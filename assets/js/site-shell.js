@@ -265,8 +265,8 @@
 .weather-app__scene--header,
 .weather-app__scene--header canvas,
 .weather-app--header canvas {
-  -webkit-mask-image: radial-gradient(ellipse 202% 196% at 50% 46%, #000 0%, #000 69%, rgba(0, 0, 0, 0.95) 83%, rgba(0, 0, 0, 0.82) 95%, transparent 100%) !important;
-          mask-image: radial-gradient(ellipse 202% 196% at 50% 46%, #000 0%, #000 69%, rgba(0, 0, 0, 0.95) 83%, rgba(0, 0, 0, 0.82) 95%, transparent 100%) !important;
+  -webkit-mask-image: radial-gradient(ellipse 210% 240% at 50% 28%, #000 0%, #000 72%, rgba(0, 0, 0, 0.9) 86%, rgba(0, 0, 0, 0.72) 95%, transparent 100%) !important;
+          mask-image: radial-gradient(ellipse 210% 240% at 50% 28%, #000 0%, #000 72%, rgba(0, 0, 0, 0.9) 86%, rgba(0, 0, 0, 0.72) 95%, transparent 100%) !important;
   -webkit-mask-repeat: no-repeat !important;
           mask-repeat: no-repeat !important;
   -webkit-mask-size: 100% 100% !important;
@@ -283,10 +283,10 @@
   position: absolute !important;
   top: 50% !important;
   left: 50% !important;
-  width: 112% !important;
-  height: calc(100% + 90px) !important;
-  min-height: calc(100% + 90px) !important;
-  transform: translate(-50%, calc(-50% + 18px)) !important;
+  width: 116% !important;
+  height: calc(100% + 180px) !important;
+  min-height: calc(100% + 180px) !important;
+  transform: translate(-50%, calc(-50% + 62px)) !important;
   transform-origin: center center !important;
   overflow: visible !important;
   opacity: 1 !important;
@@ -307,6 +307,13 @@
   visibility: visible !important;
   background: transparent !important;
   z-index: 0 !important;
+}
+
+/* Stars: brighter and crisper — override the aggressive filter:none reset
+   by matching its :not() chain to gain equal specificity, then win by
+   source order (this rule appears later in the same style block). */
+:host([data-weather-variant='header']) .weather-app canvas:not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *) {
+  filter: brightness(1.55) contrast(1.18) saturate(1.12) !important;
 }
 
 .weather-header-preview {
