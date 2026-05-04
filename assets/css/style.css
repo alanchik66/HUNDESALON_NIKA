@@ -8239,10 +8239,8 @@ body.light .nika-tooltip--visible {
     justify-self: stretch;
     width: 100%;
     min-width: 0;
-    height: 180px;
-    min-height: 180px;
-    margin-top: 2px;
-    z-index: 32;
+    height: 300px;
+    min-height: 300px;
   }
 
   .header-weather-widget {
@@ -8747,15 +8745,15 @@ body.light .nika-tooltip--visible {
 
 @media (width <= 899px) {
   .header-weather-shell {
-    height: 180px;
-    min-height: 180px;
+    height: 300px;
+    min-height: 300px;
   }
 }
 
 @media (width <= 600px) {
   .header-weather-shell {
-    height: 170px;
-    min-height: 170px;
+    height: 280px;
+    min-height: 280px;
   }
 }
 
@@ -9678,8 +9676,8 @@ body.light .social-icons-toggle.is-open {
     width: calc(100% + 58px) !important;
     min-width: 0 !important;
     max-width: none !important;
-    height: 200px !important;
-    min-height: 200px !important;
+    height: 300px !important;
+    min-height: 300px !important;
     max-height: none !important;
     transform: translateY(6px) !important;
     margin: 6px -58px 0 0 !important;
