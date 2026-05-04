@@ -9583,7 +9583,8 @@ body.light .social-icons-toggle.is-open {
     position: absolute !important;
     top: 50% !important;
     left: 50% !important;
-    transform: translate(-50%, -50%) !important;
+    margin-top: -12px !important;
+    margin-left: -12px !important;
   }
 
   /* 8. Lang dropdown button: compact round */
