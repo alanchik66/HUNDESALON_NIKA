@@ -1,0 +1,37 @@
+{
+  "recommendations": [
+    // ─── Форматирование и линтинг ─────────────────────────────────
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "stylelint.vscode-stylelint",
+    "htmlhint.vscode-htmlhint",
+
+    // ─── HTML / CSS / JS помощники ────────────────────────────────
+    "ecmel.vscode-html-css",
+    "zignd.html-css-class-completion",
+    "pranaygp.vscode-css-peek",
+    "christian-kohler.path-intellisense",
+    "formulahendry.auto-close-tag",
+    "formulahendry.auto-rename-tag",
+
+    // ─── Превью ───────────────────────────────────────────────────
+    "ritwickdey.liveserver",
+
+    // ─── Git ──────────────────────────────────────────────────────
+    "eamodio.gitlens",
+
+    // ─── Проверка орфографии (DE / EN / RU / UK) ──────────────────
+    "streetsidesoftware.code-spell-checker",
+    "streetsidesoftware.code-spell-checker-german",
+    "streetsidesoftware.code-spell-checker-russian",
+    "streetsidesoftware.code-spell-checker-ukrainian",
+
+    // ─── PowerShell (скрипты проекта) ─────────────────────────────
+    "ms-vscode.powershell",
+
+    // ─── AI-помощник ──────────────────────────────────────────────
+    "github.copilot",
+    "github.copilot-chat"
+  ],
+  "unwantedRecommendations": []
+}

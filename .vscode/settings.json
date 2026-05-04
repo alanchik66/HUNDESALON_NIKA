@@ -1,0 +1,91 @@
+{
+  // ── Редактор ──────────────────────────────────────────────────────────────
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.wordWrap": "on",
+  "editor.rulers": [120],
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "editor.linkedEditing": true,
+
+  // ── Файлы ─────────────────────────────────────────────────────────────────
+  "files.eol": "\n",
+  "files.encoding": "utf8",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.associations": {
+    "*.html": "html",
+    "*.css": "css",
+    "*.js": "javascript"
+  },
+  "files.exclude": {
+    "node_modules": true,
+    ".wrangler": true,
+    "dist": true,
+    "**/.DS_Store": true
+  },
+
+  // ── Форматирование по типу файла ──────────────────────────────────────────
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+
+  // ── ESLint ────────────────────────────────────────────────────────────────
+  "eslint.enable": true,
+  "eslint.validate": ["javascript", "html"],
+  "eslint.useFlatConfig": true,
+
+  // ── Stylelint ─────────────────────────────────────────────────────────────
+  "stylelint.enable": true,
+  "css.validate": false,
+  "scss.validate": false,
+
+  // ── HTMLHint ──────────────────────────────────────────────────────────────
+  "htmlhint.enable": true,
+
+  // ── Spell checker ────────────────────────────────────────────────────────
+  "cSpell.language": "en,de,ru",
+  "cSpell.enableFiletypes": ["html", "css", "javascript", "markdown"],
+
+  // ── Live Server ───────────────────────────────────────────────────────────
+  "liveServer.settings.port": 5502,
+  "liveServer.settings.root": "/",
+  "liveServer.settings.donotVerifyTags": true,
+  "liveServer.settings.donotShowInfoMsg": true,
+  "liveServer.settings.CustomBrowser": "chrome",
+
+  // ── Поиск ────────────────────────────────────────────────────────────────
+  "search.exclude": {
+    "node_modules": true,
+    ".wrangler": true,
+    "dist": true
+  },
+
+  // ── Git ───────────────────────────────────────────────────────────────────
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.enableSmartCommit": true,
+
+  // ── PowerShell ───────────────────────────────────────────────────────────
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+
+  // ── Path Intellisense ────────────────────────────────────────────────────
+  "path-intellisense.mappings": {
+    "/assets": "${workspaceFolder}/assets"
+  }
+}
