@@ -409,13 +409,13 @@
 
   .weather-app--header .weather-app__scene,
   .weather-app--header .weather-app__scene--header {
-    top: 20% !important;
+    top: 0 !important;
     left: 50% !important;
     width: 124% !important;
-    height: calc(100% + 150px) !important;
-    min-height: calc(100% + 150px) !important;
-    transform: translate(-50%, -50%) !important;
-    transform-origin: center center !important;
+    height: calc(100% + 440px) !important;
+    min-height: calc(100% + 440px) !important;
+    transform: translateX(-50%) !important;
+    transform-origin: center top !important;
     overflow: visible !important;
   }
 
