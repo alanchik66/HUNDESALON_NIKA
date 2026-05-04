@@ -116,7 +116,7 @@ performance-report.*
 .git/
 .gitignore.backup
 
-# ═══════════════ ПРОЧЕЕ ═══════════════ 
+# ═══════════════ ПРОЧЕЕ ═══════════════
 .continue/
 *.lockb
 
