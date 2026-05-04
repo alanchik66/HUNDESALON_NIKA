@@ -206,6 +206,17 @@
   filter: none !important;
 }
 
+/* Force overflow:visible on every intermediate shadow DOM container
+   so the scene canvas can extend above the widget without clipping. */
+:host([data-weather-variant='header']) .weather-app,
+:host([data-weather-variant='header']) .weather-app--header,
+:host([data-weather-variant='header']) .weather-header-preview,
+:host([data-weather-variant='header']) .weather-header-trigger,
+:host([data-weather-variant='header']) .weather-header-card {
+  overflow: visible !important;
+  clip-path: none !important;
+}
+
 /* AGGRESSIVE RESET: kill every background/border/shadow inside the widget,
    EXCEPT for elements that are part of the dropdown menu, location selector,
    chips/pills inside the dropdown (which need their pill background) and a few
@@ -259,14 +270,14 @@
   clip-path: none !important;
 }
 
-/* Enlarge the header scene beyond the widget bounds so the weather animation
-   can read wider, keep the cloud fully visible, and avoid clipping at the top. */
+/* Mask: linear gradient — top is ALWAYS fully opaque so clouds never clip,
+   fades only at the bottom edge. */
 .weather-app__scene,
 .weather-app__scene--header,
 .weather-app__scene--header canvas,
 .weather-app--header canvas {
-  -webkit-mask-image: radial-gradient(ellipse 210% 300% at 50% 12%, #000 0%, #000 68%, rgba(0, 0, 0, 0.88) 84%, rgba(0, 0, 0, 0.6) 95%, transparent 100%) !important;
-          mask-image: radial-gradient(ellipse 210% 300% at 50% 12%, #000 0%, #000 68%, rgba(0, 0, 0, 0.88) 84%, rgba(0, 0, 0, 0.6) 95%, transparent 100%) !important;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 70%, rgba(0, 0, 0, 0.75) 88%, transparent 100%) !important;
+          mask-image: linear-gradient(to bottom, #000 0%, #000 70%, rgba(0, 0, 0, 0.75) 88%, transparent 100%) !important;
   -webkit-mask-repeat: no-repeat !important;
           mask-repeat: no-repeat !important;
   -webkit-mask-size: 100% 100% !important;
@@ -281,11 +292,11 @@
 .weather-app--header .weather-app__scene--header {
   display: block !important;
   position: absolute !important;
-  top: 0 !important;
+  top: -100px !important;
   left: 50% !important;
-  width: 116% !important;
-  height: calc(100% + 220px) !important;
-  min-height: calc(100% + 220px) !important;
+  width: 118% !important;
+  height: calc(100% + 380px) !important;
+  min-height: calc(100% + 380px) !important;
   transform: translateX(-50%) !important;
   transform-origin: center top !important;
   overflow: visible !important;
