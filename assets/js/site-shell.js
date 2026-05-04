@@ -274,17 +274,21 @@
   border-radius: 0 !important;
 }
 
-/* Scene is contained exactly within the widget — no overflow on any side */
+/* Scene extends beyond shell so 3D renderer gets a tall enough canvas
+   for sun/moon to project into the visible area.
+   The header overflow:hidden clips the bottom bleed. */
 .weather-app--header .weather-app__scene,
 .weather-app--header .weather-app__scene--header {
   display: block !important;
   position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  min-height: 100% !important;
-  transform: none !important;
-  overflow: hidden !important;
+  top: 0 !important;
+  left: 50% !important;
+  width: 118% !important;
+  height: calc(100% + 140px) !important;
+  min-height: calc(100% + 140px) !important;
+  transform: translateX(-50%) !important;
+  transform-origin: center top !important;
+  overflow: visible !important;
   opacity: 1 !important;
   visibility: visible !important;
   background: transparent !important;
