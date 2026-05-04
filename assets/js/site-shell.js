@@ -383,7 +383,7 @@
   -webkit-tap-highlight-color: transparent !important;
 }
 
-/* Mobile: keep the weather widget open and rectangular, without orb clipping. */
+/* Mobile: scene contained exactly within widget — same approach as desktop. */
 @media (max-width: 899px) {
   :host([data-weather-variant='header']),
   :host([data-weather-variant='header']) [data-weather-widget-root] {
@@ -407,124 +407,6 @@
     width: 100% !important;
     height: 100% !important;
     min-height: 100% !important;
-  }
-
-  .weather-header-card__content {
-    padding: 8px 12px 10px !important;
-  }
-
-  .weather-header-card__top,
-  .weather-header-card__bottom {
-    position: static !important;
-    transform: none !important;
-  }
-
-  .weather-header-card__title-block {
-    max-width: min(46%, 150px) !important;
-    transform: translate(28px, -5px) !important;
-  }
-
-  .weather-header-card__location {
-    max-width: 138px !important;
-    font-size: 13px !important;
-    line-height: 1.08 !important;
-  }
-
-  .weather-header-card__meta {
-    max-width: 138px !important;
-  }
-
-  .weather-header-card__side {
-    position: static !important;
-    right: auto !important;
-    top: auto !important;
-    bottom: auto !important;
-    max-width: none !important;
-    align-items: flex-end !important;
-    transform: none !important;
-  }
-
-  .weather-header-card__condition {
-    position: absolute !important;
-    right: 10px !important;
-    top: auto !important;
-    bottom: 42px !important;
-    width: 58px !important;
-    min-width: 58px !important;
-    max-width: 58px !important;
-    font-size: 8px !important;
-    line-height: 1.12 !important;
-    overflow: visible !important;
-    text-align: right !important;
-  }
-
-  .weather-header-card__toggle {
-    position: absolute !important;
-    left: 50% !important;
-    right: auto !important;
-    bottom: -7px !important;
-    min-width: 120px !important;
-    min-height: 20px !important;
-    padding: 0 8px !important;
-    font-size: 10px !important;
-    line-height: 1 !important;
-    justify-content: center !important;
-    transform: translateX(-50%) !important;
-  }
-
-  .weather-header-card__toggle span:first-child {
-    display: inline-flex !important;
-    max-width: 104px !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-  }
-
-  .weather-header-card__toggle-icon {
-    font-size: 17px !important;
-  }
-
-  .weather-header-card__temperature {
-    position: absolute !important;
-    left: 42px !important;
-    bottom: 16px !important;
-    transform: none !important;
-  }
-
-  .weather-header-card__chips {
-    position: absolute !important;
-    inset: 0 !important;
-    width: auto !important;
-    min-width: 0 !important;
-    max-width: none !important;
-    display: block !important;
-    transform: none !important;
-  }
-
-  .weather-header-card__chip {
-    position: absolute !important;
-    width: 58px !important;
-    min-width: 58px !important;
-    max-width: 58px !important;
-    padding: 0 !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    gap: 1px !important;
-    line-height: 1.05 !important;
-  }
-
-  .weather-header-card__chip:first-child {
-    left: 80px !important;
-    bottom: 16px !important;
-    align-items: flex-start !important;
-    text-align: left !important;
-  }
-
-  .weather-header-card__chip:last-child {
-    right: 10px !important;
-    bottom: 16px !important;
-    align-items: flex-end !important;
-    text-align: right !important;
   }
 }
 `;
