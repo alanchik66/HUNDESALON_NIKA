@@ -8088,8 +8088,8 @@ body.light .nika-tooltip--visible {
            .header .top-row rules further below. */
     width: clamp(220px, 22vw, 320px);
     min-width: 200px;
-    height: 66px;
-    min-height: 66px;
+    height: 96px;
+    min-height: 96px;
     z-index: 32;
   }
 
@@ -8139,8 +8139,8 @@ body.light .nika-tooltip--visible {
     justify-self: center;
     width: clamp(220px, 22vw, 320px);
     min-width: 200px;
-    height: 66px;
-    min-height: 66px;
+    height: 96px;
+    min-height: 96px;
     margin-right: 0;
   }
 
@@ -8183,8 +8183,8 @@ body.light .nika-tooltip--visible {
     justify-self: center;
     width: clamp(200px, 24vw, 280px);
     min-width: 180px;
-    height: 62px;
-    min-height: 62px;
+    height: 88px;
+    min-height: 88px;
     margin-right: 0;
   }
 

@@ -292,11 +292,11 @@
 .weather-app--header .weather-app__scene--header {
   display: block !important;
   position: absolute !important;
-  top: -100px !important;
+  top: 0 !important;
   left: 50% !important;
   width: 118% !important;
-  height: calc(100% + 380px) !important;
-  min-height: calc(100% + 380px) !important;
+  height: calc(100% + 120px) !important;
+  min-height: calc(100% + 120px) !important;
   transform: translateX(-50%) !important;
   transform-origin: center top !important;
   overflow: visible !important;
