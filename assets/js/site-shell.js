@@ -832,7 +832,7 @@
   </div>
   <a href="${pathPrefix}index.html#promotions" class="promo-burger-btn">
     <span class="promo-btn-inner">
-      <img src="${assetPrefix}/images/icon-pak/Gotovie iconki dlya saita/currency_euro.png" class="promo-btn-icon" alt="">
+      <img src="${assetPrefix}/images/icon-pak/Gotovie iconki dlya saita/clash_royale.png" class="promo-btn-icon" alt="">
       <span class="promo-btn-label">${copy.promotions}</span>
     </span>
   </a>
