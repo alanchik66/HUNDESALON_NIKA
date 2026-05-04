@@ -265,8 +265,8 @@
 .weather-app__scene--header,
 .weather-app__scene--header canvas,
 .weather-app--header canvas {
-  -webkit-mask-image: radial-gradient(ellipse 210% 240% at 50% 28%, #000 0%, #000 72%, rgba(0, 0, 0, 0.9) 86%, rgba(0, 0, 0, 0.72) 95%, transparent 100%) !important;
-          mask-image: radial-gradient(ellipse 210% 240% at 50% 28%, #000 0%, #000 72%, rgba(0, 0, 0, 0.9) 86%, rgba(0, 0, 0, 0.72) 95%, transparent 100%) !important;
+  -webkit-mask-image: radial-gradient(ellipse 210% 300% at 50% 12%, #000 0%, #000 68%, rgba(0, 0, 0, 0.88) 84%, rgba(0, 0, 0, 0.6) 95%, transparent 100%) !important;
+          mask-image: radial-gradient(ellipse 210% 300% at 50% 12%, #000 0%, #000 68%, rgba(0, 0, 0, 0.88) 84%, rgba(0, 0, 0, 0.6) 95%, transparent 100%) !important;
   -webkit-mask-repeat: no-repeat !important;
           mask-repeat: no-repeat !important;
   -webkit-mask-size: 100% 100% !important;
@@ -281,13 +281,13 @@
 .weather-app--header .weather-app__scene--header {
   display: block !important;
   position: absolute !important;
-  top: 50% !important;
+  top: 0 !important;
   left: 50% !important;
   width: 116% !important;
-  height: calc(100% + 180px) !important;
-  min-height: calc(100% + 180px) !important;
-  transform: translate(-50%, calc(-50% + 62px)) !important;
-  transform-origin: center center !important;
+  height: calc(100% + 220px) !important;
+  min-height: calc(100% + 220px) !important;
+  transform: translateX(-50%) !important;
+  transform-origin: center top !important;
   overflow: visible !important;
   opacity: 1 !important;
   visibility: visible !important;
