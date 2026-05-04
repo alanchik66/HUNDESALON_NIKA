@@ -477,7 +477,7 @@ body.nav-open .site-scroll-root {
   flex-direction: column;
   padding: 8px 34px;
   gap: 8px;
-  overflow: visible;
+  overflow: hidden;
   transition:
     transform 0.45s ease,
     background 0.35s ease,

@@ -270,36 +270,21 @@
   clip-path: none !important;
 }
 
-/* Mask: linear gradient — top is ALWAYS fully opaque so clouds never clip,
-   fades only at the bottom edge. */
-.weather-app__scene,
-.weather-app__scene--header,
-.weather-app__scene--header canvas,
-.weather-app--header canvas {
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 70%, rgba(0, 0, 0, 0.75) 88%, transparent 100%) !important;
-          mask-image: linear-gradient(to bottom, #000 0%, #000 70%, rgba(0, 0, 0, 0.75) 88%, transparent 100%) !important;
-  -webkit-mask-repeat: no-repeat !important;
-          mask-repeat: no-repeat !important;
-  -webkit-mask-size: 100% 100% !important;
-          mask-size: 100% 100% !important;
-}
-
 .weather-app--header {
   border-radius: 0 !important;
 }
 
+/* Scene is contained exactly within the widget — no overflow on any side */
 .weather-app--header .weather-app__scene,
 .weather-app--header .weather-app__scene--header {
   display: block !important;
   position: absolute !important;
-  top: 0 !important;
-  left: 50% !important;
-  width: 118% !important;
-  height: calc(100% + 120px) !important;
-  min-height: calc(100% + 120px) !important;
-  transform: translateX(-50%) !important;
-  transform-origin: center top !important;
-  overflow: visible !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  transform: none !important;
+  overflow: hidden !important;
   opacity: 1 !important;
   visibility: visible !important;
   background: transparent !important;
@@ -409,14 +394,12 @@
 
   .weather-app--header .weather-app__scene,
   .weather-app--header .weather-app__scene--header {
-    top: 0 !important;
-    left: 50% !important;
-    width: 124% !important;
-    height: calc(100% + 440px) !important;
-    min-height: calc(100% + 440px) !important;
-    transform: translateX(-50%) !important;
-    transform-origin: center top !important;
-    overflow: visible !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    transform: none !important;
+    overflow: hidden !important;
   }
 
   .weather-app--header canvas {
