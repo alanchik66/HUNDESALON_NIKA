@@ -7085,6 +7085,22 @@ body.light .review-card {
   font-size: 11px;
 }
 
+/* Footer icon links must stay transparent in light theme —
+   body.light .social-link applies a light background to all .social-link
+   elements, but icon circles need no background so PNGs render cleanly. */
+body.light .footer-socials .social-link--icon,
+body.light .footer-socials .social-link-icon {
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+body.light .footer-socials .social-link--icon::before,
+body.light .footer-socials .social-link-icon::before {
+  content: none !important;
+  background: none !important;
+}
+
 body.light .footer-legal a {
   color: rgb(100 80 50 / 70%);
 }
