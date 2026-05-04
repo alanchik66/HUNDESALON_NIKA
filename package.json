@@ -1,0 +1,75 @@
+{
+  "name": "hundesalon-nika-website",
+  "version": "1.0.0",
+  "description": "Многоязычный сайт салона груминга HUNDESALON NIKA с виджетом погоды",
+  "main": "index.html",
+  "type": "module",
+  "scripts": {
+    "start": "live-server --port=5502",
+    "dev": "live-server --port=5502 --host=localhost",
+    "preview": "live-server --port=5502 --host=localhost --open=/de/",
+    "lint": "npm run lint:html && npm run lint:css && npm run lint:js",
+    "lint:html": "htmlhint ru/*.html de/*.html en/*.html uk/*.html *.html",
+    "lint:css": "stylelint assets/css/**/*.css",
+    "lint:js": "eslint assets/js/**/*.js",
+    "format": "prettier --write assets/js/**/*.js assets/css/**/*.css ru/*.html de/*.html en/*.html uk/*.html *.html",
+    "validate": "npm run lint && npm run check:links && npm run check:project",
+    "check": "npm run validate",
+    "check:links": "node tools/check-links.js",
+    "check:project": "node tools/check-project.js",
+    "test:links": "npm run check:links",
+    "seo:urls": "node tools/indexnow-submit.js --dry-run",
+    "seo:indexnow": "node tools/indexnow-submit.js",
+    "seo:submit": "npm run seo:indexnow",
+    "google:gsc:audit": "node tools/google-search-console-audit.js",
+    "google:gsc:browser": "node tools/gsc-browser-automate.js",
+    "build": "npm run validate && npm run build:production",
+    "build:production": "node tools/build-production.js",
+    "brand:assets": "powershell -ExecutionPolicy Bypass -File tools/generate-brand-assets.ps1",
+    "brand:seo": "node tools/update-brand-search-seo.js",
+    "build:weather": "cd 3d-weather-codrops-main && npm run build:widget",
+    "optimize:images": "echo 'Оптимизация изображений: используйте online-сервисы или установите imagemin'",
+    "deploy:prepare": "npm run validate",
+    "clean": "node -e \"const fs=require('fs'); for (const dir of ['dist','temp','test-results']) fs.rmSync(dir,{recursive:true,force:true});\"",
+    "audit": "npm audit",
+    "update": "npm update && cd 3d-weather-codrops-main && npm update",
+    "dev:cf": "wrangler pages dev . --port=8788",
+    "deploy": "npm run validate && wrangler pages deploy . --project-name=hundesalon-nika"
+  },
+  "keywords": [
+    "grooming",
+    "dogs",
+    "cats",
+    "salon",
+    "leipzig",
+    "multilingual",
+    "website",
+    "weather-widget"
+  ],
+  "author": "HUNDESALON NIKA",
+  "license": "UNLICENSED",
+  "private": true,
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "htmlhint": "^1.1.4",
+    "live-server": "^1.2.2",
+    "prettier": "^3.1.1",
+    "stylelint": "^16.1.0",
+    "stylelint-config-standard": "^35.0.0",
+    "wrangler": "^4.85.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "local"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie <= 11"
+  ]
+}

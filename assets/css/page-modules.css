@@ -1,0 +1,896 @@
+/*
+ * Shared page modules
+ * Keeps special-page styles out of inline \3c style> blocks so the HTML stays cleaner.
+ */
+
+/* =========================================================
+   REPEATED HTML UTILITIES
+   ========================================================= */
+.page-offset-top {
+    margin-top: var(--section-top-offset, 100px);
+}
+
+.glass-card {
+    padding: 1.5rem;
+    border: 1px solid var(--glass-border);
+    border-radius: 28px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+}
+
+.content-article {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
+
+.meta-accent {
+    margin-bottom: 1rem;
+    color: var(--accent-gold);
+}
+
+.stack-top-lg {
+    margin-top: 2rem;
+}
+
+.section-center {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.map-embed {
+    border: 0;
+}
+
+.accent-center {
+    color: var(--accent-gold);
+    text-align: center;
+}
+
+.accent-text {
+    color: var(--accent-gold);
+}
+
+.icon-accent-lg {
+    color: var(--accent-gold);
+    font-size: 3rem;
+}
+
+.icon-accent-lg.site-icon {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* =========================================================
+   SITE-ICON BASE & MODIFIERS
+   ========================================================= */
+.site-icon {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    flex: 0 0 auto;
+    vertical-align: middle;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    transform-origin: center center;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    will-change: transform, filter, opacity;
+    filter:
+        drop-shadow(0 1px 0 rgba(255,255,255,0.12))
+        drop-shadow(0 8px 14px rgba(0,0,0,0.22))
+        drop-shadow(0 0 10px rgba(255,223,171,0.16))
+        contrast(1.05)
+        saturate(1.06)
+        brightness(1.02);
+    animation:
+        iconCoinSpinVertical var(--icon-coin-duration) cubic-bezier(0.42, 0, 0.28, 1) infinite,
+        iconMetalShimmer var(--icon-sheen-duration) ease-in-out infinite;
+    transition: transform 0.24s ease, opacity 0.24s ease, filter 0.24s ease;
+}
+
+.site-icon--euro,
+.site-icon-euro {
+    background-image: url("../images/icon-pak/Gotovie iconki dlya saita/currency_euro.png");
+}
+
+.site-icon--job,
+.site-icon-job {
+    background-image: url("../images/icon-pak/Gotovie iconki dlya saita/Job.png");
+}
+
+.site-icon--social,
+.site-icon-social {
+    background-image: url("../images/icon-pak/Gotovie iconki dlya saita/sozial-links.png");
+}
+
+.site-icon--euro,
+.site-icon-euro,
+.site-icon--job,
+.site-icon-job {
+    backface-visibility: visible;
+    animation:
+        iconCoinFlip 5s linear infinite,
+        iconMetalShimmer var(--icon-sheen-duration) ease-in-out infinite;
+}
+
+.site-icon--job,
+.site-icon-job {
+    animation-duration: 8s, var(--icon-sheen-duration);
+}
+
+/* Inline euro next to prices */
+.currency-inline {
+    width: 0.85em;
+    height: 0.85em;
+    margin: 0 0.12em;
+    vertical-align: -0.08em;
+}
+
+/* Job/scissors heading decoration */
+.heading-job-icon {
+    width: 1.3em;
+    height: 1.3em;
+    margin-right: 0.4em;
+    vertical-align: -0.15em;
+}
+
+.stack-column-lg {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.services-grid--compact,
+.services-grid-compact {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.cta-pill-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 8px 0;
+    padding: 12px 24px;
+    border-radius: 999px;
+    color: var(--accent-gold);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* =========================================================
+   PRICE LIST / TABLE MODULE
+   ========================================================= */
+.table-wrapper {
+    overflow-x: auto;
+    margin: 2rem 0;
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    border-radius: 32px;
+    padding: 1px;
+    border: 1px solid var(--glass-border);
+}
+
+.table-wrapper table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 32px;
+    overflow: hidden;
+}
+
+.table-wrapper th,
+.table-wrapper td {
+    padding: 14px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.table-wrapper th {
+    background: rgba(198, 161, 91, 0.15);
+    font-weight: 600;
+    color: var(--accent-gold);
+}
+
+.info-card,
+.partner-card,
+.complaint-form,
+.booking-container {
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    border-radius: 28px;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-sm);
+}
+
+.info-card {
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.rules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.select-btn-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    margin-top: 1rem;
+    text-align: right;
+}
+
+.select-service-btn,
+.online-order-btn,
+.btn-modal,
+.btn-google,
+.direct-booking-btn {
+    border-radius: 40px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1);
+}
+
+.select-service-btn {
+    display: inline-block;
+    padding: 10px 24px;
+    background: var(--glass-bg);
+    color: var(--accent-gold);
+    border: 1px solid var(--accent-gold);
+    font-weight: 500;
+}
+
+.online-order-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 10px 24px;
+    background: var(--accent-gold);
+    color: #000;
+    border: 0;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(20px);
+}
+
+.select-btn-wrapper:hover .online-order-btn,
+.select-btn-wrapper:focus-within .online-order-btn {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+}
+
+.select-btn-wrapper:hover .select-service-btn,
+.select-btn-wrapper:focus-within .select-service-btn {
+    opacity: 0.72;
+    transform: translateX(-10px);
+}
+
+/* =========================================================
+   BOOKING MODAL
+   ========================================================= */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    width: min(100%, 620px);
+    max-height: min(92vh, 860px);
+    overflow-y: auto;
+    position: relative;
+    padding: 2rem;
+    border-radius: 32px;
+    border: 1px solid var(--accent-gold);
+    background: var(--bg-dark);
+    color: var(--text-dark);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.modal-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--accent-gold);
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.modal-close:hover,
+.modal-close:focus-visible {
+    background: rgba(198, 161, 91, 0.12);
+    outline: none;
+}
+
+.booking-step {
+    display: none;
+}
+
+.booking-step.active {
+    display: block;
+}
+
+.step-indicator {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.step {
+    flex: 1;
+    position: relative;
+    text-align: center;
+    color: rgba(236, 232, 223, 0.7);
+}
+
+.step.active {
+    color: var(--accent-gold);
+    font-weight: 600;
+}
+
+.step.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -1rem;
+    width: 100%;
+    height: 2px;
+    background: var(--accent-gold);
+}
+
+.service-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 1rem 0;
+}
+
+.service-option,
+.time-slot,
+.calendar-day {
+    border: 1px solid var(--glass-border);
+    background: transparent;
+    color: inherit;
+}
+
+.service-option {
+    width: 100%;
+    padding: 12px;
+    border-radius: 40px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.service-option.selected,
+.service-option:hover,
+.service-option:focus-visible,
+.time-slot.selected,
+.time-slot:hover,
+.time-slot:focus-visible,
+.calendar-day.selected,
+.calendar-day:hover,
+.calendar-day:focus-visible {
+    border-color: var(--accent-gold);
+    background: rgba(198, 161, 91, 0.2);
+    outline: none;
+}
+
+.calendar {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+    margin: 1rem 0;
+}
+
+.calendar-weekday {
+    text-align: center;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+    opacity: 0.9;
+}
+
+.calendar-day {
+    min-height: 44px;
+    padding: 10px;
+    border-radius: 18px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.calendar-day.is-empty {
+    border-color: transparent;
+    pointer-events: none;
+    opacity: 0.18;
+}
+
+.calendar-day.is-disabled {
+    cursor: not-allowed;
+    opacity: 0.38;
+}
+
+.time-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 1rem 0;
+}
+
+.time-slot {
+    padding: 8px 16px;
+    border-radius: 40px;
+    cursor: pointer;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group input,
+.form-group textarea,
+.complaint-form input,
+.complaint-form textarea,
+.complaint-form select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 24px;
+    border: 1px solid var(--glass-border);
+    background: rgba(0, 0, 0, 0.28);
+    color: var(--text-dark);
+}
+
+.form-group textarea,
+.complaint-form textarea {
+    min-height: 96px;
+    resize: vertical;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.btn-modal {
+    padding: 10px 24px;
+    background: var(--glass-bg);
+    border: 1px solid var(--accent-gold);
+    color: var(--accent-gold);
+}
+
+.btn-modal-primary,
+.direct-booking-btn,
+.btn-google {
+    background: var(--accent-gold);
+    color: #000;
+    border: 0;
+}
+
+.booking-container {
+    max-width: 800px;
+    margin: 120px auto 40px;
+    padding: 2rem;
+    text-align: center;
+}
+
+.booking-container h2 {
+    color: var(--accent-gold);
+}
+
+.direct-booking-btn {
+    margin-top: 20px;
+    padding: 14px 38px;
+    font-size: 18px;
+}
+
+.direct-booking-btn:hover,
+.btn-google:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(198, 161, 91, 0.3);
+}
+
+/* =========================================================
+   SOCIAL PAGE
+   ========================================================= */
+.social-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.section-block {
+    margin-bottom: 4rem;
+}
+
+.social-page .section-title {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, var(--text-dark), var(--accent-gold));
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+.social-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.social-grid > .social-card:last-child:nth-child(3n + 1) {
+    grid-column: 1 / -1;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.social-card,
+.news-card,
+.promo-card,
+.winner-card {
+    position: relative;
+    overflow: hidden;
+    padding: 1.5rem;
+    border-radius: 28px;
+    border: none;
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%),
+        rgba(14, 18, 16, 0.92);
+    backdrop-filter: blur(14px);
+    box-shadow:
+        0 12px 32px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+    transform-style: preserve-3d;
+    transform: perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform 0.15s ease-out, box-shadow 0.35s ease;
+    will-change: transform;
+}
+
+.social-card {
+    text-align: center;
+    height: 100%;
+}
+
+.social-card::before,
+.news-card::before,
+.winner-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at var(--glow-x, 50%) var(--glow-y, 50%), rgba(198, 161, 91, 0.22), transparent 55%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.social-card:hover,
+.news-card:hover,
+.promo-card:hover,
+.winner-card:hover {
+    box-shadow: 0 22px 38px rgba(0, 0, 0, 0.24), 14px 24px 38px rgba(40, 94, 72, 0.28);
+}
+
+.social-card:hover::before,
+.news-card:hover::before,
+.winner-card:hover::before {
+    opacity: 1;
+}
+
+body.light .social-card,
+body.light .news-card,
+body.light .promo-card,
+body.light .winner-card {
+    background:
+        linear-gradient(145deg, rgba(248,240,222,0.65) 0%, rgba(242,232,210,0.35) 100%),
+        rgba(240, 228, 208, 0.96);
+    box-shadow:
+        0 10px 28px rgba(110, 90, 50, 0.14),
+        inset 0 1px 0 rgba(255, 248, 232, 0.85);
+}
+
+.social-card .social-icon-frame {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 112px;
+    height: 112px;
+    margin: 0 auto 1.2rem;
+    position: relative;
+    overflow: visible;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    animation: none;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.social-card .social-icon-frame::after {
+    content: none;
+}
+
+.social-card .social-icon {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: var(--accent-gold);
+    font-size: 5.6rem;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    animation:
+        iconCoinSpinHorizontal var(--icon-coin-duration) cubic-bezier(0.42, 0, 0.28, 1) infinite,
+        iconMetalShimmer var(--icon-sheen-duration) ease-in-out infinite;
+    filter: none;
+}
+
+.social-card .social-icon::before {
+    content: none;
+}
+
+.social-card .social-icon-frame:hover,
+.social-card:hover .social-icon-frame {
+    transform: none;
+    opacity: 1;
+}
+
+.social-card h3 {
+    margin: 0.5rem 0;
+    font-size: 1.3rem;
+}
+
+.social-card p {
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.social-card a {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border-radius: 40px;
+    background: rgba(198, 161, 91, 0.1);
+    color: var(--accent-gold);
+    font-size: 0.8rem;
+    word-break: break-all;
+    transition: all 0.3s ease;
+}
+
+.social-card a:hover {
+    background: rgba(198, 161, 91, 0.3);
+    transform: scale(1.02);
+}
+
+.news-date,
+.promo-badge,
+.winner-date {
+    display: inline-block;
+    margin-bottom: 1rem;
+    padding: 0.2rem 1rem;
+    border-radius: 40px;
+    background: rgba(198, 161, 91, 0.2);
+    color: var(--accent-gold);
+    font-size: 0.75rem;
+}
+
+.news-card h3,
+.promo-card h3,
+.winner-card h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.btn-read {
+    display: inline-block;
+    margin-top: 1rem;
+    color: var(--accent-gold);
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.btn-read i {
+    transition: transform 0.3s ease;
+}
+
+body .btn-read i.fa-arrow-right,
+body .btn-read .site-icon--arrow-right,
+body .btn-read .site-icon-arrow-right {
+    display: inline-block;
+    width: 1rem;
+    min-width: 1rem;
+    height: 1rem;
+    margin-left: 0.35rem;
+    font-size: 0;
+    line-height: 0;
+    vertical-align: middle;
+    background: url("../images/ui/chevron-emerald-gold.svg") center/contain no-repeat;
+    filter:
+        drop-shadow(0 2px 4px rgba(0,0,0,0.28))
+        drop-shadow(0 0 5px rgba(247,199,68,0.18));
+    transform: rotate(-90deg);
+    transition: transform 0.3s ease;
+}
+
+body .btn-read i.fa-arrow-right::before {
+    content: none !important;
+    display: none !important;
+}
+
+body .btn-read:hover i.fa-arrow-right,
+body .btn-read:hover .site-icon--arrow-right,
+body .btn-read:hover .site-icon-arrow-right {
+    transform: translateX(5px) rotate(-90deg);
+}
+
+/* =========================================================
+   RATING / PARTNERSHIP PAGES
+   ========================================================= */
+.rating-section,
+.partner-section {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.rating-section {
+    text-align: center;
+}
+
+.rating-stars {
+    margin: 20px 0;
+    color: var(--accent-gold);
+    font-size: 48px;
+}
+
+.complaint-form {
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.btn-google {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 20px 0;
+    padding: 12px 24px;
+}
+
+.btn-google .site-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.partner-card {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.team-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.team-member {
+    padding: 1rem;
+    border-left: 2px solid var(--accent-gold);
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+@media (max-width: 900px) {
+    .modal {
+        padding: 1rem;
+    }
+
+    .modal-content {
+        padding: 1.5rem;
+    }
+
+    .booking-container {
+        margin-top: 108px;
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 1024px) {
+    .social-grid,
+    .cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+
+    .social-grid > .social-card:last-child:nth-child(3n + 1) {
+        grid-column: auto;
+    }
+
+    .social-grid > .social-card:last-child:nth-child(2n + 1) {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .social-page .section-title {
+        font-size: 2rem;
+    }
+
+    .social-card {
+        padding: 1rem;
+    }
+
+    .social-card .social-icon-frame {
+        width: 86px;
+        height: 86px;
+        margin-bottom: 1rem;
+    }
+
+    .social-card .social-icon {
+        font-size: 4.2rem;
+    }
+
+    .modal-buttons {
+        flex-direction: column;
+    }
+
+    .btn-modal {
+        width: 100%;
+    }
+
+    .step-indicator {
+        gap: 0.25rem;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .social-grid,
+    .cards-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .social-grid > .social-card:last-child:nth-child(2n + 1) {
+        grid-column: auto;
+    }
+}

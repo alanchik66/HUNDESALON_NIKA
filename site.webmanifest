@@ -1,0 +1,43 @@
+{
+  "name": "HUNDESALON NIKA",
+  "short_name": "NIKA",
+  "description": "Premium grooming salon for dogs and cats in Leipzig.",
+  "lang": "de",
+  "start_url": "/de/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#050605",
+  "theme_color": "#0f6d66",
+  "icons": [
+    {
+      "src": "/assets/images/favicon-48x48.png?v=20260429-full-logo",
+      "sizes": "48x48",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/images/android-chrome-192x192.png?v=20260429-full-logo",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/images/favicon-384x384.png?v=20260429-full-logo",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/images/android-chrome-512x512.png?v=20260429-full-logo",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/images/maskable-icon-512x512.png?v=20260429-full-logo",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

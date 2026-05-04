@@ -1,0 +1,131 @@
+# ═══════════════ VS CODE И СИСТЕМА ═══════════════
+.vscode/
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+
+# ═══════════════ ЗАВИСИМОСТИ И ПАКЕТЫ ═══════════════
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ═══════════════ PYTHON ОКРУЖЕНИЕ ═══════════════
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ═══════════════ ВРЕМЕННЫЕ И СЛУЖЕБНЫЕ ФАЙЛЫ ═══════════════
+temp/
+tmp/
+test-results/
+.temp/
+*.tmp
+*.temp
+*.log
+*.cache
+*.pid
+*.seed
+*.pid.lock
+_tmp*
+
+# ═══════════════ СБОРКА И ДИСТРИБУТИВ ═══════════════
+dist/
+build/
+public/
+coverage/
+.nyc_output
+
+# ═══════════════ ВИДЖЕТ ПОГОДЫ (СБОРКА) ═══════════════
+3d-weather-codrops-main/node_modules/
+3d-weather-codrops-main/build/
+3d-weather-codrops-main/.temp/
+3d-weather-codrops-main/dist/
+# 4K-видео 1.37 GB — превышает лимит GitHub 100 MB
+3d-weather-codrops-main/dist-widget/assets/Moon/mission_2160p1.mp4
+
+# ═══════════════ CLOUDFLARE / WRANGLER ═══════════════
+.wrangler/
+
+# ═══════════════ РЕДАКТОРЫ И IDE ═══════════════
+.idea/
+*.sublime-project
+*.sublime-workspace
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
+.history/
+
+# ═══════════════ КОНФИДЕНЦИАЛЬНЫЕ ДАННЫЕ ═══════════════
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+config.local.js
+secrets.*
+*.key
+*.pem
+
+# ═══════════════ БЭКАПЫ И АРХИВЫ ═══════════════
+*.backup
+*.bak
+*.sql
+*.dump
+backup/
+archives/
+*.zip
+tools/ffmpeg/
+tools/ffmpeg_extract/
+tools/ffmpeg*.zip
+*.tar.gz
+*.rar
+
+# ═══════════════ ИЗОБРАЖЕНИЯ (РАБОЧИЕ ФАЙЛЫ) ═══════════════
+*.psd
+*.ai
+*.sketch
+*.fig
+*.xcf
+original_images/
+raw_images/
+
+# ═══════════════ ХОСТИНГ И ДЕПЛОЙ ═══════════════
+.cpanel/
+.well-known/
+cpanel_logs/
+error_log
+access_log
+.htaccess.backup
+
+# ═══════════════ МОНИТОРИНГ И АНАЛИТИКА ═══════════════
+site-load-check.png
+site-load-diagnose.png
+performance-report.*
+
+# ═══════════════ GIT ═══════════════
+.git/
+.gitignore.backup
+
+# ═══════════════ ПРОЧЕЕ ═══════════════ 
+.continue/
+*.lockb
+
+# ═══════════════ ВРЕМЕННЫЕ ДЛЯ РЕВЬЮ ═══════════════
+tmp_moon_review/
+tmp_*.png
+.playwright-cli/

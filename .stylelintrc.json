@@ -1,0 +1,31 @@
+{
+  "rules": {
+    "at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": [
+          "include",
+          "mixin",
+          "if",
+          "else",
+          "for",
+          "each",
+          "while",
+          "function",
+          "return"
+        ]
+      }
+    ],
+    "property-no-unknown": true,
+    "block-no-empty": true,
+    "no-empty-source": true,
+    "string-no-newline": true
+  },
+  "ignoreFiles": [
+    "**/*.min.css",
+    "**/vendor/**",
+    "**/node_modules/**",
+    "3d-weather-codrops-main/build/**",
+    "3d-weather-codrops-main/dist-widget/**"
+  ]
+}

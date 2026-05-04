@@ -1,0 +1,16 @@
+# Cloudflare Pages — конфигурация
+# Документация: https://developers.cloudflare.com/pages/
+
+name = "hundesalon-nika"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "."
+
+# Для локальной разработки с Pages Functions:
+#   npx wrangler pages dev . --port=8788
+#
+# Для деплоя через CLI:
+#   npx wrangler pages deploy . --project-name=hundesalon-nika
+#
+# Переменные окружения задаются в Cloudflare Dashboard:
+#   Pages → hundesalon-nika → Settings → Environment variables
+#   RESEND_API_KEY = <ваш ключ Resend.com>

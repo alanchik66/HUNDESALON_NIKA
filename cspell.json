@@ -1,0 +1,33 @@
+{
+  "version": "0.2",
+  "language": "en,de",
+  "words": [
+    "Nika",
+    "nika",
+    "msvalidate",
+    "Hundegrooming",
+    "Kreativschnitte",
+    "hundesalon",
+    "Hundesalon",
+    "groomer",
+    "grooming",
+    "Grooming",
+    "Groomer",
+    "Fellpflege",
+    "Hundeschnitt",
+    "Katzenpflege",
+    "Stripping",
+    "stripping",
+    "hreflang",
+    "preload",
+    "fetchpriority",
+    "mibextid",
+    "noopener",
+    "noreferrer",
+    "preloader",
+    "neon",
+    "glassmorphism",
+    "igsh"
+  ],
+  "ignorePaths": ["node_modules/**", "assets/fonts/**", "3d-weather-codrops-main/**"]
+}

@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /tools/
+Disallow: /functions/
+Crawl-delay: 1
+
+User-agent: Googlebot
+Allow: /
+Disallow: /tools/
+Disallow: /functions/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /tools/
+Disallow: /functions/
+
+Sitemap: https://hundesalon-nika.com/sitemap.xml

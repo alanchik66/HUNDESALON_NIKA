@@ -1,0 +1,141 @@
+/* Local Font Awesome subset used by this site. */
+
+@font-face {
+  font-family: 'Font Awesome 6 Free';
+  font-style: normal;
+  font-weight: 900;
+  src: url('fa-solid-900.woff2') format('woff2'),
+       url('fa-solid-900.woff') format('woff');
+}
+
+.fa,
+.fas,
+.far {
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-style: normal;
+  font-variant: normal;
+  display: inline-block;
+  line-height: 1;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.fa::before,
+.fas::before,
+.far::before,
+.fab::before {
+  display: inline-block;
+}
+
+.fab {
+  font-style: normal;
+  display: inline-block;
+  line-height: 1;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.fab::before {
+  content: "";
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  background-color: currentColor;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.fa-cut::before { content: '\f0c4'; }
+.fa-cat::before { content: '\f6be'; }
+.fa-bath::before { content: '\f2cd'; }
+.fa-tooth::before { content: '\f5c9'; }
+.fa-heart::before { content: '\f004'; }
+.fa-certificate::before { content: '\f0a3'; }
+.fa-clock::before { content: '\f017'; }
+.fa-map-marker-alt::before { content: '\f3c5'; }
+.fa-phone::before { content: '\f095'; }
+.fa-phone-alt::before { content: '\f879'; }
+.fa-envelope::before { content: '\f0e0'; }
+.fa-user::before { content: '\f007'; }
+.fa-globe::before { content: '\f0ac'; }
+.fa-chevron-down::before { content: '\f078'; }
+.fa-gift::before { content: '\f06b'; }
+.fa-share-alt::before { content: '\f1e0'; }
+.fa-arrow-right::before { content: '\f061'; }
+.fa-euro-sign::before { content: '\f153'; }
+.fa-calendar-alt::before { content: '\f073'; }
+
+.fab.fa-instagram::before,
+.fab.fa-telegram::before,
+.fab.fa-whatsapp::before,
+.fab.fa-viber::before,
+.fab.fa-tiktok::before,
+.fab.fa-youtube::before,
+.fa-envelope::before,
+.fas.fa-envelope::before,
+.far.fa-envelope::before {
+  content: "";
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.fab.fa-instagram::before {
+  background-image: url("../../images/icon-pak/Gotovie iconki dlya saita/instagram.png");
+}
+
+.fab.fa-telegram::before {
+  background-image: url("../../images/icon-pak/Gotovie iconki dlya saita/Telegramm.png");
+}
+
+.fab.fa-whatsapp::before {
+  background-image: url("../../images/icon-pak/Gotovie iconki dlya saita/whatsapp_alt3.png");
+}
+
+.fab.fa-viber::before {
+  background-image: url("../../images/icon-pak/Gotovie iconki dlya saita/Viber.png");
+}
+
+.fab.fa-tiktok::before {
+  background-image: url("../../images/icon-pak/Gotovie iconki dlya saita/tiktok.png");
+}
+
+.fab.fa-youtube::before {
+  background-image: url("../../images/icon-pak/Gotovie iconki dlya saita/youtube_alt1.png");
+}
+
+.fa-envelope::before,
+.fas.fa-envelope::before,
+.far.fa-envelope::before {
+  background-image: url("../../images/icon-pak/Gotovie iconki dlya saita/mail.png");
+}
+
+.fab.fa-google::before {
+  content: "G";
+  width: auto;
+  height: auto;
+  vertical-align: 0;
+  background: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+  font-family: Arial, sans-serif;
+  font-size: 1em;
+  font-weight: 700;
+  line-height: 1;
+}

@@ -1,0 +1,13 @@
+# Cloudflare Pages — правила редиректов
+# https://developers.cloudflare.com/pages/configuration/redirects/
+
+# Обратная совместимость: старый URL sendmail.php → новый /sendmail
+/sendmail.php /sendmail 308
+
+# Канонические URL без index.html для Google Search Console
+/index.html / 301
+/de/index.html /de/ 301
+/en/index.html /en/ 301
+/ru/index.html /ru/ 301
+/uk/index.html /uk/ 301
+
