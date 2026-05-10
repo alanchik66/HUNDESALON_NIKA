@@ -56,7 +56,10 @@ for (const file of requiredFiles) {
 
 if (fs.existsSync(path.join(root, 'wrangler.toml'))) {
   const wrangler = read('wrangler.toml');
-  assert(/pages_build_output_dir\s*=\s*"(dist|\.)"/.test(wrangler), 'wrangler.toml must define pages_build_output_dir for Pages deploys');
+  assert(
+    /pages_build_output_dir\s*=\s*"(dist|\.)"/.test(wrangler),
+    'wrangler.toml must define pages_build_output_dir for Pages deploys'
+  );
 }
 
 if (fs.existsSync(path.join(root, '_redirects'))) {
@@ -103,7 +106,10 @@ if (fs.existsSync(path.join(root, 'sitemap.xml'))) {
   for (const url of ['/de/', '/en/', '/ru/', '/uk/']) {
     assert(sitemap.includes(`https://hundesalon-nika.com${url}`), `sitemap.xml missing ${url}`);
   }
-  assert(!sitemap.includes('<loc>https://hundesalon-nika.com/</loc>'), 'sitemap.xml should not include the redirecting root URL');
+  assert(
+    !sitemap.includes('<loc>https://hundesalon-nika.com/</loc>'),
+    'sitemap.xml should not include the redirecting root URL'
+  );
 }
 
 if (fs.existsSync(path.join(root, 'indexnow-key.txt'))) {
