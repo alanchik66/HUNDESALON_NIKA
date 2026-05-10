@@ -80,7 +80,7 @@ for (const file of indexFiles) {
   assert(html.includes('"addressLocality": "Leipzig"'), `${file}: JSON-LD addressLocality must be Leipzig`);
   assert(html.includes('"streetAddress": "Untere-Eichstädtstraße 38"'), `${file}: JSON-LD streetAddress is missing`);
   assert(html.includes('"postalCode": "04299"'), `${file}: JSON-LD postalCode is missing`);
-  assert(html.includes('/favicon.ico'), `${file}: missing root favicon link`);
+  assert(html.includes('/assets/images/favicon/favicon.ico'), `${file}: missing root favicon link`);
   assert(html.includes('/site.webmanifest'), `${file}: missing web manifest link`);
   assert(html.includes('search-logo-clear-512.png'), `${file}: missing transparent search logo structured signal`);
 

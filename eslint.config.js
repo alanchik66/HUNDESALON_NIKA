@@ -34,6 +34,7 @@ export default [
         FormData: 'readonly',
         performance: 'readonly',
         getComputedStyle: 'readonly',
+        Image: 'readonly',
       },
     },
     rules: {

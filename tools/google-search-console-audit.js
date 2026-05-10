@@ -15,10 +15,10 @@ const requiredLiveUrls = [
   `${origin}/robots.txt`,
   sitemapUrl,
   `${origin}/google8f5e729bf8a13cc7.html`,
-  `${origin}/favicon.ico?v=${brandIconVersion}`,
+  `${origin}/assets/images/favicon/favicon.ico?v=${brandIconVersion}`,
   `${origin}/site.webmanifest?v=${brandIconVersion}`,
   `${origin}/assets/images/search-logo-clear-512.png?v=${brandIconVersion}`,
-  `${origin}/assets/images/favicon-48x48.png?v=${brandIconVersion}`,
+  `${origin}/assets/images/favicon/favicon-48x48.png?v=${brandIconVersion}`,
 ];
 
 const indexUrls = [`${origin}/`, `${origin}/de/`, `${origin}/en/`, `${origin}/ru/`, `${origin}/uk/`];
@@ -129,7 +129,7 @@ for (const url of indexUrls) {
 
   if (!text.includes('Leipzig')) fail(`${url}: missing Leipzig signal`);
   if (new RegExp('\\b' + 'Ber' + 'lin' + '\\b', 'i').test(text)) fail(`${url}: contains outdated city signal`);
-  if (!text.includes('/favicon.ico')) fail(`${url}: missing root favicon link`);
+  if (!text.includes('/assets/images/favicon/favicon.ico')) fail(`${url}: missing root favicon link`);
   if (!text.includes('/site.webmanifest')) fail(`${url}: missing manifest link`);
   if (!text.includes('search-logo-clear-512.png')) fail(`${url}: missing search logo signal`);
   if (!text.includes('social-preview-1200x630.png')) warn(`${url}: missing social preview image`);

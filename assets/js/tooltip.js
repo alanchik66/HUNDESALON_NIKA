@@ -460,6 +460,11 @@
         if (!el || !tooltipText || el.dataset.nikaTooltip) return;
         el.dataset.nikaTooltip = tooltipText;
 
+        if (el.hasAttribute('title')) {
+            el.dataset.nikaNativeTitle = el.getAttribute('title') || '';
+            el.removeAttribute('title');
+        }
+
         /* лого и nav:index — фиксированная позиция справа от лого, уровень хедера */
         if (el.closest('.logo') ||
             (el.tagName === 'A' && /index\.html$|^\.\.\/$|^\.\/index/.test(el.getAttribute('href') || '')) ||
@@ -523,6 +528,13 @@
             attach(el, text);
             /* nav:index — тот же якорь что и у логотипа */
             if (key === 'nav:index') el.dataset.nikaAnchor = 'logo-right';
+        });
+
+        /* ссылка домой в social bar */
+        document.querySelectorAll('.social-home a').forEach(el => {
+            const key = 'nav:' + routeKey(el.getAttribute('href'));
+            attach(el, t[key] || t['nav:index']);
+            el.dataset.nikaAnchor = 'logo-right';
         });
 
         /* кнопки btn-neon (hero, секции) — включая заголовки типа ГЛАВНАЯ */

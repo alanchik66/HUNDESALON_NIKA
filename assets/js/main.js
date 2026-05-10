@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
       })
     : null;
 
-  const panelScrollbars = Array.from(document.querySelectorAll('.service-list'))
+  Array.from(document.querySelectorAll('.service-list'))
     .map(panel =>
       createLiquidScrollbar({
         scrollTarget: panel,
@@ -324,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
     )
     .filter(Boolean);
 
-  const inlineScrollbars = Array.from(document.querySelectorAll('.table-wrapper'))
+  Array.from(document.querySelectorAll('.table-wrapper'))
     .map(panel =>
       createLiquidScrollbar({
         scrollTarget: panel,
@@ -460,7 +460,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!headerVisible) return 0;
 
-    let visibleBottom = Math.max(0, headerRect.bottom);
+    const topRow = header.querySelector('.top-row');
+    let visibleBottom = Math.max(0, headerRect.top);
+
+    if (topRow) {
+      const topRowRect = topRow.getBoundingClientRect();
+      const topRowStyle = window.getComputedStyle(topRow);
+      const topRowVisible =
+        topRowRect.height > 0 &&
+        topRowRect.bottom > 0 &&
+        topRowStyle.display !== 'none' &&
+        topRowStyle.visibility !== 'hidden' &&
+        parseFloat(topRowStyle.opacity || '1') > 0.02;
+
+      if (topRowVisible) {
+        visibleBottom = Math.max(visibleBottom, topRowRect.bottom);
+      }
+    }
+
     const socialVisible = header.querySelector('.social-bar.show-social');
 
     if (socialVisible) {
@@ -478,6 +495,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    if (visibleBottom <= Math.max(0, headerRect.top)) {
+      visibleBottom = Math.max(0, headerRect.bottom);
+    }
+
     return Math.min(window.innerHeight, Math.round(visibleBottom));
   };
 
@@ -493,10 +514,13 @@ document.addEventListener('DOMContentLoaded', () => {
       parseFloat(window.getComputedStyle(document.querySelector('.section') || document.body).paddingTop) || 0;
     const heroPaddingTop =
       parseFloat(window.getComputedStyle(document.querySelector('.hero') || document.body).paddingTop) || 0;
-    const buffer = window.innerWidth <= 600 ? 36 : window.innerWidth <= 899 ? 28 : 24;
+    const isPhoneViewport = window.innerWidth <= 600;
+    const isMobileViewport = window.innerWidth <= 899;
+    const sectionBuffer = isPhoneViewport ? 12 : isMobileViewport ? 16 : 24;
+    const heroBuffer = isPhoneViewport ? 6 : isMobileViewport ? 10 : 24;
 
-    const sectionOffset = Math.max(sectionBaseOffset, Math.ceil(headerBottom + buffer - sectionPaddingTop));
-    const heroOffset = Math.max(heroBaseOffset, Math.ceil(headerBottom + buffer - heroPaddingTop));
+    const sectionOffset = Math.max(sectionBaseOffset, Math.ceil(headerBottom + sectionBuffer - sectionPaddingTop));
+    const heroOffset = Math.max(heroBaseOffset, Math.ceil(headerBottom + heroBuffer - heroPaddingTop));
 
     rootStyle.setProperty('--section-top-offset-dynamic', `${sectionOffset}px`);
     rootStyle.setProperty('--hero-top-offset-dynamic', `${heroOffset}px`);
@@ -609,7 +633,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const isMenuOpen = () => mobileNav.classList.contains('active');
-    const openMenu = () => setMenuState(true);
     const closeMenu = options => setMenuState(false, options);
     const toggleMenu = () => setMenuState(!isMenuOpen());
 
@@ -727,19 +750,6 @@ document.addEventListener('DOMContentLoaded', () => {
     panel.style.removeProperty('--spotify-origin-x');
   };
 
-  /* Menu is now positioned purely via CSS (position:absolute inside
-       .social-player-wrap) so it is guaranteed to sit directly below the
-       gramophone toggle, perfectly centred on it. This function only
-       defensively clears any stale inline left/top that a previous build
-       may have written to the element. */
-  const positionMusicMenu = () => {
-    if (!socialMusicMenu) return;
-    socialMusicMenu.style.removeProperty('left');
-    socialMusicMenu.style.removeProperty('top');
-    socialMusicMenu.style.removeProperty('min-width');
-    socialMusicMenu.style.removeProperty('--music-menu-origin-x');
-  };
-
   const closeAllMusicUI = () => {
     if (socialPlayerToggle) {
       socialPlayerToggle.classList.remove('is-open');
@@ -765,29 +775,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     activeMusicPanel = null;
     document.body.dataset.spotifyPanelOpen = 'false';
-  };
-
-  const setMusicMenuState = isOpen => {
-    if (!socialPlayerToggle || !socialMusicMenu) return;
-    if (isOpen) {
-      allMusicPanels.forEach(p => {
-        p.classList.remove('is-open');
-        p.hidden = true;
-        p.setAttribute('aria-hidden', 'true');
-      });
-      activeMusicPanel = null;
-      socialPlayerToggle.classList.add('is-open');
-      socialPlayerToggle.setAttribute('aria-expanded', 'true');
-      socialMusicMenu.hidden = false;
-      socialMusicMenu.setAttribute('aria-hidden', 'false');
-      positionMusicMenu();
-      requestAnimationFrame(() => {
-        socialMusicMenu.classList.add('is-open');
-        positionMusicMenu();
-      });
-    } else {
-      closeAllMusicUI();
-    }
   };
 
   /* Lazily set iframe src only on first open to avoid loading Spotify/Apple
@@ -1534,14 +1521,4 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollRoot.addEventListener('scroll', updateScrollProgress, { passive: true });
     window.addEventListener('resize', updateScrollProgress);
   }
-
-  /* ── Moon widget rotation speed from data attribute ── */
-  const moonWidgets = document.querySelectorAll('.moon-widget');
-  moonWidgets.forEach(widget => {
-    const speed = widget.getAttribute('data-rotation-speed');
-    const rotator = widget.querySelector('.moon-rotator');
-    if (speed && rotator) {
-      rotator.style.animationDuration = `${speed}s`;
-    }
-  });
 });

@@ -365,12 +365,19 @@
 }
 
 .weather-orb-overlay__image {
+
   display: block !important;
   width: 100% !important;
   height: 100% !important;
   object-fit: contain !important;
   opacity: var(--orb-core-opacity, 1) !important;
   transition: opacity 220ms ease !important;
+}
+
+/* [hidden] must override display:block !important — higher specificity (class+attr) wins */
+.weather-orb-overlay__canvas[hidden],
+.weather-orb-overlay__image[hidden] {
+  display: none !important;
 }
 
 .weather-orb-overlay::before,
@@ -601,7 +608,59 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 10px !important;
+  width: 6px !important;
+  height: 6px !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  background: url('/assets/images/icon-pak/Gotovie%20iconki%20dlya%20saita/unter.png') center/contain no-repeat !important;
+  --arrow-rotate: rotate(90deg);
+  --arrow-shift-x: 0px;
+  transform: var(--arrow-rotate) translateX(var(--arrow-shift-x)) !important;
+  animation:
+    iconArrowGlassBounce var(--icon-bounce-duration, 2.85s) ease-in-out infinite,
+    iconSurfaceRefraction var(--icon-sheen-duration, 2.35s) ease-in-out infinite !important;
+  transform-origin: center center !important;
+}
+
+.weather-header-card__toggle-icon.is-open {
+  --arrow-rotate: rotate(0deg);
+}
+
+.weather-header-trigger:active .weather-header-card__toggle-icon,
+.weather-header-trigger:focus-visible .weather-header-card__toggle-icon {
+  --arrow-rotate: rotate(0deg);
+}
+
+@keyframes iconArrowGlassBounce {
+  0%,
+  100% {
+    transform: var(--arrow-rotate, rotate(0deg)) translateX(var(--arrow-shift-x, 0px)) translateY(0) scale(1);
+  }
+
+  30% {
+    transform: var(--arrow-rotate, rotate(0deg)) translateX(var(--arrow-shift-x, 0px)) translateY(-3px) scale(1.05);
+  }
+
+  58% {
+    transform: var(--arrow-rotate, rotate(0deg)) translateX(var(--arrow-shift-x, 0px)) translateY(1px) scale(0.985);
+  }
+
+  76% {
+    transform: var(--arrow-rotate, rotate(0deg)) translateX(var(--arrow-shift-x, 0px)) translateY(-1px) scale(1.015);
+  }
+}
+
+@keyframes iconSurfaceRefraction {
+  0%,
+  100% {
+    filter: drop-shadow(0 2px 4px rgb(0 0 0 / 18%)) contrast(1.04) brightness(0.98) saturate(1.04);
+    opacity: 0.97;
+  }
+
+  50% {
+    filter: drop-shadow(0 3px 6px rgb(0 0 0 / 22%)) contrast(1.08) brightness(1.08) saturate(1.1);
+    opacity: 1;
+  }
 }
 
 .weather-header-card__top,
@@ -618,7 +677,8 @@
 }
 
 .weather-header-dropdown {
-  z-index: 9999 !important;
+  z-index: 10000 !important;
+  position: relative !important;
 }
 
 .weather-header-trigger,
@@ -684,12 +744,14 @@
   }
 
   .weather-header-card__toggle-icon {
-    font-size: 9px !important;
+    width: 7px !important;
+    height: 7px !important;
   }
 }
 `;
 
   const WEATHER_WIDGET_ASSET_VERSION = '20260504-weather-orbit3';
+  const HEADER_WEATHER_MOON_TEXTURE_SRC = '/3d-weather-codrops-main/dist-widget/assets/Moon/moon_texture.jpg';
 
   const LOCALIZED_ROUTES = new Set([
     '',
@@ -982,7 +1044,7 @@
     <div class="social-bar-inner">
       <div class="social-bar-start">
         <div class="social-home">
-          <a href="${homeHref}"${isHomeRoute ? ' class="active"' : ''} aria-label="${copy.home}">
+          <a href="${homeHref}"${isHomeRoute ? ' class="active"' : ''} aria-label="${copy.home}" title="${copy.home}">
             <img class="home-icon-img" src="${assetPrefix}/images/icon-pak/Gotovie iconki dlya saita/Home.png" alt="" aria-hidden="true">
             <span>${copy.home}</span>
           </a>
@@ -1075,6 +1137,22 @@
     document.getElementById('mobileNav')?.remove();
 
     header.replaceWith(...Array.from(wrapper.children));
+    hardenHeaderA11y();
+  }
+
+  function hardenHeaderA11y() {
+    const header = document.querySelector('header.header');
+    if (!header) {
+      return;
+    }
+
+    // Header is a landmark container, not an interactive control.
+    header.removeAttribute('tabindex');
+    header.removeAttribute('contenteditable');
+
+    if (!header.hasAttribute('role')) {
+      header.setAttribute('role', 'banner');
+    }
   }
 
   function getHeaderWeatherHost() {
@@ -1730,6 +1808,39 @@
     overlay.style.removeProperty('--orb-cloud-highlight-alpha');
   }
 
+  function enforceHeaderWeatherToggleArrow(host) {
+    const toggleIcon = host?.shadowRoot?.querySelector('.weather-header-card__toggle-icon');
+    if (!toggleIcon) {
+      return;
+    }
+
+    toggleIcon.textContent = '';
+    toggleIcon.setAttribute('aria-hidden', 'true');
+    toggleIcon.style.setProperty(
+      'background-image',
+      "url('/assets/images/icon-pak/Gotovie%20iconki%20dlya%20saita/unter.png')",
+      'important'
+    );
+    toggleIcon.style.setProperty('background-position', 'center', 'important');
+    toggleIcon.style.setProperty('background-repeat', 'no-repeat', 'important');
+    toggleIcon.style.setProperty('background-size', 'contain', 'important');
+    toggleIcon.style.setProperty('width', '10px', 'important');
+    toggleIcon.style.setProperty('height', '10px', 'important');
+    toggleIcon.style.setProperty('font-size', '0', 'important');
+    toggleIcon.style.setProperty('line-height', '0', 'important');
+    toggleIcon.style.setProperty(
+      '--arrow-rotate',
+      toggleIcon.classList.contains('is-open') ? 'rotate(0deg)' : 'rotate(90deg)',
+      'important'
+    );
+    toggleIcon.style.setProperty('--arrow-shift-x', '0px', 'important');
+    toggleIcon.style.setProperty(
+      'animation',
+      'iconArrowGlassBounce var(--icon-bounce-duration, 2.85s) ease-in-out infinite, iconSurfaceRefraction var(--icon-sheen-duration, 2.35s) ease-in-out infinite',
+      'important'
+    );
+  }
+
   function createHeaderWeatherOrbOverlay(variant) {
     const overlay = document.createElement('div');
     overlay.className = `weather-orb-overlay weather-orb-overlay--${variant}`;
@@ -2238,6 +2349,10 @@
       const tryVideoSource = sourceIndex => {
         const nextSource = videoSources[sourceIndex];
         if (!nextSource) {
+          if (canvas) {
+            canvas.hidden = true;
+            clearHeaderWeatherOrbCanvas(overlay);
+          }
           if (image) {
             image.hidden = true;
           }
@@ -2326,9 +2441,6 @@
     const syncToken = `${Date.now()}:${Math.random()}`;
     host.__weatherOrbSyncToken = syncToken;
 
-    host.querySelectorAll('.moon-widget').forEach(node => node.remove());
-    host.shadowRoot.querySelectorAll('.moon-widget').forEach(node => node.remove());
-
     let astroData = null;
     try {
       astroData = await resolveHeaderWeatherAstro(host);
@@ -2351,20 +2463,24 @@
     const orbKind = orbModel?.kind || null;
     const orbAtmosphere = resolveHeaderWeatherOrbAtmosphere(host);
     const widgetBasePath = getHeaderWeatherWidgetBasePath(host);
-    const assetConfig =
-      orbKind && widgetBasePath
-        ? orbKind === 'sun'
+    const sunVideoSources = widgetBasePath
+      ? [
+          `${widgetBasePath}/assets/Sun/3d-animated-realistic-sun-with-glowing-solar-flares-and-surface-turbulence-4k-video.mp4`,
+        ]
+      : [];
+    const assetConfig = orbKind
+      ? orbKind === 'sun'
+        ? sunVideoSources.length
           ? {
               type: 'video-keyed',
-              sources: [
-                `${widgetBasePath}/assets/Sun/3d-animated-realistic-sun-with-glowing-solar-flares-and-surface-turbulence-4k-video.mp4`,
-              ],
+              sources: sunVideoSources,
             }
-          : {
-              type: 'texture-sphere',
-              src: `${widgetBasePath}/assets/Moon/moon_texture.jpg`,
-            }
-        : null;
+          : null
+        : {
+            type: 'texture-sphere',
+            src: HEADER_WEATHER_MOON_TEXTURE_SRC,
+          }
+      : null;
 
     const previewContainer = host.shadowRoot.querySelector('.weather-header-preview');
     if (previewContainer) {
@@ -2383,6 +2499,8 @@
       setHeaderWeatherOrbSource(dropdownOverlay, isExpanded ? orbKind : null, assetConfig);
       applyHeaderWeatherOrbAtmosphere(dropdownOverlay, isExpanded && orbKind ? orbAtmosphere : 0);
     }
+
+    enforceHeaderWeatherToggleArrow(host);
   }
 
   function syncHeaderWeatherExpandedState(host) {
@@ -2843,6 +2961,7 @@
     }
 
     standardizePageHeader(context);
+    hardenHeaderA11y();
     syncHeaderWeatherWidget(context.pageLang);
     normalizeMenuSeparators(context.menuSections.more);
     fitHomeLabelToLogo();
