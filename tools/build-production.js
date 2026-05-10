@@ -4,6 +4,14 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
+const MAX_PAGES_FILE_BYTES = 24 * 1024 * 1024;
+
+const SKIP_RELATIVE_PATHS = new Set([
+  '3d-weather-codrops-main/dist-widget/assets/Moon/Moon_NASA_LRO_23k_Topo.usdz',
+  '3d-weather-codrops-main/dist-widget/assets/Moon/mission_720p30.mp4',
+  '3d-weather-codrops-main/dist-widget/assets/Moon/moon_texture_23k.png',
+  '3d-weather-codrops-main/dist-widget/assets/Moon/moon_texture_web.png',
+]);
 
 const copyEntries = [
   'index.html',
@@ -35,6 +43,18 @@ function copyRecursive(source, target) {
     for (const entry of fs.readdirSync(source)) {
       copyRecursive(path.join(source, entry), path.join(target, entry));
     }
+    return;
+  }
+
+  const relativeSource = path.relative(root, source).replaceAll('\\', '/');
+  if (SKIP_RELATIVE_PATHS.has(relativeSource)) {
+    return;
+  }
+
+  if (stat.size > MAX_PAGES_FILE_BYTES) {
+    console.warn(
+      `Skipped oversized file for Pages deploy: ${relativeSource} (${Math.round(stat.size / (1024 * 1024))} MB)`
+    );
     return;
   }
 

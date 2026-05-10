@@ -56,7 +56,7 @@ for (const file of requiredFiles) {
 
 if (fs.existsSync(path.join(root, 'wrangler.toml'))) {
   const wrangler = read('wrangler.toml');
-  assert(wrangler.includes('pages_build_output_dir = "."'), 'wrangler.toml must define pages_build_output_dir for Pages deploys');
+  assert(/pages_build_output_dir\s*=\s*"(dist|\.)"/.test(wrangler), 'wrangler.toml must define pages_build_output_dir for Pages deploys');
 }
 
 if (fs.existsSync(path.join(root, '_redirects'))) {

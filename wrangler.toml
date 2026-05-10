@@ -3,13 +3,13 @@
 
 name = "hundesalon-nika"
 compatibility_date = "2025-01-01"
-pages_build_output_dir = "."
+pages_build_output_dir = "dist"
 
 # Для локальной разработки с Pages Functions:
-#   npx wrangler pages dev . --port=8788
+#   npm run dev:cf
 #
 # Для деплоя через CLI:
-#   npx wrangler pages deploy . --project-name=hundesalon-nika
+#   npm run deploy
 #
 # Переменные окружения задаются в Cloudflare Dashboard:
 #   Pages → hundesalon-nika → Settings → Environment variables
