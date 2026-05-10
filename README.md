@@ -1,4 +1,4 @@
-# 🐕 HUNDESALON NIKA - Профессиональный груминг-салон 
+# 🐕 HUNDESALON NIKA - Профессиональный груминг-салон
 
 > Многоязычный сайт салона груминга для собак и кошек в Лейпциге
 
@@ -20,12 +20,14 @@
 ```
 HUNDESALON_NIKA/
 ├── 🏠 index.html              # Главная страница (переадресация)
-├── 📧 sendmail.php            # Обработка форм
-├── ⚙️ .htaccess               # Конфигурация веб-сервера
+├── 📧 functions/sendmail.js   # Cloudflare Pages Function для формы
+├── ⚙️ _headers                # HTTP-заголовки Cloudflare Pages
+├── 🔀 _redirects              # Редиректы Cloudflare Pages
+├── ☁️ wrangler.toml           # Конфигурация деплоя Cloudflare
 │
 ├── 🌍 Языковые версии/
 │   ├── ru/                    # 🇷🇺 Русский
-│   ├── de/                    # 🇩🇪 Немецкий  
+│   ├── de/                    # 🇩🇪 Немецкий
 │   ├── en/                    # 🇬🇧 Английский
 │   └── uk/                    # 🇺🇦 Украинский
 │
@@ -40,7 +42,7 @@ HUNDESALON_NIKA/
 ├── ⚙️ .vscode/                # VS Code настройки
 │   ├── settings.json          # Конфигурация редактора
 │   ├── extensions.json        # Рекомендуемые расширения
-│   ├── tasks.json             # Задачи автоматизации  
+│   ├── tasks.json             # Задачи автоматизации
 │   └── launch.json            # Конфигурация отладки
 │
 ├── 🔧 tools/                  # Инструменты разработки
@@ -60,11 +62,11 @@ Ctrl+Shift+P → "Extensions: Show Recommended Extensions"
 ### 2. Запуск локального сервера
 
 ```bash
-# Через VS Code
-Ctrl+Shift+P → "Live Server: Open with Live Server"
+# Локальный просмотр
+npm run dev
 
-# Или через NPM
-npm start
+# Cloudflare Pages локально
+npm run dev:cf
 ```
 
 ### 3. Проверка кода
@@ -97,7 +99,7 @@ npm run build      # Сборка для продакшена
 - **Ctrl+Shift+P** → "Tasks: Run Task":
   - `Полная проверка проекта` - комплексная валидация
   - `Сборка для продакшена` - готовая версия в `dist/`
-  - `Валидация HTML всех языков` 
+  - `Валидация HTML всех языков`
   - `Валидация CSS`
   - `Валидация JavaScript`
   - `Форматирование всех файлов`
@@ -175,15 +177,13 @@ npm run build
 Ctrl+Shift+P → "Tasks: Run Task" → "Сборка для продакшена"
 ```
 
-### 2. Загрузка на хостинг
+### 2. Деплой в Cloudflare Pages
 
-Содержимое папки `dist/` загрузите на ваш хостинг:
+```bash
+npm run deploy
+```
 
-**Рекомендуемые хостинги:**
-- **Netlify** (автодеплой, CDN, SSL)
-- **Vercel** (быстрый, статический)
-- **Hostinger** (поддержка PHP)
-- **GitHub Pages** (бесплатный)
+Команда запускает валидацию и деплой через Wrangler согласно `wrangler.toml`.
 
 ### 3. Настройка домена
 
@@ -207,15 +207,16 @@ Ctrl+Shift+P → "Tasks: Run Task" → "Сборка для продакшена
 - **HTML5** - семантическая разметка
 - **CSS3** - адаптивная верстка, flexbox, grid
 - **JavaScript ES2021** - современный стандарт
-- **PHP** - обработка форм
+- **Cloudflare Pages Functions** - обработка форм (`functions/sendmail.js`)
 - **Three.js** - 3D виджет погоды
+- **Cloudflare Pages** - хостинг и CDN
 
 ## 📋 Линтинг и форматирование
 
 ### Конфигурация инструментов:
 
 - **HTMLHint** - валидация HTML ([.htmlhintrc](.htmlhintrc))
-- **ESLint** - проверка JavaScript ([.eslintrc.json](.eslintrc.json))
+- **ESLint** - проверка JavaScript ([eslint.config.js](eslint.config.js))
 - **Stylelint** - проверка CSS ([.stylelintrc.json](.stylelintrc.json))
 - **Prettier** - форматирование ([.prettierrc](.prettierrc))
 
@@ -224,7 +225,7 @@ Ctrl+Shift+P → "Tasks: Run Task" → "Сборка для продакшена
 ```json
 {
   "html": "строгая валидация HTML5, accessibility",
-  "css": "стандартные правила, 2 пробела", 
+  "css": "стандартные правила, 2 пробела",
   "js": "ES2021, browser globals, строгость"
 }
 ```
@@ -236,7 +237,7 @@ Ctrl+Shift+P → "Tasks: Run Task" → "Сборка для продакшена
 Полная конфигурация в [`.vscode/settings.json`](.vscode/settings.json):
 
 - ✅ Автоформатирование при сохранении
-- ✅ Исправление ошибок при сохранении  
+- ✅ Исправление ошибок при сохранении
 - ✅ Многоязычная проверка орфографии
 - ✅ Live Server (порт 5502)
 - ✅ Интеграция с Git
@@ -251,7 +252,7 @@ Ctrl+Shift+P → "Tasks: Run Task" → "Сборка для продакшена
 ### Запуск отладки
 
 1. **F5** - запуск отладки
-2. **Ctrl+Shift+D** - панель отладки  
+2. **Ctrl+Shift+D** - панель отладки
 3. **F10/F11** - пошаговое выполнение
 
 ### Логи и ошибки
@@ -283,7 +284,7 @@ Ctrl+` → Terminal
 # Анализ производительности
 npm run audit
 
-# Проверка ссылок  
+# Проверка ссылок
 npm run test:links
 
 # Размер файлов
@@ -295,7 +296,7 @@ npm run analyze:bundle
 ### Заголовки безопасности
 
 - **X-Content-Type-Options**: nosniff
-- **X-Frame-Options**: SAMEORIGIN  
+- **X-Frame-Options**: SAMEORIGIN
 - **X-XSS-Protection**: включена
 - **Content-Security-Policy**: настроен для виджета
 - **HTTPS**: принудительное перенаправление

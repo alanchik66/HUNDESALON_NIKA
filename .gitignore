@@ -99,6 +99,12 @@ tools/ffmpeg*.zip
 original_images/
 raw_images/
 
+# ═══════════════ КРУПНЫЕ ИСХОДНИКИ (НЕ ДЛЯ GIT/DEPLOY) ═══════════════
+3d-weather-codrops-main/dist-widget/assets/Moon/Moon_NASA_LRO_23k_Topo.usdz
+3d-weather-codrops-main/dist-widget/assets/Moon/mission_720p30.mp4
+3d-weather-codrops-main/dist-widget/assets/Moon/moon_texture_23k.png
+3d-weather-codrops-main/dist-widget/assets/Moon/moon_texture_web.png
+
 # ═══════════════ ХОСТИНГ И ДЕПЛОЙ ═══════════════
 .cpanel/
 .well-known/
