@@ -846,10 +846,10 @@ body.site-loaded .logo-img {
 }
 
 .home-icon-img {
-  width: 22px;
-  height: 22px;
+  width: var(--social-bar-icon-size);
+  height: var(--social-bar-icon-size);
   display: block;
-  flex: 0 0 22px;
+  flex: 0 0 var(--social-bar-icon-size);
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 28%)) drop-shadow(0 0 6px rgb(198 161 91 / 14%));
   transition:
@@ -3054,7 +3054,7 @@ body.light .theme-btn::before {
   min-width: 23px;
   height: 23px;
   font-size: 0;
-  background: url("../images/icon-pak/Gotovie iconki dlya saita/globus-lang.png") center/contain
+  background: url("../images/icon-pak/Gotovie iconki dlya saita/Globus language.png") center/contain
     no-repeat;
   filter: drop-shadow(0 6px 12px rgb(0 0 0 / 26%)) saturate(1.04) brightness(1.03);
   animation:
@@ -3492,7 +3492,7 @@ body.light .theme-btn::before {
 
 .social-player-divider {
   width: 1px;
-  height: 28px;
+  height: max(20px, calc(var(--social-bar-icon-size) - 14px));
   flex: 0 0 1px;
   margin: 0 6px;
   border-radius: 999px;
@@ -3518,8 +3518,8 @@ body.light .theme-btn::before {
 }
 
 .social-player-toggle {
-  width: 44px;
-  height: 44px;
+  width: var(--social-bar-icon-size);
+  height: var(--social-bar-icon-size);
   border: none;
   padding: 0;
   display: inline-flex;
@@ -3541,11 +3541,11 @@ body.light .theme-btn::before {
 }
 
 .social-player-icon {
-  width: 72px;
-  height: 72px;
+  width: var(--social-bar-icon-size);
+  height: var(--social-bar-icon-size);
   display: inline-block;
-  background: url("../images/icon-pak/Gotovie iconki dlya saita/musicplayer_alt16.png")
-    center/contain no-repeat;
+  background: url("../images/icon-pak/Gotovie iconki dlya saita/Multimedia.png") center/contain
+    no-repeat;
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 32%)) drop-shadow(0 0 8px rgb(212 176 102 / 16%));
 }
 
@@ -3715,11 +3715,11 @@ body.light .theme-btn::before {
 }
 
 .social-music-item-icon--spotify {
-  background-image: url("../images/icon-pak/ROYCE_Transparent_App_Icons/spotify.png");
+  background-image: url("../images/icon-pak/Gotovie iconki dlya saita/spotify.png");
 }
 
 .social-music-item-icon--apple {
-  background-image: url("../images/icon-pak/ROYCE_Transparent_App_Icons/apple_music.png");
+  background-image: url("../images/icon-pak/Gotovie iconki dlya saita/apple_music.png");
 }
 
 .social-music-item-label {
@@ -4049,9 +4049,9 @@ body.light .social-music-item-icon {
 }
 
 .social-bar .social-icon {
-  width: 22px;
-  height: 22px;
-  flex: 0 0 22px;
+  width: var(--social-bar-icon-size);
+  height: var(--social-bar-icon-size);
+  flex: 0 0 var(--social-bar-icon-size);
 }
 
 .header-social-link {
@@ -4333,9 +4333,9 @@ body.light .social-music-item-icon {
   }
 
   .social-bar .social-icon {
-    width: 20px;
-    height: 20px;
-    flex: 0 0 20px;
+    width: var(--social-bar-icon-size);
+    height: var(--social-bar-icon-size);
+    flex: 0 0 var(--social-bar-icon-size);
   }
 
   .social-bar .social-home a > span {
@@ -9155,8 +9155,8 @@ body.header-weather-expanded .header-weather-widget {
 
 /* Toggle button for social icons */
 .social-icons-toggle {
-  width: 44px;
-  height: 44px;
+  width: var(--social-bar-icon-size);
+  height: var(--social-bar-icon-size);
   border: none;
   padding: 0;
   display: inline-flex;
@@ -9331,6 +9331,7 @@ body.light .social-icons-toggle.is-open {
    SOCIAL BAR: separator line lower, bar height = icon height
    ══════════════════════════════════════════════════════════════════ */
 .social-bar {
+  --social-bar-icon-size: 36px;
   padding-top: 2px !important;
   padding-bottom: 2px !important;
 }
@@ -9353,6 +9354,7 @@ body.light .social-icons-toggle.is-open {
 
 @media (width >= 900px) {
   .social-bar {
+    --social-bar-icon-size: 40px;
     padding-top: 3px !important;
     padding-bottom: 3px !important;
     margin-top: 2px !important;
@@ -9367,8 +9369,8 @@ body.light .social-icons-toggle.is-open {
    SOZIAL-LINKS icon for social toggle (replaces fa-share-alt)
    ══════════════════════════════════════════════════════════════════ */
 .social-icons-toggle-img {
-  width: 72px;
-  height: 72px;
+  width: var(--social-bar-icon-size);
+  height: var(--social-bar-icon-size);
   object-fit: contain;
   display: block;
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 32%)) drop-shadow(0 0 8px rgb(212 176 102 / 16%));
@@ -9425,8 +9427,8 @@ body.light .social-icons-toggle.is-open {
   border: none;
   padding: 0;
   cursor: pointer;
-  width: 36px;
-  height: 36px;
+  width: var(--social-bar-icon-size);
+  height: var(--social-bar-icon-size);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -9442,8 +9444,8 @@ body.light .social-icons-toggle.is-open {
 }
 
 .social-service-btn img {
-  width: 32px;
-  height: 32px;
+  width: calc(var(--social-bar-icon-size) - 4px);
+  height: calc(var(--social-bar-icon-size) - 4px);
   object-fit: contain;
   display: block;
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 28%));
@@ -10280,5 +10282,63 @@ body.light .social-icons-toggle.is-open {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Mobile social-bar icon scale + alignment
+   36px -> 25px (~30% smaller), only for mobile layout. */
+@media (width <= 899px) {
+  .header .social-bar {
+    --social-bar-icon-size: 25px !important;
+  }
+
+  .header .social-bar-inner {
+    min-height: 25px !important;
+    align-items: center !important;
+  }
+
+  .header .social-bar-start,
+  .header .social-icons-wrap,
+  .header .social-icons-wrap .social-icons {
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  .header .social-home {
+    width: 25px !important;
+    min-width: 25px !important;
+    max-width: 25px !important;
+  }
+
+  .header .social-home a {
+    width: 25px !important;
+    min-width: 25px !important;
+    height: 25px !important;
+    min-height: 25px !important;
+  }
+
+  .header .home-icon-img,
+  .header .social-player-toggle,
+  .header .social-player-icon,
+  .header .social-icons-toggle,
+  .header .social-icons-toggle-img,
+  .header .social-service-btn,
+  .header .social-bar .social-icon {
+    width: 25px !important;
+    height: 25px !important;
+  }
+
+  .header .social-bar .social-icon {
+    flex: 0 0 25px !important;
+  }
+
+  .header .social-service-btn img {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .header .social-icons-wrap .social-icons {
+    gap: 3px !important;
+    padding: 4px 8px !important;
   }
 }
