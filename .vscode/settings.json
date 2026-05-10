@@ -52,6 +52,12 @@
 
   // ── Stylelint ─────────────────────────────────────────────────────────────
   "stylelint.enable": true,
+  "stylelint.run": "onSave",
+  "stylelint.stylelintPath": "node_modules/stylelint",
+  "stylelint.packageManager": "npm",
+  "stylelint.validate": ["css"],
+  "stylelint.lintFiles.glob": "assets/css/**/*.css",
+  "stylelint.logLevel": "warn",
   "css.validate": false,
   "scss.validate": false,
 
