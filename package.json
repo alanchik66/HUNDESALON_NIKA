@@ -5,9 +5,9 @@
   "main": "index.html",
   "type": "module",
   "scripts": {
-    "start": "serve -s . -l 5502",
-    "dev": "serve -s . -l 5502",
-    "preview": "serve -s . -l 5502",
+    "start": "serve . -l 5502",
+    "dev": "serve . -l 5502",
+    "preview": "serve . -l 5502",
     "lint": "npm run lint:html && npm run lint:css && npm run lint:js",
     "lint:html": "htmlhint ru/*.html de/*.html en/*.html uk/*.html *.html",
     "lint:css": "stylelint assets/css/**/*.css",

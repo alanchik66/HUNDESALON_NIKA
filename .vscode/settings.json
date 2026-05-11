@@ -90,6 +90,10 @@
   // ── PowerShell ───────────────────────────────────────────────────────────
   "terminal.integrated.defaultProfile.windows": "PowerShell",
 
+  // ── Python (не перехватывать терминал в этом JS/HTML проекте) ──────────
+  "python.terminal.activateEnvironment": false,
+  "python.terminal.activateEnvInCurrentTerminal": false,
+
   // ── Path Intellisense ────────────────────────────────────────────────────
   "path-intellisense.mappings": {
     "/assets": "${workspaceFolder}/assets"

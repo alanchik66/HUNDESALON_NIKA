@@ -770,7 +770,7 @@ body.light .winner-card {
 }
 
 .btn-read i {
-  transition: transform 0.3s ease;
+  transition: transform 0.44s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 body .btn-read i.fa-arrow-right,
@@ -789,10 +789,10 @@ body .btn-read .site-icon-arrow-right {
   --arrow-rotate: rotate(-90deg);
   --arrow-shift-x: 0px;
   transform: var(--arrow-rotate) translateX(var(--arrow-shift-x));
+  will-change: transform;
+  transition: transform 0.44s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.32s ease;
   animation:
-    iconArrowGlassBounce var(--icon-bounce-duration) ease-in-out infinite,
     iconSurfaceRefraction var(--icon-sheen-duration) ease-in-out infinite;
-  transition: transform 0.3s ease;
 }
 
 body .btn-read i.fa-arrow-right::before {

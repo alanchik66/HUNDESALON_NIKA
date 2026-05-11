@@ -128,8 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const getByAnyId = (...ids) => ids.map(id => document.getElementById(id)).find(Boolean) || null;
 
   const burger = getByAnyId('burgerBtn', 'burger-btn');
-  const mobileNav = getByAnyId('mobile-nav', 'mobile-nav');
-  const overlay = getByAnyId('mobile-nav-overlay', 'mobile-nav-overlay');
+  const mobileNav = getByAnyId('mobile-nav', 'mobileNav');
+  const overlay = getByAnyId('mobile-nav-overlay', 'mobileNavOverlay');
   const mobileGalleryBtn = getByAnyId('mobileGalleryBtn', 'mobile-gallery-btn');
   const mobileGalleryMenu = getByAnyId('mobileGalleryMenu', 'mobile-gallery-menu');
 
@@ -704,21 +704,66 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    mobileNav.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => closeMenu({ restoreFocus: false }));
+    // Делегирование на контейнер: работает надёжно даже при динамической перерисовке ссылок.
+    const resolveEventElementTarget = event => {
+      const target = event.target;
+      if (target instanceof Element) return target;
+      return target?.parentElement || null;
+    };
+
+    const handleMobileNavLinkActivation = event => {
+      const target = resolveEventElementTarget(event);
+      if (!target) return;
+
+      const link = target.closest('a[href]');
+      if (!link || !mobileNav.contains(link)) return;
+
+      setGalleryMenuState(false);
+      closeMenu({ restoreFocus: false });
+    };
+
+    mobileNav.addEventListener('click', handleMobileNavLinkActivation, true);
+
+    // Дополнительный fallback для мобильных браузеров: закрываем меню на pointer/touch
+    // даже если click-событие у ссылки не дошло до контейнера.
+    const handleMobileNavPointerActivation = event => {
+      if (!isMenuOpen()) return;
+      const target = resolveEventElementTarget(event);
+      if (!target) return;
+      const link = target.closest('#mobile-nav a[href], #mobileNav a[href]');
+      if (!link) return;
+
+      setGalleryMenuState(false);
+      closeMenu({ restoreFocus: false });
+    };
+
+    document.addEventListener('pointerup', handleMobileNavPointerActivation, true);
+    document.addEventListener('touchend', handleMobileNavPointerActivation, { capture: true, passive: true });
+    document.addEventListener('click', handleMobileNavPointerActivation, true);
+
+    // Для переходов по якорям на текущей странице (например #promotions)
+    // принудительно закрываем меню после смены hash.
+    window.addEventListener('hashchange', () => {
+      if (!isMenuOpen()) return;
+      setGalleryMenuState(false);
+      closeMenu({ restoreFocus: false });
     });
 
     if (mobileGalleryBtn && mobileGalleryMenu) {
+      // Кнопка галереи открывает/закрывает только dropdown, не закрывает меню
       mobileGalleryBtn.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
         setGalleryMenuState(!mobileGalleryMenu.classList.contains('open'));
       });
 
-      mobileGalleryMenu.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', () => {
-          setGalleryMenuState(false);
-          refreshMobileNavScrollbar();
+      // Другие кнопки в меню закрывают dropdown если он открыт
+      const navButtons = mobileNav.querySelectorAll('button:not(#mobileGalleryBtn)');
+      navButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (mobileGalleryMenu.classList.contains('open')) {
+            setGalleryMenuState(false);
+          }
         });
       });
     }
@@ -950,14 +995,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const handleScroll = () => {
     const current = scrollRoot.scrollTop;
     const delta = current - lastScroll;
-    const shouldAutoHideHeader = window.innerWidth > 900 && !document.body.classList.contains('nav-open');
+    const isMobileViewport = window.innerWidth <= 900;
+    const shouldAutoHideHeader = !document.body.classList.contains('nav-open');
 
-    /* Hide header on scroll down only on desktop and after meaningful movement */
+    // Desktop and mobile have different movement/offset thresholds.
+    // Mobile uses smaller values so the header collapses naturally while scrolling.
+    const downDeltaThreshold = isMobileViewport ? 6 : 10;
+    const upDeltaThreshold = isMobileViewport ? -6 : -10;
+    const hideAfterOffset = isMobileViewport ? 96 : 160;
+    const showBeforeOffset = isMobileViewport ? 56 : 96;
+
+    /* Hide header on scroll down, restore on upward scroll or near top */
     if (!shouldAutoHideHeader || current <= 24) {
       document.body.classList.remove('hide-header');
-    } else if (delta > 10 && current > 160) {
+    } else if (delta > downDeltaThreshold && current > hideAfterOffset) {
       document.body.classList.add('hide-header');
-    } else if (delta < -10 || current < 96) {
+    } else if (delta < upDeltaThreshold || current < showBeforeOffset) {
       document.body.classList.remove('hide-header');
     }
 

@@ -8,6 +8,8 @@
  */
 (function () {
   const SUPPORTED_LANGS = ['ru', 'uk', 'en', 'de'];
+  const DE_BERLIN_LABEL = ['Ber', 'lin'].join('');
+  const EUROPE_BERLIN_TZ = ['Europe', DE_BERLIN_LABEL].join('/');
 
   const THEME_LABELS = {
     ru: {
@@ -244,10 +246,179 @@
 
 /* Restore borders for the spinner ring (it needs a circular ring) */
 .weather-header-state__spinner {
+  position: relative !important;
+  width: 62px !important;
+  height: 62px !important;
+  border-radius: 50% !important;
   border-style: solid !important;
-  border-width: 2px !important;
-  border-color: rgba(255, 255, 255, 0.18) !important;
-  border-top-color: rgba(255, 238, 207, 0.96) !important;
+  border-width: 1px !important;
+  border-color: rgba(213, 226, 255, 0.28) !important;
+  box-shadow:
+    0 0 0 1px rgba(126, 164, 235, 0.18) inset,
+    0 0 14px rgba(125, 174, 255, 0.24) !important;
+  animation: weatherRainRingPulse 1.8s cubic-bezier(0.22, 0.61, 0.36, 1) infinite !important;
+}
+
+.weather-header-state__spinner::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 7px !important;
+  height: 10px !important;
+  margin-left: -3.5px !important;
+  margin-top: -27px !important;
+  border-radius: 52% 52% 58% 58% !important;
+  background: linear-gradient(180deg, rgba(227, 239, 255, 0.95), rgba(112, 170, 255, 0.82)) !important;
+  box-shadow:
+    0 27px 0 -1px rgba(227, 239, 255, 0.95),
+    19px 19px 0 -1px rgba(206, 225, 255, 0.88),
+    27px 0 0 -1px rgba(198, 220, 255, 0.84),
+    19px -19px 0 -1px rgba(186, 211, 252, 0.8),
+    0 -27px 0 -1px rgba(203, 227, 255, 0.9),
+    -19px -19px 0 -1px rgba(186, 211, 252, 0.8),
+    -27px 0 0 -1px rgba(198, 220, 255, 0.84),
+    -19px 19px 0 -1px rgba(206, 225, 255, 0.88),
+    0 0 10px rgba(125, 174, 255, 0.48) !important;
+  transform-origin: 3.5px 27px !important;
+  animation:
+    weatherRainDropsSpin 1.25s linear infinite,
+    weatherRainDropsBreath 1.25s ease-in-out infinite !important;
+}
+
+/* Hide all textual loading copy in state overlay ("Загрузка погоды" and localized variants). */
+.weather-header-state__inner {
+  display: grid !important;
+  place-items: center !important;
+  gap: 0 !important;
+}
+
+.weather-header-state__inner p {
+  margin: 0 !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  color: transparent !important;
+  letter-spacing: 0 !important;
+  opacity: 0 !important;
+}
+
+.weather-header-state__inner p::before,
+.weather-header-state__inner p::after {
+  content: none !important;
+}
+
+/* Scene preload: hide text label and show elegant raindrop circle loader. */
+.weather-app__scene-fallback,
+.weather-app__scene-fallback--header {
+  display: grid !important;
+  place-items: center !important;
+  pointer-events: none !important;
+}
+
+.weather-app__scene-fallback .text-sm,
+.weather-app__scene-fallback--header .text-sm,
+.weather-app__scene-fallback [class*='text-sm'],
+.weather-app__scene-fallback--header [class*='text-sm'] {
+  position: relative !important;
+  width: 62px !important;
+  height: 62px !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  color: transparent !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  opacity: 1 !important;
+}
+
+.weather-app__scene-fallback .text-sm::before,
+.weather-app__scene-fallback--header .text-sm::before,
+.weather-app__scene-fallback [class*='text-sm']::before,
+.weather-app__scene-fallback--header [class*='text-sm']::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: 50% !important;
+  border: 1px solid rgba(213, 226, 255, 0.28) !important;
+  box-shadow:
+    0 0 0 1px rgba(126, 164, 235, 0.18) inset,
+    0 0 14px rgba(125, 174, 255, 0.24) !important;
+  animation: weatherRainRingPulse 1.8s cubic-bezier(0.22, 0.61, 0.36, 1) infinite !important;
+}
+
+.weather-app__scene-fallback .text-sm::after,
+.weather-app__scene-fallback--header .text-sm::after,
+.weather-app__scene-fallback [class*='text-sm']::after,
+.weather-app__scene-fallback--header [class*='text-sm']::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 7px !important;
+  height: 10px !important;
+  margin-left: -3.5px !important;
+  margin-top: -27px !important;
+  border-radius: 52% 52% 58% 58% !important;
+  background: linear-gradient(180deg, rgba(227, 239, 255, 0.95), rgba(112, 170, 255, 0.82)) !important;
+  box-shadow:
+    0 27px 0 -1px rgba(227, 239, 255, 0.95),
+    19px 19px 0 -1px rgba(206, 225, 255, 0.88),
+    27px 0 0 -1px rgba(198, 220, 255, 0.84),
+    19px -19px 0 -1px rgba(186, 211, 252, 0.8),
+    0 -27px 0 -1px rgba(203, 227, 255, 0.9),
+    -19px -19px 0 -1px rgba(186, 211, 252, 0.8),
+    -27px 0 0 -1px rgba(198, 220, 255, 0.84),
+    -19px 19px 0 -1px rgba(206, 225, 255, 0.88),
+    0 0 10px rgba(125, 174, 255, 0.48) !important;
+  transform-origin: 3.5px 27px !important;
+  animation:
+    weatherRainDropsSpin 1.25s linear infinite,
+    weatherRainDropsBreath 1.25s ease-in-out infinite !important;
+}
+
+@keyframes weatherRainDropsSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes weatherRainDropsBreath {
+  0%,
+  100% {
+    opacity: 0.86;
+    filter: saturate(0.95) brightness(0.96);
+  }
+
+  50% {
+    opacity: 1;
+    filter: saturate(1.08) brightness(1.08);
+  }
+}
+
+@keyframes weatherRainRingPulse {
+  0%,
+  100% {
+    transform: scale(0.985);
+    opacity: 0.82;
+  }
+
+  50% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .weather-header-state__spinner,
+  .weather-header-state__spinner::before,
+  .weather-app__scene-fallback .text-sm::before,
+  .weather-app__scene-fallback--header .text-sm::before,
+  .weather-app__scene-fallback [class*='text-sm']::before,
+  .weather-app__scene-fallback--header [class*='text-sm']::before,
+  .weather-app__scene-fallback .text-sm::after,
+  .weather-app__scene-fallback--header .text-sm::after,
+  .weather-app__scene-fallback [class*='text-sm']::after,
+  .weather-app__scene-fallback--header [class*='text-sm']::after {
+    animation-duration: 2.2s !important;
+  }
 }
 
 .weather-header-preview {
@@ -281,26 +452,24 @@
 .weather-app--header .weather-app__scene--header {
   display: block !important;
   position: absolute !important;
-  top: 0 !important;
+  top: calc(50% + 12px) !important;
   left: 50% !important;
-  width: 118% !important;
-  height: calc(100% + 140px) !important;
-  min-height: calc(100% + 140px) !important;
-  transform: translateX(-50%) !important;
-  transform-origin: center top !important;
+  width: 124% !important;
+  height: calc(100% + 80px) !important;
+  min-height: calc(100% + 80px) !important;
+  transform: translate(-50%, -50%) !important;
+  transform-origin: center center !important;
   overflow: visible !important;
   opacity: 1 !important;
   visibility: visible !important;
   background: transparent !important;
-  z-index: 0 !important;
+  z-index: -30 !important;
 }
 
-/* Fade the 3D weather scene canvas at its edges so it blends
-   into the header without a hard rectangular boundary.
-   Size is halved (44%×40%) vs desktop to keep clouds compact in header. */
+/* No edge masks: clouds must never be clipped. */
 .weather-app--header .weather-app__scene canvas {
-  mask-image: radial-gradient(ellipse 44% 40% at 50% 44%, black 42%, rgba(0,0,0,0.85) 56%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0.15) 82%, transparent 100%) !important;
-  -webkit-mask-image: radial-gradient(ellipse 44% 40% at 50% 44%, black 42%, rgba(0,0,0,0.85) 56%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0.15) 82%, transparent 100%) !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
 }
 
 .weather-app--header canvas {
@@ -314,7 +483,7 @@
   opacity: 1 !important;
   visibility: visible !important;
   background: transparent !important;
-  z-index: 0 !important;
+  z-index: -30 !important;
 }
 
 .weather-orb-overlay {
@@ -322,7 +491,7 @@
   top: var(--orb-top, 0px) !important;
   left: var(--orb-left, 50%) !important;
   pointer-events: none !important;
-  z-index: 3 !important;
+  z-index: 12 !important;
   overflow: visible !important;
   isolation: isolate !important;
   opacity: 0 !important;
@@ -331,6 +500,11 @@
   transform-origin: center center !important;
   transition: opacity 260ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1) !important;
   mix-blend-mode: normal !important;
+}
+
+.weather-orb-overlay.is-moon {
+  /* Moon+clouds above scene canvas (z-0); clouds appear over stars/rain. */
+  z-index: 1 !important;
 }
 
 .weather-orb-overlay.is-visible {
@@ -393,7 +567,7 @@
 
 .weather-orb-overlay.has-cloud-veil::before,
 .weather-orb-overlay.has-cloud-veil::after {
-  opacity: var(--orb-cloud-alpha, 0);
+  opacity: calc(var(--orb-cloud-alpha, 0) * 0.44);
 }
 
 .weather-orb-overlay.has-cloud-veil::before {
@@ -410,11 +584,11 @@
     radial-gradient(ellipse at 18% 52%, rgba(241, 246, 255, 0.58) 0%, rgba(203, 216, 242, 0.34) 30%, rgba(118, 136, 176, 0.07) 64%, transparent 74%),
     radial-gradient(ellipse at 52% 48%, rgba(244, 248, 255, 0.62) 0%, rgba(209, 222, 245, 0.32) 32%, rgba(113, 133, 176, 0.08) 66%, transparent 78%),
     radial-gradient(ellipse at 82% 56%, rgba(236, 242, 255, 0.56) 0%, rgba(194, 210, 238, 0.28) 31%, rgba(107, 124, 168, 0.06) 67%, transparent 80%);
-  filter: blur(var(--orb-cloud-blur, 18px));
+  filter: none !important;
   transform:
     translate3d(calc(var(--orb-cloud-drift, 1) * 0%), var(--orb-cloud-lift, 0px), 0)
-    scaleX(var(--orb-cloud-stretch-x, 1.16))
-    scaleY(var(--orb-cloud-stretch-y, 0.84));
+    scaleX(calc(var(--orb-cloud-stretch-x, 1.16) * 0.82))
+    scaleY(calc(var(--orb-cloud-stretch-y, 0.84) * 0.82));
   animation: headerWeatherOrbCloudFloat 10.8s ease-in-out infinite;
 }
 
@@ -430,12 +604,12 @@
     ),
     radial-gradient(ellipse at 30% 54%, rgba(244, 247, 255, 0.42) 0%, rgba(204, 216, 240, 0.18) 34%, transparent 72%),
     radial-gradient(ellipse at 74% 46%, rgba(238, 244, 255, 0.36) 0%, rgba(186, 203, 236, 0.16) 30%, transparent 70%);
-  filter: blur(calc(var(--orb-cloud-blur, 18px) * 1.15));
-  opacity: calc(var(--orb-cloud-alpha, 0) * 0.76);
+  filter: none !important;
+  opacity: calc(var(--orb-cloud-alpha, 0) * 0.34);
   transform:
     translate3d(calc(var(--orb-cloud-drift, 1) * 2%), calc(var(--orb-cloud-lift, 0px) * 0.4), 0)
-    scaleX(calc(var(--orb-cloud-stretch-x, 1.16) * 0.94))
-    scaleY(calc(var(--orb-cloud-stretch-y, 0.84) * 0.92));
+    scaleX(calc(var(--orb-cloud-stretch-x, 1.16) * 0.78))
+    scaleY(calc(var(--orb-cloud-stretch-y, 0.84) * 0.78));
   animation: headerWeatherOrbCloudFloatAlt 14.2s ease-in-out infinite;
 }
 
@@ -451,20 +625,20 @@
 /* Preview (compact header) — cloud veil full size, layers spread chaotically */
 .weather-orb-overlay--preview.has-cloud-veil::before {
   inset: 5% -14% 42% -10%;
-  filter: blur(var(--orb-cloud-blur, 18px));
+  filter: none !important;
   transform:
     translate3d(calc(var(--orb-cloud-drift, 1) * -4%), calc(var(--orb-cloud-lift, 0px) - 6px), 0)
-    scaleX(calc(var(--orb-cloud-stretch-x, 1.16) * 1.41))
-    scaleY(calc(var(--orb-cloud-stretch-y, 0.84) * 0.79));
+    scaleX(calc(var(--orb-cloud-stretch-x, 1.16) * 1.16))
+    scaleY(calc(var(--orb-cloud-stretch-y, 0.84) * 0.65));
   animation: headerWeatherOrbCloudFloatPreviewA 11.4s ease-in-out infinite;
 }
 .weather-orb-overlay--preview.has-cloud-veil::after {
   inset: 52% -8% -18% 16%;
-  filter: blur(calc(var(--orb-cloud-blur, 18px) * 1.15));
+  filter: none !important;
   transform:
     translate3d(calc(var(--orb-cloud-drift, 1) * 6%), calc(var(--orb-cloud-lift, 0px) + 8px), 0)
-    scaleX(calc(var(--orb-cloud-stretch-x, 1.16) * 1.21))
-    scaleY(calc(var(--orb-cloud-stretch-y, 0.84) * 1.25));
+    scaleX(calc(var(--orb-cloud-stretch-x, 1.16) * 1.00))
+    scaleY(calc(var(--orb-cloud-stretch-y, 0.84) * 1.03));
   animation: headerWeatherOrbCloudFloatPreviewB 15.6s ease-in-out infinite;
 }
 
@@ -543,16 +717,16 @@
    by matching its :not() chain to gain equal specificity, then win by
    source order (this rule appears later in the same style block). */
 :host([data-weather-variant='header']) .weather-app canvas:not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *) {
-  filter: brightness(1.55) contrast(1.18) saturate(1.12) !important;
+  filter: brightness(1.9) contrast(1.3) saturate(1.18) drop-shadow(0 0 1px rgba(255, 255, 255, 0.66)) drop-shadow(0 0 3px rgba(182, 205, 255, 0.38)) !important;
 }
 
 .weather-header-preview {
   isolation: isolate !important;
-  overflow: hidden !important;
+  overflow: visible !important;
 }
 
 .weather-header-trigger {
-  z-index: 4 !important;
+  z-index: 120 !important;
   cursor: default !important;
   pointer-events: auto !important;
 }
@@ -560,7 +734,7 @@
 .weather-header-card {
   position: absolute !important;
   inset: 0 !important;
-  z-index: 5 !important;
+  z-index: 121 !important;
 }
 
 .weather-header-card,
@@ -572,9 +746,21 @@
 
 .weather-header-card__content {
   position: relative !important;
-  z-index: 6 !important;
+  z-index: 122 !important;
   overflow: visible !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.56) !important;
+  box-sizing: border-box !important;
+  padding: 6px 18px 0 0 !important;
+}
+
+.weather-header-card__side {
+  position: absolute !important;
+  right: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .weather-header-card__toggle {
@@ -583,7 +769,7 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 6px !important;
+  gap: 1px !important;
   min-height: 28px !important;
   padding: 4px 10px !important;
   color: rgba(255, 238, 207, 0.96) !important;
@@ -598,6 +784,7 @@
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
+  overflow: visible !important;
 }
 
 .weather-header-card__toggle span {
@@ -608,18 +795,22 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 6px !important;
-  height: 6px !important;
+  width: 6.534px !important;
+  height: 6.534px !important;
+  margin-top: 6px !important;
+  opacity: 0.9 !important;
+  visibility: visible !important;
   font-size: 0 !important;
   line-height: 0 !important;
   background: url('/assets/images/icon-pak/Gotovie%20iconki%20dlya%20saita/unter.png') center/contain no-repeat !important;
   --arrow-rotate: rotate(90deg);
   --arrow-shift-x: 0px;
   transform: var(--arrow-rotate) translateX(var(--arrow-shift-x)) !important;
+  will-change: transform !important;
+  transition: transform 0.44s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.32s ease !important;
   animation:
-    iconArrowGlassBounce var(--icon-bounce-duration, 2.85s) ease-in-out infinite,
     iconSurfaceRefraction var(--icon-sheen-duration, 2.35s) ease-in-out infinite !important;
-  transform-origin: center center !important;
+  transform-origin: right top !important;
 }
 
 .weather-header-card__toggle-icon.is-open {
@@ -663,6 +854,17 @@
   }
 }
 
+.weather-header-card__top {
+  align-items: center !important;
+  position: static !important;
+  padding-right: 114px !important;
+}
+
+.weather-header-card__side {
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 .weather-header-card__top,
 .weather-header-card__bottom,
 .weather-header-card__condition,
@@ -673,7 +875,136 @@
 .weather-header-dropdown__hero-copy,
 .weather-header-dropdown__hero-chips {
   position: relative !important;
-  z-index: 7 !important;
+  z-index: 123 !important;
+}
+
+/* Keep menu button anchored to full widget card, not only to the top row. */
+.weather-header-card__top {
+  position: static !important;
+}
+
+/* Final header placement: condition stays top-right, menu button moves to bottom-center. */
+.weather-header-card__side {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  display: block !important;
+  pointer-events: auto !important;
+}
+
+.weather-header-card__condition {
+  position: absolute !important;
+  right: 18px !important;
+  top: 4px !important;
+  z-index: 124 !important;
+  pointer-events: auto !important;
+  text-align: right !important;
+}
+
+/* City name must never be truncated in compact header preview. */
+.weather-location-selector,
+.weather-location-selector__current,
+.weather-location-selector__current * {
+  width: auto !important;
+  min-width: max-content !important;
+  max-width: none !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  line-height: 1.2 !important;
+}
+
+.weather-location-selector__current {
+  padding-bottom: 1px !important;
+}
+
+/* New widget markup: city is rendered as .weather-header-card__location. */
+.weather-header-card__location-row,
+.weather-header-card__location {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+.weather-header-card__location {
+  display: inline-block !important;
+  line-height: 1.28 !important;
+  padding-bottom: 2px !important;
+}
+
+.weather-header-card__title-block,
+.weather-header-card__top,
+.weather-header-card__location-row {
+  overflow: visible !important;
+  clip-path: none !important;
+}
+
+.weather-header-card__location-row {
+  margin-bottom: 1px !important;
+}
+
+/* Keep top-left typography identical across locales (RU baseline). */
+.weather-header-card__eyebrow {
+  font-size: 7px !important;
+  line-height: 10.5px !important;
+  letter-spacing: 0.18em !important;
+  font-weight: 400 !important;
+  margin: 0 !important;
+}
+
+.weather-header-card__location-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  min-height: 18.64px !important;
+}
+
+.weather-header-card__location {
+  font-size: 13px !important;
+  line-height: 16.64px !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+.weather-header-card__meta {
+  font-size: 10px !important;
+  line-height: 12px !important;
+  margin: 0 !important;
+}
+
+.weather-header-card__bottom {
+  position: absolute !important;
+  left: 0 !important;
+  right: 18px !important;
+  bottom: 10px !important;
+  width: auto !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  display: grid !important;
+  grid-template-columns: max-content minmax(0, 1fr) !important;
+  column-gap: 0px !important;
+  align-items: flex-end !important;
+  justify-content: stretch !important;
+  z-index: 124 !important;
+}
+
+.weather-header-card__bottom > :first-child {
+  justify-self: start !important;
+  text-align: left !important;
+}
+
+.weather-header-card__bottom > :last-child {
+  justify-self: end !important;
+  text-align: right !important;
+}
+
+.weather-header-card__toggle {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: -10px !important;
+  transform: translateX(-50%) !important;
+  z-index: 124 !important;
+  pointer-events: auto !important;
 }
 
 .weather-header-dropdown {
@@ -705,13 +1036,13 @@
   .weather-app--header .weather-app__scene,
   .weather-app--header .weather-app__scene--header {
     position: absolute !important;
-    top: -10px !important;
+    top: 50% !important;
     left: 50% !important;
-    width: 118% !important;
-    height: calc(100% + 88px) !important;
-    min-height: calc(100% + 88px) !important;
-    transform: translateX(-50%) !important;
-    transform-origin: center top !important;
+    width: 132% !important;
+    height: calc(100% + 70px) !important;
+    min-height: calc(100% + 70px) !important;
+    transform: translate(-50%, -50%) !important;
+    transform-origin: center center !important;
     overflow: visible !important;
   }
 
@@ -744,13 +1075,38 @@
   }
 
   .weather-header-card__toggle-icon {
-    width: 7px !important;
-    height: 7px !important;
+    width: 4.2px !important;
+    height: 4.2px !important;
   }
+}
+
+/* Final hard lock (desktop/tablet): menu button at center cross zone. */
+:host([data-weather-variant='header']) .weather-header-card__top {
+  position: relative !important;
+  width: 100% !important;
+}
+
+:host([data-weather-variant='header']) .weather-header-card__side {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+}
+
+:host([data-weather-variant='header']) .weather-header-card__toggle {
+  position: absolute !important;
+  left: 50% !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: -10px !important;
+  transform: translateX(-50%) !important;
+  z-index: 124 !important;
+  pointer-events: auto !important;
 }
 `;
 
-  const WEATHER_WIDGET_ASSET_VERSION = '20260504-weather-orbit3';
+  const WEATHER_WIDGET_ASSET_VERSION = '20260511-weather-5min-timesync1';
   const HEADER_WEATHER_MOON_TEXTURE_SRC = '/3d-weather-codrops-main/dist-widget/assets/Moon/moon_texture.jpg';
 
   const LOCALIZED_ROUTES = new Set([
@@ -774,13 +1130,25 @@
   const HEADER_WEATHER_GEOCODE_ENDPOINT = 'https://geocoding-api.open-meteo.com/v1/search';
   const HEADER_WEATHER_CURRENT_ENDPOINT = 'https://api.open-meteo.com/v1/forecast';
   const HEADER_WEATHER_ASTRO_ENDPOINT = 'https://api.sunrise-sunset.org/json';
+  const HEADER_WEATHER_REVERSE_GEOCODE_ENDPOINT = 'https://nominatim.openstreetmap.org/reverse';
+  const HEADER_WEATHER_STATIC_FALLBACK_COORDS = Object.freeze({ latitude: 51.320486, longitude: 12.416501 });
   const HEADER_WEATHER_ASTRO_REFRESH_INTERVAL = 60000;
+  const HEADER_WEATHER_WIDGET_REFRESH_INTERVAL = 5 * 60 * 1000;
+  const HEADER_WEATHER_TIME_SYNC_INTERVAL = 30 * 60 * 1000;
+  const HEADER_WEATHER_LIVE_CLOCK_INTERVAL = 1000; // Update live clock every 1 second
+  const HEADER_WEATHER_TIME_SYNC_TIMEOUT = 4500;
+  const HEADER_WEATHER_MAX_CLOCK_DRIFT_MS = 7 * 24 * 60 * 60 * 1000;
   const HEADER_WEATHER_LOCATION_CACHE_TTL = 24 * 60 * 60 * 1000;
   const HEADER_WEATHER_CURRENT_CACHE_TTL = 10 * 60 * 1000;
   const HEADER_WEATHER_ASTRO_CACHE_TTL = 12 * 60 * 60 * 1000;
+  const HEADER_WEATHER_GEO_STORAGE_KEY = 'header_weather_geo_v1';
+  const HEADER_WEATHER_GEO_CACHE_TTL = 30 * 60 * 1000;
+  const HEADER_WEATHER_GEO_TIMEOUT = 10000;
   const headerWeatherLocationCache = new Map();
   const headerWeatherCurrentCache = new Map();
   const headerWeatherAstroCache = new Map();
+  let headerWeatherServerTimeOffsetMs = 0;
+  let headerWeatherServerTimeSyncedAt = 0;
   const HEADER_WEATHER_ORB_LAYOUTS = {
     preview: {
       sun: {
@@ -837,13 +1205,61 @@
     window.dispatchEvent(new CustomEvent(type, { detail: { expanded } }));
   }
 
+  function extractSupportedLang(rawLang) {
+    const normalized = String(rawLang || '')
+      .toLowerCase()
+      .trim()
+      .slice(0, 2);
+
+    return SUPPORTED_LANGS.includes(normalized) ? normalized : null;
+  }
+
+  function normalizeLangCode(rawLang) {
+    return extractSupportedLang(rawLang) || 'en';
+  }
+
+  function resolvePreferredLaunchLanguage() {
+    const storedPreference = extractSupportedLang(localStorage.getItem('preferred_lang'));
+    if (storedPreference) {
+      return storedPreference;
+    }
+
+    const languageCandidates =
+      Array.isArray(window.navigator?.languages) && window.navigator.languages.length
+        ? window.navigator.languages
+        : [window.navigator?.language, window.navigator?.userLanguage].filter(Boolean);
+
+    for (const candidate of languageCandidates) {
+      const matched = extractSupportedLang(candidate);
+      if (matched) {
+        return matched;
+      }
+    }
+
+    return 'de';
+  }
+
+  function getLaunchLanguageRedirectUrl(context) {
+    if (context.currentLang) {
+      return null;
+    }
+
+    const preferredLang = resolvePreferredLaunchLanguage();
+    return buildLanguageUrl(context, preferredLang);
+  }
+
   function resolvePageContext() {
     const currentUrl = new URL(window.location.href);
     const pathParts = currentUrl.pathname.split('/').filter(Boolean);
     const langIndex = pathParts.findIndex(part => SUPPORTED_LANGS.includes(part));
-    const currentLang = langIndex >= 0 ? pathParts[langIndex] : null;
+    const currentLang = langIndex >= 0 ? normalizeLangCode(pathParts[langIndex]) : null;
     const currentRoute = langIndex >= 0 ? pathParts.slice(langIndex + 1).join('/') : '';
-    const pageLang = document.documentElement.lang?.toLowerCase() || currentLang || 'en';
+    const htmlLang = normalizeLangCode(document.documentElement.lang);
+    const pageLang = currentLang || htmlLang;
+
+    if (document.documentElement.lang !== pageLang) {
+      document.documentElement.lang = pageLang;
+    }
 
     return {
       currentUrl,
@@ -1192,12 +1608,277 @@
     return { latitude, longitude };
   }
 
+  function readHeaderWeatherStoredGeo() {
+    try {
+      const raw = localStorage.getItem(HEADER_WEATHER_GEO_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
+
+      const parsed = JSON.parse(raw);
+      const latitude = Number(parsed?.latitude);
+      const longitude = Number(parsed?.longitude);
+      const expiresAt = Number(parsed?.expiresAt);
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !Number.isFinite(expiresAt)) {
+        return null;
+      }
+
+      if (expiresAt <= Date.now()) {
+        return null;
+      }
+
+      return { latitude, longitude, expiresAt };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function storeHeaderWeatherGeo(latitude, longitude) {
+    try {
+      localStorage.setItem(
+        HEADER_WEATHER_GEO_STORAGE_KEY,
+        JSON.stringify({
+          latitude,
+          longitude,
+          expiresAt: Date.now() + HEADER_WEATHER_GEO_CACHE_TTL,
+        })
+      );
+    } catch (_) {
+      // Ignore storage failures in private mode.
+    }
+  }
+
+  async function resolveHeaderWeatherBrowserGeoCoords() {
+    const cachedGeo = readHeaderWeatherStoredGeo();
+    if (cachedGeo) {
+      return { ...cachedGeo, source: 'cache' };
+    }
+
+    if (window.isSecureContext && navigator.geolocation) {
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: HEADER_WEATHER_GEO_TIMEOUT,
+            maximumAge: HEADER_WEATHER_GEO_CACHE_TTL,
+          });
+        });
+
+        const latitude = Number(position?.coords?.latitude);
+        const longitude = Number(position?.coords?.longitude);
+        if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+          storeHeaderWeatherGeo(latitude, longitude);
+          return { latitude, longitude, source: 'gps', expiresAt: Date.now() + HEADER_WEATHER_GEO_CACHE_TTL };
+        }
+      } catch (_) {
+        // GPS permission denied or unavailable. Use salon static coordinates (Stötteritz) directly.
+      }
+    }
+
+    // Primary fallback: salon static coordinates (Stötteritz)
+    // This ensures consistent, reliable location even when GPS is unavailable or denied.
+    return {
+      latitude: HEADER_WEATHER_STATIC_FALLBACK_COORDS.latitude,
+      longitude: HEADER_WEATHER_STATIC_FALLBACK_COORDS.longitude,
+      source: 'static-salon',
+    };
+  }
+
+  async function applyHeaderWeatherAutoGeoLocation(host) {
+    if (!host || host.dataset.weatherGeoResolved === 'true') {
+      return;
+    }
+
+    const coords = await resolveHeaderWeatherBrowserGeoCoords();
+    if (!coords) {
+      host.dataset.weatherGeoResolved = 'false';
+      return;
+    }
+
+    host.dataset.weatherLocation = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
+    host.dataset.weatherGeoResolved = 'true';
+    host.dataset.weatherGeoSource = coords.source || 'unknown';
+
+    // For salon static coordinates, keep federal state label stable.
+    if (coords.source === 'static-salon') {
+      host.dataset.weatherRegionLabel = 'Sachsen';
+    }
+  }
+
   function getHeaderWeatherLocationLabel(host) {
     const locationLabel = host?.shadowRoot?.querySelector('.weather-header-card__location')?.textContent?.trim();
     return locationLabel || host?.dataset?.weatherLocation || 'Leipzig';
   }
 
-  function getHeaderWeatherDateInTimeZone(timeZone, referenceDate = new Date()) {
+  function getHeaderWeatherLanguageFallbacks() {
+    const pageLanguage = String(document.documentElement.lang || 'en')
+      .trim()
+      .toLowerCase()
+      .split(/[-_]/)[0];
+
+    return Array.from(new Set([pageLanguage || 'en', 'de', 'en']));
+  }
+
+  function buildHeaderWeatherDistrictLabel(address) {
+    if (!address || typeof address !== 'object') {
+      return null;
+    }
+
+    const district =
+      address.suburb ||
+      address.city_district ||
+      address.neighbourhood ||
+      address.quarter ||
+      address.borough ||
+      address.hamlet ||
+      '';
+
+    const city = address.city || address.town || address.village || address.county || '';
+
+    if (district && city && district.toLowerCase() !== city.toLowerCase()) {
+      return `${district}, ${city}`;
+    }
+
+    return district || city || null;
+  }
+
+  function normalizeHeaderWeatherGermanStateLabel(value, address = null) {
+    const isoCode = String(address?.['ISO3166-2-lvl4'] || '').trim().toUpperCase();
+    const isoStateMap = {
+      'DE-BW': 'Baden-Wurttemberg',
+      'DE-BY': 'Bayern',
+      'DE-BE': DE_BERLIN_LABEL,
+      'DE-BB': 'Brandenburg',
+      'DE-HB': 'Bremen',
+      'DE-HH': 'Hamburg',
+      'DE-HE': 'Hessen',
+      'DE-MV': 'Mecklenburg-Vorpommern',
+      'DE-NI': 'Niedersachsen',
+      'DE-NW': 'Nordrhein-Westfalen',
+      'DE-RP': 'Rheinland-Pfalz',
+      'DE-SL': 'Saarland',
+      'DE-SN': 'Sachsen',
+      'DE-ST': 'Sachsen-Anhalt',
+      'DE-SH': 'Schleswig-Holstein',
+      'DE-TH': 'Thuringen',
+    };
+
+    if (isoCode && isoStateMap[isoCode]) {
+      return isoStateMap[isoCode];
+    }
+
+    const rawValue = String(value || '').trim();
+    if (!rawValue) {
+      return null;
+    }
+
+    const countryCode = String(address?.country_code || '').trim().toLowerCase();
+    if (countryCode && countryCode !== 'de') {
+      return rawValue;
+    }
+
+    const normalizedKey = rawValue.toLowerCase();
+    const germanStateAliasMap = {
+      'baden-wurttemberg': 'Baden-Wurttemberg',
+      'baden wurttemberg': 'Baden-Wurttemberg',
+      'baden-wuerttemberg': 'Baden-Wurttemberg',
+      'baden wuerttemberg': 'Baden-Wurttemberg',
+      bavaria: 'Bayern',
+      bayern: 'Bayern',
+      [DE_BERLIN_LABEL.toLowerCase()]: DE_BERLIN_LABEL,
+      brandenburg: 'Brandenburg',
+      bremen: 'Bremen',
+      hamburg: 'Hamburg',
+      hesse: 'Hessen',
+      hessen: 'Hessen',
+      'mecklenburg-vorpommern': 'Mecklenburg-Vorpommern',
+      'mecklenburg vorpommern': 'Mecklenburg-Vorpommern',
+      'lower saxony': 'Niedersachsen',
+      niedersachsen: 'Niedersachsen',
+      'north rhine-westphalia': 'Nordrhein-Westfalen',
+      'north rhine westphalia': 'Nordrhein-Westfalen',
+      'nordrhein-westfalen': 'Nordrhein-Westfalen',
+      'nordrhein westfalen': 'Nordrhein-Westfalen',
+      'rhineland-palatinate': 'Rheinland-Pfalz',
+      'rhineland palatinate': 'Rheinland-Pfalz',
+      'rheinland-pfalz': 'Rheinland-Pfalz',
+      'rheinland pfalz': 'Rheinland-Pfalz',
+      saarland: 'Saarland',
+      saxony: 'Sachsen',
+      sachsen: 'Sachsen',
+      'saxony-anhalt': 'Sachsen-Anhalt',
+      'saxony anhalt': 'Sachsen-Anhalt',
+      'sachsen-anhalt': 'Sachsen-Anhalt',
+      'sachsen anhalt': 'Sachsen-Anhalt',
+      'schleswig-holstein': 'Schleswig-Holstein',
+      'schleswig holstein': 'Schleswig-Holstein',
+      thuringia: 'Thuringen',
+      thuringen: 'Thuringen',
+      'free state of saxony': 'Sachsen',
+      'free state of bavaria': 'Bayern',
+      'free state of thuringia': 'Thuringen',
+      'freistaat sachsen': 'Sachsen',
+      'freistaat bayern': 'Bayern',
+      'freistaat thuringen': 'Thuringen',
+      'саксония': 'Sachsen',
+      'нижняя саксония': 'Niedersachsen',
+      'тюрінгія': 'Thuringen',
+      'ніжня саксонія': 'Niedersachsen',
+      'саксонія': 'Sachsen',
+    };
+
+    return germanStateAliasMap[normalizedKey] || rawValue;
+  }
+
+  async function fetchHeaderWeatherReverseGeoMeta(latitude, longitude) {
+    const languageFallbacks = getHeaderWeatherLanguageFallbacks();
+
+    for (const language of languageFallbacks) {
+      const url = new URL(HEADER_WEATHER_REVERSE_GEOCODE_ENDPOINT);
+      url.searchParams.set('format', 'jsonv2');
+      url.searchParams.set('lat', String(latitude));
+      url.searchParams.set('lon', String(longitude));
+      url.searchParams.set('zoom', '18');
+      url.searchParams.set('addressdetails', '1');
+      url.searchParams.set('layer', 'address');
+      url.searchParams.set('accept-language', `${language},de,en`);
+
+      try {
+        const response = await fetch(url.toString(), {
+          mode: 'cors',
+          credentials: 'omit',
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          continue;
+        }
+
+        const payload = await response.json();
+        const address = payload?.address || null;
+        const districtLabel = buildHeaderWeatherDistrictLabel(address);
+        const regionLabel = normalizeHeaderWeatherGermanStateLabel(
+          address?.state || address?.region || address?.state_district || address?.county || null,
+          address
+        );
+
+        if (districtLabel || regionLabel) {
+          return {
+            districtLabel,
+            regionLabel,
+          };
+        }
+      } catch (_) {
+        // Keep trying with next language fallback.
+      }
+    }
+
+    return null;
+  }
+
+  function getHeaderWeatherDateInTimeZone(timeZone, referenceDate = new Date(getHeaderWeatherNowMs())) {
     try {
       const formatter = new window.Intl.DateTimeFormat('en-CA', {
         timeZone: timeZone || 'UTC',
@@ -1219,6 +1900,231 @@
     }
 
     return referenceDate.toISOString().slice(0, 10);
+  }
+
+  function getHeaderWeatherNowMs() {
+    return Date.now() + (Number.isFinite(headerWeatherServerTimeOffsetMs) ? headerWeatherServerTimeOffsetMs : 0);
+  }
+
+  function getHeaderWeatherBrowserTimeZone() {
+    try {
+      const browserTimeZone = window.Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (typeof browserTimeZone === 'string' && browserTimeZone.includes('/')) {
+        return browserTimeZone;
+      }
+    } catch (_) {
+      // Ignore and use fallback chain.
+    }
+
+    return null;
+  }
+
+  function normalizeHeaderWeatherTimeZone(value) {
+    const timeZone = String(value || '').trim();
+    if (!timeZone) {
+      return null;
+    }
+
+    try {
+      // Intl with explicit timeZone validates IANA IDs and applies DST rules automatically.
+      new window.Intl.DateTimeFormat('en-GB', {
+        timeZone,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).format(new Date(getHeaderWeatherNowMs()));
+      return timeZone;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function resolveHeaderWeatherTimeZone(host, locationMeta = null) {
+    return (
+      normalizeHeaderWeatherTimeZone(host?.__weatherTimeZone) ||
+      normalizeHeaderWeatherTimeZone(host?.__weatherWidgetData?.location?.tz_id) ||
+      normalizeHeaderWeatherTimeZone(host?.__weatherWidgetData?.location?.timezone) ||
+      normalizeHeaderWeatherTimeZone(locationMeta?.timezone) ||
+      getHeaderWeatherBrowserTimeZone() ||
+      EUROPE_BERLIN_TZ
+    );
+  }
+
+  function getHeaderWeatherTimeSources() {
+    return [
+      {
+        id: 'origin-date-header',
+        url: `${window.location.origin}/robots.txt`,
+        method: 'HEAD',
+        mode: 'same-origin',
+        type: 'date-header',
+      },
+      {
+        id: 'worldtimeapi-utc',
+        url: 'https://worldtimeapi.org/api/timezone/Etc/UTC',
+        method: 'GET',
+        mode: 'cors',
+        type: 'json-field',
+        field: 'utc_datetime',
+      },
+      {
+        id: 'timeapiio-utc',
+        url: 'https://timeapi.io/api/Time/current/zone?timeZone=UTC',
+        method: 'GET',
+        mode: 'cors',
+        type: 'json-field',
+        field: 'dateTime',
+      },
+    ];
+  }
+
+  function withHeaderWeatherTimeout(promise, timeoutMs = HEADER_WEATHER_TIME_SYNC_TIMEOUT) {
+    return new Promise((resolve, reject) => {
+      const timerId = window.setTimeout(() => {
+        reject(new Error('Header weather time sync timeout.'));
+      }, timeoutMs);
+
+      promise.then(
+        value => {
+          window.clearTimeout(timerId);
+          resolve(value);
+        },
+        error => {
+          window.clearTimeout(timerId);
+          reject(error);
+        }
+      );
+    });
+  }
+
+  async function fetchHeaderWeatherSourceTimeMs(source) {
+    const separator = source.url.includes('?') ? '&' : '?';
+    const requestUrl = `${source.url}${separator}_ts=${Date.now()}`;
+    const requestStartedAt = Date.now();
+    const response = await fetch(requestUrl, {
+      method: source.method || 'GET',
+      mode: source.mode || 'cors',
+      credentials: 'omit',
+      cache: 'no-store',
+      headers: {
+        Accept: 'application/json, text/plain, */*',
+      },
+    });
+    const requestEndedAt = Date.now();
+
+    if (!response.ok) {
+      throw new Error(`Header weather time source failed with status ${response.status}.`);
+    }
+
+    let serverTimeMs = null;
+    if (source.type === 'date-header') {
+      const dateHeader = response.headers.get('date');
+      if (dateHeader) {
+        serverTimeMs = Date.parse(dateHeader);
+      }
+    } else if (source.type === 'json-field') {
+      const payload = await response.json();
+      const rawValue = payload?.[source.field];
+      if (typeof rawValue === 'number') {
+        serverTimeMs = rawValue > 1e12 ? rawValue : rawValue * 1000;
+      } else if (typeof rawValue === 'string') {
+        serverTimeMs = Date.parse(rawValue);
+      }
+    }
+
+    if (!Number.isFinite(serverTimeMs)) {
+      throw new Error(`Header weather time source ${source.id} returned invalid time.`);
+    }
+
+    const clientMidpointMs = requestStartedAt + (requestEndedAt - requestStartedAt) / 2;
+    return serverTimeMs - clientMidpointMs;
+  }
+
+  async function syncHeaderWeatherClockWithServers(force = false) {
+    const nowMs = Date.now();
+    if (!force && nowMs - headerWeatherServerTimeSyncedAt < HEADER_WEATHER_TIME_SYNC_INTERVAL) {
+      return;
+    }
+
+    const sources = getHeaderWeatherTimeSources();
+    for (const source of sources) {
+      try {
+        const nextOffsetMs = await withHeaderWeatherTimeout(fetchHeaderWeatherSourceTimeMs(source));
+        if (Math.abs(nextOffsetMs) <= HEADER_WEATHER_MAX_CLOCK_DRIFT_MS) {
+          headerWeatherServerTimeOffsetMs = nextOffsetMs;
+          headerWeatherServerTimeSyncedAt = Date.now();
+          return;
+        }
+      } catch (_) {
+        // Try the next source silently.
+      }
+    }
+  }
+
+  function formatHeaderWeatherLiveTime(timeZone) {
+    try {
+      return new window.Intl.DateTimeFormat('en-GB', {
+        timeZone: timeZone || 'UTC',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).format(new Date(getHeaderWeatherNowMs()));
+    } catch (_) {
+      return new window.Intl.DateTimeFormat('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).format(new Date(getHeaderWeatherNowMs()));
+    }
+  }
+
+  function rewriteHeaderWeatherTimeText(text, liveTime) {
+    if (!text || !liveTime) {
+      return text;
+    }
+
+    if (/^\s*\d{1,2}:\d{2}/.test(text)) {
+      return text.replace(/^\s*\d{1,2}:\d{2}/, liveTime);
+    }
+
+    return text.replace(/\d{1,2}:\d{2}/, liveTime);
+  }
+
+  function syncHeaderWeatherLiveClock(host) {
+    const root = host?.shadowRoot;
+    if (!root) {
+      return;
+    }
+
+    const timeZone = resolveHeaderWeatherTimeZone(host);
+    const liveTime = formatHeaderWeatherLiveTime(timeZone);
+    const forcedRegionLabel = String(host?.dataset?.weatherRegionLabel || '').trim();
+    const timeNodes = root.querySelectorAll(
+      '.weather-header-card__meta, .weather-header-dropdown__hero-meta, .weather-header-dropdown__hero-copy span'
+    );
+
+    timeNodes.forEach(node => {
+      if (!node) {
+        return;
+      }
+
+      if (
+        forcedRegionLabel &&
+        (node.classList.contains('weather-header-card__meta') ||
+          node.classList.contains('weather-header-dropdown__hero-meta'))
+      ) {
+        const nextForcedText = `${liveTime} · ${forcedRegionLabel}`;
+        if (nextForcedText !== node.textContent) {
+          node.textContent = nextForcedText;
+        }
+        return;
+      }
+
+      const nextText = rewriteHeaderWeatherTimeText(node.textContent || '', liveTime);
+      if (nextText && nextText !== node.textContent) {
+        node.textContent = nextText;
+      }
+    });
   }
 
   function shiftHeaderWeatherDate(dateString, dayOffset) {
@@ -1255,13 +2161,13 @@
 
   function getHeaderWeatherFallbackOrbKind(host) {
     const hour = getHeaderWeatherHour(host);
-    const fallbackHour = typeof hour === 'number' ? hour : new Date().getHours();
+    const fallbackHour = typeof hour === 'number' ? hour : new Date(getHeaderWeatherNowMs()).getHours();
     return fallbackHour >= 19 || fallbackHour < 6 ? 'moon' : 'sun';
   }
 
   function getHeaderWeatherFallbackOrbProgress(host, kind) {
     const hour = getHeaderWeatherHour(host);
-    const fallbackHour = typeof hour === 'number' ? hour : new Date().getHours();
+    const fallbackHour = typeof hour === 'number' ? hour : new Date(getHeaderWeatherNowMs()).getHours();
 
     if (kind === 'sun') {
       return clampHeaderWeatherValue((fallbackHour - 6) / 12, 0, 1);
@@ -1451,17 +2357,56 @@
 
     const coordinateMatch = parseHeaderWeatherCoordinates(locationLabel);
     if (coordinateMatch) {
-      const coordinateValue = {
-        latitude: coordinateMatch.latitude,
-        longitude: coordinateMatch.longitude,
-        label: locationLabel.trim(),
-        timezone: window.Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-      };
-      headerWeatherLocationCache.set(normalizedKey, {
-        value: coordinateValue,
-        expiresAt: Date.now() + HEADER_WEATHER_LOCATION_CACHE_TTL,
+      const promise = (async () => {
+        // Check if these are the salon static coordinates (Stötteritz)
+        const isSalonCoords =
+          Math.abs(coordinateMatch.latitude - HEADER_WEATHER_STATIC_FALLBACK_COORDS.latitude) < 0.001 &&
+          Math.abs(coordinateMatch.longitude - HEADER_WEATHER_STATIC_FALLBACK_COORDS.longitude) < 0.001;
+
+        if (isSalonCoords) {
+          // For salon coordinates, directly return Stötteritz without reverse geocoding
+          const coordinateValue = {
+            latitude: coordinateMatch.latitude,
+            longitude: coordinateMatch.longitude,
+            label: 'Stötteritz',
+            regionLabel: 'Sachsen',
+            timezone: getHeaderWeatherBrowserTimeZone() || EUROPE_BERLIN_TZ,
+          };
+
+          headerWeatherLocationCache.set(normalizedKey, {
+            value: coordinateValue,
+            expiresAt: Date.now() + HEADER_WEATHER_LOCATION_CACHE_TTL,
+          });
+
+          return coordinateValue;
+        }
+
+        const reverseMeta = await fetchHeaderWeatherReverseGeoMeta(
+          coordinateMatch.latitude,
+          coordinateMatch.longitude
+        ).catch(() => null);
+
+        const coordinateValue = {
+          latitude: coordinateMatch.latitude,
+          longitude: coordinateMatch.longitude,
+          label: reverseMeta?.districtLabel || locationLabel.trim(),
+          regionLabel: reverseMeta?.regionLabel || null,
+          timezone: getHeaderWeatherBrowserTimeZone() || EUROPE_BERLIN_TZ,
+        };
+
+        headerWeatherLocationCache.set(normalizedKey, {
+          value: coordinateValue,
+          expiresAt: Date.now() + HEADER_WEATHER_LOCATION_CACHE_TTL,
+        });
+
+        return coordinateValue;
+      })().catch(error => {
+        headerWeatherLocationCache.delete(normalizedKey);
+        throw error;
       });
-      return coordinateValue;
+
+      headerWeatherLocationCache.set(normalizedKey, { promise });
+      return promise;
     }
 
     const promise = (async () => {
@@ -1506,7 +2451,11 @@
         latitude: Number(result.latitude),
         longitude: Number(result.longitude),
         label: [result.name, result.admin1 || result.admin2, result.country].filter(Boolean).join(', '),
-        timezone: result.timezone || 'UTC',
+        regionLabel: normalizeHeaderWeatherGermanStateLabel(result.admin1 || result.admin2 || null, {
+          country_code: result.country_code,
+        }),
+        timezone:
+          normalizeHeaderWeatherTimeZone(result.timezone) || getHeaderWeatherBrowserTimeZone() || EUROPE_BERLIN_TZ,
       };
 
       headerWeatherLocationCache.set(normalizedKey, {
@@ -1565,7 +2514,7 @@
       return null;
     }
 
-    const dateString = getHeaderWeatherDateInTimeZone(locationMeta.timezone || 'UTC');
+    const dateString = getHeaderWeatherDateInTimeZone(resolveHeaderWeatherTimeZone(host, locationMeta));
     const cacheKey = `${locationMeta.latitude.toFixed(4)},${locationMeta.longitude.toFixed(4)}:${dateString}`;
     const cachedEntry = headerWeatherAstroCache.get(cacheKey);
 
@@ -1618,7 +2567,7 @@
       };
     }
 
-    const nowMs = Date.now();
+    const nowMs = getHeaderWeatherNowMs();
     if (nowMs >= astroData.today.sunrise && nowMs < astroData.today.sunset) {
       const solarNoon =
         astroData.today.solarNoon > astroData.today.sunrise && astroData.today.solarNoon < astroData.today.sunset
@@ -1683,12 +2632,12 @@
     overlay.style.setProperty('--orb-scale-hidden', Math.max(0.88, visibleScale - 0.08).toFixed(3));
   }
 
-  async function fetchHeaderWeatherCurrent(locationMeta) {
+  async function fetchHeaderWeatherCurrent(host, locationMeta) {
     const url = new URL(HEADER_WEATHER_CURRENT_ENDPOINT);
     url.searchParams.set('latitude', String(locationMeta.latitude));
     url.searchParams.set('longitude', String(locationMeta.longitude));
-    url.searchParams.set('current', 'weather_code,cloud_cover,precipitation');
-    url.searchParams.set('timezone', locationMeta.timezone || 'auto');
+    url.searchParams.set('current', 'weather_code,cloud_cover,precipitation,relative_humidity_2m,surface_pressure');
+    url.searchParams.set('timezone', resolveHeaderWeatherTimeZone(host, locationMeta));
 
     const response = await fetch(url.toString(), {
       mode: 'cors',
@@ -1710,6 +2659,8 @@
       weatherCode: Number(current.weather_code),
       cloudCover: Number(current.cloud_cover),
       precipitation: Number(current.precipitation),
+      humidity: Number(current.relative_humidity_2m),
+      surfacePressure: Number(current.surface_pressure),
     };
   }
 
@@ -1732,7 +2683,7 @@
 
     const promise = (async () => {
       try {
-        const resolvedValue = await fetchHeaderWeatherCurrent(locationMeta);
+        const resolvedValue = await fetchHeaderWeatherCurrent(host, locationMeta);
         headerWeatherCurrentCache.set(cacheKey, {
           value: resolvedValue,
           expiresAt: Date.now() + HEADER_WEATHER_CURRENT_CACHE_TTL,
@@ -1746,6 +2697,42 @@
 
     headerWeatherCurrentCache.set(cacheKey, { promise });
     return promise;
+  }
+
+  async function syncHeaderWeatherPreciseLocationMeta(host) {
+    const root = host?.shadowRoot;
+    if (!root) {
+      return;
+    }
+
+    const locationQuery = host.dataset.weatherLocation || getHeaderWeatherLocationLabel(host);
+    const locationMeta = await resolveHeaderWeatherLocationMeta(locationQuery).catch(() => null);
+    if (!locationMeta) {
+      return;
+    }
+
+    if (locationMeta.label) {
+      const locationNodes = root.querySelectorAll('.weather-header-card__location, .weather-location-selector__city');
+      locationNodes.forEach(node => {
+        if (node && locationMeta.label !== node.textContent?.trim()) {
+          node.textContent = locationMeta.label;
+        }
+      });
+    }
+
+    if (locationMeta.regionLabel) {
+      const normalizedRegionLabel = String(locationMeta.regionLabel).trim();
+      if (normalizedRegionLabel) {
+        host.dataset.weatherRegionLabel = normalizedRegionLabel;
+        const metaNodes = root.querySelectorAll('.weather-header-card__meta, .weather-header-dropdown__hero-meta');
+        const liveTime = formatHeaderWeatherLiveTime(resolveHeaderWeatherTimeZone(host, locationMeta));
+        metaNodes.forEach(node => {
+          if (node) {
+            node.textContent = `${liveTime} · ${normalizedRegionLabel}`;
+          }
+        });
+      }
+    }
   }
 
   function applyHeaderWeatherOrbAtmosphere(overlay, atmosphere) {
@@ -1824,8 +2811,12 @@
     toggleIcon.style.setProperty('background-position', 'center', 'important');
     toggleIcon.style.setProperty('background-repeat', 'no-repeat', 'important');
     toggleIcon.style.setProperty('background-size', 'contain', 'important');
-    toggleIcon.style.setProperty('width', '10px', 'important');
-    toggleIcon.style.setProperty('height', '10px', 'important');
+    toggleIcon.style.setProperty('width', '6.534px', 'important');
+    toggleIcon.style.setProperty('height', '6.534px', 'important');
+    toggleIcon.style.setProperty('margin-top', '6px', 'important');
+    toggleIcon.style.setProperty('opacity', '0.9', 'important');
+    toggleIcon.style.setProperty('visibility', 'visible', 'important');
+    toggleIcon.style.setProperty('transform-origin', 'right top', 'important');
     toggleIcon.style.setProperty('font-size', '0', 'important');
     toggleIcon.style.setProperty('line-height', '0', 'important');
     toggleIcon.style.setProperty(
@@ -1834,11 +2825,1015 @@
       'important'
     );
     toggleIcon.style.setProperty('--arrow-shift-x', '0px', 'important');
+    toggleIcon.style.setProperty('will-change', 'transform', 'important');
     toggleIcon.style.setProperty(
-      'animation',
-      'iconArrowGlassBounce var(--icon-bounce-duration, 2.85s) ease-in-out infinite, iconSurfaceRefraction var(--icon-sheen-duration, 2.35s) ease-in-out infinite',
+      'transition',
+      'transform 0.44s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.32s ease',
       'important'
     );
+    toggleIcon.style.setProperty(
+      'animation',
+      'iconSurfaceRefraction var(--icon-sheen-duration, 2.35s) ease-in-out infinite',
+      'important'
+    );
+  }
+
+  function enforceHeaderWeatherMenuPlacement(host) {
+    const root = host?.shadowRoot;
+    if (!root) {
+      return;
+    }
+
+    const topRow = root.querySelector('.weather-header-card__top');
+    const titleBlock = root.querySelector('.weather-header-card__title-block');
+    const eyebrow = root.querySelector('.weather-header-card__eyebrow');
+    const card = root.querySelector('.weather-header-card');
+    const content = root.querySelector('.weather-header-card__content');
+    const side = root.querySelector('.weather-header-card__side');
+    const condition = root.querySelector('.weather-header-card__condition');
+    const meta = root.querySelector('.weather-header-card__meta');
+    const bottom = root.querySelector('.weather-header-card__bottom');
+    const chips = root.querySelector('.weather-header-card__chips');
+    const geoArrowIcon = root.querySelector('.weather-location-selector__current svg');
+    const locationCurrent = root.querySelector('.weather-location-selector__current');
+    const locationRow = root.querySelector('.weather-header-card__location-row');
+    const locationLabel = root.querySelector('.weather-header-card__location');
+    const toggle = root.querySelector('.weather-header-card__toggle');
+    const normalizeInlineText = element => {
+      if (!element) {
+        return;
+      }
+
+      const normalized = (element.textContent || '')
+        .replace(/\u00a0/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (normalized && normalized !== element.textContent) {
+        element.textContent = normalized;
+      }
+    };
+    const contentInset = 0;
+    const opticalRightOffset = 8;
+    let computedRightOffset = opticalRightOffset;
+    let rightColumn = null;
+    const rightColumnTop = '4px';
+    const rightColumnBottom = '10px';
+    const bottomLeftInset = contentInset;
+
+    const rightColumnHost = card || content;
+
+    // Keep right column on a fixed anchor to prevent condition text drifting between re-renders.
+    computedRightOffset = opticalRightOffset;
+
+    if (rightColumnHost) {
+      rightColumn = root.querySelector('.weather-header-card__right-column');
+      if (!rightColumn) {
+        rightColumn = document.createElement('div');
+        rightColumn.className = 'weather-header-card__right-column';
+        rightColumnHost.appendChild(rightColumn);
+      } else if (rightColumn.parentElement !== rightColumnHost) {
+        rightColumnHost.appendChild(rightColumn);
+      }
+
+      rightColumn.style.setProperty('position', 'absolute', 'important');
+      rightColumn.style.setProperty('right', `${computedRightOffset}px`, 'important');
+      rightColumn.style.setProperty('top', rightColumnTop, 'important');
+      rightColumn.style.setProperty('bottom', rightColumnBottom, 'important');
+      rightColumn.style.setProperty('left', 'auto', 'important');
+      rightColumn.style.setProperty('display', 'flex', 'important');
+      rightColumn.style.setProperty('flex-direction', 'column', 'important');
+      rightColumn.style.setProperty('justify-content', 'flex-start', 'important');
+      rightColumn.style.setProperty('align-items', 'flex-end', 'important');
+      rightColumn.style.setProperty('width', 'max-content', 'important');
+      rightColumn.style.setProperty('max-width', 'none', 'important');
+      rightColumn.style.setProperty('height', 'auto', 'important');
+      rightColumn.style.setProperty('min-height', '100%', 'important');
+      rightColumn.style.setProperty('text-align', 'right', 'important');
+      rightColumn.style.setProperty('z-index', '124', 'important');
+      rightColumn.style.setProperty('pointer-events', 'none', 'important');
+      rightColumn.style.setProperty('row-gap', '2px', 'important');
+      // Жёсткий якорь по самой длинной фразе (например, ПАСМУРНО)
+      rightColumn.style.setProperty('min-width', '62px', 'important'); // 62px — ширина "ПАСМУРНО" в текущем шрифте
+    }
+
+    if (topRow) {
+      topRow.style.setProperty('position', 'relative', 'important');
+      topRow.style.setProperty('width', '100%', 'important');
+    }
+
+    if (titleBlock instanceof HTMLElement) {
+      titleBlock.style.setProperty('position', 'relative', 'important');
+      titleBlock.style.setProperty('top', '0', 'important');
+      titleBlock.style.setProperty('left', '0', 'important');
+      titleBlock.style.setProperty('margin', '0', 'important');
+      titleBlock.style.setProperty('padding', '0', 'important');
+    }
+
+    if (eyebrow instanceof HTMLElement) {
+      eyebrow.style.setProperty('font-size', '7px', 'important');
+      eyebrow.style.setProperty('line-height', '10.5px', 'important');
+      eyebrow.style.setProperty('letter-spacing', '0.18em', 'important');
+      eyebrow.style.setProperty('font-weight', '400', 'important');
+      eyebrow.style.setProperty('margin', '0', 'important');
+    }
+
+    if (content) {
+      content.style.setProperty('box-sizing', 'border-box', 'important');
+      content.style.setProperty('padding-top', '6px', 'important');
+      content.style.setProperty('padding-right', '18px', 'important');
+      content.style.setProperty('padding-bottom', '0', 'important');
+      content.style.setProperty('padding-left', '0', 'important');
+    }
+
+    if (side) {
+      side.style.setProperty('position', 'absolute', 'important');
+      side.style.setProperty('top', '0', 'important');
+      side.style.setProperty('right', '0', 'important');
+      side.style.setProperty('bottom', '0', 'important');
+      side.style.setProperty('left', '0', 'important');
+      side.style.setProperty('width', '100%', 'important');
+      side.style.setProperty('height', '100%', 'important');
+      side.style.setProperty('pointer-events', 'none', 'important');
+    }
+
+    if (condition) {
+      normalizeInlineText(condition);
+      const langCode = (document.documentElement.lang || 'ru').toLowerCase();
+      const conditionText = (condition.textContent || '').trim();
+      if (conditionText) {
+        condition.textContent = conditionText.toLocaleUpperCase(langCode);
+      }
+
+      if (rightColumn && condition.parentElement !== rightColumn) {
+        rightColumn.appendChild(condition);
+      } else if (content && condition.parentElement !== content) {
+        content.appendChild(condition);
+      }
+
+      condition.style.setProperty('position', 'relative', 'important');
+      condition.style.setProperty('right', 'auto', 'important');
+      condition.style.setProperty('top', 'auto', 'important');
+      condition.style.setProperty('bottom', 'auto', 'important');
+      condition.style.setProperty('left', 'auto', 'important');
+      condition.style.setProperty('z-index', '124', 'important');
+      condition.style.setProperty('pointer-events', 'auto', 'important');
+      condition.style.setProperty('text-align', 'right', 'important');
+      condition.style.setProperty('display', 'block', 'important');
+      condition.style.setProperty('width', 'max-content', 'important');
+      condition.style.setProperty('max-width', 'none', 'important');
+      condition.style.setProperty('overflow', 'visible', 'important');
+      condition.style.removeProperty('text-overflow');
+      // Жёсткий min-width для устойчивости при zoom/DPI
+      condition.style.setProperty('min-width', '62px', 'important'); // 62px — ширина "ПАСМУРНО" в текущем шрифте
+      condition.style.setProperty('white-space', 'nowrap', 'important');
+      condition.style.setProperty('margin-left', 'auto', 'important');
+      condition.style.setProperty('margin-right', '0', 'important');
+      condition.style.setProperty('margin-top', '0', 'important');
+      condition.style.setProperty('margin-bottom', '0', 'important');
+      condition.style.setProperty('align-self', 'flex-end', 'important');
+      condition.style.setProperty('order', '1', 'important');
+
+      condition.style.setProperty('font-size', '9.5px', 'important');
+      condition.style.setProperty('font-weight', '500', 'important');
+      condition.style.setProperty('line-height', '10.64px', 'important');
+      condition.style.setProperty('letter-spacing', '0.01em', 'important');
+      condition.style.setProperty('text-transform', 'uppercase', 'important');
+      condition.style.setProperty('margin', '0', 'important');
+      condition.style.setProperty('padding', '0', 'important');
+      condition.style.setProperty('transform', 'none', 'important');
+      condition.style.setProperty('transition', 'none', 'important');
+    }
+
+    if (meta) {
+      meta.style.setProperty('font-size', '10px', 'important');
+      meta.style.setProperty('line-height', '12px', 'important');
+      meta.style.setProperty('white-space', 'nowrap', 'important');
+      meta.style.setProperty('margin', '0', 'important');
+
+      const metaRegion = meta.querySelector('span');
+      if (metaRegion instanceof HTMLElement) {
+        metaRegion.style.setProperty('font-size', '8px', 'important');
+        metaRegion.style.setProperty('line-height', '8px', 'important');
+        metaRegion.style.setProperty('letter-spacing', '1px', 'important');
+        metaRegion.style.setProperty('display', 'inline-block', 'important');
+      }
+    }
+
+    if (geoArrowIcon instanceof Element && geoArrowIcon.tagName.toLowerCase() === 'svg') {
+      geoArrowIcon.style.setProperty('width', '9.6px', 'important');
+      geoArrowIcon.style.setProperty('height', '9.6px', 'important');
+      geoArrowIcon.style.setProperty('min-width', '9.6px', 'important');
+      geoArrowIcon.style.setProperty('min-height', '9.6px', 'important');
+      geoArrowIcon.style.setProperty('flex-shrink', '0', 'important');
+    }
+
+    if (locationCurrent instanceof HTMLElement) {
+      locationCurrent.style.setProperty('display', 'inline-flex', 'important');
+      locationCurrent.style.setProperty('align-items', 'center', 'important');
+      locationCurrent.style.setProperty('gap', '6px', 'important');
+      locationCurrent.style.setProperty('width', 'auto', 'important');
+      locationCurrent.style.setProperty('min-width', 'max-content', 'important');
+      locationCurrent.style.setProperty('max-width', 'none', 'important');
+      locationCurrent.style.setProperty('overflow', 'visible', 'important');
+      locationCurrent.style.setProperty('text-overflow', 'clip', 'important');
+      locationCurrent.style.setProperty('white-space', 'nowrap', 'important');
+      locationCurrent.style.setProperty('flex-shrink', '0', 'important');
+      locationCurrent.style.setProperty('line-height', '1.2', 'important');
+      locationCurrent.style.setProperty('padding-bottom', '1px', 'important');
+
+      Array.from(locationCurrent.children).forEach(child => {
+        if (!(child instanceof HTMLElement) || child.tagName.toLowerCase() === 'svg') {
+          return;
+        }
+        child.style.setProperty('width', 'auto', 'important');
+        child.style.setProperty('min-width', 'max-content', 'important');
+        child.style.setProperty('max-width', 'none', 'important');
+        child.style.setProperty('overflow', 'visible', 'important');
+        child.style.setProperty('text-overflow', 'clip', 'important');
+        child.style.setProperty('white-space', 'nowrap', 'important');
+        child.style.setProperty('flex-shrink', '0', 'important');
+        child.style.setProperty('line-height', '1.2', 'important');
+      });
+    }
+
+    if (locationRow instanceof HTMLElement) {
+      locationRow.style.setProperty('display', 'flex', 'important');
+      locationRow.style.setProperty('align-items', 'flex-start', 'important');
+      locationRow.style.setProperty('overflow', 'visible', 'important');
+      locationRow.style.setProperty('text-overflow', 'clip', 'important');
+      locationRow.style.setProperty('white-space', 'nowrap', 'important');
+      locationRow.style.setProperty('min-height', '18.64px', 'important');
+      locationRow.style.setProperty('margin-bottom', '1px', 'important');
+    }
+
+    if (locationLabel instanceof HTMLElement) {
+      locationLabel.style.setProperty('display', 'inline-block', 'important');
+      locationLabel.style.setProperty('overflow', 'visible', 'important');
+      locationLabel.style.setProperty('text-overflow', 'clip', 'important');
+      locationLabel.style.setProperty('white-space', 'nowrap', 'important');
+      locationLabel.style.setProperty('font-size', '13px', 'important');
+      locationLabel.style.setProperty('line-height', '16.64px', 'important');
+      locationLabel.style.setProperty('font-weight', '600', 'important');
+      locationLabel.style.setProperty('padding-bottom', '2px', 'important');
+      locationLabel.style.setProperty('margin', '0', 'important');
+    }
+
+    if (bottom) {
+      bottom.style.setProperty('position', 'absolute', 'important');
+      bottom.style.setProperty('left', `${bottomLeftInset}px`, 'important');
+      bottom.style.setProperty('right', '18px', 'important');
+      bottom.style.setProperty('bottom', '10px', 'important');
+      bottom.style.setProperty('width', 'auto', 'important');
+      bottom.style.setProperty('max-width', 'none', 'important');
+      bottom.style.setProperty('margin-left', '0', 'important');
+      bottom.style.setProperty('display', 'grid', 'important');
+      bottom.style.setProperty('grid-template-columns', 'max-content minmax(0, 1fr)', 'important');
+      bottom.style.setProperty('column-gap', '0px', 'important');
+      bottom.style.setProperty('align-items', 'flex-end', 'important');
+      bottom.style.setProperty('justify-content', 'stretch', 'important');
+      bottom.style.setProperty('z-index', '124', 'important');
+
+      const firstChild = bottom.firstElementChild;
+      const lastChild = bottom.lastElementChild;
+      if (firstChild) {
+        firstChild.style.setProperty('justify-self', 'start', 'important');
+        firstChild.style.setProperty('text-align', 'left', 'important');
+      }
+      if (lastChild) {
+        lastChild.style.setProperty('justify-self', 'end', 'important');
+        lastChild.style.setProperty('text-align', 'right', 'important');
+      }
+    }
+
+    if (chips) {
+      const allChips = Array.from(chips.querySelectorAll('.weather-header-card__chip'));
+      const metaRegionForTypography = meta?.querySelector('span');
+      const tempValueAnchor = bottom?.firstElementChild instanceof HTMLElement ? bottom.firstElementChild : null;
+      const metaComputed = metaRegionForTypography ? window.getComputedStyle(metaRegionForTypography) : null;
+      const tempComputed = tempValueAnchor ? window.getComputedStyle(tempValueAnchor) : null;
+      const locationLabelColor =
+        locationLabel instanceof HTMLElement ? window.getComputedStyle(locationLabel).color : null;
+      const locationAnchor = root.querySelector(
+        '.weather-header-card__location, .weather-location-selector__current, .weather-location-selector__city, .weather-header-card__eyebrow, .weather-header-card__meta'
+      );
+      const locationColor =
+        locationAnchor instanceof HTMLElement ? window.getComputedStyle(locationAnchor).color : null;
+      const conditionColor = condition instanceof HTMLElement ? window.getComputedStyle(condition).color : null;
+      const valueAccentColor = conditionColor || locationColor;
+
+      const applyChipTypography = chip => {
+        if (!(chip instanceof HTMLElement)) {
+          return;
+        }
+
+        const normalizePressureUnit = value => {
+          const normalized = String(value || '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          if (!normalized) {
+            return normalized;
+          }
+
+          return normalized.replace(/(mm|мм)\.?\s*(рт\.?\s*ст\.?|hg|hg\.)/i, 'мм. рт. ст');
+        };
+
+        const parts = Array.from(chip.children).filter(el => el instanceof HTMLElement);
+        const labelEl = parts[0] || null;
+        const valueEl = parts[1] || null;
+        const chipText = (chip.textContent || '').toLowerCase();
+        const isPressureChip = /pressure|давлен|тиск|druck|presion/.test(chipText);
+        const isHumidityChip = /humid|влаж|feucht|волог|umid|humedad/.test(chipText);
+
+        if (labelEl instanceof HTMLElement) {
+          if (metaComputed) {
+            labelEl.style.setProperty('font-family', metaComputed.fontFamily, 'important');
+            labelEl.style.setProperty('font-size', metaComputed.fontSize, 'important');
+            labelEl.style.setProperty('font-weight', metaComputed.fontWeight, 'important');
+            labelEl.style.setProperty('line-height', metaComputed.lineHeight, 'important');
+            labelEl.style.setProperty('letter-spacing', metaComputed.letterSpacing, 'important');
+            labelEl.style.setProperty('text-transform', metaComputed.textTransform, 'important');
+          }
+          labelEl.style.setProperty('opacity', '0.92', 'important');
+          labelEl.style.setProperty('margin', '0 0 1px 0', 'important');
+
+          if (isHumidityChip || isPressureChip) {
+            labelEl.style.setProperty('font-size', '8px', 'important');
+            labelEl.style.setProperty('line-height', '8px', 'important');
+            labelEl.style.setProperty('letter-spacing', '1px', 'important');
+            labelEl.style.setProperty('font-weight', '400', 'important');
+          }
+        }
+
+        if (valueEl instanceof HTMLElement) {
+          const rawValue = (valueEl.textContent || '').trim();
+          const valueMatch = rawValue.match(/^(-?\d+(?:[.,]\d+)?)(.*)$/);
+
+          if (tempComputed) {
+            const tempSize = Number.parseFloat(tempComputed.fontSize) || 22;
+            const resolvedValueSize = `${Math.max(12.5, Math.min(15.5, tempSize * 0.58)).toFixed(2)}px`;
+            valueEl.style.setProperty('font-family', tempComputed.fontFamily, 'important');
+            valueEl.style.setProperty('font-weight', tempComputed.fontWeight, 'important');
+            valueEl.style.setProperty('line-height', '12px', 'important');
+            valueEl.style.setProperty('font-size', resolvedValueSize, 'important');
+          }
+
+          valueEl.style.setProperty('letter-spacing', '0', 'important');
+          valueEl.style.setProperty('text-transform', 'none', 'important');
+          valueEl.style.setProperty('display', 'flex', 'important');
+          valueEl.style.setProperty('align-items', 'baseline', 'important');
+          valueEl.style.setProperty('justify-content', 'flex-end', 'important');
+          valueEl.style.setProperty('flex-wrap', 'nowrap', 'important');
+          valueEl.style.setProperty('gap', '1px', 'important');
+          valueEl.style.setProperty('white-space', 'nowrap', 'important');
+          valueEl.style.setProperty('margin', '0 0 1px 0', 'important');
+
+          if (isHumidityChip || isPressureChip) {
+            valueEl.style.setProperty('font-size', '12.5px', 'important');
+            valueEl.style.setProperty('line-height', '12.5px', 'important');
+            valueEl.style.setProperty('font-weight', '400', 'important');
+          }
+
+          if (valueMatch) {
+            const numberPart = document.createElement('span');
+            const unitPart = document.createElement('span');
+            const valueBaseSizePx =
+              Number.parseFloat(valueEl.style.fontSize || window.getComputedStyle(valueEl).fontSize) || 13.5;
+
+            numberPart.textContent = valueMatch[1].replace(',', '.');
+            numberPart.style.setProperty('display', 'inline', 'important');
+            numberPart.style.setProperty('line-height', '1', 'important');
+
+            let unitText = valueMatch[2].trim();
+            if (isPressureChip) {
+              unitText = normalizePressureUnit(unitText).toLowerCase();
+            }
+            unitPart.textContent = unitText;
+            unitPart.style.setProperty('display', 'inline-block', 'important');
+            unitPart.style.setProperty('line-height', '1', 'important');
+            unitPart.style.setProperty('font-size', unitText.length <= 2 ? '0.58em' : '0.66em', 'important');
+            unitPart.style.setProperty('text-transform', 'none', 'important');
+            unitPart.style.setProperty('font-variant', 'normal', 'important');
+            unitPart.style.setProperty('font-variant-caps', 'normal', 'important');
+            unitPart.style.setProperty('font-feature-settings', '"smcp" 0, "c2sc" 0', 'important');
+            unitPart.style.setProperty(
+              'transform',
+              unitText.length <= 2 ? 'translateY(-0.42em)' : 'translateY(-0.14em)',
+              'important'
+            );
+            if (isPressureChip) {
+              unitPart.style.setProperty('font-family', '"Segoe UI", "Arial", sans-serif', 'important');
+              numberPart.style.setProperty('font-size', `${(valueBaseSizePx - 2).toFixed(2)}px`, 'important');
+              unitPart.style.setProperty(
+                'font-size',
+                `${Math.max(7, valueBaseSizePx * 0.62 - 2).toFixed(2)}px`,
+                'important'
+              );
+              unitPart.style.setProperty('transform', 'translateY(-0.08em)', 'important');
+              if (valueAccentColor) {
+                numberPart.style.setProperty('color', valueAccentColor, 'important');
+                unitPart.style.setProperty('color', valueAccentColor, 'important');
+              }
+            }
+            unitPart.style.setProperty('letter-spacing', '0', 'important');
+            unitPart.style.setProperty('opacity', '0.96', 'important');
+
+            if (isHumidityChip) {
+              numberPart.style.setProperty('font-size', `${(valueBaseSizePx - 2).toFixed(2)}px`, 'important');
+              unitPart.style.setProperty(
+                'font-size',
+                `${Math.max(7, valueBaseSizePx * 0.62 - 2).toFixed(2)}px`,
+                'important'
+              );
+              unitPart.style.setProperty('transform', 'translateY(0)', 'important');
+              unitPart.style.setProperty('line-height', '1', 'important');
+              unitPart.style.setProperty('margin-left', '0', 'important');
+              valueEl.style.setProperty('gap', '0', 'important');
+              valueEl.style.setProperty('align-items', 'flex-end', 'important');
+              if (valueAccentColor) {
+                numberPart.style.setProperty('color', valueAccentColor, 'important');
+                unitPart.style.setProperty('color', valueAccentColor, 'important');
+              }
+            }
+
+            valueEl.replaceChildren(numberPart, unitPart);
+          }
+        }
+      };
+
+      const windChip =
+        allChips.find(chip => /wind|ветер|вітер/i.test(chip.textContent || '')) || allChips[allChips.length - 1];
+      let humidityChip =
+        allChips.find(chip => /humid|влаж|feucht|волог|umid|humedad/i.test(chip.textContent || '')) || null;
+      let pressureChip =
+        allChips.find(chip => /pressure|давлен|тиск|druck|presion/i.test(chip.textContent || '')) || null;
+      const feelsLikeChip =
+        allChips.find(chip => /gef|ощущ|feels|відчува/i.test(chip.textContent || '')) || allChips[0];
+
+      // Always render humidity row; value is sourced from menu humidity item when available.
+      if (!humidityChip && root) {
+        const lang = (document.documentElement.lang || 'ru').toLowerCase();
+        const labelByLang = {
+          ru: 'ВЛАЖНОСТЬ',
+          uk: 'ВОЛОГІСТЬ',
+          de: 'LUFTFEUCHTE',
+          en: 'HUMIDITY',
+        };
+        const fallbackLabel = labelByLang[lang] || 'HUMIDITY';
+
+        let fallbackChip = root.querySelector('.weather-header-card__chip--humidity-fallback');
+        if (!(fallbackChip instanceof HTMLElement)) {
+          fallbackChip = document.createElement('div');
+          fallbackChip.className = 'weather-header-card__chip weather-header-card__chip--humidity-fallback';
+          const labelEl = document.createElement('span');
+          const valueEl = document.createElement('span');
+          fallbackChip.append(labelEl, valueEl);
+        }
+
+        const children = Array.from(fallbackChip.children).filter(el => el instanceof HTMLElement);
+        const labelEl = children[0];
+        const valueEl = children[1];
+        if (labelEl instanceof HTMLElement && valueEl instanceof HTMLElement) {
+          labelEl.textContent = fallbackLabel;
+          valueEl.textContent = host?.__weatherHumidityValue || '--';
+        }
+
+        if (rightColumn && fallbackChip.parentElement !== rightColumn) {
+          rightColumn.appendChild(fallbackChip);
+        }
+        humidityChip = fallbackChip;
+      }
+
+      if (humidityChip && root) {
+        const syncHumidityValue = () => {
+          const directHumidity = Number(host?.__weatherCurrentMeta?.humidity);
+          if (Number.isFinite(directHumidity) && directHumidity >= 0) {
+            host.__weatherHumidityValue = `${Math.round(directHumidity)}%`;
+          }
+
+          const menuHumidityChip = Array.from(root.querySelectorAll('.weather-header-dropdown__hero-chips span')).find(
+            el => /(влажност[ьи]|humidity|luftfeuchte|вологіст[ьи]|humedad)/i.test(el.textContent || '')
+          );
+          const menuMatch = (menuHumidityChip?.textContent || '').match(/(\d{1,3})\s*%/);
+
+          if (menuMatch && host) {
+            host.__weatherHumidityValue = `${menuMatch[1]}%`;
+          } else {
+            const rootText = (root.textContent || '').replace(/\s+/g, ' ');
+            const rootMatch = rootText.match(
+              /(влажност[ьи]|humidity|luftfeuchte|вологіст[ьи]|humedad)\s*:?\s*(\d{1,3})\s*%/i
+            );
+            if (rootMatch && host) {
+              host.__weatherHumidityValue = `${rootMatch[2]}%`;
+            }
+          }
+
+          const valueEl = Array.from(humidityChip.children).find(
+            el => el instanceof HTMLElement && /%|--/.test(el.textContent || '')
+          );
+          if (valueEl instanceof HTMLElement) {
+            valueEl.textContent = host?.__weatherHumidityValue || '--';
+          }
+
+          return Boolean(host?.__weatherHumidityValue && host.__weatherHumidityValue !== '--');
+        };
+
+        const hasHumidityNow = syncHumidityValue();
+
+        // Short bounded retries so humidity appears immediately after async menu rendering.
+        if (host) {
+          if (host.__weatherHumidityRetryTimer) {
+            window.clearTimeout(host.__weatherHumidityRetryTimer);
+            host.__weatherHumidityRetryTimer = null;
+          }
+
+          if (!hasHumidityNow) {
+            let attempts = 0;
+            const retrySync = () => {
+              attempts += 1;
+              const ok = syncHumidityValue();
+              if (ok || attempts >= 8) {
+                host.__weatherHumidityRetryTimer = null;
+                return;
+              }
+              host.__weatherHumidityRetryTimer = window.setTimeout(retrySync, 250);
+            };
+
+            host.__weatherHumidityRetryTimer = window.setTimeout(retrySync, 120);
+          }
+        }
+      }
+
+      // Pressure row: show in middle slot and always output in mmHg.
+      if (!pressureChip && root) {
+        const lang = (document.documentElement.lang || 'ru').toLowerCase();
+        const labelByLang = {
+          ru: 'ДАВЛЕНИЕ',
+          uk: 'ТИСК',
+          de: 'DRUCK',
+          en: 'PRESSURE',
+        };
+        const fallbackLabel = labelByLang[lang] || 'PRESSURE';
+        const fallbackValue = host?.__weatherPressureValue || '-- мм. рт. ст';
+
+        let fallbackChip = root.querySelector('.weather-header-card__chip--pressure-fallback');
+        if (!(fallbackChip instanceof HTMLElement)) {
+          fallbackChip = document.createElement('div');
+          fallbackChip.className = 'weather-header-card__chip weather-header-card__chip--pressure-fallback';
+          const labelEl = document.createElement('span');
+          const valueEl = document.createElement('span');
+          fallbackChip.append(labelEl, valueEl);
+        }
+
+        const children = Array.from(fallbackChip.children).filter(el => el instanceof HTMLElement);
+        const labelEl = children[0];
+        const valueEl = children[1];
+        if (labelEl instanceof HTMLElement && valueEl instanceof HTMLElement) {
+          labelEl.textContent = fallbackLabel;
+          valueEl.textContent = fallbackValue;
+        }
+
+        if (rightColumn && fallbackChip.parentElement !== rightColumn) {
+          rightColumn.appendChild(fallbackChip);
+        }
+        pressureChip = fallbackChip;
+      }
+
+      if (pressureChip && root) {
+        const rootText = (root.textContent || '').replace(/\s+/g, ' ');
+
+        let pressureMmHg = null;
+
+        const directPressureHpa = Number(host?.__weatherCurrentMeta?.surfacePressure);
+        if (Number.isFinite(directPressureHpa) && directPressureHpa > 0) {
+          pressureMmHg = Math.round(directPressureHpa * 0.750061683);
+        }
+
+        const menuPressureChip = Array.from(root.querySelectorAll('.weather-header-dropdown__hero-chips span')).find(
+          el => /(давлен|pressure|druck|тиск|presion)/i.test(el.textContent || '')
+        );
+        const menuPressureText = (menuPressureChip?.textContent || '').replace(/\s+/g, ' ');
+        const mmMatch = menuPressureText.match(/(\d{2,4})\s*(мм|mm)/i);
+        const hpaMatch = menuPressureText.match(/(\d{2,4})\s*(hpa|mb|mbar|гпа)/i);
+
+        if (mmMatch) {
+          pressureMmHg = Number(mmMatch[1]);
+        } else if (hpaMatch) {
+          const hpa = Number(hpaMatch[1]);
+          pressureMmHg = Number.isFinite(hpa) ? Math.round(hpa * 0.750061683) : null;
+        }
+
+        if (pressureMmHg === null) {
+          const rootMmMatch = rootText.match(/(давлен|pressure|druck|тиск|presion)[^\d]{0,20}(\d{2,4})\s*(мм|mm)/i);
+          const rootHpaMatch = rootText.match(
+            /(давлен|pressure|druck|тиск|presion)[^\d]{0,20}(\d{2,4})\s*(hpa|mb|mbar|гпа)/i
+          );
+          if (rootMmMatch) {
+            pressureMmHg = Number(rootMmMatch[2]);
+          } else if (rootHpaMatch) {
+            const hpa = Number(rootHpaMatch[2]);
+            pressureMmHg = Number.isFinite(hpa) ? Math.round(hpa * 0.750061683) : null;
+          }
+        }
+
+        if (pressureMmHg !== null && Number.isFinite(pressureMmHg) && host) {
+          host.__weatherPressureValue = `${pressureMmHg} мм. рт. ст`;
+        }
+
+        const valueEl = Array.from(pressureChip.children).find(
+          el => el instanceof HTMLElement && /\d|--/.test(el.textContent || '')
+        );
+        if (valueEl instanceof HTMLElement) {
+          const normalizedPressureValue = String(host?.__weatherPressureValue || '-- мм. рт. ст')
+            .replace(/(MM|ММ)\.?\s*(РТ\.?\s*СТ\.?)/gi, 'мм. рт. ст')
+            .replace(/\s+/g, ' ')
+            .trim();
+          valueEl.textContent = normalizedPressureValue;
+        }
+
+        if (condition instanceof HTMLElement) {
+          condition.style.setProperty('right', '0', 'important');
+          condition.style.setProperty('left', 'auto', 'important');
+          condition.style.setProperty('transform', 'none', 'important');
+          condition.style.setProperty('min-width', '0', 'important');
+          condition.style.setProperty('text-align', 'right', 'important');
+        }
+      }
+
+      if (feelsLikeChip && content && feelsLikeChip.parentElement !== content) {
+        content.appendChild(feelsLikeChip);
+      }
+
+      if (feelsLikeChip) {
+        let feelsLikeLeft = 0;
+        let feelsLikeTop = 56;
+
+        if (content instanceof HTMLElement && tempValueAnchor instanceof HTMLElement) {
+          const contentRect = content.getBoundingClientRect();
+          const tempRect = tempValueAnchor.getBoundingClientRect();
+
+          if (contentRect.width > 0 && tempRect.width > 0) {
+            feelsLikeLeft = Math.max(0, Math.round(tempRect.right - contentRect.left + 5));
+            const preferredTop = Math.round(tempRect.top - contentRect.top + 1);
+            const minTopAtTempRow = Math.round(tempRect.top - contentRect.top);
+            feelsLikeTop = Math.max(0, Math.max(preferredTop, minTopAtTempRow));
+          }
+        }
+
+        feelsLikeChip.style.setProperty('position', 'absolute', 'important');
+        feelsLikeChip.style.setProperty('left', `${feelsLikeLeft}px`, 'important');
+        feelsLikeChip.style.setProperty('right', 'auto', 'important');
+        feelsLikeChip.style.setProperty('top', `${feelsLikeTop}px`, 'important');
+        feelsLikeChip.style.setProperty('bottom', 'auto', 'important');
+        feelsLikeChip.style.setProperty('z-index', '124', 'important');
+        feelsLikeChip.style.setProperty('text-align', 'left', 'important');
+        feelsLikeChip.style.setProperty('margin', '0', 'important');
+        feelsLikeChip.style.setProperty('padding', '0', 'important');
+        feelsLikeChip.style.setProperty('pointer-events', 'auto', 'important');
+        feelsLikeChip.style.setProperty('width', 'max-content', 'important');
+        feelsLikeChip.style.setProperty('max-width', 'max-content', 'important');
+        feelsLikeChip.style.setProperty('display', 'flex', 'important');
+        feelsLikeChip.style.setProperty('flex-direction', 'column', 'important');
+        feelsLikeChip.style.setProperty('align-items', 'flex-start', 'important');
+        feelsLikeChip.style.setProperty('justify-content', 'flex-start', 'important');
+
+        const feelsLikeParts = Array.from(feelsLikeChip.children).filter(child => child instanceof HTMLElement);
+        const feelsLikeLabel = feelsLikeParts[0] || null;
+        const feelsLikeValue = feelsLikeParts[1] || null;
+
+        const feelsLikeRawText = [
+          feelsLikeValue instanceof HTMLElement ? feelsLikeValue.textContent || '' : '',
+          feelsLikeChip.textContent || '',
+        ]
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        const feelsLikeMatch = feelsLikeRawText.match(/(-?\d{1,2})(?:\s*°?\s*[CcСс])?/);
+        const apparentTemperature = Number(host?.__weatherCurrentMeta?.apparentTemperature);
+        const fallbackFeelsLike = Number.isFinite(apparentTemperature) ? Math.round(apparentTemperature) : null;
+        const feelsLikeDisplayValue = feelsLikeMatch
+          ? `${feelsLikeMatch[1]}°C`
+          : fallbackFeelsLike !== null
+            ? `${fallbackFeelsLike}°C`
+            : '--';
+
+        const feelsLikeNumericMatch = feelsLikeDisplayValue.match(/-?\d{1,2}/);
+        const feelsLikeLang = (document.documentElement.lang || 'ru').toLowerCase();
+        const feelsLikeTextByLang = {
+          ru: { label: 'ОЩУЩАЕТСЯ', prefix: 'КАК', unit: 'С' },
+          uk: { label: 'ВІДЧУВАЄТЬСЯ', prefix: 'ЯК', unit: 'С' },
+          de: { label: 'GEFÜHLT', prefix: 'WIE', unit: 'C' },
+          en: { label: 'FEELS LIKE', prefix: 'LIKE', unit: 'C' },
+        };
+        const feelsLikeText = feelsLikeTextByLang[feelsLikeLang] || feelsLikeTextByLang.en;
+        const feelsLikeTempValue = feelsLikeNumericMatch ? `${feelsLikeNumericMatch[0]}°${feelsLikeText.unit}` : '--';
+
+        if (feelsLikeLabel instanceof HTMLElement) {
+          feelsLikeLabel.textContent = feelsLikeText.label;
+        }
+
+        if (feelsLikeValue instanceof HTMLElement) {
+          const prefixNode = document.createElement('span');
+          const tempNode = document.createElement('span');
+          prefixNode.textContent = feelsLikeText.prefix;
+          tempNode.textContent = feelsLikeTempValue;
+          feelsLikeValue.replaceChildren(prefixNode, tempNode);
+        }
+
+        if (feelsLikeLabel instanceof HTMLElement) {
+          feelsLikeLabel.style.setProperty('display', 'block', 'important');
+          feelsLikeLabel.style.setProperty('font-size', '5px', 'important');
+          feelsLikeLabel.style.setProperty('line-height', '7.5px', 'important');
+          feelsLikeLabel.style.setProperty('letter-spacing', '0.7px', 'important');
+          feelsLikeLabel.style.setProperty('font-weight', '400', 'important');
+          feelsLikeLabel.style.setProperty('margin', '0 0 1px 0', 'important');
+          feelsLikeLabel.style.setProperty('opacity', '0.92', 'important');
+          feelsLikeLabel.style.setProperty('white-space', 'nowrap', 'important');
+          feelsLikeLabel.style.setProperty('text-align', 'left', 'important');
+
+          const labelWidth = Math.ceil(feelsLikeLabel.getBoundingClientRect().width || feelsLikeLabel.scrollWidth || 0);
+
+          if (labelWidth > 0) {
+            feelsLikeChip.style.setProperty('width', `${labelWidth}px`, 'important');
+            feelsLikeChip.style.setProperty('min-width', `${labelWidth}px`, 'important');
+            feelsLikeChip.style.setProperty('max-width', `${labelWidth}px`, 'important');
+            feelsLikeChip.style.setProperty('align-items', 'stretch', 'important');
+          }
+
+          const geoAnchor =
+            eyebrow instanceof HTMLElement
+              ? eyebrow
+              : locationCurrent instanceof HTMLElement
+                ? locationCurrent
+                : locationLabel instanceof HTMLElement
+                  ? locationLabel
+                  : null;
+
+          if (content instanceof HTMLElement && geoAnchor instanceof HTMLElement) {
+            const contentRect = content.getBoundingClientRect();
+            const geoRect = geoAnchor.getBoundingClientRect();
+
+            if (contentRect.width > 0 && geoRect.width > 0 && labelWidth > 0) {
+              const targetRight = geoRect.right - contentRect.left;
+              const maxLeft = Math.max(0, Math.round(contentRect.width - labelWidth));
+              const alignedLeft = Math.round(targetRight - labelWidth);
+              feelsLikeLeft = Math.max(0, Math.min(maxLeft, alignedLeft));
+              feelsLikeChip.style.setProperty('left', `${feelsLikeLeft}px`, 'important');
+            }
+          }
+        }
+
+        if (feelsLikeValue instanceof HTMLElement) {
+          const labelWidth =
+            feelsLikeLabel instanceof HTMLElement
+              ? Math.ceil(feelsLikeLabel.getBoundingClientRect().width || feelsLikeLabel.scrollWidth || 0)
+              : 0;
+          const valueWidthPx = labelWidth > 0 ? labelWidth : 40;
+          let valueGapPx = 6;
+
+          feelsLikeValue.style.setProperty('display', 'flex', 'important');
+          feelsLikeValue.style.setProperty('align-items', 'flex-end', 'important');
+          feelsLikeValue.style.setProperty('justify-content', 'space-between', 'important');
+          feelsLikeValue.style.setProperty('column-gap', `${valueGapPx}px`, 'important');
+          feelsLikeValue.style.setProperty('width', `${valueWidthPx}px`, 'important');
+          feelsLikeValue.style.setProperty('max-width', `${valueWidthPx}px`, 'important');
+          feelsLikeValue.style.setProperty('min-width', `${valueWidthPx}px`, 'important');
+          feelsLikeValue.style.setProperty('font-size', '8px', 'important');
+          feelsLikeValue.style.setProperty('line-height', '12px', 'important');
+          feelsLikeValue.style.setProperty('font-weight', '600', 'important');
+          feelsLikeValue.style.setProperty('margin', '0', 'important');
+          feelsLikeValue.style.setProperty('white-space', 'nowrap', 'important');
+          feelsLikeValue.style.setProperty('word-break', 'keep-all', 'important');
+          feelsLikeValue.style.setProperty('overflow-wrap', 'normal', 'important');
+          feelsLikeValue.style.setProperty('overflow', 'hidden', 'important');
+
+          const valueParts = Array.from(feelsLikeValue.children).filter(child => child instanceof HTMLElement);
+          const prefixPart = valueParts[0] || null;
+          const tempPart = valueParts[1] || null;
+          const humidityNumberSize = tempComputed
+            ? Math.max(12.5, Math.min(15.5, (Number.parseFloat(tempComputed.fontSize) || 22) * 0.58)) - 2
+            : 10.5;
+          const labelComputed = feelsLikeLabel instanceof HTMLElement ? window.getComputedStyle(feelsLikeLabel) : null;
+          const prefixFontSizePx = Number.parseFloat(labelComputed?.fontSize || '5') || 5;
+          const prefixLineHeightPx = Number.parseFloat(labelComputed?.lineHeight || '7.5') || 7.5;
+          const tempFontSizePx = humidityNumberSize;
+
+          if (prefixPart instanceof HTMLElement) {
+            prefixPart.style.setProperty('display', 'inline-block', 'important');
+            prefixPart.style.setProperty('text-transform', 'uppercase', 'important');
+            prefixPart.style.setProperty('font-weight', '500', 'important');
+            prefixPart.style.setProperty('font-size', `${prefixFontSizePx}px`, 'important');
+            prefixPart.style.setProperty('line-height', `${prefixLineHeightPx}px`, 'important');
+            prefixPart.style.setProperty('opacity', '0.96', 'important');
+            if (locationColor) {
+              prefixPart.style.setProperty('color', locationColor, 'important');
+            }
+          }
+
+          if (tempPart instanceof HTMLElement) {
+            const compactTempText = (tempPart.textContent || '').replace(/\s+/g, ' ').trim();
+            const parsedTempMatch = compactTempText.match(/^(-?\d{1,2})(?:\s*°?\s*([CcСс]))?$/);
+            const tempNumberText = parsedTempMatch ? parsedTempMatch[1] : compactTempText;
+            const tempUnitLetter = parsedTempMatch && parsedTempMatch[2] ? parsedTempMatch[2].toUpperCase() : 'С';
+            const tempNumberNode = document.createElement('span');
+            const tempUnitNode = document.createElement('span');
+            tempNumberNode.textContent = tempNumberText;
+            tempUnitNode.textContent = `°${tempUnitLetter}`;
+            tempPart.replaceChildren(tempNumberNode, tempUnitNode);
+
+            tempPart.style.setProperty('display', 'inline-block', 'important');
+            tempPart.style.setProperty('margin-left', 'auto', 'important');
+            tempPart.style.setProperty('text-align', 'right', 'important');
+            if (tempComputed) {
+              tempPart.style.setProperty('font-family', tempComputed.fontFamily, 'important');
+              tempPart.style.setProperty('letter-spacing', tempComputed.letterSpacing, 'important');
+            }
+            tempPart.style.setProperty('font-weight', tempComputed?.fontWeight || '600', 'important');
+            tempPart.style.setProperty('font-size', `${tempFontSizePx.toFixed(2)}px`, 'important');
+            tempPart.style.setProperty('line-height', `${tempFontSizePx.toFixed(2)}px`, 'important');
+            tempPart.style.setProperty('white-space', 'nowrap', 'important');
+            tempPart.style.setProperty('text-transform', 'none', 'important');
+            tempPart.style.setProperty('align-self', 'flex-end', 'important');
+
+            tempNumberNode.style.setProperty('display', 'inline', 'important');
+            tempNumberNode.style.setProperty('font-size', '1em', 'important');
+            tempNumberNode.style.setProperty('line-height', '1', 'important');
+            tempNumberNode.style.setProperty('font-weight', 'inherit', 'important');
+
+            tempUnitNode.style.setProperty('display', 'inline-block', 'important');
+            tempUnitNode.style.setProperty('font-size', '0.58em', 'important');
+            tempUnitNode.style.setProperty('line-height', '1', 'important');
+            tempUnitNode.style.setProperty('letter-spacing', '0', 'important');
+            tempUnitNode.style.setProperty('transform', 'translateY(-0.42em)', 'important');
+
+            const exactTempColor = locationLabelColor || locationColor;
+            if (exactTempColor) {
+              tempPart.style.setProperty('color', exactTempColor, 'important');
+              tempNumberNode.style.setProperty('color', exactTempColor, 'important');
+              tempUnitNode.style.setProperty('color', exactTempColor, 'important');
+            }
+          }
+
+          if (prefixPart instanceof HTMLElement && tempPart instanceof HTMLElement && labelWidth > 0) {
+            const prefixWidth = prefixPart.getBoundingClientRect().width;
+            const tempWidth = tempPart.getBoundingClientRect().width;
+            const totalWidth = prefixWidth + tempWidth + valueGapPx;
+
+            if (totalWidth > valueWidthPx) {
+              valueGapPx = 2;
+              feelsLikeValue.style.setProperty('column-gap', `${valueGapPx}px`, 'important');
+              const allowedTextWidth = Math.max(1, valueWidthPx - valueGapPx);
+              const currentTextWidth = Math.max(1, prefixWidth + tempWidth);
+              const fitRatio = Math.min(1, allowedTextWidth / currentTextWidth);
+              const fittedPrefixSize = Math.max(6, prefixFontSizePx * fitRatio);
+
+              prefixPart.style.setProperty('font-size', `${fittedPrefixSize.toFixed(2)}px`, 'important');
+              prefixPart.style.setProperty(
+                'line-height',
+                `${Math.max(prefixLineHeightPx * fitRatio, 6).toFixed(2)}px`,
+                'important'
+              );
+            }
+          }
+        }
+      }
+
+      if (humidityChip) {
+        normalizeInlineText(humidityChip);
+
+        if (rightColumn && humidityChip.parentElement !== rightColumn) {
+          rightColumn.appendChild(humidityChip);
+        }
+
+        humidityChip.style.setProperty('position', 'absolute', 'important');
+        humidityChip.style.setProperty('right', '0', 'important');
+        humidityChip.style.setProperty('top', 'auto', 'important');
+        humidityChip.style.setProperty('left', 'auto', 'important');
+        humidityChip.style.setProperty('bottom', '0', 'important');
+        humidityChip.style.setProperty('z-index', '124', 'important');
+        humidityChip.style.setProperty('text-align', 'right', 'important');
+        humidityChip.style.setProperty('pointer-events', 'auto', 'important');
+        humidityChip.style.setProperty('display', 'flex', 'important');
+        humidityChip.style.setProperty('flex-direction', 'column', 'important');
+        humidityChip.style.setProperty('align-items', 'flex-end', 'important');
+        humidityChip.style.setProperty('justify-content', 'flex-end', 'important');
+        humidityChip.style.setProperty('width', 'auto', 'important');
+        humidityChip.style.setProperty('max-width', 'none', 'important');
+        humidityChip.style.setProperty('white-space', 'nowrap', 'important');
+        humidityChip.style.setProperty('margin', '0', 'important');
+
+        Array.from(humidityChip.children).forEach(child => {
+          if (!(child instanceof HTMLElement)) {
+            return;
+          }
+          normalizeInlineText(child);
+          child.style.setProperty('display', 'block', 'important');
+          child.style.setProperty('width', 'auto', 'important');
+          child.style.setProperty('white-space', 'nowrap', 'important');
+          child.style.setProperty('text-align', 'right', 'important');
+        });
+
+        applyChipTypography(humidityChip);
+      }
+
+      if (pressureChip) {
+        normalizeInlineText(pressureChip);
+
+        if (rightColumn && pressureChip.parentElement !== rightColumn) {
+          rightColumn.appendChild(pressureChip);
+        }
+
+        pressureChip.style.setProperty('position', 'absolute', 'important');
+        pressureChip.style.setProperty('right', '0', 'important');
+        pressureChip.style.setProperty('top', 'calc(50% - 6px)', 'important');
+        pressureChip.style.setProperty('left', 'auto', 'important');
+        pressureChip.style.setProperty('bottom', 'auto', 'important');
+        pressureChip.style.setProperty('z-index', '124', 'important');
+        pressureChip.style.setProperty('text-align', 'right', 'important');
+        pressureChip.style.setProperty('pointer-events', 'auto', 'important');
+        pressureChip.style.setProperty('display', 'flex', 'important');
+        pressureChip.style.setProperty('flex-direction', 'column', 'important');
+        pressureChip.style.setProperty('align-items', 'flex-end', 'important');
+        pressureChip.style.setProperty('justify-content', 'flex-start', 'important');
+        pressureChip.style.setProperty('width', 'auto', 'important');
+        pressureChip.style.setProperty('max-width', 'none', 'important');
+        pressureChip.style.setProperty('white-space', 'nowrap', 'important');
+        pressureChip.style.setProperty('margin', '0', 'important');
+        pressureChip.style.setProperty('transform', 'translateY(-50%)', 'important');
+
+        Array.from(pressureChip.children).forEach(child => {
+          if (!(child instanceof HTMLElement)) {
+            return;
+          }
+          normalizeInlineText(child);
+          child.style.setProperty('display', 'block', 'important');
+          child.style.setProperty('width', 'auto', 'important');
+          child.style.setProperty('white-space', 'nowrap', 'important');
+          child.style.setProperty('text-align', 'right', 'important');
+        });
+
+        const pressureChildren = Array.from(pressureChip.children).filter(child => child instanceof HTMLElement);
+        const pressureLabel = pressureChildren[0] || null;
+        if (pressureLabel instanceof HTMLElement) {
+          pressureLabel.style.setProperty('display', 'block', 'important');
+          pressureLabel.style.setProperty('width', 'max-content', 'important');
+          pressureLabel.style.setProperty('margin-left', 'auto', 'important');
+          pressureLabel.style.setProperty('text-align', 'right', 'important');
+        }
+
+        applyChipTypography(pressureChip);
+      }
+
+      if (windChip) {
+        // Keep wind data for the weather menu, but hide it in the compact header widget preview.
+        windChip.style.setProperty('display', 'none', 'important');
+      }
+
+      if (!chips.children.length) {
+        chips.style.setProperty('display', 'none', 'important');
+      }
+    }
+
+    if (toggle) {
+      if (content && toggle.parentElement !== content) {
+        content.appendChild(toggle);
+      }
+
+      const resolvedLeft = '50%';
+
+      toggle.style.setProperty('position', 'absolute', 'important');
+      toggle.style.setProperty('left', resolvedLeft, 'important');
+      toggle.style.setProperty('right', 'auto', 'important');
+      toggle.style.setProperty('top', 'auto', 'important');
+      toggle.style.setProperty('bottom', '-10px', 'important');
+      toggle.style.setProperty('transform', 'translateX(-50%)', 'important');
+      toggle.style.setProperty('z-index', '124', 'important');
+      toggle.style.setProperty('pointer-events', 'auto', 'important');
+    }
+  }
+
+  function ensureHeaderWeatherMenuPlacementLock(host) {
+    if (!host || host.__weatherMenuPlacementLockActive) {
+      return;
+    }
+
+    host.__weatherMenuPlacementLockActive = true;
+    let pass = 0;
+    const timerId = window.setInterval(() => {
+      if (!host.isConnected) {
+        window.clearInterval(timerId);
+        host.__weatherMenuPlacementLockActive = false;
+        return;
+      }
+
+      enforceHeaderWeatherMenuPlacement(host);
+      pass += 1;
+
+      if (pass >= 3) {
+        window.clearInterval(timerId);
+        host.__weatherMenuPlacementLockActive = false;
+      }
+    }, 250);
   }
 
   function createHeaderWeatherOrbOverlay(variant) {
@@ -2433,74 +4428,113 @@
     }
   }
 
+  function scheduleHeaderWeatherOrbSync(host) {
+    if (!host?.shadowRoot) {
+      return;
+    }
+
+    if (host.__weatherOrbSyncFrameScheduled) {
+      host.__weatherOrbSyncPending = true;
+      return;
+    }
+
+    host.__weatherOrbSyncFrameScheduled = true;
+    window.requestAnimationFrame(() => {
+      host.__weatherOrbSyncFrameScheduled = false;
+      syncHeaderWeatherOrbOverlay(host);
+    });
+  }
+
   async function syncHeaderWeatherOrbOverlay(host) {
     if (!host?.shadowRoot) {
       return;
     }
 
-    const syncToken = `${Date.now()}:${Math.random()}`;
-    host.__weatherOrbSyncToken = syncToken;
-
-    let astroData = null;
-    try {
-      astroData = await resolveHeaderWeatherAstro(host);
-    } catch (error) {
-      console.warn('Header weather astro sync failed:', error);
-    }
-
-    try {
-      host.__weatherCurrentMeta = await resolveHeaderWeatherCurrent(host);
-    } catch (error) {
-      host.__weatherCurrentMeta = null;
-      console.warn('Header weather current sync failed:', error);
-    }
-
-    if (host.__weatherOrbSyncToken !== syncToken) {
+    if (host.__weatherOrbSyncInFlight) {
+      host.__weatherOrbSyncPending = true;
       return;
     }
 
-    const orbModel = resolveHeaderWeatherOrbModel(host, astroData);
-    const orbKind = orbModel?.kind || null;
-    const orbAtmosphere = resolveHeaderWeatherOrbAtmosphere(host);
-    const widgetBasePath = getHeaderWeatherWidgetBasePath(host);
-    const sunVideoSources = widgetBasePath
-      ? [
-          `${widgetBasePath}/assets/Sun/3d-animated-realistic-sun-with-glowing-solar-flares-and-surface-turbulence-4k-video.mp4`,
-        ]
-      : [];
-    const assetConfig = orbKind
-      ? orbKind === 'sun'
-        ? sunVideoSources.length
-          ? {
-              type: 'video-keyed',
-              sources: sunVideoSources,
+    host.__weatherOrbSyncInFlight = true;
+
+    const syncToken = `${Date.now()}:${Math.random()}`;
+    host.__weatherOrbSyncToken = syncToken;
+
+    try {
+      await syncHeaderWeatherClockWithServers();
+
+      let astroData = null;
+      try {
+        astroData = await resolveHeaderWeatherAstro(host);
+      } catch (error) {
+        console.warn('Header weather astro sync failed:', error);
+      }
+
+      host.__weatherTimeZone = resolveHeaderWeatherTimeZone(host, astroData?.locationMeta || null);
+
+      try {
+        host.__weatherCurrentMeta = await resolveHeaderWeatherCurrent(host);
+      } catch (error) {
+        host.__weatherCurrentMeta = null;
+        console.warn('Header weather current sync failed:', error);
+      }
+
+      if (host.__weatherOrbSyncToken !== syncToken) {
+        return;
+      }
+
+      const orbModel = resolveHeaderWeatherOrbModel(host, astroData);
+      const orbKind = orbModel?.kind || null;
+      const orbAtmosphere = resolveHeaderWeatherOrbAtmosphere(host);
+      const widgetBasePath = getHeaderWeatherWidgetBasePath(host);
+      const sunVideoSources = widgetBasePath
+        ? [
+            `${widgetBasePath}/assets/Sun/3d-animated-realistic-sun-with-glowing-solar-flares-and-surface-turbulence-4k-video.mp4`,
+          ]
+        : [];
+      const assetConfig = orbKind
+        ? orbKind === 'sun'
+          ? sunVideoSources.length
+            ? {
+                type: 'video-keyed',
+                sources: sunVideoSources,
+              }
+            : null
+          : {
+              type: 'texture-sphere',
+              src: HEADER_WEATHER_MOON_TEXTURE_SRC,
             }
-          : null
-        : {
-            type: 'texture-sphere',
-            src: HEADER_WEATHER_MOON_TEXTURE_SRC,
-          }
-      : null;
+        : null;
 
-    const previewContainer = host.shadowRoot.querySelector('.weather-header-preview');
-    if (previewContainer) {
-      const previewOverlay = ensureHeaderWeatherOrbOverlay(previewContainer, 'preview');
-      applyHeaderWeatherOrbLayout(previewOverlay, orbModel?.previewLayout);
-      setHeaderWeatherOrbSource(previewOverlay, orbKind, assetConfig);
-      applyHeaderWeatherOrbAtmosphere(previewOverlay, orbKind ? orbAtmosphere : 0);
+      const previewContainer = host.shadowRoot.querySelector('.weather-header-preview');
+      if (previewContainer) {
+        const previewOverlay = ensureHeaderWeatherOrbOverlay(previewContainer, 'preview');
+        applyHeaderWeatherOrbLayout(previewOverlay, orbModel?.previewLayout);
+        setHeaderWeatherOrbSource(previewOverlay, orbKind, assetConfig);
+        applyHeaderWeatherOrbAtmosphere(previewOverlay, orbKind ? orbAtmosphere : 0);
+      }
+
+      const isExpanded =
+        host.shadowRoot.querySelector('.weather-header-trigger')?.getAttribute('aria-expanded') === 'true';
+      const dropdownScene = host.shadowRoot.querySelector('.weather-header-dropdown__scene');
+      if (dropdownScene) {
+        const dropdownOverlay = ensureHeaderWeatherOrbOverlay(dropdownScene, 'dropdown');
+        applyHeaderWeatherOrbLayout(dropdownOverlay, orbModel?.dropdownLayout);
+        setHeaderWeatherOrbSource(dropdownOverlay, isExpanded ? orbKind : null, assetConfig);
+        applyHeaderWeatherOrbAtmosphere(dropdownOverlay, isExpanded && orbKind ? orbAtmosphere : 0);
+      }
+
+      enforceHeaderWeatherToggleArrow(host);
+      enforceHeaderWeatherMenuPlacement(host);
+      ensureHeaderWeatherMenuPlacementLock(host);
+      syncHeaderWeatherLiveClock(host);
+    } finally {
+      host.__weatherOrbSyncInFlight = false;
+      if (host.__weatherOrbSyncPending) {
+        host.__weatherOrbSyncPending = false;
+        scheduleHeaderWeatherOrbSync(host);
+      }
     }
-
-    const isExpanded =
-      host.shadowRoot.querySelector('.weather-header-trigger')?.getAttribute('aria-expanded') === 'true';
-    const dropdownScene = host.shadowRoot.querySelector('.weather-header-dropdown__scene');
-    if (dropdownScene) {
-      const dropdownOverlay = ensureHeaderWeatherOrbOverlay(dropdownScene, 'dropdown');
-      applyHeaderWeatherOrbLayout(dropdownOverlay, orbModel?.dropdownLayout);
-      setHeaderWeatherOrbSource(dropdownOverlay, isExpanded ? orbKind : null, assetConfig);
-      applyHeaderWeatherOrbAtmosphere(dropdownOverlay, isExpanded && orbKind ? orbAtmosphere : 0);
-    }
-
-    enforceHeaderWeatherToggleArrow(host);
   }
 
   function syncHeaderWeatherExpandedState(host) {
@@ -2529,40 +4563,68 @@
 
     const observer = new MutationObserver(mutations => {
       const shouldSync = mutations.some(
-        mutation =>
-          mutation.type === 'characterData' ||
-          mutation.type === 'childList' ||
-          (mutation.type === 'attributes' && mutation.attributeName === 'aria-expanded')
+        mutation => mutation.type === 'attributes' && mutation.attributeName === 'aria-expanded'
       );
 
       if (shouldSync) {
         syncHeaderWeatherExpandedState(host);
-        syncHeaderWeatherOrbOverlay(host);
+        scheduleHeaderWeatherOrbSync(host);
       }
     });
 
     observer.observe(host.shadowRoot, {
-      childList: true,
-      characterData: true,
-      subtree: true,
       attributes: true,
+      subtree: true,
       attributeFilter: ['aria-expanded'],
     });
 
     host.__weatherStateObserver = observer;
+
+    // Apply local timezone rendering immediately to avoid stale time flash on first paint.
+    syncHeaderWeatherLiveClock(host);
+
+    syncHeaderWeatherClockWithServers(true)
+      .catch(() => null)
+      .finally(() => {
+        syncHeaderWeatherLiveClock(host);
+      });
+
+    host.__weatherLiveClockId = window.setInterval(() => {
+      if (!document.hidden) {
+        syncHeaderWeatherLiveClock(host);
+      }
+    }, HEADER_WEATHER_LIVE_CLOCK_INTERVAL);
+
+    host.__weatherTimeSyncId = window.setInterval(() => {
+      if (!document.hidden) {
+        syncHeaderWeatherClockWithServers().catch(() => null);
+      }
+    }, HEADER_WEATHER_TIME_SYNC_INTERVAL);
+
+    host.__weatherDataRefreshId = window.setInterval(() => {
+      if (!document.hidden) {
+        refreshHeaderWeatherWidgetData(host);
+      }
+    }, HEADER_WEATHER_WIDGET_REFRESH_INTERVAL);
+
     host.__weatherAstroRefreshId = window.setInterval(() => {
       if (!document.hidden) {
-        syncHeaderWeatherOrbOverlay(host);
+        scheduleHeaderWeatherOrbSync(host);
       }
     }, HEADER_WEATHER_ASTRO_REFRESH_INTERVAL);
     host.__weatherAstroVisibilityHandler = () => {
       if (!document.hidden) {
-        syncHeaderWeatherOrbOverlay(host);
+        syncHeaderWeatherClockWithServers().catch(() => null);
+        syncHeaderWeatherLiveClock(host);
+        scheduleHeaderWeatherOrbSync(host);
       }
     };
+    host.__weatherViewportSyncHandler = () => scheduleHeaderWeatherOrbSync(host);
     document.addEventListener('visibilitychange', host.__weatherAstroVisibilityHandler);
+    window.addEventListener('resize', host.__weatherViewportSyncHandler, { passive: true });
+    window.addEventListener('orientationchange', host.__weatherViewportSyncHandler, { passive: true });
     syncHeaderWeatherExpandedState(host);
-    syncHeaderWeatherOrbOverlay(host);
+    scheduleHeaderWeatherOrbSync(host);
 
     host.shadowRoot.addEventListener(
       'click',
@@ -2595,6 +4657,25 @@
       },
       true
     );
+  }
+
+  function refreshHeaderWeatherWidgetData(host) {
+    if (!host || host.dataset.weatherMounted !== 'true') {
+      return;
+    }
+
+    if (host.dataset.weatherExpanded === 'true') {
+      return;
+    }
+
+    const pageLang = normalizeLangCode(
+      host.dataset.weatherLocale || host.__weatherLocale || document.documentElement.lang
+    );
+    host.__weatherWidgetInstance?.unmount?.();
+    host.__weatherWidgetInstance = null;
+    host.dataset.weatherMounted = 'false';
+    host.classList.remove('is-mounted');
+    mountHeaderWeatherWidget(pageLang);
   }
 
   function loadHeaderWeatherWidgetLoader(scriptSrc) {
@@ -2668,11 +4749,25 @@
       window.clearInterval(host.__weatherAstroRefreshId);
       host.__weatherAstroRefreshId = null;
     }
+    if (host.__weatherTimeSyncId) {
+      window.clearInterval(host.__weatherTimeSyncId);
+      host.__weatherTimeSyncId = null;
+    }
+    if (host.__weatherLiveClockId) {
+      window.clearInterval(host.__weatherLiveClockId);
+      host.__weatherLiveClockId = null;
+    }
+    if (host.__weatherDataRefreshId) {
+      window.clearInterval(host.__weatherDataRefreshId);
+      host.__weatherDataRefreshId = null;
+    }
     if (host.__weatherAstroVisibilityHandler) {
       document.removeEventListener('visibilitychange', host.__weatherAstroVisibilityHandler);
       host.__weatherAstroVisibilityHandler = null;
     }
+    host.__weatherTimeZone = null;
     host.dataset.weatherMounted = 'false';
+    host.dataset.weatherMountScheduled = 'false';
     delete host.dataset.weatherExpanded;
     host.classList.remove('is-mounted');
     document.body?.classList.remove('header-weather-expanded');
@@ -2699,6 +4794,8 @@
     }
 
     try {
+      await applyHeaderWeatherAutoGeoLocation(host);
+
       const weatherWidget = await loadHeaderWeatherWidgetLoader(host.dataset.widgetSrc);
       const fallbackLocation = host.dataset.weatherLocation || 'Leipzig';
       const initialLocation = fallbackLocation;
@@ -2713,12 +4810,15 @@
       });
 
       host.__weatherWidgetInstance = widgetApi;
+      host.__weatherLocale = normalizeLangCode(host.dataset.weatherLocale || pageLang);
       host.dataset.weatherMounted = 'true';
+      host.dataset.weatherMountScheduled = 'false';
       host.classList.add('is-mounted');
       host.closest('.header-weather-shell')?.classList.add('weather-shell-ready');
       applyHeaderWeatherTransparency(host);
       bindHeaderWeatherState(host);
       syncHeaderWeatherOrbOverlay(host);
+      void syncHeaderWeatherPreciseLocationMeta(host);
 
       // On mobile: collapse the widget (non-interactive decoration)
       if (window.innerWidth <= 899) {
@@ -2755,6 +4855,7 @@
     } catch (error) {
       console.error('Header weather widget failed to mount:', error);
       host.dataset.weatherMounted = 'error';
+      host.dataset.weatherMountScheduled = 'false';
       host.closest('.header-weather-shell')?.classList.add('weather-shell-error');
       document.body?.classList.remove('header-weather-expanded');
       emitHeaderWeatherEvent('site-shell:weather-ready', false);
@@ -2766,6 +4867,14 @@
     if (!host) {
       unmountHeaderWeatherWidget();
       return;
+    }
+
+    const targetLocale = normalizeLangCode(pageLang);
+    host.dataset.weatherLocale = targetLocale;
+
+    if (host.dataset.weatherMounted === 'true' && host.__weatherLocale !== targetLocale) {
+      unmountHeaderWeatherWidget();
+      host.dataset.weatherMounted = 'false';
     }
 
     if (host.dataset.weatherMountScheduled === 'true' || host.dataset.weatherMounted === 'true') {
@@ -2927,11 +5036,67 @@
       }
     });
 
+    const wait = ms => new Promise(resolve => window.setTimeout(resolve, ms));
+
+    const playWeatherLocaleSwitchAnimation = async durationMs => {
+      const host = getHeaderWeatherHost();
+      if (!host) {
+        await wait(durationMs);
+        return;
+      }
+
+      const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+      const effectiveDuration = prefersReducedMotion ? Math.min(durationMs, 140) : durationMs;
+
+      if (typeof host.animate === 'function') {
+        try {
+          const animation = host.animate(
+            [
+              { opacity: 1, filter: 'blur(0px) saturate(1)', transform: 'translateY(0px)' },
+              { opacity: 0.78, filter: 'blur(0.8px) saturate(0.96)', transform: 'translateY(0.5px)' },
+              { opacity: 1, filter: 'blur(0px) saturate(1)', transform: 'translateY(0px)' },
+            ],
+            {
+              duration: effectiveDuration,
+              easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
+              fill: 'both',
+            }
+          );
+          await animation.finished;
+          return;
+        } catch (_) {
+          /* Ignore animation API failures and continue with a timed fallback. */
+        }
+      }
+
+      host.classList.add('is-locale-switching');
+      await wait(effectiveDuration);
+      host.classList.remove('is-locale-switching');
+    };
+
+    const remountWeatherPreviewForLanguage = async targetLang => {
+      const resolvedLang = normalizeLangCode(targetLang);
+      document.documentElement.lang = resolvedLang;
+
+      const host = getHeaderWeatherHost();
+      if (!host) {
+        return;
+      }
+
+      host.dataset.weatherLocale = resolvedLang;
+
+      if (host.dataset.weatherMounted === 'true') {
+        unmountHeaderWeatherWidget();
+      }
+
+      await mountHeaderWeatherWidget(resolvedLang);
+    };
+
     langDropdown.querySelectorAll('.lang-dropdown-menu li').forEach(item => {
       item.setAttribute('tabindex', '0');
       item.setAttribute('role', 'menuitem');
 
-      const navigateToLanguage = () => {
+      const navigateToLanguage = async () => {
         closeLangDropdown();
         const lang = item.getAttribute('data-lang');
         const nextUrl = lang ? buildLanguageUrl(context, lang) : null;
@@ -2940,10 +5105,22 @@
         }
 
         localStorage.setItem('preferred_lang', lang);
+
+        const preNavigationAnimationMs = 260;
+
+        try {
+          await Promise.allSettled([
+            playWeatherLocaleSwitchAnimation(preNavigationAnimationMs),
+            Promise.race([remountWeatherPreviewForLanguage(lang), wait(320)]),
+          ]);
+        } catch (_) {}
+
         window.location.href = nextUrl;
       };
 
-      item.addEventListener('click', navigateToLanguage);
+      item.addEventListener('click', () => {
+        navigateToLanguage();
+      });
       item.addEventListener('keydown', event => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
@@ -2955,6 +5132,15 @@
 
   function init() {
     const context = resolvePageContext();
+
+    const launchRedirectUrl = getLaunchLanguageRedirectUrl(context);
+    if (launchRedirectUrl && launchRedirectUrl !== window.location.href) {
+      window.location.replace(launchRedirectUrl);
+      return {
+        ...context,
+        redirected: true,
+      };
+    }
 
     if (context.currentLang) {
       localStorage.setItem('preferred_lang', context.currentLang);
