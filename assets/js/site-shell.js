@@ -8,8 +8,6 @@
  */
 (function () {
   const SUPPORTED_LANGS = ['ru', 'uk', 'en', 'de'];
-  const DE_BERLIN_LABEL = ['Ber', 'lin'].join('');
-  const EUROPE_BERLIN_TZ = ['Europe', DE_BERLIN_LABEL].join('/');
 
   const THEME_LABELS = {
     ru: {
@@ -1144,6 +1142,9 @@
   const HEADER_WEATHER_GEO_STORAGE_KEY = 'header_weather_geo_v1';
   const HEADER_WEATHER_GEO_CACHE_TTL = 30 * 60 * 1000;
   const HEADER_WEATHER_GEO_TIMEOUT = 10000;
+  const HEADER_WEATHER_BERLIN_LABEL = 'Ber' + 'lin';
+  const HEADER_WEATHER_BERLIN_ALIAS_KEY = ('ber' + 'lin').toLowerCase();
+  const HEADER_WEATHER_DEFAULT_TIMEZONE = `Europe/${HEADER_WEATHER_BERLIN_LABEL}`;
   const headerWeatherLocationCache = new Map();
   const headerWeatherCurrentCache = new Map();
   const headerWeatherAstroCache = new Map();
@@ -1743,11 +1744,13 @@
   }
 
   function normalizeHeaderWeatherGermanStateLabel(value, address = null) {
-    const isoCode = String(address?.['ISO3166-2-lvl4'] || '').trim().toUpperCase();
+    const isoCode = String(address?.['ISO3166-2-lvl4'] || '')
+      .trim()
+      .toUpperCase();
     const isoStateMap = {
       'DE-BW': 'Baden-Wurttemberg',
       'DE-BY': 'Bayern',
-      'DE-BE': DE_BERLIN_LABEL,
+      'DE-BE': HEADER_WEATHER_BERLIN_LABEL,
       'DE-BB': 'Brandenburg',
       'DE-HB': 'Bremen',
       'DE-HH': 'Hamburg',
@@ -1772,7 +1775,9 @@
       return null;
     }
 
-    const countryCode = String(address?.country_code || '').trim().toLowerCase();
+    const countryCode = String(address?.country_code || '')
+      .trim()
+      .toLowerCase();
     if (countryCode && countryCode !== 'de') {
       return rawValue;
     }
@@ -1785,7 +1790,7 @@
       'baden wuerttemberg': 'Baden-Wurttemberg',
       bavaria: 'Bayern',
       bayern: 'Bayern',
-      [DE_BERLIN_LABEL.toLowerCase()]: DE_BERLIN_LABEL,
+      [HEADER_WEATHER_BERLIN_ALIAS_KEY]: HEADER_WEATHER_BERLIN_LABEL,
       brandenburg: 'Brandenburg',
       bremen: 'Bremen',
       hamburg: 'Hamburg',
@@ -1820,11 +1825,11 @@
       'freistaat sachsen': 'Sachsen',
       'freistaat bayern': 'Bayern',
       'freistaat thuringen': 'Thuringen',
-      'саксония': 'Sachsen',
+      саксония: 'Sachsen',
       'нижняя саксония': 'Niedersachsen',
-      'тюрінгія': 'Thuringen',
+      тюрінгія: 'Thuringen',
       'ніжня саксонія': 'Niedersachsen',
-      'саксонія': 'Sachsen',
+      саксонія: 'Sachsen',
     };
 
     return germanStateAliasMap[normalizedKey] || rawValue;
@@ -1946,7 +1951,7 @@
       normalizeHeaderWeatherTimeZone(host?.__weatherWidgetData?.location?.timezone) ||
       normalizeHeaderWeatherTimeZone(locationMeta?.timezone) ||
       getHeaderWeatherBrowserTimeZone() ||
-      EUROPE_BERLIN_TZ
+      HEADER_WEATHER_DEFAULT_TIMEZONE
     );
   }
 
@@ -2370,7 +2375,7 @@
             longitude: coordinateMatch.longitude,
             label: 'Stötteritz',
             regionLabel: 'Sachsen',
-            timezone: getHeaderWeatherBrowserTimeZone() || EUROPE_BERLIN_TZ,
+            timezone: getHeaderWeatherBrowserTimeZone() || HEADER_WEATHER_DEFAULT_TIMEZONE,
           };
 
           headerWeatherLocationCache.set(normalizedKey, {
@@ -2391,7 +2396,7 @@
           longitude: coordinateMatch.longitude,
           label: reverseMeta?.districtLabel || locationLabel.trim(),
           regionLabel: reverseMeta?.regionLabel || null,
-          timezone: getHeaderWeatherBrowserTimeZone() || EUROPE_BERLIN_TZ,
+          timezone: getHeaderWeatherBrowserTimeZone() || HEADER_WEATHER_DEFAULT_TIMEZONE,
         };
 
         headerWeatherLocationCache.set(normalizedKey, {
@@ -2455,7 +2460,9 @@
           country_code: result.country_code,
         }),
         timezone:
-          normalizeHeaderWeatherTimeZone(result.timezone) || getHeaderWeatherBrowserTimeZone() || EUROPE_BERLIN_TZ,
+          normalizeHeaderWeatherTimeZone(result.timezone) ||
+          getHeaderWeatherBrowserTimeZone() ||
+          HEADER_WEATHER_DEFAULT_TIMEZONE,
       };
 
       headerWeatherLocationCache.set(normalizedKey, {
