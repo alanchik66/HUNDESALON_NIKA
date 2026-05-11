@@ -1535,6 +1535,9 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       if (clicking) return;
       clicking = true;
+      const openInNewTab = link.getAttribute('target') === '_blank';
+      const pendingTab = openInNewTab ? window.open('about:blank', '_blank') : null;
+      if (pendingTab) pendingTab.opener = null;
       const icon = link.querySelector('i');
       if (icon) {
         icon.style.animation = 'none';
@@ -1545,8 +1548,12 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         clicking = false;
         if (icon) icon.style.animation = '';
-        if (link.getAttribute('target') === '_blank') {
-          window.open(href, '_blank', 'noopener,noreferrer');
+        if (openInNewTab) {
+          if (pendingTab && !pendingTab.closed) {
+            pendingTab.location.href = href;
+          } else {
+            window.location.href = href;
+          }
         } else {
           window.location.href = href;
         }

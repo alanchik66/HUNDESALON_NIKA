@@ -1,0 +1,46 @@
+stages:
+  - verify
+  - security
+
+default:
+  image: node:20
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+validate_project:
+  stage: verify
+  before_script:
+    - npm ci
+  script:
+    - npm run lint
+    - npm run validate
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+include:
+  - template: Jobs/Dependency-Scanning.latest.gitlab-ci.yml
+  - template: Jobs/SAST.latest.gitlab-ci.yml
+  - template: Jobs/Secret-Detection.latest.gitlab-ci.yml
+
+dependency_scanning:
+  stage: security
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+sast:
+  stage: security
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+secret_detection:
+  stage: security
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
