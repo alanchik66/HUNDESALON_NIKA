@@ -334,6 +334,81 @@
   cursor: pointer;
 }
 
+/* =========================================================
+   AI DRAFT HELPER (CONTACT FORMS)
+   ========================================================= */
+.ai-draft-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 0 10px;
+}
+
+.ai-draft-title {
+  color: var(--accent-gold);
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.92;
+}
+
+.ai-draft-btn {
+  border: 1px solid var(--accent-gold);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 100%);
+  color: var(--accent-gold);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition:
+    transform 0.24s ease,
+    box-shadow 0.24s ease,
+    opacity 0.24s ease;
+}
+
+.ai-draft-btn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.26),
+    0 0 14px rgba(214, 169, 82, 0.22);
+}
+
+.ai-draft-btn:disabled {
+  opacity: 0.68;
+  cursor: wait;
+}
+
+.ai-draft-status {
+  margin: 8px 0 14px;
+  font-size: 0.86rem;
+}
+
+.ai-draft-status--loading {
+  color: rgba(255, 242, 217, 0.85);
+}
+
+.ai-draft-status--success {
+  color: #95d5a5;
+}
+
+.ai-draft-status--error {
+  color: #f0a2a2;
+}
+
+@media (width <= 640px) {
+  .ai-draft-tools {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ai-draft-btn {
+    width: 100%;
+  }
+}
+
 .modal-close:hover,
 .modal-close:focus-visible {
   background: rgba(198, 161, 91, 0.12);
@@ -790,9 +865,10 @@ body .btn-read .site-icon-arrow-right {
   --arrow-shift-x: 0px;
   transform: var(--arrow-rotate) translateX(var(--arrow-shift-x));
   will-change: transform;
-  transition: transform 0.44s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.32s ease;
-  animation:
-    iconSurfaceRefraction var(--icon-sheen-duration) ease-in-out infinite;
+  transition:
+    transform 0.44s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.32s ease;
+  animation: iconSurfaceRefraction var(--icon-sheen-duration) ease-in-out infinite;
 }
 
 body .btn-read i.fa-arrow-right::before {

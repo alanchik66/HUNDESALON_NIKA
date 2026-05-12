@@ -562,7 +562,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (burger && mobileNav && overlay) {
     const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const getMenuTopOpenThreshold = () => {
+      const viewportHeight = window.visualViewport?.height || window.innerHeight || 0;
+      return Math.max(96, Math.min(260, Math.round(viewportHeight * 0.24)));
+    };
+    let overlayHideTimer = null;
     let lastFocusedElement = null;
+
+    const getCurrentScrollTop = () => {
+      return typeof scrollRoot?.scrollTop === 'number'
+        ? scrollRoot.scrollTop
+        : window.scrollY || document.documentElement.scrollTop || 0;
+    };
+
+    const isAtMenuOpenTop = () => {
+      return getCurrentScrollTop() <= getMenuTopOpenThreshold();
+    };
+
     const refreshMobileNavScrollbar = () => {
       if (!mobileNavScrollbar) return;
       requestAnimationFrame(() => {
@@ -590,6 +606,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setMenuState = (isOpen, { restoreFocus = true } = {}) => {
+      if (isOpen && !isAtMenuOpenTop()) {
+        return;
+      }
+
       syncMobileNavLayout();
 
       burger.classList.toggle('active', isOpen);
@@ -599,8 +619,25 @@ document.addEventListener('DOMContentLoaded', () => {
       mobileNav.classList.toggle('active', isOpen);
       mobileNav.setAttribute('aria-hidden', String(!isOpen));
 
+      if (overlayHideTimer) {
+        window.clearTimeout(overlayHideTimer);
+        overlayHideTimer = null;
+      }
+
+      if (isOpen) {
+        overlay.hidden = false;
+      }
+
       overlay.classList.toggle('active', isOpen);
-      overlay.hidden = !isOpen;
+
+      if (!isOpen) {
+        overlayHideTimer = window.setTimeout(() => {
+          if (!mobileNav.classList.contains('active')) {
+            overlay.hidden = true;
+          }
+          overlayHideTimer = null;
+        }, 440);
+      }
 
       if (isOpen) {
         const scrollY = scrollRoot.scrollTop;
@@ -646,6 +683,16 @@ document.addEventListener('DOMContentLoaded', () => {
     burger.addEventListener('click', toggleMenu);
     overlay.addEventListener('click', () => closeMenu());
     mobileNav.addEventListener('transitionend', refreshMobileNavScrollbar);
+
+    scrollRoot.addEventListener(
+      'scroll',
+      () => {
+        if (!isMenuOpen()) return;
+        if (isAtMenuOpenTop()) return;
+        closeMenu({ restoreFocus: false });
+      },
+      { passive: true }
+    );
 
     document.addEventListener('keydown', event => {
       if (!isMenuOpen()) return;
@@ -1000,17 +1047,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Desktop and mobile have different movement/offset thresholds.
     // Mobile uses smaller values so the header collapses naturally while scrolling.
-    const downDeltaThreshold = isMobileViewport ? 6 : 10;
-    const upDeltaThreshold = isMobileViewport ? -6 : -10;
-    const hideAfterOffset = isMobileViewport ? 96 : 160;
-    const showBeforeOffset = isMobileViewport ? 56 : 96;
+    const downDeltaThreshold = isMobileViewport ? 5 : 9;
+    const hideAfterOffset = isMobileViewport ? 110 : 170;
+    const showBeforeOffset = isMobileViewport ? 62 : 104;
+    const heroRevealOffset = hero
+      ? Math.max(showBeforeOffset, Math.min(430, Math.round(hero.offsetHeight * 0.42)))
+      : showBeforeOffset;
+    const heroHideOffset = hero
+      ? Math.max(hideAfterOffset, Math.min(540, Math.round(hero.offsetHeight * 0.6)))
+      : hideAfterOffset;
 
     /* Hide header on scroll down, restore on upward scroll or near top */
     if (!shouldAutoHideHeader || current <= 24) {
       document.body.classList.remove('hide-header');
-    } else if (delta > downDeltaThreshold && current > hideAfterOffset) {
+    } else if (delta > downDeltaThreshold && current > heroHideOffset) {
       document.body.classList.add('hide-header');
-    } else if (delta < upDeltaThreshold || current < showBeforeOffset) {
+    } else if (current < heroRevealOffset) {
       document.body.classList.remove('hide-header');
     }
 
@@ -1535,6 +1587,9 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       if (clicking) return;
       clicking = true;
+      const openInNewTab = link.getAttribute('target') === '_blank';
+      const pendingTab = openInNewTab ? window.open('about:blank', '_blank') : null;
+      if (pendingTab) pendingTab.opener = null;
       const icon = link.querySelector('i');
       if (icon) {
         icon.style.animation = 'none';
@@ -1545,8 +1600,12 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         clicking = false;
         if (icon) icon.style.animation = '';
-        if (link.getAttribute('target') === '_blank') {
-          window.open(href, '_blank', 'noopener,noreferrer');
+        if (openInNewTab) {
+          if (pendingTab && !pendingTab.closed) {
+            pendingTab.location.href = href;
+          } else {
+            window.location.href = href;
+          }
         } else {
           window.location.href = href;
         }

@@ -1,0 +1,2872 @@
+commit 970f0d47e7eb10db60f01a1eb843a2501ad5acfb
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Mon May 11 21:52:27 2026 +0200
+
+    chore(git): ignore local oversized Moon source assets
+
+ .gitignore | 2 ++
+ 1 file changed, 2 insertions(+)
+
+commit 24138603208285874900a8e3c3c6efa178ea0b00
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Mon May 11 21:49:30 2026 +0200
+
+    deploy: always offload >25MiB assets to R2 and publish Pages in one pipeline
+
+ README.md                 | 56 +++++++++++++++++++++++++++++++++++------------
+ package.json              |  4 ++--
+ tools/build-production.js | 17 ++++++--------
+ tools/deploy-pages.js     | 43 ++++++++++++++++++++++++++++++++++++
+ 4 files changed, 94 insertions(+), 26 deletions(-)
+
+commit 874dbb4d11b32e03cb56c7b9313150f9f0754afb
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Mon May 11 21:40:00 2026 +0200
+
+    build: harden Pages deploy for >25MiB assets with optional R2 offload
+
+ assets/js/site-shell.js   |   6 +--
+ tools/build-production.js | 134 ++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 135 insertions(+), 5 deletions(-)
+
+commit fcbfc1f5c1c84061771b7e4907676f3bcbecfe10
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Mon May 11 21:25:38 2026 +0200
+
+    restore: reapply all 2026-05-11 site updates and keep favicon paths valid
+
+ .vscode/settings.json                              |   49 +-
+ .../dist-widget/Scene3D-Cdhk74W6.mjs               |    2 +-
+ .../dist-widget/weather-widget.es.js               |    2 +-
+ assets/css/page-modules.css                        |  458 +--
+ assets/css/style.css                               |  632 +++--
+ assets/js/main.js                                  |   69 +-
+ assets/js/site-shell.js                            | 2948 +++++++++++++++++---
+ de/blog.html                                       |  591 ++--
+ de/blog/kak-podgotovit-sobaku.html                 |   42 +-
+ de/blog/plokhaya-strizhka.html                     |   42 +-
+ de/blog/strizhka-koshek.html                       |   42 +-
+ de/blog/zashchita-ot-parazitov.html                |   42 +-
+ de/datenschutz.html                                |  563 ++--
+ de/do-i-posle.html                                 |  540 ++--
+ de/galereya.html                                   |  537 ++--
+ de/impressum.html                                  |  463 ++-
+ de/index.html                                      |   63 +-
+ de/kontakty.html                                   |  622 ++---
+ de/nashi-uslugi.html                               |  620 ++--
+ de/o-nas.html                                      |  545 ++--
+ de/onlayn-bronirovanie.html                        |  605 ++--
+ de/partnerstvo.html                                |  584 ++--
+ de/prays-list.html                                 |  703 ++---
+ de/reyting.html                                    |  565 ++--
+ de/social.html                                     |  784 +++---
+ de/vvedenie.html                                   |  692 ++---
+ en/blog.html                                       |  591 ++--
+ en/blog/kak-podgotovit-sobaku.html                 |   42 +-
+ en/blog/plokhaya-strizhka.html                     |   42 +-
+ en/blog/strizhka-koshek.html                       |   42 +-
+ en/blog/zashchita-ot-parazitov.html                |   42 +-
+ en/datenschutz.html                                |  508 ++--
+ en/do-i-posle.html                                 |  530 ++--
+ en/galereya.html                                   |  534 ++--
+ en/impressum.html                                  |  440 ++-
+ en/index.html                                      | 1063 +++----
+ en/kontakty.html                                   |  621 ++---
+ en/nashi-uslugi.html                               |  621 ++---
+ en/o-nas.html                                      |  545 ++--
+ en/onlayn-bronirovanie.html                        |  605 ++--
+ en/partnerstvo.html                                |  581 ++--
+ en/prays-list.html                                 |  730 ++---
+ en/reyting.html                                    |  562 ++--
+ en/social.html                                     |  783 +++---
+ en/vvedenie.html                                   |  692 ++---
+ google8f5e729bf8a13cc7.html                        |   45 +-
+ index.html                                         |  104 +-
+ package.json                                       |   20 +-
+ ru/blog.html                                       |  593 ++--
+ ru/blog/kak-podgotovit-sobaku.html                 |   42 +-
+ ru/blog/plokhaya-strizhka.html                     |   42 +-
+ ru/blog/strizhka-koshek.html                       |   42 +-
+ ru/blog/zashchita-ot-parazitov.html                |   42 +-
+ ru/datenschutz.html                                |  504 ++--
+ ru/do-i-posle.html                                 |  530 ++--
+ ru/galereya.html                                   |  534 ++--
+ ru/impressum.html                                  |  438 ++-
+ ru/index.html                                      |   61 +-
+ ru/kontakty.html                                   |  623 ++---
+ ru/nashi-uslugi.html                               |  627 ++---
+ ru/o-nas.html                                      |  545 ++--
+ ru/onlayn-bronirovanie.html                        |  599 ++--
+ ru/partnerstvo.html                                |  581 ++--
+ ru/prays-list.html                                 |  703 ++---
+ ru/reyting.html                                    |  566 ++--
+ ru/social.html                                     |  787 +++---
+ ru/vvedenie.html                                   |  681 ++---
+ uk/blog.html                                       |  591 ++--
+ uk/blog/kak-podgotovit-sobaku.html                 |   42 +-
+ uk/blog/plokhaya-strizhka.html                     |   42 +-
+ uk/blog/strizhka-koshek.html                       |   46 +-
+ uk/blog/zashchita-ot-parazitov.html                |   42 +-
+ uk/datenschutz.html                                |  504 ++--
+ uk/do-i-posle.html                                 |  530 ++--
+ uk/galereya.html                                   |  537 ++--
+ uk/impressum.html                                  |  438 ++-
+ uk/index.html                                      |   63 +-
+ uk/kontakty.html                                   |  621 ++---
+ uk/nashi-uslugi.html                               |  627 ++---
+ uk/o-nas.html                                      |  545 ++--
+ uk/onlayn-bronirovanie.html                        |  599 ++--
+ uk/partnerstvo.html                                |  578 ++--
+ uk/prays-list.html                                 |  703 ++---
+ uk/reyting.html                                    |  562 ++--
+ uk/social.html                                     |  784 +++---
+ uk/vvedenie.html                                   |  684 ++---
+ 86 files changed, 16906 insertions(+), 22720 deletions(-)
+
+commit 1ff0fbcf7a92114e5f7a3accdda48417e488ebd7
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Mon May 11 21:03:58 2026 +0200
+
+    fix: mobile nav close reliability, mobile header autohide, and main.js cache-bust
+
+ assets/js/main.js                   | 62 ++++++++++++++++++++++++++++++++-----
+ de/blog.html                        |  3 +-
+ de/blog/kak-podgotovit-sobaku.html  |  3 +-
+ de/blog/plokhaya-strizhka.html      |  3 +-
+ de/blog/strizhka-koshek.html        |  3 +-
+ de/blog/zashchita-ot-parazitov.html |  3 +-
+ de/datenschutz.html                 |  3 +-
+ de/do-i-posle.html                  |  3 +-
+ de/galereya.html                    |  3 +-
+ de/impressum.html                   |  3 +-
+ de/index.html                       |  3 +-
+ de/kontakty.html                    |  3 +-
+ de/nashi-uslugi.html                |  3 +-
+ de/o-nas.html                       |  3 +-
+ de/onlayn-bronirovanie.html         |  3 +-
+ de/partnerstvo.html                 |  3 +-
+ de/prays-list.html                  |  3 +-
+ de/reyting.html                     |  3 +-
+ de/social.html                      |  3 +-
+ de/vvedenie.html                    |  3 +-
+ en/blog.html                        |  3 +-
+ en/blog/kak-podgotovit-sobaku.html  |  3 +-
+ en/blog/plokhaya-strizhka.html      |  3 +-
+ en/blog/strizhka-koshek.html        |  3 +-
+ en/blog/zashchita-ot-parazitov.html |  3 +-
+ en/datenschutz.html                 |  3 +-
+ en/do-i-posle.html                  |  3 +-
+ en/galereya.html                    |  3 +-
+ en/impressum.html                   |  3 +-
+ en/index.html                       |  3 +-
+ en/kontakty.html                    |  3 +-
+ en/nashi-uslugi.html                |  3 +-
+ en/o-nas.html                       |  3 +-
+ en/onlayn-bronirovanie.html         |  3 +-
+ en/partnerstvo.html                 |  3 +-
+ en/prays-list.html                  |  3 +-
+ en/reyting.html                     |  3 +-
+ en/social.html                      |  3 +-
+ en/vvedenie.html                    |  3 +-
+ ru/blog.html                        |  3 +-
+ ru/blog/kak-podgotovit-sobaku.html  |  3 +-
+ ru/blog/plokhaya-strizhka.html      |  3 +-
+ ru/blog/strizhka-koshek.html        |  3 +-
+ ru/blog/zashchita-ot-parazitov.html |  3 +-
+ ru/datenschutz.html                 |  3 +-
+ ru/do-i-posle.html                  |  3 +-
+ ru/galereya.html                    |  3 +-
+ ru/impressum.html                   |  3 +-
+ ru/index.html                       |  3 +-
+ ru/kontakty.html                    |  3 +-
+ ru/nashi-uslugi.html                |  3 +-
+ ru/o-nas.html                       |  3 +-
+ ru/onlayn-bronirovanie.html         |  3 +-
+ ru/partnerstvo.html                 |  3 +-
+ ru/prays-list.html                  |  3 +-
+ ru/reyting.html                     |  3 +-
+ ru/social.html                      |  3 +-
+ ru/vvedenie.html                    |  3 +-
+ uk/blog.html                        |  3 +-
+ uk/blog/kak-podgotovit-sobaku.html  |  3 +-
+ uk/blog/plokhaya-strizhka.html      |  3 +-
+ uk/blog/strizhka-koshek.html        |  3 +-
+ uk/blog/zashchita-ot-parazitov.html |  3 +-
+ uk/datenschutz.html                 |  3 +-
+ uk/do-i-posle.html                  |  3 +-
+ uk/galereya.html                    |  3 +-
+ uk/impressum.html                   |  3 +-
+ uk/index.html                       |  3 +-
+ uk/kontakty.html                    |  3 +-
+ uk/nashi-uslugi.html                |  3 +-
+ uk/o-nas.html                       |  3 +-
+ uk/onlayn-bronirovanie.html         |  3 +-
+ uk/partnerstvo.html                 |  3 +-
+ uk/prays-list.html                  |  3 +-
+ uk/reyting.html                     |  3 +-
+ uk/social.html                      |  3 +-
+ uk/vvedenie.html                    |  3 +-
+ 77 files changed, 206 insertions(+), 84 deletions(-)
+
+commit 042e3912b43420aa2b8597cf07e297855a2b3876
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Thu May 7 14:49:52 2026 +0200
+
+    fix: update check-project to accept /favicon.ico root path
+
+ tools/check-project.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+commit e6d852dbe7ede56c448ec8899efc451a11c39be7
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Thu May 7 14:48:53 2026 +0200
+
+    fix: favicon cross-search-engine — shortcut icon + clean /favicon.ico on all 61 pages + _headers favikon/ rules
+
+ _headers                        | 17 +++++++++++++++++
+ de/blog.html                    |  3 ++-
+ de/datenschutz.html             |  3 ++-
+ de/do-i-posle.html              |  3 ++-
+ de/galereya.html                |  3 ++-
+ de/impressum.html               |  3 ++-
+ de/index.html                   |  3 ++-
+ de/kontakty.html                |  3 ++-
+ de/nashi-uslugi.html            |  3 ++-
+ de/o-nas.html                   |  3 ++-
+ de/onlayn-bronirovanie.html     |  3 ++-
+ de/partnerstvo.html             |  3 ++-
+ de/prays-list.html              |  3 ++-
+ de/reyting.html                 |  3 ++-
+ de/social.html                  |  3 ++-
+ de/vvedenie.html                |  3 ++-
+ en/blog.html                    |  3 ++-
+ en/datenschutz.html             |  3 ++-
+ en/do-i-posle.html              |  3 ++-
+ en/galereya.html                |  3 ++-
+ en/impressum.html               |  3 ++-
+ en/index.html                   |  3 ++-
+ en/kontakty.html                |  3 ++-
+ en/nashi-uslugi.html            |  3 ++-
+ en/o-nas.html                   |  3 ++-
+ en/onlayn-bronirovanie.html     |  3 ++-
+ en/partnerstvo.html             |  3 ++-
+ en/prays-list.html              |  3 ++-
+ en/reyting.html                 |  3 ++-
+ en/social.html                  |  3 ++-
+ en/vvedenie.html                |  3 ++-
+ index.html                      |  3 ++-
+ ru/blog.html                    |  3 ++-
+ ru/datenschutz.html             |  3 ++-
+ ru/do-i-posle.html              |  3 ++-
+ ru/galereya.html                |  3 ++-
+ ru/impressum.html               |  3 ++-
+ ru/index.html                   |  3 ++-
+ ru/kontakty.html                |  3 ++-
+ ru/nashi-uslugi.html            |  3 ++-
+ ru/o-nas.html                   |  3 ++-
+ ru/onlayn-bronirovanie.html     |  3 ++-
+ ru/partnerstvo.html             |  3 ++-
+ ru/prays-list.html              |  3 ++-
+ ru/reyting.html                 |  3 ++-
+ ru/social.html                  |  3 ++-
+ ru/vvedenie.html                |  3 ++-
+ tools/fix_favicon_ico_links.cjs | 39 +++++++++++++++++++++++++++++++++++++++
+ uk/blog.html                    |  3 ++-
+ uk/datenschutz.html             |  3 ++-
+ uk/do-i-posle.html              |  3 ++-
+ uk/galereya.html                |  3 ++-
+ uk/impressum.html               |  3 ++-
+ uk/index.html                   |  3 ++-
+ uk/kontakty.html                |  3 ++-
+ uk/nashi-uslugi.html            |  3 ++-
+ uk/o-nas.html                   |  3 ++-
+ uk/onlayn-bronirovanie.html     |  3 ++-
+ uk/partnerstvo.html             |  3 ++-
+ uk/prays-list.html              |  3 ++-
+ uk/reyting.html                 |  3 ++-
+ uk/social.html                  |  3 ++-
+ uk/vvedenie.html                |  3 ++-
+ 63 files changed, 178 insertions(+), 61 deletions(-)
+
+commit 9bd93271ff5b1a3afa4f533a1cc90abff2dcf449
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Thu May 7 14:41:59 2026 +0200
+
+    fix: favicons — transparent bg all sizes, attention-crop for 16/32/48px, lanczos3+sharpen
+
+ assets/images/favikon/android-chrome-192x192.png   | Bin 66630 -> 69228 bytes
+ assets/images/favikon/android-chrome-512x512.png   | Bin 372799 -> 386100 bytes
+ assets/images/favikon/apple-touch-icon.png         | Bin 59600 -> 61321 bytes
+ assets/images/favikon/favicon-128x128.png          | Bin 32937 -> 33582 bytes
+ assets/images/favikon/favicon-16x16.png            | Bin 973 -> 935 bytes
+ assets/images/favikon/favicon-256x256.png          | Bin 109350 -> 112774 bytes
+ assets/images/favikon/favicon-32x32.png            | Bin 2954 -> 3066 bytes
+ assets/images/favikon/favicon-384x384.png          | Bin 222250 -> 230530 bytes
+ assets/images/favikon/favicon-48x48.png            | Bin 6048 -> 6184 bytes
+ assets/images/favikon/favicon-512x512.png          | Bin 372799 -> 386100 bytes
+ assets/images/favikon/favicon-64x64.png            | Bin 9877 -> 9986 bytes
+ assets/images/favikon/favicon-96x96.png            | Bin 20399 -> 20244 bytes
+ assets/images/favikon/favicon-search-512.png       | Bin 372799 -> 386100 bytes
+ assets/images/favikon/favicon.ico                  | Bin 9667 -> 10239 bytes
+ assets/images/favikon/favicon.png                  | Bin 372799 -> 386100 bytes
+ assets/images/favikon/maskable-icon-512x512.png    | Bin 284251 -> 295241 bytes
+ assets/images/favikon/mstile-150x150.png           | Bin 43655 -> 44993 bytes
+ assets/images/favikon/search-logo-512.png          | Bin 372799 -> 386100 bytes
+ assets/images/favikon/search-logo-clear-512.png    | Bin 372799 -> 386100 bytes
+ .../images/favikon/search-logo-transparent-512.png | Bin 372799 -> 386100 bytes
+ favicon.ico                                        | Bin 9667 -> 10239 bytes
+ 21 files changed, 0 insertions(+), 0 deletions(-)
+
+commit db75308edaf0569901f9803834678d4080ed3a00
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Thu May 7 14:37:09 2026 +0200
+
+    fix: favicons max quality — lanczos3, unsharp small sizes, full-bleed ICO
+
+ .wranglerignore                                    |   1 +
+ assets/images/favikon/android-chrome-192x192.png   | Bin 69558 -> 66630 bytes
+ assets/images/favikon/android-chrome-512x512.png   | Bin 430431 -> 372799 bytes
+ assets/images/favikon/apple-touch-icon.png         | Bin 61847 -> 59600 bytes
+ assets/images/favikon/favicon-128x128.png          | Bin 33799 -> 32937 bytes
+ assets/images/favikon/favicon-16x16.png            | Bin 1001 -> 973 bytes
+ assets/images/favikon/favicon-256x256.png          | Bin 116825 -> 109350 bytes
+ assets/images/favikon/favicon-32x32.png            | Bin 3062 -> 2954 bytes
+ assets/images/favikon/favicon-384x384.png          | Bin 247604 -> 222250 bytes
+ assets/images/favikon/favicon-48x48.png            | Bin 6175 -> 6048 bytes
+ assets/images/favikon/favicon-512x512.png          | Bin 430431 -> 372799 bytes
+ assets/images/favikon/favicon-64x64.png            | Bin 10201 -> 9877 bytes
+ assets/images/favikon/favicon-96x96.png            | Bin 20440 -> 20399 bytes
+ assets/images/favikon/favicon-search-512.png       | Bin 430431 -> 372799 bytes
+ assets/images/favikon/favicon.ico                  | Bin 10292 -> 9667 bytes
+ assets/images/favikon/favicon.png                  | Bin 430431 -> 372799 bytes
+ assets/images/favikon/maskable-icon-512x512.png    | Bin 287696 -> 284251 bytes
+ assets/images/favikon/mstile-150x150.png           | Bin 44461 -> 43655 bytes
+ assets/images/favikon/search-logo-512.png          | Bin 430431 -> 372799 bytes
+ assets/images/favikon/search-logo-clear-512.png    | Bin 430431 -> 372799 bytes
+ .../images/favikon/search-logo-transparent-512.png | Bin 430431 -> 372799 bytes
+ favicon.ico                                        | Bin 270622 -> 9667 bytes
+ 22 files changed, 1 insertion(+)
+
+commit 3bce54e9a9168b92612183a6ec9733c881786bd0
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Thu May 7 02:08:56 2026 +0200
+
+    feat: favicon pack — transparent PNG, full-bleed, favikon/ v20260506
+    
+    - Regenerate all 19 PNG favicons with transparent background from logo.png
+    - Rebuild favicon.ico (16/32/48px multi-size, transparent)
+    - maskable-icon-512x512.png: emerald bg #0f6d66 with 10% safe-zone padding
+    - Migrate all favicon assets to assets/images/favikon/ (single source of truth)
+    - Update all HTML pages (de/en/ru/uk + blog) to use favikon/ paths
+    - Update site.webmanifest, browserconfig.xml to use favikon/ paths
+    - Update tooling: update-brand-search-seo.js, check-project.js,
+      optimize_fcp_head.cjs, google-search-console-audit.js
+    - Remove duplicate favicon files from assets/images/ root
+    - Cache-bust version: ?v=20260506-full-bleed
+
+ .wranglerignore                                    |   5 +-
+ .../dist-widget/assets/Moon/mission_720p30.mp4     | Bin 33628380 -> 0 bytes
+ .../dist-widget/assets/Moon/moon_texture_23k.png   | Bin 29344312 -> 0 bytes
+ INFRASTRUCTURE.md                                  | 439 +++++++++++++++++++++
+ assets/images/android-chrome-192x192.png           | Bin 29296 -> 0 bytes
+ assets/images/android-chrome-512x512.png           | Bin 201389 -> 0 bytes
+ assets/images/apple-touch-icon.png                 | Bin 27213 -> 0 bytes
+ assets/images/favicon-128x128.png                  | Bin 16454 -> 0 bytes
+ assets/images/favicon-16x16.png                    | Bin 501 -> 0 bytes
+ assets/images/favicon-256x256.png                  | Bin 55642 -> 0 bytes
+ assets/images/favicon-32x32.png                    | Bin 1559 -> 0 bytes
+ assets/images/favicon-384x384.png                  | Bin 118142 -> 0 bytes
+ assets/images/favicon-48x48.png                    | Bin 2850 -> 0 bytes
+ assets/images/favicon-512x512.png                  | Bin 201389 -> 0 bytes
+ assets/images/favicon-64x64.png                    | Bin 4958 -> 0 bytes
+ assets/images/favicon-96x96.png                    | Bin 9952 -> 0 bytes
+ assets/images/favicon-search-512.png               | Bin 161850 -> 0 bytes
+ assets/images/favicon.png                          | Bin 201389 -> 0 bytes
+ assets/images/favikon/android-chrome-192x192.png   | Bin 0 -> 69558 bytes
+ assets/images/favikon/android-chrome-512x512.png   | Bin 0 -> 430431 bytes
+ assets/images/favikon/apple-touch-icon.png         | Bin 0 -> 61847 bytes
+ assets/images/favikon/favicon-128x128.png          | Bin 0 -> 33799 bytes
+ assets/images/favikon/favicon-16x16.png            | Bin 0 -> 1001 bytes
+ assets/images/favikon/favicon-256x256.png          | Bin 0 -> 116825 bytes
+ assets/images/favikon/favicon-32x32.png            | Bin 0 -> 3062 bytes
+ assets/images/favikon/favicon-384x384.png          | Bin 0 -> 247604 bytes
+ assets/images/favikon/favicon-48x48.png            | Bin 0 -> 6175 bytes
+ assets/images/favikon/favicon-512x512.png          | Bin 0 -> 430431 bytes
+ assets/images/favikon/favicon-64x64.png            | Bin 0 -> 10201 bytes
+ assets/images/favikon/favicon-96x96.png            | Bin 0 -> 20440 bytes
+ assets/images/favikon/favicon-search-512.png       | Bin 0 -> 430431 bytes
+ assets/images/favikon/favicon.ico                  | Bin 0 -> 10292 bytes
+ assets/images/favikon/favicon.png                  | Bin 0 -> 430431 bytes
+ assets/images/favikon/maskable-icon-512x512.png    | Bin 0 -> 287696 bytes
+ assets/images/favikon/mstile-150x150.png           | Bin 0 -> 44461 bytes
+ assets/images/favikon/search-logo-512.png          | Bin 0 -> 430431 bytes
+ assets/images/favikon/search-logo-clear-512.png    | Bin 0 -> 430431 bytes
+ .../images/favikon/search-logo-transparent-512.png | Bin 0 -> 430431 bytes
+ assets/images/maskable-icon-512x512.png            | Bin 31680 -> 0 bytes
+ assets/images/mstile-150x150.png                   | Bin 19208 -> 0 bytes
+ assets/images/search-logo-512.png                  | Bin 161850 -> 0 bytes
+ assets/images/search-logo-clear-512.png            | Bin 161850 -> 0 bytes
+ assets/images/search-logo-transparent-512.png      | Bin 161850 -> 0 bytes
+ assets/images/social-preview-1200x630.png          | Bin 403823 -> 1821766 bytes
+ browserconfig.xml                                  |   2 +-
+ de/blog.html                                       |  28 +-
+ de/blog/kak-podgotovit-sobaku.html                 |  28 +-
+ de/blog/plokhaya-strizhka.html                     |  28 +-
+ de/blog/strizhka-koshek.html                       |  28 +-
+ de/blog/zashchita-ot-parazitov.html                |  28 +-
+ de/datenschutz.html                                |  28 +-
+ de/do-i-posle.html                                 |  28 +-
+ de/galereya.html                                   |  28 +-
+ de/impressum.html                                  |  28 +-
+ de/index.html                                      |  40 +-
+ de/kontakty.html                                   |  28 +-
+ de/nashi-uslugi.html                               |  28 +-
+ de/o-nas.html                                      |  28 +-
+ de/onlayn-bronirovanie.html                        |  28 +-
+ de/partnerstvo.html                                |  28 +-
+ de/prays-list.html                                 |  28 +-
+ de/reyting.html                                    |  28 +-
+ de/social.html                                     |  28 +-
+ de/vvedenie.html                                   |  28 +-
+ docs/growth-operations-playbook-90d.md             | 121 ++++++
+ en/blog.html                                       |  28 +-
+ en/blog/kak-podgotovit-sobaku.html                 |  28 +-
+ en/blog/plokhaya-strizhka.html                     |  28 +-
+ en/blog/strizhka-koshek.html                       |  28 +-
+ en/blog/zashchita-ot-parazitov.html                |  28 +-
+ en/datenschutz.html                                |  28 +-
+ en/do-i-posle.html                                 |  28 +-
+ en/galereya.html                                   |  28 +-
+ en/impressum.html                                  |  28 +-
+ en/index.html                                      |  40 +-
+ en/kontakty.html                                   |  28 +-
+ en/nashi-uslugi.html                               |  28 +-
+ en/o-nas.html                                      |  28 +-
+ en/onlayn-bronirovanie.html                        |  28 +-
+ en/partnerstvo.html                                |  28 +-
+ en/prays-list.html                                 |  28 +-
+ en/reyting.html                                    |  28 +-
+ en/social.html                                     |  28 +-
+ en/vvedenie.html                                   |  28 +-
+ favicon.ico                                        | Bin 1559 -> 270622 bytes
+ favicon.png                                        | Bin 201389 -> 0 bytes
+ index.html                                         |  40 +-
+ ru/blog.html                                       |  28 +-
+ ru/blog/kak-podgotovit-sobaku.html                 |  28 +-
+ ru/blog/plokhaya-strizhka.html                     |  28 +-
+ ru/blog/strizhka-koshek.html                       |  28 +-
+ ru/blog/zashchita-ot-parazitov.html                |  28 +-
+ ru/datenschutz.html                                |  28 +-
+ ru/do-i-posle.html                                 |  28 +-
+ ru/galereya.html                                   |  28 +-
+ ru/impressum.html                                  |  28 +-
+ ru/index.html                                      |  40 +-
+ ru/kontakty.html                                   |  28 +-
+ ru/nashi-uslugi.html                               |  28 +-
+ ru/o-nas.html                                      |  28 +-
+ ru/onlayn-bronirovanie.html                        |  28 +-
+ ru/partnerstvo.html                                |  28 +-
+ ru/prays-list.html                                 |  28 +-
+ ru/reyting.html                                    |  28 +-
+ ru/social.html                                     |  28 +-
+ ru/vvedenie.html                                   |  28 +-
+ site.webmanifest                                   |  10 +-
+ tools/cf-audit.ps1                                 | 152 +++++++
+ tools/cf-dns.ps1                                   |  42 ++
+ tools/check-project.js                             |  32 +-
+ tools/deploy-production.cjs                        |  18 +-
+ tools/google-search-console-audit.js               |  28 +-
+ tools/optimize_fcp_head.cjs                        |  95 ++---
+ tools/update-brand-search-seo.js                   |  49 ++-
+ uk/blog.html                                       |  28 +-
+ uk/blog/kak-podgotovit-sobaku.html                 |  28 +-
+ uk/blog/plokhaya-strizhka.html                     |  28 +-
+ uk/blog/strizhka-koshek.html                       |  28 +-
+ uk/blog/zashchita-ot-parazitov.html                |  28 +-
+ uk/datenschutz.html                                |  28 +-
+ uk/do-i-posle.html                                 |  28 +-
+ uk/galereya.html                                   |  28 +-
+ uk/impressum.html                                  |  28 +-
+ uk/index.html                                      |  40 +-
+ uk/kontakty.html                                   |  28 +-
+ uk/nashi-uslugi.html                               |  28 +-
+ uk/o-nas.html                                      |  28 +-
+ uk/onlayn-bronirovanie.html                        |  28 +-
+ uk/partnerstvo.html                                |  28 +-
+ uk/prays-list.html                                 |  28 +-
+ uk/reyting.html                                    |  28 +-
+ uk/social.html                                     |  28 +-
+ uk/vvedenie.html                                   |  28 +-
+ 133 files changed, 1990 insertions(+), 1219 deletions(-)
+
+commit 4e10f9d1e6e7a7fa5e2ab51cc0f193f240e97c37
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 16:52:53 2026 +0200
+
+    fix: wranglerignore explicit large files + deploy script cpSync fallback
+
+ .wranglerignore             |  6 +++++-
+ tools/deploy-production.cjs | 14 +++++++++++++-
+ 2 files changed, 18 insertions(+), 2 deletions(-)
+
+commit 8491e7661834934ec5d763d087783925dc4a69f4
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 16:49:50 2026 +0200
+
+    fix: bump CSS cache versions to 20260506-02 for browser cache bust
+
+ de/blog.html                        | 10 +++++-----
+ de/blog/kak-podgotovit-sobaku.html  |  4 ++--
+ de/blog/plokhaya-strizhka.html      |  4 ++--
+ de/blog/strizhka-koshek.html        |  4 ++--
+ de/blog/zashchita-ot-parazitov.html |  4 ++--
+ de/datenschutz.html                 | 10 +++++-----
+ de/do-i-posle.html                  | 10 +++++-----
+ de/galereya.html                    | 10 +++++-----
+ de/impressum.html                   | 10 +++++-----
+ de/index.html                       |  4 ++--
+ de/kontakty.html                    | 10 +++++-----
+ de/nashi-uslugi.html                | 10 +++++-----
+ de/o-nas.html                       | 10 +++++-----
+ de/onlayn-bronirovanie.html         | 10 +++++-----
+ de/partnerstvo.html                 | 10 +++++-----
+ de/prays-list.html                  | 10 +++++-----
+ de/reyting.html                     | 10 +++++-----
+ de/social.html                      | 10 +++++-----
+ de/vvedenie.html                    | 10 +++++-----
+ en/blog.html                        | 10 +++++-----
+ en/blog/kak-podgotovit-sobaku.html  |  4 ++--
+ en/blog/plokhaya-strizhka.html      |  4 ++--
+ en/blog/strizhka-koshek.html        |  4 ++--
+ en/blog/zashchita-ot-parazitov.html |  4 ++--
+ en/datenschutz.html                 | 10 +++++-----
+ en/do-i-posle.html                  | 10 +++++-----
+ en/galereya.html                    | 10 +++++-----
+ en/impressum.html                   | 10 +++++-----
+ en/index.html                       |  4 ++--
+ en/kontakty.html                    | 10 +++++-----
+ en/nashi-uslugi.html                | 10 +++++-----
+ en/o-nas.html                       | 10 +++++-----
+ en/onlayn-bronirovanie.html         | 10 +++++-----
+ en/partnerstvo.html                 | 10 +++++-----
+ en/prays-list.html                  | 10 +++++-----
+ en/reyting.html                     | 10 +++++-----
+ en/social.html                      | 10 +++++-----
+ en/vvedenie.html                    | 10 +++++-----
+ ru/blog.html                        | 10 +++++-----
+ ru/blog/kak-podgotovit-sobaku.html  |  4 ++--
+ ru/blog/plokhaya-strizhka.html      |  4 ++--
+ ru/blog/strizhka-koshek.html        |  4 ++--
+ ru/blog/zashchita-ot-parazitov.html |  4 ++--
+ ru/datenschutz.html                 | 10 +++++-----
+ ru/do-i-posle.html                  | 10 +++++-----
+ ru/galereya.html                    | 10 +++++-----
+ ru/impressum.html                   | 10 +++++-----
+ ru/index.html                       |  4 ++--
+ ru/kontakty.html                    | 10 +++++-----
+ ru/nashi-uslugi.html                | 10 +++++-----
+ ru/o-nas.html                       | 10 +++++-----
+ ru/onlayn-bronirovanie.html         | 10 +++++-----
+ ru/partnerstvo.html                 | 10 +++++-----
+ ru/prays-list.html                  | 10 +++++-----
+ ru/reyting.html                     | 10 +++++-----
+ ru/social.html                      | 10 +++++-----
+ ru/vvedenie.html                    | 10 +++++-----
+ uk/blog.html                        | 10 +++++-----
+ uk/blog/kak-podgotovit-sobaku.html  |  4 ++--
+ uk/blog/plokhaya-strizhka.html      |  4 ++--
+ uk/blog/strizhka-koshek.html        |  4 ++--
+ uk/blog/zashchita-ot-parazitov.html |  4 ++--
+ uk/datenschutz.html                 | 10 +++++-----
+ uk/do-i-posle.html                  | 10 +++++-----
+ uk/galereya.html                    | 10 +++++-----
+ uk/impressum.html                   | 10 +++++-----
+ uk/index.html                       |  4 ++--
+ uk/kontakty.html                    | 10 +++++-----
+ uk/nashi-uslugi.html                | 10 +++++-----
+ uk/o-nas.html                       | 10 +++++-----
+ uk/onlayn-bronirovanie.html         | 10 +++++-----
+ uk/partnerstvo.html                 | 10 +++++-----
+ uk/prays-list.html                  | 10 +++++-----
+ uk/reyting.html                     | 10 +++++-----
+ uk/social.html                      | 10 +++++-----
+ uk/vvedenie.html                    | 10 +++++-----
+ 76 files changed, 320 insertions(+), 320 deletions(-)
+
+commit 56a65ac2b07c3574ea6ba72b87e9e6258f22d9a2
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 16:38:35 2026 +0200
+
+    fix: backup entire 3d-weather folder
+    
+    The wrangler deploy process rebuilds dist/ and copies large files.
+    Backup the entire 3d-weather-codrops-main folder to prevent
+    any large assets from being included in Cloudflare deployment.
+
+ tools/deploy-production.cjs | 20 +++++++++++++++++---
+ 1 file changed, 17 insertions(+), 3 deletions(-)
+
+commit 45b84e88a7684068718921af8a6a9dcdcc2db7c7
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 16:37:49 2026 +0200
+
+    fix: skip build, clean dist/, use git lfs files only
+    
+    FINAL FIX:
+    - Skip npm run build (prevents git lfs from restoring large files to dist/)
+    - Only run linting and checks (npm run lint, npm run check:*)
+    - Remove dist/ folder before deploying (if exists)
+    - Deploy source code directly to Cloudflare Pages
+    - Restore large files after deploy
+    
+    This prevents dist/ from being polluted with LFS files >25MB
+
+ tools/deploy-production.cjs | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+commit 927c203c619f0f01853f7f2520f74deb41d07db4
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 16:36:16 2026 +0200
+
+    fix: move large files BEFORE validation
+    
+    CRITICAL FIX: Backup large files BEFORE npm run validate
+    - Prevents dist/ from including large files (302MB usdz, 32MB mp4, etc)
+    - Only after validation, deploy to Cloudflare Pages
+    - Restore files after deployment complete
+    
+    This ensures wrangler only sees small files in both project and dist/
+
+ tools/deploy-production.cjs | 113 +++++++++++++++++++++++++-------------------
+ 1 file changed, 65 insertions(+), 48 deletions(-)
+
+commit 076c3a7f1c7f1c1e91704f2c5f6585ada81ad6cf
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 16:33:19 2026 +0200
+
+    fix: use system temp folder for large files
+    
+    - Move large files to OS temp directory (/tmp or %TEMP%)
+    - Files completely outside of project scope during deployment
+    - Prevents wrangler from scanning temporary files
+    - Automatically cleanup after deploy completes
+    - More reliable than project-based temporary storage
+
+ .wranglerignore             | 42 +++++++-----------------------------------
+ tools/deploy-production.cjs | 15 ++++++---------
+ 2 files changed, 13 insertions(+), 44 deletions(-)
+
+commit cca3efbd611787b80e292d31904585485a9f93b6
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 16:30:57 2026 +0200
+
+    fix: move large files to temp folder during deployment
+    
+    - Create .deploy-temp folder for temporary storage
+    - Move large files (457 MB) completely out of project scope
+    - Deploy to Cloudflare Pages without size violations
+    - Restore files after deployment succeeds or fails
+    - Cleanup temporary folder automatically
+    
+    This solves wrangler's aggressive file scanning that detects even renamed files.
+
+ tools/deploy-production.cjs | 54 +++++++++++++++++++++++++++------------------
+ 1 file changed, 32 insertions(+), 22 deletions(-)
+
+commit 20511c7ead1022f479c2273366c3984f511a5fee
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 16:29:23 2026 +0200
+
+    refactor: smart deployment with temporary file hiding
+    
+    SOLUTION: Temporary hide-and-restore approach
+    - Rename large files to *.deploy-hidden before deployment
+    - Deploy to Cloudflare Pages without size violations
+    - Restore files immediately after deploy completes
+    - No .wranglerignore workarounds needed
+    
+    Large files handled:
+    - tools/.otel/* (Git LFS tracked, 457 MB total)
+    - 3d-weather moon assets (362 MB total)
+    
+    This ensures:
+    ✓ Cloudflare Pages deployment succeeds (<25MB files)
+    ✓ Git LFS files remain version-controlled
+    ✓ Local dev files always available after deploy
+    ✓ Professional, reliable deployment process
+
+ tools/deploy-production.cjs | 115 ++++++++++++++++++++++++++------------------
+ 1 file changed, 67 insertions(+), 48 deletions(-)
+
+commit e6cdbd1dc5f48b70f45c7a751aec534903bb2a42
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 16:27:26 2026 +0200
+
+    improvement: dynamic .wranglerignore generation for deploy
+    
+    - Temporarily generate .wranglerignore with large file exclusions
+    - Exclude tools/.otel (Git LFS files)
+    - Exclude 3d-weather moon assets (>25MB)
+    - Restore git version after deploy
+    - Simplified deployment flow
+
+ tools/deploy-production.cjs | 83 ++++++++++++++++++++-------------------------
+ 1 file changed, 36 insertions(+), 47 deletions(-)
+
+commit f41a313685a21c671e447fe814ba98e11f2cb993
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 16:25:37 2026 +0200
+
+    fix: rename deploy script to .cjs for CommonJS compatibility
+    
+    - Rename tools/deploy-production.js -> deploy-production.cjs
+    - Update package.json deploy script reference
+    - Resolves ES module/CommonJS conflict with 'type: module' in package.json
+
+ package.json                                          | 2 +-
+ tools/{deploy-production.js => deploy-production.cjs} | 0
+ 2 files changed, 1 insertion(+), 1 deletion(-)
+
+commit 805d8b57670e7c76f31899f39302bfd1ed5413b7
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 16:24:37 2026 +0200
+
+    refactor: implement professional Git LFS solution for large files
+    
+    PROBLEM SOLVED:
+    - Cloudflare Pages has 25MB per-file limit
+    - Project contained multiple large files: .exe (362MB), .tar.gz (94.7MB), backups
+    - Previous solutions were incomplete or inefficient
+    
+    SOLUTION (Best Practice):
+    1. Git LFS for All Large Files:
+       - Track *.exe files via Git LFS (removes from regular git)
+       - Track *.tar.gz and *.gz files via Git LFS
+       - LFS pointers (~1KB) stored in git, actual files on LFS server
+    
+    2. Smart Deploy Script (tools/deploy-production.js):
+       - Validates project (lint + links + config)
+       - Analyzes files for Cloudflare size limits
+       - Deploys only eligible files to Cloudflare Pages
+       - LFS files remain in GitHub, not deployed to Pages
+       - Provides clear summary and recommendations
+    
+    3. Configuration Updates:
+       - .gitattributes: LFS tracking for binary/large files
+       - package.json: Updated 'deploy' script to use smart deployer
+       - wrangler.toml: Documented deploy process
+       - .wranglerignore: Excludes dev artifacts
+    
+    BENEFITS:
+    ✓ Large files version-controlled in Git (via LFS)
+    ✓ Cloudflare Pages deployment succeeds (<25MB files)
+    ✓ Production builds are clean and fast
+    ✓ Dev files (.otel tools) preserved for local use
+    ✓ Git history clean, no rebasing needed
+    ✓ Professional, maintainable solution
+    
+    USAGE:
+    - npm run deploy (uses smart deployment)
+    - git push (LFS files auto-transferred)
+    - GitHub.com shows LFS badge for large files
+
+ .gitattributes                                     |   2 +
+ package.json                                       |   2 +-
+ .../otelcol-contrib_0.151.0_windows_amd64.tar.gz   |   3 +
+ tools/deploy-production.js                         | 106 +++++++++++++++++++++
+ wrangler.toml                                      |   8 +-
+ 5 files changed, 119 insertions(+), 2 deletions(-)
+
+commit bd9e89afe70ffbcc6161842e8482a4404df2ac01
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 16:21:54 2026 +0200
+
+    chore: add .wranglerignore to exclude large files from Cloudflare Pages deploy
+    
+    - Exclude backups/ folder (too large for Pages 25MB limit)
+    - Exclude node_modules, .git, and other dev artifacts
+    - Exclude tools and scripts not needed in production
+    - Resolves Cloudflare Pages deployment error (421 MiB > 25 MiB limit)
+
+ .wranglerignore | 38 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
+
+commit 211e97f238f3f8c40a55c0fc66ea23c0d17c37b4
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 16:16:30 2026 +0200
+
+    feat: enable Git LFS for large OpenTelemetry binaries
+    
+    - Initialize Git LFS and track *.exe files (>100MB)
+    - Add otelcol-contrib.exe (362.72 MB) via Git LFS
+    - Update .gitignore to allow .otel files through LFS
+    - Resolves GitHub 100MB file size limit by using LFS pointers
+    - All large files now stored in LFS remote storage
+    - Maintains full .otel tool functionality with versioning
+
+ .gitattributes                                          | 1 +
+ .gitignore                                              | 2 +-
+ tools/.otel/otelcol-contrib_0.151.0/otelcol-contrib.exe | 3 +++
+ 3 files changed, 5 insertions(+), 1 deletion(-)
+
+commit 733cd9b8cb86124ebe8ddf4c2f3f639b23d37226
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 16:13:39 2026 +0200
+
+    refactor: improve MCP fetch server setup, enhance CSS modules and AI assistant
+    
+    - Configure MCP fetch server with Python venv isolation (resolves npm E404)
+    - Update VS Code settings for optimal Python environment integration
+    - Enhance page-modules.css with improved component styling
+    - Refactor ai-assistant.js with cleaner architecture and better comments
+    - Update .gitignore to exclude large OpenTelemetry binaries (>100MB)
+    - All lints passed: HTML, CSS, JS validation 100% clean
+    - Production build successful, no errors or warnings
+
+ .gitignore                  |   1 +
+ .vscode/mcp.json            |   6 +-
+ .vscode/settings.json       |   5 +
+ assets/css/page-modules.css | 129 +++++++++
+ assets/js/ai-assistant.js   | 624 +++++++++++++++++++++++---------------------
+ 5 files changed, 470 insertions(+), 295 deletions(-)
+
+commit beb80d7b75ebfaf59907803f131eb34c469ac6e1
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 14:38:15 2026 +0200
+
+    Adds AI assistant widget with Otel integration
+    
+    Introduces an AI assistant widget to contact pages, including all necessary container markup, script inclusion, and dedicated CSS for styling and responsiveness.
+    
+    Enables OpenTelemetry tracing and configuration in workspace settings, and provides VS Code tasks for starting/stopping the Otel collector and managing backups.
+    
+    Enhances user support and observability by integrating AI-powered help and tracing capabilities.
+
+ .env.example                   |  20 +++
+ .vscode/settings.json          |   8 +
+ .vscode/tasks.json             |  49 ++++++
+ assets/css/page-modules.css    | 286 +++++++++++++++++++++++++++++++++++
+ assets/js/ai-assistant.js      | 332 +++++++++++++++++++++++++++++++++++++++++
+ de/kontakty.html               |   4 +
+ docs/AI_ASSISTANT.md           | 223 +++++++++++++++++++++++++++
+ docs/backup-strategy.md        |  50 +++++++
+ docs/opentelemetry-local.md    |  33 ++++
+ en/kontakty.html               |   4 +
+ functions/openrouter-proxy.js  |  69 +++++++++
+ ru/kontakty.html               |   4 +
+ tools/backup.ps1               |  64 ++++++++
+ tools/otel/otelcol-config.yaml |  34 +++++
+ tools/start-otel-collector.ps1 |  70 +++++++++
+ tools/stop-otel-collector.ps1  |   8 +
+ uk/kontakty.html               |   4 +
+ 17 files changed, 1262 insertions(+)
+
+commit 0b1f861eb15dbb61d8267731bef98217f17708de
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 12:13:59 2026 +0200
+
+    chore: setup local AI agents and MCP project config
+
+ .vscode/extensions.json |  5 ++++-
+ .vscode/mcp.json        | 19 +++++++++++++++++++
+ 2 files changed, 23 insertions(+), 1 deletion(-)
+
+commit df6ff2075951b71727b53418570561c5fb8c2db9
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 11:07:40 2026 +0200
+
+    test: setup Playwright VS Code smoke workflow
+
+ .gitignore                  |  1 +
+ package-lock.json           | 64 +++++++++++++++++++++++++++++++++++++++++++++
+ package.json                |  6 +++++
+ playwright.config.js        | 33 +++++++++++++++++++++++
+ tests/smoke-locales.spec.js | 24 +++++++++++++++++
+ 5 files changed, 128 insertions(+)
+
+commit 34dace9f6bf15cbd5951bd1e98ebd730f04476e9
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 11:00:12 2026 +0200
+
+    chore: remove copilot extension recommendation popup
+
+ .vscode/extensions.json | 1 -
+ 1 file changed, 1 deletion(-)
+
+commit ae3120d36805f655c8d3c2c376a9ea249c50baf8
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 10:56:01 2026 +0200
+
+    seo: add dual search-card image signals and image sitemap
+
+ de/index.html      |  6 ++++++
+ en/index.html      |  6 ++++++
+ index.html         |  6 ++++++
+ robots.txt         |  1 +
+ ru/index.html      |  6 ++++++
+ sitemap-images.xml | 53 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ uk/index.html      |  6 ++++++
+ 7 files changed, 84 insertions(+)
+
+commit 094f4cbffcec45c7d664583a460086e0fcb1a5e2
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 10:46:04 2026 +0200
+
+    fix: remove weather sun asset 404 and bump site-shell cache key
+
+ assets/js/site-shell.js             | 2 +-
+ de/blog.html                        | 2 +-
+ de/blog/kak-podgotovit-sobaku.html  | 2 +-
+ de/blog/plokhaya-strizhka.html      | 2 +-
+ de/blog/strizhka-koshek.html        | 2 +-
+ de/blog/zashchita-ot-parazitov.html | 2 +-
+ de/datenschutz.html                 | 2 +-
+ de/do-i-posle.html                  | 2 +-
+ de/galereya.html                    | 2 +-
+ de/impressum.html                   | 2 +-
+ de/index.html                       | 2 +-
+ de/kontakty.html                    | 2 +-
+ de/nashi-uslugi.html                | 2 +-
+ de/o-nas.html                       | 2 +-
+ de/onlayn-bronirovanie.html         | 2 +-
+ de/partnerstvo.html                 | 2 +-
+ de/prays-list.html                  | 2 +-
+ de/reyting.html                     | 2 +-
+ de/social.html                      | 2 +-
+ de/vvedenie.html                    | 2 +-
+ en/blog.html                        | 2 +-
+ en/blog/kak-podgotovit-sobaku.html  | 2 +-
+ en/blog/plokhaya-strizhka.html      | 2 +-
+ en/blog/strizhka-koshek.html        | 2 +-
+ en/blog/zashchita-ot-parazitov.html | 2 +-
+ en/datenschutz.html                 | 2 +-
+ en/do-i-posle.html                  | 2 +-
+ en/galereya.html                    | 2 +-
+ en/impressum.html                   | 2 +-
+ en/index.html                       | 2 +-
+ en/kontakty.html                    | 2 +-
+ en/nashi-uslugi.html                | 2 +-
+ en/o-nas.html                       | 2 +-
+ en/onlayn-bronirovanie.html         | 2 +-
+ en/partnerstvo.html                 | 2 +-
+ en/prays-list.html                  | 2 +-
+ en/reyting.html                     | 2 +-
+ en/social.html                      | 2 +-
+ en/vvedenie.html                    | 2 +-
+ ru/blog.html                        | 2 +-
+ ru/blog/kak-podgotovit-sobaku.html  | 2 +-
+ ru/blog/plokhaya-strizhka.html      | 2 +-
+ ru/blog/strizhka-koshek.html        | 2 +-
+ ru/blog/zashchita-ot-parazitov.html | 2 +-
+ ru/datenschutz.html                 | 2 +-
+ ru/do-i-posle.html                  | 2 +-
+ ru/galereya.html                    | 2 +-
+ ru/impressum.html                   | 2 +-
+ ru/index.html                       | 2 +-
+ ru/kontakty.html                    | 2 +-
+ ru/nashi-uslugi.html                | 2 +-
+ ru/o-nas.html                       | 2 +-
+ ru/onlayn-bronirovanie.html         | 2 +-
+ ru/partnerstvo.html                 | 2 +-
+ ru/prays-list.html                  | 2 +-
+ ru/reyting.html                     | 2 +-
+ ru/social.html                      | 2 +-
+ ru/vvedenie.html                    | 2 +-
+ uk/blog.html                        | 2 +-
+ uk/blog/kak-podgotovit-sobaku.html  | 2 +-
+ uk/blog/plokhaya-strizhka.html      | 2 +-
+ uk/blog/strizhka-koshek.html        | 2 +-
+ uk/blog/zashchita-ot-parazitov.html | 2 +-
+ uk/datenschutz.html                 | 2 +-
+ uk/do-i-posle.html                  | 2 +-
+ uk/galereya.html                    | 2 +-
+ uk/impressum.html                   | 2 +-
+ uk/index.html                       | 2 +-
+ uk/kontakty.html                    | 2 +-
+ uk/nashi-uslugi.html                | 2 +-
+ uk/o-nas.html                       | 2 +-
+ uk/onlayn-bronirovanie.html         | 2 +-
+ uk/partnerstvo.html                 | 2 +-
+ uk/prays-list.html                  | 2 +-
+ uk/reyting.html                     | 2 +-
+ uk/social.html                      | 2 +-
+ uk/vvedenie.html                    | 2 +-
+ 77 files changed, 77 insertions(+), 77 deletions(-)
+
+commit e07cd3376fab495d2568f2b093b140b082606030
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 10:42:22 2026 +0200
+
+    refactor: one-pass full source formatting and safe auto-fixes
+
+ assets/js/tooltip.js        | 1149 ++++++++++++++++++++++---------------------
+ de/blog.html                |  586 +++++++++++++---------
+ de/datenschutz.html         |  558 +++++++++++++--------
+ de/do-i-posle.html          |  535 ++++++++++++--------
+ de/galereya.html            |  532 ++++++++++++--------
+ de/impressum.html           |  458 ++++++++++-------
+ de/kontakty.html            |  613 ++++++++++++++---------
+ de/nashi-uslugi.html        |  615 +++++++++++++++--------
+ de/o-nas.html               |  540 ++++++++++++--------
+ de/onlayn-bronirovanie.html |  600 +++++++++++++---------
+ de/partnerstvo.html         |  579 ++++++++++++++--------
+ de/prays-list.html          |  692 +++++++++++++++++---------
+ de/reyting.html             |  560 +++++++++++++--------
+ de/social.html              |  779 +++++++++++++++++------------
+ de/vvedenie.html            |  687 ++++++++++++++++----------
+ en/blog.html                |  586 +++++++++++++---------
+ en/datenschutz.html         |  503 +++++++++++--------
+ en/do-i-posle.html          |  525 ++++++++++++--------
+ en/galereya.html            |  529 ++++++++++++--------
+ en/impressum.html           |  435 +++++++++-------
+ en/index.html               | 1046 ++++++++++++++++++++++-----------------
+ en/kontakty.html            |  612 ++++++++++++++---------
+ en/nashi-uslugi.html        |  616 +++++++++++++++--------
+ en/o-nas.html               |  540 ++++++++++++--------
+ en/onlayn-bronirovanie.html |  600 +++++++++++++---------
+ en/partnerstvo.html         |  576 ++++++++++++++--------
+ en/prays-list.html          |  719 ++++++++++++++++++---------
+ en/reyting.html             |  557 +++++++++++++--------
+ en/social.html              |  778 +++++++++++++++++------------
+ en/vvedenie.html            |  687 ++++++++++++++++----------
+ ru/blog.html                |  588 +++++++++++++---------
+ ru/datenschutz.html         |  499 +++++++++++--------
+ ru/do-i-posle.html          |  525 ++++++++++++--------
+ ru/galereya.html            |  529 ++++++++++++--------
+ ru/impressum.html           |  433 +++++++++-------
+ ru/kontakty.html            |  614 ++++++++++++++---------
+ ru/nashi-uslugi.html        |  622 +++++++++++++++--------
+ ru/o-nas.html               |  540 ++++++++++++--------
+ ru/onlayn-bronirovanie.html |  594 +++++++++++++---------
+ ru/partnerstvo.html         |  576 ++++++++++++++--------
+ ru/prays-list.html          |  692 +++++++++++++++++---------
+ ru/reyting.html             |  561 ++++++++++++---------
+ ru/social.html              |  782 +++++++++++++++++------------
+ ru/vvedenie.html            |  676 +++++++++++++++----------
+ uk/blog.html                |  586 +++++++++++++---------
+ uk/datenschutz.html         |  499 +++++++++++--------
+ uk/do-i-posle.html          |  525 ++++++++++++--------
+ uk/galereya.html            |  532 ++++++++++++--------
+ uk/impressum.html           |  433 +++++++++-------
+ uk/kontakty.html            |  612 ++++++++++++++---------
+ uk/nashi-uslugi.html        |  622 +++++++++++++++--------
+ uk/o-nas.html               |  540 ++++++++++++--------
+ uk/onlayn-bronirovanie.html |  594 +++++++++++++---------
+ uk/partnerstvo.html         |  573 +++++++++++++--------
+ uk/prays-list.html          |  692 +++++++++++++++++---------
+ uk/reyting.html             |  557 +++++++++++++--------
+ uk/social.html              |  779 +++++++++++++++++------------
+ uk/vvedenie.html            |  679 +++++++++++++++----------
+ 58 files changed, 21715 insertions(+), 13531 deletions(-)
+
+commit cb6cc95ab735dd909c01092d7ffb2e26c56dc715
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 10:37:45 2026 +0200
+
+    chore: professionalize vscode workspace and clean stale shell code
+
+ .gitignore              |  2 --
+ .vscode/extensions.json | 18 ++++--------------
+ .vscode/launch.json     | 13 +++++++++++++
+ .vscode/settings.json   | 26 ++++++--------------------
+ .vscode/tasks.json      | 41 +++++++++++++++++++++++++++++++++++++++++
+ assets/js/site-shell.js | 35 -----------------------------------
+ 6 files changed, 64 insertions(+), 71 deletions(-)
+
+commit 161dba42db8201df4abf7088a55129c7adc8db91
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 10:30:10 2026 +0200
+
+    ci: add npm audit security gate
+
+ .github/workflows/ci.yml | 3 +++
+ 1 file changed, 3 insertions(+)
+
+commit 2d36a1d866acfb320934253c70d9cb02a35c0396
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 10:28:46 2026 +0200
+
+    chore: replace live-server to resolve audit vulnerabilities
+
+ package-lock.json | 2700 +++++++++--------------------------------------------
+ package.json      |    8 +-
+ 2 files changed, 421 insertions(+), 2287 deletions(-)
+
+commit 8a4b1a08d1f052d08465953bf2790ec9bbaba6f7
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 10:26:48 2026 +0200
+
+    docs: add repository security policy
+
+ .github/SECURITY.md | 43 +++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 43 insertions(+)
+
+commit 353637919fab6dc11a9ebad1ce30eaa1fca2d93b
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 10:19:09 2026 +0200
+
+    chore: remove obsolete local seo artifacts
+
+ response.txt              |  1 -
+ response2.txt             |  0
+ response_bing.txt         |  1 -
+ tools/edge-9224-tabs.json | 51 -----------------------------------------------
+ 4 files changed, 53 deletions(-)
+
+commit 1bc253bddcfaa2cc0fbf19318c1c2f3eda49f046
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 10:11:43 2026 +0200
+
+    security: add dependabot update policy
+
+ .github/dependabot.yml | 29 +++++++++++++++++++++++++++++
+ 1 file changed, 29 insertions(+)
+
+commit 2f97bb22b18e293350e79f6e651c47f7766c2fe9
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 10:04:39 2026 +0200
+
+    ci: track npm lockfile for actions
+
+ .gitignore        |    2 -
+ package-lock.json | 6677 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 6677 insertions(+), 2 deletions(-)
+
+commit 89ed9c286d5f195c849323f1ba05eeb435aa6f91
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 10:00:03 2026 +0200
+
+    seo: reset Bing/Google verification and add CI baseline
+
+ .github/workflows/ci.yml             |  44 +++++++++++++++++++++++++++++++++++
+ B67A37AB236F9D14E1F99A12DDCA531C.txt |   2 +-
+ BingSiteAuth.xml                     |   2 +-
+ favicon.ico                          | Bin 0 -> 1559 bytes
+ google8f5e729bf8a13cc7.html          |   1 +
+ package.json                         |   2 +-
+ 6 files changed, 48 insertions(+), 3 deletions(-)
+
+commit 6173343ec7b5d0ef6de60ec1989611b049cf316d
+Author: Alan Sakarjaew <snaiper1984@gmail.com>
+Date:   Wed May 6 07:06:27 2026 +0200
+
+    initial: clean project state
+
+ .continuerules                                     |    52 +
+ .cursorrules                                       |    35 +
+ .editorconfig                                      |    11 +
+ .eslintrc.json                                     |    46 +
+ .github/copilot-instructions.md                    |   126 +
+ .github/prompts/hundesalon-agent.prompt.md         |   195 +
+ .gitignore                                         |   130 +
+ .htmlhintrc                                        |    16 +
+ .prettierrc                                        |    45 +
+ .stylelintrc.json                                  |    31 +
+ .vscode/extensions.json                            |    37 +
+ .vscode/settings.json                              |    91 +
+ .windsurfrules                                     |    51 +
+ .../dist-widget/Scene3D-Cdhk74W6.mjs               |    45 +
+ .../dist-widget/assets/Moon/mission_720p30.mp4     |   Bin 0 -> 33628380 bytes
+ .../dist-widget/assets/Moon/moon_texture.jpg       |   Bin 0 -> 200772 bytes
+ .../dist-widget/assets/Moon/moon_texture_23k.png   |   Bin 0 -> 29344312 bytes
+ .../dist-widget/assets/Moon/moon_texture_web.png   |   Bin 0 -> 4318297 bytes
+ .../dist-widget/assets/Sun/sun_orb_keyed.webm      |   Bin 0 -> 4905133 bytes
+ .../assets/lensDirtTexture-Dmo413_7.jpg            |   Bin 0 -> 22296 bytes
+ .../dist-widget/assets/moon_2k-kbb0hanK.jpg        |   Bin 0 -> 123026 bytes
+ .../dist-widget/assets/sun_2k-sc1guPlV.jpg         |   Bin 0 -> 101860 bytes
+ .../dist-widget/react-vendor-DdSZTPSL.mjs          |     9 +
+ .../dist-widget/rolldown-runtime-CwX0HnDi.mjs      |     1 +
+ .../dist-widget/weather-3d-CKX6ob-m.mjs            | 51358 +++++++++++++++++++
+ .../dist-widget/weather-widget.es.js               |     1 +
+ .../dist-widget/weather-widget.iife.js             |     1 +
+ .../dist-widget/weatherService-iG8lrujy.mjs        |     9 +
+ AGENTS.md                                          |    58 +
+ B67A37AB236F9D14E1F99A12DDCA531C.txt               |     1 +
+ BingSiteAuth.xml                                   |     4 +
+ CLAUDE.md                                          |    32 +
+ PROJECT_WORKFLOW.md                                |    31 +
+ README.md                                          |   326 +
+ _headers                                           |    59 +
+ _redirects                                         |    13 +
+ assets/css/page-modules.css                        |   919 +
+ assets/css/style.css                               | 10286 ++++
+ assets/fonts/fontawesome/all.min.css               |   185 +
+ assets/fonts/fontawesome/fa-solid-900.woff         |     1 +
+ assets/fonts/fontawesome/fa-solid-900.woff2        |   Bin 0 -> 158220 bytes
+ assets/images/android-chrome-192x192.png           |   Bin 0 -> 29296 bytes
+ assets/images/android-chrome-512x512.png           |   Bin 0 -> 201389 bytes
+ assets/images/apple-touch-icon.png                 |   Bin 0 -> 27213 bytes
+ assets/images/favicon-128x128.png                  |   Bin 0 -> 16454 bytes
+ assets/images/favicon-16x16.png                    |   Bin 0 -> 501 bytes
+ assets/images/favicon-256x256.png                  |   Bin 0 -> 55642 bytes
+ assets/images/favicon-32x32.png                    |   Bin 0 -> 1559 bytes
+ assets/images/favicon-384x384.png                  |   Bin 0 -> 118142 bytes
+ assets/images/favicon-48x48.png                    |   Bin 0 -> 2850 bytes
+ assets/images/favicon-512x512.png                  |   Bin 0 -> 201389 bytes
+ assets/images/favicon-64x64.png                    |   Bin 0 -> 4958 bytes
+ assets/images/favicon-96x96.png                    |   Bin 0 -> 9952 bytes
+ assets/images/favicon-search-512.png               |   Bin 0 -> 161850 bytes
+ assets/images/favicon.png                          |   Bin 0 -> 201389 bytes
+ assets/images/gallery1.jpg                         |   Bin 0 -> 208989 bytes
+ assets/images/gallery2.jpg                         |   Bin 0 -> 208989 bytes
+ assets/images/gallery3.jpg                         |   Bin 0 -> 208989 bytes
+ assets/images/gallery4.jpg                         |   Bin 0 -> 208989 bytes
+ assets/images/gallery5.jpg                         |   Bin 0 -> 208989 bytes
+ assets/images/gallery6.jpg                         |   Bin 0 -> 208989 bytes
+ assets/images/hero-dog.jpg                         |   Bin 0 -> 208989 bytes
+ .../Gotovie iconki dlya saita/Burger-Menu.png      |   Bin 0 -> 25685 bytes
+ .../Copilot_20260430_203009.png                    |   Bin 0 -> 1757766 bytes
+ .../Gotovie iconki dlya saita/Facebook.png         |   Bin 0 -> 7529 bytes
+ .../Gotovie iconki dlya saita/Globus language.png  |   Bin 0 -> 1894327 bytes
+ .../icon-pak/Gotovie iconki dlya saita/Home.png    |   Bin 0 -> 1319565 bytes
+ .../icon-pak/Gotovie iconki dlya saita/Job.png     |   Bin 0 -> 444438 bytes
+ .../Gotovie iconki dlya saita/Like Herz.png        |   Bin 0 -> 1647030 bytes
+ .../icon-pak/Gotovie iconki dlya saita/Locate.png  |   Bin 0 -> 1426993 bytes
+ .../Gotovie iconki dlya saita/Multimedia.png       |   Bin 0 -> 44867 bytes
+ .../Gotovie iconki dlya saita/Partners.png         |   Bin 0 -> 708439 bytes
+ .../Gotovie iconki dlya saita/Telegramm.png        |   Bin 0 -> 10772 bytes
+ .../icon-pak/Gotovie iconki dlya saita/Viber.png   |   Bin 0 -> 1806794 bytes
+ .../icon-pak/Gotovie iconki dlya saita/action.png  |   Bin 0 -> 1559784 bytes
+ .../icon-pak/Gotovie iconki dlya saita/agar_io.png |   Bin 0 -> 14180 bytes
+ .../Gotovie iconki dlya saita/apple_music.png      |   Bin 0 -> 1234800 bytes
+ .../Gotovie iconki dlya saita/asphalt_8.png        |   Bin 0 -> 14173 bytes
+ .../bonus_locomotive1.png                          |   Bin 0 -> 11498 bytes
+ .../Gotovie iconki dlya saita/clash_of_royale.png  |   Bin 0 -> 11050 bytes
+ .../Gotovie iconki dlya saita/clash_royale.png     |   Bin 0 -> 13528 bytes
+ .../icon-pak/Gotovie iconki dlya saita/clock.png   |   Bin 0 -> 1574993 bytes
+ .../Gotovie iconki dlya saita/contacts_alt6.png    |   Bin 0 -> 22568 bytes
+ .../Gotovie iconki dlya saita/currency_euro.png    |   Bin 0 -> 1997598 bytes
+ .../Gotovie iconki dlya saita/facebook_alt4.png    |   Bin 0 -> 13889 bytes
+ .../Gotovie iconki dlya saita/female_head1.png     |   Bin 0 -> 18961 bytes
+ .../icon-pak/Gotovie iconki dlya saita/frends.png  |   Bin 0 -> 719028 bytes
+ .../Gotovie iconki dlya saita/gallery_alt6.png     |   Bin 0 -> 20521 bytes
+ .../icon-pak/Gotovie iconki dlya saita/gamefly.png |   Bin 0 -> 13746 bytes
+ .../Gotovie iconki dlya saita/gom_audio.png        |   Bin 0 -> 14552 bytes
+ .../Gotovie iconki dlya saita/instagram.png        |   Bin 0 -> 1685653 bytes
+ .../internet_security.png                          |   Bin 0 -> 13284 bytes
+ .../icon-pak/Gotovie iconki dlya saita/mail.png    |   Bin 0 -> 21426 bytes
+ .../Gotovie iconki dlya saita/mail_alt1.png        |   Bin 0 -> 9156 bytes
+ .../Gotovie iconki dlya saita/mastercard.png       |   Bin 0 -> 9602 bytes
+ .../Gotovie iconki dlya saita/messaging.png        |   Bin 0 -> 10762 bytes
+ .../Gotovie iconki dlya saita/moon_reader.png      |   Bin 0 -> 13496 bytes
+ .../musicplayer_alt16.png                          |   Bin 0 -> 14138 bytes
+ .../Gotovie iconki dlya saita/musicplayer_alt6.png |   Bin 0 -> 16132 bytes
+ .../Gotovie iconki dlya saita/phone_alt5.png       |   Bin 0 -> 26537 bytes
+ .../Gotovie iconki dlya saita/pixel_dungeon.png    |   Bin 0 -> 6925 bytes
+ .../Gotovie iconki dlya saita/qr_code_reader.png   |   Bin 0 -> 8287 bytes
+ .../scientific_calculator.png                      |   Bin 0 -> 16558 bytes
+ .../Gotovie iconki dlya saita/sozial-links.png     |   Bin 0 -> 338905 bytes
+ .../Gotovie iconki dlya saita/sparkase.png         |   Bin 0 -> 13447 bytes
+ .../icon-pak/Gotovie iconki dlya saita/spotify.png |   Bin 0 -> 1153679 bytes
+ .../icon-pak/Gotovie iconki dlya saita/sunrise.png |   Bin 0 -> 1568624 bytes
+ .../icon-pak/Gotovie iconki dlya saita/tiktok.png  |   Bin 0 -> 10851 bytes
+ .../icon-pak/Gotovie iconki dlya saita/unter.png   |   Bin 0 -> 1003967 bytes
+ .../Gotovie iconki dlya saita/weather_live.png     |   Bin 0 -> 11267 bytes
+ .../Gotovie iconki dlya saita/whatsapp_alt3.png    |   Bin 0 -> 1668930 bytes
+ .../Gotovie iconki dlya saita/youtube_alt1.png     |   Bin 0 -> 1398200 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/4sync.png |   Bin 0 -> 17645 bytes
+ .../ROYCE_Transparent_App_Icons/HSBCnet.png        |   Bin 0 -> 12049 bytes
+ .../ROYCE_Transparent_App_Icons/HSB_CA.png         |   Bin 0 -> 10331 bytes
+ .../ROYCE_Transparent_App_Icons/Kijiji.png         |   Bin 0 -> 10745 bytes
+ .../ROYCE_Transparent_App_Icons/Les_pac.png        |   Bin 0 -> 12911 bytes
+ .../ROYCE_Transparent_App_Icons/NFHS_Network.png   |   Bin 0 -> 13066 bytes
+ .../ROYCE_Transparent_App_Icons/a4a_radar.png      |   Bin 0 -> 13946 bytes
+ .../a_better_camera.png                            |   Bin 0 -> 12357 bytes
+ .../a_better_camera_unlocked.png                   |   Bin 0 -> 12516 bytes
+ .../ROYCE_Transparent_App_Icons/a_color_story.png  |   Bin 0 -> 22298 bytes
+ .../aarp_member_advantages.png                     |   Bin 0 -> 10647 bytes
+ .../ROYCE_Transparent_App_Icons/aba_english.png    |   Bin 0 -> 10306 bytes
+ .../ROYCE_Transparent_App_Icons/aba_mobile.png     |   Bin 0 -> 10721 bytes
+ .../ROYCE_Transparent_App_Icons/abanca.png         |   Bin 0 -> 13860 bytes
+ .../abbyy_textgrabber.png                          |   Bin 0 -> 14887 bytes
+ .../ROYCE_Transparent_App_Icons/abc_news.png       |   Bin 0 -> 9022 bytes
+ .../ROYCE_Transparent_App_Icons/abhibus.png        |   Bin 0 -> 9379 bytes
+ .../ROYCE_Transparent_App_Icons/absoluteguitar.png |   Bin 0 -> 18055 bytes
+ .../ROYCE_Transparent_App_Icons/abv_bg.png         |   Bin 0 -> 17791 bytes
+ .../ROYCE_Transparent_App_Icons/ac4_black_flag.png |   Bin 0 -> 16876 bytes
+ .../ROYCE_Transparent_App_Icons/ac_unity.png       |   Bin 0 -> 14071 bytes
+ .../ROYCE_Transparent_App_Icons/acalendar.png      |   Bin 0 -> 13744 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/acar.png  |   Bin 0 -> 11794 bytes
+ .../ROYCE_Transparent_App_Icons/access.png         |   Bin 0 -> 13870 bytes
+ .../ROYCE_Transparent_App_Icons/accubattery.png    |   Bin 0 -> 11076 bytes
+ .../ROYCE_Transparent_App_Icons/accuradio.png      |   Bin 0 -> 19131 bytes
+ .../ROYCE_Transparent_App_Icons/accuweather.png    |   Bin 0 -> 12520 bytes
+ .../accuweather_pro.png                            |   Bin 0 -> 12578 bytes
+ .../ROYCE_Transparent_App_Icons/acdisplay.png      |   Bin 0 -> 8676 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/ace.png   |   Bin 0 -> 12894 bytes
+ .../ace_stream_engine.png                          |   Bin 0 -> 19118 bytes
+ .../ROYCE_Transparent_App_Icons/acmarket.png       |   Bin 0 -> 13344 bytes
+ .../acontact_plusplus.png                          |   Bin 0 -> 9237 bytes
+ .../ROYCE_Transparent_App_Icons/acorns.png         |   Bin 0 -> 11891 bytes
+ .../acr_pro_licence.png                            |   Bin 0 -> 11120 bytes
+ .../ROYCE_Transparent_App_Icons/action_cam.png     |   Bin 0 -> 9705 bytes
+ .../action_launcher.png                            |   Bin 0 -> 7712 bytes
+ .../action_launcher_3.png                          |   Bin 0 -> 13996 bytes
+ .../action_launcher_pro.png                        |   Bin 0 -> 8231 bytes
+ .../ROYCE_Transparent_App_Icons/actions.png        |   Bin 0 -> 14551 bytes
+ .../activador_de_porcentaje.png                    |   Bin 0 -> 12087 bytes
+ .../active_mobile_v2.png                           |   Bin 0 -> 14036 bytes
+ .../activity_launcher.png                          |   Bin 0 -> 8901 bytes
+ .../ROYCE_Transparent_App_Icons/acurrency.png      |   Bin 0 -> 22530 bytes
+ .../ROYCE_Transparent_App_Icons/ad_detector.png    |   Bin 0 -> 12657 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/ada.png   |   Bin 0 -> 22236 bytes
+ .../ROYCE_Transparent_App_Icons/adaway.png         |   Bin 0 -> 10044 bytes
+ .../adblock_browser.png                            |   Bin 0 -> 14333 bytes
+ .../ROYCE_Transparent_App_Icons/adblock_fast.png   |   Bin 0 -> 16975 bytes
+ .../adblock_for_samsung_browser.png                |   Bin 0 -> 11519 bytes
+ .../adblock_plus_pour_samsung_internet.png         |   Bin 0 -> 10716 bytes
+ .../ROYCE_Transparent_App_Icons/adfree.png         |   Bin 0 -> 23572 bytes
+ .../ROYCE_Transparent_App_Icons/adguard.png        |   Bin 0 -> 11373 bytes
+ .../adguard_content_blocker.png                    |   Bin 0 -> 10856 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/adm.png   |   Bin 0 -> 13390 bytes
+ .../administrador_de_tareas.png                    |   Bin 0 -> 10673 bytes
+ .../ROYCE_Transparent_App_Icons/adobe_air.png      |   Bin 0 -> 11672 bytes
+ .../ROYCE_Transparent_App_Icons/adobe_clip.png     |   Bin 0 -> 10880 bytes
+ .../ROYCE_Transparent_App_Icons/adobe_draw.png     |   Bin 0 -> 12042 bytes
+ .../adobe_fill_and_sign.png                        |   Bin 0 -> 10951 bytes
+ .../adobe_photoshop_fix.png                        |   Bin 0 -> 13572 bytes
+ .../adobe_photoshop_mix.png                        |   Bin 0 -> 12621 bytes
+ .../ROYCE_Transparent_App_Icons/adobe_reader.png   |   Bin 0 -> 9104 bytes
+ .../ROYCE_Transparent_App_Icons/adobe_scan.png     |   Bin 0 -> 12666 bytes
+ .../ROYCE_Transparent_App_Icons/adobe_sketch.png   |   Bin 0 -> 10686 bytes
+ .../adv_registratore_schermo.png                   |   Bin 0 -> 8580 bytes
+ .../advance_task_manager.png                       |   Bin 0 -> 9627 bytes
+ .../advanced_battery_calibrator.png                |   Bin 0 -> 10645 bytes
+ .../adw_extensions_pack.png                        |   Bin 0 -> 9481 bytes
+ .../ROYCE_Transparent_App_Icons/adw_launcher.png   |   Bin 0 -> 10846 bytes
+ .../adw_launcher_ex.png                            |   Bin 0 -> 16858 bytes
+ .../ROYCE_Transparent_App_Icons/adw_notifier.png   |   Bin 0 -> 16508 bytes
+ .../ROYCE_Transparent_App_Icons/adwnotifier_2.png  |   Bin 0 -> 15604 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/aea.png   |   Bin 0 -> 9057 bytes
+ .../ROYCE_Transparent_App_Icons/aedict.png         |   Bin 0 -> 15326 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/aemet.png |   Bin 0 -> 11817 bytes
+ .../ROYCE_Transparent_App_Icons/aeo___aerie.png    |   Bin 0 -> 9799 bytes
+ .../ROYCE_Transparent_App_Icons/aeroflot.png       |   Bin 0 -> 13303 bytes
+ .../ROYCE_Transparent_App_Icons/af_wall.png        |   Bin 0 -> 11554 bytes
+ .../ROYCE_Transparent_App_Icons/afinador.png       |   Bin 0 -> 8263 bytes
+ .../ROYCE_Transparent_App_Icons/aftensmad.png      |   Bin 0 -> 12673 bytes
+ .../ROYCE_Transparent_App_Icons/aftership.png      |   Bin 0 -> 9942 bytes
+ .../aftership_package_tracker.png                  |   Bin 0 -> 10592 bytes
+ .../ROYCE_Transparent_App_Icons/agar_io.png        |   Bin 0 -> 14180 bytes
+ .../ROYCE_Transparent_App_Icons/agenda_escolar.png |   Bin 0 -> 17131 bytes
+ .../agenda_widget_plus.png                         |   Bin 0 -> 15784 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/agent.png |   Bin 0 -> 12867 bytes
+ .../ROYCE_Transparent_App_Icons/agent2.png         |   Bin 0 -> 9993 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/agora.png |   Bin 0 -> 16085 bytes
+ .../ROYCE_Transparent_App_Icons/aida64.png         |   Bin 0 -> 15909 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/aimp.png  |   Bin 0 -> 12140 bytes
+ .../ROYCE_Transparent_App_Icons/aio_downloader.png |   Bin 0 -> 12040 bytes
+ .../ROYCE_Transparent_App_Icons/air_control.png    |   Bin 0 -> 9124 bytes
+ .../ROYCE_Transparent_App_Icons/air_nz.png         |   Bin 0 -> 16206 bytes
+ .../ROYCE_Transparent_App_Icons/airbnb.png         |   Bin 0 -> 21284 bytes
+ .../ROYCE_Transparent_App_Icons/airbrush.png       |   Bin 0 -> 19985 bytes
+ .../ROYCE_Transparent_App_Icons/aircalc.png        |   Bin 0 -> 14492 bytes
+ .../ROYCE_Transparent_App_Icons/airdroid.png       |   Bin 0 -> 10420 bytes
+ .../ROYCE_Transparent_App_Icons/airmap.png         |   Bin 0 -> 11146 bytes
+ .../ROYCE_Transparent_App_Icons/airmore.png        |   Bin 0 -> 9709 bytes
+ .../ROYCE_Transparent_App_Icons/airtel_xstream.png |   Bin 0 -> 11049 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/airy.png  |   Bin 0 -> 13090 bytes
+ .../ROYCE_Transparent_App_Icons/al_jazeera.png     |   Bin 0 -> 13281 bytes
+ .../alarm_clock_pro.png                            |   Bin 0 -> 12267 bytes
+ .../ROYCE_Transparent_App_Icons/alarm_pad.png      |   Bin 0 -> 13344 bytes
+ .../alarmclock_extreme.png                         |   Bin 0 -> 19845 bytes
+ .../alarmclock_plus.png                            |   Bin 0 -> 18019 bytes
+ .../ROYCE_Transparent_App_Icons/alarmdroid.png     |   Bin 0 -> 11964 bytes
+ .../ROYCE_Transparent_App_Icons/alarmy.png         |   Bin 0 -> 23225 bytes
+ .../ROYCE_Transparent_App_Icons/album_art.png      |   Bin 0 -> 26278 bytes
+ .../ROYCE_Transparent_App_Icons/alchemy.png        |   Bin 0 -> 10675 bytes
+ .../ROYCE_Transparent_App_Icons/aldi_talk.png      |   Bin 0 -> 13100 bytes
+ .../ROYCE_Transparent_App_Icons/aldiko.png         |   Bin 0 -> 18759 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/alexa.png |   Bin 0 -> 13103 bytes
+ .../ROYCE_Transparent_App_Icons/alfred.png         |   Bin 0 -> 15415 bytes
+ .../ROYCE_Transparent_App_Icons/aliexpress.png     |   Bin 0 -> 10098 bytes
+ .../ROYCE_Transparent_App_Icons/alipay.png         |   Bin 0 -> 14080 bytes
+ .../ROYCE_Transparent_App_Icons/alitools.png       |   Bin 0 -> 11850 bytes
+ .../ROYCE_Transparent_App_Icons/alkitab.png        |   Bin 0 -> 11526 bytes
+ .../ROYCE_Transparent_App_Icons/alkitab0.png       |   Bin 0 -> 10615 bytes
+ .../all_file_converter.png                         |   Bin 0 -> 10191 bytes
+ .../ROYCE_Transparent_App_Icons/all_recipes.png    |   Bin 0 -> 10019 bytes
+ .../ROYCE_Transparent_App_Icons/allcast.png        |   Bin 0 -> 13837 bytes
+ .../ROYCE_Transparent_App_Icons/allconnect.png     |   Bin 0 -> 13589 bytes
+ .../ROYCE_Transparent_App_Icons/allegro.png        |   Bin 0 -> 10383 bytes
+ .../allinone_calculator.png                        |   Bin 0 -> 11406 bytes
+ .../allinone_toolbox.png                           |   Bin 0 -> 11715 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/allo.png  |   Bin 0 -> 14715 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/ally.png  |   Bin 0 -> 12276 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/aloha.png |   Bin 0 -> 10905 bytes
+ .../ROYCE_Transparent_App_Icons/alpinequest.png    |   Bin 0 -> 16670 bytes
+ .../ROYCE_Transparent_App_Icons/alquran.png        |   Bin 0 -> 16784 bytes
+ .../ROYCE_Transparent_App_Icons/alreader.png       |   Bin 0 -> 15058 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/alto.png  |   Bin 0 -> 10597 bytes
+ .../ROYCE_Transparent_App_Icons/alto_email.png     |   Bin 0 -> 8938 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/alzip.png |   Bin 0 -> 9369 bytes
+ .../amaze_file_manager.png                         |   Bin 0 -> 12374 bytes
+ .../ROYCE_Transparent_App_Icons/amazfit_watch.png  |   Bin 0 -> 9401 bytes
+ .../ROYCE_Transparent_App_Icons/amazon.png         |   Bin 0 -> 15169 bytes
+ .../ROYCE_Transparent_App_Icons/amazon_alexa.png   |   Bin 0 -> 9804 bytes
+ .../ROYCE_Transparent_App_Icons/amazon_drive.png   |   Bin 0 -> 11393 bytes
+ .../ROYCE_Transparent_App_Icons/amazon_firetv.png  |   Bin 0 -> 13097 bytes
+ .../ROYCE_Transparent_App_Icons/amazon_kindle.png  |   Bin 0 -> 13126 bytes
+ .../ROYCE_Transparent_App_Icons/amazon_music.png   |   Bin 0 -> 23115 bytes
+ .../amazon_primevideo.png                          |   Bin 0 -> 14565 bytes
+ .../ROYCE_Transparent_App_Icons/amber_weather.png  |   Bin 0 -> 10445 bytes
+ .../ROYCE_Transparent_App_Icons/amc_security.png   |   Bin 0 -> 9470 bytes
+ .../american_airlines.png                          |   Bin 0 -> 10928 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/amex.png  |   Bin 0 -> 15547 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/amino.png |   Bin 0 -> 12184 bytes
+ .../ROYCE_Transparent_App_Icons/among_us.png       |   Bin 0 -> 16894 bytes
+ .../ROYCE_Transparent_App_Icons/ampere.png         |   Bin 0 -> 8900 bytes
+ .../amplificador_de_volumen_goodev.png             |   Bin 0 -> 9977 bytes
+ .../amplify_battery.png                            |   Bin 0 -> 7305 bytes
+ .../ROYCE_Transparent_App_Icons/amtrak.png         |   Bin 0 -> 10303 bytes
+ .../analog_clock_on_statusbar.png                  |   Bin 0 -> 9749 bytes
+ .../ROYCE_Transparent_App_Icons/anb_mobile.png     |   Bin 0 -> 10398 bytes
+ .../ROYCE_Transparent_App_Icons/andchat.png        |   Bin 0 -> 11447 bytes
+ .../ROYCE_Transparent_App_Icons/andro_irc.png      |   Bin 0 -> 11168 bytes
+ .../ROYCE_Transparent_App_Icons/androdumpper.png   |   Bin 0 -> 9097 bytes
+ .../androhelm_antivirus.png                        |   Bin 0 -> 7178 bytes
+ .../androhelm_antivirus0.png                       |   Bin 0 -> 7239 bytes
+ .../android_assistant.png                          |   Bin 0 -> 13798 bytes
+ .../android_assitant.png                           |   Bin 0 -> 17385 bytes
+ .../android_authority.png                          |   Bin 0 -> 9421 bytes
+ .../android_autority.png                           |   Bin 0 -> 8509 bytes
+ .../android_central.png                            |   Bin 0 -> 13995 bytes
+ .../ROYCE_Transparent_App_Icons/androidpit.png     |   Bin 0 -> 11694 bytes
+ .../ROYCE_Transparent_App_Icons/andromoney.png     |   Bin 0 -> 14072 bytes
+ .../androturk_radyo.png                            |   Bin 0 -> 13035 bytes
+ .../ROYCE_Transparent_App_Icons/anecdote.png       |   Bin 0 -> 11338 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/anews.png |   Bin 0 -> 16496 bytes
+ .../ROYCE_Transparent_App_Icons/angry_bird.png     |   Bin 0 -> 16900 bytes
+ .../ROYCE_Transparent_App_Icons/angry_birds_2.png  |   Bin 0 -> 24024 bytes
+ .../ROYCE_Transparent_App_Icons/angrybird_go.png   |   Bin 0 -> 17192 bytes
+ .../ROYCE_Transparent_App_Icons/angrybird_rio.png  |   Bin 0 -> 17085 bytes
+ .../angrybird_space.png                            |   Bin 0 -> 17739 bytes
+ .../angrybird_starwars.png                         |   Bin 0 -> 19074 bytes
+ .../ROYCE_Transparent_App_Icons/animator.png       |   Bin 0 -> 13281 bytes
+ .../animoto_video_maker.png                        |   Bin 0 -> 10805 bytes
+ .../ROYCE_Transparent_App_Icons/ankidroid.png      |   Bin 0 -> 11048 bytes
+ .../ROYCE_Transparent_App_Icons/anonytun.png       |   Bin 0 -> 10610 bytes
+ .../ROYCE_Transparent_App_Icons/antennapod.png     |   Bin 0 -> 10026 bytes
+ .../ROYCE_Transparent_App_Icons/antivirus_free.png |   Bin 0 -> 14482 bytes
+ .../anttek_explorer.png                            |   Bin 0 -> 9594 bytes
+ .../ROYCE_Transparent_App_Icons/antutu_3dbench.png |   Bin 0 -> 12715 bytes
+ .../antutu_benchmark.png                           |   Bin 0 -> 10988 bytes
+ .../ROYCE_Transparent_App_Icons/anwriter_free.png  |   Bin 0 -> 7330 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/anydo.png |   Bin 0 -> 9132 bytes
+ .../anymote_smart_remote.png                       |   Bin 0 -> 19937 bytes
+ .../ROYCE_Transparent_App_Icons/anywhere.png       |   Bin 0 -> 10504 bytes
+ .../ao3track_reader.png                            |   Bin 0 -> 15339 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/aol.png   |   Bin 0 -> 10585 bytes
+ .../ROYCE_Transparent_App_Icons/apex_notifier.png  |   Bin 0 -> 9942 bytes
+ .../ROYCE_Transparent_App_Icons/apk_editor.png     |   Bin 0 -> 12121 bytes
+ .../ROYCE_Transparent_App_Icons/apk_extractor.png  |   Bin 0 -> 11098 bytes
+ .../apkextractor_lite.png                          |   Bin 0 -> 19880 bytes
+ .../ROYCE_Transparent_App_Icons/apkpure.png        |   Bin 0 -> 14568 bytes
+ .../ROYCE_Transparent_App_Icons/apollo.png         |   Bin 0 -> 13766 bytes
+ .../ROYCE_Transparent_App_Icons/apolo_launcher.png |   Bin 0 -> 11022 bytes
+ .../ROYCE_Transparent_App_Icons/app2sd.png         |   Bin 0 -> 12790 bytes
+ .../ROYCE_Transparent_App_Icons/app_brain.png      |   Bin 0 -> 15626 bytes
+ .../app_chace_cleaner.png                          |   Bin 0 -> 10926 bytes
+ .../ROYCE_Transparent_App_Icons/app_lock.png       |   Bin 0 -> 21639 bytes
+ .../app_lock_schutz.png                            |   Bin 0 -> 12584 bytes
+ .../ROYCE_Transparent_App_Icons/app_manager.png    |   Bin 0 -> 9767 bytes
+ .../ROYCE_Transparent_App_Icons/app_of_the_day.png |   Bin 0 -> 10336 bytes
+ .../ROYCE_Transparent_App_Icons/app_store.png      |   Bin 0 -> 11894 bytes
+ .../ROYCE_Transparent_App_Icons/app_swap.png       |   Bin 0 -> 7669 bytes
+ .../ROYCE_Transparent_App_Icons/app_watcher.png    |   Bin 0 -> 18864 bytes
+ .../ROYCE_Transparent_App_Icons/appblock.png       |   Bin 0 -> 13050 bytes
+ .../ROYCE_Transparent_App_Icons/appchat.png        |   Bin 0 -> 15410 bytes
+ .../ROYCE_Transparent_App_Icons/appdialer.png      |   Bin 0 -> 14855 bytes
+ .../ROYCE_Transparent_App_Icons/appgame_4pda.png   |   Bin 0 -> 15004 bytes
+ .../ROYCE_Transparent_App_Icons/apphunt.png        |   Bin 0 -> 8468 bytes
+ .../ROYCE_Transparent_App_Icons/apple_maps.png     |   Bin 0 -> 16246 bytes
+ .../ROYCE_Transparent_App_Icons/apple_music.png    |   Bin 0 -> 9037 bytes
+ .../ROYCE_Transparent_App_Icons/apple_notes.png    |   Bin 0 -> 14103 bytes
+ .../apple_reminders.png                            |   Bin 0 -> 10765 bytes
+ .../ROYCE_Transparent_App_Icons/apple_tv.png       |   Bin 0 -> 10647 bytes
+ .../ROYCE_Transparent_App_Icons/appmgr_pro_iii.png |   Bin 0 -> 15413 bytes
+ .../ROYCE_Transparent_App_Icons/appmonster_v5.png  |   Bin 0 -> 10936 bytes
+ .../apps_google_playstore.png                      |   Bin 0 -> 14247 bytes
+ .../ROYCE_Transparent_App_Icons/appsales.png       |   Bin 0 -> 9790 bytes
+ .../ROYCE_Transparent_App_Icons/appsfree.png       |   Bin 0 -> 10752 bytes
+ .../ROYCE_Transparent_App_Icons/apptivo.png        |   Bin 0 -> 5089 bytes
+ .../ROYCE_Transparent_App_Icons/appy_gamer.png     |   Bin 0 -> 6563 bytes
+ .../ROYCE_Transparent_App_Icons/appy_geek.png      |   Bin 0 -> 13512 bytes
+ .../ROYCE_Transparent_App_Icons/appzapp.png        |   Bin 0 -> 12845 bytes
+ .../ROYCE_Transparent_App_Icons/aptoide.png        |   Bin 0 -> 23919 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/apus.png  |   Bin 0 -> 9656 bytes
+ .../apus_boosterplus_clean_boost.png               |   Bin 0 -> 8181 bytes
+ .../ROYCE_Transparent_App_Icons/apus_browser.png   |   Bin 0 -> 8031 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/apw.png   |   Bin 0 -> 16665 bytes
+ .../ROYCE_Transparent_App_Icons/aquamail.png       |   Bin 0 -> 19678 bytes
+ .../ROYCE_Transparent_App_Icons/aragon.png         |   Bin 0 -> 9273 bytes
+ .../archive_track_reader.png                       |   Bin 0 -> 11679 bytes
+ .../ROYCE_Transparent_App_Icons/archos_video.png   |   Bin 0 -> 18255 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/arcus.png |   Bin 0 -> 10741 bytes
+ .../ROYCE_Transparent_App_Icons/arcus2.png         |   Bin 0 -> 7440 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/argos.png |   Bin 0 -> 15103 bytes
+ .../ROYCE_Transparent_App_Icons/armorfly.png       |   Bin 0 -> 12313 bytes
+ .../ROYCE_Transparent_App_Icons/arroundme.png      |   Bin 0 -> 10129 bytes
+ .../ROYCE_Transparent_App_Icons/arrow_launcher.png |   Bin 0 -> 6038 bytes
+ .../ROYCE_Transparent_App_Icons/ascensus.png       |   Bin 0 -> 10491 bytes
+ .../ROYCE_Transparent_App_Icons/asphalt_8.png      |   Bin 0 -> 14173 bytes
+ .../ROYCE_Transparent_App_Icons/asphalt_xtreme.png |   Bin 0 -> 28597 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/asr.png   |   Bin 0 -> 22805 bytes
+ .../ROYCE_Transparent_App_Icons/astril_vpn.png     |   Bin 0 -> 19477 bytes
+ .../astro_filemanager.png                          |   Bin 0 -> 12000 bytes
+ .../ROYCE_Transparent_App_Icons/astus_eld.png      |   Bin 0 -> 16307 bytes
+ .../asus_mobile_manager.png                        |   Bin 0 -> 16310 bytes
+ .../ROYCE_Transparent_App_Icons/asus_support.png   |   Bin 0 -> 9905 bytes
+ .../ROYCE_Transparent_App_Icons/atom_launcher.png  |   Bin 0 -> 12878 bytes
+ .../ROYCE_Transparent_App_Icons/atomus_hd.png      |   Bin 0 -> 24692 bytes
+ .../ROYCE_Transparent_App_Icons/atorrent.png       |   Bin 0 -> 7596 bytes
+ .../ROYCE_Transparent_App_Icons/atv_madness.png    |   Bin 0 -> 10090 bytes
+ .../ROYCE_Transparent_App_Icons/audi_connect.png   |   Bin 0 -> 10175 bytes
+ .../ROYCE_Transparent_App_Icons/audials.png        |   Bin 0 -> 18432 bytes
+ .../ROYCE_Transparent_App_Icons/audible.png        |   Bin 0 -> 11022 bytes
+ .../ROYCE_Transparent_App_Icons/audiofx.png        |   Bin 0 -> 10436 bytes
+ .../ROYCE_Transparent_App_Icons/audiovision.png    |   Bin 0 -> 10413 bytes
+ .../ROYCE_Transparent_App_Icons/audipo.png         |   Bin 0 -> 10587 bytes
+ .../ROYCE_Transparent_App_Icons/auspost.png        |   Bin 0 -> 12446 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/authy.png |   Bin 0 -> 11706 bytes
+ .../ROYCE_Transparent_App_Icons/auto_voice.png     |   Bin 0 -> 20524 bytes
+ .../ROYCE_Transparent_App_Icons/autoapps.png       |   Bin 0 -> 19404 bytes
+ .../ROYCE_Transparent_App_Icons/autoinput.png      |   Bin 0 -> 17859 bytes
+ .../ROYCE_Transparent_App_Icons/autolaunch.png     |   Bin 0 -> 19151 bytes
+ .../ROYCE_Transparent_App_Icons/automatag.png      |   Bin 0 -> 8900 bytes
+ .../automatic_call_recorder.png                    |   Bin 0 -> 7868 bytes
+ .../ROYCE_Transparent_App_Icons/autopebble.png     |   Bin 0 -> 18055 bytes
+ .../ROYCE_Transparent_App_Icons/autoremote.png     |   Bin 0 -> 17850 bytes
+ .../autoshortcutpro.png                            |   Bin 0 -> 19189 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/avast.png |   Bin 0 -> 17047 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/avg.png   |   Bin 0 -> 16698 bytes
+ .../ROYCE_Transparent_App_Icons/avg_cleaner.png    |   Bin 0 -> 10461 bytes
+ .../ROYCE_Transparent_App_Icons/aviary.png         |   Bin 0 -> 14193 bytes
+ .../aviate_launcher.png                            |   Bin 0 -> 11827 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/avira.png |   Bin 0 -> 14594 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/avito.png |   Bin 0 -> 13571 bytes
+ .../awallet_cloud_password_manager.png             |   Bin 0 -> 9622 bytes
+ .../ROYCE_Transparent_App_Icons/axis_mobile.png    |   Bin 0 -> 11182 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/ayuda.png |   Bin 0 -> 7032 bytes
+ .../ROYCE_Transparent_App_Icons/babycenter.png     |   Bin 0 -> 15958 bytes
+ .../ROYCE_Transparent_App_Icons/babylist.png       |   Bin 0 -> 8817 bytes
+ .../ROYCE_Transparent_App_Icons/backdrops.png      |   Bin 0 -> 9689 bytes
+ .../background_defocus_xperia.png                  |   Bin 0 -> 17767 bytes
+ .../ROYCE_Transparent_App_Icons/backgrounds_hd.png |   Bin 0 -> 9539 bytes
+ .../backup_and_restore.png                         |   Bin 0 -> 12361 bytes
+ .../ROYCE_Transparent_App_Icons/bacon_camera.png   |   Bin 0 -> 9953 bytes
+ .../ROYCE_Transparent_App_Icons/bacon_reader.png   |   Bin 0 -> 7890 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/badoo.png |   Bin 0 -> 8275 bytes
+ .../ROYCE_Transparent_App_Icons/baiduinput.png     |   Bin 0 -> 14228 bytes
+ .../ROYCE_Transparent_App_Icons/balance.png        |   Bin 0 -> 7529 bytes
+ .../ROYCE_Transparent_App_Icons/banco_inter.png    |   Bin 0 -> 10458 bytes
+ .../ROYCE_Transparent_App_Icons/bancomer.png       |   Bin 0 -> 12660 bytes
+ .../bank_of_america.png                            |   Bin 0 -> 11788 bytes
+ .../ROYCE_Transparent_App_Icons/bankid.png         |   Bin 0 -> 9612 bytes
+ .../ROYCE_Transparent_App_Icons/bankieren.png      |   Bin 0 -> 4819 bytes
+ .../ROYCE_Transparent_App_Icons/banking.png        |   Bin 0 -> 13584 bytes
+ .../barcode_scanner.png                            |   Bin 0 -> 7875 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/bark.png  |   Bin 0 -> 14336 bytes
+ .../ROYCE_Transparent_App_Icons/basecamp.png       |   Bin 0 -> 9661 bytes
+ .../bass_booster_pro.png                           |   Bin 0 -> 11119 bytes
+ .../ROYCE_Transparent_App_Icons/batman.png         |   Bin 0 -> 10460 bytes
+ .../ROYCE_Transparent_App_Icons/battery_doctor.png |   Bin 0 -> 8717 bytes
+ .../ROYCE_Transparent_App_Icons/battlelog.png      |   Bin 0 -> 11584 bytes
+ .../ROYCE_Transparent_App_Icons/bbc_news.png       |   Bin 0 -> 10734 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/bbm.png   |   Bin 0 -> 15622 bytes
+ .../ROYCE_Transparent_App_Icons/be_weather.png     |   Bin 0 -> 14662 bytes
+ .../ROYCE_Transparent_App_Icons/beautyplus.png     |   Bin 0 -> 13068 bytes
+ .../ROYCE_Transparent_App_Icons/bejeweled.png      |   Bin 0 -> 10680 bytes
+ .../ROYCE_Transparent_App_Icons/belfius_mobile.png |   Bin 0 -> 13120 bytes
+ .../ROYCE_Transparent_App_Icons/belle_iconpack.png |   Bin 0 -> 11696 bytes
+ .../belle_iconpack_donate.png                      |   Bin 0 -> 11092 bytes
+ .../ROYCE_Transparent_App_Icons/best_buy.png       |   Bin 0 -> 12118 bytes
+ .../ROYCE_Transparent_App_Icons/bestie.png         |   Bin 0 -> 14803 bytes
+ .../better_battery_stat.png                        |   Bin 0 -> 16561 bytes
+ .../ROYCE_Transparent_App_Icons/beyondpod.png      |   Bin 0 -> 12187 bytes
+ .../ROYCE_Transparent_App_Icons/bibble.png         |   Bin 0 -> 11384 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/bible.png |   Bin 0 -> 11293 bytes
+ .../ROYCE_Transparent_App_Icons/bike_race.png      |   Bin 0 -> 12654 bytes
+ .../ROYCE_Transparent_App_Icons/bikroy.png         |   Bin 0 -> 11105 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/bild.png  |   Bin 0 -> 7867 bytes
+ .../ROYCE_Transparent_App_Icons/binance.png        |   Bin 0 -> 14338 bytes
+ .../ROYCE_Transparent_App_Icons/bitdefender.png    |   Bin 0 -> 17496 bytes
+ .../bitdefender_antivirus.png                      |   Bin 0 -> 10245 bytes
+ .../ROYCE_Transparent_App_Icons/blackmart.png      |   Bin 0 -> 17800 bytes
+ .../ROYCE_Transparent_App_Icons/blitzer_de.png     |   Bin 0 -> 14249 bytes
+ .../ROYCE_Transparent_App_Icons/blogger.png        |   Bin 0 -> 17496 bytes
+ .../ROYCE_Transparent_App_Icons/bloglovin.png      |   Bin 0 -> 11484 bytes
+ .../ROYCE_Transparent_App_Icons/bluemail.png       |   Bin 0 -> 20317 bytes
+ .../ROYCE_Transparent_App_Icons/bluetooth.png      |   Bin 0 -> 9402 bytes
+ .../bluetooth_mono_media.png                       |   Bin 0 -> 16135 bytes
+ .../ROYCE_Transparent_App_Icons/boat_browser.png   |   Bin 0 -> 18735 bytes
+ .../boat_browser_mini.png                          |   Bin 0 -> 17306 bytes
+ .../boat_browser_tablet.png                        |   Bin 0 -> 14633 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/bola.png  |   Bin 0 -> 11746 bytes
+ .../ROYCE_Transparent_App_Icons/bookmyshow.png     |   Bin 0 -> 12954 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/books.png |   Bin 0 -> 11939 bytes
+ .../ROYCE_Transparent_App_Icons/boomerang.png      |   Bin 0 -> 11758 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/box.png   |   Bin 0 -> 11070 bytes
+ .../ROYCE_Transparent_App_Icons/bpjstk_mobile.png  |   Bin 0 -> 15459 bytes
+ .../ROYCE_Transparent_App_Icons/brainly.png        |   Bin 0 -> 16901 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/brave.png |   Bin 0 -> 13996 bytes
+ .../ROYCE_Transparent_App_Icons/brave_frontier.png |   Bin 0 -> 11083 bytes
+ .../ROYCE_Transparent_App_Icons/brightness.png     |   Bin 0 -> 14966 bytes
+ .../ROYCE_Transparent_App_Icons/bsplayer.png       |   Bin 0 -> 12662 bytes
+ .../ROYCE_Transparent_App_Icons/buffer.png         |   Bin 0 -> 20247 bytes
+ .../bussiness_calendar.png                         |   Bin 0 -> 12668 bytes
+ .../bussiness_calendar_2.png                       |   Bin 0 -> 12342 bytes
+ .../ROYCE_Transparent_App_Icons/busybox.png        |   Bin 0 -> 6480 bytes
+ .../ROYCE_Transparent_App_Icons/buzz_launcher.png  |   Bin 0 -> 12540 bytes
+ .../ROYCE_Transparent_App_Icons/ca_auto_bank.png   |   Bin 0 -> 15016 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/caa.png   |   Bin 0 -> 8926 bytes
+ .../ROYCE_Transparent_App_Icons/caastme.png        |   Bin 0 -> 10486 bytes
+ .../ROYCE_Transparent_App_Icons/cabify.png         |   Bin 0 -> 12954 bytes
+ .../ROYCE_Transparent_App_Icons/calc_plus.png      |   Bin 0 -> 9398 bytes
+ .../ROYCE_Transparent_App_Icons/calculator.png     |   Bin 0 -> 15504 bytes
+ .../calculator_plusplus.png                        |   Bin 0 -> 6982 bytes
+ .../ROYCE_Transparent_App_Icons/calendar.png       |   Bin 0 -> 12814 bytes
+ .../calendario_venezuela.png                       |   Bin 0 -> 12435 bytes
+ .../ROYCE_Transparent_App_Icons/calengoo.png       |   Bin 0 -> 13366 bytes
+ .../ROYCE_Transparent_App_Icons/call_log.png       |   Bin 0 -> 12101 bytes
+ .../ROYCE_Transparent_App_Icons/call_of_duty_1.png |   Bin 0 -> 16259 bytes
+ .../ROYCE_Transparent_App_Icons/call_of_duty_2.png |   Bin 0 -> 10364 bytes
+ .../ROYCE_Transparent_App_Icons/call_of_duty_3.png |   Bin 0 -> 9315 bytes
+ .../ROYCE_Transparent_App_Icons/call_of_duty_4.png |   Bin 0 -> 11020 bytes
+ .../ROYCE_Transparent_App_Icons/call_recorder.png  |   Bin 0 -> 9067 bytes
+ .../ROYCE_Transparent_App_Icons/caller_name_id.png |   Bin 0 -> 11446 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/callx.png |   Bin 0 -> 20626 bytes
+ .../ROYCE_Transparent_App_Icons/camera.png         |   Bin 0 -> 12260 bytes
+ .../ROYCE_Transparent_App_Icons/camera360.png      |   Bin 0 -> 8806 bytes
+ .../ROYCE_Transparent_App_Icons/camera_zoom_fx.png |   Bin 0 -> 12014 bytes
+ .../ROYCE_Transparent_App_Icons/cameringoplus.png  |   Bin 0 -> 17750 bytes
+ .../ROYCE_Transparent_App_Icons/camscanner.png     |   Bin 0 -> 11307 bytes
+ .../camscanner_full.png                            |   Bin 0 -> 12322 bytes
+ .../candy_crush_saga.png                           |   Bin 0 -> 8497 bytes
+ .../ROYCE_Transparent_App_Icons/capital_one.png    |   Bin 0 -> 10156 bytes
+ .../captain_america.png                            |   Bin 0 -> 13131 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/car.png   |   Bin 0 -> 16538 bytes
+ .../ROYCE_Transparent_App_Icons/car_home_ultra.png |   Bin 0 -> 14956 bytes
+ .../ROYCE_Transparent_App_Icons/carhome.png        |   Bin 0 -> 14407 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/cash.png  |   Bin 0 -> 12767 bytes
+ .../ROYCE_Transparent_App_Icons/castbox.png        |   Bin 0 -> 10512 bytes
+ .../ROYCE_Transparent_App_Icons/caustic3.png       |   Bin 0 -> 15666 bytes
+ .../ROYCE_Transparent_App_Icons/ccleaner.png       |   Bin 0 -> 16635 bytes
+ .../champagne_auction.png                          |   Bin 0 -> 11385 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/chase.png |   Bin 0 -> 17308 bytes
+ .../ROYCE_Transparent_App_Icons/chat_gpt.png       |   Bin 0 -> 23791 bytes
+ .../ROYCE_Transparent_App_Icons/chat_gpt_alt1.png  |   Bin 0 -> 15921 bytes
+ .../ROYCE_Transparent_App_Icons/chaton.png         |   Bin 0 -> 11850 bytes
+ .../cheetah_keyboard.png                           |   Bin 0 -> 12622 bytes
+ .../ROYCE_Transparent_App_Icons/chemistry.png      |   Bin 0 -> 10371 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/chewy.png |   Bin 0 -> 11629 bytes
+ .../ROYCE_Transparent_App_Icons/chillr.png         |   Bin 0 -> 12378 bytes
+ .../ROYCE_Transparent_App_Icons/chompsms.png       |   Bin 0 -> 11243 bytes
+ .../ROYCE_Transparent_App_Icons/chrome.png         |   Bin 0 -> 16714 bytes
+ .../ROYCE_Transparent_App_Icons/chrome_dev.png     |   Bin 0 -> 16201 bytes
+ .../ROYCE_Transparent_App_Icons/chromebeta.png     |   Bin 0 -> 15997 bytes
+ .../chrooma_keyboard.png                           |   Bin 0 -> 6778 bytes
+ .../ROYCE_Transparent_App_Icons/clash_of_clans.png |   Bin 0 -> 17441 bytes
+ .../clash_of_royale.png                            |   Bin 0 -> 11050 bytes
+ .../ROYCE_Transparent_App_Icons/clash_royale.png   |   Bin 0 -> 13528 bytes
+ .../clash_royale_alt1.png                          |   Bin 0 -> 15735 bytes
+ .../ROYCE_Transparent_App_Icons/clean_master.png   |   Bin 0 -> 11744 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/clock.png |   Bin 0 -> 12870 bytes
+ .../ROYCE_Transparent_App_Icons/cm_browser.png     |   Bin 0 -> 11264 bytes
+ .../ROYCE_Transparent_App_Icons/cm_security.png    |   Bin 0 -> 6933 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/cnet.png  |   Bin 0 -> 13024 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/cnn.png   |   Bin 0 -> 15681 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/cod.png   |   Bin 0 -> 14481 bytes
+ .../ROYCE_Transparent_App_Icons/color_grab.png     |   Bin 0 -> 17233 bytes
+ .../ROYCE_Transparent_App_Icons/color_note.png     |   Bin 0 -> 8118 bytes
+ .../ROYCE_Transparent_App_Icons/color_switch.png   |   Bin 0 -> 11085 bytes
+ .../com_android_videoeditor.png                    |   Bin 0 -> 19069 bytes
+ .../com_graysoft_smartphone.png                    |   Bin 0 -> 12488 bytes
+ .../com_hp_printercontrol.png                      |   Bin 0 -> 13589 bytes
+ .../ROYCE_Transparent_App_Icons/com_region.png     |   Bin 0 -> 10420 bytes
+ .../com_tnstudio_movieoftheday.png                 |   Bin 0 -> 17639 bytes
+ .../ROYCE_Transparent_App_Icons/compass.png        |   Bin 0 -> 13619 bytes
+ .../ROYCE_Transparent_App_Icons/compte_ameli.png   |   Bin 0 -> 14792 bytes
+ .../ROYCE_Transparent_App_Icons/connect.png        |   Bin 0 -> 15586 bytes
+ .../ROYCE_Transparent_App_Icons/contacts.png       |   Bin 0 -> 10543 bytes
+ .../ROYCE_Transparent_App_Icons/converter_plus.png |   Bin 0 -> 8174 bytes
+ .../ROYCE_Transparent_App_Icons/cookie_cats.png    |   Bin 0 -> 17155 bytes
+ .../ROYCE_Transparent_App_Icons/couple.png         |   Bin 0 -> 13132 bytes
+ .../ROYCE_Transparent_App_Icons/coursera.png       |   Bin 0 -> 9954 bytes
+ .../ROYCE_Transparent_App_Icons/cowley_abbott.png  |   Bin 0 -> 9787 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/craft.png |   Bin 0 -> 13996 bytes
+ .../ROYCE_Transparent_App_Icons/craigslist.png     |   Bin 0 -> 23141 bytes
+ .../create_shortcut.png                            |   Bin 0 -> 10700 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/cred.png  |   Bin 0 -> 12751 bytes
+ .../ROYCE_Transparent_App_Icons/credit_karma.png   |   Bin 0 -> 13147 bytes
+ .../ROYCE_Transparent_App_Icons/cricbuzz.png       |   Bin 0 -> 13064 bytes
+ .../criterio_channel.png                           |   Bin 0 -> 12371 bytes
+ .../ROYCE_Transparent_App_Icons/crunchyroll.png    |   Bin 0 -> 18496 bytes
+ .../ROYCE_Transparent_App_Icons/curious_cat.png    |   Bin 0 -> 9804 bytes
+ .../ROYCE_Transparent_App_Icons/currency.png       |   Bin 0 -> 10600 bytes
+ .../ROYCE_Transparent_App_Icons/currentwidget.png  |   Bin 0 -> 10038 bytes
+ .../cyanogenmod_roms.png                           |   Bin 0 -> 15659 bytes
+ .../ROYCE_Transparent_App_Icons/d_and_d_beyond.png |   Bin 0 -> 11254 bytes
+ .../daily_mail_online.png                          |   Bin 0 -> 17788 bytes
+ .../ROYCE_Transparent_App_Icons/dailymotion.png    |   Bin 0 -> 11133 bytes
+ .../ROYCE_Transparent_App_Icons/dashlane.png       |   Bin 0 -> 10341 bytes
+ .../ROYCE_Transparent_App_Icons/datpiff.png        |   Bin 0 -> 22520 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/deepl.png |   Bin 0 -> 10312 bytes
+ .../ROYCE_Transparent_App_Icons/deezer.png         |   Bin 0 -> 9681 bytes
+ .../delivery_reports.png                           |   Bin 0 -> 11416 bytes
+ .../ROYCE_Transparent_App_Icons/deputy.png         |   Bin 0 -> 13849 bytes
+ .../desktop_visualizer.png                         |   Bin 0 -> 13134 bytes
+ .../devdnua_clipboard_pro.png                      |   Bin 0 -> 9802 bytes
+ .../ROYCE_Transparent_App_Icons/deviantart.png     |   Bin 0 -> 9903 bytes
+ .../ROYCE_Transparent_App_Icons/device_unlock.png  |   Bin 0 -> 19438 bytes
+ .../ROYCE_Transparent_App_Icons/devrant.png        |   Bin 0 -> 12466 bytes
+ .../ROYCE_Transparent_App_Icons/diabetesm.png      |   Bin 0 -> 11870 bytes
+ .../ROYCE_Transparent_App_Icons/diablo.png         |   Bin 0 -> 10685 bytes
+ .../ROYCE_Transparent_App_Icons/dianping.png       |   Bin 0 -> 12900 bytes
+ .../ROYCE_Transparent_App_Icons/dictionary.png     |   Bin 0 -> 15562 bytes
+ .../ROYCE_Transparent_App_Icons/digical.png        |   Bin 0 -> 10640 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/digio.png |   Bin 0 -> 12053 bytes
+ .../ROYCE_Transparent_App_Icons/disableservice.png |   Bin 0 -> 9858 bytes
+ .../ROYCE_Transparent_App_Icons/discord.png        |   Bin 0 -> 10956 bytes
+ .../ROYCE_Transparent_App_Icons/discovery_plus.png |   Bin 0 -> 13627 bytes
+ .../ROYCE_Transparent_App_Icons/disney.png         |   Bin 0 -> 11689 bytes
+ .../disney_plus_hotstar.png                        |   Bin 0 -> 12380 bytes
+ .../ROYCE_Transparent_App_Icons/docs_to_go.png     |   Bin 0 -> 12675 bytes
+ .../ROYCE_Transparent_App_Icons/docs_to_go_key.png |   Bin 0 -> 10309 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/doku.png  |   Bin 0 -> 13229 bytes
+ .../dolphin_browser.png                            |   Bin 0 -> 8251 bytes
+ .../ROYCE_Transparent_App_Icons/domino_pizza.png   |   Bin 0 -> 9507 bytes
+ .../ROYCE_Transparent_App_Icons/doordash.png       |   Bin 0 -> 7832 bytes
+ .../ROYCE_Transparent_App_Icons/double_twist.png   |   Bin 0 -> 12619 bytes
+ .../ROYCE_Transparent_App_Icons/downloads.png      |   Bin 0 -> 15057 bytes
+ .../ROYCE_Transparent_App_Icons/dr_web.png         |   Bin 0 -> 18392 bytes
+ .../ROYCE_Transparent_App_Icons/droidlife.png      |   Bin 0 -> 7375 bytes
+ .../ROYCE_Transparent_App_Icons/dropbox.png        |   Bin 0 -> 20438 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/drupe.png |   Bin 0 -> 8638 bytes
+ .../ROYCE_Transparent_App_Icons/dunkin_donuts.png  |   Bin 0 -> 6657 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/duo.png   |   Bin 0 -> 11207 bytes
+ .../ROYCE_Transparent_App_Icons/duolingo.png       |   Bin 0 -> 12032 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/durak.png |   Bin 0 -> 8652 bytes
+ .../easy_app_backup.png                            |   Bin 0 -> 10811 bytes
+ .../easy_unistaller.png                            |   Bin 0 -> 15227 bytes
+ .../easy_voice_recorder.png                        |   Bin 0 -> 10240 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/ebay.png  |   Bin 0 -> 10518 bytes
+ .../ROYCE_Transparent_App_Icons/ebuddy.png         |   Bin 0 -> 11182 bytes
+ .../ROYCE_Transparent_App_Icons/ecualizador.png    |   Bin 0 -> 18577 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/edge.png  |   Bin 0 -> 12430 bytes
+ .../ROYCE_Transparent_App_Icons/edge_mask.png      |   Bin 0 -> 10205 bytes
+ .../ROYCE_Transparent_App_Icons/edupage.png        |   Bin 0 -> 12801 bytes
+ .../ROYCE_Transparent_App_Icons/eight_ball.png     |   Bin 0 -> 7081 bytes
+ .../ROYCE_Transparent_App_Icons/elevate.png        |   Bin 0 -> 14204 bytes
+ .../ROYCE_Transparent_App_Icons/elparking.png      |   Bin 0 -> 11516 bytes
+ .../empty_folder_cleaner.png                       |   Bin 0 -> 10498 bytes
+ .../ROYCE_Transparent_App_Icons/endomondo.png      |   Bin 0 -> 17735 bytes
+ .../english_central.png                            |   Bin 0 -> 10581 bytes
+ .../ROYCE_Transparent_App_Icons/enpass.png         |   Bin 0 -> 10005 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/entel.png |   Bin 0 -> 12775 bytes
+ .../ROYCE_Transparent_App_Icons/entel_peru.png     |   Bin 0 -> 11003 bytes
+ .../ROYCE_Transparent_App_Icons/epson_iprint.png   |   Bin 0 -> 14283 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/epsxe.png |   Bin 0 -> 13406 bytes
+ .../ROYCE_Transparent_App_Icons/equalizer_fx.png   |   Bin 0 -> 10551 bytes
+ .../ROYCE_Transparent_App_Icons/equifax.png        |   Bin 0 -> 9285 bytes
+ .../ROYCE_Transparent_App_Icons/erudite_dict.png   |   Bin 0 -> 13455 bytes
+ .../es_file_explorer.png                           |   Bin 0 -> 12538 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/esewa.png |   Bin 0 -> 11794 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/espn.png  |   Bin 0 -> 13911 bytes
+ .../ROYCE_Transparent_App_Icons/espn_watch.png     |   Bin 0 -> 12905 bytes
+ .../ROYCE_Transparent_App_Icons/espnradio.png      |   Bin 0 -> 11239 bytes
+ .../espnscorecenter.png                            |   Bin 0 -> 11585 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/etsy.png  |   Bin 0 -> 12094 bytes
+ .../ROYCE_Transparent_App_Icons/eurosport.png      |   Bin 0 -> 17551 bytes
+ .../ROYCE_Transparent_App_Icons/eventbrite.png     |   Bin 0 -> 11615 bytes
+ .../ROYCE_Transparent_App_Icons/evernote.png       |   Bin 0 -> 12935 bytes
+ .../ROYCE_Transparent_App_Icons/every_dollar.png   |   Bin 0 -> 11351 bytes
+ .../ROYCE_Transparent_App_Icons/evoland.png        |   Bin 0 -> 8301 bytes
+ .../ROYCE_Transparent_App_Icons/evolve_sms.png     |   Bin 0 -> 7811 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/excel.png |   Bin 0 -> 14098 bytes
+ .../ROYCE_Transparent_App_Icons/exclusive.png      |   Bin 0 -> 13451 bytes
+ .../ROYCE_Transparent_App_Icons/expedia.png        |   Bin 0 -> 21072 bytes
+ .../ROYCE_Transparent_App_Icons/express_vpn.png    |   Bin 0 -> 10545 bytes
+ .../ROYCE_Transparent_App_Icons/eyefilter.png      |   Bin 0 -> 9151 bytes
+ .../ROYCE_Transparent_App_Icons/ez_disabler.png    |   Bin 0 -> 13493 bytes
+ .../ROYCE_Transparent_App_Icons/faasos.png         |   Bin 0 -> 11466 bytes
+ .../ROYCE_Transparent_App_Icons/faceapp.png        |   Bin 0 -> 10134 bytes
+ .../ROYCE_Transparent_App_Icons/facebook.png       |   Bin 0 -> 7529 bytes
+ .../facebook_meta_business.png                     |   Bin 0 -> 17283 bytes
+ .../ROYCE_Transparent_App_Icons/facetime.png       |   Bin 0 -> 9747 bytes
+ .../ROYCE_Transparent_App_Icons/facetune.png       |   Bin 0 -> 7267 bytes
+ .../ROYCE_Transparent_App_Icons/falcon_pro.png     |   Bin 0 -> 20829 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/fancy.png |   Bin 0 -> 11211 bytes
+ .../ROYCE_Transparent_App_Icons/fandango.png       |   Bin 0 -> 14820 bytes
+ .../ROYCE_Transparent_App_Icons/fantastical.png    |   Bin 0 -> 15990 bytes
+ .../ROYCE_Transparent_App_Icons/fantasy.png        |   Bin 0 -> 9972 bytes
+ .../farm_heroes_saga.png                           |   Bin 0 -> 20247 bytes
+ .../ROYCE_Transparent_App_Icons/fast_reboot.png    |   Bin 0 -> 25182 bytes
+ .../ROYCE_Transparent_App_Icons/fb_messenger.png   |   Bin 0 -> 10299 bytes
+ .../ROYCE_Transparent_App_Icons/feedly.png         |   Bin 0 -> 10072 bytes
+ .../ROYCE_Transparent_App_Icons/fetch_rewards.png  |   Bin 0 -> 10379 bytes
+ .../ROYCE_Transparent_App_Icons/fetion.png         |   Bin 0 -> 13665 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/fidme.png |   Bin 0 -> 11160 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/fido.png  |   Bin 0 -> 14813 bytes
+ .../ROYCE_Transparent_App_Icons/fieldtrip.png      |   Bin 0 -> 6384 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/fildo.png |   Bin 0 -> 17330 bytes
+ .../ROYCE_Transparent_App_Icons/file_commander.png |   Bin 0 -> 13251 bytes
+ .../ROYCE_Transparent_App_Icons/file_manager.png   |   Bin 0 -> 6862 bytes
+ .../ROYCE_Transparent_App_Icons/filemanager.png    |   Bin 0 -> 10584 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/fimo.png  |   Bin 0 -> 8453 bytes
+ .../finanzassistent.png                            |   Bin 0 -> 12282 bytes
+ .../ROYCE_Transparent_App_Icons/find_my.png        |   Bin 0 -> 7773 bytes
+ .../ROYCE_Transparent_App_Icons/findomestic.png    |   Bin 0 -> 11499 bytes
+ .../ROYCE_Transparent_App_Icons/firefox.png        |   Bin 0 -> 20819 bytes
+ .../ROYCE_Transparent_App_Icons/fitbit.png         |   Bin 0 -> 12069 bytes
+ .../ROYCE_Transparent_App_Icons/fitbit_coach.png   |   Bin 0 -> 11353 bytes
+ .../ROYCE_Transparent_App_Icons/fitness.png        |   Bin 0 -> 24918 bytes
+ .../ROYCE_Transparent_App_Icons/fitness_buddy.png  |   Bin 0 -> 17535 bytes
+ .../five00_firepaper.png                           |   Bin 0 -> 11071 bytes
+ .../ROYCE_Transparent_App_Icons/fiverr.png         |   Bin 0 -> 9013 bytes
+ .../fix_lollipop_memory_leak.png                   |   Bin 0 -> 9862 bytes
+ .../ROYCE_Transparent_App_Icons/flamingo.png       |   Bin 0 -> 17136 bytes
+ .../ROYCE_Transparent_App_Icons/flashlight.png     |   Bin 0 -> 11589 bytes
+ .../flashlight_samsung_galaxy.png                  |   Bin 0 -> 18354 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/flexy.png |   Bin 0 -> 10486 bytes
+ .../ROYCE_Transparent_App_Icons/flickr.png         |   Bin 0 -> 10241 bytes
+ .../ROYCE_Transparent_App_Icons/flighttrack.png    |   Bin 0 -> 12455 bytes
+ .../ROYCE_Transparent_App_Icons/flipboard.png      |   Bin 0 -> 10014 bytes
+ .../ROYCE_Transparent_App_Icons/flipkart.png       |   Bin 0 -> 10248 bytes
+ .../ROYCE_Transparent_App_Icons/flixster.png       |   Bin 0 -> 13690 bytes
+ .../ROYCE_Transparent_App_Icons/floatify.png       |   Bin 0 -> 12098 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/flow.png  |   Bin 0 -> 10712 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/flud.png  |   Bin 0 -> 10020 bytes
+ .../ROYCE_Transparent_App_Icons/foldersync.png     |   Bin 0 -> 8214 bytes
+ .../ROYCE_Transparent_App_Icons/followmyhealth.png |   Bin 0 -> 9063 bytes
+ .../ROYCE_Transparent_App_Icons/fontinator.png     |   Bin 0 -> 10459 bytes
+ .../ROYCE_Transparent_App_Icons/foot_mercato.png   |   Bin 0 -> 10395 bytes
+ .../ROYCE_Transparent_App_Icons/fooview.png        |   Bin 0 -> 13144 bytes
+ .../ROYCE_Transparent_App_Icons/forsquare.png      |   Bin 0 -> 13906 bytes
+ .../ROYCE_Transparent_App_Icons/forum_miui.png     |   Bin 0 -> 9888 bytes
+ .../ROYCE_Transparent_App_Icons/fotmob.png         |   Bin 0 -> 19651 bytes
+ .../ROYCE_Transparent_App_Icons/four_shared.png    |   Bin 0 -> 13472 bytes
+ .../ROYCE_Transparent_App_Icons/fourpda.png        |   Bin 0 -> 26647 bytes
+ .../ROYCE_Transparent_App_Icons/foursquare.png     |   Bin 0 -> 9928 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/foxfi.png |   Bin 0 -> 15154 bytes
+ .../ROYCE_Transparent_App_Icons/freeappsnow.png    |   Bin 0 -> 14770 bytes
+ .../ROYCE_Transparent_App_Icons/freecharge.png     |   Bin 0 -> 8768 bytes
+ .../ROYCE_Transparent_App_Icons/friendcaster.png   |   Bin 0 -> 16242 bytes
+ .../ROYCE_Transparent_App_Icons/friendly_fire.png  |   Bin 0 -> 13163 bytes
+ .../ROYCE_Transparent_App_Icons/fruitninja.png     |   Bin 0 -> 6333 bytes
+ .../ROYCE_Transparent_App_Icons/fs_videobox.png    |   Bin 0 -> 15424 bytes
+ .../ROYCE_Transparent_App_Icons/funimation.png     |   Bin 0 -> 7843 bytes
+ .../ROYCE_Transparent_App_Icons/fx_textedit.png    |   Bin 0 -> 12197 bytes
+ .../ROYCE_Transparent_App_Icons/fxguru.png         |   Bin 0 -> 11804 bytes
+ .../ROYCE_Transparent_App_Icons/fxtrade.png        |   Bin 0 -> 25612 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/g1.png    |   Bin 0 -> 9694 bytes
+ .../ROYCE_Transparent_App_Icons/g_cloud.png        |   Bin 0 -> 11116 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/gaana.png |   Bin 0 -> 12862 bytes
+ .../ROYCE_Transparent_App_Icons/galaxy_apps.png    |   Bin 0 -> 10433 bytes
+ .../galaxy_button_lights_2.png                     |   Bin 0 -> 9438 bytes
+ .../ROYCE_Transparent_App_Icons/galerij.png        |   Bin 0 -> 10488 bytes
+ .../ROYCE_Transparent_App_Icons/gallery.png        |   Bin 0 -> 11488 bytes
+ .../ROYCE_Transparent_App_Icons/gallery_old.png    |   Bin 0 -> 13073 bytes
+ .../ROYCE_Transparent_App_Icons/game_hub.png       |   Bin 0 -> 19774 bytes
+ .../ROYCE_Transparent_App_Icons/game_launcher.png  |   Bin 0 -> 10167 bytes
+ .../ROYCE_Transparent_App_Icons/gamefly.png        |   Bin 0 -> 13746 bytes
+ .../games_angrybirdsseasons.png                    |   Bin 0 -> 17214 bytes
+ .../games_cuttherope.png                           |   Bin 0 -> 12648 bytes
+ .../games_drawsomething.png                        |   Bin 0 -> 7672 bytes
+ .../games_spiritwalkers.png                        |   Bin 0 -> 21071 bytes
+ .../games_wheresmywater.png                        |   Bin 0 -> 15640 bytes
+ .../ROYCE_Transparent_App_Icons/garageband.png     |   Bin 0 -> 13609 bytes
+ .../ROYCE_Transparent_App_Icons/gas_buddy.png      |   Bin 0 -> 21028 bytes
+ .../ROYCE_Transparent_App_Icons/gboard.png         |   Bin 0 -> 8291 bytes
+ .../gdevice_manager.png                            |   Bin 0 -> 11686 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/geek.png  |   Bin 0 -> 11278 bytes
+ .../ROYCE_Transparent_App_Icons/geeking.png        |   Bin 0 -> 10942 bytes
+ .../ROYCE_Transparent_App_Icons/genius_scan.png    |   Bin 0 -> 18727 bytes
+ .../genius_scan_plus.png                           |   Bin 0 -> 13306 bytes
+ .../ROYCE_Transparent_App_Icons/geometry_dash.png  |   Bin 0 -> 16525 bytes
+ .../geometry_dash_meltdown.png                     |   Bin 0 -> 19695 bytes
+ .../ROYCE_Transparent_App_Icons/ghostery.png       |   Bin 0 -> 11699 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/giphy.png |   Bin 0 -> 12852 bytes
+ .../ROYCE_Transparent_App_Icons/glympse.png        |   Bin 0 -> 11025 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/gmail.png |   Bin 0 -> 7562 bytes
+ .../ROYCE_Transparent_App_Icons/go_backup.png      |   Bin 0 -> 15400 bytes
+ .../ROYCE_Transparent_App_Icons/go_keyboard.png    |   Bin 0 -> 11137 bytes
+ .../ROYCE_Transparent_App_Icons/go_launcher.png    |   Bin 0 -> 20401 bytes
+ .../ROYCE_Transparent_App_Icons/go_locker.png      |   Bin 0 -> 11046 bytes
+ .../go_media_manager.png                           |   Bin 0 -> 15989 bytes
+ .../ROYCE_Transparent_App_Icons/go_sms.png         |   Bin 0 -> 11491 bytes
+ .../ROYCE_Transparent_App_Icons/go_weather.png     |   Bin 0 -> 15587 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/goat.png  |   Bin 0 -> 9645 bytes
+ .../ROYCE_Transparent_App_Icons/gocontacts.png     |   Bin 0 -> 17950 bytes
+ .../ROYCE_Transparent_App_Icons/golfnow.png        |   Bin 0 -> 11319 bytes
+ .../ROYCE_Transparent_App_Icons/gom_audio.png      |   Bin 0 -> 14552 bytes
+ .../gonemad_music_player.png                       |   Bin 0 -> 11970 bytes
+ .../ROYCE_Transparent_App_Icons/goodnotes.png      |   Bin 0 -> 11182 bytes
+ .../ROYCE_Transparent_App_Icons/google_admin.png   |   Bin 0 -> 12512 bytes
+ .../ROYCE_Transparent_App_Icons/google_adsense.png |   Bin 0 -> 8248 bytes
+ .../ROYCE_Transparent_App_Icons/google_adwords.png |   Bin 0 -> 10000 bytes
+ .../google_analytics.png                           |   Bin 0 -> 10828 bytes
+ .../google_android_wear.png                        |   Bin 0 -> 6077 bytes
+ .../google_androidify.png                          |   Bin 0 -> 8834 bytes
+ .../google_appsdevicepolicy.png                    |   Bin 0 -> 19130 bytes
+ .../google_authenticator.png                       |   Bin 0 -> 15543 bytes
+ .../ROYCE_Transparent_App_Icons/google_auto.png    |   Bin 0 -> 11971 bytes
+ .../ROYCE_Transparent_App_Icons/google_books.png   |   Bin 0 -> 5290 bytes
+ .../ROYCE_Transparent_App_Icons/google_browser.png |   Bin 0 -> 21048 bytes
+ .../google_calendar.png                            |   Bin 0 -> 10582 bytes
+ .../ROYCE_Transparent_App_Icons/google_camera.png  |   Bin 0 -> 14616 bytes
+ .../google_cardboard.png                           |   Bin 0 -> 8713 bytes
+ .../google_cardboard_camera.png                    |   Bin 0 -> 15665 bytes
+ .../google_cardboarddesignlab.png                  |   Bin 0 -> 10619 bytes
+ .../ROYCE_Transparent_App_Icons/google_cast.png    |   Bin 0 -> 11470 bytes
+ .../google_chrome_remote_desktop.png               |   Bin 0 -> 20431 bytes
+ .../google_chrometophone.png                       |   Bin 0 -> 14494 bytes
+ .../ROYCE_Transparent_App_Icons/google_clock.png   |   Bin 0 -> 15647 bytes
+ .../google_cloud_print.png                         |   Bin 0 -> 11914 bytes
+ .../google_contacts.png                            |   Bin 0 -> 11109 bytes
+ .../google_device_assist.png                       |   Bin 0 -> 21387 bytes
+ .../google_documents.png                           |   Bin 0 -> 9207 bytes
+ .../ROYCE_Transparent_App_Icons/google_drive.png   |   Bin 0 -> 13641 bytes
+ .../ROYCE_Transparent_App_Icons/google_earth.png   |   Bin 0 -> 19635 bytes
+ .../ROYCE_Transparent_App_Icons/google_fit.png     |   Bin 0 -> 8902 bytes
+ .../ROYCE_Transparent_App_Icons/google_games.png   |   Bin 0 -> 17763 bytes
+ .../ROYCE_Transparent_App_Icons/google_gesture.png |   Bin 0 -> 13653 bytes
+ .../ROYCE_Transparent_App_Icons/google_goggles.png |   Bin 0 -> 16754 bytes
+ .../google_handwriting_inputed.png                 |   Bin 0 -> 7762 bytes
+ .../google_hangouts.png                            |   Bin 0 -> 10263 bytes
+ .../google_hangouts_dialer.png                     |   Bin 0 -> 10502 bytes
+ .../google_hindi_input.png                         |   Bin 0 -> 7408 bytes
+ .../ROYCE_Transparent_App_Icons/google_inbox.png   |   Bin 0 -> 10234 bytes
+ .../ROYCE_Transparent_App_Icons/google_keep.png    |   Bin 0 -> 13848 bytes
+ .../google_keyboard.png                            |   Bin 0 -> 7368 bytes
+ .../google_korean_input.png                        |   Bin 0 -> 6289 bytes
+ .../google_magazine.png                            |   Bin 0 -> 11061 bytes
+ .../ROYCE_Transparent_App_Icons/google_maps.png    |   Bin 0 -> 11200 bytes
+ .../google_maps_engine.png                         |   Bin 0 -> 10017 bytes
+ .../ROYCE_Transparent_App_Icons/google_movies.png  |   Bin 0 -> 14589 bytes
+ .../ROYCE_Transparent_App_Icons/google_music.png   |   Bin 0 -> 15382 bytes
+ .../google_my_business.png                         |   Bin 0 -> 15429 bytes
+ .../google_my_glass.png                            |   Bin 0 -> 8846 bytes
+ .../google_my_tracks.png                           |   Bin 0 -> 10346 bytes
+ .../google_navigation.png                          |   Bin 0 -> 12093 bytes
+ .../google_now_launcher.png                        |   Bin 0 -> 9645 bytes
+ .../ROYCE_Transparent_App_Icons/google_on.png      |   Bin 0 -> 15172 bytes
+ .../ROYCE_Transparent_App_Icons/google_pay.png     |   Bin 0 -> 12918 bytes
+ .../google_pdfviewer.png                           |   Bin 0 -> 9535 bytes
+ .../ROYCE_Transparent_App_Icons/google_photo.png   |   Bin 0 -> 9859 bytes
+ .../google_pinyin_input.png                        |   Bin 0 -> 7663 bytes
+ .../google_playnewsstand.png                       |   Bin 0 -> 9653 bytes
+ .../ROYCE_Transparent_App_Icons/google_plus.png    |   Bin 0 -> 13513 bytes
+ .../google_project_fi.png                          |   Bin 0 -> 8098 bytes
+ .../ROYCE_Transparent_App_Icons/google_rewards.png |   Bin 0 -> 9155 bytes
+ .../ROYCE_Transparent_App_Icons/google_search.png  |   Bin 0 -> 17423 bytes
+ .../google_settings.png                            |   Bin 0 -> 19757 bytes
+ .../ROYCE_Transparent_App_Icons/google_sheets.png  |   Bin 0 -> 8660 bytes
+ .../google_shopping_express.png                    |   Bin 0 -> 8690 bytes
+ .../ROYCE_Transparent_App_Icons/google_sky_map.png |   Bin 0 -> 14544 bytes
+ .../ROYCE_Transparent_App_Icons/google_slides.png  |   Bin 0 -> 10363 bytes
+ .../google_street_view.png                         |   Bin 0 -> 15550 bytes
+ .../google_systemwebview.png                       |   Bin 0 -> 16049 bytes
+ .../google_talkback.png                            |   Bin 0 -> 15950 bytes
+ .../google_texttospeech.png                        |   Bin 0 -> 11613 bytes
+ .../google_translate.png                           |   Bin 0 -> 15220 bytes
+ .../google_tv_remote.png                           |   Bin 0 -> 9645 bytes
+ .../ROYCE_Transparent_App_Icons/google_voice.png   |   Bin 0 -> 10086 bytes
+ .../google_voice_search.png                        |   Bin 0 -> 17597 bytes
+ .../ROYCE_Transparent_App_Icons/google_wallet.png  |   Bin 0 -> 16806 bytes
+ .../google_wallet_new.png                          |   Bin 0 -> 9507 bytes
+ .../ROYCE_Transparent_App_Icons/google_zagat.png   |   Bin 0 -> 16374 bytes
+ .../google_zhuyin_input.png                        |   Bin 0 -> 7133 bytes
+ .../ROYCE_Transparent_App_Icons/googleplus.png     |   Bin 0 -> 9572 bytes
+ .../ROYCE_Transparent_App_Icons/gopower.png        |   Bin 0 -> 18459 bytes
+ .../ROYCE_Transparent_App_Icons/gospel_library.png |   Bin 0 -> 10595 bytes
+ .../ROYCE_Transparent_App_Icons/gotaskmanager.png  |   Bin 0 -> 14734 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/grab.png  |   Bin 0 -> 11977 bytes
+ .../ROYCE_Transparent_App_Icons/grab_driver.png    |   Bin 0 -> 13572 bytes
+ .../ROYCE_Transparent_App_Icons/grammarly.png      |   Bin 0 -> 10523 bytes
+ .../grand_theft_auto_iii.png                       |   Bin 0 -> 22721 bytes
+ .../grand_theft_auto_vicecity.png                  |   Bin 0 -> 22709 bytes
+ .../ROYCE_Transparent_App_Icons/greader.png        |   Bin 0 -> 16091 bytes
+ .../ROYCE_Transparent_App_Icons/green_dot.png      |   Bin 0 -> 15897 bytes
+ .../ROYCE_Transparent_App_Icons/greenify.png       |   Bin 0 -> 11347 bytes
+ .../ROYCE_Transparent_App_Icons/grindr.png         |   Bin 0 -> 12556 bytes
+ .../ROYCE_Transparent_App_Icons/grokio.png         |   Bin 0 -> 17656 bytes
+ .../ROYCE_Transparent_App_Icons/groupme.png        |   Bin 0 -> 10336 bytes
+ .../ROYCE_Transparent_App_Icons/groupon.png        |   Bin 0 -> 22691 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/gtask.png |   Bin 0 -> 14021 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/guard.png |   Bin 0 -> 16697 bytes
+ .../ROYCE_Transparent_App_Icons/guardian.png       |   Bin 0 -> 14984 bytes
+ .../ROYCE_Transparent_App_Icons/guitartuna.png     |   Bin 0 -> 15243 bytes
+ .../ROYCE_Transparent_App_Icons/gumtree.png        |   Bin 0 -> 11123 bytes
+ .../ROYCE_Transparent_App_Icons/habitica.png       |   Bin 0 -> 18168 bytes
+ .../ROYCE_Transparent_App_Icons/handcent.png       |   Bin 0 -> 11110 bytes
+ .../ROYCE_Transparent_App_Icons/handcuff.png       |   Bin 0 -> 8258 bytes
+ .../ROYCE_Transparent_App_Icons/handy_photo.png    |   Bin 0 -> 11678 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/happn.png |   Bin 0 -> 11661 bytes
+ .../harkins_theatres.png                           |   Bin 0 -> 8953 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/hbo.png   |   Bin 0 -> 10295 bytes
+ .../ROYCE_Transparent_App_Icons/hbo_go.png         |   Bin 0 -> 12287 bytes
+ .../ROYCE_Transparent_App_Icons/hd_widgets.png     |   Bin 0 -> 17348 bytes
+ .../ROYCE_Transparent_App_Icons/hdfc_bank.png      |   Bin 0 -> 15127 bytes
+ .../ROYCE_Transparent_App_Icons/headspace.png      |   Bin 0 -> 7819 bytes
+ .../ROYCE_Transparent_App_Icons/health.png         |   Bin 0 -> 10699 bytes
+ .../ROYCE_Transparent_App_Icons/hearts_f.png       |   Bin 0 -> 17714 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/help.png  |   Bin 0 -> 12777 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/here.png  |   Bin 0 -> 11497 bytes
+ .../ROYCE_Transparent_App_Icons/hesabm.png         |   Bin 0 -> 11466 bytes
+ .../ROYCE_Transparent_App_Icons/hexatech.png       |   Bin 0 -> 12018 bytes
+ .../ROYCE_Transparent_App_Icons/hhonors.png        |   Bin 0 -> 13498 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/hibid.png |   Bin 0 -> 12002 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/hike.png  |   Bin 0 -> 13159 bytes
+ .../ROYCE_Transparent_App_Icons/hilton.png         |   Bin 0 -> 10102 bytes
+ .../ROYCE_Transparent_App_Icons/hintergrund.png    |   Bin 0 -> 612 bytes
+ .../ROYCE_Transparent_App_Icons/holo_launcher.png  |   Bin 0 -> 9676 bytes
+ .../holo_launcher_hd.png                           |   Bin 0 -> 19799 bytes
+ .../ROYCE_Transparent_App_Icons/holocompass.png    |   Bin 0 -> 14512 bytes
+ .../ROYCE_Transparent_App_Icons/holotimer.png      |   Bin 0 -> 13953 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/home.png  |   Bin 0 -> 10409 bytes
+ .../ROYCE_Transparent_App_Icons/hoot_suite.png     |   Bin 0 -> 13103 bytes
+ .../ROYCE_Transparent_App_Icons/hotels.png         |   Bin 0 -> 14694 bytes
+ .../ROYCE_Transparent_App_Icons/htc_updater.png    |   Bin 0 -> 9053 bytes
+ .../ROYCE_Transparent_App_Icons/htcweather.png     |   Bin 0 -> 13797 bytes
+ .../ROYCE_Transparent_App_Icons/huawei_hilink.png  |   Bin 0 -> 13172 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/hub.png   |   Bin 0 -> 11620 bytes
+ .../hubble_for_motorola_monitors.png               |   Bin 0 -> 17620 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/hulu.png  |   Bin 0 -> 7573 bytes
+ .../ROYCE_Transparent_App_Icons/hungry_shark.png   |   Bin 0 -> 4956 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/hvv.png   |   Bin 0 -> 11060 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/iZip.png  |   Bin 0 -> 9772 bytes
+ .../ROYCE_Transparent_App_Icons/i_genaration.png   |   Bin 0 -> 10023 bytes
+ .../ROYCE_Transparent_App_Icons/ibispaint.png      |   Bin 0 -> 14398 bytes
+ .../ROYCE_Transparent_App_Icons/icon_changer.png   |   Bin 0 -> 19307 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/icons.png |   Bin 0 -> 8790 bytes
+ .../ROYCE_Transparent_App_Icons/iconzy.png         |   Bin 0 -> 10780 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/iegor.png |   Bin 0 -> 9737 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/ifont.png |   Bin 0 -> 11167 bytes
+ .../ROYCE_Transparent_App_Icons/ifunny.png         |   Bin 0 -> 23640 bytes
+ .../ROYCE_Transparent_App_Icons/iheart_radio.png   |   Bin 0 -> 17734 bytes
+ .../ROYCE_Transparent_App_Icons/image_resizer.png  |   Bin 0 -> 11021 bytes
+ .../image_to_wallpaper.png                         |   Bin 0 -> 8937 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/imdb.png  |   Bin 0 -> 8861 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/imo.png   |   Bin 0 -> 15676 bytes
+ .../ROYCE_Transparent_App_Icons/imobile.png        |   Bin 0 -> 19064 bytes
+ .../ROYCE_Transparent_App_Icons/imovie.png         |   Bin 0 -> 11663 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/imvu.png  |   Bin 0 -> 19888 bytes
+ .../ROYCE_Transparent_App_Icons/inbrowser.png      |   Bin 0 -> 7041 bytes
+ .../ROYCE_Transparent_App_Icons/ing_direct.png     |   Bin 0 -> 16661 bytes
+ .../ROYCE_Transparent_App_Icons/ingress.png        |   Bin 0 -> 21131 bytes
+ .../ROYCE_Transparent_App_Icons/instagram.png      |   Bin 0 -> 15105 bytes
+ .../ROYCE_Transparent_App_Icons/instapaper.png     |   Bin 0 -> 11210 bytes
+ .../ROYCE_Transparent_App_Icons/instasaver.png     |   Bin 0 -> 8064 bytes
+ .../internet_security.png                          |   Bin 0 -> 13284 bytes
+ .../internet_speed_meter.png                       |   Bin 0 -> 9460 bytes
+ .../ROYCE_Transparent_App_Icons/invaluable.png     |   Bin 0 -> 8400 bytes
+ .../ROYCE_Transparent_App_Icons/ireader.png        |   Bin 0 -> 12430 bytes
+ .../ROYCE_Transparent_App_Icons/irista.png         |   Bin 0 -> 24720 bytes
+ .../ROYCE_Transparent_App_Icons/ironman.png        |   Bin 0 -> 13959 bytes
+ .../ROYCE_Transparent_App_Icons/israel.png         |   Bin 0 -> 15799 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/issuu.png |   Bin 0 -> 14602 bytes
+ .../ROYCE_Transparent_App_Icons/itranslate.png     |   Bin 0 -> 13979 bytes
+ .../ROYCE_Transparent_App_Icons/itunes.png         |   Bin 0 -> 8095 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/jaumo.png |   Bin 0 -> 13543 bytes
+ .../ROYCE_Transparent_App_Icons/jbl_music.png      |   Bin 0 -> 11954 bytes
+ .../ROYCE_Transparent_App_Icons/jet_audio.png      |   Bin 0 -> 14527 bytes
+ .../ROYCE_Transparent_App_Icons/jio4gvoice.png     |   Bin 0 -> 10026 bytes
+ .../ROYCE_Transparent_App_Icons/jiochat.png        |   Bin 0 -> 10370 bytes
+ .../ROYCE_Transparent_App_Icons/jiocinema.png      |   Bin 0 -> 10850 bytes
+ .../ROYCE_Transparent_App_Icons/jiocloud.png       |   Bin 0 -> 9279 bytes
+ .../ROYCE_Transparent_App_Icons/jiomoney.png       |   Bin 0 -> 10219 bytes
+ .../ROYCE_Transparent_App_Icons/jiomusic.png       |   Bin 0 -> 9550 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/jiotv.png |   Bin 0 -> 10278 bytes
+ .../ROYCE_Transparent_App_Icons/job_search.png     |   Bin 0 -> 7150 bytes
+ .../ROYCE_Transparent_App_Icons/jotterpad.png      |   Bin 0 -> 8844 bytes
+ .../ROYCE_Transparent_App_Icons/journey.png        |   Bin 0 -> 12697 bytes
+ .../ROYCE_Transparent_App_Icons/just_unfollow.png  |   Bin 0 -> 19403 bytes
+ .../ROYCE_Transparent_App_Icons/kakao_talk.png     |   Bin 0 -> 10880 bytes
+ .../ROYCE_Transparent_App_Icons/kakaomap.png       |   Bin 0 -> 10345 bytes
+ .../kate_mobile_pro.png                            |   Bin 0 -> 19812 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/kayak.png |   Bin 0 -> 15241 bytes
+ .../ROYCE_Transparent_App_Icons/keepassdroid.png   |   Bin 0 -> 15105 bytes
+ .../ROYCE_Transparent_App_Icons/khan_academy.png   |   Bin 0 -> 11831 bytes
+ .../ROYCE_Transparent_App_Icons/kicker.png         |   Bin 0 -> 12021 bytes
+ .../ROYCE_Transparent_App_Icons/kiikeyboard.png    |   Bin 0 -> 15468 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/kik.png   |   Bin 0 -> 13519 bytes
+ .../ROYCE_Transparent_App_Icons/kk_launcher.png    |   Bin 0 -> 12442 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/klwp.png  |   Bin 0 -> 10957 bytes
+ .../ROYCE_Transparent_App_Icons/kmplayer.png       |   Bin 0 -> 16770 bytes
+ .../ROYCE_Transparent_App_Icons/kninemail.png      |   Bin 0 -> 12691 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/kodi.png  |   Bin 0 -> 11659 bytes
+ .../ROYCE_Transparent_App_Icons/kotak_bank.png     |   Bin 0 -> 11053 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/ksl.png   |   Bin 0 -> 9382 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/kwgt.png  |   Bin 0 -> 10357 bytes
+ .../ROYCE_Transparent_App_Icons/la_province.png    |   Bin 0 -> 11521 bytes
+ .../ROYCE_Transparent_App_Icons/lastpass0.png      |   Bin 0 -> 10409 bytes
+ .../ROYCE_Transparent_App_Icons/launcher_pro.png   |   Bin 0 -> 11758 bytes
+ .../ROYCE_Transparent_App_Icons/layers_manager.png |   Bin 0 -> 8169 bytes
+ .../ROYCE_Transparent_App_Icons/layout.png         |   Bin 0 -> 15735 bytes
+ .../ROYCE_Transparent_App_Icons/lazada.png         |   Bin 0 -> 9400 bytes
+ .../ROYCE_Transparent_App_Icons/lds_tools.png      |   Bin 0 -> 10432 bytes
+ .../ROYCE_Transparent_App_Icons/le_devoir.png      |   Bin 0 -> 10410 bytes
+ .../ROYCE_Transparent_App_Icons/leandroid.png      |   Bin 0 -> 7660 bytes
+ .../ROYCE_Transparent_App_Icons/lequipe.png        |   Bin 0 -> 11142 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/letgo.png |   Bin 0 -> 12675 bytes
+ .../ROYCE_Transparent_App_Icons/lg_backup.png      |   Bin 0 -> 14653 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/lib.png   |   Bin 0 -> 12941 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/libby.png |   Bin 0 -> 11274 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/lidow.png |   Bin 0 -> 11271 bytes
+ .../ROYCE_Transparent_App_Icons/life360.png        |   Bin 0 -> 12231 bytes
+ .../ROYCE_Transparent_App_Icons/lifelog.png        |   Bin 0 -> 11352 bytes
+ .../ROYCE_Transparent_App_Icons/liftmaster.png     |   Bin 0 -> 8229 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/lifx.png  |   Bin 0 -> 12787 bytes
+ .../ROYCE_Transparent_App_Icons/ligue1.png         |   Bin 0 -> 16915 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/limbo.png |   Bin 0 -> 22120 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/line.png  |   Bin 0 -> 11941 bytes
+ .../ROYCE_Transparent_App_Icons/link2sd.png        |   Bin 0 -> 8208 bytes
+ .../ROYCE_Transparent_App_Icons/linkdln.png        |   Bin 0 -> 18213 bytes
+ .../ROYCE_Transparent_App_Icons/linpus_battery.png |   Bin 0 -> 13248 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/lite.png  |   Bin 0 -> 12765 bytes
+ .../ROYCE_Transparent_App_Icons/little.png         |   Bin 0 -> 10750 bytes
+ .../live_auctioneers.png                           |   Bin 0 -> 11193 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/llama.png |   Bin 0 -> 11308 bytes
+ .../ROYCE_Transparent_App_Icons/loader_droid.png   |   Bin 0 -> 5527 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/local.png |   Bin 0 -> 15189 bytes
+ .../ROYCE_Transparent_App_Icons/lock_app.png       |   Bin 0 -> 10358 bytes
+ .../ROYCE_Transparent_App_Icons/locker_widget.png  |   Bin 0 -> 18462 bytes
+ .../ROYCE_Transparent_App_Icons/lookout.png        |   Bin 0 -> 20388 bytes
+ .../ROYCE_Transparent_App_Icons/lucid_launcher.png |   Bin 0 -> 10732 bytes
+ .../ROYCE_Transparent_App_Icons/lucky_patcher.png  |   Bin 0 -> 10717 bytes
+ .../ROYCE_Transparent_App_Icons/lux_dash.png       |   Bin 0 -> 20620 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/lyft.png  |   Bin 0 -> 8248 bytes
+ .../ROYCE_Transparent_App_Icons/magenta_tv.png     |   Bin 0 -> 13359 bytes
+ .../ROYCE_Transparent_App_Icons/magnifier.png      |   Bin 0 -> 13219 bytes
+ .../ROYCE_Transparent_App_Icons/magnolia.png       |   Bin 0 -> 13278 bytes
+ .../ROYCE_Transparent_App_Icons/mahjong.png        |   Bin 0 -> 18134 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/mail.png  |   Bin 0 -> 10118 bytes
+ .../ROYCE_Transparent_App_Icons/mail_com.png       |   Bin 0 -> 13692 bytes
+ .../ROYCE_Transparent_App_Icons/makemytrip.png     |   Bin 0 -> 13187 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/maps.png  |   Bin 0 -> 12215 bytes
+ .../ROYCE_Transparent_App_Icons/mastercard.png     |   Bin 0 -> 9602 bytes
+ .../ROYCE_Transparent_App_Icons/maybank.png        |   Bin 0 -> 14322 bytes
+ .../ROYCE_Transparent_App_Icons/mcdonalds.png      |   Bin 0 -> 17570 bytes
+ .../ROYCE_Transparent_App_Icons/measure.png        |   Bin 0 -> 10849 bytes
+ .../media_utilities.png                            |   Bin 0 -> 11444 bytes
+ .../ROYCE_Transparent_App_Icons/mediafire.png      |   Bin 0 -> 10590 bytes
+ .../ROYCE_Transparent_App_Icons/medisafe.png       |   Bin 0 -> 9332 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/mega.png  |   Bin 0 -> 9730 bytes
+ .../ROYCE_Transparent_App_Icons/memrise.png        |   Bin 0 -> 18228 bytes
+ .../ROYCE_Transparent_App_Icons/mercado_libre.png  |   Bin 0 -> 24477 bytes
+ .../ROYCE_Transparent_App_Icons/mercado_pago.png   |   Bin 0 -> 13237 bytes
+ .../merriam_webster_dictionary.png                 |   Bin 0 -> 11019 bytes
+ .../ROYCE_Transparent_App_Icons/messageplus.png    |   Bin 0 -> 12511 bytes
+ .../ROYCE_Transparent_App_Icons/messages.png       |   Bin 0 -> 12214 bytes
+ .../ROYCE_Transparent_App_Icons/messaging.png      |   Bin 0 -> 10762 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/metal.png |   Bin 0 -> 9355 bytes
+ .../ROYCE_Transparent_App_Icons/metro_bank.png     |   Bin 0 -> 19686 bytes
+ .../ROYCE_Transparent_App_Icons/meu_tim.png        |   Bin 0 -> 9987 bytes
+ .../ROYCE_Transparent_App_Icons/mfile_explorer.png |   Bin 0 -> 9242 bytes
+ .../ROYCE_Transparent_App_Icons/mi_home.png        |   Bin 0 -> 11329 bytes
+ .../ROYCE_Transparent_App_Icons/mi_remote.png      |   Bin 0 -> 11394 bytes
+ .../ROYCE_Transparent_App_Icons/mibitel.png        |   Bin 0 -> 13416 bytes
+ .../microsoft_account.png                          |   Bin 0 -> 15482 bytes
+ .../microsoft_phonecmpanion.png                    |   Bin 0 -> 4689 bytes
+ .../microsoft_teams.png                            |   Bin 0 -> 13501 bytes
+ .../ROYCE_Transparent_App_Icons/mightytext.png     |   Bin 0 -> 14371 bytes
+ .../ROYCE_Transparent_App_Icons/mijn_telfort.png   |   Bin 0 -> 11255 bytes
+ .../ROYCE_Transparent_App_Icons/milanuncios.png    |   Bin 0 -> 13646 bytes
+ .../ROYCE_Transparent_App_Icons/minecraft.png      |   Bin 0 -> 6018 bytes
+ .../ROYCE_Transparent_App_Icons/mini_launcher.png  |   Bin 0 -> 15715 bytes
+ .../minima_wallpaper.png                           |   Bin 0 -> 17467 bytes
+ .../ROYCE_Transparent_App_Icons/mint_bills.png     |   Bin 0 -> 22372 bytes
+ .../missed_call_reminder.png                       |   Bin 0 -> 10533 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/mixer.png |   Bin 0 -> 15358 bytes
+ .../ROYCE_Transparent_App_Icons/ml_manager.png     |   Bin 0 -> 18997 bytes
+ .../mobi_calculator_pro.png                        |   Bin 0 -> 6867 bytes
+ .../ROYCE_Transparent_App_Icons/mobile_hotspot.png |   Bin 0 -> 10301 bytes
+ .../mobile_security.png                            |   Bin 0 -> 16936 bytes
+ .../ROYCE_Transparent_App_Icons/mobilevoip.png     |   Bin 0 -> 16564 bytes
+ .../ROYCE_Transparent_App_Icons/mojiweather.png    |   Bin 0 -> 16364 bytes
+ .../ROYCE_Transparent_App_Icons/moments.png        |   Bin 0 -> 17393 bytes
+ .../ROYCE_Transparent_App_Icons/moon_reader.png    |   Bin 0 -> 13496 bytes
+ .../ROYCE_Transparent_App_Icons/mortal_kombat.png  |   Bin 0 -> 20668 bytes
+ .../mortal_kombat_x.png                            |   Bin 0 -> 14873 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/moto.png  |   Bin 0 -> 18970 bytes
+ .../ROYCE_Transparent_App_Icons/motocare.png       |   Bin 0 -> 7032 bytes
+ .../ROYCE_Transparent_App_Icons/motorola_alert.png |   Bin 0 -> 7822 bytes
+ .../motorola_camera.png                            |   Bin 0 -> 14229 bytes
+ .../motorola_gallery.png                           |   Bin 0 -> 14230 bytes
+ .../ROYCE_Transparent_App_Icons/movie_mate.png     |   Bin 0 -> 16284 bytes
+ .../ROYCE_Transparent_App_Icons/moviefone.png      |   Bin 0 -> 12237 bytes
+ .../mp3_video_converter.png                        |   Bin 0 -> 13304 bytes
+ .../ROYCE_Transparent_App_Icons/mparivahan.png     |   Bin 0 -> 14832 bytes
+ .../ROYCE_Transparent_App_Icons/mr_number.png      |   Bin 0 -> 8787 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/mtga.png  |   Bin 0 -> 9882 bytes
+ .../ROYCE_Transparent_App_Icons/musical_ly.png     |   Bin 0 -> 9346 bytes
+ .../ROYCE_Transparent_App_Icons/musicplayer.png    |   Bin 0 -> 14670 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/muzei.png |   Bin 0 -> 9380 bytes
+ .../ROYCE_Transparent_App_Icons/mx_player.png      |   Bin 0 -> 19662 bytes
+ .../ROYCE_Transparent_App_Icons/my_airtel.png      |   Bin 0 -> 17020 bytes
+ .../ROYCE_Transparent_App_Icons/my_app_sharer.png  |   Bin 0 -> 10092 bytes
+ .../ROYCE_Transparent_App_Icons/my_bhn.png         |   Bin 0 -> 12618 bytes
+ .../ROYCE_Transparent_App_Icons/my_talking_tom.png |   Bin 0 -> 24951 bytes
+ .../ROYCE_Transparent_App_Icons/my_verizon.png     |   Bin 0 -> 6332 bytes
+ .../myandroidtools_pro.png                         |   Bin 0 -> 13201 bytes
+ .../ROYCE_Transparent_App_Icons/myfitnesspal.png   |   Bin 0 -> 11174 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/myjio.png |   Bin 0 -> 10794 bytes
+ .../myjio_techblix_com.png                         |   Bin 0 -> 18330 bytes
+ .../ROYCE_Transparent_App_Icons/mymail.png         |   Bin 0 -> 17849 bytes
+ .../ROYCE_Transparent_App_Icons/mymetro.png        |   Bin 0 -> 9525 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/mysms.png |   Bin 0 -> 9379 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/myxl.png  |   Bin 0 -> 12722 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/n26.png   |   Bin 0 -> 13220 bytes
+ .../ROYCE_Transparent_App_Icons/n_launcher.png     |   Bin 0 -> 9444 bytes
+ .../n_o_s_car_speedrace.png                        |   Bin 0 -> 8282 bytes
+ .../ROYCE_Transparent_App_Icons/navbar_apps.png    |   Bin 0 -> 11257 bytes
+ .../ROYCE_Transparent_App_Icons/naviexpert_gps.png |   Bin 0 -> 12150 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/nba.png   |   Bin 0 -> 9267 bytes
+ .../ROYCE_Transparent_App_Icons/nba_jam.png        |   Bin 0 -> 14873 bytes
+ .../ROYCE_Transparent_App_Icons/nbc_5_dfw.png      |   Bin 0 -> 13977 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/nest.png  |   Bin 0 -> 11504 bytes
+ .../ROYCE_Transparent_App_Icons/netflix.png        |   Bin 0 -> 9714 bytes
+ .../ROYCE_Transparent_App_Icons/network_log.png    |   Bin 0 -> 9464 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/netx.png  |   Bin 0 -> 11975 bytes
+ .../ROYCE_Transparent_App_Icons/neutron.png        |   Bin 0 -> 13164 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/news.png  |   Bin 0 -> 17467 bytes
+ .../ROYCE_Transparent_App_Icons/news_republic.png  |   Bin 0 -> 10239 bytes
+ .../ROYCE_Transparent_App_Icons/newsandweather.png |   Bin 0 -> 11727 bytes
+ .../next_clock_widget.png                          |   Bin 0 -> 5882 bytes
+ .../next_contacts_widget.png                       |   Bin 0 -> 7697 bytes
+ .../ROYCE_Transparent_App_Icons/next_launcher.png  |   Bin 0 -> 12523 bytes
+ .../ROYCE_Transparent_App_Icons/nextdoor.png       |   Bin 0 -> 11080 bytes
+ .../nfc_task_launcher.png                          |   Bin 0 -> 18381 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/nfl.png   |   Bin 0 -> 15184 bytes
+ .../nfs_most_wanted.png                            |   Bin 0 -> 12724 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/nhl.png   |   Bin 0 -> 15755 bytes
+ .../ROYCE_Transparent_App_Icons/niagara.png        |   Bin 0 -> 11491 bytes
+ .../ROYCE_Transparent_App_Icons/nicequest.png      |   Bin 0 -> 10212 bytes
+ .../ROYCE_Transparent_App_Icons/nike_running.png   |   Bin 0 -> 6006 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/nine.png  |   Bin 0 -> 9439 bytes
+ .../ROYCE_Transparent_App_Icons/nine_gag.png       |   Bin 0 -> 20617 bytes
+ .../ROYCE_Transparent_App_Icons/nine_gag_tv.png    |   Bin 0 -> 11888 bytes
+ .../ROYCE_Transparent_App_Icons/nolock.png         |   Bin 0 -> 15009 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/nook.png  |   Bin 0 -> 10764 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/nos.png   |   Bin 0 -> 10124 bytes
+ .../ROYCE_Transparent_App_Icons/nos_teletekst.png  |   Bin 0 -> 11850 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/note.png  |   Bin 0 -> 11214 bytes
+ .../notify_my_android.png                          |   Bin 0 -> 20078 bytes
+ .../ROYCE_Transparent_App_Icons/notion.png         |   Bin 0 -> 17081 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/nu.png    |   Bin 0 -> 8147 bytes
+ .../ROYCE_Transparent_App_Icons/nubank.png         |   Bin 0 -> 15281 bytes
+ .../ROYCE_Transparent_App_Icons/nvision.png        |   Bin 0 -> 14711 bytes
+ .../ROYCE_Transparent_App_Icons/nytimes.png        |   Bin 0 -> 21926 bytes
+ .../ROYCE_Transparent_App_Icons/oculus.png         |   Bin 0 -> 10377 bytes
+ .../ROYCE_Transparent_App_Icons/odin_mobile.png    |   Bin 0 -> 9406 bytes
+ .../ROYCE_Transparent_App_Icons/odysse.png         |   Bin 0 -> 11789 bytes
+ .../ROYCE_Transparent_App_Icons/office_lens.png    |   Bin 0 -> 10972 bytes
+ .../ROYCE_Transparent_App_Icons/office_suite.png   |   Bin 0 -> 13484 bytes
+ .../official_twrp_app.png                          |   Bin 0 -> 22914 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/oh.png    |   Bin 0 -> 11093 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/ok.png    |   Bin 0 -> 11071 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/olx.png   |   Bin 0 -> 21741 bytes
+ .../ROYCE_Transparent_App_Icons/olx_pl.png         |   Bin 0 -> 14979 bytes
+ .../ROYCE_Transparent_App_Icons/one010.png         |   Bin 0 -> 14956 bytes
+ .../ROYCE_Transparent_App_Icons/one_weather.png    |   Bin 0 -> 13750 bytes
+ .../ROYCE_Transparent_App_Icons/onefootball.png    |   Bin 0 -> 10178 bytes
+ .../ROYCE_Transparent_App_Icons/onenote.png        |   Bin 0 -> 14292 bytes
+ .../ROYCE_Transparent_App_Icons/onetouch.png       |   Bin 0 -> 12125 bytes
+ .../ROYCE_Transparent_App_Icons/oneweather.png     |   Bin 0 -> 9629 bytes
+ .../online_nandroid_backup.png                     |   Bin 0 -> 10936 bytes
+ .../ROYCE_Transparent_App_Icons/open_camera.png    |   Bin 0 -> 9172 bytes
+ .../ROYCE_Transparent_App_Icons/opentable.png      |   Bin 0 -> 16525 bytes
+ .../openvpn_for_android.png                        |   Bin 0 -> 18050 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/opera.png |   Bin 0 -> 13235 bytes
+ .../ROYCE_Transparent_App_Icons/opera_mini.png     |   Bin 0 -> 8698 bytes
+ .../ROYCE_Transparent_App_Icons/ottplayer.png      |   Bin 0 -> 11454 bytes
+ .../ROYCE_Transparent_App_Icons/our_groceries.png  |   Bin 0 -> 14862 bytes
+ .../ROYCE_Transparent_App_Icons/outlook.png        |   Bin 0 -> 9749 bytes
+ .../ROYCE_Transparent_App_Icons/outof_milk.png     |   Bin 0 -> 12210 bytes
+ .../ROYCE_Transparent_App_Icons/overdrive.png      |   Bin 0 -> 12233 bytes
+ .../package_disabler.png                           |   Bin 0 -> 9500 bytes
+ .../ROYCE_Transparent_App_Icons/pages_jaunes.png   |   Bin 0 -> 11228 bytes
+ .../ROYCE_Transparent_App_Icons/palringo.png       |   Bin 0 -> 13794 bytes
+ .../ROYCE_Transparent_App_Icons/pandao.png         |   Bin 0 -> 10930 bytes
+ .../ROYCE_Transparent_App_Icons/pandora.png        |   Bin 0 -> 11828 bytes
+ .../ROYCE_Transparent_App_Icons/parallel_space.png |   Bin 0 -> 6336 bytes
+ .../ROYCE_Transparent_App_Icons/parkmobile.png     |   Bin 0 -> 25686 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/path.png  |   Bin 0 -> 21195 bytes
+ .../ROYCE_Transparent_App_Icons/patreon.png        |   Bin 0 -> 7195 bytes
+ .../ROYCE_Transparent_App_Icons/patriots.png       |   Bin 0 -> 13571 bytes
+ .../ROYCE_Transparent_App_Icons/paypal.png         |   Bin 0 -> 16875 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/paytm.png |   Bin 0 -> 11212 bytes
+ .../ROYCE_Transparent_App_Icons/pcradio.png        |   Bin 0 -> 19600 bytes
+ .../ROYCE_Transparent_App_Icons/pdanetplus.png     |   Bin 0 -> 8481 bytes
+ .../ROYCE_Transparent_App_Icons/pedometer.png      |   Bin 0 -> 15100 bytes
+ .../ROYCE_Transparent_App_Icons/peel_remote.png    |   Bin 0 -> 11513 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/penup.png |   Bin 0 -> 13454 bytes
+ .../ROYCE_Transparent_App_Icons/penyuntik_http.png |   Bin 0 -> 8498 bytes
+ .../ROYCE_Transparent_App_Icons/periscope.png      |   Bin 0 -> 7488 bytes
+ .../ROYCE_Transparent_App_Icons/petro_canada.png   |   Bin 0 -> 10763 bytes
+ .../pf_voicemailplus.png                           |   Bin 0 -> 25145 bytes
+ .../ROYCE_Transparent_App_Icons/phandroid.png      |   Bin 0 -> 11295 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/phone.png |   Bin 0 -> 14590 bytes
+ .../phone_info_plus.png                            |   Bin 0 -> 9241 bytes
+ .../ROYCE_Transparent_App_Icons/phonepe.png        |   Bin 0 -> 9246 bytes
+ .../ROYCE_Transparent_App_Icons/photo_bucket.png   |   Bin 0 -> 18338 bytes
+ .../ROYCE_Transparent_App_Icons/photo_editor.png   |   Bin 0 -> 8751 bytes
+ .../ROYCE_Transparent_App_Icons/photo_studio.png   |   Bin 0 -> 20261 bytes
+ .../ROYCE_Transparent_App_Icons/photocollage.png   |   Bin 0 -> 11914 bytes
+ .../ROYCE_Transparent_App_Icons/photos.png         |   Bin 0 -> 15668 bytes
+ .../pi_music_player.png                            |   Bin 0 -> 14152 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/piano.png |   Bin 0 -> 16705 bytes
+ .../ROYCE_Transparent_App_Icons/picarto.png        |   Bin 0 -> 11588 bytes
+ .../ROYCE_Transparent_App_Icons/picsart.png        |   Bin 0 -> 13750 bytes
+ .../ROYCE_Transparent_App_Icons/picsew.png         |   Bin 0 -> 10242 bytes
+ .../pictures_editor.png                            |   Bin 0 -> 12743 bytes
+ .../ROYCE_Transparent_App_Icons/piktures.png       |   Bin 0 -> 11189 bytes
+ .../ROYCE_Transparent_App_Icons/pinsave.png        |   Bin 0 -> 10578 bytes
+ .../ROYCE_Transparent_App_Icons/pinterest.png      |   Bin 0 -> 24576 bytes
+ .../ROYCE_Transparent_App_Icons/pixel_dungeon.png  |   Bin 0 -> 6925 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/pixlr.png |   Bin 0 -> 10854 bytes
+ .../ROYCE_Transparent_App_Icons/plague_inc.png     |   Bin 0 -> 11402 bytes
+ .../ROYCE_Transparent_App_Icons/plantnet.png       |   Bin 0 -> 11393 bytes
+ .../ROYCE_Transparent_App_Icons/play_console.png   |   Bin 0 -> 15078 bytes
+ .../ROYCE_Transparent_App_Icons/playerpro.png      |   Bin 0 -> 19846 bytes
+ .../ROYCE_Transparent_App_Icons/playit.png         |   Bin 0 -> 9290 bytes
+ .../ROYCE_Transparent_App_Icons/playstation.png    |   Bin 0 -> 13946 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/plex.png  |   Bin 0 -> 10538 bytes
+ .../plumefor_twitter.png                           |   Bin 0 -> 11412 bytes
+ .../ROYCE_Transparent_App_Icons/pocket.png         |   Bin 0 -> 13191 bytes
+ .../ROYCE_Transparent_App_Icons/pocket_cast.png    |   Bin 0 -> 11022 bytes
+ .../ROYCE_Transparent_App_Icons/podcast_addict.png |   Bin 0 -> 10139 bytes
+ .../ROYCE_Transparent_App_Icons/podcasts.png       |   Bin 0 -> 12764 bytes
+ .../ROYCE_Transparent_App_Icons/pokemon_go.png     |   Bin 0 -> 10154 bytes
+ .../ROYCE_Transparent_App_Icons/popcorn_time.png   |   Bin 0 -> 13584 bytes
+ .../ROYCE_Transparent_App_Icons/popup_widget.png   |   Bin 0 -> 8901 bytes
+ .../ROYCE_Transparent_App_Icons/portal.png         |   Bin 0 -> 21064 bytes
+ .../ROYCE_Transparent_App_Icons/poshmark.png       |   Bin 0 -> 14746 bytes
+ .../ROYCE_Transparent_App_Icons/power_light.png    |   Bin 0 -> 14396 bytes
+ .../ROYCE_Transparent_App_Icons/power_toggles.png  |   Bin 0 -> 12837 bytes
+ .../ROYCE_Transparent_App_Icons/poweramp.png       |   Bin 0 -> 10141 bytes
+ .../ROYCE_Transparent_App_Icons/poweraudio_pro.png |   Bin 0 -> 9288 bytes
+ .../ROYCE_Transparent_App_Icons/powerpoint.png     |   Bin 0 -> 14016 bytes
+ .../ROYCE_Transparent_App_Icons/ppsspp.png         |   Bin 0 -> 16860 bytes
+ .../ROYCE_Transparent_App_Icons/prayer_times.png   |   Bin 0 -> 10609 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/prey.png  |   Bin 0 -> 17498 bytes
+ .../ROYCE_Transparent_App_Icons/priceline.png      |   Bin 0 -> 11904 bytes
+ .../ROYCE_Transparent_App_Icons/prime_video.png    |   Bin 0 -> 7933 bytes
+ .../ROYCE_Transparent_App_Icons/printershare.png   |   Bin 0 -> 10772 bytes
+ .../ROYCE_Transparent_App_Icons/prisma.png         |   Bin 0 -> 10967 bytes
+ .../private_notepad.png                            |   Bin 0 -> 10572 bytes
+ .../ROYCE_Transparent_App_Icons/procreat.png       |   Bin 0 -> 12028 bytes
+ .../ROYCE_Transparent_App_Icons/prof_reminder.png  |   Bin 0 -> 13730 bytes
+ .../ROYCE_Transparent_App_Icons/projectm_pro.png   |   Bin 0 -> 11281 bytes
+ .../promodescuentos.png                            |   Bin 0 -> 16296 bytes
+ .../ROYCE_Transparent_App_Icons/protonmail.png     |   Bin 0 -> 10670 bytes
+ .../providers_benefits.png                         |   Bin 0 -> 8594 bytes
+ .../ROYCE_Transparent_App_Icons/ps_messages.png    |   Bin 0 -> 9096 bytes
+ .../ROYCE_Transparent_App_Icons/ps_mobile.png      |   Bin 0 -> 9270 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/psg.png   |   Bin 0 -> 17565 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/pubg.png  |   Bin 0 -> 6047 bytes
+ .../ROYCE_Transparent_App_Icons/puffin.png         |   Bin 0 -> 12257 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/pulse.png |   Bin 0 -> 8668 bytes
+ .../ROYCE_Transparent_App_Icons/pure_chess.png     |   Bin 0 -> 20447 bytes
+ .../ROYCE_Transparent_App_Icons/pushbullet.png     |   Bin 0 -> 8990 bytes
+ .../ROYCE_Transparent_App_Icons/python.png         |   Bin 0 -> 10959 bytes
+ .../ROYCE_Transparent_App_Icons/qhd_wallpapers.png |   Bin 0 -> 12960 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/qiwi.png  |   Bin 0 -> 16994 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/qksms.png |   Bin 0 -> 11205 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/qq.png    |   Bin 0 -> 9835 bytes
+ .../ROYCE_Transparent_App_Icons/qr_code_reader.png |   Bin 0 -> 8287 bytes
+ .../ROYCE_Transparent_App_Icons/qr_droid.png       |   Bin 0 -> 28885 bytes
+ .../ROYCE_Transparent_App_Icons/quick_event.png    |   Bin 0 -> 14238 bytes
+ .../quick_remote_lg.png                            |   Bin 0 -> 13394 bytes
+ .../ROYCE_Transparent_App_Icons/quicker.png        |   Bin 0 -> 19263 bytes
+ .../ROYCE_Transparent_App_Icons/quickpic.png       |   Bin 0 -> 16296 bytes
+ .../quickshortcutmaker.png                         |   Bin 0 -> 11277 bytes
+ .../ROYCE_Transparent_App_Icons/quizduell.png      |   Bin 0 -> 13703 bytes
+ .../ROYCE_Transparent_App_Icons/quizup.png         |   Bin 0 -> 7463 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/quora.png |   Bin 0 -> 19564 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/qzone.png |   Bin 0 -> 10269 bytes
+ .../radiant_defense.png                            |   Bin 0 -> 19063 bytes
+ .../ROYCE_Transparent_App_Icons/radio_canada.png   |   Bin 0 -> 16860 bytes
+ .../ROYCE_Transparent_App_Icons/radio_net.png      |   Bin 0 -> 11209 bytes
+ .../ROYCE_Transparent_App_Icons/radiofm.png        |   Bin 0 -> 12191 bytes
+ .../ROYCE_Transparent_App_Icons/radiosnet.png      |   Bin 0 -> 11526 bytes
+ .../ROYCE_Transparent_App_Icons/rahmen.png         |   Bin 0 -> 7923 bytes
+ .../ROYCE_Transparent_App_Icons/ram_manager.png    |   Bin 0 -> 10962 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/rar.png   |   Bin 0 -> 19538 bytes
+ .../ROYCE_Transparent_App_Icons/rbl_mobank.png     |   Bin 0 -> 11199 bytes
+ .../ROYCE_Transparent_App_Icons/reader_hd.png      |   Bin 0 -> 10893 bytes
+ .../ROYCE_Transparent_App_Icons/rebtel.png         |   Bin 0 -> 16264 bytes
+ .../ROYCE_Transparent_App_Icons/redbox.png         |   Bin 0 -> 10245 bytes
+ .../ROYCE_Transparent_App_Icons/reddit.png         |   Bin 0 -> 9475 bytes
+ .../ROYCE_Transparent_App_Icons/redditis_fun.png   |   Bin 0 -> 12936 bytes
+ .../ROYCE_Transparent_App_Icons/relay_pro.png      |   Bin 0 -> 8992 bytes
+ .../ROYCE_Transparent_App_Icons/remind.png         |   Bin 0 -> 8135 bytes
+ .../ROYCE_Transparent_App_Icons/remote_link.png    |   Bin 0 -> 21998 bytes
+ .../ROYCE_Transparent_App_Icons/renren.png         |   Bin 0 -> 21273 bytes
+ .../reproductor_de_mp3.png                         |   Bin 0 -> 10966 bytes
+ .../ROYCE_Transparent_App_Icons/resplash.png       |   Bin 0 -> 8432 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/resso.png |   Bin 0 -> 18011 bytes
+ .../ROYCE_Transparent_App_Icons/retouch.png        |   Bin 0 -> 13706 bytes
+ .../ROYCE_Transparent_App_Icons/retrica.png        |   Bin 0 -> 15775 bytes
+ .../ROYCE_Transparent_App_Icons/richman.png        |   Bin 0 -> 11536 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/ring.png  |   Bin 0 -> 9098 bytes
+ .../ROYCE_Transparent_App_Icons/rmc_sport.png      |   Bin 0 -> 10658 bytes
+ .../ROYCE_Transparent_App_Icons/robinhood.png      |   Bin 0 -> 11215 bytes
+ .../ROYCE_Transparent_App_Icons/roboform.png       |   Bin 0 -> 14897 bytes
+ .../ROYCE_Transparent_App_Icons/robomateplus.png   |   Bin 0 -> 10796 bytes
+ .../rocket_contacts.png                            |   Bin 0 -> 7496 bytes
+ .../ROYCE_Transparent_App_Icons/rocket_money.png   |   Bin 0 -> 14889 bytes
+ .../ROYCE_Transparent_App_Icons/rocketdial.png     |   Bin 0 -> 7059 bytes
+ .../ROYCE_Transparent_App_Icons/rom_manager.png    |   Bin 0 -> 13279 bytes
+ .../ROYCE_Transparent_App_Icons/rom_toolbox.png    |   Bin 0 -> 28957 bytes
+ .../ROYCE_Transparent_App_Icons/root_booster.png   |   Bin 0 -> 12145 bytes
+ .../root_call_sms_manager.png                      |   Bin 0 -> 11482 bytes
+ .../ROYCE_Transparent_App_Icons/root_cleaner.png   |   Bin 0 -> 8784 bytes
+ .../ROYCE_Transparent_App_Icons/root_explorer.png  |   Bin 0 -> 18393 bytes
+ .../ROYCE_Transparent_App_Icons/rosetta_stone.png  |   Bin 0 -> 10331 bytes
+ .../ROYCE_Transparent_App_Icons/rt_news.png        |   Bin 0 -> 10574 bytes
+ .../ROYCE_Transparent_App_Icons/ru_yandex_mail.png |   Bin 0 -> 11090 bytes
+ .../ROYCE_Transparent_App_Icons/rumble.png         |   Bin 0 -> 11629 bytes
+ .../ROYCE_Transparent_App_Icons/runtastic.png      |   Bin 0 -> 9349 bytes
+ .../ROYCE_Transparent_App_Icons/rutube.png         |   Bin 0 -> 11917 bytes
+ .../ROYCE_Transparent_App_Icons/s_health.png       |   Bin 0 -> 11855 bytes
+ .../ROYCE_Transparent_App_Icons/s_help.png         |   Bin 0 -> 12777 bytes
+ .../ROYCE_Transparent_App_Icons/s_launcher.png     |   Bin 0 -> 10708 bytes
+ .../ROYCE_Transparent_App_Icons/s_note.png         |   Bin 0 -> 14007 bytes
+ .../ROYCE_Transparent_App_Icons/s_translator.png   |   Bin 0 -> 16535 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/saavn.png |   Bin 0 -> 13884 bytes
+ .../ROYCE_Transparent_App_Icons/safari.png         |   Bin 0 -> 11106 bytes
+ .../ROYCE_Transparent_App_Icons/safeincloud.png    |   Bin 0 -> 7854 bytes
+ .../samsung_connect.png                            |   Bin 0 -> 15036 bytes
+ .../ROYCE_Transparent_App_Icons/samsung_gear.png   |   Bin 0 -> 14103 bytes
+ .../samsung_gear_360.png                           |   Bin 0 -> 14895 bytes
+ .../ROYCE_Transparent_App_Icons/samsung_max.png    |   Bin 0 -> 18959 bytes
+ .../samsung_members.png                            |   Bin 0 -> 11508 bytes
+ .../ROYCE_Transparent_App_Icons/samsung_notes.png  |   Bin 0 -> 12928 bytes
+ .../ROYCE_Transparent_App_Icons/samsung_pay.png    |   Bin 0 -> 13639 bytes
+ .../samsung_video_library.png                      |   Bin 0 -> 13561 bytes
+ .../ROYCE_Transparent_App_Icons/sbrowser.png       |   Bin 0 -> 20312 bytes
+ .../scientific_calculator.png                      |   Bin 0 -> 16558 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/scoop.png |   Bin 0 -> 9836 bytes
+ .../ROYCE_Transparent_App_Icons/scoremobile.png    |   Bin 0 -> 17856 bytes
+ .../ROYCE_Transparent_App_Icons/scruff.png         |   Bin 0 -> 11211 bytes
+ .../ROYCE_Transparent_App_Icons/sd_maid.png        |   Bin 0 -> 19239 bytes
+ .../ROYCE_Transparent_App_Icons/seagate_media.png  |   Bin 0 -> 11713 bytes
+ .../search_duplicate_file.png                      |   Bin 0 -> 20085 bytes
+ .../ROYCE_Transparent_App_Icons/seastorm.png       |   Bin 0 -> 9568 bytes
+ .../ROYCE_Transparent_App_Icons/secure_folder.png  |   Bin 0 -> 13879 bytes
+ .../secure_settings.png                            |   Bin 0 -> 15101 bytes
+ .../ROYCE_Transparent_App_Icons/secure_vpn.png     |   Bin 0 -> 13221 bytes
+ .../ROYCE_Transparent_App_Icons/secureanywhere.png |   Bin 0 -> 11072 bytes
+ .../ROYCE_Transparent_App_Icons/securesafe.png     |   Bin 0 -> 14531 bytes
+ .../ROYCE_Transparent_App_Icons/security_360.png   |   Bin 0 -> 8892 bytes
+ .../ROYCE_Transparent_App_Icons/seriesguide.png    |   Bin 0 -> 10447 bytes
+ .../ROYCE_Transparent_App_Icons/settings.png       |   Bin 0 -> 15716 bytes
+ .../seven_minute_workout.png                       |   Bin 0 -> 14044 bytes
+ .../sevendigital_music.png                         |   Bin 0 -> 9998 bytes
+ .../ROYCE_Transparent_App_Icons/shadowgun.png      |   Bin 0 -> 22893 bytes
+ .../shadowgun_deadzone.png                         |   Bin 0 -> 24154 bytes
+ .../ROYCE_Transparent_App_Icons/shadowrocket.png   |   Bin 0 -> 10324 bytes
+ .../ROYCE_Transparent_App_Icons/shareit.png        |   Bin 0 -> 16882 bytes
+ .../ROYCE_Transparent_App_Icons/shazam.png         |   Bin 0 -> 22417 bytes
+ .../ROYCE_Transparent_App_Icons/shield_tv.png      |   Bin 0 -> 14694 bytes
+ .../ROYCE_Transparent_App_Icons/shonen_jump.png    |   Bin 0 -> 9870 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/shop.png  |   Bin 0 -> 11543 bytes
+ .../ROYCE_Transparent_App_Icons/shopee.png         |   Bin 0 -> 10170 bytes
+ .../ROYCE_Transparent_App_Icons/shortcuts.png      |   Bin 0 -> 17348 bytes
+ .../ROYCE_Transparent_App_Icons/shpock.png         |   Bin 0 -> 12919 bytes
+ .../ROYCE_Transparent_App_Icons/shutapp.png        |   Bin 0 -> 20305 bytes
+ .../ROYCE_Transparent_App_Icons/sidesync.png       |   Bin 0 -> 22195 bytes
+ .../ROYCE_Transparent_App_Icons/signal.png         |   Bin 0 -> 16105 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/sim.png   |   Bin 0 -> 10339 bytes
+ .../ROYCE_Transparent_App_Icons/simple.png         |   Bin 0 -> 17722 bytes
+ .../ROYCE_Transparent_App_Icons/simple0.png        |   Bin 0 -> 21178 bytes
+ .../ROYCE_Transparent_App_Icons/simple_pro.png     |   Bin 0 -> 10207 bytes
+ .../ROYCE_Transparent_App_Icons/simplemind.png     |   Bin 0 -> 13270 bytes
+ .../ROYCE_Transparent_App_Icons/simplenote.png     |   Bin 0 -> 17187 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/sims3.png |   Bin 0 -> 22568 bytes
+ .../ROYCE_Transparent_App_Icons/sims_freeplay.png  |   Bin 0 -> 18750 bytes
+ .../ROYCE_Transparent_App_Icons/sirius_xm.png      |   Bin 0 -> 25017 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/sis.png   |   Bin 0 -> 11661 bytes
+ .../ROYCE_Transparent_App_Icons/skizze_xperia.png  |   Bin 0 -> 11378 bytes
+ .../ROYCE_Transparent_App_Icons/sky_sports.png     |   Bin 0 -> 13382 bytes
+ .../ROYCE_Transparent_App_Icons/skydrive.png       |   Bin 0 -> 12976 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/skype.png |   Bin 0 -> 14129 bytes
+ .../ROYCE_Transparent_App_Icons/skyscanner.png     |   Bin 0 -> 9648 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/slack.png |   Bin 0 -> 13871 bytes
+ .../ROYCE_Transparent_App_Icons/slacker_radio.png  |   Bin 0 -> 10284 bytes
+ .../ROYCE_Transparent_App_Icons/sleep_android.png  |   Bin 0 -> 5757 bytes
+ .../ROYCE_Transparent_App_Icons/slickdeals.png     |   Bin 0 -> 12887 bytes
+ .../ROYCE_Transparent_App_Icons/slidejoy.png       |   Bin 0 -> 10010 bytes
+ .../smart_app_manager.png                          |   Bin 0 -> 9704 bytes
+ .../ROYCE_Transparent_App_Icons/smart_booster.png  |   Bin 0 -> 12809 bytes
+ .../ROYCE_Transparent_App_Icons/smart_launcher.png |   Bin 0 -> 13839 bytes
+ .../ROYCE_Transparent_App_Icons/smart_manager.png  |   Bin 0 -> 22489 bytes
+ .../smartphone_link.png                            |   Bin 0 -> 17127 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/sms.png   |   Bin 0 -> 10443 bytes
+ .../sms_backup_restore.png                         |   Bin 0 -> 10552 bytes
+ .../ROYCE_Transparent_App_Icons/snackpack.png      |   Bin 0 -> 8243 bytes
+ .../ROYCE_Transparent_App_Icons/snap_camera.png    |   Bin 0 -> 10307 bytes
+ .../ROYCE_Transparent_App_Icons/snap_vpn.png       |   Bin 0 -> 9821 bytes
+ .../ROYCE_Transparent_App_Icons/snapchat.png       |   Bin 0 -> 12389 bytes
+ .../ROYCE_Transparent_App_Icons/snaps23.png        |   Bin 0 -> 11312 bytes
+ .../ROYCE_Transparent_App_Icons/snapseed.png       |   Bin 0 -> 7654 bytes
+ .../ROYCE_Transparent_App_Icons/sol_calendar.png   |   Bin 0 -> 14581 bytes
+ .../ROYCE_Transparent_App_Icons/solid_explorer.png |   Bin 0 -> 11375 bytes
+ .../ROYCE_Transparent_App_Icons/solo_launcher.png  |   Bin 0 -> 19517 bytes
+ .../ROYCE_Transparent_App_Icons/sony_ar_effect.png |   Bin 0 -> 10703 bytes
+ .../ROYCE_Transparent_App_Icons/sony_liv.png       |   Bin 0 -> 20189 bytes
+ .../ROYCE_Transparent_App_Icons/sony_lounge.png    |   Bin 0 -> 23940 bytes
+ .../ROYCE_Transparent_App_Icons/sonysocial.png     |   Bin 0 -> 10608 bytes
+ .../ROYCE_Transparent_App_Icons/soundcloud.png     |   Bin 0 -> 9318 bytes
+ .../ROYCE_Transparent_App_Icons/soundhound.png     |   Bin 0 -> 13257 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/spark.png |   Bin 0 -> 8750 bytes
+ .../ROYCE_Transparent_App_Icons/spark_alt1.png     |   Bin 0 -> 14190 bytes
+ .../ROYCE_Transparent_App_Icons/sparkase.png       |   Bin 0 -> 13447 bytes
+ .../ROYCE_Transparent_App_Icons/speedpass.png      |   Bin 0 -> 11691 bytes
+ .../ROYCE_Transparent_App_Icons/speedtest.png      |   Bin 0 -> 13423 bytes
+ .../ROYCE_Transparent_App_Icons/spiderman.png      |   Bin 0 -> 8539 bytes
+ .../ROYCE_Transparent_App_Icons/splashtop.png      |   Bin 0 -> 14212 bytes
+ .../ROYCE_Transparent_App_Icons/spotify.png        |   Bin 0 -> 13109 bytes
+ .../ROYCE_Transparent_App_Icons/sqlite_editor.png  |   Bin 0 -> 16654 bytes
+ .../ROYCE_Transparent_App_Icons/ssb_mobile.png     |   Bin 0 -> 18903 bytes
+ .../ROYCE_Transparent_App_Icons/star_chart.png     |   Bin 0 -> 12157 bytes
+ .../ROYCE_Transparent_App_Icons/star_wars.png      |   Bin 0 -> 13383 bytes
+ .../ROYCE_Transparent_App_Icons/starbuck.png       |   Bin 0 -> 14121 bytes
+ .../ROYCE_Transparent_App_Icons/status_saver.png   |   Bin 0 -> 12605 bytes
+ .../ROYCE_Transparent_App_Icons/stellio.png        |   Bin 0 -> 13310 bytes
+ .../ROYCE_Transparent_App_Icons/stepdrop.png       |   Bin 0 -> 11053 bytes
+ .../ROYCE_Transparent_App_Icons/sticky_notes.png   |   Bin 0 -> 9901 bytes
+ .../ROYCE_Transparent_App_Icons/stocknotes.png     |   Bin 0 -> 10683 bytes
+ .../ROYCE_Transparent_App_Icons/stockx.png         |   Bin 0 -> 15317 bytes
+ .../ROYCE_Transparent_App_Icons/stopwatch.png      |   Bin 0 -> 18152 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/storm.png |   Bin 0 -> 11440 bytes
+ .../ROYCE_Transparent_App_Icons/stumbleupon.png    |   Bin 0 -> 17142 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/su.png    |   Bin 0 -> 11334 bytes
+ .../ROYCE_Transparent_App_Icons/substratum.png     |   Bin 0 -> 18564 bytes
+ .../ROYCE_Transparent_App_Icons/subway_surfers.png |   Bin 0 -> 4932 bytes
+ .../ROYCE_Transparent_App_Icons/sugar_sync.png     |   Bin 0 -> 5801 bytes
+ .../ROYCE_Transparent_App_Icons/sunrise.png        |   Bin 0 -> 7100 bytes
+ .../ROYCE_Transparent_App_Icons/superbeam.png      |   Bin 0 -> 11077 bytes
+ .../ROYCE_Transparent_App_Icons/supersu.png        |   Bin 0 -> 8973 bytes
+ .../ROYCE_Transparent_App_Icons/superuser.png      |   Bin 0 -> 11498 bytes
+ .../ROYCE_Transparent_App_Icons/support_xperia.png |   Bin 0 -> 10965 bytes
+ .../ROYCE_Transparent_App_Icons/survival_craft.png |   Bin 0 -> 12008 bytes
+ .../ROYCE_Transparent_App_Icons/swiftkey.png       |   Bin 0 -> 11225 bytes
+ .../ROYCE_Transparent_App_Icons/swiggy.png         |   Bin 0 -> 9832 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/sygic.png |   Bin 0 -> 13244 bytes
+ .../ROYCE_Transparent_App_Icons/symbolab.png       |   Bin 0 -> 12536 bytes
+ .../ROYCE_Transparent_App_Icons/syncme.png         |   Bin 0 -> 12605 bytes
+ .../ROYCE_Transparent_App_Icons/syslog.png         |   Bin 0 -> 10661 bytes
+ .../system_flashlight.png                          |   Bin 0 -> 14207 bytes
+ .../ROYCE_Transparent_App_Icons/systempanel.png    |   Bin 0 -> 10738 bytes
+ .../ROYCE_Transparent_App_Icons/tablettalk.png     |   Bin 0 -> 10010 bytes
+ .../ROYCE_Transparent_App_Icons/tagged.png         |   Bin 0 -> 17238 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/tango.png |   Bin 0 -> 13000 bytes
+ .../ROYCE_Transparent_App_Icons/taobao.png         |   Bin 0 -> 19905 bytes
+ .../ROYCE_Transparent_App_Icons/tapatalk.png       |   Bin 0 -> 12983 bytes
+ .../ROYCE_Transparent_App_Icons/tapped_out.png     |   Bin 0 -> 24144 bytes
+ .../ROYCE_Transparent_App_Icons/target.png         |   Bin 0 -> 17152 bytes
+ .../ROYCE_Transparent_App_Icons/task_generic.png   |   Bin 0 -> 12930 bytes
+ .../ROYCE_Transparent_App_Icons/tasker.png         |   Bin 0 -> 22675 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/tasks.png |   Bin 0 -> 7377 bytes
+ .../ROYCE_Transparent_App_Icons/td_bank.png        |   Bin 0 -> 14680 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/ted.png   |   Bin 0 -> 14060 bytes
+ .../ROYCE_Transparent_App_Icons/telegram.png       |   Bin 0 -> 23347 bytes
+ .../ROYCE_Transparent_App_Icons/telegram_x.png     |   Bin 0 -> 10324 bytes
+ .../ROYCE_Transparent_App_Icons/temple_run.png     |   Bin 0 -> 25290 bytes
+ .../ROYCE_Transparent_App_Icons/temple_run2.png    |   Bin 0 -> 25674 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/temu.png  |   Bin 0 -> 12835 bytes
+ .../terminal_emulator.png                          |   Bin 0 -> 11841 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/tesla.png |   Bin 0 -> 10509 bytes
+ .../ROYCE_Transparent_App_Icons/tesla_led.png      |   Bin 0 -> 17635 bytes
+ .../ROYCE_Transparent_App_Icons/teslaunread.png    |   Bin 0 -> 13690 bytes
+ .../ROYCE_Transparent_App_Icons/textra.png         |   Bin 0 -> 10705 bytes
+ .../the_weather_channel.png                        |   Bin 0 -> 8960 bytes
+ .../ROYCE_Transparent_App_Icons/theme_store.png    |   Bin 0 -> 11977 bytes
+ .../ROYCE_Transparent_App_Icons/threads.png        |   Bin 0 -> 20092 bytes
+ .../ROYCE_Transparent_App_Icons/three60_cities.png |   Bin 0 -> 11170 bytes
+ .../three_c_toolbox.png                            |   Bin 0 -> 9906 bytes
+ .../threec_battery_monitor_pro.png                 |   Bin 0 -> 11711 bytes
+ .../threeg_watchdog.png                            |   Bin 0 -> 14939 bytes
+ .../threeg_watchdog_pro.png                        |   Bin 0 -> 15133 bytes
+ .../ROYCE_Transparent_App_Icons/threema.png        |   Bin 0 -> 11284 bytes
+ .../ROYCE_Transparent_App_Icons/ticktick.png       |   Bin 0 -> 14021 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/tidal.png |   Bin 0 -> 10343 bytes
+ .../ROYCE_Transparent_App_Icons/tiktok.png         |   Bin 0 -> 10851 bytes
+ .../ROYCE_Transparent_App_Icons/timely.png         |   Bin 0 -> 15293 bytes
+ .../ROYCE_Transparent_App_Icons/timeriffic.png     |   Bin 0 -> 10524 bytes
+ .../ROYCE_Transparent_App_Icons/tinder.png         |   Bin 0 -> 8818 bytes
+ .../titanium_backup.png                            |   Bin 0 -> 14660 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/tk.png    |   Bin 0 -> 9025 bytes
+ .../ROYCE_Transparent_App_Icons/today_calendar.png |   Bin 0 -> 11194 bytes
+ .../ROYCE_Transparent_App_Icons/todoist.png        |   Bin 0 -> 13659 bytes
+ .../ROYCE_Transparent_App_Icons/toolwiz_photos.png |   Bin 0 -> 16009 bytes
+ .../total_commander.png                            |   Bin 0 -> 10005 bytes
+ .../touchnote_postcard.png                         |   Bin 0 -> 17530 bytes
+ ...pal_keyboard_emoji_keyboard_app_for_android.png |   Bin 0 -> 11964 bytes
+ .../ROYCE_Transparent_App_Icons/toyota.png         |   Bin 0 -> 14668 bytes
+ .../ROYCE_Transparent_App_Icons/toyota_alt1.png    |   Bin 0 -> 9341 bytes
+ .../ROYCE_Transparent_App_Icons/track_id.png       |   Bin 0 -> 11956 bytes
+ .../ROYCE_Transparent_App_Icons/trans_union.png    |   Bin 0 -> 11975 bytes
+ .../ROYCE_Transparent_App_Icons/transfer.png       |   Bin 0 -> 13296 bytes
+ .../ROYCE_Transparent_App_Icons/transit.png        |   Bin 0 -> 11932 bytes
+ .../ROYCE_Transparent_App_Icons/translate.png      |   Bin 0 -> 16233 bytes
+ .../transmission_remote.png                        |   Bin 0 -> 8832 bytes
+ .../ROYCE_Transparent_App_Icons/traveloka.png      |   Bin 0 -> 8480 bytes
+ .../ROYCE_Transparent_App_Icons/trickster.png      |   Bin 0 -> 9849 bytes
+ .../ROYCE_Transparent_App_Icons/tripadvisor.png    |   Bin 0 -> 11305 bytes
+ .../ROYCE_Transparent_App_Icons/truecaller.png     |   Bin 0 -> 8891 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/ttpod.png |   Bin 0 -> 18783 bytes
+ .../ROYCE_Transparent_App_Icons/tumblr.png         |   Bin 0 -> 13494 bytes
+ .../ROYCE_Transparent_App_Icons/tunein.png         |   Bin 0 -> 13506 bytes
+ .../ROYCE_Transparent_App_Icons/turbo_alarm.png    |   Bin 0 -> 7811 bytes
+ .../ROYCE_Transparent_App_Icons/turbo_vpn.png      |   Bin 0 -> 12566 bytes
+ .../ROYCE_Transparent_App_Icons/tv_time.png        |   Bin 0 -> 4085 bytes
+ .../ROYCE_Transparent_App_Icons/twc_tv.png         |   Bin 0 -> 21756 bytes
+ .../ROYCE_Transparent_App_Icons/tweet_caster.png   |   Bin 0 -> 12867 bytes
+ .../ROYCE_Transparent_App_Icons/tweetings.png      |   Bin 0 -> 9178 bytes
+ .../ROYCE_Transparent_App_Icons/twitch.png         |   Bin 0 -> 12646 bytes
+ .../twitpaneplus_for_twitter.png                   |   Bin 0 -> 11909 bytes
+ .../ROYCE_Transparent_App_Icons/twitter.png        |   Bin 0 -> 13887 bytes
+ .../ROYCE_Transparent_App_Icons/two048.png         |   Bin 0 -> 12396 bytes
+ .../ROYCE_Transparent_App_Icons/typeapp.png        |   Bin 0 -> 18912 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/uber.png  |   Bin 0 -> 11349 bytes
+ .../ROYCE_Transparent_App_Icons/uc_browser.png     |   Bin 0 -> 7232 bytes
+ .../ROYCE_Transparent_App_Icons/uc_mini.png        |   Bin 0 -> 4201 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/uccw.png  |   Bin 0 -> 10948 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/udemy.png |   Bin 0 -> 10406 bytes
+ .../ROYCE_Transparent_App_Icons/ultraflow.png      |   Bin 0 -> 9488 bytes
+ .../ROYCE_Transparent_App_Icons/unarchiver.png     |   Bin 0 -> 8686 bytes
+ .../ROYCE_Transparent_App_Icons/unicon.png         |   Bin 0 -> 12890 bytes
+ .../unique_snowflake.png                           |   Bin 0 -> 20279 bytes
+ .../ROYCE_Transparent_App_Icons/updateme.png       |   Bin 0 -> 12744 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/ups.png   |   Bin 0 -> 10813 bytes
+ .../ROYCE_Transparent_App_Icons/usa_today.png      |   Bin 0 -> 15690 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/usaa.png  |   Bin 0 -> 16366 bytes
+ .../ussd_dual_widget_pro.png                       |   Bin 0 -> 20031 bytes
+ .../ROYCE_Transparent_App_Icons/vc_browser.png     |   Bin 0 -> 9561 bytes
+ .../ROYCE_Transparent_App_Icons/vega_cast.png      |   Bin 0 -> 9685 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/venmo.png |   Bin 0 -> 9820 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/vi.png    |   Bin 0 -> 11671 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/via.png   |   Bin 0 -> 14966 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/viber.png |   Bin 0 -> 17342 bytes
+ .../ROYCE_Transparent_App_Icons/video_maker.png    |   Bin 0 -> 29999 bytes
+ .../ROYCE_Transparent_App_Icons/videos.png         |   Bin 0 -> 8595 bytes
+ .../ROYCE_Transparent_App_Icons/videoshow.png      |   Bin 0 -> 9091 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/vimeo.png |   Bin 0 -> 12268 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/vine.png  |   Bin 0 -> 16317 bytes
+ .../ROYCE_Transparent_App_Icons/vinted.png         |   Bin 0 -> 11200 bytes
+ .../ROYCE_Transparent_App_Icons/vinylmation.png    |   Bin 0 -> 15282 bytes
+ .../ROYCE_Transparent_App_Icons/vivavideo.png      |   Bin 0 -> 7183 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/vk.png    |   Bin 0 -> 11627 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/vlc.png   |   Bin 0 -> 10568 bytes
+ .../ROYCE_Transparent_App_Icons/vlc_media.png      |   Bin 0 -> 11840 bytes
+ .../ROYCE_Transparent_App_Icons/vodafone.png       |   Bin 0 -> 16651 bytes
+ .../ROYCE_Transparent_App_Icons/voice_mail.png     |   Bin 0 -> 10636 bytes
+ .../ROYCE_Transparent_App_Icons/voice_memos.png    |   Bin 0 -> 10261 bytes
+ .../ROYCE_Transparent_App_Icons/voicerecorder.png  |   Bin 0 -> 7688 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/vudu.png  |   Bin 0 -> 10316 bytes
+ .../ROYCE_Transparent_App_Icons/vz_protect.png     |   Bin 0 -> 10530 bytes
+ .../wakelock_detector.png                          |   Bin 0 -> 5469 bytes
+ .../ROYCE_Transparent_App_Icons/wallapop.png       |   Bin 0 -> 14188 bytes
+ .../ROYCE_Transparent_App_Icons/wallax.png         |   Bin 0 -> 13713 bytes
+ .../ROYCE_Transparent_App_Icons/wallet.png         |   Bin 0 -> 16563 bytes
+ .../wallpaper_changer.png                          |   Bin 0 -> 15568 bytes
+ .../ROYCE_Transparent_App_Icons/walmart.png        |   Bin 0 -> 10556 bytes
+ .../walt_disney_world.png                          |   Bin 0 -> 10875 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/wapo.png  |   Bin 0 -> 22989 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/watch.png |   Bin 0 -> 8621 bytes
+ .../ROYCE_Transparent_App_Icons/watchmaker.png     |   Bin 0 -> 14667 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/waze.png  |   Bin 0 -> 12208 bytes
+ .../ROYCE_Transparent_App_Icons/wealthfront.png    |   Bin 0 -> 11887 bytes
+ .../ROYCE_Transparent_App_Icons/weather.png        |   Bin 0 -> 9512 bytes
+ .../ROYCE_Transparent_App_Icons/weather_bug.png    |   Bin 0 -> 17197 bytes
+ .../weather_generic.png                            |   Bin 0 -> 14353 bytes
+ .../ROYCE_Transparent_App_Icons/weather_live.png   |   Bin 0 -> 11267 bytes
+ .../weather_timeline.png                           |   Bin 0 -> 12865 bytes
+ .../weatherback_wallpaper.png                      |   Bin 0 -> 12868 bytes
+ .../ROYCE_Transparent_App_Icons/webde_mail.png     |   Bin 0 -> 12028 bytes
+ .../ROYCE_Transparent_App_Icons/webtoon.png        |   Bin 0 -> 10626 bytes
+ .../ROYCE_Transparent_App_Icons/wechat.png         |   Bin 0 -> 14702 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/weex.png  |   Bin 0 -> 10926 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/weibo.png |   Bin 0 -> 12556 bytes
+ .../ROYCE_Transparent_App_Icons/wells_fargo.png    |   Bin 0 -> 13082 bytes
+ .../ROYCE_Transparent_App_Icons/whatsapp.png       |   Bin 0 -> 13278 bytes
+ .../ROYCE_Transparent_App_Icons/widgetsmith.png    |   Bin 0 -> 9370 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/widgy.png |   Bin 0 -> 10106 bytes
+ .../ROYCE_Transparent_App_Icons/wifi_analyzer.png  |   Bin 0 -> 12017 bytes
+ .../wifi_file_transfer.png                         |   Bin 0 -> 10827 bytes
+ .../ROYCE_Transparent_App_Icons/wifi_manager.png   |   Bin 0 -> 15841 bytes
+ .../ROYCE_Transparent_App_Icons/wikipedia.png      |   Bin 0 -> 13156 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/wish.png  |   Bin 0 -> 12745 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/word.png  |   Bin 0 -> 14233 bytes
+ .../ROYCE_Transparent_App_Icons/wordpress.png      |   Bin 0 -> 11106 bytes
+ .../words_withfriends.png                          |   Bin 0 -> 13000 bytes
+ .../ROYCE_Transparent_App_Icons/wordsmith_game.png |   Bin 0 -> 26240 bytes
+ .../ROYCE_Transparent_App_Icons/wow_armory.png     |   Bin 0 -> 10593 bytes
+ .../ROYCE_Transparent_App_Icons/wow_tv.png         |   Bin 0 -> 9644 bytes
+ .../ROYCE_Transparent_App_Icons/wps_office.png     |   Bin 0 -> 14843 bytes
+ .../ROYCE_Transparent_App_Icons/wunderlist.png     |   Bin 0 -> 14965 bytes
+ .../ROYCE_Transparent_App_Icons/wvu_gameday.png    |   Bin 0 -> 14974 bytes
+ .../ROYCE_Transparent_App_Icons/x_twitter.png      |   Bin 0 -> 10205 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/xbox.png  |   Bin 0 -> 19407 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/xda.png   |   Bin 0 -> 8566 bytes
+ .../ROYCE_Transparent_App_Icons/xe_currency.png    |   Bin 0 -> 20861 bytes
+ .../ROYCE_Transparent_App_Icons/xstream_fiber.png  |   Bin 0 -> 11930 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/xykey.png |   Bin 0 -> 9517 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/yahoo.png |   Bin 0 -> 11769 bytes
+ .../ROYCE_Transparent_App_Icons/yahoomail.png      |   Bin 0 -> 18320 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/yatse.png |   Bin 0 -> 17349 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/yelp.png  |   Bin 0 -> 15731 bytes
+ .../ROYCE_Transparent_App_Icons/yesstyle.png       |   Bin 0 -> 10240 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/youku.png |   Bin 0 -> 9298 bytes
+ .../ROYCE_Transparent_App_Icons/youmiam.png        |   Bin 0 -> 9344 bytes
+ .../young_plattform.png                            |   Bin 0 -> 10716 bytes
+ .../ROYCE_Transparent_App_Icons/youtube.png        |   Bin 0 -> 4641 bytes
+ .../youtube_creator.png                            |   Bin 0 -> 12072 bytes
+ .../ROYCE_Transparent_App_Icons/youtube_gaming.png |   Bin 0 -> 7577 bytes
+ .../ROYCE_Transparent_App_Icons/youtube_kids.png   |   Bin 0 -> 12267 bytes
+ .../ROYCE_Transparent_App_Icons/youtube_music.png  |   Bin 0 -> 18995 bytes
+ .../ROYCE_Transparent_App_Icons/youtube_tv.png     |   Bin 0 -> 8371 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/zapya.png |   Bin 0 -> 10772 bytes
+ .../ROYCE_Transparent_App_Icons/zarchiver_pro.png  |   Bin 0 -> 11596 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/zedge.png |   Bin 0 -> 17777 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/zello.png |   Bin 0 -> 19150 bytes
+ .../ROYCE_Transparent_App_Icons/zodiac_scorpio.png |   Bin 0 -> 11085 bytes
+ .../ROYCE_Transparent_App_Icons/zoho_crm.png       |   Bin 0 -> 12980 bytes
+ .../zoner_antivirus.png                            |   Bin 0 -> 12100 bytes
+ .../icon-pak/ROYCE_Transparent_App_Icons/zoom.png  |   Bin 0 -> 6520 bytes
+ .../ROYCE_Transparent_App_Icons/zooper_free.png    |   Bin 0 -> 12458 bytes
+ .../ROYCE_Transparent_App_Icons/zooper_pro.png     |   Bin 0 -> 19812 bytes
+ .../ROYCE_Transparent_App_Icons/zynga_poker.png    |   Bin 0 -> 9827 bytes
+ assets/images/logo.png                             |   Bin 0 -> 1036369 bytes
+ assets/images/maskable-icon-512x512.png            |   Bin 0 -> 31680 bytes
+ assets/images/mstile-150x150.png                   |   Bin 0 -> 19208 bytes
+ assets/images/search-logo-512.png                  |   Bin 0 -> 161850 bytes
+ assets/images/search-logo-clear-512.png            |   Bin 0 -> 161850 bytes
+ assets/images/search-logo-transparent-512.png      |   Bin 0 -> 161850 bytes
+ assets/images/social-preview-1-1200x630.png        |   Bin 0 -> 2965908 bytes
+ assets/images/social-preview-1200x630.png          |   Bin 0 -> 403823 bytes
+ assets/images/ui/chevron-emerald-gold.svg          |    50 +
+ assets/js/main.js                                  |  1510 +
+ assets/js/page-modules.js                          |   616 +
+ assets/js/site-shell.js                            |  2906 ++
+ assets/js/tooltip.js                               |   602 +
+ browserconfig.xml                                  |     9 +
+ cspell.json                                        |    33 +
+ de/blog.html                                       |   244 +
+ de/blog/kak-podgotovit-sobaku.html                 |   186 +
+ de/blog/plokhaya-strizhka.html                     |   186 +
+ de/blog/strizhka-koshek.html                       |   185 +
+ de/blog/zashchita-ot-parazitov.html                |   183 +
+ de/datenschutz.html                                |   216 +
+ de/do-i-posle.html                                 |   229 +
+ de/galereya.html                                   |   227 +
+ de/impressum.html                                  |   190 +
+ de/index.html                                      |   619 +
+ de/kontakty.html                                   |   250 +
+ de/nashi-uslugi.html                               |   229 +
+ de/o-nas.html                                      |   225 +
+ de/onlayn-bronirovanie.html                        |   264 +
+ de/partnerstvo.html                                |   237 +
+ de/prays-list.html                                 |   548 +
+ de/reyting.html                                    |   238 +
+ de/social.html                                     |   335 +
+ de/vvedenie.html                                   |   292 +
+ docs/moon-asset-pipeline.md                        |    49 +
+ en/blog.html                                       |   244 +
+ en/blog/kak-podgotovit-sobaku.html                 |   186 +
+ en/blog/plokhaya-strizhka.html                     |   186 +
+ en/blog/strizhka-koshek.html                       |   185 +
+ en/blog/zashchita-ot-parazitov.html                |   183 +
+ en/datenschutz.html                                |   203 +
+ en/do-i-posle.html                                 |   225 +
+ en/galereya.html                                   |   227 +
+ en/impressum.html                                  |   187 +
+ en/index.html                                      |   473 +
+ en/kontakty.html                                   |   249 +
+ en/nashi-uslugi.html                               |   229 +
+ en/o-nas.html                                      |   225 +
+ en/onlayn-bronirovanie.html                        |   264 +
+ en/partnerstvo.html                                |   237 +
+ en/prays-list.html                                 |   548 +
+ en/reyting.html                                    |   238 +
+ en/social.html                                     |   335 +
+ en/vvedenie.html                                   |   292 +
+ eslint.config.js                                   |    52 +
+ favicon.png                                        |   Bin 0 -> 201389 bytes
+ functions/sendmail.js                              |   184 +
+ google8f5e729bf8a13cc7.html                        |    10 +
+ index.html                                         |   187 +
+ indexnow-key.txt                                   |     1 +
+ package.json                                       |    75 +
+ response.txt                                       |     1 +
+ response2.txt                                      |     0
+ response_bing.txt                                  |     1 +
+ robots.txt                                         |    17 +
+ ru/blog.html                                       |   244 +
+ ru/blog/kak-podgotovit-sobaku.html                 |   186 +
+ ru/blog/plokhaya-strizhka.html                     |   186 +
+ ru/blog/strizhka-koshek.html                       |   185 +
+ ru/blog/zashchita-ot-parazitov.html                |   183 +
+ ru/datenschutz.html                                |   202 +
+ ru/do-i-posle.html                                 |   225 +
+ ru/galereya.html                                   |   227 +
+ ru/impressum.html                                  |   187 +
+ ru/index.html                                      |   672 +
+ ru/kontakty.html                                   |   250 +
+ ru/nashi-uslugi.html                               |   229 +
+ ru/o-nas.html                                      |   225 +
+ ru/onlayn-bronirovanie.html                        |   264 +
+ ru/partnerstvo.html                                |   237 +
+ ru/prays-list.html                                 |   548 +
+ ru/reyting.html                                    |   242 +
+ ru/social.html                                     |   338 +
+ ru/vvedenie.html                                   |   292 +
+ scripts/build_moon_alpha_assets.ps1                |   167 +
+ scripts/convert_to_webm.ps1                        |   172 +
+ scripts/verify_outputs.ps1                         |   168 +
+ site.webmanifest                                   |    43 +
+ sitemap.xml                                        |   129 +
+ tools/add_comments.py                              |   385 +
+ tools/bing-submit-urls.txt                         |    76 +
+ tools/build-production.js                          |    52 +
+ tools/build_production.ps1                         |   181 +
+ tools/check-links.js                               |   133 +
+ tools/check-project.js                             |   146 +
+ tools/edge-9224-tabs.json                          |    51 +
+ tools/fix_html_stubs.py                            |    98 +
+ tools/generate-brand-assets.ps1                    |   279 +
+ tools/google-search-console-audit.js               |   177 +
+ tools/google-search-console-report.json            |    28 +
+ tools/google-search-console-submit-urls.txt        |    76 +
+ tools/gsc-browser-automate.js                      |   176 +
+ tools/indexnow-submit.js                           |    90 +
+ tools/normalize_html_pages.py                      |   405 +
+ tools/normalize_seo_urls.cjs                       |    94 +
+ tools/normalize_seo_urls.js                        |    95 +
+ tools/optimize_fcp_head.cjs                        |    76 +
+ tools/update-brand-search-seo.js                   |   204 +
+ uk/blog.html                                       |   244 +
+ uk/blog/kak-podgotovit-sobaku.html                 |   186 +
+ uk/blog/plokhaya-strizhka.html                     |   186 +
+ uk/blog/strizhka-koshek.html                       |   185 +
+ uk/blog/zashchita-ot-parazitov.html                |   183 +
+ uk/datenschutz.html                                |   202 +
+ uk/do-i-posle.html                                 |   225 +
+ uk/galereya.html                                   |   227 +
+ uk/impressum.html                                  |   187 +
+ uk/index.html                                      |   624 +
+ uk/kontakty.html                                   |   249 +
+ uk/nashi-uslugi.html                               |   229 +
+ uk/o-nas.html                                      |   225 +
+ uk/onlayn-bronirovanie.html                        |   264 +
+ uk/partnerstvo.html                                |   237 +
+ uk/prays-list.html                                 |   548 +
+ uk/reyting.html                                    |   238 +
+ uk/social.html                                     |   335 +
+ uk/vvedenie.html                                   |   292 +
+ wrangler.toml                                      |    16 +
+ 1717 files changed, 94212 insertions(+)

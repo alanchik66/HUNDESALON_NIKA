@@ -97,5 +97,6 @@
   // ── Path Intellisense ────────────────────────────────────────────────────
   "path-intellisense.mappings": {
     "/assets": "${workspaceFolder}/assets"
-  }
+  },
+  "editor.cursorSmoothCaretAnimation": "on"
 }

@@ -135,6 +135,54 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
 
+  const aiDraftCopy = {
+    title: {
+      ru: 'AI-помощник для текста',
+      uk: 'AI-помічник для тексту',
+      en: 'AI text helper',
+      de: 'AI-Texthelfer',
+    },
+    button: {
+      ru: 'Сгенерировать черновик',
+      uk: 'Згенерувати чернетку',
+      en: 'Generate draft',
+      de: 'Entwurf generieren',
+    },
+    loading: {
+      ru: 'Готовлю черновик...',
+      uk: 'Готую чернетку...',
+      en: 'Preparing draft...',
+      de: 'Entwurf wird erstellt...',
+    },
+    done: {
+      ru: 'Черновик добавлен в поле сообщения.',
+      uk: 'Чернетку додано до поля повідомлення.',
+      en: 'Draft added to the message field.',
+      de: 'Entwurf wurde in das Nachrichtenfeld eingefugt.',
+    },
+    failed: {
+      ru: 'Не удалось создать черновик. Попробуйте снова чуть позже.',
+      uk: 'Не вдалося створити чернетку. Спробуйте трохи пізніше.',
+      en: 'Could not create draft. Please try again shortly.',
+      de: 'Entwurf konnte nicht erstellt werden. Bitte versuchen Sie es erneut.',
+    },
+  };
+
+  const normalizeAssistantMessage = value => {
+    if (typeof value === 'string') return value.trim();
+    if (Array.isArray(value)) {
+      const joined = value
+        .map(part => {
+          if (typeof part === 'string') return part;
+          if (part && typeof part === 'object' && typeof part.text === 'string') return part.text;
+          return '';
+        })
+        .join('\n');
+      return joined.trim();
+    }
+    return '';
+  };
+
   const initSendmailForms = () => {
     const forms = document.querySelectorAll('form[action$="/sendmail"]');
     if (!forms.length) return;
@@ -208,6 +256,101 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
           }
+        }
+      });
+    });
+  };
+
+  const initAiDraftAssistants = () => {
+    const forms = document.querySelectorAll('form[action$="/sendmail"]');
+    if (!forms.length) return;
+
+    forms.forEach(form => {
+      const messageField = form.querySelector('textarea[name="message"]');
+      if (!messageField) return;
+      if (form.dataset.aiDraftReady === 'true') return;
+      form.dataset.aiDraftReady = 'true';
+
+      const tools = document.createElement('div');
+      tools.className = 'ai-draft-tools';
+
+      const title = document.createElement('span');
+      title.className = 'ai-draft-title';
+      title.textContent = aiDraftCopy.title[pageLang] ?? aiDraftCopy.title.de;
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'ai-draft-btn';
+      button.textContent = aiDraftCopy.button[pageLang] ?? aiDraftCopy.button.de;
+
+      const status = document.createElement('p');
+      status.className = 'ai-draft-status';
+
+      tools.appendChild(title);
+      tools.appendChild(button);
+      messageField.insertAdjacentElement('beforebegin', tools);
+      messageField.insertAdjacentElement('afterend', status);
+
+      button.addEventListener('click', async () => {
+        const formType = form.querySelector('input[name="form_type"]')?.value || 'contact';
+        const name = form.querySelector('input[name="name"]')?.value?.trim() || '';
+        const service = form.querySelector('input[name="service"]')?.value?.trim() || '';
+        const existingText = messageField.value.trim();
+
+        status.className = 'ai-draft-status ai-draft-status--loading';
+        status.textContent = aiDraftCopy.loading[pageLang] ?? aiDraftCopy.loading.de;
+        button.disabled = true;
+
+        try {
+          const response = await fetch('/openrouter', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({
+              temperature: 0.45,
+              max_tokens: 260,
+              messages: [
+                {
+                  role: 'system',
+                  content:
+                    'You write polite, concise salon customer messages in the requested language. Keep tone warm and practical. No markdown.',
+                },
+                {
+                  role: 'user',
+                  content: [
+                    `Language: ${pageLang}`,
+                    `Form type: ${formType}`,
+                    `Customer name: ${name || 'not provided'}`,
+                    `Service: ${service || 'not provided'}`,
+                    `Existing message: ${existingText || 'empty'}`,
+                    'Task: create a clear customer message draft for HUNDESALON NIKA contact form.',
+                    'Output: plain text only, 70-120 words, with specific request details and preferred contact follow-up.',
+                  ].join('\n'),
+                },
+              ],
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`AI request failed with status ${response.status}`);
+          }
+
+          const payload = await response.json();
+          const aiText = normalizeAssistantMessage(payload?.choices?.[0]?.message?.content);
+          if (!aiText) {
+            throw new Error('AI response is empty');
+          }
+
+          messageField.value = aiText;
+          status.className = 'ai-draft-status ai-draft-status--success';
+          status.textContent = aiDraftCopy.done[pageLang] ?? aiDraftCopy.done.de;
+        } catch {
+          status.className = 'ai-draft-status ai-draft-status--error';
+          status.textContent = aiDraftCopy.failed[pageLang] ?? aiDraftCopy.failed.de;
+        } finally {
+          button.disabled = false;
         }
       });
     });
@@ -611,6 +754,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   initSendmailForms();
+  initAiDraftAssistants();
   initSmoothHashLinks();
   initBookingModal();
 });
