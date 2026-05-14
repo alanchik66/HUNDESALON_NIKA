@@ -1,6 +1,6 @@
 {
   "version": "0.2",
-  "language": "en,de",
+  "language": "en,de,ru",
   "words": [
     "Nika",
     "nika",
@@ -27,7 +27,13 @@
     "preloader",
     "neon",
     "glassmorphism",
-    "igsh"
+    "igsh",
+    "contenteditable",
+    "lerp",
+    "mult",
+    "spotify",
+    "desynchronised",
+    "laggy"
   ],
   "ignorePaths": ["node_modules/**", "assets/fonts/**", "3d-weather-codrops-main/**"]
 }
