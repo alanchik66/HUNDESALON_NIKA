@@ -14,8 +14,8 @@
     "formulahendry.auto-close-tag",
     "formulahendry.auto-rename-tag",
 
-    // ─── Превью ───────────────────────────────────────────────────
-    "ritwickdey.liveserver",
+    // ─── QA / браузерные проверки ────────────────────────────────
+    "ms-playwright.playwright",
 
     // ─── Git ──────────────────────────────────────────────────────
     "eamodio.gitlens",
@@ -31,7 +31,12 @@
 
     // ─── AI-помощник ──────────────────────────────────────────────
     "github.copilot",
-    "github.copilot-chat"
+    "github.copilot-chat",
+
+    // ─── Инфраструктура Cloudflare ───────────────────────────────
+    "cloudflare.cloudflare-workers"
   ],
-  "unwantedRecommendations": []
+  "unwantedRecommendations": [
+    "ritwickdey.liveserver"
+  ]
 }

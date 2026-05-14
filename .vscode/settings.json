@@ -68,12 +68,13 @@
   "cSpell.language": "en,de,ru",
   "cSpell.enableFiletypes": ["html", "css", "javascript", "markdown"],
 
-  // ── Live Server ───────────────────────────────────────────────────────────
-  "liveServer.settings.port": 5502,
-  "liveServer.settings.root": "/",
-  "liveServer.settings.donotVerifyTags": true,
-  "liveServer.settings.donotShowInfoMsg": true,
-  "liveServer.settings.CustomBrowser": "chrome",
+  // ── Обновления VS Code и расширений ─────────────────────────────────────
+  "update.mode": "default",
+  "extensions.autoUpdate": true,
+  "extensions.autoCheckUpdates": true,
+
+  // ── npm-скрипты как основной способ локального превью ───────────────────
+  "npm.scriptRunnerShowNotification": "onError",
 
   // ── Поиск ────────────────────────────────────────────────────────────────
   "search.exclude": {
@@ -98,5 +99,27 @@
   "path-intellisense.mappings": {
     "/assets": "${workspaceFolder}/assets"
   },
-  "editor.cursorSmoothCaretAnimation": "on"
+  "editor.cursorSmoothCaretAnimation": "on",
+
+  // ── Copilot / Chat ───────────────────────────────────────────────────────
+  "chat.commandCenter.enabled": true,
+  "chat.tools.compressOutput.enabled": true,
+  "chat.tools.riskAssessment.enabled": true,
+  "chat.planWidget.inlineEditor.enabled": true,
+
+  // ── Agents window (VS Code 1.120) ───────────────────────────────────────
+  "extensions.supportAgentsWindow": {
+    "github.copilot": true,
+    "github.copilot-chat": true,
+    "eamodio.gitlens": true,
+    "ms-playwright.playwright": true,
+    "cloudflare.cloudflare-workers": true
+  },
+
+  // ── Markdown diff preview (VS Code 1.120) ───────────────────────────────
+  "workbench.diffEditorAssociations": {
+    "*.md": "vscode.markdown.preview.editor"
+  },
+  "markdown.preview.doubleClickToSwitchToEditor": false,
+  "markdown.preview.markEditorSelection": false
 }

@@ -72,6 +72,8 @@ coverage/
 .env.production.local
 config.local.js
 secrets.*
+.dev.vars
+.dev.vars.*
 *.key
 *.pem
 
