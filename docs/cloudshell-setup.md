@@ -21,6 +21,7 @@ cd HUNDESALON_NIKA
 ```
 
 **Expected output:**
+
 ```
 Cloning into 'HUNDESALON_NIKA'...
 remote: Enumerating objects: ...
@@ -37,6 +38,7 @@ npm install
 ```
 
 **Expected output:**
+
 ```
 added X packages, and audited Y packages in Zs
 packages found with no vulnerabilities
@@ -53,6 +55,7 @@ npm run validate
 ```
 
 **Expected output:**
+
 ```
 > npm run lint
 > npm run lint:html && npm run lint:css && npm run lint:js
@@ -77,6 +80,7 @@ npm run build
 ```
 
 **Expected output:**
+
 ```
 > npm run validate (runs again as part of build)
 > npm run build:production
@@ -95,6 +99,7 @@ npx wrangler login
 ```
 
 **Expected output:**
+
 ```
  ⛅ wrangler 4.87.0
 ✔ Enter your email: [your-email@example.com]
@@ -113,6 +118,7 @@ npm run deploy
 ```
 
 **Expected output:**
+
 ```
 > npm run build && wrangler pages deploy dist --project-name=hundesalon-nika
 (validation and build output)
@@ -131,6 +137,7 @@ npx wrangler pages deployments list --project-name=hundesalon-nika
 ```
 
 **Expected output:**
+
 ```
 ┌────────┬─────────────────────────────────────┬─────────────────┐
 │ Status │ Deployment ID                       │ Created on      │
@@ -161,6 +168,7 @@ curl -X POST https://hundesalon-nika.com/openrouter \
 ```
 
 Expected response:
+
 ```json
 {
   "error": "OPENROUTER_API_KEY is not configured"
@@ -179,6 +187,7 @@ curl -X POST https://hundesalon-nika.com/seo-generate \
 ```
 
 Expected response:
+
 ```json
 {
   "error": "OPENROUTER_API_KEY is not configured"
@@ -194,6 +203,7 @@ Expected response:
 ### Issue: `npm: command not found`
 
 **Solution:**
+
 ```bash
 # Cloud Shell should have Node.js pre-installed. Try:
 node --version
@@ -207,6 +217,7 @@ nvm install node
 ### Issue: `wrangler: command not found`
 
 **Solution:**
+
 ```bash
 # Use npx instead:
 npx wrangler --version
@@ -217,6 +228,7 @@ npm run deploy
 ### Issue: Build fails with "dist/ already exists"
 
 **Solution:**
+
 ```bash
 rm -rf dist/
 npm run build
@@ -225,6 +237,7 @@ npm run build
 ### Issue: Authentication fails
 
 **Solution:**
+
 ```bash
 # Clear stored credentials
 rm ~/.wrangler/config.json
@@ -237,11 +250,13 @@ npx wrangler login
 
 **Solution:**
 Verify project name in `wrangler.toml`:
+
 ```bash
 grep project_name wrangler.toml
 ```
 
 Should show:
+
 ```
 project_name = "hundesalon-nika"
 ```
@@ -266,14 +281,14 @@ echo "✅ Deployment complete!"
 
 ## Useful Commands Reference
 
-| Command | Purpose |
-|---------|---------|
-| `npm run dev` | Local preview (port 5502) |
-| `npm run lint` | Check HTML, CSS, JS for errors |
-| `npm run validate` | Full project validation |
-| `npm run build` | Create production bundle |
-| `npm run deploy` | Deploy to Cloudflare Pages |
-| `npx wrangler pages deployments list --project-name=hundesalon-nika` | View deployment history |
+| Command                                                              | Purpose                        |
+| -------------------------------------------------------------------- | ------------------------------ |
+| `npm run dev`                                                        | Local preview (port 5502)      |
+| `npm run lint`                                                       | Check HTML, CSS, JS for errors |
+| `npm run validate`                                                   | Full project validation        |
+| `npm run build`                                                      | Create production bundle       |
+| `npm run deploy`                                                     | Deploy to Cloudflare Pages     |
+| `npx wrangler pages deployments list --project-name=hundesalon-nika` | View deployment history        |
 
 ---
 
@@ -302,5 +317,5 @@ If you encounter any issues:
 
 ---
 
-**Created:** 2026-05-12  
+**Created:** 2026-05-12
 **Status:** Ready for production deployment

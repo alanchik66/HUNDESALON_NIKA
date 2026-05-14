@@ -33,8 +33,10 @@
     "clean": "node -e \"const fs=require('fs'); for (const dir of ['dist','temp','test-results']) fs.rmSync(dir,{recursive:true,force:true});\"",
     "audit": "npm audit",
     "update": "npm update && cd 3d-weather-codrops-main && npm update",
-    "dev:cf": "npm run build:production && wrangler pages dev dist --port=8788",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name=hundesalon-nika"
+    "dev:cf": "npm run build:production && node tools/sync-dev-vars.js && wrangler pages dev dist --port=8788",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name=hundesalon-nika",
+    "ai:pilot:ollama": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1",
+    "ai:rollout:plan": "node -e \"console.log('See docs/ai-rollout-3-step-plan.md')\""
   },
   "keywords": [
     "grooming",

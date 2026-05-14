@@ -52,6 +52,59 @@ function isAllowedOrigin(origin, host) {
   return originHost === host;
 }
 
+function getEnvVar(env, key) {
+  if (!env || typeof env !== 'object') return '';
+
+  const direct = env[key];
+  if (typeof direct === 'string' && direct.trim()) {
+    return direct.trim();
+  }
+
+  const normalizedKey = String(key || '').trim();
+  for (const candidate of Object.keys(env)) {
+    const clean = candidate.replace(/^\uFEFF/, '').trim();
+    if (clean !== normalizedKey) continue;
+
+    const value = env[candidate];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  // Local Pages dev fallback: read from process env when binding passthrough is inconsistent.
+  const processEnv = globalThis?.process?.env;
+  if (processEnv && typeof processEnv === 'object') {
+    const fromProcess = processEnv[key];
+    if (typeof fromProcess === 'string' && fromProcess.trim()) {
+      return fromProcess.trim();
+    }
+  }
+
+  return '';
+}
+
+function getRuntimeEnvs(context) {
+  const candidates = [
+    context?.env,
+    context?.data,
+    context?.platform?.env,
+    context?.cloudflare?.env,
+    context?.cloudflare?.bindings,
+    context?.locals?.env,
+  ];
+
+  return candidates.filter(candidate => candidate && typeof candidate === 'object');
+}
+
+function getEnvVarFromContext(context, key) {
+  for (const env of getRuntimeEnvs(context)) {
+    const value = getEnvVar(env, key);
+    if (value) return value;
+  }
+
+  return '';
+}
+
 function stripCodeFence(input) {
   const text = String(input || '').trim();
   if (!text.startsWith('```')) return text;
@@ -164,7 +217,7 @@ function buildPrompt(input) {
 }
 
 export async function onRequest(context) {
-  const { request, env } = context;
+  const { request } = context;
 
   if (request.method !== 'POST') {
     return new Response('Method Not Allowed', {
@@ -179,7 +232,7 @@ export async function onRequest(context) {
     return jsonResponse({ error: 'Forbidden' }, 403);
   }
 
-  const apiKey = env?.OPENROUTER_API_KEY;
+  const apiKey = getEnvVarFromContext(context, 'OPENROUTER_API_KEY');
   if (!apiKey) {
     return jsonResponse({ error: 'OPENROUTER_API_KEY is not configured' }, 503);
   }
@@ -195,10 +248,10 @@ export async function onRequest(context) {
     return jsonResponse({ error: 'Body must be an object' }, 400);
   }
 
-  const referer = sanitizeOrigin(env?.OPENROUTER_SITE_URL) || sanitizeOrigin(origin);
-  const title = String(env?.OPENROUTER_SITE_NAME || 'HUNDESALON NIKA').trim();
-  const model = String(env?.OPENROUTER_DEFAULT_MODEL || DEFAULT_MODEL).trim();
-  const fallbackModel = String(env?.OPENROUTER_FALLBACK_MODEL || '').trim();
+  const referer = sanitizeOrigin(getEnvVarFromContext(context, 'OPENROUTER_SITE_URL')) || sanitizeOrigin(origin);
+  const title = String(getEnvVarFromContext(context, 'OPENROUTER_SITE_NAME') || 'HUNDESALON NIKA').trim();
+  const model = String(getEnvVarFromContext(context, 'OPENROUTER_DEFAULT_MODEL') || DEFAULT_MODEL).trim();
+  const fallbackModel = String(getEnvVarFromContext(context, 'OPENROUTER_FALLBACK_MODEL') || '').trim();
 
   const upstreamHeaders = {
     Authorization: `Bearer ${apiKey}`,

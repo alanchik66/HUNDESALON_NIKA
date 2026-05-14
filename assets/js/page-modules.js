@@ -166,6 +166,18 @@ document.addEventListener('DOMContentLoaded', () => {
       en: 'Could not create draft. Please try again shortly.',
       de: 'Entwurf konnte nicht erstellt werden. Bitte versuchen Sie es erneut.',
     },
+    localDevHint: {
+      ru: 'Локальный запуск: откройте сайт через http://127.0.0.1:8788 (npm run dev:cf).',
+      uk: 'Локальний запуск: відкрийте сайт через http://127.0.0.1:8788 (npm run dev:cf).',
+      en: 'Local run: open the site via http://127.0.0.1:8788 (npm run dev:cf).',
+      de: 'Lokaler Start: Bitte Seite uber http://127.0.0.1:8788 offnen (npm run dev:cf).',
+    },
+    apiKeyMissing: {
+      ru: 'AI недоступен: локально не задан OPENROUTER_API_KEY для Cloudflare Functions.',
+      uk: 'AI недоступний: локально не задано OPENROUTER_API_KEY для Cloudflare Functions.',
+      en: 'AI unavailable: OPENROUTER_API_KEY is not configured for local Cloudflare Functions.',
+      de: 'AI nicht verfugbar: OPENROUTER_API_KEY ist fur lokale Cloudflare Functions nicht gesetzt.',
+    },
   };
 
   const normalizeAssistantMessage = value => {
@@ -262,6 +274,60 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const initAiDraftAssistants = () => {
+    const resolveAiEndpoints = () => {
+      const port = window.location.port;
+
+      if (port === '8788') {
+        return ['/openrouter'];
+      }
+
+      return ['/openrouter', '/functions/openrouter'];
+    };
+
+    const requestAiDraft = async requestBody => {
+      let lastError = null;
+
+      for (const endpoint of resolveAiEndpoints()) {
+        try {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+          });
+
+          if (!response.ok) {
+            const errorBody = await response.text();
+            if (response.status === 503 && /OPENROUTER_API_KEY/i.test(errorBody)) {
+              throw new Error('OPENROUTER_API_KEY_MISSING');
+            }
+
+            const error = new Error(`AI request failed with status ${response.status} on ${endpoint}`);
+            // Retry with next endpoint for infra-like failures.
+            if (response.status === 404 || response.status === 405 || response.status >= 500) {
+              lastError = error;
+              continue;
+            }
+            throw error;
+          }
+
+          return await response.json();
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const isStaticPreview = window.location.port === '5502';
+      if (isLocalHost && isStaticPreview) {
+        throw new Error('LOCAL_CF_DEV_REQUIRED');
+      }
+
+      throw lastError || new Error('AI endpoints are unavailable');
+    };
+
     const forms = document.querySelectorAll('form[action$="/sendmail"]');
     if (!forms.length) return;
 
@@ -302,42 +368,30 @@ document.addEventListener('DOMContentLoaded', () => {
         button.disabled = true;
 
         try {
-          const response = await fetch('/openrouter', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-            body: JSON.stringify({
-              temperature: 0.45,
-              max_tokens: 260,
-              messages: [
-                {
-                  role: 'system',
-                  content:
-                    'You write polite, concise salon customer messages in the requested language. Keep tone warm and practical. No markdown.',
-                },
-                {
-                  role: 'user',
-                  content: [
-                    `Language: ${pageLang}`,
-                    `Form type: ${formType}`,
-                    `Customer name: ${name || 'not provided'}`,
-                    `Service: ${service || 'not provided'}`,
-                    `Existing message: ${existingText || 'empty'}`,
-                    'Task: create a clear customer message draft for HUNDESALON NIKA contact form.',
-                    'Output: plain text only, 70-120 words, with specific request details and preferred contact follow-up.',
-                  ].join('\n'),
-                },
-              ],
-            }),
+          const payload = await requestAiDraft({
+            temperature: 0.45,
+            max_tokens: 260,
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You write polite, concise salon customer messages in the requested language. Keep tone warm and practical. No markdown.',
+              },
+              {
+                role: 'user',
+                content: [
+                  `Language: ${pageLang}`,
+                  `Form type: ${formType}`,
+                  `Customer name: ${name || 'not provided'}`,
+                  `Service: ${service || 'not provided'}`,
+                  `Existing message: ${existingText || 'empty'}`,
+                  'Task: create a clear customer message draft for HUNDESALON NIKA contact form.',
+                  'Output: plain text only, 70-120 words, with specific request details and preferred contact follow-up.',
+                ].join('\n'),
+              },
+            ],
           });
 
-          if (!response.ok) {
-            throw new Error(`AI request failed with status ${response.status}`);
-          }
-
-          const payload = await response.json();
           const aiText = normalizeAssistantMessage(payload?.choices?.[0]?.message?.content);
           if (!aiText) {
             throw new Error('AI response is empty');
@@ -346,9 +400,14 @@ document.addEventListener('DOMContentLoaded', () => {
           messageField.value = aiText;
           status.className = 'ai-draft-status ai-draft-status--success';
           status.textContent = aiDraftCopy.done[pageLang] ?? aiDraftCopy.done.de;
-        } catch {
+        } catch (error) {
           status.className = 'ai-draft-status ai-draft-status--error';
-          status.textContent = aiDraftCopy.failed[pageLang] ?? aiDraftCopy.failed.de;
+          status.textContent =
+            error?.message === 'LOCAL_CF_DEV_REQUIRED'
+              ? aiDraftCopy.localDevHint[pageLang] ?? aiDraftCopy.localDevHint.de
+              : error?.message === 'OPENROUTER_API_KEY_MISSING'
+                ? aiDraftCopy.apiKeyMissing[pageLang] ?? aiDraftCopy.apiKeyMissing.de
+              : aiDraftCopy.failed[pageLang] ?? aiDraftCopy.failed.de;
         } finally {
           button.disabled = false;
         }

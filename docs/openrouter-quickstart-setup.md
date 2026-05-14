@@ -26,6 +26,11 @@ Future-ready (recommended):
 
 - `OPENROUTER_DEFAULT_MODEL` = `openai/gpt-5.2`
 - `OPENROUTER_FALLBACK_MODEL` = `openai/gpt-4.1-mini`
+- `OPENROUTER_PROVIDER_ORDER` = `openai,anthropic` (comma-separated provider priority)
+- `OPENROUTER_PROVIDER_SORT` = `price` (optional routing preference)
+- `OPENROUTER_ALLOW_FALLBACKS` = `true` (allow provider fallback routing)
+- `OPENROUTER_ENABLE_RESPONSE_CACHE` = `true` (proxy cache for repeated non-stream requests)
+- `OPENROUTER_CACHE_TTL_SECONDS` = `300` (cache lifetime in seconds)
 
 Why recommended:
 
@@ -83,6 +88,42 @@ curl -X POST http://localhost:5502/openrouter \
 - Payload is OpenAI-compatible `chat/completions` format from OpenRouter Quickstart.
 - Proxy applies safety limits for message count and message size.
 - If OpenRouter returns `429` or `5xx`, proxy can auto-retry with `OPENROUTER_FALLBACK_MODEL`.
+
+### Cost-Control Defaults
+
+- The proxy can apply provider defaults from environment variables.
+- You can still override provider routing per request via request body `provider`.
+
+Example body:
+
+```json
+{
+  "model": "openai/gpt-5.2",
+  "provider": {
+    "sort": "price",
+    "allow_fallbacks": true
+  },
+  "messages": [{ "role": "user", "content": "Сделай короткий текст для карточки услуги" }]
+}
+```
+
+### Proxy Response Caching
+
+- Cache works only for non-streaming requests.
+- Enable globally with `OPENROUTER_ENABLE_RESPONSE_CACHE=true`.
+- You can force cache per request with `"cache": true`.
+- Optional per-request TTL: `"cache_ttl_seconds": 120`.
+
+Example cache-enabled body:
+
+```json
+{
+  "model": "openai/gpt-5.2",
+  "cache": true,
+  "cache_ttl_seconds": 180,
+  "messages": [{ "role": "user", "content": "Напиши 3 коротких CTA" }]
+}
+```
 
 ## Included UX Feature
 
