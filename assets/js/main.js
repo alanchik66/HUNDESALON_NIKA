@@ -40,6 +40,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       document.body.classList.add('site-loaded');
+      preloader.setAttribute('aria-hidden', 'true');
+      preloader.setAttribute('hidden', 'hidden');
+      preloader.style.pointerEvents = 'none';
+      preloader.querySelectorAll('.preloader-message').forEach(node => {
+        node.setAttribute('aria-hidden', 'true');
+      });
       preloader.style.opacity = '0';
       setTimeout(() => preloader.remove(), 350);
     };
@@ -819,6 +825,9 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ========== HEADER SCROLL + SOCIAL BAR + HERO PARALLAX ========== */
   const pageHeader = document.querySelector('header.header');
   const pageTopRow = pageHeader?.querySelector('.top-row');
+  const pageWeatherShell = pageHeader?.querySelector('.header-weather-shell');
+  const pageNavMain = pageHeader?.querySelector('.nav-main');
+  const pageHeaderControls = pageHeader?.querySelector('.header-controls');
   const socialBar = document.querySelector('.social-bar');
   const socialPlayerToggle = document.querySelector('.social-player-toggle');
   const socialMusicMenu = document.getElementById('social-music-menu');
@@ -1015,7 +1024,126 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  const clearDesktopHeaderWeatherClearance = () => {
+    [pageNavMain, pageHeaderControls].forEach(element => {
+      element?.style.removeProperty('margin-inline-start');
+    });
+
+    pageHeader?.classList.remove('header--weather-crowded');
+  };
+
+  const getHeaderWeatherVisualRect = () => {
+    if (!pageWeatherShell) {
+      return null;
+    }
+
+    const shellRect = pageWeatherShell.getBoundingClientRect();
+    let left = shellRect.left;
+    let right = shellRect.right;
+    let top = shellRect.top;
+    let bottom = shellRect.bottom;
+
+    const widgetHost = Array.from(pageWeatherShell.querySelectorAll('*')).find(element =>
+      element.shadowRoot?.querySelector?.('.weather-header-preview')
+    );
+    const shadowRoot = widgetHost?.shadowRoot;
+    const previewOverlay = shadowRoot?.querySelector('.weather-orb-overlay--preview');
+    const previewOrbMedia = previewOverlay
+      ? previewOverlay.querySelectorAll(
+          '.weather-orb-overlay__canvas, .weather-orb-overlay__image, .weather-orb-overlay__video'
+        )
+      : [];
+
+    const measuredNodes = [previewOverlay, ...previewOrbMedia].filter(Boolean);
+    measuredNodes.forEach(node => {
+      const rect = node.getBoundingClientRect();
+      if (rect.width < 1 || rect.height < 1) {
+        return;
+      }
+
+      left = Math.min(left, rect.left);
+      right = Math.max(right, rect.right);
+      top = Math.min(top, rect.top);
+      bottom = Math.max(bottom, rect.bottom);
+    });
+
+    return { left, right, top, bottom };
+  };
+
+  const syncDesktopHeaderWeatherClearance = () => {
+    if (window.innerWidth <= 899 || !pageHeader || !pageWeatherShell) {
+      clearDesktopHeaderWeatherClearance();
+      return;
+    }
+
+    const weatherRect = getHeaderWeatherVisualRect();
+    if (!weatherRect) {
+      clearDesktopHeaderWeatherClearance();
+      return;
+    }
+
+    const minimumGap = 18;
+    let largestInjectedGap = 0;
+
+    [pageNavMain, pageHeaderControls].forEach(element => {
+      if (!element) {
+        return;
+      }
+
+      const rect = element.getBoundingClientRect();
+      const overlapsWeatherBand = rect.bottom > weatherRect.top + 4 && rect.top < weatherRect.bottom - 4;
+      if (!overlapsWeatherBand) {
+        element.style.removeProperty('margin-inline-start');
+        return;
+      }
+
+      const currentGap = rect.left - weatherRect.right;
+      const injectedGap = Math.max(0, Math.ceil(minimumGap - currentGap));
+      if (injectedGap > 0) {
+        element.style.setProperty('margin-inline-start', `${injectedGap}px`);
+        largestInjectedGap = Math.max(largestInjectedGap, injectedGap);
+      } else {
+        element.style.removeProperty('margin-inline-start');
+      }
+    });
+
+    pageHeader.classList.toggle('header--weather-crowded', largestInjectedGap > 28);
+  };
+
+  const syncDesktopBurgerAxis = () => {
+    const headerRoot = document.querySelector('header.header');
+    if (!headerRoot || window.innerWidth <= 899) {
+      headerRoot?.style.removeProperty('--burger-align-shift');
+      return;
+    }
+
+    const pageBurger = headerRoot.querySelector('.premium-burger');
+    const visibleDivider = Array.from(headerRoot.querySelectorAll('.social-player-divider')).find(divider => {
+      const rect = divider.getBoundingClientRect();
+      return rect.width >= 1 && rect.height >= 1;
+    });
+    if (!pageBurger || !visibleDivider) {
+      headerRoot.style.removeProperty('--burger-align-shift');
+      return;
+    }
+
+    const burgerRect = pageBurger.getBoundingClientRect();
+    const dividerRect = visibleDivider.getBoundingClientRect();
+    if (burgerRect.width < 1 || dividerRect.width < 1) {
+      headerRoot.style.removeProperty('--burger-align-shift');
+      return;
+    }
+
+    const burgerCenterX = burgerRect.left + burgerRect.width / 2;
+    const dividerCenterX = dividerRect.left + dividerRect.width / 2;
+    const shift = Math.round(dividerCenterX - burgerCenterX);
+    const clampedShift = Math.max(-120, Math.min(120, shift));
+    headerRoot.style.setProperty('--burger-align-shift', `${clampedShift}px`);
+  };
+
   const syncHeaderAdaptiveLayout = () => {
+    syncDesktopHeaderWeatherClearance();
+    syncDesktopBurgerAxis();
     updatePageScrollbarOffset();
     if (activeMusicPanel?.classList.contains('is-open')) {
       positionPanel(activeMusicPanel);
@@ -1024,6 +1152,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.addEventListener('site-shell:weather-ready', syncHeaderAdaptiveLayout);
   window.addEventListener('site-shell:weather-toggle', syncHeaderAdaptiveLayout);
+  window.addEventListener('site-shell:social-ready', syncHeaderAdaptiveLayout);
+  window.addEventListener('load', syncHeaderAdaptiveLayout);
+  window.addEventListener('resize', syncHeaderAdaptiveLayout, { passive: true });
 
   if (window.ResizeObserver && pageHeader) {
     const adaptiveHeaderObserver = new ResizeObserver(() => {
@@ -1033,6 +1164,9 @@ document.addEventListener('DOMContentLoaded', () => {
     adaptiveHeaderObserver.observe(pageHeader);
     if (pageTopRow) {
       adaptiveHeaderObserver.observe(pageTopRow);
+    }
+    if (pageWeatherShell) {
+      adaptiveHeaderObserver.observe(pageWeatherShell);
     }
   }
 

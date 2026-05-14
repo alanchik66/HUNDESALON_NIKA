@@ -2207,6 +2207,34 @@
     return Number.isFinite(conditionCode) ? conditionCode : null;
   }
 
+  function getHeaderWeatherPressureLang(host) {
+    return normalizeLangCode(
+      host?.__weatherLocale || host?.dataset?.weatherLocale || document.documentElement.lang || 'ru'
+    );
+  }
+
+  function getHeaderWeatherPressureUnitText(host) {
+    const lang = getHeaderWeatherPressureLang(host);
+    const unitByLang = {
+      ru: 'мм. рт. ст.',
+      uk: 'мм рт. ст.',
+      de: 'mmHg',
+      en: 'mmHg',
+    };
+
+    return unitByLang[lang] || unitByLang.ru;
+  }
+
+  function formatHeaderWeatherPressureValue(host, pressureMmHg) {
+    const unitText = getHeaderWeatherPressureUnitText(host);
+    const normalizedPressure = Number(pressureMmHg);
+    if (!Number.isFinite(normalizedPressure) || normalizedPressure <= 0) {
+      return `-- ${unitText}`;
+    }
+
+    return `${Math.round(normalizedPressure)} ${unitText}`;
+  }
+
   function getHeaderWeatherCloudCover(host) {
     const cloudCover = Number(
       host?.__weatherCurrentMeta?.cloudCover ?? host?.dataset?.weatherCloud ?? host?.__weatherWidgetData?.current?.cloud
@@ -3141,7 +3169,10 @@
             return normalized;
           }
 
-          return normalized.replace(/(mm|мм)\.?\s*(рт\.?\s*ст\.?|hg|hg\.)/i, 'мм. рт. ст');
+          const pressureUnitText = getHeaderWeatherPressureUnitText(host);
+          return normalized
+            .replace(/(mm\s*hg|mmhg|мм\.?\s*рт\.?\s*ст\.?|мм\s*рт\s*ст)/i, pressureUnitText)
+            .replace(/(mm|мм)\.?\s*(рт\.?\s*ст\.?|hg|hg\.|h\s*g)/i, pressureUnitText);
         };
 
         const parts = Array.from(chip.children).filter(el => el instanceof HTMLElement);
@@ -3370,9 +3401,9 @@
         }
       }
 
-      // Pressure row: show in middle slot and always output in mmHg.
+      // Pressure row: keep a strict locale-specific unit and never mix formats.
       if (!pressureChip && root) {
-        const lang = (document.documentElement.lang || 'ru').toLowerCase();
+        const lang = getHeaderWeatherPressureLang(host);
         const labelByLang = {
           ru: 'ДАВЛЕНИЕ',
           uk: 'ТИСК',
@@ -3380,7 +3411,7 @@
           en: 'PRESSURE',
         };
         const fallbackLabel = labelByLang[lang] || 'PRESSURE';
-        const fallbackValue = host?.__weatherPressureValue || '-- мм. рт. ст';
+        const fallbackValue = formatHeaderWeatherPressureValue(host, host?.__weatherPressureMmHg);
 
         let fallbackChip = root.querySelector('.weather-header-card__chip--pressure-fallback');
         if (!(fallbackChip instanceof HTMLElement)) {
@@ -3443,18 +3474,15 @@
         }
 
         if (pressureMmHg !== null && Number.isFinite(pressureMmHg) && host) {
-          host.__weatherPressureValue = `${pressureMmHg} мм. рт. ст`;
+          host.__weatherPressureMmHg = pressureMmHg;
+          host.__weatherPressureValue = formatHeaderWeatherPressureValue(host, pressureMmHg);
         }
 
         const valueEl = Array.from(pressureChip.children).find(
           el => el instanceof HTMLElement && /\d|--/.test(el.textContent || '')
         );
         if (valueEl instanceof HTMLElement) {
-          const normalizedPressureValue = String(host?.__weatherPressureValue || '-- мм. рт. ст')
-            .replace(/(MM|ММ)\.?\s*(РТ\.?\s*СТ\.?)/gi, 'мм. рт. ст')
-            .replace(/\s+/g, ' ')
-            .trim();
-          valueEl.textContent = normalizedPressureValue;
+          valueEl.textContent = formatHeaderWeatherPressureValue(host, host?.__weatherPressureMmHg);
         }
 
         if (condition instanceof HTMLElement) {
