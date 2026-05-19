@@ -40,6 +40,8 @@
     "cf:open-purge-token": "node tools/open-cf-purge-token.mjs",
     "cf:set-purge-token": "node tools/set-cf-purge-token.mjs",
     "cf:purge-cache": "node tools/purge-cloudflare-cache.mjs",
+    "sync:gitlab:push": "git fetch gitlab && git branch -f sync/gitlab-main main && git push gitlab sync/gitlab-main --force-with-lease",
+    "sync:gitlab:mr": "node tools/sync-gitlab-merge.mjs",
     "check:live-html": "node tools/check-live-html.mjs",
     "ai:pilot:ollama": "npm run ai:pilot:ollama:balanced",
     "ai:pilot:ollama:custom": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1",
