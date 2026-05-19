@@ -14,9 +14,22 @@ A **Cache Rule** named **「Cache HTML pages for 4 hours, browser 30 min」** ca
 | Rule | Action |
 |------|--------|
 | Cache static assets (CSS, JS, images, fonts) for 30 days | **Keep** — matches versioned assets |
-| Cache HTML pages for 4 hours | **Configured (2026-05-19):** Edge **Bypass cache** + Browser **Bypass cache** (rule still matches `*.html` and `/`) |
+| HTML — bypass cache (rename in Dashboard) | **Configured (2026-05-19):** Edge **Bypass cache** + Browser **Bypass cache** (matches `*.html` and `/`) |
 
-Path: **Caching → Cache Rules** → edit rule #2 → disable or change cache action.
+Path: **Caching → Cache Rules** → rule #2. Rename from the old “4 hours” label so future edits are obvious.
+
+## API token for automated purge
+
+Wrangler OAuth (`npx wrangler login`) can deploy Pages but often **cannot** purge zone cache.
+
+1. [Cloudflare Dashboard → API Tokens](https://dash.cloudflare.com/profile/api-tokens) → **Create Token**
+2. Use **Custom token** with:
+   - **Zone** → **Cache Purge**, **Zone** → **Zone** (Read)
+   - **Account** → **Cloudflare Pages** → **Edit** (if you deploy via `CLOUDFLARE_API_TOKEN` instead of Wrangler OAuth)
+3. Zone resources: **Include** → **Specific zone** → `hundesalon-nika.com`
+4. Copy the token once; set `CLOUDFLARE_API_TOKEN` in `.dev.vars` (local, see `.dev.vars.example`) or Cursor Cloud secrets — never commit it.
+
+Test: `npm run cf:purge-cache`
 
 ## After every production deploy
 

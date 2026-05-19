@@ -113,5 +113,14 @@ async function main() {
 
 main().catch(error => {
   console.error(error.message);
+  if (/purge_cache|Authentication error/i.test(error.message) && !process.env.CLOUDFLARE_API_TOKEN) {
+    console.error('');
+    console.error('Create a zone API token: My Profile → API Tokens → Create Token');
+    console.error('  Template: "Edit zone DNS" or custom with Zone → Cache Purge + Zone → Zone Read');
+    console.error('  Zone: hundesalon-nika.com');
+    console.error('Then set CLOUDFLARE_API_TOKEN in .dev.vars (local) or Cursor Cloud secrets.');
+    console.error('Or purge manually: Caching → Configuration → Purge Everything');
+    console.error('See docs/cloudflare-caching.md');
+  }
   process.exit(1);
 });
