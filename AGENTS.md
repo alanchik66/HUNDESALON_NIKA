@@ -55,6 +55,8 @@
 
 - Cloudflare config: `wrangler.toml`.
 - Production deploy command in `package.json`: `npm run deploy`.
+- Full post-deploy path: `npm run deploy:full` (deploy, CDN purge, live HTML check, GSC audit).
+- HTML caching pitfalls and Cache Rules: `docs/cloudflare-caching.md`.
 - Before deploy, prefer validating with `npm run lint` and a quick local browser smoke test.
 
 ## Cursor Cloud specific instructions

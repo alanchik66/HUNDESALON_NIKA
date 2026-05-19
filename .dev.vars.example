@@ -3,3 +3,5 @@
 
 OPENROUTER_API_KEY=
 RESEND_API_KEY=
+# Pages deploy + cache purge (npm run deploy:full, npm run cf:purge-cache)
+CLOUDFLARE_API_TOKEN=
