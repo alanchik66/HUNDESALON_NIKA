@@ -37,6 +37,8 @@
     "deploy": "npm run build && wrangler pages deploy dist --project-name=hundesalon-nika",
     "deploy:full": "npm run deploy && node tools/post-deploy.mjs",
     "cf:ensure-purge-token": "node tools/ensure-cf-purge-token.mjs",
+    "cf:open-purge-token": "node tools/open-cf-purge-token.mjs",
+    "cf:set-purge-token": "node tools/set-cf-purge-token.mjs",
     "cf:purge-cache": "node tools/purge-cloudflare-cache.mjs",
     "check:live-html": "node tools/check-live-html.mjs",
     "ai:pilot:ollama": "npm run ai:pilot:ollama:balanced",

@@ -1,5 +1,5 @@
 /**
- * Shared Cloudflare auth: .dev.vars, CLOUDFLARE_API_TOKEN, or Wrangler OAuth refresh.
+ * Shared Cloudflare auth: .dev.vars, API token, Global API Key, or Wrangler OAuth (read-only).
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -13,6 +13,12 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 export { DOMAIN, ACCOUNT_ID, REPO_ROOT };
 
 export function loadDevVars(filePath = path.join(REPO_ROOT, '.dev.vars')) {
+  const tokenFile = path.join(REPO_ROOT, '.cloudflare-purge.token');
+  if (existsSync(tokenFile) && !process.env.CLOUDFLARE_API_TOKEN) {
+    const fromFile = readFileSync(tokenFile, 'utf8').trim();
+    if (fromFile) process.env.CLOUDFLARE_API_TOKEN = fromFile;
+  }
+
   if (!existsSync(filePath)) return;
   const text = readFileSync(filePath, 'utf8');
   for (const line of text.split(/\r?\n/)) {
@@ -26,6 +32,26 @@ export function loadDevVars(filePath = path.join(REPO_ROOT, '.dev.vars')) {
       process.env[key] = value;
     }
   }
+}
+
+/** Headers for Cloudflare API v4 (token or Global API Key). */
+export function getCloudflareAuthHeaders() {
+  loadDevVars();
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN?.trim();
+  if (apiToken) {
+    return { Authorization: `Bearer ${apiToken}` };
+  }
+
+  const email = process.env.CLOUDFLARE_API_EMAIL?.trim();
+  const globalKey = process.env.CLOUDFLARE_API_KEY?.trim();
+  if (email && globalKey) {
+    return {
+      'X-Auth-Email': email,
+      'X-Auth-Key': globalKey,
+    };
+  }
+
+  return null;
 }
 
 function wranglerConfigCandidates() {
@@ -85,11 +111,16 @@ export async function refreshWranglerOAuth(stored) {
   return payload.access_token;
 }
 
-export async function cloudflareApi(token, pathname, init = {}) {
+export async function cloudflareApi(tokenOrHeaders, pathname, init = {}) {
+  const authHeaders =
+    typeof tokenOrHeaders === 'string'
+      ? { Authorization: `Bearer ${tokenOrHeaders}` }
+      : tokenOrHeaders;
+
   const response = await fetch(`https://api.cloudflare.com/client/v4${pathname}`, {
     ...init,
     headers: {
-      Authorization: `Bearer ${token}`,
+      ...authHeaders,
       'Content-Type': 'application/json',
       ...(init.headers || {}),
     },
@@ -105,19 +136,21 @@ export async function cloudflareApi(token, pathname, init = {}) {
   return payload.result;
 }
 
-export async function resolveManagementToken() {
-  loadDevVars();
-  if (process.env.CLOUDFLARE_API_TOKEN) {
-    return process.env.CLOUDFLARE_API_TOKEN;
-  }
-  return refreshWranglerOAuth(loadWranglerOAuth());
-}
-
-export async function resolveZoneId(token) {
-  const zones = await cloudflareApi(token, `/zones?name=${DOMAIN}`);
+export async function resolveZoneId(auth) {
+  const headers = typeof auth === 'string' ? { Authorization: `Bearer ${auth}` } : auth;
+  const zones = await cloudflareApi(headers, `/zones?name=${DOMAIN}`);
   const zone = zones.find(entry => entry.name === DOMAIN);
   if (!zone) throw new Error(`Zone not found for ${DOMAIN}`);
   return zone.id;
+}
+
+/** Auth that can purge cache (API token or Global API Key — not Wrangler OAuth). */
+export function resolvePurgeAuth() {
+  const headers = getCloudflareAuthHeaders();
+  if (headers) return headers;
+  throw new Error(
+    'No purge credentials. Add CLOUDFLARE_API_TOKEN (zone: Cache Purge) or CLOUDFLARE_API_EMAIL + CLOUDFLARE_API_KEY to .dev.vars. Run: npm run cf:open-purge-token'
+  );
 }
 
 export function upsertDevVar(key, value, filePath = path.join(REPO_ROOT, '.dev.vars')) {

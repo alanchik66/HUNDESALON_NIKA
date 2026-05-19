@@ -1,9 +1,8 @@
 /**
  * Purge all Cloudflare cache for hundesalon-nika.com.
- * Uses CLOUDFLARE_API_TOKEN from .dev.vars (zone token with Cache Purge).
  */
 import { spawn } from 'node:child_process';
-import { DOMAIN, cloudflareApi, loadDevVars, resolveZoneId } from './lib/cloudflare-auth.mjs';
+import { DOMAIN, cloudflareApi, loadDevVars, resolvePurgeAuth, resolveZoneId } from './lib/cloudflare-auth.mjs';
 
 async function runEnsurePurgeToken() {
   await new Promise((resolve, reject) => {
@@ -16,9 +15,10 @@ async function runEnsurePurgeToken() {
   loadDevVars();
 }
 
-async function purgeEverything(token) {
-  const zoneId = await resolveZoneId(token);
-  await cloudflareApi(token, `/zones/${zoneId}/purge_cache`, {
+async function purgeEverything() {
+  const auth = resolvePurgeAuth();
+  const zoneId = await resolveZoneId(auth);
+  await cloudflareApi(auth, `/zones/${zoneId}/purge_cache`, {
     method: 'POST',
     body: JSON.stringify({ purge_everything: true }),
   });
@@ -27,33 +27,24 @@ async function purgeEverything(token) {
 
 async function main() {
   loadDevVars();
-  let token = process.env.CLOUDFLARE_API_TOKEN?.trim();
-  if (!token) {
-    await runEnsurePurgeToken();
-    token = process.env.CLOUDFLARE_API_TOKEN?.trim();
-  }
-
   try {
-    await purgeEverything(token);
+    await purgeEverything();
   } catch (error) {
-    if (!/purge_cache|Authentication error|not allowed/i.test(error.message)) {
-      throw error;
+    if (!process.env.CLOUDFLARE_API_TOKEN && !process.env.CLOUDFLARE_API_KEY) {
+      try {
+        await runEnsurePurgeToken();
+        await purgeEverything();
+        return;
+      } catch {
+        // fall through
+      }
     }
-    console.warn('Purge failed with current token; creating a zone Cache Purge token...');
-    await runEnsurePurgeToken();
-    token = process.env.CLOUDFLARE_API_TOKEN?.trim();
-    if (!token) throw new Error('CLOUDFLARE_API_TOKEN missing after ensure step');
-    await purgeEverything(token);
+    throw error;
   }
 }
 
 main().catch(error => {
   console.error(error.message);
-  if (/purge_cache|Authentication error|not allowed/i.test(error.message)) {
-    console.error('');
-    console.error('Run: npm run cf:ensure-purge-token');
-    console.error('Or set CLOUDFLARE_API_TOKEN in .dev.vars with Zone → Cache Purge.');
-    console.error('See docs/cloudflare-caching.md');
-  }
+  console.error('Run: npm run cf:open-purge-token');
   process.exit(1);
 });

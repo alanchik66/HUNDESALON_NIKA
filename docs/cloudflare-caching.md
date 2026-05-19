@@ -40,7 +40,10 @@ npm run deploy:full
 This runs:
 
 1. `npm run deploy` — build + Cloudflare Pages upload
-2. `npm run cf:purge-cache` — purge zone cache (`CLOUDFLARE_API_TOKEN` with **Cache Purge**, or **Caching → Configuration → Purge Everything** in Dashboard). Wrangler OAuth alone often lacks purge permission; `deploy:full` continues if purge fails.
+2. `npm run cf:purge-cache` — purge zone cache. **Wrangler OAuth cannot purge** (scopes: `zone:read`, `pages:write`, no Cache Purge). Use one of:
+   - `CLOUDFLARE_API_TOKEN` in `.dev.vars` (create via `npm run cf:open-purge-token` → `npm run cf:set-purge-token -- <token>`)
+   - `CLOUDFLARE_API_EMAIL` + `CLOUDFLARE_API_KEY` (Global API Key) — then `npm run cf:ensure-purge-token` auto-creates a zone token
+   - Dashboard: **Caching → Configuration → Purge Everything**
 3. `npm run check:live-html` — quick favicon/canonical check
 4. `npm run google:gsc:audit` — full GSC readiness check
 

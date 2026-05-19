@@ -3,5 +3,8 @@
 
 OPENROUTER_API_KEY=
 RESEND_API_KEY=
-# Pages deploy + zone cache purge (needs Cache Purge + Pages Edit; wrangler login alone may not purge)
+# Zone API token with Cache Purge (create via npm run cf:open-purge-token)
 CLOUDFLARE_API_TOKEN=
+# Or Global API Key (My Profile → API Keys) to auto-create purge token:
+# CLOUDFLARE_API_EMAIL=
+# CLOUDFLARE_API_KEY=
