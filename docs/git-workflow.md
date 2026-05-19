@@ -46,7 +46,20 @@ npm run sync:gitlab:mr
 
 Или сохраните в пользовательских переменных Windows.
 
-Без токена: откройте [открытые MR](https://gitlab.com/hundesalon-nika/hundesalon-nika/-/merge_requests) и смержите `sync/gitlab-main` → `main`.
+Без токена: откройте [MR !2](https://gitlab.com/hundesalon-nika/hundesalon-nika/-/merge_requests/2) и нажмите **Merge** (дождитесь зелёного pipeline).
+
+Если GitLab пишет «source branch is N commits behind» — это нормально при разной истории; используйте **Merge** (merge commit), не rebase. После первого успешного merge дальнейшие `npm run git:push` будут проще.
+
+### Полное выравнивание GitLab `main` = GitHub (один раз, опционально)
+
+Ветка `main` на GitLab **защищена** (force push запрещён). Варианты:
+
+1. **MR** (рекомендуется): merge `sync/gitlab-main` → `main` в UI.
+2. **Force push** (если вы Maintainer): Settings → Repository → Protected branches → временно разрешить force push для `main`, затем:
+   ```bash
+   git push gitlab main --force-with-lease
+   ```
+   После этого снова включите защиту.
 
 ## Remotes (не трогать без нужды)
 
