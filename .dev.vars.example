@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local Cloudflare Pages dev (npm run dev:cf).
+# Never commit .dev.vars. For cloud agents, use Cursor Dashboard secrets.
+
+OPENROUTER_API_KEY=
+RESEND_API_KEY=

@@ -81,10 +81,10 @@ Full gate: `npm run validate` (lint + link check + project health).
 ### Deploy (only when explicitly requested)
 
 ```bash
-npm run deploy
-npm run cf:purge-cache
-npm run check:live-html
+npm run deploy:full
 ```
+
+Or step by step: `npm run deploy`, then `npm run cf:purge-cache`, then `npm run check:live-html`.
 
 Requires `CLOUDFLARE_API_TOKEN` in Cursor Cloud secrets (Dashboard → Cloud Agents → Secrets). Do not commit tokens. After HTML deploy, purge CDN cache so `_headers` cache rules apply immediately.
 
@@ -98,7 +98,7 @@ Add in [Cloud Agents → Secrets](https://cursor.com/dashboard/cloud-agents) for
 | `RESEND_API_KEY` | Production email via `functions/sendmail.js` |
 | `OPENROUTER_API_KEY` | Optional: SEO/AI functions (`openrouter.js`, `seo-generate.js`) |
 
-Local-only dev vars (optional): create `.dev.vars` in repo root for `npm run dev:cf` — never commit it.
+Local-only dev vars (optional): copy `.dev.vars.example` to `.dev.vars` for `npm run dev:cf` — never commit `.dev.vars`.
 
 ### Repo and hosting
 

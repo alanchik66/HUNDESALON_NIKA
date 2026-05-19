@@ -35,6 +35,7 @@
     "update": "npm update && cd 3d-weather-codrops-main && npm update",
     "dev:cf": "npm run build:production && node tools/sync-dev-vars.js && wrangler pages dev dist --port=8788",
     "deploy": "npm run build && wrangler pages deploy dist --project-name=hundesalon-nika",
+    "deploy:full": "npm run deploy && npm run cf:purge-cache && npm run check:live-html",
     "cf:purge-cache": "node tools/purge-cloudflare-cache.mjs",
     "check:live-html": "node tools/check-live-html.mjs",
     "ai:pilot:ollama": "npm run ai:pilot:ollama:balanced",
