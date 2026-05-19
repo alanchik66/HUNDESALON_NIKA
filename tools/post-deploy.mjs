@@ -2,6 +2,9 @@
  * Post-deploy checks: optional CDN purge, then live HTML + GSC audit.
  */
 import { spawn } from 'node:child_process';
+import { loadDevVars } from './lib/cloudflare-auth.mjs';
+
+loadDevVars();
 
 function runNpm(script, { optional = false } = {}) {
   return new Promise((resolve, reject) => {
@@ -22,6 +25,7 @@ function runNpm(script, { optional = false } = {}) {
   });
 }
 
-await runNpm('cf:purge-cache', { optional: true });
+await runNpm('cf:ensure-purge-token', { optional: true });
+await runNpm('cf:purge-cache');
 await runNpm('check:live-html');
 await runNpm('google:gsc:audit');

@@ -1,125 +1,58 @@
 /**
  * Purge all Cloudflare cache for hundesalon-nika.com.
- * Uses CLOUDFLARE_API_TOKEN when set; otherwise Wrangler OAuth from local config.
+ * Uses CLOUDFLARE_API_TOKEN from .dev.vars (zone token with Cache Purge).
  */
-import { existsSync, readFileSync } from 'node:fs';
-import { homedir } from 'node:os';
-import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { DOMAIN, cloudflareApi, loadDevVars, resolveZoneId } from './lib/cloudflare-auth.mjs';
 
-const DOMAIN = 'hundesalon-nika.com';
-
-function wranglerConfigCandidates() {
-  const home = homedir();
-  return [
-    process.env.WRANGLER_CONFIG,
-    path.join(home, '.config', '.wrangler', 'config', 'default.toml'),
-    path.join(home, 'AppData', 'Roaming', '.wrangler', 'config', 'default.toml'),
-    path.join(home, 'AppData', 'Roaming', 'xdg.config', '.wrangler', 'config', 'default.toml'),
-  ].filter(Boolean);
-}
-
-function loadWranglerOAuth() {
-  const configPath = wranglerConfigCandidates().find(candidate => existsSync(candidate));
-
-  if (!configPath) {
-    throw new Error('Wrangler config not found. Run: npx wrangler login');
-  }
-
-  const raw = readFileSync(configPath, 'utf8');
-  const oauthToken = raw.match(/^oauth_token\s*=\s*"([^"]+)"/m)?.[1];
-  const refreshToken = raw.match(/^refresh_token\s*=\s*"([^"]+)"/m)?.[1];
-  const expirationTime = raw.match(/^expiration_time\s*=\s*"([^"]+)"/m)?.[1];
-
-  if (!oauthToken || !refreshToken) {
-    throw new Error('Wrangler OAuth credentials not found. Run: npx wrangler login');
-  }
-
-  return {
-    access_token: oauthToken,
-    refresh_token: refreshToken,
-    expiration_time: expirationTime ? Date.parse(expirationTime) : 0,
-  };
-}
-
-async function cloudflareApi(token, pathname, init = {}) {
-  const response = await fetch(`https://api.cloudflare.com/client/v4${pathname}`, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...(init.headers || {}),
-    },
+async function runEnsurePurgeToken() {
+  await new Promise((resolve, reject) => {
+    const child = spawn('npm', ['run', 'cf:ensure-purge-token'], {
+      stdio: 'inherit',
+      shell: true,
+    });
+    child.on('close', code => (code === 0 ? resolve() : reject(new Error('cf:ensure-purge-token failed'))));
   });
-
-  const payload = await response.json();
-  if (!response.ok || !payload.success) {
-    throw new Error(
-      `Cloudflare API ${pathname} failed: ${payload.errors?.map(error => error.message).join('; ') || response.status}`
-    );
-  }
-
-  return payload.result;
+  loadDevVars();
 }
 
-async function resolveAccessToken(stored) {
-  if (stored.access_token && stored.expiration_time && Date.now() < stored.expiration_time - 60_000) {
-    return stored.access_token;
-  }
-
-  const body = new URLSearchParams({
-    grant_type: 'refresh_token',
-    refresh_token: stored.refresh_token,
-    client_id: '54d11594-84e4-41aa-b438-e81b8f53c41e',
-  });
-
-  const response = await fetch('https://dash.cloudflare.com/oauth2/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body,
-  });
-
-  const payload = await response.json();
-  if (!response.ok || !payload.access_token) {
-    throw new Error('Failed to refresh Wrangler OAuth token. Run: npx wrangler login');
-  }
-
-  return payload.access_token;
-}
-
-async function resolveToken() {
-  if (process.env.CLOUDFLARE_API_TOKEN) {
-    return process.env.CLOUDFLARE_API_TOKEN;
-  }
-
-  return resolveAccessToken(loadWranglerOAuth());
-}
-
-async function main() {
-  const accessToken = await resolveToken();
-  const zones = await cloudflareApi(accessToken, `/zones?name=${DOMAIN}`);
-  const zone = zones.find(entry => entry.name === DOMAIN);
-
-  if (!zone) {
-    throw new Error(`Zone not found for ${DOMAIN}`);
-  }
-
-  await cloudflareApi(accessToken, `/zones/${zone.id}/purge_cache`, {
+async function purgeEverything(token) {
+  const zoneId = await resolveZoneId(token);
+  await cloudflareApi(token, `/zones/${zoneId}/purge_cache`, {
     method: 'POST',
     body: JSON.stringify({ purge_everything: true }),
   });
+  console.log(`Purged Cloudflare cache for ${DOMAIN} (zone ${zoneId}).`);
+}
 
-  console.log(`Purged Cloudflare cache for ${DOMAIN} (zone ${zone.id}).`);
+async function main() {
+  loadDevVars();
+  let token = process.env.CLOUDFLARE_API_TOKEN?.trim();
+  if (!token) {
+    await runEnsurePurgeToken();
+    token = process.env.CLOUDFLARE_API_TOKEN?.trim();
+  }
+
+  try {
+    await purgeEverything(token);
+  } catch (error) {
+    if (!/purge_cache|Authentication error|not allowed/i.test(error.message)) {
+      throw error;
+    }
+    console.warn('Purge failed with current token; creating a zone Cache Purge token...');
+    await runEnsurePurgeToken();
+    token = process.env.CLOUDFLARE_API_TOKEN?.trim();
+    if (!token) throw new Error('CLOUDFLARE_API_TOKEN missing after ensure step');
+    await purgeEverything(token);
+  }
 }
 
 main().catch(error => {
   console.error(error.message);
-  if (/purge_cache|Authentication error/i.test(error.message) && !process.env.CLOUDFLARE_API_TOKEN) {
+  if (/purge_cache|Authentication error|not allowed/i.test(error.message)) {
     console.error('');
-    console.error('Create a zone API token: My Profile → API Tokens → Create Token');
-    console.error('  Template: "Edit zone DNS" or custom with Zone → Cache Purge + Zone → Zone Read');
-    console.error('  Zone: hundesalon-nika.com');
-    console.error('Then set CLOUDFLARE_API_TOKEN in .dev.vars (local) or Cursor Cloud secrets.');
-    console.error('Or purge manually: Caching → Configuration → Purge Everything');
+    console.error('Run: npm run cf:ensure-purge-token');
+    console.error('Or set CLOUDFLARE_API_TOKEN in .dev.vars with Zone → Cache Purge.');
     console.error('See docs/cloudflare-caching.md');
   }
   process.exit(1);
