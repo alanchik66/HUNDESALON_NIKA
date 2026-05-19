@@ -3,6 +3,13 @@
  * Secure proxy for OpenRouter chat completions.
  */
 
+import {
+  sanitizeOrigin,
+  assertAllowedOrigin,
+  enforceRateLimit,
+  jsonResponse,
+} from './_lib/http-security.js';
+
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const DEFAULT_MODEL = 'openai/gpt-5.2';
 const DEFAULT_SITE_NAME = 'HUNDESALON NIKA';
@@ -10,38 +17,6 @@ const MAX_MESSAGES = 24;
 const MAX_MESSAGE_CONTENT_LENGTH = 8000;
 const DEV_KEY_ASSET_URL = 'https://local.dev/__dev_openrouter_key.txt';
 const DEFAULT_CACHE_TTL_SECONDS = 300;
-
-function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8' },
-  });
-}
-
-function sanitizeOrigin(value) {
-  const raw = String(value || '').trim();
-  if (!raw) return '';
-  return raw.replace(/\/$/, '');
-}
-
-function getOriginHost(origin) {
-  try {
-    return new URL(origin).host;
-  } catch {
-    return '';
-  }
-}
-
-function isAllowedOrigin(origin, host) {
-  if (!origin) return true;
-  if (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
-    return true;
-  }
-
-  const originHost = getOriginHost(origin);
-  if (!originHost || !host) return false;
-  return originHost === host;
-}
 
 function isLocalRequest(origin) {
   return origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1');
@@ -274,51 +249,41 @@ export async function onRequest(context) {
     return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
   }
 
-  const origin = sanitizeOrigin(request.headers.get('Origin'));
-  const host = sanitizeOrigin(request.headers.get('Host'));
-  if (!isAllowedOrigin(origin, host)) {
+  const originCheck = assertAllowedOrigin(request);
+  if (!originCheck.ok) {
     return jsonResponse({ error: 'Forbidden' }, 403);
+  }
+  const { origin } = originCheck;
+
+  const rateLimited = await enforceRateLimit(request, {
+    route: 'openrouter',
+    limit: 30,
+    windowSec: 60,
+  });
+  if (rateLimited) {
+    return rateLimited;
   }
 
   let apiKey = getEnvVarFromContext(context, 'OPENROUTER_API_KEY');
-  let localAssetsStatus = 'skipped';
 
   if (!apiKey && isLocalRequest(origin)) {
     const localAssets = await getLocalApiKeyFromAssets(primaryRuntimeEnv);
     apiKey = localAssets.key;
-    localAssetsStatus = localAssets.status;
   }
 
   if (!apiKey) {
-    const response = { error: 'OPENROUTER_API_KEY is not configured' };
-
-    if (isLocalRequest(origin)) {
-      const availableKeys =
-        primaryRuntimeEnv && typeof primaryRuntimeEnv === 'object' ? Object.keys(primaryRuntimeEnv).sort() : [];
-      const envContainerKeySamples = runtimeEnvs.map(container => Object.keys(container).filter(Boolean).slice(0, 25));
-      response.debug = {
-        openrouterKeyCandidates: availableKeys.filter(key => /OPENROUTER/i.test(key)).slice(0, 20),
-        bindingIntrospection: {
-          contextTopLevelKeys: Object.keys(context || {}).slice(0, 30),
-          runtimeEnvContainers: runtimeEnvs.length,
-          envContainerKeySamples,
-          localAssetsStatus,
-        },
-      };
-    }
-
-    return jsonResponse(response, 503);
+    return jsonResponse({ error: 'OPENROUTER_API_KEY is not configured' }, 503, origin);
   }
 
   let payload;
   try {
     payload = await request.json();
   } catch {
-    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+    return jsonResponse({ error: 'Invalid JSON body' }, 400, origin);
   }
 
   const payloadError = validatePayload(payload);
-  if (payloadError) return jsonResponse({ error: payloadError }, 400);
+  if (payloadError) return jsonResponse({ error: payloadError }, 400, origin);
 
   const resolvedModel = String(
     payload.model || getEnvVarFromContext(context, 'OPENROUTER_DEFAULT_MODEL') || DEFAULT_MODEL
@@ -377,7 +342,11 @@ export async function onRequest(context) {
   try {
     upstream = await callOpenRouter(requestPayload);
   } catch (error) {
-    return jsonResponse({ error: 'Failed to reach OpenRouter', details: String(error?.message || error) }, 502);
+    return jsonResponse(
+      { error: 'Failed to reach OpenRouter', details: String(error?.message || error) },
+      502,
+      origin
+    );
   }
 
   const canRetryWithFallback =

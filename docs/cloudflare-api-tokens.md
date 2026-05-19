@@ -5,6 +5,7 @@
 | Нужно | Права | Команда |
 |-------|--------|---------|
 | **Cache Purge** (после деплоя HTML) | Zone Read + Cache Purge, зона `hundesalon-nika.com` | `npm run cf:open-purge-token` → `npm run cf:set-purge-token -- <token>` |
+| **WAF rate limits** (`/sendmail`, `/openrouter`, `/seo-generate`) | Zone → **WAF** → Edit | `npm run cf:configure-waf-rate-limits` или Dashboard: `npm run cf:open-waf-rate-limits` |
 | **Crawler Hints + CSAM** (кеш/SEO) | Zone Settings Edit (или Dashboard) | `npm run cf:open-cache-configuration` или `npm run cf:configure-cache-features` |
 | **Pages deploy** | Wrangler OAuth (`npx wrangler login`) или Dashboard Git integration | `npm run deploy` |
 | **OpenRouter / email** | Secrets на Pages, не Cloudflare token | `npm run sync:openrouter` |

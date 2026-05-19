@@ -275,8 +275,12 @@
     delete tip.dataset.noArrow;
     delete tip.dataset.compact;
 
-    /* текст в span — анимируем только его, не ломая окошко */
-    tip.innerHTML = `<span class="nika-tip-text">${text}</span>`;
+    /* текст в span — textContent only (no innerHTML; alt text must not become HTML) */
+    tip.replaceChildren();
+    const textNode = document.createElement('span');
+    textNode.className = 'nika-tip-text';
+    textNode.textContent = text;
+    tip.appendChild(textNode);
 
     /* viewport-координаты целевого элемента */
     const rect = target.getBoundingClientRect();
@@ -608,9 +612,25 @@
     requestAnimationFrame(() => requestAnimationFrame(scanAndAttach));
   }
 
-  /* пересканировать после динамических изменений (смена темы, открытие меню) */
-  const observer = new MutationObserver(() => {
-    requestAnimationFrame(scanAndAttach);
+  /* пересканировать после динамических изменений (debounced — не на каждую мутацию) */
+  let scanDebounceTimer = null;
+  const scheduleScanAndAttach = () => {
+    if (scanDebounceTimer) {
+      window.clearTimeout(scanDebounceTimer);
+    }
+    scanDebounceTimer = window.setTimeout(() => {
+      scanDebounceTimer = null;
+      scanAndAttach();
+    }, 180);
+  };
+
+  const observer = new MutationObserver(mutations => {
+    const hasElementChanges = mutations.some(
+      mutation => mutation.type === 'childList' && (mutation.addedNodes.length || mutation.removedNodes.length)
+    );
+    if (hasElementChanges) {
+      scheduleScanAndAttach();
+    }
   });
   observer.observe(document.body, { childList: true, subtree: true });
 })();

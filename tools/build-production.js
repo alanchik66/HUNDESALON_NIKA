@@ -62,6 +62,27 @@ function copyRecursive(source, target) {
   fs.copyFileSync(source, target);
 }
 
+function ensureLeafletVendorBundle() {
+  const vendorJs = path.join(root, 'assets/vendor/leaflet/1.9.4/leaflet.js');
+  const sourceJs = path.join(root, 'node_modules/leaflet/dist/leaflet.js');
+  if (fs.existsSync(vendorJs) || !fs.existsSync(sourceJs)) {
+    return;
+  }
+
+  const vendorDir = path.join(root, 'assets/vendor/leaflet/1.9.4');
+  const sourceDir = path.join(root, 'node_modules/leaflet/dist');
+  fs.mkdirSync(path.join(vendorDir, 'images'), { recursive: true });
+  for (const fileName of ['leaflet.css', 'leaflet.js']) {
+    fs.copyFileSync(path.join(sourceDir, fileName), path.join(vendorDir, fileName));
+  }
+  for (const imageName of fs.readdirSync(path.join(sourceDir, 'images'))) {
+    fs.copyFileSync(path.join(sourceDir, 'images', imageName), path.join(vendorDir, 'images', imageName));
+  }
+  console.log('Copied Leaflet vendor assets from node_modules.');
+}
+
+ensureLeafletVendorBundle();
+
 fs.rmSync(dist, { recursive: true, force: true });
 fs.mkdirSync(dist, { recursive: true });
 

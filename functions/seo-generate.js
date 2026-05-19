@@ -13,44 +13,16 @@
  *   OPENROUTER_FALLBACK_MODEL
  */
 
+import {
+  sanitizeOrigin,
+  assertAllowedOrigin,
+  enforceRateLimit,
+  jsonResponse,
+} from './_lib/http-security.js';
+
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const DEFAULT_MODEL = 'openai/gpt-5.2';
 const LOCALES = ['de', 'en', 'ru', 'uk'];
-
-function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
-    },
-  });
-}
-
-function sanitizeOrigin(value) {
-  const raw = String(value || '').trim();
-  if (!raw) return '';
-  return raw.replace(/\/$/, '');
-}
-
-function getOriginHost(origin) {
-  try {
-    return new URL(origin).host;
-  } catch {
-    return '';
-  }
-}
-
-function isAllowedOrigin(origin, host) {
-  if (!origin) return true;
-  if (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
-    return true;
-  }
-
-  const originHost = getOriginHost(origin);
-  if (!originHost || !host) return false;
-  return originHost === host;
-}
 
 function getEnvVar(env, key) {
   if (!env || typeof env !== 'object') return '';
@@ -226,15 +198,24 @@ export async function onRequest(context) {
     });
   }
 
-  const origin = sanitizeOrigin(request.headers.get('Origin'));
-  const host = sanitizeOrigin(request.headers.get('Host'));
-  if (!isAllowedOrigin(origin, host)) {
+  const originCheck = assertAllowedOrigin(request);
+  if (!originCheck.ok) {
     return jsonResponse({ error: 'Forbidden' }, 403);
+  }
+  const { origin } = originCheck;
+
+  const rateLimited = await enforceRateLimit(request, {
+    route: 'seo-generate',
+    limit: 8,
+    windowSec: 60,
+  });
+  if (rateLimited) {
+    return rateLimited;
   }
 
   const apiKey = getEnvVarFromContext(context, 'OPENROUTER_API_KEY');
   if (!apiKey) {
-    return jsonResponse({ error: 'OPENROUTER_API_KEY is not configured' }, 503);
+    return jsonResponse({ error: 'OPENROUTER_API_KEY is not configured' }, 503, origin);
   }
 
   let input;

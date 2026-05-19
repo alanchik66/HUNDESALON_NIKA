@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
       chooseService: 'Выберите услугу',
       chooseDate: 'Выберите дату',
       chooseTime: 'Выберите время',
+      chooseContact: 'Заполните имя, email и телефон',
       closeModal: 'Закрыть окно',
     },
     uk: {
@@ -54,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
       chooseService: 'Оберіть послугу',
       chooseDate: 'Оберіть дату',
       chooseTime: 'Оберіть час',
+      chooseContact: 'Заповніть імʼя, email і телефон',
       closeModal: 'Закрити вікно',
     },
     en: {
@@ -75,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
       chooseService: 'Please select a service',
       chooseDate: 'Please select a date',
       chooseTime: 'Please select a time',
+      chooseContact: 'Please fill in name, email, and phone',
       closeModal: 'Close dialog',
     },
     de: {
@@ -96,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
       chooseService: 'Bitte wählen Sie eine Leistung',
       chooseDate: 'Bitte wählen Sie ein Datum',
       chooseTime: 'Bitte wählen Sie eine Uhrzeit',
+      chooseContact: 'Bitte füllen Sie Name, E-Mail und Telefon aus',
       closeModal: 'Dialog schließen',
     },
   };
@@ -195,16 +199,63 @@ document.addEventListener('DOMContentLoaded', () => {
     return '';
   };
 
+  const submitSendmailForm = async (form, submitBtn) => {
+    const originalText = submitBtn?.textContent ?? '';
+
+    form.querySelectorAll('.form-status').forEach(el => el.remove());
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = formCopy.sending[pageLang] ?? formCopy.sending.de;
+    }
+
+    const statusEl = document.createElement('p');
+    statusEl.className = 'form-status';
+
+    try {
+      const response = await fetch('/sendmail', {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { Accept: 'application/json' },
+      });
+
+      const result = await response.json().catch(() => ({ success: false }));
+
+      if (result.success) {
+        statusEl.classList.add('form-status--success');
+        statusEl.textContent = formCopy.success[pageLang] ?? formCopy.success.de;
+        form.reset();
+      } else {
+        statusEl.classList.add('form-status--error');
+        statusEl.textContent = formCopy.error[pageLang] ?? formCopy.error.de;
+      }
+    } catch {
+      statusEl.classList.add('form-status--error');
+      statusEl.textContent = formCopy.error[pageLang] ?? formCopy.error.de;
+    } finally {
+      form.appendChild(statusEl);
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    }
+
+    return statusEl.classList.contains('form-status--success');
+  };
+
   const initSendmailForms = () => {
     const forms = document.querySelectorAll('form[action$="/sendmail"]');
     if (!forms.length) return;
 
     forms.forEach(form => {
+      if (form.id === 'booking-form') {
+        return;
+      }
+
       const isBookingForm =
-        form.id === 'booking-form' ||
-        (form.querySelector('input[name="service"][type="hidden"]') &&
-          form.querySelector('input[name="date"][type="hidden"]') &&
-          form.querySelector('input[name="time"][type="hidden"]'));
+        form.querySelector('input[name="service"][type="hidden"]') &&
+        form.querySelector('input[name="date"][type="hidden"]') &&
+        form.querySelector('input[name="time"][type="hidden"]');
       const isFeedbackForm =
         !isBookingForm &&
         (form.closest('.complaint-form') !== null || form.querySelector('select[name="subject"]') !== null);
@@ -228,47 +279,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       form.addEventListener('submit', async event => {
         event.preventDefault();
-
         const submitBtn = form.querySelector('[type="submit"]');
-        const originalText = submitBtn?.textContent ?? '';
-
-        form.querySelectorAll('.form-status').forEach(el => el.remove());
-
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.textContent = formCopy.sending[pageLang] ?? formCopy.sending.de;
-        }
-
-        const statusEl = document.createElement('p');
-        statusEl.className = 'form-status';
-
-        try {
-          const response = await fetch('/sendmail', {
-            method: 'POST',
-            body: new FormData(form),
-            headers: { Accept: 'application/json' },
-          });
-
-          const result = await response.json().catch(() => ({ success: false }));
-
-          if (result.success) {
-            statusEl.classList.add('form-status--success');
-            statusEl.textContent = formCopy.success[pageLang] ?? formCopy.success.de;
-            form.reset();
-          } else {
-            statusEl.classList.add('form-status--error');
-            statusEl.textContent = formCopy.error[pageLang] ?? formCopy.error.de;
-          }
-        } catch {
-          statusEl.classList.add('form-status--error');
-          statusEl.textContent = formCopy.error[pageLang] ?? formCopy.error.de;
-        } finally {
-          form.appendChild(statusEl);
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
-          }
-        }
+        await submitSendmailForm(form, submitBtn);
       });
     });
   };
@@ -415,13 +427,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
+  const resolveHashTarget = hashHref => {
+    if (!hashHref || hashHref === '#') return null;
+    const rawId = hashHref.startsWith('#') ? hashHref.slice(1) : hashHref;
+    if (!rawId || !/^[A-Za-z][\w-]*$/.test(rawId)) {
+      return null;
+    }
+    return document.getElementById(rawId);
+  };
+
   const initSmoothHashLinks = () => {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       const targetId = anchor.getAttribute('href');
       if (!targetId || targetId === '#') return;
 
       anchor.addEventListener('click', event => {
-        const target = document.querySelector(targetId);
+        const target = resolveHashTarget(targetId);
         if (!target) return;
 
         event.preventDefault();
@@ -776,9 +797,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    form.addEventListener('submit', event => {
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      clearValidationMessage();
+      syncHiddenFields();
+
       if (!state.selectedService) {
-        event.preventDefault();
         setStep(1);
         showValidationMessage(
           bookingCopy.chooseService,
@@ -788,7 +812,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (!state.selectedDate) {
-        event.preventDefault();
         setStep(2);
         renderCalendar();
         renderTimeSlots();
@@ -800,7 +823,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (!state.selectedTime) {
-        event.preventDefault();
         setStep(2);
         renderCalendar();
         renderTimeSlots();
@@ -809,6 +831,25 @@ document.addEventListener('DOMContentLoaded', () => {
           timeSlotsContainer.querySelector('.time-slot.selected, .time-slot')
         );
         return;
+      }
+
+      const nameValue = form.querySelector('input[name="name"]')?.value?.trim() ?? '';
+      const emailValue = form.querySelector('input[name="email"]')?.value?.trim() ?? '';
+      const phoneValue = form.querySelector('input[name="phone"]')?.value?.trim() ?? '';
+
+      if (!nameValue || !emailValue || !phoneValue) {
+        setStep(3);
+        showValidationMessage(
+          bookingCopy.chooseContact,
+          form.querySelector('input[name="name"], input[name="email"], input[name="phone"]')
+        );
+        return;
+      }
+
+      const submitBtn = form.querySelector('[type="submit"]');
+      const sent = await submitSendmailForm(form, submitBtn);
+      if (sent) {
+        closeModal();
       }
     });
   };

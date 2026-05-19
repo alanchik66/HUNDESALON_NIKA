@@ -11,6 +11,8 @@
  *      добавьте секрет: RESEND_API_KEY = <ваш ключ>
  */
 
+import { assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http-security.js';
+
 const RECIPIENT = 'info@hundesalon-nika.com';
 const FROM      = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
 
@@ -69,11 +71,24 @@ export async function onRequest(ctx) {
         });
     }
 
-    /* ── Origin check (basic CSRF mitigation) ─────────────────── */
-    const origin = request.headers.get('Origin') ?? '';
-    const host   = request.headers.get('Host')   ?? '';
-    if (origin && !origin.endsWith(host) && !origin.startsWith('http://localhost')) {
+    /* ── Origin check (CSRF mitigation) ──────────────────────── */
+    const originCheck = assertAllowedOrigin(request);
+    if (!originCheck.ok) {
         return jsonResponse({ success: false, message: 'Forbidden' }, 403);
+    }
+    const { origin } = originCheck;
+
+    const rateLimited = await enforceRateLimit(request, {
+        route: 'sendmail',
+        limit: 12,
+        windowSec: 60,
+    });
+    if (rateLimited) {
+        return jsonResponse(
+            { success: false, message: 'Too many requests. Please try again later.' },
+            429,
+            origin
+        );
     }
 
     /* ── Parse form data ───────────────────────────────────────── */
@@ -104,14 +119,32 @@ export async function onRequest(ctx) {
     const copy = COPY[lang] ?? COPY.de;
 
     /* ── Validate required fields ──────────────────────────────── */
-    if (!name || !email || !message) {
-        return jsonResponse({ success: false, message: copy.error }, 400);
+    if (!name || !email) {
+        return jsonResponse({ success: false, message: copy.error }, 400, origin);
     }
     if (!isValidEmail(email)) {
-        return jsonResponse({ success: false, message: copy.error }, 400);
+        return jsonResponse({ success: false, message: copy.error }, 400, origin);
     }
-    if (message.length > 2000) {
-        return jsonResponse({ success: false, message: copy.error }, 400);
+
+    if (formType === 'booking') {
+        if (!service || !date || !time) {
+            return jsonResponse({ success: false, message: copy.error }, 400, origin);
+        }
+        if (!phone) {
+            return jsonResponse({ success: false, message: copy.error }, 400, origin);
+        }
+    } else if (!message) {
+        return jsonResponse({ success: false, message: copy.error }, 400, origin);
+    }
+
+    const resolvedMessage =
+        message ||
+        (formType === 'booking'
+            ? `Booking request: ${service} on ${date} at ${time}`
+            : '');
+
+    if (resolvedMessage.length > 2000) {
+        return jsonResponse({ success: false, message: copy.error }, 400, origin);
     }
 
     /* ── Build email ───────────────────────────────────────────── */
@@ -133,7 +166,7 @@ export async function onRequest(ctx) {
         time    ? `Uhrzeit:     ${time}`    : null,
         '',
         'Nachricht:',
-        message,
+        resolvedMessage,
     ].filter((l) => l !== null);
 
     const textBody = bodyLines.join('\n');
@@ -142,7 +175,7 @@ export async function onRequest(ctx) {
     const apiKey = env?.RESEND_API_KEY;
     if (!apiKey) {
         console.error('[sendmail] RESEND_API_KEY not configured');
-        return jsonResponse({ success: false, message: copy.error }, 503);
+        return jsonResponse({ success: false, message: copy.error }, 503, origin);
     }
 
     let resendRes;
@@ -163,22 +196,15 @@ export async function onRequest(ctx) {
         });
     } catch (err) {
         console.error('[sendmail] Network error:', err);
-        return jsonResponse({ success: false, message: copy.error }, 502);
+        return jsonResponse({ success: false, message: copy.error }, 502, origin);
     }
 
     if (resendRes.ok) {
-        return jsonResponse({ success: true, message: copy.success });
+        return jsonResponse({ success: true, message: copy.success }, 200, origin);
     }
 
     const errBody = await resendRes.text().catch(() => '');
     console.error('[sendmail] Resend error', resendRes.status, errBody);
-    return jsonResponse({ success: false, message: copy.error }, 502);
+    return jsonResponse({ success: false, message: copy.error }, 502, origin);
 }
 
-/* ── Helper ────────────────────────────────────────────────────── */
-function jsonResponse(data, status = 200) {
-    return new Response(JSON.stringify(data), {
-        status,
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-    });
-}

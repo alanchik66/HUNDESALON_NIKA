@@ -505,8 +505,6 @@
 }
 
 .weather-header-preview {
-  position: relative !important;
-  width: 100% !important;
   height: 100% !important;
   min-height: 100% !important;
   border-radius: 0 !important;
@@ -514,10 +512,6 @@
 }
 
 .weather-app--header {
-  position: relative !important;
-  width: 100% !important;
-  height: 100% !important;
-  min-height: 100% !important;
   border-radius: 0 !important;
   overflow: visible !important;
 }
@@ -535,42 +529,24 @@
   clip-path: none !important;
 }
 
-/* Scene = full weather panel in main menu (100% width × height). */
+/* Header scene: extend beyond panel so cloud tops stay inside WebGL canvas. */
 .weather-app--header .weather-app__scene,
 .weather-app--header .weather-app__scene--header {
   display: block !important;
   position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
+  inset: -38% -8% -4% -8% !important;
+  width: auto !important;
   max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
   max-height: none !important;
   transform: none !important;
-  transform-origin: 50% 50% !important;
+  transform-origin: center bottom !important;
   overflow: visible !important;
-  contain: none !important;
   opacity: 1 !important;
   visibility: visible !important;
   background: transparent !important;
   z-index: 0 !important;
-}
-
-.weather-app--header .weather-app__scene > div,
-.weather-app--header .weather-app__scene--header > div,
-.weather-app--header .weather-app__scene > div > div,
-.weather-app--header .weather-app__scene--header > div > div,
-.weather-app--header .weather-app__scene > div > div > div,
-.weather-app--header .weather-app__scene--header > div > div > div {
-  position: relative !important;
-  width: 100% !important;
-  height: 100% !important;
-  max-width: none !important;
-  max-height: none !important;
-  overflow: visible !important;
-  clip-path: none !important;
-  contain: none !important;
 }
 
 /* No edge masks: clouds must never be clipped. */
@@ -579,21 +555,20 @@
   -webkit-mask-image: none !important;
 }
 
-/* Canvas fills panel; slight overscan shows full cloud mass (no box crop). */
 .weather-app--header canvas {
   position: absolute !important;
-  top: -24% !important;
-  left: -10% !important;
-  right: auto !important;
+  top: -16% !important;
+  left: 0 !important;
+  right: 0 !important;
   bottom: auto !important;
   display: block !important;
-  width: 120% !important;
-  max-width: none !important;
-  height: 148% !important;
-  min-height: 148% !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 132% !important;
+  min-height: 132% !important;
   max-height: none !important;
   transform: none !important;
-  transform-origin: 50% 48% !important;
+  transform-origin: center bottom !important;
   pointer-events: none !important;
   opacity: 1 !important;
   visibility: visible !important;
@@ -1427,7 +1402,6 @@
   -webkit-tap-highlight-color: transparent !important;
 }
 
-/* Mobile: same bleed geometry as desktop — never lock canvas to 100% box. */
 @media (max-width: 899px) {
   :host([data-weather-variant='header']),
   :host([data-weather-variant='header']) [data-weather-widget-root] {
@@ -1438,19 +1412,30 @@
 
   .weather-app--header .weather-app__scene,
   .weather-app--header .weather-app__scene--header {
-    inset: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    transform-origin: 50% 50% !important;
+    position: absolute !important;
+    inset: -32% -6% -2% -6% !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    transform: none !important;
+    transform-origin: center bottom !important;
+    overflow: visible !important;
   }
 
   .weather-app--header canvas {
-    top: -26% !important;
-    left: -12% !important;
-    width: 124% !important;
-    height: 152% !important;
-    min-height: 152% !important;
-    transform-origin: 50% 48% !important;
+    top: -14% !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 128% !important;
+    min-height: 128% !important;
+    max-height: none !important;
+    transform: none !important;
+    transform-origin: center bottom !important;
   }
 
   .weather-orb-overlay--preview {
@@ -5344,7 +5329,10 @@
         scheduleHeaderWeatherOrbSync(host);
       }
     };
-    host.__weatherViewportSyncHandler = () => scheduleHeaderWeatherOrbSync(host);
+    host.__weatherViewportSyncHandler = () => {
+      releaseHeaderWeatherSceneClip(host);
+      scheduleHeaderWeatherOrbSync(host);
+    };
     document.addEventListener('visibilitychange', host.__weatherAstroVisibilityHandler);
     window.addEventListener('resize', host.__weatherViewportSyncHandler, { passive: true });
     window.addEventListener('orientationchange', host.__weatherViewportSyncHandler, { passive: true });
@@ -5448,19 +5436,17 @@
 
     root
       .querySelectorAll(
-        '.weather-header-preview div, .weather-app--header .weather-app__scene div, .weather-app--header .weather-app__scene--header div'
+        '.weather-app--header .weather-app__scene div, .weather-app--header .weather-app__scene--header div'
       )
       .forEach(node => {
         node.style.setProperty('overflow', 'visible', 'important');
         node.style.setProperty('clip-path', 'none', 'important');
         node.style.setProperty('contain', 'none', 'important');
-        node.style.setProperty('max-width', 'none', 'important');
-        node.style.setProperty('max-height', 'none', 'important');
       });
 
     root.querySelectorAll('.weather-app--header canvas').forEach(canvas => {
-      canvas.style.setProperty('overflow', 'visible', 'important');
       canvas.style.setProperty('clip-path', 'none', 'important');
+      canvas.style.removeProperty('transform');
       canvas.style.removeProperty('max-height');
       canvas.style.removeProperty('max-width');
     });
@@ -5531,6 +5517,11 @@
     if (host.__weatherAstroVisibilityHandler) {
       document.removeEventListener('visibilitychange', host.__weatherAstroVisibilityHandler);
       host.__weatherAstroVisibilityHandler = null;
+    }
+    if (host.__weatherViewportSyncHandler) {
+      window.removeEventListener('resize', host.__weatherViewportSyncHandler);
+      window.removeEventListener('orientationchange', host.__weatherViewportSyncHandler);
+      host.__weatherViewportSyncHandler = null;
     }
     host.__weatherTimeZone = null;
     host.dataset.weatherMounted = 'false';

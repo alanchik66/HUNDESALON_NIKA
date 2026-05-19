@@ -119,18 +119,31 @@ async function submitUrls(send, urls) {
       setNativeValue(textarea, urls.join('\\n'));
       await sleep(800);
 
+      const buttonText = el =>
+        (el.innerText || el.value || el.getAttribute('aria-label') || '').trim();
+
+      const clickButton = pattern => {
+        const buttons = Array.from(document.querySelectorAll('button, [role="button"], input[type="submit"]'))
+          .filter(el => visible(el) && !el.disabled);
+        const match = buttons.find(el => pattern.test(buttonText(el)));
+        if (match) match.click();
+        return !!match;
+      };
+
+      clickButton(/submit urls/i);
+      await sleep(1200);
+
       const buttons = Array.from(document.querySelectorAll('button, [role="button"], input[type="submit"]'))
         .filter(el => visible(el) && !el.disabled);
-      const submit =
-        buttons.find(el => /submit|send|отправ|надісл|einreichen/i.test((el.innerText || el.value || el.getAttribute('aria-label') || '').trim())) ||
-        buttons[0];
+      const confirm = buttons.find(el => /^submit$/i.test(buttonText(el)));
+      const fallback = buttons.find(el => /submit|send|отправ|надісл|einreichen/i.test(buttonText(el)));
 
-      if (!submit) {
+      if (!confirm && !fallback) {
         return { ok: false, reason: 'NO_SUBMIT', url: location.href, title: document.title };
       }
 
-      submit.click();
-      await sleep(4000);
+      (confirm || fallback).click();
+      await sleep(5000);
       return {
         ok: true,
         count: urls.length,
@@ -157,18 +170,31 @@ async function inspectHome(send) {
         el.dispatchEvent(new Event('change', { bubbles: true }));
       };
       const target = 'https://hundesalon-nika.com/de/';
-      const input = Array.from(document.querySelectorAll('input[type="url"], input[type="text"], input:not([type])'))
-        .find(el => visible(el) && !el.disabled);
+      const label = el => (el.innerText || el.getAttribute('aria-label') || '').trim();
+      const input =
+        document.querySelector('input[placeholder*="URL" i]') ||
+        Array.from(document.querySelectorAll('input[type="url"], input[type="search"], input[type="text"]')).find(
+          el => visible(el) && !el.disabled
+        );
+
       if (input) {
         setNativeValue(input, target);
-        await sleep(500);
+        await sleep(600);
         input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-        await sleep(3500);
+        await sleep(2500);
       }
-      const buttons = Array.from(document.querySelectorAll('button, [role="button"]'))
-        .filter(el => visible(el) && !el.disabled);
+
+      const buttons = Array.from(document.querySelectorAll('button, [role="button"]')).filter(
+        el => visible(el) && !el.disabled
+      );
+      const inspectBtn = buttons.find(el => /^inspect$/i.test(label(el)) || /inspect url|prüfen|провер/i.test(label(el)));
+      if (inspectBtn) {
+        inspectBtn.click();
+        await sleep(4000);
+      }
+
       const requestBtn = buttons.find(el =>
-        /request indexing|indexieren|индекс|запросить/i.test((el.innerText || el.getAttribute('aria-label') || '').trim())
+        /request indexing|indexieren|индекс|запросить|indexing anfordern/i.test(label(el))
       );
       if (requestBtn) {
         requestBtn.click();

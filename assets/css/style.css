@@ -7961,8 +7961,8 @@ body.light .footer-legal-sep {
    Header height reference (keeps values in sync with actual header):
      ≥1281px  — top-row 1 row (88px) + social-bar (48px) + padding (16px) ≈ 152px
      900-1280px — top-row 2 rows (146px) + social-bar (48px) + padding (16px) ≈ 210px
-     ≤900px  — top-row 2 rows (164px) + social-bar (56px) + padding (16px) ≈ 236px
-     ≤600px  — top-row 3 rows (212px) + social-bar (56px) + padding (16px) ≈ 284px
+     ≤900px  — top-row 2 rows (~164px) + social-bar (56px) + padding ≈ 236px
+     ≤600px  — same grid, slightly tighter weather row ≈ 228px
    Content must clear header + ~20px buffer.
    section padding-top: 72px (desktop) / 60px (≤900px)
    hero   padding-top: 168px (desktop) / 136px (≤900px)
@@ -7988,21 +7988,21 @@ body.light .footer-legal-sep {
   }
 }
 
-/* ≤900px: header ≈236px; section needs ≥196px, hero needs ≥120px */
+/* ≤900px: compact header — section/hero offsets track --header-weather-panel-h */
 @media (width <= 900px) {
   :root {
     --site-side-padding: 14px;
-    --section-top-offset-base: 182px;
-    --hero-top-offset-base: 112px;
-    --first-screen-inner-space: 34px;
+    --section-top-offset-base: 152px;
+    --hero-top-offset-base: 88px;
+    --first-screen-inner-space: 30px;
   }
 }
 
-/* ≤600px: header ≈284px; section needs ≥244px, hero needs ≥168px */
+/* ≤600px */
 @media (width <= 600px) {
   :root {
-    --section-top-offset-base: 256px;
-    --hero-top-offset-base: 182px;
+    --section-top-offset-base: 232px;
+    --hero-top-offset-base: 152px;
   }
 }
 
@@ -8600,7 +8600,7 @@ body.light .nika-tooltip--visible {
   }
 
   .header {
-    padding: 8px 14px 10px;
+    padding: 6px 12px 8px;
   }
 
   .logo-wrapper {
@@ -8628,9 +8628,9 @@ body.light .nika-tooltip--visible {
     justify-self: stretch;
     width: 100%;
     min-width: 0;
-    height: var(--header-weather-panel-h, clamp(176px, 40vw, 212px));
-    min-height: var(--header-weather-panel-h, clamp(176px, 40vw, 212px));
-    max-height: none;
+    height: var(--header-weather-panel-h, 96px);
+    min-height: var(--header-weather-panel-h, 96px);
+    max-height: var(--header-weather-panel-h, 96px);
     overflow: visible;
   }
 
@@ -8639,6 +8639,7 @@ body.light .nika-tooltip--visible {
     width: 100%;
     height: 100%;
     min-height: inherit;
+    max-height: 100%;
     border-radius: 0;
     overflow: visible;
     background: transparent;
@@ -9340,9 +9341,11 @@ body.light .nika-tooltip--visible {
     grid-area: weather;
     width: 100%;
     min-width: 0;
-    height: 112px;
-    min-height: 112px;
+    height: var(--header-weather-panel-h, 96px);
+    min-height: var(--header-weather-panel-h, 96px);
+    max-height: var(--header-weather-panel-h, 96px);
     margin-top: 0;
+    overflow: visible;
   }
 }
 
@@ -10268,15 +10271,15 @@ body.light .social-icons-toggle.is-open {
     transform: none !important;
     display: none !important;
     width: 100% !important;
-    height: var(--header-weather-panel-h, clamp(176px, 40vw, 212px)) !important;
+    height: var(--header-weather-panel-h, 96px) !important;
     min-width: 0 !important;
-    min-height: var(--header-weather-panel-h, clamp(176px, 40vw, 212px)) !important;
+    min-height: var(--header-weather-panel-h, 96px) !important;
     max-height: none !important;
     flex: none !important;
     grid-column: 1 / -1 !important;
     grid-row: 2 !important;
     z-index: 8 !important;
-    margin: 4px 0 0 !important;
+    margin: 0 !important;
     isolation: auto !important;
     padding: 0 !important;
     background: transparent !important;
@@ -10900,9 +10903,9 @@ body.light .social-icons-toggle.is-open {
 @media (width <= 900px) {
   .header .social-bar {
     --social-bar-icon-size: 25px !important;
-    padding-top: 1px !important;
-    padding-bottom: 1px !important;
-    margin-top: 2px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 1px !important;
   }
 
   /* Bar inner: 2-column grid, fixed 10px column-gap, strict center alignment */
@@ -11187,10 +11190,18 @@ body.light .social-icons-toggle.is-open {
 }
 
 /* =========================================================
-   WEATHER PANEL — достаточная высота + overflow visible (сцена bleed из site-shell)
+   WEATHER PANEL — compact mobile row; scene bleed in site-shell.js
    ========================================================= */
-:root {
-  --header-weather-panel-h: clamp(176px, 40vw, 212px);
+@media (width <= 900px) {
+  :root {
+    --header-weather-panel-h: clamp(88px, 20vw, 96px);
+  }
+}
+
+@media (width <= 560px) {
+  :root {
+    --header-weather-panel-h: clamp(84px, 22vw, 92px);
+  }
 }
 
 @media (width >= 900px) {
@@ -11220,6 +11231,29 @@ body.light .social-icons-toggle.is-open {
     --header-menu-weather-h: var(--header-weather-panel-h);
   }
 
+  .header {
+    padding-top: 4px !important;
+    padding-bottom: 6px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    gap: 4px !important;
+  }
+
+  .header .top-row {
+    gap: 4px 8px !important;
+    row-gap: 4px !important;
+  }
+
+  /* Cloud scene must not paint above header band (was clipped by viewport / fixed header). */
+  .header,
+  .header .top-row,
+  .header .top-row > .header-weather-shell,
+  .header-weather-widget[data-weather-widget] {
+    overflow: visible !important;
+    clip-path: none !important;
+    contain: none !important;
+  }
+
   .header .top-row > .header-weather-shell,
   .top-row > .header-weather-shell,
   .header.header-social-visible .top-row > .header-weather-shell {
@@ -11228,8 +11262,8 @@ body.light .social-icons-toggle.is-open {
     min-width: 0 !important;
     height: var(--header-weather-panel-h) !important;
     min-height: var(--header-weather-panel-h) !important;
-    max-height: none !important;
-    margin-top: 4px !important;
+    max-height: var(--header-weather-panel-h) !important;
+    margin-top: 0 !important;
     margin-bottom: 0 !important;
     padding: 0 !important;
     transform: none !important;
@@ -11245,7 +11279,7 @@ body.light .social-icons-toggle.is-open {
     width: 100% !important;
     height: 100% !important;
     min-height: 100% !important;
-    max-height: none !important;
+    max-height: 100% !important;
     overflow: visible !important;
     contain: none !important;
   }
@@ -11253,8 +11287,21 @@ body.light .social-icons-toggle.is-open {
 
 .header .top-row > .header-weather-shell,
 .top-row > .header-weather-shell {
-  max-height: none !important;
   transform: none !important;
   overflow: visible !important;
   isolation: auto !important;
+}
+
+@media (width <= 900px) {
+  .header .top-row > .header-weather-shell,
+  .top-row > .header-weather-shell {
+    max-height: var(--header-weather-panel-h, 96px) !important;
+  }
+}
+
+@media (width >= 901px) {
+  .header .top-row > .header-weather-shell,
+  .top-row > .header-weather-shell {
+    max-height: none !important;
+  }
 }

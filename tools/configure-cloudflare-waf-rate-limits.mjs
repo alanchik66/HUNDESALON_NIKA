@@ -1,0 +1,237 @@
+/**
+ * Configure Cloudflare WAF rate limiting rules for Pages Functions API routes.
+ *
+ * Auth: CLOUDFLARE_API_TOKEN with Zone WAF Write (or Wrangler OAuth with zone edit).
+ * Usage:
+ *   npm run cf:configure-waf-rate-limits
+ *   npm run cf:configure-waf-rate-limits -- --status
+ */
+import { exec } from 'node:child_process';
+import {
+  ACCOUNT_ID,
+  DOMAIN,
+  cloudflareApi,
+  getCloudflareAuthHeaders,
+  loadDevVars,
+  loadWranglerOAuth,
+  refreshWranglerOAuth,
+  resolveZoneId,
+} from './lib/cloudflare-auth.mjs';
+
+const RULE_PREFIX = 'HUNDESALON:';
+const PHASE = 'http_ratelimit';
+
+const ENDPOINT_LIMITS = [
+  {
+    path: '/sendmail',
+    description: `${RULE_PREFIX} POST /sendmail`,
+    requestsPerPeriod: 12,
+    period: 60,
+    mitigationTimeout: 120,
+  },
+  {
+    path: '/openrouter',
+    description: `${RULE_PREFIX} POST /openrouter`,
+    requestsPerPeriod: 30,
+    period: 60,
+    mitigationTimeout: 120,
+  },
+  {
+    path: '/seo-generate',
+    description: `${RULE_PREFIX} POST /seo-generate`,
+    requestsPerPeriod: 8,
+    period: 60,
+    mitigationTimeout: 120,
+  },
+];
+
+function parseArgs(argv) {
+  return { status: argv.includes('--status') };
+}
+
+async function resolveAuth() {
+  loadDevVars();
+  try {
+    const headers = getCloudflareAuthHeaders({ allowOAuthToken: true });
+    if (headers) return headers;
+  } catch {
+    // fall through
+  }
+
+  const oauth = loadWranglerOAuth();
+  const token = await refreshWranglerOAuth(oauth);
+  return { Authorization: `Bearer ${token}` };
+}
+
+function buildRulePayload({ path, description, requestsPerPeriod, period, mitigationTimeout }) {
+  return {
+    description,
+    expression: `(http.request.uri.path eq "${path}" and http.request.method eq "POST")`,
+    action: 'block',
+    action_parameters: {
+      response: {
+        status_code: 429,
+        content: '{"error":"Too many requests"}',
+        content_type: 'application/json',
+      },
+    },
+    ratelimit: {
+      characteristics: ['ip.src', 'cf.colo.id'],
+      period,
+      requests_per_period: requestsPerPeriod,
+      mitigation_timeout: mitigationTimeout,
+    },
+    enabled: true,
+  };
+}
+
+async function getPhaseRuleset(auth, zoneId) {
+  const headers = typeof auth === 'string' ? { Authorization: `Bearer ${auth}` } : auth;
+  const response = await fetch(
+    `https://api.cloudflare.com/client/v4/zones/${zoneId}/rulesets/phases/${PHASE}/entrypoint`,
+    { headers: { ...headers, 'Content-Type': 'application/json' } }
+  );
+  const payload = await response.json();
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok || !payload.success) {
+    throw new Error(
+      `Cloudflare API phases/${PHASE}/entrypoint failed: ${payload.errors?.map(error => error.message).join('; ') || response.status}`
+    );
+  }
+  return payload.result;
+}
+
+async function createPhaseRuleset(auth, zoneId, rules) {
+  return cloudflareApi(auth, `/zones/${zoneId}/rulesets`, {
+    method: 'POST',
+    body: JSON.stringify({
+      name: 'HUNDESALON NIKA API rate limits',
+      description: 'Rate limits for Pages Functions (sendmail, openrouter, seo-generate)',
+      kind: 'zone',
+      phase: PHASE,
+      rules,
+    }),
+  });
+}
+
+async function addRule(auth, zoneId, rulesetId, rule) {
+  return cloudflareApi(auth, `/zones/${zoneId}/rulesets/${rulesetId}/rules`, {
+    method: 'POST',
+    body: JSON.stringify(rule),
+  });
+}
+
+async function updateRule(auth, zoneId, rulesetId, ruleId, rule) {
+  return cloudflareApi(auth, `/zones/${zoneId}/rulesets/${rulesetId}/rules/${ruleId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(rule),
+  });
+}
+
+function ruleNeedsUpdate(existing, desired) {
+  const existingLimit = existing?.ratelimit;
+  const desiredLimit = desired.ratelimit;
+  return (
+    existing?.expression !== desired.expression ||
+    existing?.action !== desired.action ||
+    existingLimit?.period !== desiredLimit.period ||
+    existingLimit?.requests_per_period !== desiredLimit.requests_per_period ||
+    existingLimit?.mitigation_timeout !== desiredLimit.mitigation_timeout
+  );
+}
+
+async function ensureRules(auth, zoneId) {
+  const desiredRules = ENDPOINT_LIMITS.map(buildRulePayload);
+  let ruleset = await getPhaseRuleset(auth, zoneId);
+
+  if (!ruleset) {
+    ruleset = await createPhaseRuleset(auth, zoneId, desiredRules);
+    console.log(`Created ${PHASE} ruleset with ${desiredRules.length} rate limit rules.`);
+    return ruleset;
+  }
+
+  const rulesetId = ruleset.id;
+  const existingRules = Array.isArray(ruleset.rules) ? ruleset.rules : [];
+  let created = 0;
+  let updated = 0;
+  let unchanged = 0;
+
+  for (const desired of desiredRules) {
+    const existing = existingRules.find(rule => rule.description === desired.description);
+    if (!existing) {
+      await addRule(auth, zoneId, rulesetId, desired);
+      created += 1;
+      continue;
+    }
+
+    if (ruleNeedsUpdate(existing, desired)) {
+      await updateRule(auth, zoneId, rulesetId, existing.id, desired);
+      updated += 1;
+    } else {
+      unchanged += 1;
+    }
+  }
+
+  console.log(`WAF rate limits: ${created} created, ${updated} updated, ${unchanged} unchanged.`);
+  return getPhaseRuleset(auth, zoneId);
+}
+
+async function printStatus(auth, zoneId) {
+  const ruleset = await getPhaseRuleset(auth, zoneId);
+  if (!ruleset) {
+    console.log(`No ${PHASE} entry point ruleset on ${DOMAIN}.`);
+    return;
+  }
+
+  const rules = (ruleset.rules || []).filter(rule => String(rule.description || '').startsWith(RULE_PREFIX));
+  if (!rules.length) {
+    console.log(`Ruleset ${ruleset.id} exists but no ${RULE_PREFIX} rules found.`);
+    return;
+  }
+
+  for (const rule of rules) {
+    const limit = rule.ratelimit || {};
+    console.log(
+      `- ${rule.description}: ${limit.requests_per_period}/${limit.period}s, mitigation ${limit.mitigation_timeout}s, enabled=${rule.enabled !== false}`
+    );
+  }
+}
+
+function openDashboard() {
+  const url = `https://dash.cloudflare.com/${ACCOUNT_ID}/${DOMAIN}/security/waf/rate-limiting-rules`;
+  console.log(`\nDashboard (manual edit): ${url}`);
+  const start =
+    process.platform === 'win32'
+      ? `start "" "${url}"`
+      : process.platform === 'darwin'
+        ? `open "${url}"`
+        : `xdg-open "${url}"`;
+  exec(start, () => {});
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  const auth = await resolveAuth();
+  const zoneId = await resolveZoneId(auth);
+
+  if (args.status) {
+    await printStatus(auth, zoneId);
+    return;
+  }
+
+  try {
+    await ensureRules(auth, zoneId);
+    await printStatus(auth, zoneId);
+  } catch (error) {
+    console.error(`\n${error.message}`);
+    console.error(
+      'Token needs Zone → WAF Write. Create a custom API token or configure rules in Dashboard.'
+    );
+    openDashboard();
+    process.exitCode = 1;
+  }
+}
+
+main();

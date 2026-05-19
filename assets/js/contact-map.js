@@ -6,8 +6,8 @@
 
   const LEAFLET_CSS_ID = 'leaflet-css';
   const LEAFLET_SCRIPT_ID = 'leaflet-script';
-  const LEAFLET_CSS_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-  const LEAFLET_SCRIPT_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  const LEAFLET_CSS_URL = '/assets/vendor/leaflet/1.9.4/leaflet.css';
+  const LEAFLET_SCRIPT_URL = '/assets/vendor/leaflet/1.9.4/leaflet.js';
   const SATELLITE_TILES =
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
   const TRANSPORT_TILES =

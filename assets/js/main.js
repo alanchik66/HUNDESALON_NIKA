@@ -1396,6 +1396,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let cursorGlowTargetY = cursorGlowY;
   let cursorGlowVelocityX = 0;
   let cursorGlowVelocityY = 0;
+  let cursorGlowRafId = null;
 
   const renderCursorGlow = () => {
     const dx = cursorGlowTargetX - cursorGlowX;
@@ -1410,10 +1411,28 @@ document.addEventListener('DOMContentLoaded', () => {
     /* CSS centres the halo via negative margin, so we just translate to
            the raw cursor coordinates — no rotation, no offset hacks. */
     cursorGlow.style.transform = `translate(${cursorGlowX}px, ${cursorGlowY}px)`;
-    window.requestAnimationFrame(renderCursorGlow);
+
+    const isSettled =
+      Math.abs(dx) < 0.35 &&
+      Math.abs(dy) < 0.35 &&
+      Math.abs(cursorGlowVelocityX) < 0.08 &&
+      Math.abs(cursorGlowVelocityY) < 0.08;
+
+    if (isSettled && cursorGlow.classList.contains('is-idle')) {
+      cursorGlowRafId = null;
+      return;
+    }
+
+    cursorGlowRafId = window.requestAnimationFrame(renderCursorGlow);
   };
 
-  window.requestAnimationFrame(renderCursorGlow);
+  const startCursorGlowLoop = () => {
+    if (cursorGlowRafId === null) {
+      cursorGlowRafId = window.requestAnimationFrame(renderCursorGlow);
+    }
+  };
+
+  startCursorGlowLoop();
 
   document.addEventListener(
     'mousemove',
@@ -1422,6 +1441,7 @@ document.addEventListener('DOMContentLoaded', () => {
       cursorGlowTargetY = e.clientY;
       cursorGlow.classList.remove('is-idle');
       cursorGlow.classList.add('is-active');
+      startCursorGlowLoop();
     },
     { passive: true }
   );
@@ -1598,6 +1618,32 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!touchRaf) touchRaf = requestAnimationFrame(tickTouches);
   }
 
+  /* ========== SAFE EXTERNAL / INTERNAL NAVIGATION ========== */
+  const isSafeNavigationHref = href => {
+    if (!href || href === '#') return false;
+    const value = href.trim();
+    if (value.startsWith('/') || value.startsWith('./') || value.startsWith('../') || value.startsWith('#')) {
+      return true;
+    }
+    try {
+      const protocol = new URL(value, window.location.href).protocol;
+      return (
+        protocol === 'http:' ||
+        protocol === 'https:' ||
+        protocol === 'tel:' ||
+        protocol === 'mailto:' ||
+        protocol === 'viber:'
+      );
+    } catch {
+      return false;
+    }
+  };
+
+  const navigateToSafeHref = href => {
+    if (!isSafeNavigationHref(href)) return;
+    window.location.assign(href);
+  };
+
   /* ========== NAV CLICK — PLASMA EFFECT + DELAY NAVIGATION ========== */
   document.querySelectorAll('.nav-main > a, .nav-main > .dropdown > a').forEach(link => {
     if (link.classList.contains('active') || link.getAttribute('aria-current') === 'page') {
@@ -1717,7 +1763,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     link.addEventListener('click', e => {
       const href = link.getAttribute('href');
-      if (!href || href === '#') return;
+      if (!isSafeNavigationHref(href)) return;
       e.preventDefault();
       link.style.pointerEvents = 'none';
       const plasma = document.createElement('span');
@@ -1731,7 +1777,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       setTimeout(() => {
         plasma.remove();
-        window.location.href = href;
+        navigateToSafeHref(href);
       }, 1400);
     });
   });
@@ -1780,14 +1826,20 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         clicking = false;
         if (icon) icon.style.animation = '';
+        if (!isSafeNavigationHref(href)) {
+          if (pendingTab && !pendingTab.closed) {
+            pendingTab.close();
+          }
+          return;
+        }
         if (openInNewTab) {
           if (pendingTab && !pendingTab.closed) {
             pendingTab.location.href = href;
           } else {
-            window.location.href = href;
+            navigateToSafeHref(href);
           }
         } else {
-          window.location.href = href;
+          navigateToSafeHref(href);
         }
       }, 2500);
     });
