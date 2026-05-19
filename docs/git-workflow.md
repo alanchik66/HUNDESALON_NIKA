@@ -68,6 +68,24 @@ npm run git:cleanup
 
 Удаляет `sync/gitlab-main`, `reconcile` и «prunable» worktree. Ветка `agents/css-js-minification-explained` остаётся, пока открыт worktree в `.worktrees/`.
 
+## Оранжевое предупреждение в Protected branches
+
+Текст вроде *«Giving merge rights to a protected branch also gives elevated permissions for certain CI/CD features»* — **это не поломка**, а напоминание GitLab о безопасности.
+
+**Смысл:** если кому-то разрешён **merge** в защищённую ветку, в pipeline merge request он может получить доступ к **protected CI/CD variables** и **protected runners**. Это важно, если в проект пушат посторонние или открыты MR с внешних форков.
+
+**Для HUNDESALON_NIKA** (один maintainer, зеркало с GitHub через `git push`, MR на GitLab не используем):
+
+| Настройка | Рекомендация |
+|-----------|----------------|
+| **Allowed to merge** | **No one** — merge только не нужен |
+| **Allowed to push and merge** | **Maintainers** — для `npm run git:push` |
+| **Allowed to force push** | выкл. (вкл. только если снова нужно выровнять историю) |
+
+Предупреждение можно **игнорировать**, если merge = No one. Если merge = Maintainers — предупреждение уместно; для вас оно лишнее, поэтому merge лучше отключить.
+
+Путь: **Settings → Repository → Protected branches** (или **Branch rules** → `main`).
+
 ## Cloudflare после push в GitHub
 
 Если в Dashboard включён **Git integration**, деплой идёт автоматически с `main`. Иначе:
