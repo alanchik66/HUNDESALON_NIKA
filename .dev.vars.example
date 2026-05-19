@@ -3,5 +3,5 @@
 
 OPENROUTER_API_KEY=
 RESEND_API_KEY=
-# Pages deploy + cache purge (npm run deploy:full, npm run cf:purge-cache)
+# Pages deploy + zone cache purge (needs Cache Purge + Pages Edit; wrangler login alone may not purge)
 CLOUDFLARE_API_TOKEN=

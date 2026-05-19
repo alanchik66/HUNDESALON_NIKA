@@ -14,7 +14,7 @@ A **Cache Rule** named **「Cache HTML pages for 4 hours, browser 30 min」** ca
 | Rule | Action |
 |------|--------|
 | Cache static assets (CSS, JS, images, fonts) for 30 days | **Keep** — matches versioned assets |
-| Cache HTML pages for 4 hours | **Disable** or set Edge TTL to **Bypass cache** / **Respect origin** |
+| Cache HTML pages for 4 hours | **Configured (2026-05-19):** Edge **Bypass cache** + Browser **Bypass cache** (rule still matches `*.html` and `/`) |
 
 Path: **Caching → Cache Rules** → edit rule #2 → disable or change cache action.
 
@@ -27,7 +27,7 @@ npm run deploy:full
 This runs:
 
 1. `npm run deploy` — build + Cloudflare Pages upload
-2. `npm run cf:purge-cache` — purge zone cache (needs `CLOUDFLARE_API_TOKEN` with **Cache Purge** or manual **Purge Everything** in Dashboard)
+2. `npm run cf:purge-cache` — purge zone cache (`CLOUDFLARE_API_TOKEN` with **Cache Purge**, or **Caching → Configuration → Purge Everything** in Dashboard). Wrangler OAuth alone often lacks purge permission; `deploy:full` continues if purge fails.
 3. `npm run check:live-html` — quick favicon/canonical check
 4. `npm run google:gsc:audit` — full GSC readiness check
 
