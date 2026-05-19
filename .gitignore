@@ -118,6 +118,7 @@ access_log
 site-load-check.png
 site-load-diagnose.png
 performance-report.*
+tools/google-search-console-report.json
 
 # ═══════════════ GIT ═══════════════
 .git/
