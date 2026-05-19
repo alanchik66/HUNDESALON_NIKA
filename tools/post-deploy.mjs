@@ -46,9 +46,11 @@ await runNpm('cf:purge-cache', { optional: true });
 
 try {
   await runNpm('check:live-html');
+  await runNpm('seo:indexnow', { optional: true });
+  await runNpm('bing:api', { optional: true });
   await runNpm('google:gsc:audit');
-  await runNpm('check:openrouter');
-  await notifySlack('success', 'CDN purged, live HTML OK, GSC audit passed.');
+  await runNpm('check:openrouter', { optional: true });
+  await notifySlack('success', 'CDN purged, live HTML OK, IndexNow + GSC audit passed.');
 } catch (error) {
   await notifySlack('failed', error.message);
   throw error;

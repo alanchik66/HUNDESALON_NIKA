@@ -20,8 +20,21 @@ If OpenRouter returns 401 after deploy: `npm run sync:openrouter`, wait ~10s, `n
 | `npm run check:all` | Full health (local + prod + git remotes) |
 | `npm run check:prod` | Live HTML, GSC audit, OpenRouter |
 | `npm run git:push` | Push `main` to GitHub and GitLab |
-| `npm run deploy:full` | Build, deploy Pages, optional purge, prod checks |
+| `npm run deploy:full` | Build, deploy Pages, optional purge, IndexNow, prod checks |
+| `npm run seo:indexnow` | Notify Bing (and partners) about all sitemap URLs |
+| `npm run seo:post-favicon` | IndexNow + purge + live favicon checks after icon update |
+| `npm run bing:open` | Open Bing Webmaster (inspection, IndexNow) in browser |
+| `npm run bing:edge` | Edge with CDP for `bing:automate` (sign in once) |
+| `npm run bing:automate` | Submit URLs + request indexing via Edge CDP |
+| `npm run bing:api` | Bing URL API (needs `BING_WEBMASTER_API_KEY` in `.dev.vars`) |
 | `npm run sync:openrouter` | Copy key from `.dev.vars` → Pages secret |
+
+## Bing favicon / indexing
+
+1. After favicon deploy: `npm run seo:post-favicon` (IndexNow + live checks).
+2. Optional API key: Bing Webmaster → **Settings → API Access** → add to `.dev.vars` as `BING_WEBMASTER_API_KEY`, then `npm run bing:api`.
+3. Browser automation (one-time Microsoft sign-in): `npm run bing:edge` → sign in → `npm run bing:automate`.
+4. Favicon in Bing SERP often updates in **2–4 weeks** after crawl.
 
 ## Cloudflare tokens
 
@@ -73,6 +86,13 @@ Resend vs Routing: **Resend** sends mail from the site (`noreply@hundesalon-nika
 | `.dev.vars` (local, gitignored) | `OPENROUTER_API_KEY`, optional `CLOUDFLARE_API_TOKEN` |
 | Cloudflare Pages | `OPENROUTER_API_KEY`, `RESEND_API_KEY` |
 | Cursor Cloud Agents | `OPENROUTER_API_KEY`, `CLOUDFLARE_API_TOKEN` (purge) |
+
+## API security (Pages Functions)
+
+- Shared helpers: `functions/_lib/http-security.js` (Origin check, Cache API rate limits, response headers).
+- POST endpoints require a valid `Origin` (localhost allowed for `npm run dev:cf`).
+- Edge rate limits (per IP, 60s window): `/sendmail` 12, `/openrouter` 30, `/seo-generate` 8.
+- WAF (zone edge): `npm run cf:configure-waf-rate-limits` (needs token with Zone WAF Write) or Dashboard via `npm run cf:open-waf-rate-limits`.
 
 ## Docs
 
