@@ -13,29 +13,18 @@ This setup follows OpenRouter Quickstart and is adapted for Cloudflare Pages Fun
 
 Set these variables in Cloudflare Pages:
 
-Required:
+Required (Cloudflare Pages, Cursor Cloud Agents, or `.dev.vars`):
 
 - `OPENROUTER_API_KEY` = your OpenRouter API key
 
-Recommended:
+Optional — only if you need to override code defaults in `functions/openrouter.js` / `functions/seo-generate.js`:
 
-- `OPENROUTER_SITE_URL` = `https://hundesalon-nika.com`
-- `OPENROUTER_SITE_NAME` = `HUNDESALON NIKA`
+- `OPENROUTER_SITE_URL`, `OPENROUTER_SITE_NAME` (attribution headers; defaults: request origin + `HUNDESALON NIKA`)
+- `OPENROUTER_DEFAULT_MODEL` (default: `openai/gpt-5.2`)
+- `OPENROUTER_FALLBACK_MODEL` (no default; set only if you want automatic model fallback)
+- `OPENROUTER_PROVIDER_ORDER`, `OPENROUTER_PROVIDER_SORT`, `OPENROUTER_ALLOW_FALLBACKS`, `OPENROUTER_ENABLE_RESPONSE_CACHE`, `OPENROUTER_CACHE_TTL_SECONDS`
 
-Future-ready (recommended):
-
-- `OPENROUTER_DEFAULT_MODEL` = `openai/gpt-5.2`
-- `OPENROUTER_FALLBACK_MODEL` = `openai/gpt-4.1-mini`
-- `OPENROUTER_PROVIDER_ORDER` = `openai,anthropic` (comma-separated provider priority)
-- `OPENROUTER_PROVIDER_SORT` = `price` (optional routing preference)
-- `OPENROUTER_ALLOW_FALLBACKS` = `true` (allow provider fallback routing)
-- `OPENROUTER_ENABLE_RESPONSE_CACHE` = `true` (proxy cache for repeated non-stream requests)
-- `OPENROUTER_CACHE_TTL_SECONDS` = `300` (cache lifetime in seconds)
-
-Why recommended:
-
-- OpenRouter Quickstart marks `HTTP-Referer` and `X-OpenRouter-Title` as optional attribution headers.
-- This function sends them automatically from the env values above.
+Do not duplicate these in Cursor secrets unless you intentionally override defaults.
 
 ## Request Format
 

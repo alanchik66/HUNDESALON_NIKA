@@ -39,11 +39,8 @@
 
 All required environment variables are set in Cloudflare Pages (project: hundesalon-nika):
 
-- ✅ `OPENROUTER_API_KEY` – API authentication
-- ✅ `OPENROUTER_SITE_URL` – Attribution header
-- ✅ `OPENROUTER_SITE_NAME` – Attribution header
-- ✅ `OPENROUTER_DEFAULT_MODEL` – Primary model (openai/gpt-5.2)
-- ✅ `OPENROUTER_FALLBACK_MODEL` – Fallback on rate limit (openai/gpt-4.1-mini)
+- ✅ `OPENROUTER_API_KEY` – API authentication (required)
+- Optional overrides (code defaults cover site name, model `openai/gpt-5.2`, referer from request): `OPENROUTER_SITE_*`, `OPENROUTER_*_MODEL`
 
 ### 5. Documentation
 

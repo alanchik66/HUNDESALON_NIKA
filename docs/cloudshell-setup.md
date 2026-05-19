@@ -296,11 +296,8 @@ echo "✅ Deployment complete!"
 
 These are configured in Cloudflare Pages secrets:
 
-- `OPENROUTER_API_KEY` – OpenRouter API authentication
-- `OPENROUTER_SITE_URL` – Site URL for attribution
-- `OPENROUTER_SITE_NAME` – Site name for attribution
-- `OPENROUTER_DEFAULT_MODEL` – Primary model (openai/gpt-5.2)
-- `OPENROUTER_FALLBACK_MODEL` – Fallback model (openai/gpt-4.1-mini)
+- `OPENROUTER_API_KEY` – OpenRouter API authentication (required)
+- Other `OPENROUTER_*` vars are optional; see `docs/openrouter-quickstart-setup.md`
 
 > No need to set these manually in Cloud Shell — they're baked into Cloudflare.
 

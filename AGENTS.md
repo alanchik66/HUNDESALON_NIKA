@@ -96,11 +96,13 @@ Add in [Cloud Agents → Secrets](https://cursor.com/dashboard/cloud-agents) for
 
 | Variable | Purpose |
 |----------|---------|
-| `CLOUDFLARE_API_TOKEN` | `wrangler pages deploy` from cloud agents |
+| `CLOUDFLARE_API_TOKEN` | Zone Cache Purge + deploy (`npm run cf:purge-cache`, `deploy:full`) |
 | `RESEND_API_KEY` | Production email via `functions/sendmail.js` |
-| `OPENROUTER_API_KEY` | Optional: SEO/AI functions (`openrouter.js`, `seo-generate.js`) |
+| `OPENROUTER_API_KEY` | AI proxy (`/openrouter`) and SEO generate — **only this OpenRouter secret is required** |
 
-Local-only dev vars (optional): copy `.dev.vars.example` to `.dev.vars` for `npm run dev:cf` — never commit `.dev.vars`.
+Remove from Cursor if present (defaults are in code): `OPENROUTER_SITE_URL`, `OPENROUTER_SITE_NAME`, `OPENROUTER_DEFAULT_MODEL`, `OPENROUTER_FALLBACK_MODEL`.
+
+Local-only: copy `.dev.vars.example` to `.dev.vars` — never commit `.dev.vars`.
 
 ### Repo and hosting
 
