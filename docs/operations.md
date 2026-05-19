@@ -23,6 +23,10 @@ If OpenRouter returns 401 after deploy: `npm run sync:openrouter`, wait ~10s, `n
 | `npm run deploy:full` | Build, deploy Pages, optional purge, prod checks |
 | `npm run sync:openrouter` | Copy key from `.dev.vars` → Pages secret |
 
+## Cloudflare tokens
+
+Which Dashboard tokens are for what: `docs/cloudflare-api-tokens.md`.
+
 ## Cloudflare cache purge
 
 Use a **zone API token** (not a revoked/old token). Create via template:
