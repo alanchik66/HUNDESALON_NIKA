@@ -29,7 +29,7 @@ Wrangler OAuth (`npx wrangler login`) can deploy Pages but often **cannot** purg
 3. Zone resources: **Include** → **Specific zone** → `hundesalon-nika.com`
 4. Copy the token once; set `CLOUDFLARE_API_TOKEN` in `.dev.vars` (local, see `.dev.vars.example`) or Cursor Cloud secrets — never commit it.
 
-Test: `npm run cf:purge-cache`
+Test: `npm run cf:purge-cache` (or first `npm run cf:ensure-purge-token` if `.dev.vars` has no token yet — requires creating the token once in Dashboard; Wrangler OAuth cannot create API tokens).
 
 ## After every production deploy
 
