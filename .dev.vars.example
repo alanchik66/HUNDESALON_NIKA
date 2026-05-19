@@ -1,7 +1,10 @@
 # Copy to .dev.vars for local Cloudflare Pages dev (npm run dev:cf).
 # Never commit .dev.vars. For cloud agents, use Cursor Dashboard secrets.
 
+# Inference key only (chat). Do NOT use a management/provisioning key here.
 OPENROUTER_API_KEY=
+# Optional: create inference keys via API (keep out of OPENROUTER_API_KEY)
+# OPENROUTER_MANAGEMENT_API_KEY=
 RESEND_API_KEY=
 # Zone API token with Cache Purge (create via npm run cf:open-purge-token)
 CLOUDFLARE_API_TOKEN=

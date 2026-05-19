@@ -15,7 +15,7 @@ Set these variables in Cloudflare Pages:
 
 Required (Cloudflare Pages, Cursor Cloud Agents, or `.dev.vars`):
 
-- `OPENROUTER_API_KEY` = your OpenRouter API key
+- `OPENROUTER_API_KEY` = **inference** API key from [OpenRouter Keys](https://openrouter.ai/keys) (not a management/provisioning key — those cannot call chat completions)
 
 Optional — only if you need to override code defaults in `functions/openrouter.js` / `functions/seo-generate.js`:
 
