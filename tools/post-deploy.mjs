@@ -26,6 +26,7 @@ function runNpm(script, { optional = false } = {}) {
 }
 
 await runNpm('cf:ensure-purge-token', { optional: true });
-await runNpm('cf:purge-cache');
+await runNpm('cf:purge-cache', { optional: true });
 await runNpm('check:live-html');
 await runNpm('google:gsc:audit');
+await runNpm('check:openrouter');

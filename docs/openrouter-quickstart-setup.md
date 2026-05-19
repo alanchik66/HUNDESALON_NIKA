@@ -24,7 +24,7 @@ Optional — only if you need to override code defaults in `functions/openrouter
 - `OPENROUTER_FALLBACK_MODEL` (no default; set only if you want automatic model fallback)
 - `OPENROUTER_PROVIDER_ORDER`, `OPENROUTER_PROVIDER_SORT`, `OPENROUTER_ALLOW_FALLBACKS`, `OPENROUTER_ENABLE_RESPONSE_CACHE`, `OPENROUTER_CACHE_TTL_SECONDS`
 
-Do not duplicate these in Cursor secrets unless you intentionally override defaults.
+Do not duplicate these in Cursor secrets unless you intentionally override defaults. See [cursor-cloud-secrets.md](./cursor-cloud-secrets.md) for what to keep in Cloud Agents.
 
 ## Request Format
 
