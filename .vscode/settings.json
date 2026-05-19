@@ -9,6 +9,13 @@
   "editor.bracketPairColorization.enabled": true,
   "editor.guides.bracketPairs": "active",
   "editor.linkedEditing": true,
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.minimap.enabled": false,
+  "editor.stickyScroll.enabled": true,
+  "editor.inlineSuggest.enabled": true,
+  "editor.quickSuggestions": {
+    "strings": "on"
+  },
 
   // ── Файлы ─────────────────────────────────────────────────────────────────
   "files.eol": "\n",
@@ -24,7 +31,14 @@
     "node_modules": true,
     ".wrangler": true,
     "dist": true,
-    "**/.DS_Store": true
+    "**/.DS_Store": true,
+    "**/*.map": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/.wrangler/**": true,
+    "**/3d-weather-codrops-main/node_modules/**": true
   },
 
   // ── Форматирование по типу файла ──────────────────────────────────────────
@@ -38,17 +52,25 @@
   },
   "[javascript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
   },
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
+  },
+  "[markdown]": {
+    "editor.wordWrap": "on",
+    "editor.formatOnSave": false
   },
 
   // ── ESLint ────────────────────────────────────────────────────────────────
   "eslint.enable": true,
   "eslint.validate": ["javascript", "html"],
   "eslint.useFlatConfig": true,
+  "eslint.codeActionsOnSave.mode": "problems",
 
   // ── Stylelint ─────────────────────────────────────────────────────────────
   "stylelint.enable": true,
@@ -64,36 +86,49 @@
   // ── HTMLHint ──────────────────────────────────────────────────────────────
   "htmlhint.enable": true,
 
+  // ── Emmet ─────────────────────────────────────────────────────────────────
+  "emmet.includeLanguages": {
+    "javascript": "html"
+  },
+  "emmet.triggerExpansionOnTab": true,
+
   // ── Spell checker ────────────────────────────────────────────────────────
-  "cSpell.language": "en,de,ru",
+  "cSpell.language": "en,de,ru,uk",
   "cSpell.enableFiletypes": ["html", "css", "javascript", "markdown"],
+  "cSpell.ignorePaths": [
+    "node_modules",
+    "dist",
+    "3d-weather-codrops-main",
+    "package-lock.json",
+    "assets/fonts"
+  ],
 
-  // ── Обновления VS Code и расширений ─────────────────────────────────────
-  "update.mode": "default",
-  "extensions.autoUpdate": true,
-  "extensions.autoCheckUpdates": true,
-
-  // ── npm-скрипты как основной способ локального превью ───────────────────
+  // ── npm-скрипты ───────────────────────────────────────────────────────────
   "npm.scriptRunnerShowNotification": "onError",
+  "npm.enableRunFromFolder": true,
 
   // ── Поиск ────────────────────────────────────────────────────────────────
   "search.exclude": {
     "node_modules": true,
     ".wrangler": true,
-    "dist": true
+    "dist": true,
+    "3d-weather-codrops-main/node_modules": true,
+    "package-lock.json": true
   },
 
   // ── Git ───────────────────────────────────────────────────────────────────
   "git.autofetch": true,
   "git.confirmSync": false,
   "git.enableSmartCommit": true,
-  // GitLab CI/pipelines: origin = GitHub, remote "gitlab" — см. .git/config
+  "git.inputValidationSubjectLength": 72,
   "gitlab.pipelineGitRemoteName": "gitlab",
 
-  // ── PowerShell ───────────────────────────────────────────────────────────
+  // ── Терминал ─────────────────────────────────────────────────────────────
   "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.scrollback": 5000,
+  "terminal.integrated.copyOnSelection": true,
 
-  // ── Python (не перехватывать терминал в этом JS/HTML проекте) ──────────
+  // ── Python (не перехватывать) ──────────────────────────────────────────────
   "python.terminal.activateEnvironment": false,
   "python.terminal.activateEnvInCurrentTerminal": false,
 
@@ -101,7 +136,7 @@
   "path-intellisense.mappings": {
     "/assets": "${workspaceFolder}/assets"
   },
-  "editor.cursorSmoothCaretAnimation": "on",
+  "path-intellisense.autoTriggerNextSuggestion": true,
 
   // ── Copilot / Chat ───────────────────────────────────────────────────────
   "chat.commandCenter.enabled": true,
@@ -109,7 +144,7 @@
   "chat.tools.riskAssessment.enabled": true,
   "chat.planWidget.inlineEditor.enabled": true,
 
-  // ── Agents window (VS Code 1.120) ───────────────────────────────────────
+  // ── Agents window ─────────────────────────────────────────────────────────
   "extensions.supportAgentsWindow": {
     "github.copilot": true,
     "github.copilot-chat": true,
@@ -118,13 +153,21 @@
     "cloudflare.cloudflare-workers": true
   },
 
-  // ── Markdown diff preview (VS Code 1.120) ───────────────────────────────
+  // ── Workbench ─────────────────────────────────────────────────────────────
   "workbench.diffEditorAssociations": {
     "*.md": "vscode.markdown.preview.editor"
   },
+  "workbench.editor.highlightModifiedTabs": true,
+  "workbench.tree.indent": 16,
+  "breadcrumbs.enabled": true,
   "markdown.preview.doubleClickToSwitchToEditor": false,
   "markdown.preview.markEditorSelection": false,
   "[powershell]": {
     "editor.defaultFormatter": "ms-vscode.powershell"
-  }
+  },
+
+  // ── Обновления ────────────────────────────────────────────────────────────
+  "update.mode": "default",
+  "extensions.autoUpdate": true,
+  "extensions.autoCheckUpdates": true
 }

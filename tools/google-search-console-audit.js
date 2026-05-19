@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const origin = 'https://hundesalon-nika.com';
-const brandIconVersion = '20260429-full-logo';
+const brandIconVersion = '20260519-tight-fit';
 const sitemapUrl = `${origin}/sitemap.xml`;
 const reportPath = path.join(root, 'tools', 'google-search-console-report.json');
 const urlListPath = path.join(root, 'tools', 'google-search-console-submit-urls.txt');

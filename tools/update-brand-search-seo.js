@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const domain = 'https://hundesalon-nika.com';
-const brandIconVersion = '20260429-full-logo';
+const brandIconVersion = '20260519-tight-fit';
 const searchLogo = `${domain}/assets/images/search-logo-clear-512.png?v=${brandIconVersion}`;
 const socialPreview = `${domain}/assets/images/social-preview-1200x630.png`;
 
@@ -33,6 +33,7 @@ function walk(dir) {
 function buildBrandHeadBlock(indent) {
   const v = brandIconVersion;
   return [
+    `${indent}<link rel="icon" href="/favicon.ico?v=${v}" sizes="any">`,
     `${indent}<link rel="icon" href="/assets/images/favicon/favicon.ico?v=${v}" sizes="any">`,
     `${indent}<link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon/favicon-16x16.png?v=${v}">`,
     `${indent}<link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon/favicon-32x32.png?v=${v}">`,
@@ -54,7 +55,10 @@ function buildBrandHeadBlock(indent) {
 
 function normalizeBrandHead(html) {
   let next = html
-    .replace(/\s*<link\s+rel=["'](?:shortcut icon|icon|apple-touch-icon|apple-touch-icon-precomposed|mask-icon)["'][^>]*>\s*/gim, '\n')
+    .replace(
+      /\s*<link\s+rel=["'](?:shortcut icon|icon|apple-touch-icon|apple-touch-icon-precomposed|mask-icon)["'][^>]*>\s*/gim,
+      '\n'
+    )
     .replace(/\s*<link\s+rel=["']manifest["'][^>]*>\s*/gim, '\n')
     .replace(/\s*<meta\s+name=["']msapplication-(?:TileColor|TileImage|config)["'][^>]*>\s*/gim, '\n');
 
@@ -138,9 +142,9 @@ function getLanguage(relativePath) {
 function normalizeJsonLd(json, relativePath) {
   const inLanguage = getLanguage(relativePath);
   const graph = Array.isArray(json['@graph']) ? json['@graph'] : [json];
-  const business = graph.find((node) => node && node['@type'] === 'LocalBusiness');
+  const business = graph.find(node => node && node['@type'] === 'LocalBusiness');
   const sameAs = Array.isArray(business?.sameAs) ? business.sameAs : [];
-  const filtered = graph.filter((node) => {
+  const filtered = graph.filter(node => {
     if (!node || typeof node !== 'object') return false;
     return node['@type'] !== 'Organization' && node['@type'] !== 'WebSite';
   });
@@ -148,7 +152,7 @@ function normalizeJsonLd(json, relativePath) {
   const normalizedGraph = [
     organizationObject(sameAs),
     websiteObject(inLanguage),
-    ...filtered.map((node) => (node['@type'] === 'LocalBusiness' ? updateBusiness(node) : node)),
+    ...filtered.map(node => (node['@type'] === 'LocalBusiness' ? updateBusiness(node) : node)),
   ];
 
   return {
@@ -165,7 +169,7 @@ function updateJsonLd(html, relativePath) {
       const indent = match.match(/^(\s*)<script/)?.[1] ?? '';
       const jsonText = JSON.stringify(normalized, null, 2)
         .split('\n')
-        .map((line) => `${indent}${line}`)
+        .map(line => `${indent}${line}`)
         .join('\n');
       return `<script type="application/ld+json">\n${jsonText}\n${indent}</script>`;
     } catch {
@@ -187,7 +191,11 @@ for (const file of walk(root)) {
     html = replaceMetaContent(html, 'property=["\']og:image["\']', socialPreview);
     html = replaceMetaContent(html, 'name=["\']twitter:image["\']', socialPreview);
     html = ensureMetaAfter(html, 'property=["\']og:image["\']', '<meta property="og:image:width" content="1200">');
-    html = ensureMetaAfter(html, 'property=["\']og:image:width["\']', '<meta property="og:image:height" content="630">');
+    html = ensureMetaAfter(
+      html,
+      'property=["\']og:image:width["\']',
+      '<meta property="og:image:height" content="630">'
+    );
     html = updateJsonLd(html, relativePath);
   }
 

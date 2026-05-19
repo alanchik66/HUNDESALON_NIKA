@@ -46,13 +46,33 @@ Without token: Dashboard → **Caching → Purge Everything** after HTML deploys
 
 Optional: same token in Cursor Cloud Agents as `CLOUDFLARE_API_TOKEN` for automated purge in agents.
 
+## Email (contact forms, info@, CSAM)
+
+| Service | Status | Notes |
+|---------|--------|--------|
+| **Resend** (forms → `info@`) | OK | Pages has `RESEND_API_KEY`; test: `POST https://hundesalon-nika.com/sendmail` → `success: true` |
+| **Email Routing** (`info@`) | OK | Dashboard → Email → Routing: active, DNS configured; mail to `info@` is forwarded |
+| **CSAM notify email** | Pending verify | Use `info@hundesalon-nika.com` (matches site imprint); see below |
+
+**CSAM (one-time, ~2 min):**
+
+```bash
+npm run cf:open-csam-setup
+```
+
+1. Email field: `info@hundesalon-nika.com` (already set in Dashboard if you followed the assistant).
+2. Open the inbox for `info@` (or Gmail if routing forwards there) and click Cloudflare’s verification link.
+3. On the CSAM page, click **Submit** / **Absenden** when the button is enabled.
+
+Resend vs Routing: **Resend** sends mail from the site (`noreply@hundesalon-nika.com`). **Email Routing** receives mail at `@hundesalon-nika.com`. Both are independent and already configured for production.
+
 ## Secrets
 
 | Where | Variables |
 |-------|-----------|
 | `.dev.vars` (local, gitignored) | `OPENROUTER_API_KEY`, optional `CLOUDFLARE_API_TOKEN` |
 | Cloudflare Pages | `OPENROUTER_API_KEY`, `RESEND_API_KEY` |
-| Cursor Cloud Agents | `OPENROUTER_API_KEY` only |
+| Cursor Cloud Agents | `OPENROUTER_API_KEY`, `CLOUDFLARE_API_TOKEN` (purge) |
 
 ## Docs
 

@@ -1,4 +1,20 @@
-# Cursor Cloud Agents — secrets
+# Cursor Cloud Agents — setup and secrets
+
+## Завершить onboarding («Set up your cloud environment»)
+
+Репозиторий уже содержит [`.cursor/environment.json`](../.cursor/environment.json) (`npm install`, порты 5502/8788, терминал `npm run dev`). На GitHub это в `main`.
+
+1. Откройте [Cloud Agents → Environments](https://cursor.com/dashboard/cloud-agents#environments) (`npm run cursor:open-cloud-setup`).
+2. **Create environment** (или **Set up** в чеклисте) → выберите **GitHub** → репозиторий `alanchik66/HUNDESALON_NIKA`, ветка `main`.
+3. Cursor запустит `install` из `environment.json`. Дождитесь **Environment ready** (или предупреждений с кнопкой repair).
+4. **Secrets** (тот же dashboard → My Secrets или привязка к environment):
+   - обязательно: `OPENROUTER_API_KEY`
+   - по желанию: `CLOUDFLARE_API_TOKEN` (purge после deploy)
+5. Сохраните **snapshot** виртуальной машины, если мастер предложит — ускорит следующие cloud-агенты.
+
+После этого пункт onboarding в Cursor IDE отметится выполненным.
+
+## Secrets
 
 For this repo you only need **one** OpenRouter secret in [Cloud Agents → My Secrets](https://cursor.com/dashboard/cloud-agents).
 

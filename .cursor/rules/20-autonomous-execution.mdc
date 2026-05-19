@@ -11,3 +11,26 @@ alwaysApply: true
 - После изменений: `npm run validate`, при деплое — `npm run deploy:full` (если запрошен deploy).
 - Секреты — только в Cursor Dashboard / Cloudflare, никогда в git.
 - Git: только ветка `main`; пуш — `npm run git:push` (GitHub + GitLab). Без hello-world, без PR и без лишних веток, если пользователь не просил явно.
+
+# Порядок действий при типовых задачах
+
+## Изменение UI/контента
+1. Внести правку в нужных файлах (все 4 локали если текст/структура)
+2. `npm run lint` — убедиться что чисто
+3. Smoke-check через браузер если видимое изменение
+4. Сообщить результат
+
+## Деплой
+1. `npm run validate` — gate
+2. `npm run deploy:full` — build + deploy + purge + live check
+3. Сообщить URL и статус
+
+## SEO / структура
+1. Проверить hreflang, canonical, JSON-LD
+2. `npm run check:project`
+3. `npm run seo:indexnow` при необходимости
+
+## Cloudflare
+1. Использовать `tools/` CLI или Dashboard browser automation
+2. Не хранить токены в коде
+3. Purge cache после HTML-деплоя

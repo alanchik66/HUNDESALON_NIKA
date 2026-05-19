@@ -21,58 +21,6 @@
  * ================================================================
  */
 
-/* Социальные иконки в мобильном меню */
-
-.mobile-social-icons {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 18px;
-  margin-top: 8px;
-  margin-bottom: 8px;
-  padding-right: 10px;
-}
-
-.mobile-social-icons .social-icon {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0;
-}
-
-.mobile-social-icons .social-icon i {
-  width: 100%;
-  height: 100%;
-  font-size: 22px !important;
-  transform-style: preserve-3d;
-  backface-visibility: visible;
-  animation: iconMetalShimmer var(--icon-sheen-duration) ease-in-out infinite;
-}
-
-.mobile-social-icons .social-icon:hover i {
-  animation:
-    iconSocialBounceFlip 2.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards,
-    iconMetalShimmer var(--icon-sheen-duration) ease-in-out infinite;
-}
-
-@media (width <= 900px) {
-  .mobile-social-icons {
-    gap: 14px;
-    padding-right: 4px;
-  }
-
-  .mobile-social-icons .social-icon {
-    width: 24px;
-    height: 24px;
-  }
-
-  .mobile-social-icons .social-icon i {
-    font-size: 18px !important;
-  }
-}
-
 /* Shared mobile navigation styling lives in the dedicated MOBILE NAV section below. */
 
 /* ===== ROOT / BASE ===== */
@@ -487,7 +435,8 @@ body.nav-open .site-scroll-root {
   padding: 4px var(--site-side-padding);
   gap: 8px;
   column-gap: 10px;
-  overflow: hidden;
+  /* Weather scene in header must be able to bleed outside card bounds. */
+  overflow: visible;
   transition:
     transform 0.62s cubic-bezier(0.22, 1, 0.36, 1),
     background 0.42s cubic-bezier(0.22, 1, 0.36, 1),
@@ -726,7 +675,7 @@ body.light.player-active .header::before {
   .top-row > .logo-wrapper {
     display: flex;
     flex-direction: row;
-    align-items: flex-start;
+    align-items: center;
     gap: 14px;
     padding-right: 0;
     min-height: 0;
@@ -737,7 +686,7 @@ body.light.player-active .header::before {
   }
 
   .top-row > .logo-wrapper .premium-burger {
-    margin-top: 4px;
+    margin-top: 0;
   }
 }
 
@@ -1614,9 +1563,26 @@ html[lang="de"] .social-home a > span {
   box-shadow: none;
 }
 
+/* Premium hover/focus glow so burger highlights like logo. */
+.header .premium-burger:hover,
+.header .premium-burger:focus-visible {
+  filter: saturate(1.12) brightness(1.08) drop-shadow(0 0 8px rgb(198 161 91 / 40%));
+}
+
+.header .premium-burger:hover span,
+.header .premium-burger:focus-visible span {
+  box-shadow:
+    inset 0 1px 0 rgb(255 244 218 / 40%),
+    inset 0 -1px 0 rgb(62 40 10 / 40%),
+    0 1px 0 rgb(28 16 0 / 28%),
+    0 0 8px rgb(198 161 91 / 34%),
+    0 0 14px rgb(231 205 144 / 20%);
+}
+
 .premium-burger:focus-visible {
-  outline: none;
-  box-shadow: none;
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.3);
 }
 
 .premium-burger span {
@@ -1767,8 +1733,8 @@ body.light .premium-burger span {
   margin-top: 0;
   min-width: 0;
   flex-wrap: wrap;
-  margin-right: 24px;
-  transform: translateY(4px);
+  margin-right: 0;
+  transform: none;
 }
 
 .nav-main > a,
@@ -2812,7 +2778,7 @@ body.light .dropdown-menu a:hover {
   margin-top: 0;
   padding-right: 0;
   max-width: 100%;
-  transform: translateY(6px);
+  transform: none;
 }
 
 .header-controls .language-dropdown {
@@ -4038,6 +4004,27 @@ body.light .social-music-item-icon {
   transform: translateY(0);
 }
 
+/* Keep social controls above decorative header layers so clicks
+   always reach icons on all breakpoints. */
+.social-bar {
+  isolation: isolate;
+}
+
+.social-bar .social-player-divider {
+  pointer-events: none;
+}
+
+.social-bar .social-player-wrap,
+.social-bar .social-icons,
+.social-bar .social-icons-wrap,
+.social-bar .social-icon,
+.social-bar .social-icons-toggle,
+.social-bar .social-player-toggle {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
 @media (width >= 900px) {
   .social-bar {
     margin-top: 2px;
@@ -4245,8 +4232,7 @@ body.light .social-music-item-icon {
 .social-bar .social-icon.social-entrance i,
 .header-social-link.social-entrance i,
 .footer-socials .social-link--icon.social-entrance i,
-.footer-socials .social-link-icon.social-entrance i,
-.mobile-social-icons .social-icon.social-entrance i {
+.footer-socials .social-link-icon.social-entrance i {
   animation:
     iconSocialBounceFlip 2.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards,
     iconMetalShimmer var(--icon-sheen-duration) ease-in-out infinite !important;
@@ -4695,8 +4681,8 @@ body.light .social-music-item-icon {
   left: 0;
   right: 0;
   width: 100%;
-  height: min(var(--mobile-nav-height), calc(100dvh - var(--mobile-nav-offset) - 8px));
-  max-height: calc(100dvh - var(--mobile-nav-offset) - 8px);
+  height: min(var(--mobile-nav-height), calc(100dvh - var(--mobile-nav-offset)));
+  max-height: calc(100dvh - var(--mobile-nav-offset));
   padding: 8px 16px 10px;
   display: flex;
   flex-direction: column;
@@ -5841,10 +5827,10 @@ body.light .menu-separator::after {
 
 @media (width <= 640px) {
   #mobile-nav {
-    left: 10px;
-    width: calc(100vw - 20px);
+    left: 0;
+    width: 100vw;
     padding: 12px 10px 14px;
-    border-radius: 18px;
+    border-radius: 0;
   }
 
   #mobile-nav a,
@@ -7881,7 +7867,7 @@ body.light .footer-legal-sep {
 /* =========================================================
    RESPONSIVE
    ========================================================= */
-@media (width <= 899px) {
+@media (width <= 900px) {
   .top-row {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
@@ -7975,11 +7961,11 @@ body.light .footer-legal-sep {
    Header height reference (keeps values in sync with actual header):
      ≥1281px  — top-row 1 row (88px) + social-bar (48px) + padding (16px) ≈ 152px
      900-1280px — top-row 2 rows (146px) + social-bar (48px) + padding (16px) ≈ 210px
-     ≤899px  — top-row 2 rows (164px) + social-bar (56px) + padding (16px) ≈ 236px
+     ≤900px  — top-row 2 rows (164px) + social-bar (56px) + padding (16px) ≈ 236px
      ≤600px  — top-row 3 rows (212px) + social-bar (56px) + padding (16px) ≈ 284px
    Content must clear header + ~20px buffer.
-   section padding-top: 72px (desktop) / 60px (≤899px)
-   hero   padding-top: 168px (desktop) / 136px (≤899px)
+   section padding-top: 72px (desktop) / 60px (≤900px)
+   hero   padding-top: 168px (desktop) / 136px (≤900px)
    ========================================================= */
 
 .section,
@@ -8002,8 +7988,8 @@ body.light .footer-legal-sep {
   }
 }
 
-/* ≤899px: header ≈236px; section needs ≥196px, hero needs ≥120px */
-@media (width <= 899px) {
+/* ≤900px: header ≈236px; section needs ≥196px, hero needs ≥120px */
+@media (width <= 900px) {
   :root {
     --site-side-padding: 14px;
     --section-top-offset-base: 182px;
@@ -8146,59 +8132,58 @@ body:not(.hide-header) .top-row {
   left: 0;
   z-index: 100000;
   pointer-events: none;
-  max-width: 220px;
+  max-width: min(300px, calc(100vw - 20px));
   width: max-content;
-  padding: 7px 14px 8px;
+  padding: 8px 14px 9px;
 
   /* сглаженная "таблетка" как у iOS */
   border-radius: 20px;
   font-family: var(--font-body);
-  font-size: 0.69rem;
+  font-size: 0.72rem;
   font-weight: 500;
-  line-height: 1.3;
-  letter-spacing: 0.022em;
-  color: #ece8df;
-  text-shadow:
-    0 1px 5px rgb(0 0 0 / 55%),
-    0 0 14px rgb(198 161 91 / 18%);
+  line-height: 1.34;
+  letter-spacing: 0.018em;
+  color: rgb(244 240 230 / 96%);
+  text-shadow: 0 1px 4px rgb(0 0 0 / 44%);
 
   /* жидкое стекло: почти полностью прозрачный фон + сильный blur */
-  background: linear-gradient(
-    160deg,
-    rgb(255 255 255 / 0.5%) 0%,
-    rgb(255 255 255 / 0.2%) 45%,
-    rgb(10 20 16 / 0.4%) 100%
-  );
-  backdrop-filter: blur(18px) saturate(1.1) brightness(0.98);
-  backdrop-filter: blur(18px) saturate(1.1) brightness(0.98);
+  background:
+    linear-gradient(
+      162deg,
+      rgb(248 240 220 / 16%) 0%,
+      rgb(215 188 122 / 10%) 40%,
+      rgb(19 16 12 / 86%) 100%
+    ),
+    linear-gradient(180deg, rgb(15 12 9 / 86%) 0%, rgb(9 8 6 / 90%) 100%);
+  -webkit-backdrop-filter: blur(14px) saturate(1.05);
+  backdrop-filter: blur(14px) saturate(1.05);
 
   /* контур: переливающийся градиент по кругу как у Dynamic Island */
   border: 1px solid transparent;
   background-clip: padding-box;
   background-clip: padding-box;
-  outline: 1px solid rgb(255 255 255 / 6%);
+  outline: 1px solid rgb(245 224 170 / 18%);
 
   /* свечение — фирменный iPhone glow */
   box-shadow:
-        /* внешнее мягкое голубоватое свечение */
-    0 0 0 1px rgb(255 255 255 / 18%),
-    0 0 18px 2px rgb(160 220 255 / 12%),
-    /* тень */ 0 8px 32px rgb(0 0 0 / 32%),
-    0 2px 8px rgb(0 0 0 / 18%),
-    /* внутренний блик */ inset 0 1px 0 rgb(255 255 255 / 28%),
-    inset 0 -1px 0 rgb(0 0 0 / 14%);
+    0 0 0 1px rgb(248 226 176 / 22%),
+    0 10px 28px rgb(0 0 0 / 40%),
+    0 3px 10px rgb(0 0 0 / 26%),
+    inset 0 1px 0 rgb(255 255 255 / 22%),
+    inset 0 -1px 0 rgb(32 22 8 / 28%);
   white-space: normal;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+  word-break: normal;
   text-align: center;
   transform: translateY(-1px) scale(0.99);
   opacity: 0;
   visibility: hidden;
   transition:
-    opacity 0.22s ease,
-    visibility 0.22s ease,
-    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.3s ease;
+    opacity 0.2s ease,
+    visibility 0.2s ease,
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
+  contain: layout paint style;
 }
 
 /* верхний блик — эффект стеклянной линзы */
@@ -8230,9 +8215,9 @@ body:not(.hide-header) .top-row {
   transform: translateX(-50%);
   width: 10px;
   height: 6px;
-  background: rgb(255 255 255 / 12%);
+  background: rgb(224 197 136 / 56%);
   clip-path: polygon(0 0, 100% 0, 50% 100%);
-  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 30%));
+  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 22%));
 }
 
 /* без стрелки (тултип логотипа) */
@@ -8241,10 +8226,10 @@ body:not(.hide-header) .top-row {
 }
 
 .nika-tooltip[data-compact="1"] {
-  max-width: 180px;
+  max-width: min(220px, calc(100vw - 20px));
   padding: 5px 11px 6px;
   border-radius: 16px;
-  font-size: 0.58rem;
+  font-size: 0.62rem;
 }
 
 /* СНИЗУ */
@@ -8296,34 +8281,32 @@ body:not(.hide-header) .top-row {
 
   /* пульсирующее свечение после появления */
   box-shadow:
-    0 0 0 1px rgb(255 255 255 / 8%),
-    0 0 14px 2px rgb(160 220 255 / 6%),
-    0 6px 22px rgb(0 0 0 / 18%),
-    0 2px 6px rgb(0 0 0 / 10%),
-    inset 0 1px 0 rgb(255 255 255 / 10%),
-    inset 0 -1px 0 rgb(0 0 0 / 5%);
+    0 0 0 1px rgb(248 226 176 / 28%),
+    0 12px 30px rgb(0 0 0 / 46%),
+    0 3px 12px rgb(0 0 0 / 28%),
+    inset 0 1px 0 rgb(255 255 255 / 24%),
+    inset 0 -1px 0 rgb(32 22 8 / 28%);
 }
 
 /* светлая тема — молочное жидкое стекло */
 
 body.light .nika-tooltip {
-  color: #1a1e3a;
-  text-shadow:
-    0 1px 4px rgb(255 255 255 / 60%),
-    0 0 12px rgb(90 110 200 / 12%);
+  color: rgb(35 41 71 / 96%);
+  text-shadow: 0 1px 2px rgb(255 255 255 / 42%);
   background: linear-gradient(
     160deg,
-    rgb(240 242 255 / 2.3%) 0%,
-    rgb(230 234 252 / 1.3%) 50%,
-    rgb(220 226 248 / 0.9%) 100%
+    rgb(250 251 255 / 86%) 0%,
+    rgb(240 245 255 / 80%) 52%,
+    rgb(229 236 251 / 84%) 100%
   );
+  -webkit-backdrop-filter: blur(14px) saturate(1.03);
+  backdrop-filter: blur(14px) saturate(1.03);
   box-shadow:
-    0 0 0 1px rgb(255 255 255 / 28%),
-    0 0 10px 1px rgb(90 130 255 / 7%),
-    0 6px 18px rgb(0 0 0 / 7%),
-    0 2px 6px rgb(0 0 0 / 4%),
-    inset 0 1px 0 rgb(255 255 255 / 40%),
-    inset 0 -1px 0 rgb(0 0 0 / 2%);
+    0 0 0 1px rgb(173 188 234 / 32%),
+    0 8px 22px rgb(43 62 110 / 14%),
+    0 2px 8px rgb(43 62 110 / 10%),
+    inset 0 1px 0 rgb(255 255 255 / 70%),
+    inset 0 -1px 0 rgb(145 165 210 / 12%);
 }
 
 body.light .nika-tooltip::before {
@@ -8336,7 +8319,7 @@ body.light .nika-tooltip::before {
 }
 
 body.light .nika-tooltip::after {
-  background: rgb(255 255 255 / 50%);
+  background: rgb(202 214 242 / 88%);
 }
 
 /* анимация только текста — скользит слева направо, стартует после появления окошка */
@@ -8349,11 +8332,37 @@ body.light .nika-tooltip::after {
 
 body.light .nika-tooltip--visible {
   box-shadow:
-    0 0 0 1px rgb(255 255 255 / 65%),
-    0 0 22px 4px rgb(90 130 255 / 18%),
-    0 8px 32px rgb(0 0 0 / 10%),
-    inset 0 1px 0 rgb(255 255 255 / 85%),
-    inset 0 -1px 0 rgb(0 0 0 / 4%);
+    0 0 0 1px rgb(183 198 238 / 46%),
+    0 10px 24px rgb(43 62 110 / 16%),
+    inset 0 1px 0 rgb(255 255 255 / 84%),
+    inset 0 -1px 0 rgb(145 165 210 / 16%);
+}
+
+@media (width <= 900px) {
+  .nika-tooltip {
+    max-width: min(240px, calc(100vw - 18px));
+    padding: 7px 12px 8px;
+    border-radius: 16px;
+    font-size: 0.66rem;
+    line-height: 1.32;
+  }
+
+  .nika-tooltip[data-compact="1"] {
+    max-width: min(190px, calc(100vw - 18px));
+    font-size: 0.58rem;
+    padding: 5px 9px 6px;
+  }
+
+  .nika-tooltip::after {
+    width: 8px;
+    height: 5px;
+  }
+
+  .nika-tooltip--right::after,
+  .nika-tooltip--left::after {
+    width: 5px;
+    height: 8px;
+  }
 }
 
 .promo-btn-icon {
@@ -8581,7 +8590,7 @@ body.light .nika-tooltip--visible {
   }
 }
 
-@media (width <= 899px) {
+@media (width <= 900px) {
   .top-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -8619,8 +8628,10 @@ body.light .nika-tooltip--visible {
     justify-self: stretch;
     width: 100%;
     min-width: 0;
-    height: 300px;
-    min-height: 300px;
+    height: var(--header-weather-panel-h, clamp(176px, 40vw, 212px));
+    min-height: var(--header-weather-panel-h, clamp(176px, 40vw, 212px));
+    max-height: none;
+    overflow: visible;
   }
 
   .header-weather-widget {
@@ -8648,13 +8659,6 @@ body.light .nika-tooltip--visible {
 
   .header-weather-widget[data-weather-expanded="true"] {
     z-index: 48;
-  }
-}
-
-@media (width <= 600px) {
-  .header-weather-shell {
-    height: 76px;
-    min-height: 76px;
   }
 }
 
@@ -8698,25 +8702,7 @@ body.light .nika-tooltip--visible {
   border-radius: 0 !important;
 }
 
-.mobile-social-icons--secondary {
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 14px;
-  margin: 2px 0 12px;
-  padding-right: 0;
-}
-
-.mobile-social-icons--secondary .social-icon {
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
-}
-
-.mobile-social-icons--secondary .social-icon i {
-  font-size: 20px !important;
-}
-
-@media (width <= 899px) {
+@media (width <= 900px) {
   .top-row {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
@@ -8781,7 +8767,7 @@ body.light .nika-tooltip--visible {
   }
 }
 
-@media (width <= 899px) {
+@media (width <= 900px) {
   @supports (-webkit-touch-callout: none) {
     .header {
       padding-top: calc(4px + env(safe-area-inset-top, 0px));
@@ -8900,7 +8886,7 @@ body.light .nika-tooltip--visible {
 
   .header.header--mobile-day-clouds .top-row {
     position: relative;
-    isolation: isolate;
+    isolation: auto;
     --mobile-day-clouds-origin-x: 50%;
     --mobile-day-clouds-origin-y: 54%;
     --mobile-day-clouds-opacity: 0.84;
@@ -8950,136 +8936,42 @@ body.light .nika-tooltip--visible {
     animation: headerMobileRainSweep 1.35s linear infinite;
   }
 
-  .header.header--mobile-day-clouds .top-row::after {
-    content: "";
-    position: absolute;
-    inset: -10px -14px -14px -14px;
-    pointer-events: none;
-    z-index: 6;
-    opacity: var(--mobile-day-clouds-opacity, 0.82);
-    background:
-      linear-gradient(
-        180deg,
-        rgba(94, 106, 114, 0.24) 0%,
-        rgba(79, 90, 98, 0.32) 42%,
-        rgba(63, 72, 80, 0.4) 100%
-      ),
-      radial-gradient(
-        34% 16% at 24% 26%,
-        rgba(184, 193, 199, 0.34) 0%,
-        rgba(150, 160, 167, 0.24) 34%,
-        rgba(101, 112, 120, 0.12) 58%,
-        transparent 76%
-      ),
-      radial-gradient(
-        30% 15% at 50% 22%,
-        rgba(176, 185, 192, 0.3) 0%,
-        rgba(140, 150, 158, 0.22) 34%,
-        rgba(95, 106, 114, 0.12) 58%,
-        transparent 76%
-      ),
-      radial-gradient(
-        32% 16% at 74% 28%,
-        rgba(170, 180, 187, 0.3) 0%,
-        rgba(134, 145, 153, 0.22) 35%,
-        rgba(91, 101, 109, 0.12) 58%,
-        transparent 76%
-      ),
-      radial-gradient(
-        42% 18% at 48% 58%,
-        rgba(136, 146, 154, 0.28) 0%,
-        rgba(106, 116, 124, 0.2) 38%,
-        rgba(76, 86, 94, 0.12) 62%,
-        transparent 82%
-      );
-    filter: blur(12px) saturate(0.94) brightness(1.04);
-    mix-blend-mode: normal;
-  }
-
-  .header.header--mobile-day-clouds.header--mobile-day-clouds-overcast .top-row::after {
-    background:
-      linear-gradient(
-        180deg,
-        rgba(138, 143, 147, 0.34) 0%,
-        rgba(121, 127, 131, 0.46) 28%,
-        rgba(103, 109, 114, 0.58) 58%,
-        rgba(85, 92, 97, 0.66) 100%
-      ),
-      radial-gradient(
-        62% 34% at 18% 26%,
-        rgba(214, 218, 220, 0.38) 0%,
-        rgba(184, 189, 193, 0.34) 30%,
-        rgba(142, 149, 154, 0.22) 54%,
-        transparent 82%
-      ),
-      radial-gradient(
-        56% 30% at 50% 22%,
-        rgba(208, 212, 215, 0.36) 0%,
-        rgba(178, 183, 187, 0.32) 30%,
-        rgba(138, 145, 151, 0.22) 54%,
-        transparent 80%
-      ),
-      radial-gradient(
-        60% 32% at 84% 28%,
-        rgba(204, 209, 212, 0.34) 0%,
-        rgba(173, 179, 184, 0.3) 30%,
-        rgba(133, 141, 147, 0.2) 54%,
-        transparent 82%
-      ),
-      radial-gradient(
-        86% 46% at 50% 62%,
-        rgba(160, 167, 173, 0.34) 0%,
-        rgba(132, 140, 147, 0.28) 38%,
-        rgba(98, 106, 113, 0.2) 62%,
-        transparent 88%
-      );
-    filter: blur(8px) saturate(0.98) brightness(1.08);
-  }
-
+  /* Temporary hard-off: disable all mobile cloud overlays until final tuning. */
+  .header.header--mobile-day-clouds .top-row::before,
+  .header.header--mobile-day-clouds .top-row::after,
+  .header.header--mobile-day-clouds.header--mobile-day-clouds-overcast .top-row::after,
+  .header.header--mobile-day-clouds.header--mobile-day-clouds-precipitation .top-row::before,
   .header.header--mobile-day-clouds.header--mobile-day-clouds-precipitation .top-row::after {
-    background:
-      linear-gradient(
-        180deg,
-        rgba(128, 134, 138, 0.34) 0%,
-        rgba(110, 117, 121, 0.48) 30%,
-        rgba(90, 97, 102, 0.62) 58%,
-        rgba(72, 79, 84, 0.74) 100%
-      ),
-      radial-gradient(
-        70% 40% at 22% 20%,
-        rgba(198, 203, 206, 0.3) 0%,
-        rgba(164, 171, 176, 0.28) 30%,
-        rgba(122, 130, 136, 0.2) 54%,
-        transparent 82%
-      ),
-      radial-gradient(
-        64% 36% at 76% 24%,
-        rgba(190, 196, 200, 0.28) 0%,
-        rgba(156, 163, 168, 0.26) 30%,
-        rgba(116, 124, 130, 0.2) 54%,
-        transparent 82%
-      ),
-      radial-gradient(
-        88% 50% at 50% 62%,
-        rgba(148, 156, 162, 0.34) 0%,
-        rgba(118, 126, 133, 0.3) 38%,
-        rgba(86, 94, 101, 0.22) 62%,
-        transparent 88%
-      );
-    filter: blur(10px) saturate(0.96) brightness(1.06);
-    mix-blend-mode: normal;
+    content: none !important;
+    background: none !important;
+    filter: none !important;
+    opacity: 0 !important;
+  }
+
+  /* Dark mobile “shirma” disabled — real 3D clouds must paint above any top-row overlay. */
+  .header.header--mobile-day-clouds .top-row::after,
+  .header.header--mobile-day-clouds.header--mobile-day-clouds-overcast .top-row::after,
+  .header.header--mobile-day-clouds.header--mobile-day-clouds-precipitation .top-row::after {
+    content: none !important;
+    display: none !important;
+    opacity: 0 !important;
+    z-index: -1 !important;
+    background: none !important;
+    filter: none !important;
   }
 
   .header.header--mobile-day-clouds .top-row > .logo-wrapper,
   .header.header--mobile-day-clouds .top-row > .nav-main,
   .header.header--mobile-day-clouds .top-row > .header-controls {
     position: relative;
-    z-index: 8;
+    z-index: 12;
   }
 
   .header.header--mobile-day-clouds .top-row > .header-weather-shell {
     position: relative;
-    z-index: 4;
+    z-index: 8;
+    overflow: visible !important;
+    isolation: auto !important;
   }
 
   .header.header--mobile-day-clouds .top-row > .logo-wrapper,
@@ -9118,7 +9010,7 @@ body.light .nika-tooltip--visible {
   width: 100%;
   min-width: 0;
   overflow: visible;
-  isolation: isolate;
+  isolation: auto;
 }
 
 .header .top-row > .nav-main {
@@ -9235,6 +9127,51 @@ body.light .nika-tooltip--visible {
   filter: none;
 }
 
+/* Desktop header controls: matched globe + theme icon boxes (45px hit, 40px glyph). */
+@media (width >= 900px) {
+  .header .top-row > .header-controls {
+    --header-control-icon-box: 45px;
+    --header-control-icon-glyph: 45px;
+  }
+
+  .header .top-row > .header-controls .theme-btn {
+    width: var(--header-control-icon-box);
+    min-width: var(--header-control-icon-box);
+    height: var(--header-control-icon-box);
+    min-height: var(--header-control-icon-box);
+    padding: 0;
+  }
+
+  .header .top-row > .header-controls .theme-btn::before {
+    width: var(--header-control-icon-glyph);
+    height: var(--header-control-icon-glyph);
+  }
+
+  .header .top-row > .header-controls .lang-dropdown-btn {
+    width: auto;
+    min-width: var(--header-control-icon-box);
+    height: var(--header-control-icon-box);
+    min-height: var(--header-control-icon-box);
+    padding: 0 2px 0 0;
+    gap: 2px;
+    justify-content: center;
+    border-radius: 0;
+  }
+
+  .header .top-row > .header-controls .lang-dropdown-btn i:first-child {
+    width: var(--header-control-icon-glyph);
+    min-width: var(--header-control-icon-glyph);
+    height: var(--header-control-icon-glyph);
+    background-size: contain;
+  }
+
+  .header .top-row > .header-controls .lang-dropdown-btn i:last-child {
+    width: 7.2px;
+    min-width: 7.2px;
+    height: 7.2px;
+  }
+}
+
 @media (width >= 900px) {
   .header.header--weather-crowded .top-row {
     grid-template-columns: max-content minmax(0, 1fr) max-content !important;
@@ -9273,27 +9210,6 @@ body.light .nika-tooltip--visible {
   }
 }
 
-.mobile-social-icons .social-icon .mobile-menu-euro-icon {
-  width: 100%;
-  height: 100%;
-  font-size: 0 !important;
-  color: transparent;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: contain;
-  transform-style: preserve-3d;
-  backface-visibility: visible;
-  animation: iconMetalShimmer var(--icon-sheen-duration) ease-in-out infinite;
-  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 26%)) drop-shadow(0 0 4px rgb(255 223 171 / 10%));
-}
-
-.mobile-social-icons .social-icon:hover .mobile-menu-euro-icon,
-.mobile-social-icons .social-icon:focus-visible .mobile-menu-euro-icon {
-  animation:
-    iconSocialBounceFlip 2.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards,
-    iconMetalShimmer var(--icon-sheen-duration) ease-in-out infinite;
-}
-
 @media (width >= 1281px) {
   .header .top-row {
     grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr) max-content;
@@ -9312,9 +9228,11 @@ body.light .nika-tooltip--visible {
     width: 100% !important;
     flex: 1;
     min-width: 240px;
-    height: 104px !important;
-    min-height: 104px !important;
+    height: var(--header-weather-panel-h, 104px) !important;
+    min-height: var(--header-weather-panel-h, 104px) !important;
+    max-height: none !important;
     margin-right: 0;
+    overflow: visible !important;
   }
 
   .header .top-row > .nav-main {
@@ -9384,7 +9302,7 @@ body.light .nika-tooltip--visible {
   }
 }
 
-@media (width <= 899px) {
+@media (width <= 900px) {
   .header .top-row {
     grid-template-areas:
       "logo controls"
@@ -9459,23 +9377,6 @@ body.light .nika-tooltip--visible {
   }
 }
 
-/* ===== HEADER WEATHER SIZE PROPERLY CONFIGURED ABOVE ===== */
-/* Compact overrides removed — using responsive sizes from media queries at line 8220+ */
-
-@media (width <= 899px) {
-  .header-weather-shell {
-    height: 300px;
-    min-height: 300px;
-  }
-}
-
-@media (width <= 600px) {
-  .header-weather-shell {
-    height: 280px;
-    min-height: 280px;
-  }
-}
-
 body.header-weather-expanded .header,
 body.header-weather-expanded .header-weather-shell,
 body.header-weather-expanded .header-weather-widget {
@@ -9526,7 +9427,7 @@ body.header-weather-expanded .header-weather-widget {
 }
 
 /* ── 4. Hero right column: prevent horizontal overflow ────── */
-@media (width <= 899px) {
+@media (width <= 900px) {
   .hero-right {
     width: 100%;
     max-width: 100%;
@@ -9734,11 +9635,10 @@ body.header-weather-expanded .header-weather-widget {
 }
 
 /* ── 15. Prevent any element from causing horizontal scroll ─ */
-@media (width <= 899px) {
+@media (width <= 900px) {
   .hero,
   .section,
   .footer,
-  .header,
   .about-container,
   .services-grid,
   .gallery-grid,
@@ -9746,15 +9646,163 @@ body.header-weather-expanded .header-weather-widget {
     max-width: 100%;
     overflow-x: hidden;
   }
+
+  .header,
+  .header .top-row,
+  .header .top-row > .header-weather-shell,
+  .header-weather-widget[data-weather-widget] {
+    overflow: visible !important;
+  }
+
+  /* Keep cloud scene uncut across main + social header bands. */
+  .header .top-row,
+  .header .top-row > .header-weather-shell,
+  .header-weather-widget[data-weather-widget],
+  .social-bar,
+  .social-bar-inner,
+  .social-bar-start {
+    overflow: visible !important;
+    clip-path: none !important;
+  }
+
+  /* Hard anti-overlap mode for visible social header:
+   nothing inside this header may clip or cover weather clouds. */
+  .header.header-social-visible,
+  .header.header-social-visible .top-row,
+  .header.header-social-visible .top-row > .header-weather-shell,
+  .header.header-social-visible .header-weather-widget[data-weather-widget],
+  .header.header-social-visible .social-bar,
+  .header.header-social-visible .social-bar-inner,
+  .header.header-social-visible .social-bar-start {
+    overflow: visible !important;
+    clip-path: none !important;
+    contain: none !important;
+  }
+
+  .header.header-social-visible::before,
+  .header.header-social-visible::after,
+  .header.header-social-visible .top-row::before,
+  .header.header-social-visible .top-row::after,
+  .header.header-social-visible .social-bar::before,
+  .header.header-social-visible .social-bar::after {
+    pointer-events: none !important;
+    z-index: 0 !important;
+  }
+
+  .header.header-social-visible .top-row > .header-weather-shell,
+  .header.header-social-visible .header-weather-widget[data-weather-widget] {
+    position: relative !important;
+    z-index: 10 !important;
+  }
+
+  /* Hard anti-clip chain for weather clouds in main menu. */
+  .header.header-social-visible,
+  .header.header-social-visible .top-row,
+  .header.header-social-visible .top-row > .header-weather-shell,
+  .header.header-social-visible .header-weather-widget[data-weather-widget] {
+    overflow: visible !important;
+    clip-path: none !important;
+    contain: none !important;
+  }
+
+  .header.header-social-visible .top-row > .header-weather-shell::before,
+  .header.header-social-visible .top-row > .header-weather-shell::after,
+  .header.header-social-visible .header-weather-widget[data-weather-widget]::before,
+  .header.header-social-visible .header-weather-widget[data-weather-widget]::after {
+    clip-path: none !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+  }
+
+  /* Restore decorative lines but place them lower (near social house chimney). */
+  .header:has(.header-weather-widget[data-weather-widget])::before {
+    content: "" !important;
+    display: block !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: -1px !important;
+    width: auto !important;
+    height: 1px !important;
+    border-radius: 0 !important;
+    background: linear-gradient(
+      90deg,
+      rgb(255 255 255 / 0%) 0%,
+      rgb(155 124 67 / 4%) 18%,
+      rgb(225 193 126 / 16%) 50%,
+      rgb(155 124 67 / 4%) 82%,
+      rgb(255 255 255 / 0%) 100%
+    ) !important;
+    box-shadow: none !important;
+    background-size: 220% 100% !important;
+    background-position: 50% 50% !important;
+    opacity: 0.28 !important;
+    z-index: 1 !important;
+    animation: siriHeaderLineFlow 7.8s ease-in-out infinite !important;
+  }
+
+  .header:has(.header-weather-widget[data-weather-widget]) .social-bar::before {
+    content: "" !important;
+    display: block !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: -1px !important;
+    bottom: auto !important;
+    width: auto !important;
+    height: 1px !important;
+    border-radius: 0 !important;
+    background: linear-gradient(
+      90deg,
+      rgb(255 255 255 / 0%) 0%,
+      rgb(155 124 67 / 4%) 18%,
+      rgb(225 193 126 / 16%) 50%,
+      rgb(155 124 67 / 4%) 82%,
+      rgb(255 255 255 / 0%) 100%
+    ) !important;
+    box-shadow: none !important;
+    background-size: 220% 100% !important;
+    background-position: 50% 50% !important;
+    opacity: 0.22 !important;
+    animation: siriHeaderLineFlow 7.8s ease-in-out infinite !important;
+  }
+
+  /* Fallback without :has() to guarantee raised lower line. */
+  .header .social-bar::before {
+    top: -1px !important;
+    bottom: auto !important;
+  }
+
+  /* Keep cloud/mask overlays disabled in mobile day-cloud variant. */
+  .header:has(.header-weather-widget[data-weather-widget]).header--mobile-day-clouds
+    .top-row::before,
+  .header:has(.header-weather-widget[data-weather-widget]).header--mobile-day-clouds
+    .top-row::after {
+    content: none !important;
+    display: none !important;
+    background: none !important;
+    box-shadow: none !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+  }
+}
+
+/* Global anti-clip for weather clouds in both top-row and social row. */
+.header .top-row,
+.header .top-row > .header-weather-shell,
+.header-weather-widget[data-weather-widget],
+.social-bar,
+.social-bar-inner,
+.social-bar-start {
+  overflow: visible !important;
+  clip-path: none !important;
 }
 
 /* ══════════════════════════════════════════════════════════════════
    MOBILE HEADER FINAL LAYOUT — permanent rule for all pages/devices
    Layout: [LOGO far-LEFT] [controls CENTER] [🍔 burger far-RIGHT]
    Controls order: lang switcher → online booking → theme toggle
-   Applies ≤ 899px. Uses !important to override all previous rules.
+   Applies ≤ 900px. Uses !important to override all previous rules.
    ══════════════════════════════════════════════════════════════════ */
-@media (width <= 899px) {
+@media (width <= 900px) {
   /* 1. top-row: single flex row, right padding reserves burger space */
   .header .top-row {
     display: flex !important;
@@ -9972,9 +10020,9 @@ body.light .social-icons-toggle.is-open {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   ONLINE BUTTON: btn-neon style on mobile (≤899px), smaller size
+   ONLINE BUTTON: btn-neon style on mobile (≤900px), smaller size
    ══════════════════════════════════════════════════════════════════ */
-@media (width <= 899px) {
+@media (width <= 900px) {
   .header .top-row > .header-controls a.header-online-btn,
   .header .top-row > .header-controls .header-online-btn {
     /* Reset gold pill styles */
@@ -10062,8 +10110,8 @@ body.light .social-icons-toggle.is-open {
 }
 
 .social-bar::before {
-  top: auto !important;
-  bottom: 100% !important;
+  top: -1px !important;
+  bottom: auto !important;
   height: 1px !important;
 }
 
@@ -10183,9 +10231,9 @@ body.light .social-icons-toggle.is-open {
 
 /* ══════════════════════════════════════════════════════════════════
    MOBILE LOGO SIZE: same as burger (46×46px)
-   Only on mobile ≤899px
+   Only on mobile ≤900px
    ══════════════════════════════════════════════════════════════════ */
-@media (width <= 899px) {
+@media (width <= 900px) {
   .logo-img {
     width: 46px !important;
     height: 46px !important;
@@ -10199,7 +10247,7 @@ body.light .social-icons-toggle.is-open {
    centered in header area, z-index lower than controls & social bar.
    Social bar gets z-index > top-row (5) to always paint above weather.
    ══════════════════════════════════════════════════════════════════ */
-@media (width <= 899px) {
+@media (width <= 900px) {
   /* 1. top-row: keep overflow visible so expanded weather panel shows */
   .header .top-row {
     overflow: visible !important;
@@ -10217,18 +10265,19 @@ body.light .social-icons-toggle.is-open {
     position: relative !important;
     left: auto !important;
     top: auto !important;
-    transform: translateY(6px) !important;
+    transform: none !important;
     display: none !important;
     width: 100% !important;
-    height: 112px !important;
+    height: var(--header-weather-panel-h, clamp(176px, 40vw, 212px)) !important;
     min-width: 0 !important;
-    min-height: 112px !important;
+    min-height: var(--header-weather-panel-h, clamp(176px, 40vw, 212px)) !important;
     max-height: none !important;
     flex: none !important;
     grid-column: 1 / -1 !important;
     grid-row: 2 !important;
-    z-index: 2 !important;
-    margin: 6px 0 0 !important;
+    z-index: 8 !important;
+    margin: 4px 0 0 !important;
+    isolation: auto !important;
     padding: 0 !important;
     background: transparent !important;
     overflow: visible !important;
@@ -10236,9 +10285,7 @@ body.light .social-icons-toggle.is-open {
 
   .header .top-row > .header-weather-shell.weather-shell-ready,
   .top-row > .header-weather-shell.weather-shell-ready {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
+    display: block !important;
     overflow: visible !important;
     border-radius: 0 !important;
     clip-path: none !important;
@@ -10358,88 +10405,6 @@ body.light .social-icons-toggle.is-open {
   overflow: visible !important;
 }
 
-@media (width >= 900px) {
-  .header .top-row > .header-weather-shell,
-  .top-row > .header-weather-shell {
-    width: 100% !important;
-    min-width: 0 !important;
-    height: 88px !important;
-    min-height: 88px !important;
-    max-width: none !important;
-    max-height: none !important;
-    transform: translateY(8px) !important;
-    margin-top: 4px !important;
-    margin-bottom: -4px !important;
-    overflow: visible !important;
-  }
-
-  .header-weather-widget[data-weather-widget] {
-    width: 100% !important;
-    height: 100% !important;
-    min-width: 0 !important;
-    min-height: inherit !important;
-    max-width: none !important;
-    max-height: none !important;
-  }
-}
-
-@media (width <= 899px) {
-  .header .top-row {
-    flex-wrap: wrap !important;
-    align-items: flex-start !important;
-  }
-
-  .header .top-row > .header-weather-shell,
-  .top-row > .header-weather-shell {
-    position: relative !important;
-    left: auto !important;
-    top: auto !important;
-    display: block !important;
-    order: 10 !important;
-    flex: 0 0 calc(100% + 58px) !important;
-    grid-area: weather !important;
-    grid-column: 1 / -1 !important;
-    grid-row: 2 !important;
-    justify-self: stretch !important;
-    width: calc(100% + 58px) !important;
-    min-width: 0 !important;
-    max-width: none !important;
-    height: 300px !important;
-    min-height: 300px !important;
-    max-height: none !important;
-    transform: translateY(6px) !important;
-    margin: 6px -58px 0 0 !important;
-    padding: 0 !important;
-    overflow: visible !important;
-    pointer-events: auto !important;
-    z-index: 2 !important;
-  }
-
-  .header .top-row > .header-weather-shell.weather-shell-ready,
-  .top-row > .header-weather-shell.weather-shell-ready {
-    display: block !important;
-    justify-content: initial !important;
-    align-items: initial !important;
-    overflow: visible !important;
-    border-radius: 0 !important;
-    clip-path: none !important;
-    pointer-events: auto !important;
-  }
-
-  .header-weather-widget[data-weather-widget] {
-    flex: none !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-width: 0 !important;
-    min-height: inherit !important;
-    max-width: none !important;
-    max-height: none !important;
-    overflow: visible !important;
-    clip-path: none !important;
-    pointer-events: auto !important;
-  }
-}
-
 /* Desktop header geometry: weather owns its column; animation can breathe outside. */
 @media (width >= 900px) {
   .header {
@@ -10470,13 +10435,13 @@ body.light .social-icons-toggle.is-open {
     justify-self: stretch !important;
     align-self: center !important;
     width: 100% !important;
-    min-width: 420px !important;
+    min-width: 0 !important;
     max-width: 680px !important;
-    height: 112px !important;
-    min-height: 112px !important;
-    max-height: 112px !important;
+    height: 100px !important;
+    min-height: 100px !important;
+    max-height: none !important;
     margin: 0 !important;
-    transform: translateY(4px) !important;
+    transform: none !important;
     overflow: visible !important;
     z-index: 24 !important;
   }
@@ -10526,7 +10491,7 @@ body.light .social-icons-toggle.is-open {
 }
 
 /* Mobile header burger lock: the burger always belongs to the top-row edge, never to the logo box. */
-@media (width <= 899px) {
+@media (width <= 900px) {
   .header .top-row {
     position: relative !important;
     padding-right: 58px !important;
@@ -10588,6 +10553,7 @@ body.light .social-icons-toggle.is-open {
   border: none !important;
   box-shadow: none !important;
   outline: none !important;
+  outline-offset: 0;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -10613,19 +10579,29 @@ body.light .social-icons-toggle.is-open {
   border-radius: 0 !important;
   box-shadow: none !important;
   outline: none !important;
+  outline-offset: 0;
   overflow: visible !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
+.header .theme-btn:focus-visible,
+.header .header-controls .lang-dropdown-btn:focus-visible,
+.header .social-player-toggle:focus-visible,
+.header .social-icons-toggle:focus-visible {
+  outline: 2px solid rgb(242 210 145 / 70%) !important;
+  outline-offset: 2px;
+}
+
 /* Fluid compact header and social-band alignment. */
-@media (width <= 899px) {
+@media (width <= 900px) {
   .header {
     --header-edge-slot: max(var(--logo-mark-width, 46px), 46px);
     --header-row-gap: clamp(6px, 1.6vw, 10px);
     --header-item-gap: clamp(6px, 2vw, 12px);
 
-    overflow-x: clip;
+    /* Do not use overflow-x:clip here — it forces overflow-y:auto and clips cloud scene. */
+    overflow: visible;
   }
 
   .header .top-row {
@@ -10726,6 +10702,14 @@ body.light .social-icons-toggle.is-open {
     flex: none !important;
     margin: 0 !important;
     transform: none !important;
+    overflow: visible !important;
+    clip-path: none !important;
+    contain: none !important;
+  }
+
+  .header-weather-widget[data-weather-widget] {
+    overflow: visible !important;
+    contain: none !important;
   }
 
   .header .social-bar-inner {
@@ -10911,71 +10895,9 @@ body.light .social-icons-toggle.is-open {
   }
 }
 
-/* Header weather slim top lock. */
-@media (width >= 1281px) {
-  .header .top-row > .header-weather-shell,
-  .top-row > .header-weather-shell {
-    align-self: center !important;
-    height: 88px !important;
-    min-height: 88px !important;
-    max-height: 88px !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    transform: none !important;
-  }
-}
-
-@media (width <= 1280px) and (width >= 900px) {
-  .header .top-row > .header-weather-shell,
-  .top-row > .header-weather-shell {
-    align-self: center !important;
-    height: 82px !important;
-    min-height: 82px !important;
-    max-height: 82px !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    transform: none !important;
-  }
-}
-
-@media (width <= 899px) {
-  .header {
-    --header-row-gap: 0px;
-
-    overflow: visible !important;
-  }
-
-  .header .top-row {
-    padding-top: 0 !important;
-    overflow: visible !important;
-  }
-
-  .header .top-row > .header-weather-shell,
-  .top-row > .header-weather-shell {
-    height: clamp(78px, 20vw, 84px) !important;
-    min-height: clamp(78px, 20vw, 84px) !important;
-    max-height: 84px !important;
-    margin-top: -4px !important;
-    transform: none !important;
-    overflow: visible !important;
-    z-index: 1 !important;
-  }
-
-  .header-weather-widget[data-weather-widget] {
-    overflow: visible !important;
-  }
-
-  .header .top-row > .logo-wrapper,
-  .header .top-row > .header-controls,
-  .header .top-row > .premium-burger,
-  .header .top-row .premium-burger {
-    z-index: 6 !important;
-  }
-}
-
 /* Mobile social-bar icon scale + alignment
    36px -> 25px (~30% smaller), pixel-perfect spacing for mobile layout. */
-@media (width <= 899px) {
+@media (width <= 900px) {
   .header .social-bar {
     --social-bar-icon-size: 25px !important;
     padding-top: 1px !important;
@@ -11061,7 +10983,9 @@ body.light .social-icons-toggle.is-open {
     gap: 4px !important;
     padding: 4px 8px !important;
   }
+
 }
+
 
 /* Final side-gutter lock: content edges always follow logo/burger line. */
 .header {
@@ -11074,14 +10998,14 @@ body.light .social-icons-toggle.is-open {
   padding-right: var(--site-side-padding) !important;
 }
 
-@media (width <= 899px) {
+@media (width <= 900px) {
   .hero {
     padding-left: var(--site-side-padding) !important;
     padding-right: var(--site-side-padding) !important;
   }
 }
 
-@media (width <= 899px) {
+@media (width <= 900px) {
   /* Final hard lock for edge icons: strict 1:1 with logo/burger guides. */
   .header .social-home {
     transform: translateX(0) !important;
@@ -11099,10 +11023,83 @@ body.light .social-icons-toggle.is-open {
   }
 }
 
-/* Final weather slot authority: keep one clear responsive geometry for all devices. */
+/* Click-priority lock: social controls must stay clickable even when
+   weather widget visuals overflow beyond their own slot. */
+.header .social-bar {
+  position: relative !important;
+  z-index: 64 !important;
+  pointer-events: auto !important;
+}
+
+.header .social-bar .social-home,
+.header .social-bar .social-player-wrap,
+.header .social-bar .social-player-toggle,
+.header .social-bar .social-icons-wrap,
+.header .social-bar .social-icons-toggle,
+.header .social-bar .social-icons,
+.header .social-bar .social-icon {
+  position: relative;
+  z-index: 65;
+  pointer-events: auto !important;
+}
+
+/* =========================================================
+   MAIN MENU — pixel lock (final authority, desktop + mobile)
+   ========================================================= */
 @media (width >= 900px) {
+  .header {
+    --header-menu-pad-y: 6px;
+    --header-menu-icon: 46px;
+    --header-menu-weather-h: 100px;
+    --header-menu-col-gap: 16px;
+  }
+
   .header .top-row {
-    grid-template-columns: max-content 46px minmax(0, 1fr) max-content max-content !important;
+    display: grid !important;
+    grid-template-areas: "logo burger weather nav controls" !important;
+    grid-template-columns:
+      max-content
+      var(--header-menu-icon)
+      minmax(280px, 1fr)
+      max-content
+      max-content !important;
+    align-items: center !important;
+    justify-items: stretch !important;
+    column-gap: var(--header-menu-col-gap) !important;
+    row-gap: 0 !important;
+    padding-top: var(--header-menu-pad-y) !important;
+    padding-bottom: var(--header-menu-pad-y) !important;
+    min-height: calc(var(--header-menu-weather-h) + var(--header-menu-pad-y) * 2) !important;
+    overflow: visible !important;
+  }
+
+  .header .top-row > .logo-wrapper {
+    grid-area: logo !important;
+    display: flex !important;
+    align-items: center !important;
+    align-self: center !important;
+    justify-self: start !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+
+  .header .top-row > .logo-wrapper .premium-burger {
+    margin-top: 0 !important;
+  }
+
+  .header .top-row > .premium-burger,
+  .header .top-row .premium-burger {
+    grid-area: burger !important;
+    position: relative !important;
+    inset: auto !important;
+    justify-self: center !important;
+    align-self: center !important;
+    width: var(--header-menu-icon) !important;
+    height: var(--header-menu-icon) !important;
+    flex: 0 0 var(--header-menu-icon) !important;
+    margin: 0 !important;
+    transform: translateX(var(--burger-align-shift, 0px)) !important;
   }
 
   .header .top-row > .header-weather-shell,
@@ -11110,49 +11107,15 @@ body.light .social-icons-toggle.is-open {
     grid-area: weather !important;
     justify-self: center !important;
     align-self: center !important;
-    width: min(100%, clamp(240px, 28vw, 420px)) !important;
+    width: min(100%, 420px) !important;
     min-width: 0 !important;
     max-width: 420px !important;
-    margin: 0 !important;
-    overflow: visible !important;
-  }
-
-  .header-weather-widget[data-weather-widget] {
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-  }
-
-  .header .top-row > .nav-main,
-  .header .top-row > .header-controls {
-    min-width: 0 !important;
-  }
-}
-
-@media (width >= 1281px) {
-  .header .top-row > .header-weather-shell,
-  .top-row > .header-weather-shell {
-    width: min(100%, clamp(300px, 30vw, 420px)) !important;
-  }
-}
-
-@media (width <= 899px) {
-  .header .top-row > .header-weather-shell,
-  .top-row > .header-weather-shell {
-    grid-area: weather !important;
-    grid-column: 1 / -1 !important;
-    justify-self: stretch !important;
-    align-self: center !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-    height: clamp(78px, 20vw, 86px) !important;
-    min-height: clamp(78px, 20vw, 86px) !important;
-    max-height: 86px !important;
+    height: var(--header-weather-panel-h, var(--header-menu-weather-h, 104px)) !important;
+    min-height: var(--header-weather-panel-h, var(--header-menu-weather-h, 104px)) !important;
+    max-height: none !important;
     margin: 0 !important;
     transform: none !important;
     overflow: visible !important;
-    z-index: 1 !important;
   }
 
   .header-weather-widget[data-weather-widget] {
@@ -11163,4 +11126,135 @@ body.light .social-icons-toggle.is-open {
     min-height: 100% !important;
     overflow: visible !important;
   }
+
+  .header .top-row > .nav-main {
+    grid-area: nav !important;
+    align-self: center !important;
+    justify-self: start !important;
+    margin: 0 !important;
+    transform: none !important;
+    gap: 8px 10px !important;
+  }
+
+  .header .top-row > .nav-main > a,
+  .header .top-row > .nav-main > .dropdown > a {
+    min-height: 40px !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .header .top-row > .header-controls {
+    grid-area: controls !important;
+    align-self: center !important;
+    justify-self: end !important;
+    margin: 0 !important;
+    transform: none !important;
+    gap: 10px !important;
+  }
+}
+
+@media (width >= 1281px) {
+  .header {
+    --header-menu-weather-h: 104px;
+    --header-menu-col-gap: 18px;
+  }
+
+  .header .top-row {
+    grid-template-columns:
+      max-content
+      var(--header-menu-icon)
+      minmax(320px, 1fr)
+      max-content
+      max-content !important;
+  }
+}
+
+@media (width <= 900px) {
+  .header .top-row > .logo-wrapper,
+  .header .top-row > .header-controls,
+  .header .top-row > .premium-burger,
+  .header .top-row .premium-burger {
+    z-index: 12 !important;
+  }
+
+  .header .top-row > .header-controls {
+    transform: none !important;
+  }
+
+  .header .top-row > .nav-main {
+    transform: none !important;
+  }
+}
+
+/* =========================================================
+   WEATHER PANEL — достаточная высота + overflow visible (сцена bleed из site-shell)
+   ========================================================= */
+:root {
+  --header-weather-panel-h: clamp(176px, 40vw, 212px);
+}
+
+@media (width >= 900px) {
+  :root {
+    --header-weather-panel-h: 104px;
+    --header-menu-weather-h: var(--header-weather-panel-h);
+  }
+
+  .header .top-row > .header-weather-shell,
+  .top-row > .header-weather-shell {
+    height: var(--header-weather-panel-h) !important;
+    min-height: var(--header-weather-panel-h) !important;
+    max-height: none !important;
+    overflow: visible !important;
+    isolation: auto !important;
+  }
+
+  .header-weather-widget[data-weather-widget] {
+    height: 100% !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+  }
+}
+
+@media (width <= 900px) {
+  :root {
+    --header-menu-weather-h: var(--header-weather-panel-h);
+  }
+
+  .header .top-row > .header-weather-shell,
+  .top-row > .header-weather-shell,
+  .header.header-social-visible .top-row > .header-weather-shell {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: var(--header-weather-panel-h) !important;
+    min-height: var(--header-weather-panel-h) !important;
+    max-height: none !important;
+    margin-top: 4px !important;
+    margin-bottom: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+    overflow: visible !important;
+    isolation: auto !important;
+    contain: none !important;
+    z-index: 8 !important;
+  }
+
+  .header-weather-widget[data-weather-widget],
+  .header-weather-widget[data-weather-widget].is-mounted {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    contain: none !important;
+  }
+}
+
+.header .top-row > .header-weather-shell,
+.top-row > .header-weather-shell {
+  max-height: none !important;
+  transform: none !important;
+  overflow: visible !important;
+  isolation: auto !important;
 }

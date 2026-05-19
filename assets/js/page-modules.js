@@ -2,8 +2,8 @@
  * ================================================================
  * HUNDESALON NIKA — Page Modules
  * ================================================================
- * Page-specific interactive logic: booking calendar, price list
- * filters, gallery lightbox, contact form validation, etc.
+ * Page-specific interactive logic: booking modal, sendmail forms,
+ * AI draft assistants, and smooth hash-link scrolling.
  * Loaded on pages that need specialised behaviour beyond main.js.
  *
  * Version: 2026-04-20
@@ -426,8 +426,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         event.preventDefault();
 
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         target.scrollIntoView({
-          behavior: 'smooth',
+          behavior: prefersReducedMotion ? 'auto' : 'smooth',
           block: 'start',
           inline: 'nearest',
         });

@@ -22,7 +22,7 @@ for (const url of urls) {
   });
   const text = await response.text();
   const canonical = text.match(/rel=["']canonical["'][^>]*href=["']([^"']+)/i)?.[1] || 'MISSING';
-  const faviconOk = text.includes('/assets/images/favicon/favicon.ico');
+  const faviconOk = text.includes('/favicon.ico') || text.includes('/assets/images/favicon/favicon.ico');
 
   console.log(url);
   console.log(

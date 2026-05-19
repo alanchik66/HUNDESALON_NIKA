@@ -13,12 +13,15 @@
     "christian-kohler.path-intellisense",
     "formulahendry.auto-close-tag",
     "formulahendry.auto-rename-tag",
+    "naumovs.color-highlight",
 
-    // ─── QA / браузерные проверки ────────────────────────────────
+    // ─── QA / тестирование ──────────────────────────────────────────
     "ms-playwright.playwright",
+    "webhint.vscode-webhint",
 
     // ─── Git ──────────────────────────────────────────────────────
     "eamodio.gitlens",
+    "mhutchie.git-graph",
 
     // ─── Проверка орфографии (DE / EN / RU / UK) ──────────────────
     "streetsidesoftware.code-spell-checker",
@@ -26,15 +29,23 @@
     "streetsidesoftware.code-spell-checker-russian",
     "streetsidesoftware.code-spell-checker-ukrainian",
 
-    // ─── PowerShell (скрипты проекта) ─────────────────────────────
+    // ─── PowerShell ─────────────────────────────────────────────────
     "ms-vscode.powershell",
 
-    // ─── AI-помощник ──────────────────────────────────────────────
+    // ─── AI ─────────────────────────────────────────────────────────
     "github.copilot",
     "github.copilot-chat",
 
-    // ─── Инфраструктура Cloudflare ───────────────────────────────
-    "cloudflare.cloudflare-workers-bindings-extension"
+    // ─── Cloudflare ────────────────────────────────────────────────
+    "cloudflare.cloudflare-workers-bindings-extension",
+
+    // ─── Утилиты ────────────────────────────────────────────────────
+    "editorconfig.editorconfig",
+    "mikestead.dotenv",
+    "yzhang.markdown-all-in-one"
   ],
-  "unwantedRecommendations": ["ritwickdey.liveserver"]
+  "unwantedRecommendations": [
+    "ritwickdey.liveserver",
+    "hookyqr.beautify"
+  ]
 }

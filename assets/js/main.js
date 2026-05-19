@@ -600,10 +600,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const syncMobileNavLayout = () => {
-      const headerBottom = Math.min(window.innerHeight, Math.max(0, Math.round(getVisibleHeaderBottom())));
       const viewportHeight = window.visualViewport?.height || window.innerHeight;
-      const availableHeight = Math.max(viewportHeight - headerBottom - 16, 0);
-      mobileNav.style.setProperty('--mobile-nav-offset', `${headerBottom + 8}px`);
+      const availableHeight = Math.max(viewportHeight, 0);
+      mobileNav.style.setProperty('--mobile-nav-offset', '0px');
       mobileNav.style.setProperty('--mobile-nav-height', `${availableHeight}px`);
       refreshMobileNavScrollbar();
     };
@@ -884,6 +883,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let activeMusicPanel = null;
 
+  const closeSocialIconsUI = () => {
+    if (!socialIconsToggle || !socialIconsList) return;
+    socialIconsToggle.setAttribute('aria-expanded', 'false');
+    socialIconsToggle.classList.remove('is-open');
+    socialIconsList.hidden = true;
+    socialIconsList.setAttribute('aria-hidden', 'true');
+    socialIconsList.classList.remove('is-open');
+  };
+
   /* Panel is positioned via CSS (position:absolute inside .social-player-wrap,
        slides to the right). JS positioning is no longer needed. */
   const positionPanel = panel => {
@@ -965,6 +973,7 @@ document.addEventListener('DOMContentLoaded', () => {
     socialPlayerToggle.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
+      closeSocialIconsUI();
       const pickerOpen = socialServicePicker?.classList.contains('is-open');
       const panelOpen = activeMusicPanel?.classList.contains('is-open');
       if (pickerOpen || panelOpen) {
@@ -984,6 +993,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
+        closeSocialIconsUI();
         const panelId = btn.dataset.panel;
         const panel = document.getElementById(panelId);
         if (socialServicePicker) {
@@ -1021,21 +1031,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── Social icons toggle: выкат влево ── */
   if (socialIconsToggle && socialIconsList) {
-    const closeSocialIcons = () => {
-      socialIconsToggle.setAttribute('aria-expanded', 'false');
-      socialIconsToggle.classList.remove('is-open');
-      socialIconsList.hidden = true;
-      socialIconsList.setAttribute('aria-hidden', 'true');
-      socialIconsList.classList.remove('is-open');
-    };
-
     socialIconsToggle.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
       const isOpen = socialIconsList.classList.contains('is-open');
       if (isOpen) {
-        closeSocialIcons();
+        closeSocialIconsUI();
       } else {
+        closeAllMusicUI();
         socialIconsToggle.setAttribute('aria-expanded', 'true');
         socialIconsToggle.classList.add('is-open');
         socialIconsList.hidden = false;
@@ -1050,11 +1053,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!socialIconsList.classList.contains('is-open')) return;
       if (socialIconsToggle.contains(event.target)) return;
       if (socialIconsList.contains(event.target)) return;
-      closeSocialIcons();
+      closeSocialIconsUI();
     });
 
     document.addEventListener('keydown', event => {
-      if (event.key === 'Escape') closeSocialIcons();
+      if (event.key === 'Escape') closeSocialIconsUI();
     });
   }
 

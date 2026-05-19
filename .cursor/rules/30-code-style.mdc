@@ -1,0 +1,34 @@
+---
+description: Стиль кода и технические ограничения
+alwaysApply: true
+---
+
+# HTML
+
+- Все страницы: `<!DOCTYPE html>`, `<html lang="{de|en|ru|uk}">`, charset UTF-8, viewport.
+- Каждая страница должна иметь: canonical, hreflang (de/en/ru/uk/x-default), title, meta description.
+- Интерактивные элементы — только `<button>` или `<a>`, не `<div>` с onclick.
+- Изображения: осмысленный `alt`; декоративные: `alt="" aria-hidden="true"`.
+- Структура: header > main content > footer. Использовать landmark roles.
+
+# CSS
+
+- Единый мобильный breakpoint: `900px`. Не смешивать 899/900/901.
+- `backdrop-filter` всегда с `-webkit-backdrop-filter`.
+- `:focus-visible` — всегда с видимым индикатором, никогда `outline: none` без замены.
+- Избегать `!important` кроме утилитарных overrides.
+- z-index: header 1000, mobile-nav 1100, preloader 9999, modals 2000.
+
+# JavaScript
+
+- ES2021, browser globals (no bundler, no import maps in prod).
+- Без `console.log/warn/error` в production paths (допускается в dev-only tools/).
+- `prefers-reduced-motion` — уважать для всех анимаций и smooth scroll.
+- Event delegation предпочтительнее массовых addEventListener.
+- Guard clauses в начале init-функций: `if (!document.querySelector(...)) return;`
+
+# Git
+
+- Коммиты на английском, 72 символа subject, императив (Add, Fix, Update).
+- Не коммитить: .dev.vars, .cloudflare-purge.token, node_modules, dist.
+- Один логический change = один коммит.

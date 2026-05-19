@@ -217,6 +217,49 @@
   clip-path: none !important;
 }
 
+/* Smooth weather value updates without blinking. */
+:host([data-weather-variant='header']) .weather-header-card__condition,
+:host([data-weather-variant='header']) .weather-header-card__meta,
+:host([data-weather-variant='header']) .weather-header-card__chip,
+:host([data-weather-variant='header']) .weather-header-card__temperature,
+:host([data-weather-variant='header']) .weather-header-card__location,
+:host([data-weather-variant='header']) .weather-header-card__toggle {
+  transition:
+    opacity 220ms ease,
+    color 280ms ease,
+    filter 280ms ease,
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+:host([data-weather-variant='header'][data-weather-refreshing='true']) .weather-header-card__condition,
+:host([data-weather-variant='header'][data-weather-refreshing='true']) .weather-header-card__meta,
+:host([data-weather-variant='header'][data-weather-refreshing='true']) .weather-header-card__chip,
+:host([data-weather-variant='header'][data-weather-refreshing='true']) .weather-header-card__temperature,
+:host([data-weather-variant='header'][data-weather-refreshing='true']) .weather-header-card__location,
+:host([data-weather-variant='header'][data-weather-refreshing='true']) .weather-header-card__toggle {
+  opacity: 0.92 !important;
+}
+
+/* Some internal preview wrappers may still keep overflow hidden.
+   Force anti-clip for all nested preview layers and pseudo-elements. */
+:host([data-weather-variant='header']) .weather-header-preview *,
+:host([data-weather-variant='header']) .weather-header-preview *::before,
+:host([data-weather-variant='header']) .weather-header-preview *::after {
+  overflow: visible !important;
+  clip-path: none !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+}
+
+/* Do not allow any preview pseudo overlays to mask cloud scene. */
+:host([data-weather-variant='header']) .weather-header-preview::before,
+:host([data-weather-variant='header']) .weather-header-preview::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
 /* AGGRESSIVE RESET: kill every background/border/shadow inside the widget,
    EXCEPT for elements that are part of the dropdown menu, location selector,
    chips/pills inside the dropdown (which need their pill background) and a few
@@ -243,61 +286,82 @@
 }
 
 /* Restore borders for the spinner ring (it needs a circular ring) */
+:host([data-weather-variant='header']) {
+  --weather-loader-size: clamp(38px, 7.2vw, 44px);
+  --weather-loader-core-size: clamp(5px, 1.05vw, 6px);
+  --weather-loader-inner-gap: clamp(4px, 0.8vw, 5px);
+  --weather-loader-label-offset: calc(var(--weather-loader-size) + 10px);
+}
+
 .weather-header-state__spinner {
   position: relative !important;
-  width: 62px !important;
-  height: 62px !important;
+  width: var(--weather-loader-size) !important;
+  height: var(--weather-loader-size) !important;
   border-radius: 50% !important;
-  border-style: solid !important;
-  border-width: 1px !important;
-  border-color: rgba(213, 226, 255, 0.28) !important;
+  border: 1px solid rgba(224, 233, 248, 0.16) !important;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 72%)
+    !important;
   box-shadow:
-    0 0 0 1px rgba(126, 164, 235, 0.18) inset,
-    0 0 14px rgba(125, 174, 255, 0.24) !important;
-  animation: weatherRainRingPulse 1.8s cubic-bezier(0.22, 0.61, 0.36, 1) infinite !important;
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 8px rgba(138, 183, 246, 0.16) !important;
+  animation: weatherHeaderLoaderBreath 2.8s ease-in-out infinite !important;
 }
 
 .weather-header-state__spinner::before {
   content: '' !important;
   position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: 7px !important;
-  height: 10px !important;
-  margin-left: -3.5px !important;
-  margin-top: -27px !important;
-  border-radius: 52% 52% 58% 58% !important;
-  background: linear-gradient(180deg, rgba(227, 239, 255, 0.95), rgba(112, 170, 255, 0.82)) !important;
-  box-shadow:
-    0 27px 0 -1px rgba(227, 239, 255, 0.95),
-    19px 19px 0 -1px rgba(206, 225, 255, 0.88),
-    27px 0 0 -1px rgba(198, 220, 255, 0.84),
-    19px -19px 0 -1px rgba(186, 211, 252, 0.8),
-    0 -27px 0 -1px rgba(203, 227, 255, 0.9),
-    -19px -19px 0 -1px rgba(186, 211, 252, 0.8),
-    -27px 0 0 -1px rgba(198, 220, 255, 0.84),
-    -19px 19px 0 -1px rgba(206, 225, 255, 0.88),
-    0 0 10px rgba(125, 174, 255, 0.48) !important;
-  transform-origin: 3.5px 27px !important;
-  animation:
-    weatherRainDropsSpin 1.25s linear infinite,
-    weatherRainDropsBreath 1.25s ease-in-out infinite !important;
+  inset: 0 !important;
+  border-radius: 50% !important;
+  background: conic-gradient(
+    from -90deg,
+    rgba(245, 225, 170, 0) 0deg,
+    rgba(245, 225, 170, 0) 210deg,
+    rgba(245, 225, 170, 0.76) 270deg,
+    rgba(224, 240, 255, 0.92) 302deg,
+    rgba(245, 225, 170, 0) 340deg,
+    rgba(245, 225, 170, 0) 360deg
+  ) !important;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+  animation: weatherHeaderLoaderSpin 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite !important;
 }
 
-/* Hide all textual loading copy in state overlay ("Загрузка погоды" and localized variants). */
+.weather-header-state__spinner::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: var(--weather-loader-core-size) !important;
+  height: var(--weather-loader-core-size) !important;
+  margin-left: calc(var(--weather-loader-core-size) / -2) !important;
+  margin-top: calc(var(--weather-loader-core-size) / -2) !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 249, 236, 0.98) 0%, rgba(240, 217, 160, 0.9) 100%)
+    !important;
+  box-shadow:
+    0 0 8px rgba(252, 226, 173, 0.56),
+    0 0 14px rgba(169, 202, 245, 0.26) !important;
+  transform-origin: center calc((var(--weather-loader-size) / 2) - 1px) !important;
+  animation:
+    weatherHeaderLoaderComet 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite,
+    weatherHeaderLoaderPulse 2s ease-in-out infinite !important;
+}
+
 .weather-header-state__inner {
   display: grid !important;
   place-items: center !important;
-  gap: 0 !important;
+  gap: 10px !important;
 }
 
 .weather-header-state__inner p {
   margin: 0 !important;
-  font-size: 0 !important;
-  line-height: 0 !important;
-  color: transparent !important;
-  letter-spacing: 0 !important;
-  opacity: 0 !important;
+  font-size: 9px !important;
+  line-height: 1.3 !important;
+  color: rgba(236, 244, 255, 0.84) !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 1px 4px rgba(28, 48, 78, 0.42) !important;
+  opacity: 1 !important;
 }
 
 .weather-header-state__inner p::before,
@@ -305,7 +369,7 @@
   content: none !important;
 }
 
-/* Scene preload: hide text label and show elegant raindrop circle loader. */
+/* Scene preload: concise glass-gold loader with readable text. */
 .weather-app__scene-fallback,
 .weather-app__scene-fallback--header {
   display: grid !important;
@@ -318,13 +382,17 @@
 .weather-app__scene-fallback [class*='text-sm'],
 .weather-app__scene-fallback--header [class*='text-sm'] {
   position: relative !important;
-  width: 62px !important;
-  height: 62px !important;
-  font-size: 0 !important;
-  line-height: 0 !important;
-  color: transparent !important;
-  letter-spacing: 0 !important;
-  text-transform: none !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  min-width: var(--weather-loader-size) !important;
+  min-height: var(--weather-loader-size) !important;
+  padding-top: var(--weather-loader-label-offset) !important;
+  font-size: 9px !important;
+  line-height: 1.3 !important;
+  color: rgba(236, 244, 255, 0.82) !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 1px 4px rgba(28, 48, 78, 0.42) !important;
   opacity: 1 !important;
 }
 
@@ -334,13 +402,19 @@
 .weather-app__scene-fallback--header [class*='text-sm']::before {
   content: '' !important;
   position: absolute !important;
-  inset: 0 !important;
+  left: 50% !important;
+  top: 0 !important;
+  width: var(--weather-loader-size) !important;
+  height: var(--weather-loader-size) !important;
+  margin-left: calc(var(--weather-loader-size) / -2) !important;
   border-radius: 50% !important;
-  border: 1px solid rgba(213, 226, 255, 0.28) !important;
+  border: 1px solid rgba(224, 233, 248, 0.16) !important;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 72%)
+    !important;
   box-shadow:
-    0 0 0 1px rgba(126, 164, 235, 0.18) inset,
-    0 0 14px rgba(125, 174, 255, 0.24) !important;
-  animation: weatherRainRingPulse 1.8s cubic-bezier(0.22, 0.61, 0.36, 1) infinite !important;
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 8px rgba(138, 183, 246, 0.16) !important;
+  animation: weatherHeaderLoaderBreath 2.8s ease-in-out infinite !important;
 }
 
 .weather-app__scene-fallback .text-sm::after,
@@ -351,56 +425,67 @@
   position: absolute !important;
   left: 50% !important;
   top: 50% !important;
-  width: 7px !important;
-  height: 10px !important;
-  margin-left: -3.5px !important;
-  margin-top: -27px !important;
-  border-radius: 52% 52% 58% 58% !important;
-  background: linear-gradient(180deg, rgba(227, 239, 255, 0.95), rgba(112, 170, 255, 0.82)) !important;
+  width: var(--weather-loader-core-size) !important;
+  height: var(--weather-loader-core-size) !important;
+  margin-left: calc(var(--weather-loader-core-size) / -2) !important;
+  margin-top: calc(var(--weather-loader-core-size) / -2) !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 249, 236, 0.98) 0%, rgba(240, 217, 160, 0.9) 100%)
+    !important;
   box-shadow:
-    0 27px 0 -1px rgba(227, 239, 255, 0.95),
-    19px 19px 0 -1px rgba(206, 225, 255, 0.88),
-    27px 0 0 -1px rgba(198, 220, 255, 0.84),
-    19px -19px 0 -1px rgba(186, 211, 252, 0.8),
-    0 -27px 0 -1px rgba(203, 227, 255, 0.9),
-    -19px -19px 0 -1px rgba(186, 211, 252, 0.8),
-    -27px 0 0 -1px rgba(198, 220, 255, 0.84),
-    -19px 19px 0 -1px rgba(206, 225, 255, 0.88),
-    0 0 10px rgba(125, 174, 255, 0.48) !important;
-  transform-origin: 3.5px 27px !important;
+    0 0 8px rgba(252, 226, 173, 0.56),
+    0 0 14px rgba(169, 202, 245, 0.26) !important;
+  transform-origin: center calc((var(--weather-loader-size) / 2) - 1px) !important;
   animation:
-    weatherRainDropsSpin 1.25s linear infinite,
-    weatherRainDropsBreath 1.25s ease-in-out infinite !important;
+    weatherHeaderLoaderComet 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite,
+    weatherHeaderLoaderPulse 2s ease-in-out infinite !important;
 }
 
-@keyframes weatherRainDropsSpin {
+@keyframes weatherHeaderLoaderSpin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-@keyframes weatherRainDropsBreath {
+@keyframes weatherHeaderLoaderPulse {
   0%,
   100% {
-    opacity: 0.86;
-    filter: saturate(0.95) brightness(0.96);
+    opacity: 0.72;
+    transform: scale(0.9);
   }
 
+  50% {
+    opacity: 1;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes weatherHeaderLoaderComet {
+  from {
+    transform: rotate(0deg) translateY(calc((var(--weather-loader-size) / -2) + 1px));
+  }
+  to {
+    transform: rotate(360deg) translateY(calc((var(--weather-loader-size) / -2) + 1px));
+  }
+}
+
+@keyframes weatherHeaderLoaderBreath {
+  0%,
+  100% {
+    opacity: 0.72;
+    filter: saturate(0.92) brightness(0.94);
+  }
   50% {
     opacity: 1;
     filter: saturate(1.08) brightness(1.08);
   }
 }
 
-@keyframes weatherRainRingPulse {
-  0%,
-  100% {
-    transform: scale(0.985);
-    opacity: 0.82;
-  }
-
-  50% {
-    transform: scale(1.03);
-    opacity: 1;
+@media (max-width: 899px) {
+  :host([data-weather-variant='header']) {
+    --weather-loader-size: 34px;
+    --weather-loader-core-size: 5px;
+    --weather-loader-inner-gap: 4px;
+    --weather-loader-label-offset: 42px;
   }
 }
 
@@ -420,6 +505,17 @@
 }
 
 .weather-header-preview {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+
+.weather-app--header {
+  position: relative !important;
+  width: 100% !important;
   height: 100% !important;
   min-height: 100% !important;
   border-radius: 0 !important;
@@ -439,29 +535,42 @@
   clip-path: none !important;
 }
 
-.weather-app--header {
-  border-radius: 0 !important;
-}
-
-/* Scene extends beyond shell so 3D renderer gets a tall enough canvas
-   for sun/moon to project into the visible area.
-   The header overflow:hidden clips the bottom bleed. */
+/* Scene = full weather panel in main menu (100% width × height). */
 .weather-app--header .weather-app__scene,
 .weather-app--header .weather-app__scene--header {
   display: block !important;
   position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  width: 126% !important;
-  height: calc(100% + 104px) !important;
-  min-height: calc(100% + 104px) !important;
-  transform: translate(-50%, -50%) !important;
-  transform-origin: center center !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  transform: none !important;
+  transform-origin: 50% 50% !important;
   overflow: visible !important;
+  contain: none !important;
   opacity: 1 !important;
   visibility: visible !important;
   background: transparent !important;
   z-index: 0 !important;
+}
+
+.weather-app--header .weather-app__scene > div,
+.weather-app--header .weather-app__scene--header > div,
+.weather-app--header .weather-app__scene > div > div,
+.weather-app--header .weather-app__scene--header > div > div,
+.weather-app--header .weather-app__scene > div > div > div,
+.weather-app--header .weather-app__scene--header > div > div > div {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  overflow: visible !important;
+  clip-path: none !important;
+  contain: none !important;
 }
 
 /* No edge masks: clouds must never be clipped. */
@@ -470,13 +579,21 @@
   -webkit-mask-image: none !important;
 }
 
+/* Canvas fills panel; slight overscan shows full cloud mass (no box crop). */
 .weather-app--header canvas {
   position: absolute !important;
-  inset: 0 !important;
+  top: -24% !important;
+  left: -10% !important;
+  right: auto !important;
+  bottom: auto !important;
   display: block !important;
-  width: 100% !important;
-  height: 100% !important;
-  min-height: 100% !important;
+  width: 120% !important;
+  max-width: none !important;
+  height: 148% !important;
+  min-height: 148% !important;
+  max-height: none !important;
+  transform: none !important;
+  transform-origin: 50% 48% !important;
   pointer-events: none !important;
   opacity: 1 !important;
   visibility: visible !important;
@@ -505,6 +622,13 @@
   z-index: 1 !important;
 }
 
+/* Moon uses pure MP4 source: disable decorative veil layers around orb. */
+.weather-orb-overlay.is-moon::before,
+.weather-orb-overlay.is-moon::after {
+  content: none !important;
+  display: none !important;
+}
+
 .weather-orb-overlay.is-visible {
   opacity: 1 !important;
   visibility: visible !important;
@@ -522,10 +646,16 @@
 }
 
 .weather-orb-overlay__video {
-  display: none !important;
+  display: block !important;
   width: 100% !important;
   height: 100% !important;
   object-fit: contain !important;
+  opacity: var(--orb-core-opacity, 1) !important;
+  transition: opacity 220ms ease !important;
+}
+
+.weather-orb-overlay__video[hidden] {
+  display: none !important;
 }
 
 .weather-orb-overlay__canvas {
@@ -554,18 +684,71 @@
 
 .weather-orb-overlay::before,
 .weather-orb-overlay::after {
-  content: "";
-  position: absolute;
-  border-radius: 999px;
-  pointer-events: none;
-  opacity: 0;
-  will-change: transform, opacity;
-  transition: opacity 220ms ease, transform 220ms ease, filter 220ms ease;
+  content: none !important;
+  display: none !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
 }
 
+/* Hard-disable decorative cloud veil layers (they produced oval artifacts). */
 .weather-orb-overlay.has-cloud-veil::before,
 .weather-orb-overlay.has-cloud-veil::after {
-  opacity: calc(var(--orb-cloud-alpha, 0) * 0.44);
+  content: none !important;
+  display: none !important;
+  opacity: 0 !important;
+}
+
+/* Re-enable cloud veil only for sun with non-oval layers. */
+.weather-orb-overlay.is-sun.has-cloud-veil::before,
+.weather-orb-overlay.is-sun.has-cloud-veil::after {
+  content: "" !important;
+  display: block !important;
+  border-radius: 0 !important;
+}
+
+.weather-orb-overlay.is-sun.has-cloud-veil::before {
+  inset: 18% -10% 36% -10% !important;
+  opacity: calc(var(--orb-cloud-alpha, 0) * 0.46) !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(244, 247, 255, 0.52) 0%,
+      rgba(214, 225, 241, 0.26) 36%,
+      rgba(156, 173, 199, 0.12) 64%,
+      rgba(0, 0, 0, 0) 100%
+    ),
+    linear-gradient(
+      166deg,
+      rgba(240, 244, 252, 0.36) 0%,
+      rgba(204, 217, 238, 0.16) 42%,
+      rgba(0, 0, 0, 0) 82%
+    ) !important;
+  transform:
+    translate3d(calc(var(--orb-cloud-drift, 1) * -2%), calc(var(--orb-cloud-lift, 0px) * 0.5), 0)
+    skewX(-8deg) !important;
+  animation: headerWeatherSunVeilA 11.8s ease-in-out infinite !important;
+}
+
+.weather-orb-overlay.is-sun.has-cloud-veil::after {
+  inset: 42% -14% 10% -6% !important;
+  opacity: calc(var(--orb-cloud-alpha, 0) * 0.38) !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(250, 252, 255, 0.36) 0%,
+      rgba(214, 225, 241, 0.18) 34%,
+      rgba(0, 0, 0, 0) 100%
+    ),
+    linear-gradient(
+      194deg,
+      rgba(232, 239, 250, 0.3) 0%,
+      rgba(196, 210, 234, 0.14) 46%,
+      rgba(0, 0, 0, 0) 86%
+    ) !important;
+  transform:
+    translate3d(calc(var(--orb-cloud-drift, 1) * 2%), calc(var(--orb-cloud-lift, 0px) * 0.2), 0)
+    skewX(7deg) !important;
+  animation: headerWeatherSunVeilB 14.6s ease-in-out infinite !important;
 }
 
 .weather-orb-overlay.has-cloud-veil::before {
@@ -701,14 +884,46 @@
   }
 }
 
+@keyframes headerWeatherSunVeilA {
+  0%,
+  100% {
+    transform: translate3d(-3%, -2%, 0) skewX(-8deg);
+  }
+  50% {
+    transform: translate3d(4%, 2%, 0) skewX(-5deg);
+  }
+}
+
+@keyframes headerWeatherSunVeilB {
+  0%,
+  100% {
+    transform: translate3d(3%, 2%, 0) skewX(7deg);
+  }
+  50% {
+    transform: translate3d(-4%, -1%, 0) skewX(4deg);
+  }
+}
+
 .weather-orb-overlay.is-sun .weather-orb-overlay__canvas,
 .weather-orb-overlay.is-sun .weather-orb-overlay__image {
-  filter: drop-shadow(0 0 18px rgba(255, 216, 116, 0.42)) drop-shadow(0 0 34px rgba(255, 196, 72, 0.18)) !important;
+  filter: none !important;
+}
+
+.weather-orb-overlay.is-sun .weather-orb-overlay__video,
+.weather-orb-overlay.is-sun .weather-orb-overlay__canvas,
+.weather-orb-overlay.is-sun .weather-orb-overlay__image {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.weather-orb-overlay.is-sun.has-cloud-veil::before,
+.weather-orb-overlay.is-sun.has-cloud-veil::after {
+  z-index: 2 !important;
 }
 
 .weather-orb-overlay.is-moon .weather-orb-overlay__canvas,
 .weather-orb-overlay.is-moon .weather-orb-overlay__image {
-  clip-path: circle(50% at 50% 50%) !important;
+  clip-path: none !important;
 }
 
 /* Stars: brighter and crisper — override the aggressive filter:none reset
@@ -721,6 +936,13 @@
 .weather-header-preview {
   isolation: isolate !important;
   overflow: visible !important;
+  contain: none !important;
+}
+
+:host([data-weather-variant='header']),
+:host([data-weather-variant='header']) [data-weather-widget-root],
+:host([data-weather-variant='header']) .weather-header-preview {
+  contain: none !important;
 }
 
 .weather-header-preview.is-night-sky::before,
@@ -777,6 +999,64 @@
   animation: weatherHeaderStarsTwinkleAlt 8.1s ease-in-out infinite;
 }
 
+.weather-header-dropdown__scene {
+  position: relative !important;
+  isolation: isolate !important;
+}
+
+.weather-header-dropdown__scene.is-night-sky::before,
+.weather-header-dropdown__scene.is-night-sky::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: -6% -4% -8% -4% !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+  mix-blend-mode: screen !important;
+}
+
+.weather-header-dropdown__scene.is-night-sky::before {
+  opacity: var(--dropdown-stars-opacity, 0.78) !important;
+  background:
+    radial-gradient(circle at 10% 12%, rgba(255, 255, 255, 0.92) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 18% 34%, rgba(224, 238, 255, 0.78) 0 0.7px, transparent 1.18px),
+    radial-gradient(circle at 27% 16%, rgba(255, 255, 255, 0.9) 0 0.78px, transparent 1.22px),
+    radial-gradient(circle at 36% 30%, rgba(208, 226, 252, 0.72) 0 0.68px, transparent 1.14px),
+    radial-gradient(circle at 45% 13%, rgba(255, 255, 255, 0.9) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 54% 28%, rgba(231, 241, 255, 0.76) 0 0.7px, transparent 1.16px),
+    radial-gradient(circle at 63% 11%, rgba(255, 255, 255, 0.9) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 72% 33%, rgba(226, 238, 254, 0.74) 0 0.7px, transparent 1.16px),
+    radial-gradient(circle at 81% 17%, rgba(255, 255, 255, 0.9) 0 0.8px, transparent 1.24px),
+    radial-gradient(circle at 90% 29%, rgba(214, 230, 252, 0.72) 0 0.68px, transparent 1.13px),
+    radial-gradient(circle at 14% 62%, rgba(255, 255, 255, 0.86) 0 0.75px, transparent 1.2px),
+    radial-gradient(circle at 24% 74%, rgba(212, 228, 252, 0.7) 0 0.66px, transparent 1.12px),
+    radial-gradient(circle at 34% 58%, rgba(255, 255, 255, 0.86) 0 0.75px, transparent 1.2px),
+    radial-gradient(circle at 44% 77%, rgba(232, 242, 255, 0.74) 0 0.68px, transparent 1.14px),
+    radial-gradient(circle at 56% 60%, rgba(255, 255, 255, 0.86) 0 0.75px, transparent 1.2px),
+    radial-gradient(circle at 66% 76%, rgba(206, 223, 249, 0.7) 0 0.66px, transparent 1.12px),
+    radial-gradient(circle at 76% 58%, rgba(255, 255, 255, 0.86) 0 0.75px, transparent 1.2px),
+    radial-gradient(circle at 86% 74%, rgba(230, 240, 255, 0.72) 0 0.66px, transparent 1.12px);
+  filter: drop-shadow(0 0 1.2px rgba(196, 217, 255, 0.4)) !important;
+  animation: weatherHeaderStarsTwinkle 6.6s ease-in-out infinite !important;
+}
+
+.weather-header-dropdown__scene.is-night-sky::after {
+  opacity: calc(var(--dropdown-stars-opacity, 0.78) * 0.66) !important;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.95) 0 1.24px, transparent 1.88px),
+    radial-gradient(circle at 30% 14%, rgba(232, 243, 255, 0.82) 0 1.08px, transparent 1.68px),
+    radial-gradient(circle at 50% 19%, rgba(255, 255, 255, 0.95) 0 1.22px, transparent 1.86px),
+    radial-gradient(circle at 68% 14%, rgba(238, 246, 255, 0.8) 0 1.04px, transparent 1.62px),
+    radial-gradient(circle at 84% 18%, rgba(255, 255, 255, 0.9) 0 1.14px, transparent 1.76px),
+    radial-gradient(circle at 22% 48%, rgba(255, 255, 255, 0.9) 0 1.1px, transparent 1.72px),
+    radial-gradient(circle at 42% 54%, rgba(228, 239, 255, 0.8) 0 1.02px, transparent 1.62px),
+    radial-gradient(circle at 62% 50%, rgba(255, 255, 255, 0.9) 0 1.1px, transparent 1.72px),
+    radial-gradient(circle at 80% 56%, rgba(232, 241, 255, 0.78) 0 0.98px, transparent 1.58px),
+    radial-gradient(circle at 36% 82%, rgba(226, 238, 255, 0.76) 0 0.94px, transparent 1.52px),
+    radial-gradient(circle at 60% 80%, rgba(248, 251, 255, 0.82) 0 1px, transparent 1.6px);
+  filter: drop-shadow(0 0 3px rgba(210, 226, 255, 0.34)) !important;
+  animation: weatherHeaderStarsTwinkleAlt 8.1s ease-in-out infinite !important;
+}
+
 @keyframes weatherHeaderStarsTwinkle {
   0%,
   100% {
@@ -802,7 +1082,7 @@
 }
 
 .weather-header-trigger {
-  z-index: 120 !important;
+  z-index: 30 !important;
   cursor: default !important;
   pointer-events: auto !important;
 }
@@ -810,7 +1090,13 @@
 .weather-header-card {
   position: absolute !important;
   inset: 0 !important;
-  z-index: 121 !important;
+  z-index: 20 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  pointer-events: none !important;
 }
 
 .weather-header-card,
@@ -822,11 +1108,26 @@
 
 .weather-header-card__content {
   position: relative !important;
-  z-index: 122 !important;
+  z-index: 22 !important;
   overflow: visible !important;
+  background: transparent !important;
+  pointer-events: none !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.56) !important;
   box-sizing: border-box !important;
   padding: 6px 18px 0 0 !important;
+}
+
+.weather-header-card__location,
+.weather-header-card__location-row,
+.weather-header-card__eyebrow,
+.weather-header-card__condition,
+.weather-header-card__meta,
+.weather-header-card__bottom,
+.weather-header-card__side,
+.weather-header-card__toggle {
+  position: relative !important;
+  z-index: 24 !important;
+  pointer-events: auto !important;
 }
 
 .weather-header-card__side {
@@ -843,11 +1144,14 @@
   pointer-events: auto !important;
   cursor: pointer !important;
   display: inline-flex !important;
-  align-items: center !important;
+  position: relative !important;
+  align-items: flex-end !important;
   justify-content: center !important;
-  gap: 1px !important;
-  min-height: 28px !important;
-  padding: 4px 10px !important;
+  gap: 0 !important;
+  min-height: auto !important;
+  width: max-content !important;
+  max-width: max-content !important;
+  padding: 1px !important;
   color: rgba(255, 238, 207, 0.96) !important;
   font-size: 8px !important;
   line-height: 1 !important;
@@ -867,13 +1171,22 @@
   pointer-events: none !important;
 }
 
+.weather-header-card__toggle span:first-child {
+  display: inline-block !important;
+  line-height: 1 !important;
+}
+
 .weather-header-card__toggle-icon {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 6.534px !important;
-  height: 6.534px !important;
-  margin-top: 6px !important;
+  width: 7.906px !important;
+  height: 7.906px !important;
+  position: absolute !important;
+  right: -9.906px !important;
+  top: auto !important;
+  bottom: -1px !important;
+  margin-top: 0 !important;
   opacity: 0.9 !important;
   visibility: visible !important;
   font-size: 0 !important;
@@ -886,16 +1199,16 @@
   transition: transform 0.44s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.32s ease !important;
   animation:
     iconSurfaceRefraction var(--icon-sheen-duration, 2.35s) ease-in-out infinite !important;
-  transform-origin: right top !important;
+  transform-origin: 50% 100% !important;
 }
 
 .weather-header-card__toggle-icon.is-open {
-  --arrow-rotate: rotate(0deg);
+  --arrow-rotate: rotate(180deg);
 }
 
 .weather-header-trigger:active .weather-header-card__toggle-icon,
 .weather-header-trigger:focus-visible .weather-header-card__toggle-icon {
-  --arrow-rotate: rotate(0deg);
+  --arrow-rotate: rotate(180deg);
 }
 
 @keyframes iconArrowGlassBounce {
@@ -1085,7 +1398,21 @@
 
 .weather-header-dropdown {
   z-index: 10000 !important;
-  position: relative !important;
+  position: absolute !important;
+  left: 50% !important;
+  right: auto !important;
+  top: calc(100% + 38px) !important;
+  transform: translateX(-50%) !important;
+  width: min(
+    calc(100vw - (var(--site-side-padding, 14px) * 2)),
+    clamp(500px, 36vw, 620px)
+  ) !important;
+  max-width: min(
+    calc(100vw - (var(--site-side-padding, 14px) * 2)),
+    clamp(500px, 36vw, 620px)
+  ) !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
 }
 
 .weather-header-trigger,
@@ -1100,7 +1427,7 @@
   -webkit-tap-highlight-color: transparent !important;
 }
 
-/* Mobile: scene contained exactly within widget — same approach as desktop. */
+/* Mobile: same bleed geometry as desktop — never lock canvas to 100% box. */
 @media (max-width: 899px) {
   :host([data-weather-variant='header']),
   :host([data-weather-variant='header']) [data-weather-widget-root] {
@@ -1111,22 +1438,19 @@
 
   .weather-app--header .weather-app__scene,
   .weather-app--header .weather-app__scene--header {
-    position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
-    width: 134% !important;
-    height: calc(100% + 92px) !important;
-    min-height: calc(100% + 92px) !important;
-    transform: translate(-50%, -50%) !important;
-    transform-origin: center center !important;
-    overflow: visible !important;
-  }
-
-  .weather-app--header canvas {
     inset: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    min-height: 100% !important;
+    transform-origin: 50% 50% !important;
+  }
+
+  .weather-app--header canvas {
+    top: -26% !important;
+    left: -12% !important;
+    width: 124% !important;
+    height: 152% !important;
+    min-height: 152% !important;
+    transform-origin: 50% 48% !important;
   }
 
   .weather-orb-overlay--preview {
@@ -1140,10 +1464,10 @@
   }
 
   .weather-header-card__toggle {
-    min-height: 22px !important;
-    padding: 4px 8px !important;
+    min-height: auto !important;
+    padding: 1px !important;
     font-size: 7px !important;
-    gap: 4px !important;
+    gap: 0 !important;
   }
 
   .weather-header-card__toggle span:first-child {
@@ -1151,8 +1475,16 @@
   }
 
   .weather-header-card__toggle-icon {
-    width: 4.2px !important;
-    height: 4.2px !important;
+    width: 5.082px !important;
+    height: 5.082px !important;
+    right: -7.082px !important;
+    top: auto !important;
+    bottom: -1px !important;
+  }
+
+  .weather-header-card__condition {
+    top: 30px !important;
+    transform: translateY(-50%) !important;
   }
 }
 
@@ -1182,8 +1514,8 @@
 }
 `;
 
-  const WEATHER_WIDGET_ASSET_VERSION = '20260511-weather-5min-timesync1';
-  const HEADER_WEATHER_MOON_TEXTURE_SRC = '/3d-weather-codrops-main/dist-widget/assets/Moon/moon_texture.jpg';
+  const WEATHER_WIDGET_ASSET_VERSION = '20260519-weather-moon-clean-1';
+  const HEADER_WEATHER_MOON_VIDEO_FILE = 'mission_720p30.mp4';
 
   const LOCALIZED_ROUTES = new Set([
     '',
@@ -1200,6 +1532,12 @@
     'blog/plokhaya-strizhka.html',
     'blog/strizhka-koshek.html',
     'blog/zashchita-ot-parazitov.html',
+    'vvedenie.html',
+    'social.html',
+    'reyting.html',
+    'partnerstvo.html',
+    'impressum.html',
+    'datenschutz.html',
   ]);
 
   let headerWeatherLoaderPromise = null;
@@ -1209,13 +1547,14 @@
   const HEADER_WEATHER_REVERSE_GEOCODE_ENDPOINT = 'https://nominatim.openstreetmap.org/reverse';
   const HEADER_WEATHER_STATIC_FALLBACK_COORDS = Object.freeze({ latitude: 51.320486, longitude: 12.416501 });
   const HEADER_WEATHER_ASTRO_REFRESH_INTERVAL = 60000;
-  const HEADER_WEATHER_WIDGET_REFRESH_INTERVAL = 5 * 60 * 1000;
+  const HEADER_WEATHER_WIDGET_REFRESH_INTERVAL = 60 * 1000;
   const HEADER_WEATHER_TIME_SYNC_INTERVAL = 30 * 60 * 1000;
   const HEADER_WEATHER_LIVE_CLOCK_INTERVAL = 1000; // Update live clock every 1 second
   const HEADER_WEATHER_TIME_SYNC_TIMEOUT = 4500;
+  const HEADER_WEATHER_CLOUDS_ENABLED = true;
   const HEADER_WEATHER_MAX_CLOCK_DRIFT_MS = 7 * 24 * 60 * 60 * 1000;
   const HEADER_WEATHER_LOCATION_CACHE_TTL = 24 * 60 * 60 * 1000;
-  const HEADER_WEATHER_CURRENT_CACHE_TTL = 10 * 60 * 1000;
+  const HEADER_WEATHER_CURRENT_CACHE_TTL = 45 * 1000;
   const HEADER_WEATHER_ASTRO_CACHE_TTL = 12 * 60 * 60 * 1000;
   const HEADER_WEATHER_GEO_STORAGE_KEY = 'header_weather_geo_v1';
   const HEADER_WEATHER_GEO_CACHE_TTL = 30 * 60 * 1000;
@@ -1267,16 +1606,16 @@
       outputFilter: 'brightness(1.05) saturate(1.04) contrast(1.02)',
     },
     moon: {
-      keyFloor: 36,
-      featherCeiling: 78,
-      alphaFloor: 8,
-      focusThreshold: 80,
-      focusAlphaFloor: 30,
+      keyFloor: 56,
+      featherCeiling: 104,
+      alphaFloor: 26,
+      focusThreshold: 102,
+      focusAlphaFloor: 44,
       paddingRatio: 0.32,
       baseMarginRatio: 0.05,
       maxScale: 2.4,
-      sourceFilter: 'brightness(1.08) contrast(1.12) saturate(0.88)',
-      outputFilter: 'brightness(1.05) contrast(1.08) saturate(0.92)',
+      sourceFilter: 'brightness(1.04) contrast(1.18) saturate(0.82)',
+      outputFilter: 'brightness(1.02) contrast(1.12) saturate(0.9)',
     },
   };
 
@@ -1599,7 +1938,7 @@
   </div>
   <a href="${pathPrefix}index.html#promotions" class="promo-burger-btn">
     <span class="promo-btn-inner">
-      <img src="${assetPrefix}/images/icon-pak/Gotovie iconki dlya saita/clash_royale.png" class="promo-btn-icon" alt="">
+      <img src="${assetPrefix}/images/icon-pak/Gotovie iconki dlya saita/clash_royale.png" class="promo-btn-icon" alt="" aria-hidden="true">
       <span class="promo-btn-label">${copy.promotions}</span>
     </span>
   </a>
@@ -2285,6 +2624,86 @@
     return Number.isFinite(conditionCode) ? conditionCode : null;
   }
 
+  function resolveHeaderWeatherConditionLabel(host) {
+    const conditionCode = getHeaderWeatherConditionCode(host);
+    if (conditionCode === null) {
+      return '';
+    }
+
+    const lang = getHeaderWeatherPressureLang(host);
+    const labels = {
+      ru: {
+        clear: 'ЯСНО',
+        partly: 'ПЕРЕМЕННАЯ ОБЛАЧНОСТЬ',
+        cloudy: 'ОБЛАЧНО',
+        overcast: 'ПАСМУРНО',
+        fog: 'ТУМАН',
+        precipitation: 'ОСАДКИ',
+      },
+      uk: {
+        clear: 'ЯСНО',
+        partly: 'МІНЛИВА ХМАРНІСТЬ',
+        cloudy: 'ХМАРНО',
+        overcast: 'ПОХМУРО',
+        fog: 'ТУМАН',
+        precipitation: 'ОПАДИ',
+      },
+      de: {
+        clear: 'KLAR',
+        partly: 'TEILWEISE BEWOLKT',
+        cloudy: 'BEWOLKT',
+        overcast: 'BEDECKT',
+        fog: 'NEBEL',
+        precipitation: 'NIEDERSCHLAG',
+      },
+      en: {
+        clear: 'CLEAR',
+        partly: 'PARTLY CLOUDY',
+        cloudy: 'CLOUDY',
+        overcast: 'OVERCAST',
+        fog: 'FOG',
+        precipitation: 'PRECIPITATION',
+      },
+    };
+
+    const dict = labels[lang] || labels.ru;
+    const isPartlyCloudyCode = conditionCode === 1003 || conditionCode === 2;
+    const isCloudyCode = conditionCode === 1006;
+    const isOvercastCode = conditionCode === 1009 || conditionCode === 3;
+    const isFogCode = conditionCode === 1030 || conditionCode === 45 || conditionCode === 48;
+    const isPrecipitationCode =
+      [1153, 1183, 1210, 1240, 1273].includes(conditionCode) ||
+      (conditionCode >= 51 && conditionCode <= 67) ||
+      (conditionCode >= 71 && conditionCode <= 77) ||
+      (conditionCode >= 80 && conditionCode <= 82) ||
+      (conditionCode >= 85 && conditionCode <= 86) ||
+      (conditionCode >= 95 && conditionCode <= 99);
+
+    if (isPrecipitationCode) return dict.precipitation;
+    if (isFogCode) return dict.fog;
+    if (isOvercastCode) return dict.overcast;
+    if (isCloudyCode) return dict.cloudy;
+    if (isPartlyCloudyCode) return dict.partly;
+    return dict.clear;
+  }
+
+  function applyHeaderWeatherLiveConditionLabel(host) {
+    const root = host?.shadowRoot;
+    if (!root) {
+      return;
+    }
+
+    const label = resolveHeaderWeatherConditionLabel(host);
+    if (!label) {
+      return;
+    }
+
+    const conditionNode = root.querySelector('.weather-header-card__condition');
+    if (conditionNode && conditionNode.textContent?.trim() !== label) {
+      conditionNode.textContent = label;
+    }
+  }
+
   function getHeaderWeatherPressureLang(host) {
     return normalizeLangCode(
       host?.__weatherLocale || host?.dataset?.weatherLocale || document.documentElement.lang || 'ru'
@@ -2364,7 +2783,7 @@
     }
 
     let mode = 'cloudy';
-    let alpha = normalizedCloudCover !== null ? 0.12 + normalizedCloudCover * 0.24 : 0.18;
+    let alpha = normalizedCloudCover !== null ? 0.08 + normalizedCloudCover * 0.2 : 0.14;
     let blur = 16;
     let stretchX = 1.12;
     let stretchY = 0.82;
@@ -2374,7 +2793,112 @@
     let depthAlpha = 0.24;
     let highlightAlpha = 0.16;
 
-    if (isPartlyCloudyCode || isPartlyCloudyText) {
+    /* Primary source of truth: cloud_cover from live weather API. */
+    if (normalizedCloudCover !== null) {
+      if (normalizedCloudCover <= 0.12) {
+        mode = 'clear';
+        alpha = 0.02 + normalizedCloudCover * 0.12;
+        blur = 12;
+        stretchX = 1.02;
+        stretchY = 0.9;
+        drift = 0.88;
+        coreOpacity = 1;
+        depthAlpha = 0.12;
+        highlightAlpha = 0.1;
+      } else if (normalizedCloudCover <= 0.38) {
+        mode = 'partly';
+        alpha = 0.05 + normalizedCloudCover * 0.18;
+        blur = 14;
+        stretchX = 1.06;
+        stretchY = 0.88;
+        drift = 0.92;
+        coreOpacity = 0.99;
+        depthAlpha = 0.18;
+        highlightAlpha = 0.14;
+      } else if (normalizedCloudCover <= 0.75) {
+        mode = 'cloudy';
+        alpha = 0.11 + normalizedCloudCover * 0.2;
+        blur = 18;
+        stretchX = 1.14;
+        stretchY = 0.84;
+        drift = 1;
+        coreOpacity = 0.97;
+        depthAlpha = 0.24;
+        highlightAlpha = 0.16;
+      } else {
+        mode = 'overcast';
+        alpha = 0.18 + normalizedCloudCover * 0.2;
+        blur = 22;
+        stretchX = 1.2;
+        stretchY = 0.8;
+        drift = 1.08;
+        lift = 1;
+        coreOpacity = 0.95;
+        depthAlpha = 0.3;
+        highlightAlpha = 0.2;
+      }
+    }
+
+    /* Weather code has stronger semantic priority than cloud_cover buckets.
+       Example: code=3 (overcast) must not look like light clouds even at 60-70% cover. */
+    if (normalizedCloudCover !== null) {
+      if (isPrecipitationCode || isPrecipitationText) {
+        mode = 'precipitation';
+        alpha = 0.24 + normalizedCloudCover * 0.2;
+        blur = 24;
+        stretchX = 1.22;
+        stretchY = 0.8;
+        drift = 1.08;
+        lift = 1;
+        coreOpacity = 0.92;
+        depthAlpha = 0.32;
+        highlightAlpha = 0.18;
+      } else if (isFogCode || isFogText) {
+        mode = 'fog';
+        alpha = 0.22 + normalizedCloudCover * 0.16;
+        blur = 26;
+        stretchX = 1.32;
+        stretchY = 0.78;
+        drift = 0.88;
+        lift = 2;
+        coreOpacity = 0.97;
+        depthAlpha = 0.22;
+        highlightAlpha = 0.12;
+      } else if (isOvercastCode || isOvercastText) {
+        mode = 'overcast';
+        alpha = 0.32 + normalizedCloudCover * 0.2;
+        blur = 22;
+        stretchX = 1.28;
+        stretchY = 0.76;
+        drift = 1.14;
+        lift = 1;
+        coreOpacity = 0.95;
+        depthAlpha = 0.34;
+        highlightAlpha = 0.22;
+      } else if (isCloudyCode || isCloudyText) {
+        mode = 'cloudy';
+        alpha = 0.18 + normalizedCloudCover * 0.2;
+        blur = 18;
+        stretchX = 1.16;
+        stretchY = 0.84;
+        drift = 1.02;
+        coreOpacity = 0.97;
+        depthAlpha = 0.26;
+        highlightAlpha = 0.18;
+      } else if (isPartlyCloudyCode || isPartlyCloudyText) {
+        mode = 'partly';
+        alpha = 0.08 + normalizedCloudCover * 0.18;
+        blur = 14;
+        stretchX = 1.06;
+        stretchY = 0.88;
+        drift = 0.92;
+        coreOpacity = 0.99;
+        depthAlpha = 0.18;
+        highlightAlpha = 0.14;
+      }
+    }
+
+    if ((isPartlyCloudyCode || isPartlyCloudyText) && normalizedCloudCover === null) {
       mode = 'partly';
       alpha = normalizedCloudCover !== null ? 0.08 + normalizedCloudCover * 0.18 : 0.18;
       blur = 14;
@@ -2386,7 +2910,7 @@
       highlightAlpha = 0.14;
     }
 
-    if (isCloudyCode || isCloudyText) {
+    if ((isCloudyCode || isCloudyText) && normalizedCloudCover === null) {
       mode = 'cloudy';
       alpha = normalizedCloudCover !== null ? 0.16 + normalizedCloudCover * 0.22 : 0.3;
       blur = 18;
@@ -2398,7 +2922,7 @@
       highlightAlpha = 0.18;
     }
 
-    if (isOvercastCode || isOvercastText) {
+    if ((isOvercastCode || isOvercastText) && normalizedCloudCover === null) {
       mode = 'overcast';
       alpha = normalizedCloudCover !== null ? 0.28 + normalizedCloudCover * 0.22 : 0.46;
       blur = 22;
@@ -2411,7 +2935,7 @@
       highlightAlpha = 0.22;
     }
 
-    if (isFogCode || isFogText) {
+    if ((isFogCode || isFogText) && normalizedCloudCover === null) {
       mode = 'fog';
       alpha = normalizedCloudCover !== null ? 0.24 + normalizedCloudCover * 0.14 : 0.34;
       blur = 26;
@@ -2424,7 +2948,7 @@
       highlightAlpha = 0.12;
     }
 
-    if (isPrecipitationCode || isPrecipitationText) {
+    if ((isPrecipitationCode || isPrecipitationText) && normalizedCloudCover === null) {
       mode = 'precipitation';
       alpha = normalizedCloudCover !== null ? 0.24 + normalizedCloudCover * 0.18 : 0.38;
       blur = 24;
@@ -2439,7 +2963,7 @@
 
     return {
       mode,
-      alpha: clampHeaderWeatherValue(alpha, 0, 0.62),
+      alpha: clampHeaderWeatherValue(alpha, 0, 0.5),
       blur,
       stretchX,
       stretchY,
@@ -2853,13 +3377,45 @@
       return;
     }
 
+    if (!HEADER_WEATHER_CLOUDS_ENABLED) {
+      overlay.classList.remove('has-cloud-veil');
+      overlay.style.removeProperty('--orb-cloud-alpha');
+      overlay.style.removeProperty('--orb-core-opacity');
+      overlay.style.removeProperty('--orb-cloud-blur');
+      overlay.style.removeProperty('--orb-cloud-stretch-x');
+      overlay.style.removeProperty('--orb-cloud-stretch-y');
+      overlay.style.removeProperty('--orb-cloud-drift');
+      overlay.style.removeProperty('--orb-cloud-lift');
+      overlay.style.removeProperty('--orb-cloud-depth-alpha');
+      overlay.style.removeProperty('--orb-cloud-highlight-alpha');
+      return;
+    }
+
+    if (overlay.classList.contains('is-moon')) {
+      overlay.classList.remove('has-cloud-veil');
+      overlay.style.removeProperty('--orb-cloud-alpha');
+      overlay.style.removeProperty('--orb-core-opacity');
+      overlay.style.removeProperty('--orb-cloud-blur');
+      overlay.style.removeProperty('--orb-cloud-stretch-x');
+      overlay.style.removeProperty('--orb-cloud-stretch-y');
+      overlay.style.removeProperty('--orb-cloud-drift');
+      overlay.style.removeProperty('--orb-cloud-lift');
+      overlay.style.removeProperty('--orb-cloud-depth-alpha');
+      overlay.style.removeProperty('--orb-cloud-highlight-alpha');
+      return;
+    }
+
+    const isSunOverlay = overlay.classList.contains('is-sun');
     const normalizedAtmosphere =
       atmosphere && typeof atmosphere === 'object'
         ? atmosphere
         : {
             alpha: Number(atmosphere) || 0,
           };
-    const resolvedCloudiness = clampHeaderWeatherValue(Number(normalizedAtmosphere.alpha) || 0, 0, 0.92);
+    let resolvedCloudiness = clampHeaderWeatherValue(Number(normalizedAtmosphere.alpha) || 0, 0, 0.92);
+    if (isSunOverlay) {
+      resolvedCloudiness = clampHeaderWeatherValue(resolvedCloudiness, 0, 0.5);
+    }
     overlay.classList.toggle('has-cloud-veil', resolvedCloudiness > 0.03);
 
     if (resolvedCloudiness > 0.03) {
@@ -2924,17 +3480,21 @@
     toggleIcon.style.setProperty('background-position', 'center', 'important');
     toggleIcon.style.setProperty('background-repeat', 'no-repeat', 'important');
     toggleIcon.style.setProperty('background-size', 'contain', 'important');
-    toggleIcon.style.setProperty('width', '6.534px', 'important');
-    toggleIcon.style.setProperty('height', '6.534px', 'important');
-    toggleIcon.style.setProperty('margin-top', '6px', 'important');
+    toggleIcon.style.setProperty('width', '7.906px', 'important');
+    toggleIcon.style.setProperty('height', '7.906px', 'important');
+    toggleIcon.style.setProperty('position', 'absolute', 'important');
+    toggleIcon.style.setProperty('right', '-9.906px', 'important');
+    toggleIcon.style.setProperty('top', 'auto', 'important');
+    toggleIcon.style.setProperty('bottom', '-1px', 'important');
+    toggleIcon.style.setProperty('margin-top', '0', 'important');
     toggleIcon.style.setProperty('opacity', '0.9', 'important');
     toggleIcon.style.setProperty('visibility', 'visible', 'important');
-    toggleIcon.style.setProperty('transform-origin', 'right top', 'important');
+    toggleIcon.style.setProperty('transform-origin', '50% 100%', 'important');
     toggleIcon.style.setProperty('font-size', '0', 'important');
     toggleIcon.style.setProperty('line-height', '0', 'important');
     toggleIcon.style.setProperty(
       '--arrow-rotate',
-      toggleIcon.classList.contains('is-open') ? 'rotate(0deg)' : 'rotate(90deg)',
+      toggleIcon.classList.contains('is-open') ? 'rotate(180deg)' : 'rotate(90deg)',
       'important'
     );
     toggleIcon.style.setProperty('--arrow-shift-x', '0px', 'important');
@@ -4004,6 +4564,7 @@
     video.preload = 'auto';
     video.setAttribute('muted', '');
     video.setAttribute('playsinline', '');
+    video.hidden = true;
 
     const canvas = document.createElement('canvas');
     canvas.className = 'weather-orb-overlay__canvas';
@@ -4263,6 +4824,8 @@
     renderFrame();
   }
 
+  // Kept for optional future fallback; moon now uses MP4-only source.
+  // eslint-disable-next-line no-unused-vars
   function startHeaderWeatherOrbTextureRender(overlay, texture) {
     stopHeaderWeatherOrbRender(overlay);
     const canvas = overlay.querySelector('canvas');
@@ -4450,44 +5013,6 @@
     overlay.classList.add('is-visible');
     delete overlay.dataset.fallbackSrc;
 
-    if (assetConfig.type === 'texture-sphere') {
-      stopHeaderWeatherOrbRender(overlay);
-      video.onloadeddata = null;
-      video.oncanplay = null;
-      video.onerror = null;
-      video.pause();
-      video.hidden = true;
-      if (video.dataset.currentSrc) {
-        video.removeAttribute('src');
-        video.load();
-        delete video.dataset.currentSrc;
-      }
-      if (!canvas) return;
-      const textureSrc = assetConfig.src;
-      if (overlay.dataset.textureSphereSrc === textureSrc && overlay.__orbTextureSphereImg?.complete) {
-        canvas.hidden = false;
-        if (image) image.hidden = true;
-        startHeaderWeatherOrbTextureRender(overlay, overlay.__orbTextureSphereImg);
-        return;
-      }
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        overlay.__orbTextureSphereImg = img;
-        overlay.dataset.textureSphereSrc = textureSrc;
-        canvas.hidden = false;
-        if (image) image.hidden = true;
-        startHeaderWeatherOrbTextureRender(overlay, img);
-      };
-      img.onerror = () => {
-        canvas.hidden = true;
-        if (image) image.hidden = true;
-      };
-      overlay.dataset.textureSphereSrc = textureSrc;
-      img.src = textureSrc;
-      return;
-    }
-
     if (assetConfig.type === 'video-keyed') {
       const sourceListKey = videoSources.join('|');
       if (overlay.dataset.currentSourceList !== sourceListKey) {
@@ -4495,9 +5020,13 @@
         overlay.dataset.currentSourceIndex = '0';
       }
 
+      const directVideoMode = assetConfig.renderMode === 'video-direct';
       const tryVideoSource = sourceIndex => {
         const nextSource = videoSources[sourceIndex];
         if (!nextSource) {
+          stopHeaderWeatherOrbRender(overlay);
+          video.pause();
+          video.hidden = true;
           if (canvas) {
             canvas.hidden = true;
             clearHeaderWeatherOrbCanvas(overlay);
@@ -4520,14 +5049,26 @@
           video
             .play()
             .then(() => {
-              video.hidden = true;
-              if (canvas) {
-                canvas.hidden = false;
+              if (directVideoMode) {
+                stopHeaderWeatherOrbRender(overlay);
+                video.hidden = false;
+                if (canvas) {
+                  canvas.hidden = true;
+                  clearHeaderWeatherOrbCanvas(overlay);
+                }
+                if (image) {
+                  image.hidden = true;
+                }
+              } else {
+                video.hidden = true;
+                if (canvas) {
+                  canvas.hidden = false;
+                }
+                if (image) {
+                  image.hidden = true;
+                }
+                startHeaderWeatherOrbRender(overlay);
               }
-              if (image) {
-                image.hidden = true;
-              }
-              startHeaderWeatherOrbRender(overlay);
             })
             .catch(() => {
               tryVideoSource(sourceIndex + 1);
@@ -4621,7 +5162,7 @@
       try {
         astroData = await resolveHeaderWeatherAstro(host);
       } catch (error) {
-        console.warn('Header weather astro sync failed:', error);
+        // console.warn('Header weather astro sync failed:', error);
       }
 
       host.__weatherTimeZone = resolveHeaderWeatherTimeZone(host, astroData?.locationMeta || null);
@@ -4630,8 +5171,10 @@
         host.__weatherCurrentMeta = await resolveHeaderWeatherCurrent(host);
       } catch (error) {
         host.__weatherCurrentMeta = null;
-        console.warn('Header weather current sync failed:', error);
+        // console.warn('Header weather current sync failed:', error);
       }
+
+      applyHeaderWeatherLiveConditionLabel(host);
 
       if (host.__weatherOrbSyncToken !== syncToken) {
         return;
@@ -4641,8 +5184,9 @@
       const orbKind = orbModel?.kind || null;
       const orbAtmosphere = resolveHeaderWeatherOrbAtmosphere(host);
       const widgetBasePath = getHeaderWeatherWidgetBasePath(host);
-      const sunVideoSources = widgetBasePath
-        ? [`${widgetBasePath}/assets/Sun/sun_orb_keyed.webm`]
+      const sunVideoSources = widgetBasePath ? [`${widgetBasePath}/assets/Sun/sun_orb_keyed.webm`] : [];
+      const moonVideoSources = widgetBasePath
+        ? [`${widgetBasePath}/assets/Moon/${HEADER_WEATHER_MOON_VIDEO_FILE}`]
         : [];
       const assetConfig = orbKind
         ? orbKind === 'sun'
@@ -4652,19 +5196,18 @@
                 sources: sunVideoSources,
               }
             : null
-          : {
-              type: 'texture-sphere',
-              src: HEADER_WEATHER_MOON_TEXTURE_SRC,
-            }
+          : moonVideoSources.length
+            ? {
+                type: 'video-keyed',
+                sources: moonVideoSources,
+              }
+            : null
         : null;
 
       const previewContainer = host.shadowRoot.querySelector('.weather-header-preview');
       if (previewContainer) {
         const cloudAlpha = Number(orbAtmosphere?.alpha) || 0;
-        const starOpacity =
-          orbKind === 'moon'
-            ? clampHeaderWeatherValue(1.02 - cloudAlpha * 0.72, 0.42, 0.98)
-            : 0;
+        const starOpacity = orbKind === 'moon' ? clampHeaderWeatherValue(1.02 - cloudAlpha * 0.72, 0.42, 0.98) : 0;
         previewContainer.classList.toggle('is-night-sky', orbKind === 'moon');
         previewContainer.style.setProperty('--preview-stars-opacity', `${starOpacity.toFixed(3)}`);
         const previewOverlay = ensureHeaderWeatherOrbOverlay(previewContainer, 'preview');
@@ -4677,6 +5220,10 @@
         host.shadowRoot.querySelector('.weather-header-trigger')?.getAttribute('aria-expanded') === 'true';
       const dropdownScene = host.shadowRoot.querySelector('.weather-header-dropdown__scene');
       if (dropdownScene) {
+        const cloudAlpha = Number(orbAtmosphere?.alpha) || 0;
+        const starOpacity = orbKind === 'moon' ? clampHeaderWeatherValue(1 - cloudAlpha * 0.68, 0.4, 0.94) : 0;
+        dropdownScene.classList.toggle('is-night-sky', isExpanded && orbKind === 'moon');
+        dropdownScene.style.setProperty('--dropdown-stars-opacity', `${starOpacity.toFixed(3)}`);
         const dropdownOverlay = ensureHeaderWeatherOrbOverlay(dropdownScene, 'dropdown');
         applyHeaderWeatherOrbLayout(dropdownOverlay, orbModel?.dropdownLayout);
         setHeaderWeatherOrbSource(dropdownOverlay, isExpanded ? orbKind : null, assetConfig);
@@ -4739,6 +5286,25 @@
 
     host.__weatherStateObserver = observer;
 
+    if (!host.__weatherMenuStrictTapBound) {
+      const blockNonToggleInteraction = event => {
+        const trigger = event.target?.closest?.('.weather-header-trigger');
+        if (!trigger) {
+          return;
+        }
+        const toggleButton = event.target?.closest?.('.weather-header-card__toggle');
+        if (toggleButton) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+      };
+      host.shadowRoot.addEventListener('pointerdown', blockNonToggleInteraction, true);
+      host.shadowRoot.addEventListener('click', blockNonToggleInteraction, true);
+      host.shadowRoot.addEventListener('touchstart', blockNonToggleInteraction, { capture: true, passive: false });
+      host.__weatherMenuStrictTapBound = true;
+    }
+
     // Apply local timezone rendering immediately to avoid stale time flash on first paint.
     syncHeaderWeatherLiveClock(host);
 
@@ -4786,7 +5352,7 @@
     scheduleHeaderWeatherOrbSync(host);
   }
 
-  function refreshHeaderWeatherWidgetData(host) {
+  async function refreshHeaderWeatherWidgetData(host) {
     if (!host || host.dataset.weatherMounted !== 'true') {
       return;
     }
@@ -4795,14 +5361,46 @@
       return;
     }
 
-    const pageLang = normalizeLangCode(
-      host.dataset.weatherLocale || host.__weatherLocale || document.documentElement.lang
-    );
-    host.__weatherWidgetInstance?.unmount?.();
-    host.__weatherWidgetInstance = null;
-    host.dataset.weatherMounted = 'false';
-    host.classList.remove('is-mounted');
-    mountHeaderWeatherWidget(pageLang);
+    if (host.__weatherRefreshInFlight) {
+      host.__weatherRefreshPending = true;
+      return;
+    }
+
+    host.__weatherRefreshInFlight = true;
+    host.dataset.weatherRefreshing = 'true';
+
+    try {
+      const widgetApi = host.__weatherWidgetInstance;
+      const refreshMethod =
+        (typeof widgetApi?.refresh === 'function' && widgetApi.refresh.bind(widgetApi)) ||
+        (typeof widgetApi?.reload === 'function' && widgetApi.reload.bind(widgetApi)) ||
+        (typeof widgetApi?.update === 'function' && widgetApi.update.bind(widgetApi)) ||
+        null;
+
+      if (refreshMethod) {
+        await Promise.resolve(refreshMethod());
+      }
+
+      await syncHeaderWeatherOrbOverlay(host);
+      await syncHeaderWeatherPreciseLocationMeta(host);
+      syncHeaderWeatherLiveClock(host);
+      syncHeaderWeatherExpandedState(host);
+      releaseHeaderWeatherSceneClip(host);
+    } catch (_) {
+      scheduleHeaderWeatherOrbSync(host);
+    } finally {
+      releaseHeaderWeatherSceneClip(host);
+      window.setTimeout(() => {
+        if (host?.dataset) {
+          host.dataset.weatherRefreshing = 'false';
+        }
+      }, 240);
+      host.__weatherRefreshInFlight = false;
+      if (host.__weatherRefreshPending) {
+        host.__weatherRefreshPending = false;
+        void refreshHeaderWeatherWidgetData(host);
+      }
+    }
   }
 
   function loadHeaderWeatherWidgetLoader(scriptSrc) {
@@ -4842,6 +5440,46 @@
     return headerWeatherLoaderPromise;
   }
 
+  function releaseHeaderWeatherSceneClip(host) {
+    const root = host?.shadowRoot;
+    if (!root) {
+      return;
+    }
+
+    root
+      .querySelectorAll(
+        '.weather-header-preview div, .weather-app--header .weather-app__scene div, .weather-app--header .weather-app__scene--header div'
+      )
+      .forEach(node => {
+        node.style.setProperty('overflow', 'visible', 'important');
+        node.style.setProperty('clip-path', 'none', 'important');
+        node.style.setProperty('contain', 'none', 'important');
+        node.style.setProperty('max-width', 'none', 'important');
+        node.style.setProperty('max-height', 'none', 'important');
+      });
+
+    root.querySelectorAll('.weather-app--header canvas').forEach(canvas => {
+      canvas.style.setProperty('overflow', 'visible', 'important');
+      canvas.style.setProperty('clip-path', 'none', 'important');
+      canvas.style.removeProperty('max-height');
+      canvas.style.removeProperty('max-width');
+    });
+  }
+
+  function scheduleHeaderWeatherSceneClipRelease(host) {
+    if (!host) {
+      return;
+    }
+
+    [0, 100, 400, 1000, 2200].forEach(delay => {
+      window.setTimeout(() => {
+        if (host.isConnected && host.dataset.weatherMounted === 'true') {
+          releaseHeaderWeatherSceneClip(host);
+        }
+      }, delay);
+    });
+  }
+
   function applyHeaderWeatherTransparency(host) {
     if (!host?.shadowRoot) {
       return;
@@ -4852,13 +5490,15 @@
       if (existing.textContent !== HEADER_WEATHER_TRANSPARENT_STYLES) {
         existing.textContent = HEADER_WEATHER_TRANSPARENT_STYLES;
       }
-      return;
+    } else {
+      const styleTag = document.createElement('style');
+      styleTag.dataset.headerWeatherTransparent = 'true';
+      styleTag.textContent = HEADER_WEATHER_TRANSPARENT_STYLES;
+      host.shadowRoot.appendChild(styleTag);
     }
 
-    const styleTag = document.createElement('style');
-    styleTag.dataset.headerWeatherTransparent = 'true';
-    styleTag.textContent = HEADER_WEATHER_TRANSPARENT_STYLES;
-    host.shadowRoot.appendChild(styleTag);
+    releaseHeaderWeatherSceneClip(host);
+    scheduleHeaderWeatherSceneClipRelease(host);
   }
 
   function unmountHeaderWeatherWidget() {
@@ -5007,10 +5647,10 @@
 
       emitHeaderWeatherEvent('site-shell:weather-ready', host.dataset.weatherExpanded === 'true');
     } catch (error) {
-      console.error('Header weather widget failed to mount:', error);
+      // console.error('Header weather widget failed to mount:', error);
       host.dataset.weatherMounted = 'false';
       host.dataset.weatherMountScheduled = 'false';
-      host.closest('.header-weather-shell')?.classList.add('weather-shell-error');
+      host.closest('.header-weather-shell')?.classList.remove('weather-shell-ready');
       document.body?.classList.remove('header-weather-expanded');
       emitHeaderWeatherEvent('site-shell:weather-ready', false);
 
@@ -5028,6 +5668,8 @@
           }
           mountHeaderWeatherWidget(pageLang);
         }, retryDelayMs);
+      } else {
+        host.closest('.header-weather-shell')?.classList.add('weather-shell-error');
       }
     }
   }
