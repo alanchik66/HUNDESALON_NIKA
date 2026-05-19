@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-19T00:35:26.943Z",
+  "generatedAt": "2026-05-19T00:53:59.623Z",
   "property": "sc-domain:hundesalon-nika.com",
   "sitemap": "https://hundesalon-nika.com/sitemap.xml",
   "urlCount": 76,
@@ -23,17 +23,6 @@
       "https://hundesalon-nika.com/uk/"
     ]
   },
-  "warnings": [
-    "https://hundesalon-nika.com/: canonical differs from requested URL",
-    "https://hundesalon-nika.com/de/: canonical differs from requested URL",
-    "https://hundesalon-nika.com/ru/: canonical differs from requested URL",
-    "https://hundesalon-nika.com/uk/: canonical differs from requested URL"
-  ],
-  "failures": [
-    "https://hundesalon-nika.com/: missing root favicon link",
-    "https://hundesalon-nika.com/de/: missing root favicon link",
-    "https://hundesalon-nika.com/en/: missing root favicon link",
-    "https://hundesalon-nika.com/ru/: missing root favicon link",
-    "https://hundesalon-nika.com/uk/: missing root favicon link"
-  ]
+  "warnings": [],
+  "failures": []
 }

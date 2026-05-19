@@ -93,7 +93,11 @@ function parseJsonLd(html, url) {
 }
 
 function hasCanonical(html, url) {
-  return html.includes(`<link rel="canonical" href="${url}">`) || html.includes(`<link rel="canonical" href="${url}/">`);
+  const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(
+    `<link[^>]*rel=["']canonical["'][^>]*href=["']${escaped}\\/?["'][^>]*>`,
+    'i'
+  ).test(html);
 }
 
 const robots = await fetchText(`${origin}/robots.txt`);
