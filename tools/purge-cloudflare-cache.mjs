@@ -2,7 +2,14 @@
  * Purge all Cloudflare cache for hundesalon-nika.com.
  */
 import { spawn } from 'node:child_process';
-import { DOMAIN, cloudflareApi, loadDevVars, resolvePurgeAuth, resolveZoneId } from './lib/cloudflare-auth.mjs';
+import {
+  DOMAIN,
+  cloudflareApi,
+  loadDevVars,
+  removeDevVar,
+  resolvePurgeAuth,
+  resolveZoneId,
+} from './lib/cloudflare-auth.mjs';
 
 async function runEnsurePurgeToken() {
   await new Promise((resolve, reject) => {
@@ -30,7 +37,19 @@ async function main() {
   try {
     await purgeEverything();
   } catch (error) {
-    if (!process.env.CLOUDFLARE_API_TOKEN && !process.env.CLOUDFLARE_API_KEY) {
+    const msg = String(error.message || error);
+    const badToken =
+      process.env.CLOUDFLARE_API_TOKEN &&
+      (msg.includes('Invalid request headers') ||
+        msg.includes('Authentication error') ||
+        msg.includes('Invalid API Token') ||
+        msg.includes('Wrangler OAuth'));
+
+    if (badToken) {
+      removeDevVar('CLOUDFLARE_API_TOKEN');
+    }
+
+    if (!process.env.CLOUDFLARE_API_TOKEN?.trim() && !process.env.CLOUDFLARE_API_KEY?.trim()) {
       try {
         await runEnsurePurgeToken();
         await purgeEverything();

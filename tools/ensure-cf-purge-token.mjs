@@ -6,8 +6,7 @@ import {
   cloudflareApi,
   getCloudflareAuthHeaders,
   loadDevVars,
-  loadWranglerOAuth,
-  refreshWranglerOAuth,
+  removeDevVar,
   resolveZoneId,
   upsertDevVar,
 } from './lib/cloudflare-auth.mjs';
@@ -63,15 +62,23 @@ async function main() {
       await resolveZoneId({ Authorization: `Bearer ${existing}` });
       console.log('CLOUDFLARE_API_TOKEN in .dev.vars is present and valid for zone lookup.');
       return;
-    } catch {
-      console.warn('Existing CLOUDFLARE_API_TOKEN invalid; replacing...');
+    } catch (error) {
+      console.warn(`Existing CLOUDFLARE_API_TOKEN invalid (${error.message}); removing...`);
+      removeDevVar('CLOUDFLARE_API_TOKEN');
     }
   }
 
-  const authHeaders = getCloudflareAuthHeaders();
+  let authHeaders;
+  try {
+    authHeaders = getCloudflareAuthHeaders();
+  } catch (error) {
+    console.warn(error.message);
+    removeDevVar('CLOUDFLARE_API_TOKEN');
+    authHeaders = getCloudflareAuthHeaders();
+  }
+
   if (authHeaders?.['X-Auth-Key']) {
-    const oauth = await refreshWranglerOAuth(loadWranglerOAuth());
-    const zoneId = await resolveZoneId(oauth);
+    const zoneId = await resolveZoneId(authHeaders);
     const token = await createZonePurgeToken(authHeaders, zoneId);
     if (!token?.value) throw new Error('Token creation returned no value');
     upsertDevVar('CLOUDFLARE_API_TOKEN', token.value);
@@ -80,15 +87,20 @@ async function main() {
   }
 
   if (authHeaders?.Authorization) {
-    const zoneId = await resolveZoneId(authHeaders);
-    const token = await createZonePurgeToken(authHeaders, zoneId);
-    if (!token?.value) throw new Error('Token creation returned no value');
-    upsertDevVar('CLOUDFLARE_API_TOKEN', token.value);
-    console.log('CLOUDFLARE_API_TOKEN saved to .dev.vars.');
-    return;
+    try {
+      const zoneId = await resolveZoneId(authHeaders);
+      const token = await createZonePurgeToken(authHeaders, zoneId);
+      if (!token?.value) throw new Error('Token creation returned no value');
+      upsertDevVar('CLOUDFLARE_API_TOKEN', token.value);
+      console.log('CLOUDFLARE_API_TOKEN saved to .dev.vars.');
+      return;
+    } catch (error) {
+      console.warn(`Cannot create purge token with current API token: ${error.message}`);
+      removeDevVar('CLOUDFLARE_API_TOKEN');
+    }
   }
 
-  console.error('Wrangler OAuth cannot create API tokens or purge cache.');
+  console.error('Wrangler OAuth cannot purge cache or create API tokens.');
   console.error('');
   console.error('Add to .dev.vars (one option):');
   console.error('  A) CLOUDFLARE_API_TOKEN=<zone token with Cache Purge>');

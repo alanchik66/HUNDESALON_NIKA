@@ -34,11 +34,26 @@ export function loadDevVars(filePath = path.join(REPO_ROOT, '.dev.vars')) {
   }
 }
 
+function looksLikeWranglerOAuthToken(apiToken) {
+  try {
+    const stored = loadWranglerOAuth();
+    if (stored.access_token && apiToken === stored.access_token) return true;
+  } catch {
+    // no wrangler config
+  }
+  return false;
+}
+
 /** Headers for Cloudflare API v4 (token or Global API Key). */
-export function getCloudflareAuthHeaders() {
+export function getCloudflareAuthHeaders({ allowOAuthToken = false } = {}) {
   loadDevVars();
   const apiToken = process.env.CLOUDFLARE_API_TOKEN?.trim();
   if (apiToken) {
+    if (!allowOAuthToken && looksLikeWranglerOAuthToken(apiToken)) {
+      throw new Error(
+        'CLOUDFLARE_API_TOKEN matches Wrangler OAuth (no Cache Purge). Create a zone API token: npm run cf:open-purge-token'
+      );
+    }
     return { Authorization: `Bearer ${apiToken}` };
   }
 
@@ -151,6 +166,14 @@ export function resolvePurgeAuth() {
   throw new Error(
     'No purge credentials. Add CLOUDFLARE_API_TOKEN (zone: Cache Purge) or CLOUDFLARE_API_EMAIL + CLOUDFLARE_API_KEY to .dev.vars. Run: npm run cf:open-purge-token'
   );
+}
+
+export function removeDevVar(key, filePath = path.join(REPO_ROOT, '.dev.vars')) {
+  if (!existsSync(filePath)) return;
+  const lines = readFileSync(filePath, 'utf8').split(/\r?\n/);
+  const next = lines.filter(row => !row.replace(/^\uFEFF/, '').trim().startsWith(`${key}=`));
+  writeFileSync(filePath, `${next.join('\n').replace(/\n+$/, '')}\n`, 'utf8');
+  delete process.env[key];
 }
 
 export function upsertDevVar(key, value, filePath = path.join(REPO_ROOT, '.dev.vars')) {
