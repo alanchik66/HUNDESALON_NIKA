@@ -1,6 +1,9 @@
 param(
   [string]$Model = "gemma4:latest",
-  [string]$OutFile = "docs/ollama-mtp-pilot-latest.md"
+  [string]$OutFile = "docs/ollama-mtp-pilot-latest.md",
+  [int]$NumPredict = 360,
+  [double]$Temperature = 0.2,
+  [double]$TopP = 0.9
 )
 
 Set-StrictMode -Version Latest
@@ -36,6 +39,11 @@ foreach ($prompt in $prompts) {
       model  = $Model
       prompt = $prompt
       stream = $false
+      options = @{
+        num_predict = $NumPredict
+        temperature = $Temperature
+        top_p = $TopP
+      }
     } | ConvertTo-Json -Depth 4
 
     $response = Invoke-RestMethod -Method Post -Uri $ollamaApiUrl -ContentType "application/json" -Body $requestBody
@@ -73,6 +81,9 @@ $lines += "# Ollama MTP Pilot Report"
 $lines += ""
 $lines += "- Generated: $timestamp"
 $lines += "- Model: $Model"
+$lines += "- NumPredict: $NumPredict"
+$lines += "- Temperature: $Temperature"
+$lines += "- TopP: $TopP"
 $lines += "- Prompts: $($results.Count)"
 $lines += "- Average latency (sec): $avg"
 $lines += ""

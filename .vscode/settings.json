@@ -53,7 +53,7 @@
   // ── Stylelint ─────────────────────────────────────────────────────────────
   "stylelint.enable": true,
   "stylelint.run": "onSave",
-  "stylelint.stylelintPath": "node_modules/stylelint",
+  "stylelint.configFile": "${workspaceFolder}/.stylelintrc.json",
   "stylelint.packageManager": "npm",
   "stylelint.validate": ["css"],
   "stylelint.lintFiles.glob": "assets/css/**/*.css",
@@ -87,6 +87,8 @@
   "git.autofetch": true,
   "git.confirmSync": false,
   "git.enableSmartCommit": true,
+  // GitLab CI/pipelines: origin = GitHub, remote "gitlab" — см. .git/config
+  "gitlab.pipelineGitRemoteName": "gitlab",
 
   // ── PowerShell ───────────────────────────────────────────────────────────
   "terminal.integrated.defaultProfile.windows": "PowerShell",
@@ -121,5 +123,8 @@
     "*.md": "vscode.markdown.preview.editor"
   },
   "markdown.preview.doubleClickToSwitchToEditor": false,
-  "markdown.preview.markEditorSelection": false
+  "markdown.preview.markEditorSelection": false,
+  "[powershell]": {
+    "editor.defaultFormatter": "ms-vscode.powershell"
+  }
 }

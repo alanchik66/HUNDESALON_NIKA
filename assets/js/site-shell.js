@@ -223,9 +223,9 @@
    intentional UI parts. The base preview/scene/trigger area must be invisible
    so only the 3D animation is visible. */
 :host([data-weather-variant='header']) .weather-app,
-:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *),
-:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *)::before,
-:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *)::after {
+:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *):not(.weather-header-preview):not(.weather-header-preview *),
+:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *):not(.weather-header-preview):not(.weather-header-preview *)::before,
+:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *):not(.weather-header-preview):not(.weather-header-preview *)::after {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
@@ -450,18 +450,18 @@
 .weather-app--header .weather-app__scene--header {
   display: block !important;
   position: absolute !important;
-  top: calc(50% + 12px) !important;
+  top: 50% !important;
   left: 50% !important;
-  width: 124% !important;
-  height: calc(100% + 80px) !important;
-  min-height: calc(100% + 80px) !important;
+  width: 126% !important;
+  height: calc(100% + 104px) !important;
+  min-height: calc(100% + 104px) !important;
   transform: translate(-50%, -50%) !important;
   transform-origin: center center !important;
   overflow: visible !important;
   opacity: 1 !important;
   visibility: visible !important;
   background: transparent !important;
-  z-index: -30 !important;
+  z-index: 0 !important;
 }
 
 /* No edge masks: clouds must never be clipped. */
@@ -481,7 +481,7 @@
   opacity: 1 !important;
   visibility: visible !important;
   background: transparent !important;
-  z-index: -30 !important;
+  z-index: 0 !important;
 }
 
 .weather-orb-overlay {
@@ -721,6 +721,84 @@
 .weather-header-preview {
   isolation: isolate !important;
   overflow: visible !important;
+}
+
+.weather-header-preview.is-night-sky::before,
+.weather-header-preview.is-night-sky::after {
+  content: '';
+  position: absolute;
+  inset: -8% -3% -10% -3%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: var(--preview-stars-opacity, 0.82);
+  mix-blend-mode: screen;
+}
+
+.weather-header-preview.is-night-sky::before {
+  background:
+    radial-gradient(circle at 8% 12%, rgba(255, 255, 255, 0.92) 0 0.7px, transparent 1.15px),
+    radial-gradient(circle at 16% 26%, rgba(228, 238, 255, 0.8) 0 0.62px, transparent 1.08px),
+    radial-gradient(circle at 24% 8%, rgba(255, 255, 255, 0.86) 0 0.7px, transparent 1.12px),
+    radial-gradient(circle at 32% 19%, rgba(201, 224, 255, 0.7) 0 0.62px, transparent 1.08px),
+    radial-gradient(circle at 40% 6%, rgba(255, 255, 255, 0.88) 0 0.7px, transparent 1.12px),
+    radial-gradient(circle at 49% 22%, rgba(235, 244, 255, 0.78) 0 0.62px, transparent 1.08px),
+    radial-gradient(circle at 57% 11%, rgba(255, 255, 255, 0.9) 0 0.72px, transparent 1.14px),
+    radial-gradient(circle at 66% 28%, rgba(236, 242, 252, 0.72) 0 0.62px, transparent 1.08px),
+    radial-gradient(circle at 74% 9%, rgba(255, 255, 255, 0.88) 0 0.7px, transparent 1.12px),
+    radial-gradient(circle at 83% 21%, rgba(240, 245, 253, 0.74) 0 0.62px, transparent 1.08px),
+    radial-gradient(circle at 91% 7%, rgba(255, 255, 255, 0.88) 0 0.7px, transparent 1.12px),
+    radial-gradient(circle at 12% 43%, rgba(255, 255, 255, 0.84) 0 0.66px, transparent 1.1px),
+    radial-gradient(circle at 21% 56%, rgba(210, 228, 255, 0.72) 0 0.6px, transparent 1.02px),
+    radial-gradient(circle at 30% 41%, rgba(255, 255, 255, 0.86) 0 0.66px, transparent 1.1px),
+    radial-gradient(circle at 38% 63%, rgba(235, 244, 255, 0.76) 0 0.6px, transparent 1.02px),
+    radial-gradient(circle at 47% 48%, rgba(255, 255, 255, 0.84) 0 0.66px, transparent 1.1px),
+    radial-gradient(circle at 55% 64%, rgba(208, 227, 255, 0.7) 0 0.6px, transparent 1.02px),
+    radial-gradient(circle at 63% 46%, rgba(255, 255, 255, 0.84) 0 0.66px, transparent 1.1px),
+    radial-gradient(circle at 72% 58%, rgba(229, 239, 255, 0.74) 0 0.6px, transparent 1.02px),
+    radial-gradient(circle at 80% 44%, rgba(255, 255, 255, 0.88) 0 0.66px, transparent 1.1px),
+    radial-gradient(circle at 89% 60%, rgba(238, 244, 252, 0.68) 0 0.6px, transparent 1.02px);
+  filter: drop-shadow(0 0 0.9px rgba(196, 217, 255, 0.42));
+  animation: weatherHeaderStarsTwinkle 6.6s ease-in-out infinite;
+}
+
+.weather-header-preview.is-night-sky::after {
+  background:
+    radial-gradient(circle at 14% 18%, rgba(255, 255, 255, 0.96) 0 1.34px, transparent 1.95px),
+    radial-gradient(circle at 36% 14%, rgba(229, 241, 255, 0.84) 0 1.1px, transparent 1.68px),
+    radial-gradient(circle at 58% 18%, rgba(255, 255, 255, 0.95) 0 1.32px, transparent 1.92px),
+    radial-gradient(circle at 78% 16%, rgba(246, 249, 254, 0.8) 0 1.1px, transparent 1.68px),
+    radial-gradient(circle at 26% 52%, rgba(255, 255, 255, 0.92) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 50% 56%, rgba(232, 243, 255, 0.84) 0 1.1px, transparent 1.68px),
+    radial-gradient(circle at 74% 50%, rgba(255, 255, 255, 0.92) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 40% 80%, rgba(226, 238, 255, 0.8) 0 1px, transparent 1.58px),
+    radial-gradient(circle at 66% 76%, rgba(248, 250, 254, 0.84) 0 1.1px, transparent 1.7px);
+  opacity: calc(var(--preview-stars-opacity, 0.82) * 0.74);
+  filter: drop-shadow(0 0 3.6px rgba(210, 226, 255, 0.38));
+  animation: weatherHeaderStarsTwinkleAlt 8.1s ease-in-out infinite;
+}
+
+@keyframes weatherHeaderStarsTwinkle {
+  0%,
+  100% {
+    opacity: calc(var(--preview-stars-opacity, 0.82) * 0.88);
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: var(--preview-stars-opacity, 0.82);
+    transform: translateY(-0.5px);
+  }
+}
+
+@keyframes weatherHeaderStarsTwinkleAlt {
+  0%,
+  100% {
+    opacity: calc(var(--preview-stars-opacity, 0.82) * 0.56);
+  }
+
+  50% {
+    opacity: calc(var(--preview-stars-opacity, 0.82) * 0.74);
+  }
 }
 
 .weather-header-trigger {
@@ -1036,9 +1114,9 @@
     position: absolute !important;
     top: 50% !important;
     left: 50% !important;
-    width: 132% !important;
-    height: calc(100% + 70px) !important;
-    min-height: calc(100% + 70px) !important;
+    width: 134% !important;
+    height: calc(100% + 92px) !important;
+    min-height: calc(100% + 92px) !important;
     transform: translate(-50%, -50%) !important;
     transform-origin: center center !important;
     overflow: visible !important;
@@ -3005,9 +3083,9 @@
         content.appendChild(condition);
       }
 
-      condition.style.setProperty('position', 'relative', 'important');
-      condition.style.setProperty('right', 'auto', 'important');
-      condition.style.setProperty('top', 'auto', 'important');
+      condition.style.setProperty('position', 'absolute', 'important');
+      condition.style.setProperty('right', '0', 'important');
+      condition.style.setProperty('top', '0', 'important');
       condition.style.setProperty('bottom', 'auto', 'important');
       condition.style.setProperty('left', 'auto', 'important');
       condition.style.setProperty('z-index', '124', 'important');
@@ -3027,11 +3105,12 @@
       condition.style.setProperty('margin-bottom', '0', 'important');
       condition.style.setProperty('align-self', 'flex-end', 'important');
       condition.style.setProperty('order', '1', 'important');
+      condition.style.setProperty('height', '8px', 'important');
 
-      condition.style.setProperty('font-size', '9.5px', 'important');
-      condition.style.setProperty('font-weight', '500', 'important');
-      condition.style.setProperty('line-height', '10.64px', 'important');
-      condition.style.setProperty('letter-spacing', '0.01em', 'important');
+      condition.style.setProperty('font-size', '8px', 'important');
+      condition.style.setProperty('font-weight', '400', 'important');
+      condition.style.setProperty('line-height', '8px', 'important');
+      condition.style.setProperty('letter-spacing', '1px', 'important');
       condition.style.setProperty('text-transform', 'uppercase', 'important');
       condition.style.setProperty('margin', '0', 'important');
       condition.style.setProperty('padding', '0', 'important');
@@ -3243,7 +3322,7 @@
 
             let unitText = valueMatch[2].trim();
             if (isPressureChip) {
-              unitText = normalizePressureUnit(unitText).toLowerCase();
+              unitText = normalizePressureUnit(unitText);
             }
             unitPart.textContent = unitText;
             unitPart.style.setProperty('display', 'inline-block', 'important');
@@ -3486,10 +3565,15 @@
         }
 
         if (condition instanceof HTMLElement) {
+          condition.style.setProperty('position', 'absolute', 'important');
+          condition.style.setProperty('top', '0', 'important');
           condition.style.setProperty('right', '0', 'important');
           condition.style.setProperty('left', 'auto', 'important');
+          condition.style.setProperty('bottom', 'auto', 'important');
           condition.style.setProperty('transform', 'none', 'important');
-          condition.style.setProperty('min-width', '0', 'important');
+          condition.style.setProperty('min-width', '62px', 'important');
+          condition.style.setProperty('height', '8px', 'important');
+          condition.style.setProperty('line-height', '8px', 'important');
           condition.style.setProperty('text-align', 'right', 'important');
         }
       }
@@ -3525,7 +3609,10 @@
         feelsLikeChip.style.setProperty('padding', '0', 'important');
         feelsLikeChip.style.setProperty('pointer-events', 'auto', 'important');
         feelsLikeChip.style.setProperty('width', 'max-content', 'important');
+        feelsLikeChip.style.setProperty('min-width', 'max-content', 'important');
         feelsLikeChip.style.setProperty('max-width', 'max-content', 'important');
+        feelsLikeChip.style.setProperty('overflow', 'visible', 'important');
+        feelsLikeChip.style.setProperty('white-space', 'nowrap', 'important');
         feelsLikeChip.style.setProperty('display', 'flex', 'important');
         feelsLikeChip.style.setProperty('flex-direction', 'column', 'important');
         feelsLikeChip.style.setProperty('align-items', 'flex-start', 'important');
@@ -3623,7 +3710,7 @@
             feelsLikeLabel instanceof HTMLElement
               ? Math.ceil(feelsLikeLabel.getBoundingClientRect().width || feelsLikeLabel.scrollWidth || 0)
               : 0;
-          const valueWidthPx = labelWidth > 0 ? labelWidth : 40;
+          let valueWidthPx = labelWidth > 0 ? labelWidth : 40;
           let valueGapPx = 6;
 
           feelsLikeValue.style.setProperty('display', 'flex', 'important');
@@ -3640,7 +3727,7 @@
           feelsLikeValue.style.setProperty('white-space', 'nowrap', 'important');
           feelsLikeValue.style.setProperty('word-break', 'keep-all', 'important');
           feelsLikeValue.style.setProperty('overflow-wrap', 'normal', 'important');
-          feelsLikeValue.style.setProperty('overflow', 'hidden', 'important');
+          feelsLikeValue.style.setProperty('overflow', 'visible', 'important');
 
           const valueParts = Array.from(feelsLikeValue.children).filter(child => child instanceof HTMLElement);
           const prefixPart = valueParts[0] || null;
@@ -3713,6 +3800,38 @@
             const prefixWidth = prefixPart.getBoundingClientRect().width;
             const tempWidth = tempPart.getBoundingClientRect().width;
             const totalWidth = prefixWidth + tempWidth + valueGapPx;
+
+            if (totalWidth > valueWidthPx) {
+              valueWidthPx = Math.ceil(totalWidth);
+              feelsLikeChip.style.setProperty('width', `${valueWidthPx}px`, 'important');
+              feelsLikeChip.style.setProperty('min-width', `${valueWidthPx}px`, 'important');
+              feelsLikeChip.style.setProperty('max-width', `${valueWidthPx}px`, 'important');
+              feelsLikeValue.style.setProperty('width', `${valueWidthPx}px`, 'important');
+              feelsLikeValue.style.setProperty('min-width', `${valueWidthPx}px`, 'important');
+              feelsLikeValue.style.setProperty('max-width', `${valueWidthPx}px`, 'important');
+
+              const geoAnchor =
+                eyebrow instanceof HTMLElement
+                  ? eyebrow
+                  : locationCurrent instanceof HTMLElement
+                    ? locationCurrent
+                    : locationLabel instanceof HTMLElement
+                      ? locationLabel
+                      : null;
+
+              if (content instanceof HTMLElement && geoAnchor instanceof HTMLElement) {
+                const contentRect = content.getBoundingClientRect();
+                const geoRect = geoAnchor.getBoundingClientRect();
+
+                if (contentRect.width > 0 && geoRect.width > 0) {
+                  const targetRight = geoRect.right - contentRect.left;
+                  const maxLeft = Math.max(0, Math.round(contentRect.width - valueWidthPx));
+                  const alignedLeft = Math.round(targetRight - valueWidthPx);
+                  feelsLikeLeft = Math.max(0, Math.min(maxLeft, alignedLeft));
+                  feelsLikeChip.style.setProperty('left', `${feelsLikeLeft}px`, 'important');
+                }
+              }
+            }
 
             if (totalWidth > valueWidthPx) {
               valueGapPx = 2;
@@ -4523,9 +4642,7 @@
       const orbAtmosphere = resolveHeaderWeatherOrbAtmosphere(host);
       const widgetBasePath = getHeaderWeatherWidgetBasePath(host);
       const sunVideoSources = widgetBasePath
-        ? [
-            `${widgetBasePath}/assets/Sun/3d-animated-realistic-sun-with-glowing-solar-flares-and-surface-turbulence-4k-video.mp4`,
-          ]
+        ? [`${widgetBasePath}/assets/Sun/sun_orb_keyed.webm`]
         : [];
       const assetConfig = orbKind
         ? orbKind === 'sun'
@@ -4543,6 +4660,13 @@
 
       const previewContainer = host.shadowRoot.querySelector('.weather-header-preview');
       if (previewContainer) {
+        const cloudAlpha = Number(orbAtmosphere?.alpha) || 0;
+        const starOpacity =
+          orbKind === 'moon'
+            ? clampHeaderWeatherValue(1.02 - cloudAlpha * 0.72, 0.42, 0.98)
+            : 0;
+        previewContainer.classList.toggle('is-night-sky', orbKind === 'moon');
+        previewContainer.style.setProperty('--preview-stars-opacity', `${starOpacity.toFixed(3)}`);
         const previewOverlay = ensureHeaderWeatherOrbOverlay(previewContainer, 'preview');
         applyHeaderWeatherOrbLayout(previewOverlay, orbModel?.previewLayout);
         setHeaderWeatherOrbSource(previewOverlay, orbKind, assetConfig);
@@ -4660,38 +4784,6 @@
     window.addEventListener('orientationchange', host.__weatherViewportSyncHandler, { passive: true });
     syncHeaderWeatherExpandedState(host);
     scheduleHeaderWeatherOrbSync(host);
-
-    host.shadowRoot.addEventListener(
-      'click',
-      ev => {
-        const trigger = host.shadowRoot?.querySelector('.weather-header-trigger');
-        if (!trigger) {
-          return;
-        }
-
-        const path = typeof ev.composedPath === 'function' ? ev.composedPath() : [];
-        if (!path.includes(trigger)) {
-          return;
-        }
-
-        const isAllowedControl = path.some(node => {
-          if (!(node instanceof Element)) {
-            return false;
-          }
-
-          return Boolean(
-            node.closest('.weather-header-card__toggle, .weather-header-dropdown, .weather-location-selector')
-          );
-        });
-
-        if (!isAllowedControl) {
-          ev.preventDefault();
-          ev.stopPropagation();
-          ev.stopImmediatePropagation?.();
-        }
-      },
-      true
-    );
   }
 
   function refreshHeaderWeatherWidgetData(host) {
@@ -4848,12 +4940,39 @@
       host.__weatherLocale = normalizeLangCode(host.dataset.weatherLocale || pageLang);
       host.dataset.weatherMounted = 'true';
       host.dataset.weatherMountScheduled = 'false';
+      host.dataset.weatherRetryCount = '0';
       host.classList.add('is-mounted');
+      host.closest('.header-weather-shell')?.classList.remove('weather-shell-error');
       host.closest('.header-weather-shell')?.classList.add('weather-shell-ready');
       applyHeaderWeatherTransparency(host);
       bindHeaderWeatherState(host);
       syncHeaderWeatherOrbOverlay(host);
       void syncHeaderWeatherPreciseLocationMeta(host);
+
+      // Verify that the widget actually rendered interactive content; if not, retry once.
+      window.setTimeout(() => {
+        if (!host.isConnected || host.dataset.weatherMounted !== 'true') {
+          return;
+        }
+
+        const trigger = host.shadowRoot?.querySelector('.weather-header-trigger, .weather-header-card__toggle');
+        const content = host.shadowRoot?.querySelector('.weather-header-card, .weather-header-preview');
+        if (trigger || content) {
+          return;
+        }
+
+        const retryCount = Number(host.dataset.weatherRetryCount || '0');
+        if (retryCount >= 3) {
+          return;
+        }
+
+        host.dataset.weatherRetryCount = String(retryCount + 1);
+        host.dataset.weatherMounted = 'false';
+        host.classList.remove('is-mounted');
+        host.__weatherWidgetInstance?.unmount?.();
+        host.__weatherWidgetInstance = null;
+        mountHeaderWeatherWidget(pageLang);
+      }, 900);
 
       // On mobile: collapse the widget (non-interactive decoration)
       if (window.innerWidth <= 899) {
@@ -4889,11 +5008,27 @@
       emitHeaderWeatherEvent('site-shell:weather-ready', host.dataset.weatherExpanded === 'true');
     } catch (error) {
       console.error('Header weather widget failed to mount:', error);
-      host.dataset.weatherMounted = 'error';
+      host.dataset.weatherMounted = 'false';
       host.dataset.weatherMountScheduled = 'false';
       host.closest('.header-weather-shell')?.classList.add('weather-shell-error');
       document.body?.classList.remove('header-weather-expanded');
       emitHeaderWeatherEvent('site-shell:weather-ready', false);
+
+      const retryCount = Number(host.dataset.weatherRetryCount || '0');
+      if (retryCount < 3) {
+        host.dataset.weatherRetryCount = String(retryCount + 1);
+        const retryDelayMs = 1200 * (retryCount + 1);
+        window.setTimeout(() => {
+          if (
+            !host.isConnected ||
+            host.dataset.weatherMounted === 'loading' ||
+            host.dataset.weatherMounted === 'true'
+          ) {
+            return;
+          }
+          mountHeaderWeatherWidget(pageLang);
+        }, retryDelayMs);
+      }
     }
   }
 
@@ -4922,9 +5057,9 @@
        On mobile, delay a bit more to keep first paint and scrolling smooth. */
     const scheduleIdle = cb => {
       if (window.requestIdleCallback) {
-        window.requestIdleCallback(cb, { timeout: 3500 });
+        window.requestIdleCallback(cb, { timeout: 900 });
       } else {
-        window.setTimeout(cb, 220);
+        window.setTimeout(cb, 80);
       }
     };
 
@@ -4938,9 +5073,12 @@
     };
 
     const startAfterLoad = () => {
-      const postLoadDelay = window.innerWidth <= 899 ? 1800 : 650;
+      const postLoadDelay = window.innerWidth <= 899 ? 1100 : 320;
       window.setTimeout(startMount, postLoadDelay);
     };
+
+    // Start mount immediately after shell init; deferred hooks below act as backup retries.
+    startMount();
 
     if (document.readyState === 'complete') {
       startAfterLoad();
@@ -4953,6 +5091,16 @@
     };
 
     window.addEventListener('load', onLoad, { once: true });
+
+    // Fallback: if `load` is delayed by third-party/network resources, still mount weather widget.
+    const maxWaitBeforeForcedMount = window.innerWidth <= 899 ? 2200 : 1200;
+    window.setTimeout(() => {
+      if (host.dataset.weatherMounted === 'true' || host.dataset.weatherMounted === 'loading') {
+        return;
+      }
+      window.removeEventListener('load', onLoad);
+      startMount();
+    }, maxWaitBeforeForcedMount);
 
     const onFirstInteraction = () => {
       window.removeEventListener('pointerdown', onFirstInteraction, true);

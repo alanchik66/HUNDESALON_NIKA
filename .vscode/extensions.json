@@ -34,9 +34,7 @@
     "github.copilot-chat",
 
     // ─── Инфраструктура Cloudflare ───────────────────────────────
-    "cloudflare.cloudflare-workers"
+    "cloudflare.cloudflare-workers-bindings-extension"
   ],
-  "unwantedRecommendations": [
-    "ritwickdey.liveserver"
-  ]
+  "unwantedRecommendations": ["ritwickdey.liveserver"]
 }

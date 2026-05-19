@@ -510,23 +510,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const syncContentTopOffsets = () => {
     const headerBottom = getVisibleHeaderBottom();
-    if (headerBottom <= 0) return;
 
     const rootStyle = document.documentElement.style;
     const rootComputed = window.getComputedStyle(document.documentElement);
     const sectionBaseOffset = parseFloat(rootComputed.getPropertyValue('--section-top-offset-base')) || 0;
     const heroBaseOffset = parseFloat(rootComputed.getPropertyValue('--hero-top-offset-base')) || 0;
-    const sectionPaddingTop =
-      parseFloat(window.getComputedStyle(document.querySelector('.section') || document.body).paddingTop) || 0;
-    const heroPaddingTop =
-      parseFloat(window.getComputedStyle(document.querySelector('.hero') || document.body).paddingTop) || 0;
+
+    if (headerBottom <= 0) {
+      rootStyle.setProperty('--section-top-offset-dynamic', `${sectionBaseOffset}px`);
+      rootStyle.setProperty('--hero-top-offset-dynamic', `${heroBaseOffset}px`);
+      return;
+    }
+
     const isPhoneViewport = window.innerWidth <= 600;
     const isMobileViewport = window.innerWidth <= 899;
-    const sectionBuffer = isPhoneViewport ? 12 : isMobileViewport ? 16 : 24;
-    const heroBuffer = isPhoneViewport ? 6 : isMobileViewport ? 10 : 24;
+    const sectionBufferBase = isPhoneViewport ? 18 : isMobileViewport ? 22 : 28;
+    const heroBufferBase = isPhoneViewport ? 14 : isMobileViewport ? 18 : 28;
+    const sectionBufferAdaptive = Math.ceil(headerBottom * (isPhoneViewport ? 0.1 : isMobileViewport ? 0.09 : 0.07));
+    const heroBufferAdaptive = Math.ceil(headerBottom * (isPhoneViewport ? 0.08 : isMobileViewport ? 0.075 : 0.06));
+    const sectionBuffer = Math.max(sectionBufferBase, sectionBufferAdaptive);
+    const heroBuffer = Math.max(heroBufferBase, heroBufferAdaptive);
 
-    const sectionOffset = Math.max(sectionBaseOffset, Math.ceil(headerBottom + sectionBuffer - sectionPaddingTop));
-    const heroOffset = Math.max(heroBaseOffset, Math.ceil(headerBottom + heroBuffer - heroPaddingTop));
+    const sectionOffset = Math.max(sectionBaseOffset, Math.ceil(headerBottom + sectionBuffer));
+    const heroOffset = Math.max(heroBaseOffset, Math.ceil(headerBottom + heroBuffer));
 
     rootStyle.setProperty('--section-top-offset-dynamic', `${sectionOffset}px`);
     rootStyle.setProperty('--hero-top-offset-dynamic', `${heroOffset}px`);
@@ -675,6 +681,25 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
+    const normalizeNavLockState = () => {
+      if (mobileNav.classList.contains('active')) {
+        return;
+      }
+
+      if (document.body.classList.contains('nav-open')) {
+        document.body.classList.remove('nav-open');
+        document.body.style.top = '';
+      }
+
+      if (!overlay.classList.contains('active')) {
+        overlay.hidden = true;
+      }
+
+      if ('inert' in mobileNav) {
+        mobileNav.inert = true;
+      }
+    };
+
     const isMenuOpen = () => mobileNav.classList.contains('active');
     const closeMenu = options => setMenuState(false, options);
     const toggleMenu = () => setMenuState(!isMenuOpen());
@@ -685,6 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
     syncMobileNavLayout();
     setGalleryMenuState(false);
     refreshMobileNavScrollbar();
+    normalizeNavLockState();
 
     burger.addEventListener('click', toggleMenu);
     overlay.addEventListener('click', () => closeMenu());
@@ -786,6 +812,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const link = target.closest('#mobile-nav a[href], #mobileNav a[href]');
       if (!link) return;
 
+      // iOS can drop anchor navigation when the menu is closed in capture phase
+      // before the synthetic click/default link action is executed.
+      if (event.type === 'touchend' || event.type === 'pointerup') {
+        window.setTimeout(() => {
+          if (!isMenuOpen()) return;
+          setGalleryMenuState(false);
+          closeMenu({ restoreFocus: false });
+        }, 0);
+        return;
+      }
+
       setGalleryMenuState(false);
       closeMenu({ restoreFocus: false });
     };
@@ -793,6 +830,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('pointerup', handleMobileNavPointerActivation, true);
     document.addEventListener('touchend', handleMobileNavPointerActivation, { capture: true, passive: true });
     document.addEventListener('click', handleMobileNavPointerActivation, true);
+    window.addEventListener('pageshow', normalizeNavLockState, { passive: true });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        normalizeNavLockState();
+      }
+    });
 
     // Для переходов по якорям на текущей странице (например #promotions)
     // принудительно закрываем меню после смены hash.
@@ -1768,3 +1811,17 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', updateScrollProgress);
   }
 });
+
+function updateStarVisibility() {
+  const stars = document.querySelectorAll('.rating-stars');
+  stars.forEach(star => {
+    if (window.innerWidth <= 899) {
+      star.style.opacity = '0.8';
+    } else {
+      star.style.opacity = '1';
+    }
+  });
+}
+
+window.addEventListener('resize', updateStarVisibility);
+updateStarVisibility();

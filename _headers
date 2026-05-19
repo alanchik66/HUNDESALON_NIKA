@@ -1,6 +1,26 @@
 # Cloudflare Pages — HTTP-заголовки для статических ресурсов
 # https://developers.cloudflare.com/pages/configuration/headers/
 
+# HTML should revalidate on every request, otherwise search checks can keep
+# seeing stale page markup after a successful Pages deploy.
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/de/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/en/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/ru/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/uk/*
+  Cache-Control: public, max-age=0, must-revalidate
+
 # Долгосрочное кеширование хешированных ассетов
 /assets/css/*
   Cache-Control: public, max-age=31536000, immutable

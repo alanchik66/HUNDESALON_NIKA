@@ -35,7 +35,12 @@
     "update": "npm update && cd 3d-weather-codrops-main && npm update",
     "dev:cf": "npm run build:production && node tools/sync-dev-vars.js && wrangler pages dev dist --port=8788",
     "deploy": "npm run build && wrangler pages deploy dist --project-name=hundesalon-nika",
-    "ai:pilot:ollama": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1",
+    "ai:pilot:ollama": "npm run ai:pilot:ollama:balanced",
+    "ai:pilot:ollama:custom": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1",
+    "ai:pilot:ollama:quality": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1 -Model gemma4:latest -OutFile docs/ollama-mtp-pilot-gemma4.md -NumPredict 480 -Temperature 0.2 -TopP 0.9",
+    "ai:pilot:ollama:balanced": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1 -Model qwen2.5:7b -OutFile docs/ollama-mtp-pilot-qwen2.5-7b.md -NumPredict 320 -Temperature 0.25 -TopP 0.9",
+    "ai:pilot:ollama:fast": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1 -Model phi4-mini:latest -OutFile docs/ollama-mtp-pilot-phi4-mini.md -NumPredict 220 -Temperature 0.2 -TopP 0.85",
+    "ai:pilot:ollama:compare": "npm run ai:pilot:ollama:quality && npm run ai:pilot:ollama:balanced && npm run ai:pilot:ollama:fast",
     "ai:rollout:plan": "node -e \"console.log('See docs/ai-rollout-3-step-plan.md')\""
   },
   "keywords": [
@@ -58,7 +63,10 @@
     "serve": "^14.2.6",
     "stylelint": "^16.1.0",
     "stylelint-config-standard": "^35.0.0",
-    "wrangler": "^4.85.0"
+    "wrangler": "^4.92.0"
+  },
+  "overrides": {
+    "ws": "^8.20.1"
   },
   "engines": {
     "node": ">=18.0.0",
