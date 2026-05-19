@@ -28,38 +28,27 @@ npm run git:push
 
 `npm run git:push`:
 
-1. Пушит `main` на **GitHub**
-2. Пушит тот же коммит на GitLab ветку `sync/gitlab-main`
-3. Если задан `GITLAB_TOKEN` — создаёт/мержит MR в `main`
-4. Иначе — ссылка на MR в браузере (нужно нажать **Merge** один раз)
+1. Пушит `main` на **GitHub** (`origin`)
+2. Зеркалит `main` на **GitLab** (`git push gitlab main --force-with-lease`)
 
-## GitLab token (один раз)
+Для зеркала на GitLab ветка `main` должна позволять push/force push (Maintainers) или быть временно без защиты.
 
-Создайте [Personal Access Token](https://gitlab.com/-/user_settings/personal_access_tokens) с scope **`api`**.
+### Первичное выравнивание GitLab (один раз)
 
-PowerShell (сессия):
+Settings → Repository → Protected branches → **Unprotect** `main` (или Allow force push), затем:
 
-```powershell
-$env:GITLAB_TOKEN = "glpat-..."
-npm run sync:gitlab:mr
+```bash
+git push gitlab main --force-with-lease
 ```
 
-Или сохраните в пользовательских переменных Windows.
+Снова включите защиту `main` (рекомендуется). Дальше достаточно `npm run git:push`.
 
-Без токена: откройте [MR !2](https://gitlab.com/hundesalon-nika/hundesalon-nika/-/merge_requests/2) и нажмите **Merge** (дождитесь зелёного pipeline).
+### Запасной путь (если force push недоступен)
 
-Если GitLab пишет «source branch is N commits behind» — это нормально при разной истории; используйте **Merge** (merge commit), не rebase. После первого успешного merge дальнейшие `npm run git:push` будут проще.
-
-### Полное выравнивание GitLab `main` = GitHub (один раз, опционально)
-
-Ветка `main` на GitLab **защищена** (force push запрещён). Варианты:
-
-1. **MR** (рекомендуется): merge `sync/gitlab-main` → `main` в UI.
-2. **Force push** (если вы Maintainer): Settings → Repository → Protected branches → временно разрешить force push для `main`, затем:
-   ```bash
-   git push gitlab main --force-with-lease
-   ```
-   После этого снова включите защиту.
+```bash
+npm run sync:gitlab:push   # main → sync/gitlab-main
+# MR в GitLab UI или npm run sync:gitlab:mr (нужен GITLAB_TOKEN с scope api)
+```
 
 ## Remotes (не трогать без нужды)
 

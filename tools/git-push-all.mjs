@@ -22,19 +22,20 @@ if (current !== 'main') {
 console.log('→ GitHub (origin/main)');
 run('git', ['push', 'origin', 'main']);
 
-console.log('→ GitLab (sync/gitlab-main → MR into protected main)');
+console.log('→ GitLab (mirror main)');
 run('git', ['fetch', 'gitlab']);
-run('git', ['push', 'gitlab', 'main:sync/gitlab-main', '--force-with-lease']);
-
-if (process.env.GITLAB_TOKEN?.trim() || process.env.GL_TOKEN?.trim()) {
-  console.log('→ GitLab MR merge (GITLAB_TOKEN set)');
-  const mr = spawnSync('npm', ['run', 'sync:gitlab:mr'], { encoding: 'utf8', shell: true, stdio: 'inherit' });
-  if (mr.status !== 0) process.exit(mr.status);
-} else {
-  console.log('');
-  console.log('GitLab: open MR and merge (or set GITLAB_TOKEN with api scope):');
-  console.log('  https://gitlab.com/hundesalon-nika/hundesalon-nika/-/merge_requests?state=opened');
-  console.log('  Then: git fetch gitlab && git checkout main');
+const mirror = spawnSync('git', ['push', 'gitlab', 'main', '--force-with-lease'], {
+  encoding: 'utf8',
+  shell: true,
+});
+const mirrorOut = `${mirror.stdout || ''}${mirror.stderr || ''}`.trim();
+if (mirrorOut) console.log(mirrorOut);
+if (mirror.status !== 0) {
+  console.warn('');
+  console.warn('GitLab mirror failed (protected main?). Options:');
+  console.warn('  1. Temporarily unprotect main or allow force push in GitLab Settings → Repository');
+  console.warn('  2. npm run sync:gitlab:push && merge MR (legacy)');
+  console.warn('  See docs/git-workflow.md');
 }
 
 console.log('');
