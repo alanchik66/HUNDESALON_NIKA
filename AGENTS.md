@@ -63,13 +63,32 @@
 
 Cloud agents run on Ubuntu. Configuration lives in `.cursor/environment.json`.
 
+### Do not run by default
+
+- **No hello-world** site tour, browser onboarding, or “navigate and interact” checklist.
+- **No pull request** unless the user explicitly asks for a PR.
+- **No extra branches** — work only on `main`.
+- **No** `sync/gitlab-main` MR flow unless `git push gitlab main` fails (see `docs/git-workflow.md`).
+
+### Git (after code changes)
+
+```bash
+git checkout main
+git pull origin main
+npm run validate   # optional but recommended
+git add -A && git commit -m "…"
+npm run git:push   # GitHub origin + GitLab mirror
+```
+
+Details: `docs/git-workflow.md`. Remotes: `origin`/`github` → GitHub; `gitlab` → GitLab.
+
 ### Bootstrap (every agent start)
 
 1. `npm install` runs automatically from `environment.json`.
 2. Dev preview: terminal `dev` or `npm run dev` → http://localhost:5502 (root redirects to `/de/`).
 3. Cloudflare Pages + Functions locally: `npm run dev:cf` → port 8788 (builds `dist/` first).
 
-### Validation before PR or deploy
+### Validation before deploy
 
 ```bash
 npm run lint

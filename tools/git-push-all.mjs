@@ -1,5 +1,5 @@
 /**
- * Push local main to GitHub (canonical) and sync GitLab protected main via MR branch.
+ * Push local main to GitHub (origin) and mirror to GitLab (gitlab).
  */
 import { spawnSync } from 'node:child_process';
 
@@ -24,18 +24,22 @@ run('git', ['push', 'origin', 'main']);
 
 console.log('→ GitLab (mirror main)');
 run('git', ['fetch', 'gitlab']);
-const mirror = spawnSync('git', ['push', 'gitlab', 'main', '--force-with-lease'], {
-  encoding: 'utf8',
-  shell: true,
-});
-const mirrorOut = `${mirror.stdout || ''}${mirror.stderr || ''}`.trim();
+let mirror = spawnSync('git', ['push', 'gitlab', 'main'], { encoding: 'utf8', shell: true });
+let mirrorOut = `${mirror.stdout || ''}${mirror.stderr || ''}`.trim();
 if (mirrorOut) console.log(mirrorOut);
 if (mirror.status !== 0) {
+  console.warn('GitLab fast-forward push failed, retrying with --force-with-lease…');
+  mirror = spawnSync('git', ['push', 'gitlab', 'main', '--force-with-lease'], {
+    encoding: 'utf8',
+    shell: true,
+  });
+  mirrorOut = `${mirror.stdout || ''}${mirror.stderr || ''}`.trim();
+  if (mirrorOut) console.log(mirrorOut);
+}
+if (mirror.status !== 0) {
   console.warn('');
-  console.warn('GitLab mirror failed (protected main?). Options:');
-  console.warn('  1. Temporarily unprotect main or allow force push in GitLab Settings → Repository');
-  console.warn('  2. npm run sync:gitlab:push && merge MR (legacy)');
-  console.warn('  See docs/git-workflow.md');
+  console.warn('GitLab mirror failed. See docs/git-workflow.md (protected main / force push).');
+  process.exit(mirror.status);
 }
 
 console.log('');

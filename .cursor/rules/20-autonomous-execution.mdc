@@ -10,3 +10,4 @@ alwaysApply: true
 - Уточняй только при реальном блокере (нет доступа, нет секрета, деструктивное действие).
 - После изменений: `npm run validate`, при деплое — `npm run deploy:full` (если запрошен deploy).
 - Секреты — только в Cursor Dashboard / Cloudflare, никогда в git.
+- Git: только ветка `main`; пуш — `npm run git:push` (GitHub + GitLab). Без hello-world, без PR и без лишних веток, если пользователь не просил явно.
