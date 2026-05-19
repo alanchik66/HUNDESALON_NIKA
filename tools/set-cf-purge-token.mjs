@@ -10,12 +10,23 @@ if (!token) {
   process.exit(1);
 }
 
-upsertDevVar('CLOUDFLARE_API_TOKEN', token);
-loadDevVars();
-
 try {
+  const verify = await fetch('https://api.cloudflare.com/client/v4/user/tokens/verify', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const payload = await verify.json();
+  if (!verify.ok || !payload.success) {
+    const msg = payload.errors?.[0]?.message || 'Invalid API Token';
+    console.error(`Cloudflare rejected this token: ${msg}`);
+    console.error('Create a new token: npm run cf:open-purge-token');
+    process.exit(1);
+  }
   await resolveZoneId({ Authorization: `Bearer ${token}` });
-  console.log('CLOUDFLARE_API_TOKEN saved and verified for zone lookup.');
 } catch (error) {
-  console.warn(`Token saved but zone lookup failed: ${error.message}`);
+  console.error(`Token verification failed: ${error.message}`);
+  console.error('Create a new token: npm run cf:open-purge-token');
+  process.exit(1);
 }
+
+upsertDevVar('CLOUDFLARE_API_TOKEN', token);
+console.log('CLOUDFLARE_API_TOKEN saved and verified (zone read + purge capable).');

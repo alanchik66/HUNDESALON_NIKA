@@ -25,15 +25,22 @@ If OpenRouter returns 401 after deploy: `npm run sync:openrouter`, wait ~10s, `n
 
 ## Cloudflare cache purge
 
-Requires `CLOUDFLARE_API_TOKEN` in `.dev.vars` (zone **Cache Purge** + **Zone Read**):
+Use a **zone API token** (not a revoked/old token). Create via template:
 
 ```bash
 npm run cf:open-purge-token
-npm run cf:set-purge-token -- <token>
+# Copy token once, then:
+npm run cf:set-purge-token -- <paste-token>
 npm run cf:purge-cache
 ```
 
+`cf:set-purge-token` verifies the token before writing `.dev.vars`. Invalid tokens are rejected.
+
+Permissions: **Zone → Read**, **Zone → Cache Purge**, resource `hundesalon-nika.com`.
+
 Without token: Dashboard → **Caching → Purge Everything** after HTML deploys.
+
+Optional: same token in Cursor Cloud Agents as `CLOUDFLARE_API_TOKEN` for automated purge in agents.
 
 ## Secrets
 
