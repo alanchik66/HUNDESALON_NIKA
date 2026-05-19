@@ -8,10 +8,22 @@ const SOURCE = 'sync/gitlab-main';
 const TARGET = 'main';
 
 function gitlabToken() {
+  const fromEnv = process.env.GITLAB_TOKEN?.trim() || process.env.GL_TOKEN?.trim();
+  if (fromEnv) return fromEnv;
+
   const input = 'protocol=https\nhost=gitlab.com\n\n';
   const out = execSync('git credential fill', { input, encoding: 'utf8' });
   const password = out.match(/^password=(.+)$/m)?.[1]?.trim();
-  if (!password) throw new Error('No GitLab credentials from git credential fill');
+  if (!password) {
+    throw new Error(
+      'Set GITLAB_TOKEN (project/group PAT with api scope) or configure git credentials for gitlab.com'
+    );
+  }
+  if (password.startsWith('glpat-') === false && password.length < 20) {
+    console.warn(
+      'Warning: git credential token may be OAuth (mcp/ai_workflows only). Use GITLAB_TOKEN with api scope.'
+    );
+  }
   return password;
 }
 
