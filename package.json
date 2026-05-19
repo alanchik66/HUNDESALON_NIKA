@@ -35,6 +35,8 @@
     "update": "npm update && cd 3d-weather-codrops-main && npm update",
     "dev:cf": "npm run build:production && node tools/sync-dev-vars.js && wrangler pages dev dist --port=8788",
     "deploy": "npm run build && wrangler pages deploy dist --project-name=hundesalon-nika",
+    "cf:purge-cache": "node tools/purge-cloudflare-cache.mjs",
+    "check:live-html": "node tools/check-live-html.mjs",
     "ai:pilot:ollama": "npm run ai:pilot:ollama:balanced",
     "ai:pilot:ollama:custom": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1",
     "ai:pilot:ollama:quality": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1 -Model gemma4:latest -OutFile docs/ollama-mtp-pilot-gemma4.md -NumPredict 480 -Temperature 0.2 -TopP 0.9",
@@ -74,7 +76,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "local"
+    "url": "https://github.com/alanchik66/HUNDESALON_NIKA.git"
   },
   "browserslist": [
     "> 1%",

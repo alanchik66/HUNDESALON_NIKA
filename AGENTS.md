@@ -56,3 +56,59 @@
 - Cloudflare config: `wrangler.toml`.
 - Production deploy command in `package.json`: `npm run deploy`.
 - Before deploy, prefer validating with `npm run lint` and a quick local browser smoke test.
+
+## Cursor Cloud specific instructions
+
+Cloud agents run on Ubuntu. Configuration lives in `.cursor/environment.json`.
+
+### Bootstrap (every agent start)
+
+1. `npm install` runs automatically from `environment.json`.
+2. Dev preview: terminal `dev` or `npm run dev` → http://localhost:5502 (root redirects to `/de/`).
+3. Cloudflare Pages + Functions locally: `npm run dev:cf` → port 8788 (builds `dist/` first).
+
+### Validation before PR or deploy
+
+```bash
+npm run lint
+npm run check:links
+npm run check:project
+npm run build
+```
+
+Full gate: `npm run validate` (lint + link check + project health).
+
+### Deploy (only when explicitly requested)
+
+```bash
+npm run deploy
+npm run cf:purge-cache
+npm run check:live-html
+```
+
+Requires `CLOUDFLARE_API_TOKEN` in Cursor Cloud secrets (Dashboard → Cloud Agents → Secrets). Do not commit tokens. After HTML deploy, purge CDN cache so `_headers` cache rules apply immediately.
+
+### Secrets (Cursor Dashboard, not in git)
+
+Add in [Cloud Agents → Secrets](https://cursor.com/dashboard/cloud-agents) for this environment:
+
+| Variable | Purpose |
+|----------|---------|
+| `CLOUDFLARE_API_TOKEN` | `wrangler pages deploy` from cloud agents |
+| `RESEND_API_KEY` | Production email via `functions/sendmail.js` |
+| `OPENROUTER_API_KEY` | Optional: SEO/AI functions (`openrouter.js`, `seo-generate.js`) |
+
+Local-only dev vars (optional): create `.dev.vars` in repo root for `npm run dev:cf` — never commit it.
+
+### Repo and hosting
+
+- GitHub: `https://github.com/alanchik66/HUNDESALON_NIKA`
+- Production: Cloudflare Pages project `hundesalon-nika`, output `dist/`
+- Default locale: `de/`; also `en/`, `ru/`, `uk/`
+- Weather widget assets are prebuilt under `3d-weather-codrops-main/dist-widget/` (no separate widget `npm install` in CI)
+
+### UI change checklist
+
+- Edit shared shell/CSS/JS once; keep all four language trees consistent.
+- Asset paths: `../assets/` on language-root pages, `../../assets/` under `blog/`.
+- After visible UI changes: `npm run lint` and browser smoke on `de/index.html` plus one other locale.
