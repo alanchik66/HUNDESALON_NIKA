@@ -45,9 +45,14 @@ async function api(token, pathname, init = {}) {
     payload = { message: text };
   }
   if (!response.ok) {
-    throw new Error(
-      `GitLab API ${pathname} ${response.status}: ${payload.message || JSON.stringify(payload)}`
-    );
+    const detail = payload.message || JSON.stringify(payload);
+    if (response.status === 403 && String(detail).includes('insufficient_scope')) {
+      throw new Error(
+        `GitLab API 403 insufficient_scope. Create a PAT with scope "api" and set GITLAB_TOKEN, or merge MR manually:\n` +
+          `  https://gitlab.com/hundesalon-nika/hundesalon-nika/-/merge_requests`
+      );
+    }
+    throw new Error(`GitLab API ${pathname} ${response.status}: ${detail}`);
   }
   return payload;
 }
