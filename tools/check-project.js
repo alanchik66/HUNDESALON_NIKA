@@ -12,6 +12,7 @@ const requiredFiles = [
   'uk/index.html',
   'robots.txt',
   'sitemap.xml',
+  'sitemap-brand.xml',
   'indexnow-key.txt',
   'favicon.ico',
   'site.webmanifest',
@@ -102,6 +103,7 @@ for (const file of indexFiles) {
 if (fs.existsSync(path.join(root, 'robots.txt'))) {
   const robots = read('robots.txt');
   assert(robots.includes('Sitemap: https://hundesalon-nika.com/sitemap.xml'), 'robots.txt must point to sitemap.xml');
+  assert(robots.includes('sitemap-brand.xml'), 'robots.txt must point to sitemap-brand.xml');
 }
 
 if (fs.existsSync(path.join(root, 'sitemap.xml'))) {
@@ -143,7 +145,8 @@ for (const file of walk(root)) {
   if (!/\.(?:html|xml|txt|js|css|md|json|toml|cjs|mjs)$/i.test(relativePath)) continue;
 
   const content = fs.readFileSync(file, 'utf8');
-  if (outdatedCityPattern.test(content)) failures.push(`${relativePath}: contains outdated city name`);
+  const contentForCityCheck = content.replaceAll('Europe/Berlin', 'Europe/Timezone');
+  if (outdatedCityPattern.test(contentForCityCheck)) failures.push(`${relativePath}: contains outdated city name`);
 }
 
 if (failures.length) {

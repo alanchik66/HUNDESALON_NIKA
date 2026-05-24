@@ -1,38 +1,51 @@
-# Cloudflare API tokens — что за что
+# Cloudflare API token — HUNDESALON NIKA
 
-## Для этого проекта (HUNDESALON NIKA)
+## Один токен на всё
 
-| Нужно | Права | Команда |
-|-------|--------|---------|
-| **Cache Purge** (после деплоя HTML) | Zone Read + Cache Purge, зона `hundesalon-nika.com` | `npm run cf:open-purge-token` → `npm run cf:set-purge-token -- <token>` |
-| **WAF rate limits** (`/sendmail`, `/openrouter`, `/seo-generate`) | Zone → **WAF** → Edit | `npm run cf:configure-waf-rate-limits` или Dashboard: `npm run cf:open-waf-rate-limits` |
-| **Crawler Hints + CSAM** (кеш/SEO) | Zone Settings Edit (или Dashboard) | `npm run cf:open-cache-configuration` или `npm run cf:configure-cache-features` |
-| **Pages deploy** | Wrangler OAuth (`npx wrangler login`) или Dashboard Git integration | `npm run deploy` |
-| **OpenRouter / email** | Secrets на Pages, не Cloudflare token | `npm run sync:openrouter` |
+| Имя | `HUNDESALON — Zone API` |
+|-----|-------------------------|
+| **Зона** | `hundesalon-nika.com` |
+| **Права** | Zone Read · Cache Purge · Page Rules Edit · Zone Rules Edit |
+| **Файл** | `CLOUDFLARE_API_TOKEN` в `.dev.vars` (копия: `.cloudflare-api.token`, gitignored) |
 
-Один токен **«HUNDESALON — Cache Purge»** в `.dev.vars` как `CLOUDFLARE_API_TOKEN` — достаточно для `npm run cf:purge-cache` и `deploy:full`.
-
-## Токены в аккаунте (примеры — другие задачи)
-
-| Имя в Dashboard | Обычно для чего | Нужен для NIKA? |
-|-----------------|-----------------|-----------------|
-| **Cloudflare Agent Token** | Cursor/агенты, артефакты, Data Localization | Нет (не Cache Purge) |
-| **NIKA-Zone-Audit-2025** | DNS и настройки зоны | Нет (аудит, не purge) |
-| **WordPress** | Плагин WordPress ↔ Cloudflare | Нет (сайт на Pages, не WP) |
-
-Старые `cfat_…` из переписки **отозвать**, если ещё активны — они недействительны или избыточны.
-
-## Global API Key (опционально)
-
-Если добавить в `.dev.vars` (не коммитить):
-
-```
-CLOUDFLARE_API_EMAIL=your@email.com
-CLOUDFLARE_API_KEY=<Global API Key from My Profile>
+```bash
+npm run cf:ensure-api-token    # проверка или авто-создание
+npm run cf:open-edit-token     # правка NIKA-Purge-Cache (добавить Zone Rules Edit)
+npm run cf:open-api-token      # мастер нового токена
+npm run cf:set-api-token -- <token>
 ```
 
-то `npm run cf:ensure-purge-token` может **создать** отдельный purge-токен автоматически. Global Key хранить только локально.
+**Практичнее всего:** не создавать новый токен — открыть `cf:open-edit-token`, в списке **NIKA-Purge-Cache** → Edit → добавить **Zone → Zone Rules → Edit** → Update token. Тот же секрет в `.dev.vars` остаётся действовать.
 
-## Без API-токена purge
+После деплоя HTML: `npm run cf:purge-cache` или `npm run deploy:full`.
 
-Cloudflare Dashboard → **Caching** → **Configuration** → **Purge Everything** (после `npm run deploy`).
+## Дополнить текущий токен (без нового секрета)
+
+Токен **NIKA-Purge-Cache** (`bc69976…`) уже имеет Purge и Page Rules — добавьте только **Zone → Zone Rules → Edit**:
+
+```bash
+npm run cf:open-edit-token   # открывает страницу редактирования в Edge
+```
+
+После сохранения в Dashboard: `npm run cf:ensure-api-token` (все четыре ✓).
+
+Авто через API (без Dashboard): `.cloudflare-global.json` + `npm run cf:ensure-api-token` — скрипт вызовет `PUT /user/tokens/{id}` и добавит Zone Rules Edit.
+
+## Авто-создание (рекомендуется один раз)
+
+1. [Profile → API Tokens](https://dash.cloudflare.com/profile/api-tokens) → **Global API Key** → View  
+2. Скопировать `.cloudflare-global.json.example` → `.cloudflare-global.json` (не коммитить)  
+3. `npm run cf:ensure-api-token` — создаст полный токен и запишет в `.dev.vars`
+
+## Другие задачи (отдельные токены не нужны для robots/purge)
+
+| Задача | Команда |
+|--------|---------|
+| WAF rate limits | `npm run cf:configure-waf-rate-limits` |
+| Crawler Hints / CSAM | `npm run cf:configure-cache-features` |
+| Pages deploy | `npx wrangler login` + `npm run deploy` |
+| www robots → apex | `npm run cf:www-robots-setup` (Page Rule `www/*` уже есть) |
+
+## Устаревшие команды
+
+`cf:ensure-purge-token`, `cf:set-purge-token`, `cf:ensure-zone-rules-token` — алиасы на `cf:ensure-api-token` / `cf:set-api-token`.

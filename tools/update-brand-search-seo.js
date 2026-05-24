@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const domain = 'https://hundesalon-nika.com';
-const brandIconVersion = '20260519-tight-fit';
+const brandIconVersion = '20260520-brand-bing';
 const searchLogo = `${domain}/assets/images/search-logo-clear-512.png?v=${brandIconVersion}`;
 const socialPreview = `${domain}/assets/images/social-preview-1200x630.png`;
 
@@ -45,6 +45,7 @@ function buildBrandHeadBlock(indent) {
     `${indent}<link rel="icon" type="image/png" sizes="256x256" href="/assets/images/favicon/favicon-256x256.png?v=${v}">`,
     `${indent}<link rel="icon" type="image/png" sizes="384x384" href="/assets/images/favicon/favicon-384x384.png?v=${v}">`,
     `${indent}<link rel="icon" type="image/png" sizes="512x512" href="/assets/images/favicon/favicon-search-512.png?v=${v}">`,
+    `${indent}<link rel="icon" type="image/png" sizes="512x512" href="/assets/images/search-logo-clear-512.png?v=${v}">`,
     `${indent}<link rel="apple-touch-icon" sizes="180x180" href="/assets/images/favicon/apple-touch-icon.png?v=${v}">`,
     `${indent}<link rel="manifest" href="/site.webmanifest?v=${v}">`,
     `${indent}<meta name="msapplication-TileColor" content="#0f6d66">`,

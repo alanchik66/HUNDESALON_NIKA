@@ -4,7 +4,7 @@
 
 Репозиторий уже содержит [`.cursor/environment.json`](../.cursor/environment.json) (`npm install`, порты 5502/8788, терминал `npm run dev`). На GitHub это в `main`.
 
-1. Откройте [Cloud Agents → Environments](https://cursor.com/dashboard/cloud-agents#environments) (`npm run cursor:open-cloud-setup`).
+1. Запустите `npm run cursor:setup-cloud` (проверит `npm install`, подскажет секреты, откроет Dashboard) или [Environments](https://cursor.com/dashboard/cloud-agents#environments) (`npm run cursor:open-cloud-setup`).
 2. **Create environment** (или **Set up** в чеклисте) → выберите **GitHub** → репозиторий `alanchik66/HUNDESALON_NIKA`, ветка `main`.
 3. Cursor запустит `install` из `environment.json`. Дождитесь **Environment ready** (или предупреждений с кнопкой repair).
 4. **Secrets** (тот же dashboard → My Secrets или привязка к environment):
@@ -13,6 +13,21 @@
 5. Сохраните **snapshot** виртуальной машины, если мастер предложит — ускорит следующие cloud-агенты.
 
 После этого пункт onboarding в Cursor IDE отметится выполненным.
+
+## Автоматизация (CLI)
+
+| Команда | Назначение |
+|---------|------------|
+| `npm run cursor:setup-cloud` | Проверка `npm install` + открыть Dashboard |
+| `npm run cursor:edge-dashboard` | Edge с профилем логина (CDP :9227) |
+| `npm run cursor:setup-cloud:auto` | Environment + секреты из `.dev.vars` |
+| `npm run cursor:finish-cloud` | Дождаться run, Base branch `main`, очистка |
+| `npm run cursor:cancel-run` | Остановить зависший Running run |
+| `npm run cursor:complete-onboarding` | Клик Set up на Overview |
+| `npm run cursor:variant-b` | Вариант B: Edge + self-hosted OFF + onboarding 4/4 |
+| `npm run cursor:delete-bad-slack` | Удалить ошибочный секрет `SLACK_WEBHOOK_URL=https://...` |
+
+Секреты в Dashboard: `OPENROUTER_API_KEY`, `CLOUDFLARE_API_TOKEN` (из `.dev.vars`). `RESEND` — только Cloudflare Pages.
 
 ## Secrets
 

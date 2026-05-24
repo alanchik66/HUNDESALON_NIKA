@@ -130,13 +130,13 @@ async function submitUrls(send, urls) {
         return !!match;
       };
 
-      clickButton(/submit urls/i);
-      await sleep(1200);
+      clickButton(/submit urls|отправить url/i);
+      await sleep(1500);
 
       const buttons = Array.from(document.querySelectorAll('button, [role="button"], input[type="submit"]'))
         .filter(el => visible(el) && !el.disabled);
-      const confirm = buttons.find(el => /^submit$/i.test(buttonText(el)));
-      const fallback = buttons.find(el => /submit|send|отправ|надісл|einreichen/i.test(buttonText(el)));
+      const confirm = buttons.find(el => /^(submit|отправить|send|einreichen)$/i.test(buttonText(el)));
+      const fallback = buttons.find(el => /submit|send|отправ|надісл|einreichen/i.test(buttonText(el)) && !/submit urls|отправить url/i.test(buttonText(el)));
 
       if (!confirm && !fallback) {
         return { ok: false, reason: 'NO_SUBMIT', url: location.href, title: document.title };

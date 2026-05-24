@@ -5,7 +5,9 @@
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.wordWrap": "on",
-  "editor.rulers": [120],
+  "editor.rulers": [
+    120
+  ],
   "editor.bracketPairColorization.enabled": true,
   "editor.guides.bracketPairs": "active",
   "editor.linkedEditing": true,
@@ -14,9 +16,10 @@
   "editor.stickyScroll.enabled": true,
   "editor.inlineSuggest.enabled": true,
   "editor.quickSuggestions": {
+    "other": "off",
+    "comments": "off",
     "strings": "on"
   },
-
   // ── Файлы ─────────────────────────────────────────────────────────────────
   "files.eol": "\n",
   "files.encoding": "utf8",
@@ -40,7 +43,6 @@
     "**/.wrangler/**": true,
     "**/3d-weather-codrops-main/node_modules/**": true
   },
-
   // ── Форматирование по типу файла ──────────────────────────────────────────
   "[html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
@@ -65,36 +67,41 @@
     "editor.wordWrap": "on",
     "editor.formatOnSave": false
   },
-
   // ── ESLint ────────────────────────────────────────────────────────────────
   "eslint.enable": true,
-  "eslint.validate": ["javascript", "html"],
+  "eslint.validate": [
+    "javascript",
+    "html"
+  ],
   "eslint.useFlatConfig": true,
   "eslint.codeActionsOnSave.mode": "problems",
-
   // ── Stylelint ─────────────────────────────────────────────────────────────
   "stylelint.enable": true,
   "stylelint.run": "onSave",
   "stylelint.configFile": "${workspaceFolder}/.stylelintrc.json",
   "stylelint.packageManager": "npm",
-  "stylelint.validate": ["css"],
+  "stylelint.validate": [
+    "css"
+  ],
   "stylelint.lintFiles.glob": "assets/css/**/*.css",
   "stylelint.logLevel": "warn",
   "css.validate": false,
   "scss.validate": false,
-
   // ── HTMLHint ──────────────────────────────────────────────────────────────
   "htmlhint.enable": true,
-
   // ── Emmet ─────────────────────────────────────────────────────────────────
   "emmet.includeLanguages": {
     "javascript": "html"
   },
   "emmet.triggerExpansionOnTab": true,
-
   // ── Spell checker ────────────────────────────────────────────────────────
   "cSpell.language": "en,de,ru,uk",
-  "cSpell.enableFiletypes": ["html", "css", "javascript", "markdown"],
+  "cSpell.enableFiletypes": [
+    "html",
+    "css",
+    "javascript",
+    "markdown"
+  ],
   "cSpell.ignorePaths": [
     "node_modules",
     "dist",
@@ -102,11 +109,9 @@
     "package-lock.json",
     "assets/fonts"
   ],
-
   // ── npm-скрипты ───────────────────────────────────────────────────────────
   "npm.scriptRunnerShowNotification": "onError",
   "npm.enableRunFromFolder": true,
-
   // ── Поиск ────────────────────────────────────────────────────────────────
   "search.exclude": {
     "node_modules": true,
@@ -115,48 +120,45 @@
     "3d-weather-codrops-main/node_modules": true,
     "package-lock.json": true
   },
-
   // ── Git ───────────────────────────────────────────────────────────────────
   "git.autofetch": true,
   "git.confirmSync": false,
   "git.enableSmartCommit": true,
   "git.inputValidationSubjectLength": 72,
   "gitlab.pipelineGitRemoteName": "gitlab",
-
   // ── Терминал ─────────────────────────────────────────────────────────────
   "terminal.integrated.defaultProfile.windows": "PowerShell",
   "terminal.integrated.scrollback": 5000,
   "terminal.integrated.copyOnSelection": true,
-
   // ── Python (не перехватывать) ──────────────────────────────────────────────
   "python.terminal.activateEnvironment": false,
   "python.terminal.activateEnvInCurrentTerminal": false,
-
   // ── Path Intellisense ────────────────────────────────────────────────────
   "path-intellisense.mappings": {
     "/assets": "${workspaceFolder}/assets"
   },
   "path-intellisense.autoTriggerNextSuggestion": true,
-
   // ── Copilot / Chat ───────────────────────────────────────────────────────
   "chat.commandCenter.enabled": true,
   "chat.tools.compressOutput.enabled": true,
   "chat.tools.riskAssessment.enabled": true,
+  "chat.utilityModel": "Default",
+  "chat.utilitySmallModel": "Default",
   "chat.planWidget.inlineEditor.enabled": true,
-
+  "github.copilot.chat.claudeAgent.allowAutoPermissions": true,
   // ── Agents window ─────────────────────────────────────────────────────────
   "extensions.supportAgentsWindow": {
     "github.copilot": true,
     "github.copilot-chat": true,
     "eamodio.gitlens": true,
     "ms-playwright.playwright": true,
-    "cloudflare.cloudflare-workers": true
+    "cloudflare.cloudflare-workers-bindings-extension": true
   },
-
   // ── Workbench ─────────────────────────────────────────────────────────────
   "workbench.diffEditorAssociations": {
     "*.md": "vscode.markdown.preview.editor"
   },
+  "markdown.preview.frontMatter": "table",
   "workbench.editor.highlightModifiedTabs": true,
   "workbench.tree.indent": 16,
   "breadcrumbs.enabled": true,
@@ -165,9 +167,9 @@
   "[powershell]": {
     "editor.defaultFormatter": "ms-vscode.powershell"
   },
-
   // ── Обновления ────────────────────────────────────────────────────────────
   "update.mode": "default",
   "extensions.autoUpdate": true,
-  "extensions.autoCheckUpdates": true
+  "extensions.autoCheckUpdates": true,
+  "liveServer.settings.port": 5502
 }

@@ -1,40 +1,41 @@
-# Handoff: Bing favicon + indexing (for GitHub Copilot Chat)
+# Handoff: Bing Webmaster Tools — HUNDESALON NIKA
 
-**Copy this entire file into Copilot Chat** if the user asked to finish Bing Webmaster steps in the browser.
+## Accounts
 
-## Done already (Cursor agent / CI)
+| Service | Account |
+|---------|---------|
+| Google Search Console | `snaiper1984@gmail.com` |
+| Bing Webmaster Tools | `snaiper1984@mail.ru` |
 
-- Favicons regenerated: air-trim only, version `20260519-tight-fit`
-- Production deploy + CDN purge
-- `/favicon.ico` and full PNG set live on https://hundesalon-nika.com
-- **IndexNow**: 76 URLs submitted (HTTP 200) — Bing notified
-- `npm run check:live-html` → `favicon=true`
+## Done (automated)
 
-## Your tasks in browser (Microsoft login required)
+- Site **verified** on Bing (meta tag `msvalidate.01` on all pages)
+- **Sitemap**: `https://hundesalon-nika.com/sitemap.xml` in Bing
+- **IndexNow**: 76 URLs via CLI; Bing dashboard shows **763+** submissions (Self + Cloudflare)
+- **Submit URLs**: 50 priority URLs via Bing Webmaster
+- **Search stats** visible (clicks/impressions)
+- Favicons on production (`?v=20260519-tight-fit`)
 
-1. Open https://www.bing.com/webmasters/ — site `https://hundesalon-nika.com/` must be verified (`BingSiteAuth.xml` on site).
-2. **URL Inspection** → enter `https://hundesalon-nika.com/de/` → **Request indexing**.
-3. **IndexNow** tab → confirm recent submissions appear.
-4. Optional: **Settings → API Access** → generate API key → user adds to `.dev.vars` as `BING_WEBMASTER_API_KEY` → then `npm run bing:api`.
-
-## Local automation (after user signs in to Microsoft in Edge)
+## One command for full setup
 
 ```bash
-npm run bing:edge      # isolated Edge + CDP port 9224
-# sign in to Microsoft in that window
-npm run bing:automate  # submit priority URLs + try Request indexing
+npm run bing:edge    # sign in as snaiper1984@mail.ru in that Edge window only
+npm run bing:setup   # sitemap, users, submit, inspect, IndexNow
 ```
 
-## Do not
+## Optional manual polish
 
-- Regenerate favicons with heavy padding (user wants full logo, no empty frame)
-- Remove `/favicon.ico` from root or HTML
+1. **Settings → API Access** → key in `.dev.vars` as `BING_WEBMASTER_API_KEY` → `npm run bing:api`
+2. **URL Inspection** → `https://hundesalon-nika.com/de/` → Request indexing (if automate missed the button)
+3. Remove stray property `https://hundesalon-nika.com/sitemap.xml` if it still appears in site list (wrong URL added as site)
+4. **User management** — only `@mail.ru` should have access; remove `@gmail.com` if listed as user (not GSC import banner text)
 
 ## Verify
 
 ```bash
+npm run bing:audit
+npm run seo:indexnow
 curl -sI https://hundesalon-nika.com/favicon.ico
-npm run check:live-html
 ```
 
-Favicon in Bing SERP may take **2–4 weeks** after crawl.
+Favicon in Bing SERP: often **2–4 weeks** after crawl.

@@ -77,7 +77,8 @@
     "Segoe UI Variable Display", "Aptos Display", "Montserrat", "Inter", system-ui, sans-serif;
   --premium-letter-tight: 0.008em;
   --premium-letter-wide: 0.012em;
-  --logo-mark-width: 72px;
+  --header-burger-size: 46px;
+  --logo-mark-width: var(--header-burger-size);
   --home-label-size: calc(var(--logo-mark-width) * 0.245);
   --shadow-sm: 0 8px 20px rgb(0 0 0 / 20%);
   --transition-smooth: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1);
@@ -667,7 +668,7 @@ body.light.player-active .header::before {
   flex-shrink: 0;
   justify-self: start;
   width: max-content;
-  padding-right: 50px;
+  padding-right: calc(var(--header-burger-size) + 8px);
   transform: translateX(calc(var(--social-edge-inset) * -1)) !important;
 }
 
@@ -691,7 +692,12 @@ body.light.player-active .header::before {
 }
 
 .logo a {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--header-burger-size);
+  height: var(--header-burger-size);
+  flex: 0 0 var(--header-burger-size);
   transition: transform 0.3s ease;
 }
 
@@ -700,9 +706,11 @@ body.light.player-active .header::before {
 }
 
 .logo-img {
-  width: 72px;
-  max-width: 100%;
-  height: auto;
+  width: var(--logo-mark-width);
+  height: var(--logo-mark-width);
+  max-width: var(--logo-mark-width);
+  max-height: var(--logo-mark-width);
+  object-fit: contain;
   display: block;
   transition: all 0.3s ease;
   animation: glassGlow 6.8s ease-in-out infinite;
@@ -733,7 +741,9 @@ body.site-loaded .logo-img {
 
 @media (width <= 900px) {
   :root {
-    --logo-mark-width: 54px;
+    --header-mobile-control-size: 40px;
+    --header-mobile-control-glyph: 20px;
+    --header-mobile-control-chevron: 8px;
     --home-label-size: calc(var(--logo-mark-width) * 0.245);
     --nav-pill-gap-x: 18px;
     --nav-pill-gap-y: 12px;
@@ -743,9 +753,6 @@ body.site-loaded .logo-img {
     --nav-pill-blur: 18px;
   }
 
-  .logo-img {
-    width: 54px;
-  }
 }
 
 .social-home {
@@ -1508,9 +1515,10 @@ html[lang="de"] .social-home a > span {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 6px;
-  width: 58px;
-  height: 58px;
+  gap: 5px;
+  width: var(--header-burger-size);
+  height: var(--header-burger-size);
+  flex: 0 0 var(--header-burger-size);
   padding: 0;
   border: none;
   border-radius: 999px;
@@ -1536,9 +1544,9 @@ html[lang="de"] .social-home a > span {
     top: auto;
     right: auto;
     left: auto;
-    width: 46px;
-    height: 46px;
-    flex: 0 0 46px;
+    width: var(--header-burger-size);
+    height: var(--header-burger-size);
+    flex: 0 0 var(--header-burger-size);
     margin: 0;
     align-self: center;
     transform: translateX(var(--burger-align-shift, 0px));
@@ -1588,8 +1596,8 @@ html[lang="de"] .social-home a > span {
 .premium-burger span {
   position: relative;
   display: block;
-  width: 30px;
-  height: 3px;
+  width: 24px;
+  height: 2.5px;
   border-radius: 999px;
   background:
     linear-gradient(
@@ -1623,7 +1631,7 @@ html[lang="de"] .social-home a > span {
 }
 
 .premium-burger span:nth-child(2) {
-  width: 20px;
+  width: 16px;
   animation-delay: 0.16s;
 }
 
@@ -1643,7 +1651,7 @@ html[lang="de"] .social-home a > span {
 }
 
 .premium-burger.active span:nth-child(1) {
-  transform: translateY(10px) rotate(45deg);
+  transform: translateY(8px) rotate(45deg);
 }
 
 .premium-burger.active span:nth-child(2) {
@@ -1652,7 +1660,7 @@ html[lang="de"] .social-home a > span {
 }
 
 .premium-burger.active span:nth-child(3) {
-  transform: translateY(-10px) rotate(-45deg);
+  transform: translateY(-8px) rotate(-45deg);
 }
 
 @media (width >= 900px) {
@@ -3522,34 +3530,6 @@ body.light .header-controls .lang-dropdown-menu li:hover .flag {
 }
 
 @media (width <= 900px) {
-  .header-controls .lang-dropdown-btn {
-    min-width: 68px;
-    width: 68px;
-    height: 68px;
-    min-height: 68px;
-    padding: 0 10px;
-    font-size: 20px;
-    border-radius: 24px;
-  }
-
-  .header-controls .lang-dropdown-btn i:first-child {
-    width: 38px;
-    min-width: 38px;
-    height: 38px;
-  }
-
-  .header-controls .lang-dropdown-btn i:last-child {
-    width: 14.52px;
-    min-width: 14.52px;
-    height: 14.52px;
-    font-size: 0;
-  }
-
-  .theme-btn::before {
-    width: 38px;
-    height: 38px;
-  }
-
   .header-controls .lang-dropdown-menu {
     right: auto;
     left: 0;
@@ -4554,13 +4534,13 @@ body.light .social-music-item-icon {
   }
 
   .social-player-toggle {
-    width: 36px;
-    height: 36px;
+    width: var(--header-mobile-control-size, 40px);
+    height: var(--header-mobile-control-size, 40px);
   }
 
   .social-player-icon {
-    width: 36px;
-    height: 36px;
+    width: var(--header-mobile-control-size, 40px);
+    height: var(--header-mobile-control-size, 40px);
   }
 
   .social-music-menu {
@@ -4599,42 +4579,6 @@ body.light .social-music-item-icon {
   .flag-item {
     min-height: 38px;
     padding: 7px 10px;
-  }
-
-  .theme-btn {
-    width: 40px;
-    min-width: 40px;
-    height: 40px;
-    min-height: 40px;
-    font-size: 24px;
-  }
-
-  .header-controls .lang-dropdown-btn {
-    min-width: 56px;
-    width: 56px;
-    height: 56px;
-    min-height: 56px;
-    padding: 0 8px;
-    font-size: 18px;
-    border-radius: 20px;
-  }
-
-  .header-controls .lang-dropdown-btn i:first-child {
-    width: 32px;
-    min-width: 32px;
-    height: 32px;
-  }
-
-  .header-controls .lang-dropdown-btn i:last-child {
-    width: 13.068px;
-    min-width: 13.068px;
-    height: 13.068px;
-    font-size: 0;
-  }
-
-  .theme-btn::before {
-    width: 34px;
-    height: 34px;
   }
 }
 
@@ -7878,12 +7822,10 @@ body.light .footer-legal-sep {
   .logo-wrapper {
     grid-column: 1;
     justify-self: start;
-    padding-right: 48px;
+    padding-right: calc(var(--header-burger-size) + 8px);
   }
 
   .premium-burger {
-    width: 46px;
-    height: 46px;
     top: 50%;
     right: 0;
     left: auto;
@@ -7961,8 +7903,8 @@ body.light .footer-legal-sep {
    Header height reference (keeps values in sync with actual header):
      ≥1281px  — top-row 1 row (88px) + social-bar (48px) + padding (16px) ≈ 152px
      900-1280px — top-row 2 rows (146px) + social-bar (48px) + padding (16px) ≈ 210px
-     ≤900px  — top-row 2 rows (~164px) + social-bar (56px) + padding ≈ 236px
-     ≤600px  — same grid, slightly tighter weather row ≈ 228px
+     ≤900px  — top-row 2 rows (~156px) + social-bar (56px) + padding ≈ 228px
+     ≤600px  — same grid, slightly tighter weather row ≈ 220px
    Content must clear header + ~20px buffer.
    section padding-top: 72px (desktop) / 60px (≤900px)
    hero   padding-top: 168px (desktop) / 136px (≤900px)
@@ -7988,21 +7930,21 @@ body.light .footer-legal-sep {
   }
 }
 
-/* ≤900px: compact header — section/hero offsets track --header-weather-panel-h */
+/* ≤900px: compact header — section/hero offsets track main band height */
 @media (width <= 900px) {
   :root {
     --site-side-padding: 14px;
-    --section-top-offset-base: 152px;
-    --hero-top-offset-base: 88px;
-    --first-screen-inner-space: 30px;
+    --section-top-offset-base: 142px;
+    --hero-top-offset-base: 86px;
+    --first-screen-inner-space: 28px;
   }
 }
 
 /* ≤600px */
 @media (width <= 600px) {
   :root {
-    --section-top-offset-base: 232px;
-    --hero-top-offset-base: 152px;
+    --section-top-offset-base: 212px;
+    --hero-top-offset-base: 144px;
   }
 }
 
@@ -8499,6 +8441,7 @@ body.light .nika-tooltip--visible {
 
   .header-weather-widget[data-weather-expanded="true"] {
     z-index: 48;
+    overflow: visible;
   }
 }
 
@@ -8607,7 +8550,7 @@ body.light .nika-tooltip--visible {
     grid-column: 1;
     grid-row: 1;
     justify-self: start;
-    padding-right: 48px;
+    padding-right: calc(var(--header-burger-size) + 8px);
   }
 
   .header-controls {
@@ -9065,17 +9008,6 @@ body.light .nika-tooltip--visible {
   border-radius: 999px;
 }
 
-.header .top-row > .header-controls .theme-btn {
-  grid-area: theme;
-  place-self: center end;
-  flex: none;
-  width: 45px;
-  min-width: 45px;
-  height: 45px;
-  min-height: 45px;
-  border-radius: 0;
-}
-
 .header .top-row > .header-controls .theme-btn,
 .header .top-row > .header-controls .lang-dropdown-btn {
   background: transparent;
@@ -9089,29 +9021,6 @@ body.light .nika-tooltip--visible {
 .header .top-row > .header-controls .lang-dropdown-btn:hover {
   transform: translateY(-1px) scale(1.02);
   filter: saturate(1.06) brightness(1.03);
-}
-
-.header .top-row > .header-controls .lang-dropdown-btn {
-  width: auto;
-  min-width: 0;
-  height: auto;
-  min-height: 0;
-  padding: 6px 8px;
-  border-radius: 14px;
-  gap: 3px;
-}
-
-.header .top-row > .header-controls .lang-dropdown-btn i:first-child {
-  width: 36px;
-  min-width: 36px;
-  height: 36px;
-}
-
-.header .top-row > .header-controls .lang-dropdown-btn i:last-child {
-  width: 8.712px;
-  min-width: 8.712px;
-  height: 8.712px;
-  margin-top: 0;
 }
 
 .header .top-row > .header-controls .theme-btn::before {
@@ -9128,8 +9037,88 @@ body.light .nika-tooltip--visible {
   filter: none;
 }
 
+/* Mobile header controls (+10% vs legacy 36px compact hit area). */
+@media (width <= 900px) {
+  .header .top-row > .header-controls .header-online-btn {
+    min-height: var(--header-mobile-control-size);
+  }
+
+  .header .top-row > .header-controls .theme-btn {
+    grid-area: theme;
+    place-self: center end;
+    flex: none;
+    width: var(--header-mobile-control-size) !important;
+    min-width: var(--header-mobile-control-size) !important;
+    height: var(--header-mobile-control-size) !important;
+    min-height: var(--header-mobile-control-size) !important;
+    border-radius: 50% !important;
+    overflow: hidden !important;
+    background: rgb(255 255 255 / 4%) !important;
+  }
+
+  .header .top-row > .header-controls .theme-btn::before {
+    width: calc(var(--header-mobile-control-glyph) + 6px) !important;
+    height: calc(var(--header-mobile-control-glyph) + 6px) !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    margin-top: calc((var(--header-mobile-control-glyph) + 6px) / -2) !important;
+    margin-left: calc((var(--header-mobile-control-glyph) + 6px) / -2) !important;
+  }
+
+  .header .top-row > .header-controls .lang-dropdown-btn {
+    grid-area: lang;
+    place-self: center end;
+    width: var(--header-mobile-control-size) !important;
+    min-width: var(--header-mobile-control-size) !important;
+    height: var(--header-mobile-control-size) !important;
+    min-height: var(--header-mobile-control-size) !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    gap: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .header .top-row > .header-controls .lang-dropdown-btn i:first-child {
+    width: var(--header-mobile-control-glyph) !important;
+    min-width: var(--header-mobile-control-glyph) !important;
+    height: var(--header-mobile-control-glyph) !important;
+    font-size: 18px !important;
+  }
+
+  .header .top-row > .header-controls .lang-dropdown-btn i:last-child {
+    width: var(--header-mobile-control-chevron) !important;
+    min-width: var(--header-mobile-control-chevron) !important;
+    height: var(--header-mobile-control-chevron) !important;
+    font-size: 10px !important;
+    margin-left: 1px !important;
+    margin-top: 0 !important;
+  }
+}
+
 /* Desktop header controls: matched globe + theme icon boxes (45px hit, 40px glyph). */
 @media (width >= 900px) {
+  .header .top-row > .header-controls .theme-btn {
+    grid-area: theme;
+    place-self: center end;
+    flex: none;
+    border-radius: 0;
+  }
+
+  .header .top-row > .header-controls .lang-dropdown-btn {
+    grid-area: lang;
+    place-self: center end;
+    width: auto;
+    min-width: 0;
+    height: auto;
+    min-height: 0;
+    padding: 0 2px 0 0;
+    border-radius: 0;
+    gap: 2px;
+  }
+
   .header .top-row > .header-controls {
     --header-control-icon-box: 45px;
     --header-control-icon-glyph: 45px;
@@ -9386,6 +9375,17 @@ body.header-weather-expanded .header-weather-widget {
   z-index: 9999;
 }
 
+body.header-weather-expanded {
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
+}
+
+body.header-weather-expanded .site-scroll-root {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
 /* =========================================================
    GLOBAL MOBILE RESPONSIVENESS — 2026-04-28
    ========================================================= */
@@ -9473,7 +9473,7 @@ body.header-weather-expanded .header-weather-widget {
 
   /* Recalibrate offsets for the now-shorter header */
   :root {
-    --section-top-offset-base: 132px;
+    --section-top-offset-base: 124px;
     --hero-top-offset-base: 88px;
     --first-screen-inner-space: 24px;
   }
@@ -9493,23 +9493,10 @@ body.header-weather-expanded .header-weather-widget {
 
 /* ── 7. Language button: compact at narrow phone ────────── */
 @media (width <= 560px) {
-  /* Use matching specificity to override the auto-size rule */
-  .header .top-row > .header-controls .lang-dropdown-btn,
-  .header-controls .lang-dropdown-btn {
-    min-width: 44px !important;
-    width: 44px !important;
-    height: 44px !important;
-    min-height: 44px !important;
-    font-size: 16px;
-    border-radius: 14px;
-    padding: 0 8px;
-  }
-
-  .header .top-row > .header-controls .lang-dropdown-btn i:first-child,
-  .header-controls .lang-dropdown-btn i:first-child {
-    width: 22px;
-    min-width: 22px;
-    height: 22px;
+  :root {
+    --header-mobile-control-size: 48px;
+    --header-mobile-control-glyph: 24px;
+    --header-mobile-control-chevron: 9px;
   }
 
   /* Keep the chevron arrow always visible */
@@ -10233,18 +10220,6 @@ body.light .social-icons-toggle.is-open {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   MOBILE LOGO SIZE: same as burger (46×46px)
-   Only on mobile ≤900px
-   ══════════════════════════════════════════════════════════════════ */
-@media (width <= 900px) {
-  .logo-img {
-    width: 46px !important;
-    height: 46px !important;
-    object-fit: contain !important;
-  }
-}
-
-/* ══════════════════════════════════════════════════════════════════
    MOBILE v22 — WEATHER BEHIND HEADER CONTENT
    Strategy: weather shell = position:absolute (out of grid flow),
    centered in header area, z-index lower than controls & social bar.
@@ -10256,10 +10231,10 @@ body.light .social-icons-toggle.is-open {
     overflow: visible !important;
   }
 
-  /* 2. Burger: pinned to right of first grid row */
+  /* 2. Burger: aligned with logo/controls (no absolute top offset) */
   .header .top-row .premium-burger {
-    top: 30px !important;
-    transform: translateY(-50%) !important;
+    top: auto !important;
+    transform: none !important;
   }
 
   /* 3. Weather shell: expanded below the first header row, behind controls */
@@ -10278,8 +10253,8 @@ body.light .social-icons-toggle.is-open {
     flex: none !important;
     grid-column: 1 / -1 !important;
     grid-row: 2 !important;
-    z-index: 8 !important;
-    margin: 0 !important;
+    z-index: 1 !important;
+    margin: -6px 0 0 !important;
     isolation: auto !important;
     padding: 0 !important;
     background: transparent !important;
@@ -10289,6 +10264,7 @@ body.light .social-icons-toggle.is-open {
   .header .top-row > .header-weather-shell.weather-shell-ready,
   .top-row > .header-weather-shell.weather-shell-ready {
     display: block !important;
+    margin-top: -6px !important;
     overflow: visible !important;
     border-radius: 0 !important;
     clip-path: none !important;
@@ -10336,61 +10312,14 @@ body.light .social-icons-toggle.is-open {
     z-index: 6 !important;
   }
 
-  /* 6. Logo: 36px — proportional to burger */
+  /* 6. Logo: aligned to mobile control hit size */
   .logo-img {
-    width: 36px !important;
-    height: 36px !important;
+    width: var(--header-mobile-control-size) !important;
+    height: var(--header-mobile-control-size) !important;
   }
 
-  /* 7. Theme toggle: perfectly round circle, compact */
   .header .top-row > .header-controls .theme-btn {
-    border-radius: 50% !important;
-    width: 36px !important;
-    min-width: 36px !important;
-    height: 36px !important;
-    min-height: 36px !important;
-    overflow: hidden !important;
-    background: rgb(255 255 255 / 4%) !important;
     flex-shrink: 0 !important;
-  }
-
-  .header .top-row > .header-controls .theme-btn::before {
-    width: 24px !important;
-    height: 24px !important;
-    position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
-    margin-top: -12px !important;
-    margin-left: -12px !important;
-  }
-
-  /* 8. Lang dropdown button: compact round */
-  .header .top-row > .header-controls .lang-dropdown-btn {
-    width: 36px !important;
-    min-width: 36px !important;
-    height: 36px !important;
-    min-height: 36px !important;
-    padding: 0 !important;
-    border-radius: 50% !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 0 !important;
-  }
-
-  .header .top-row > .header-controls .lang-dropdown-btn i:first-child {
-    width: 18px !important;
-    min-width: 18px !important;
-    height: 18px !important;
-    font-size: 16px !important;
-  }
-
-  .header .top-row > .header-controls .lang-dropdown-btn i:last-child {
-    width: 7.26px !important;
-    min-width: 7.26px !important;
-    height: 7.26px !important;
-    font-size: 9px !important;
-    margin-left: 1px !important;
   }
 }
 
@@ -10516,20 +10445,20 @@ body.light .social-icons-toggle.is-open {
   .header .top-row .premium-burger,
   .header .logo-wrapper .premium-burger {
     position: absolute !important;
-    top: 30px !important;
+    top: auto !important;
     right: 0 !important;
     left: auto !important;
-    width: 46px !important;
-    height: 46px !important;
+    width: calc(var(--header-mobile-control-size) + 6px) !important;
+    height: calc(var(--header-mobile-control-size) + 6px) !important;
     margin: 0 !important;
-    transform: translateY(-50%) !important;
+    transform: none !important;
     z-index: 8 !important;
   }
 
   .header .top-row > .premium-burger.active,
   .header .top-row .premium-burger.active,
   .header .logo-wrapper .premium-burger.active {
-    transform: translateY(-50%) !important;
+    transform: none !important;
   }
 }
 
@@ -10599,7 +10528,10 @@ body.light .social-icons-toggle.is-open {
 /* Fluid compact header and social-band alignment. */
 @media (width <= 900px) {
   .header {
-    --header-edge-slot: max(var(--logo-mark-width, 46px), 46px);
+    --header-edge-slot: max(
+      var(--logo-mark-width, 54px),
+      calc(var(--header-mobile-control-size) + 6px)
+    );
     --header-row-gap: clamp(6px, 1.6vw, 10px);
     --header-item-gap: clamp(6px, 2vw, 12px);
 
@@ -10620,6 +10552,11 @@ body.light .social-icons-toggle.is-open {
     min-height: auto !important;
     padding: 4px 0 0 !important;
     overflow: visible !important;
+  }
+
+  /* Visual nudge only — layout box unchanged, social bar stays put. */
+  body:not(.hide-header) .header .top-row {
+    transform: translateY(-3px) !important;
   }
 
   .header .top-row > .logo-wrapper {
@@ -10698,7 +10635,8 @@ body.light .social-icons-toggle.is-open {
     grid-column: 1 / -1 !important;
     position: relative !important;
     justify-self: stretch !important;
-    align-self: center !important;
+    align-self: start !important;
+    margin-top: -6px !important;
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
@@ -10708,6 +10646,7 @@ body.light .social-icons-toggle.is-open {
     overflow: visible !important;
     clip-path: none !important;
     contain: none !important;
+    z-index: 1 !important;
   }
 
   .header-weather-widget[data-weather-widget] {
@@ -10777,7 +10716,10 @@ body.light .social-icons-toggle.is-open {
 
 @media (width <= 480px) {
   .header {
-    --header-edge-slot: max(var(--logo-mark-width, 40px), 46px);
+    --header-edge-slot: max(
+      var(--logo-mark-width, 54px),
+      calc(var(--header-mobile-control-size) + 6px)
+    );
   }
 
   .header .top-row {
@@ -10902,7 +10844,7 @@ body.light .social-icons-toggle.is-open {
    36px -> 25px (~30% smaller), pixel-perfect spacing for mobile layout. */
 @media (width <= 900px) {
   .header .social-bar {
-    --social-bar-icon-size: 25px !important;
+    --social-bar-icon-size: calc(var(--header-mobile-control-size) * 0.625) !important;
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     margin-top: 1px !important;
@@ -10986,9 +10928,7 @@ body.light .social-icons-toggle.is-open {
     gap: 4px !important;
     padding: 4px 8px !important;
   }
-
 }
-
 
 /* Final side-gutter lock: content edges always follow logo/burger line. */
 .header {
@@ -11194,13 +11134,13 @@ body.light .social-icons-toggle.is-open {
    ========================================================= */
 @media (width <= 900px) {
   :root {
-    --header-weather-panel-h: clamp(88px, 20vw, 96px);
+    --header-weather-panel-h: clamp(82px, 18vw, 88px);
   }
 }
 
 @media (width <= 560px) {
   :root {
-    --header-weather-panel-h: clamp(84px, 22vw, 92px);
+    --header-weather-panel-h: clamp(78px, 20vw, 84px);
   }
 }
 
@@ -11231,17 +11171,27 @@ body.light .social-icons-toggle.is-open {
     --header-menu-weather-h: var(--header-weather-panel-h);
   }
 
+  .header .top-row > .header-weather-shell,
+  .top-row > .header-weather-shell {
+    z-index: 1 !important;
+  }
+
   .header {
-    padding-top: 4px !important;
-    padding-bottom: 6px !important;
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
     padding-left: 12px !important;
     padding-right: 12px !important;
-    gap: 4px !important;
+    gap: 2px !important;
   }
 
   .header .top-row {
     gap: 4px 8px !important;
     row-gap: 4px !important;
+  }
+
+  .header .top-row > .header-controls {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
   }
 
   /* Cloud scene must not paint above header band (was clipped by viewport / fixed header). */
@@ -11263,14 +11213,14 @@ body.light .social-icons-toggle.is-open {
     height: var(--header-weather-panel-h) !important;
     min-height: var(--header-weather-panel-h) !important;
     max-height: var(--header-weather-panel-h) !important;
-    margin-top: 0 !important;
+    margin-top: -6px !important;
     margin-bottom: 0 !important;
     padding: 0 !important;
     transform: none !important;
     overflow: visible !important;
     isolation: auto !important;
     contain: none !important;
-    z-index: 8 !important;
+    z-index: 1 !important;
   }
 
   .header-weather-widget[data-weather-widget],

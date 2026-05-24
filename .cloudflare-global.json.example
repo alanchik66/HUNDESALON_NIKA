@@ -1,0 +1,4 @@
+{
+  "email": "your-cloudflare-account@email.com",
+  "api_key": "paste-global-api-key-from-https://dash.cloudflare.com/profile/api-tokens"
+}

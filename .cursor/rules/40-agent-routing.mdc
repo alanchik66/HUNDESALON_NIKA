@@ -1,0 +1,31 @@
+---
+description: Маршрутизация задач для AI-агентов (SEO, Bing, деплой, аудит)
+alwaysApply: true
+---
+
+# Agent routing
+
+Полный playbook: `docs/agents-playbook.md`. Профиль: `AGENTS.md`.
+
+## Search & indexing
+
+- GSC → `snaiper1984@gmail.com` — не переносить на mail.ru.
+- Bing → `snaiper1984@mail.ru` — `npm run bing:edge` затем `bing:index-all` / `bing:setup`.
+- IndexNow: `npm run seo:indexnow` (apex + www, все URL из sitemap).
+- После HTML deploy: `deploy:full` или минимум `seo:indexnow` + `cf:purge-cache`.
+
+## Site audit
+
+- Локальные ссылки: `npm run check:links`.
+- Живой обход sitemap: `npm run check:live-crawl`.
+- Конфиг/SEO файлы: `npm run check:project`.
+
+## Skills
+
+- UI → hundesalon-frontend
+- SEO/hreflang → hundesalon-seo-multilingual
+- Cloudflare → hundesalon-cloudflare + cloudflare-deploy
+
+## Cloud agents
+
+Не делать hello-world тур по сайту. Не создавать PR/ветки без запроса. Секреты только в Dashboard, не в git.

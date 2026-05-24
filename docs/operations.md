@@ -18,23 +18,46 @@ If OpenRouter returns 401 after deploy: `npm run sync:openrouter`, wait ~10s, `n
 | Script | Purpose |
 |--------|---------|
 | `npm run check:all` | Full health (local + prod + git remotes) |
+| `npm run check:live-crawl` | Live HEAD/GET for all 76 sitemap URLs |
+| `docs/agents-playbook.md` | Routing for Cursor/Codex agents (SEO, Bing, deploy) |
+| `npm run bing:complete` | All 16 Bing WMT sections — see `docs/bing-webmaster-checklist.md` |
 | `npm run check:prod` | Live HTML, GSC audit, OpenRouter |
 | `npm run git:push` | Push `main` to GitHub and GitLab |
 | `npm run deploy:full` | Build, deploy Pages, optional purge, IndexNow, prod checks |
-| `npm run seo:indexnow` | Notify Bing (and partners) about all sitemap URLs |
+| `npm run slack:test` | Проверка Slack webhook (тестовое сообщение) |
+| `npm run seo:indexnow` | IndexNow: all sitemap URLs on **apex + www** hosts |
+| `npm run bing:index-all` | IndexNow + Bing Submit (100/day) + URL inspection + www property |
 | `npm run seo:post-favicon` | IndexNow + purge + live favicon checks after icon update |
 | `npm run bing:open` | Open Bing Webmaster (inspection, IndexNow) in browser |
 | `npm run bing:edge` | Edge with CDP for `bing:automate` (sign in once) |
+| `npm run bing:setup` | Full Bing Webmaster setup (sitemap, users, submit, inspect, IndexNow) |
 | `npm run bing:automate` | Submit URLs + request indexing via Edge CDP |
 | `npm run bing:api` | Bing URL API (needs `BING_WEBMASTER_API_KEY` in `.dev.vars`) |
 | `npm run sync:openrouter` | Copy key from `.dev.vars` → Pages secret |
 
+## Slack (лиды + деплой)
+
+- Полная инструкция: `docs/slack-setup.md`
+- Входящие заявки с сайта (`/sendmail`) отправляются в Slack при наличии `SLACK_WEBHOOK_URL`.
+- Уведомления деплоя (`npm run deploy:full`) также идут в Slack через `tools/post-deploy.mjs`.
+- Для Cursor Cloud следите, чтобы имя секрета было ровно `SLACK_WEBHOOK_URL` (без `=https...` в имени).
+
 ## Bing favicon / indexing
 
+**Accounts (do not mix):**
+
+| Service | Account |
+|---------|---------|
+| Google Search Console | `snaiper1984@gmail.com` — keep as-is |
+| Bing Webmaster Tools | `snaiper1984@mail.ru` — sign in via `npm run bing:edge` (isolated Edge profile, port 9224) |
+
 1. After favicon deploy: `npm run seo:post-favicon` (IndexNow + live checks).
-2. Optional API key: Bing Webmaster → **Settings → API Access** → add to `.dev.vars` as `BING_WEBMASTER_API_KEY`, then `npm run bing:api`.
-3. Browser automation (one-time Microsoft sign-in): `npm run bing:edge` → sign in → `npm run bing:automate`.
-4. Favicon in Bing SERP often updates in **2–4 weeks** after crawl.
+2. Full Bing setup (recommended): `npm run bing:edge` → sign in as mail.ru → `npm run bing:setup` (sitemap, users, URL submit, inspections, IndexNow).
+3. Or step-by-step: `npm run bing:mail-setup` → `npm run bing:verify` → `npm run bing:automate`.
+4. Optional API key: Bing Webmaster → **Settings → API Access** → add to `.dev.vars` as `BING_WEBMASTER_API_KEY`, then `npm run bing:api`.
+5. **www**: `seo:indexnow` submits apex + www (152 URLs). `www` → apex via 301; canonical stays `https://hundesalon-nika.com`. Bing Submit quota 100/day — rest: `npm run bing:submit-www-rem` next day.
+6. **robots.txt**: Bing — только `https://hundesalon-nika.com/robots.txt`. `npm run cf:www-robots-setup`. **Cloudflare:** один токен `HUNDESALON — Zone API` → `npm run cf:ensure-api-token` (см. `docs/cloudflare-api-tokens.md`).
+6. Favicon in Bing SERP often updates in **2–4 weeks** after crawl.
 
 ## Cloudflare tokens
 

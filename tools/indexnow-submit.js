@@ -4,6 +4,9 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const siteHost = 'hundesalon-nika.com';
+const wwwHost = `www.${siteHost}`;
+const apexOrigin = `https://${siteHost}`;
+const wwwOrigin = `https://${wwwHost}`;
 const keyFile = 'indexnow-key.txt';
 const keyPath = path.join(root, keyFile);
 const sitemapPath = path.join(root, 'sitemap.xml');
@@ -22,19 +25,47 @@ function getSitemapUrls() {
     .filter(Boolean);
 }
 
+function toWwwUrl(url) {
+  return url.startsWith(apexOrigin) ? `${wwwOrigin}${url.slice(apexOrigin.length)}` : url;
+}
+
 function uniqueUrls(urls) {
   return [...new Set(urls)].sort((a, b) => {
     const priority = url => {
-      if (url === 'https://hundesalon-nika.com/') return 0;
-      if (/\/(?:de|en|ru|uk)\/$/.test(url)) return 1;
-      if (/\/kontakty\.html$/.test(url)) return 2;
-      if (/\/onlayn-bronirovanie\.html$/.test(url)) return 3;
-      if (/\/prays-list\.html$/.test(url)) return 4;
-      return 5;
+      const path = url.replace(/^https:\/\/(www\.)?hundesalon-nika\.com/, '');
+      if (path === '/') return 0;
+      if (/\/(?:de|en|ru|uk)\/$/.test(path)) return 1;
+      if (/\/kontakty\.html$/.test(path)) return 2;
+      if (/\/onlayn-bronirovanie\.html$/.test(path)) return 3;
+      if (/\/prays-list\.html$/.test(path)) return 4;
+      return url.includes('www.') ? 6 : 5;
     };
 
     return priority(a) - priority(b) || a.localeCompare(b);
   });
+}
+
+async function submitIndexNow({ host, key, urlList }) {
+  const payload = {
+    host,
+    key,
+    keyLocation: `https://${host}/${keyFile}`,
+    urlList,
+  };
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    body: JSON.stringify(payload),
+  });
+  const responseText = await response.text();
+  if (!response.ok) {
+    console.error(`IndexNow failed for ${host}: HTTP ${response.status}`);
+    if (responseText.trim()) console.error(responseText);
+    return false;
+  }
+  console.log(`IndexNow accepted ${urlList.length} URLs for ${host}. HTTP ${response.status}`);
+  if (responseText.trim()) console.log(responseText);
+  return true;
 }
 
 if (!fs.existsSync(keyPath)) {
@@ -53,38 +84,29 @@ if (!/^[a-f0-9]{32,128}$/i.test(key)) {
   process.exit(1);
 }
 
-const urlList = uniqueUrls(getSitemapUrls());
+function getBrandSitemapUrls() {
+  const brandPath = path.join(root, 'sitemap-brand.xml');
+  if (!fs.existsSync(brandPath)) return [];
+  const xml = fs.readFileSync(brandPath, 'utf8');
+  return [...xml.matchAll(/<loc>(https:\/\/hundesalon-nika\.com\/[^<]*)<\/loc>/g)].map(m => m[1].trim());
+}
+
+const apexList = uniqueUrls([...getSitemapUrls(), ...getBrandSitemapUrls()]);
+const wwwList = apexList.map(toWwwUrl);
+const urlList = uniqueUrls([...apexList, ...wwwList]);
 fs.writeFileSync(manualListPath, `${urlList.join('\n')}\n`, 'utf8');
 
-const payload = {
-  host: siteHost,
-  key,
-  keyLocation: `https://${siteHost}/${keyFile}`,
-  urlList,
-};
-
 if (isDryRun) {
-  console.log(`Prepared ${urlList.length} URLs for Bing/IndexNow.`);
+  console.log(`Prepared ${apexList.length} apex + ${wwwList.length} www = ${urlList.length} URLs.`);
   console.log(`Manual Bing list: ${path.relative(root, manualListPath)}`);
-  console.log(`Key location: ${payload.keyLocation}`);
+  console.log(`Apex key: https://${siteHost}/${keyFile}`);
+  console.log(`WWW key: https://${wwwHost}/${keyFile} (301 → apex)`);
   console.log(urlList.join('\n'));
   process.exit(0);
 }
 
-const response = await fetch(endpoint, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json; charset=utf-8',
-  },
-  body: JSON.stringify(payload),
-});
+const apexOk = await submitIndexNow({ host: siteHost, key, urlList: apexList });
+const wwwOk = await submitIndexNow({ host: wwwHost, key, urlList: wwwList });
 
-const responseText = await response.text();
-if (!response.ok) {
-  console.error(`IndexNow submission failed: HTTP ${response.status}`);
-  if (responseText.trim()) console.error(responseText);
-  process.exit(1);
-}
-
-console.log(`IndexNow accepted ${urlList.length} URLs. HTTP ${response.status}`);
-if (responseText.trim()) console.log(responseText);
+if (!apexOk || !wwwOk) process.exit(1);
+console.log(`Done: ${apexList.length} apex + ${wwwList.length} www URLs notified via IndexNow.`);

@@ -1,5 +1,7 @@
 # HUNDESALON NIKA — Codex Project Profile
 
+**Agent playbook (routing, SEO accounts, checklists):** `docs/agents-playbook.md`
+
 ## Project
 
 - Website: `https://hundesalon-nika.com`

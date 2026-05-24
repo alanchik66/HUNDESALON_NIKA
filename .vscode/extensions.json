@@ -36,7 +36,7 @@
     "github.copilot",
     "github.copilot-chat",
 
-    // ─── Cloudflare ────────────────────────────────────────────────
+    // ─── Cloudflare Pages / Workers bindings ──────────────────────
     "cloudflare.cloudflare-workers-bindings-extension",
 
     // ─── Утилиты ────────────────────────────────────────────────────

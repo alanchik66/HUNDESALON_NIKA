@@ -1158,32 +1158,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const syncDesktopBurgerAxis = () => {
     const headerRoot = document.querySelector('header.header');
-    if (!headerRoot || window.innerWidth <= 899) {
-      headerRoot?.style.removeProperty('--burger-align-shift');
+    if (!headerRoot) {
+      return;
+    }
+
+    const socialBar = headerRoot.querySelector('.social-bar');
+    const socialBarVisible =
+      socialBar?.classList.contains('show-social') || headerRoot.classList.contains('header-social-visible');
+    if (!socialBarVisible) {
+      headerRoot.style.removeProperty('--burger-align-shift');
       return;
     }
 
     const pageBurger = headerRoot.querySelector('.premium-burger');
-    const visibleDivider = Array.from(headerRoot.querySelectorAll('.social-player-divider')).find(divider => {
-      const rect = divider.getBoundingClientRect();
-      return rect.width >= 1 && rect.height >= 1;
-    });
-    if (!pageBurger || !visibleDivider) {
+    const axisTarget =
+      headerRoot.querySelector('.social-icons-toggle-img') ||
+      headerRoot.querySelector('.social-icons-toggle');
+    if (!pageBurger || !axisTarget) {
       headerRoot.style.removeProperty('--burger-align-shift');
       return;
     }
 
     const burgerRect = pageBurger.getBoundingClientRect();
-    const dividerRect = visibleDivider.getBoundingClientRect();
-    if (burgerRect.width < 1 || dividerRect.width < 1) {
+    const targetRect = axisTarget.getBoundingClientRect();
+    if (burgerRect.width < 1 || targetRect.width < 1) {
       headerRoot.style.removeProperty('--burger-align-shift');
       return;
     }
 
     const burgerCenterX = burgerRect.left + burgerRect.width / 2;
-    const dividerCenterX = dividerRect.left + dividerRect.width / 2;
-    const shift = Math.round(dividerCenterX - burgerCenterX);
-    const clampedShift = Math.max(-120, Math.min(120, shift));
+    const targetCenterX = targetRect.left + targetRect.width / 2;
+    const shift = Math.round(targetCenterX - burgerCenterX);
+    const clampedShift = Math.max(-180, Math.min(180, shift));
     headerRoot.style.setProperty('--burger-align-shift', `${clampedShift}px`);
   };
 

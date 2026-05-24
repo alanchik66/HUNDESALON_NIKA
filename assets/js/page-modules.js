@@ -1,4 +1,4 @@
-﻿/*
+/*
  * ================================================================
  * HUNDESALON NIKA — Page Modules
  * ================================================================
@@ -416,10 +416,10 @@ document.addEventListener('DOMContentLoaded', () => {
           status.className = 'ai-draft-status ai-draft-status--error';
           status.textContent =
             error?.message === 'LOCAL_CF_DEV_REQUIRED'
-              ? aiDraftCopy.localDevHint[pageLang] ?? aiDraftCopy.localDevHint.de
+              ? (aiDraftCopy.localDevHint[pageLang] ?? aiDraftCopy.localDevHint.de)
               : error?.message === 'OPENROUTER_API_KEY_MISSING'
-                ? aiDraftCopy.apiKeyMissing[pageLang] ?? aiDraftCopy.apiKeyMissing.de
-              : aiDraftCopy.failed[pageLang] ?? aiDraftCopy.failed.de;
+                ? (aiDraftCopy.apiKeyMissing[pageLang] ?? aiDraftCopy.apiKeyMissing.de)
+                : (aiDraftCopy.failed[pageLang] ?? aiDraftCopy.failed.de);
         } finally {
           button.disabled = false;
         }

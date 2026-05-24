@@ -26,6 +26,7 @@ const copyEntries = [
   '_redirects',
   'robots.txt',
   'sitemap.xml',
+  'sitemap-brand.xml',
   'indexnow-key.txt',
   'favicon.ico',
   'site.webmanifest',

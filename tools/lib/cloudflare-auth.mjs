@@ -13,10 +13,27 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 export { DOMAIN, ACCOUNT_ID, REPO_ROOT };
 
 export function loadDevVars(filePath = path.join(REPO_ROOT, '.dev.vars')) {
-  const tokenFile = path.join(REPO_ROOT, '.cloudflare-purge.token');
-  if (existsSync(tokenFile) && !process.env.CLOUDFLARE_API_TOKEN) {
-    const fromFile = readFileSync(tokenFile, 'utf8').trim();
-    if (fromFile) process.env.CLOUDFLARE_API_TOKEN = fromFile;
+  for (const file of ['.cloudflare-api.token', '.cloudflare-purge.token', '.cloudflare-rules.token']) {
+    const tokenPath = path.join(REPO_ROOT, file);
+    if (existsSync(tokenPath) && !process.env.CLOUDFLARE_API_TOKEN) {
+      const fromFile = readFileSync(tokenPath, 'utf8').trim();
+      if (fromFile) process.env.CLOUDFLARE_API_TOKEN = fromFile;
+    }
+  }
+
+  const globalFile = path.join(REPO_ROOT, '.cloudflare-global.json');
+  if (existsSync(globalFile) && !process.env.CLOUDFLARE_API_KEY) {
+    try {
+      const data = JSON.parse(readFileSync(globalFile, 'utf8'));
+      const email = String(data.email || data.CLOUDFLARE_API_EMAIL || '').trim();
+      const key = String(data.api_key || data.CLOUDFLARE_API_KEY || '').trim();
+      if (email && key) {
+        process.env.CLOUDFLARE_API_EMAIL = email;
+        process.env.CLOUDFLARE_API_KEY = key;
+      }
+    } catch {
+      // ignore
+    }
   }
 
   if (!existsSync(filePath)) return;

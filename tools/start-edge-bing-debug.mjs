@@ -5,7 +5,7 @@ import { exec, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
-const port = process.env.BING_EDGE_PORT || '9224';
+const port = process.env.BING_MAIL_EDGE_PORT || '9224';
 const site = encodeURIComponent('https://hundesalon-nika.com/');
 const startUrl = `https://www.bing.com/webmasters/urlinspection?siteUrl=${site}`;
 

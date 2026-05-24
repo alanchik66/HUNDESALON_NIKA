@@ -34,6 +34,7 @@ test-results/
 *.tmp
 *.temp
 *.log
+logs/
 *.cache
 *.pid
 *.seed
@@ -136,4 +137,7 @@ tmp_*.png
 # Локальные одноразовые скрипты агента (не для репозитория)
 tools/_test-*.mjs
 tools/_create-*.mjs
+.cloudflare-api.token
 .cloudflare-purge.token
+.cloudflare-rules.token
+.cloudflare-global.json

@@ -15,6 +15,7 @@ import { assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http
 
 const RECIPIENT = 'info@hundesalon-nika.com';
 const FROM      = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
+const SLACK_TIMEOUT_MS = 4500;
 
 /** Строки для ответа на разных языках */
 const COPY = {
@@ -54,6 +55,97 @@ function sanitize(val) {
  */
 function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+
+/**
+ * Builds a compact, readable Slack payload for website leads.
+ * @param {object} data
+ * @returns {{ text: string, blocks: object[] }}
+ */
+function buildSlackPayload(data) {
+    const lines = [
+        `Форма: ${data.formType}`,
+        `Язык: ${data.lang}`,
+        `Имя: ${data.name}`,
+        `E-mail: ${data.email}`,
+        data.phone ? `Телефон: ${data.phone}` : null,
+        data.service ? `Услуга: ${data.service}` : null,
+        data.date ? `Дата: ${data.date}` : null,
+        data.time ? `Время: ${data.time}` : null,
+        data.pagePath ? `Страница: ${data.pagePath}` : null,
+    ].filter((line) => line !== null);
+
+    const title = data.level === 'error'
+        ? ':rotating_light: Ошибка отправки формы на сайте'
+        : ':dog: Новая заявка с сайта HUNDESALON NIKA';
+
+    const messagePreview = String(data.message || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 700);
+
+    return {
+        text: `${title}\n${lines.join('\n')}`,
+        blocks: [
+            {
+                type: 'header',
+                text: {
+                    type: 'plain_text',
+                    text: title.replace(/:[^\s:]+:/g, '').trim(),
+                    emoji: true,
+                },
+            },
+            {
+                type: 'section',
+                text: {
+                    type: 'mrkdwn',
+                    text: lines.map((line) => `• ${line}`).join('\n'),
+                },
+            },
+            {
+                type: 'section',
+                text: {
+                    type: 'mrkdwn',
+                    text: `*Сообщение:*\n${messagePreview || '—'}`,
+                },
+            },
+            {
+                type: 'context',
+                elements: [
+                    {
+                        type: 'mrkdwn',
+                        text: `Источник: ${data.origin || 'unknown'} | ${new Date().toISOString()}`,
+                    },
+                ],
+            },
+        ],
+    };
+}
+
+/**
+ * Sends a message to Slack if SLACK_WEBHOOK_URL is configured.
+ * @param {any} env
+ * @param {object} payload
+ */
+async function sendSlackNotification(env, payload) {
+    const webhook = String(env?.SLACK_WEBHOOK_URL || '').trim();
+    if (!webhook) return;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), SLACK_TIMEOUT_MS);
+
+    try {
+        await fetch(webhook, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+        });
+    } catch (err) {
+        console.warn('[sendmail] Slack notify failed:', err?.message || err);
+    } finally {
+        clearTimeout(timeout);
+    }
 }
 
 /**
@@ -117,6 +209,7 @@ export async function onRequest(ctx) {
     const time     = sanitize(fields.time);
 
     const copy = COPY[lang] ?? COPY.de;
+    const requestUrl = new URL(request.url);
 
     /* ── Validate required fields ──────────────────────────────── */
     if (!name || !email) {
@@ -142,6 +235,21 @@ export async function onRequest(ctx) {
         (formType === 'booking'
             ? `Booking request: ${service} on ${date} at ${time}`
             : '');
+
+    const slackLeadPayload = buildSlackPayload({
+        level: 'info',
+        formType,
+        lang,
+        name,
+        email,
+        phone,
+        service,
+        date,
+        time,
+        message: resolvedMessage,
+        origin,
+        pagePath: requestUrl.pathname,
+    });
 
     if (resolvedMessage.length > 2000) {
         return jsonResponse({ success: false, message: copy.error }, 400, origin);
@@ -196,15 +304,44 @@ export async function onRequest(ctx) {
         });
     } catch (err) {
         console.error('[sendmail] Network error:', err);
+        await sendSlackNotification(env, buildSlackPayload({
+            level: 'error',
+            formType,
+            lang,
+            name,
+            email,
+            phone,
+            service,
+            date,
+            time,
+            message: `Network error while sending via Resend: ${err?.message || 'unknown error'}`,
+            origin,
+            pagePath: requestUrl.pathname,
+        }));
         return jsonResponse({ success: false, message: copy.error }, 502, origin);
     }
 
     if (resendRes.ok) {
+        await sendSlackNotification(env, slackLeadPayload);
         return jsonResponse({ success: true, message: copy.success }, 200, origin);
     }
 
     const errBody = await resendRes.text().catch(() => '');
     console.error('[sendmail] Resend error', resendRes.status, errBody);
+    await sendSlackNotification(env, buildSlackPayload({
+        level: 'error',
+        formType,
+        lang,
+        name,
+        email,
+        phone,
+        service,
+        date,
+        time,
+        message: `Resend error ${resendRes.status}: ${errBody.slice(0, 600) || 'no details'}`,
+        origin,
+        pagePath: requestUrl.pathname,
+    }));
     return jsonResponse({ success: false, message: copy.error }, 502, origin);
 }
 

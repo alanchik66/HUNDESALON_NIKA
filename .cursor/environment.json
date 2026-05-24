@@ -1,7 +1,7 @@
 {
   "name": "hundesalon-nika",
   "install": "npm install",
-  "start": "echo 'HUNDESALON NIKA: npm run dev (5502) | npm run dev:cf (8788)'",
+  "start": "echo 'Read docs/agents-playbook.md. Dev: npm run dev (5502). Validate: npm run validate. SEO: npm run seo:indexnow'",
   "ports": [
     {
       "name": "static-preview",

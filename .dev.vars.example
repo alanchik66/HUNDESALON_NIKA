@@ -9,7 +9,11 @@ OPENROUTER_API_KEY=
 BING_WEBMASTER_API_KEY=
 RESEND_API_KEY=
 # Zone API token with Cache Purge (create via npm run cf:open-purge-token)
+# Full zone token (purge + rules): npm run cf:ensure-api-token
 CLOUDFLARE_API_TOKEN=
 # Or Global API Key (My Profile → API Keys) to auto-create purge token:
+# Optional — auto-create Zone Rules token (npm run cf:ensure-zone-rules-token):
+# Prefer gitignored .cloudflare-global.json (see .cloudflare-global.json.example)
+# Or:
 # CLOUDFLARE_API_EMAIL=
 # CLOUDFLARE_API_KEY=

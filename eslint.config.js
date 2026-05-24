@@ -27,6 +27,10 @@ export default [
         ResizeObserver: 'readonly',
         WheelEvent: 'readonly',
         Node: 'readonly',
+        NodeFilter: 'readonly',
+        Text: 'readonly',
+        ShadowRoot: 'readonly',
+        DocumentFragment: 'readonly',
         Element: 'readonly',
         HTMLElement: 'readonly',
         Event: 'readonly',
@@ -47,6 +51,13 @@ export default [
       'no-redeclare': 'error',
       'no-unreachable': 'error',
       'no-undef': 'error',
+    },
+  },
+  {
+    files: ['assets/js/header-weather-sun-scene.js'],
+    languageOptions: {
+      ecmaVersion: 2021,
+      sourceType: 'module',
     },
   },
 ];
