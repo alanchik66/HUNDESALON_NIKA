@@ -3333,7 +3333,7 @@
 }
 `;
 
-  const WEATHER_WIDGET_ASSET_VERSION = '20260522-moon-visibility-v3';
+  const WEATHER_WIDGET_ASSET_VERSION = '20260525-moon-fallback-v4';
   /** Full mission_2160p30.mp4 timeline (7:38) mapped to each local night window. */
   const HEADER_WEATHER_MOON_VIDEO_DURATION_SEC = 458.233333;
   const HEADER_WEATHER_MOON_DAY_MIN_OPACITY = 0.22;
@@ -3342,7 +3342,11 @@
   const HEADER_WEATHER_SUN_VIDEO_FILES = Object.freeze(['sun_alpha.webm']);
   /** Civil-style handoff moon ↔ sun (ms). */
   const HEADER_WEATHER_ORB_CROSSFADE_MS = 42 * 60 * 1000;
-  const HEADER_WEATHER_MOON_VIDEO_FILES = Object.freeze(['mission_2160p30_alpha.webm']);
+  const HEADER_WEATHER_MOON_VIDEO_FILES = Object.freeze([
+    'mission_2160p30_alpha.webm',
+    'mission_2160p30_fallback.mp4',
+    'mission_2160p30.mp4',
+  ]);
 
   const LOCALIZED_ROUTES = new Set([
     '',
