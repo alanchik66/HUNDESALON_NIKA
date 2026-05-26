@@ -207,17 +207,34 @@ try {
   else report.warn.push('Malformed Slack — npm run cursor:delete-bad-slack');
 
   await page.goto(DASHBOARD, { waitUntil: 'domcontentloaded', timeout: 90000 });
+  let onboardingDone = false;
   for (let i = 0; i < 3; i += 1) {
     await page.waitForTimeout(3000);
     await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
     await page.waitForTimeout(2000);
-    if (!/set up your cloud environment/i.test(await body(page))) {
+    const dashText = await body(page);
+    const looksLikeDashboard = /overview|get\s*started|cloud\s*agents/i.test(dashText);
+    if (!looksLikeDashboard || dashText.trim().length < 120) {
+      continue;
+    }
+    const hasCloudStep = /set up your cloud environment/i.test(dashText);
+    const hasThreeOfFour = /3\/4|3 of 4/i.test(dashText);
+    if (!hasCloudStep && !hasThreeOfFour) {
+      onboardingDone = true;
       report.ok.push('Onboarding 4/4');
       break;
     }
   }
-  if (!report.ok.some(x => x.includes('Onboarding'))) {
+  if (!onboardingDone) {
     report.warn.push('Onboarding — npm run cursor:edge-dashboard then Ctrl+F5 in IDE');
+  }
+
+  await page.goto(AGENTS, { waitUntil: 'domcontentloaded', timeout: 90000 });
+  await page.waitForTimeout(3000);
+  await clickFirst(page, [page.getByText(REPO, { exact: false }), page.getByText(REPO_FULL, { exact: false })]);
+  await page.waitForTimeout(2500);
+  if (await page.getByRole('button', { name: /Start Setup Agent/i }).first().isVisible().catch(() => false)) {
+    report.warn.push('Cloud setup run not finalized (Start Setup Agent still visible)');
   }
 
   await snap(page, 'dashboard');
