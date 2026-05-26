@@ -106,7 +106,7 @@ Resend vs Routing: **Resend** sends mail from the site (`noreply@hundesalon-nika
 
 | Where | Variables |
 |-------|-----------|
-| `.dev.vars` (local, gitignored) | `OPENROUTER_API_KEY`, optional `CLOUDFLARE_API_TOKEN` |
+| `.dev.vars` (local, gitignored) | `OPENROUTER_API_KEY`, optional `CLOUDFLARE_API_TOKEN`, optional `LG_TASK_WEBHOOK_SECRET` |
 | Cloudflare Pages | `OPENROUTER_API_KEY`, `RESEND_API_KEY` |
 | Cursor Cloud Agents | `OPENROUTER_API_KEY`, `CLOUDFLARE_API_TOKEN` (purge) |
 
@@ -114,7 +114,7 @@ Resend vs Routing: **Resend** sends mail from the site (`noreply@hundesalon-nika
 
 - Shared helpers: `functions/_lib/http-security.js` (Origin check, Cache API rate limits, response headers).
 - POST endpoints require a valid `Origin` (localhost allowed for `npm run dev:cf`).
-- Edge rate limits (per IP, 60s window): `/sendmail` 12, `/openrouter` 30, `/seo-generate` 8.
+- Edge rate limits (per IP, 60s window): `/sendmail` 12, `/openrouter` 30, `/seo-generate` 8, `/lg-task` 20.
 - WAF (zone edge): `npm run cf:configure-waf-rate-limits` (needs token with Zone WAF Write) or Dashboard via `npm run cf:open-waf-rate-limits`.
 
 ## Docs

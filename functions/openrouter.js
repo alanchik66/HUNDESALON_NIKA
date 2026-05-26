@@ -11,7 +11,8 @@ import {
 } from './_lib/http-security.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = 'openai/gpt-5.2';
+const DEFAULT_MODEL = 'openai/gpt-5.5';
+const DEFAULT_FALLBACK_MODEL = 'openai/gpt-5.2';
 const DEFAULT_SITE_NAME = 'HUNDESALON NIKA';
 const MAX_MESSAGES = 24;
 const MAX_MESSAGE_CONTENT_LENGTH = 8000;
@@ -288,7 +289,9 @@ export async function onRequest(context) {
   const resolvedModel = String(
     payload.model || getEnvVarFromContext(context, 'OPENROUTER_DEFAULT_MODEL') || DEFAULT_MODEL
   ).trim();
-  const fallbackModel = String(getEnvVarFromContext(context, 'OPENROUTER_FALLBACK_MODEL') || '').trim();
+  const fallbackModel = String(
+    getEnvVarFromContext(context, 'OPENROUTER_FALLBACK_MODEL') || DEFAULT_FALLBACK_MODEL
+  ).trim();
   const provider = resolveProviderDefaults(context, payload.provider);
 
   const requestPayload = {

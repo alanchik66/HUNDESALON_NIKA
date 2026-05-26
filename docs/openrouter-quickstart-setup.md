@@ -20,9 +20,15 @@ Required (Cloudflare Pages, Cursor Cloud Agents, or `.dev.vars`):
 Optional — only if you need to override code defaults in `functions/openrouter.js` / `functions/seo-generate.js`:
 
 - `OPENROUTER_SITE_URL`, `OPENROUTER_SITE_NAME` (attribution headers; defaults: request origin + `HUNDESALON NIKA`)
-- `OPENROUTER_DEFAULT_MODEL` (default: `openai/gpt-5.2`)
-- `OPENROUTER_FALLBACK_MODEL` (no default; set only if you want automatic model fallback)
+- `OPENROUTER_DEFAULT_MODEL` (default: `openai/gpt-5.5`)
+- `OPENROUTER_FALLBACK_MODEL` (default: `openai/gpt-5.2`)
 - `OPENROUTER_PROVIDER_ORDER`, `OPENROUTER_PROVIDER_SORT`, `OPENROUTER_ALLOW_FALLBACKS`, `OPENROUTER_ENABLE_RESPONSE_CACHE`, `OPENROUTER_CACHE_TTL_SECONDS`
+
+Recommended model presets (optional):
+
+- Fast draft: `deepseek/deepseek-chat-v4:free` (or your paid DeepSeek V4 Flash route)
+- Higher-quality draft: `deepseek/deepseek-chat-v4`
+- Low-latency multilingual: `google/gemini-2.5-flash`
 
 Do not duplicate these in Cursor secrets unless you intentionally override defaults. See [cursor-cloud-secrets.md](./cursor-cloud-secrets.md) for what to keep in Cloud Agents.
 
@@ -36,7 +42,7 @@ Body (JSON):
 
 ```json
 {
-  "model": "openai/gpt-5.2",
+  "model": "openai/gpt-5.5",
   "messages": [{ "role": "user", "content": "Сделай краткое описание услуги тримминга на немецком" }]
 }
 ```
@@ -45,7 +51,7 @@ Streaming is supported by passing:
 
 ```json
 {
-  "model": "openai/gpt-5.2",
+  "model": "openai/gpt-5.5",
   "messages": [{ "role": "user", "content": "..." }],
   "stream": true
 }
@@ -65,7 +71,7 @@ Then call:
 curl -X POST http://localhost:5502/openrouter \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "openai/gpt-5.2",
+    "model": "openai/gpt-5.5",
     "messages": [{"role":"user","content":"Напиши 3 варианта короткого CTA для записи на груминг"}]
   }'
 ```
@@ -87,7 +93,7 @@ Example body:
 
 ```json
 {
-  "model": "openai/gpt-5.2",
+  "model": "openai/gpt-5.5",
   "provider": {
     "sort": "price",
     "allow_fallbacks": true
@@ -107,11 +113,42 @@ Example cache-enabled body:
 
 ```json
 {
-  "model": "openai/gpt-5.2",
+  "model": "openai/gpt-5.5",
   "cache": true,
   "cache_ttl_seconds": 180,
   "messages": [{ "role": "user", "content": "Напиши 3 коротких CTA" }]
 }
+```
+
+## LG Task Webhook (new)
+
+For dashboard-driven flows you can call:
+
+- `POST /lg-task`
+
+Optional auth secret (recommended for external webhooks):
+
+- `LG_TASK_WEBHOOK_SECRET` (send as `Authorization: Bearer <secret>`)
+
+Supported tasks:
+
+- `ping`
+- `openrouter.chat` (forwards payload to `/openrouter`)
+- `seo.generate` (forwards payload to `/seo-generate`)
+
+Example:
+
+```bash
+curl -X POST http://localhost:5502/lg-task \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_SECRET" \
+  -d '{
+    "task": "openrouter.chat",
+    "payload": {
+      "model": "openai/gpt-5.5",
+      "messages": [{"role":"user","content":"Сделай 2 варианта краткого CTA"}]
+    }
+  }'
 ```
 
 ## Included UX Feature

@@ -21,7 +21,8 @@ import {
 } from './_lib/http-security.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = 'openai/gpt-5.2';
+const DEFAULT_MODEL = 'openai/gpt-5.5';
+const DEFAULT_FALLBACK_MODEL = 'openai/gpt-5.2';
 const LOCALES = ['de', 'en', 'ru', 'uk'];
 
 function getEnvVar(env, key) {
@@ -232,7 +233,9 @@ export async function onRequest(context) {
   const referer = sanitizeOrigin(getEnvVarFromContext(context, 'OPENROUTER_SITE_URL')) || sanitizeOrigin(origin);
   const title = String(getEnvVarFromContext(context, 'OPENROUTER_SITE_NAME') || 'HUNDESALON NIKA').trim();
   const model = String(getEnvVarFromContext(context, 'OPENROUTER_DEFAULT_MODEL') || DEFAULT_MODEL).trim();
-  const fallbackModel = String(getEnvVarFromContext(context, 'OPENROUTER_FALLBACK_MODEL') || '').trim();
+  const fallbackModel = String(
+    getEnvVarFromContext(context, 'OPENROUTER_FALLBACK_MODEL') || DEFAULT_FALLBACK_MODEL
+  ).trim();
 
   const upstreamHeaders = {
     Authorization: `Bearer ${apiKey}`,

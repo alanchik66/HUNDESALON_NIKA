@@ -3,8 +3,13 @@
 
 # Inference key only (chat). Do NOT use a management/provisioning key here.
 OPENROUTER_API_KEY=
+# Optional OpenRouter model overrides (code defaults are already safe)
+# OPENROUTER_DEFAULT_MODEL=openai/gpt-5.5
+# OPENROUTER_FALLBACK_MODEL=openai/gpt-5.2
 # Optional: create inference keys via API (keep out of OPENROUTER_API_KEY)
 # OPENROUTER_MANAGEMENT_API_KEY=
+# Optional webhook auth for POST /lg-task (Authorization: Bearer <secret>)
+# LG_TASK_WEBHOOK_SECRET=
 # Bing Webmaster → Settings → API Access (optional; IndexNow works without it)
 BING_WEBMASTER_API_KEY=
 RESEND_API_KEY=

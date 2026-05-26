@@ -40,7 +40,8 @@
 All required environment variables are set in Cloudflare Pages (project: hundesalon-nika):
 
 - ✅ `OPENROUTER_API_KEY` – API authentication (required)
-- Optional overrides (code defaults cover site name, model `openai/gpt-5.2`, referer from request): `OPENROUTER_SITE_*`, `OPENROUTER_*_MODEL`
+- Optional overrides (code defaults cover site name, model `openai/gpt-5.5`, fallback `openai/gpt-5.2`, referer from request): `OPENROUTER_SITE_*`, `OPENROUTER_*_MODEL`
+- Optional webhook auth for dashboard flows: `LG_TASK_WEBHOOK_SECRET` (for `POST /lg-task`)
 
 ### 5. Documentation
 
@@ -115,10 +116,14 @@ Expected response includes `locales` and `snippets` keys with de/en/ru/uk conten
 │     └─ "Сгенерировать черновик" button   │
 │                                           │
 │  ↓ POST /openrouter                       │
+│  ↓ POST /lg-task (optional webhook)       │
 │                                           │
 │  Cloudflare Pages Function                │
 │  ├─ functions/openrouter.js              │
 │  │  └─ OPENROUTER_API_KEY (secure)       │
+│  │                                       │
+│  ├─ functions/lg-task.js                 │
+│  │  └─ task bridge: ping/chat/seo        │
 │  │                                       │
 │  ├─ functions/seo-generate.js            │
 │  │  └─ Multilingual SEO generation       │
