@@ -5386,26 +5386,43 @@
     compactAnchorOffsetPx: 3,
     desktopAnchorOffsetPx: 1,
     rowGapPx: 2,
-    // Optical compensation by locale so temperature end visually lands at label end.
-    localeWidthNudgePx: Object.freeze({
-      ru: 0.8,
-      uk: 0.9,
-      de: 0.6,
-      en: 0.5,
-    }),
+    // RU baseline width for identical alignment across locales.
+    compactBlockWidthPx: 62.6,
+    desktopBlockWidthPx: 62.6,
   });
 
-  function applyHeaderWeatherFeelsReferencePresetLayout({ feelsLikeChip, valueEl, labelBox, lang }) {
-    if (!(feelsLikeChip instanceof HTMLElement) || !(valueEl instanceof HTMLElement) || !labelBox?.width) {
+  function fitHeaderWeatherInlineTextWidth(node, maxWidthPx, minFontSizePx = 3.8) {
+    if (!(node instanceof HTMLElement) || !Number.isFinite(maxWidthPx) || maxWidthPx <= 0) {
+      return;
+    }
+
+    const computed = window.getComputedStyle(node);
+    let fontSize = Number.parseFloat(computed.fontSize) || 0;
+    let lineHeight = Number.parseFloat(computed.lineHeight) || 0;
+    let letterSpacing = Number.parseFloat(computed.letterSpacing) || 0;
+    let guard = 0;
+
+    while (guard < 20 && node.getBoundingClientRect().width > maxWidthPx + 0.5 && fontSize > minFontSizePx) {
+      fontSize = Number(Math.max(minFontSizePx, fontSize - 0.2).toFixed(2));
+      lineHeight = Number(Math.max(minFontSizePx + 0.2, lineHeight - 0.2).toFixed(2));
+      letterSpacing = Number(Math.max(0, letterSpacing - 0.02).toFixed(3));
+      node.style.setProperty('font-size', `${fontSize}px`, 'important');
+      node.style.setProperty('line-height', `${lineHeight}px`, 'important');
+      node.style.setProperty('letter-spacing', `${letterSpacing}px`, 'important');
+      guard += 1;
+    }
+  }
+
+  function applyHeaderWeatherFeelsReferencePresetLayout({ feelsLikeChip, valueEl, lang, compactPreview }) {
+    if (!(feelsLikeChip instanceof HTMLElement) || !(valueEl instanceof HTMLElement)) {
       return;
     }
 
     const langCode = normalizeLangCode(lang || document.documentElement.lang || 'ru');
-    const widthNudgePx =
-      Number(HEADER_WEATHER_FEELS_REFERENCE_PRESET.localeWidthNudgePx?.[langCode]) ||
-      Number(HEADER_WEATHER_FEELS_REFERENCE_PRESET.localeWidthNudgePx?.en) ||
-      0;
-    const blockWidthPx = Math.max(1, Math.round((labelBox.width + widthNudgePx) * 10) / 10);
+    const baselineWidthPx = compactPreview
+      ? HEADER_WEATHER_FEELS_REFERENCE_PRESET.compactBlockWidthPx
+      : HEADER_WEATHER_FEELS_REFERENCE_PRESET.desktopBlockWidthPx;
+    const blockWidthPx = Math.max(1, Math.round(Number(baselineWidthPx) * 10) / 10);
     feelsLikeChip.dataset.weatherFeelsPreset = HEADER_WEATHER_FEELS_REFERENCE_PRESET.id;
     feelsLikeChip.dataset.weatherFeelsRowLayout = HEADER_WEATHER_FEELS_REFERENCE_PRESET.rowLayout;
     feelsLikeChip.dataset.weatherFeelsLang = langCode;
@@ -6992,6 +7009,10 @@
       return;
     }
 
+    const cardVerticalInsetPx = Number.isFinite(Number(host?.__weatherCardVerticalInsetPx))
+      ? Math.max(0, Number(host.__weatherCardVerticalInsetPx))
+      : 0;
+
     const legacyMetricsBlock = rightColumn.querySelector('.weather-header-card__metrics-block');
     if (legacyMetricsBlock instanceof HTMLElement) {
       Array.from(legacyMetricsBlock.children).forEach(child => {
@@ -7072,13 +7093,13 @@
     rightColumn.style.setProperty('display', 'flex', 'important');
     rightColumn.style.setProperty('flex-direction', 'column', 'important');
     rightColumn.style.setProperty('position', 'absolute', 'important');
-    rightColumn.style.setProperty('top', '0', 'important');
+    rightColumn.style.setProperty('top', `${cardVerticalInsetPx}px`, 'important');
     rightColumn.style.setProperty('right', '8px', 'important');
-    rightColumn.style.setProperty('bottom', '0', 'important');
+    rightColumn.style.setProperty('bottom', `${cardVerticalInsetPx}px`, 'important');
     rightColumn.style.setProperty('left', 'auto', 'important');
     rightColumn.style.setProperty('height', 'auto', 'important');
-    rightColumn.style.setProperty('min-height', '100%', 'important');
-    rightColumn.style.setProperty('max-height', '100%', 'important');
+    rightColumn.style.setProperty('min-height', `calc(100% - ${cardVerticalInsetPx * 2}px)`, 'important');
+    rightColumn.style.setProperty('max-height', `calc(100% - ${cardVerticalInsetPx * 2}px)`, 'important');
     rightColumn.style.setProperty('justify-content', 'flex-start', 'important');
     rightColumn.style.setProperty('row-gap', '0', 'important');
     rightColumn.style.setProperty('align-items', 'flex-end', 'important');
@@ -7629,10 +7650,7 @@
       const titleBlockNode = feelsLikeChip
         .closest('.weather-header-card')
         ?.querySelector('.weather-header-card__title-block');
-      const geoLabelNode = Array.from(root?.querySelectorAll('.weather-header-card *') || []).find(
-        node => node instanceof HTMLElement && (node.textContent || '').trim() === 'Ваша геопозиция'
-      );
-      if (!(titleBlockNode instanceof HTMLElement) || !(geoLabelNode instanceof HTMLElement)) {
+      if (!(titleBlockNode instanceof HTMLElement)) {
         feelsLikeChip.style.setProperty('margin-left', '0', 'important');
         labelEl.style.setProperty('transform', 'none', 'important');
         return;
@@ -7643,25 +7661,21 @@
         triggerNode instanceof HTMLElement ? Math.round(triggerNode.getBoundingClientRect().height || 0) : 0;
       const compactPreview = triggerHeight > 0 && triggerHeight <= 92;
       const activeLang = normalizeLangCode(document.documentElement.lang || 'ru');
-      const geoBox = geoLabelNode.getBoundingClientRect();
-      const labelBox = labelEl.getBoundingClientRect();
-      if (!geoBox.width || !labelBox.width) {
-        return;
-      }
 
       applyHeaderWeatherFeelsReferencePresetLayout({
         feelsLikeChip,
         valueEl,
-        labelBox,
         lang: activeLang,
+        compactPreview,
       });
 
-      const opticalOffsetPx = compactPreview
-        ? HEADER_WEATHER_FEELS_REFERENCE_PRESET.compactAnchorOffsetPx
-        : HEADER_WEATHER_FEELS_REFERENCE_PRESET.desktopAnchorOffsetPx;
-      const targetRight = geoBox.right + opticalOffsetPx;
-      const shift = Math.round((targetRight - labelBox.right) * 10) / 10;
-      feelsLikeChip.style.setProperty('margin-left', `${shift}px`, 'important');
+      const tempWidth = tempEl.getBoundingClientRect().width || 0;
+      const blockWidth = valueEl.getBoundingClientRect().width || 0;
+      const prefixMaxWidth = Math.max(10, blockWidth - tempWidth - 2);
+      fitHeaderWeatherInlineTextWidth(labelEl, blockWidth, 3.8);
+      fitHeaderWeatherInlineTextWidth(prefixEl, prefixMaxWidth, 3.6);
+
+      feelsLikeChip.style.setProperty('margin-left', '0', 'important');
       labelEl.style.setProperty('transform', 'none', 'important');
     };
 
@@ -8084,7 +8098,8 @@
       const verticalRhythmGapPx = compactPreview ? 6 : 7;
       const tempRowTopGapPx = compactPreview ? Math.max(0, verticalRhythmGapPx - 2) : 32;
       const rowGapPx = compactPreview ? 12 : 10;
-      const baseContentPadY = compactPreview ? 1 : 5;
+      const cardVerticalInsetPx = 6;
+      const baseContentPadY = cardVerticalInsetPx;
       let rightColumn = null;
       const rightColumnHost = card || content;
 
@@ -8109,21 +8124,22 @@
       const infoPanel = ensureHeaderWeatherInfoPanel(root, topRow, titleBlock, bottom);
       if (infoPanel instanceof HTMLElement) {
         infoPanel.style.setProperty('position', 'absolute', 'important');
-        infoPanel.style.setProperty('top', '0', 'important');
+        infoPanel.style.setProperty('top', `${cardVerticalInsetPx}px`, 'important');
         infoPanel.style.setProperty('left', '0', 'important');
         infoPanel.style.setProperty('right', 'auto', 'important');
-        infoPanel.style.setProperty('bottom', '0', 'important');
+        infoPanel.style.setProperty('bottom', `${cardVerticalInsetPx}px`, 'important');
         infoPanel.style.setProperty('display', 'flex', 'important');
         infoPanel.style.setProperty('flex-direction', 'column', 'important');
         infoPanel.style.setProperty('justify-content', 'space-between', 'important');
         infoPanel.style.setProperty('align-items', 'flex-start', 'important');
         infoPanel.style.setProperty('height', 'auto', 'important');
-        infoPanel.style.setProperty('min-height', '100%', 'important');
-        infoPanel.style.setProperty('max-height', '100%', 'important');
+        infoPanel.style.setProperty('min-height', `calc(100% - ${cardVerticalInsetPx * 2}px)`, 'important');
+        infoPanel.style.setProperty('max-height', `calc(100% - ${cardVerticalInsetPx * 2}px)`, 'important');
         infoPanel.style.setProperty('padding', '0', 'important');
         infoPanel.style.setProperty('margin', '0', 'important');
         infoPanel.style.setProperty('row-gap', '0', 'important');
       }
+      host.__weatherCardVerticalInsetPx = cardVerticalInsetPx;
       const tempRow = infoPanel?.querySelector('.weather-header-card__temp-row') || null;
       const tempRowChips =
         tempRow?.querySelector('.weather-header-card__chips') || root.querySelector('.weather-header-card__chips');

@@ -143,3 +143,9 @@ tools/_create-*.mjs
 .cloudflare-purge.token
 .cloudflare-rules.token
 .cloudflare-global.json
+
+# Cloudflare debug/temp artifacts
+.wrangler-no-token.env
+tmp-pages-smoke/
+tools/tmp-cf-*.mjs
+tools/cf-chrome-token-reset.mjs
