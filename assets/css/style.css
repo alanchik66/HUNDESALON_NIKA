@@ -11108,7 +11108,7 @@ body.light .social-icons-toggle.is-open {
 
 @media (width >= 1281px) {
   .header {
-    --header-menu-weather-h: 98px;
+    --header-menu-weather-h: 96px;
     --header-menu-col-gap: 18px;
   }
 
@@ -11156,7 +11156,7 @@ body.light .social-icons-toggle.is-open {
 
 @media (width >= 900px) {
   :root {
-    --header-weather-panel-h: 98px;
+    --header-weather-panel-h: 96px;
     --header-menu-weather-h: var(--header-weather-panel-h);
   }
 
