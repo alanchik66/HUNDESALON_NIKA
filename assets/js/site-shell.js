@@ -5547,6 +5547,119 @@
     requestAnimationFrame(tick);
   }
 
+  function setupHeaderWeatherFeelsLayoutAutoSync({ feelsLikeChip, syncLayout, observeNodes = [], observeRoot = null }) {
+    if (!(feelsLikeChip instanceof HTMLElement) || typeof syncLayout !== 'function') {
+      return () => {};
+    }
+
+    if (typeof feelsLikeChip.__weatherFeelsAutoSyncCleanup === 'function') {
+      feelsLikeChip.__weatherFeelsAutoSyncCleanup();
+    }
+
+    let disposed = false;
+    let rafId = 0;
+    const timeoutIds = [];
+    const listeners = [];
+
+    const scheduleSync = () => {
+      if (disposed || !feelsLikeChip.isConnected) {
+        return;
+      }
+
+      if (typeof requestAnimationFrame !== 'function') {
+        syncLayout();
+        return;
+      }
+
+      if (rafId) {
+        return;
+      }
+
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
+        if (!disposed && feelsLikeChip.isConnected) {
+          syncLayout();
+        }
+      });
+    };
+
+    const bootstrapSyncDelays = [40, 120, 260];
+    bootstrapSyncDelays.forEach(delayMs => {
+      const timerId = setTimeout(scheduleSync, delayMs);
+      timeoutIds.push(timerId);
+    });
+
+    const handleWindowResize = () => {
+      scheduleSync();
+    };
+    window.addEventListener('resize', handleWindowResize, { passive: true });
+    window.addEventListener('orientationchange', handleWindowResize, { passive: true });
+    listeners.push(['resize', handleWindowResize]);
+    listeners.push(['orientationchange', handleWindowResize]);
+
+    const uniqueObservedNodes = Array.from(new Set(observeNodes.filter(node => node instanceof Element)));
+    const resizeObserver =
+      typeof ResizeObserver === 'function'
+        ? new ResizeObserver(() => {
+            scheduleSync();
+          })
+        : null;
+    if (resizeObserver) {
+      uniqueObservedNodes.forEach(node => resizeObserver.observe(node));
+    }
+
+    const mutationTarget =
+      observeRoot instanceof ShadowRoot || observeRoot instanceof HTMLElement || observeRoot instanceof DocumentFragment
+        ? observeRoot
+        : feelsLikeChip.closest('.weather-header-card') || feelsLikeChip.parentElement;
+    const mutationObserver =
+      mutationTarget instanceof Node
+        ? new MutationObserver(() => {
+            scheduleSync();
+          })
+        : null;
+    if (mutationObserver && mutationTarget) {
+      mutationObserver.observe(mutationTarget, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-weather-expanded'],
+      });
+    }
+
+    const cleanup = () => {
+      if (disposed) {
+        return;
+      }
+
+      disposed = true;
+
+      if (rafId && typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
+
+      timeoutIds.forEach(timerId => clearTimeout(timerId));
+      timeoutIds.length = 0;
+
+      listeners.forEach(([eventName, handler]) => {
+        window.removeEventListener(eventName, handler);
+      });
+
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+
+      if (mutationObserver) {
+        mutationObserver.disconnect();
+      }
+    };
+
+    feelsLikeChip.__weatherFeelsAutoSyncCleanup = cleanup;
+    return cleanup;
+  }
+
   function syncHeaderWeatherFeelsBaseline(feelsLikeChip, mainTempNode, valueNode) {
     if (!(feelsLikeChip instanceof HTMLElement)) {
       return;
@@ -7732,10 +7845,11 @@
       }
     };
 
+    const findTitleBlockNode = () =>
+      feelsLikeChip.closest('.weather-header-card')?.querySelector('.weather-header-card__title-block') || null;
+
     const syncFeelsHorizontalAnchor = () => {
-      const titleBlockNode = feelsLikeChip
-        .closest('.weather-header-card')
-        ?.querySelector('.weather-header-card__title-block');
+      const titleBlockNode = findTitleBlockNode();
       if (!(titleBlockNode instanceof HTMLElement)) {
         feelsLikeChip.style.setProperty('margin-left', '0', 'important');
         labelEl.style.setProperty('transform', 'none', 'important');
@@ -7758,7 +7872,6 @@
       fitHeaderWeatherInlineTextWidth(labelEl, blockWidth, 3.8);
       fitHeaderWeatherInlineTextWidth(prefixEl, prefixMaxWidth, 3.6);
 
-      feelsLikeChip.style.setProperty('margin-left', '0', 'important');
       labelEl.style.setProperty('transform', 'none', 'important');
     };
 
@@ -7781,6 +7894,24 @@
     };
 
     runHeaderWeatherPostLayoutPass(syncFeelsLayoutMetrics, 2);
+
+    const titleBlockNodeForObserver = findTitleBlockNode();
+    setupHeaderWeatherFeelsLayoutAutoSync({
+      feelsLikeChip,
+      syncLayout: syncFeelsLayoutMetrics,
+      observeRoot: root,
+      observeNodes: [
+        feelsLikeChip,
+        labelEl,
+        valueEl,
+        prefixEl,
+        tempEl,
+        tempRow,
+        chipsNode,
+        tempValueAnchor,
+        titleBlockNodeForObserver,
+      ],
+    });
   }
 
   function applyHeaderWeatherFeelsLikePreview(host, layoutRefs) {
