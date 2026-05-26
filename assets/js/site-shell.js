@@ -10477,7 +10477,12 @@
 
     const headerTop = pageHeader.getBoundingClientRect().top;
     const shellTop = weatherShell.getBoundingClientRect().top;
-    const risePx = Math.max(0, Math.ceil(shellTop - headerTop + 2));
+    const rawRisePx = Math.max(0, Math.ceil(shellTop - headerTop + 2));
+    // Desktop: keep stars/cloud scene stable and avoid over-stretch when layout shifts.
+    const risePx =
+      window.innerWidth >= 900
+        ? Math.max(0, Math.min(18, rawRisePx))
+        : Math.max(0, Math.min(96, rawRisePx));
     host.style.setProperty('--header-weather-cloud-rise', `${risePx}px`);
   }
 
@@ -11534,6 +11539,25 @@
         homeAnchor instanceof HTMLElement &&
         trigger instanceof HTMLElement
       ) {
+        // Desktop: weather panel must stay centered inside top row without extra JS shifts.
+        if (window.innerWidth >= 900) {
+          weatherShell.__weatherVerticalShiftY = 0;
+          topRow.__weatherExtraPaddingBottom = 0;
+
+          weatherShell.style.removeProperty('transform');
+          weatherShell.style.removeProperty('transform-origin');
+          weatherShell.style.removeProperty('align-self');
+          weatherShell.style.removeProperty('overflow');
+
+          if (Number.isFinite(topRow.__weatherBasePaddingBottom)) {
+            topRow.style.setProperty('padding-bottom', `${topRow.__weatherBasePaddingBottom}px`, 'important');
+          } else {
+            topRow.style.removeProperty('padding-bottom');
+          }
+
+          return;
+        }
+
         const targetGapPx = 5;
         const currentShellShiftY = Number.isFinite(weatherShell.__weatherVerticalShiftY)
           ? weatherShell.__weatherVerticalShiftY
