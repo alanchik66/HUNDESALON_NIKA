@@ -1,11 +1,11 @@
 {
   "name": "hundesalon-nika",
   "install": "npm install",
-  "start": "echo 'Read docs/agents-playbook.md. Dev: npm run dev (5502). Validate: npm run validate. SEO: npm run seo:indexnow'",
+  "start": "echo 'Read docs/agents-playbook.md. Dev: npm run dev (5500). Laragon: http://127.0.0.1:5500/. Validate: npm run validate. SEO: npm run seo:indexnow'",
   "ports": [
     {
       "name": "static-preview",
-      "port": 5502
+      "port": 5500
     },
     {
       "name": "cloudflare-pages-dev",
@@ -16,7 +16,7 @@
     {
       "name": "dev",
       "command": "npm run dev",
-      "description": "Static site preview server on port 5502."
+      "description": "Static site preview server on port 5500."
     }
   ]
 }

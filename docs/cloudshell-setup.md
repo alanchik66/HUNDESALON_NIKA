@@ -283,7 +283,7 @@ echo "✅ Deployment complete!"
 
 | Command                                                              | Purpose                        |
 | -------------------------------------------------------------------- | ------------------------------ |
-| `npm run dev`                                                        | Local preview (port 5502)      |
+| `npm run dev`                                                        | Local preview (port 5500)      |
 | `npm run lint`                                                       | Check HTML, CSS, JS for errors |
 | `npm run validate`                                                   | Full project validation        |
 | `npm run build`                                                      | Create production bundle       |

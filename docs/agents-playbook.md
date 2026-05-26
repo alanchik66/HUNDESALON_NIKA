@@ -6,16 +6,6 @@
 
 Статический многоязычный сайт салона в Лейпциге (`de` / `en` / `ru` / `uk`), хостинг **Cloudflare Pages**, shell в `site-shell.js`, продакшен: https://hundesalon-nika.com (`www` → 301 на apex).
 
-## VS Code 1.121 — профиль для проекта
-
-- Включены оптимизации терминальных инструментов чата (`chat.tools.compressOutput.enabled: true`) для более коротких и полезных ответов агентов.
-- Включены utility-модели по умолчанию (`chat.utilityModel`, `chat.utilitySmallModel` = `Default`) для генерации заголовков/summary/служебных задач без ручной настройки.
-- Включен показ режима Auto у Claude (`github.copilot.chat.claudeAgent.allowAutoPermissions: true`), но **не включен** bypass-permissions.
-- Для Markdown превью включен рендер YAML frontmatter как таблицы (`markdown.preview.frontMatter: table`).
-- Для HTML используй встроенный предпросмотр VS Code: правый клик по HTML → `Open in Integrated Browser`.
-- Для диаграмм используй fenced-блоки Mermaid в Markdown/ноутбуках — рендер теперь встроенный.
-- Локальный дев-адрес зафиксирован: `http://127.0.0.1:5502` (без автосмены порта).
-
 ## Аккаунты (не путать)
 
 | Сервис | Аккаунт |
@@ -24,6 +14,10 @@
 | Bing Webmaster Tools | `snaiper1984@mail.ru` (Edge CDP `npm run bing:edge`, порт 9224) |
 
 ## Маршрутизация задач → команды
+
+## Команда владельца `проф`
+
+Если владелец пишет `проф`, выполнять полный профессиональный цикл: аудит кода, ассетов, локалей, виджета погоды, мусорных файлов и дублей; исправление найденных ошибок без лишних вопросов; `npm run validate`; браузерный smoke desktop/mobile; `npm run build`; live-проверки; полный backup; commit; push в GitHub и GitLab; Cloudflare Pages deploy; cache purge и post-deploy проверки при наличии токенов. Если Cloudflare Dashboard, Resend или другой внешний кабинет требует интерактивной авторизации, зафиксировать это отдельно и продолжить всё, что доступно через локальные CLI/API.
 
 | Задача | Команда |
 |--------|---------|
@@ -77,7 +71,7 @@ npm run validate
 npm run check:live-crawl   # опционально, нужен сеть
 ```
 
-Секреты в [Cursor Dashboard → Cloud Agents → Secrets](https://cursor.com/dashboard/cloud-agents): `OPENROUTER_API_KEY`, опционально `CLOUDFLARE_API_TOKEN`. Локально: `.dev.vars` из `.dev.vars.example`. Итог настройки: `docs/cursor-cloud-setup-complete.md`, команда `npm run cursor:complete`.
+Секреты в [Cursor Dashboard → Cloud Agents → Secrets](https://cursor.com/dashboard/cloud-agents): `CLOUDFLARE_API_TOKEN`, `RESEND_API_KEY`, `OPENROUTER_API_KEY`. Локально: `.dev.vars` из `.dev.vars.example`.
 
 ## Перспектива (регулярно)
 

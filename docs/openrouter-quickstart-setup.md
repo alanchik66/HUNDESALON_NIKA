@@ -68,7 +68,7 @@ npm run dev
 Then call:
 
 ```bash
-curl -X POST http://localhost:5502/openrouter \
+curl -X POST http://localhost:8788/openrouter \
   -H "Content-Type: application/json" \
   -d '{
     "model": "openai/gpt-5.5",
@@ -139,7 +139,7 @@ Supported tasks:
 Example:
 
 ```bash
-curl -X POST http://localhost:5502/lg-task \
+curl -X POST http://localhost:8788/lg-task \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_SECRET" \
   -d '{
@@ -197,7 +197,7 @@ Response shape:
 Quick local test:
 
 ```bash
-curl -X POST http://localhost:5502/seo-generate \
+curl -X POST http://localhost:8788/seo-generate \
   -H "Content-Type: application/json" \
   -d '{
     "pageType":"service page",

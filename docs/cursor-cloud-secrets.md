@@ -2,7 +2,7 @@
 
 ## Завершить onboarding («Set up your cloud environment»)
 
-Репозиторий уже содержит [`.cursor/environment.json`](../.cursor/environment.json) (`npm install`, порты 5502/8788, терминал `npm run dev`). На GitHub это в `main`.
+Репозиторий уже содержит [`.cursor/environment.json`](../.cursor/environment.json) (`npm install`, порты 5500/8788, терминал `npm run dev`). На GitHub это в `main`.
 
 1. Запустите `npm run cursor:setup-cloud` (проверит `npm install`, подскажет секреты, откроет Dashboard) или [Environments](https://cursor.com/dashboard/cloud-agents#environments) (`npm run cursor:open-cloud-setup`).
 2. **Create environment** (или **Set up** в чеклисте) → выберите **GitHub** → репозиторий `alanchik66/HUNDESALON_NIKA`, ветка `main`.

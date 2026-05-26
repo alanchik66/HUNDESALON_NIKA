@@ -184,10 +184,10 @@
   };
 
   const WEATHER_WIDGET_COPY = {
-    ru: { ariaLabel: 'Виджет погоды салона' },
-    uk: { ariaLabel: 'Віджет погоди салону' },
-    de: { ariaLabel: 'Wetter-Widget des Salons' },
-    en: { ariaLabel: 'Salon weather widget' },
+    ru: { ariaLabel: 'Виджет погоды по точной геопозиции' },
+    uk: { ariaLabel: 'Віджет погоди за точною геолокацією' },
+    de: { ariaLabel: 'Wetter-Widget für exakten Standort' },
+    en: { ariaLabel: 'Exact location weather widget' },
   };
 
   /** Menu toggle aligned to the gold decorative strip between weather and social bar. */
@@ -3333,7 +3333,7 @@
 }
 `;
 
-  const WEATHER_WIDGET_ASSET_VERSION = '20260525-weather-fixes-v5';
+  const WEATHER_WIDGET_ASSET_VERSION = '20260526-exact-geo-v1';
   /** Full mission_2160p30.mp4 timeline (7:38) mapped to each local night window. */
   const HEADER_WEATHER_MOON_VIDEO_DURATION_SEC = 458.233333;
   const HEADER_WEATHER_MOON_DAY_MIN_OPACITY = 0.22;
@@ -3376,7 +3376,6 @@
   const HEADER_WEATHER_CURRENT_ENDPOINT = 'https://api.open-meteo.com/v1/forecast';
   const HEADER_WEATHER_ASTRO_ENDPOINT = 'https://api.sunrise-sunset.org/json';
   const HEADER_WEATHER_REVERSE_GEOCODE_ENDPOINT = 'https://nominatim.openstreetmap.org/reverse';
-  const HEADER_WEATHER_STATIC_FALLBACK_COORDS = Object.freeze({ latitude: 51.320486, longitude: 12.416501 });
   const HEADER_WEATHER_ASTRO_REFRESH_INTERVAL = 60000;
   const HEADER_WEATHER_WIDGET_REFRESH_INTERVAL = 60 * 1000;
   const HEADER_WEATHER_TIME_SYNC_INTERVAL = 30 * 60 * 1000;
@@ -3387,11 +3386,9 @@
   const HEADER_WEATHER_LOCATION_CACHE_TTL = 24 * 60 * 60 * 1000;
   const HEADER_WEATHER_CURRENT_CACHE_TTL = 45 * 1000;
   const HEADER_WEATHER_ASTRO_CACHE_TTL = 12 * 60 * 60 * 1000;
-  const HEADER_WEATHER_GEO_STORAGE_KEY = 'header_weather_geo_v1';
-  const HEADER_WEATHER_GEO_CACHE_TTL = 30 * 60 * 1000;
   const HEADER_WEATHER_READINGS_STORAGE_KEY = 'header_weather_readings_v1';
   const HEADER_WEATHER_READINGS_CACHE_TTL = 12 * 60 * 60 * 1000;
-  const HEADER_WEATHER_GEO_TIMEOUT = 10000;
+  const HEADER_WEATHER_GEO_TIMEOUT = 15000;
   const HEADER_WEATHER_STRICT_STYLE_LOCK = true;
   const HEADER_WEATHER_BERLIN_LABEL = 'Ber' + 'lin';
   const HEADER_WEATHER_BERLIN_ALIAS_KEY = ('ber' + 'lin').toLowerCase();
@@ -3650,7 +3647,6 @@
         class="header-weather-widget"
         data-weather-widget="true"
         data-widget-src="${weatherWidgetPrefix}/weather-widget.iife.js?v=${WEATHER_WIDGET_ASSET_VERSION}"
-        data-weather-location="Leipzig"
         data-weather-locale="${context.pageLang}"
         data-weather-min-height="100%"
         aria-label="${context.weatherWidgetCopy.ariaLabel}">
@@ -3898,104 +3894,74 @@
     return { latitude, longitude };
   }
 
-  function readHeaderWeatherStoredGeo() {
-    try {
-      const raw = localStorage.getItem(HEADER_WEATHER_GEO_STORAGE_KEY);
-      if (!raw) {
-        return null;
-      }
-
-      const parsed = JSON.parse(raw);
-      const latitude = Number(parsed?.latitude);
-      const longitude = Number(parsed?.longitude);
-      const expiresAt = Number(parsed?.expiresAt);
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !Number.isFinite(expiresAt)) {
-        return null;
-      }
-
-      if (expiresAt <= Date.now()) {
-        return null;
-      }
-
-      return { latitude, longitude, expiresAt };
-    } catch (_) {
+  async function resolveHeaderWeatherBrowserGeoCoords() {
+    if (!window.isSecureContext || !navigator.geolocation) {
       return null;
     }
-  }
 
-  function storeHeaderWeatherGeo(latitude, longitude) {
     try {
-      localStorage.setItem(
-        HEADER_WEATHER_GEO_STORAGE_KEY,
-        JSON.stringify({
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: HEADER_WEATHER_GEO_TIMEOUT,
+          maximumAge: 0,
+        });
+      });
+
+      const latitude = Number(position?.coords?.latitude);
+      const longitude = Number(position?.coords?.longitude);
+      const accuracy = Number(position?.coords?.accuracy);
+      if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+        return {
           latitude,
           longitude,
-          expiresAt: Date.now() + HEADER_WEATHER_GEO_CACHE_TTL,
-        })
-      );
-    } catch (_) {
-      // Ignore storage failures in private mode.
-    }
-  }
-
-  async function resolveHeaderWeatherBrowserGeoCoords() {
-    const cachedGeo = readHeaderWeatherStoredGeo();
-    if (cachedGeo) {
-      return { ...cachedGeo, source: 'cache' };
-    }
-
-    if (window.isSecureContext && navigator.geolocation) {
-      try {
-        const position = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: HEADER_WEATHER_GEO_TIMEOUT,
-            maximumAge: HEADER_WEATHER_GEO_CACHE_TTL,
-          });
-        });
-
-        const latitude = Number(position?.coords?.latitude);
-        const longitude = Number(position?.coords?.longitude);
-        if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
-          storeHeaderWeatherGeo(latitude, longitude);
-          return { latitude, longitude, source: 'gps', expiresAt: Date.now() + HEADER_WEATHER_GEO_CACHE_TTL };
-        }
-      } catch (_) {
-        // GPS permission denied or unavailable. Use salon static coordinates (Stötteritz) directly.
+          accuracy: Number.isFinite(accuracy) ? accuracy : null,
+          source: 'gps',
+          timestamp: Number(position?.timestamp) || Date.now(),
+        };
       }
+    } catch (_) {
+      // Exact browser geolocation is unavailable or denied; no approximate or salon fallback is used.
     }
 
-    // Primary fallback: salon static coordinates (Stötteritz)
-    return {
-      latitude: HEADER_WEATHER_STATIC_FALLBACK_COORDS.latitude,
-      longitude: HEADER_WEATHER_STATIC_FALLBACK_COORDS.longitude,
-      source: 'static-salon',
-    };
+    return null;
   }
 
   async function applyHeaderWeatherAutoGeoLocation(host) {
-    if (!host || host.dataset.weatherGeoResolved === 'true') {
+    if (!host) {
       return;
     }
 
     const coords = await resolveHeaderWeatherBrowserGeoCoords();
     if (!coords) {
       host.dataset.weatherGeoResolved = 'false';
+      host.dataset.weatherGeoSource = 'unavailable';
+      delete host.dataset.weatherLocation;
+      delete host.dataset.weatherRegionLabel;
+      delete host.dataset.weatherAccuracy;
       return;
     }
 
     host.dataset.weatherLocation = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
     host.dataset.weatherGeoResolved = 'true';
     host.dataset.weatherGeoSource = coords.source || 'unknown';
+    delete host.dataset.weatherRegionLabel;
 
-    if (coords.source === 'static-salon') {
-      host.dataset.weatherRegionLabel = 'Sachsen';
+    if (Number.isFinite(coords.accuracy)) {
+      host.dataset.weatherAccuracy = String(Math.round(coords.accuracy));
+    } else {
+      delete host.dataset.weatherAccuracy;
     }
   }
 
   function getHeaderWeatherLocationLabel(host) {
+    const hostLocation = host?.dataset?.weatherLocation?.trim();
+    if (hostLocation) {
+      return hostLocation;
+    }
+
     const locationLabel = host?.shadowRoot?.querySelector('.weather-header-card__location')?.textContent?.trim();
-    return locationLabel || host?.dataset?.weatherLocation || 'Leipzig';
+    return locationLabel || '';
   }
 
   function formatHeaderWeatherCityDistrictDisplayLabel(value) {
@@ -4033,10 +3999,6 @@
 
     if (commaParts.length === 2 && commaParts[0].toLowerCase() !== commaParts[1].toLowerCase()) {
       return applySoftBreakHints(`${commaParts[1]} - ${commaParts[0]}`);
-    }
-
-    if (!raw.includes(',') && !raw.includes('.') && /stötteritz/i.test(raw)) {
-      return applySoftBreakHints(`Leipzig - ${raw}`);
     }
 
     return applySoftBreakHints(raw);
@@ -4973,6 +4935,7 @@
     const windMatch = windText.match(/(-?\d{1,3}(?:[.,]\d+)?)\s*(km\/h|км\/ч|mph)?/i);
     const humidityMatch = (humidityChip?.textContent || '').match(/(\d{1,3})\s*%/);
     const pressureText = (pressureChip?.textContent || '').replace(/\s+/g, ' ').trim();
+    const pressureNumericValue = parseHeaderWeatherNumericToken(pressureText);
 
     if (temp === null && !condition && feelsValue === null && !windMatch && !humidityMatch) {
       return null;
@@ -4985,7 +4948,7 @@
       feels: feelsValue === null ? null : formatHeaderWeatherCelsiusText(feelsValue),
       wind: windMatch ? `${Math.round(Number(windMatch[1].replace(',', '.')))} ${windMatch[2] || 'km/h'}` : null,
       humidity: humidityMatch ? `${humidityMatch[1]}%` : null,
-      pressure: pressureText || null,
+      pressure: pressureNumericValue === null ? null : pressureText,
       source: 'widget-preview',
     };
   }
@@ -5037,7 +5000,19 @@
 
     const widgetReadings = extractHeaderWeatherReadingsFromHost(host);
     const fallbackReadings = buildHeaderWeatherReadingsFromMeta(host);
-    const resolvedReadings = widgetReadings || fallbackReadings;
+    const resolvedReadings =
+      widgetReadings && fallbackReadings
+        ? {
+            temp: widgetReadings.temp ?? fallbackReadings.temp,
+            condition: widgetReadings.condition || fallbackReadings.condition,
+            meta: widgetReadings.meta || fallbackReadings.meta,
+            feels: widgetReadings.feels || fallbackReadings.feels,
+            wind: widgetReadings.wind || fallbackReadings.wind,
+            humidity: widgetReadings.humidity || fallbackReadings.humidity,
+            pressure: widgetReadings.pressure || fallbackReadings.pressure,
+            source: `${widgetReadings.source}+${fallbackReadings.source}`,
+          }
+        : widgetReadings || fallbackReadings;
 
     if (!resolvedReadings) {
       return null;
@@ -6089,27 +6064,6 @@
     const coordinateMatch = parseHeaderWeatherCoordinates(locationLabel);
     if (coordinateMatch) {
       const promise = (async () => {
-        const isSalonCoords =
-          Math.abs(coordinateMatch.latitude - HEADER_WEATHER_STATIC_FALLBACK_COORDS.latitude) < 0.001 &&
-          Math.abs(coordinateMatch.longitude - HEADER_WEATHER_STATIC_FALLBACK_COORDS.longitude) < 0.001;
-
-        if (isSalonCoords) {
-          const coordinateValue = {
-            latitude: coordinateMatch.latitude,
-            longitude: coordinateMatch.longitude,
-            label: 'Leipzig - Stötteritz',
-            regionLabel: 'Sachsen',
-            timezone: getHeaderWeatherBrowserTimeZone() || HEADER_WEATHER_DEFAULT_TIMEZONE,
-          };
-
-          headerWeatherLocationCache.set(normalizedKey, {
-            value: coordinateValue,
-            expiresAt: Date.now() + HEADER_WEATHER_LOCATION_CACHE_TTL,
-          });
-
-          return coordinateValue;
-        }
-
         const reverseMeta = await fetchHeaderWeatherReverseGeoMeta(
           coordinateMatch.latitude,
           coordinateMatch.longitude
@@ -6247,7 +6201,7 @@
   }
 
   async function resolveHeaderWeatherAstro(host) {
-    const locationLabel = getHeaderWeatherLocationLabel(host);
+    const locationLabel = host?.dataset?.weatherLocation || getHeaderWeatherLocationLabel(host);
     const locationMeta = await resolveHeaderWeatherLocationMeta(locationLabel);
     if (!locationMeta) {
       return null;
@@ -6658,7 +6612,11 @@
   }
 
   async function resolveHeaderWeatherCurrent(host) {
-    const locationLabel = getHeaderWeatherLocationLabel(host);
+    const locationLabel = host?.dataset?.weatherLocation || getHeaderWeatherLocationLabel(host);
+    if (!locationLabel) {
+      return null;
+    }
+
     const locationMeta = await resolveHeaderWeatherLocationMeta(locationLabel);
     if (!locationMeta) {
       return null;
@@ -6699,6 +6657,10 @@
     }
 
     const locationQuery = host.dataset.weatherLocation || getHeaderWeatherLocationLabel(host);
+    if (!locationQuery) {
+      return;
+    }
+
     const locationMeta = await resolveHeaderWeatherLocationMeta(locationQuery).catch(() => null);
     if (!locationMeta) {
       return;
@@ -10208,11 +10170,16 @@
       applyHeaderWeatherTextReadability(host, orbAtmosphere);
       const widgetBasePath = getHeaderWeatherWidgetBasePath(host);
       const assetsModuleBase = getHeaderWeatherAssetsBasePath(host);
-      const geoState = {
-        latitude: Number(astroData?.locationMeta?.latitude) || HEADER_WEATHER_STATIC_FALLBACK_COORDS.latitude,
-        longitude: Number(astroData?.locationMeta?.longitude) || HEADER_WEATHER_STATIC_FALLBACK_COORDS.longitude,
-        timeMs: getHeaderWeatherNowMs(),
-      };
+      const astroLatitude = Number(astroData?.locationMeta?.latitude);
+      const astroLongitude = Number(astroData?.locationMeta?.longitude);
+      const geoState =
+        Number.isFinite(astroLatitude) && Number.isFinite(astroLongitude)
+          ? {
+              latitude: astroLatitude,
+              longitude: astroLongitude,
+              timeMs: getHeaderWeatherNowMs(),
+            }
+          : null;
       const moonVideoSources = widgetBasePath
         ? HEADER_WEATHER_MOON_VIDEO_FILES.map(file => `${widgetBasePath}/assets/Moon/${file}`)
         : [];
@@ -10579,25 +10546,6 @@
 
     host.__weatherStateObserver = observer;
 
-    if (!host.__weatherMenuStrictTapBound) {
-      const blockNonToggleInteraction = event => {
-        const trigger = event.target?.closest?.('.weather-header-trigger');
-        if (!trigger) {
-          return;
-        }
-        const toggleButton = event.target?.closest?.('.weather-header-card__toggle');
-        if (toggleButton) {
-          return;
-        }
-        event.preventDefault();
-        event.stopPropagation();
-      };
-      host.shadowRoot.addEventListener('pointerdown', blockNonToggleInteraction, true);
-      host.shadowRoot.addEventListener('click', blockNonToggleInteraction, true);
-      host.shadowRoot.addEventListener('touchstart', blockNonToggleInteraction, { capture: true, passive: false });
-      host.__weatherMenuStrictTapBound = true;
-    }
-
     applyHeaderWeatherLocationSearchCopy(host);
     bindHeaderWeatherOutsideDismiss(host);
     bindHeaderWeatherDropdownScrollState(host);
@@ -10913,15 +10861,14 @@
       await applyHeaderWeatherAutoGeoLocation(host);
 
       const weatherWidget = await loadHeaderWeatherWidgetLoader(host.dataset.widgetSrc);
-      const fallbackLocation = host.dataset.weatherLocation || 'Leipzig';
-      const initialLocation = fallbackLocation;
+      const preciseLocation = host.dataset.weatherLocation || '';
 
       const widgetApi = await weatherWidget.mountWeatherWidget(host, {
         variant: 'header',
         locale: host.dataset.weatherLocale || pageLang,
-        initialLocation,
-        fallbackLocation,
-        useGeolocation: false,
+        initialLocation: preciseLocation,
+        fallbackLocation: preciseLocation,
+        useGeolocation: !preciseLocation,
         minHeight: host.dataset.weatherMinHeight || '100%',
       });
 
