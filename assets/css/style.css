@@ -6625,6 +6625,13 @@ body.light .review-card {
   color: var(--accent-gold);
 }
 
+.contact-item .contact-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .socials {
   display: flex;
   flex-wrap: wrap;
