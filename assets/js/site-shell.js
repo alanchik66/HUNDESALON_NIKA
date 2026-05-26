@@ -4554,13 +4554,34 @@
       return source;
     }
 
-    const parts = source
-      .split('·')
-      .map(part => part.trim())
-      .filter(Boolean)
-      .filter(part => !knownWeekdays.has(part.replace(/\.$/, '').trim().toLowerCase()));
+    let result = source;
+    const escapeRegExp = value => String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-    return parts.join(' · ');
+    // Remove standalone weekday tokens regardless of separator style (· • , ; / - | space).
+    knownWeekdays.forEach(token => {
+      if (!token) {
+        return;
+      }
+
+      const escaped = escapeRegExp(token);
+      const tokenPattern = new RegExp(
+        `(^|[\\s·•|,;:/-])${escaped}(?=\\.?($|[\\s·•|,;:/-]))`,
+        'giu'
+      );
+      result = result.replace(tokenPattern, '$1');
+    });
+
+    // Normalize repeated separators/spaces after weekday removal.
+    result = result
+      .replace(/[\s]*[·•|][\s]*/g, ' · ')
+      .replace(/[\s]*,[\s]*/g, ', ')
+      .replace(/(?:\s*·\s*){2,}/g, ' · ')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/^\s*[·•|,;:/-]+\s*/u, '')
+      .replace(/\s*[·•|,;:/-]+\s*$/u, '')
+      .trim();
+
+    return result;
   }
 
   function rewriteHeaderWeatherTimeText(text, liveTime, timeZone) {
