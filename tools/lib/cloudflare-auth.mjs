@@ -1,5 +1,5 @@
 /**
- * Shared Cloudflare auth: .dev.vars, API token, Global API Key, or Wrangler OAuth (read-only).
+ * Shared Cloudflare auth: .dev.vars, API Bearer token, Global API Key, or Wrangler OAuth (read-only).
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -48,6 +48,11 @@ export function loadDevVars(filePath = path.join(REPO_ROOT, '.dev.vars')) {
     if (key && process.env[key] === undefined) {
       process.env[key] = value;
     }
+  }
+
+  // Cloudflare Origin CA replacement token is accepted as an API Bearer token source.
+  if (!process.env.CLOUDFLARE_API_TOKEN?.trim() && process.env.CLOUDFLARE_ORIGIN_CA_REPLACEMENT_TOKEN?.trim()) {
+    process.env.CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_ORIGIN_CA_REPLACEMENT_TOKEN.trim();
   }
 }
 

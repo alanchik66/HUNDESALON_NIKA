@@ -45,6 +45,13 @@ const ENDPOINT_LIMITS = [
   },
 ];
 
+const COMBINED_RULE_DESC = `${RULE_PREFIX} POST protected API endpoints`;
+const COMBINED_RULE_LIMIT = {
+  requestsPerPeriod: 2,
+  period: 10,
+  mitigationTimeout: 10,
+};
+
 function parseArgs(argv) {
   return { status: argv.includes('--status') };
 }
@@ -83,6 +90,33 @@ function buildRulePayload({ path, description, requestsPerPeriod, period, mitiga
     },
     enabled: true,
   };
+}
+
+function buildCombinedRulePayload() {
+  return {
+    description: COMBINED_RULE_DESC,
+    expression:
+      '((http.request.uri.path eq "/sendmail" or http.request.uri.path eq "/openrouter" or http.request.uri.path eq "/seo-generate") and http.request.method eq "POST")',
+    action: 'block',
+    action_parameters: {
+      response: {
+        status_code: 429,
+        content: '{"error":"Too many requests"}',
+        content_type: 'application/json',
+      },
+    },
+    ratelimit: {
+      characteristics: ['ip.src', 'cf.colo.id'],
+      period: COMBINED_RULE_LIMIT.period,
+      requests_per_period: COMBINED_RULE_LIMIT.requestsPerPeriod,
+      mitigation_timeout: COMBINED_RULE_LIMIT.mitigationTimeout,
+    },
+    enabled: true,
+  };
+}
+
+function isSingleRulePhaseLimit(error) {
+  return /maximum number of rules in the phase .* out of 1/i.test(String(error?.message || error));
 }
 
 async function getPhaseRuleset(auth, zoneId) {
@@ -147,13 +181,31 @@ async function ensureRules(auth, zoneId) {
   let ruleset = await getPhaseRuleset(auth, zoneId);
 
   if (!ruleset) {
-    ruleset = await createPhaseRuleset(auth, zoneId, desiredRules);
-    console.log(`Created ${PHASE} ruleset with ${desiredRules.length} rate limit rules.`);
+    try {
+      ruleset = await createPhaseRuleset(auth, zoneId, desiredRules);
+      console.log(`Created ${PHASE} ruleset with ${desiredRules.length} rate limit rules.`);
+    } catch (error) {
+      if (!isSingleRulePhaseLimit(error)) throw error;
+      const combinedRule = buildCombinedRulePayload();
+      ruleset = await createPhaseRuleset(auth, zoneId, [combinedRule]);
+      console.log(`Created ${PHASE} ruleset with single fallback rule: ${combinedRule.description}.`);
+    }
     return ruleset;
   }
 
   const rulesetId = ruleset.id;
   const existingRules = Array.isArray(ruleset.rules) ? ruleset.rules : [];
+  const combinedRule = buildCombinedRulePayload();
+  const existingCombined = existingRules.find(rule => rule.description === COMBINED_RULE_DESC);
+  if (existingCombined) {
+    if (ruleNeedsUpdate(existingCombined, combinedRule)) {
+      await updateRule(auth, zoneId, rulesetId, existingCombined.id, combinedRule);
+      console.log(`WAF rate limits: updated fallback rule ${COMBINED_RULE_DESC}.`);
+    } else {
+      console.log(`WAF rate limits: fallback rule ${COMBINED_RULE_DESC} unchanged.`);
+    }
+    return getPhaseRuleset(auth, zoneId);
+  }
   let created = 0;
   let updated = 0;
   let unchanged = 0;
@@ -161,7 +213,17 @@ async function ensureRules(auth, zoneId) {
   for (const desired of desiredRules) {
     const existing = existingRules.find(rule => rule.description === desired.description);
     if (!existing) {
-      await addRule(auth, zoneId, rulesetId, desired);
+      try {
+        await addRule(auth, zoneId, rulesetId, desired);
+      } catch (error) {
+        if (!isSingleRulePhaseLimit(error)) throw error;
+        if (existingRules.length === 0) {
+          await addRule(auth, zoneId, rulesetId, combinedRule);
+          console.log(`WAF rate limits: created fallback rule ${COMBINED_RULE_DESC}.`);
+          return getPhaseRuleset(auth, zoneId);
+        }
+        throw error;
+      }
       created += 1;
       continue;
     }

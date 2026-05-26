@@ -184,10 +184,10 @@
   };
 
   const WEATHER_WIDGET_COPY = {
-    ru: { ariaLabel: 'Виджет погоды по точной геопозиции' },
-    uk: { ariaLabel: 'Віджет погоди за точною геолокацією' },
-    de: { ariaLabel: 'Wetter-Widget für exakten Standort' },
-    en: { ariaLabel: 'Exact location weather widget' },
+    ru: { ariaLabel: 'Виджет погоды салона' },
+    uk: { ariaLabel: 'Віджет погоди салону' },
+    de: { ariaLabel: 'Wetter-Widget des Salons' },
+    en: { ariaLabel: 'Salon weather widget' },
   };
 
   /** Menu toggle aligned to the gold decorative strip between weather and social bar. */
@@ -197,7 +197,7 @@
   const HEADER_WEATHER_TOGGLE_ARROW_OPEN = 'rotate(0deg)';
   /** Preview moon size (+30% vs backup 8fbeca0 baseline), −15% display trim, −20% owner trim. */
   const HEADER_WEATHER_MOON_DISPLAY_SCALE = 0.85;
-  const HEADER_WEATHER_MOON_SIZE_REDUCTION = 0.68;
+  const HEADER_WEATHER_MOON_SIZE_REDUCTION = 0.8;
   const HEADER_WEATHER_MOON_SIZE_BOOST =
     1.3 * 0.85 * 1.3 * HEADER_WEATHER_MOON_DISPLAY_SCALE * HEADER_WEATHER_MOON_SIZE_REDUCTION;
   const HEADER_WEATHER_MOON_SIZE_FACTOR = 3 * HEADER_WEATHER_MOON_SIZE_BOOST;
@@ -3305,6 +3305,57 @@
     transform: none !important;
   }
 
+  /* Mobile stretch lock: keep temp + feels row readable and prevent overlap in all locales. */
+  .weather-header-card__content {
+    padding: 8px 14px 0 var(--header-weather-text-inset, 0px) !important;
+  }
+
+  .weather-header-card__info-panel,
+  .weather-header-card__left-stack {
+    max-width: calc(100% - 96px) !important;
+    width: calc(100% - 96px) !important;
+    min-width: 0 !important;
+  }
+
+  .weather-header-card__temp-row,
+  .weather-header-card__bottom {
+    grid-template-columns: max-content max-content !important;
+    column-gap: 12px !important;
+    width: max-content !important;
+    max-width: none !important;
+  }
+
+  .weather-header-card__temp-row > .weather-header-card__temperature,
+  .weather-header-card__bottom > .weather-header-card__temperature {
+    margin-right: 2px !important;
+  }
+
+  .weather-header-card__temp-row > .weather-header-card__chips,
+  .weather-header-card__bottom > .weather-header-card__chips {
+    width: max-content !important;
+    min-width: max-content !important;
+    max-width: none !important;
+    overflow: visible !important;
+  }
+
+  .weather-header-card__chip--feels-like[data-weather-feels-layout='custom'] > .weather-header-card__feels-label,
+  .weather-header-card__chip--feels-like[data-weather-feels-layout='custom'] .weather-header-card__feels-prefix {
+    font-size: 5.5px !important;
+    line-height: 6.5px !important;
+  }
+
+  .weather-header-card__chip--feels-like[data-weather-feels-layout='custom'] > .weather-header-card__feels-value,
+  .weather-header-card__chip--feels-like[data-weather-feels-layout='custom'] > .weather-header-card__feels-row {
+    column-gap: 3px !important;
+    font-size: 10px !important;
+    line-height: 10px !important;
+  }
+
+  .weather-header-card__temperature-unit,
+  .weather-header-card__feels-temp-unit {
+    transform: translate(0.02em, -0.62em) !important;
+  }
+
 }
 
 /* Final hard lock (desktop/tablet): menu button at center cross zone. */
@@ -3333,7 +3384,7 @@
 }
 `;
 
-  const WEATHER_WIDGET_ASSET_VERSION = '20260526-exact-geo-v1';
+  const WEATHER_WIDGET_ASSET_VERSION = '20260522-moon-visibility-v3';
   /** Full mission_2160p30.mp4 timeline (7:38) mapped to each local night window. */
   const HEADER_WEATHER_MOON_VIDEO_DURATION_SEC = 458.233333;
   const HEADER_WEATHER_MOON_DAY_MIN_OPACITY = 0.22;
@@ -3342,11 +3393,7 @@
   const HEADER_WEATHER_SUN_VIDEO_FILES = Object.freeze(['sun_alpha.webm']);
   /** Civil-style handoff moon ↔ sun (ms). */
   const HEADER_WEATHER_ORB_CROSSFADE_MS = 42 * 60 * 1000;
-  const HEADER_WEATHER_MOON_VIDEO_FILES = Object.freeze([
-    'mission_2160p30_alpha.webm',
-    'mission_2160p30.mp4',
-    'mission_2160p30_fallback.mp4',
-  ]);
+  const HEADER_WEATHER_MOON_VIDEO_FILES = Object.freeze(['mission_2160p30_alpha.webm']);
 
   const LOCALIZED_ROUTES = new Set([
     '',
@@ -3376,6 +3423,7 @@
   const HEADER_WEATHER_CURRENT_ENDPOINT = 'https://api.open-meteo.com/v1/forecast';
   const HEADER_WEATHER_ASTRO_ENDPOINT = 'https://api.sunrise-sunset.org/json';
   const HEADER_WEATHER_REVERSE_GEOCODE_ENDPOINT = 'https://nominatim.openstreetmap.org/reverse';
+  const HEADER_WEATHER_STATIC_FALLBACK_COORDS = Object.freeze({ latitude: 51.320486, longitude: 12.416501 });
   const HEADER_WEATHER_ASTRO_REFRESH_INTERVAL = 60000;
   const HEADER_WEATHER_WIDGET_REFRESH_INTERVAL = 60 * 1000;
   const HEADER_WEATHER_TIME_SYNC_INTERVAL = 30 * 60 * 1000;
@@ -3386,9 +3434,11 @@
   const HEADER_WEATHER_LOCATION_CACHE_TTL = 24 * 60 * 60 * 1000;
   const HEADER_WEATHER_CURRENT_CACHE_TTL = 45 * 1000;
   const HEADER_WEATHER_ASTRO_CACHE_TTL = 12 * 60 * 60 * 1000;
+  const HEADER_WEATHER_GEO_STORAGE_KEY = 'header_weather_geo_v1';
+  const HEADER_WEATHER_GEO_CACHE_TTL = 30 * 60 * 1000;
   const HEADER_WEATHER_READINGS_STORAGE_KEY = 'header_weather_readings_v1';
   const HEADER_WEATHER_READINGS_CACHE_TTL = 12 * 60 * 60 * 1000;
-  const HEADER_WEATHER_GEO_TIMEOUT = 15000;
+  const HEADER_WEATHER_GEO_TIMEOUT = 10000;
   const HEADER_WEATHER_STRICT_STYLE_LOCK = true;
   const HEADER_WEATHER_BERLIN_LABEL = 'Ber' + 'lin';
   const HEADER_WEATHER_BERLIN_ALIAS_KEY = ('ber' + 'lin').toLowerCase();
@@ -3647,6 +3697,7 @@
         class="header-weather-widget"
         data-weather-widget="true"
         data-widget-src="${weatherWidgetPrefix}/weather-widget.iife.js?v=${WEATHER_WIDGET_ASSET_VERSION}"
+        data-weather-location="Leipzig"
         data-weather-locale="${context.pageLang}"
         data-weather-min-height="100%"
         aria-label="${context.weatherWidgetCopy.ariaLabel}">
@@ -3894,74 +3945,104 @@
     return { latitude, longitude };
   }
 
-  async function resolveHeaderWeatherBrowserGeoCoords() {
-    if (!window.isSecureContext || !navigator.geolocation) {
+  function readHeaderWeatherStoredGeo() {
+    try {
+      const raw = localStorage.getItem(HEADER_WEATHER_GEO_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
+
+      const parsed = JSON.parse(raw);
+      const latitude = Number(parsed?.latitude);
+      const longitude = Number(parsed?.longitude);
+      const expiresAt = Number(parsed?.expiresAt);
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !Number.isFinite(expiresAt)) {
+        return null;
+      }
+
+      if (expiresAt <= Date.now()) {
+        return null;
+      }
+
+      return { latitude, longitude, expiresAt };
+    } catch (_) {
       return null;
     }
+  }
 
+  function storeHeaderWeatherGeo(latitude, longitude) {
     try {
-      const position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: HEADER_WEATHER_GEO_TIMEOUT,
-          maximumAge: 0,
-        });
-      });
-
-      const latitude = Number(position?.coords?.latitude);
-      const longitude = Number(position?.coords?.longitude);
-      const accuracy = Number(position?.coords?.accuracy);
-      if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
-        return {
+      localStorage.setItem(
+        HEADER_WEATHER_GEO_STORAGE_KEY,
+        JSON.stringify({
           latitude,
           longitude,
-          accuracy: Number.isFinite(accuracy) ? accuracy : null,
-          source: 'gps',
-          timestamp: Number(position?.timestamp) || Date.now(),
-        };
-      }
+          expiresAt: Date.now() + HEADER_WEATHER_GEO_CACHE_TTL,
+        })
+      );
     } catch (_) {
-      // Exact browser geolocation is unavailable or denied; no approximate or salon fallback is used.
+      // Ignore storage failures in private mode.
+    }
+  }
+
+  async function resolveHeaderWeatherBrowserGeoCoords() {
+    const cachedGeo = readHeaderWeatherStoredGeo();
+    if (cachedGeo) {
+      return { ...cachedGeo, source: 'cache' };
     }
 
-    return null;
+    if (window.isSecureContext && navigator.geolocation) {
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: HEADER_WEATHER_GEO_TIMEOUT,
+            maximumAge: HEADER_WEATHER_GEO_CACHE_TTL,
+          });
+        });
+
+        const latitude = Number(position?.coords?.latitude);
+        const longitude = Number(position?.coords?.longitude);
+        if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+          storeHeaderWeatherGeo(latitude, longitude);
+          return { latitude, longitude, source: 'gps', expiresAt: Date.now() + HEADER_WEATHER_GEO_CACHE_TTL };
+        }
+      } catch (_) {
+        // GPS permission denied or unavailable. Use salon static coordinates (Stötteritz) directly.
+      }
+    }
+
+    // Primary fallback: salon static coordinates (Stötteritz)
+    return {
+      latitude: HEADER_WEATHER_STATIC_FALLBACK_COORDS.latitude,
+      longitude: HEADER_WEATHER_STATIC_FALLBACK_COORDS.longitude,
+      source: 'static-salon',
+    };
   }
 
   async function applyHeaderWeatherAutoGeoLocation(host) {
-    if (!host) {
+    if (!host || host.dataset.weatherGeoResolved === 'true') {
       return;
     }
 
     const coords = await resolveHeaderWeatherBrowserGeoCoords();
     if (!coords) {
       host.dataset.weatherGeoResolved = 'false';
-      host.dataset.weatherGeoSource = 'unavailable';
-      delete host.dataset.weatherLocation;
-      delete host.dataset.weatherRegionLabel;
-      delete host.dataset.weatherAccuracy;
       return;
     }
 
     host.dataset.weatherLocation = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
     host.dataset.weatherGeoResolved = 'true';
     host.dataset.weatherGeoSource = coords.source || 'unknown';
-    delete host.dataset.weatherRegionLabel;
 
-    if (Number.isFinite(coords.accuracy)) {
-      host.dataset.weatherAccuracy = String(Math.round(coords.accuracy));
-    } else {
-      delete host.dataset.weatherAccuracy;
+    if (coords.source === 'static-salon') {
+      host.dataset.weatherRegionLabel = 'Sachsen';
     }
   }
 
   function getHeaderWeatherLocationLabel(host) {
-    const hostLocation = host?.dataset?.weatherLocation?.trim();
-    if (hostLocation) {
-      return hostLocation;
-    }
-
     const locationLabel = host?.shadowRoot?.querySelector('.weather-header-card__location')?.textContent?.trim();
-    return locationLabel || '';
+    return locationLabel || host?.dataset?.weatherLocation || 'Leipzig';
   }
 
   function formatHeaderWeatherCityDistrictDisplayLabel(value) {
@@ -3999,6 +4080,10 @@
 
     if (commaParts.length === 2 && commaParts[0].toLowerCase() !== commaParts[1].toLowerCase()) {
       return applySoftBreakHints(`${commaParts[1]} - ${commaParts[0]}`);
+    }
+
+    if (!raw.includes(',') && !raw.includes('.') && /stötteritz/i.test(raw)) {
+      return applySoftBreakHints(`Leipzig - ${raw}`);
     }
 
     return applySoftBreakHints(raw);
@@ -4435,10 +4520,8 @@
       return text;
     }
 
-    // Replace leading "time + weekday cluster" to avoid endless weekday duplication
-    // like "01:24 · Пн · Пн · Пн" during live clock updates.
-    if (/^\s*\d{1,2}:\d{2}(?:\s*[·•|]\s*[\p{L}\p{M}]{1,6}\.?\s*)*/u.test(text)) {
-      return text.replace(/^\s*\d{1,2}:\d{2}(?:\s*[·•|]\s*[\p{L}\p{M}]{1,6}\.?\s*)*/u, liveTime);
+    if (/^\s*\d{1,2}:\d{2}/.test(text)) {
+      return text.replace(/^\s*\d{1,2}:\d{2}/, liveTime);
     }
 
     return text.replace(/\d{1,2}:\d{2}/, liveTime);
@@ -4935,7 +5018,6 @@
     const windMatch = windText.match(/(-?\d{1,3}(?:[.,]\d+)?)\s*(km\/h|км\/ч|mph)?/i);
     const humidityMatch = (humidityChip?.textContent || '').match(/(\d{1,3})\s*%/);
     const pressureText = (pressureChip?.textContent || '').replace(/\s+/g, ' ').trim();
-    const pressureNumericValue = parseHeaderWeatherNumericToken(pressureText);
 
     if (temp === null && !condition && feelsValue === null && !windMatch && !humidityMatch) {
       return null;
@@ -4948,7 +5030,7 @@
       feels: feelsValue === null ? null : formatHeaderWeatherCelsiusText(feelsValue),
       wind: windMatch ? `${Math.round(Number(windMatch[1].replace(',', '.')))} ${windMatch[2] || 'km/h'}` : null,
       humidity: humidityMatch ? `${humidityMatch[1]}%` : null,
-      pressure: pressureNumericValue === null ? null : pressureText,
+      pressure: pressureText || null,
       source: 'widget-preview',
     };
   }
@@ -5000,19 +5082,7 @@
 
     const widgetReadings = extractHeaderWeatherReadingsFromHost(host);
     const fallbackReadings = buildHeaderWeatherReadingsFromMeta(host);
-    const resolvedReadings =
-      widgetReadings && fallbackReadings
-        ? {
-            temp: widgetReadings.temp ?? fallbackReadings.temp,
-            condition: widgetReadings.condition || fallbackReadings.condition,
-            meta: widgetReadings.meta || fallbackReadings.meta,
-            feels: widgetReadings.feels || fallbackReadings.feels,
-            wind: widgetReadings.wind || fallbackReadings.wind,
-            humidity: widgetReadings.humidity || fallbackReadings.humidity,
-            pressure: widgetReadings.pressure || fallbackReadings.pressure,
-            source: `${widgetReadings.source}+${fallbackReadings.source}`,
-          }
-        : widgetReadings || fallbackReadings;
+    const resolvedReadings = widgetReadings || fallbackReadings;
 
     if (!resolvedReadings) {
       return null;
@@ -6064,6 +6134,27 @@
     const coordinateMatch = parseHeaderWeatherCoordinates(locationLabel);
     if (coordinateMatch) {
       const promise = (async () => {
+        const isSalonCoords =
+          Math.abs(coordinateMatch.latitude - HEADER_WEATHER_STATIC_FALLBACK_COORDS.latitude) < 0.001 &&
+          Math.abs(coordinateMatch.longitude - HEADER_WEATHER_STATIC_FALLBACK_COORDS.longitude) < 0.001;
+
+        if (isSalonCoords) {
+          const coordinateValue = {
+            latitude: coordinateMatch.latitude,
+            longitude: coordinateMatch.longitude,
+            label: 'Leipzig - Stötteritz',
+            regionLabel: 'Sachsen',
+            timezone: getHeaderWeatherBrowserTimeZone() || HEADER_WEATHER_DEFAULT_TIMEZONE,
+          };
+
+          headerWeatherLocationCache.set(normalizedKey, {
+            value: coordinateValue,
+            expiresAt: Date.now() + HEADER_WEATHER_LOCATION_CACHE_TTL,
+          });
+
+          return coordinateValue;
+        }
+
         const reverseMeta = await fetchHeaderWeatherReverseGeoMeta(
           coordinateMatch.latitude,
           coordinateMatch.longitude
@@ -6201,7 +6292,7 @@
   }
 
   async function resolveHeaderWeatherAstro(host) {
-    const locationLabel = host?.dataset?.weatherLocation || getHeaderWeatherLocationLabel(host);
+    const locationLabel = getHeaderWeatherLocationLabel(host);
     const locationMeta = await resolveHeaderWeatherLocationMeta(locationLabel);
     if (!locationMeta) {
       return null;
@@ -6612,11 +6703,7 @@
   }
 
   async function resolveHeaderWeatherCurrent(host) {
-    const locationLabel = host?.dataset?.weatherLocation || getHeaderWeatherLocationLabel(host);
-    if (!locationLabel) {
-      return null;
-    }
-
+    const locationLabel = getHeaderWeatherLocationLabel(host);
     const locationMeta = await resolveHeaderWeatherLocationMeta(locationLabel);
     if (!locationMeta) {
       return null;
@@ -6657,10 +6744,6 @@
     }
 
     const locationQuery = host.dataset.weatherLocation || getHeaderWeatherLocationLabel(host);
-    if (!locationQuery) {
-      return;
-    }
-
     const locationMeta = await resolveHeaderWeatherLocationMeta(locationQuery).catch(() => null);
     if (!locationMeta) {
       return;
@@ -6870,6 +6953,39 @@
     syncHeaderWeatherToggleArrow(host);
   }
 
+  function applyHeaderWeatherEqualMetricSpacing(rightColumn) {
+    if (!(rightColumn instanceof HTMLElement)) {
+      return;
+    }
+
+    const metricNodes = Array.from(
+      rightColumn.querySelectorAll(':scope > .weather-header-card__condition, :scope > .weather-header-card__chip')
+    ).filter(node => {
+      if (!(node instanceof HTMLElement)) {
+        return false;
+      }
+      const hiddenByDisplay = node.style.getPropertyValue('display') === 'none';
+      const hiddenByVisibility = node.style.getPropertyValue('visibility') === 'hidden';
+      const ariaHidden = node.getAttribute('aria-hidden') === 'true';
+      return !hiddenByDisplay && !hiddenByVisibility && !ariaHidden;
+    });
+
+    if (metricNodes.length <= 1) {
+      rightColumn.style.setProperty('justify-content', 'flex-start', 'important');
+      rightColumn.style.setProperty('row-gap', '0', 'important');
+      return;
+    }
+
+    const containerHeight = rightColumn.getBoundingClientRect().height || 0;
+    const occupiedHeight = metricNodes.reduce((sum, node) => sum + (node.getBoundingClientRect().height || 0), 0);
+    const freeHeight = Math.max(0, containerHeight - occupiedHeight);
+    const equalGap = freeHeight / (metricNodes.length - 1);
+    const normalizedGap = Number.isFinite(equalGap) ? Math.max(0, Math.round(equalGap * 100) / 100) : 0;
+
+    rightColumn.style.setProperty('justify-content', 'flex-start', 'important');
+    rightColumn.style.setProperty('row-gap', `${normalizedGap}px`, 'important');
+  }
+
   function syncHeaderWeatherRightColumnAlign(host, layoutRefs) {
     const { rightColumn, condition, pressureChip, humidityChip } = layoutRefs || {};
     if (!(rightColumn instanceof HTMLElement)) {
@@ -6955,9 +7071,20 @@
 
     rightColumn.style.setProperty('display', 'flex', 'important');
     rightColumn.style.setProperty('flex-direction', 'column', 'important');
+    rightColumn.style.setProperty('position', 'absolute', 'important');
+    rightColumn.style.setProperty('top', '0', 'important');
+    rightColumn.style.setProperty('right', '8px', 'important');
+    rightColumn.style.setProperty('bottom', '0', 'important');
+    rightColumn.style.setProperty('left', 'auto', 'important');
+    rightColumn.style.setProperty('height', 'auto', 'important');
+    rightColumn.style.setProperty('min-height', '100%', 'important');
+    rightColumn.style.setProperty('max-height', '100%', 'important');
     rightColumn.style.setProperty('justify-content', 'flex-start', 'important');
-    rightColumn.style.setProperty('row-gap', '6px', 'important');
+    rightColumn.style.setProperty('row-gap', '0', 'important');
     rightColumn.style.setProperty('align-items', 'flex-end', 'important');
+
+    applyHeaderWeatherEqualMetricSpacing(rightColumn);
+    window.requestAnimationFrame(() => applyHeaderWeatherEqualMetricSpacing(rightColumn));
   }
 
   function scheduleHeaderWeatherMenuPlacement(host) {
@@ -7956,7 +8083,7 @@
       const tempSizePx = compactPreview ? 22 : 34;
       const verticalRhythmGapPx = compactPreview ? 6 : 7;
       const tempRowTopGapPx = compactPreview ? Math.max(0, verticalRhythmGapPx - 2) : 32;
-      const rowGapPx = compactPreview ? 4 : 8;
+      const rowGapPx = compactPreview ? 12 : 10;
       const baseContentPadY = compactPreview ? 1 : 5;
       let rightColumn = null;
       const rightColumnHost = card || content;
@@ -7980,6 +8107,23 @@
       }
 
       const infoPanel = ensureHeaderWeatherInfoPanel(root, topRow, titleBlock, bottom);
+      if (infoPanel instanceof HTMLElement) {
+        infoPanel.style.setProperty('position', 'absolute', 'important');
+        infoPanel.style.setProperty('top', '0', 'important');
+        infoPanel.style.setProperty('left', '0', 'important');
+        infoPanel.style.setProperty('right', 'auto', 'important');
+        infoPanel.style.setProperty('bottom', '0', 'important');
+        infoPanel.style.setProperty('display', 'flex', 'important');
+        infoPanel.style.setProperty('flex-direction', 'column', 'important');
+        infoPanel.style.setProperty('justify-content', 'space-between', 'important');
+        infoPanel.style.setProperty('align-items', 'flex-start', 'important');
+        infoPanel.style.setProperty('height', 'auto', 'important');
+        infoPanel.style.setProperty('min-height', '100%', 'important');
+        infoPanel.style.setProperty('max-height', '100%', 'important');
+        infoPanel.style.setProperty('padding', '0', 'important');
+        infoPanel.style.setProperty('margin', '0', 'important');
+        infoPanel.style.setProperty('row-gap', '0', 'important');
+      }
       const tempRow = infoPanel?.querySelector('.weather-header-card__temp-row') || null;
       const tempRowChips =
         tempRow?.querySelector('.weather-header-card__chips') || root.querySelector('.weather-header-card__chips');
@@ -8039,7 +8183,7 @@
         meta.style.setProperty('white-space', 'nowrap', 'important');
         meta.style.setProperty('overflow', 'hidden', 'important');
         meta.style.setProperty('text-overflow', 'ellipsis', 'important');
-        meta.style.setProperty('margin', `${verticalRhythmGapPx}px 0 0 0`, 'important');
+        meta.style.setProperty('margin', '0', 'important');
 
         const metaRegion = meta.querySelector('span');
         if (metaRegion instanceof HTMLElement) {
@@ -8276,7 +8420,7 @@
 
       if (tempRow instanceof HTMLElement) {
         tempRow.style.setProperty('margin-left', '0', 'important');
-        tempRow.style.setProperty('margin-top', `${tempRowTopGapPx}px`, 'important');
+        tempRow.style.setProperty('margin-top', '0', 'important');
         tempRow.style.setProperty('padding-left', '0', 'important');
         tempRow.style.setProperty('grid-template-columns', 'max-content max-content', 'important');
         tempRow.style.setProperty('column-gap', `${rowGapPx}px`, 'important');
@@ -9918,9 +10062,7 @@
     stopHeaderWeatherSunScene(overlay);
 
     if (assetConfig.type === 'video-keyed') {
-      if (kind === 'moon') {
-        video.loop = true;
-      } else if (kind === 'sun') {
+      if (kind === 'moon' || kind === 'sun') {
         video.loop = false;
       }
 
@@ -9972,7 +10114,7 @@
                 if (image) {
                   image.hidden = true;
                 }
-                if (kind === 'sun' && assetConfig.timelineBase) {
+                if ((kind === 'moon' || kind === 'sun') && assetConfig.timelineBase) {
                   overlay.__moonTimelineBase = assetConfig.timelineBase;
                   const readTimeline = () => {
                     const base = overlay.__moonTimelineBase;
@@ -10170,16 +10312,11 @@
       applyHeaderWeatherTextReadability(host, orbAtmosphere);
       const widgetBasePath = getHeaderWeatherWidgetBasePath(host);
       const assetsModuleBase = getHeaderWeatherAssetsBasePath(host);
-      const astroLatitude = Number(astroData?.locationMeta?.latitude);
-      const astroLongitude = Number(astroData?.locationMeta?.longitude);
-      const geoState =
-        Number.isFinite(astroLatitude) && Number.isFinite(astroLongitude)
-          ? {
-              latitude: astroLatitude,
-              longitude: astroLongitude,
-              timeMs: getHeaderWeatherNowMs(),
-            }
-          : null;
+      const geoState = {
+        latitude: Number(astroData?.locationMeta?.latitude) || HEADER_WEATHER_STATIC_FALLBACK_COORDS.latitude,
+        longitude: Number(astroData?.locationMeta?.longitude) || HEADER_WEATHER_STATIC_FALLBACK_COORDS.longitude,
+        timeMs: getHeaderWeatherNowMs(),
+      };
       const moonVideoSources = widgetBasePath
         ? HEADER_WEATHER_MOON_VIDEO_FILES.map(file => `${widgetBasePath}/assets/Moon/${file}`)
         : [];
@@ -10546,6 +10683,25 @@
 
     host.__weatherStateObserver = observer;
 
+    if (!host.__weatherMenuStrictTapBound) {
+      const blockNonToggleInteraction = event => {
+        const trigger = event.target?.closest?.('.weather-header-trigger');
+        if (!trigger) {
+          return;
+        }
+        const toggleButton = event.target?.closest?.('.weather-header-card__toggle');
+        if (toggleButton) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+      };
+      host.shadowRoot.addEventListener('pointerdown', blockNonToggleInteraction, true);
+      host.shadowRoot.addEventListener('click', blockNonToggleInteraction, true);
+      host.shadowRoot.addEventListener('touchstart', blockNonToggleInteraction, { capture: true, passive: false });
+      host.__weatherMenuStrictTapBound = true;
+    }
+
     applyHeaderWeatherLocationSearchCopy(host);
     bindHeaderWeatherOutsideDismiss(host);
     bindHeaderWeatherDropdownScrollState(host);
@@ -10861,14 +11017,15 @@
       await applyHeaderWeatherAutoGeoLocation(host);
 
       const weatherWidget = await loadHeaderWeatherWidgetLoader(host.dataset.widgetSrc);
-      const preciseLocation = host.dataset.weatherLocation || '';
+      const fallbackLocation = host.dataset.weatherLocation || 'Leipzig';
+      const initialLocation = fallbackLocation;
 
       const widgetApi = await weatherWidget.mountWeatherWidget(host, {
         variant: 'header',
         locale: host.dataset.weatherLocale || pageLang,
-        initialLocation: preciseLocation,
-        fallbackLocation: preciseLocation,
-        useGeolocation: !preciseLocation,
+        initialLocation,
+        fallbackLocation,
+        useGeolocation: false,
         minHeight: host.dataset.weatherMinHeight || '100%',
       });
 

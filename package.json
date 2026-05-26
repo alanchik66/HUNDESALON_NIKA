@@ -166,7 +166,7 @@
     "serve": "^14.2.6",
     "stylelint": "^16.1.0",
     "stylelint-config-standard": "^35.0.0",
-    "wrangler": "^4.92.0"
+    "wrangler": "^4.94.0"
   },
   "overrides": {
     "ws": "^8.20.1"
