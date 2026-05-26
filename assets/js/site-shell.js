@@ -5508,6 +5508,19 @@
     valueEl.style.setProperty('max-width', `${blockWidthPx}px`, 'important');
     valueEl.style.setProperty('justify-content', 'space-between', 'important');
     valueEl.style.setProperty('column-gap', '0', 'important');
+
+    // Keep the feels-like right edge optically aligned with the geolocation block right edge.
+    const chipRect = feelsLikeChip.getBoundingClientRect();
+    if (chipRect.width > 0) {
+      const titleRightEdge = Number(labelBox.left) + Number(labelBox.width);
+      const edgeDelta = titleRightEdge - Number(chipRect.right);
+      if (Number.isFinite(edgeDelta)) {
+        const currentMarginLeft = Number.parseFloat(window.getComputedStyle(feelsLikeChip).marginLeft || '0') || 0;
+        const targetMarginLeft = Math.max(-64, Math.min(64, currentMarginLeft + edgeDelta));
+        const roundedMarginLeft = Math.round(targetMarginLeft * 10) / 10;
+        feelsLikeChip.style.setProperty('margin-left', `${roundedMarginLeft}px`, 'important');
+      }
+    }
   }
 
   function runHeaderWeatherPostLayoutPass(callback, frameCount = 2) {
