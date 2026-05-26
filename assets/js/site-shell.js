@@ -197,7 +197,7 @@
   const HEADER_WEATHER_TOGGLE_ARROW_OPEN = 'rotate(0deg)';
   /** Preview moon size (+30% vs backup 8fbeca0 baseline), −15% display trim, −20% owner trim. */
   const HEADER_WEATHER_MOON_DISPLAY_SCALE = 0.85;
-  const HEADER_WEATHER_MOON_SIZE_REDUCTION = 0.8;
+  const HEADER_WEATHER_MOON_SIZE_REDUCTION = 0.68;
   const HEADER_WEATHER_MOON_SIZE_BOOST =
     1.3 * 0.85 * 1.3 * HEADER_WEATHER_MOON_DISPLAY_SCALE * HEADER_WEATHER_MOON_SIZE_REDUCTION;
   const HEADER_WEATHER_MOON_SIZE_FACTOR = 3 * HEADER_WEATHER_MOON_SIZE_BOOST;
@@ -3333,7 +3333,7 @@
 }
 `;
 
-  const WEATHER_WIDGET_ASSET_VERSION = '20260525-moon-fallback-v4';
+  const WEATHER_WIDGET_ASSET_VERSION = '20260525-weather-fixes-v5';
   /** Full mission_2160p30.mp4 timeline (7:38) mapped to each local night window. */
   const HEADER_WEATHER_MOON_VIDEO_DURATION_SEC = 458.233333;
   const HEADER_WEATHER_MOON_DAY_MIN_OPACITY = 0.22;
@@ -3344,8 +3344,8 @@
   const HEADER_WEATHER_ORB_CROSSFADE_MS = 42 * 60 * 1000;
   const HEADER_WEATHER_MOON_VIDEO_FILES = Object.freeze([
     'mission_2160p30_alpha.webm',
-    'mission_2160p30_fallback.mp4',
     'mission_2160p30.mp4',
+    'mission_2160p30_fallback.mp4',
   ]);
 
   const LOCALIZED_ROUTES = new Set([
@@ -4473,8 +4473,10 @@
       return text;
     }
 
-    if (/^\s*\d{1,2}:\d{2}/.test(text)) {
-      return text.replace(/^\s*\d{1,2}:\d{2}/, liveTime);
+    // Replace leading "time + weekday cluster" to avoid endless weekday duplication
+    // like "01:24 · Пн · Пн · Пн" during live clock updates.
+    if (/^\s*\d{1,2}:\d{2}(?:\s*[·•|]\s*[\p{L}\p{M}]{1,6}\.?\s*)*/u.test(text)) {
+      return text.replace(/^\s*\d{1,2}:\d{2}(?:\s*[·•|]\s*[\p{L}\p{M}]{1,6}\.?\s*)*/u, liveTime);
     }
 
     return text.replace(/\d{1,2}:\d{2}/, liveTime);
@@ -9954,7 +9956,9 @@
     stopHeaderWeatherSunScene(overlay);
 
     if (assetConfig.type === 'video-keyed') {
-      if (kind === 'moon' || kind === 'sun') {
+      if (kind === 'moon') {
+        video.loop = true;
+      } else if (kind === 'sun') {
         video.loop = false;
       }
 
@@ -10006,7 +10010,7 @@
                 if (image) {
                   image.hidden = true;
                 }
-                if ((kind === 'moon' || kind === 'sun') && assetConfig.timelineBase) {
+                if (kind === 'sun' && assetConfig.timelineBase) {
                   overlay.__moonTimelineBase = assetConfig.timelineBase;
                   const readTimeline = () => {
                     const base = overlay.__moonTimelineBase;
