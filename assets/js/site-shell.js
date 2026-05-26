@@ -7872,21 +7872,8 @@
       fitHeaderWeatherInlineTextWidth(labelEl, blockWidth, 3.8);
       fitHeaderWeatherInlineTextWidth(prefixEl, prefixMaxWidth, 3.6);
 
-      // Keep "ОЩУЩАЕТСЯ" on the same vertical level as the geolocation eyebrow label.
-      const eyebrowNode = titleBlockNode.querySelector('.weather-header-card__eyebrow');
-      if (eyebrowNode instanceof HTMLElement) {
-        const eyebrowRect = eyebrowNode.getBoundingClientRect();
-        const feelsLabelRect = labelEl.getBoundingClientRect();
-        const levelDelta = eyebrowRect.top - feelsLabelRect.top;
-        if (Number.isFinite(levelDelta)) {
-          const clampedDelta = Math.max(-8, Math.min(8, Math.round(levelDelta * 10) / 10));
-          labelEl.style.setProperty('transform', `translateY(${clampedDelta}px)`, 'important');
-        } else {
-          labelEl.style.setProperty('transform', 'none', 'important');
-        }
-      } else {
-        labelEl.style.setProperty('transform', 'none', 'important');
-      }
+      // Keep label geometry stable; horizontal anchor is handled by chip alignment.
+      labelEl.style.setProperty('transform', 'none', 'important');
     };
 
     const syncFeelsLayoutMetrics = () => {
