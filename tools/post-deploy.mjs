@@ -11,15 +11,19 @@ const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL || '';
 
 async function notifySlack(status, details = '') {
   if (!SLACK_WEBHOOK_URL) return;
-  const emoji = status === 'success' ? ':white_check_mark:' : ':x:';
-  const text = `${emoji} *Deploy ${status}* — hundesalon-nika.com\n${details}\n_${new Date().toISOString()}_`;
+  const ok = status === 'success';
+  const emoji = ok ? ':white_check_mark:' : ':x:';
+  const title = ok ? 'Деплой успешно завершен' : 'Ошибка деплоя';
+  const text = `${emoji} *${title}* — hundesalon-nika.com\n${details}\n_${new Date().toISOString()}_`;
   try {
     await fetch(SLACK_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
     });
-  } catch { /* silent */ }
+  } catch {
+    /* silent */
+  }
 }
 
 function runNpm(script, { optional = false } = {}) {
@@ -50,8 +54,8 @@ try {
   await runNpm('bing:api', { optional: true });
   await runNpm('google:gsc:audit');
   await runNpm('check:openrouter', { optional: true });
-  await notifySlack('success', 'CDN purged, live HTML OK, IndexNow + GSC audit passed.');
+  await notifySlack('success', 'CDN очищен, live HTML в норме, IndexNow и аудит GSC выполнены.');
 } catch (error) {
-  await notifySlack('failed', error.message);
+  await notifySlack('failed', `Детали: ${error.message}`);
   throw error;
 }

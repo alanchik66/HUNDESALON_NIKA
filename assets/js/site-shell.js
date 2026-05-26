@@ -184,10 +184,10 @@
   };
 
   const WEATHER_WIDGET_COPY = {
-    ru: { ariaLabel: 'Виджет погоды салона' },
-    uk: { ariaLabel: 'Віджет погоди салону' },
-    de: { ariaLabel: 'Wetter-Widget des Salons' },
-    en: { ariaLabel: 'Salon weather widget' },
+    ru: { ariaLabel: 'Виджет погоды по вашей геопозиции' },
+    uk: { ariaLabel: 'Віджет погоди за вашою геолокацією' },
+    de: { ariaLabel: 'Wetter-Widget fuer Ihre Geolokation' },
+    en: { ariaLabel: 'Weather widget for your geolocation' },
   };
 
   /** Menu toggle aligned to the gold decorative strip between weather and social bar. */
@@ -4564,10 +4564,7 @@
       }
 
       const escaped = escapeRegExp(token);
-      const tokenPattern = new RegExp(
-        `(^|[\\s·•|,;:/-])${escaped}(?=\\.?($|[\\s·•|,;:/-]))`,
-        'giu'
-      );
+      const tokenPattern = new RegExp(`(^|[\\s·•|,;:/-])${escaped}(?=\\.?($|[\\s·•|,;:/-]))`, 'giu');
       result = result.replace(tokenPattern, '$1');
     });
 
@@ -5458,9 +5455,13 @@
     compactAnchorOffsetPx: 3,
     desktopAnchorOffsetPx: 1,
     rowGapPx: 2,
-    // RU baseline width for identical alignment across locales.
-    compactBlockWidthPx: 62.6,
-    desktopBlockWidthPx: 62.6,
+    // Optical compensation by locale so temperature end visually lands at label end.
+    localeWidthNudgePx: Object.freeze({
+      ru: 0.8,
+      uk: 0.9,
+      de: 0.6,
+      en: 0.5,
+    }),
   });
 
   function fitHeaderWeatherInlineTextWidth(node, maxWidthPx, minFontSizePx = 3.8) {
@@ -5485,16 +5486,16 @@
     }
   }
 
-  function applyHeaderWeatherFeelsReferencePresetLayout({ feelsLikeChip, valueEl, lang, compactPreview }) {
-    if (!(feelsLikeChip instanceof HTMLElement) || !(valueEl instanceof HTMLElement)) {
+  function applyHeaderWeatherFeelsReferencePresetLayout({ feelsLikeChip, valueEl, labelBox, lang }) {
+    if (!(feelsLikeChip instanceof HTMLElement) || !(valueEl instanceof HTMLElement) || !labelBox?.width) {
       return;
     }
 
     const langCode = normalizeLangCode(lang || document.documentElement.lang || 'ru');
-    const baselineWidthPx = compactPreview
-      ? HEADER_WEATHER_FEELS_REFERENCE_PRESET.compactBlockWidthPx
-      : HEADER_WEATHER_FEELS_REFERENCE_PRESET.desktopBlockWidthPx;
+    const nudgeMultiplier = HEADER_WEATHER_FEELS_REFERENCE_PRESET.localeWidthNudgePx[langCode] || 0.8;
+    const baselineWidthPx = 52.5 + nudgeMultiplier;
     const blockWidthPx = Math.max(1, Math.round(Number(baselineWidthPx) * 10) / 10);
+
     feelsLikeChip.dataset.weatherFeelsPreset = HEADER_WEATHER_FEELS_REFERENCE_PRESET.id;
     feelsLikeChip.dataset.weatherFeelsRowLayout = HEADER_WEATHER_FEELS_REFERENCE_PRESET.rowLayout;
     feelsLikeChip.dataset.weatherFeelsLang = langCode;
@@ -7627,9 +7628,9 @@
 
     const tempComputed = tempValueAnchor ? window.getComputedStyle(tempValueAnchor) : null;
     const tempFontSizePx = Math.max(
-      11,
+      10.5,
       Math.min(
-        14,
+        13.5,
         (tempComputed
           ? Number.parseFloat(tempComputed.fontSize) || HEADER_WEATHER_TEMP_VALUE_SIZE_PX
           : HEADER_WEATHER_TEMP_VALUE_SIZE_PX) *
@@ -7728,17 +7729,14 @@
         return;
       }
 
-      const triggerNode = root instanceof ShadowRoot ? root.querySelector('.weather-header-trigger') : null;
-      const triggerHeight =
-        triggerNode instanceof HTMLElement ? Math.round(triggerNode.getBoundingClientRect().height || 0) : 0;
-      const compactPreview = triggerHeight > 0 && triggerHeight <= 92;
       const activeLang = normalizeLangCode(document.documentElement.lang || 'ru');
+      const labelBox = titleBlockNode.getBoundingClientRect();
 
       applyHeaderWeatherFeelsReferencePresetLayout({
         feelsLikeChip,
         valueEl,
+        labelBox,
         lang: activeLang,
-        compactPreview,
       });
 
       const tempWidth = tempEl.getBoundingClientRect().width || 0;
