@@ -4515,16 +4515,66 @@
     return chunks.join(' · ');
   }
 
-  function rewriteHeaderWeatherTimeText(text, liveTime) {
+  function getHeaderWeatherKnownWeekdayTokens(timeZone) {
+    const locale = resolveHeaderWeatherDateLocale();
+    const set = new Set();
+
+    try {
+      for (let dayOffset = -6; dayOffset <= 6; dayOffset += 1) {
+        const date = new Date(getHeaderWeatherNowMs() + dayOffset * 86400000);
+        const weekday = new window.Intl.DateTimeFormat(locale, {
+          timeZone: timeZone || 'UTC',
+          weekday: 'short',
+        }).format(date);
+
+        const normalized = String(weekday || '')
+          .replace(/\.$/, '')
+          .trim()
+          .toLowerCase();
+
+        if (normalized) {
+          set.add(normalized);
+        }
+      }
+    } catch (_) {
+      // Keep an empty set when Intl/timeZone is unavailable.
+    }
+
+    return set;
+  }
+
+  function stripHeaderWeatherWeekdayTokens(text, timeZone) {
+    const source = String(text || '').trim();
+    if (!source) {
+      return source;
+    }
+
+    const knownWeekdays = getHeaderWeatherKnownWeekdayTokens(timeZone);
+    if (!knownWeekdays.size) {
+      return source;
+    }
+
+    const parts = source
+      .split('·')
+      .map(part => part.trim())
+      .filter(Boolean)
+      .filter(part => !knownWeekdays.has(part.replace(/\.$/, '').trim().toLowerCase()));
+
+    return parts.join(' · ');
+  }
+
+  function rewriteHeaderWeatherTimeText(text, liveTime, timeZone) {
     if (!text || !liveTime) {
       return text;
     }
 
-    if (/^\s*\d{1,2}:\d{2}/.test(text)) {
-      return text.replace(/^\s*\d{1,2}:\d{2}/, liveTime);
+    const sanitizedText = stripHeaderWeatherWeekdayTokens(text, timeZone);
+
+    if (/^\s*\d{1,2}:\d{2}/.test(sanitizedText)) {
+      return sanitizedText.replace(/^\s*\d{1,2}:\d{2}/, liveTime);
     }
 
-    return text.replace(/\d{1,2}:\d{2}/, liveTime);
+    return sanitizedText.replace(/\d{1,2}:\d{2}/, liveTime);
   }
 
   function syncHeaderWeatherLiveClock(host) {
@@ -4560,7 +4610,8 @@
 
       const nextText = rewriteHeaderWeatherTimeText(
         node.textContent || '',
-        liveWeekday ? `${liveTime} · ${liveWeekday}` : liveTime
+        liveWeekday ? `${liveTime} · ${liveWeekday}` : liveTime,
+        timeZone
       );
       if (nextText && nextText !== node.textContent) {
         node.textContent = nextText;
