@@ -184,7 +184,7 @@
   };
 
   const WEATHER_WIDGET_COPY = {
-    ru: { ariaLabel: 'Виджет погоды по вашей геопозиции' },
+    ru: { ariaLabel: 'Виджет погоды по вашей геолокации' },
     uk: { ariaLabel: 'Віджет погоди за вашою геолокацією' },
     de: { ariaLabel: 'Wetter-Widget fuer Ihre Geolokation' },
     en: { ariaLabel: 'Weather widget for your geolocation' },
