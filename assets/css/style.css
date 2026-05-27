@@ -11019,10 +11019,14 @@ body.light .social-icons-toggle.is-open {
 @media (width >= 900px) {
   .header {
     --header-menu-pad-y: 1px;
-    --header-menu-icon: 40px;
+    --header-menu-icon: 36px;
     --header-menu-weather-h: 78px;
     --header-menu-col-gap: 16px;
-    --header-burger-logo-pull: 8px;
+    --header-burger-logo-pull: 6px;
+  }
+
+  .header .premium-burger {
+    gap: 4px;
   }
 
   .header .top-row {
