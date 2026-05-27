@@ -78,7 +78,7 @@
   --premium-letter-tight: 0.008em;
   --premium-letter-wide: 0.012em;
   --header-burger-size: 46px;
-  --logo-mark-width: var(--header-burger-size);
+  --logo-mark-width: calc(var(--header-burger-size) * 1.2);
   --home-label-size: calc(var(--logo-mark-width) * 0.245);
   --shadow-sm: 0 8px 20px rgb(0 0 0 / 20%);
   --transition-smooth: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1);
@@ -695,9 +695,9 @@ body.light.player-active .header::before {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--header-burger-size);
-  height: var(--header-burger-size);
-  flex: 0 0 var(--header-burger-size);
+  width: var(--logo-mark-width);
+  height: var(--logo-mark-width);
+  flex: 0 0 var(--logo-mark-width);
   transition: transform 0.3s ease;
 }
 
