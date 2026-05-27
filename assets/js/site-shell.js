@@ -1410,26 +1410,31 @@
   overflow: visible !important;
   contain: none !important;
 }
-
+  row-gap: 0 !important;
 :host([data-weather-variant='header']),
 :host([data-weather-variant='header']) [data-weather-widget-root],
 :host([data-weather-variant='header']) .weather-header-preview {
   contain: none !important;
-}
+  padding-bottom: 0 !important;
 
 :host([data-weather-variant='header']) .weather-header-preview__stars-back.is-night-sky::before,
 :host([data-weather-variant='header']) .weather-header-preview__stars-back.is-night-sky::after,
 .weather-header-preview__stars-back.is-night-sky::before,
-.weather-header-preview__stars-back.is-night-sky::after {
-  content: '' !important;
+  min-height: auto !important;
+  margin-bottom: 0 !important;
   display: block !important;
   position: absolute !important;
   inset: 0 !important;
   pointer-events: none !important;
   z-index: 0 !important;
   opacity: var(--preview-stars-opacity, 0.82) !important;
-  mix-blend-mode: normal !important;
+  margin-top: var(--weather-meta-equal-gap) !important;
+  margin-bottom: var(--weather-meta-equal-gap) !important;
   background-color: transparent !important;
+.weather-header-card__info-panel,
+.weather-header-card__left-stack {
+  row-gap: 0 !important;
+}
   border: none !important;
   box-shadow: none !important;
   filter: none !important;
@@ -1791,8 +1796,8 @@
 
 .weather-header-card__info-panel,
 .weather-header-card__left-stack {
-  --weather-info-title-temp-gap: 2px;
-  --weather-info-location-meta-gap: var(--weather-info-title-temp-gap, 2px);
+  --weather-info-location-meta-gap: 2px;
+  --weather-info-title-temp-gap: var(--weather-info-location-meta-gap, 2px);
   --weather-info-temp-feels-gap: 8px;
   --weather-info-feels-line-gap: 2px;
   --weather-feels-stack-max-height: calc(var(--header-weather-temp-value-size, 22px) * 0.9);
@@ -2289,17 +2294,20 @@
   clip-path: none !important;
 }
 
+.weather-header-card__title-block {
+  row-gap: 0 !important;
+}
+
 
 .weather-header-card__location-row {
   margin: 0 !important;
 }
 
 .weather-header-card__meta {
-  margin-top: var(--weather-info-location-meta-gap, var(--weather-info-title-temp-gap, 2px)) !important;
-  margin-bottom: 0 !important;
+  margin: 0 !important;
 }
 .weather-header-card__location-row {
-  margin-bottom: 1px !important;
+  margin-bottom: 0 !important;
 }
 
 /* Keep top-left typography identical across locales (RU baseline). */
@@ -2310,8 +2318,8 @@
 .weather-header-card__location-row {
   display: flex !important;
   align-items: flex-start !important;
-  min-height: 20px !important;
-  margin-bottom: 3px !important;
+  min-height: auto !important;
+  margin-bottom: 0 !important;
 }
 
 .weather-header-card__location {
@@ -2323,11 +2331,18 @@
 }
 
 .weather-header-card__meta {
+  --weather-meta-equal-gap: 4px;
   font-size: 10px !important;
   line-height: 12px !important;
   letter-spacing: 0.01em !important;
   opacity: 0.8 !important;
-  margin: 0 !important;
+  margin-top: var(--weather-meta-equal-gap, 4px) !important;
+  margin-bottom: var(--weather-meta-equal-gap, 4px) !important;
+}
+
+.weather-header-card__info-panel,
+.weather-header-card__left-stack {
+  row-gap: 0 !important;
 }
 
 .weather-header-card__bottom {
@@ -7663,6 +7678,48 @@
     const tempEl = valueEl?.querySelector('.weather-header-card__feels-temp') || null;
     if (!(valueEl instanceof HTMLElement) || !(prefixEl instanceof HTMLElement) || !(tempEl instanceof HTMLElement)) {
       return;
+    }
+
+    const titleBlockNode =
+      root instanceof ShadowRoot || root instanceof DocumentFragment
+        ? root.querySelector('.weather-header-card__title-block')
+        : null;
+    const infoPanelNode =
+      root instanceof ShadowRoot || root instanceof DocumentFragment
+        ? root.querySelector('.weather-header-card__info-panel, .weather-header-card__left-stack')
+        : null;
+    const locationNode =
+      root instanceof ShadowRoot || root instanceof DocumentFragment
+        ? root.querySelector('.weather-header-card__location')
+        : null;
+    const locationRowNode =
+      root instanceof ShadowRoot || root instanceof DocumentFragment
+        ? root.querySelector('.weather-header-card__location-row')
+        : null;
+    const metaNode =
+      root instanceof ShadowRoot || root instanceof DocumentFragment
+        ? root.querySelector('.weather-header-card__meta')
+        : null;
+
+    if (titleBlockNode instanceof HTMLElement) {
+      titleBlockNode.style.setProperty('display', 'flex', 'important');
+      titleBlockNode.style.setProperty('flex-direction', 'column', 'important');
+      titleBlockNode.style.setProperty('row-gap', '0px', 'important');
+    }
+    if (infoPanelNode instanceof HTMLElement) {
+      infoPanelNode.style.setProperty('row-gap', '0px', 'important');
+    }
+    if (locationRowNode instanceof HTMLElement) {
+      locationRowNode.style.setProperty('margin', '0', 'important');
+      locationRowNode.style.setProperty('min-height', 'auto', 'important');
+    }
+    if (locationNode instanceof HTMLElement) {
+      locationNode.style.setProperty('margin', '0', 'important');
+      locationNode.style.setProperty('padding-bottom', '0px', 'important');
+    }
+    if (metaNode instanceof HTMLElement) {
+      metaNode.style.setProperty('margin-top', '4.4px', 'important');
+      metaNode.style.setProperty('margin-bottom', '3.2px', 'important');
     }
 
     labelEl.style.setProperty('display', 'block', 'important');
