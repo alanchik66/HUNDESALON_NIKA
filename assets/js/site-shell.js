@@ -5270,6 +5270,8 @@
       return;
     }
 
+    markHeaderWeatherInspectableElements(host);
+
     const readings = resolveHeaderWeatherReadings(host);
     if (!readings) {
       return;
@@ -5302,6 +5304,44 @@
         writeHeaderWeatherReadingsCache(host, { pressureMmHg });
       }
     }
+  }
+
+  function markHeaderWeatherInspectableElements(host) {
+    const root = host?.shadowRoot;
+    if (!root) {
+      return;
+    }
+
+    host.setAttribute('data-nika-element', 'header-weather-host');
+    host.closest('.header-weather-shell')?.setAttribute('data-nika-element', 'header-weather-shell');
+
+    const map = [
+      ['.weather-header-trigger', 'weather-trigger'],
+      ['.weather-header-card', 'weather-card'],
+      ['.weather-header-card__eyebrow', 'weather-geolocation-title'],
+      ['.weather-header-card__location', 'weather-location'],
+      ['.weather-header-card__meta', 'weather-time-region'],
+      ['.weather-header-card__temperature', 'weather-temperature'],
+      ['.weather-header-card__condition', 'weather-condition'],
+      ['.weather-header-card__toggle', 'weather-menu-toggle'],
+      ['.weather-header-card__chip--feels-like', 'weather-feels-like'],
+      [
+        ".weather-header-card__chip[data-weather-metric='feels'], .weather-header-card__chip[data-weather-metric='apparent']",
+        'weather-feels-like',
+      ],
+      ['.weather-header-card__chip[data-weather-metric="pressure"]', 'weather-pressure'],
+      ['.weather-header-card__chip[data-weather-metric="humidity"]', 'weather-humidity'],
+      ['.weather-header-dropdown', 'weather-dropdown'],
+    ];
+
+    map.forEach(([selector, marker]) => {
+      root.querySelectorAll(selector).forEach(node => {
+        if (!(node instanceof HTMLElement)) {
+          return;
+        }
+        node.setAttribute('data-nika-element', marker);
+      });
+    });
   }
 
   function scheduleHeaderWeatherReadingsSync(host) {
@@ -5353,6 +5393,7 @@
       });
 
       if (shouldSync) {
+        markHeaderWeatherInspectableElements(host);
         scheduleHeaderWeatherReadingsSync(host);
       }
     });
@@ -10986,6 +11027,8 @@
       return;
     }
 
+    markHeaderWeatherInspectableElements(host);
+
     const observer = new MutationObserver(mutations => {
       const shouldSync = mutations.some(
         mutation => mutation.type === 'attributes' && mutation.attributeName === 'aria-expanded'
@@ -11364,6 +11407,7 @@
       host.closest('.header-weather-shell')?.classList.remove('weather-shell-error');
       host.closest('.header-weather-shell')?.classList.add('weather-shell-ready');
       applyHeaderWeatherTransparency(host);
+      markHeaderWeatherInspectableElements(host);
       bindHeaderWeatherState(host);
       bindHeaderWeatherLayoutObserver(host);
       ensureHeaderWeatherMenuPlacementLock(host);
@@ -11371,10 +11415,14 @@
       syncHeaderWeatherOrbOverlay(host);
       void syncHeaderWeatherPreciseLocationMeta(host);
       window.setTimeout(() => {
+        markHeaderWeatherInspectableElements(host);
         scheduleHeaderBrandColumnAlign(host);
         scheduleHeaderWeatherReadingsSync(host);
       }, 320);
-      window.setTimeout(() => scheduleHeaderWeatherReadingsSync(host), 1200);
+      window.setTimeout(() => {
+        markHeaderWeatherInspectableElements(host);
+        scheduleHeaderWeatherReadingsSync(host);
+      }, 1200);
 
       // Verify that the widget actually rendered interactive content; if not, retry once.
       window.setTimeout(() => {
