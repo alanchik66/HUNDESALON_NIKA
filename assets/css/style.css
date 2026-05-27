@@ -11001,9 +11001,9 @@ body.light .social-icons-toggle.is-open {
    ========================================================= */
 @media (width >= 900px) {
   .header {
-    --header-menu-pad-y: 6px;
+    --header-menu-pad-y: 4px;
     --header-menu-icon: 46px;
-    --header-menu-weather-h: 92px;
+    --header-menu-weather-h: 88px;
     --header-menu-col-gap: 16px;
   }
 
@@ -11108,7 +11108,7 @@ body.light .social-icons-toggle.is-open {
 
 @media (width >= 1281px) {
   .header {
-    --header-menu-weather-h: 92px;
+    --header-menu-weather-h: 88px;
     --header-menu-col-gap: 18px;
   }
 
@@ -11156,7 +11156,7 @@ body.light .social-icons-toggle.is-open {
 
 @media (width >= 900px) {
   :root {
-    --header-weather-panel-h: 92px;
+    --header-weather-panel-h: 88px;
     --header-menu-weather-h: var(--header-weather-panel-h);
   }
 
