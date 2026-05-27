@@ -11721,7 +11721,10 @@
         return;
       }
 
-      const fitScale = Math.max(0.38, Math.min(1.08, availableWidth / naturalWidth));
+      // Never upscale home label above its base typography. This removes intermittent
+      // enlargement when layout reflows or observers run in a different order.
+      const rawFitScale = availableWidth / naturalWidth;
+      const fitScale = Number.isFinite(rawFitScale) ? Math.max(0.38, Math.min(1, rawFitScale)) : 1;
       homeLink.style.setProperty('--home-fit-scale', fitScale.toFixed(3));
     });
   }
