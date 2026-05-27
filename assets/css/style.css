@@ -1595,8 +1595,7 @@ html[lang="de"] .social-home a > span {
 .premium-burger span {
   position: relative;
   display: block;
-  width: 100%;
-  max-width: 100%;
+  width: 24px;
   height: 2.5px;
   border-radius: 999px;
   background:
@@ -1631,7 +1630,7 @@ html[lang="de"] .social-home a > span {
 }
 
 .premium-burger span:nth-child(2) {
-  width: 100%;
+  width: 16px;
   animation-delay: 0.16s;
 }
 
