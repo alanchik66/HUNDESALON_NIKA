@@ -1792,6 +1792,7 @@
 .weather-header-card__info-panel,
 .weather-header-card__left-stack {
   --weather-info-title-temp-gap: 2px;
+  --weather-info-location-meta-gap: var(--weather-info-title-temp-gap, 2px);
   --weather-info-temp-feels-gap: 8px;
   --weather-info-feels-line-gap: 2px;
   --weather-feels-stack-max-height: calc(var(--header-weather-temp-value-size, 22px) * 0.9);
@@ -2288,6 +2289,15 @@
   clip-path: none !important;
 }
 
+
+.weather-header-card__location-row {
+  margin: 0 !important;
+}
+
+.weather-header-card__meta {
+  margin-top: var(--weather-info-location-meta-gap, var(--weather-info-title-temp-gap, 2px)) !important;
+  margin-bottom: 0 !important;
+}
 .weather-header-card__location-row {
   margin-bottom: 1px !important;
 }

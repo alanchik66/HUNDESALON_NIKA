@@ -1193,9 +1193,44 @@ document.addEventListener('DOMContentLoaded', () => {
     headerRoot.style.setProperty('--burger-align-shift', `${clampedShift}px`);
   };
 
+  const syncHomeButtonMaxWidth = () => {
+    const headerRoot = document.querySelector('header.header');
+    if (!headerRoot) {
+      return;
+    }
+
+    const logoWrapper = headerRoot.querySelector('.logo-wrapper');
+    const homeButton = headerRoot.querySelector('.social-home');
+    if (!logoWrapper || !homeButton) {
+      headerRoot.style.removeProperty('--home-max-width');
+      return;
+    }
+
+    const logoRect = logoWrapper.getBoundingClientRect();
+    if (logoRect.width < 1) {
+      headerRoot.style.removeProperty('--home-max-width');
+      return;
+    }
+
+    const maxWidth = Math.max(32, Math.round(logoRect.width));
+    headerRoot.style.setProperty('--home-max-width', `${maxWidth}px`);
+
+    homeButton.style.setProperty('width', `${maxWidth}px`);
+    homeButton.style.setProperty('max-width', `${maxWidth}px`);
+    homeButton.style.setProperty('min-width', '0px');
+
+    const homeLink = homeButton.querySelector('a');
+    if (homeLink instanceof HTMLElement) {
+      homeLink.style.setProperty('width', '100%');
+      homeLink.style.setProperty('max-width', '100%');
+      homeLink.style.setProperty('min-width', '0px');
+    }
+  };
+
   const syncHeaderAdaptiveLayout = () => {
     syncDesktopHeaderWeatherClearance();
     syncDesktopBurgerAxis();
+    syncHomeButtonMaxWidth();
     updatePageScrollbarOffset();
     if (activeMusicPanel?.classList.contains('is-open')) {
       positionPanel(activeMusicPanel);
