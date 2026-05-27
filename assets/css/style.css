@@ -857,12 +857,10 @@ body.site-loaded .logo-img {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   -webkit-text-stroke: 0.22px rgb(41 24 5 / 34%);
-  transform: scaleX(0.98) scaleY(1.08);
+  transform: translateY(0);
   transform-origin: center;
   filter: drop-shadow(0 1px 0 rgb(28 16 3 / 48%)) drop-shadow(0 1px 3px rgb(130 92 36 / 12%));
-  animation:
-    socialHomeGoldShimmer var(--motion-sync-sheen) linear infinite reverse,
-    containedGoldBreath var(--motion-sync-breath) ease-in-out infinite;
+  animation: socialHomeGoldShimmer var(--motion-sync-sheen) linear infinite reverse;
 }
 
 @keyframes socialHomeGoldShimmer {
@@ -898,15 +896,15 @@ html[lang="de"] .social-home a {
 
 html[lang="ru"] .social-home a > span,
 html[lang="uk"] .social-home a > span {
-  transform: scaleX(0.96) scaleY(1.14);
+  transform: translateY(0);
 }
 
 html[lang="en"] .social-home a > span {
-  transform: scaleX(1.01) scaleY(1.04);
+  transform: translateY(0);
 }
 
 html[lang="de"] .social-home a > span {
-  transform: scaleX(0.99) scaleY(1.06);
+  transform: translateY(0);
 }
 
 @keyframes premiumTextSheen {
@@ -4459,20 +4457,20 @@ body.light .social-music-item-icon {
   }
 
   .social-bar .social-home a > span {
-    transform: translateY(var(--social-band-item-shift)) scaleX(0.98) scaleY(1.08);
+    transform: translateY(var(--social-band-item-shift));
   }
 
   html[lang="ru"] .social-bar .social-home a > span,
   html[lang="uk"] .social-bar .social-home a > span {
-    transform: translateY(var(--social-band-item-shift)) scaleX(0.96) scaleY(1.11);
+    transform: translateY(var(--social-band-item-shift));
   }
 
   html[lang="en"] .social-bar .social-home a > span {
-    transform: translateY(var(--social-band-item-shift)) scaleX(1.01) scaleY(1.03);
+    transform: translateY(var(--social-band-item-shift));
   }
 
   html[lang="de"] .social-bar .social-home a > span {
-    transform: translateY(var(--social-band-item-shift)) scaleX(0.99) scaleY(1.05);
+    transform: translateY(var(--social-band-item-shift));
   }
 
   .social-player-wrap {
