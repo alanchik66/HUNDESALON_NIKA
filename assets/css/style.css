@@ -11001,10 +11001,11 @@ body.light .social-icons-toggle.is-open {
    ========================================================= */
 @media (width >= 900px) {
   .header {
-    --header-menu-pad-y: 4px;
+    --header-menu-pad-y: 1px;
     --header-menu-icon: 46px;
-    --header-menu-weather-h: 88px;
+    --header-menu-weather-h: 78px;
     --header-menu-col-gap: 16px;
+    --header-burger-logo-pull: 8px;
   }
 
   .header .top-row {
@@ -11052,7 +11053,7 @@ body.light .social-icons-toggle.is-open {
     height: var(--header-menu-icon) !important;
     flex: 0 0 var(--header-menu-icon) !important;
     margin: 0 !important;
-    transform: translateX(var(--burger-align-shift, 0px)) !important;
+    transform: translateX(calc(var(--burger-align-shift, 0px) - var(--header-burger-logo-pull, 0px))) !important;
   }
 
   .header .top-row > .header-weather-shell,
@@ -11108,7 +11109,7 @@ body.light .social-icons-toggle.is-open {
 
 @media (width >= 1281px) {
   .header {
-    --header-menu-weather-h: 88px;
+    --header-menu-weather-h: 78px;
     --header-menu-col-gap: 18px;
   }
 
@@ -11156,7 +11157,7 @@ body.light .social-icons-toggle.is-open {
 
 @media (width >= 900px) {
   :root {
-    --header-weather-panel-h: 88px;
+    --header-weather-panel-h: 78px;
     --header-menu-weather-h: var(--header-weather-panel-h);
   }
 

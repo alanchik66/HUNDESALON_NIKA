@@ -10479,10 +10479,13 @@
     const shellTop = weatherShell.getBoundingClientRect().top;
     const rawRisePx = Math.max(0, Math.ceil(shellTop - headerTop + 2));
     // Desktop: keep stars/cloud scene stable and avoid over-stretch when layout shifts.
-    const risePx =
-      window.innerWidth >= 900
-        ? Math.max(0, Math.min(18, rawRisePx))
-        : Math.max(0, Math.min(96, rawRisePx));
+    const isDesktop = window.innerWidth >= 900;
+    const risePx = isDesktop ? 0 : Math.max(0, Math.min(96, rawRisePx));
+    if (isDesktop) {
+      host.style.setProperty('--header-weather-cloud-extra-h', '4px');
+    } else {
+      host.style.removeProperty('--header-weather-cloud-extra-h');
+    }
     host.style.setProperty('--header-weather-cloud-rise', `${risePx}px`);
   }
 
