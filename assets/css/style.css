@@ -3587,6 +3587,8 @@ body.light .header-controls .lang-dropdown-menu li:hover .flag {
   height: max(20px, calc(var(--social-bar-icon-size) - 14px));
   flex: 0 0 1px;
   margin: 0 6px;
+  transform: translateX(var(--social-divider-shift-x, 0px));
+  transform-origin: center center;
   border-radius: 999px;
   background: linear-gradient(
     180deg,
@@ -4405,7 +4407,7 @@ body.light .social-music-item-icon {
 
   .social-player-divider {
     height: 20px;
-    transform: translateY(var(--social-band-item-shift));
+    transform: translateX(var(--social-divider-shift-x, 0px)) translateY(var(--social-band-item-shift));
   }
 
   .social-player-toggle {

@@ -1227,10 +1227,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  const syncSocialDividerWithBurger = () => {
+    const headerRoot = document.querySelector('header.header');
+    if (!headerRoot || window.innerWidth <= 899) {
+      headerRoot?.style.removeProperty('--social-divider-shift-x');
+      return;
+    }
+
+    const burger = headerRoot.querySelector('.premium-burger');
+    const divider = headerRoot.querySelector('.social-player-divider');
+    if (!burger || !divider) {
+      headerRoot.style.removeProperty('--social-divider-shift-x');
+      return;
+    }
+
+    const burgerRect = burger.getBoundingClientRect();
+    const dividerRect = divider.getBoundingClientRect();
+    if (burgerRect.width < 1 || dividerRect.width < 1) {
+      headerRoot.style.removeProperty('--social-divider-shift-x');
+      return;
+    }
+
+    const burgerCenterX = burgerRect.left + burgerRect.width / 2;
+    const dividerCenterX = dividerRect.left + dividerRect.width / 2;
+    const currentShift =
+      Number.parseFloat(window.getComputedStyle(headerRoot).getPropertyValue('--social-divider-shift-x')) || 0;
+    const baseDividerCenterX = dividerCenterX - currentShift;
+    const shift = burgerCenterX - baseDividerCenterX;
+    const clampedShift = Math.max(-220, Math.min(220, shift));
+    headerRoot.style.setProperty('--social-divider-shift-x', `${clampedShift.toFixed(2)}px`);
+  };
+
   const syncHeaderAdaptiveLayout = () => {
     syncDesktopHeaderWeatherClearance();
     syncDesktopBurgerAxis();
     syncHomeButtonMaxWidth();
+    syncSocialDividerWithBurger();
     updatePageScrollbarOffset();
     if (activeMusicPanel?.classList.contains('is-open')) {
       positionPanel(activeMusicPanel);
