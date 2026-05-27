@@ -10809,6 +10809,22 @@ body.light .social-icons-toggle.is-open {
     gap: 0 !important;
   }
 
+  html[lang="ru"] .header .social-home a {
+    --home-fit-scale: 0.489 !important;
+  }
+
+  html[lang="uk"] .header .social-home a {
+    --home-fit-scale: 0.475 !important;
+  }
+
+  html[lang="de"] .header .social-home a {
+    --home-fit-scale: 0.382 !important;
+  }
+
+  html[lang="en"] .header .social-home a {
+    --home-fit-scale: 0.61 !important;
+  }
+
   .header .social-home {
     --home-label-size: 17.64px;
 
@@ -11003,7 +11019,7 @@ body.light .social-icons-toggle.is-open {
 @media (width >= 900px) {
   .header {
     --header-menu-pad-y: 1px;
-    --header-menu-icon: 46px;
+    --header-menu-icon: 40px;
     --header-menu-weather-h: 78px;
     --header-menu-col-gap: 16px;
     --header-burger-logo-pull: 8px;

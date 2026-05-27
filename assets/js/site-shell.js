@@ -11753,6 +11753,11 @@
 
       scheduleHeaderBrandColumnAlign();
 
+      if (window.innerWidth >= 900) {
+        homeLink.style.removeProperty('--home-fit-scale');
+        return;
+      }
+
       const homeLabel = homeLink.querySelector('span');
       if (!homeLabel) {
         return;
