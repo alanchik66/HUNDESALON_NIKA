@@ -1796,16 +1796,22 @@
 
 .weather-header-card__info-panel,
 .weather-header-card__left-stack {
+  --weather-info-column-shift-x: 0px;
+  --weather-info-column-shift-y: 0px;
+  --weather-info-column-width: max-content;
   --weather-info-location-meta-gap: 2px;
   --weather-info-title-temp-gap: var(--weather-info-location-meta-gap, 2px);
   --weather-info-temp-feels-gap: 8px;
   --weather-info-feels-line-gap: 2px;
   --weather-feels-stack-max-height: calc(var(--header-weather-temp-value-size, 22px) * 0.9);
-  display: flex !important;
-  flex-direction: column !important;
+  display: grid !important;
+  grid-template-columns: var(--weather-info-column-width, max-content) !important;
+  grid-auto-rows: max-content !important;
   align-items: flex-start !important;
   justify-content: flex-start !important;
-  width: max-content !important;
+  justify-items: flex-start !important;
+  align-content: flex-start !important;
+  width: var(--weather-info-column-width, max-content) !important;
   max-width: calc(100% - 118px) !important;
   margin: 0 !important;
   padding: 0 0 10px 0 !important;
@@ -1814,7 +1820,8 @@
   row-gap: var(--weather-info-title-temp-gap, 2px) !important;
   position: relative !important;
   left: 0 !important;
-  transform: none !important;
+  transform: translate3d(var(--weather-info-column-shift-x, 0px), var(--weather-info-column-shift-y, 0px), 0)
+    !important;
   pointer-events: none !important;
 }
 
@@ -7707,6 +7714,19 @@
       titleBlockNode.style.setProperty('row-gap', '0px', 'important');
     }
     if (infoPanelNode instanceof HTMLElement) {
+      infoPanelNode.style.setProperty('--weather-info-column-shift-x', '0px', 'important');
+      infoPanelNode.style.setProperty('--weather-info-column-shift-y', '0px', 'important');
+      infoPanelNode.style.setProperty('--weather-info-column-scale', '1', 'important');
+      infoPanelNode.style.setProperty('display', 'flex', 'important');
+      infoPanelNode.style.setProperty('flex-direction', 'column', 'important');
+      infoPanelNode.style.setProperty('align-items', 'flex-start', 'important');
+      infoPanelNode.style.setProperty('justify-content', 'flex-start', 'important');
+      infoPanelNode.style.setProperty('transform-origin', 'top left', 'important');
+      infoPanelNode.style.setProperty(
+        'transform',
+        'translate3d(var(--weather-info-column-shift-x, 0px), var(--weather-info-column-shift-y, 0px), 0) scale(var(--weather-info-column-scale, 1))',
+        'important'
+      );
       infoPanelNode.style.setProperty('row-gap', '0px', 'important');
     }
     if (locationRowNode instanceof HTMLElement) {
@@ -7719,7 +7739,7 @@
     }
     if (metaNode instanceof HTMLElement) {
       metaNode.style.setProperty('margin-top', '4.4px', 'important');
-      metaNode.style.setProperty('margin-bottom', '3.2px', 'important');
+      metaNode.style.setProperty('margin-bottom', '4.4px', 'important');
     }
 
     labelEl.style.setProperty('display', 'block', 'important');
