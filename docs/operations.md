@@ -24,7 +24,6 @@ If OpenRouter returns 401 after deploy: `npm run sync:openrouter`, wait ~10s, `n
 | `npm run check:prod` | Live HTML, GSC audit, OpenRouter |
 | `npm run git:push` | Push `main` to GitHub and GitLab |
 | `npm run deploy:full` | Build, deploy Pages, optional purge, IndexNow, prod checks |
-| `npm run slack:test` | Проверка Slack webhook (тестовое сообщение) |
 | `npm run seo:indexnow` | IndexNow: all sitemap URLs on **apex + www** hosts |
 | `npm run bing:index-all` | IndexNow + Bing Submit (100/day) + URL inspection + www property |
 | `npm run seo:post-favicon` | IndexNow + purge + live favicon checks after icon update |
@@ -34,13 +33,6 @@ If OpenRouter returns 401 after deploy: `npm run sync:openrouter`, wait ~10s, `n
 | `npm run bing:automate` | Submit URLs + request indexing via Edge CDP |
 | `npm run bing:api` | Bing URL API (needs `BING_WEBMASTER_API_KEY` in `.dev.vars`) |
 | `npm run sync:openrouter` | Copy key from `.dev.vars` → Pages secret |
-
-## Slack (лиды + деплой)
-
-- Полная инструкция: `docs/slack-setup.md`
-- Входящие заявки с сайта (`/sendmail`) отправляются в Slack при наличии `SLACK_WEBHOOK_URL`.
-- Уведомления деплоя (`npm run deploy:full`) также идут в Slack через `tools/post-deploy.mjs`.
-- Для Cursor Cloud следите, чтобы имя секрета было ровно `SLACK_WEBHOOK_URL` (без `=https...` в имени).
 
 ## Bing favicon / indexing
 
@@ -106,7 +98,7 @@ Resend vs Routing: **Resend** sends mail from the site (`noreply@hundesalon-nika
 
 | Where | Variables |
 |-------|-----------|
-| `.dev.vars` (local, gitignored) | `OPENROUTER_API_KEY`, optional `CLOUDFLARE_API_TOKEN`, optional `LG_TASK_WEBHOOK_SECRET` |
+| `.dev.vars` (local, gitignored) | `OPENROUTER_API_KEY`, optional `CLOUDFLARE_API_TOKEN` |
 | Cloudflare Pages | `OPENROUTER_API_KEY`, `RESEND_API_KEY` |
 | Cursor Cloud Agents | `OPENROUTER_API_KEY`, `CLOUDFLARE_API_TOKEN` (purge) |
 
@@ -114,7 +106,7 @@ Resend vs Routing: **Resend** sends mail from the site (`noreply@hundesalon-nika
 
 - Shared helpers: `functions/_lib/http-security.js` (Origin check, Cache API rate limits, response headers).
 - POST endpoints require a valid `Origin` (localhost allowed for `npm run dev:cf`).
-- Edge rate limits (per IP, 60s window): `/sendmail` 12, `/openrouter` 30, `/seo-generate` 8, `/lg-task` 20.
+- Edge rate limits (per IP, 60s window): `/sendmail` 12, `/openrouter` 30, `/seo-generate` 8.
 - WAF (zone edge): `npm run cf:configure-waf-rate-limits` (needs token with Zone WAF Write) or Dashboard via `npm run cf:open-waf-rate-limits`.
 
 ## Docs

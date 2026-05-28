@@ -3,21 +3,14 @@
 
 # Inference key only (chat). Do NOT use a management/provisioning key here.
 OPENROUTER_API_KEY=
-# Optional OpenRouter model overrides (code defaults are already safe)
-# OPENROUTER_DEFAULT_MODEL=openai/gpt-5.5
-# OPENROUTER_FALLBACK_MODEL=openai/gpt-5.2
 # Optional: create inference keys via API (keep out of OPENROUTER_API_KEY)
 # OPENROUTER_MANAGEMENT_API_KEY=
-# Optional webhook auth for POST /lg-task (Authorization: Bearer <secret>)
-# LG_TASK_WEBHOOK_SECRET=
 # Bing Webmaster → Settings → API Access (optional; IndexNow works without it)
 BING_WEBMASTER_API_KEY=
 RESEND_API_KEY=
 # Zone API token with Cache Purge (create via npm run cf:open-purge-token)
 # Full zone token (purge + rules): npm run cf:ensure-api-token
 CLOUDFLARE_API_TOKEN=
-# Origin CA Replacement Token (alternative source, mapped to CLOUDFLARE_API_TOKEN)
-# CLOUDFLARE_ORIGIN_CA_REPLACEMENT_TOKEN=
 # Or Global API Key (My Profile → API Keys) to auto-create purge token:
 # Optional — auto-create Zone Rules token (npm run cf:ensure-zone-rules-token):
 # Prefer gitignored .cloudflare-global.json (see .cloudflare-global.json.example)

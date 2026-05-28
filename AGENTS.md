@@ -20,8 +20,6 @@
 
 ## Work Rules
 
-- If the owner writes `проф`, run the full professional maintenance flow without extra questions:
-  audit local code and generated assets, check the weather widget on desktop/mobile, remove only verified junk files and duplicates, preserve unrelated user changes, run validation/build/live checks, create a full backup, commit, push to GitHub and GitLab, deploy to Cloudflare Pages, purge cache when credentials allow it, and report any dashboard/service step that needs manual authenticated access.
 - If the request is incomplete, choose the best implementation and complete it.
 - Protect user work: never revert unrelated local changes.
 - Before broad HTML changes, check one representative page per language and the shared shell files.
@@ -89,7 +87,7 @@ Details: `docs/git-workflow.md`. Remotes: `origin`/`github` → GitHub; `gitlab`
 ### Bootstrap (every agent start)
 
 1. `npm install` runs automatically from `environment.json`.
-2. Dev preview: terminal `dev` or `npm run dev` → http://localhost:5500 (root redirects to `/de/`).
+2. Dev preview: terminal `dev` or `npm run dev` → http://localhost:5502 (root redirects to `/de/`).
 3. Cloudflare Pages + Functions locally: `npm run dev:cf` → port 8788 (builds `dist/` first).
 
 ### Validation before deploy

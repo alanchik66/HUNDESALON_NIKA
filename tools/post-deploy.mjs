@@ -21,9 +21,7 @@ async function notifySlack(status, details = '') {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
     });
-  } catch {
-    /* silent */
-  }
+  } catch { /* silent */ }
 }
 
 function runNpm(script, { optional = false } = {}) {

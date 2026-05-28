@@ -79,11 +79,7 @@ async function scanCdp(port, label) {
     ws.close();
     return { label, port, ok: true, tab: t.url, scan: r.result?.value };
   } catch (e) {
-    const msg = String(e?.message || 'unknown');
-    if (/fetch failed|ECONNREFUSED|connect|network/i.test(msg)) {
-      return { label, port, ok: null, skipped: true, reason: 'debug_port_unavailable' };
-    }
-    return { label, port, ok: false, err: msg };
+    return { label, port, ok: false, err: e.message };
   }
 }
 
@@ -105,7 +101,5 @@ for (const { port, label } of [
   console.log(JSON.stringify(r, null, 2));
   console.log('');
 }
-
-console.log('Note: skipped debug ports are informational and do not affect token validity.');
 
 process.exit(isFullToken(audit) ? 0 : 1);
