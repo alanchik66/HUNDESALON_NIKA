@@ -190,8 +190,8 @@
     en: { ariaLabel: 'Weather widget for your geolocation' },
   };
 
-  /** Menu toggle aligned to the gold decorative strip between weather and social bar. */
-  const HEADER_WEATHER_MENU_TOGGLE_BOTTOM = '-6px';
+  /** Menu toggle aligned to the ВЛАЖНОСТЬ label height in the header weather widget. */
+  const HEADER_WEATHER_MENU_TOGGLE_TOP = '85%';
   /** Arrow: left when closed → CW to down when open (cursor demo: слева → вниз). */
   const HEADER_WEATHER_TOGGLE_ARROW_CLOSED = 'rotate(90deg)';
   const HEADER_WEATHER_TOGGLE_ARROW_OPEN = 'rotate(0deg)';
@@ -401,7 +401,7 @@
 
 /* Restore borders for the spinner ring (it needs a circular ring) */
 :host([data-weather-variant='header']) {
-  --header-weather-menu-toggle-bottom: ${HEADER_WEATHER_MENU_TOGGLE_BOTTOM};
+  --header-weather-menu-toggle-top: ${HEADER_WEATHER_MENU_TOGGLE_TOP};
   --header-weather-cloud-rise: 0px;
   --header-weather-cloud-extra-h: 24px;
   --header-weather-text-inset: 0px;
@@ -2019,18 +2019,18 @@
   min-height: auto !important;
   width: max-content !important;
   max-width: max-content !important;
-  padding: 1px !important;
+  padding: 3px 6px !important;
   color: rgba(255, 238, 207, 0.96) !important;
-  font-size: 7px !important;
+  font-size: 8px !important;
   line-height: 1 !important;
   white-space: nowrap !important;
   letter-spacing: 0.14em !important;
   text-transform: uppercase !important;
   border-radius: 999px !important;
-  border: 1px solid rgba(255, 232, 176, 0.22) !important;
+  border: none !important;
   background: linear-gradient(180deg, rgba(255, 235, 193, 0.12), rgba(5, 12, 10, 0.58)) !important;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
-  backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
   overflow: visible !important;
 }
@@ -2048,10 +2048,10 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 5.082px !important;
-  height: 5.082px !important;
+  width: 6.607px !important;
+  height: 6.607px !important;
   position: absolute !important;
-  right: -7.082px !important;
+  right: -8.607px !important;
   top: auto !important;
   bottom: -1px !important;
   margin-top: 0 !important;
@@ -2766,9 +2766,9 @@
   position: absolute !important;
   left: 50% !important;
   right: auto !important;
-  top: auto !important;
-  bottom: var(--header-weather-menu-toggle-bottom, -6px) !important;
-  transform: translateX(-50%) !important;
+  top: var(--header-weather-menu-toggle-top, 50%) !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
   z-index: 130 !important;
   pointer-events: auto !important;
 }
@@ -3408,9 +3408,9 @@
   position: absolute !important;
   left: 50% !important;
   right: auto !important;
-  top: auto !important;
-  bottom: var(--header-weather-menu-toggle-bottom, -6px) !important;
-  transform: translateX(-50%) !important;
+  top: var(--header-weather-menu-toggle-top, 50%) !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
   z-index: 130 !important;
   pointer-events: auto !important;
 }
@@ -7558,9 +7558,9 @@
     toggle.style.setProperty('position', 'absolute', 'important');
     toggle.style.setProperty('left', '50%', 'important');
     toggle.style.setProperty('right', 'auto', 'important');
-    toggle.style.setProperty('top', 'auto', 'important');
-    toggle.style.setProperty('bottom', 'var(--header-weather-menu-toggle-bottom, -6px)', 'important');
-    toggle.style.setProperty('transform', 'translateX(-50%)', 'important');
+    toggle.style.setProperty('top', 'var(--header-weather-menu-toggle-top, 50%)', 'important');
+    toggle.style.setProperty('bottom', 'auto', 'important');
+    toggle.style.setProperty('transform', 'translate(-50%, -50%)', 'important');
     toggle.style.setProperty('z-index', '130', 'important');
     toggle.style.setProperty('margin', '0', 'important');
     toggle.style.setProperty('pointer-events', 'auto', 'important');
@@ -11792,14 +11792,85 @@
 
     langDropdown.dataset.bound = 'true';
 
-    const closeLangDropdown = () => {
+    let openTimerId = null;
+    let closeFlashStartTimerId = null;
+    let closeFlashStopTimerId = null;
+
+    const clearOpenTimer = () => {
+      if (openTimerId !== null) {
+        window.clearTimeout(openTimerId);
+        openTimerId = null;
+      }
+    };
+
+    const clearCloseTimers = () => {
+      if (closeFlashStartTimerId !== null) {
+        window.clearTimeout(closeFlashStartTimerId);
+        closeFlashStartTimerId = null;
+      }
+      if (closeFlashStopTimerId !== null) {
+        window.clearTimeout(closeFlashStopTimerId);
+        closeFlashStopTimerId = null;
+      }
+    };
+
+    const getLangFlashDurations = () => {
+      const isKinescope = document.body.classList.contains('lang-tv-kinescope');
+      return {
+        openMs: isKinescope ? 920 : 1080,
+        closeSettleMs: isKinescope ? 560 : 720,
+        closeFlashMs: isKinescope ? 560 : 720,
+      };
+    };
+
+    const playCloseFlashOnly = () => {
+      clearCloseTimers();
+      langDropdown.classList.remove('closing');
+      const { closeSettleMs, closeFlashMs } = getLangFlashDurations();
+      closeFlashStartTimerId = window.setTimeout(() => {
+        closeFlashStartTimerId = null;
+        // Force reflow to restart close flash on each close action.
+        void langDropdown.offsetWidth;
+        langDropdown.classList.add('closing');
+        closeFlashStopTimerId = window.setTimeout(() => {
+          langDropdown.classList.remove('closing');
+          closeFlashStopTimerId = null;
+        }, closeFlashMs + 40);
+      }, closeSettleMs + 20);
+    };
+
+    const closeLangDropdown = ({ withCloseFlash = true } = {}) => {
+      clearOpenTimer();
       langDropdown.classList.remove('open');
+      langDropdown.classList.remove('opening');
       langBtn.setAttribute('aria-expanded', 'false');
+      if (withCloseFlash) {
+        playCloseFlashOnly();
+      } else {
+        clearCloseTimers();
+        langDropdown.classList.remove('closing');
+      }
     };
 
     const openLangDropdown = () => {
-      langDropdown.classList.add('open');
+      if (langDropdown.classList.contains('open') || langDropdown.classList.contains('opening')) {
+        return;
+      }
+
+      clearCloseTimers();
+      langDropdown.classList.remove('closing');
+      langDropdown.classList.add('opening');
       langBtn.setAttribute('aria-expanded', 'true');
+
+      const { openMs } = getLangFlashDurations();
+      openTimerId = window.setTimeout(() => {
+        openTimerId = null;
+        if (!langDropdown.classList.contains('opening')) {
+          return;
+        }
+        langDropdown.classList.remove('opening');
+        langDropdown.classList.add('open');
+      }, openMs);
     };
 
     langBtn.setAttribute('aria-haspopup', 'menu');
@@ -11897,7 +11968,7 @@
       item.setAttribute('role', 'menuitem');
 
       const navigateToLanguage = async () => {
-        closeLangDropdown();
+        closeLangDropdown({ withCloseFlash: false });
         const lang = item.getAttribute('data-lang');
         const nextUrl = lang ? buildLanguageUrl(context, lang) : null;
         if (!nextUrl) {

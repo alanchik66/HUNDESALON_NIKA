@@ -752,7 +752,6 @@ body.site-loaded .logo-img {
     --nav-pill-radius: 14px;
     --nav-pill-blur: 18px;
   }
-
 }
 
 .social-home {
@@ -2789,7 +2788,10 @@ body.light .dropdown-menu a:hover {
 }
 
 .header-controls .language-dropdown {
+  position: relative;
   overflow: visible;
+  isolation: isolate;
+  z-index: 4200;
 }
 
 @media (width >= 1281px) {
@@ -3085,9 +3087,9 @@ body.light .theme-btn::before {
 
 .header-controls .lang-dropdown-btn i:last-child {
   order: 1;
-  width: 6.534px;
-  min-width: 6.534px;
-  height: 6.534px;
+  width: 6.607px;
+  min-width: 6.607px;
+  height: 6.607px;
   font-size: 0;
   margin-left: 0;
   margin-right: 2px;
@@ -3134,52 +3136,75 @@ body.light .theme-btn::before {
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
+  display: block;
   background:
     linear-gradient(
       180deg,
-      rgb(255 255 255 / 12%) 0%,
-      rgb(255 255 255 / 4%) 18%,
-      rgb(13 15 21 / 42%) 58%,
-      rgb(10 12 18 / 56%) 100%
+      rgb(222 245 229 / 19%) 0%,
+      rgb(150 214 179 / 14%) 14%,
+      rgb(14 36 30 / 91%) 52%,
+      rgb(7 22 18 / 97%) 100%
     ),
     radial-gradient(
-      circle at 14% 10%,
-      rgb(255 243 210 / 14%) 0%,
-      rgb(255 243 210 / 4%) 18%,
-      rgb(255 243 210 / 0%) 38%
+      circle at 14% 12%,
+      rgb(168 231 190 / 21%) 0%,
+      rgb(168 231 190 / 11%) 20%,
+      rgb(168 231 190 / 0%) 42%
     ),
     radial-gradient(
       circle at 82% 16%,
-      rgb(197 238 255 / 8%) 0%,
-      rgb(197 238 255 / 2.5%) 20%,
-      rgb(197 238 255 / 0%) 42%
+      rgb(110 177 154 / 23%) 0%,
+      rgb(110 177 154 / 11%) 22%,
+      rgb(110 177 154 / 0%) 44%
+    ),
+    conic-gradient(
+      from 210deg at 50% 50%,
+      rgb(80 152 125 / 12%) 0deg,
+      rgb(121 197 164 / 8%) 64deg,
+      rgb(22 58 46 / 12%) 146deg,
+      rgb(92 166 138 / 10%) 238deg,
+      rgb(80 152 125 / 12%) 360deg
     ),
     linear-gradient(
       140deg,
-      rgb(255 236 184 / 5%) 0%,
-      rgb(255 255 255 / 1.6%) 28%,
-      rgb(0 0 0 / 8%) 100%
+      rgb(237 215 156 / 9%) 0%,
+      rgb(210 233 216 / 6%) 34%,
+      rgb(0 0 0 / 30%) 100%
     );
-  backdrop-filter: blur(26px) saturate(1.34);
-  backdrop-filter: blur(26px) saturate(1.34);
-  border: none;
+  backdrop-filter: blur(34px) saturate(1.08) brightness(0.74);
+  -webkit-backdrop-filter: blur(34px) saturate(1.08) brightness(0.74);
+  border: 1px solid rgb(157 226 186 / 42%);
   border-radius: 18px;
   padding: 5px;
   min-width: 130px;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-12px) scale(0.98);
+  transform: translate3d(0, 0, 0) scale(var(--lang-tv-start-scale, 0.22));
+  transform-origin: 50% 50%;
+  clip-path: inset(
+    var(--lang-tv-point-inset-y, 49%) var(--lang-tv-point-inset-x, 50%)
+      var(--lang-tv-point-inset-y, 49%) var(--lang-tv-point-inset-x, 50%) round 999px
+  );
   transition:
-    opacity 0.3s cubic-bezier(0.2, 0.9, 0.4, 1),
-    visibility 0.3s ease,
-    transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1);
+    opacity calc(var(--lang-tv-duration, 0.56s) * 0.74)
+      var(--lang-tv-ease, cubic-bezier(0.18, 0.92, 0.22, 1)),
+    transform var(--lang-tv-duration, 0.56s) var(--lang-tv-ease, cubic-bezier(0.18, 0.92, 0.22, 1)),
+    filter var(--lang-tv-duration, 0.56s) var(--lang-tv-ease, cubic-bezier(0.18, 0.92, 0.22, 1)),
+    clip-path var(--lang-tv-duration, 0.56s) var(--lang-tv-ease, cubic-bezier(0.18, 0.92, 0.22, 1)),
+    visibility 0s linear var(--lang-tv-duration, 0.56s);
+  transition-delay: 0s, 0s, 0s, 0s, var(--lang-tv-flash-stage, 0s);
   pointer-events: none;
   box-shadow:
-    0 28px 64px rgb(0 0 0 / 34%),
-    inset 0 1px 0 rgb(255 255 255 / 12%),
-    inset 0 -14px 32px rgb(0 0 0 / 8%);
-  z-index: 2100;
+    0 24px 56px rgb(2 10 8 / 64%),
+    0 12px 28px rgb(14 68 51 / 52%),
+    inset 0 1px 0 rgb(233 246 236 / 20%),
+    inset 0 0 0 1px rgb(113 193 156 / 34%),
+    inset 0 0 18px rgb(108 189 152 / 16%),
+    inset 0 -20px 34px rgb(0 0 0 / 36%);
+  z-index: 5200;
   overflow: hidden;
+  filter: blur(var(--lang-tv-start-blur, 3px)) saturate(var(--lang-tv-start-saturate, 0.74))
+    brightness(var(--lang-tv-start-brightness, 0.68)) contrast(var(--lang-tv-start-contrast, 1.16));
 }
 
 .header-controls .lang-dropdown-menu::before {
@@ -3190,44 +3215,144 @@ body.light .theme-btn::before {
   background:
     linear-gradient(
       135deg,
-      rgb(255 255 255 / 12%) 0%,
-      rgb(255 255 255 / 4.5%) 22%,
+      rgb(223 244 230 / 20%) 0%,
+      rgb(180 221 194 / 14%) 24%,
       rgb(255 255 255 / 0%) 44%
     ),
     linear-gradient(
       180deg,
-      rgb(255 255 255 / 4%) 0%,
-      rgb(255 255 255 / 1.2%) 28%,
+      rgb(205 232 214 / 12%) 0%,
+      rgb(205 232 214 / 5%) 30%,
       rgb(255 255 255 / 0%) 58%
-    );
+    ),
+    linear-gradient(150deg, rgb(122 199 161 / 16%) 0%, rgb(122 199 161 / 0%) 52%),
+    repeating-linear-gradient(180deg, rgb(173 226 195 / 6%) 0 1px, rgb(255 255 255 / 0%) 1px 4px);
   pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.52;
+  transition:
+    opacity calc(var(--lang-tv-duration, 0.56s) * 0.7)
+      var(--lang-tv-ease, cubic-bezier(0.18, 0.92, 0.22, 1)),
+    background-position calc(var(--lang-tv-duration, 0.56s) * 0.8) linear;
 }
 
 .header-controls .lang-dropdown-menu::after {
   content: "";
   position: absolute;
-  inset: auto 10% -28%;
-  height: 48%;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgb(255 235 182 / 12%) 0%,
-    rgb(255 235 182 / 3.5%) 32%,
-    rgb(255 235 182 / 0%) 68%
-  );
-  filter: blur(16px);
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      180deg,
+      rgb(235 252 242 / 0%) 0%,
+      rgb(235 252 242 / 0%) 43%,
+      rgb(235 252 242 / 72%) 49%,
+      rgb(235 252 242 / 72%) 51%,
+      rgb(235 252 242 / 0%) 57%,
+      rgb(235 252 242 / 0%) 100%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgb(232 252 240 / 72%) 0%,
+      rgb(192 241 218 / 34%) 38%,
+      rgb(160 228 194 / 0%) 74%
+    );
+  mix-blend-mode: normal;
+  filter: blur(8px) brightness(1.62) saturate(1.22);
+  opacity: 0;
+  transform-origin: 50% 50%;
+  transform: scale(0.22, 0.02);
   pointer-events: none;
 }
 
+/* Independent flash layer so the power-on effect remains visible before menu reveal. */
+.header-controls .language-dropdown::after {
+  content: "";
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 142px;
+  height: 162px;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0%) 0%,
+      rgb(255 255 255 / 0%) 42%,
+      rgb(244 255 248 / 88%) 49%,
+      rgb(244 255 248 / 88%) 51%,
+      rgb(255 255 255 / 0%) 58%,
+      rgb(255 255 255 / 0%) 100%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgb(236 255 244 / 78%) 0%,
+      rgb(199 245 223 / 34%) 38%,
+      rgb(199 245 223 / 0%) 74%
+    );
+  opacity: 0;
+  transform: scale(0.2, 0.02);
+  transform-origin: 50% 50%;
+  filter: blur(11px) brightness(1.42) saturate(1.16);
+  mix-blend-mode: normal;
+  pointer-events: none;
+  z-index: 5255;
+}
+
 .header-controls .language-dropdown.open .lang-dropdown-menu {
+  display: block;
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  transform: translateY(0) scale(1);
+  transform: translate3d(0, 0, 0) scale(1);
+  clip-path: inset(0 0 0 0 round 18px);
+  filter: blur(0) saturate(1) brightness(1) contrast(1);
+  transition-delay: 0s, 0s, 0s, 0s, 0s;
+}
+
+.header-controls .language-dropdown.open .lang-dropdown-menu::before {
+  opacity: 0.66;
+  animation: langTvScanColor 1.25s steps(16, end) infinite;
+}
+
+.header-controls .language-dropdown.open .lang-dropdown-menu::after {
+  animation: none;
+}
+
+.header-controls .language-dropdown.opening::after {
+  animation: langTvContainerFlashClose 0.64s cubic-bezier(0.24, 0.86, 0.32, 1) 1;
+}
+
+body.lang-tv-lamp .header-controls .language-dropdown.open .lang-dropdown-menu::after {
+  animation: none;
+}
+
+body.lang-tv-kinescope .header-controls .language-dropdown.open .lang-dropdown-menu::after {
+  animation: none;
+}
+
+body.lang-tv-lamp .header-controls .language-dropdown.opening::after {
+  animation: langTvContainerFlashClose 0.72s cubic-bezier(0.24, 0.86, 0.32, 1) 1;
+}
+
+body.lang-tv-kinescope .header-controls .language-dropdown.opening::after {
+  animation: langTvContainerFlashClose 0.56s cubic-bezier(0.22, 0.9, 0.28, 1) 1;
+}
+
+.header-controls .language-dropdown.closing::after {
+  animation: langTvContainerFlashOpen 0.72s cubic-bezier(0.2, 0.84, 0.24, 1) 1;
+}
+
+body.lang-tv-lamp .header-controls .language-dropdown.closing::after {
+  animation: langTvContainerFlashOpen 1.08s cubic-bezier(0.2, 0.84, 0.24, 1) 1;
+}
+
+body.lang-tv-kinescope .header-controls .language-dropdown.closing::after {
+  animation: langTvContainerFlashOpen 0.92s cubic-bezier(0.14, 0.92, 0.18, 1) 1;
 }
 
 .header-controls .language-dropdown.open {
-  z-index: 2600;
+  z-index: 5300;
 }
 
 .header-controls .lang-dropdown-menu li {
@@ -3246,26 +3371,181 @@ body.light .theme-btn::before {
   gap: 6px;
   font-size: 13px;
   font-weight: 540;
-  color: var(--text-dark);
-  border: none;
-  background: linear-gradient(135deg, rgb(255 255 255 / 6%) 0%, rgb(255 255 255 / 2%) 100%);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
+  color: rgb(228 224 216);
+  border: 1px solid rgb(138 203 170 / 24%);
+  background:
+    linear-gradient(
+      135deg,
+      rgb(174 230 198 / 14%) 0%,
+      rgb(174 230 198 / 8%) 26%,
+      rgb(9 30 24 / 58%) 100%
+    ),
+    rgb(6 24 19 / 80%);
+  box-shadow: inset 0 1px 0 rgb(237 247 241 / 8%);
+  text-shadow: 0 1px 0 rgb(0 0 0 / 30%);
 }
 
 .header-controls .lang-dropdown-menu li:hover {
   background:
     linear-gradient(
       135deg,
-      rgb(255 244 216 / 12%) 0%,
-      rgb(255 244 216 / 4%) 28%,
-      rgb(255 244 216 / 2%) 100%
+      rgb(207 245 221 / 22%) 0%,
+      rgb(207 245 221 / 11%) 30%,
+      rgb(207 245 221 / 6%) 100%
     ),
-    rgb(198 161 91 / 8%);
+    rgb(40 92 71 / 44%);
   color: var(--accent-gold);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 8%),
-    0 8px 20px rgb(0 0 0 / 16%);
+    inset 0 1px 0 rgb(255 255 255 / 16%),
+    inset 0 0 0 1px rgb(160 221 189 / 38%),
+    0 0 0 1px rgb(128 201 166 / 22%),
+    0 8px 20px rgb(0 0 0 / 24%);
   transform: translateX(2px) translateY(-1px);
+}
+
+@keyframes langTvScanColor {
+  0% {
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0;
+    opacity: 0.58;
+  }
+
+  45% {
+    background-position:
+      0 0,
+      0 -1px,
+      0 2px,
+      0 6px;
+    opacity: 0.68;
+  }
+
+  100% {
+    background-position:
+      0 0,
+      0 -2px,
+      0 4px,
+      0 12px;
+    opacity: 0.62;
+  }
+}
+
+@keyframes langTvPowerOnLamp {
+  0% {
+    opacity: 0;
+    transform: scale(0.26, 0.025);
+    filter: blur(18px) brightness(1.18);
+  }
+
+  22% {
+    opacity: 0.92;
+    transform: scale(1.03, 0.1);
+    filter: blur(9px) brightness(1.14);
+  }
+
+  56% {
+    opacity: 0.54;
+    transform: scale(1.01, 0.9);
+    filter: blur(3px) brightness(1.06);
+  }
+
+  78% {
+    opacity: 0.84;
+    transform: scale(1.04, 1.03);
+    filter: blur(6px) brightness(1.2);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1, 1);
+    filter: blur(1px) brightness(1);
+  }
+}
+
+@keyframes langTvPowerOnKinescope {
+  0% {
+    opacity: 0;
+    transform: scale(0.16, 0.012);
+    filter: blur(14px) brightness(1.38) contrast(1.36);
+  }
+
+  16% {
+    opacity: 1;
+    transform: scale(1.06, 0.035);
+    filter: blur(6px) brightness(1.3) contrast(1.28);
+  }
+
+  42% {
+    opacity: 0.58;
+    transform: scale(1.02, 0.92);
+    filter: blur(2.5px) brightness(1.08) contrast(1.16);
+  }
+
+  74% {
+    opacity: 0.9;
+    transform: scale(1.05, 1.04);
+    filter: blur(5px) brightness(1.24) contrast(1.24);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1, 1);
+    filter: blur(1px) brightness(1) contrast(1);
+  }
+}
+
+@keyframes langTvContainerFlashOpen {
+  0% {
+    opacity: 0;
+    transform: scale(0.2, 0.02);
+    filter: blur(10px) brightness(1.18) saturate(1.06);
+  }
+
+  28% {
+    opacity: 0.98;
+    transform: scale(1.06, 0.12);
+    filter: blur(5px) brightness(1.78) saturate(1.24);
+  }
+
+  62% {
+    opacity: 0.44;
+    transform: scale(1.02, 0.84);
+    filter: blur(3px) brightness(1.2) saturate(1.1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1, 1);
+    filter: blur(1px) brightness(1);
+  }
+}
+
+@keyframes langTvContainerFlashClose {
+  0% {
+    opacity: 0;
+    transform: scale(0.9, 0.9);
+    filter: blur(2px) brightness(1.02) saturate(1.02);
+  }
+
+  40% {
+    opacity: 0.98;
+    transform: scale(1.05, 1.02);
+    filter: blur(4px) brightness(1.58) saturate(1.18);
+  }
+
+  78% {
+    opacity: 0.52;
+    transform: scale(1.02, 1.01);
+    filter: blur(2px) brightness(1.26) saturate(1.12);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1, 1);
+    filter: blur(1px) brightness(1);
+  }
 }
 
 .header-controls .lang-dropdown-menu li + li {
@@ -3533,6 +3813,12 @@ body.light .header-controls .lang-dropdown-menu li:hover .flag {
     right: auto;
     left: 0;
     min-width: 124px;
+  }
+
+  .header-controls .language-dropdown::after {
+    right: auto;
+    left: 0;
+    width: 132px;
   }
 }
 
@@ -4405,7 +4691,8 @@ body.light .social-music-item-icon {
 
   .social-player-divider {
     height: 20px;
-    transform: translateX(var(--social-divider-shift-x, 0px)) translateY(var(--social-band-item-shift));
+    transform: translateX(var(--social-divider-shift-x, 0px))
+      translateY(var(--social-band-item-shift));
   }
 
   .social-player-toggle {
@@ -8991,6 +9278,9 @@ body.light .nika-tooltip--visible {
   place-self: center end;
   justify-content: end;
   gap: 10px;
+  z-index: 4100;
+  isolation: isolate;
+  overflow: visible !important;
 }
 
 .header .top-row > .header-controls > * {
@@ -9167,9 +9457,9 @@ body.light .nika-tooltip--visible {
   }
 
   .header .top-row > .header-controls .lang-dropdown-btn i:last-child {
-    width: 7.2px;
-    min-width: 7.2px;
-    height: 7.2px;
+    width: 6.607px;
+    min-width: 6.607px;
+    height: 6.607px;
   }
 }
 
@@ -10192,6 +10482,43 @@ body.light .social-icons-toggle.is-open {
   pointer-events: auto;
 }
 
+/* Final authority: language dropdown must always open above the full header stack. */
+.header .top-row > .header-controls {
+  z-index: 4100 !important;
+  isolation: isolate !important;
+  overflow: visible !important;
+}
+
+.header .header-controls .language-dropdown {
+  position: relative !important;
+  z-index: 4200 !important;
+  isolation: isolate !important;
+  overflow: visible !important;
+}
+
+.header .header-controls .language-dropdown .lang-dropdown-menu {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.header .header-controls .language-dropdown.open {
+  z-index: 5300 !important;
+}
+
+.header .header-controls .language-dropdown.open .lang-dropdown-menu {
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+/* When language menu is open, force top-row above social strip/icons. */
+.header:has(.header-controls .language-dropdown.open) .top-row {
+  z-index: 96 !important;
+}
+
+.header:has(.header-controls .language-dropdown.open) .social-bar {
+  z-index: 40 !important;
+}
+
 .social-service-picker[hidden] {
   display: none !important;
 }
@@ -11019,10 +11346,23 @@ body.light .social-icons-toggle.is-open {
 @media (width >= 900px) {
   .header {
     --header-menu-pad-y: 1px;
+    /* Keep 1px on regular desktop, then scale side inset smoothly on ultra-wide. */
+    --header-menu-pad-x: clamp(1px, calc((100vw - 1600px) * 0.015 + 1px), 12px);
     --header-menu-icon: 36px;
     --header-menu-weather-h: 78px;
     --header-menu-col-gap: 16px;
-    --header-burger-logo-pull: 6px;
+    --header-burger-logo-pull: 10px;
+    /* Default TV-like profile: smooth premium motion. */
+    --lang-tv-duration: 0.62s;
+    --lang-tv-ease: cubic-bezier(0.2, 0.86, 0.24, 1);
+    --lang-tv-start-scale: 0.24;
+    --lang-tv-start-blur: 3px;
+    --lang-tv-start-saturate: 0.74;
+    --lang-tv-start-brightness: 0.68;
+    --lang-tv-start-contrast: 1.16;
+    --lang-tv-point-inset-y: 50%;
+    --lang-tv-point-inset-x: 50%;
+    --lang-tv-flash-stage: 0.72s;
   }
 
   .header .premium-burger {
@@ -11037,13 +11377,15 @@ body.light .social-icons-toggle.is-open {
       var(--header-menu-icon)
       minmax(280px, 1fr)
       max-content
-      max-content !important;
+      minmax(max-content, 1fr) !important;
     align-items: center !important;
     justify-items: stretch !important;
     column-gap: var(--header-menu-col-gap) !important;
     row-gap: 0 !important;
     padding-top: var(--header-menu-pad-y) !important;
     padding-bottom: var(--header-menu-pad-y) !important;
+    padding-left: var(--header-menu-pad-x) !important;
+    padding-right: var(--header-menu-pad-x) !important;
     min-height: calc(var(--header-menu-weather-h) + var(--header-menu-pad-y) * 2) !important;
     overflow: visible !important;
   }
@@ -11074,7 +11416,9 @@ body.light .social-icons-toggle.is-open {
     height: var(--header-menu-icon) !important;
     flex: 0 0 var(--header-menu-icon) !important;
     margin: 0 !important;
-    transform: translateX(calc(var(--burger-align-shift, 0px) - var(--header-burger-logo-pull, 0px))) !important;
+    transform: translateX(
+      calc(var(--burger-align-shift, 0px) - var(--header-burger-logo-pull, 0px))
+    ) !important;
   }
 
   .header .top-row > .header-weather-shell,
@@ -11122,9 +11466,29 @@ body.light .social-icons-toggle.is-open {
     grid-area: controls !important;
     align-self: center !important;
     justify-self: end !important;
+    width: max-content !important;
+    display: grid !important;
+    grid-template-areas: "lang booking theme" !important;
+    grid-template-columns: repeat(3, max-content) !important;
+    align-items: center !important;
     margin: 0 !important;
     transform: none !important;
     gap: 10px !important;
+  }
+
+  .header .top-row > .header-controls .language-dropdown {
+    grid-area: lang !important;
+    justify-self: start !important;
+  }
+
+  .header .top-row > .header-controls .header-online-btn {
+    grid-area: booking !important;
+    justify-self: start !important;
+  }
+
+  .header .top-row > .header-controls .theme-btn {
+    grid-area: theme !important;
+    justify-self: end !important;
   }
 }
 
@@ -11140,7 +11504,33 @@ body.light .social-icons-toggle.is-open {
       var(--header-menu-icon)
       minmax(320px, 1fr)
       max-content
-      max-content !important;
+      minmax(max-content, 1fr) !important;
+  }
+}
+
+@media (width >= 900px) {
+  /* Lamp mode: softer flash and wider line */
+  body.lang-tv-lamp .header {
+    --lang-tv-duration: 0.72s;
+    --lang-tv-flash-stage: 1.08s;
+    --lang-tv-ease: cubic-bezier(0.2, 0.84, 0.24, 1);
+    --lang-tv-start-scale: 0.28;
+    --lang-tv-start-blur: 2.8px;
+    --lang-tv-start-saturate: 0.78;
+    --lang-tv-start-brightness: 0.72;
+    --lang-tv-start-contrast: 1.1;
+  }
+
+  /* Kinescope mode: sharper flash and stronger contrast */
+  body.lang-tv-kinescope .header {
+    --lang-tv-duration: 0.56s;
+    --lang-tv-flash-stage: 0.92s;
+    --lang-tv-ease: cubic-bezier(0.14, 0.92, 0.18, 1);
+    --lang-tv-start-scale: 0.18;
+    --lang-tv-start-blur: 3.2px;
+    --lang-tv-start-saturate: 0.64;
+    --lang-tv-start-brightness: 0.62;
+    --lang-tv-start-contrast: 1.24;
   }
 }
 
