@@ -5,7 +5,6 @@
     "esbenp.prettier-vscode",
     "stylelint.vscode-stylelint",
     "htmlhint.vscode-htmlhint",
-
     // ─── HTML / CSS / JS помощники ────────────────────────────────
     "ecmel.vscode-html-css",
     "zignd.html-css-class-completion",
@@ -14,37 +13,30 @@
     "formulahendry.auto-close-tag",
     "formulahendry.auto-rename-tag",
     "naumovs.color-highlight",
-
     // ─── QA / тестирование ──────────────────────────────────────────
     "ms-playwright.playwright",
-    "webhint.vscode-webhint",
-
     // ─── Git ──────────────────────────────────────────────────────
     "eamodio.gitlens",
     "mhutchie.git-graph",
-
     // ─── Проверка орфографии (DE / EN / RU / UK) ──────────────────
     "streetsidesoftware.code-spell-checker",
     "streetsidesoftware.code-spell-checker-german",
     "streetsidesoftware.code-spell-checker-russian",
     "streetsidesoftware.code-spell-checker-ukrainian",
-
     // ─── PowerShell ─────────────────────────────────────────────────
     "ms-vscode.powershell",
-
     // ─── AI ─────────────────────────────────────────────────────────
-    "github.copilot",
-    "github.copilot-chat",
-
     // ─── Cloudflare Pages / Workers bindings ──────────────────────
     "cloudflare.cloudflare-workers-bindings-extension",
-
     // ─── Утилиты ────────────────────────────────────────────────────
     "editorconfig.editorconfig",
     "mikestead.dotenv",
     "yzhang.markdown-all-in-one"
   ],
   "unwantedRecommendations": [
+    "github.copilot",
+    "github.copilot-chat",
+    "webhint.vscode-webhint",
     "ritwickdey.liveserver",
     "hookyqr.beautify"
   ]

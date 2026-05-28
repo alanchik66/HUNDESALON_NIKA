@@ -15,10 +15,6 @@
 
 ## Маршрутизация задач → команды
 
-## Команда владельца `проф`
-
-Если владелец пишет `проф`, выполнять полный профессиональный цикл: аудит кода, ассетов, локалей, виджета погоды, мусорных файлов и дублей; исправление найденных ошибок без лишних вопросов; `npm run validate`; браузерный smoke desktop/mobile; `npm run build`; live-проверки; полный backup; commit; push в GitHub и GitLab; Cloudflare Pages deploy; cache purge и post-deploy проверки при наличии токенов. Если Cloudflare Dashboard, Resend или другой внешний кабинет требует интерактивной авторизации, зафиксировать это отдельно и продолжить всё, что доступно через локальные CLI/API.
-
 | Задача | Команда |
 |--------|---------|
 | Правка UI/вёрстки | Правки в `assets/*` + 4 локали; `npm run lint` |
@@ -46,9 +42,25 @@
 
 Пути skills у владельца: `~/.agents/skills/hundesalon-*`.
 
-## Погода — эталон °C
+## GitLens 18.0 (релиз 2026-05-27) — что внедрено
 
-Везде на сайте: **`19°C`** = число + сразу **°** + латинская **C**, **без пробела** (не `19 °C`, не `° С`, не кириллическая «С»). Константа: `HEADER_WEATHER_CELSIUS_SUFFIX`, формат: `formatHeaderWeatherCelsiusText()` в `assets/js/site-shell.js`.
+Практический ежедневный сценарий: `docs/gitlens-18-daily-checklist.md`
+
+1. Commit Graph используется как основная рабочая поверхность (detials panel справа).
+2. Включены Experimental-панели для агентного потока:
+	- Agent Kanban (`gitlens.graph.experimental.kanban.enabled`)
+	- Visualizations/Treemap (`gitlens.graph.experimental.visualizations.enabled`)
+3. Для AI-функций GitLens добавлены безопасные исключения контекста:
+	- через `gitlens.ai.exclude.files` в workspace settings
+	- через корневой `.aiignore`
+4. Interactive Rebase закреплен в режиме открытия `auto` (`gitlens.rebaseEditor.openBehavior`).
+
+### Операционный ритуал для задач с git/review
+
+1. Открыть Commit Graph и сфокусировать рабочую ветку.
+2. Перед коммитом запускать AI Review/Compose из Graph Details (если менялось несколько файлов).
+3. Для PR-потока проверять Launchpad и Agent Sessions, чтобы не пропускать `Needs Input`.
+4. Для параллельных задач использовать worktree-first подход (не смешивать разные задачи в одном дереве).
 
 ## Файлы — не трогать без причины
 

@@ -1,0 +1,16 @@
+# GitLens AI context exclusions (v17.10+)
+# Prevent secrets and build artifacts from entering AI prompts.
+
+.env*
+.dev.vars*
+*.token
+*.pem
+*.key
+
+# Build and deployment artifacts
+dist/
+backups/
+.wrangler/
+
+# Heavy generated assets
+3d-weather-codrops-main/dist-widget/assets/Moon/

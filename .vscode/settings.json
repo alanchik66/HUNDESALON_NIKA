@@ -63,6 +63,10 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
   },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.formatOnSave": true
+  },
   "[markdown]": {
     "editor.wordWrap": "on",
     "editor.formatOnSave": false
@@ -89,6 +93,7 @@
   "scss.validate": false,
   // ── HTMLHint ──────────────────────────────────────────────────────────────
   "htmlhint.enable": true,
+  "webhint.enable": false,
   // ── Emmet ─────────────────────────────────────────────────────────────────
   "emmet.includeLanguages": {
     "javascript": "html"
@@ -112,6 +117,9 @@
   // ── npm-скрипты ───────────────────────────────────────────────────────────
   "npm.scriptRunnerShowNotification": "onError",
   "npm.enableRunFromFolder": true,
+  "npm.autoDetect": "off",
+  "task.allowAutomaticTasks": "off",
+  "task.autoDetect": "off",
   // ── Поиск ────────────────────────────────────────────────────────────────
   "search.exclude": {
     "node_modules": true,
@@ -125,11 +133,26 @@
   "git.confirmSync": false,
   "git.enableSmartCommit": true,
   "git.inputValidationSubjectLength": 72,
+  "gitlens.defaultCurrentUserNameStyle": "you",
+  "gitlens.graph.details.location": "right",
+  "gitlens.graph.experimental.kanban.enabled": true,
+  "gitlens.graph.experimental.visualizations.enabled": true,
+  "gitlens.rebaseEditor.openBehavior": "auto",
+  "gitlens.ai.exclude.files": [
+    "**/.env*",
+    "**/.dev.vars*",
+    "**/*.token",
+    "**/*.pem",
+    "**/*.key",
+    "**/dist/**",
+    "**/backups/**"
+  ],
   "gitlab.pipelineGitRemoteName": "gitlab",
   // ── Терминал ─────────────────────────────────────────────────────────────
   "terminal.integrated.defaultProfile.windows": "PowerShell",
   "terminal.integrated.scrollback": 5000,
   "terminal.integrated.copyOnSelection": true,
+  "terminal.integrated.hideOnStartup": "always",
   // ── Python (не перехватывать) ──────────────────────────────────────────────
   "python.terminal.activateEnvironment": false,
   "python.terminal.activateEnvInCurrentTerminal": false,
@@ -164,6 +187,7 @@
   "breadcrumbs.enabled": true,
   "markdown.preview.doubleClickToSwitchToEditor": false,
   "markdown.preview.markEditorSelection": false,
+  "extensions.ignoreRecommendations": true,
   "[powershell]": {
     "editor.defaultFormatter": "ms-vscode.powershell"
   },

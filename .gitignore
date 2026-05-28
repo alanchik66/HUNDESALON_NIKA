@@ -34,7 +34,6 @@ test-results/
 *.tmp
 *.temp
 *.log
-logs/
 *.cache
 *.pid
 *.seed
@@ -56,8 +55,6 @@ coverage/
 
 # ═══════════════ CLOUDFLARE / WRANGLER ═══════════════
 .wrangler/
-.pi/
-.playwright-mcp/
 
 # ═══════════════ РЕДАКТОРЫ И IDE ═══════════════
 .idea/
@@ -129,6 +126,7 @@ tools/google-search-console-report.json
 
 # ═══════════════ ПРОЧЕЕ ═══════════════
 .continue/
+.pi/
 *.lockb
 
 # ═══════════════ ВРЕМЕННЫЕ ДЛЯ РЕВЬЮ ═══════════════
@@ -143,9 +141,3 @@ tools/_create-*.mjs
 .cloudflare-purge.token
 .cloudflare-rules.token
 .cloudflare-global.json
-
-# Cloudflare debug/temp artifacts
-.wrangler-no-token.env
-tmp-pages-smoke/
-tools/tmp-cf-*.mjs
-tools/cf-chrome-token-reset.mjs
