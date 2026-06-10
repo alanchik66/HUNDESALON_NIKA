@@ -112,6 +112,10 @@
     "cf:configure-waf-rate-limits": "node tools/configure-cloudflare-waf-rate-limits.mjs",
     "cf:open-waf-rate-limits": "node tools/open-cf-waf-rate-limits.mjs",
     "pages:secrets:prune": "node tools/prune-pages-openrouter-secrets.mjs",
+    "resend:set-local": "node tools/set-resend-secret.mjs --local",
+    "resend:set-pages": "node tools/set-resend-secret.mjs --pages",
+    "resend:set-all": "node tools/set-resend-secret.mjs --all",
+    "resend:check-live": "node tools/check-resend-live.mjs",
     "sync:openrouter": "node tools/sync-openrouter-from-devvars.mjs",
     "openrouter:validate-key": "node tools/validate-openrouter-key.mjs",
     "check:openrouter": "node tools/check-openrouter-live.mjs",
@@ -121,8 +125,8 @@
     "cursor:open-cloud-setup": "node tools/open-cursor-cloud-setup.mjs",
     "git:push": "node tools/git-push-all.mjs",
     "git:cleanup": "node tools/git-cleanup.mjs",
-    "sync:gitlab:push": "git fetch gitlab && git push gitlab main:sync/gitlab-main --force-with-lease",
-    "sync:gitlab:mr": "node tools/sync-gitlab-merge.mjs",
+    "sync:gitlab:push": "git fetch gitlab && git push gitlab main:main --force-with-lease",
+    "sync:gitlab:mr": "node -e \"console.error('GitLab sync MR disabled: repository must keep only main. Use npm run git:push.'); process.exit(1)\"",
     "check:live-html": "node tools/check-live-html.mjs",
     "ai:pilot:ollama": "npm run ai:pilot:ollama:balanced",
     "ai:pilot:ollama:custom": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1",
@@ -160,8 +164,8 @@
     "ws": "^8.20.1"
   },
   "engines": {
-    "node": ">=22.0.0",
-    "npm": ">=9.0.0"
+    "node": ">=26.0.0",
+    "npm": ">=11.0.0"
   },
   "repository": {
     "type": "git",

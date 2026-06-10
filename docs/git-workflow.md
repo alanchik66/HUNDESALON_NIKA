@@ -72,19 +72,16 @@ git push gitlab main --force-with-lease
 
 Снова включите защиту `main` (рекомендуется). Дальше достаточно `npm run git:push`.
 
-### Запасной путь (если force push недоступен)
+### Политика веток
 
-```bash
-npm run sync:gitlab:push   # main → sync/gitlab-main
-# MR в GitLab UI или npm run sync:gitlab:mr (нужен GITLAB_TOKEN с scope api)
-```
+В GitHub и GitLab держим только `main`. Не создаем sync/fallback ветки. Если GitLab push не проходит из-за защиты `main`, исправляем права protected branch и повторяем `npm run git:push`.
 
 ## Remotes (не трогать без нужды)
 
 ```
 origin  → GitHub (fetch + push)
 github  → GitHub (alias)
-gitlab  → GitLab (только для sync/MR)
+gitlab  → GitLab (зеркало main)
 ```
 
 Раньше `origin` пушил в оба репозитория сразу — из‑за этого появлялась ошибка non-fast-forward на GitLab. Сейчас push только на GitHub; GitLab — через `git:push`.
@@ -95,7 +92,7 @@ gitlab  → GitLab (только для sync/MR)
 npm run git:cleanup
 ```
 
-Удаляет `sync/gitlab-main`, `reconcile` и «prunable» worktree. Ветка `agents/css-js-minification-explained` остаётся, пока открыт worktree в `.worktrees/`.
+Удаляет старые локальные служебные ветки и prunable worktree. В репозиториях GitHub/GitLab должна оставаться только ветка `main`.
 
 ## Оранжевое предупреждение в Protected branches
 

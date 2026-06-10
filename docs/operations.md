@@ -78,7 +78,7 @@ Optional: same token in Cursor Cloud Agents as `CLOUDFLARE_API_TOKEN` for automa
 
 | Service | Status | Notes |
 |---------|--------|--------|
-| **Resend** (forms → `info@`) | OK | Pages has `RESEND_API_KEY`; test: `POST https://hundesalon-nika.com/sendmail` → `success: true` |
+| **Resend** (forms → `info@`) | Check | Pages must have `RESEND_API_KEY`; test: `npm run resend:check-live` → `success: true` |
 | **Email Routing** (`info@`) | OK | Dashboard → Email → Routing: active, DNS configured; mail to `info@` is forwarded |
 | **CSAM notify email** | Pending verify | Use `info@hundesalon-nika.com` (matches site imprint); see below |
 
@@ -98,7 +98,7 @@ Resend vs Routing: **Resend** sends mail from the site (`noreply@hundesalon-nika
 
 | Where | Variables |
 |-------|-----------|
-| `.dev.vars` (local, gitignored) | `OPENROUTER_API_KEY`, optional `CLOUDFLARE_API_TOKEN` |
+| `.dev.vars` (local, gitignored) | `OPENROUTER_API_KEY`, optional `RESEND_API_KEY`, optional `CLOUDFLARE_API_TOKEN` |
 | Cloudflare Pages | `OPENROUTER_API_KEY`, `RESEND_API_KEY` |
 | Cursor Cloud Agents | `OPENROUTER_API_KEY`, `CLOUDFLARE_API_TOKEN` (purge) |
 

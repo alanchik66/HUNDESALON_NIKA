@@ -5,7 +5,7 @@ stages:
   - deploy
 
 default:
-  image: node:22
+  image: node:26
   cache:
     key:
       files:
@@ -15,7 +15,8 @@ default:
 
 workflow:
   rules:
-    - if: '$CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - when: never
 
 validate_project:
   stage: verify
@@ -25,7 +26,7 @@ validate_project:
     - npm run lint
     - npm run validate
   rules:
-    - if: '$CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 deploy_cloudflare_pages:
   stage: deploy

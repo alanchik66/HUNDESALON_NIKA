@@ -16,6 +16,7 @@ import { assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http
 const RECIPIENT = 'info@hundesalon-nika.com';
 const FROM      = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
 const SLACK_TIMEOUT_MS = 4500;
+const RESEND_USER_AGENT = 'hundesalon-nika.com/1.0 (Cloudflare Pages Function)';
 
 /** Строки для ответа на разных языках */
 const COPY = {
@@ -295,11 +296,18 @@ export async function onRequest(ctx) {
 
     let resendRes;
     try {
+        const idempotencyKey =
+            typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+                ? crypto.randomUUID()
+                : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
         resendRes = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
                 Authorization:  `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
+                'Idempotency-Key': idempotencyKey,
+                'User-Agent': RESEND_USER_AGENT,
             },
             body: JSON.stringify({
                 from:     FROM,

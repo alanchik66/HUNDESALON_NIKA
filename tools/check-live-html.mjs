@@ -3,12 +3,14 @@
  */
 const urls = [
   'https://hundesalon-nika.com/de/',
+  'https://hundesalon-nika.com/ru/',
   'https://hundesalon-nika.com/',
 ];
 
 const pagesDevHost = process.env.PAGES_DEV_HOST;
 if (pagesDevHost) {
   urls.push(`https://${pagesDevHost}/de/`);
+  urls.push(`https://${pagesDevHost}/ru/`);
 }
 
 let failed = false;

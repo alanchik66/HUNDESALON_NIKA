@@ -3,7 +3,7 @@
  */
 import { spawnSync } from 'node:child_process';
 
-function git(...args) {
+function git(args) {
   return spawnSync('git', args, { encoding: 'utf8' }).stdout.trim();
 }
 
