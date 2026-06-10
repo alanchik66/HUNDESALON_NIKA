@@ -4,7 +4,7 @@
 import { spawnSync } from 'node:child_process';
 
 function run(cmd, args, { allowFail = false } = {}) {
-  const result = spawnSync(cmd, args, { encoding: 'utf8', shell: true });
+  const result = spawnSync(cmd, args, { encoding: 'utf8' });
   const out = `${result.stdout || ''}${result.stderr || ''}`.trim();
   if (result.status !== 0 && !allowFail) {
     throw new Error(`${cmd} ${args.join(' ')} failed:\n${out}`);
@@ -24,14 +24,13 @@ run('git', ['push', 'origin', 'main']);
 
 console.log('→ GitLab (mirror main)');
 run('git', ['fetch', 'gitlab']);
-let mirror = spawnSync('git', ['push', 'gitlab', 'main'], { encoding: 'utf8', shell: true });
+let mirror = spawnSync('git', ['push', 'gitlab', 'main'], { encoding: 'utf8' });
 let mirrorOut = `${mirror.stdout || ''}${mirror.stderr || ''}`.trim();
 if (mirrorOut) console.log(mirrorOut);
 if (mirror.status !== 0) {
   console.warn('GitLab fast-forward push failed, retrying with --force-with-lease…');
   mirror = spawnSync('git', ['push', 'gitlab', 'main', '--force-with-lease'], {
     encoding: 'utf8',
-    shell: true,
   });
   mirrorOut = `${mirror.stdout || ''}${mirror.stderr || ''}`.trim();
   if (mirrorOut) console.log(mirrorOut);
