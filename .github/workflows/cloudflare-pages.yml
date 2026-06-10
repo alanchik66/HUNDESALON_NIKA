@@ -26,10 +26,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
@@ -47,7 +47,7 @@ jobs:
         if: env.CLOUDFLARE_ACCOUNT_ID != '' && env.CLOUDFLARE_PAGES_API_TOKEN != ''
         env:
           CLOUDFLARE_API_TOKEN: ${{ env.CLOUDFLARE_PAGES_API_TOKEN }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message || github.workflow }}
+          COMMIT_MESSAGE: ${{ github.sha }}
         run: |
           npx wrangler pages deploy dist \
             --project-name="${CLOUDFLARE_PROJECT_NAME}" \
