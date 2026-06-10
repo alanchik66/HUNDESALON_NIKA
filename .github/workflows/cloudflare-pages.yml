@@ -44,7 +44,7 @@ jobs:
         run: npm run build:production
 
       - name: Check Cloudflare deploy secrets
-        id: cloudflare-secrets
+        id: cloudflare_secrets
         shell: bash
         run: |
           if [[ -n "${CLOUDFLARE_ACCOUNT_ID}" && -n "${CLOUDFLARE_PAGES_API_TOKEN}" ]]; then
@@ -55,7 +55,7 @@ jobs:
           fi
 
       - name: Deploy to Cloudflare Pages
-        if: steps.cloudflare-secrets.outputs.ready == 'true'
+        if: steps.cloudflare_secrets.outputs.ready == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ env.CLOUDFLARE_PAGES_API_TOKEN }}
           COMMIT_MESSAGE: ${{ github.sha }}
@@ -67,7 +67,7 @@ jobs:
             --commit-message="${COMMIT_MESSAGE}"
 
       - name: Purge Cloudflare cache
-        if: steps.cloudflare-secrets.outputs.ready == 'true'
+        if: steps.cloudflare_secrets.outputs.ready == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ env.CLOUDFLARE_ZONE_API_TOKEN }}
         shell: bash
@@ -79,5 +79,5 @@ jobs:
           fi
 
       - name: Smoke check production
-        if: steps.cloudflare-secrets.outputs.ready == 'true'
+        if: steps.cloudflare_secrets.outputs.ready == 'true'
         run: npm run check:live-html
