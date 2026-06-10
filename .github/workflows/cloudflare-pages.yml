@@ -43,8 +43,19 @@ jobs:
       - name: Build production bundle
         run: npm run build:production
 
+      - name: Check Cloudflare deploy secrets
+        id: cloudflare-secrets
+        shell: bash
+        run: |
+          if [[ -n "${CLOUDFLARE_ACCOUNT_ID}" && -n "${CLOUDFLARE_PAGES_API_TOKEN}" ]]; then
+            echo "ready=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "ready=false" >> "${GITHUB_OUTPUT}"
+            echo "::notice::Cloudflare Pages deploy skipped. Add GitHub secrets CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_PAGES_API_TOKEN."
+          fi
+
       - name: Deploy to Cloudflare Pages
-        if: env.CLOUDFLARE_ACCOUNT_ID != '' && env.CLOUDFLARE_PAGES_API_TOKEN != ''
+        if: steps.cloudflare-secrets.outputs.ready == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ env.CLOUDFLARE_PAGES_API_TOKEN }}
           COMMIT_MESSAGE: ${{ github.sha }}
@@ -56,16 +67,17 @@ jobs:
             --commit-message="${COMMIT_MESSAGE}"
 
       - name: Purge Cloudflare cache
-        if: env.CLOUDFLARE_ACCOUNT_ID != '' && env.CLOUDFLARE_PAGES_API_TOKEN != '' && env.CLOUDFLARE_ZONE_API_TOKEN != ''
+        if: steps.cloudflare-secrets.outputs.ready == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ env.CLOUDFLARE_ZONE_API_TOKEN }}
-        run: npm run cf:purge-cache
+        shell: bash
+        run: |
+          if [[ -n "${CLOUDFLARE_API_TOKEN}" ]]; then
+            npm run cf:purge-cache
+          else
+            echo "::notice::Cloudflare cache purge skipped. Add GitHub secret CLOUDFLARE_ZONE_API_TOKEN."
+          fi
 
       - name: Smoke check production
-        if: env.CLOUDFLARE_ACCOUNT_ID != '' && env.CLOUDFLARE_PAGES_API_TOKEN != ''
+        if: steps.cloudflare-secrets.outputs.ready == 'true'
         run: npm run check:live-html
-
-      - name: Cloudflare deploy secrets missing
-        if: env.CLOUDFLARE_ACCOUNT_ID == '' || env.CLOUDFLARE_PAGES_API_TOKEN == ''
-        run: |
-          echo "::notice::Cloudflare Pages deploy skipped. Add GitHub secrets CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_PAGES_API_TOKEN."
