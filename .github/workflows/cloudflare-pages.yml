@@ -19,10 +19,7 @@ jobs:
     name: Build and deploy
     runs-on: ubuntu-latest
     env:
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_PROJECT_NAME: hundesalon-nika
-      CLOUDFLARE_PAGES_API_TOKEN: ${{ secrets.CLOUDFLARE_PAGES_API_TOKEN }}
-      CLOUDFLARE_ZONE_API_TOKEN: ${{ secrets.CLOUDFLARE_ZONE_API_TOKEN }}
 
     steps:
       - name: Checkout
@@ -46,6 +43,9 @@ jobs:
       - name: Check Cloudflare deploy secrets
         id: cloudflare_secrets
         shell: bash
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_PAGES_API_TOKEN: ${{ secrets.CLOUDFLARE_PAGES_API_TOKEN }}
         run: |
           if [[ -n "${CLOUDFLARE_ACCOUNT_ID}" && -n "${CLOUDFLARE_PAGES_API_TOKEN}" ]]; then
             echo "ready=true" >> "${GITHUB_OUTPUT}"
@@ -55,9 +55,10 @@ jobs:
           fi
 
       - name: Deploy to Cloudflare Pages
-        if: steps.cloudflare_secrets.outputs.ready == 'true'
+        if: ${{ steps.cloudflare_secrets.outputs.ready == 'true' }}
         env:
-          CLOUDFLARE_API_TOKEN: ${{ env.CLOUDFLARE_PAGES_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PAGES_API_TOKEN }}
           COMMIT_MESSAGE: ${{ github.sha }}
         run: |
           npx wrangler pages deploy dist \
@@ -67,9 +68,9 @@ jobs:
             --commit-message="${COMMIT_MESSAGE}"
 
       - name: Purge Cloudflare cache
-        if: steps.cloudflare_secrets.outputs.ready == 'true'
+        if: ${{ steps.cloudflare_secrets.outputs.ready == 'true' }}
         env:
-          CLOUDFLARE_API_TOKEN: ${{ env.CLOUDFLARE_ZONE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_ZONE_API_TOKEN }}
         shell: bash
         run: |
           if [[ -n "${CLOUDFLARE_API_TOKEN}" ]]; then
@@ -79,5 +80,5 @@ jobs:
           fi
 
       - name: Smoke check production
-        if: steps.cloudflare_secrets.outputs.ready == 'true'
+        if: ${{ steps.cloudflare_secrets.outputs.ready == 'true' }}
         run: npm run check:live-html
