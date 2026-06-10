@@ -129,20 +129,22 @@ function buildSlackPayload(data) {
  */
 async function sendSlackNotification(env, payload) {
     const webhook = String(env?.SLACK_WEBHOOK_URL || '').trim();
-    if (!webhook) return;
+    if (!webhook) return false;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), SLACK_TIMEOUT_MS);
 
     try {
-        await fetch(webhook, {
+        const response = await fetch(webhook, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
             signal: controller.signal,
         });
+        return response.ok;
     } catch (err) {
         console.warn('[sendmail] Slack notify failed:', err?.message || err);
+        return false;
     } finally {
         clearTimeout(timeout);
     }
@@ -283,6 +285,11 @@ export async function onRequest(ctx) {
     const apiKey = env?.RESEND_API_KEY;
     if (!apiKey) {
         console.error('[sendmail] RESEND_API_KEY not configured');
+        const slackDelivered = await sendSlackNotification(env, slackLeadPayload);
+        if (slackDelivered) {
+            console.warn('[sendmail] Delivered via Slack fallback because RESEND_API_KEY is not configured');
+            return jsonResponse({ success: true, message: copy.success }, 200, origin);
+        }
         return jsonResponse({ success: false, message: copy.error }, 503, origin);
     }
 
@@ -344,4 +351,3 @@ export async function onRequest(ctx) {
     }));
     return jsonResponse({ success: false, message: copy.error }, 502, origin);
 }
-

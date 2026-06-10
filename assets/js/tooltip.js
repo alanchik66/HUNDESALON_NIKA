@@ -319,7 +319,7 @@
 
     const tw = tip.offsetWidth;
     const th = tip.offsetHeight;
-    const MARGIN = 8; /* минимальный отступ от края вьюпорта */
+    const MARGIN = 8; /* базовый отступ от края вьюпорта */
     const GAP = 4; /* зазор между элементом и тултипом */
 
     const vw = document.documentElement.clientWidth;

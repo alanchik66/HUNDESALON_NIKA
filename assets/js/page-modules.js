@@ -137,6 +137,54 @@ document.addEventListener('DOMContentLoaded', () => {
       en: 'Sending...',
       de: 'Wird gesendet...',
     },
+    localFunctionsRequired: {
+      ru: url =>
+        `Локальная страница открыта без серверной отправки. Откройте ${url} — там форма отправит заявку правильно.`,
+      uk: url =>
+        `Локальну сторінку відкрито без серверного надсилання. Відкрийте ${url} — там форма надішле заявку правильно.`,
+      en: url => `This local page is running without server sending. Open ${url} and the booking form will submit correctly.`,
+      de: url =>
+        `Diese lokale Seite läuft ohne Server-Versand. Öffnen Sie ${url}, dann sendet das Buchungsformular korrekt.`,
+    },
+  };
+
+  const SENDMAIL_ENDPOINT_TIMEOUT_MS = 4500;
+
+  const isPrivateLanHost = hostname =>
+    /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(String(hostname || '').trim());
+
+  const getLocalCloudflareSendmailUrl = () => {
+    const { protocol, hostname, port } = window.location;
+    const isLocalStaticHost =
+      hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || isPrivateLanHost(hostname);
+    const isStaticPreviewPort = ['5500', '5501', '5502', '5503', '5504'].includes(port);
+
+    if (!isLocalStaticHost || !isStaticPreviewPort) {
+      return '';
+    }
+
+    return `${protocol}//${hostname}:8788/sendmail`;
+  };
+
+  const getLocalCloudflarePageUrl = () => {
+    const sendmailUrl = getLocalCloudflareSendmailUrl();
+    if (!sendmailUrl) return '';
+
+    const url = new URL(sendmailUrl);
+    url.pathname = window.location.pathname;
+    url.search = '';
+    return url.toString();
+  };
+
+  const getSendmailEndpoints = () => {
+    const endpoints = ['/sendmail'];
+    const localCloudflareUrl = getLocalCloudflareSendmailUrl();
+
+    if (localCloudflareUrl) {
+      endpoints.push(localCloudflareUrl);
+    }
+
+    return endpoints;
   };
 
   const aiDraftCopy = {
@@ -211,29 +259,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const statusEl = document.createElement('p');
     statusEl.className = 'form-status';
+    statusEl.setAttribute('role', 'status');
+    statusEl.setAttribute('aria-live', 'polite');
+    statusEl.setAttribute('tabindex', '-1');
+
+    let shouldShowLocalFunctionHint = false;
+    let lastResult = null;
 
     try {
-      const response = await fetch('/sendmail', {
-        method: 'POST',
-        body: new FormData(form),
-        headers: { Accept: 'application/json' },
-      });
+      for (const endpoint of getSendmailEndpoints()) {
+        let response;
+        const controller = new window.AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), SENDMAIL_ENDPOINT_TIMEOUT_MS);
 
-      const result = await response.json().catch(() => ({ success: false }));
+        try {
+          response = await fetch(endpoint, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+          });
+        } catch (error) {
+          lastResult = { success: false, status: 0, error };
+          shouldShowLocalFunctionHint = Boolean(getLocalCloudflareSendmailUrl());
+          continue;
+        } finally {
+          window.clearTimeout(timeoutId);
+        }
 
-      if (result.success) {
-        statusEl.classList.add('form-status--success');
-        statusEl.textContent = formCopy.success[pageLang] ?? formCopy.success.de;
-        form.reset();
-      } else {
-        statusEl.classList.add('form-status--error');
-        statusEl.textContent = formCopy.error[pageLang] ?? formCopy.error.de;
+        const result = await response.json().catch(() => ({ success: false }));
+        lastResult = { ...result, status: response.status };
+
+        if (response.ok && result.success) {
+          statusEl.classList.add('form-status--success');
+          statusEl.textContent = result.message || (formCopy.success[pageLang] ?? formCopy.success.de);
+          form.reset();
+          break;
+        }
+
+        if ((response.status === 404 || response.status === 405) && endpoint === '/sendmail') {
+          shouldShowLocalFunctionHint = Boolean(getLocalCloudflareSendmailUrl());
+          continue;
+        }
       }
     } catch {
-      statusEl.classList.add('form-status--error');
-      statusEl.textContent = formCopy.error[pageLang] ?? formCopy.error.de;
+      lastResult = { success: false };
     } finally {
+      if (!statusEl.classList.contains('form-status--success')) {
+        const localCloudflarePageUrl = getLocalCloudflarePageUrl();
+        statusEl.classList.add('form-status--error');
+        statusEl.textContent =
+          shouldShowLocalFunctionHint && localCloudflarePageUrl
+            ? (formCopy.localFunctionsRequired[pageLang] ?? formCopy.localFunctionsRequired.de)(localCloudflarePageUrl)
+            : lastResult?.message || (formCopy.error[pageLang] ?? formCopy.error.de);
+      }
+
       form.appendChild(statusEl);
+      window.requestAnimationFrame(() => statusEl.focus({ preventScroll: true }));
+
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
@@ -468,6 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!modal) return;
 
     const closeControl = modal.querySelector('.modal-close');
+    const closeTriggers = modal.querySelectorAll('[data-booking-close]');
     const form = modal.querySelector('#booking-form');
     const serviceList = modal.querySelector('#service-list');
     const calendarContainer = modal.querySelector('#calendar-container');
@@ -711,6 +795,7 @@ document.addEventListener('DOMContentLoaded', () => {
       state.step = 1;
       state.selectedService = serviceName || state.selectedService;
       clearValidationMessage();
+      modal.classList.remove('booking-modal-sent');
       syncHiddenFields();
       setStep(1);
       renderServiceList();
@@ -725,6 +810,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const closeModal = () => {
       clearValidationMessage();
+      modal.classList.remove('booking-modal-sent');
       modal.classList.remove('active');
       modal.setAttribute('aria-hidden', 'true');
       document.body.classList.remove('booking-modal-open');
@@ -777,6 +863,9 @@ document.addEventListener('DOMContentLoaded', () => {
     nextStep2?.addEventListener('click', moveToContactStep);
     prevStep2?.addEventListener('click', () => setStep(1));
     prevStep3?.addEventListener('click', () => setStep(2));
+    closeTriggers.forEach(trigger => {
+      trigger.addEventListener('click', closeModal);
+    });
     closeControl?.addEventListener('click', closeModal);
     closeControl?.addEventListener('keydown', event => {
       if (event.key === 'Enter' || event.key === ' ') {
@@ -841,7 +930,13 @@ document.addEventListener('DOMContentLoaded', () => {
         setStep(3);
         showValidationMessage(
           bookingCopy.chooseContact,
-          form.querySelector('input[name="name"], input[name="email"], input[name="phone"]')
+          form.querySelector(
+            !nameValue
+              ? 'input[name="name"]'
+              : !emailValue
+                ? 'input[name="email"]'
+                : 'input[name="phone"]'
+          )
         );
         return;
       }
@@ -849,7 +944,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const submitBtn = form.querySelector('[type="submit"]');
       const sent = await submitSendmailForm(form, submitBtn);
       if (sent) {
-        closeModal();
+        modal.classList.add('booking-modal-sent');
+        state.selectedService = '';
+        state.selectedDate = '';
+        state.selectedTime = '';
+        syncHiddenFields();
       }
     });
   };

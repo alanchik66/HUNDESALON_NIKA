@@ -73,6 +73,7 @@
     "audit": "npm audit",
     "update": "npm update && cd 3d-weather-codrops-main && npm update",
     "dev:cf": "npm run build:production && node tools/sync-dev-vars.js && wrangler pages dev dist --port=8788",
+    "dev:cf:lan": "npm run build:production && node tools/sync-dev-vars.js && wrangler pages dev dist --ip=0.0.0.0 --port=8788",
     "deploy": "npm run build && wrangler pages deploy dist --project-name=hundesalon-nika",
     "deploy:full": "npm run deploy && node tools/post-deploy.mjs",
     "cf:ensure-api-token": "node tools/ensure-cf-api-token.mjs",
@@ -153,13 +154,13 @@
     "serve": "^14.2.6",
     "stylelint": "^16.1.0",
     "stylelint-config-standard": "^35.0.0",
-    "wrangler": "^4.92.0"
+    "wrangler": "^4.99.0"
   },
   "overrides": {
     "ws": "^8.20.1"
   },
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=22.0.0",
     "npm": ">=9.0.0"
   },
   "repository": {

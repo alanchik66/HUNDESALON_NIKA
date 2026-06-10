@@ -827,6 +827,32 @@ body.light .direct-booking-btn:focus-visible {
   display: block;
 }
 
+.form-status {
+  margin: 1rem 0 0;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  background: rgb(255 255 255 / 5%);
+  color: rgb(255 239 209 / 95%);
+  font-size: 0.94rem;
+  line-height: 1.45;
+  box-shadow:
+    0 14px 30px rgb(0 0 0 / 18%),
+    inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+
+.form-status--success {
+  border-color: rgb(163 217 163 / 38%);
+  background: linear-gradient(135deg, rgb(82 140 82 / 22%) 0%, rgb(255 255 255 / 5%) 100%);
+  color: rgb(204 255 213 / 96%);
+}
+
+.form-status--error {
+  border-color: rgb(240 162 162 / 34%);
+  background: linear-gradient(135deg, rgb(96 24 24 / 26%) 0%, rgb(255 255 255 / 5%) 100%);
+  color: rgb(255 218 218 / 96%);
+}
+
 .service-list {
   display: flex;
   flex-direction: column;

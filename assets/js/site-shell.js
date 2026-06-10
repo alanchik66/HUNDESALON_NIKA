@@ -190,8 +190,8 @@
     en: { ariaLabel: 'Weather widget for your geolocation' },
   };
 
-  /** Menu toggle aligned to the ВЛАЖНОСТЬ label height in the header weather widget. */
-  const HEADER_WEATHER_MENU_TOGGLE_TOP = '85%';
+  /** Menu toggle aligned to the gold decorative strip between weather and social bar. */
+  const HEADER_WEATHER_MENU_TOGGLE_BOTTOM = '4px';
   /** Arrow: left when closed → CW to down when open (cursor demo: слева → вниз). */
   const HEADER_WEATHER_TOGGLE_ARROW_CLOSED = 'rotate(90deg)';
   const HEADER_WEATHER_TOGGLE_ARROW_OPEN = 'rotate(0deg)';
@@ -401,8 +401,9 @@
 
 /* Restore borders for the spinner ring (it needs a circular ring) */
 :host([data-weather-variant='header']) {
-  --header-weather-menu-toggle-top: ${HEADER_WEATHER_MENU_TOGGLE_TOP};
+  --header-weather-menu-toggle-bottom: ${HEADER_WEATHER_MENU_TOGGLE_BOTTOM};
   --header-weather-cloud-rise: 0px;
+  --header-weather-scene-shift-y: 0px;
   --header-weather-cloud-extra-h: 24px;
   --header-weather-text-inset: 0px;
   --header-weather-metrics-gap: 3px;
@@ -483,13 +484,13 @@
 
 .weather-header-state__inner p {
   margin: 0 !important;
-  font-size: 9px !important;
-  line-height: 1.3 !important;
-  color: rgba(236, 244, 255, 0.84) !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  color: transparent !important;
   letter-spacing: 0.12em !important;
   text-transform: uppercase !important;
-  text-shadow: 0 1px 4px rgba(28, 48, 78, 0.42) !important;
-  opacity: 1 !important;
+  text-shadow: none !important;
+  opacity: 0 !important;
 }
 
 .weather-header-state__inner p::before,
@@ -514,14 +515,14 @@
   place-items: center !important;
   min-width: var(--weather-loader-size) !important;
   min-height: var(--weather-loader-size) !important;
-  padding-top: var(--weather-loader-label-offset) !important;
-  font-size: 9px !important;
-  line-height: 1.3 !important;
-  color: rgba(236, 244, 255, 0.82) !important;
+  padding-top: 0 !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  color: transparent !important;
   letter-spacing: 0.12em !important;
   text-transform: uppercase !important;
-  text-shadow: 0 1px 4px rgba(28, 48, 78, 0.42) !important;
-  opacity: 1 !important;
+  text-shadow: none !important;
+  opacity: 0.92 !important;
 }
 
 .weather-app__scene-fallback .text-sm::before,
@@ -1410,31 +1411,26 @@
   overflow: visible !important;
   contain: none !important;
 }
-  row-gap: 0 !important;
+
 :host([data-weather-variant='header']),
 :host([data-weather-variant='header']) [data-weather-widget-root],
 :host([data-weather-variant='header']) .weather-header-preview {
   contain: none !important;
-  padding-bottom: 0 !important;
+}
 
 :host([data-weather-variant='header']) .weather-header-preview__stars-back.is-night-sky::before,
 :host([data-weather-variant='header']) .weather-header-preview__stars-back.is-night-sky::after,
 .weather-header-preview__stars-back.is-night-sky::before,
-  min-height: auto !important;
-  margin-bottom: 0 !important;
+.weather-header-preview__stars-back.is-night-sky::after {
+  content: '' !important;
   display: block !important;
   position: absolute !important;
   inset: 0 !important;
   pointer-events: none !important;
   z-index: 0 !important;
   opacity: var(--preview-stars-opacity, 0.82) !important;
-  margin-top: var(--weather-meta-equal-gap) !important;
-  margin-bottom: var(--weather-meta-equal-gap) !important;
+  mix-blend-mode: normal !important;
   background-color: transparent !important;
-.weather-header-card__info-panel,
-.weather-header-card__left-stack {
-  row-gap: 0 !important;
-}
   border: none !important;
   box-shadow: none !important;
   filter: none !important;
@@ -1796,22 +1792,15 @@
 
 .weather-header-card__info-panel,
 .weather-header-card__left-stack {
-  --weather-info-column-shift-x: 0px;
-  --weather-info-column-shift-y: 0px;
-  --weather-info-column-width: max-content;
-  --weather-info-location-meta-gap: 2px;
-  --weather-info-title-temp-gap: var(--weather-info-location-meta-gap, 2px);
+  --weather-info-title-temp-gap: 2px;
   --weather-info-temp-feels-gap: 8px;
   --weather-info-feels-line-gap: 2px;
   --weather-feels-stack-max-height: calc(var(--header-weather-temp-value-size, 22px) * 0.9);
-  display: grid !important;
-  grid-template-columns: var(--weather-info-column-width, max-content) !important;
-  grid-auto-rows: max-content !important;
+  display: flex !important;
+  flex-direction: column !important;
   align-items: flex-start !important;
   justify-content: flex-start !important;
-  justify-items: flex-start !important;
-  align-content: flex-start !important;
-  width: var(--weather-info-column-width, max-content) !important;
+  width: max-content !important;
   max-width: calc(100% - 118px) !important;
   margin: 0 !important;
   padding: 0 0 10px 0 !important;
@@ -1820,8 +1809,7 @@
   row-gap: var(--weather-info-title-temp-gap, 2px) !important;
   position: relative !important;
   left: 0 !important;
-  transform: translate3d(var(--weather-info-column-shift-x, 0px), var(--weather-info-column-shift-y, 0px), 0)
-    !important;
+  transform: none !important;
   pointer-events: none !important;
 }
 
@@ -1868,9 +1856,9 @@
 .weather-header-card__right-column {
   --weather-metrics-gap: 0px;
   position: absolute !important;
-  right: 8px !important;
+  right: 2px !important;
   top: 4px !important;
-  bottom: 10px !important;
+  bottom: 4px !important;
   left: auto !important;
   display: flex !important;
   flex-direction: column !important;
@@ -1879,7 +1867,7 @@
   width: max-content !important;
   min-width: 62px !important;
   max-width: none !important;
-  min-height: calc(100% - 14px) !important;
+  min-height: calc(100% - 8px) !important;
   text-align: right !important;
   z-index: 124 !important;
   pointer-events: none !important;
@@ -1888,6 +1876,23 @@
   padding: 0 !important;
   margin: 0 !important;
   transform: none !important;
+}
+
+.weather-header-card__metrics-block {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  align-self: stretch !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  max-height: 100% !important;
+  row-gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
 }
 
 /* Adaptive readability: no rectangular tiles — only typography opacity + shadow on bright clouds. */
@@ -2019,18 +2024,18 @@
   min-height: auto !important;
   width: max-content !important;
   max-width: max-content !important;
-  padding: 3px 6px !important;
+  padding: 1px !important;
   color: rgba(255, 238, 207, 0.96) !important;
-  font-size: 8px !important;
+  font-size: 7px !important;
   line-height: 1 !important;
   white-space: nowrap !important;
   letter-spacing: 0.14em !important;
   text-transform: uppercase !important;
   border-radius: 999px !important;
-  border: none !important;
+  border: 1px solid rgba(255, 232, 176, 0.22) !important;
   background: linear-gradient(180deg, rgba(255, 235, 193, 0.12), rgba(5, 12, 10, 0.58)) !important;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
-  backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
   overflow: visible !important;
 }
@@ -2048,10 +2053,10 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 6.607px !important;
-  height: 6.607px !important;
+  width: 5.082px !important;
+  height: 5.082px !important;
   position: absolute !important;
-  right: -8.607px !important;
+  right: -7.082px !important;
   top: auto !important;
   bottom: -1px !important;
   margin-top: 0 !important;
@@ -2198,11 +2203,13 @@
 
 .weather-header-card__condition-line {
   display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
   font-size: inherit !important;
   line-height: inherit !important;
   font-weight: inherit !important;
   letter-spacing: inherit !important;
-  text-align: inherit !important;
+  text-align: right !important;
   white-space: nowrap !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -2225,7 +2232,8 @@
   margin: 0 !important;
   padding: 0 !important;
   width: 100% !important;
-  min-width: 62px !important;
+  max-width: var(--header-weather-metrics-min-width, 9.5rem) !important;
+  min-width: 0 !important;
   flex: 0 0 auto !important;
 }
 
@@ -2238,11 +2246,15 @@
 }
 
 .weather-header-card__right-column > .weather-header-card__chip > span:first-child {
-  margin-bottom: 1px !important;
+  margin-bottom: 0 !important;
 }
 
 .weather-header-card__right-column > .weather-header-card__chip[data-weather-metric='pressure'],
 .weather-header-card__right-column > .weather-header-card__chip--pressure-fallback {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: end !important;
+  column-gap: 4px !important;
   order: 2 !important;
   margin-top: 0 !important;
 }
@@ -2258,8 +2270,42 @@
 
 .weather-header-card__right-column > .weather-header-card__chip[data-weather-metric='humidity'],
 .weather-header-card__right-column > .weather-header-card__chip--humidity-fallback {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: end !important;
+  column-gap: 4px !important;
   order: 3 !important;
   margin-top: 0 !important;
+}
+
+.weather-header-card__right-column > .weather-header-card__chip[data-weather-metric='humidity'] > span,
+.weather-header-card__right-column > .weather-header-card__chip--humidity-fallback > span {
+  font-size: 5px !important;
+  line-height: 5px !important;
+  letter-spacing: 0.7px !important;
+  font-weight: 400 !important;
+  text-transform: uppercase !important;
+}
+
+.weather-header-card__right-column > .weather-header-card__chip[data-weather-metric='pressure'] > span:first-child,
+.weather-header-card__right-column > .weather-header-card__chip--pressure-fallback > span:first-child,
+.weather-header-card__right-column > .weather-header-card__chip[data-weather-metric='humidity'] > span:first-child,
+.weather-header-card__right-column > .weather-header-card__chip--humidity-fallback > span:first-child {
+  width: auto !important;
+  text-align: left !important;
+  justify-self: start !important;
+  white-space: normal !important;
+}
+
+.weather-header-card__right-column > .weather-header-card__chip[data-weather-metric='pressure'] > span:last-child,
+.weather-header-card__right-column > .weather-header-card__chip--pressure-fallback > span:last-child,
+.weather-header-card__right-column > .weather-header-card__chip[data-weather-metric='humidity'] > span:last-child,
+.weather-header-card__right-column > .weather-header-card__chip--humidity-fallback > span:last-child {
+  width: auto !important;
+  text-align: right !important;
+  justify-self: end !important;
+  margin-left: auto !important;
+  white-space: nowrap !important;
 }
 
 /* City name must never be truncated in compact header preview. */
@@ -2301,20 +2347,8 @@
   clip-path: none !important;
 }
 
-.weather-header-card__title-block {
-  row-gap: 0 !important;
-}
-
-
 .weather-header-card__location-row {
-  margin: 0 !important;
-}
-
-.weather-header-card__meta {
-  margin: 0 !important;
-}
-.weather-header-card__location-row {
-  margin-bottom: 0 !important;
+  margin-bottom: 1px !important;
 }
 
 /* Keep top-left typography identical across locales (RU baseline). */
@@ -2325,31 +2359,24 @@
 .weather-header-card__location-row {
   display: flex !important;
   align-items: flex-start !important;
-  min-height: auto !important;
-  margin-bottom: 0 !important;
+  min-height: 20px !important;
+  margin-bottom: 3px !important;
 }
 
 .weather-header-card__location {
   font-size: 14px !important;
   line-height: 17px !important;
   font-weight: 500 !important;
-  letter-spacing: -0.01em !important;
+  letter-spacing: 0 !important;
   margin: 0 !important;
 }
 
 .weather-header-card__meta {
-  --weather-meta-equal-gap: 4px;
   font-size: 10px !important;
   line-height: 12px !important;
   letter-spacing: 0.01em !important;
   opacity: 0.8 !important;
-  margin-top: var(--weather-meta-equal-gap, 4px) !important;
-  margin-bottom: var(--weather-meta-equal-gap, 4px) !important;
-}
-
-.weather-header-card__info-panel,
-.weather-header-card__left-stack {
-  row-gap: 0 !important;
+  margin: 0 !important;
 }
 
 .weather-header-card__bottom {
@@ -2441,8 +2468,8 @@
   flex: 0 0 auto !important;
   margin: 0 !important;
   padding: 0 !important;
-  font-size: 4.5px !important;
-  line-height: 5px !important;
+  font-size: 3.5px !important;
+  line-height: 4px !important;
   letter-spacing: 0.12em !important;
   font-weight: 400 !important;
   color: rgb(255 246 228 / 0.58) !important;
@@ -2477,8 +2504,8 @@
 }
 
 .weather-header-card__chip--feels-like[data-weather-feels-layout='custom'] .weather-header-card__feels-prefix {
-  font-size: 4.5px !important;
-  line-height: 5px !important;
+  font-size: 3.5px !important;
+  line-height: 4px !important;
   letter-spacing: 0.12em !important;
   font-weight: 400 !important;
   text-transform: uppercase !important;
@@ -2513,8 +2540,8 @@
 
 .weather-header-card__feels-label {
   display: block !important;
-  font-size: 5px !important;
-  line-height: 5px !important;
+  font-size: 4px !important;
+  line-height: 4px !important;
   letter-spacing: 0.7px !important;
   font-weight: 400 !important;
   margin: 0 !important;
@@ -2607,8 +2634,8 @@
 
 .weather-header-card__feels-prefix {
   display: inline-block !important;
-  font-size: 8px !important;
-  line-height: 8px !important;
+  font-size: 7px !important;
+  line-height: 7px !important;
   letter-spacing: 0.4px !important;
   font-weight: 500 !important;
   text-transform: none !important;
@@ -2636,7 +2663,7 @@
   font-size: 1em !important;
   line-height: 1 !important;
   font-weight: 200 !important;
-  letter-spacing: -0.05em !important;
+  letter-spacing: 0 !important;
   font-variant-numeric: tabular-nums !important;
   vertical-align: baseline !important;
   margin: 0 !important;
@@ -2729,7 +2756,7 @@
 .weather-header-card__temperature-value {
   font-size: 1em !important;
   font-weight: 300 !important;
-  letter-spacing: -0.055em !important;
+  letter-spacing: 0 !important;
   font-variant-numeric: tabular-nums !important;
   line-height: 1 !important;
 }
@@ -2766,9 +2793,9 @@
   position: absolute !important;
   left: 50% !important;
   right: auto !important;
-  top: var(--header-weather-menu-toggle-top, 50%) !important;
-  bottom: auto !important;
-  transform: translate(-50%, -50%) !important;
+  top: auto !important;
+  bottom: var(--header-weather-menu-toggle-bottom, 4px) !important;
+  transform: translateX(-50%) !important;
   z-index: 130 !important;
   pointer-events: auto !important;
 }
@@ -2931,7 +2958,7 @@
 .weather-header-dropdown__hero-temp span {
   font-size: var(--hero-dropdown-copy-height) !important;
   font-weight: 200 !important;
-  letter-spacing: -0.05em !important;
+  letter-spacing: 0 !important;
   line-height: 1 !important;
   height: auto !important;
   max-height: none !important;
@@ -3404,28 +3431,34 @@
   pointer-events: none !important;
 }
 
+:host([data-weather-variant='header']) .weather-header-card,
+:host([data-weather-variant='header']) .weather-header-card__content {
+  overflow: hidden !important;
+  contain: paint !important;
+}
+
 :host([data-weather-variant='header']) .weather-header-card__toggle {
   position: absolute !important;
   left: 50% !important;
   right: auto !important;
-  top: var(--header-weather-menu-toggle-top, 50%) !important;
-  bottom: auto !important;
-  transform: translate(-50%, -50%) !important;
+  top: auto !important;
+  bottom: var(--header-weather-menu-toggle-bottom, 4px) !important;
+  transform: translateX(-50%) !important;
   z-index: 130 !important;
   pointer-events: auto !important;
 }
 `;
 
-  const WEATHER_WIDGET_ASSET_VERSION = '20260522-moon-visibility-v3';
+  const WEATHER_WIDGET_ASSET_VERSION = '20260530-weather-metrics-align-v4';
   /** Full mission_2160p30.mp4 timeline (7:38) mapped to each local night window. */
   const HEADER_WEATHER_MOON_VIDEO_DURATION_SEC = 458.233333;
   const HEADER_WEATHER_MOON_DAY_MIN_OPACITY = 0.22;
   /** NASA / Eyes-style warm loop (sun:fetch-nasa or sun_reference.mp4). */
   const HEADER_WEATHER_SUN_VIDEO_DURATION_SEC = 10;
-  const HEADER_WEATHER_SUN_VIDEO_FILES = Object.freeze(['sun_alpha.webm']);
+  const HEADER_WEATHER_SUN_VIDEO_FILES = Object.freeze(['nasa_sun_loop.mp4']);
   /** Civil-style handoff moon ↔ sun (ms). */
   const HEADER_WEATHER_ORB_CROSSFADE_MS = 42 * 60 * 1000;
-  const HEADER_WEATHER_MOON_VIDEO_FILES = Object.freeze(['mission_2160p30_alpha.webm']);
+  const HEADER_WEATHER_MOON_VIDEO_FILES = Object.freeze(['mission_2160p30_fallback.mp4']);
 
   const LOCALIZED_ROUTES = new Set([
     '',
@@ -3454,7 +3487,7 @@
   const HEADER_WEATHER_GEOCODE_ENDPOINT = 'https://geocoding-api.open-meteo.com/v1/search';
   const HEADER_WEATHER_CURRENT_ENDPOINT = 'https://api.open-meteo.com/v1/forecast';
   const HEADER_WEATHER_ASTRO_ENDPOINT = 'https://api.sunrise-sunset.org/json';
-  const HEADER_WEATHER_REVERSE_GEOCODE_ENDPOINT = 'https://nominatim.openstreetmap.org/reverse';
+  const HEADER_WEATHER_REVERSE_GEOCODE_PROXY_ENDPOINT = '/reverse-geocode';
   const HEADER_WEATHER_STATIC_FALLBACK_COORDS = Object.freeze({ latitude: 51.320486, longitude: 12.416501 });
   const HEADER_WEATHER_ASTRO_REFRESH_INTERVAL = 60000;
   const HEADER_WEATHER_WIDGET_REFRESH_INTERVAL = 60 * 1000;
@@ -3465,11 +3498,14 @@
   const HEADER_WEATHER_MAX_CLOCK_DRIFT_MS = 7 * 24 * 60 * 60 * 1000;
   const HEADER_WEATHER_LOCATION_CACHE_TTL = 24 * 60 * 60 * 1000;
   const HEADER_WEATHER_CURRENT_CACHE_TTL = 45 * 1000;
+  const HEADER_WEATHER_CURRENT_META_MAX_AGE = 10 * 60 * 1000;
+  const HEADER_WEATHER_CURRENT_MODEL_MAX_AGE = 2 * 60 * 60 * 1000;
   const HEADER_WEATHER_ASTRO_CACHE_TTL = 12 * 60 * 60 * 1000;
   const HEADER_WEATHER_GEO_STORAGE_KEY = 'header_weather_geo_v1';
   const HEADER_WEATHER_GEO_CACHE_TTL = 30 * 60 * 1000;
   const HEADER_WEATHER_READINGS_STORAGE_KEY = 'header_weather_readings_v1';
   const HEADER_WEATHER_READINGS_CACHE_TTL = 12 * 60 * 60 * 1000;
+  let headerWeatherReverseGeoProxyUnavailable = false;
   const HEADER_WEATHER_GEO_TIMEOUT = 10000;
   const HEADER_WEATHER_STRICT_STYLE_LOCK = true;
   const HEADER_WEATHER_BERLIN_LABEL = 'Ber' + 'lin';
@@ -3486,6 +3522,85 @@
   const headerWeatherAstroCache = new Map();
   let headerWeatherServerTimeOffsetMs = 0;
   let headerWeatherServerTimeSyncedAt = 0;
+
+  function installHeaderWeatherLocalReverseGeocodeStub() {
+    if (
+      typeof window === 'undefined' ||
+      window.__headerWeatherLocalReverseGeoStubInstalled ||
+      window.location.protocol !== 'http:' ||
+      !/^(127\.0\.0\.1|localhost)$/i.test(window.location.hostname) ||
+      window.location.port !== '5502' ||
+      typeof window.XMLHttpRequest === 'undefined'
+    ) {
+      return;
+    }
+
+    const nativeOpen = window.XMLHttpRequest.prototype.open;
+    const nativeSend = window.XMLHttpRequest.prototype.send;
+
+    window.XMLHttpRequest.prototype.open = function patchedOpen(method, url, ...rest) {
+      try {
+        const resolvedUrl = new URL(String(url), window.location.origin);
+        this.__headerWeatherReverseGeoStubUrl =
+          resolvedUrl.origin === window.location.origin && resolvedUrl.pathname === '/reverse-geocode'
+            ? resolvedUrl
+            : null;
+      } catch {
+        this.__headerWeatherReverseGeoStubUrl = null;
+      }
+
+      return nativeOpen.call(this, method, url, ...rest);
+    };
+
+    window.XMLHttpRequest.prototype.send = function patchedSend(body) {
+      const stubUrl = this.__headerWeatherReverseGeoStubUrl;
+      if (!stubUrl) {
+        return nativeSend.call(this, body);
+      }
+
+      const language = normalizeLangCode(stubUrl.searchParams.get('accept-language') || 'ru');
+      const cityByLang = {
+        ru: 'Лейпциг - Штёттериц',
+        uk: 'Лейпциг - Штеттеріц',
+        de: 'Leipzig - Stotteritz',
+        en: 'Leipzig - Stotteritz',
+      };
+      const payload = JSON.stringify({
+        payload: {
+          name: cityByLang[language] || cityByLang.en,
+          address: {
+            suburb: 'Stotteritz',
+            city: 'Leipzig',
+            state: 'Sachsen',
+            country: 'Deutschland',
+          },
+        },
+      });
+
+      window.setTimeout(() => {
+        Object.defineProperty(this, 'readyState', { configurable: true, value: 4 });
+        Object.defineProperty(this, 'status', { configurable: true, value: 200 });
+        Object.defineProperty(this, 'statusText', { configurable: true, value: 'OK' });
+        Object.defineProperty(this, 'responseURL', { configurable: true, value: stubUrl.toString() });
+        Object.defineProperty(this, 'responseText', { configurable: true, value: payload });
+        Object.defineProperty(this, 'response', { configurable: true, value: payload });
+
+        this.onreadystatechange?.(new Event('readystatechange'));
+        this.dispatchEvent?.(new Event('readystatechange'));
+        this.onload?.(new Event('load'));
+        this.dispatchEvent?.(new Event('load'));
+        this.onloadend?.(new Event('loadend'));
+        this.dispatchEvent?.(new Event('loadend'));
+      }, 0);
+
+      return undefined;
+    };
+
+    window.__headerWeatherLocalReverseGeoStubInstalled = true;
+  }
+
+  installHeaderWeatherLocalReverseGeocodeStub();
+
   const HEADER_WEATHER_ORB_RENDER_PROFILES = {
     sun: {
       useFullFrame: true,
@@ -3914,7 +4029,7 @@
       try {
         const scriptUrl = new URL(shellScript.src, window.location.href);
         return new URL(`./header-weather-sun-scene.js?v=${WEATHER_WIDGET_ASSET_VERSION}`, scriptUrl).href;
-      } catch (_) {
+      } catch {
         // Fall through to site-root assets path.
       }
     }
@@ -3957,13 +4072,41 @@
 
   function normalizeHeaderWeatherLocationKey(value) {
     return String(value || '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
+      .replace(/\u00A0/g, ' ')
       .trim()
       .toLowerCase()
       .replace(/\s+/g, ' ');
   }
 
+  function isHeaderWeatherSalonLocationKey(normalizedKey) {
+    return (
+      normalizedKey === 'leipzig' ||
+      (normalizedKey.includes('leipzig') &&
+        (normalizedKey.includes('stotteritz') ||
+          normalizedKey.includes('stoetteritz') ||
+          normalizedKey.includes('sachsen')))
+    );
+  }
+
+  function getHeaderWeatherSalonLocationMeta() {
+    return {
+      latitude: HEADER_WEATHER_STATIC_FALLBACK_COORDS.latitude,
+      longitude: HEADER_WEATHER_STATIC_FALLBACK_COORDS.longitude,
+      label: 'Leipzig - Stötteritz',
+      regionLabel: 'Sachsen',
+      timezone: HEADER_WEATHER_DEFAULT_TIMEZONE,
+    };
+  }
+
   function parseHeaderWeatherCoordinates(value) {
-    const match = String(value || '').match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+    const normalizedValue = String(value || '')
+      .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
+      .replace(/\u00A0/g, ' ')
+      .trim();
+    const match = normalizedValue.match(/^\s*(-?\d+(?:\.\d+)?)\s*(?:,|[-–—])\s*(-?\d+(?:\.\d+)?)\s*$/);
     if (!match) {
       return null;
     }
@@ -3997,7 +4140,7 @@
       }
 
       return { latitude, longitude, expiresAt };
-    } catch (_) {
+    } catch {
       return null;
     }
   }
@@ -4012,7 +4155,7 @@
           expiresAt: Date.now() + HEADER_WEATHER_GEO_CACHE_TTL,
         })
       );
-    } catch (_) {
+    } catch {
       // Ignore storage failures in private mode.
     }
   }
@@ -4039,7 +4182,7 @@
           storeHeaderWeatherGeo(latitude, longitude);
           return { latitude, longitude, source: 'gps', expiresAt: Date.now() + HEADER_WEATHER_GEO_CACHE_TTL };
         }
-      } catch (_) {
+      } catch {
         // GPS permission denied or unavailable. Use salon static coordinates (Stötteritz) directly.
       }
     }
@@ -4251,32 +4394,23 @@
   }
 
   async function fetchHeaderWeatherReverseGeoMeta(latitude, longitude) {
+    if (headerWeatherReverseGeoProxyUnavailable) {
+      return null;
+    }
+
+    if (
+      window.location.protocol === 'http:' &&
+      /^(127\.0\.0\.1|localhost)$/i.test(window.location.hostname) &&
+      window.location.port === '5502'
+    ) {
+      headerWeatherReverseGeoProxyUnavailable = true;
+      return null;
+    }
+
     const languageFallbacks = getHeaderWeatherLanguageFallbacks();
 
     for (const language of languageFallbacks) {
-      const url = new URL(HEADER_WEATHER_REVERSE_GEOCODE_ENDPOINT);
-      url.searchParams.set('format', 'jsonv2');
-      url.searchParams.set('lat', String(latitude));
-      url.searchParams.set('lon', String(longitude));
-      url.searchParams.set('zoom', '18');
-      url.searchParams.set('addressdetails', '1');
-      url.searchParams.set('layer', 'address');
-      url.searchParams.set('accept-language', `${language},de,en`);
-
-      try {
-        const response = await fetch(url.toString(), {
-          mode: 'cors',
-          credentials: 'omit',
-          headers: {
-            Accept: 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          continue;
-        }
-
-        const payload = await response.json();
+      const parseGeoPayload = payload => {
         const address = payload?.address || null;
         const districtLabel = buildHeaderWeatherDistrictLabel(address);
         const regionLabel = normalizeHeaderWeatherGermanStateLabel(
@@ -4290,8 +4424,40 @@
             regionLabel,
           };
         }
-      } catch (_) {
-        // Keep trying with next language fallback.
+
+        return null;
+      };
+
+      const proxyUrl = new URL(HEADER_WEATHER_REVERSE_GEOCODE_PROXY_ENDPOINT, window.location.origin);
+      proxyUrl.searchParams.set('lat', String(latitude));
+      proxyUrl.searchParams.set('lon', String(longitude));
+      proxyUrl.searchParams.set('lang', language);
+
+      try {
+        const proxyResponse = await fetch(proxyUrl.toString(), {
+          mode: 'same-origin',
+          credentials: 'omit',
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        if (proxyResponse.status === 404 || proxyResponse.status === 405) {
+          headerWeatherReverseGeoProxyUnavailable = true;
+          return null;
+        }
+
+        if (proxyResponse.ok) {
+          const proxyPayload = await proxyResponse.json();
+          const parsedProxyMeta = parseGeoPayload(proxyPayload?.payload || null);
+          if (parsedProxyMeta) {
+            return parsedProxyMeta;
+          }
+        }
+      } catch {
+        // Proxy is unavailable in this runtime (e.g. static server without Functions).
+        headerWeatherReverseGeoProxyUnavailable = true;
+        return null;
       }
     }
 
@@ -4315,7 +4481,7 @@
       if (parts.year && parts.month && parts.day) {
         return `${parts.year}-${parts.month}-${parts.day}`;
       }
-    } catch (_) {
+    } catch {
       // Fall through to the ISO fallback below.
     }
 
@@ -4332,7 +4498,7 @@
       if (typeof browserTimeZone === 'string' && browserTimeZone.includes('/')) {
         return browserTimeZone;
       }
-    } catch (_) {
+    } catch {
       // Ignore and use fallback chain.
     }
 
@@ -4354,7 +4520,7 @@
         hour12: false,
       }).format(new Date(getHeaderWeatherNowMs()));
       return timeZone;
-    } catch (_) {
+    } catch {
       return null;
     }
   }
@@ -4374,8 +4540,8 @@
     return [
       {
         id: 'origin-date-header',
-        url: `${window.location.origin}/robots.txt`,
-        method: 'HEAD',
+        url: `${window.location.origin}/`,
+        method: 'GET',
         mode: 'same-origin',
         type: 'date-header',
       },
@@ -4475,7 +4641,7 @@
           headerWeatherServerTimeSyncedAt = Date.now();
           return;
         }
-      } catch (_) {
+      } catch {
         // Try the next source silently.
       }
     }
@@ -4489,7 +4655,7 @@
         minute: '2-digit',
         hour12: false,
       }).format(new Date(getHeaderWeatherNowMs()));
-    } catch (_) {
+    } catch {
       return new window.Intl.DateTimeFormat('en-GB', {
         hour: '2-digit',
         minute: '2-digit',
@@ -4521,7 +4687,7 @@
     try {
       const weekday = new window.Intl.DateTimeFormat(locale, {
         timeZone: timeZone || 'UTC',
-        weekday: 'short',
+        weekday: 'long',
       }).format(new Date(getHeaderWeatherNowMs()));
 
       const cleanedWeekday = String(weekday || '')
@@ -4533,7 +4699,7 @@
       }
 
       return cleanedWeekday.charAt(0).toUpperCase() + cleanedWeekday.slice(1);
-    } catch (_) {
+    } catch {
       return '';
     }
   }
@@ -4554,21 +4720,23 @@
     try {
       for (let dayOffset = -6; dayOffset <= 6; dayOffset += 1) {
         const date = new Date(getHeaderWeatherNowMs() + dayOffset * 86400000);
-        const weekday = new window.Intl.DateTimeFormat(locale, {
-          timeZone: timeZone || 'UTC',
-          weekday: 'short',
-        }).format(date);
+        ['short', 'long'].forEach(weekdayLength => {
+          const weekday = new window.Intl.DateTimeFormat(locale, {
+            timeZone: timeZone || 'UTC',
+            weekday: weekdayLength,
+          }).format(date);
 
-        const normalized = String(weekday || '')
-          .replace(/\.$/, '')
-          .trim()
-          .toLowerCase();
+          const normalized = String(weekday || '')
+            .replace(/\.$/, '')
+            .trim()
+            .toLowerCase();
 
-        if (normalized) {
-          set.add(normalized);
-        }
+          if (normalized) {
+            set.add(normalized);
+          }
+        });
       }
-    } catch (_) {
+    } catch {
       // Keep an empty set when Intl/timeZone is unavailable.
     }
 
@@ -4667,6 +4835,8 @@
         node.textContent = nextText;
       }
     });
+
+    syncHeaderWeatherMetaWidthToEyebrow(host);
   }
 
   function shiftHeaderWeatherDate(dateString, dayOffset) {
@@ -4787,7 +4957,7 @@
 
     condition.replaceChildren(...lines.map(text => renderLine(text, 'weather-header-card__condition-line')));
 
-    const conditionFontSizePx = 8;
+    const conditionFontSizePx = 12;
     const conditionLineHeightPx = Math.max(conditionFontSizePx + 1, Math.round(conditionFontSizePx * 1.2 * 100) / 100);
 
     condition.style.setProperty('display', 'flex', 'important');
@@ -4955,7 +5125,7 @@
       ru: { feels: 'Ощущается', wind: 'Ветер', humidity: 'Влажность', updated: 'Обновлено' },
       uk: { feels: 'Відчувається', wind: 'Вітер', humidity: 'Вологість', updated: 'Оновлено' },
       de: { feels: 'Gefühlt', wind: 'Wind', humidity: 'Luftfeuchte', updated: 'Aktualisiert' },
-      en: { feels: 'Feels like', wind: 'Wind', humidity: 'Humidity', updated: 'Updated' },
+      en: { feels: 'Apparent temp', wind: 'Wind', humidity: 'Humidity', updated: 'Updated' },
     };
 
     return copyByLang[lang] || copyByLang.ru;
@@ -4973,6 +5143,49 @@
 
     const value = Number(match[1].replace(',', '.'));
     return Number.isFinite(value) ? value : null;
+  }
+
+  function getHeaderWeatherFiniteNumber(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function getHeaderWeatherTimestampMs(value) {
+    const number = Number(value);
+    if (Number.isFinite(number) && number > 0) {
+      return number < 10000000000 ? number * 1000 : number;
+    }
+
+    const parsed = Date.parse(String(value || ''));
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function isHeaderWeatherCurrentMetaFresh(meta) {
+    if (!meta) {
+      return false;
+    }
+
+    const now = getHeaderWeatherNowMs();
+    const fetchedAtMs = getHeaderWeatherTimestampMs(meta.fetchedAt);
+    if (
+      fetchedAtMs !== null &&
+      fetchedAtMs <= now + 60 * 1000 &&
+      now - fetchedAtMs <= HEADER_WEATHER_CURRENT_META_MAX_AGE
+    ) {
+      return true;
+    }
+
+    const currentTimeMs = getHeaderWeatherTimestampMs(meta.time);
+    return (
+      currentTimeMs !== null &&
+      currentTimeMs <= now + 60 * 1000 &&
+      now - currentTimeMs <= HEADER_WEATHER_CURRENT_MODEL_MAX_AGE
+    );
+  }
+
+  function convertHeaderWeatherHpaToMmHg(value) {
+    const hpa = getHeaderWeatherFiniteNumber(value);
+    return hpa !== null && hpa > 0 ? Math.round(hpa * 0.750061683) : null;
   }
 
   function normalizeHeaderWeatherHumidityValue(value) {
@@ -5107,7 +5320,7 @@
     const chipNodes = Array.from(root.querySelectorAll('.weather-header-card__chip'));
     const findChip = pattern => chipNodes.find(chip => pattern.test((chip.textContent || '').replace(/\s+/g, ' ')));
 
-    const feelsChip = findChip(/gef|ощущ|feels|відчува/i);
+    const feelsChip = findChip(/gef|ощущ|feels|відчува|apparent/i);
     const windChip = findChip(/wind|ветер|вітер/i);
     const humidityChip = findChip(/humid|влаж|feucht|волог|umid|humedad/i);
     const pressureChip = findChip(/pressure|давлен|тиск|druck|presion/i);
@@ -5118,7 +5331,9 @@
     const windText = (windChip?.textContent || '').replace(/\s+/g, ' ').trim();
     const windMatch = windText.match(/(-?\d{1,3}(?:[.,]\d+)?)\s*(km\/h|км\/ч|mph)?/i);
     const humidityMatch = (humidityChip?.textContent || '').match(/(\d{1,3})\s*%/);
-    const pressureText = (pressureChip?.textContent || '').replace(/\s+/g, ' ').trim();
+    const pressureValueText =
+      pressureChip?.querySelector(':scope > span:last-child')?.textContent || pressureChip?.textContent || '';
+    const pressureToken = parseHeaderWeatherNumericToken(pressureValueText);
 
     if (temp === null && !condition && feelsValue === null && !windMatch && !humidityMatch) {
       return null;
@@ -5131,7 +5346,10 @@
       feels: feelsValue === null ? null : formatHeaderWeatherCelsiusText(feelsValue),
       wind: windMatch ? `${Math.round(Number(windMatch[1].replace(',', '.')))} ${windMatch[2] || 'km/h'}` : null,
       humidity: humidityMatch ? `${humidityMatch[1]}%` : null,
-      pressure: pressureText || null,
+      pressure:
+        pressureToken === null || !Number.isFinite(pressureToken) || Math.abs(pressureToken) <= 0
+          ? null
+          : formatHeaderWeatherPressureValue(host, Math.abs(pressureToken)),
       source: 'widget-preview',
     };
   }
@@ -5142,18 +5360,15 @@
       return null;
     }
 
-    const temp = Number(meta.temperature);
-    const feels = Number(meta.apparentTemperature);
-    const wind = Number(meta.windSpeedKph);
-    const humidity = Number(meta.humidity);
+    const temp = getHeaderWeatherFiniteNumber(meta.temperature);
+    const feels = getHeaderWeatherFiniteNumber(meta.apparentTemperature);
+    const wind = getHeaderWeatherFiniteNumber(meta.windSpeedKph);
+    const humidityRaw = getHeaderWeatherFiniteNumber(meta.humidity);
+    const humidity = humidityRaw !== null && humidityRaw >= 0 && humidityRaw <= 100 ? humidityRaw : null;
     const pressureMmHg =
-      Number.isFinite(Number(meta.pressureMmHg)) && Number(meta.pressureMmHg) > 0
-        ? Number(meta.pressureMmHg)
-        : Number.isFinite(Number(meta.surfacePressure)) && Number(meta.surfacePressure) > 0
-          ? Math.round(Number(meta.surfacePressure) * 0.750061683)
-          : Number.isFinite(Number(meta.pressureMsl)) && Number(meta.pressureMsl) > 0
-            ? Math.round(Number(meta.pressureMsl) * 0.750061683)
-            : null;
+      getHeaderWeatherFiniteNumber(meta.pressureMmHg) > 0
+        ? Math.round(Number(meta.pressureMmHg))
+        : convertHeaderWeatherHpaToMmHg(meta.surfacePressure) || convertHeaderWeatherHpaToMmHg(meta.pressureMsl);
 
     const condition = resolveHeaderWeatherConditionLabel(host);
     if (
@@ -5182,8 +5397,26 @@
     hydrateHeaderWeatherReadingsFromCache(host);
 
     const widgetReadings = extractHeaderWeatherReadingsFromHost(host);
-    const fallbackReadings = buildHeaderWeatherReadingsFromMeta(host);
-    const resolvedReadings = widgetReadings || fallbackReadings;
+    const apiReadings = buildHeaderWeatherReadingsFromMeta(host);
+    const apiReadingsAreFresh = apiReadings && isHeaderWeatherCurrentMetaFresh(host?.__weatherCurrentMeta);
+    const resolvedReadings = apiReadingsAreFresh
+      ? {
+          ...(widgetReadings || {}),
+          ...apiReadings,
+          meta: widgetReadings?.meta || apiReadings.meta || '',
+          source: apiReadings.source,
+        }
+      : widgetReadings
+        ? {
+            ...widgetReadings,
+            temp: widgetReadings.temp ?? apiReadings?.temp ?? null,
+            condition: widgetReadings.condition || apiReadings?.condition || '',
+            feels: widgetReadings.feels || apiReadings?.feels || null,
+            wind: widgetReadings.wind || apiReadings?.wind || null,
+            pressure: widgetReadings.pressure || apiReadings?.pressure || null,
+            humidity: widgetReadings.humidity || apiReadings?.humidity || null,
+          }
+        : apiReadings;
 
     if (!resolvedReadings) {
       return null;
@@ -5258,9 +5491,44 @@
       }
     };
 
-    applyChip(/gef|ощущ|feels|відчува/i, readings.feels, copy.feels);
+    applyChip(/gef|ощущ|feels|відчува|apparent/i, readings.feels, copy.feels);
     applyChip(/wind|ветер|вітер/i, readings.wind, copy.wind);
     applyChip(/humid|влаж|feucht|волог|umid|humedad/i, readings.humidity, copy.humidity);
+
+    return changed;
+  }
+
+  function applyHeaderWeatherPreviewReadings(host, readings) {
+    const root = host?.shadowRoot;
+    if (!root || !readings) {
+      return false;
+    }
+
+    let changed = false;
+    const temperature = getHeaderWeatherFiniteNumber(readings.temp);
+    if (temperature !== null) {
+      const nextTemperature = String(Math.round(temperature));
+      root.querySelectorAll('.weather-header-card__temperature-value').forEach(node => {
+        if (!(node instanceof HTMLElement)) {
+          return;
+        }
+
+        if ((node.textContent || '').trim() !== nextTemperature) {
+          node.textContent = nextTemperature;
+          changed = true;
+        }
+      });
+    }
+
+    const conditionNode = root.querySelector('.weather-header-card__condition');
+    const nextConditionText = (readings.condition || '').replace(/\s+/g, ' ').trim();
+    if (conditionNode instanceof HTMLElement && nextConditionText) {
+      const currentConditionText = getHeaderWeatherConditionPlainText(conditionNode);
+      if (currentConditionText.toLocaleUpperCase() !== nextConditionText.toLocaleUpperCase()) {
+        applyHeaderWeatherConditionTypography(conditionNode, nextConditionText);
+        changed = true;
+      }
+    }
 
     return changed;
   }
@@ -5270,8 +5538,6 @@
       return;
     }
 
-    markHeaderWeatherInspectableElements(host);
-
     const readings = resolveHeaderWeatherReadings(host);
     if (!readings) {
       return;
@@ -5279,6 +5545,7 @@
 
     host.__weatherReadingsSnapshot = readings;
     applyHeaderWeatherDropdownReadings(host, readings);
+    applyHeaderWeatherPreviewReadings(host, readings);
     const dropdownConditionNode = host.shadowRoot?.querySelector('.weather-header-dropdown__hero-copy strong');
     if (dropdownConditionNode instanceof HTMLElement && readings.condition) {
       applyHeaderWeatherDropdownConditionTypography(dropdownConditionNode, readings.condition);
@@ -5298,50 +5565,12 @@
     }
     if (readings.pressure) {
       const pressureMmHg = parseHeaderWeatherNumericToken(readings.pressure);
-      if (pressureMmHg !== null) {
+      if (pressureMmHg !== null && Number.isFinite(pressureMmHg) && pressureMmHg > 0) {
         host.__weatherPressureMmHg = pressureMmHg;
         host.__weatherPressureValue = readings.pressure;
         writeHeaderWeatherReadingsCache(host, { pressureMmHg });
       }
     }
-  }
-
-  function markHeaderWeatherInspectableElements(host) {
-    const root = host?.shadowRoot;
-    if (!root) {
-      return;
-    }
-
-    host.setAttribute('data-nika-element', 'header-weather-host');
-    host.closest('.header-weather-shell')?.setAttribute('data-nika-element', 'header-weather-shell');
-
-    const map = [
-      ['.weather-header-trigger', 'weather-trigger'],
-      ['.weather-header-card', 'weather-card'],
-      ['.weather-header-card__eyebrow', 'weather-geolocation-title'],
-      ['.weather-header-card__location', 'weather-location'],
-      ['.weather-header-card__meta', 'weather-time-region'],
-      ['.weather-header-card__temperature', 'weather-temperature'],
-      ['.weather-header-card__condition', 'weather-condition'],
-      ['.weather-header-card__toggle', 'weather-menu-toggle'],
-      ['.weather-header-card__chip--feels-like', 'weather-feels-like'],
-      [
-        ".weather-header-card__chip[data-weather-metric='feels'], .weather-header-card__chip[data-weather-metric='apparent']",
-        'weather-feels-like',
-      ],
-      ['.weather-header-card__chip[data-weather-metric="pressure"]', 'weather-pressure'],
-      ['.weather-header-card__chip[data-weather-metric="humidity"]', 'weather-humidity'],
-      ['.weather-header-dropdown', 'weather-dropdown'],
-    ];
-
-    map.forEach(([selector, marker]) => {
-      root.querySelectorAll(selector).forEach(node => {
-        if (!(node instanceof HTMLElement)) {
-          return;
-        }
-        node.setAttribute('data-nika-element', marker);
-      });
-    });
   }
 
   function scheduleHeaderWeatherReadingsSync(host) {
@@ -5393,7 +5622,6 @@
       });
 
       if (shouldSync) {
-        markHeaderWeatherInspectableElements(host);
         scheduleHeaderWeatherReadingsSync(host);
       }
     });
@@ -5515,6 +5743,7 @@
   const HEADER_WEATHER_FEELS_TEMP_SHRINK_PX = 1;
   const HEADER_WEATHER_FEELS_TEMP_LETTER_SPACING_EM = 0.04;
   const HEADER_WEATHER_FEELS_MUTED_COLOR = 'rgb(255 246 228 / 0.55)';
+  const HEADER_WEATHER_FEELS_LABEL_LETTER_SPACING_PX = 1;
 
   /**
    * Reference preset for the compact block:
@@ -5528,13 +5757,9 @@
     compactAnchorOffsetPx: 3,
     desktopAnchorOffsetPx: 1,
     rowGapPx: 2,
-    // Optical compensation by locale so temperature end visually lands at label end.
-    localeWidthNudgePx: Object.freeze({
-      ru: 0.8,
-      uk: 0.9,
-      de: 0.6,
-      en: 0.5,
-    }),
+    // RU is the visual reference for all locales.
+    baselineNudgePx: 0.8,
+    minInlineGapPx: 4,
   });
 
   function fitHeaderWeatherInlineTextWidth(node, maxWidthPx, minFontSizePx = 3.8) {
@@ -5565,9 +5790,16 @@
     }
 
     const langCode = normalizeLangCode(lang || document.documentElement.lang || 'ru');
-    const nudgeMultiplier = HEADER_WEATHER_FEELS_REFERENCE_PRESET.localeWidthNudgePx[langCode] || 0.8;
-    const baselineWidthPx = 52.5 + nudgeMultiplier;
-    const blockWidthPx = Math.max(1, Math.round(Number(baselineWidthPx) * 10) / 10);
+    const baselineWidthPx = 52.5 + HEADER_WEATHER_FEELS_REFERENCE_PRESET.baselineNudgePx;
+    const prefixNode = valueEl.querySelector('.weather-header-card__feels-prefix');
+    const tempNode = valueEl.querySelector('.weather-header-card__feels-temp');
+    const prefixWidthPx =
+      (prefixNode instanceof HTMLElement && (prefixNode.getBoundingClientRect().width || prefixNode.scrollWidth)) || 0;
+    const tempWidthPx =
+      (tempNode instanceof HTMLElement && (tempNode.getBoundingClientRect().width || tempNode.scrollWidth)) || 0;
+    const contentMinWidthPx =
+      prefixWidthPx + tempWidthPx + Math.max(2, HEADER_WEATHER_FEELS_REFERENCE_PRESET.minInlineGapPx);
+    const blockWidthPx = Math.max(1, Math.round(Math.max(baselineWidthPx, contentMinWidthPx) * 10) / 10);
 
     feelsLikeChip.dataset.weatherFeelsPreset = HEADER_WEATHER_FEELS_REFERENCE_PRESET.id;
     feelsLikeChip.dataset.weatherFeelsRowLayout = HEADER_WEATHER_FEELS_REFERENCE_PRESET.rowLayout;
@@ -5581,19 +5813,6 @@
     valueEl.style.setProperty('max-width', `${blockWidthPx}px`, 'important');
     valueEl.style.setProperty('justify-content', 'space-between', 'important');
     valueEl.style.setProperty('column-gap', '0', 'important');
-
-    // Keep the feels-like right edge optically aligned with the geolocation block right edge.
-    const chipRect = feelsLikeChip.getBoundingClientRect();
-    if (chipRect.width > 0) {
-      const titleRightEdge = Number(labelBox.left) + Number(labelBox.width);
-      const edgeDelta = titleRightEdge - Number(chipRect.right);
-      if (Number.isFinite(edgeDelta)) {
-        const currentMarginLeft = Number.parseFloat(window.getComputedStyle(feelsLikeChip).marginLeft || '0') || 0;
-        const targetMarginLeft = Math.max(-64, Math.min(64, currentMarginLeft + edgeDelta));
-        const roundedMarginLeft = Math.round(targetMarginLeft * 10) / 10;
-        feelsLikeChip.style.setProperty('margin-left', `${roundedMarginLeft}px`, 'important');
-      }
-    }
   }
 
   function runHeaderWeatherPostLayoutPass(callback, frameCount = 2) {
@@ -5620,119 +5839,6 @@
     requestAnimationFrame(tick);
   }
 
-  function setupHeaderWeatherFeelsLayoutAutoSync({ feelsLikeChip, syncLayout, observeNodes = [], observeRoot = null }) {
-    if (!(feelsLikeChip instanceof HTMLElement) || typeof syncLayout !== 'function') {
-      return () => {};
-    }
-
-    if (typeof feelsLikeChip.__weatherFeelsAutoSyncCleanup === 'function') {
-      feelsLikeChip.__weatherFeelsAutoSyncCleanup();
-    }
-
-    let disposed = false;
-    let rafId = 0;
-    const timeoutIds = [];
-    const listeners = [];
-
-    const scheduleSync = () => {
-      if (disposed || !feelsLikeChip.isConnected) {
-        return;
-      }
-
-      if (typeof requestAnimationFrame !== 'function') {
-        syncLayout();
-        return;
-      }
-
-      if (rafId) {
-        return;
-      }
-
-      rafId = requestAnimationFrame(() => {
-        rafId = 0;
-        if (!disposed && feelsLikeChip.isConnected) {
-          syncLayout();
-        }
-      });
-    };
-
-    const bootstrapSyncDelays = [40, 120, 260];
-    bootstrapSyncDelays.forEach(delayMs => {
-      const timerId = setTimeout(scheduleSync, delayMs);
-      timeoutIds.push(timerId);
-    });
-
-    const handleWindowResize = () => {
-      scheduleSync();
-    };
-    window.addEventListener('resize', handleWindowResize, { passive: true });
-    window.addEventListener('orientationchange', handleWindowResize, { passive: true });
-    listeners.push(['resize', handleWindowResize]);
-    listeners.push(['orientationchange', handleWindowResize]);
-
-    const uniqueObservedNodes = Array.from(new Set(observeNodes.filter(node => node instanceof Element)));
-    const resizeObserver =
-      typeof ResizeObserver === 'function'
-        ? new ResizeObserver(() => {
-            scheduleSync();
-          })
-        : null;
-    if (resizeObserver) {
-      uniqueObservedNodes.forEach(node => resizeObserver.observe(node));
-    }
-
-    const mutationTarget =
-      observeRoot instanceof ShadowRoot || observeRoot instanceof HTMLElement || observeRoot instanceof DocumentFragment
-        ? observeRoot
-        : feelsLikeChip.closest('.weather-header-card') || feelsLikeChip.parentElement;
-    const mutationObserver =
-      mutationTarget instanceof Node
-        ? new MutationObserver(() => {
-            scheduleSync();
-          })
-        : null;
-    if (mutationObserver && mutationTarget) {
-      mutationObserver.observe(mutationTarget, {
-        subtree: true,
-        childList: true,
-        characterData: true,
-        attributes: true,
-        attributeFilter: ['class', 'style', 'data-weather-expanded'],
-      });
-    }
-
-    const cleanup = () => {
-      if (disposed) {
-        return;
-      }
-
-      disposed = true;
-
-      if (rafId && typeof cancelAnimationFrame === 'function') {
-        cancelAnimationFrame(rafId);
-        rafId = 0;
-      }
-
-      timeoutIds.forEach(timerId => clearTimeout(timerId));
-      timeoutIds.length = 0;
-
-      listeners.forEach(([eventName, handler]) => {
-        window.removeEventListener(eventName, handler);
-      });
-
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
-
-      if (mutationObserver) {
-        mutationObserver.disconnect();
-      }
-    };
-
-    feelsLikeChip.__weatherFeelsAutoSyncCleanup = cleanup;
-    return cleanup;
-  }
-
   function syncHeaderWeatherFeelsBaseline(feelsLikeChip, mainTempNode, valueNode) {
     if (!(feelsLikeChip instanceof HTMLElement)) {
       return;
@@ -5743,16 +5849,23 @@
       return;
     }
 
+    feelsLikeChip.style.setProperty('transform', 'none', 'important');
+
     const mainTempBox = mainTempNode.getBoundingClientRect();
+    const feelsBox = feelsLikeChip.getBoundingClientRect();
     const valueBox = valueNode.getBoundingClientRect();
-    if (!mainTempBox.height || !valueBox.height) {
+    if (!mainTempBox.height || !feelsBox.height || !valueBox.height) {
       feelsLikeChip.style.setProperty('transform', 'none', 'important');
       return;
     }
 
-    const shiftUpPx = Math.round((valueBox.bottom - mainTempBox.bottom) * 10) / 10;
-    if (shiftUpPx > 0.4) {
-      feelsLikeChip.style.setProperty('transform', `translateY(-${shiftUpPx}px)`, 'important');
+    const mainCenterY = mainTempBox.top + mainTempBox.height / 2;
+    const feelsCenterY = feelsBox.top + feelsBox.height / 2;
+    const shiftPx = Math.round((mainCenterY - feelsCenterY) * 10) / 10;
+    const clampedShiftPx = Math.max(-14, Math.min(4, shiftPx));
+
+    if (Math.abs(clampedShiftPx) > 0.2) {
+      feelsLikeChip.style.setProperty('transform', `translateY(${clampedShiftPx}px)`, 'important');
     } else {
       feelsLikeChip.style.setProperty('transform', 'none', 'important');
     }
@@ -5891,7 +6004,7 @@
       root.querySelector('.weather-header-card__chips');
     if (previewChips instanceof HTMLElement) {
       const chipNodes = Array.from(previewChips.querySelectorAll('.weather-header-card__chip'));
-      const feelsChip = chipNodes.find(chip => /gef|ощущ|feels|відчува/i.test(chip.textContent || '')) || null;
+      const feelsChip = chipNodes.find(chip => /gef|ощущ|feels|відчува|apparent/i.test(chip.textContent || '')) || null;
       const windChip = chipNodes.find(chip => /wind|ветер|вітер/i.test(chip.textContent || '')) || null;
       if (windChip instanceof HTMLElement) {
         windChip.remove();
@@ -5943,6 +6056,22 @@
           feelsChip.replaceChildren(label, row);
           feelsChip.dataset.weatherCollapsedFormatted = 'true';
           changed = true;
+        } else {
+          const existingLabel = feelsChip.querySelector('.weather-header-card__feels-label');
+          const existingPrefix = feelsChip.querySelector('.weather-header-card__feels-prefix');
+          const existingNumber = feelsChip.querySelector('.weather-header-card__feels-temp-number');
+          if (existingLabel instanceof HTMLElement && existingLabel.textContent !== labelText) {
+            existingLabel.textContent = labelText;
+            changed = true;
+          }
+          if (existingPrefix instanceof HTMLElement && existingPrefix.textContent !== prefixText) {
+            existingPrefix.textContent = prefixText;
+            changed = true;
+          }
+          if (existingNumber instanceof HTMLElement && existingNumber.textContent !== feelsNumber) {
+            existingNumber.textContent = feelsNumber;
+            changed = true;
+          }
         }
 
         chipNodes.forEach(chip => {
@@ -6409,6 +6538,15 @@
     const normalizedKey = normalizeHeaderWeatherLocationKey(locationLabel);
     if (!normalizedKey) {
       return null;
+    }
+
+    if (isHeaderWeatherSalonLocationKey(normalizedKey)) {
+      const salonLocationMeta = getHeaderWeatherSalonLocationMeta();
+      headerWeatherLocationCache.set(normalizedKey, {
+        value: salonLocationMeta,
+        expiresAt: Date.now() + HEADER_WEATHER_LOCATION_CACHE_TTL,
+      });
+      return salonLocationMeta;
     }
 
     const cachedEntry = headerWeatherLocationCache.get(normalizedKey);
@@ -6956,10 +7094,18 @@
       ].join(',')
     );
     url.searchParams.set('timezone', resolveHeaderWeatherTimeZone(host, locationMeta));
+    url.searchParams.set('forecast_days', '1');
+    url.searchParams.set('models', 'best_match');
+    url.searchParams.set('temperature_unit', 'celsius');
+    url.searchParams.set('wind_speed_unit', 'kmh');
+    url.searchParams.set('precipitation_unit', 'mm');
+    url.searchParams.set('timeformat', 'iso8601');
+    url.searchParams.set('_ts', String(Date.now()));
 
     const response = await fetch(url.toString(), {
       mode: 'cors',
       credentials: 'omit',
+      cache: 'no-store',
       headers: { Accept: 'application/json' },
     });
 
@@ -6973,21 +7119,39 @@
       throw new Error('Current weather lookup returned incomplete data.');
     }
 
-    const pressureMsl = Number(current.pressure_msl);
-    const surfacePressure = Number(current.surface_pressure);
-    const windSpeedKph = Number(current.wind_speed_10m);
+    const pressureMsl = getHeaderWeatherFiniteNumber(current.pressure_msl);
+    const surfacePressure = getHeaderWeatherFiniteNumber(current.surface_pressure);
+    const windSpeedKph = getHeaderWeatherFiniteNumber(current.wind_speed_10m);
+    const humidity = getHeaderWeatherFiniteNumber(current.relative_humidity_2m);
+    const temperature = getHeaderWeatherFiniteNumber(current.temperature_2m);
+    const apparentTemperature = getHeaderWeatherFiniteNumber(current.apparent_temperature);
+    const surfacePressureMmHg = convertHeaderWeatherHpaToMmHg(surfacePressure);
+    const pressureMslMmHg = convertHeaderWeatherHpaToMmHg(pressureMsl);
+    const weatherCode = getHeaderWeatherFiniteNumber(current.weather_code);
+    const cloudCover = getHeaderWeatherFiniteNumber(current.cloud_cover);
+    const precipitation = getHeaderWeatherFiniteNumber(current.precipitation);
+    const isDay = getHeaderWeatherFiniteNumber(current.is_day);
 
     return {
-      weatherCode: Number(current.weather_code),
-      cloudCover: Number(current.cloud_cover),
-      precipitation: Number(current.precipitation),
-      humidity: Number(current.relative_humidity_2m),
-      temperature: Number(current.temperature_2m),
-      apparentTemperature: Number(current.apparent_temperature),
-      isDay: Number(current.is_day),
-      pressureMsl: Number.isFinite(pressureMsl) ? pressureMsl : null,
-      surfacePressure: Number.isFinite(surfacePressure) ? surfacePressure : null,
-      windSpeedKph: Number.isFinite(windSpeedKph) ? windSpeedKph : null,
+      source: 'open-meteo-best-match',
+      time: typeof current.time === 'string' ? current.time : null,
+      interval: getHeaderWeatherFiniteNumber(current.interval),
+      timezone: payload?.timezone || resolveHeaderWeatherTimeZone(host, locationMeta),
+      utcOffsetSeconds: getHeaderWeatherFiniteNumber(payload?.utc_offset_seconds),
+      fetchedAt: getHeaderWeatherNowMs(),
+      latitude: getHeaderWeatherFiniteNumber(payload?.latitude) || locationMeta.latitude,
+      longitude: getHeaderWeatherFiniteNumber(payload?.longitude) || locationMeta.longitude,
+      weatherCode,
+      cloudCover,
+      precipitation,
+      humidity: humidity !== null && humidity >= 0 && humidity <= 100 ? humidity : null,
+      temperature,
+      apparentTemperature,
+      isDay,
+      pressureMsl,
+      surfacePressure,
+      pressureMmHg: surfacePressureMmHg || pressureMslMmHg,
+      windSpeedKph,
     };
   }
 
@@ -7242,13 +7406,71 @@
     syncHeaderWeatherToggleArrow(host);
   }
 
-  function applyHeaderWeatherEqualMetricSpacing(rightColumn) {
+  function applyHeaderWeatherEqualMetricSpacing(rightColumn, _preferredGapPx = null) {
     if (!(rightColumn instanceof HTMLElement)) {
       return;
     }
 
+    const lockedGapPx = 6;
+
+    const conditionNode =
+      rightColumn.querySelector(':scope > .weather-header-card__condition') ||
+      rightColumn.querySelector(':scope > .weather-header-card__metrics-block > .weather-header-card__condition');
+    const metricsBlockNode = rightColumn.querySelector(':scope > .weather-header-card__metrics-block');
+    if (metricsBlockNode instanceof HTMLElement) {
+      const metricsChildren = Array.from(metricsBlockNode.children).filter(
+        node => node instanceof HTMLElement && node.style.getPropertyValue('display') !== 'none'
+      );
+
+      if (metricsChildren.length > 1) {
+        const columnHeightPx = rightColumn.getBoundingClientRect().height;
+        const resolvedHeightPx = Number.isFinite(columnHeightPx) && columnHeightPx > 0 ? columnHeightPx : null;
+
+        rightColumn.style.setProperty('justify-content', 'flex-start', 'important');
+        rightColumn.style.setProperty('row-gap', '0', 'important');
+        rightColumn.style.setProperty('padding-top', '0', 'important');
+        rightColumn.style.setProperty('padding-bottom', '0', 'important');
+        metricsBlockNode.style.setProperty('justify-content', 'space-between', 'important');
+        metricsBlockNode.style.setProperty('row-gap', '0', 'important');
+        metricsBlockNode.style.setProperty('padding-top', '0', 'important');
+        metricsBlockNode.style.setProperty('padding-bottom', '0', 'important');
+        metricsBlockNode.style.setProperty('align-self', 'stretch', 'important');
+        metricsBlockNode.style.setProperty('width', '100%', 'important');
+        metricsBlockNode.style.setProperty('max-width', '100%', 'important');
+        metricsBlockNode.style.setProperty('flex', '1 1 auto', 'important');
+        if (resolvedHeightPx !== null) {
+          metricsBlockNode.style.setProperty('height', `${resolvedHeightPx}px`, 'important');
+          metricsBlockNode.style.setProperty('min-height', `${resolvedHeightPx}px`, 'important');
+          metricsBlockNode.style.setProperty('max-height', `${resolvedHeightPx}px`, 'important');
+        } else {
+          metricsBlockNode.style.setProperty('height', '100%', 'important');
+          metricsBlockNode.style.setProperty('min-height', '100%', 'important');
+          metricsBlockNode.style.setProperty('max-height', '100%', 'important');
+        }
+
+        return;
+      }
+    }
+
+    if (conditionNode instanceof HTMLElement && metricsBlockNode instanceof HTMLElement) {
+      const gapPx = lockedGapPx;
+
+      rightColumn.style.setProperty('justify-content', 'flex-start', 'important');
+      rightColumn.style.setProperty('row-gap', `${gapPx}px`, 'important');
+      rightColumn.style.setProperty('padding-top', `${gapPx}px`, 'important');
+      rightColumn.style.setProperty('padding-bottom', `${gapPx}px`, 'important');
+      metricsBlockNode.style.setProperty('justify-content', 'space-between', 'important');
+      metricsBlockNode.style.setProperty('row-gap', '0', 'important');
+      metricsBlockNode.style.setProperty('padding-top', '0', 'important');
+      metricsBlockNode.style.setProperty('padding-bottom', '0', 'important');
+
+      return;
+    }
+
     const metricNodes = Array.from(
-      rightColumn.querySelectorAll(':scope > .weather-header-card__condition, :scope > .weather-header-card__chip')
+      rightColumn.querySelectorAll(
+        ':scope > .weather-header-card__condition, :scope > .weather-header-card__metrics-block, :scope > .weather-header-card__chip'
+      )
     ).filter(node => {
       if (!(node instanceof HTMLElement)) {
         return false;
@@ -7265,35 +7487,56 @@
       return;
     }
 
-    const containerHeight = rightColumn.getBoundingClientRect().height || 0;
-    const occupiedHeight = metricNodes.reduce((sum, node) => sum + (node.getBoundingClientRect().height || 0), 0);
-    const freeHeight = Math.max(0, containerHeight - occupiedHeight);
-    const equalGap = freeHeight / (metricNodes.length - 1);
-    const normalizedGap = Number.isFinite(equalGap) ? Math.max(0, Math.round(equalGap * 100) / 100) : 0;
-
     rightColumn.style.setProperty('justify-content', 'flex-start', 'important');
-    rightColumn.style.setProperty('row-gap', `${normalizedGap}px`, 'important');
+    rightColumn.style.setProperty('row-gap', `${lockedGapPx}px`, 'important');
   }
 
   function syncHeaderWeatherRightColumnAlign(host, layoutRefs) {
-    const { rightColumn, condition, pressureChip, humidityChip } = layoutRefs || {};
+    const { rightColumn, condition, pressureChip, humidityChip, infoPanel, titleBlock, tempRow } = layoutRefs || {};
     if (!(rightColumn instanceof HTMLElement)) {
       return;
     }
 
-    const cardVerticalInsetPx = Number.isFinite(Number(host?.__weatherCardVerticalInsetPx))
-      ? Math.max(0, Number(host.__weatherCardVerticalInsetPx))
-      : 0;
+    // Read insets directly from infoPanel's already-applied top/bottom values.
+    // This guarantees they match the left column regardless of execution order.
+    const _infoPanelTop = infoPanel instanceof HTMLElement ? Number.parseFloat(infoPanel.style.top) : Number.NaN;
+    const _infoPanelBottom = infoPanel instanceof HTMLElement ? Number.parseFloat(infoPanel.style.bottom) : Number.NaN;
+    const _hostTopInset = Number.isFinite(Number(host?.__weatherCardTopInsetPx))
+      ? Math.max(0, Number(host.__weatherCardTopInsetPx))
+      : Number.isFinite(Number(host?.__weatherCardVerticalInsetPx))
+        ? Math.max(0, Number(host.__weatherCardVerticalInsetPx))
+        : 0;
+    const _hostBottomInset = Number.isFinite(Number(host?.__weatherCardBottomInsetPx))
+      ? Math.max(0, Number(host.__weatherCardBottomInsetPx))
+      : Number.isFinite(Number(host?.__weatherCardVerticalInsetPx))
+        ? Math.max(0, Number(host.__weatherCardVerticalInsetPx))
+        : 0;
+    const _resolvedTopInset =
+      Number.isFinite(_infoPanelTop) && _infoPanelTop >= 0
+        ? _infoPanelTop
+        : _hostTopInset;
+    const _resolvedBottomInset =
+      Number.isFinite(_infoPanelBottom) && _infoPanelBottom >= 0
+        ? _infoPanelBottom
+        : _hostBottomInset;
+    const rightTopInsetPx = _resolvedTopInset;
+    const rightBottomInsetPx = _resolvedBottomInset;
 
-    const legacyMetricsBlock = rightColumn.querySelector('.weather-header-card__metrics-block');
-    if (legacyMetricsBlock instanceof HTMLElement) {
-      Array.from(legacyMetricsBlock.children).forEach(child => {
-        if (child instanceof HTMLElement) {
-          rightColumn.appendChild(child);
-        }
-      });
-      legacyMetricsBlock.remove();
+    let metricsGroup = rightColumn.querySelector(':scope > .weather-header-card__metrics-block');
+    if (!(metricsGroup instanceof HTMLElement)) {
+      metricsGroup = document.createElement('div');
+      metricsGroup.className = 'weather-header-card__metrics-block';
+      rightColumn.appendChild(metricsGroup);
     }
+
+    Array.from(metricsGroup.children).forEach(child => {
+      if (
+        child instanceof HTMLElement &&
+        !/pressure|humid|влаж|feucht|волог|umid|humedad|давлен|тиск|druck|presion/i.test(child.textContent || '')
+      ) {
+        rightColumn.appendChild(child);
+      }
+    });
 
     const mountNode = (node, order) => {
       if (!(node instanceof HTMLElement)) {
@@ -7307,9 +7550,28 @@
       node.dataset.weatherMetricOrder = String(order);
     };
 
-    mountNode(condition, 1);
     mountNode(pressureChip, 2);
     mountNode(humidityChip, 3);
+
+    if (metricsGroup instanceof HTMLElement) {
+      if (condition instanceof HTMLElement) {
+        if (condition.parentElement !== metricsGroup) {
+          metricsGroup.insertBefore(condition, metricsGroup.firstChild);
+        } else if (metricsGroup.firstElementChild !== condition) {
+          metricsGroup.insertBefore(condition, metricsGroup.firstChild);
+        }
+        condition.dataset.weatherMetricOrder = '1';
+      }
+
+      [pressureChip, humidityChip].forEach(chip => {
+        if (!(chip instanceof HTMLElement)) {
+          return;
+        }
+        if (chip.parentElement !== metricsGroup) {
+          metricsGroup.appendChild(chip);
+        }
+      });
+    }
 
     [pressureChip, humidityChip].forEach(chip => {
       if (!(chip instanceof HTMLElement)) {
@@ -7333,12 +7595,30 @@
 
     if (condition instanceof HTMLElement) {
       condition.style.setProperty('position', 'relative', 'important');
+      condition.style.setProperty('order', '0', 'important');
       condition.style.setProperty('top', 'auto', 'important');
       condition.style.setProperty('right', '0', 'important');
       condition.style.setProperty('bottom', 'auto', 'important');
       condition.style.setProperty('left', 'auto', 'important');
       condition.style.setProperty('transform', 'none', 'important');
       condition.style.setProperty('margin', '0', 'important');
+      condition.style.setProperty('width', '100%', 'important');
+      condition.style.setProperty('max-width', '100%', 'important');
+      condition.style.setProperty('min-width', '0', 'important');
+      condition.style.setProperty('align-self', 'stretch', 'important');
+      condition.style.setProperty('align-items', 'flex-end', 'important');
+      condition.style.setProperty('text-align', 'right', 'important');
+
+      condition.querySelectorAll('.weather-header-card__condition-line').forEach(line => {
+        if (!(line instanceof HTMLElement)) {
+          return;
+        }
+        line.style.setProperty('display', 'block', 'important');
+        line.style.setProperty('width', '100%', 'important');
+        line.style.setProperty('max-width', '100%', 'important');
+        line.style.setProperty('text-align', 'right', 'important');
+        line.style.setProperty('white-space', 'nowrap', 'important');
+      });
     }
 
     [pressureChip, humidityChip].forEach(chip => {
@@ -7358,26 +7638,117 @@
       chip.style.setProperty('left', 'auto', 'important');
       chip.style.setProperty('transform', 'none', 'important');
       chip.style.setProperty('margin', '0', 'important');
-      chip.style.setProperty('width', '100%', 'important');
-      chip.style.setProperty('align-items', isReferencePressure ? 'flex-start' : 'flex-end', 'important');
+      chip.style.setProperty('padding-left', '0', 'important');
+      chip.style.setProperty('padding-right', '0', 'important');
+      chip.style.setProperty('width', 'max-content', 'important');
+      chip.style.setProperty('max-width', '100%', 'important');
+      chip.style.setProperty('min-width', '0', 'important');
+      chip.style.setProperty('align-self', 'flex-end', 'important');
+      chip.style.setProperty('justify-content', 'flex-end', 'important');
+      chip.style.setProperty('align-items', 'flex-end', 'important');
+      chip.style.setProperty('gap', isReferencePressure ? '3px' : chip.style.gap, 'important');
+      chip.style.setProperty('order', isReferencePressure ? '1' : '2', 'important');
     });
+
+    const rightEdgeInsetPx = 2;
 
     rightColumn.style.setProperty('display', 'flex', 'important');
     rightColumn.style.setProperty('flex-direction', 'column', 'important');
     rightColumn.style.setProperty('position', 'absolute', 'important');
-    rightColumn.style.setProperty('top', `${cardVerticalInsetPx}px`, 'important');
-    rightColumn.style.setProperty('right', '8px', 'important');
-    rightColumn.style.setProperty('bottom', `${cardVerticalInsetPx}px`, 'important');
+    rightColumn.style.setProperty('top', `${rightTopInsetPx}px`, 'important');
+    rightColumn.style.setProperty('right', `${rightEdgeInsetPx}px`, 'important');
+    rightColumn.style.setProperty('bottom', `${rightBottomInsetPx}px`, 'important');
     rightColumn.style.setProperty('left', 'auto', 'important');
-    rightColumn.style.setProperty('height', 'auto', 'important');
-    rightColumn.style.setProperty('min-height', `calc(100% - ${cardVerticalInsetPx * 2}px)`, 'important');
-    rightColumn.style.setProperty('max-height', `calc(100% - ${cardVerticalInsetPx * 2}px)`, 'important');
+    // height must be explicit (not auto) so space-between can spread children.
+    rightColumn.style.setProperty('height', `calc(100% - ${rightTopInsetPx + rightBottomInsetPx}px)`, 'important');
+    rightColumn.style.setProperty('min-height', `calc(100% - ${rightTopInsetPx + rightBottomInsetPx}px)`, 'important');
+    rightColumn.style.setProperty('max-height', `calc(100% - ${rightTopInsetPx + rightBottomInsetPx}px)`, 'important');
     rightColumn.style.setProperty('justify-content', 'flex-start', 'important');
     rightColumn.style.setProperty('row-gap', '0', 'important');
     rightColumn.style.setProperty('align-items', 'flex-end', 'important');
+    if (metricsGroup instanceof HTMLElement) {
+      metricsGroup.style.setProperty('display', 'flex', 'important');
+      metricsGroup.style.setProperty('flex-direction', 'column', 'important');
+      metricsGroup.style.setProperty('align-items', 'flex-end', 'important');
+      metricsGroup.style.setProperty('justify-content', 'space-between', 'important');
+      metricsGroup.style.setProperty('row-gap', '0', 'important');
+      metricsGroup.style.setProperty('margin', '0', 'important');
+      metricsGroup.style.setProperty('padding-top', '0', 'important');
+      metricsGroup.style.setProperty('padding-bottom', '0', 'important');
+      metricsGroup.style.setProperty('width', '100%', 'important');
+      metricsGroup.style.setProperty('max-width', '100%', 'important');
+      metricsGroup.style.setProperty('align-self', 'stretch', 'important');
+      metricsGroup.style.setProperty('height', '100%', 'important');
+      metricsGroup.style.setProperty('min-height', '100%', 'important');
+      metricsGroup.style.setProperty('max-height', '100%', 'important');
+      metricsGroup.style.setProperty('flex', '1 1 auto', 'important');
+      metricsGroup.style.setProperty('order', '2', 'important');
+      metricsGroup.dataset.weatherMetricOrder = '2';
+    }
 
-    applyHeaderWeatherEqualMetricSpacing(rightColumn);
-    window.requestAnimationFrame(() => applyHeaderWeatherEqualMetricSpacing(rightColumn));
+    rightColumn.style.setProperty('padding', '0', 'important');
+    rightColumn.style.setProperty('box-sizing', 'border-box', 'important');
+
+    const measuredRightColumnWidth = Math.ceil(rightColumn.getBoundingClientRect().width || 0);
+    const reservedRightColumnWidth = Math.max(111, measuredRightColumnWidth) + 12 + Math.max(0, rightEdgeInsetPx);
+    host.__weatherRightColumnAnchorWidth = reservedRightColumnWidth;
+
+    rightColumn.style.setProperty('width', `${reservedRightColumnWidth}px`, 'important');
+    rightColumn.style.setProperty('min-width', `${reservedRightColumnWidth}px`, 'important');
+    rightColumn.style.setProperty('max-width', `${reservedRightColumnWidth}px`, 'important');
+
+    if (infoPanel instanceof HTMLElement) {
+      infoPanel.style.setProperty('width', `calc(100% - ${reservedRightColumnWidth}px)`, 'important');
+      infoPanel.style.setProperty('max-width', `calc(100% - ${reservedRightColumnWidth}px)`, 'important');
+      infoPanel.style.setProperty('min-width', '0', 'important');
+      infoPanel.style.setProperty('box-sizing', 'border-box', 'important');
+      infoPanel.style.setProperty('overflow', 'hidden', 'important');
+    }
+
+    let preferredGapPx = null;
+    if (infoPanel instanceof HTMLElement && titleBlock instanceof HTMLElement && tempRow instanceof HTMLElement) {
+      // Insets are already resolved from infoPanel at the top of this function; just reaffirm.
+      rightColumn.style.setProperty('top', `${rightTopInsetPx}px`, 'important');
+      rightColumn.style.setProperty('bottom', `${rightBottomInsetPx}px`, 'important');
+      // Use the infoPanel's actual rendered height as the explicit column height.
+      // calc(100% - N) may not work when the containing block uses height:auto.
+      const infoPanelH = infoPanel.getBoundingClientRect().height;
+      const cardNode = rightColumn.closest('.weather-header-card');
+      const cardH = cardNode instanceof HTMLElement ? cardNode.getBoundingClientRect().height : 0;
+      const availableColumnH =
+        cardH > 0 ? Math.max(0, cardH - rightTopInsetPx - rightBottomInsetPx) : null;
+      const resolvedH =
+        availableColumnH !== null && availableColumnH > 0
+          ? availableColumnH
+          : infoPanelH > 0
+            ? infoPanelH
+            : null;
+      if (resolvedH !== null) {
+        rightColumn.style.setProperty('height', `${resolvedH}px`, 'important');
+        rightColumn.style.setProperty('min-height', `${resolvedH}px`, 'important');
+        rightColumn.style.setProperty('max-height', `${resolvedH}px`, 'important');
+      } else {
+        rightColumn.style.setProperty('height', `calc(100% - ${rightTopInsetPx + rightBottomInsetPx}px)`, 'important');
+        rightColumn.style.setProperty(
+          'min-height',
+          `calc(100% - ${rightTopInsetPx + rightBottomInsetPx}px)`,
+          'important'
+        );
+        rightColumn.style.setProperty(
+          'max-height',
+          `calc(100% - ${rightTopInsetPx + rightBottomInsetPx}px)`,
+          'important'
+        );
+      }
+
+      const leftGap = tempRow.getBoundingClientRect().top - titleBlock.getBoundingClientRect().bottom;
+      if (Number.isFinite(leftGap) && leftGap >= 0) {
+        preferredGapPx = Math.round(leftGap * 100) / 100;
+      }
+    }
+
+    applyHeaderWeatherEqualMetricSpacing(rightColumn, preferredGapPx);
+    window.requestAnimationFrame(() => applyHeaderWeatherEqualMetricSpacing(rightColumn, preferredGapPx));
   }
 
   function scheduleHeaderWeatherMenuPlacement(host) {
@@ -7558,14 +7929,189 @@
     toggle.style.setProperty('position', 'absolute', 'important');
     toggle.style.setProperty('left', '50%', 'important');
     toggle.style.setProperty('right', 'auto', 'important');
-    toggle.style.setProperty('top', 'var(--header-weather-menu-toggle-top, 50%)', 'important');
-    toggle.style.setProperty('bottom', 'auto', 'important');
-    toggle.style.setProperty('transform', 'translate(-50%, -50%)', 'important');
+    toggle.style.setProperty('top', 'auto', 'important');
+    toggle.style.setProperty('bottom', 'var(--header-weather-menu-toggle-bottom, 4px)', 'important');
+    toggle.style.setProperty('transform', 'translateX(-50%)', 'important');
     toggle.style.setProperty('z-index', '130', 'important');
     toggle.style.setProperty('margin', '0', 'important');
     toggle.style.setProperty('pointer-events', 'auto', 'important');
 
     return toggle;
+  }
+
+  function syncHeaderWeatherMetaWidthToEyebrow(host, refs = {}) {
+    const root =
+      host instanceof ShadowRoot || host instanceof DocumentFragment
+        ? host
+        : host?.shadowRoot || refs.root || null;
+    if (!(root instanceof ShadowRoot || root instanceof DocumentFragment)) {
+      return;
+    }
+
+    const meta = refs.meta instanceof HTMLElement ? refs.meta : root.querySelector('.weather-header-card__meta');
+    const eyebrow =
+      refs.eyebrow instanceof HTMLElement ? refs.eyebrow : root.querySelector('.weather-header-card__eyebrow');
+    if (!(meta instanceof HTMLElement) || !(eyebrow instanceof HTMLElement)) {
+      return;
+    }
+
+    const measureTextRect = node => {
+      if (!(node instanceof HTMLElement) || !node.firstChild) {
+        return null;
+      }
+
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      const textBox = range.getBoundingClientRect();
+      range.detach?.();
+      return textBox.width > 0 ? textBox : null;
+    };
+
+    const eyebrowTextBox = measureTextRect(eyebrow) || eyebrow.getBoundingClientRect();
+    const targetWidthPx = Math.round((eyebrowTextBox.width || 0) * 10) / 10;
+    if (!Number.isFinite(targetWidthPx) || targetWidthPx <= 0) {
+      return;
+    }
+
+    const renderMetaSegments = () => {
+      const rawText = String(meta.textContent || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!rawText) {
+        return {};
+      }
+
+      const chunks = rawText
+        .split(/\s*·\s*/u)
+        .map(chunk => chunk.trim())
+        .filter(Boolean);
+      if (chunks.length < 2) {
+        return {};
+      }
+
+      const [timeText, weekdayText, ...regionChunks] = chunks;
+      const regionText = regionChunks.join(' · ');
+      if (!timeText || !regionText) {
+        return {};
+      }
+
+      const currentTime = meta.querySelector(':scope > .weather-header-card__meta-time')?.textContent || '';
+      const currentWeekday = meta.querySelector(':scope > .weather-header-card__meta-weekday')?.textContent || '';
+      const currentRegion = meta.querySelector(':scope > .weather-header-card__meta-region')?.textContent || '';
+      if (currentTime === timeText && currentWeekday === weekdayText && currentRegion === regionText) {
+        return {
+          timeNode: meta.querySelector(':scope > .weather-header-card__meta-time'),
+          weekdayNode: meta.querySelector(':scope > .weather-header-card__meta-weekday'),
+          regionNode: meta.querySelector(':scope > .weather-header-card__meta-region'),
+          separatorNodes: Array.from(meta.querySelectorAll(':scope > .weather-header-card__meta-separator')),
+        };
+      }
+
+      const createPart = (className, text) => {
+        const part = document.createElement('span');
+        part.className = className;
+        part.textContent = text;
+        return part;
+      };
+      const timeNode = createPart('weather-header-card__meta-time', timeText);
+      const weekdayNode = createPart('weather-header-card__meta-weekday', weekdayText);
+      const regionNode = createPart('weather-header-card__meta-region', regionText);
+      const separatorOne = createPart('weather-header-card__meta-separator', ' · ');
+      const separatorTwo = createPart('weather-header-card__meta-separator', ' · ');
+
+      meta.replaceChildren(timeNode, separatorOne, weekdayNode, separatorTwo, regionNode);
+
+      return {
+        timeNode,
+        weekdayNode,
+        regionNode,
+        separatorNodes: [separatorOne, separatorTwo],
+      };
+    };
+
+    const computed = window.getComputedStyle(meta);
+    if (!meta.dataset.weatherMetaBaseFontSize) {
+      meta.dataset.weatherMetaBaseFontSize = String(Number.parseFloat(computed.fontSize) || 10.2);
+    }
+    if (!meta.dataset.weatherMetaBaseLineHeight) {
+      meta.dataset.weatherMetaBaseLineHeight = String(Number.parseFloat(computed.lineHeight) || 12);
+    }
+
+    let fontSizePx = Number.parseFloat(meta.dataset.weatherMetaBaseFontSize) || 10.2;
+    let lineHeightPx = Number.parseFloat(meta.dataset.weatherMetaBaseLineHeight) || Math.max(10, fontSizePx * 1.18);
+    let letterSpacingPx = 0.1;
+    const minFontSizePx = 6.8;
+    const minLetterSpacingPx = -0.12;
+    const maxLetterSpacingPx = 1.15;
+    const { timeNode, weekdayNode, regionNode, separatorNodes = [] } = renderMetaSegments();
+
+    const applyMetaTypography = () => {
+      const fontSize = Number(fontSizePx.toFixed(2));
+      const timeFontSize = Number((fontSizePx + 2).toFixed(2));
+      const regionFontSize = Number((fontSizePx + 3).toFixed(2));
+      const lineHeight = Number(Math.max(lineHeightPx, timeFontSize * 1.08).toFixed(2));
+      const letterSpacing = Number(letterSpacingPx.toFixed(3));
+
+      meta.style.setProperty('display', 'block', 'important');
+      meta.style.setProperty('width', `${targetWidthPx}px`, 'important');
+      meta.style.setProperty('min-width', `${targetWidthPx}px`, 'important');
+      meta.style.setProperty('max-width', `${targetWidthPx}px`, 'important');
+      meta.style.setProperty('font-size', `${fontSize}px`, 'important');
+      meta.style.setProperty('line-height', `${lineHeight}px`, 'important');
+      meta.style.setProperty('letter-spacing', `${letterSpacing}px`, 'important');
+      meta.style.setProperty('white-space', 'nowrap', 'important');
+      meta.style.setProperty('overflow', 'visible', 'important');
+      meta.style.setProperty('text-overflow', 'clip', 'important');
+      meta.style.setProperty('transform', 'none', 'important');
+      meta.style.setProperty('transform-origin', 'left center', 'important');
+
+      [timeNode, weekdayNode, regionNode, ...separatorNodes].forEach(node => {
+        if (!(node instanceof HTMLElement)) {
+          return;
+        }
+        node.style.setProperty('display', 'inline-block', 'important');
+        node.style.setProperty('line-height', `${lineHeight}px`, 'important');
+        node.style.setProperty('letter-spacing', `${letterSpacing}px`, 'important');
+        node.style.setProperty('white-space', 'pre', 'important');
+        node.style.setProperty('vertical-align', 'baseline', 'important');
+      });
+
+      if (timeNode instanceof HTMLElement) {
+        timeNode.style.setProperty('font-size', `${timeFontSize}px`, 'important');
+      }
+      if (weekdayNode instanceof HTMLElement) {
+        weekdayNode.style.setProperty('font-size', `${fontSize}px`, 'important');
+      }
+      if (regionNode instanceof HTMLElement) {
+        regionNode.style.setProperty('font-size', `${regionFontSize}px`, 'important');
+      }
+      separatorNodes.forEach(node => {
+        if (node instanceof HTMLElement) {
+          node.style.setProperty('font-size', `${fontSize}px`, 'important');
+        }
+      });
+    };
+
+    applyMetaTypography();
+
+    let fitGuard = 0;
+    let metaTextBox = measureTextRect(meta);
+    while (fitGuard < 20 && metaTextBox?.width > targetWidthPx + 0.35 && fontSizePx > minFontSizePx) {
+      fontSizePx = Number(Math.max(minFontSizePx, fontSizePx - 0.2).toFixed(2));
+      lineHeightPx = Number(Math.max(9.1, fontSizePx * 1.18).toFixed(2));
+      letterSpacingPx = Number(Math.max(minLetterSpacingPx, letterSpacingPx - 0.025).toFixed(3));
+      applyMetaTypography();
+      metaTextBox = measureTextRect(meta);
+      fitGuard += 1;
+    }
+
+    metaTextBox = measureTextRect(meta);
+    const characterCount = Array.from((meta.textContent || '').trim()).length;
+    if (metaTextBox?.width > 0 && characterCount > 1 && metaTextBox.width < targetWidthPx - 0.35) {
+      const stretchPx = (targetWidthPx - metaTextBox.width) / (characterCount - 1);
+      letterSpacingPx = Number(Math.min(maxLetterSpacingPx, Math.max(letterSpacingPx, letterSpacingPx + stretchPx)).toFixed(3));
+      applyMetaTypography();
+    }
   }
 
   function syncHeaderWeatherLeftTextColumn(host, layoutRefs) {
@@ -7606,8 +8152,6 @@
 
     if (meta instanceof HTMLElement) {
       meta.style.setProperty('display', 'block', 'important');
-      meta.style.setProperty('width', 'auto', 'important');
-      meta.style.setProperty('max-width', '100%', 'important');
       meta.style.setProperty('text-align', 'left', 'important');
     }
 
@@ -7616,10 +8160,24 @@
       tempRow.style.setProperty('left', '0', 'important');
       tempRow.style.setProperty('right', 'auto', 'important');
       tempRow.style.setProperty('bottom', 'auto', 'important');
+      tempRow.style.setProperty('justify-content', 'flex-start', 'important');
       const temperatureNode = tempRow.querySelector('.weather-header-card__temperature');
       resetNode(temperatureNode);
+      if (temperatureNode instanceof HTMLElement) {
+        temperatureNode.style.setProperty('display', 'inline-flex', 'important');
+        temperatureNode.style.setProperty('flex-direction', 'row', 'important');
+        temperatureNode.style.setProperty('align-items', 'baseline', 'important');
+        temperatureNode.style.setProperty('justify-content', 'flex-start', 'important');
+        temperatureNode.style.setProperty('align-self', 'flex-start', 'important');
+        temperatureNode.style.setProperty('text-align', 'left', 'important');
+        temperatureNode.style.setProperty('width', 'max-content', 'important');
+      }
       const tempValueNode = tempRow.querySelector('.weather-header-card__temperature-value');
       resetNode(tempValueNode);
+      if (tempValueNode instanceof HTMLElement) {
+        tempValueNode.style.setProperty('display', 'inline-block', 'important');
+        tempValueNode.style.setProperty('text-align', 'left', 'important');
+      }
     }
 
     if (feelsLikeChip instanceof HTMLElement && feelsLikeChip.dataset.weatherFeelsLayout !== 'custom') {
@@ -7629,6 +8187,8 @@
       feelsLikeChip.style.removeProperty('min-width');
       feelsLikeChip.style.removeProperty('max-width');
     }
+
+    syncHeaderWeatherMetaWidthToEyebrow(host, { eyebrow, meta });
   }
 
   function ensureHeaderWeatherPreviewMetricsVisible(host) {
@@ -7652,6 +8212,21 @@
       return true;
     }
 
+    if (host?.__weatherPlacementApplying) {
+      if (host.__weatherEnsureMetricsRetryTimer) {
+        window.clearTimeout(host.__weatherEnsureMetricsRetryTimer);
+      }
+
+      host.__weatherEnsureMetricsRetryTimer = window.setTimeout(() => {
+        host.__weatherEnsureMetricsRetryTimer = null;
+        host.__weatherPreviewLayoutReady = false;
+        host.__weatherMetricsStructureReady = false;
+        enforceHeaderWeatherMenuPlacement(host);
+      }, 60);
+
+      return false;
+    }
+
     host.__weatherPreviewLayoutReady = false;
     host.__weatherMetricsStructureReady = false;
     enforceHeaderWeatherMenuPlacement(host);
@@ -7667,7 +8242,7 @@
 
     Array.from(tempRow.querySelectorAll('.weather-header-card__chip')).forEach(chip => {
       const chipText = (chip.textContent || '').toLowerCase();
-      const isFeelsLike = /gef|ощущ|feels|відчува/.test(chipText);
+      const isFeelsLike = /gef|ощущ|feels|відчува|apparent/.test(chipText);
       const isWind = /wind|ветер|вітер/.test(chipText);
       const isMetric = /pressure|давлен|тиск|druck|presion|humid|влаж|feucht|волог|umid|humedad/.test(chipText);
 
@@ -7688,7 +8263,7 @@
 
     const feelsCandidates = Array.from(
       tempRow.querySelectorAll('.weather-header-card__chip--feels-like, .weather-header-card__chip')
-    ).filter(chip => /gef|ощущ|feels|відчува/i.test(chip.textContent || ''));
+    ).filter(chip => /gef|ощущ|feels|відчува|apparent/i.test(chip.textContent || ''));
 
     const primary = feelsCandidates[0] || null;
     feelsCandidates.slice(1).forEach(chip => chip.remove());
@@ -7715,7 +8290,7 @@
   }
 
   function alignHeaderWeatherFeelsLikeRow(feelsLikeChip, labelEl, layoutRefs) {
-    const { tempRow, root } = layoutRefs || {};
+    const { tempRow, root, eyebrow, locationCurrent, locationLabel } = layoutRefs || {};
     if (!(feelsLikeChip instanceof HTMLElement) || !(labelEl instanceof HTMLElement)) {
       return;
     }
@@ -7728,77 +8303,30 @@
       return;
     }
 
-    const titleBlockNode =
-      root instanceof ShadowRoot || root instanceof DocumentFragment
-        ? root.querySelector('.weather-header-card__title-block')
-        : null;
-    const infoPanelNode =
-      root instanceof ShadowRoot || root instanceof DocumentFragment
-        ? root.querySelector('.weather-header-card__info-panel, .weather-header-card__left-stack')
-        : null;
-    const locationNode =
-      root instanceof ShadowRoot || root instanceof DocumentFragment
-        ? root.querySelector('.weather-header-card__location')
-        : null;
-    const locationRowNode =
-      root instanceof ShadowRoot || root instanceof DocumentFragment
-        ? root.querySelector('.weather-header-card__location-row')
-        : null;
-    const metaNode =
-      root instanceof ShadowRoot || root instanceof DocumentFragment
-        ? root.querySelector('.weather-header-card__meta')
-        : null;
-
-    if (titleBlockNode instanceof HTMLElement) {
-      titleBlockNode.style.setProperty('display', 'flex', 'important');
-      titleBlockNode.style.setProperty('flex-direction', 'column', 'important');
-      titleBlockNode.style.setProperty('row-gap', '0px', 'important');
-    }
-    if (infoPanelNode instanceof HTMLElement) {
-      infoPanelNode.style.setProperty('--weather-info-column-shift-x', '0px', 'important');
-      infoPanelNode.style.setProperty('--weather-info-column-shift-y', '0px', 'important');
-      infoPanelNode.style.setProperty('--weather-info-column-scale', '1', 'important');
-      infoPanelNode.style.setProperty('display', 'flex', 'important');
-      infoPanelNode.style.setProperty('flex-direction', 'column', 'important');
-      infoPanelNode.style.setProperty('align-items', 'flex-start', 'important');
-      infoPanelNode.style.setProperty('justify-content', 'flex-start', 'important');
-      infoPanelNode.style.setProperty('transform-origin', 'top left', 'important');
-      infoPanelNode.style.setProperty(
-        'transform',
-        'translate3d(var(--weather-info-column-shift-x, 0px), var(--weather-info-column-shift-y, 0px), 0) scale(var(--weather-info-column-scale, 1))',
-        'important'
-      );
-      infoPanelNode.style.setProperty('row-gap', '0px', 'important');
-    }
-    if (locationRowNode instanceof HTMLElement) {
-      locationRowNode.style.setProperty('margin', '0', 'important');
-      locationRowNode.style.setProperty('min-height', 'auto', 'important');
-    }
-    if (locationNode instanceof HTMLElement) {
-      locationNode.style.setProperty('margin', '0', 'important');
-      locationNode.style.setProperty('padding-bottom', '0px', 'important');
-    }
-    if (metaNode instanceof HTMLElement) {
-      metaNode.style.setProperty('margin-top', '4.4px', 'important');
-      metaNode.style.setProperty('margin-bottom', '4.4px', 'important');
-    }
+    const feelsLang = normalizeLangCode(document.documentElement.lang || 'ru');
+    const labelFontPx = 5.2;
+    const valueColumnGapPx = 2;
+    const feelsRowGapPx = feelsLang === 'de' ? 5 : 1;
+    const labelLineHeightPx = feelsLang === 'de' ? 6.4 : labelFontPx;
+    const prefixFontPx = feelsLang === 'en' ? 4.2 : labelFontPx;
+    const prefixLineHeightPx = feelsLang === 'de' ? 6.4 : prefixFontPx;
 
     labelEl.style.setProperty('display', 'block', 'important');
-    labelEl.style.setProperty('font-size', '5px', 'important');
-    labelEl.style.setProperty('line-height', '5px', 'important');
-    labelEl.style.setProperty('letter-spacing', '0.7px', 'important');
+    labelEl.style.setProperty('font-size', `${labelFontPx}px`, 'important');
+    labelEl.style.setProperty('line-height', `${labelLineHeightPx}px`, 'important');
+    labelEl.style.setProperty('letter-spacing', `${HEADER_WEATHER_FEELS_LABEL_LETTER_SPACING_PX}px`, 'important');
     labelEl.style.setProperty('font-weight', '400', 'important');
     labelEl.style.setProperty('margin', '0', 'important');
     labelEl.style.setProperty('opacity', '0.92', 'important');
     labelEl.style.setProperty('white-space', 'nowrap', 'important');
-    labelEl.style.setProperty('text-align', 'left', 'important');
+    labelEl.style.setProperty('text-align', 'right', 'important');
 
     valueEl.style.setProperty('display', 'flex', 'important');
     valueEl.style.setProperty('flex-direction', 'row', 'important');
     valueEl.style.setProperty('flex-wrap', 'nowrap', 'important');
     valueEl.style.setProperty('align-items', 'flex-end', 'important');
     valueEl.style.setProperty('justify-content', 'flex-start', 'important');
-    valueEl.style.setProperty('column-gap', '4px', 'important');
+    valueEl.style.setProperty('column-gap', `${valueColumnGapPx}px`, 'important');
     valueEl.style.setProperty('padding-left', '0', 'important');
     valueEl.style.setProperty('width', 'max-content', 'important');
     valueEl.style.setProperty('min-width', 'max-content', 'important');
@@ -7845,8 +8373,8 @@
     feelsLikeChip.style.setProperty('align-self', 'end', 'important');
     feelsLikeChip.style.setProperty('transform', 'none', 'important');
 
-    feelsLikeChip.style.setProperty('gap', '2px', 'important');
-    feelsLikeChip.style.setProperty('row-gap', '2px', 'important');
+    feelsLikeChip.style.setProperty('gap', `${feelsRowGapPx}px`, 'important');
+    feelsLikeChip.style.setProperty('row-gap', `${feelsRowGapPx}px`, 'important');
     feelsLikeChip.style.setProperty('margin-top', '0', 'important');
     feelsLikeChip.style.setProperty('height', 'auto', 'important');
     feelsLikeChip.style.setProperty('min-height', '0', 'important');
@@ -7867,13 +8395,14 @@
     valueEl.style.setProperty('-webkit-user-select', 'text', 'important');
     valueEl.style.setProperty('pointer-events', 'auto', 'important');
     labelEl.style.setProperty('flex-shrink', '0', 'important');
-    labelEl.style.setProperty('width', 'max-content', 'important');
+    labelEl.style.setProperty('width', '100%', 'important');
+    labelEl.style.setProperty('min-width', '0', 'important');
 
     prefixEl.style.setProperty('display', 'inline-block', 'important');
     prefixEl.style.setProperty('text-transform', 'uppercase', 'important');
     prefixEl.style.setProperty('font-weight', '400', 'important');
-    prefixEl.style.setProperty('font-size', '5px', 'important');
-    prefixEl.style.setProperty('line-height', '5px', 'important');
+    prefixEl.style.setProperty('font-size', `${prefixFontPx}px`, 'important');
+    prefixEl.style.setProperty('line-height', `${prefixLineHeightPx}px`, 'important');
     prefixEl.style.setProperty('letter-spacing', '0.7px', 'important');
     prefixEl.style.setProperty('opacity', '0.92', 'important');
     prefixEl.style.setProperty('margin', '0', 'important');
@@ -7882,13 +8411,13 @@
 
     const tempComputed = tempValueAnchor ? window.getComputedStyle(tempValueAnchor) : null;
     const tempFontSizePx = Math.max(
-      10.5,
+      8.8,
       Math.min(
-        13.5,
+        11.5,
         (tempComputed
           ? Number.parseFloat(tempComputed.fontSize) || HEADER_WEATHER_TEMP_VALUE_SIZE_PX
           : HEADER_WEATHER_TEMP_VALUE_SIZE_PX) *
-          0.55 -
+          0.47 -
           HEADER_WEATHER_FEELS_TEMP_SHRINK_PX
       )
     );
@@ -7899,12 +8428,11 @@
     const mainTempColor =
       tempValueAnchor instanceof HTMLElement
         ? window.getComputedStyle(tempValueAnchor).color
-        : 'rgb(255 246 228 / 0.94)';
+        : tempComputed?.color || window.getComputedStyle(tempEl).color;
 
     tempEl.style.setProperty('display', 'inline-flex', 'important');
     tempEl.style.setProperty('flex-direction', 'row', 'important');
     tempEl.style.setProperty('flex-wrap', 'nowrap', 'important');
-    tempEl.style.setProperty('align-items', 'flex-end', 'important');
     tempEl.style.setProperty('margin-left', '0', 'important');
     tempEl.style.setProperty('text-align', 'left', 'important');
     tempEl.style.setProperty('font-weight', '200', 'important');
@@ -7973,11 +8501,22 @@
       }
     };
 
-    const findTitleBlockNode = () =>
-      feelsLikeChip.closest('.weather-header-card')?.querySelector('.weather-header-card__title-block') || null;
-
     const syncFeelsHorizontalAnchor = () => {
-      const titleBlockNode = findTitleBlockNode();
+      const measureTextRect = node => {
+        if (!(node instanceof HTMLElement) || !node.firstChild) {
+          return null;
+        }
+
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        const textBox = range.getBoundingClientRect();
+        range.detach?.();
+        return textBox.width > 0 ? textBox : null;
+      };
+
+      const titleBlockNode = feelsLikeChip
+        .closest('.weather-header-card')
+        ?.querySelector('.weather-header-card__title-block');
       if (!(titleBlockNode instanceof HTMLElement)) {
         feelsLikeChip.style.setProperty('margin-left', '0', 'important');
         labelEl.style.setProperty('transform', 'none', 'important');
@@ -8000,8 +8539,102 @@
       fitHeaderWeatherInlineTextWidth(labelEl, blockWidth, 3.8);
       fitHeaderWeatherInlineTextWidth(prefixEl, prefixMaxWidth, 3.6);
 
-      // Keep label geometry stable; horizontal anchor is handled by chip alignment.
+      prefixEl.style.setProperty('margin-left', '0', 'important');
+
+      feelsLikeChip.style.setProperty('margin-left', '0', 'important');
       labelEl.style.setProperty('transform', 'none', 'important');
+
+      const cardNode = feelsLikeChip.closest('.weather-header-card');
+      const titleBlockForAnchor =
+        cardNode?.querySelector('.weather-header-card__title-block') ||
+        root?.querySelector('.weather-header-card__title-block') ||
+        null;
+      const scopedEyebrow = titleBlockForAnchor?.querySelector('.weather-header-card__eyebrow') || null;
+      const scopedLocationCurrent =
+        titleBlockForAnchor?.querySelector('.weather-location-selector__current') ||
+        titleBlockForAnchor?.querySelector('.weather-header-card__location-current') ||
+        null;
+      const scopedLocationLabel = titleBlockForAnchor?.querySelector('.weather-header-card__location') || null;
+
+      const rightAnchorCandidates = [
+        scopedEyebrow,
+        root?.querySelector('.weather-header-card__eyebrow') || null,
+        eyebrow,
+        scopedLocationCurrent,
+        locationCurrent,
+        root?.querySelector('.weather-location-selector__current') || null,
+        scopedLocationLabel,
+        locationLabel,
+        root?.querySelector('.weather-header-card__location') || null,
+      ];
+
+      const measurableAnchor = rightAnchorCandidates
+        .filter(node => node instanceof HTMLElement)
+        .map(node => {
+          const box = measureTextRect(node) || node.getBoundingClientRect();
+          const computed = window.getComputedStyle(node);
+          const isVisible =
+            computed.display !== 'none' &&
+            computed.visibility !== 'hidden' &&
+            Number.parseFloat(computed.opacity || '1') > 0.01;
+          return { node, box, isVisible };
+        })
+        .find(candidate => candidate.isVisible && candidate.box.width > 2 && candidate.box.height > 2);
+
+      if (!measurableAnchor) {
+        labelEl.style.setProperty('transform', 'none', 'important');
+        return;
+      }
+
+      const anchorBox = measurableAnchor.box;
+      const chipBoxNow = feelsLikeChip.getBoundingClientRect();
+      const labelBoxForRightAnchor = measureTextRect(labelEl) || labelEl.getBoundingClientRect();
+      if (!anchorBox.width || !chipBoxNow.width || !labelBoxForRightAnchor?.width) {
+        return;
+      }
+
+      const deltaRightPx = Math.round((anchorBox.right - labelBoxForRightAnchor.right) * 10) / 10;
+      const tempRowBox =
+        cardNode?.getBoundingClientRect() ||
+        tempRow?.getBoundingClientRect() ||
+        feelsLikeChip.closest('.weather-header-card__temp-row')?.getBoundingClientRect() ||
+        null;
+
+      let safeDeltaPx = deltaRightPx;
+      if (tempRowBox && chipBoxNow.width > 0) {
+        const minShiftPx = Math.round((tempRowBox.left + 1 - chipBoxNow.left) * 10) / 10;
+        const maxShiftPx = Math.round((tempRowBox.right - chipBoxNow.right) * 10) / 10;
+        safeDeltaPx = Math.min(maxShiftPx, Math.max(minShiftPx, deltaRightPx));
+      }
+
+      if (Math.abs(safeDeltaPx) <= 0.2) {
+        feelsLikeChip.style.setProperty('margin-left', '0', 'important');
+      } else {
+        feelsLikeChip.style.setProperty('margin-left', `${safeDeltaPx}px`, 'important');
+      }
+
+      const labelRectAfterShift = measureTextRect(labelEl) || labelEl.getBoundingClientRect();
+      if (labelRectAfterShift) {
+        const correctionPx = Math.round((anchorBox.right - labelRectAfterShift.right) * 10) / 10;
+        if (Math.abs(correctionPx) > 0.2) {
+          let correctedDeltaPx = Math.round((safeDeltaPx + correctionPx) * 10) / 10;
+          if (tempRowBox) {
+            const shiftedChipBox = feelsLikeChip.getBoundingClientRect();
+            const minCorrectionPx = Math.round((tempRowBox.left + 1 - shiftedChipBox.left) * 10) / 10;
+            const maxCorrectionPx = Math.round((tempRowBox.right - shiftedChipBox.right) * 10) / 10;
+            correctedDeltaPx =
+              safeDeltaPx + Math.min(maxCorrectionPx, Math.max(minCorrectionPx, correctionPx));
+            correctedDeltaPx = Math.round(correctedDeltaPx * 10) / 10;
+          }
+
+          if (Math.abs(correctedDeltaPx) <= 0.2) {
+            feelsLikeChip.style.setProperty('margin-left', '0', 'important');
+          } else {
+            feelsLikeChip.style.setProperty('margin-left', `${correctedDeltaPx}px`, 'important');
+          }
+        }
+        labelEl.style.setProperty('transform', 'none', 'important');
+      }
     };
 
     const syncFeelsLayoutMetrics = () => {
@@ -8022,25 +8655,7 @@
       syncFeelsVerticalCenter();
     };
 
-    runHeaderWeatherPostLayoutPass(syncFeelsLayoutMetrics, 2);
-
-    const titleBlockNodeForObserver = findTitleBlockNode();
-    setupHeaderWeatherFeelsLayoutAutoSync({
-      feelsLikeChip,
-      syncLayout: syncFeelsLayoutMetrics,
-      observeRoot: root,
-      observeNodes: [
-        feelsLikeChip,
-        labelEl,
-        valueEl,
-        prefixEl,
-        tempEl,
-        tempRow,
-        chipsNode,
-        tempValueAnchor,
-        titleBlockNodeForObserver,
-      ],
-    });
+    runHeaderWeatherPostLayoutPass(syncFeelsLayoutMetrics, 4);
   }
 
   function applyHeaderWeatherFeelsLikePreview(host, layoutRefs) {
@@ -8169,7 +8784,7 @@
     }
 
     const chipNodes = Array.from(chips.querySelectorAll('.weather-header-card__chip'));
-    const feelsChip = chipNodes.find(chip => /gef|ощущ|feels|відчува/i.test(chip.textContent || '')) || null;
+    const feelsChip = chipNodes.find(chip => /gef|ощущ|feels|відчува|apparent/i.test(chip.textContent || '')) || null;
     if (!(feelsChip instanceof HTMLElement)) {
       return null;
     }
@@ -8431,18 +9046,20 @@
       const contentInset = isHeaderVariant ? host.__weatherLockedTextInset || 4 : measuredInset;
       const compactPreview = isHeaderVariant ? true : triggerHeight > 0 && triggerHeight <= 92;
       const showMetrics = compactPreview;
-      const eyebrowSizePx = compactPreview ? 9 : 11;
-      const eyebrowLineHeightPx = compactPreview ? 11 : 13;
-      const locationSizePx = 12.4;
-      const locationLineHeightPx = 15;
+      const eyebrowSizePx = compactPreview ? 10 : 12;
+      const eyebrowLineHeightPx = compactPreview ? 12 : 14;
+      const locationSizePx = 14.4;
+      const locationLineHeightPx = 17;
       const metaSizePx = compactPreview ? 10.2 : 13;
       const metaLineHeightPx = compactPreview ? 12 : 16;
       const tempSizePx = compactPreview ? 22 : 34;
       const verticalRhythmGapPx = compactPreview ? 6 : 7;
       const tempRowTopGapPx = compactPreview ? Math.max(0, verticalRhythmGapPx - 2) : 32;
       const rowGapPx = compactPreview ? 12 : 10;
-      const cardVerticalInsetPx = 6;
-      const baseContentPadY = cardVerticalInsetPx;
+      const cardTopInsetPx = 4;
+      const cardBottomInsetPx = 4;
+      const baseContentPadTopPx = cardTopInsetPx;
+      const baseContentPadBottomPx = cardBottomInsetPx;
       let rightColumn = null;
       const rightColumnHost = card || content;
 
@@ -8467,22 +9084,24 @@
       const infoPanel = ensureHeaderWeatherInfoPanel(root, topRow, titleBlock, bottom);
       if (infoPanel instanceof HTMLElement) {
         infoPanel.style.setProperty('position', 'absolute', 'important');
-        infoPanel.style.setProperty('top', `${cardVerticalInsetPx}px`, 'important');
+        infoPanel.style.setProperty('top', `${cardTopInsetPx}px`, 'important');
         infoPanel.style.setProperty('left', '0', 'important');
         infoPanel.style.setProperty('right', 'auto', 'important');
-        infoPanel.style.setProperty('bottom', `${cardVerticalInsetPx}px`, 'important');
+        infoPanel.style.setProperty('bottom', `${cardBottomInsetPx}px`, 'important');
         infoPanel.style.setProperty('display', 'flex', 'important');
         infoPanel.style.setProperty('flex-direction', 'column', 'important');
         infoPanel.style.setProperty('justify-content', 'space-between', 'important');
         infoPanel.style.setProperty('align-items', 'flex-start', 'important');
         infoPanel.style.setProperty('height', 'auto', 'important');
-        infoPanel.style.setProperty('min-height', `calc(100% - ${cardVerticalInsetPx * 2}px)`, 'important');
-        infoPanel.style.setProperty('max-height', `calc(100% - ${cardVerticalInsetPx * 2}px)`, 'important');
+        infoPanel.style.setProperty('min-height', `calc(100% - ${cardTopInsetPx + cardBottomInsetPx}px)`, 'important');
+        infoPanel.style.setProperty('max-height', `calc(100% - ${cardTopInsetPx + cardBottomInsetPx}px)`, 'important');
         infoPanel.style.setProperty('padding', '0', 'important');
         infoPanel.style.setProperty('margin', '0', 'important');
         infoPanel.style.setProperty('row-gap', '0', 'important');
       }
-      host.__weatherCardVerticalInsetPx = cardVerticalInsetPx;
+      host.__weatherCardVerticalInsetPx = cardBottomInsetPx;
+      host.__weatherCardTopInsetPx = cardTopInsetPx;
+      host.__weatherCardBottomInsetPx = cardBottomInsetPx;
       const tempRow = infoPanel?.querySelector('.weather-header-card__temp-row') || null;
       const tempRowChips =
         tempRow?.querySelector('.weather-header-card__chips') || root.querySelector('.weather-header-card__chips');
@@ -8510,9 +9129,9 @@
         content.style.setProperty('min-height', '100%', 'important');
         content.style.setProperty('height', 'auto', 'important');
         content.style.setProperty('box-sizing', 'border-box', 'important');
-        content.style.setProperty('padding-top', `${baseContentPadY}px`, 'important');
+        content.style.setProperty('padding-top', `${baseContentPadTopPx}px`, 'important');
         content.style.setProperty('padding-right', '18px', 'important');
-        content.style.setProperty('padding-bottom', `${baseContentPadY}px`, 'important');
+        content.style.setProperty('padding-bottom', `${baseContentPadBottomPx}px`, 'important');
         content.style.setProperty('padding-left', `${contentInset}px`, 'important');
       }
 
@@ -8563,6 +9182,8 @@
         geoArrowIcon.style.setProperty('flex-shrink', '0', 'important');
       }
 
+      const locationLabelBoostPx = 1;
+
       if (locationCurrent instanceof HTMLElement) {
         locationCurrent.style.setProperty('display', 'inline-flex', 'important');
         locationCurrent.style.setProperty('align-items', 'center', 'important');
@@ -8597,8 +9218,8 @@
         locationRow.style.setProperty('flex-direction', 'column', 'important');
         locationRow.style.setProperty('align-items', 'flex-start', 'important');
         locationRow.style.setProperty('justify-content', 'flex-start', 'important');
-        locationRow.style.setProperty('row-gap', '1px', 'important');
-        locationRow.style.setProperty('gap', '1px', 'important');
+        locationRow.style.setProperty('row-gap', '0', 'important');
+        locationRow.style.setProperty('gap', '0', 'important');
         locationRow.style.setProperty('overflow', 'visible', 'important');
         locationRow.style.setProperty('text-overflow', 'clip', 'important');
         locationRow.style.setProperty('white-space', 'normal', 'important');
@@ -8618,12 +9239,13 @@
         locationLabel.style.setProperty('word-break', 'normal', 'important');
         locationLabel.style.setProperty('overflow-wrap', 'normal', 'important');
         locationLabel.style.setProperty('hyphens', 'none', 'important');
-        locationLabel.style.setProperty('font-size', `${locationSizePx}px`, 'important');
+        locationLabel.style.setProperty('font-size', `${locationSizePx + locationLabelBoostPx}px`, 'important');
         locationLabel.style.setProperty('line-height', `${locationLineHeightPx}px`, 'important');
         locationLabel.style.setProperty('font-weight', '600', 'important');
         locationLabel.style.setProperty('letter-spacing', '-0.015em', 'important');
         locationLabel.style.setProperty('padding-bottom', '0', 'important');
         locationLabel.style.setProperty('margin', '0', 'important');
+        locationLabel.style.setProperty('margin-top', '-1.1px', 'important');
       }
 
       if (eyebrow instanceof HTMLElement) {
@@ -8646,12 +9268,13 @@
         const eyebrowWidth = Math.round(eyebrow.getBoundingClientRect().width || 0);
         const locationWidth = Math.round(locationLabel.getBoundingClientRect().width || 0);
         if (eyebrowWidth > 0 && locationWidth > 0) {
-          const maxSingleLineWidth = eyebrowWidth;
+          const locationWrapTolerancePx = 4;
+          const maxSingleLineWidth = eyebrowWidth + locationWrapTolerancePx;
           const targetRatio = eyebrowWidth / locationWidth;
           const locationShrinkOnWrapPx = 2;
           let adjustedLocationSize = Math.max(
-            11.2,
-            Math.min(14, Number((locationSizePx * targetRatio + 0.1).toFixed(2)))
+            14.2,
+            Math.min(17, Number(((locationSizePx + locationLabelBoostPx) * targetRatio + 0.1).toFixed(2)))
           );
           let adjustedLocationLineHeight = Math.max(14, Number((adjustedLocationSize * 1.22).toFixed(2)));
           locationLabel.style.setProperty('font-size', `${adjustedLocationSize}px`, 'important');
@@ -8676,8 +9299,8 @@
           const initialLines = initialLineHeight > 0 ? initialHeight / initialLineHeight : 1;
 
           if (initialLines > 1.05) {
-            adjustedLocationSize = Number(Math.max(9.2, adjustedLocationSize - locationShrinkOnWrapPx).toFixed(2));
-            adjustedLocationLineHeight = Number(Math.max(11.2, adjustedLocationSize * 1.16).toFixed(2));
+            adjustedLocationSize = Number(Math.max(12.2, adjustedLocationSize - locationShrinkOnWrapPx).toFixed(2));
+            adjustedLocationLineHeight = Number(Math.max(13.2, adjustedLocationSize * 1.16).toFixed(2));
             locationLabel.style.setProperty('font-size', `${adjustedLocationSize}px`, 'important');
             locationLabel.style.setProperty('line-height', `${adjustedLocationLineHeight}px`, 'important');
           }
@@ -8688,12 +9311,12 @@
             const currentLineHeight =
               Number.parseFloat(window.getComputedStyle(locationLabel).lineHeight) || adjustedLocationLineHeight;
             const currentLines = currentLineHeight > 0 ? currentHeight / currentLineHeight : 1;
-            if (currentLines <= 2.08 || adjustedLocationSize <= 9.8) {
+            if (currentLines <= 2.08 || adjustedLocationSize <= 12.8) {
               break;
             }
 
-            adjustedLocationSize = Number(Math.max(9.8, adjustedLocationSize - 0.2).toFixed(2));
-            adjustedLocationLineHeight = Number(Math.max(11.6, adjustedLocationSize * 1.18).toFixed(2));
+            adjustedLocationSize = Number(Math.max(12.8, adjustedLocationSize - 0.2).toFixed(2));
+            adjustedLocationLineHeight = Number(Math.max(13.6, adjustedLocationSize * 1.18).toFixed(2));
             locationLabel.style.setProperty('font-size', `${adjustedLocationSize}px`, 'important');
             locationLabel.style.setProperty('line-height', `${adjustedLocationLineHeight}px`, 'important');
             fitGuard += 1;
@@ -8708,32 +9331,50 @@
       }
 
       if (meta instanceof HTMLElement && eyebrow instanceof HTMLElement) {
-        const maxMetaWidth = Math.round(eyebrow.getBoundingClientRect().width || 0);
-        if (maxMetaWidth > 0) {
-          const metaRegion = meta.querySelector('span');
-          let fittedMetaFontSize = metaSizePx;
-          let fittedMetaLineHeight = metaLineHeightPx;
+        syncHeaderWeatherMetaWidthToEyebrow(host, { eyebrow, meta });
+      }
 
-          meta.style.setProperty('display', 'block', 'important');
-          meta.style.setProperty('max-width', `${maxMetaWidth}px`, 'important');
-          meta.style.setProperty('width', `${maxMetaWidth}px`, 'important');
-          meta.style.setProperty('white-space', 'nowrap', 'important');
-          meta.style.setProperty('overflow', 'hidden', 'important');
-          meta.style.setProperty('text-overflow', 'ellipsis', 'important');
-
-          let fitGuard = 0;
-          while (fitGuard < 14 && meta.getBoundingClientRect().width > maxMetaWidth && fittedMetaFontSize > 8.2) {
-            fittedMetaFontSize = Number((fittedMetaFontSize - 0.2).toFixed(2));
-            fittedMetaLineHeight = Number(Math.max(10, fittedMetaFontSize * 1.18).toFixed(2));
-            meta.style.setProperty('font-size', `${fittedMetaFontSize}px`, 'important');
-            meta.style.setProperty('line-height', `${fittedMetaLineHeight}px`, 'important');
-            if (metaRegion instanceof HTMLElement) {
-              metaRegion.style.setProperty('font-size', `${fittedMetaFontSize}px`, 'important');
-              metaRegion.style.setProperty('line-height', `${fittedMetaLineHeight}px`, 'important');
-            }
-            fitGuard += 1;
-          }
+      const protectHeaderTextVerticalClip = (node, minLineHeightPx, paddingPx = 1) => {
+        if (!(node instanceof HTMLElement)) {
+          return;
         }
+
+        const resolvedPadding =
+          typeof paddingPx === 'object' && paddingPx !== null
+            ? {
+                top: Number.isFinite(Number(paddingPx.top)) ? Math.max(0, Number(paddingPx.top)) : 0,
+                bottom: Number.isFinite(Number(paddingPx.bottom)) ? Math.max(0, Number(paddingPx.bottom)) : 0,
+              }
+            : {
+                top: Number.isFinite(Number(paddingPx)) ? Math.max(0, Number(paddingPx)) : 0,
+                bottom: Number.isFinite(Number(paddingPx)) ? Math.max(0, Number(paddingPx)) : 0,
+              };
+        const computed = window.getComputedStyle(node);
+        const currentLineHeightPx = Number.parseFloat(computed.lineHeight) || 0;
+        const safeLineHeightPx = Math.max(minLineHeightPx, currentLineHeightPx);
+        node.style.setProperty('line-height', `${Number(safeLineHeightPx.toFixed(2))}px`, 'important');
+        node.style.setProperty('height', 'auto', 'important');
+        node.style.setProperty(
+          'min-height',
+          `${Number((safeLineHeightPx + resolvedPadding.top + resolvedPadding.bottom).toFixed(2))}px`,
+          'important'
+        );
+        node.style.setProperty('padding-top', `${resolvedPadding.top}px`, 'important');
+        node.style.setProperty('padding-bottom', `${resolvedPadding.bottom}px`, 'important');
+        node.style.setProperty('box-sizing', 'border-box', 'important');
+        node.style.setProperty('clip-path', 'none', 'important');
+        node.style.setProperty('overflow-y', 'visible', 'important');
+      };
+
+      protectHeaderTextVerticalClip(locationLabel, 16.6, { top: 0, bottom: 1 });
+      protectHeaderTextVerticalClip(eyebrow, 13.8, { top: 0, bottom: 0 });
+      protectHeaderTextVerticalClip(meta, 13.8, 1);
+
+      if (locationRow instanceof HTMLElement) {
+        locationRow.style.setProperty('overflow', 'visible', 'important');
+        locationRow.style.setProperty('height', 'auto', 'important');
+        locationRow.style.setProperty('min-height', 'max-content', 'important');
+        locationRow.style.setProperty('clip-path', 'none', 'important');
       }
 
       const estimateTextLines = node => {
@@ -8742,7 +9383,9 @@
         }
         const computed = window.getComputedStyle(node);
         const lineHeight = Number.parseFloat(computed.lineHeight) || 0;
-        const height = node.getBoundingClientRect().height || 0;
+        const verticalPadding =
+          (Number.parseFloat(computed.paddingTop) || 0) + (Number.parseFloat(computed.paddingBottom) || 0);
+        const height = Math.max(0, (node.getBoundingClientRect().height || 0) - verticalPadding);
         if (!lineHeight || !height) {
           return 1;
         }
@@ -8755,9 +9398,10 @@
       const growthPx = extraTextLines > 0 ? Math.min(12, Math.ceil(extraTextLines * 6 + 2)) : 0;
 
       if (content instanceof HTMLElement) {
-        const nextPadY = baseContentPadY + (growthPx > 0 ? Math.ceil(growthPx / 3) : 0);
-        content.style.setProperty('padding-top', `${nextPadY}px`, 'important');
-        content.style.setProperty('padding-bottom', `${nextPadY}px`, 'important');
+        const nextPadTopPx = baseContentPadTopPx + (growthPx > 0 ? Math.ceil(growthPx / 6) : 0);
+        const nextPadBottomPx = baseContentPadBottomPx + (growthPx > 0 ? Math.ceil(growthPx / 2) : 0);
+        content.style.setProperty('padding-top', `${nextPadTopPx}px`, 'important');
+        content.style.setProperty('padding-bottom', `${nextPadBottomPx}px`, 'important');
       }
 
       if (triggerNode instanceof HTMLElement) {
@@ -8780,6 +9424,7 @@
       if (tempRow instanceof HTMLElement) {
         tempRow.style.setProperty('margin-left', '0', 'important');
         tempRow.style.setProperty('margin-top', '0', 'important');
+        tempRow.style.setProperty('top', '0', 'important');
         tempRow.style.setProperty('padding-left', '0', 'important');
         tempRow.style.setProperty('grid-template-columns', 'max-content max-content', 'important');
         tempRow.style.setProperty('column-gap', `${rowGapPx}px`, 'important');
@@ -8790,6 +9435,36 @@
           temperatureNode.style.setProperty('transform', 'none', 'important');
           temperatureNode.style.setProperty('--header-weather-temp-value-size', `${tempSizePx}px`, 'important');
           temperatureNode.style.setProperty('font-size', `${tempSizePx}px`, 'important');
+        }
+
+        if (locationLabel instanceof HTMLElement && meta instanceof HTMLElement) {
+          const locationBox = locationLabel.getBoundingClientRect();
+          const metaBox = meta.getBoundingClientRect();
+          const tempRowBox = tempRow.getBoundingClientRect();
+
+          const gapTop = metaBox.top - locationBox.bottom;
+          const gapBottom = tempRowBox.top - metaBox.bottom;
+
+          if (Number.isFinite(gapTop) && Number.isFinite(gapBottom) && gapBottom >= 0) {
+            const targetGap = (gapTop + gapBottom) / 2;
+            const deltaTop = targetGap - gapTop;
+            const cityMetaTuckPx = 0;
+            const nextMarginTop = Math.max(-2, Math.round(deltaTop - cityMetaTuckPx));
+            meta.style.setProperty('margin-top', `${nextMarginTop}px`, 'important');
+            meta.style.setProperty('margin-bottom', '0', 'important');
+
+            const adjustedLocationBox = locationLabel.getBoundingClientRect();
+            const adjustedMetaBox = meta.getBoundingClientRect();
+            const adjustedTempRowBox = tempRow.getBoundingClientRect();
+            const targetTempGap = Math.round(adjustedMetaBox.top - adjustedLocationBox.bottom);
+            const currentTempGap = Math.round(adjustedTempRowBox.top - adjustedMetaBox.bottom);
+            const opticalTempGapCorrectionPx = 0;
+            const nextTempRowTop = Math.max(
+              -6,
+              Math.min(0, targetTempGap - currentTempGap + opticalTempGapCorrectionPx)
+            );
+            tempRow.style.setProperty('top', `${nextTempRowTop}px`, 'important');
+          }
         }
       } else if (bottom instanceof HTMLElement) {
         bottom.style.setProperty('display', 'grid', 'important');
@@ -8843,12 +9518,421 @@
               .replace(/(mm|мм)\.?\s*(рт\.?\s*ст\.?|hg|hg\.|h\s*g)/i, pressureUnitText);
           };
 
+          const HUMIDITY_FIXED_BLOCK = {
+            valueBoostPx: 2,
+            percentExtraBoostPx: 3,
+            minPercentPx: 7,
+          };
+
+          const applyHumidityFixedBlock = ({ chipNode, valueNode, numberNode, unitNode, valueBaseSizePx }) => {
+            if (
+              !(chipNode instanceof HTMLElement) ||
+              !(valueNode instanceof HTMLElement) ||
+              !(numberNode instanceof HTMLElement) ||
+              !(unitNode instanceof HTMLElement)
+            ) {
+              return;
+            }
+
+            const baseHumidityNumberSize = valueBaseSizePx - 3 + HUMIDITY_FIXED_BLOCK.valueBoostPx;
+            const humidityNumberSize = Math.max(6, baseHumidityNumberSize);
+            const humidityPercentSize = Math.max(HUMIDITY_FIXED_BLOCK.minPercentPx, baseHumidityNumberSize * 0.7 - 2);
+            const labelNode =
+              chipNode.firstElementChild instanceof HTMLElement && chipNode.firstElementChild !== valueNode
+                ? chipNode.firstElementChild
+                : null;
+
+            numberNode.style.setProperty('font-size', `${humidityNumberSize.toFixed(2)}px`, 'important');
+            numberNode.style.setProperty('transform', 'translateY(1px)', 'important');
+            unitNode.style.setProperty('font-size', `${humidityPercentSize.toFixed(2)}px`, 'important');
+            unitNode.style.setProperty('transform', 'translateY(0)', 'important');
+            unitNode.style.setProperty('line-height', '1', 'important');
+            unitNode.style.setProperty('margin-left', '0', 'important');
+
+            valueNode.style.setProperty('gap', '0', 'important');
+            valueNode.style.setProperty('align-items', 'flex-end', 'important');
+            valueNode.style.setProperty('justify-content', 'flex-end', 'important');
+            valueNode.style.setProperty('width', 'max-content', 'important');
+            valueNode.style.setProperty('max-width', '100%', 'important');
+            valueNode.style.setProperty('align-self', 'center', 'important');
+            valueNode.style.setProperty('margin', '0', 'important');
+            valueNode.style.setProperty('text-align', 'right', 'important');
+
+            if (labelNode instanceof HTMLElement) {
+              const pressureLabelRef = root?.querySelector('.weather-header-card__pressure-meta-label');
+              const pressureLabelComputed =
+                pressureLabelRef instanceof HTMLElement ? window.getComputedStyle(pressureLabelRef) : null;
+              const syncedHumidityLabelFontSize =
+                Number.parseFloat(pressureLabelComputed?.fontSize || '') > 0 ? pressureLabelComputed.fontSize : '6.4px';
+              const syncedHumidityLabelLineHeight =
+                Number.parseFloat(pressureLabelComputed?.lineHeight || '') > 0
+                  ? pressureLabelComputed.lineHeight
+                  : '6.4px';
+              const syncedHumidityLabelLetterSpacing =
+                pressureLabelComputed?.letterSpacing && pressureLabelComputed.letterSpacing !== 'normal'
+                  ? pressureLabelComputed.letterSpacing
+                  : '0px';
+
+              const rawLabel = (labelNode.textContent || '').replace(/\s+/g, ' ').trim();
+              const cleanLabel = rawLabel.replace(/[≈~]+/g, '').trim();
+              const hasApprox = /[≈~]/.test(rawLabel) || /влаж|humid|feucht|волог|humedad/i.test(rawLabel);
+
+              let approxNode = null;
+
+              if (hasApprox) {
+                const labelTextNode = document.createElement('span');
+                labelTextNode.className = 'weather-header-card__humidity-label-text';
+                labelTextNode.textContent = cleanLabel || rawLabel;
+                labelTextNode.style.setProperty('display', 'inline-block', 'important');
+                labelTextNode.style.setProperty('white-space', 'nowrap', 'important');
+                labelTextNode.style.setProperty('text-align', 'left', 'important');
+                labelTextNode.style.setProperty('transform', 'none', 'important');
+
+                approxNode = document.createElement('span');
+                approxNode.className = 'weather-header-card__humidity-approx';
+                approxNode.textContent = '≈';
+                approxNode.style.setProperty('font-size', syncedHumidityLabelFontSize, 'important');
+                approxNode.style.setProperty('line-height', syncedHumidityLabelLineHeight, 'important');
+                approxNode.style.setProperty('font-weight', '400', 'important');
+                approxNode.style.setProperty('margin-left', '0', 'important');
+                approxNode.style.setProperty('letter-spacing', '0', 'important');
+                approxNode.style.setProperty('transform', 'none', 'important');
+                approxNode.style.setProperty('position', 'static', 'important');
+                approxNode.style.setProperty('display', 'inline-flex', 'important');
+                approxNode.style.setProperty('align-items', 'center', 'important');
+                approxNode.style.setProperty('white-space', 'nowrap', 'important');
+                approxNode.style.setProperty('pointer-events', 'none', 'important');
+
+                labelNode.replaceChildren(labelTextNode);
+              }
+
+              labelNode.style.setProperty('display', 'inline-flex', 'important');
+              labelNode.style.setProperty('align-items', 'center', 'important');
+              labelNode.style.setProperty('justify-content', 'flex-start', 'important');
+              labelNode.style.setProperty('gap', '0', 'important');
+              labelNode.style.setProperty('width', 'auto', 'important');
+              labelNode.style.setProperty('max-width', '100%', 'important');
+              labelNode.style.setProperty('margin', '0', 'important');
+              labelNode.style.setProperty('font-size', syncedHumidityLabelFontSize, 'important');
+              labelNode.style.setProperty('line-height', syncedHumidityLabelLineHeight, 'important');
+              labelNode.style.setProperty('letter-spacing', syncedHumidityLabelLetterSpacing, 'important');
+              labelNode.style.setProperty('white-space', 'nowrap', 'important');
+              labelNode.style.setProperty('text-align', 'left', 'important');
+              labelNode.style.setProperty('justify-self', 'start', 'important');
+              labelNode.style.setProperty('align-self', 'end', 'important');
+              labelNode.style.setProperty('transform', 'none', 'important');
+
+              if (approxNode instanceof HTMLElement && labelNode.parentElement === chipNode) {
+                chipNode.insertBefore(approxNode, valueNode);
+              }
+            }
+
+            chipNode.style.setProperty('display', 'inline-flex', 'important');
+            chipNode.style.setProperty('position', 'static', 'important');
+            chipNode.style.setProperty('align-items', 'end', 'important');
+            chipNode.style.setProperty('row-gap', '0', 'important');
+            chipNode.style.setProperty('column-gap', '1px', 'important');
+            chipNode.style.setProperty('justify-content', 'flex-end', 'important');
+            chipNode.style.setProperty('white-space', 'nowrap', 'important');
+            chipNode.style.setProperty('text-align', 'left', 'important');
+            chipNode.style.setProperty('padding-left', '0', 'important');
+            chipNode.style.setProperty('padding-right', '0', 'important');
+            chipNode.style.setProperty('width', '100%', 'important');
+            chipNode.style.setProperty('max-width', '100%', 'important');
+            chipNode.style.setProperty('align-self', 'stretch', 'important');
+            chipNode.style.setProperty('flex', '0 0 auto', 'important');
+
+            if (valueNode.parentElement === chipNode) {
+              valueNode.style.setProperty('margin-left', 'auto', 'important');
+            }
+
+            valueNode.style.setProperty('justify-self', 'end', 'important');
+            valueNode.style.setProperty('margin-left', 'auto', 'important');
+          };
+
+          const applyPressureFixedBlock = ({
+            chipNode,
+            valueNode,
+            labelNode,
+            pressureNumberText,
+            pressureUnitText,
+            pressureMetaNode,
+            pressureMetaLabelNode,
+            pressureMetaUnitNode,
+          }) => {
+            if (
+              !(chipNode instanceof HTMLElement) ||
+              !(valueNode instanceof HTMLElement) ||
+              !(pressureMetaNode instanceof HTMLElement) ||
+              !(pressureMetaLabelNode instanceof HTMLElement) ||
+              !(pressureMetaUnitNode instanceof HTMLElement)
+            ) {
+              return;
+            }
+
+            pressureMetaLabelNode.textContent = (labelNode?.textContent || '').trim();
+            pressureMetaUnitNode.textContent = pressureUnitText;
+            pressureMetaNode.replaceChildren(pressureMetaLabelNode, pressureMetaUnitNode);
+
+            const pressureSeparatorExisting = chipNode.querySelector(
+              ':scope > .weather-header-card__pressure-separator'
+            );
+            const pressureSeparatorNode =
+              pressureSeparatorExisting instanceof HTMLElement
+                ? pressureSeparatorExisting
+                : document.createElement('span');
+            pressureSeparatorNode.className = 'weather-header-card__pressure-separator';
+            pressureSeparatorNode.textContent = '≈';
+
+            const hostPressureMmHgRaw = Number(host?.__weatherPressureMmHg);
+            const metaPressureMmHgRaw = Number(host?.__weatherCurrentMeta?.pressureMmHg);
+            const metaSurfacePressureRaw = Number(host?.__weatherCurrentMeta?.surfacePressure);
+            const metaPressureMslRaw = Number(host?.__weatherCurrentMeta?.pressureMsl);
+            const fallbackPressureMmHg =
+              Number.isFinite(hostPressureMmHgRaw) && hostPressureMmHgRaw > 0
+                ? Math.round(hostPressureMmHgRaw)
+                : Number.isFinite(metaPressureMmHgRaw) && metaPressureMmHgRaw > 0
+                  ? Math.round(metaPressureMmHgRaw)
+                  : Number.isFinite(metaSurfacePressureRaw) && metaSurfacePressureRaw > 0
+                    ? Math.round(metaSurfacePressureRaw * 0.750061683)
+                    : Number.isFinite(metaPressureMslRaw) && metaPressureMslRaw > 0
+                      ? Math.round(metaPressureMslRaw * 0.750061683)
+                      : null;
+            const resolvedPressureNumberText =
+              pressureNumberText === '--' && Number.isFinite(fallbackPressureMmHg) && fallbackPressureMmHg > 0
+                ? String(fallbackPressureMmHg)
+                : pressureNumberText;
+
+            valueNode.textContent = resolvedPressureNumberText;
+
+            if (resolvedPressureNumberText === '--' && host && !host.__weatherPressureRecoveryInFlight) {
+              host.__weatherPressureRecoveryInFlight = true;
+              resolveHeaderWeatherCurrent(host)
+                .then(currentMeta => {
+                  if (!host?.isConnected || !currentMeta || !valueNode.isConnected) {
+                    return;
+                  }
+
+                  host.__weatherCurrentMeta = currentMeta;
+                  const recoveredPressureMsl = Number(currentMeta.pressureMsl);
+                  const recoveredSurfacePressure = Number(currentMeta.surfacePressure);
+                  const recoveredMmHg =
+                    Number.isFinite(recoveredSurfacePressure) && recoveredSurfacePressure > 0
+                      ? Math.round(recoveredSurfacePressure * 0.750061683)
+                      : Number.isFinite(recoveredPressureMsl) && recoveredPressureMsl > 0
+                        ? Math.round(recoveredPressureMsl * 0.750061683)
+                        : null;
+
+                  if (Number.isFinite(recoveredMmHg) && recoveredMmHg > 0) {
+                    host.__weatherPressureMmHg = recoveredMmHg;
+                    host.__weatherPressureValue = formatHeaderWeatherPressureValue(host, recoveredMmHg);
+                    valueNode.textContent = String(recoveredMmHg);
+                    writeHeaderWeatherReadingsCache(host, { pressureMmHg: recoveredMmHg });
+                  }
+                })
+                .catch(() => {
+                  // Keep '--' when recovery fails.
+                })
+                .finally(() => {
+                  if (host) {
+                    host.__weatherPressureRecoveryInFlight = false;
+                  }
+                });
+            }
+            valueNode.style.setProperty('display', 'inline-flex', 'important');
+            valueNode.style.setProperty('font-size', '15px', 'important');
+            valueNode.style.setProperty('line-height', '0.92', 'important');
+            valueNode.style.setProperty('font-weight', '400', 'important');
+            valueNode.style.setProperty('letter-spacing', '0', 'important');
+            valueNode.style.setProperty('margin', '0', 'important');
+            valueNode.style.setProperty('white-space', 'nowrap', 'important');
+            valueNode.style.setProperty('align-self', 'auto', 'important');
+            valueNode.style.setProperty('align-items', 'center', 'important');
+            valueNode.style.setProperty('justify-content', 'flex-end', 'important');
+            valueNode.style.setProperty('text-align', 'right', 'important');
+
+            pressureMetaNode.style.setProperty('display', 'inline-flex', 'important');
+            pressureMetaNode.style.setProperty('flex-direction', 'column', 'important');
+            pressureMetaNode.style.setProperty('align-items', 'flex-end', 'important');
+            pressureMetaNode.style.setProperty('justify-content', 'center', 'important');
+            pressureMetaNode.style.setProperty('row-gap', '2px', 'important');
+            pressureMetaNode.style.setProperty('column-gap', '0', 'important');
+            pressureMetaNode.style.setProperty('margin', '0', 'important');
+            pressureMetaNode.style.setProperty('white-space', 'normal', 'important');
+            pressureMetaNode.style.setProperty('width', 'max-content', 'important');
+            pressureMetaNode.style.setProperty('text-align', 'right', 'important');
+            pressureMetaNode.style.setProperty('transform', 'translate(0px, 2px)', 'important');
+
+            pressureMetaLabelNode.style.setProperty('display', 'block', 'important');
+            if (metaComputed) {
+              pressureMetaLabelNode.style.setProperty('font-family', metaComputed.fontFamily, 'important');
+              pressureMetaLabelNode.style.setProperty('font-weight', metaComputed.fontWeight, 'important');
+              pressureMetaLabelNode.style.setProperty('text-transform', metaComputed.textTransform, 'important');
+            } else {
+              pressureMetaLabelNode.style.setProperty('font-weight', '400', 'important');
+              pressureMetaLabelNode.style.setProperty('text-transform', 'uppercase', 'important');
+            }
+            pressureMetaLabelNode.style.setProperty('font-size', '6.4px', 'important');
+            pressureMetaLabelNode.style.setProperty('line-height', '6.4px', 'important');
+            pressureMetaLabelNode.style.setProperty('letter-spacing', '0', 'important');
+            if (locationComputed) {
+              pressureMetaLabelNode.style.setProperty('color', locationComputed.color, 'important');
+              pressureMetaLabelNode.style.setProperty('opacity', locationComputed.opacity, 'important');
+            } else {
+              pressureMetaLabelNode.style.setProperty('opacity', '0.92', 'important');
+            }
+            pressureMetaLabelNode.style.setProperty('margin', '0', 'important');
+            pressureMetaLabelNode.style.setProperty('text-align', 'right', 'important');
+            pressureMetaLabelNode.style.setProperty('width', 'auto', 'important');
+            pressureMetaLabelNode.style.setProperty('white-space', 'nowrap', 'important');
+
+            const feelsLabelRef = root?.querySelector('.weather-header-card__feels-label');
+            const feelsLabelComputed = feelsLabelRef ? window.getComputedStyle(feelsLabelRef) : null;
+
+            pressureMetaUnitNode.style.setProperty('display', 'block', 'important');
+            if (feelsLabelComputed) {
+              pressureMetaUnitNode.style.setProperty('font-family', feelsLabelComputed.fontFamily, 'important');
+              pressureMetaUnitNode.style.setProperty('font-weight', feelsLabelComputed.fontWeight, 'important');
+            } else {
+              pressureMetaUnitNode.style.setProperty('font-weight', '400', 'important');
+            }
+            pressureMetaUnitNode.style.setProperty('font-size', '5.8px', 'important');
+            pressureMetaUnitNode.style.setProperty('line-height', '5.8px', 'important');
+            pressureMetaUnitNode.style.setProperty('letter-spacing', '0.1px', 'important');
+            pressureMetaUnitNode.style.setProperty('text-transform', 'none', 'important');
+            pressureMetaUnitNode.style.setProperty('opacity', '0.96', 'important');
+            pressureMetaUnitNode.style.setProperty('transform', 'translateY(0)', 'important');
+            pressureMetaUnitNode.style.setProperty('margin', '0', 'important');
+            pressureMetaUnitNode.style.setProperty('text-align', 'right', 'important');
+            pressureMetaUnitNode.style.setProperty('width', 'auto', 'important');
+            pressureMetaUnitNode.style.setProperty('white-space', 'nowrap', 'important');
+
+            pressureSeparatorNode.style.setProperty('display', 'inline-flex', 'important');
+            pressureSeparatorNode.style.setProperty('align-items', 'center', 'important');
+            pressureSeparatorNode.style.setProperty('justify-content', 'center', 'important');
+            pressureSeparatorNode.style.setProperty('font-size', '6.4px', 'important');
+            pressureSeparatorNode.style.setProperty('line-height', '6.4px', 'important');
+            pressureSeparatorNode.style.setProperty('font-weight', '400', 'important');
+            pressureSeparatorNode.style.setProperty('letter-spacing', '0', 'important');
+            pressureSeparatorNode.style.setProperty('margin', '0', 'important');
+            pressureSeparatorNode.style.setProperty('padding', '0', 'important');
+            pressureSeparatorNode.style.setProperty('opacity', '0.95', 'important');
+            pressureSeparatorNode.style.setProperty('align-self', 'center', 'important');
+            pressureSeparatorNode.style.setProperty('transform', 'translateY(0)', 'important');
+
+            chipNode.style.setProperty('display', 'flex', 'important');
+            chipNode.style.setProperty('flex-direction', 'row', 'important');
+            chipNode.style.setProperty('align-items', 'center', 'important');
+            chipNode.style.setProperty('justify-content', 'flex-end', 'important');
+            chipNode.style.setProperty('row-gap', '0', 'important');
+            chipNode.style.setProperty('column-gap', '3px', 'important');
+            chipNode.style.setProperty('text-align', 'right', 'important');
+            chipNode.style.setProperty('padding-left', '0', 'important');
+            chipNode.style.setProperty('padding-right', '0', 'important');
+            chipNode.style.setProperty('width', 'max-content', 'important');
+            chipNode.style.setProperty('max-width', '100%', 'important');
+            chipNode.style.setProperty('align-self', 'flex-end', 'important');
+            chipNode.style.setProperty('flex', '0 0 auto', 'important');
+            chipNode.dataset.weatherPressureLayout = 'reference';
+
+            valueNode.style.setProperty('align-self', 'center', 'important');
+            pressureMetaNode.style.setProperty('align-self', 'center', 'important');
+            pressureMetaNode.style.setProperty('width', 'max-content', 'important');
+            pressureMetaNode.style.setProperty('max-width', '100%', 'important');
+
+            if (
+              chipNode.children.length !== 3 ||
+              chipNode.children[0] !== pressureMetaNode ||
+              chipNode.children[1] !== pressureSeparatorNode ||
+              chipNode.children[2] !== valueNode
+            ) {
+              chipNode.replaceChildren(pressureMetaNode, pressureSeparatorNode, valueNode);
+            }
+
+            const pressureValueWidth = Math.round((valueNode.getBoundingClientRect().width || 0) * 10) / 10;
+            if (pressureValueWidth > 0) {
+              const lockedPressureMetaWidth = `${pressureValueWidth}px`;
+              pressureMetaNode.style.setProperty('width', lockedPressureMetaWidth, 'important');
+              pressureMetaNode.style.setProperty('min-width', lockedPressureMetaWidth, 'important');
+              pressureMetaNode.style.setProperty('max-width', lockedPressureMetaWidth, 'important');
+            }
+
+            const pressureMetaHeight = pressureMetaNode.getBoundingClientRect().height || 0;
+            if (pressureMetaHeight > 0) {
+              const targetPressureValueSizePx = Math.max(15.5, Math.round((pressureMetaHeight - 2) * 10) / 10 + 1);
+              valueNode.style.setProperty('font-size', `${targetPressureValueSizePx}px`, 'important');
+              valueNode.style.setProperty('min-height', `${Math.round(pressureMetaHeight * 10) / 10}px`, 'important');
+              valueNode.style.setProperty('line-height', '1', 'important');
+            }
+
+            const pressureValueHeight = valueNode.getBoundingClientRect().height || 0;
+            if (pressureValueHeight > 0) {
+              const metaLabelComputed = window.getComputedStyle(pressureMetaLabelNode);
+              const metaUnitComputed = window.getComputedStyle(pressureMetaUnitNode);
+              const baseLabelFontSize = Number.parseFloat(metaLabelComputed.fontSize) || 8;
+              const baseUnitFontSize = Number.parseFloat(metaUnitComputed.fontSize) || 5;
+              const baseLabelLineHeight = Number.parseFloat(metaLabelComputed.lineHeight) || baseLabelFontSize;
+              const baseUnitLineHeight = Number.parseFloat(metaUnitComputed.lineHeight) || baseUnitFontSize;
+              const baseLabelLetterSpacing = Number.parseFloat(metaLabelComputed.letterSpacing) || 0;
+              const baseUnitLetterSpacing = Number.parseFloat(metaUnitComputed.letterSpacing) || 0;
+
+              const totalMetaLineHeight = baseLabelLineHeight + baseUnitLineHeight;
+              if (totalMetaLineHeight > pressureValueHeight) {
+                const fitRatio = Math.max(0.72, pressureValueHeight / totalMetaLineHeight);
+                const fittedLabelFontSize = Math.max(6.2, Math.round(baseLabelFontSize * fitRatio * 100) / 100);
+                const fittedUnitFontSize = Math.max(4.1, Math.round(baseUnitFontSize * fitRatio * 100) / 100);
+                const fittedLabelLineHeight = Math.max(6.2, Math.round(baseLabelLineHeight * fitRatio * 100) / 100);
+                const fittedUnitLineHeight = Math.max(4.1, Math.round(baseUnitLineHeight * fitRatio * 100) / 100);
+                const fittedLabelLetterSpacing = Math.round(baseLabelLetterSpacing * fitRatio * 100) / 100;
+                const fittedUnitLetterSpacing = Math.round(baseUnitLetterSpacing * fitRatio * 100) / 100;
+
+                pressureMetaLabelNode.style.setProperty('font-size', `${fittedLabelFontSize}px`, 'important');
+                pressureMetaLabelNode.style.setProperty('line-height', `${fittedLabelLineHeight}px`, 'important');
+                pressureMetaLabelNode.style.setProperty('letter-spacing', `${fittedLabelLetterSpacing}px`, 'important');
+
+                pressureMetaUnitNode.style.setProperty('font-size', `${fittedUnitFontSize}px`, 'important');
+                pressureMetaUnitNode.style.setProperty('line-height', `${fittedUnitLineHeight}px`, 'important');
+                pressureMetaUnitNode.style.setProperty('letter-spacing', `${fittedUnitLetterSpacing}px`, 'important');
+              }
+
+              const lockedPressureHeight = `${Math.round(pressureValueHeight * 10) / 10}px`;
+              pressureMetaNode.style.setProperty('height', lockedPressureHeight, 'important');
+              pressureMetaNode.style.setProperty('min-height', lockedPressureHeight, 'important');
+              pressureMetaNode.style.setProperty('max-height', lockedPressureHeight, 'important');
+            }
+          };
+
           const parts = Array.from(chip.children).filter(el => el instanceof HTMLElement);
-          const labelEl = parts[0] || null;
-          const valueEl = parts[1] || null;
+          let labelEl = parts[0] || null;
+          let valueEl = parts[1] || null;
           const chipText = (chip.textContent || '').toLowerCase();
           const isPressureChip = /pressure|давлен|тиск|druck|presion/.test(chipText);
           const isHumidityChip = /humid|влаж|feucht|волог|umid|humedad/.test(chipText);
+
+          if (
+            isPressureChip &&
+            chip.dataset.weatherPressureLayout === 'reference' &&
+            chip.querySelector(':scope > .weather-header-card__pressure-meta') instanceof HTMLElement &&
+            chip.querySelector(':scope > .weather-header-card__pressure-separator') instanceof HTMLElement &&
+            chip.querySelector(':scope > span:last-child') instanceof HTMLElement
+          ) {
+            chip.dataset.weatherTypographyReady = 'true';
+            return;
+          }
+
+          if (isPressureChip) {
+            const pressureValueNode = chip.querySelector(':scope > span:last-child');
+            const pressureMetaLabelNode = chip.querySelector(':scope .weather-header-card__pressure-meta-label');
+            const pressureSeparatorNode = chip.querySelector(':scope > .weather-header-card__pressure-separator');
+
+            if (pressureSeparatorNode instanceof HTMLElement && pressureValueNode instanceof HTMLElement) {
+              valueEl = pressureValueNode;
+            }
+
+            if (pressureMetaLabelNode instanceof HTMLElement) {
+              labelEl = pressureMetaLabelNode;
+            }
+          }
 
           if (labelEl instanceof HTMLElement) {
             if (metaComputed) {
@@ -8863,9 +9947,9 @@
             labelEl.style.setProperty('margin', '0 0 1px 0', 'important');
 
             if (isHumidityChip) {
-              labelEl.style.setProperty('font-size', '8px', 'important');
-              labelEl.style.setProperty('line-height', '8px', 'important');
-              labelEl.style.setProperty('letter-spacing', '1px', 'important');
+              labelEl.style.setProperty('font-size', '6.4px', 'important');
+              labelEl.style.setProperty('line-height', '6.4px', 'important');
+              labelEl.style.setProperty('letter-spacing', '0', 'important');
               labelEl.style.setProperty('font-weight', '400', 'important');
             }
 
@@ -8882,14 +9966,22 @@
             }
 
             if (isHumidityChip) {
-              if (metaComputed) {
-                labelEl.style.setProperty('font-family', metaComputed.fontFamily, 'important');
-                labelEl.style.setProperty('font-size', metaComputed.fontSize, 'important');
-                labelEl.style.setProperty('line-height', metaComputed.lineHeight, 'important');
-                labelEl.style.setProperty('font-weight', metaComputed.fontWeight, 'important');
-                labelEl.style.setProperty('letter-spacing', metaComputed.letterSpacing, 'important');
-                labelEl.style.setProperty('text-transform', metaComputed.textTransform, 'important');
+              const pressureLabelRef = root?.querySelector('.weather-header-card__pressure-meta-label');
+              const pressureLabelComputed =
+                pressureLabelRef instanceof HTMLElement ? window.getComputedStyle(pressureLabelRef) : null;
+              if (pressureLabelComputed) {
+                labelEl.style.setProperty('font-family', pressureLabelComputed.fontFamily, 'important');
+                labelEl.style.setProperty('font-size', pressureLabelComputed.fontSize, 'important');
+                labelEl.style.setProperty('line-height', pressureLabelComputed.lineHeight, 'important');
+                labelEl.style.setProperty('font-weight', pressureLabelComputed.fontWeight, 'important');
+                labelEl.style.setProperty('letter-spacing', pressureLabelComputed.letterSpacing, 'important');
+              } else {
+                labelEl.style.setProperty('font-size', '6.4px', 'important');
+                labelEl.style.setProperty('line-height', '6.4px', 'important');
+                labelEl.style.setProperty('letter-spacing', '0', 'important');
+                labelEl.style.setProperty('font-weight', '400', 'important');
               }
+              labelEl.style.setProperty('text-transform', 'uppercase', 'important');
               if (locationComputed) {
                 labelEl.style.setProperty('color', locationComputed.color, 'important');
                 labelEl.style.setProperty('opacity', locationComputed.opacity, 'important');
@@ -8926,75 +10018,16 @@
                 pressureMetaUnit.className = 'weather-header-card__pressure-meta-unit';
               }
 
-              pressureMetaLabel.textContent = (labelEl?.textContent || '').trim();
-              pressureMetaUnit.textContent = pressureUnitText;
-              pressureMeta.replaceChildren(pressureMetaLabel, pressureMetaUnit);
-
-              valueEl.textContent = pressureNumberText;
-              valueEl.style.setProperty('display', 'block', 'important');
-              valueEl.style.setProperty('font-size', '10.5px', 'important');
-              valueEl.style.setProperty('line-height', '0.92', 'important');
-              valueEl.style.setProperty('font-weight', '300', 'important');
-              valueEl.style.setProperty('letter-spacing', '0', 'important');
-              valueEl.style.setProperty('margin', '0', 'important');
-              valueEl.style.setProperty('white-space', 'nowrap', 'important');
-              valueEl.style.setProperty('align-self', 'flex-start', 'important');
-              valueEl.style.setProperty('text-align', 'left', 'important');
-
-              pressureMeta.style.setProperty('display', 'flex', 'important');
-              pressureMeta.style.setProperty('flex-direction', 'column', 'important');
-              pressureMeta.style.setProperty('align-items', 'flex-start', 'important');
-              pressureMeta.style.setProperty('justify-content', 'flex-start', 'important');
-              pressureMeta.style.setProperty('row-gap', '0', 'important');
-              pressureMeta.style.setProperty('margin', '0', 'important');
-              pressureMeta.style.setProperty('white-space', 'nowrap', 'important');
-
-              pressureMetaLabel.style.setProperty('display', 'block', 'important');
-              if (metaComputed) {
-                pressureMetaLabel.style.setProperty('font-family', metaComputed.fontFamily, 'important');
-                pressureMetaLabel.style.setProperty('font-size', metaComputed.fontSize, 'important');
-                pressureMetaLabel.style.setProperty('line-height', metaComputed.lineHeight, 'important');
-                pressureMetaLabel.style.setProperty('font-weight', metaComputed.fontWeight, 'important');
-                pressureMetaLabel.style.setProperty('letter-spacing', metaComputed.letterSpacing, 'important');
-                pressureMetaLabel.style.setProperty('text-transform', metaComputed.textTransform, 'important');
-              } else {
-                pressureMetaLabel.style.setProperty('font-size', '8px', 'important');
-                pressureMetaLabel.style.setProperty('line-height', '8px', 'important');
-                pressureMetaLabel.style.setProperty('font-weight', '400', 'important');
-                pressureMetaLabel.style.setProperty('letter-spacing', '1px', 'important');
-                pressureMetaLabel.style.setProperty('text-transform', 'uppercase', 'important');
-              }
-              if (locationComputed) {
-                pressureMetaLabel.style.setProperty('color', locationComputed.color, 'important');
-                pressureMetaLabel.style.setProperty('opacity', locationComputed.opacity, 'important');
-              } else {
-                pressureMetaLabel.style.setProperty('opacity', '0.92', 'important');
-              }
-              pressureMetaLabel.style.setProperty('margin', '0', 'important');
-              pressureMetaLabel.style.setProperty('text-align', 'left', 'important');
-
-              pressureMetaUnit.style.setProperty('display', 'block', 'important');
-              pressureMetaUnit.style.setProperty('font-size', '5px', 'important');
-              pressureMetaUnit.style.setProperty('line-height', '5px', 'important');
-              pressureMetaUnit.style.setProperty('font-weight', '400', 'important');
-              pressureMetaUnit.style.setProperty('letter-spacing', '0.7px', 'important');
-              pressureMetaUnit.style.setProperty('text-transform', 'none', 'important');
-              pressureMetaUnit.style.setProperty('opacity', '0.96', 'important');
-              pressureMetaUnit.style.setProperty('margin', '0', 'important');
-              pressureMetaUnit.style.setProperty('text-align', 'left', 'important');
-
-              chip.style.setProperty('display', 'inline-flex', 'important');
-              chip.style.setProperty('flex-direction', 'row', 'important');
-              chip.style.setProperty('align-items', 'flex-start', 'important');
-              chip.style.setProperty('justify-content', 'flex-end', 'important');
-              chip.style.setProperty('column-gap', '8px', 'important');
-              chip.style.setProperty('width', 'auto', 'important');
-              chip.style.setProperty('max-width', 'max-content', 'important');
-              chip.dataset.weatherPressureLayout = 'reference';
-
-              if (chip.children.length !== 2 || chip.children[0] !== valueEl || chip.children[1] !== pressureMeta) {
-                chip.replaceChildren(valueEl, pressureMeta);
-              }
+              applyPressureFixedBlock({
+                chipNode: chip,
+                valueNode: valueEl,
+                labelNode: labelEl,
+                pressureNumberText,
+                pressureUnitText,
+                pressureMetaNode: pressureMeta,
+                pressureMetaLabelNode: pressureMetaLabel,
+                pressureMetaUnitNode: pressureMetaUnit,
+              });
 
               chip.dataset.weatherTypographyReady = 'true';
               return;
@@ -9019,7 +10052,7 @@
             valueEl.style.setProperty('white-space', 'nowrap', 'important');
             valueEl.style.setProperty('margin', '0 0 1px 0', 'important');
 
-            if (isPressureChip || isHumidityChip) {
+            if (isHumidityChip) {
               valueEl.style.setProperty('font-size', '12.5px', 'important');
               valueEl.style.setProperty('line-height', '12.5px', 'important');
               valueEl.style.setProperty('font-weight', '400', 'important');
@@ -9057,7 +10090,7 @@
               unitPart.style.setProperty('font-variant-caps', 'normal', 'important');
               unitPart.style.setProperty('font-feature-settings', '"smcp" 0, "c2sc" 0', 'important');
               if (isPressureChip) {
-                numberPart.style.setProperty('font-size', `${(valueBaseSizePx - 2).toFixed(2)}px`, 'important');
+                numberPart.style.setProperty('font-size', `${valueBaseSizePx.toFixed(2)}px`, 'important');
                 unitPart.style.setProperty('font-size', '5px', 'important');
                 unitPart.style.setProperty('transform', 'translateY(0)', 'important');
                 unitPart.style.setProperty('line-height', '1', 'important');
@@ -9069,17 +10102,13 @@
               unitPart.style.setProperty('opacity', '0.96', 'important');
 
               if (isHumidityChip) {
-                numberPart.style.setProperty('font-size', `${(valueBaseSizePx - 2).toFixed(2)}px`, 'important');
-                unitPart.style.setProperty(
-                  'font-size',
-                  `${Math.max(7, valueBaseSizePx * 0.62 - 2).toFixed(2)}px`,
-                  'important'
-                );
-                unitPart.style.setProperty('transform', 'translateY(0)', 'important');
-                unitPart.style.setProperty('line-height', '1', 'important');
-                unitPart.style.setProperty('margin-left', '0', 'important');
-                valueEl.style.setProperty('gap', '0', 'important');
-                valueEl.style.setProperty('align-items', 'flex-end', 'important');
+                applyHumidityFixedBlock({
+                  chipNode: chip,
+                  valueNode: valueEl,
+                  numberNode: numberPart,
+                  unitNode: unitPart,
+                  valueBaseSizePx,
+                });
               }
 
               valueEl.replaceChildren(numberPart, unitPart);
@@ -9239,7 +10268,7 @@
           }
 
           const directPressureHpa = Number(
-            host?.__weatherCurrentMeta?.pressureMsl ?? host?.__weatherCurrentMeta?.surfacePressure
+            host?.__weatherCurrentMeta?.surfacePressure ?? host?.__weatherCurrentMeta?.pressureMsl
           );
           if (pressureMmHg === null && Number.isFinite(directPressureHpa) && directPressureHpa > 0) {
             pressureMmHg = Math.round(directPressureHpa * 0.750061683);
@@ -9341,7 +10370,7 @@
           pressureChip.style.setProperty('flex-direction', isReferencePressureLayout ? 'row' : 'column', 'important');
           pressureChip.style.setProperty(
             'align-items',
-            isReferencePressureLayout ? 'flex-start' : 'flex-end',
+            isReferencePressureLayout ? 'flex-end' : 'flex-end',
             'important'
           );
           pressureChip.style.setProperty(
@@ -9352,8 +10381,8 @@
           pressureChip.style.setProperty('column-gap', isReferencePressureLayout ? '8px' : '0', 'important');
 
           if (pressureChip.dataset.weatherPressureLayout === 'reference') {
-            const pressureValueNode = pressureChip.children[0];
-            const pressureMetaNode = pressureChip.children[1];
+            const pressureValueNode = pressureChip.querySelector(':scope > span:last-child');
+            const pressureMetaNode = pressureChip.querySelector(':scope > .weather-header-card__pressure-meta');
             if (pressureValueNode instanceof HTMLElement) {
               pressureValueNode.style.setProperty('display', 'block', 'important');
               pressureValueNode.style.setProperty('font-size', '10.5px', 'important');
@@ -9361,13 +10390,15 @@
               pressureValueNode.style.setProperty('font-weight', '300', 'important');
               pressureValueNode.style.setProperty('white-space', 'nowrap', 'important');
               pressureValueNode.style.setProperty('margin', '0', 'important');
-              pressureValueNode.style.setProperty('align-self', 'flex-start', 'important');
+              pressureValueNode.style.setProperty('align-self', 'flex-end', 'important');
+              pressureValueNode.style.setProperty('text-align', 'right', 'important');
             }
             if (pressureMetaNode instanceof HTMLElement) {
               pressureMetaNode.style.setProperty('display', 'flex', 'important');
               pressureMetaNode.style.setProperty('flex-direction', 'column', 'important');
-              pressureMetaNode.style.setProperty('align-items', 'flex-start', 'important');
+              pressureMetaNode.style.setProperty('align-items', 'flex-end', 'important');
               pressureMetaNode.style.setProperty('justify-content', 'flex-start', 'important');
+              pressureMetaNode.style.setProperty('text-align', 'right', 'important');
               pressureMetaNode.style.setProperty('row-gap', '0', 'important');
             }
           } else {
@@ -9409,7 +10440,7 @@
               chip.style.setProperty('display', 'none', 'important');
               return;
             }
-            if (/gef|ощущ|feels|відчува/i.test(chip.textContent || '')) {
+            if (/gef|ощущ|feels|відчува|apparent/i.test(chip.textContent || '')) {
               chip.classList.add('weather-header-card__chip--feels-like');
             }
           });
@@ -9447,6 +10478,9 @@
           condition,
           pressureChip: pressureChipForLayout,
           humidityChip: humidityChipForLayout,
+          infoPanel,
+          titleBlock,
+          tempRow,
         });
 
         rightColumn.style.setProperty('display', showMetrics ? 'flex' : 'none', 'important');
@@ -9509,6 +10543,7 @@
         infoPanel,
         feelsLikeChip: feelsLikeChipForAlign,
       });
+      runHeaderWeatherPostLayoutPass(() => syncHeaderWeatherMetaWidthToEyebrow(host, { eyebrow, meta }), 4);
 
       ensureHeaderWeatherMenuToggleAnchor(root, card);
 
@@ -9575,6 +10610,293 @@
         finalPressureMetaLabelNode.style.setProperty('opacity', locationFinalComputed.opacity, 'important');
       };
       runHeaderWeatherPostLayoutPass(syncPressureLabelToLocationColor, 2);
+
+      const setImportantStyles = (node, styles) => {
+        if (!(node instanceof HTMLElement)) {
+          return;
+        }
+
+        Object.entries(styles).forEach(([property, value]) => {
+          node.style.setProperty(property, value, 'important');
+        });
+      };
+
+      const syncPressureAndHumidityLabels = () => {
+        const METRIC_ROW_SHIFT_X_PX = 0;
+        const LABEL_COLUMN_WIDTH_PX = 38;
+        const APPROX_COLUMN_PX = 5;
+        const VALUE_COLUMN_WIDTH_PX = 24.3;
+        const METRIC_COLUMN_GAP_PX = 2.4;
+        const PRESSURE_LABEL_RIGHT_INSET_PX = 2.3;
+        const PRESSURE_META_HEIGHT_PX = 14.4;
+        const HUMIDITY_LABEL_AND_APPROX_SHIFT_Y_PX = 3.2;
+        const METRIC_ROW_WIDTH_PX =
+          LABEL_COLUMN_WIDTH_PX + APPROX_COLUMN_PX + VALUE_COLUMN_WIDTH_PX + METRIC_COLUMN_GAP_PX * 2;
+        const conditionNode = root.querySelector('.weather-header-card__right-column .weather-header-card__condition');
+        const finalPressureChipNode = root.querySelector(
+          '.weather-header-card__chip[data-weather-metric="pressure"], .weather-header-card__chip--pressure-fallback'
+        );
+        const finalHumidityChipNode = root.querySelector(
+          '.weather-header-card__chip[data-weather-metric="humidity"], .weather-header-card__chip--humidity-fallback'
+        );
+
+        const setMetricRowStyles = (node, order) => {
+          setImportantStyles(node, {
+            display: 'grid',
+            'grid-template-columns': `${LABEL_COLUMN_WIDTH_PX}px ${APPROX_COLUMN_PX}px ${VALUE_COLUMN_WIDTH_PX}px`,
+            'column-gap': `${METRIC_COLUMN_GAP_PX}px`,
+            'align-items': 'center',
+            'justify-items': 'stretch',
+            'justify-content': 'end',
+            width: `${METRIC_ROW_WIDTH_PX}px`,
+            'min-width': `${METRIC_ROW_WIDTH_PX}px`,
+            'max-width': `${METRIC_ROW_WIDTH_PX}px`,
+            'align-self': 'flex-end',
+            position: 'relative',
+            inset: 'auto 0 auto auto',
+            transform: METRIC_ROW_SHIFT_X_PX === 0 ? 'none' : `translateX(${METRIC_ROW_SHIFT_X_PX}px)`,
+            margin: '0',
+            padding: '0',
+            'text-align': 'right',
+            'white-space': 'nowrap',
+            order: String(order),
+          });
+        };
+
+        if (conditionNode instanceof HTMLElement) {
+          setImportantStyles(conditionNode, {
+            display: 'flex',
+            'flex-direction': 'column',
+            'align-items': 'flex-end',
+            'justify-content': 'flex-start',
+            width: '100%',
+            'min-width': '0',
+            'max-width': '100%',
+            'align-self': 'stretch',
+            margin: '0',
+            padding: '0',
+            transform: 'none',
+            'text-align': 'right',
+            'white-space': 'normal',
+            order: '0',
+          });
+
+          conditionNode.querySelectorAll('.weather-header-card__condition-line').forEach(line => {
+            setImportantStyles(line, {
+              display: 'block',
+              width: '100%',
+              'max-width': '100%',
+              margin: '0',
+              padding: '0',
+              'text-align': 'right',
+              'white-space': 'nowrap',
+            });
+          });
+        }
+
+        const setMetricLabelStyles = node => {
+          setImportantStyles(node, {
+            'grid-column': '1',
+            display: 'inline-flex',
+            'align-items': 'center',
+            'justify-content': 'flex-start',
+            'justify-self': 'stretch',
+            'align-self': 'center',
+            width: `${LABEL_COLUMN_WIDTH_PX}px`,
+            'min-width': `${LABEL_COLUMN_WIDTH_PX}px`,
+            'max-width': `${LABEL_COLUMN_WIDTH_PX}px`,
+            margin: '0',
+            'font-size': '6px',
+            'line-height': '6px',
+            'font-weight': '400',
+            'letter-spacing': '0',
+            'text-transform': 'none',
+            'text-align': 'left',
+            'white-space': 'nowrap',
+            transform: 'none',
+          });
+        };
+
+        const setApproxStyles = (node, translateYPx = 0) => {
+          setImportantStyles(node, {
+            'grid-column': '2',
+            position: 'static',
+            display: 'inline-flex',
+            'align-items': 'center',
+            'justify-content': 'center',
+            'justify-self': 'center',
+            'align-self': 'center',
+            width: `${APPROX_COLUMN_PX}px`,
+            'min-width': `${APPROX_COLUMN_PX}px`,
+            'max-width': `${APPROX_COLUMN_PX}px`,
+            margin: '0',
+            padding: '0',
+            'font-size': '7px',
+            'line-height': '6px',
+            'font-weight': '400',
+            'letter-spacing': '0',
+            'text-align': 'center',
+            'white-space': 'nowrap',
+            transform: `translateY(${translateYPx}px)`,
+            'pointer-events': 'none',
+          });
+        };
+
+        const setMetricValueStyles = (node, fontSizePx, letterSpacingPx = 0, translateYPx = 0, lineHeightPx = null) => {
+          setImportantStyles(node, {
+            'grid-column': '3',
+            display: 'inline-flex',
+            'align-items': 'center',
+            'justify-content': 'flex-end',
+            'justify-self': 'end',
+            'align-self': 'center',
+            width: `${VALUE_COLUMN_WIDTH_PX}px`,
+            'min-width': `${VALUE_COLUMN_WIDTH_PX}px`,
+            'max-width': `${VALUE_COLUMN_WIDTH_PX}px`,
+            margin: '0',
+            'font-size': `${fontSizePx}px`,
+            'line-height': lineHeightPx === null ? `${fontSizePx}px` : `${lineHeightPx}px`,
+            'font-weight': '400',
+            'letter-spacing': `${letterSpacingPx}px`,
+            'text-align': 'right',
+            'white-space': 'nowrap',
+            transform: translateYPx === 0 ? 'none' : `translateY(${translateYPx}px)`,
+          });
+        };
+
+        if (finalPressureChipNode instanceof HTMLElement) {
+          const finalPressureSeparatorNode = finalPressureChipNode.querySelector(
+            ':scope > .weather-header-card__pressure-separator'
+          );
+          const finalPressureValueNode = finalPressureChipNode.querySelector(':scope > span:last-child') || null;
+          const finalPressureMetaNode = finalPressureChipNode.querySelector(':scope > .weather-header-card__pressure-meta');
+          const finalPressureMetaLabelNode =
+            finalPressureChipNode.querySelector(':scope .weather-header-card__pressure-meta-label') ||
+            finalPressureChipNode.querySelector(':scope > span:first-child');
+          const finalPressureMetaUnitNode = finalPressureChipNode.querySelector(
+            ':scope .weather-header-card__pressure-meta-unit'
+          );
+
+          setMetricRowStyles(finalPressureChipNode, 1);
+
+          setImportantStyles(finalPressureMetaNode, {
+            'grid-column': '1',
+            display: 'inline-flex',
+            'flex-direction': 'column',
+            'align-items': 'flex-start',
+            'justify-content': 'center',
+            'row-gap': '0.4px',
+            width: `${LABEL_COLUMN_WIDTH_PX}px`,
+            'min-width': `${LABEL_COLUMN_WIDTH_PX}px`,
+            'max-width': `${LABEL_COLUMN_WIDTH_PX}px`,
+            height: `${PRESSURE_META_HEIGHT_PX}px`,
+            'min-height': `${PRESSURE_META_HEIGHT_PX}px`,
+            'max-height': `${PRESSURE_META_HEIGHT_PX}px`,
+            margin: '0',
+            'text-align': 'left',
+            'white-space': 'normal',
+            transform: 'none',
+            'align-self': 'center',
+            'justify-self': 'stretch',
+          });
+
+          setMetricLabelStyles(finalPressureMetaLabelNode);
+          setImportantStyles(finalPressureMetaLabelNode, {
+            'letter-spacing': '0.67px',
+          });
+          setMetricLabelStyles(finalPressureMetaUnitNode);
+          setImportantStyles(finalPressureMetaUnitNode, {
+            'justify-content': 'flex-end',
+            'text-align': 'right',
+            'box-sizing': 'border-box',
+            'padding-right': `${PRESSURE_LABEL_RIGHT_INSET_PX}px`,
+            'font-size': '5.8px',
+            'line-height': '6px',
+            'text-transform': 'none',
+            opacity: '0.96',
+          });
+          setApproxStyles(finalPressureSeparatorNode, 0);
+          setMetricValueStyles(finalPressureValueNode, 15, 0, 0, PRESSURE_META_HEIGHT_PX);
+        }
+
+        if (finalHumidityChipNode instanceof HTMLElement) {
+          const finalHumidityLabelNode =
+            finalHumidityChipNode.querySelector(':scope > span:first-child') ||
+            Array.from(finalHumidityChipNode.children).find(el => el instanceof HTMLElement) ||
+            null;
+          const finalHumidityValueNode =
+            Array.from(finalHumidityChipNode.children).find(
+              el => el instanceof HTMLElement && /%|--/.test(el.textContent || '')
+            ) ||
+            finalHumidityChipNode.querySelector(':scope > span:last-child') ||
+            null;
+          let humidityApproxNode = finalHumidityChipNode.querySelector('.weather-header-card__humidity-approx');
+
+          if (!(humidityApproxNode instanceof HTMLElement)) {
+            humidityApproxNode = document.createElement('span');
+            humidityApproxNode.className = 'weather-header-card__humidity-approx';
+            humidityApproxNode.textContent = '≈';
+          }
+
+          if (
+            humidityApproxNode instanceof HTMLElement &&
+            finalHumidityValueNode instanceof HTMLElement &&
+            humidityApproxNode.nextElementSibling !== finalHumidityValueNode
+          ) {
+            finalHumidityChipNode.insertBefore(humidityApproxNode, finalHumidityValueNode);
+          }
+
+          if (finalHumidityLabelNode instanceof HTMLElement) {
+            let humidityLabelTextNode = finalHumidityLabelNode.querySelector('.weather-header-card__humidity-label-text');
+            if (!(humidityLabelTextNode instanceof HTMLElement)) {
+              humidityLabelTextNode = document.createElement('span');
+              humidityLabelTextNode.className = 'weather-header-card__humidity-label-text';
+              humidityLabelTextNode.textContent = (finalHumidityLabelNode.textContent || '')
+                .replace(/[≈~]+/g, '')
+                .trim();
+              finalHumidityLabelNode.replaceChildren(humidityLabelTextNode);
+            }
+
+            setMetricLabelStyles(finalHumidityLabelNode);
+            setMetricLabelStyles(humidityLabelTextNode);
+            setImportantStyles(finalHumidityLabelNode, {
+              transform: `translateY(${HUMIDITY_LABEL_AND_APPROX_SHIFT_Y_PX}px)`,
+            });
+          }
+
+          setMetricRowStyles(finalHumidityChipNode, 2);
+          setApproxStyles(humidityApproxNode, HUMIDITY_LABEL_AND_APPROX_SHIFT_Y_PX);
+          setMetricValueStyles(finalHumidityValueNode, 12.5, 0.2, 1.15, 13);
+        }
+      };
+      runHeaderWeatherPostLayoutPass(syncPressureAndHumidityLabels, 2);
+      runHeaderWeatherPostLayoutPass(syncPressureAndHumidityLabels, 3);
+
+      const enforceHeaderWeatherMetricsRightEdge = () => {
+        const rightColumnNode = root.querySelector('.weather-header-card__right-column');
+        const metricsBlockNode = root.querySelector('.weather-header-card__metrics-block');
+
+        setImportantStyles(rightColumnNode, {
+          'align-items': 'flex-end',
+          'text-align': 'right',
+        });
+        setImportantStyles(metricsBlockNode, {
+          'align-items': 'flex-end',
+          'justify-content': 'space-between',
+          'align-self': 'stretch',
+          width: '100%',
+          'max-width': '100%',
+          height: '100%',
+          'min-height': '100%',
+          'max-height': '100%',
+          flex: '1 1 auto',
+          'row-gap': '0',
+          'text-align': 'right',
+        });
+        syncPressureAndHumidityLabels();
+      };
+      runHeaderWeatherPostLayoutPass(enforceHeaderWeatherMetricsRightEdge, 2);
+      runHeaderWeatherPostLayoutPass(syncPressureAndHumidityLabels, 4);
 
       normalizeHeaderWeatherCelsiusUnits(host);
       if (HEADER_WEATHER_STRICT_STYLE_LOCK && hasCompleteLockedPreview()) {
@@ -9864,7 +11186,7 @@
     if (Math.abs(video.currentTime - targetTime) > 0.28) {
       try {
         video.currentTime = targetTime;
-      } catch (_error) {
+      } catch {
         // Seek while metadata loads.
       }
     }
@@ -10329,7 +11651,7 @@
         image.hidden = true;
       }
       scene.resize();
-    } catch (_error) {
+    } catch {
       if (overlay.__sunSceneMountToken === mountToken) {
         overlay.__sunSceneMountToken = null;
       }
@@ -10605,15 +11927,7 @@
 
     const headerTop = pageHeader.getBoundingClientRect().top;
     const shellTop = weatherShell.getBoundingClientRect().top;
-    const rawRisePx = Math.max(0, Math.ceil(shellTop - headerTop + 2));
-    // Desktop: keep stars/cloud scene stable and avoid over-stretch when layout shifts.
-    const isDesktop = window.innerWidth >= 900;
-    const risePx = isDesktop ? 0 : Math.max(0, Math.min(96, rawRisePx));
-    if (isDesktop) {
-      host.style.setProperty('--header-weather-cloud-extra-h', '4px');
-    } else {
-      host.style.removeProperty('--header-weather-cloud-extra-h');
-    }
+    const risePx = Math.max(0, Math.ceil(shellTop - headerTop + 2));
     host.style.setProperty('--header-weather-cloud-rise', `${risePx}px`);
   }
 
@@ -10655,7 +11969,7 @@
       let astroData = null;
       try {
         astroData = await resolveHeaderWeatherAstro(host);
-      } catch (error) {
+      } catch {
         // console.warn('Header weather astro sync failed:', error);
       }
 
@@ -10663,7 +11977,7 @@
 
       try {
         host.__weatherCurrentMeta = await resolveHeaderWeatherCurrent(host);
-      } catch (error) {
+      } catch {
         host.__weatherCurrentMeta = null;
         // console.warn('Header weather current sync failed:', error);
       }
@@ -11027,8 +12341,6 @@
       return;
     }
 
-    markHeaderWeatherInspectableElements(host);
-
     const observer = new MutationObserver(mutations => {
       const shouldSync = mutations.some(
         mutation => mutation.type === 'attributes' && mutation.attributeName === 'aria-expanded'
@@ -11165,7 +12477,7 @@
       syncHeaderWeatherLiveClock(host);
       syncHeaderWeatherExpandedState(host);
       releaseHeaderWeatherSceneClip(host);
-    } catch (_) {
+    } catch {
       scheduleHeaderWeatherOrbSync(host);
     } finally {
       releaseHeaderWeatherSceneClip(host);
@@ -11407,7 +12719,6 @@
       host.closest('.header-weather-shell')?.classList.remove('weather-shell-error');
       host.closest('.header-weather-shell')?.classList.add('weather-shell-ready');
       applyHeaderWeatherTransparency(host);
-      markHeaderWeatherInspectableElements(host);
       bindHeaderWeatherState(host);
       bindHeaderWeatherLayoutObserver(host);
       ensureHeaderWeatherMenuPlacementLock(host);
@@ -11415,14 +12726,10 @@
       syncHeaderWeatherOrbOverlay(host);
       void syncHeaderWeatherPreciseLocationMeta(host);
       window.setTimeout(() => {
-        markHeaderWeatherInspectableElements(host);
         scheduleHeaderBrandColumnAlign(host);
         scheduleHeaderWeatherReadingsSync(host);
       }, 320);
-      window.setTimeout(() => {
-        markHeaderWeatherInspectableElements(host);
-        scheduleHeaderWeatherReadingsSync(host);
-      }, 1200);
+      window.setTimeout(() => scheduleHeaderWeatherReadingsSync(host), 1200);
 
       // Verify that the widget actually rendered interactive content; if not, retry once.
       window.setTimeout(() => {
@@ -11453,7 +12760,7 @@
       if (window.innerWidth <= 899) {
         try {
           widgetApi?.collapse?.();
-        } catch (_) {}
+        } catch {}
         host.dataset.weatherExpanded = 'false';
         document.body?.classList.remove('header-weather-expanded');
       }
@@ -11481,7 +12788,7 @@
       }
 
       emitHeaderWeatherEvent('site-shell:weather-ready', host.dataset.weatherExpanded === 'true');
-    } catch (error) {
+    } catch {
       // console.error('Header weather widget failed to mount:', error);
       host.dataset.weatherMounted = 'false';
       host.dataset.weatherMountScheduled = 'false';
@@ -11652,7 +12959,6 @@
     const host = hostOverride || getHeaderWeatherHost();
     if (host) {
       const eyebrow = host.shadowRoot?.querySelector('.weather-header-card__eyebrow');
-      const trigger = host.shadowRoot?.querySelector('.weather-header-trigger');
       let resolvedInset = weatherInset;
 
       if (eyebrow instanceof HTMLElement) {
@@ -11671,64 +12977,14 @@
         host.style.setProperty('--header-weather-text-inset', `${resolvedInset}px`);
       }
 
-      if (
-        weatherShell instanceof HTMLElement &&
-        topRow instanceof HTMLElement &&
-        homeAnchor instanceof HTMLElement &&
-        trigger instanceof HTMLElement
-      ) {
-        // Desktop: weather panel must stay centered inside top row without extra JS shifts.
-        if (window.innerWidth >= 900) {
-          weatherShell.__weatherVerticalShiftY = 0;
-          topRow.__weatherExtraPaddingBottom = 0;
-
-          weatherShell.style.removeProperty('transform');
-          weatherShell.style.removeProperty('transform-origin');
-          weatherShell.style.removeProperty('align-self');
-          weatherShell.style.removeProperty('overflow');
-
-          if (Number.isFinite(topRow.__weatherBasePaddingBottom)) {
-            topRow.style.setProperty('padding-bottom', `${topRow.__weatherBasePaddingBottom}px`, 'important');
-          } else {
-            topRow.style.removeProperty('padding-bottom');
-          }
-
-          return;
-        }
-
-        const targetGapPx = 5;
-        const currentShellShiftY = Number.isFinite(weatherShell.__weatherVerticalShiftY)
-          ? weatherShell.__weatherVerticalShiftY
-          : 0;
-        const currentTopRowExtraBottom = Number.isFinite(topRow.__weatherExtraPaddingBottom)
-          ? topRow.__weatherExtraPaddingBottom
-          : 0;
-
-        if (!Number.isFinite(topRow.__weatherBasePaddingBottom)) {
-          topRow.__weatherBasePaddingBottom = Number.parseFloat(window.getComputedStyle(topRow).paddingBottom) || 0;
-        }
-
-        const baseTopRowPaddingBottom = topRow.__weatherBasePaddingBottom;
-        const logoBottom = logoImage.getBoundingClientRect().bottom;
-        const homeTop = homeAnchor.getBoundingClientRect().top;
-        const triggerRect = trigger.getBoundingClientRect();
-        const baseTriggerTop = triggerRect.top - currentShellShiftY;
-        const baseTriggerBottom = triggerRect.bottom - currentShellShiftY;
-        const baseHomeTop = homeTop - currentTopRowExtraBottom;
-        const nextShellShiftY = Math.max(0, Number((logoBottom + targetGapPx - baseTriggerTop).toFixed(2)));
-        const nextTopRowExtraBottom = Math.max(
-          0,
-          Number((baseTriggerBottom + nextShellShiftY + targetGapPx - baseHomeTop).toFixed(2))
-        );
-
-        weatherShell.__weatherVerticalShiftY = nextShellShiftY;
-        topRow.__weatherExtraPaddingBottom = nextTopRowExtraBottom;
-
-        weatherShell.style.setProperty('transform', `translateY(${nextShellShiftY}px)`, 'important');
-        weatherShell.style.setProperty('transform-origin', 'top center', 'important');
-        weatherShell.style.setProperty('align-self', 'start', 'important');
+      if (weatherShell instanceof HTMLElement && topRow instanceof HTMLElement) {
+        weatherShell.__weatherVerticalShiftY = 0;
+        topRow.__weatherExtraPaddingBottom = 0;
+        weatherShell.style.removeProperty('transform');
+        weatherShell.style.removeProperty('transform-origin');
+        weatherShell.style.removeProperty('align-self');
         weatherShell.style.setProperty('overflow', 'visible', 'important');
-        topRow.style.setProperty('padding-bottom', `${baseTopRowPaddingBottom + nextTopRowExtraBottom}px`, 'important');
+        topRow.style.removeProperty('padding-bottom');
       }
     }
   }
@@ -11747,16 +13003,10 @@
       const logoWidth = logoImage?.getBoundingClientRect().width || 0;
       if (logoWidth > 0) {
         const logoSlotWidth = `${Math.round(logoWidth)}px`;
-        document.documentElement.style.setProperty('--logo-mark-width', logoSlotWidth);
         homeSlot.style.setProperty('--home-slot-width', logoSlotWidth);
       }
 
       scheduleHeaderBrandColumnAlign();
-
-      if (window.innerWidth >= 900) {
-        homeLink.style.removeProperty('--home-fit-scale');
-        return;
-      }
 
       const homeLabel = homeLink.querySelector('span');
       if (!homeLabel) {
@@ -11774,10 +13024,7 @@
         return;
       }
 
-      // Never upscale home label above its base typography. This removes intermittent
-      // enlargement when layout reflows or observers run in a different order.
-      const rawFitScale = availableWidth / naturalWidth;
-      const fitScale = Number.isFinite(rawFitScale) ? Math.max(0.38, Math.min(1, rawFitScale)) : 1;
+      const fitScale = Math.max(0.38, Math.min(1.08, availableWidth / naturalWidth));
       homeLink.style.setProperty('--home-fit-scale', fitScale.toFixed(3));
     });
   }
@@ -11792,85 +13039,14 @@
 
     langDropdown.dataset.bound = 'true';
 
-    let openTimerId = null;
-    let closeFlashStartTimerId = null;
-    let closeFlashStopTimerId = null;
-
-    const clearOpenTimer = () => {
-      if (openTimerId !== null) {
-        window.clearTimeout(openTimerId);
-        openTimerId = null;
-      }
-    };
-
-    const clearCloseTimers = () => {
-      if (closeFlashStartTimerId !== null) {
-        window.clearTimeout(closeFlashStartTimerId);
-        closeFlashStartTimerId = null;
-      }
-      if (closeFlashStopTimerId !== null) {
-        window.clearTimeout(closeFlashStopTimerId);
-        closeFlashStopTimerId = null;
-      }
-    };
-
-    const getLangFlashDurations = () => {
-      const isKinescope = document.body.classList.contains('lang-tv-kinescope');
-      return {
-        openMs: isKinescope ? 920 : 1080,
-        closeSettleMs: isKinescope ? 560 : 720,
-        closeFlashMs: isKinescope ? 560 : 720,
-      };
-    };
-
-    const playCloseFlashOnly = () => {
-      clearCloseTimers();
-      langDropdown.classList.remove('closing');
-      const { closeSettleMs, closeFlashMs } = getLangFlashDurations();
-      closeFlashStartTimerId = window.setTimeout(() => {
-        closeFlashStartTimerId = null;
-        // Force reflow to restart close flash on each close action.
-        void langDropdown.offsetWidth;
-        langDropdown.classList.add('closing');
-        closeFlashStopTimerId = window.setTimeout(() => {
-          langDropdown.classList.remove('closing');
-          closeFlashStopTimerId = null;
-        }, closeFlashMs + 40);
-      }, closeSettleMs + 20);
-    };
-
-    const closeLangDropdown = ({ withCloseFlash = true } = {}) => {
-      clearOpenTimer();
+    const closeLangDropdown = () => {
       langDropdown.classList.remove('open');
-      langDropdown.classList.remove('opening');
       langBtn.setAttribute('aria-expanded', 'false');
-      if (withCloseFlash) {
-        playCloseFlashOnly();
-      } else {
-        clearCloseTimers();
-        langDropdown.classList.remove('closing');
-      }
     };
 
     const openLangDropdown = () => {
-      if (langDropdown.classList.contains('open') || langDropdown.classList.contains('opening')) {
-        return;
-      }
-
-      clearCloseTimers();
-      langDropdown.classList.remove('closing');
-      langDropdown.classList.add('opening');
+      langDropdown.classList.add('open');
       langBtn.setAttribute('aria-expanded', 'true');
-
-      const { openMs } = getLangFlashDurations();
-      openTimerId = window.setTimeout(() => {
-        openTimerId = null;
-        if (!langDropdown.classList.contains('opening')) {
-          return;
-        }
-        langDropdown.classList.remove('opening');
-        langDropdown.classList.add('open');
-      }, openMs);
     };
 
     langBtn.setAttribute('aria-haspopup', 'menu');
@@ -11935,7 +13111,7 @@
           );
           await animation.finished;
           return;
-        } catch (_) {
+        } catch {
           /* Ignore animation API failures and continue with a timed fallback. */
         }
       }
@@ -11968,7 +13144,7 @@
       item.setAttribute('role', 'menuitem');
 
       const navigateToLanguage = async () => {
-        closeLangDropdown({ withCloseFlash: false });
+        closeLangDropdown();
         const lang = item.getAttribute('data-lang');
         const nextUrl = lang ? buildLanguageUrl(context, lang) : null;
         if (!nextUrl) {
@@ -11984,7 +13160,7 @@
             playWeatherLocaleSwitchAnimation(preNavigationAnimationMs),
             Promise.race([remountWeatherPreviewForLanguage(lang), wait(320)]),
           ]);
-        } catch (_) {}
+        } catch {}
 
         window.location.href = nextUrl;
       };

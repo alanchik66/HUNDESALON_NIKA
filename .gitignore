@@ -133,6 +133,11 @@ tools/google-search-console-report.json
 tmp_moon_review/
 tmp_*.png
 .playwright-cli/
+.playwright-mcp/
+.anima/
+output/
+output-*.png
+booking-*-codex-browser.png
 
 # Локальные одноразовые скрипты агента (не для репозитория)
 tools/_test-*.mjs

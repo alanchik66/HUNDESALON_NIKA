@@ -2,9 +2,10 @@ stages:
   - verify
   - test
   - security
+  - deploy
 
 default:
-  image: node:20
+  image: node:22
   cache:
     key:
       files:
@@ -25,6 +26,24 @@ validate_project:
     - npm run validate
   rules:
     - if: '$CI_COMMIT_BRANCH'
+
+deploy_cloudflare_pages:
+  stage: deploy
+  before_script:
+    - npm ci
+  script:
+    - npm run build
+    - >
+      npx wrangler pages deploy dist
+      --project-name=hundesalon-nika
+      --branch="$CI_COMMIT_BRANCH"
+      --commit-hash="$CI_COMMIT_SHA"
+      --commit-message="$CI_COMMIT_TITLE"
+  environment:
+    name: production
+    url: https://hundesalon-nika.com
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" && $CLOUDFLARE_ACCOUNT_ID && $CLOUDFLARE_API_TOKEN'
 
 include:
   - template: Jobs/Dependency-Scanning.latest.gitlab-ci.yml

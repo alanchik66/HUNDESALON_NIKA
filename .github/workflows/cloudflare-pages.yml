@@ -1,0 +1,71 @@
+name: Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: cloudflare-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  build-and-deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT_NAME: hundesalon-nika
+      CLOUDFLARE_PAGES_API_TOKEN: ${{ secrets.CLOUDFLARE_PAGES_API_TOKEN }}
+      CLOUDFLARE_ZONE_API_TOKEN: ${{ secrets.CLOUDFLARE_ZONE_API_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Validate
+        run: npm run validate
+
+      - name: Build production bundle
+        run: npm run build:production
+
+      - name: Deploy to Cloudflare Pages
+        if: env.CLOUDFLARE_ACCOUNT_ID != '' && env.CLOUDFLARE_PAGES_API_TOKEN != ''
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ env.CLOUDFLARE_PAGES_API_TOKEN }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message || github.workflow }}
+        run: |
+          npx wrangler pages deploy dist \
+            --project-name="${CLOUDFLARE_PROJECT_NAME}" \
+            --branch="${GITHUB_REF_NAME}" \
+            --commit-hash="${GITHUB_SHA}" \
+            --commit-message="${COMMIT_MESSAGE}"
+
+      - name: Purge Cloudflare cache
+        if: env.CLOUDFLARE_ACCOUNT_ID != '' && env.CLOUDFLARE_PAGES_API_TOKEN != '' && env.CLOUDFLARE_ZONE_API_TOKEN != ''
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ env.CLOUDFLARE_ZONE_API_TOKEN }}
+        run: npm run cf:purge-cache
+
+      - name: Smoke check production
+        if: env.CLOUDFLARE_ACCOUNT_ID != '' && env.CLOUDFLARE_PAGES_API_TOKEN != ''
+        run: npm run check:live-html
+
+      - name: Cloudflare deploy secrets missing
+        if: env.CLOUDFLARE_ACCOUNT_ID == '' || env.CLOUDFLARE_PAGES_API_TOKEN == ''
+        run: |
+          echo "::notice::Cloudflare Pages deploy skipped. Add GitHub secrets CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_PAGES_API_TOKEN."
