@@ -5,6 +5,7 @@
 import { spawnSync } from 'node:child_process';
 
 const PROJECT = 'hundesalon-nika';
+const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 const REMOVE = [
   'OPENROUTER_SITE_URL',
   'OPENROUTER_SITE_NAME',
@@ -14,9 +15,9 @@ const REMOVE = [
 
 for (const name of REMOVE) {
   const result = spawnSync(
-    'npx',
+    npx,
     ['wrangler', 'pages', 'secret', 'delete', name, '--project-name', PROJECT],
-    { encoding: 'utf8', shell: true, input: 'y\n' }
+    { encoding: 'utf8', input: 'y\n' }
   );
   if (result.status !== 0) {
     const out = `${result.stdout}\n${result.stderr}`;
