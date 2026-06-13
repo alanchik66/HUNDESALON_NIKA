@@ -1,0 +1,106 @@
+---
+description: HUNDESALON NIKA site operator rules for AI agents
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# HUNDESALON NIKA Site Operator Rules
+
+Read these rules before working on the website.
+
+## Project
+
+- Repository: `alanchik66/HUNDESALON_NIKA`
+- Website: `https://hundesalon-nika.com`
+- Business: premium dog grooming salon in Leipzig, Germany
+- Hosting: Cloudflare Pages
+- Output: `dist/`
+- Stack: native HTML, CSS, JavaScript
+- Default locale: `de/`
+- Other locales: `en/`, `ru/`, `uk/`
+
+## Core mission
+
+Improve the website so it brings more qualified local clients and booking requests.
+
+Prioritize:
+
+1. local Leipzig SEO;
+2. booking and contact conversion;
+3. premium trust;
+4. multilingual consistency;
+5. clean technical implementation;
+6. safe validation before deployment.
+
+## Required project context
+
+When working as an AI agent, use these project docs:
+
+- `AGENTS.md`
+- `docs/ai-site-operator-agent.md`
+- `docs/agents-playbook.md`
+
+## Design rules
+
+Keep the existing premium visual language:
+
+- glass effects;
+- gold accents;
+- soft light;
+- depth;
+- warmth;
+- careful animal-care tone.
+
+Avoid generic template visuals, harsh outlines, loud effects, and cheap sales language.
+
+## Frontend rules
+
+- Prefer shared files in `assets/css/` and `assets/js/`.
+- Do not duplicate header, footer, or navigation by hand unless a page explicitly needs a fallback.
+- Keep `.site-scroll-root` and the fixed premium header behavior intact.
+- Keep all four language trees consistent.
+- Use `../assets/` for language-root pages and usually `../../assets/` for blog pages.
+- Do not introduce a framework unless the owner explicitly asks.
+
+## SEO rules
+
+For SEO tasks, check or update:
+
+- title;
+- meta description;
+- headings;
+- canonical;
+- hreflang;
+- JSON-LD;
+- sitemap;
+- internal links;
+- local Leipzig intent;
+- localized versions where needed.
+
+## Validation
+
+After UI or content changes, prefer:
+
+```bash
+npm run lint
+```
+
+After broader changes, prefer:
+
+```bash
+npm run validate
+npm run build
+```
+
+Deploy only when the owner explicitly asks.
+
+## Reporting
+
+Report in Russian unless asked otherwise. Include:
+
+- changed files;
+- what was changed;
+- validation status;
+- deployment status;
+- next useful action.
