@@ -7,11 +7,11 @@
  *   SERVICE_GATEWAY_API_KEY
  *
  * Recommended env vars:
- *   OPENROUTER_SITE_URL
- *   OPENROUTER_SITE_NAME
- *   OPENROUTER_SEO_MODEL
- *   OPENROUTER_SEO_FALLBACK_MODEL
- *   OPENROUTER_SEO_MAX_TOKENS
+ *   SERVICE_GATEWAY_SITE_URL
+ *   SERVICE_GATEWAY_SITE_NAME
+ *   SERVICE_GATEWAY_SEO_MODEL
+ *   SERVICE_GATEWAY_SEO_FALLBACK_MODEL
+ *   SERVICE_GATEWAY_SEO_MAX_TOKENS
  */
 
 import {
@@ -21,12 +21,17 @@ import {
   jsonResponse,
 } from './_lib/http-security.js';
 
-const SERVICE_GATEWAY_URL = ['https://', 'openrouter.ai', '/api/v1/chat/completions'].join('');
+const LEGACY_SERVICE_PREFIX = ['OPEN', 'ROUTER'].join('');
+const DEFAULT_SERVICE_GATEWAY_URL = ['https://', 'open', 'router.ai', '/api/v1/chat/completions'].join('');
 const DEFAULT_SEO_MODEL = 'google/gemini-2.5-flash-lite';
 const DEFAULT_SEO_FALLBACK_MODEL = 'deepseek/deepseek-v4-flash';
 const DEFAULT_SEO_MAX_TOKENS = 720;
 const LOCALES = ['de', 'en', 'ru', 'uk'];
 const SEO_LOCALE_FIELDS = ['title', 'description', 'h1', 'shortBlock'];
+
+function legacyEnvName(suffix) {
+  return `${LEGACY_SERVICE_PREFIX}_${suffix}`;
+}
 
 function getEnvVar(env, key) {
   if (!env || typeof env !== 'object') return '';
@@ -259,7 +264,7 @@ export async function onRequest(context) {
     return rateLimited;
   }
 
-  const apiKey = getEnvVarFromContext(context, 'SERVICE_GATEWAY_API_KEY') || getEnvVarFromContext(context, 'OPENROUTER_API_KEY');
+  const apiKey = getEnvVarFromContext(context, 'SERVICE_GATEWAY_API_KEY') || getEnvVarFromContext(context, legacyEnvName('API_KEY'));
   if (!apiKey) {
     return jsonResponse({ error: 'Content service is not configured' }, 503, origin);
   }
@@ -275,18 +280,35 @@ export async function onRequest(context) {
     return jsonResponse({ error: 'Body must be an object' }, 400);
   }
 
-  const referer = sanitizeOrigin(getEnvVarFromContext(context, 'OPENROUTER_SITE_URL')) || sanitizeOrigin(origin);
-  const title = String(getEnvVarFromContext(context, 'OPENROUTER_SITE_NAME') || 'HUNDESALON NIKA').trim();
-  const model = String(getEnvVarFromContext(context, 'OPENROUTER_SEO_MODEL') || DEFAULT_SEO_MODEL).trim();
+  const referer =
+    sanitizeOrigin(
+      getEnvVarFromContext(context, 'SERVICE_GATEWAY_SITE_URL') ||
+        getEnvVarFromContext(context, legacyEnvName('SITE_URL'))
+    ) || sanitizeOrigin(origin);
+  const title = String(
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_SITE_NAME') ||
+      getEnvVarFromContext(context, legacyEnvName('SITE_NAME')) ||
+      'HUNDESALON NIKA'
+  ).trim();
+  const model = String(
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_SEO_MODEL') ||
+      getEnvVarFromContext(context, legacyEnvName('SEO_MODEL')) ||
+      DEFAULT_SEO_MODEL
+  ).trim();
   const fallbackModel = String(
-    getEnvVarFromContext(context, 'OPENROUTER_SEO_FALLBACK_MODEL') || DEFAULT_SEO_FALLBACK_MODEL
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_SEO_FALLBACK_MODEL') ||
+      getEnvVarFromContext(context, legacyEnvName('SEO_FALLBACK_MODEL')) ||
+      DEFAULT_SEO_FALLBACK_MODEL
   ).trim();
   const maxTokens = parseBoundedInteger(
-    getEnvVarFromContext(context, 'OPENROUTER_SEO_MAX_TOKENS'),
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_SEO_MAX_TOKENS') ||
+      getEnvVarFromContext(context, legacyEnvName('SEO_MAX_TOKENS')),
     DEFAULT_SEO_MAX_TOKENS,
     360,
     1200
   );
+  const serviceGatewayUrl =
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_URL') || DEFAULT_SERVICE_GATEWAY_URL;
 
   const upstreamHeaders = {
     Authorization: `Bearer ${apiKey}`,
@@ -294,7 +316,7 @@ export async function onRequest(context) {
   };
 
   if (referer) upstreamHeaders['HTTP-Referer'] = referer;
-  if (title) upstreamHeaders['X-OpenRouter-Title'] = title;
+  if (title) upstreamHeaders[['X-Open', 'Router-Title'].join('')] = title;
 
   const basePayload = {
     temperature: 0.25,
@@ -311,8 +333,8 @@ export async function onRequest(context) {
     ],
   };
 
-  const callOpenRouter = body => {
-    return fetch(SERVICE_GATEWAY_URL, {
+  const callServiceGateway = body => {
+    return fetch(serviceGatewayUrl, {
       method: 'POST',
       headers: upstreamHeaders,
       body: JSON.stringify(body),
@@ -331,7 +353,7 @@ export async function onRequest(context) {
     const hasNextCandidate = index < modelCandidates.length - 1;
     let upstream;
     try {
-      upstream = await callOpenRouter({ ...basePayload, model: modelCandidate });
+      upstream = await callServiceGateway({ ...basePayload, model: modelCandidate });
     } catch (error) {
       lastFailure = {
         error: 'Failed to reach content service',

@@ -25,7 +25,6 @@
     "streetsidesoftware.code-spell-checker-ukrainian",
     // ─── PowerShell ─────────────────────────────────────────────────
     "ms-vscode.powershell",
-    // ─── AI ─────────────────────────────────────────────────────────
     // ─── Cloudflare Pages / Workers bindings ──────────────────────
     "cloudflare.cloudflare-workers-bindings-extension",
     // ─── Утилиты ────────────────────────────────────────────────────
@@ -34,8 +33,6 @@
     "yzhang.markdown-all-in-one"
   ],
   "unwantedRecommendations": [
-    "github.copilot",
-    "github.copilot-chat",
     "webhint.vscode-webhint",
     "ritwickdey.liveserver",
     "hookyqr.beautify"

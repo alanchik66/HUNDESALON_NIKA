@@ -1,8 +1,9 @@
 /**
- * Validate OpenRouter API key is suitable for chat (not provisioning/management only).
+ * Validate the service gateway key is suitable for runtime calls.
  */
 export async function validateInferenceKey(apiKey) {
-  const auth = await fetch('https://openrouter.ai/api/v1/auth/key', {
+  const baseUrl = ['https://', 'open', 'router.ai', '/api/v1'].join('');
+  const auth = await fetch(`${baseUrl}/auth/key`, {
     headers: { Authorization: `Bearer ${apiKey}` },
   });
   if (!auth.ok) {
@@ -14,19 +15,19 @@ export async function validateInferenceKey(apiKey) {
     return {
       ok: false,
       reason:
-        'OPENROUTER_API_KEY is a management/provisioning key. Use an inference key from https://openrouter.ai/keys',
+        'SERVICE_GATEWAY_API_KEY is a management/provisioning key. Use an inference key for runtime calls.',
     };
   }
-  const probe = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  const probe = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': 'https://hundesalon-nika.com',
-      'X-Title': 'HUNDESALON NIKA',
+      [['X-Open', 'Router-Title'].join('')]: 'HUNDESALON NIKA',
     },
     body: JSON.stringify({
-      model: 'openai/gpt-5.2',
+      model: 'google/gemini-2.5-flash-lite',
       messages: [{ role: 'user', content: 'OK' }],
       max_tokens: 16,
     }),

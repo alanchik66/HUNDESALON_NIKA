@@ -22,7 +22,7 @@
 |--------|-----|----------|
 | Домашняя | `/home` | Проверка верификации, статистика |
 | Search Performance | `/searchperf` | Мониторинг кликов/показов |
-| AI Performance | `/aiperformance` | Цитирования в Copilot (бета) |
+| Search visibility | `/aiperformance` | Цитирования и упоминания в поиске Bing |
 | URL Inspection | `/urlinspection` | Проверка + запрос индексации ключевых URL |
 | Site Explorer | `/siteexplorer` | Структура сайта, индекс |
 | Sitemaps | `/sitemaps` | `sitemap.xml` + `sitemap-brand.xml` |

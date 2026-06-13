@@ -1,6 +1,6 @@
 /**
  * Cloudflare Pages Function: POST /lg-task
- * Lightweight webhook bridge for dashboard-driven AI tasks.
+ * Lightweight webhook bridge for dashboard-driven service tasks.
  */
 
 import {
@@ -111,8 +111,8 @@ export async function onRequest(context) {
     return jsonResponse({ ok: true, task: 'ping', service: 'lg-task', ts: new Date().toISOString() }, 200, responseOrigin);
   }
 
-  if (task === 'openrouter.chat') {
-    const upstream = await forwardJson(request, '/openrouter', payload.payload || {});
+  if (task === 'message.draft') {
+    const upstream = await forwardJson(request, '/message-draft', payload.payload || {});
     const text = await upstream.text();
     return new Response(text, {
       status: upstream.status,
@@ -136,7 +136,7 @@ export async function onRequest(context) {
   return jsonResponse(
     {
       error: 'Unsupported task',
-      supported: ['ping', 'openrouter.chat', 'seo.generate'],
+      supported: ['ping', 'message.draft', 'seo.generate'],
     },
     400,
     responseOrigin

@@ -22,17 +22,7 @@ for (const path of prunable) {
   spawnSync('git', ['worktree', 'remove', path, '--force'], { stdio: 'inherit', shell: true });
 }
 
-const extraWorktrees = [
-  'C:/laragon/www/HUNDESALON_NIKA.worktrees/agents-css-js-minification-explained',
-];
-for (const wtPath of extraWorktrees) {
-  const listed = spawnSync('git', ['worktree', 'list'], { encoding: 'utf8' }).stdout;
-  if (!listed.includes(wtPath.replace(/\//g, '/'))) continue;
-  console.log(`Removing worktree: ${wtPath}`);
-  spawnSync('git', ['worktree', 'remove', wtPath, '--force'], { stdio: 'inherit', shell: true });
-}
-
-const staleBranches = ['sync/gitlab-main', 'reconcile', 'agents/css-js-minification-explained'];
+const staleBranches = ['sync/gitlab-main', 'reconcile'];
 for (const name of staleBranches) {
   const exists = spawnSync('git', ['show-ref', '--verify', `refs/heads/${name}`], { encoding: 'utf8' });
   if (exists.status !== 0) continue;

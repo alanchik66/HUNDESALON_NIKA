@@ -13,7 +13,6 @@
 - Shared scripts: `assets/js/site-shell.js`, `assets/js/main.js`, `assets/js/page-modules.js`
 - SEO entry pages: `index.html`, `de/index.html`, `en/index.html`, `ru/index.html`, `uk/index.html`
 - Cloudflare: `wrangler.toml`, `_headers`, `_redirects`, `functions/`
-- Agent rules: `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, `.continuerules`, `.windsurfrules`
 
 ## Checks
 
@@ -27,5 +26,5 @@
 Use `npm run deploy` for Cloudflare Pages. It validates first, then runs:
 
 ```bash
-wrangler pages deploy . --project-name=hundesalon-nika
+wrangler pages deploy dist --project-name=hundesalon-nika
 ```

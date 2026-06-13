@@ -30,8 +30,8 @@ const ENDPOINT_LIMITS = [
     mitigationTimeout: 120,
   },
   {
-    path: '/openrouter',
-    description: `${RULE_PREFIX} POST /openrouter`,
+    path: '/message-draft',
+    description: `${RULE_PREFIX} POST /message-draft`,
     requestsPerPeriod: 30,
     period: 60,
     mitigationTimeout: 120,
@@ -96,7 +96,7 @@ function buildCombinedRulePayload() {
   return {
     description: COMBINED_RULE_DESC,
     expression:
-      '((http.request.uri.path eq "/sendmail" or http.request.uri.path eq "/openrouter" or http.request.uri.path eq "/seo-generate") and http.request.method eq "POST")',
+      '((http.request.uri.path eq "/sendmail" or http.request.uri.path eq "/message-draft" or http.request.uri.path eq "/seo-generate") and http.request.method eq "POST")',
     action: 'block',
     action_parameters: {
       response: {
@@ -142,7 +142,7 @@ async function createPhaseRuleset(auth, zoneId, rules) {
     method: 'POST',
     body: JSON.stringify({
       name: 'HUNDESALON NIKA API rate limits',
-      description: 'Rate limits for Pages Functions (sendmail, openrouter, seo-generate)',
+      description: 'Rate limits for Pages Functions (sendmail, message-draft, seo-generate)',
       kind: 'zone',
       phase: PHASE,
       rules,

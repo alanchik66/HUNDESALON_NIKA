@@ -3,4 +3,4 @@
  * Contact-form message draft endpoint.
  */
 
-export { onRequest } from './openrouter.js';
+export { handleMessageDraft as onRequest } from './_lib/draft-service.js';

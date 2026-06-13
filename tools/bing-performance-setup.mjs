@@ -1,11 +1,11 @@
 /**
- * Bing Webmaster: AI Performance + logo/favicon signals for search.
+ * Bing Webmaster: performance + logo/favicon signals for search.
  * Requires: npm run bing:edge (mail.ru), port 9224
  */
 const port = Number(process.env.BING_MAIL_EDGE_PORT || 9224);
 const siteUrl = 'https://hundesalon-nika.com/';
 const siteQ = encodeURIComponent(siteUrl);
-const aiUrl = `https://www.bing.com/webmasters/aiperformance?siteUrl=${siteQ}`;
+const performanceUrl = `https://www.bing.com/webmasters/aiperformance?siteUrl=${siteQ}`;
 
 const logoUrls = [
   'https://hundesalon-nika.com/favicon.ico',
@@ -109,8 +109,8 @@ try {
 
 const report = { at: new Date().toISOString(), logoUrls };
 
-report.aiPerformance = await withCdp(async send => {
-  await send('Page.navigate', { url: aiUrl });
+report.searchPerformance = await withCdp(async send => {
+  await send('Page.navigate', { url: performanceUrl });
   await wait(8000);
   const page = await evalPage(
     send,
@@ -122,7 +122,7 @@ report.aiPerformance = await withCdp(async send => {
       title: document.title,
       url: location.href,
       started,
-      hasAiData: /citation|цитир|ai performance|copilot|упоминан/i.test(body),
+      hasSearchData: /citation|цитир|performance|упоминан/i.test(body),
       sample: body.slice(0, 1200),
     };
   `

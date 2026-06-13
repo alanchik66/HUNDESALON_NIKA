@@ -19,7 +19,6 @@ const requiredFiles = [
   '_headers',
   '_redirects',
   'wrangler.toml',
-  'AGENTS.md',
 ];
 
 const indexFiles = ['index.html', 'de/index.html', 'en/index.html', 'ru/index.html', 'uk/index.html'];

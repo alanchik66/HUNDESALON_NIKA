@@ -2,11 +2,11 @@
 
 ## 1) Что уже выполнено безопасно
 
-- Сделан полный backup проекта (вне репозитория):
-  - C:/laragon/www/HUNDESALON_NIKA_BACKUPS/migrated-from-repo-20260514-215014/full-audit-20260514-214310/repo.bundle
-  - C:/laragon/www/HUNDESALON_NIKA_BACKUPS/migrated-from-repo-20260514-215014/full-audit-20260514-214310/workspace-snapshot.zip
-  - C:/laragon/www/HUNDESALON_NIKA_BACKUPS/migrated-from-repo-20260514-215014/full-audit-20260514-214310/git-status.txt
-  - C:/laragon/www/HUNDESALON_NIKA_BACKUPS/migrated-from-repo-20260514-215014/full-audit-20260514-214310/git-diff.patch
+- Сделан полный backup проекта (вне репозитория, legacy-архив старой миграции):
+  - repo.bundle
+  - workspace-snapshot.zip
+  - git-status.txt
+  - git-diff.patch
 - Пройдены проверки проекта:
   - npm run validate (OK)
   - npm run build (OK)

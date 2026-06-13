@@ -138,15 +138,6 @@
   "gitlens.graph.experimental.kanban.enabled": true,
   "gitlens.graph.experimental.visualizations.enabled": true,
   "gitlens.rebaseEditor.openBehavior": "auto",
-  "gitlens.ai.exclude.files": [
-    "**/.env*",
-    "**/.dev.vars*",
-    "**/*.token",
-    "**/*.pem",
-    "**/*.key",
-    "**/dist/**",
-    "**/backups/**"
-  ],
   "gitlab.pipelineGitRemoteName": "gitlab",
   // ── Терминал ─────────────────────────────────────────────────────────────
   "terminal.integrated.defaultProfile.windows": "HUNDESALON PowerShell",
@@ -178,7 +169,6 @@
   "terminal.integrated.cwd": "${workspaceFolder}",
   "terminal.integrated.inheritEnv": true,
   "terminal.integrated.env.windows": {
-    "PATH": "C:\\laragon\\bin\\nodejs\\node-v24;${env:PATH}",
     "NODE_TLS_REJECT_UNAUTHORIZED": null
   },
   "terminal.integrated.windowsEnableConpty": true,
@@ -193,22 +183,6 @@
     "/assets": "${workspaceFolder}/assets"
   },
   "path-intellisense.autoTriggerNextSuggestion": true,
-  // ── Copilot / Chat ───────────────────────────────────────────────────────
-  "chat.commandCenter.enabled": true,
-  "chat.tools.compressOutput.enabled": true,
-  "chat.tools.riskAssessment.enabled": true,
-  "chat.utilityModel": "Default",
-  "chat.utilitySmallModel": "Default",
-  "chat.planWidget.inlineEditor.enabled": true,
-  "github.copilot.chat.claudeAgent.allowAutoPermissions": true,
-  // ── Agents window ─────────────────────────────────────────────────────────
-  "extensions.supportAgentsWindow": {
-    "github.copilot": true,
-    "github.copilot-chat": true,
-    "eamodio.gitlens": true,
-    "ms-playwright.playwright": true,
-    "cloudflare.cloudflare-workers-bindings-extension": true
-  },
   // ── Workbench ─────────────────────────────────────────────────────────────
   "workbench.diffEditorAssociations": {
     "*.md": "vscode.markdown.preview.editor"

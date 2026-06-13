@@ -28,7 +28,7 @@ npm run brand:sitemap   # sitemap-brand.xml for search engines
 ## Bing / SEO
 
 - Bing **does not** accept logo upload in Webmaster UI; it crawls `/favicon.ico` and schema logo URL.
-- Submit: `npm run seo:indexnow`, `npm run bing:ai-performance`
+- Submit: `npm run seo:indexnow`, `npm run bing:performance`
 - Sitemap: `sitemap-brand.xml` (listed in `robots.txt`)
 
 ## Gallery / content

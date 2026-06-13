@@ -3,8 +3,8 @@ const url = process.env.RESEND_CHECK_URL || 'https://hundesalon-nika.com/sendmai
 const origin = process.env.RESEND_CHECK_ORIGIN || 'https://hundesalon-nika.com';
 
 const payload = {
-  name: 'Codex Resend Check',
-  email: process.env.RESEND_CHECK_REPLY_TO || 'codex-check@example.com',
+  name: 'HUNDESALON NIKA Resend Check',
+  email: process.env.RESEND_CHECK_REPLY_TO || 'resend-check@example.com',
   message: `Resend production check ${new Date().toISOString()}. Please ignore if delivered.`,
   lang: 'ru',
   form_type: 'contact',

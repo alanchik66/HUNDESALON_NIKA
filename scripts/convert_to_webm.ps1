@@ -1,5 +1,5 @@
 Param(
-  [string]$srcDir = "C:\laragon\www\HUNDESALON_NIKA\3d-weather-codrops-main\dist-widget\assets\Moon",
+  [string]$srcDir = (Join-Path $PSScriptRoot "..\3d-weather-codrops-main\dist-widget\assets\Moon"),
   [int]$bitrate4k = 8000,
   [int]$bitrate1080 = 4000,
   [string]$ffmpeg = "ffmpeg"

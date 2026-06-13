@@ -158,12 +158,12 @@ curl -s https://hundesalon-nika.com/ru/index.html | head -20
 
 Should return HTML with site structure.
 
-### Test 2: Check OpenRouter Endpoint
+### Test 2: Check Message Draft Endpoint
 
 ```bash
-curl -X POST https://hundesalon-nika.com/openrouter \
+curl -X POST https://hundesalon-nika.com/message-draft \
   -H "Content-Type: application/json" \
-  -d '{"model":"openai/gpt-4","messages":[{"role":"user","content":"test"}]}' \
+  -d '{"messages":[{"role":"user","content":"test"}],"max_tokens":32}' \
   | head
 ```
 
@@ -283,7 +283,7 @@ echo "✅ Deployment complete!"
 
 | Command                                                              | Purpose                        |
 | -------------------------------------------------------------------- | ------------------------------ |
-| `npm run dev`                                                        | Local preview (port 5500)      |
+| `npm run dev`                                                        | Local preview (port 5502)      |
 | `npm run lint`                                                       | Check HTML, CSS, JS for errors |
 | `npm run validate`                                                   | Full project validation        |
 | `npm run build`                                                      | Create production bundle       |
@@ -296,8 +296,8 @@ echo "✅ Deployment complete!"
 
 These are configured in Cloudflare Pages secrets:
 
-- `OPENROUTER_API_KEY` – OpenRouter API authentication (required)
-- Other `OPENROUTER_*` vars are optional; see `docs/openrouter-quickstart-setup.md`
+- `SERVICE_GATEWAY_API_KEY` - service gateway authentication (required)
+- Other service gateway vars are optional; see `docs/operations.md`
 
 > No need to set these manually in Cloud Shell — they're baked into Cloudflare.
 
@@ -309,8 +309,8 @@ If you encounter any issues:
 
 1. Check the error message carefully
 2. Run `npm run validate` to catch configuration issues
-3. Review [DEPLOYMENT_CHECKLIST.md](../DEPLOYMENT_CHECKLIST.md)
-4. Check [docs/openrouter-quickstart-setup.md](../docs/openrouter-quickstart-setup.md)
+3. Review [docs/operations.md](../docs/operations.md)
+4. Run `npm run check:prod` after deployment
 
 ---
 

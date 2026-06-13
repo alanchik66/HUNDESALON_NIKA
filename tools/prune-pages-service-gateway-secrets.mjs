@@ -1,16 +1,16 @@
 /**
- * Remove redundant OpenRouter Pages secrets (defaults live in functions/*.js).
- * Keeps OPENROUTER_API_KEY; does not touch RESEND_API_KEY.
+ * Remove redundant service gateway Pages secrets (defaults live in functions/*.js).
+ * Keeps SERVICE_GATEWAY_API_KEY; does not touch RESEND_API_KEY.
  */
 import { spawnSync } from 'node:child_process';
 
 const PROJECT = 'hundesalon-nika';
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 const REMOVE = [
-  'OPENROUTER_SITE_URL',
-  'OPENROUTER_SITE_NAME',
-  'OPENROUTER_DEFAULT_MODEL',
-  'OPENROUTER_FALLBACK_MODEL',
+  'SERVICE_GATEWAY_SITE_URL',
+  'SERVICE_GATEWAY_SITE_NAME',
+  'SERVICE_GATEWAY_DEFAULT_MODEL',
+  'SERVICE_GATEWAY_FALLBACK_MODEL',
 ];
 
 for (const name of REMOVE) {
@@ -30,4 +30,4 @@ for (const name of REMOVE) {
   console.log(`deleted ${name}`);
 }
 
-console.log('Done. Remaining secrets should include OPENROUTER_API_KEY only (+ RESEND if configured).');
+console.log('Done. Remaining secrets should include SERVICE_GATEWAY_API_KEY only (+ RESEND if configured).');

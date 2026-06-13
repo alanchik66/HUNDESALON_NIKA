@@ -8,7 +8,7 @@ const url = `https://dash.cloudflare.com/${ACCOUNT_ID}/${DOMAIN}/security/waf/ra
 
 console.log('Opening Cloudflare WAF rate limiting rules…');
 console.log(url);
-console.log('\nSuggested limits (POST, per IP, 60s): /sendmail 12, /openrouter 30, /seo-generate 8');
+console.log('\nSuggested limits (POST, per IP, 60s): /sendmail 12, /message-draft 30, /seo-generate 8');
 
 const start =
   process.platform === 'win32'

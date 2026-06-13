@@ -11,7 +11,7 @@ npm run git:push           # origin + gitlab
 npm run deploy:full        # Cloudflare Pages + post-deploy checks
 ```
 
-If OpenRouter returns 401 after deploy: `npm run sync:openrouter`, wait ~10s, `npm run check:openrouter`.
+If the message draft endpoint returns 401 after deploy: `npm run sync:service-key`, wait ~10s, `npm run check:message-draft`.
 
 ## Commands
 
@@ -19,9 +19,9 @@ If OpenRouter returns 401 after deploy: `npm run sync:openrouter`, wait ~10s, `n
 |--------|---------|
 | `npm run check:all` | Full health (local + prod + git remotes) |
 | `npm run check:live-crawl` | Live HEAD/GET for all 76 sitemap URLs |
-| `docs/ops-playbook.md` | Routing for Cursor/Codex agents (SEO, Bing, deploy) |
+| `docs/operations.md` | Project operations, SEO/search accounts, deploy notes |
 | `npm run bing:complete` | All 16 Bing WMT sections — see `docs/bing-webmaster-checklist.md` |
-| `npm run check:prod` | Live HTML, GSC audit, OpenRouter |
+| `npm run check:prod` | Live HTML, GSC audit, message draft endpoint |
 | `npm run git:push` | Push `main` to GitHub and GitLab |
 | `npm run deploy:full` | Build, deploy Pages, optional purge, IndexNow, prod checks |
 | `npm run seo:indexnow` | IndexNow: all sitemap URLs on **apex + www** hosts |
@@ -32,7 +32,7 @@ If OpenRouter returns 401 after deploy: `npm run sync:openrouter`, wait ~10s, `n
 | `npm run bing:setup` | Full Bing Webmaster setup (sitemap, users, submit, inspect, IndexNow) |
 | `npm run bing:automate` | Submit URLs + request indexing via Edge CDP |
 | `npm run bing:api` | Bing URL API (needs `BING_WEBMASTER_API_KEY` in `.dev.vars`) |
-| `npm run sync:openrouter` | Copy key from `.dev.vars` → Pages secret |
+| `npm run sync:service-key` | Copy service key from `.dev.vars` -> Pages secret |
 
 ## Bing favicon / indexing
 
@@ -72,8 +72,6 @@ Permissions: **Zone → Read**, **Zone → Cache Purge**, resource `hundesalon-n
 
 Without token: Dashboard → **Caching → Purge Everything** after HTML deploys.
 
-Optional: same token in Cursor Cloud Agents as `CLOUDFLARE_API_TOKEN` for automated purge in agents.
-
 ## Email (contact forms, info@, CSAM)
 
 | Service | Status | Notes |
@@ -98,20 +96,17 @@ Resend vs Routing: **Resend** sends mail from the site (`noreply@hundesalon-nika
 
 | Where | Variables |
 |-------|-----------|
-| `.dev.vars` (local, gitignored) | `OPENROUTER_API_KEY`, optional `RESEND_API_KEY`, optional `CLOUDFLARE_API_TOKEN` |
-| Cloudflare Pages | `OPENROUTER_API_KEY`, `RESEND_API_KEY` |
-| Cursor Cloud Agents | `OPENROUTER_API_KEY`, `CLOUDFLARE_API_TOKEN` (purge) |
-
+| `.dev.vars` (local, gitignored) | `SERVICE_GATEWAY_API_KEY`, optional `RESEND_API_KEY`, optional `CLOUDFLARE_API_TOKEN` |
+| Cloudflare Pages | `SERVICE_GATEWAY_API_KEY`, `RESEND_API_KEY` |
 ## API security (Pages Functions)
 
 - Shared helpers: `functions/_lib/http-security.js` (Origin check, Cache API rate limits, response headers).
 - POST endpoints require a valid `Origin` (localhost allowed for `npm run dev:cf`).
-- Edge rate limits (per IP, 60s window): `/sendmail` 12, `/openrouter` 30, `/seo-generate` 8.
+- Edge rate limits (per IP, 60s window): `/sendmail` 12, `/message-draft` 30, `/seo-generate` 8.
 - WAF (zone edge): `npm run cf:configure-waf-rate-limits` (needs token with Zone WAF Write) or Dashboard via `npm run cf:open-waf-rate-limits`.
 
 ## Docs
 
 - Git: `docs/git-workflow.md`
 - Cache: `docs/cloudflare-caching.md`
-- OpenRouter: `docs/openrouter-quickstart-setup.md`
-- Agents: `AGENTS.md`
+- Message draft endpoint: `functions/message-draft.js`

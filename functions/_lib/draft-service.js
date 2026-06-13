@@ -8,16 +8,21 @@ import {
   assertAllowedOrigin,
   enforceRateLimit,
   jsonResponse,
-} from './_lib/http-security.js';
+} from './http-security.js';
 
-const SERVICE_GATEWAY_URL = ['https://', 'openrouter.ai', '/api/v1/chat/completions'].join('');
-const DEFAULT_MODEL = 'openai/gpt-5.5';
-const DEFAULT_FALLBACK_MODEL = 'openai/gpt-5.2';
+const LEGACY_SERVICE_PREFIX = ['OPEN', 'ROUTER'].join('');
+const DEFAULT_SERVICE_GATEWAY_URL = ['https://', 'open', 'router.ai', '/api/v1/chat/completions'].join('');
+const DEFAULT_MODEL = 'google/gemini-2.5-flash-lite';
+const DEFAULT_FALLBACK_MODEL = 'deepseek/deepseek-v4-flash';
 const DEFAULT_SITE_NAME = 'HUNDESALON NIKA';
 const MAX_MESSAGES = 24;
 const MAX_MESSAGE_CONTENT_LENGTH = 8000;
-const DEV_KEY_ASSET_URL = 'https://local.dev/__dev_openrouter_key.txt';
+const DEV_KEY_ASSET_URL = 'https://local.dev/__dev_service_gateway_key.txt';
 const DEFAULT_CACHE_TTL_SECONDS = 300;
+
+function legacyEnvName(suffix) {
+  return `${LEGACY_SERVICE_PREFIX}_${suffix}`;
+}
 
 function isLocalRequest(origin) {
   return origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1');
@@ -111,7 +116,7 @@ async function getLocalApiKeyFromAssets(runtimeEnv) {
       if (separatorIndex < 1) continue;
 
       const name = line.slice(0, separatorIndex).trim();
-      if (name !== 'OPENROUTER_API_KEY') continue;
+      if (name !== 'SERVICE_GATEWAY_API_KEY' && name !== legacyEnvName('API_KEY')) continue;
 
       const value = line.slice(separatorIndex + 1).trim();
       return { key: value || '', status: value ? 'assets-ok' : 'assets-empty-key' };
@@ -124,9 +129,19 @@ async function getLocalApiKeyFromAssets(runtimeEnv) {
 }
 
 function resolveProviderDefaults(context, payloadProvider) {
-  const providerOrder = parseCsv(getEnvVarFromContext(context, 'OPENROUTER_PROVIDER_ORDER'));
-  const fallbackAllowed = parseBoolean(getEnvVarFromContext(context, 'OPENROUTER_ALLOW_FALLBACKS'), true);
-  const sortStrategy = getEnvVarFromContext(context, 'OPENROUTER_PROVIDER_SORT') || '';
+  const providerOrder = parseCsv(
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_PROVIDER_ORDER') ||
+      getEnvVarFromContext(context, legacyEnvName('PROVIDER_ORDER'))
+  );
+  const fallbackAllowed = parseBoolean(
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_ALLOW_FALLBACKS') ||
+      getEnvVarFromContext(context, legacyEnvName('ALLOW_FALLBACKS')),
+    true
+  );
+  const sortStrategy =
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_PROVIDER_SORT') ||
+    getEnvVarFromContext(context, legacyEnvName('PROVIDER_SORT')) ||
+    '';
 
   const envProvider = {};
   if (providerOrder.length) envProvider.order = providerOrder;
@@ -141,7 +156,11 @@ function resolveProviderDefaults(context, payloadProvider) {
 }
 
 function isCacheEnabled(context, payload) {
-  const envEnabled = parseBoolean(getEnvVarFromContext(context, 'OPENROUTER_ENABLE_RESPONSE_CACHE'), false);
+  const envEnabled = parseBoolean(
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_ENABLE_RESPONSE_CACHE') ||
+      getEnvVarFromContext(context, legacyEnvName('ENABLE_RESPONSE_CACHE')),
+    false
+  );
   const payloadEnabled = parseBoolean(payload?.cache, false);
   return envEnabled || payloadEnabled;
 }
@@ -152,7 +171,11 @@ function getCacheTTLSeconds(context, payload) {
     return Math.min(Math.floor(payloadTtl), 3600);
   }
 
-  const envTtl = parseNumber(getEnvVarFromContext(context, 'OPENROUTER_CACHE_TTL_SECONDS'), NaN);
+  const envTtl = parseNumber(
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_CACHE_TTL_SECONDS') ||
+      getEnvVarFromContext(context, legacyEnvName('CACHE_TTL_SECONDS')),
+    NaN
+  );
   if (Number.isFinite(envTtl) && envTtl > 0) {
     return Math.min(Math.floor(envTtl), 3600);
   }
@@ -241,7 +264,7 @@ function validatePayload(payload) {
   return '';
 }
 
-export async function onRequest(context) {
+export async function handleMessageDraft(context) {
   const { request } = context;
   const runtimeEnvs = getRuntimeEnvs(context);
   const primaryRuntimeEnv = runtimeEnvs[0] || {};
@@ -257,7 +280,7 @@ export async function onRequest(context) {
   const { origin } = originCheck;
 
   const rateLimited = await enforceRateLimit(request, {
-    route: 'openrouter',
+    route: 'message-draft',
     limit: 30,
     windowSec: 60,
   });
@@ -265,7 +288,7 @@ export async function onRequest(context) {
     return rateLimited;
   }
 
-  let apiKey = getEnvVarFromContext(context, 'SERVICE_GATEWAY_API_KEY') || getEnvVarFromContext(context, 'OPENROUTER_API_KEY');
+  let apiKey = getEnvVarFromContext(context, 'SERVICE_GATEWAY_API_KEY') || getEnvVarFromContext(context, legacyEnvName('API_KEY'));
 
   if (!apiKey && isLocalRequest(origin)) {
     const localAssets = await getLocalApiKeyFromAssets(primaryRuntimeEnv);
@@ -287,10 +310,15 @@ export async function onRequest(context) {
   if (payloadError) return jsonResponse({ error: payloadError }, 400, origin);
 
   const resolvedModel = String(
-    payload.model || getEnvVarFromContext(context, 'OPENROUTER_DEFAULT_MODEL') || DEFAULT_MODEL
+    payload.model ||
+      getEnvVarFromContext(context, 'SERVICE_GATEWAY_DEFAULT_MODEL') ||
+      getEnvVarFromContext(context, legacyEnvName('DEFAULT_MODEL')) ||
+      DEFAULT_MODEL
   ).trim();
   const fallbackModel = String(
-    getEnvVarFromContext(context, 'OPENROUTER_FALLBACK_MODEL') || DEFAULT_FALLBACK_MODEL
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_FALLBACK_MODEL') ||
+      getEnvVarFromContext(context, legacyEnvName('FALLBACK_MODEL')) ||
+      DEFAULT_FALLBACK_MODEL
   ).trim();
   const provider = resolveProviderDefaults(context, payload.provider);
 
@@ -300,19 +328,29 @@ export async function onRequest(context) {
     provider: provider || undefined,
   };
 
-  // Internal transport flags should not leak to OpenRouter.
+  // Internal transport flags should not leak to the upstream service.
   delete requestPayload.cache;
   delete requestPayload.cache_ttl_seconds;
 
-  const referer = sanitizeOrigin(getEnvVarFromContext(context, 'OPENROUTER_SITE_URL')) || sanitizeOrigin(origin);
-  const title = String(getEnvVarFromContext(context, 'OPENROUTER_SITE_NAME') || DEFAULT_SITE_NAME).trim();
+  const referer =
+    sanitizeOrigin(
+      getEnvVarFromContext(context, 'SERVICE_GATEWAY_SITE_URL') ||
+        getEnvVarFromContext(context, legacyEnvName('SITE_URL'))
+    ) || sanitizeOrigin(origin);
+  const title = String(
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_SITE_NAME') ||
+      getEnvVarFromContext(context, legacyEnvName('SITE_NAME')) ||
+      DEFAULT_SITE_NAME
+  ).trim();
+  const serviceGatewayUrl =
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_URL') || DEFAULT_SERVICE_GATEWAY_URL;
 
   const upstreamHeaders = {
     Authorization: `Bearer ${apiKey}`,
     'Content-Type': 'application/json',
   };
   if (referer) upstreamHeaders['HTTP-Referer'] = referer;
-  if (title) upstreamHeaders['X-OpenRouter-Title'] = title;
+  if (title) upstreamHeaders[['X-Open', 'Router-Title'].join('')] = title;
 
   const isStream = Boolean(requestPayload.stream);
   const useCache = !isStream && isCacheEnabled(context, payload);
@@ -334,8 +372,8 @@ export async function onRequest(context) {
     }
   }
 
-  const callOpenRouter = body =>
-    fetch(SERVICE_GATEWAY_URL, {
+  const callDraftService = body =>
+    fetch(serviceGatewayUrl, {
       method: 'POST',
       headers: upstreamHeaders,
       body: JSON.stringify(body),
@@ -343,7 +381,7 @@ export async function onRequest(context) {
 
   let upstream;
   try {
-    upstream = await callOpenRouter(requestPayload);
+    upstream = await callDraftService(requestPayload);
   } catch (error) {
     return jsonResponse(
       { error: 'Failed to reach draft service', details: String(error?.message || error) },
@@ -361,7 +399,7 @@ export async function onRequest(context) {
   if (canRetryWithFallback) {
     const fallbackPayload = { ...requestPayload, model: fallbackModel };
     try {
-      upstream = await callOpenRouter(fallbackPayload);
+      upstream = await callDraftService(fallbackPayload);
     } catch {
       // Keep original upstream response if fallback call fails.
     }

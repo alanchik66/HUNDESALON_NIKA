@@ -137,9 +137,9 @@ tmp_*.png
 .anima/
 output/
 output-*.png
-booking-*-codex-browser.png
+booking-*-browser.png
 
-# Локальные одноразовые скрипты агента (не для репозитория)
+# Локальные одноразовые скрипты (не для репозитория)
 tools/_test-*.mjs
 tools/_create-*.mjs
 .cloudflare-api.token

@@ -9,7 +9,7 @@
 /de/  en/  ru/  uk/  → по 19 страниц на локаль = 76 URL в sitemap
 /de/blog/*.html      → 4 статьи × 4 языка
 assets/              → CSS, JS, изображения, favicon
-functions/           → sendmail, openrouter, seo-generate (Workers)
+functions/           → sendmail, message-draft, seo-generate (Workers)
 ```
 
 ## Страницы (одинаковые slug во всех локалях)
@@ -57,7 +57,7 @@ functions/           → sendmail, openrouter, seo-generate (Workers)
 - **Bing**: `msvalidate.01` + `BingSiteAuth.xml`
 - **IndexNow**: `indexnow-key.txt`, sitemap + logo assets (apex + www)
 - **Logo для Bing**: `/favicon.ico`, JSON-LD `search-logo-clear-512.png` — Bing **не** позволяет загрузить лого в панели (глобус в шапке — стандарт Bing); иконка в выдаче берётся с сайта
-- **AI Performance**: [Bing Webmaster → AI Performance](https://www.bing.com/webmasters/aiperformance?siteUrl=https://hundesalon-nika.com/) — цитирования в Copilot; `npm run bing:ai-performance`
+- **Bing Performance**: раздел Bing Webmaster для видимости сайта; `npm run bing:ai-performance`
 - **Sitemap**: `sitemap.xml` (76 URL)
 
 ## Проверки (регулярно)
@@ -78,4 +78,4 @@ npm run validate           # lint + links + project
 | Google Search Console | snaiper1984@gmail.com |
 | Bing Webmaster | snaiper1984@mail.ru |
 
-Подробнее: `docs/ops-playbook.md`.
+Подробнее: `docs/operations.md`.

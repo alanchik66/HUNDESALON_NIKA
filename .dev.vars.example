@@ -1,14 +1,12 @@
 # Copy to .dev.vars for local Cloudflare Pages dev (npm run dev:cf).
-# Never commit .dev.vars. For cloud agents, use Cursor Dashboard secrets.
+# Never commit .dev.vars. For production, use Cloudflare Pages secrets.
 
 # Inference key only (chat). Do NOT use a management/provisioning key here.
-OPENROUTER_API_KEY=
-# Optional SEO endpoint overrides. Code defaults are production-cheap:
-# OPENROUTER_SEO_MODEL=google/gemini-2.5-flash-lite
-# OPENROUTER_SEO_FALLBACK_MODEL=deepseek/deepseek-v4-flash
-# OPENROUTER_SEO_MAX_TOKENS=720
-# Optional: create inference keys via API (keep out of OPENROUTER_API_KEY)
-# OPENROUTER_MANAGEMENT_API_KEY=
+SERVICE_GATEWAY_API_KEY=
+# Optional SEO endpoint overrides. Code defaults are production-ready:
+# SERVICE_GATEWAY_SEO_MODEL=google/gemini-2.5-flash-lite
+# SERVICE_GATEWAY_SEO_FALLBACK_MODEL=deepseek/deepseek-v4-flash
+# SERVICE_GATEWAY_SEO_MAX_TOKENS=720
 # Bing Webmaster → Settings → API Access (optional; IndexNow works without it)
 BING_WEBMASTER_API_KEY=
 # Resend.com API key for local Cloudflare Pages Functions.

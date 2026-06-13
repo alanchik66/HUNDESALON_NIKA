@@ -51,7 +51,7 @@ try {
   await runNpm('seo:indexnow', { optional: true });
   await runNpm('bing:api', { optional: true });
   await runNpm('google:gsc:audit');
-  await runNpm('check:openrouter', { optional: true });
+  await runNpm('check:message-draft', { optional: true });
   await notifySlack('success', 'CDN очищен, live HTML в норме, IndexNow и аудит GSC выполнены.');
 } catch (error) {
   await notifySlack('failed', `Детали: ${error.message}`);

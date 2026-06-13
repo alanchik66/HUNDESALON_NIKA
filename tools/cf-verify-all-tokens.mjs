@@ -22,7 +22,7 @@ const LIST_SCAN = `(async () => {
     rows.push({
       name: name.slice(0, 100),
       hasNika: /NIKA-Purge-Cache/i.test(t),
-      hasAgent: /cloudflare agent|konto\\.access/i.test(t),
+      hasAccessToken: /konto\\.access/i.test(t),
       snippet: t.slice(0, 160),
     });
   }

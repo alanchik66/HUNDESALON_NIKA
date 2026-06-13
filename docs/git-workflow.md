@@ -6,7 +6,7 @@
 | -------------------------------------------- | ------------------------------------------------------------------- |
 | **GitHub** `alanchik66/HUNDESALON_NIKA`      | Основной remote (`origin`), основной CI-деплой Cloudflare Pages     |
 | **GitLab** `hundesalon-nika/hundesalon-nika` | Зеркало + fallback CI (`.gitlab-ci.yml`), ветка `main` **защищена** |
-| **Локально**                                 | Всегда работайте в `main` на `C:\laragon\www\HUNDESALON_NIKA`       |
+| **Локально**                                 | Всегда работайте в `main` на `C:\PROJEKT\HUNDESALON_NIKA`           |
 
 Cloudflare Pages: проект `hundesalon-nika`, тип **Direct Upload**. Продакшен обновляется через:
 
