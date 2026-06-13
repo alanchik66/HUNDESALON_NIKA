@@ -8,14 +8,14 @@
 
 Файлы:
 - .vscode/settings.json
-- docs/agents-playbook.md
+- docs/ops-playbook.md
 - docs/gitlens-18-daily-checklist.md
 - .aiignore
 - .gitignore
 
 Команды:
 ```bash
-git add .vscode/settings.json docs/agents-playbook.md docs/gitlens-18-daily-checklist.md .aiignore .gitignore
+git add .vscode/settings.json docs/ops-playbook.md docs/gitlens-18-daily-checklist.md .aiignore .gitignore
 git commit -m "chore(gitlens): roll out v18 workflow and ai context safety"
 ```
 

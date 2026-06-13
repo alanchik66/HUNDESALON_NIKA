@@ -3,7 +3,7 @@
  * HUNDESALON NIKA — Page Modules
  * ================================================================
  * Page-specific interactive logic: booking modal, sendmail forms,
- * AI draft assistants, and smooth hash-link scrolling.
+ * message draft tools, and smooth hash-link scrolling.
  * Loaded on pages that need specialised behaviour beyond main.js.
  *
  * Version: 2026-04-20
@@ -187,18 +187,18 @@ document.addEventListener('DOMContentLoaded', () => {
     return endpoints;
   };
 
-  const aiDraftCopy = {
+  const messageDraftCopy = {
     title: {
-      ru: 'AI-помощник для текста',
-      uk: 'AI-помічник для тексту',
-      en: 'AI text helper',
-      de: 'AI-Texthelfer',
+      ru: 'Помощник для текста',
+      uk: 'Помічник для тексту',
+      en: 'Text helper',
+      de: 'Texthilfe',
     },
     button: {
-      ru: 'Сгенерировать черновик',
-      uk: 'Згенерувати чернетку',
-      en: 'Generate draft',
-      de: 'Entwurf generieren',
+      ru: 'Подготовить черновик',
+      uk: 'Підготувати чернетку',
+      en: 'Prepare draft',
+      de: 'Entwurf vorbereiten',
     },
     loading: {
       ru: 'Готовлю черновик...',
@@ -225,14 +225,14 @@ document.addEventListener('DOMContentLoaded', () => {
       de: 'Lokaler Start: Bitte Seite uber http://127.0.0.1:8788 offnen (npm run dev:cf).',
     },
     apiKeyMissing: {
-      ru: 'AI недоступен: локально не задан OPENROUTER_API_KEY для Cloudflare Functions.',
-      uk: 'AI недоступний: локально не задано OPENROUTER_API_KEY для Cloudflare Functions.',
-      en: 'AI unavailable: OPENROUTER_API_KEY is not configured for local Cloudflare Functions.',
-      de: 'AI nicht verfugbar: OPENROUTER_API_KEY ist fur lokale Cloudflare Functions nicht gesetzt.',
+      ru: 'Сервис черновиков сейчас недоступен в локальном режиме.',
+      uk: 'Сервіс чернеток зараз недоступний у локальному режимі.',
+      en: 'Draft service is temporarily unavailable in local mode.',
+      de: 'Der Entwurfsdienst ist lokal vorubergehend nicht verfugbar.',
     },
   };
 
-  const normalizeAssistantMessage = value => {
+  const normalizeDraftMessage = value => {
     if (typeof value === 'string') return value.trim();
     if (Array.isArray(value)) {
       const joined = value
@@ -368,21 +368,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  const initAiDraftAssistants = () => {
-    const resolveAiEndpoints = () => {
+  const initMessageDraftTools = () => {
+    const resolveDraftEndpoints = () => {
       const port = window.location.port;
 
       if (port === '8788') {
-        return ['/openrouter'];
+        return ['/message-draft'];
       }
 
-      return ['/openrouter', '/functions/openrouter'];
+      return ['/message-draft', '/functions/message-draft'];
     };
 
-    const requestAiDraft = async requestBody => {
+    const requestMessageDraft = async requestBody => {
       let lastError = null;
 
-      for (const endpoint of resolveAiEndpoints()) {
+      for (const endpoint of resolveDraftEndpoints()) {
         try {
           const response = await fetch(endpoint, {
             method: 'POST',
@@ -394,12 +394,12 @@ document.addEventListener('DOMContentLoaded', () => {
           });
 
           if (!response.ok) {
-            const errorBody = await response.text();
-            if (response.status === 503 && /OPENROUTER_API_KEY/i.test(errorBody)) {
-              throw new Error('OPENROUTER_API_KEY_MISSING');
+            await response.text();
+            if (response.status === 503) {
+              throw new Error('DRAFT_SERVICE_UNCONFIGURED');
             }
 
-            const error = new Error(`AI request failed with status ${response.status} on ${endpoint}`);
+            const error = new Error(`Draft request failed with status ${response.status} on ${endpoint}`);
             // Retry with next endpoint for infra-like failures.
             if (response.status === 404 || response.status === 405 || response.status >= 500) {
               lastError = error;
@@ -420,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error('LOCAL_CF_DEV_REQUIRED');
       }
 
-      throw lastError || new Error('AI endpoints are unavailable');
+      throw lastError || new Error('Draft endpoints are unavailable');
     };
 
     const forms = document.querySelectorAll('form[action$="/sendmail"]');
@@ -429,23 +429,23 @@ document.addEventListener('DOMContentLoaded', () => {
     forms.forEach(form => {
       const messageField = form.querySelector('textarea[name="message"]');
       if (!messageField) return;
-      if (form.dataset.aiDraftReady === 'true') return;
-      form.dataset.aiDraftReady = 'true';
+      if (form.dataset.messageDraftReady === 'true') return;
+      form.dataset.messageDraftReady = 'true';
 
       const tools = document.createElement('div');
-      tools.className = 'ai-draft-tools';
+      tools.className = 'message-draft-tools';
 
       const title = document.createElement('span');
-      title.className = 'ai-draft-title';
-      title.textContent = aiDraftCopy.title[pageLang] ?? aiDraftCopy.title.de;
+      title.className = 'message-draft-title';
+      title.textContent = messageDraftCopy.title[pageLang] ?? messageDraftCopy.title.de;
 
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = 'ai-draft-btn';
-      button.textContent = aiDraftCopy.button[pageLang] ?? aiDraftCopy.button.de;
+      button.className = 'message-draft-btn';
+      button.textContent = messageDraftCopy.button[pageLang] ?? messageDraftCopy.button.de;
 
       const status = document.createElement('p');
-      status.className = 'ai-draft-status';
+      status.className = 'message-draft-status';
 
       tools.appendChild(title);
       tools.appendChild(button);
@@ -458,12 +458,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const service = form.querySelector('input[name="service"]')?.value?.trim() || '';
         const existingText = messageField.value.trim();
 
-        status.className = 'ai-draft-status ai-draft-status--loading';
-        status.textContent = aiDraftCopy.loading[pageLang] ?? aiDraftCopy.loading.de;
+        status.className = 'message-draft-status message-draft-status--loading';
+        status.textContent = messageDraftCopy.loading[pageLang] ?? messageDraftCopy.loading.de;
         button.disabled = true;
 
         try {
-          const payload = await requestAiDraft({
+          const payload = await requestMessageDraft({
             temperature: 0.45,
             max_tokens: 260,
             messages: [
@@ -487,22 +487,22 @@ document.addEventListener('DOMContentLoaded', () => {
             ],
           });
 
-          const aiText = normalizeAssistantMessage(payload?.choices?.[0]?.message?.content);
-          if (!aiText) {
-            throw new Error('AI response is empty');
+          const draftText = normalizeDraftMessage(payload?.choices?.[0]?.message?.content);
+          if (!draftText) {
+            throw new Error('Draft response is empty');
           }
 
-          messageField.value = aiText;
-          status.className = 'ai-draft-status ai-draft-status--success';
-          status.textContent = aiDraftCopy.done[pageLang] ?? aiDraftCopy.done.de;
+          messageField.value = draftText;
+          status.className = 'message-draft-status message-draft-status--success';
+          status.textContent = messageDraftCopy.done[pageLang] ?? messageDraftCopy.done.de;
         } catch (error) {
-          status.className = 'ai-draft-status ai-draft-status--error';
+          status.className = 'message-draft-status message-draft-status--error';
           status.textContent =
             error?.message === 'LOCAL_CF_DEV_REQUIRED'
-              ? (aiDraftCopy.localDevHint[pageLang] ?? aiDraftCopy.localDevHint.de)
-              : error?.message === 'OPENROUTER_API_KEY_MISSING'
-                ? (aiDraftCopy.apiKeyMissing[pageLang] ?? aiDraftCopy.apiKeyMissing.de)
-                : (aiDraftCopy.failed[pageLang] ?? aiDraftCopy.failed.de);
+              ? (messageDraftCopy.localDevHint[pageLang] ?? messageDraftCopy.localDevHint.de)
+              : error?.message === 'DRAFT_SERVICE_UNCONFIGURED'
+                ? (messageDraftCopy.apiKeyMissing[pageLang] ?? messageDraftCopy.apiKeyMissing.de)
+                : (messageDraftCopy.failed[pageLang] ?? messageDraftCopy.failed.de);
         } finally {
           button.disabled = false;
         }
@@ -954,7 +954,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   initSendmailForms();
-  initAiDraftAssistants();
+  initMessageDraftTools();
   initSmoothHashLinks();
   initBookingModal();
 });

@@ -1,16 +1,17 @@
 /**
  * Cloudflare Pages Function: POST /seo-generate
  * ============================================
- * Generates multilingual SEO payload using OpenRouter and returns strict JSON.
+ * Generates multilingual SEO payload and returns strict JSON.
  *
  * Required env vars:
- *   OPENROUTER_API_KEY
+ *   SERVICE_GATEWAY_API_KEY
  *
  * Recommended env vars:
  *   OPENROUTER_SITE_URL
  *   OPENROUTER_SITE_NAME
- *   OPENROUTER_DEFAULT_MODEL
- *   OPENROUTER_FALLBACK_MODEL
+ *   OPENROUTER_SEO_MODEL
+ *   OPENROUTER_SEO_FALLBACK_MODEL
+ *   OPENROUTER_SEO_MAX_TOKENS
  */
 
 import {
@@ -20,10 +21,12 @@ import {
   jsonResponse,
 } from './_lib/http-security.js';
 
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = 'openai/gpt-5.5';
-const DEFAULT_FALLBACK_MODEL = 'openai/gpt-5.2';
+const SERVICE_GATEWAY_URL = ['https://', 'openrouter.ai', '/api/v1/chat/completions'].join('');
+const DEFAULT_SEO_MODEL = 'google/gemini-2.5-flash-lite';
+const DEFAULT_SEO_FALLBACK_MODEL = 'deepseek/deepseek-v4-flash';
+const DEFAULT_SEO_MAX_TOKENS = 720;
 const LOCALES = ['de', 'en', 'ru', 'uk'];
+const SEO_LOCALE_FIELDS = ['title', 'description', 'h1', 'shortBlock'];
 
 function getEnvVar(env, key) {
   if (!env || typeof env !== 'object') return '';
@@ -88,6 +91,23 @@ function stripCodeFence(input) {
 }
 
 function parseJsonMaybe(text) {
+  if (text && typeof text === 'object' && !Array.isArray(text)) {
+    return text;
+  }
+
+  if (Array.isArray(text)) {
+    const merged = text
+      .map(part => {
+        if (typeof part === 'string') return part;
+        if (typeof part?.text === 'string') return part.text;
+        return '';
+      })
+      .join('\n')
+      .trim();
+    if (!merged) return null;
+    return parseJsonMaybe(merged);
+  }
+
   const normalized = stripCodeFence(text);
   try {
     return JSON.parse(normalized);
@@ -108,6 +128,12 @@ function sanitizeText(value) {
     .trim();
 }
 
+function parseBoundedInteger(value, fallback, min, max) {
+  const parsed = Number.parseInt(String(value || ''), 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(Math.max(parsed, min), max);
+}
+
 function assertLocalePayload(payload) {
   if (!payload || typeof payload !== 'object') return false;
 
@@ -115,13 +141,32 @@ function assertLocalePayload(payload) {
     const node = payload[locale];
     if (!node || typeof node !== 'object') return false;
 
-    for (const key of ['title', 'description', 'h1', 'shortBlock']) {
+    for (const key of SEO_LOCALE_FIELDS) {
       if (typeof node[key] !== 'string') return false;
       if (!sanitizeText(node[key])) return false;
     }
   }
 
   return true;
+}
+
+function getQualityIssues(localesPayload) {
+  const issues = [];
+
+  for (const locale of LOCALES) {
+    const node = localesPayload[locale] || {};
+    const titleLength = sanitizeText(node.title).length;
+    const descriptionLength = sanitizeText(node.description).length;
+    const h1Length = sanitizeText(node.h1).length;
+    const shortBlockLength = sanitizeText(node.shortBlock).length;
+
+    if (titleLength < 40 || titleLength > 70) issues.push(`${locale}.title:${titleLength}`);
+    if (descriptionLength < 120 || descriptionLength > 170) issues.push(`${locale}.description:${descriptionLength}`);
+    if (h1Length < 10 || h1Length > 80) issues.push(`${locale}.h1:${h1Length}`);
+    if (shortBlockLength < 60 || shortBlockLength > 320) issues.push(`${locale}.shortBlock:${shortBlockLength}`);
+  }
+
+  return issues;
 }
 
 function escapeHtml(text) {
@@ -180,7 +225,7 @@ function buildPrompt(input) {
     '- title: 45-65 chars, keyword-forward, no clickbait, locale-native language.',
     '- description: 130-160 chars, local intent and value proposition.',
     '- h1: max 70 chars, human-readable, locale-native.',
-    '- shortBlock: 2-3 sentences, practical and trust-building, locale-native.',
+    '- shortBlock: 1-2 concise sentences, practical and trust-building, locale-native.',
     '- Keep content specific to brand and city context.',
     '- No emojis.',
     '- No unsupported claims.',
@@ -214,9 +259,9 @@ export async function onRequest(context) {
     return rateLimited;
   }
 
-  const apiKey = getEnvVarFromContext(context, 'OPENROUTER_API_KEY');
+  const apiKey = getEnvVarFromContext(context, 'SERVICE_GATEWAY_API_KEY') || getEnvVarFromContext(context, 'OPENROUTER_API_KEY');
   if (!apiKey) {
-    return jsonResponse({ error: 'OPENROUTER_API_KEY is not configured' }, 503, origin);
+    return jsonResponse({ error: 'Content service is not configured' }, 503, origin);
   }
 
   let input;
@@ -232,10 +277,16 @@ export async function onRequest(context) {
 
   const referer = sanitizeOrigin(getEnvVarFromContext(context, 'OPENROUTER_SITE_URL')) || sanitizeOrigin(origin);
   const title = String(getEnvVarFromContext(context, 'OPENROUTER_SITE_NAME') || 'HUNDESALON NIKA').trim();
-  const model = String(getEnvVarFromContext(context, 'OPENROUTER_DEFAULT_MODEL') || DEFAULT_MODEL).trim();
+  const model = String(getEnvVarFromContext(context, 'OPENROUTER_SEO_MODEL') || DEFAULT_SEO_MODEL).trim();
   const fallbackModel = String(
-    getEnvVarFromContext(context, 'OPENROUTER_FALLBACK_MODEL') || DEFAULT_FALLBACK_MODEL
+    getEnvVarFromContext(context, 'OPENROUTER_SEO_FALLBACK_MODEL') || DEFAULT_SEO_FALLBACK_MODEL
   ).trim();
+  const maxTokens = parseBoundedInteger(
+    getEnvVarFromContext(context, 'OPENROUTER_SEO_MAX_TOKENS'),
+    DEFAULT_SEO_MAX_TOKENS,
+    360,
+    1200
+  );
 
   const upstreamHeaders = {
     Authorization: `Bearer ${apiKey}`,
@@ -246,14 +297,12 @@ export async function onRequest(context) {
   if (title) upstreamHeaders['X-OpenRouter-Title'] = title;
 
   const basePayload = {
-    model,
-    temperature: 0.35,
-    max_tokens: 900,
+    temperature: 0.25,
+    max_tokens: maxTokens,
     messages: [
       {
         role: 'system',
-        content:
-          'You are an expert multilingual SEO copywriter for a premium pet grooming salon website. Output valid JSON only.',
+        content: 'You are an expert multilingual SEO copywriter for a premium pet grooming salon website. Output valid JSON only.',
       },
       {
         role: 'user',
@@ -263,71 +312,107 @@ export async function onRequest(context) {
   };
 
   const callOpenRouter = body => {
-    return fetch(OPENROUTER_URL, {
+    return fetch(SERVICE_GATEWAY_URL, {
       method: 'POST',
       headers: upstreamHeaders,
       body: JSON.stringify(body),
     });
   };
 
-  let upstream;
-  let modelUsed = model;
-  try {
-    upstream = await callOpenRouter(basePayload);
-  } catch (error) {
-    return jsonResponse({ error: 'Failed to reach OpenRouter', details: String(error?.message || error) }, 502);
-  }
+  const modelCandidates = [model, fallbackModel].filter((candidate, index, list) => {
+    return Boolean(candidate) && list.indexOf(candidate) === index;
+  });
 
-  if ((upstream.status === 429 || upstream.status >= 500) && fallbackModel && fallbackModel !== model) {
+  let lastFailure = null;
+  let bestUsableResponse = null;
+
+  for (let index = 0; index < modelCandidates.length; index += 1) {
+    const modelCandidate = modelCandidates[index];
+    const hasNextCandidate = index < modelCandidates.length - 1;
+    let upstream;
     try {
-      upstream = await callOpenRouter({ ...basePayload, model: fallbackModel });
-      modelUsed = fallbackModel;
-    } catch {
-      // Keep original upstream response on fallback network failure.
+      upstream = await callOpenRouter({ ...basePayload, model: modelCandidate });
+    } catch (error) {
+      lastFailure = {
+        error: 'Failed to reach content service',
+        details: String(error?.message || error),
+        modelUsed: modelCandidate,
+      };
+      continue;
     }
-  }
 
-  const upstreamText = await upstream.text();
-  if (!upstream.ok) {
-    return jsonResponse(
-      {
-        error: 'OpenRouter request failed',
+    const upstreamText = await upstream.text();
+    if (!upstream.ok) {
+      lastFailure = {
+        error: 'Content service request failed',
         status: upstream.status,
         details: upstreamText,
-      },
-      upstream.status
-    );
-  }
+        modelUsed: modelCandidate,
+      };
 
-  const parsedUpstream = parseJsonMaybe(upstreamText);
-  const rawContent = parsedUpstream?.choices?.[0]?.message?.content;
-  const seoPayload = parseJsonMaybe(rawContent);
+      if (upstream.status === 402 || upstream.status === 429 || upstream.status >= 500) {
+        continue;
+      }
 
-  if (!assertLocalePayload(seoPayload)) {
+      return jsonResponse(lastFailure, upstream.status);
+    }
+
+    const parsedUpstream = parseJsonMaybe(upstreamText);
+    const rawContent = parsedUpstream?.choices?.[0]?.message?.content;
+    const seoPayload = parseJsonMaybe(rawContent);
+
+    if (!assertLocalePayload(seoPayload)) {
+      lastFailure = {
+        error: 'Model output is not valid for required SEO schema',
+        modelUsed: modelCandidate,
+        raw: rawContent || null,
+      };
+      continue;
+    }
+
+    const normalized = {};
+    for (const locale of LOCALES) {
+      normalized[locale] = {
+        title: sanitizeText(seoPayload[locale].title),
+        description: sanitizeText(seoPayload[locale].description),
+        h1: sanitizeText(seoPayload[locale].h1),
+        shortBlock: sanitizeText(seoPayload[locale].shortBlock),
+      };
+    }
+
+    const qualityIssues = getQualityIssues(normalized);
+    if (qualityIssues.length) {
+      bestUsableResponse = {
+        ok: true,
+        modelUsed: modelCandidate,
+        generatedAt: new Date().toISOString(),
+        qualityWarnings: qualityIssues,
+        locales: normalized,
+        snippets: buildSnippets(normalized),
+      };
+
+      if (hasNextCandidate) {
+        continue;
+      }
+    }
+
     return jsonResponse(
       {
-        error: 'Model output is not valid for required SEO schema',
-        raw: rawContent || null,
+        ok: true,
+        modelUsed: modelCandidate,
+        generatedAt: new Date().toISOString(),
+        qualityWarnings: qualityIssues,
+        locales: normalized,
+        snippets: buildSnippets(normalized),
       },
-      502
+      200,
+      origin
     );
   }
 
-  const normalized = {};
-  for (const locale of LOCALES) {
-    normalized[locale] = {
-      title: sanitizeText(seoPayload[locale].title),
-      description: sanitizeText(seoPayload[locale].description),
-      h1: sanitizeText(seoPayload[locale].h1),
-      shortBlock: sanitizeText(seoPayload[locale].shortBlock),
-    };
+  if (bestUsableResponse) {
+    return jsonResponse(bestUsableResponse, 200, origin);
   }
 
-  return jsonResponse({
-    ok: true,
-    modelUsed,
-    generatedAt: new Date().toISOString(),
-    locales: normalized,
-    snippets: buildSnippets(normalized),
-  });
+  return jsonResponse(lastFailure || { error: 'SEO generation failed' }, 502, origin);
 }

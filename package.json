@@ -43,7 +43,7 @@
     "bing:setup": "node tools/bing-professional-setup.mjs",
     "bing:index-all": "node tools/bing-index-all-site.mjs",
     "bing:submit-www-rem": "node tools/bing-index-all-site.mjs --www-rem",
-    "bing:ai-performance": "node tools/bing-ai-performance-setup.mjs",
+    "bing:performance": "node tools/bing-performance-setup.mjs",
     "bing:auto": "node tools/bing-consolidate-accounts.mjs auto",
     "bing:force-clean": "node tools/bing-force-clean.mjs",
     "bing:prefill-mail": "node tools/bing-prefill-mail-login.mjs",
@@ -128,13 +128,13 @@
     "sync:gitlab:push": "git fetch gitlab && git push gitlab main:main --force-with-lease",
     "sync:gitlab:mr": "node -e \"console.error('GitLab sync MR disabled: repository must keep only main. Use npm run git:push.'); process.exit(1)\"",
     "check:live-html": "node tools/check-live-html.mjs",
-    "ai:pilot:ollama": "npm run ai:pilot:ollama:balanced",
-    "ai:pilot:ollama:custom": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1",
-    "ai:pilot:ollama:quality": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1 -Model gemma4:latest -OutFile docs/ollama-mtp-pilot-gemma4.md -NumPredict 480 -Temperature 0.2 -TopP 0.9",
-    "ai:pilot:ollama:balanced": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1 -Model qwen2.5:7b -OutFile docs/ollama-mtp-pilot-qwen2.5-7b.md -NumPredict 320 -Temperature 0.25 -TopP 0.9",
-    "ai:pilot:ollama:fast": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1 -Model phi4-mini:latest -OutFile docs/ollama-mtp-pilot-phi4-mini.md -NumPredict 220 -Temperature 0.2 -TopP 0.85",
-    "ai:pilot:ollama:compare": "npm run ai:pilot:ollama:quality && npm run ai:pilot:ollama:balanced && npm run ai:pilot:ollama:fast",
-    "ai:rollout:plan": "node -e \"console.log('See docs/ai-rollout-3-step-plan.md')\""
+    "pilot:ollama": "npm run pilot:ollama:balanced",
+    "pilot:ollama:custom": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1",
+    "pilot:ollama:quality": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1 -Model gemma4:latest -OutFile docs/ollama-mtp-pilot-gemma4.md -NumPredict 480 -Temperature 0.2 -TopP 0.9",
+    "pilot:ollama:balanced": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1 -Model qwen2.5:7b -OutFile docs/ollama-mtp-pilot-qwen2.5-7b.md -NumPredict 320 -Temperature 0.25 -TopP 0.9",
+    "pilot:ollama:fast": "powershell -ExecutionPolicy Bypass -File tools/ollama-mtp-pilot.ps1 -Model phi4-mini:latest -OutFile docs/ollama-mtp-pilot-phi4-mini.md -NumPredict 220 -Temperature 0.2 -TopP 0.85",
+    "pilot:ollama:compare": "npm run pilot:ollama:quality && npm run pilot:ollama:balanced && npm run pilot:ollama:fast",
+    "rollout:plan": "node -e \"console.log('See docs/site-operations-guide.md')\""
   },
   "keywords": [
     "grooming",
@@ -150,23 +150,25 @@
   "license": "UNLICENSED",
   "private": true,
   "devDependencies": {
-    "eslint": "^8.57.0",
-    "htmlhint": "^1.1.4",
+    "eslint": "^10.5.0",
+    "htmlhint": "^1.9.2",
     "leaflet": "^1.9.4",
-    "playwright": "^1.50.1",
-    "prettier": "^3.1.1",
+    "playwright": "^1.60.0",
+    "prettier": "^3.8.4",
     "serve": "^14.2.6",
-    "stylelint": "^16.1.0",
-    "stylelint-config-standard": "^35.0.0",
-    "wrangler": "^4.99.0"
+    "stylelint": "^17.13.0",
+    "stylelint-config-standard": "^40.0.0",
+    "wrangler": "^4.100.0"
   },
   "overrides": {
+    "esbuild": "^0.28.1",
     "ws": "^8.20.1"
   },
   "engines": {
-    "node": ">=26.0.0",
-    "npm": ">=11.0.0"
+    "node": "^24.16.0 || ^26.3.0",
+    "npm": ">=11.13.0"
   },
+  "packageManager": "npm@11.17.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/alanchik66/HUNDESALON_NIKA.git"
@@ -176,5 +178,10 @@
     "last 2 versions",
     "not dead",
     "not ie <= 11"
-  ]
+  ],
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "workerd@1.20260611.1": true,
+    "sharp@0.34.5": true
+  }
 }

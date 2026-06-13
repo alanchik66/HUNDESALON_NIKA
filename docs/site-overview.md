@@ -78,4 +78,4 @@ npm run validate           # lint + links + project
 | Google Search Console | snaiper1984@gmail.com |
 | Bing Webmaster | snaiper1984@mail.ru |
 
-Подробнее: `docs/agents-playbook.md`.
+Подробнее: `docs/ops-playbook.md`.

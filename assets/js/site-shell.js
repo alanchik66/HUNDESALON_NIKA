@@ -1765,7 +1765,7 @@
   pointer-events: none !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.56) !important;
   box-sizing: border-box !important;
-  padding: 6px 18px 0 var(--header-weather-text-inset, 0px) !important;
+  padding: 2px 18px 0 var(--header-weather-text-inset, 0px) !important;
 }
 
 .weather-header-card__title-block,
@@ -2377,6 +2377,21 @@
   letter-spacing: 0.01em !important;
   opacity: 0.8 !important;
   margin: 0 !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.weather-header-card__meta-time,
+.weather-header-card__meta-weekday,
+.weather-header-card__meta-region,
+.weather-header-card__meta-separator {
+  display: inline-block !important;
+  max-width: none !important;
+  white-space: pre !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  vertical-align: baseline !important;
 }
 
 .weather-header-card__bottom {
@@ -3366,7 +3381,7 @@
 
   /* Mobile stretch lock: keep temp + feels row readable and prevent overlap in all locales. */
   .weather-header-card__content {
-    padding: 8px 14px 0 var(--header-weather-text-inset, 0px) !important;
+    padding: 2px 14px 0 var(--header-weather-text-inset, 0px) !important;
   }
 
   .weather-header-card__info-panel,
@@ -4682,16 +4697,17 @@
     return 'en-GB';
   }
 
-  function formatHeaderWeatherLiveWeekday(timeZone) {
+  function formatHeaderWeatherLiveWeekday(timeZone, weekdayStyle = 'short') {
     const locale = resolveHeaderWeatherDateLocale();
     try {
+      const safeWeekdayStyle = ['narrow', 'short', 'long'].includes(weekdayStyle) ? weekdayStyle : 'short';
       const weekday = new window.Intl.DateTimeFormat(locale, {
         timeZone: timeZone || 'UTC',
-        weekday: 'long',
+        weekday: safeWeekdayStyle,
       }).format(new Date(getHeaderWeatherNowMs()));
 
       const cleanedWeekday = String(weekday || '')
-        .replace(/\.$/, '')
+        .replace(/[.,]+$/u, '')
         .trim();
 
       if (!cleanedWeekday) {
@@ -4706,7 +4722,7 @@
 
   function buildHeaderWeatherMetaText(timeZone, regionLabel = '') {
     const liveTime = formatHeaderWeatherLiveTime(timeZone);
-    const liveWeekday = formatHeaderWeatherLiveWeekday(timeZone);
+    const liveWeekday = formatHeaderWeatherLiveWeekday(timeZone, 'short');
     const region = String(regionLabel || '').trim();
 
     const chunks = [liveTime, liveWeekday, region].filter(Boolean);
@@ -4727,7 +4743,7 @@
           }).format(date);
 
           const normalized = String(weekday || '')
-            .replace(/\.$/, '')
+            .replace(/[.,]+$/u, '')
             .trim()
             .toLowerCase();
 
@@ -5747,8 +5763,9 @@
 
   /**
    * Reference preset for the compact block:
-   * 1) "ОЩУЩАЕТСЯ" right-aligned to geolocation label edge
-   * 2) "КАК" pinned left, "28°C" pinned right in the same row
+   * 1) the block right edge follows the geolocation label edge
+   * 2) "ОЩУЩАЕТСЯ" and "КАК" keep the same left anchor inside the block
+   * 3) "28°C" stays pinned right in the same row
    * Keep this object as a single customization point for future tuning.
    */
   const HEADER_WEATHER_FEELS_REFERENCE_PRESET = Object.freeze({
@@ -5799,7 +5816,16 @@
       (tempNode instanceof HTMLElement && (tempNode.getBoundingClientRect().width || tempNode.scrollWidth)) || 0;
     const contentMinWidthPx =
       prefixWidthPx + tempWidthPx + Math.max(2, HEADER_WEATHER_FEELS_REFERENCE_PRESET.minInlineGapPx);
-    const blockWidthPx = Math.max(1, Math.round(Math.max(baselineWidthPx, contentMinWidthPx) * 10) / 10);
+    const chipBox = feelsLikeChip.getBoundingClientRect();
+    const targetRightPx = Number.isFinite(labelBox.right) ? labelBox.right : labelBox.left + labelBox.width;
+    const referenceWidthPx =
+      Number.isFinite(targetRightPx) && Number.isFinite(chipBox.left)
+        ? Math.max(0, targetRightPx - chipBox.left)
+        : 0;
+    const blockWidthPx = Math.max(
+      1,
+      Math.round(Math.max(baselineWidthPx, contentMinWidthPx, referenceWidthPx) * 10) / 10
+    );
 
     feelsLikeChip.dataset.weatherFeelsPreset = HEADER_WEATHER_FEELS_REFERENCE_PRESET.id;
     feelsLikeChip.dataset.weatherFeelsRowLayout = HEADER_WEATHER_FEELS_REFERENCE_PRESET.rowLayout;
@@ -8011,6 +8037,7 @@
         const part = document.createElement('span');
         part.className = className;
         part.textContent = text;
+        part.title = text;
         return part;
       };
       const timeNode = createPart('weather-header-card__meta-time', timeText);
@@ -8044,18 +8071,22 @@
     const minLetterSpacingPx = -0.12;
     const maxLetterSpacingPx = 1.15;
     const { timeNode, weekdayNode, regionNode, separatorNodes = [] } = renderMetaSegments();
+    const regionCharacterCount = Array.from((regionNode?.textContent || '').trim()).length;
+    const allowedRegionOverflowPx =
+      regionCharacterCount > 12 ? Math.min(18, Math.max(6, (regionCharacterCount - 12) * 0.85)) : 0;
 
     const applyMetaTypography = () => {
       const fontSize = Number(fontSizePx.toFixed(2));
       const timeFontSize = Number((fontSizePx + 2).toFixed(2));
-      const regionFontSize = Number((fontSizePx + 3).toFixed(2));
+      const regionLiftPx = regionCharacterCount > 14 ? 0.25 : regionCharacterCount > 9 ? 0.8 : 1.15;
+      const regionFontSize = Number((fontSizePx + regionLiftPx).toFixed(2));
       const lineHeight = Number(Math.max(lineHeightPx, timeFontSize * 1.08).toFixed(2));
       const letterSpacing = Number(letterSpacingPx.toFixed(3));
 
       meta.style.setProperty('display', 'block', 'important');
       meta.style.setProperty('width', `${targetWidthPx}px`, 'important');
       meta.style.setProperty('min-width', `${targetWidthPx}px`, 'important');
-      meta.style.setProperty('max-width', `${targetWidthPx}px`, 'important');
+      meta.style.setProperty('max-width', `${targetWidthPx + allowedRegionOverflowPx}px`, 'important');
       meta.style.setProperty('font-size', `${fontSize}px`, 'important');
       meta.style.setProperty('line-height', `${lineHeight}px`, 'important');
       meta.style.setProperty('letter-spacing', `${letterSpacing}px`, 'important');
@@ -8096,7 +8127,11 @@
 
     let fitGuard = 0;
     let metaTextBox = measureTextRect(meta);
-    while (fitGuard < 20 && metaTextBox?.width > targetWidthPx + 0.35 && fontSizePx > minFontSizePx) {
+    while (
+      fitGuard < 20 &&
+      metaTextBox?.width > targetWidthPx + allowedRegionOverflowPx + 0.35 &&
+      fontSizePx > minFontSizePx
+    ) {
       fontSizePx = Number(Math.max(minFontSizePx, fontSizePx - 0.2).toFixed(2));
       lineHeightPx = Number(Math.max(9.1, fontSizePx * 1.18).toFixed(2));
       letterSpacingPx = Number(Math.max(minLetterSpacingPx, letterSpacingPx - 0.025).toFixed(3));
@@ -8107,7 +8142,12 @@
 
     metaTextBox = measureTextRect(meta);
     const characterCount = Array.from((meta.textContent || '').trim()).length;
-    if (metaTextBox?.width > 0 && characterCount > 1 && metaTextBox.width < targetWidthPx - 0.35) {
+    if (
+      metaTextBox?.width > 0 &&
+      characterCount > 1 &&
+      allowedRegionOverflowPx <= 0 &&
+      metaTextBox.width < targetWidthPx - 0.35
+    ) {
       const stretchPx = (targetWidthPx - metaTextBox.width) / (characterCount - 1);
       letterSpacingPx = Number(Math.min(maxLetterSpacingPx, Math.max(letterSpacingPx, letterSpacingPx + stretchPx)).toFixed(3));
       applyMetaTypography();
@@ -8290,7 +8330,7 @@
   }
 
   function alignHeaderWeatherFeelsLikeRow(feelsLikeChip, labelEl, layoutRefs) {
-    const { tempRow, root, eyebrow, locationCurrent, locationLabel } = layoutRefs || {};
+    const { tempRow } = layoutRefs || {};
     if (!(feelsLikeChip instanceof HTMLElement) || !(labelEl instanceof HTMLElement)) {
       return;
     }
@@ -8319,7 +8359,7 @@
     labelEl.style.setProperty('margin', '0', 'important');
     labelEl.style.setProperty('opacity', '0.92', 'important');
     labelEl.style.setProperty('white-space', 'nowrap', 'important');
-    labelEl.style.setProperty('text-align', 'right', 'important');
+    labelEl.style.setProperty('text-align', 'left', 'important');
 
     valueEl.style.setProperty('display', 'flex', 'important');
     valueEl.style.setProperty('flex-direction', 'row', 'important');
@@ -8356,7 +8396,7 @@
     if (chipsNode instanceof HTMLElement) {
       chipsNode.style.setProperty('display', 'flex', 'important');
       chipsNode.style.setProperty('align-self', 'end', 'important');
-      chipsNode.style.setProperty('align-items', 'flex-end', 'important');
+      chipsNode.style.setProperty('align-items', 'flex-start', 'important');
       chipsNode.style.setProperty('justify-content', 'flex-start', 'important');
       chipsNode.style.setProperty('line-height', '1', 'important');
       chipsNode.style.setProperty('font-size', 'inherit', 'important');
@@ -8370,7 +8410,7 @@
 
     feelsLikeChip.style.setProperty('display', 'inline-flex', 'important');
     feelsLikeChip.style.setProperty('flex-direction', 'column', 'important');
-    feelsLikeChip.style.setProperty('align-self', 'end', 'important');
+    feelsLikeChip.style.setProperty('align-self', 'flex-start', 'important');
     feelsLikeChip.style.setProperty('transform', 'none', 'important');
 
     feelsLikeChip.style.setProperty('gap', `${feelsRowGapPx}px`, 'important');
@@ -8395,8 +8435,8 @@
     valueEl.style.setProperty('-webkit-user-select', 'text', 'important');
     valueEl.style.setProperty('pointer-events', 'auto', 'important');
     labelEl.style.setProperty('flex-shrink', '0', 'important');
-    labelEl.style.setProperty('width', '100%', 'important');
-    labelEl.style.setProperty('min-width', '0', 'important');
+    labelEl.style.setProperty('width', 'auto', 'important');
+    labelEl.style.setProperty('min-width', 'max-content', 'important');
 
     prefixEl.style.setProperty('display', 'inline-block', 'important');
     prefixEl.style.setProperty('text-transform', 'uppercase', 'important');
@@ -8502,29 +8542,23 @@
     };
 
     const syncFeelsHorizontalAnchor = () => {
-      const measureTextRect = node => {
-        if (!(node instanceof HTMLElement) || !node.firstChild) {
-          return null;
-        }
-
-        const range = document.createRange();
-        range.selectNodeContents(node);
-        const textBox = range.getBoundingClientRect();
-        range.detach?.();
-        return textBox.width > 0 ? textBox : null;
-      };
-
       const titleBlockNode = feelsLikeChip
         .closest('.weather-header-card')
         ?.querySelector('.weather-header-card__title-block');
       if (!(titleBlockNode instanceof HTMLElement)) {
         feelsLikeChip.style.setProperty('margin-left', '0', 'important');
         labelEl.style.setProperty('transform', 'none', 'important');
+        labelEl.style.setProperty('text-align', 'left', 'important');
         return;
       }
 
       const activeLang = normalizeLangCode(document.documentElement.lang || 'ru');
-      const labelBox = titleBlockNode.getBoundingClientRect();
+      const referenceNode =
+        titleBlockNode.querySelector('.weather-header-card__eyebrow') ||
+        titleBlockNode.querySelector('.weather-location-selector__current') ||
+        titleBlockNode.querySelector('.weather-header-card__location') ||
+        titleBlockNode;
+      const labelBox = referenceNode.getBoundingClientRect();
 
       applyHeaderWeatherFeelsReferencePresetLayout({
         feelsLikeChip,
@@ -8540,100 +8574,15 @@
       fitHeaderWeatherInlineTextWidth(prefixEl, prefixMaxWidth, 3.6);
 
       prefixEl.style.setProperty('margin-left', '0', 'important');
-
       feelsLikeChip.style.setProperty('margin-left', '0', 'important');
+      feelsLikeChip.style.setProperty('align-self', 'flex-start', 'important');
+      feelsLikeChip.style.setProperty('justify-self', 'start', 'important');
       labelEl.style.setProperty('transform', 'none', 'important');
-
-      const cardNode = feelsLikeChip.closest('.weather-header-card');
-      const titleBlockForAnchor =
-        cardNode?.querySelector('.weather-header-card__title-block') ||
-        root?.querySelector('.weather-header-card__title-block') ||
-        null;
-      const scopedEyebrow = titleBlockForAnchor?.querySelector('.weather-header-card__eyebrow') || null;
-      const scopedLocationCurrent =
-        titleBlockForAnchor?.querySelector('.weather-location-selector__current') ||
-        titleBlockForAnchor?.querySelector('.weather-header-card__location-current') ||
-        null;
-      const scopedLocationLabel = titleBlockForAnchor?.querySelector('.weather-header-card__location') || null;
-
-      const rightAnchorCandidates = [
-        scopedEyebrow,
-        root?.querySelector('.weather-header-card__eyebrow') || null,
-        eyebrow,
-        scopedLocationCurrent,
-        locationCurrent,
-        root?.querySelector('.weather-location-selector__current') || null,
-        scopedLocationLabel,
-        locationLabel,
-        root?.querySelector('.weather-header-card__location') || null,
-      ];
-
-      const measurableAnchor = rightAnchorCandidates
-        .filter(node => node instanceof HTMLElement)
-        .map(node => {
-          const box = measureTextRect(node) || node.getBoundingClientRect();
-          const computed = window.getComputedStyle(node);
-          const isVisible =
-            computed.display !== 'none' &&
-            computed.visibility !== 'hidden' &&
-            Number.parseFloat(computed.opacity || '1') > 0.01;
-          return { node, box, isVisible };
-        })
-        .find(candidate => candidate.isVisible && candidate.box.width > 2 && candidate.box.height > 2);
-
-      if (!measurableAnchor) {
-        labelEl.style.setProperty('transform', 'none', 'important');
-        return;
-      }
-
-      const anchorBox = measurableAnchor.box;
-      const chipBoxNow = feelsLikeChip.getBoundingClientRect();
-      const labelBoxForRightAnchor = measureTextRect(labelEl) || labelEl.getBoundingClientRect();
-      if (!anchorBox.width || !chipBoxNow.width || !labelBoxForRightAnchor?.width) {
-        return;
-      }
-
-      const deltaRightPx = Math.round((anchorBox.right - labelBoxForRightAnchor.right) * 10) / 10;
-      const tempRowBox =
-        cardNode?.getBoundingClientRect() ||
-        tempRow?.getBoundingClientRect() ||
-        feelsLikeChip.closest('.weather-header-card__temp-row')?.getBoundingClientRect() ||
-        null;
-
-      let safeDeltaPx = deltaRightPx;
-      if (tempRowBox && chipBoxNow.width > 0) {
-        const minShiftPx = Math.round((tempRowBox.left + 1 - chipBoxNow.left) * 10) / 10;
-        const maxShiftPx = Math.round((tempRowBox.right - chipBoxNow.right) * 10) / 10;
-        safeDeltaPx = Math.min(maxShiftPx, Math.max(minShiftPx, deltaRightPx));
-      }
-
-      if (Math.abs(safeDeltaPx) <= 0.2) {
-        feelsLikeChip.style.setProperty('margin-left', '0', 'important');
-      } else {
-        feelsLikeChip.style.setProperty('margin-left', `${safeDeltaPx}px`, 'important');
-      }
-
-      const labelRectAfterShift = measureTextRect(labelEl) || labelEl.getBoundingClientRect();
-      if (labelRectAfterShift) {
-        const correctionPx = Math.round((anchorBox.right - labelRectAfterShift.right) * 10) / 10;
-        if (Math.abs(correctionPx) > 0.2) {
-          let correctedDeltaPx = Math.round((safeDeltaPx + correctionPx) * 10) / 10;
-          if (tempRowBox) {
-            const shiftedChipBox = feelsLikeChip.getBoundingClientRect();
-            const minCorrectionPx = Math.round((tempRowBox.left + 1 - shiftedChipBox.left) * 10) / 10;
-            const maxCorrectionPx = Math.round((tempRowBox.right - shiftedChipBox.right) * 10) / 10;
-            correctedDeltaPx =
-              safeDeltaPx + Math.min(maxCorrectionPx, Math.max(minCorrectionPx, correctionPx));
-            correctedDeltaPx = Math.round(correctedDeltaPx * 10) / 10;
-          }
-
-          if (Math.abs(correctedDeltaPx) <= 0.2) {
-            feelsLikeChip.style.setProperty('margin-left', '0', 'important');
-          } else {
-            feelsLikeChip.style.setProperty('margin-left', `${correctedDeltaPx}px`, 'important');
-          }
-        }
-        labelEl.style.setProperty('transform', 'none', 'important');
+      labelEl.style.setProperty('text-align', 'left', 'important');
+      labelEl.style.setProperty('width', 'auto', 'important');
+      labelEl.style.setProperty('min-width', 'max-content', 'important');
+      if (chipsNode instanceof HTMLElement) {
+        chipsNode.style.setProperty('align-items', 'flex-start', 'important');
       }
     };
 
@@ -9041,9 +8990,13 @@
         host?.dataset?.weatherVariant === 'header' || host?.getAttribute?.('data-weather-variant') === 'header';
       const measuredInset = Number.isFinite(parsedInset) ? Math.max(0, Math.round(parsedInset)) : 0;
       if (isHeaderVariant && !Number.isFinite(host.__weatherLockedTextInset)) {
-        host.__weatherLockedTextInset = 4;
+        host.__weatherLockedTextInset = 0;
       }
-      const contentInset = isHeaderVariant ? host.__weatherLockedTextInset || 4 : measuredInset;
+      const contentInset = isHeaderVariant
+        ? Number.isFinite(host.__weatherLockedTextInset)
+          ? host.__weatherLockedTextInset
+          : 0
+        : measuredInset;
       const compactPreview = isHeaderVariant ? true : triggerHeight > 0 && triggerHeight <= 92;
       const showMetrics = compactPreview;
       const eyebrowSizePx = compactPreview ? 10 : 12;
@@ -9056,7 +9009,7 @@
       const verticalRhythmGapPx = compactPreview ? 6 : 7;
       const tempRowTopGapPx = compactPreview ? Math.max(0, verticalRhythmGapPx - 2) : 32;
       const rowGapPx = compactPreview ? 12 : 10;
-      const cardTopInsetPx = 4;
+      const cardTopInsetPx = 1;
       const cardBottomInsetPx = 4;
       const baseContentPadTopPx = cardTopInsetPx;
       const baseContentPadBottomPx = cardBottomInsetPx;
@@ -12958,10 +12911,12 @@
 
     const host = hostOverride || getHeaderWeatherHost();
     if (host) {
+      const isHeaderWeatherHost =
+        host?.dataset?.weatherVariant === 'header' || host?.getAttribute?.('data-weather-variant') === 'header';
       const eyebrow = host.shadowRoot?.querySelector('.weather-header-card__eyebrow');
-      let resolvedInset = weatherInset;
+      let resolvedInset = isHeaderWeatherHost ? 0 : weatherInset;
 
-      if (eyebrow instanceof HTMLElement) {
+      if (!isHeaderWeatherHost && eyebrow instanceof HTMLElement) {
         const eyebrowLeft = eyebrow.getBoundingClientRect().left;
         const delta = Math.round(alignedLogoLeft - eyebrowLeft);
         const currentInset = Number.parseFloat(

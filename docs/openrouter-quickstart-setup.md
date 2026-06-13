@@ -23,6 +23,16 @@ Optional — only if you need to override code defaults in `functions/openrouter
 - `OPENROUTER_DEFAULT_MODEL` (default: `openai/gpt-5.5`)
 - `OPENROUTER_FALLBACK_MODEL` (default: `openai/gpt-5.2`)
 - `OPENROUTER_PROVIDER_ORDER`, `OPENROUTER_PROVIDER_SORT`, `OPENROUTER_ALLOW_FALLBACKS`, `OPENROUTER_ENABLE_RESPONSE_CACHE`, `OPENROUTER_CACHE_TTL_SECONDS`
+- `OPENROUTER_SEO_MODEL` (default for `/seo-generate`: `google/gemini-2.5-flash-lite`)
+- `OPENROUTER_SEO_FALLBACK_MODEL` (default for `/seo-generate`: `deepseek/deepseek-v4-flash`)
+- `OPENROUTER_SEO_MAX_TOKENS` (default: `720`, bounded to `360..1200`)
+
+Current project policy:
+
+- Public website flows keep `/seo-generate` on prompt-constrained JSON for maximum compatibility across current OpenRouter model routes.
+- `/seo-generate` is separated from the general `/openrouter` model defaults and uses a cheaper production model by default: `google/gemini-2.5-flash-lite`.
+- Public website flows do not enable web search, fusion, or other paid agentic tools by default. They are available through `/openrouter` only when explicitly requested per call.
+- Keep production on inference keys only. Guardrails/workspaces are account-level controls and should be configured in OpenRouter dashboard, not hardcoded in repo secrets.
 
 Recommended model presets (optional):
 
@@ -83,6 +93,8 @@ curl -X POST http://localhost:8788/openrouter \
 - Payload is OpenAI-compatible `chat/completions` format from OpenRouter Quickstart.
 - Proxy applies safety limits for message count and message size.
 - If OpenRouter returns `429` or `5xx`, proxy can auto-retry with `OPENROUTER_FALLBACK_MODEL`.
+- `/openrouter` passes through advanced OpenRouter fields such as `response_format`, `plugins`, `tools`, `tool_choice`, `session_id`, `user`, `reasoning`, `verbosity`, and `web_search_options`.
+- Internal proxy-only flags are `cache` and `cache_ttl_seconds`; those are stripped before the upstream call.
 
 ### Cost-Control Defaults
 
@@ -172,6 +184,14 @@ Endpoint:
 Function file:
 
 - `functions/seo-generate.js`
+
+Current implementation details:
+
+- Uses strict prompt constraints plus server-side schema validation for locale-safe SEO payloads.
+- Parser accepts string, object, and array-style content shapes from compatible model responses.
+- Output token cap defaults to `720` to fit four locales while keeping cost controlled on Flash/Lite models.
+- Retries with `OPENROUTER_SEO_FALLBACK_MODEL` on `402`, `429`, `5xx`, invalid schema output, or clear SEO quality warnings.
+- Returns `qualityWarnings` when the final usable response is valid JSON but title/description/H1/short-block lengths need manual review.
 
 Input body example:
 

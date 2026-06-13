@@ -177,6 +177,10 @@
   },
   "terminal.integrated.cwd": "${workspaceFolder}",
   "terminal.integrated.inheritEnv": true,
+  "terminal.integrated.env.windows": {
+    "PATH": "C:\\laragon\\bin\\nodejs\\node-v24;${env:PATH}",
+    "NODE_TLS_REJECT_UNAUTHORIZED": null
+  },
   "terminal.integrated.windowsEnableConpty": true,
   "terminal.integrated.scrollback": 5000,
   "terminal.integrated.copyOnSelection": true,

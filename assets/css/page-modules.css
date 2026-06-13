@@ -679,9 +679,9 @@ body.light .direct-booking-btn:focus-visible {
 }
 
 /* =========================================================
-   AI DRAFT HELPER (CONTACT FORMS)
+   MESSAGE DRAFT HELPER (CONTACT FORMS)
    ========================================================= */
-.ai-draft-tools {
+.message-draft-tools {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -689,7 +689,7 @@ body.light .direct-booking-btn:focus-visible {
   margin: 8px 0 10px;
 }
 
-.ai-draft-title {
+.message-draft-title {
   color: var(--accent-gold);
   font-size: 0.9rem;
   letter-spacing: 0.04em;
@@ -697,7 +697,7 @@ body.light .direct-booking-btn:focus-visible {
   opacity: 0.92;
 }
 
-.ai-draft-btn {
+.message-draft-btn {
   border: 1px solid var(--accent-gold);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 100%);
   color: var(--accent-gold);
@@ -713,42 +713,42 @@ body.light .direct-booking-btn:focus-visible {
     opacity 0.24s ease;
 }
 
-.ai-draft-btn:hover {
+.message-draft-btn:hover {
   transform: translateY(-1px);
   box-shadow:
     0 8px 18px rgba(0, 0, 0, 0.26),
     0 0 14px rgba(214, 169, 82, 0.22);
 }
 
-.ai-draft-btn:disabled {
+.message-draft-btn:disabled {
   opacity: 0.68;
   cursor: wait;
 }
 
-.ai-draft-status {
+.message-draft-status {
   margin: 8px 0 14px;
   font-size: 0.86rem;
 }
 
-.ai-draft-status--loading {
+.message-draft-status--loading {
   color: rgba(255, 242, 217, 0.85);
 }
 
-.ai-draft-status--success {
+.message-draft-status--success {
   color: #95d5a5;
 }
 
-.ai-draft-status--error {
+.message-draft-status--error {
   color: #f0a2a2;
 }
 
 @media (width <= 640px) {
-  .ai-draft-tools {
+  .message-draft-tools {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .ai-draft-btn {
+  .message-draft-btn {
     width: 100%;
   }
 }

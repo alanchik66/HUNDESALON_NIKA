@@ -3,6 +3,10 @@
 
 # Inference key only (chat). Do NOT use a management/provisioning key here.
 OPENROUTER_API_KEY=
+# Optional SEO endpoint overrides. Code defaults are production-cheap:
+# OPENROUTER_SEO_MODEL=google/gemini-2.5-flash-lite
+# OPENROUTER_SEO_FALLBACK_MODEL=deepseek/deepseek-v4-flash
+# OPENROUTER_SEO_MAX_TOKENS=720
 # Optional: create inference keys via API (keep out of OPENROUTER_API_KEY)
 # OPENROUTER_MANAGEMENT_API_KEY=
 # Bing Webmaster → Settings → API Access (optional; IndexNow works without it)

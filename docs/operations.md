@@ -19,7 +19,7 @@ If OpenRouter returns 401 after deploy: `npm run sync:openrouter`, wait ~10s, `n
 |--------|---------|
 | `npm run check:all` | Full health (local + prod + git remotes) |
 | `npm run check:live-crawl` | Live HEAD/GET for all 76 sitemap URLs |
-| `docs/agents-playbook.md` | Routing for Cursor/Codex agents (SEO, Bing, deploy) |
+| `docs/ops-playbook.md` | Routing for Cursor/Codex agents (SEO, Bing, deploy) |
 | `npm run bing:complete` | All 16 Bing WMT sections — see `docs/bing-webmaster-checklist.md` |
 | `npm run check:prod` | Live HTML, GSC audit, OpenRouter |
 | `npm run git:push` | Push `main` to GitHub and GitLab |

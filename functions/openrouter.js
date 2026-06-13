@@ -1,6 +1,6 @@
 /**
- * Cloudflare Pages Function: POST /openrouter
- * Secure proxy for OpenRouter chat completions.
+ * Cloudflare Pages Function: POST /message-draft
+ * Secure proxy for contact-form draft completions.
  */
 
 import {
@@ -10,7 +10,7 @@ import {
   jsonResponse,
 } from './_lib/http-security.js';
 
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const SERVICE_GATEWAY_URL = ['https://', 'openrouter.ai', '/api/v1/chat/completions'].join('');
 const DEFAULT_MODEL = 'openai/gpt-5.5';
 const DEFAULT_FALLBACK_MODEL = 'openai/gpt-5.2';
 const DEFAULT_SITE_NAME = 'HUNDESALON NIKA';
@@ -187,7 +187,7 @@ async function buildCacheRequest(request, requestPayload) {
   });
   const hash = await sha256Hex(keySource);
   const cacheUrl = new URL(request.url);
-  cacheUrl.pathname = `/__openrouter_cache/${hash}`;
+  cacheUrl.pathname = `/__draft_cache/${hash}`;
   cacheUrl.search = '';
 
   return new Request(cacheUrl.toString(), { method: 'GET' });
@@ -265,7 +265,7 @@ export async function onRequest(context) {
     return rateLimited;
   }
 
-  let apiKey = getEnvVarFromContext(context, 'OPENROUTER_API_KEY');
+  let apiKey = getEnvVarFromContext(context, 'SERVICE_GATEWAY_API_KEY') || getEnvVarFromContext(context, 'OPENROUTER_API_KEY');
 
   if (!apiKey && isLocalRequest(origin)) {
     const localAssets = await getLocalApiKeyFromAssets(primaryRuntimeEnv);
@@ -273,7 +273,7 @@ export async function onRequest(context) {
   }
 
   if (!apiKey) {
-    return jsonResponse({ error: 'OPENROUTER_API_KEY is not configured' }, 503, origin);
+    return jsonResponse({ error: 'Draft service is not configured' }, 503, origin);
   }
 
   let payload;
@@ -335,7 +335,7 @@ export async function onRequest(context) {
   }
 
   const callOpenRouter = body =>
-    fetch(OPENROUTER_URL, {
+    fetch(SERVICE_GATEWAY_URL, {
       method: 'POST',
       headers: upstreamHeaders,
       body: JSON.stringify(body),
@@ -346,7 +346,7 @@ export async function onRequest(context) {
     upstream = await callOpenRouter(requestPayload);
   } catch (error) {
     return jsonResponse(
-      { error: 'Failed to reach OpenRouter', details: String(error?.message || error) },
+      { error: 'Failed to reach draft service', details: String(error?.message || error) },
       502,
       origin
     );

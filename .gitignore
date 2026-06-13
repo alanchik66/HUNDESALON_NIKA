@@ -146,3 +146,5 @@ tools/_create-*.mjs
 .cloudflare-purge.token
 .cloudflare-rules.token
 .cloudflare-global.json
+.local-backups/
+*.bundle

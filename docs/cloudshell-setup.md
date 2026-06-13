@@ -171,7 +171,7 @@ Expected response:
 
 ```json
 {
-  "error": "OPENROUTER_API_KEY is not configured"
+  "error": "Service configuration is not available"
 }
 ```
 
@@ -190,7 +190,7 @@ Expected response:
 
 ```json
 {
-  "error": "OPENROUTER_API_KEY is not configured"
+  "error": "Service configuration is not available"
 }
 ```
 

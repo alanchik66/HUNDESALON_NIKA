@@ -1,4 +1,4 @@
-# Playbook для AI-агентов — HUNDESALON NIKA
+# Playbook для операционных помощников — HUNDESALON NIKA
 
 Документ для **Cursor Cloud Agents**, Codex, Claude и локальных ассистентов. Читай перед любой задачей по сайту, SEO или деплою.
 
