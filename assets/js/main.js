@@ -1454,81 +1454,81 @@ document.addEventListener('DOMContentLoaded', () => {
     reveals.forEach(el => el.classList.add('active'));
   }
 
-  /* ========== CURSOR GLOW ==========
-       Simple, natural circular halo that follows the cursor with a gentle
-       trailing motion. The halo is centred on the cursor — no rotation,
+  /* ========== POINTER GLOW ==========
+       Simple, natural circular halo that follows pointer movement with a gentle
+       trailing motion. The halo is centred on the pointer — no rotation,
        no tear-drop shape. CSS handles the visual; JS only animates the
        position. */
-  const cursorGlow = document.createElement('div');
-  cursorGlow.className = 'cursor-glow is-idle';
-  document.body.appendChild(cursorGlow);
+  const pointerGlow = document.createElement('div');
+  pointerGlow.className = 'pointer-glow is-idle';
+  document.body.appendChild(pointerGlow);
 
-  let cursorGlowX = window.innerWidth * 0.5;
-  let cursorGlowY = window.innerHeight * 0.5;
-  let cursorGlowTargetX = cursorGlowX;
-  let cursorGlowTargetY = cursorGlowY;
-  let cursorGlowVelocityX = 0;
-  let cursorGlowVelocityY = 0;
-  let cursorGlowRafId = null;
+  let pointerGlowX = window.innerWidth * 0.5;
+  let pointerGlowY = window.innerHeight * 0.5;
+  let pointerGlowTargetX = pointerGlowX;
+  let pointerGlowTargetY = pointerGlowY;
+  let pointerGlowVelocityX = 0;
+  let pointerGlowVelocityY = 0;
+  let pointerGlowRafId = null;
 
-  const renderCursorGlow = () => {
-    const dx = cursorGlowTargetX - cursorGlowX;
-    const dy = cursorGlowTargetY - cursorGlowY;
+  const renderPointerGlow = () => {
+    const dx = pointerGlowTargetX - pointerGlowX;
+    const dy = pointerGlowTargetY - pointerGlowY;
 
     /* Gentle spring follow — not too snappy, not too laggy. */
-    cursorGlowVelocityX = (cursorGlowVelocityX + dx * 0.03) * 0.84;
-    cursorGlowVelocityY = (cursorGlowVelocityY + dy * 0.03) * 0.84;
-    cursorGlowX += cursorGlowVelocityX;
-    cursorGlowY += cursorGlowVelocityY;
+    pointerGlowVelocityX = (pointerGlowVelocityX + dx * 0.03) * 0.84;
+    pointerGlowVelocityY = (pointerGlowVelocityY + dy * 0.03) * 0.84;
+    pointerGlowX += pointerGlowVelocityX;
+    pointerGlowY += pointerGlowVelocityY;
 
     /* CSS centres the halo via negative margin, so we just translate to
-           the raw cursor coordinates — no rotation, no offset hacks. */
-    cursorGlow.style.transform = `translate(${cursorGlowX}px, ${cursorGlowY}px)`;
+           the raw pointer coordinates — no rotation, no offset hacks. */
+    pointerGlow.style.transform = `translate(${pointerGlowX}px, ${pointerGlowY}px)`;
 
     const isSettled =
       Math.abs(dx) < 0.35 &&
       Math.abs(dy) < 0.35 &&
-      Math.abs(cursorGlowVelocityX) < 0.08 &&
-      Math.abs(cursorGlowVelocityY) < 0.08;
+      Math.abs(pointerGlowVelocityX) < 0.08 &&
+      Math.abs(pointerGlowVelocityY) < 0.08;
 
-    if (isSettled && cursorGlow.classList.contains('is-idle')) {
-      cursorGlowRafId = null;
+    if (isSettled && pointerGlow.classList.contains('is-idle')) {
+      pointerGlowRafId = null;
       return;
     }
 
-    cursorGlowRafId = window.requestAnimationFrame(renderCursorGlow);
+    pointerGlowRafId = window.requestAnimationFrame(renderPointerGlow);
   };
 
-  const startCursorGlowLoop = () => {
-    if (cursorGlowRafId === null) {
-      cursorGlowRafId = window.requestAnimationFrame(renderCursorGlow);
+  const startPointerGlowLoop = () => {
+    if (pointerGlowRafId === null) {
+      pointerGlowRafId = window.requestAnimationFrame(renderPointerGlow);
     }
   };
 
-  startCursorGlowLoop();
+  startPointerGlowLoop();
 
   document.addEventListener(
     'mousemove',
     e => {
-      cursorGlowTargetX = e.clientX;
-      cursorGlowTargetY = e.clientY;
-      cursorGlow.classList.remove('is-idle');
-      cursorGlow.classList.add('is-active');
-      startCursorGlowLoop();
+      pointerGlowTargetX = e.clientX;
+      pointerGlowTargetY = e.clientY;
+      pointerGlow.classList.remove('is-idle');
+      pointerGlow.classList.add('is-active');
+      startPointerGlowLoop();
     },
     { passive: true }
   );
 
   document.addEventListener('mouseout', e => {
     if (!e.relatedTarget) {
-      cursorGlow.classList.remove('is-active');
-      cursorGlow.classList.add('is-idle');
+      pointerGlow.classList.remove('is-active');
+      pointerGlow.classList.add('is-idle');
     }
   });
 
   window.addEventListener('blur', () => {
-    cursorGlow.classList.remove('is-active');
-    cursorGlow.classList.add('is-idle');
+    pointerGlow.classList.remove('is-active');
+    pointerGlow.classList.add('is-idle');
   });
 
   /* ========== 3D TILT + GLOW FOR ALL TILES ========== */
@@ -1744,7 +1744,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const cursorTips = [];
       for (let i = 0; i < 3; i++) {
         const ct = document.createElement('span');
-        ct.className = 'nav-plasma-touch nav-plasma-touch--cursor';
+        ct.className = 'nav-plasma-touch nav-plasma-touch--pointer';
         activePlasma.appendChild(ct);
         animateTouchPoint(ct);
         ct._active = false;

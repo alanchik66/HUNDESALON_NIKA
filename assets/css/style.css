@@ -2035,9 +2035,9 @@ body.light .premium-burger span {
   will-change: left, top, opacity, width, height;
 }
 
-/* Лапка-курсор — яркая точка касания на стекле */
+/* Яркая точка касания на стекле */
 
-.nav-plasma-touch--cursor {
+.nav-plasma-touch--pointer {
   background: radial-gradient(
     circle,
     rgb(255 255 240 / 100%) 0%,
@@ -2051,7 +2051,7 @@ body.light .premium-burger span {
   transition: opacity 0.12s ease-out;
 }
 
-.nav-plasma-touch--cursor.active {
+.nav-plasma-touch--pointer.active {
   opacity: 0.9;
 }
 
@@ -2394,7 +2394,7 @@ body.light .nav-plasma-touch {
   filter: blur(5px);
 }
 
-body.light .nav-plasma-touch--cursor {
+body.light .nav-plasma-touch--pointer {
   background: radial-gradient(
     circle,
     rgb(210 185 130 / 100%) 0%,
@@ -7709,7 +7709,7 @@ body.light .footer-legal-sep {
 }
 
 /* =========================================================
-   REVEAL / CURSOR / PRELOADER
+   REVEAL / POINTER LIGHT / PRELOADER
    ========================================================= */
 
 .reveal {
@@ -7723,19 +7723,19 @@ body.light .footer-legal-sep {
   transform: translateY(0);
 }
 
-/* Natural, professional cursor halo:
-   a soft circular spot of warm light that follows the cursor.
+/* Natural, professional pointer halo:
+   a soft circular spot of warm light that follows pointer movement.
    No clip-path "tear-drop" / Prince-Rupert shape, no rotation.
    Two concentric radial layers give a smooth core → soft outer falloff. */
 
-.cursor-glow {
+.pointer-glow {
   position: fixed;
   width: 220px;
   height: 220px;
   pointer-events: none;
   z-index: 5;
 
-  /* Centre the halo on the cursor coordinates set by JS via translate(). */
+  /* Centre the halo on pointer coordinates set by JS via translate(). */
   transform-origin: 50% 50%;
   margin: -110px 0 0 -110px;
   filter: blur(8px) saturate(1.05);
@@ -7746,8 +7746,8 @@ body.light .footer-legal-sep {
   border-radius: 50%;
 }
 
-.cursor-glow::before,
-.cursor-glow::after {
+.pointer-glow::before,
+.pointer-glow::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -7757,7 +7757,7 @@ body.light .footer-legal-sep {
 
 /* Outer soft halo — wide warm spread that fades out gracefully. */
 
-.cursor-glow::before {
+.pointer-glow::before {
   background: radial-gradient(
     circle at 50% 50%,
     rgb(255 232 182 / 16%) 0%,
@@ -7769,7 +7769,7 @@ body.light .footer-legal-sep {
 
 /* Inner brighter core — small bright centre, like a focused light source. */
 
-.cursor-glow::after {
+.pointer-glow::after {
   background: radial-gradient(
     circle at 50% 50%,
     rgb(255 250 232 / 20%) 0%,
@@ -7779,11 +7779,11 @@ body.light .footer-legal-sep {
   opacity: 0.85;
 }
 
-.cursor-glow.is-active {
+.pointer-glow.is-active {
   opacity: 0.7;
 }
 
-.cursor-glow.is-idle {
+.pointer-glow.is-idle {
   opacity: 0;
 }
 
