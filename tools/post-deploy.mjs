@@ -3,11 +3,40 @@
  * Sends deploy notification to Slack via webhook.
  */
 import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import { loadDevVars } from './lib/cloudflare-auth.mjs';
 
 loadDevVars();
 
+if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
+  delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+}
+
 const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL || '';
+
+function npmRunner() {
+  if (process.env.npm_execpath && existsSync(process.env.npm_execpath)) {
+    return { command: process.execPath, argsPrefix: [process.env.npm_execpath] };
+  }
+
+  const bundledNpm = path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
+  if (existsSync(bundledNpm)) {
+    return { command: process.execPath, argsPrefix: [bundledNpm] };
+  }
+
+  return { command: 'npm', argsPrefix: [] };
+}
+
+const npmCommand = npmRunner();
+
+function childEnv() {
+  const env = { ...process.env };
+  if (env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
+    delete env.NODE_TLS_REJECT_UNAUTHORIZED;
+  }
+  return env;
+}
 
 async function notifySlack(status, details = '') {
   if (!SLACK_WEBHOOK_URL) return;
@@ -26,10 +55,9 @@ async function notifySlack(status, details = '') {
 
 function runNpm(script, { optional = false } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn('npm', ['run', script], {
+    const child = spawn(npmCommand.command, [...npmCommand.argsPrefix, 'run', script], {
       stdio: 'inherit',
-      shell: true,
-      env: process.env,
+      env: childEnv(),
     });
 
     child.on('close', code => {
