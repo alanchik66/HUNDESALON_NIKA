@@ -150,10 +150,16 @@ $badPublicMatches = @(
 )
 
 foreach ($pattern in $badPublicMatches) {
-  $result = rg -n --fixed-strings $pattern assets functions de en ru uk index.html 2>$null
-  if ($LASTEXITCODE -eq 0) {
+  $files = @("index.html")
+  foreach ($dir in "assets", "functions", "de", "en", "ru", "uk") {
+    if (Test-Path $dir) {
+      $files += Get-ChildItem -Path $dir -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName }
+    }
+  }
+  $result = Select-String -SimpleMatch -Pattern $pattern -Path $files -ErrorAction SilentlyContinue
+  if ($result) {
     Write-Warn "Found stale public marker: $pattern"
-    $result | ForEach-Object { Write-Host $_ }
+    $result | ForEach-Object { Write-Host "$($_.Path):$($_.LineNumber): $($_.Line.Trim())" }
     throw "Public marker check failed."
   }
 }
