@@ -30,7 +30,8 @@
     // ─── Утилиты ────────────────────────────────────────────────────
     "editorconfig.editorconfig",
     "mikestead.dotenv",
-    "yzhang.markdown-all-in-one"
+    "yzhang.markdown-all-in-one",
+    "googlecloudtools.cloudcode"
   ],
   "unwantedRecommendations": [
     "webhint.vscode-webhint",
