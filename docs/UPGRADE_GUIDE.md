@@ -27,7 +27,19 @@
 - `TEAM_CHANNEL_ID`
 - `TEAMS_WEBHOOK_URL`
 - `RESEND_API_KEY`
+- `SLACK_WEBHOOK_URL`
+- `GOOGLE_SHEETS_WEBHOOK_URL`
+- `GOOGLE_DRIVE_UPLOAD_WEBHOOK_URL`
 - `PAYMENT_PROVIDER_KEY`
+
+Локальный пример лежит в `.dev.vars.example`. Реальные значения нельзя сгенерировать из репозитория: владелец аккаунтов должен войти в Google Cloud, Microsoft Entra/Teams, Resend и Cloudflare, создать ключи/токены и вставить их как Cloudflare Pages secrets. Файл `.dev.vars` остаётся только локальным и не коммитится.
+
+## Быстрая настройка в Cloudflare
+
+1. Откройте Cloudflare Dashboard → Pages → `hundesalon-nika` → Settings → Environment variables.
+2. Добавьте переменные из списка выше для Production и Preview.
+3. Для секретов используйте тип Secret/Encrypted, если интерфейс Cloudflare предлагает выбор.
+4. После сохранения запустите новый deploy, чтобы Functions получили свежие значения.
 
 ## Google
 
@@ -43,6 +55,10 @@
 2. Выдайте Graph permissions для Mail.Send и ChannelMessage.Send.
 3. Сохраните `MS_GRAPH_ACCESS_TOKEN`, `TEAM_ID`, `TEAM_CHANNEL_ID`.
 4. Для простого уведомления можно использовать `TEAMS_WEBHOOK_URL`.
+
+## Галерея до/после
+
+TikTok JPEG перенесены в `assets/images/before-after/` и подключены в `assets/js/before-after.js`. Подробная инструкция по обновлению карточек и изображений лежит в `docs/before-after-guide.md`.
 
 ## Платежи
 

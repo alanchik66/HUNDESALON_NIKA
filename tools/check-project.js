@@ -146,6 +146,12 @@ for (const file of walk(root)) {
   const content = fs.readFileSync(file, 'utf8');
   const contentForCityCheck = content.replaceAll('Europe/Berlin', 'Europe/Timezone');
   if (outdatedCityPattern.test(contentForCityCheck)) failures.push(`${relativePath}: contains outdated city name`);
+
+  if (/^(?:de|en|ru|uk)\/.+\.html$/i.test(relativePath) && content.includes('class="nav-main"')) {
+    failures.push(
+      `${relativePath}: contains static nav-main markup; run "npm run shell:strip" and rely on site-shell.js`
+    );
+  }
 }
 
 if (failures.length) {

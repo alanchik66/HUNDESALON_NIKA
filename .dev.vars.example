@@ -12,6 +12,23 @@ BING_WEBMASTER_API_KEY=
 # Resend.com API key for local Cloudflare Pages Functions.
 # Starts with re_. Production value must be a Cloudflare Pages secret, not a committed file.
 RESEND_API_KEY=
+
+# Full-stack platform integrations. Keep production values in Cloudflare Pages secrets only.
+GA_MEASUREMENT_ID=
+GOOGLE_OAUTH_ACCESS_TOKEN=
+GOOGLE_CALENDAR_ID=primary
+SHEET_ID=
+DRIVE_UPLOAD_FOLDER=
+GMAIL_SENDER=info@hundesalon-nika.com
+GOOGLE_SHEETS_WEBHOOK_URL=
+GOOGLE_DRIVE_UPLOAD_WEBHOOK_URL=
+MS_GRAPH_ACCESS_TOKEN=
+TEAM_ID=
+TEAM_CHANNEL_ID=
+TEAMS_WEBHOOK_URL=
+SLACK_WEBHOOK_URL=
+PAYMENT_PROVIDER_KEY=
+
 # Zone API token with Cache Purge (create via npm run cf:open-purge-token)
 # Full zone token (purge + rules): npm run cf:ensure-api-token
 CLOUDFLARE_API_TOKEN=

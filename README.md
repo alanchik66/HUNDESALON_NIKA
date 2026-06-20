@@ -249,6 +249,8 @@ npm run deploy
 | `TEAMS_WEBHOOK_URL` | Teams Incoming Webhook | быстрый канал уведомлений |
 | `RESEND_API_KEY` | Resend dashboard | резервная отправка писем с сайта |
 | `SLACK_WEBHOOK_URL` | Slack app webhook | текущий fallback-канал уведомлений |
+| `GOOGLE_SHEETS_WEBHOOK_URL` | ваш backend/service gateway | fallback-запись в Google Sheets |
+| `GOOGLE_DRIVE_UPLOAD_WEBHOOK_URL` | ваш backend/service gateway | fallback-загрузка файлов в Google Drive |
 | `PAYMENT_PROVIDER_KEY` | Stripe/PayPal dashboard | TODO для будущей предоплаты |
 
 Для локальной проверки Cloudflare Functions используйте `.dev.vars` по образцу `.dev.vars.example`, затем запускайте:

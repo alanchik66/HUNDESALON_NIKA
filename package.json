@@ -21,6 +21,7 @@
     "check:live-crawl": "node tools/site-crawl-live.mjs",
     "check:live-robots": "node tools/check-live-robots.mjs",
     "check:project": "node tools/check-project.js",
+    "shell:strip": "node tools/strip-static-shell.mjs",
     "test:links": "npm run check:links",
     "seo:urls": "node tools/indexnow-submit.js --dry-run",
     "seo:indexnow": "node tools/indexnow-submit.js",

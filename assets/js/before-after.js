@@ -217,174 +217,217 @@ class BeforeAfterGallery {
   }
 }
 
-// Sample before/after data (placeholder images - replace with real work samples)
+const BEFORE_AFTER_IMAGE_BASE = '../assets/images/before-after/';
+const beforeAfterImage = (fileName) => `${BEFORE_AFTER_IMAGE_BASE}${fileName}`;
+
+// Before/after data built from real local TikTok work samples.
 const beforeAfterItems = {
   de: [
     {
-      beforeImage: '../assets/images/gallery1.jpg',
-      afterImage: '../assets/images/gallery2.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev1.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide-afterright1.jpeg'),
       beforeLabel: 'VORHER',
       afterLabel: 'NACHHER',
       badge: 'Schnitt',
       category: 'haircut',
-      title: 'Pudel-Lady elegante Transformation',
-      description: 'Komplette Pflege mit Modell-Schnitt'
+      title: 'Saubere Salon-Transformation',
+      description: 'Fellpflege, Kontur und gepflegtes Finish'
     },
     {
-      beforeImage: '../assets/images/gallery3.jpg',
-      afterImage: '../assets/images/gallery4.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev2.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide-afterright2.jpeg'),
       beforeLabel: 'VORHER',
       afterLabel: 'NACHHER',
       badge: 'Kreativ',
       category: 'creative',
-      title: 'Kreative Fellfärbung',
-      description: 'Sichere Farben, kreatives Design'
+      title: 'Ausdrucksstarker Pflege-Look',
+      description: 'Weiche Linien, klare Silhouette, goldener Salon-Glow'
     },
     {
-      beforeImage: '../assets/images/gallery5.jpg',
-      afterImage: '../assets/images/gallery6.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev3.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev3b.jpeg'),
       beforeLabel: 'VORHER',
       afterLabel: 'NACHHER',
       badge: 'Katze',
       category: 'cats',
-      title: 'Sanfte Katzenpflege',
-      description: 'Stressfreie Umgebung, liebevolle Behandlung'
+      title: 'Sanfte Pflege fuer sensible Tiere',
+      description: 'Ruhige Atmosphaere, geduldige Handgriffe, liebevolle Behandlung'
     },
     {
-      beforeImage: '../assets/images/gallery1.jpg',
-      afterImage: '../assets/images/gallery3.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev4.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide1.jpeg'),
       beforeLabel: 'VORHER',
       afterLabel: 'NACHHER',
       badge: 'Schnitt',
       category: 'haircut',
-      title: 'Golden Retriever Pflege',
-      description: 'Baden, Bürsten, Trimmen'
+      title: 'Frischer Pflegeabschluss',
+      description: 'Baden, Buersten, Trimmen und ein weicher Salon-Look'
+    },
+    {
+      beforeImage: beforeAfterImage('tiktok-home-check.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-ksafaraliev-slide1.jpeg'),
+      beforeLabel: 'VORHER',
+      afterLabel: 'NACHHER',
+      badge: 'Kreativ',
+      category: 'creative',
+      title: 'Social-ready Salonmoment',
+      description: 'Ein gepflegter Look mit warmer Praesenz fuer Foto und Video'
     }
   ],
   en: [
     {
-      beforeImage: '../assets/images/gallery1.jpg',
-      afterImage: '../assets/images/gallery2.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev1.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide-afterright1.jpeg'),
       beforeLabel: 'BEFORE',
       afterLabel: 'AFTER',
       badge: 'Haircut',
       category: 'haircut',
-      title: 'Poodle Lady Elegant Transformation',
-      description: 'Complete grooming with model cut'
+      title: 'Clean Salon Transformation',
+      description: 'Coat care, contour shaping and a polished finish'
     },
     {
-      beforeImage: '../assets/images/gallery3.jpg',
-      afterImage: '../assets/images/gallery4.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev2.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide-afterright2.jpeg'),
       beforeLabel: 'BEFORE',
       afterLabel: 'AFTER',
       badge: 'Creative',
       category: 'creative',
-      title: 'Creative Fur Coloring',
-      description: 'Safe colors, creative design'
+      title: 'Expressive Grooming Look',
+      description: 'Soft lines, clear silhouette and a warm salon glow'
     },
     {
-      beforeImage: '../assets/images/gallery5.jpg',
-      afterImage: '../assets/images/gallery6.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev3.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev3b.jpeg'),
       beforeLabel: 'BEFORE',
       afterLabel: 'AFTER',
       badge: 'Cat',
       category: 'cats',
-      title: 'Gentle Cat Grooming',
-      description: 'Stress-free environment, loving care'
+      title: 'Gentle Care for Sensitive Pets',
+      description: 'Calm atmosphere, patient handling and loving care'
     },
     {
-      beforeImage: '../assets/images/gallery1.jpg',
-      afterImage: '../assets/images/gallery3.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev4.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide1.jpeg'),
       beforeLabel: 'BEFORE',
       afterLabel: 'AFTER',
       badge: 'Haircut',
       category: 'haircut',
-      title: 'Golden Retriever Grooming',
-      description: 'Bathing, brushing, trimming'
+      title: 'Fresh Grooming Finish',
+      description: 'Bathing, brushing, trimming and a soft salon look'
+    },
+    {
+      beforeImage: beforeAfterImage('tiktok-home-check.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-ksafaraliev-slide1.jpeg'),
+      beforeLabel: 'BEFORE',
+      afterLabel: 'AFTER',
+      badge: 'Creative',
+      category: 'creative',
+      title: 'Social-ready Salon Moment',
+      description: 'A polished look with warm presence for photo and video'
     }
   ],
   ru: [
     {
-      beforeImage: '../assets/images/gallery1.jpg',
-      afterImage: '../assets/images/gallery2.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev1.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide-afterright1.jpeg'),
       beforeLabel: 'ДО',
       afterLabel: 'ПОСЛЕ',
       badge: 'Стрижка',
       category: 'haircut',
-      title: 'Элегантная трансформация пуделя',
-      description: 'Полный уход с модельной стрижкой'
+      title: 'Аккуратная салонная трансформация',
+      description: 'Уход за шерстью, чистый контур и ухоженный финиш'
     },
     {
-      beforeImage: '../assets/images/gallery3.jpg',
-      afterImage: '../assets/images/gallery4.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev2.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide-afterright2.jpeg'),
       beforeLabel: 'ДО',
       afterLabel: 'ПОСЛЕ',
       badge: 'Креатив',
       category: 'creative',
-      title: 'Креативное окрашивание шерсти',
-      description: 'Безопасные красители, креативный дизайн'
+      title: 'Выразительный образ после груминга',
+      description: 'Мягкие линии, чистый силуэт и теплое салонное сияние'
     },
     {
-      beforeImage: '../assets/images/gallery5.jpg',
-      afterImage: '../assets/images/gallery6.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev3.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev3b.jpeg'),
       beforeLabel: 'ДО',
       afterLabel: 'ПОСЛЕ',
       badge: 'Кошка',
       category: 'cats',
       title: 'Бережный груминг кошек',
-      description: 'Безstressовая обстановка, заботливый уход'
+      description: 'Спокойная обстановка, терпеливые руки и заботливый уход'
     },
     {
-      beforeImage: '../assets/images/gallery1.jpg',
-      afterImage: '../assets/images/gallery3.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev4.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide1.jpeg'),
       beforeLabel: 'ДО',
       afterLabel: 'ПОСЛЕ',
       badge: 'Стрижка',
       category: 'haircut',
-      title: 'Груминг золотистого ретривера',
-      description: 'Купание, расчесывание, тримминг'
+      title: 'Свежий результат после ухода',
+      description: 'Купание, вычесывание, тримминг и мягкий салонный вид'
+    },
+    {
+      beforeImage: beforeAfterImage('tiktok-home-check.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-ksafaraliev-slide1.jpeg'),
+      beforeLabel: 'ДО',
+      afterLabel: 'ПОСЛЕ',
+      badge: 'Креатив',
+      category: 'creative',
+      title: 'Салонный момент для соцсетей',
+      description: 'Ухоженный образ с теплым светом для фото и видео'
     }
   ],
   uk: [
     {
-      beforeImage: '../assets/images/gallery1.jpg',
-      afterImage: '../assets/images/gallery2.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev1.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide-afterright1.jpeg'),
       beforeLabel: 'ДО',
       afterLabel: 'ПІСЛЯ',
       badge: 'Стрижка',
       category: 'haircut',
-      title: 'Елегантна трансформація пуделя',
-      description: 'Повний догляд з модельною стрижкою'
+      title: 'Охайна салонна трансформація',
+      description: 'Догляд за шерстю, чистий контур і доглянутий фініш'
     },
     {
-      beforeImage: '../assets/images/gallery3.jpg',
-      afterImage: '../assets/images/gallery4.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev2.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide-afterright2.jpeg'),
       beforeLabel: 'ДО',
       afterLabel: 'ПІСЛЯ',
       badge: 'Креатив',
       category: 'creative',
-      title: 'Креативне фарбування шерсті',
-      description: 'Безпечні барвники, креативний дизайн'
+      title: 'Виразний образ після грумінгу',
+      description: "М'які лінії, чистий силует і тепле салонне сяйво"
     },
     {
-      beforeImage: '../assets/images/gallery5.jpg',
-      afterImage: '../assets/images/gallery6.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev3.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev3b.jpeg'),
       beforeLabel: 'ДО',
       afterLabel: 'ПІСЛЯ',
       badge: 'Кіт',
       category: 'cats',
       title: 'Дбайливий грумінг котів',
-      description: 'Безстресова обстановка, турботливий догляд'
+      description: 'Спокійна атмосфера, терплячі руки й турботливий догляд'
     },
     {
-      beforeImage: '../assets/images/gallery1.jpg',
-      afterImage: '../assets/images/gallery3.jpg',
+      beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev4.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-mikemozg-slide1.jpeg'),
       beforeLabel: 'ДО',
       afterLabel: 'ПІСЛЯ',
       badge: 'Стрижка',
       category: 'haircut',
-      title: 'Грумінг золотистого ретривера',
-      description: 'Купання, розчісування, трімінг'
+      title: 'Свіжий результат після догляду',
+      description: "Купання, вичісування, тримінг і м'який салонний вигляд"
+    },
+    {
+      beforeImage: beforeAfterImage('tiktok-home-check.jpeg'),
+      afterImage: beforeAfterImage('tiktok-new-ksafaraliev-slide1.jpeg'),
+      beforeLabel: 'ДО',
+      afterLabel: 'ПІСЛЯ',
+      badge: 'Креатив',
+      category: 'creative',
+      title: 'Салонний момент для соцмереж',
+      description: 'Доглянутий образ із теплим світлом для фото й відео'
     }
   ]
 };
