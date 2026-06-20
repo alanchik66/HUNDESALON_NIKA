@@ -12,6 +12,14 @@
  */
 
 import { assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http-security.js';
+import {
+    appendGoogleSheetRow,
+    createGoogleCalendarEvent,
+    getEnvValue,
+    sendGmailEmail,
+    sendOutlookEmail,
+    sendTeamsMessage,
+} from './_lib/platform-integrations.js';
 
 const RECIPIENT = 'info@hundesalon-nika.com';
 const FROM      = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
@@ -73,6 +81,8 @@ function buildSlackPayload(data) {
         data.service ? `Услуга: ${data.service}` : null,
         data.date ? `Дата: ${data.date}` : null,
         data.time ? `Время: ${data.time}` : null,
+        data.fileUrl ? `Файл: ${data.fileUrl}` : null,
+        data.paymentStatus ? `Оплата: ${data.paymentStatus}` : null,
         data.pagePath ? `Страница: ${data.pagePath}` : null,
     ].filter((line) => line !== null);
 
@@ -210,6 +220,10 @@ export async function onRequest(ctx) {
     const service  = sanitize(fields.service);
     const date     = sanitize(fields.date);
     const time     = sanitize(fields.time);
+    const uploadedFileUrl = sanitize(fields.uploaded_file_url || fields.file_url);
+    const paymentNow = sanitize(fields.payment_now || fields.pay_now) === 'on';
+    const privacyConsent = sanitize(fields.privacy_consent);
+    const paymentStatus = paymentNow ? 'prepayment_requested' : 'pay_at_salon';
 
     const copy = COPY[lang] ?? COPY.de;
     const requestUrl = new URL(request.url);
@@ -227,6 +241,9 @@ export async function onRequest(ctx) {
             return jsonResponse({ success: false, message: copy.error }, 400, origin);
         }
         if (!phone) {
+            return jsonResponse({ success: false, message: copy.error }, 400, origin);
+        }
+        if (!privacyConsent) {
             return jsonResponse({ success: false, message: copy.error }, 400, origin);
         }
     } else if (!message) {
@@ -249,6 +266,8 @@ export async function onRequest(ctx) {
         service,
         date,
         time,
+        fileUrl: uploadedFileUrl,
+        paymentStatus,
         message: resolvedMessage,
         origin,
         pagePath: requestUrl.pathname,
@@ -275,6 +294,8 @@ export async function onRequest(ctx) {
         service ? `Leistung:    ${service}` : null,
         date    ? `Datum:       ${date}`    : null,
         time    ? `Uhrzeit:     ${time}`    : null,
+        uploadedFileUrl ? `Datei:       ${uploadedFileUrl}` : null,
+        formType === 'booking' ? `Zahlung:     ${paymentStatus}` : null,
         '',
         'Nachricht:',
         resolvedMessage,
@@ -282,13 +303,93 @@ export async function onRequest(ctx) {
 
     const textBody = bodyLines.join('\n');
 
+    const runBookingIntegrations = async () => {
+        if (formType !== 'booking') {
+            return [];
+        }
+
+        const startDateTime = `${date}T${time}:00`;
+        const endDate = new Date(`${date}T${time}:00`);
+        endDate.setMinutes(endDate.getMinutes() + 90);
+        const endDateTime = endDate.toISOString().replace(/\.\d{3}Z$/, '');
+        const bookingSummary = [
+            `Name: ${name}`,
+            `E-Mail: ${email}`,
+            phone ? `Telefon: ${phone}` : null,
+            `Leistung: ${service}`,
+            `Datum: ${date}`,
+            `Uhrzeit: ${time}`,
+            `Zahlung: ${paymentStatus}`,
+            uploadedFileUrl ? `Datei: ${uploadedFileUrl}` : null,
+            '',
+            resolvedMessage,
+        ].filter(Boolean).join('\n');
+
+        const results = await Promise.allSettled([
+            createGoogleCalendarEvent(env, {
+                calendarId: getEnvValue(env, 'GOOGLE_CALENDAR_ID', 'primary'),
+                summary: `HUNDESALON NIKA: ${service} — ${name}`,
+                description: bookingSummary,
+                startDateTime,
+                endDateTime,
+            }),
+            appendGoogleSheetRow(env, {
+                spreadsheetId: getEnvValue(env, 'SHEET_ID'),
+                sheetName: 'bookings',
+                values: [
+                    new Date().toISOString(),
+                    lang,
+                    formType,
+                    name,
+                    email,
+                    phone,
+                    service,
+                    date,
+                    time,
+                    uploadedFileUrl,
+                    paymentStatus,
+                    resolvedMessage,
+                ],
+            }),
+            sendTeamsMessage(env, {
+                title: 'Neue Buchung HUNDESALON NIKA',
+                text: bookingSummary,
+                html: bookingSummary.replaceAll('\n', '<br>'),
+            }),
+            sendGmailEmail(env, {
+                to: email,
+                subject: 'Ihre Buchungsanfrage bei HUNDESALON NIKA',
+                text: `Danke für Ihre Anfrage.\n\n${bookingSummary}`,
+            }),
+            sendGmailEmail(env, {
+                to: RECIPIENT,
+                subject,
+                text: textBody,
+            }),
+            sendOutlookEmail(env, {
+                to: email,
+                subject: 'Ihre Buchungsanfrage bei HUNDESALON NIKA',
+                text: `Danke für Ihre Anfrage.\n\n${bookingSummary}`,
+            }),
+            sendOutlookEmail(env, {
+                to: RECIPIENT,
+                subject,
+                text: textBody,
+            }),
+        ]);
+
+        return results.map((result) => result.status === 'fulfilled' ? result.value : { ok: false, error: result.reason?.message || 'failed' });
+    };
+
     /* ── Send via Resend API ───────────────────────────────────── */
     const apiKey = env?.RESEND_API_KEY;
     if (!apiKey) {
         console.error('[sendmail] RESEND_API_KEY not configured');
         const slackDelivered = await sendSlackNotification(env, slackLeadPayload);
-        if (slackDelivered) {
-            console.warn('[sendmail] Delivered via Slack fallback because RESEND_API_KEY is not configured');
+        const integrationResults = await runBookingIntegrations();
+        const integrationDelivered = integrationResults.some((result) => result?.ok === true);
+        if (slackDelivered || integrationDelivered) {
+            console.warn('[sendmail] Delivered via fallback because RESEND_API_KEY is not configured');
             return jsonResponse({ success: true, message: copy.success }, 200, origin);
         }
         return jsonResponse({ success: false, message: copy.error }, 503, origin);
@@ -337,7 +438,7 @@ export async function onRequest(ctx) {
     }
 
     if (resendRes.ok) {
-        await sendSlackNotification(env, slackLeadPayload);
+        await Promise.allSettled([sendSlackNotification(env, slackLeadPayload), runBookingIntegrations()]);
         return jsonResponse({ success: true, message: copy.success }, 200, origin);
     }
 

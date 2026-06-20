@@ -1,0 +1,76 @@
+# HUNDESALON NIKA Full-Stack Upgrade Guide
+
+## Что добавлено
+
+- Cookie-consent на DE/RU/EN/UK с сохранением выбора в `localStorage`.
+- Google Analytics через `config/env.js`, запуск только после согласия.
+- Расширенная booking-форма: дата, время, список услуг, JPG/PNG до 5 MB, GDPR, предоплата, резюме перед отправкой.
+- Cloudflare Functions: `/sendmail`, `/upload`, `/payment`, `/subscribe`, `/blog`.
+- Google/Outlook/Teams/Drive/Sheets/Calendar hooks через env-переменные.
+- Отзывы из `data/testimonials.json` и локальные фото в `assets/images/testimonials/`.
+- Документы из `data/documents.json`.
+- Локальные SEO-страницы и новая статья про экспресс-линьку.
+- PWA service worker `sw.js` и регистрация через `assets/js/pwa.js`.
+
+## Обязательные переменные
+
+Настройте в Cloudflare Pages → Settings → Environment variables:
+
+- `GA_MEASUREMENT_ID`
+- `GOOGLE_OAUTH_ACCESS_TOKEN`
+- `GOOGLE_CALENDAR_ID`
+- `SHEET_ID`
+- `DRIVE_UPLOAD_FOLDER`
+- `GMAIL_SENDER`
+- `MS_GRAPH_ACCESS_TOKEN`
+- `TEAM_ID`
+- `TEAM_CHANNEL_ID`
+- `TEAMS_WEBHOOK_URL`
+- `RESEND_API_KEY`
+- `PAYMENT_PROVIDER_KEY`
+
+## Google
+
+1. Создайте проект в Google Cloud.
+2. Включите Gmail API, Calendar API, Sheets API и Drive API.
+3. Настройте OAuth consent screen.
+4. Создайте OAuth credentials или service gateway.
+5. Скопируйте access token/refresh-token flow в backend-сервис и отдавайте Cloudflare только рабочий серверный токен.
+
+## Microsoft Teams и Outlook
+
+1. Создайте app registration в Microsoft Entra.
+2. Выдайте Graph permissions для Mail.Send и ChannelMessage.Send.
+3. Сохраните `MS_GRAPH_ACCESS_TOKEN`, `TEAM_ID`, `TEAM_CHANNEL_ID`.
+4. Для простого уведомления можно использовать `TEAMS_WEBHOOK_URL`.
+
+## Платежи
+
+`functions/payment.js` пока возвращает статус `TODO`. Для продакшена подключите Stripe или PayPal только на сервере, ключи храните в Cloudflare env vars, а клиенту возвращайте только payment session/client token.
+
+## Рассылка
+
+`functions/subscribe.js` пишет подписчиков в лист `subscribers` и отправляет welcome-письмо при наличии Gmail API. Регулярная рассылка оставлена как TODO: нужен отдельный cron-сервис или Cloudflare Scheduled Worker.
+
+## Проверки перед деплоем
+
+```bash
+npm run lint
+npm run validate
+npm run build
+```
+
+Для проверки функций локально:
+
+```bash
+npm run dev:cf
+```
+
+Проверить вручную:
+
+- cookie banner на всех языках;
+- booking-форму с будущей датой и файлом JPG/PNG;
+- подписку на новостную рассылку;
+- страницы `documents.html`;
+- SEO-страницы `hundefriseur-leipzig.html`, `hundesalon-leipzig.html`, `dog-grooming-leipzig.html`;
+- PWA installability и offline fallback.

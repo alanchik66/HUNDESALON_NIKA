@@ -232,6 +232,31 @@ npm run deploy
 
 ## 🔧 Конфигурация
 
+### Переменные окружения для новых модулей
+
+Публичные placeholder-значения лежат в [`config/env.js`](config/env.js). Для реального деплоя секреты и рабочие ID задаются только в Cloudflare Pages → Settings → Environment variables.
+
+| Переменная | Где взять | Для чего нужна |
+|------------|-----------|----------------|
+| `GA_MEASUREMENT_ID` | Google Analytics → Admin → Data streams | аналитика после cookie-согласия |
+| `GOOGLE_OAUTH_ACCESS_TOKEN` | Google Cloud OAuth / service gateway | Gmail, Calendar, Sheets, Drive API |
+| `GOOGLE_CALENDAR_ID` | Google Calendar settings | создание событий бронирования |
+| `SHEET_ID` | URL Google Sheets таблицы | лог бронирований и подписчиков |
+| `DRIVE_UPLOAD_FOLDER` | URL папки Google Drive | загрузка фото питомца |
+| `GMAIL_SENDER` | Gmail/Workspace адрес | отправка welcome и подтверждений |
+| `MS_GRAPH_ACCESS_TOKEN` | Microsoft Entra / Graph OAuth | Outlook Email и Teams через Graph |
+| `TEAM_ID`, `TEAM_CHANNEL_ID` | Microsoft Teams / Graph | уведомления команды |
+| `TEAMS_WEBHOOK_URL` | Teams Incoming Webhook | быстрый канал уведомлений |
+| `RESEND_API_KEY` | Resend dashboard | резервная отправка писем с сайта |
+| `SLACK_WEBHOOK_URL` | Slack app webhook | текущий fallback-канал уведомлений |
+| `PAYMENT_PROVIDER_KEY` | Stripe/PayPal dashboard | TODO для будущей предоплаты |
+
+Для локальной проверки Cloudflare Functions используйте `.dev.vars` по образцу `.dev.vars.example`, затем запускайте:
+
+```bash
+npm run dev:cf
+```
+
 ### VS Code настройки
 
 Полная конфигурация в [`.vscode/settings.json`](.vscode/settings.json):
