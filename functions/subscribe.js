@@ -2,11 +2,15 @@ import { assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http
 import {
   appendGoogleSheetRow,
   cleanText,
+  getEnvList,
   getEnvValue,
-  sendGmailEmail,
   sendResendEmail,
   sendTeamsMessage,
 } from './_lib/platform-integrations.js';
+
+const DEFAULT_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
+const DEFAULT_RECIPIENT = 'info@hundesalon-nika.com';
+const DEFAULT_ADMIN_EMAILS = ['snaiper1984@gmail.com', 'ryndenko1982@gmail.com'];
 
 const COPY = {
   de: 'Danke. Ihre Anmeldung wurde gespeichert.',
@@ -17,6 +21,17 @@ const COPY = {
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+
+function uniqueEmailList(items) {
+  const seen = new Set();
+  return items
+    .map((item) => cleanText(item, 180).toLowerCase())
+    .filter((item) => {
+      if (!isValidEmail(item) || seen.has(item)) return false;
+      seen.add(item);
+      return true;
+    });
 }
 
 export async function onRequest(context) {
@@ -48,6 +63,13 @@ export async function onRequest(context) {
   }
 
   const createdAt = new Date().toISOString();
+  const supportReplyTo =
+    getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') ||
+    getEnvValue(env, 'SUPPORT_EMAIL') ||
+    getEnvValue(env, 'SALON_EMAIL', DEFAULT_RECIPIENT);
+  const clientEmailFrom = getEnvValue(env, 'CLIENT_EMAIL_FROM') || getEnvValue(env, 'RESEND_FROM', DEFAULT_FROM);
+  const adminRecipients = uniqueEmailList(getEnvList(env, 'ADMIN_NOTIFICATION_EMAILS', DEFAULT_ADMIN_EMAILS.join(',')));
+
   await appendGoogleSheetRow(env, {
     spreadsheetId: getEnvValue(env, 'SHEET_ID'),
     sheetName: 'subscribers',
@@ -58,13 +80,19 @@ export async function onRequest(context) {
     to: email,
     subject: 'HUNDESALON NIKA',
     text: 'Danke für Ihre Anmeldung. Wir senden nur ausgewählte Neuigkeiten, Pflege-Tipps und Angebote.',
+    replyTo: supportReplyTo,
+    from: clientEmailFrom,
   });
 
-  await sendGmailEmail(env, {
-    to: email,
-    subject: 'HUNDESALON NIKA',
-    text: 'Danke für Ihre Anmeldung. Wir senden nur ausgewählte Neuigkeiten, Pflege-Tipps und Angebote.',
-  });
+  if (adminRecipients.length > 0) {
+    await sendResendEmail(env, {
+      to: adminRecipients,
+      subject: '[Admin] Neue Newsletter-Anmeldung — HUNDESALON NIKA',
+      text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}\nAntworten bitte über ${supportReplyTo}.`,
+      replyTo: supportReplyTo,
+      from: getEnvValue(env, 'RESEND_FROM', DEFAULT_FROM),
+    });
+  }
 
   await sendTeamsMessage(env, {
     title: 'Neue Newsletter-Anmeldung',

@@ -14,6 +14,14 @@ export function getEnvValue(env, name, fallback = '') {
   return String(env?.[name] || fallback || '').trim();
 }
 
+export function getEnvList(env, name, fallback = '') {
+  const value = Array.isArray(env?.[name]) ? env[name].join(',') : getEnvValue(env, name, fallback);
+  return String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export function hasUsableValue(value) {
   return Boolean(value) && !/ВАШ_|YOUR_|XXXXXXXX|TODO/i.test(value);
 }
@@ -336,8 +344,12 @@ export async function sendTeamsMessage(env, payload) {
   });
 }
 
-export async function sendGmailEmail(env, { to, subject, text }) {
+export async function sendGmailEmail(env, { to, subject, text, replyTo = '', allowImplicitSender = false }) {
   const sender = getEnvValue(env, 'GMAIL_SENDER');
+  if (!hasUsableValue(sender) && !allowImplicitSender) {
+    return { ok: false, skipped: true, reason: 'Gmail sender is not explicitly configured.' };
+  }
+
   const serviceAccountSubject = getEnvValue(env, 'GOOGLE_SERVICE_ACCOUNT_SUBJECT');
   const token =
     (hasUsableValue(serviceAccountSubject)
@@ -350,6 +362,7 @@ export async function sendGmailEmail(env, { to, subject, text }) {
   const message = [
     hasUsableValue(sender) ? `From: ${sender}` : null,
     `To: ${to}`,
+    hasUsableValue(replyTo) ? `Reply-To: ${replyTo}` : null,
     `Subject: ${subject}`,
     'Content-Type: text/plain; charset=UTF-8',
     '',
@@ -410,13 +423,16 @@ export async function sendOutlookEmail(env, { to, subject, text }) {
 
 export async function sendResendEmail(env, { to, subject, text, replyTo = '', from = '' }) {
   const apiKey = getEnvValue(env, 'RESEND_API_KEY');
-  if (!hasUsableValue(apiKey) || !hasUsableValue(to)) {
+  const recipients = (Array.isArray(to) ? to : String(to || '').split(','))
+    .map((item) => String(item || '').trim())
+    .filter(Boolean);
+  if (!hasUsableValue(apiKey) || recipients.length === 0) {
     return { ok: false, skipped: true, reason: 'Resend credentials are not configured.' };
   }
 
   const payload = {
     from: from || getEnvValue(env, 'RESEND_FROM', 'Hundesalon Nika <noreply@hundesalon-nika.com>'),
-    to: [to],
+    to: recipients,
     subject,
     text,
   };

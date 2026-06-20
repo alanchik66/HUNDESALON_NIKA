@@ -15,15 +15,15 @@ import { assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http
 import {
     appendGoogleSheetRow,
     createGoogleCalendarEvent,
+    getEnvList,
     getEnvValue,
-    sendGmailEmail,
-    sendOutlookEmail,
     sendResendEmail,
     sendTeamsMessage,
 } from './_lib/platform-integrations.js';
 
 const DEFAULT_RECIPIENT = 'info@hundesalon-nika.com';
 const DEFAULT_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
+const DEFAULT_ADMIN_EMAILS = ['snaiper1984@gmail.com', 'ryndenko1982@gmail.com'];
 const SLACK_TIMEOUT_MS = 4500;
 const RESEND_USER_AGENT = 'hundesalon-nika.com/1.0 (Cloudflare Pages Function)';
 
@@ -79,6 +79,30 @@ function getSalonRecipient(env, formType) {
         return contactRecipient;
     }
     return isValidEmail(fallbackRecipient) ? fallbackRecipient : DEFAULT_RECIPIENT;
+}
+
+function uniqueEmailList(items) {
+    const seen = new Set();
+    return items
+        .map((item) => sanitize(item).toLowerCase())
+        .filter((item) => {
+            if (!isValidEmail(item) || seen.has(item)) return false;
+            seen.add(item);
+            return true;
+        });
+}
+
+function getAdminEmails(env) {
+    return uniqueEmailList(getEnvList(env, 'ADMIN_NOTIFICATION_EMAILS', DEFAULT_ADMIN_EMAILS.join(',')));
+}
+
+function getSupportReplyTo(env, fallback = DEFAULT_RECIPIENT) {
+    const supportEmail = getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') || getEnvValue(env, 'SUPPORT_EMAIL') || fallback;
+    return isValidEmail(supportEmail) ? supportEmail : fallback;
+}
+
+function getClientEmailFrom(env, fallback = DEFAULT_FROM) {
+    return getEnvValue(env, 'CLIENT_EMAIL_FROM') || fallback;
 }
 
 /**
@@ -244,6 +268,9 @@ export async function onRequest(ctx) {
     const requestUrl = new URL(request.url);
     const recipient = getSalonRecipient(env, formType);
     const resendFrom = getEnvValue(env, 'RESEND_FROM', DEFAULT_FROM);
+    const supportReplyTo = getSupportReplyTo(env, recipient);
+    const clientEmailFrom = getClientEmailFrom(env, resendFrom);
+    const adminRecipients = getAdminEmails(env);
 
     /* ── Validate required fields ──────────────────────────────── */
     if (!name || !email) {
@@ -373,35 +400,37 @@ export async function onRequest(ctx) {
                 text: bookingSummary,
                 html: bookingSummary.replaceAll('\n', '<br>'),
             }),
-            sendGmailEmail(env, {
-                to: email,
-                subject: 'Ihre Buchungsanfrage bei HUNDESALON NIKA',
-                text: `Danke für Ihre Anfrage.\n\n${bookingSummary}`,
-            }),
             sendResendEmail(env, {
                 to: email,
                 subject: 'Ihre Buchungsanfrage bei HUNDESALON NIKA',
                 text: `Danke für Ihre Anfrage.\n\n${bookingSummary}`,
-                replyTo: recipient,
-            }),
-            sendGmailEmail(env, {
-                to: recipient,
-                subject,
-                text: textBody,
-            }),
-            sendOutlookEmail(env, {
-                to: email,
-                subject: 'Ihre Buchungsanfrage bei HUNDESALON NIKA',
-                text: `Danke für Ihre Anfrage.\n\n${bookingSummary}`,
-            }),
-            sendOutlookEmail(env, {
-                to: recipient,
-                subject,
-                text: textBody,
+                replyTo: supportReplyTo,
+                from: clientEmailFrom,
             }),
         ]);
 
         return results.map((result) => result.status === 'fulfilled' ? result.value : { ok: false, error: result.reason?.message || 'failed' });
+    };
+
+    const sendAdminNotification = async () => {
+        if (adminRecipients.length === 0) {
+            return { ok: false, skipped: true, reason: 'Admin notification recipients are not configured.' };
+        }
+
+        const adminText = [
+            'Admin-Kopie der Website-Anfrage.',
+            `Antworten an Kunden bitte nur über ${supportReplyTo}.`,
+            '',
+            textBody,
+        ].join('\n');
+
+        return sendResendEmail(env, {
+            to: adminRecipients,
+            subject: `[Admin] ${subject}`,
+            text: adminText,
+            replyTo: supportReplyTo,
+            from: resendFrom,
+        });
     };
 
     /* ── Send via Resend API ───────────────────────────────────── */
@@ -461,7 +490,11 @@ export async function onRequest(ctx) {
     }
 
     if (resendRes.ok) {
-        await Promise.allSettled([sendSlackNotification(env, slackLeadPayload), runBookingIntegrations()]);
+        await Promise.allSettled([
+            sendSlackNotification(env, slackLeadPayload),
+            runBookingIntegrations(),
+            sendAdminNotification(),
+        ]);
         return jsonResponse({ success: true, message: copy.success }, 200, origin);
     }
 

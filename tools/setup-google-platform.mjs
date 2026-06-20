@@ -8,6 +8,8 @@ import { spawn } from 'node:child_process';
 const PROJECT_NAME = 'hundesalon-nika';
 const ACCOUNT_ID = '25e872aeab8cb246c69142ab07cd0fee';
 const DEFAULT_SALON_EMAIL = 'info@hundesalon-nika.com';
+const DEFAULT_ADMIN_EMAILS = ['snaiper1984@gmail.com', 'ryndenko1982@gmail.com'];
+const DEFAULT_CLIENT_EMAIL_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
 const DEFAULT_RESOURCE_PREFIX = 'HUNDESALON NIKA';
 const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/calendar',
@@ -32,6 +34,21 @@ function parseArgs(argv) {
     }
   }
   return args;
+}
+
+function parseEmailList(value, fallback = []) {
+  const rawValue = Array.isArray(value) ? value.join(',') : String(value || '');
+  const items = rawValue
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+  const emails = items.length > 0 ? items : fallback;
+  const seen = new Set();
+  return emails.filter((email) => {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || seen.has(email)) return false;
+    seen.add(email);
+    return true;
+  });
 }
 
 function latestOAuthClientJson() {
@@ -165,7 +182,7 @@ async function exchangeCode({ clientId, clientSecret, code, redirectUri }) {
   return body;
 }
 
-async function createGoogleResources(accessToken, shareEmail, prefix) {
+async function createGoogleResources(accessToken, shareEmails, prefix) {
   const profile = await googleFetch(accessToken, 'https://www.googleapis.com/oauth2/v2/userinfo');
   const calendar = await googleFetch(accessToken, 'https://www.googleapis.com/calendar/v3/calendars', {
     method: 'POST',
@@ -228,30 +245,32 @@ async function createGoogleResources(accessToken, shareEmail, prefix) {
   });
 
   const shareResults = [];
-  if (shareEmail) {
-    for (const item of [
-      { type: 'drive', id: folder.id, label: 'drive folder' },
-      { type: 'drive', id: spreadsheet.spreadsheetId, label: 'spreadsheet' },
-    ]) {
-      try {
-        await googleFetch(accessToken, `https://www.googleapis.com/drive/v3/files/${item.id}/permissions?sendNotificationEmail=true`, {
-          method: 'POST',
-          body: JSON.stringify({ role: 'writer', type: 'user', emailAddress: shareEmail }),
-        });
-        shareResults.push(`${item.label}: shared`);
-      } catch (error) {
-        shareResults.push(`${item.label}: share failed`);
+  for (const shareEmail of shareEmails) {
+    if (shareEmail) {
+      for (const item of [
+        { type: 'drive', id: folder.id, label: 'drive folder' },
+        { type: 'drive', id: spreadsheet.spreadsheetId, label: 'spreadsheet' },
+      ]) {
+        try {
+          await googleFetch(accessToken, `https://www.googleapis.com/drive/v3/files/${item.id}/permissions?sendNotificationEmail=true`, {
+            method: 'POST',
+            body: JSON.stringify({ role: 'writer', type: 'user', emailAddress: shareEmail }),
+          });
+          shareResults.push(`${item.label}: shared with ${shareEmail}`);
+        } catch (error) {
+          shareResults.push(`${item.label}: share failed for ${shareEmail}`);
+        }
       }
-    }
 
-    try {
-      await googleFetch(accessToken, `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.id)}/acl`, {
-        method: 'POST',
-        body: JSON.stringify({ role: 'writer', scope: { type: 'user', value: shareEmail } }),
-      });
-      shareResults.push('calendar: shared');
-    } catch (error) {
-      shareResults.push('calendar: share failed');
+      try {
+        await googleFetch(accessToken, `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.id)}/acl`, {
+          method: 'POST',
+          body: JSON.stringify({ role: 'writer', scope: { type: 'user', value: shareEmail } }),
+        });
+        shareResults.push(`calendar: shared with ${shareEmail}`);
+      } catch (error) {
+        shareResults.push(`calendar: share failed for ${shareEmail}`);
+      }
     }
   }
 
@@ -279,7 +298,9 @@ async function updateCloudflareSecrets(vars) {
   }
 
   const envVars = Object.fromEntries(
-    Object.entries(vars).map(([key, value]) => [key, { type: 'secret_text', value: String(value) }])
+    Object.entries(vars)
+      .filter(([, value]) => String(value || '').trim() !== '')
+      .map(([key, value]) => [key, { type: 'secret_text', value: String(value) }])
   );
   const body = {
     deployment_configs: {
@@ -311,14 +332,25 @@ async function main() {
   }
 
   const salonEmail = String(args['salon-email'] || process.env.SALON_EMAIL || DEFAULT_SALON_EMAIL).trim();
-  const shareEmail = String(args['share-email'] || process.env.GOOGLE_SHARE_EMAIL || salonEmail).trim();
+  const adminEmails = parseEmailList(
+    args['admin-emails'] || process.env.ADMIN_NOTIFICATION_EMAILS,
+    DEFAULT_ADMIN_EMAILS
+  );
+  const shareEmails = parseEmailList(
+    args['share-email'] || process.env.GOOGLE_SHARE_EMAIL,
+    adminEmails
+  );
+  const supportEmail = String(args['support-email'] || process.env.SUPPORT_EMAIL || salonEmail).trim();
+  const supportReplyTo = String(args['support-reply-to'] || process.env.SUPPORT_REPLY_TO_EMAIL || supportEmail).trim();
+  const clientEmailFrom = String(args['client-email-from'] || process.env.CLIENT_EMAIL_FROM || DEFAULT_CLIENT_EMAIL_FROM).trim();
+  const gmailSender = String(args['gmail-sender'] || process.env.GMAIL_SENDER || '').trim();
   const prefix = String(args.prefix || DEFAULT_RESOURCE_PREFIX).trim();
   const { clientId, clientSecret } = readOAuthClient(clientFile);
   const port = Number(args.port || 53682);
   const state = randomBytes(16).toString('hex');
   const { code, redirectUri } = await waitForOAuthCode({ clientId, port, state });
   const token = await exchangeCode({ clientId, clientSecret, code, redirectUri });
-  const resources = await createGoogleResources(token.access_token, shareEmail, prefix);
+  const resources = await createGoogleResources(token.access_token, shareEmails, prefix);
 
   const cloudflare = await updateCloudflareSecrets({
     GOOGLE_OAUTH_CLIENT_ID: clientId,
@@ -327,11 +359,15 @@ async function main() {
     GOOGLE_CALENDAR_ID: resources.calendarId,
     SHEET_ID: resources.spreadsheetId,
     DRIVE_UPLOAD_FOLDER: resources.driveFolderId,
-    GMAIL_SENDER: resources.googleAccountEmail,
+    GMAIL_SENDER: gmailSender,
     SALON_EMAIL: salonEmail,
     CONTACT_RECIPIENT_EMAIL: salonEmail,
     BOOKING_RECIPIENT_EMAIL: salonEmail,
-    GOOGLE_SHARE_EMAIL: shareEmail,
+    SUPPORT_EMAIL: supportEmail,
+    SUPPORT_REPLY_TO_EMAIL: supportReplyTo,
+    CLIENT_EMAIL_FROM: clientEmailFrom,
+    ADMIN_NOTIFICATION_EMAILS: adminEmails.join(','),
+    GOOGLE_SHARE_EMAIL: shareEmails.join(','),
   });
 
   console.log(JSON.stringify({
@@ -341,7 +377,9 @@ async function main() {
     driveFolderId: resources.driveFolderId,
     driveFolderUrl: resources.driveFolderUrl,
     googleAccountEmail: resources.googleAccountEmail,
-    shareEmail,
+    shareEmails,
+    adminEmails,
+    gmailSenderConfigured: Boolean(gmailSender),
     shareResults: resources.shareResults,
     cloudflare,
   }, null, 2));

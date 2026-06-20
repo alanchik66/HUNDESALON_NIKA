@@ -248,10 +248,11 @@ npm run deploy
 | `GOOGLE_CALENDAR_ID` | Google Calendar settings | создание событий бронирования |
 | `SHEET_ID` | URL Google Sheets таблицы | лог бронирований и подписчиков |
 | `DRIVE_UPLOAD_FOLDER` | URL папки Google Drive | загрузка фото питомца |
-| `GMAIL_SENDER` | Gmail/Workspace адрес | отправка welcome и подтверждений |
-| `RESEND_FROM` | Resend verified domain | основной отправитель transactional email |
-| `SALON_EMAIL`, `CONTACT_RECIPIENT_EMAIL`, `BOOKING_RECIPIENT_EMAIL` | рабочая почта салона | получатель заявок, контактов и бронирований |
-| `GOOGLE_SHARE_EMAIL` | Google/Workspace аккаунт салона | доступ к созданным Calendar, Sheets и Drive; если рабочая почта не Google-аккаунт, укажите владелецкий Gmail |
+| `GMAIL_SENDER` | Gmail/Workspace alias | опционально; указывайте только рабочий alias, иначе Gmail не отправляет клиентам письма |
+| `RESEND_FROM`, `CLIENT_EMAIL_FROM` | Resend verified domain | основной отправитель transactional email для клиентов |
+| `SALON_EMAIL`, `SUPPORT_EMAIL`, `SUPPORT_REPLY_TO_EMAIL`, `CONTACT_RECIPIENT_EMAIL`, `BOOKING_RECIPIENT_EMAIL` | рабочая почта салона | получатель заявок и адрес, куда клиенты отвечают |
+| `ADMIN_NOTIFICATION_EMAILS` | Gmail администраторов | внутренние копии заявок: `snaiper1984@gmail.com,ryndenko1982@gmail.com` |
+| `GOOGLE_SHARE_EMAIL` | Google/Workspace аккаунты администраторов | доступ к созданным Calendar, Sheets и Drive; можно указывать несколько адресов через запятую |
 | `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET` | Microsoft Entra App Registration | постоянный серверный вход в Microsoft Graph |
 | `MS_GRAPH_ACCESS_TOKEN` | Microsoft Entra / Graph OAuth | временный fallback для Outlook Email и Teams через Graph |
 | `OUTLOOK_SENDER` | Microsoft 365 mailbox | опциональный отправитель для Graph `/users/{sender}/sendMail`; нужен лицензированный mailbox |
@@ -272,10 +273,10 @@ npm run dev:cf
 Для первичной настройки Google OAuth после скачивания Desktop app JSON из Google Auth Platform:
 
 ```bash
-npm run google:setup-platform -- --salon-email info@hundesalon-nika.com --share-email info@hundesalon-nika.com
+npm run google:setup-platform -- --salon-email info@hundesalon-nika.com --share-email snaiper1984@gmail.com,ryndenko1982@gmail.com
 ```
 
-Скрипт создаёт Calendar, Sheet и Drive-папку, ставит Cloudflare secrets для Production/Preview и не выводит OAuth secrets в консоль.
+Скрипт создаёт Calendar, Sheet и Drive-папку, шарит их на оба админ-адреса, ставит Cloudflare secrets для Production/Preview и не выводит OAuth secrets в консоль.
 
 ### VS Code настройки
 
