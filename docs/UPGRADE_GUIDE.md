@@ -53,9 +53,23 @@
 
 1. Создайте проект в Google Cloud.
 2. Включите Gmail API, Calendar API, Sheets API и Drive API.
-3. Для Calendar, Sheets и Drive используйте service account: сохраните `GOOGLE_SERVICE_ACCOUNT_EMAIL` и `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` в Cloudflare secrets.
-4. Создайте отдельный календарь, таблицу и Drive-папку под этот service account; при необходимости расшарьте их владельцу салона.
-5. Gmail API через service account работает только в Google Workspace с domain-wide delegation. Для обычного `@gmail.com` используйте Resend/Microsoft Graph как основной канал email, а `GOOGLE_SERVICE_ACCOUNT_SUBJECT` оставьте пустым.
+3. Для Google Workspace или проектов без запрета ключей можно использовать service account: сохраните `GOOGLE_SERVICE_ACCOUNT_EMAIL` и `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` в Cloudflare secrets.
+4. Для обычного `@gmail.com` используйте Apps Script gateway из `integrations/google-apps-script-gateway/`. Он выполняется от имени владельца Google-аккаунта, создаёт Calendar/Sheets/Drive и принимает защищённые webhook-запросы от Cloudflare.
+5. Если Google Cloud включает `iam.disableServiceAccountKeyCreation`, не отключайте защиту ради сайта. Используйте Apps Script gateway или Cloud Run gateway без private key.
+6. Gmail API через service account работает только в Google Workspace с domain-wide delegation. Для обычного `@gmail.com` используйте Resend как основной канал email, а `GOOGLE_SERVICE_ACCOUNT_SUBJECT` оставьте пустым.
+
+## Google Apps Script gateway
+
+1. Включите Apps Script API в пользовательских настройках: `https://script.google.com/home/usersettings`.
+2. В каталоге `integrations/google-apps-script-gateway/` создайте Apps Script project через `clasp create`, загрузите код через `clasp push`.
+3. Установите script property `GATEWAY_SECRET`.
+4. Разверните как Web App: execute as owner, access anyone with link.
+5. Добавьте в Cloudflare Pages secrets:
+   - `GOOGLE_APPS_SCRIPT_WEBHOOK_URL`
+   - `GOOGLE_GATEWAY_SECRET`
+   - `GOOGLE_CALENDAR_ID`
+   - `SHEET_ID`
+   - `DRIVE_UPLOAD_FOLDER`
 
 ## Microsoft Teams и Outlook
 

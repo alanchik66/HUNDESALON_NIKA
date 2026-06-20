@@ -30,6 +30,15 @@ function base64UrlEncode(value) {
     .replace(/=+$/g, '');
 }
 
+function base64Encode(value) {
+  const bytes = value instanceof Uint8Array ? value : new TextEncoder().encode(String(value));
+  let binary = '';
+  for (let index = 0; index < bytes.length; index += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+  }
+  return btoa(binary);
+}
+
 function pemToArrayBuffer(pem) {
   const normalized = String(pem || '').replace(/\\n/g, '\n');
   const base64 = normalized
@@ -158,12 +167,37 @@ export async function getMicrosoftGraphToken(env) {
     : '';
 }
 
+export async function callGoogleAppsScriptGateway(env, action, payload) {
+  const webhook = getEnvValue(env, 'GOOGLE_APPS_SCRIPT_WEBHOOK_URL');
+  if (!hasUsableValue(webhook)) {
+    return { ok: false, skipped: true, reason: 'Google Apps Script gateway is not configured.' };
+  }
+
+  return safeJsonFetch(webhook, {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({
+      action,
+      secret: getEnvValue(env, 'GOOGLE_GATEWAY_SECRET'),
+      ...payload,
+    }),
+  });
+}
+
 export async function appendGoogleSheetRow(env, { spreadsheetId, sheetName = 'bookings', values }) {
+  const appsScriptResult = await callGoogleAppsScriptGateway(env, 'sheets', { spreadsheetId, sheetName, values });
+  if (!appsScriptResult.skipped) {
+    return appsScriptResult;
+  }
+
   const webhook = getEnvValue(env, 'GOOGLE_SHEETS_WEBHOOK_URL');
   if (hasUsableValue(webhook)) {
     return safeJsonFetch(webhook, {
       method: 'POST',
-      headers: JSON_HEADERS,
+      headers: {
+        ...JSON_HEADERS,
+        'X-Hundesalon-Gateway-Secret': getEnvValue(env, 'GOOGLE_GATEWAY_SECRET'),
+      },
       body: JSON.stringify({ spreadsheetId, sheetName, values }),
     });
   }
@@ -190,6 +224,29 @@ export async function appendGoogleSheetRow(env, { spreadsheetId, sheetName = 'bo
 }
 
 export async function createGoogleCalendarEvent(env, { calendarId, summary, description, startDateTime, endDateTime }) {
+  const appsScriptResult = await callGoogleAppsScriptGateway(env, 'calendar', {
+    calendarId,
+    summary,
+    description,
+    startDateTime,
+    endDateTime,
+  });
+  if (!appsScriptResult.skipped) {
+    return appsScriptResult;
+  }
+
+  const webhook = getEnvValue(env, 'GOOGLE_CALENDAR_WEBHOOK_URL');
+  if (hasUsableValue(webhook)) {
+    return safeJsonFetch(webhook, {
+      method: 'POST',
+      headers: {
+        ...JSON_HEADERS,
+        'X-Hundesalon-Gateway-Secret': getEnvValue(env, 'GOOGLE_GATEWAY_SECRET'),
+      },
+      body: JSON.stringify({ calendarId, summary, description, startDateTime, endDateTime }),
+    });
+  }
+
   const token =
     (await getGoogleAccessToken(env, ['https://www.googleapis.com/auth/calendar'])) ||
     getEnvValue(env, 'GOOGLE_OAUTH_ACCESS_TOKEN');
@@ -335,12 +392,39 @@ export async function sendResendEmail(env, { to, subject, text, replyTo = '', fr
 }
 
 export async function uploadFileToDrive(env, { file, fileName, metadata = {} }) {
+  const appsScriptWebhook = getEnvValue(env, 'GOOGLE_APPS_SCRIPT_WEBHOOK_URL');
+  if (hasUsableValue(appsScriptWebhook)) {
+    const fileBytes = new Uint8Array(await file.arrayBuffer());
+    const appsScriptResult = await callGoogleAppsScriptGateway(env, 'drive', {
+      fileName,
+      mimeType: file.type || 'application/octet-stream',
+      fileBase64: base64Encode(fileBytes),
+      metadata,
+    });
+
+    if (appsScriptResult.ok && appsScriptResult.body?.fileUrl) {
+      return {
+        ...appsScriptResult,
+        body: {
+          ...appsScriptResult.body,
+          id: appsScriptResult.body.fileId || appsScriptResult.body.id,
+          webViewLink: appsScriptResult.body.fileUrl,
+        },
+      };
+    }
+    return appsScriptResult;
+  }
+
   const webhook = getEnvValue(env, 'GOOGLE_DRIVE_UPLOAD_WEBHOOK_URL');
   if (hasUsableValue(webhook)) {
     const formData = new FormData();
     formData.append('file', file, fileName);
     formData.append('metadata', JSON.stringify(metadata));
-    return safeJsonFetch(webhook, { method: 'POST', body: formData });
+    return safeJsonFetch(webhook, {
+      method: 'POST',
+      headers: { 'X-Hundesalon-Gateway-Secret': getEnvValue(env, 'GOOGLE_GATEWAY_SECRET') },
+      body: formData,
+    });
   }
 
   const token =

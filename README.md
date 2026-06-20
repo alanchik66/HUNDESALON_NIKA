@@ -242,6 +242,8 @@ npm run deploy
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | Google Cloud IAM service account | стабильный серверный доступ к Calendar, Sheets, Drive |
 | `GOOGLE_SERVICE_ACCOUNT_SUBJECT` | Google Workspace Admin | опционально для Gmail domain-wide delegation |
 | `GOOGLE_OAUTH_ACCESS_TOKEN` | Google Cloud OAuth / service gateway | временный fallback для Google API |
+| `GOOGLE_APPS_SCRIPT_WEBHOOK_URL` | Apps Script Web App | основной gateway для обычного Gmail-аккаунта без Workspace |
+| `GOOGLE_GATEWAY_SECRET` | локально сгенерированный секрет | защита Google gateway endpoint |
 | `GOOGLE_CALENDAR_ID` | Google Calendar settings | создание событий бронирования |
 | `SHEET_ID` | URL Google Sheets таблицы | лог бронирований и подписчиков |
 | `DRIVE_UPLOAD_FOLDER` | URL папки Google Drive | загрузка фото питомца |
