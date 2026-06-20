@@ -18,6 +18,7 @@ import {
     getEnvValue,
     sendGmailEmail,
     sendOutlookEmail,
+    sendResendEmail,
     sendTeamsMessage,
 } from './_lib/platform-integrations.js';
 
@@ -360,6 +361,12 @@ export async function onRequest(ctx) {
                 to: email,
                 subject: 'Ihre Buchungsanfrage bei HUNDESALON NIKA',
                 text: `Danke für Ihre Anfrage.\n\n${bookingSummary}`,
+            }),
+            sendResendEmail(env, {
+                to: email,
+                subject: 'Ihre Buchungsanfrage bei HUNDESALON NIKA',
+                text: `Danke für Ihre Anfrage.\n\n${bookingSummary}`,
+                replyTo: RECIPIENT,
             }),
             sendGmailEmail(env, {
                 to: RECIPIENT,

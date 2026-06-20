@@ -18,10 +18,14 @@
 
 - `GA_MEASUREMENT_ID`
 - `GOOGLE_OAUTH_ACCESS_TOKEN`
+- `GOOGLE_SERVICE_ACCOUNT_EMAIL`
+- `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`
+- `GOOGLE_SERVICE_ACCOUNT_SUBJECT`
 - `GOOGLE_CALENDAR_ID`
 - `SHEET_ID`
 - `DRIVE_UPLOAD_FOLDER`
 - `GMAIL_SENDER`
+- `RESEND_FROM`
 - `MS_TENANT_ID`
 - `MS_CLIENT_ID`
 - `MS_CLIENT_SECRET`
@@ -49,17 +53,22 @@
 
 1. Создайте проект в Google Cloud.
 2. Включите Gmail API, Calendar API, Sheets API и Drive API.
-3. Настройте OAuth consent screen.
-4. Создайте OAuth credentials или service gateway.
-5. Скопируйте access token/refresh-token flow в backend-сервис и отдавайте Cloudflare только рабочий серверный токен.
+3. Для Calendar, Sheets и Drive используйте service account: сохраните `GOOGLE_SERVICE_ACCOUNT_EMAIL` и `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` в Cloudflare secrets.
+4. Создайте отдельный календарь, таблицу и Drive-папку под этот service account; при необходимости расшарьте их владельцу салона.
+5. Gmail API через service account работает только в Google Workspace с domain-wide delegation. Для обычного `@gmail.com` используйте Resend/Microsoft Graph как основной канал email, а `GOOGLE_SERVICE_ACCOUNT_SUBJECT` оставьте пустым.
 
 ## Microsoft Teams и Outlook
 
 1. Создайте app registration в Microsoft Entra.
 2. Выдайте Microsoft Graph application permission `Mail.Send` и подтвердите admin consent.
-3. Создайте client secret и сохраните `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `OUTLOOK_SENDER`.
-4. Для Teams используйте `TEAMS_WEBHOOK_URL` как основной и самый стабильный канал уведомлений.
-5. `MS_GRAPH_ACCESS_TOKEN`, `TEAM_ID`, `TEAM_CHANNEL_ID` оставлены как fallback для ручной/делегированной Graph-настройки.
+3. Создайте client secret и сохраните `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET`.
+4. Укажите `OUTLOOK_SENDER` только если в tenant есть лицензированный Microsoft 365 mailbox. Без mailbox Cloudflare Function пропускает Outlook и не ломает заявку.
+5. Для Teams используйте `TEAMS_WEBHOOK_URL` как основной и самый стабильный канал уведомлений. Нужен существующий Teams channel с включённым incoming webhook.
+6. `MS_GRAPH_ACCESS_TOKEN`, `TEAM_ID`, `TEAM_CHANNEL_ID` оставлены как fallback для ручной/делегированной Graph-настройки.
+
+## Текущий продакшен-канал email
+
+Resend — основной рабочий канал для заявок и welcome-писем. Gmail API оставлен опционально: он включается только при `GOOGLE_OAUTH_ACCESS_TOKEN` или Google Workspace domain-wide delegation через `GOOGLE_SERVICE_ACCOUNT_SUBJECT`.
 
 ## Галерея до/после
 

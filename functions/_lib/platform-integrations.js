@@ -1,4 +1,7 @@
 const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8' };
+const FORM_HEADERS = { 'Content-Type': 'application/x-www-form-urlencoded' };
+const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
+const googleTokenCache = new Map();
 
 export function cleanText(value, maxLength = 2000) {
   return String(value ?? '')
@@ -15,6 +18,48 @@ export function hasUsableValue(value) {
   return Boolean(value) && !/ВАШ_|YOUR_|XXXXXXXX|TODO/i.test(value);
 }
 
+function base64UrlEncode(value) {
+  const bytes = value instanceof Uint8Array ? value : new TextEncoder().encode(String(value));
+  let binary = '';
+  for (let index = 0; index < bytes.length; index += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+  }
+  return btoa(binary)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+}
+
+function pemToArrayBuffer(pem) {
+  const normalized = String(pem || '').replace(/\\n/g, '\n');
+  const base64 = normalized
+    .replace(/-----BEGIN PRIVATE KEY-----/g, '')
+    .replace(/-----END PRIVATE KEY-----/g, '')
+    .replace(/\s+/g, '');
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes.buffer;
+}
+
+async function signServiceAccountJwt(privateKeyPem, unsignedJwt) {
+  const key = await crypto.subtle.importKey(
+    'pkcs8',
+    pemToArrayBuffer(privateKeyPem),
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign(
+    { name: 'RSASSA-PKCS1-v1_5' },
+    key,
+    new TextEncoder().encode(unsignedJwt)
+  );
+  return `${unsignedJwt}.${base64UrlEncode(new Uint8Array(signature))}`;
+}
+
 export async function safeJsonFetch(url, options = {}) {
   const response = await fetch(url, options);
   const bodyText = await response.text().catch(() => '');
@@ -27,6 +72,58 @@ export async function safeJsonFetch(url, options = {}) {
   }
 
   return { ok: response.ok, status: response.status, body };
+}
+
+export async function getGoogleAccessToken(env, scopes, subject = '') {
+  const email = getEnvValue(env, 'GOOGLE_SERVICE_ACCOUNT_EMAIL');
+  const privateKey = getEnvValue(env, 'GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY');
+  const scopeText = Array.isArray(scopes) ? scopes.join(' ') : String(scopes || '');
+  const normalizedSubject = getEnvValue(env, 'GOOGLE_SERVICE_ACCOUNT_SUBJECT', subject);
+
+  if (!hasUsableValue(email) || !hasUsableValue(privateKey) || !hasUsableValue(scopeText)) {
+    return '';
+  }
+
+  const cacheKey = `${email}|${scopeText}|${normalizedSubject}`;
+  const cached = googleTokenCache.get(cacheKey);
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (cached && cached.expiresAt - 90 > nowSeconds) {
+    return cached.token;
+  }
+
+  const header = base64UrlEncode(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+  const claims = {
+    iss: email,
+    scope: scopeText,
+    aud: GOOGLE_TOKEN_URL,
+    iat: nowSeconds,
+    exp: nowSeconds + 3600,
+  };
+  if (hasUsableValue(normalizedSubject)) {
+    claims.sub = normalizedSubject;
+  }
+
+  const unsignedJwt = `${header}.${base64UrlEncode(JSON.stringify(claims))}`;
+  const assertion = await signServiceAccountJwt(privateKey, unsignedJwt);
+  const tokenResponse = await safeJsonFetch(GOOGLE_TOKEN_URL, {
+    method: 'POST',
+    headers: FORM_HEADERS,
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion,
+    }),
+  });
+
+  if (!tokenResponse.ok || !hasUsableValue(tokenResponse.body?.access_token)) {
+    return '';
+  }
+
+  const token = tokenResponse.body.access_token;
+  googleTokenCache.set(cacheKey, {
+    token,
+    expiresAt: nowSeconds + Number(tokenResponse.body.expires_in || 3600),
+  });
+  return token;
 }
 
 export async function getMicrosoftGraphToken(env) {
@@ -71,7 +168,9 @@ export async function appendGoogleSheetRow(env, { spreadsheetId, sheetName = 'bo
     });
   }
 
-  const token = getEnvValue(env, 'GOOGLE_OAUTH_ACCESS_TOKEN');
+  const token =
+    (await getGoogleAccessToken(env, ['https://www.googleapis.com/auth/spreadsheets'])) ||
+    getEnvValue(env, 'GOOGLE_OAUTH_ACCESS_TOKEN');
   if (!hasUsableValue(token) || !hasUsableValue(spreadsheetId)) {
     return { ok: false, skipped: true, reason: 'Google Sheets credentials are not configured.' };
   }
@@ -91,7 +190,9 @@ export async function appendGoogleSheetRow(env, { spreadsheetId, sheetName = 'bo
 }
 
 export async function createGoogleCalendarEvent(env, { calendarId, summary, description, startDateTime, endDateTime }) {
-  const token = getEnvValue(env, 'GOOGLE_OAUTH_ACCESS_TOKEN');
+  const token =
+    (await getGoogleAccessToken(env, ['https://www.googleapis.com/auth/calendar'])) ||
+    getEnvValue(env, 'GOOGLE_OAUTH_ACCESS_TOKEN');
   if (!hasUsableValue(token) || !hasUsableValue(calendarId)) {
     return { ok: false, skipped: true, reason: 'Google Calendar credentials are not configured.' };
   }
@@ -139,8 +240,12 @@ export async function sendTeamsMessage(env, payload) {
 }
 
 export async function sendGmailEmail(env, { to, subject, text }) {
-  const token = getEnvValue(env, 'GOOGLE_OAUTH_ACCESS_TOKEN');
   const sender = getEnvValue(env, 'GMAIL_SENDER', 'info@hundesalon-nika.com');
+  const serviceAccountSubject = getEnvValue(env, 'GOOGLE_SERVICE_ACCOUNT_SUBJECT');
+  const token =
+    (hasUsableValue(serviceAccountSubject)
+      ? await getGoogleAccessToken(env, ['https://www.googleapis.com/auth/gmail.send'], serviceAccountSubject)
+      : '') || getEnvValue(env, 'GOOGLE_OAUTH_ACCESS_TOKEN');
   if (!hasUsableValue(token) || !hasUsableValue(to)) {
     return { ok: false, skipped: true, reason: 'Gmail credentials are not configured.' };
   }
@@ -176,7 +281,10 @@ export async function sendOutlookEmail(env, { to, subject, text }) {
   }
 
   const hasDirectToken = hasUsableValue(getEnvValue(env, 'MS_GRAPH_ACCESS_TOKEN'));
-  const sender = getEnvValue(env, 'OUTLOOK_SENDER', getEnvValue(env, 'GMAIL_SENDER', 'info@hundesalon-nika.com'));
+  const sender = getEnvValue(env, 'OUTLOOK_SENDER');
+  if (!hasDirectToken && !hasUsableValue(sender)) {
+    return { ok: false, skipped: true, reason: 'Outlook sender mailbox is not configured.' };
+  }
   const endpoint = hasDirectToken
     ? 'https://graph.microsoft.com/v1.0/me/sendMail'
     : `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(sender)}/sendMail`;
@@ -198,6 +306,34 @@ export async function sendOutlookEmail(env, { to, subject, text }) {
   });
 }
 
+export async function sendResendEmail(env, { to, subject, text, replyTo = '', from = '' }) {
+  const apiKey = getEnvValue(env, 'RESEND_API_KEY');
+  if (!hasUsableValue(apiKey) || !hasUsableValue(to)) {
+    return { ok: false, skipped: true, reason: 'Resend credentials are not configured.' };
+  }
+
+  const payload = {
+    from: from || getEnvValue(env, 'RESEND_FROM', 'Hundesalon Nika <noreply@hundesalon-nika.com>'),
+    to: [to],
+    subject,
+    text,
+  };
+  if (hasUsableValue(replyTo)) {
+    payload.reply_to = replyTo;
+  }
+
+  return safeJsonFetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      ...JSON_HEADERS,
+      Authorization: `Bearer ${apiKey}`,
+      'Idempotency-Key': crypto.randomUUID(),
+      'User-Agent': 'hundesalon-nika.com/1.0 (Cloudflare Pages Function)',
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function uploadFileToDrive(env, { file, fileName, metadata = {} }) {
   const webhook = getEnvValue(env, 'GOOGLE_DRIVE_UPLOAD_WEBHOOK_URL');
   if (hasUsableValue(webhook)) {
@@ -207,7 +343,9 @@ export async function uploadFileToDrive(env, { file, fileName, metadata = {} }) 
     return safeJsonFetch(webhook, { method: 'POST', body: formData });
   }
 
-  const token = getEnvValue(env, 'GOOGLE_OAUTH_ACCESS_TOKEN');
+  const token =
+    (await getGoogleAccessToken(env, ['https://www.googleapis.com/auth/drive.file'])) ||
+    getEnvValue(env, 'GOOGLE_OAUTH_ACCESS_TOKEN');
   const folderId = getEnvValue(env, 'DRIVE_UPLOAD_FOLDER');
   if (!hasUsableValue(token) || !hasUsableValue(folderId)) {
     return { ok: false, skipped: true, reason: 'Google Drive credentials are not configured.' };

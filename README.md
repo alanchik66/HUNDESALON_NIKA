@@ -239,16 +239,19 @@ npm run deploy
 | Переменная | Где взять | Для чего нужна |
 |------------|-----------|----------------|
 | `GA_MEASUREMENT_ID` | Google Analytics → Admin → Data streams | аналитика после cookie-согласия |
-| `GOOGLE_OAUTH_ACCESS_TOKEN` | Google Cloud OAuth / service gateway | Gmail, Calendar, Sheets, Drive API |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | Google Cloud IAM service account | стабильный серверный доступ к Calendar, Sheets, Drive |
+| `GOOGLE_SERVICE_ACCOUNT_SUBJECT` | Google Workspace Admin | опционально для Gmail domain-wide delegation |
+| `GOOGLE_OAUTH_ACCESS_TOKEN` | Google Cloud OAuth / service gateway | временный fallback для Google API |
 | `GOOGLE_CALENDAR_ID` | Google Calendar settings | создание событий бронирования |
 | `SHEET_ID` | URL Google Sheets таблицы | лог бронирований и подписчиков |
 | `DRIVE_UPLOAD_FOLDER` | URL папки Google Drive | загрузка фото питомца |
 | `GMAIL_SENDER` | Gmail/Workspace адрес | отправка welcome и подтверждений |
+| `RESEND_FROM` | Resend verified domain | основной отправитель transactional email |
 | `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET` | Microsoft Entra App Registration | постоянный серверный вход в Microsoft Graph |
 | `MS_GRAPH_ACCESS_TOKEN` | Microsoft Entra / Graph OAuth | временный fallback для Outlook Email и Teams через Graph |
-| `OUTLOOK_SENDER` | Microsoft 365 mailbox | отправитель для Graph `/users/{sender}/sendMail` |
+| `OUTLOOK_SENDER` | Microsoft 365 mailbox | опциональный отправитель для Graph `/users/{sender}/sendMail`; нужен лицензированный mailbox |
 | `TEAM_ID`, `TEAM_CHANNEL_ID` | Microsoft Teams / Graph | уведомления команды |
-| `TEAMS_WEBHOOK_URL` | Teams Incoming Webhook | быстрый канал уведомлений |
+| `TEAMS_WEBHOOK_URL` | Teams Incoming Webhook | быстрый канал уведомлений; нужен существующий Teams channel |
 | `RESEND_API_KEY` | Resend dashboard | резервная отправка писем с сайта |
 | `SLACK_WEBHOOK_URL` | Slack app webhook | текущий fallback-канал уведомлений |
 | `GOOGLE_SHEETS_WEBHOOK_URL` | ваш backend/service gateway | fallback-запись в Google Sheets |

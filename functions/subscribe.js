@@ -4,6 +4,7 @@ import {
   cleanText,
   getEnvValue,
   sendGmailEmail,
+  sendResendEmail,
   sendTeamsMessage,
 } from './_lib/platform-integrations.js';
 
@@ -51,6 +52,12 @@ export async function onRequest(context) {
     spreadsheetId: getEnvValue(env, 'SHEET_ID'),
     sheetName: 'subscribers',
     values: [createdAt, email, lang, page, originCheck.origin],
+  });
+
+  await sendResendEmail(env, {
+    to: email,
+    subject: 'HUNDESALON NIKA',
+    text: 'Danke für Ihre Anmeldung. Wir senden nur ausgewählte Neuigkeiten, Pflege-Tipps und Angebote.',
   });
 
   await sendGmailEmail(env, {
