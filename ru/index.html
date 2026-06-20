@@ -199,208 +199,16 @@
     <link rel="stylesheet" href="../assets/css/style.css?v=20260609-mobile-controls-equal-v1" />
     <link rel="stylesheet" href="../assets/fonts/fontawesome/all.min.css?v=20260329-0192" />
     <link rel="stylesheet" href="../assets/css/page-modules.css?v=20260606-booking-flow-v1" />
-  </head>
+  <link rel="stylesheet" href="../assets/css/cookie-consent.css?v=20260620-full-stack-upgrade">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=%GA_MEASUREMENT_ID%"></script>
+  <script src="../assets/js/analytics.js?v=20260620-full-stack-upgrade"></script>
+</head>
   <!-- ═══════════════════ Начало тела страницы ══════════════════════════ -->
   <body>
-    <!-- ─── Прелоадер: анимация загрузки ─── -->
-
-    <div id="preloader"><div class="loader"></div></div>
-
-    <!-- ══════════════════ Шапка сайта (Header) ═══════════════════════════ -->
-
-    <header class="header">
-      <div class="top-row">
-        <div class="logo-wrapper">
-          <div class="logo">
-            <a href="index.html">
-              <img
-                src="../assets/images/logo.png"
-                alt="HUNDESALON NIKA"
-                class="logo-img"
-                width="788"
-                height="788"
-                decoding="async"
-              />
-            </a>
-          </div>
-          <button class="premium-burger" id="burger-btn" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobile-nav">
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-        </div>
-        <!-- Главное навигационное меню -->
-
-        <nav class="nav-main">
-          <a href="o-nas.html" class="btn-neon">О НАС</a>
-          <a href="nashi-uslugi.html" class="btn-neon">НАШИ УСЛУГИ</a>
-          <a href="prays-list.html" class="btn-neon">ПРАЙС-ЛИСТ</a>
-          <div class="dropdown">
-            <a href="galereya.html" class="btn-neon">ГАЛЕРЕЯ</a>
-            <div class="dropdown-menu">
-              <a href="galereya.html">НАША ГАЛЕРЕЯ</a>
-              <a href="do-i-posle.html">ДО И ПОСЛЕ</a>
-            </div>
-          </div>
-          <a href="kontakty.html" class="btn-neon">КОНТАКТЫ</a>
-        </nav>
-
-        <!-- Управление: выбор языка, онлайн-запись, тема -->
-
-        <div class="header-controls">
-          <!-- Выбор языка сайта -->
-
-          <div class="language-dropdown">
-            <button class="lang-dropdown-btn" type="button" aria-label="Select language" title="Select language">
-              <i class="fas fa-globe"></i>
-              <i class="fas fa-chevron-down"></i>
-            </button>
-            <ul class="lang-dropdown-menu">
-              <li data-lang="de">
-                <span class="flag">🇩🇪</span>
-                Deutsch
-              </li>
-              <li data-lang="ru">
-                <span class="flag">🇷🇺</span>
-                Русский
-              </li>
-              <li data-lang="uk">
-                <span class="flag">🇺🇦</span>
-                Українська
-              </li>
-              <li data-lang="en">
-                <span class="flag">🇬🇧</span>
-                English
-              </li>
-            </ul>
-          </div>
-          <a href="onlayn-bronirovanie.html" class="header-online-btn">ОНЛАЙН ЗАКАЗ</a>
-          <button id="theme-toggle" class="theme-btn"></button>
-        </div>
-
-        <!-- ─── Панель социальных сетей и мини-плеер ─── -->
-
-        <div class="social-bar">
-          <div class="social-bar-inner">
-            <div class="social-bar-start">
-              <div class="social-home">
-                <a href="index.html" class="active" title="ГЛАВНАЯ"><span>ГЛАВНАЯ</span></a>
-              </div>
-              <span class="social-player-divider" aria-hidden="true"></span>
-              <div class="social-player-wrap">
-                <button
-                  class="social-player-toggle"
-                  type="button"
-                  aria-label="Spotify player"
-                  aria-expanded="false"
-                  aria-controls="social-spotify-panel"
-                >
-                  <span class="social-player-icon" aria-hidden="true"></span>
-                </button>
-                <div class="social-player-panel" id="social-spotify-panel" hidden aria-hidden="true">
-                  <iframe
-                    src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator"
-                    title="Spotify player"
-                    loading="lazy"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  ></iframe>
-                </div>
-              </div>
-            </div>
-            <!-- Иконки социальных сетей -->
-
-            <div class="social-icons">
-              <a
-                href="https://wa.me/4915151708888"
-                class="social-icon"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="WhatsApp"
-              >
-                <i class="fab fa-whatsapp"></i>
-              </a>
-              <a
-                href="https://t.me/hundesalon_nika"
-                class="social-icon"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Telegram"
-              >
-                <i class="fab fa-telegram"></i>
-              </a>
-              <a href="viber://chat?number=%2B4915151708888" class="social-icon" aria-label="Viber">
-                <i class="fab fa-viber"></i>
-              </a>
-              <a
-                href="https://www.instagram.com/hundesalon_nika?igsh=MWthdXgyY2llMWRndw=="
-                class="social-icon"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-              >
-                <i class="fab fa-instagram"></i>
-              </a>
-              <a
-                href="https://www.tiktok.com/@hundesalon_nika"
-                class="social-icon"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="TikTok"
-              >
-                <i class="fab fa-tiktok"></i>
-              </a>
-              <a
-                href="https://www.facebook.com/share/17SVsvkZEo/?mibextid=wwXIfr"
-                class="social-icon"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Facebook"
-              >
-                <i class="fab fa-facebook-f"></i>
-              </a>
-              <a
-                href="https://www.youtube.com/@hundesalon_nika"
-                class="social-icon"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="YouTube"
-              >
-                <i class="fab fa-youtube"></i>
-              </a>
-              <a href="social.html" class="social-icon" aria-label="Все соцсети"><i class="fas fa-share-alt"></i></a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- Mobile nav overlay -->
-    <!-- ══════════════ Мобильное меню (выезжающая панель) ═══════════════ -->
-
-    <div id="mobile-nav-overlay" hidden aria-hidden="true"></div>
-
-    <nav id="mobile-nav" aria-hidden="true">
-      <a href="vvedenie.html">ВВЕДЕНИЕ</a>
-      <a href="o-nas.html">О НАС</a>
-      <a href="nashi-uslugi.html">НАШИ УСЛУГИ</a>
-      <a href="prays-list.html">ПРАЙС-ЛИСТ</a>
-      <div class="mobile-dropdown">
-        <button class="mobile-dropdown-btn" id="mobile-gallery-btn">ГАЛЕРЕЯ</button>
-        <div class="mobile-dropdown-menu" id="mobile-gallery-menu">
-          <a href="galereya.html">НАША ГАЛЕРЕЯ</a>
-          <a href="do-i-posle.html">ДО И ПОСЛЕ</a>
-        </div>
-      </div>
-      <a href="index.html#promotions" class="promo-burger-btn">
-        <i class="fas fa-gift"></i>
-        АКЦИИ
-      </a>
-      <a href="kontakty.html">КОНТАКТЫ</a>
-      <div class="menu-separator"></div>
-      <a href="social.html">НАШИ СОЦИАЛЬНЫЕ СЕТИ</a>
-      <a href="reyting.html">РЕЙТИНГ</a>
-      <a href="partnerstvo.html">ПАРТНЕРСКОЕ ПРЕДЛОЖЕНИЕ</a>
-    </nav>
+    <!-- Header and mobile nav (built by site-shell.js) -->
+<header class="header"></header>
+<div id="mobile-nav-overlay" hidden aria-hidden="true"></div>
+<nav id="mobile-nav" aria-hidden="true"></nav>
 
     <main>
       <!-- ══════════════════ Секция Hero: главный баннер ═════════════════════ -->
@@ -543,15 +351,11 @@
     <section class="gallery section reveal">
       <div class="container">
         <h2 class="section-title">Фотогалерея</h2>
-        <p class="gallery-intro">Наши хвостатые клиенты выглядят и чувствуют себя прекрасно.</p>
-        <div class="gallery-grid">
-          <div class="gallery-item gallery-item-1"></div>
-          <div class="gallery-item gallery-item-2"></div>
-          <div class="gallery-item gallery-item-3"></div>
-          <div class="gallery-item gallery-item-4"></div>
-          <div class="gallery-item gallery-item-5"></div>
-          <div class="gallery-item gallery-item-6"></div>
-        </div>
+        <p class="gallery-intro">Интерактивная галерея: До и После — потяните ползунок!</p>
+
+        <!-- Interactive Before/After Gallery -->
+        <div class="gallery-before-after-grid" id="before-after-gallery"></div>
+
         <div class="gallery-cta">
           <a href="galereya.html" class="btn-neon">Смотреть все работы</a>
         </div>
@@ -582,12 +386,31 @@
         </div>
       </div>
     </section>
+    <section id="testimonials" class="testimonials-section section reveal"></section>
 
     </main>
 
     <!-- ══════════════════ Подвал сайта (Footer) ══════════════════════════ -->
 
-    <footer class="footer">
+<section class="newsletter-section section reveal" data-newsletter-section>
+  <div class="container">
+    <div class="newsletter-card">
+      <div>
+        <p class="section-kicker">Письма салона</p>
+        <h2 class="section-title">Советы по уходу и предложения на email</h2>
+        <p>Только отборные рекомендации, сезонный уход и тёплые предложения от HUNDESALON NIKA.</p>
+      </div>
+      <form class="newsletter-form" data-newsletter-form action="/subscribe" method="POST">
+        <input type="hidden" name="lang" value="ru">
+        <input type="hidden" name="page" value="">
+        <input type="email" name="email" placeholder="Email" autocomplete="email" required>
+        <button type="submit" class="btn-neon">Подписаться</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
       <div class="footer-container">
         <div class="footer-nav">
           <a href="o-nas.html">О НАС</a>
@@ -664,5 +487,10 @@
     <script src="../assets/js/main.js?v=20260515-02"></script>
     <script src="../assets/js/page-modules.js?v=20260613-message-draft-v2"></script>
     <script src="../assets/js/tooltip.js?v=20260330-0001"></script>
-  </body>
+    <script src="../assets/js/before-after.js?v=20260618-before-after-v1"></script>
+<script src="../assets/js/cookie-consent.js?v=20260620-full-stack-upgrade"></script>
+<script src="../assets/js/newsletter.js?v=20260620-full-stack-upgrade"></script>
+<script src="../assets/js/pwa.js?v=20260620-full-stack-upgrade"></script>
+<script src="../assets/js/testimonials.js?v=20260620-full-stack-upgrade"></script>
+</body>
 </html>

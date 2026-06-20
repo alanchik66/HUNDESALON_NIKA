@@ -1,0 +1,58 @@
+[
+  {
+    "language": "de",
+    "name": "Anna K.",
+    "petName": "Milo",
+    "text": "Sehr ruhige Betreuung, liebevolle Details und ein Schnitt, der wirklich zum Hund passt.",
+    "photoUrl": "/assets/images/testimonials/anna-milo.jpg"
+  },
+  {
+    "language": "de",
+    "name": "Sofia M.",
+    "petName": "Luna",
+    "text": "Unsere Katze wurde sanft gepflegt. Die Atmosphäre war warm, sauber und sehr professionell.",
+    "photoUrl": "/assets/images/testimonials/sofia-luna.jpg"
+  },
+  {
+    "language": "ru",
+    "name": "Анна К.",
+    "petName": "Мило",
+    "text": "Очень спокойный подход, забота в деталях и стрижка, которая действительно подошла собаке.",
+    "photoUrl": "/assets/images/testimonials/anna-milo.jpg"
+  },
+  {
+    "language": "ru",
+    "name": "София М.",
+    "petName": "Луна",
+    "text": "Кошку привели в порядок мягко и бережно. Атмосфера тёплая, чистая и очень профессиональная.",
+    "photoUrl": "/assets/images/testimonials/sofia-luna.jpg"
+  },
+  {
+    "language": "en",
+    "name": "Anna K.",
+    "petName": "Milo",
+    "text": "Calm handling, caring details, and a haircut that truly fits our dog.",
+    "photoUrl": "/assets/images/testimonials/anna-milo.jpg"
+  },
+  {
+    "language": "en",
+    "name": "Sofia M.",
+    "petName": "Luna",
+    "text": "Our cat was groomed gently. The atmosphere felt warm, clean, and very professional.",
+    "photoUrl": "/assets/images/testimonials/sofia-luna.jpg"
+  },
+  {
+    "language": "uk",
+    "name": "Анна К.",
+    "petName": "Міло",
+    "text": "Дуже спокійний підхід, турбота в деталях і стрижка, яка справді пасує собаці.",
+    "photoUrl": "/assets/images/testimonials/anna-milo.jpg"
+  },
+  {
+    "language": "uk",
+    "name": "Софія М.",
+    "petName": "Луна",
+    "text": "Кішку привели до ладу мʼяко й дбайливо. Атмосфера тепла, чиста та дуже професійна.",
+    "photoUrl": "/assets/images/testimonials/sofia-luna.jpg"
+  }
+]

@@ -853,6 +853,260 @@ body.light .direct-booking-btn:focus-visible {
   color: rgb(255 218 218 / 96%);
 }
 
+.booking-native-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 16px 0 18px;
+}
+
+.booking-field-label,
+.booking-check-label {
+  display: grid;
+  gap: 7px;
+  color: rgb(255 246 224 / 88%);
+  font-size: 0.92rem;
+}
+
+.booking-field-label input,
+.booking-field-label select {
+  min-height: 44px;
+  width: 100%;
+  color: #fff7e8;
+  background: rgb(255 255 255 / 8%);
+  border: 1px solid rgb(236 205 138 / 24%);
+  border-radius: 8px;
+  padding: 0 12px;
+}
+
+.booking-check-label {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  margin: 10px 0;
+  line-height: 1.45;
+}
+
+.booking-check-label input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: #d7af62;
+}
+
+.booking-file-preview,
+.booking-summary {
+  margin: 14px 0;
+  padding: 14px;
+  color: rgb(255 247 232 / 90%);
+  background:
+    radial-gradient(circle at 0 0, rgb(236 205 138 / 14%), transparent 34%),
+    rgb(255 255 255 / 6%);
+  border: 1px solid rgb(236 205 138 / 24%);
+  border-radius: 8px;
+}
+
+.booking-summary[hidden],
+.booking-file-preview[hidden] {
+  display: none;
+}
+
+.booking-summary h4 {
+  margin: 0 0 10px;
+  color: #f5d995;
+  font-size: 1rem;
+}
+
+.booking-summary dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 14px;
+  margin: 0;
+}
+
+.booking-summary dt {
+  color: rgb(255 247 232 / 66%);
+}
+
+.booking-summary dd {
+  margin: 0;
+  color: #fff7e8;
+}
+
+.booking-file-preview img {
+  display: block;
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border: 1px solid rgb(236 205 138 / 32%);
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.newsletter-section,
+.documents-section,
+.seo-local-section,
+.testimonials-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.newsletter-card,
+.document-card,
+.testimonial-card,
+.seo-local-card {
+  border: 1px solid rgb(236 205 138 / 22%);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 10% 0%, rgb(236 205 138 / 18%), transparent 38%),
+    rgb(255 255 255 / 6%);
+  box-shadow:
+    0 18px 52px rgb(0 0 0 / 28%),
+    inset 0 1px 0 rgb(255 255 255 / 10%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.section-kicker {
+  margin: 0 0 8px;
+  color: #f1ce83;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.testimonials-grid,
+.documents-grid,
+.seo-local-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.testimonial-card {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 16px;
+  padding: 18px;
+}
+
+.testimonial-card img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border: 1px solid rgb(236 205 138 / 40%);
+  border-radius: 50%;
+}
+
+.testimonial-card__text,
+.testimonial-card__author,
+.document-card p,
+.seo-local-card p,
+.newsletter-card p {
+  margin: 0;
+  color: rgb(255 247 232 / 82%);
+  line-height: 1.55;
+}
+
+.testimonial-card__author {
+  margin-top: 12px;
+  color: #f3d58f;
+  font-weight: 700;
+}
+
+.testimonial-card--empty {
+  grid-column: 1 / -1;
+}
+
+.newsletter-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 24px;
+  align-items: center;
+  padding: clamp(22px, 4vw, 34px);
+}
+
+.newsletter-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.newsletter-form input {
+  min-height: 48px;
+  color: #fff7e8;
+  background: rgb(255 255 255 / 8%);
+  border: 1px solid rgb(236 205 138 / 26%);
+  border-radius: 8px;
+  padding: 0 14px;
+}
+
+.newsletter-form .btn-neon {
+  min-height: 48px;
+  border: 0;
+}
+
+.newsletter-form__status {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  font-size: 0.92rem;
+}
+
+.newsletter-form__status--success {
+  color: #d8f6d2;
+}
+
+.newsletter-form__status--error {
+  color: #ffd0d0;
+}
+
+.document-card,
+.seo-local-card {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+}
+
+.document-card h3,
+.seo-local-card h2,
+.seo-local-card h3 {
+  margin: 0;
+  color: #fff2d4;
+}
+
+.seo-local-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: rgb(255 247 232 / 84%);
+  line-height: 1.7;
+}
+
+body.light .booking-field-label,
+body.light .booking-check-label,
+body.light .testimonial-card__text,
+body.light .document-card p,
+body.light .seo-local-card p,
+body.light .newsletter-card p {
+  color: rgb(33 24 12 / 78%);
+}
+
+body.light .booking-field-label input,
+body.light .booking-field-label select,
+body.light .newsletter-form input {
+  color: #24180d;
+  background: rgb(255 255 255 / 72%);
+}
+
+@media (width <= 820px) {
+  .booking-native-grid,
+  .newsletter-card,
+  .newsletter-form,
+  .testimonials-grid,
+  .documents-grid,
+  .seo-local-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .service-list {
   display: flex;
   flex-direction: column;
@@ -1584,4 +1838,278 @@ body .btn-read:hover .site-icon-arrow-right {
   .social-grid > .social-card:last-child:nth-child(2n + 1) {
     grid-column: auto;
   }
+}
+
+/* =========================================================
+   BEFORE/AFTER SLIDER COMPONENT
+   ========================================================= */
+
+.before-after-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.before-after-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.before-after-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
+
+.before-after-before {
+  z-index: 1;
+}
+
+.before-after-after {
+  z-index: 2;
+  clip-path: inset(0 50% 0 0);
+  transition: clip-path 0.1s ease-out;
+}
+
+.before-after-slider {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--accent-gold) 20%,
+    var(--accent-gold) 80%,
+    transparent
+  );
+  z-index: 10;
+  cursor: ew-resize;
+  transform: translateX(-50%);
+  box-shadow: 0 0 20px rgba(198, 161, 91, 0.4);
+}
+
+.before-after-slider::before {
+  content: '◀ ▶';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  background: var(--accent-gold);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 24px rgba(198, 161, 91, 0.6);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-size: 14px;
+  color: var(--bg-dark);
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.before-after-slider:hover::before {
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow: 0 0 32px rgba(198, 161, 91, 0.8);
+}
+
+.before-after-label {
+  position: absolute;
+  bottom: 16px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 20px;
+  z-index: 5;
+  pointer-events: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: opacity 0.3s ease;
+}
+
+.before-after-label-before {
+  left: 16px;
+}
+
+.before-after-label-after {
+  right: 16px;
+}
+
+.before-after-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-dark));
+  color: var(--bg-dark);
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 12px;
+  z-index: 5;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 12px rgba(198, 161, 91, 0.3);
+}
+
+/* Gallery Grid with Before/After */
+.gallery-before-after-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.before-after-card {
+  position: relative;
+  aspect-ratio: 4/3;
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.before-after-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
+}
+
+.before-after-card-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  z-index: 15;
+  color: white;
+}
+
+.before-after-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: var(--accent-gold);
+}
+
+.before-after-card-description {
+  font-size: 13px;
+  opacity: 0.9;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Filter Buttons */
+.before-after-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+  justify-content: center;
+}
+
+.filter-btn {
+  padding: 10px 20px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  color: var(--text-dark);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-btn:hover {
+  background: var(--accent-gold);
+  color: var(--bg-dark);
+  border-color: var(--accent-gold);
+  transform: translateY(-2px);
+}
+
+.filter-btn.active {
+  background: var(--accent-gold);
+  color: var(--bg-dark);
+  border-color: var(--accent-gold);
+  box-shadow: 0 4px 12px rgba(198, 161, 91, 0.4);
+}
+
+/* Touch-friendly for mobile */
+@media (max-width: 768px) {
+  .before-after-slider::before {
+    width: 52px;
+    height: 52px;
+    font-size: 12px;
+  }
+
+  .gallery-before-after-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .before-after-filters {
+    gap: 8px;
+  }
+
+  .filter-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .before-after-label {
+    font-size: 12px;
+    padding: 6px 12px;
+    bottom: 12px;
+  }
+
+  .before-after-badge {
+    font-size: 11px;
+    padding: 5px 12px;
+    top: 12px;
+  }
+}
+
+/* Light theme adjustments */
+body.light .before-after-slider {
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--accent-gold-dark) 20%,
+    var(--accent-gold-dark) 80%,
+    transparent
+  );
+}
+
+body.light .before-after-label {
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--text-light);
+}
+
+body.light .before-after-slider::before {
+  background: var(--accent-gold-dark);
 }

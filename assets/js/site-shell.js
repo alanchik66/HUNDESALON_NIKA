@@ -68,6 +68,8 @@
       rating: 'РЕЙТИНГ',
       partner: 'ПАРТНЕРСКОЕ ПРЕДЛОЖЕНИЕ',
       promotions: 'АКЦИИ',
+      documents: 'ДОКУМЕНТЫ',
+      localSeo: 'ГРУМИНГ В ЛЕЙПЦИГЕ',
       selectLanguage: 'Выбрать язык',
     },
     uk: {
@@ -86,6 +88,8 @@
       rating: 'РЕЙТИНГ І ВІДГУКИ',
       partner: 'ПАРТНЕРСЬКА ПРОПОЗИЦІЯ',
       promotions: 'АКЦІЇ',
+      documents: 'ДОКУМЕНТИ',
+      localSeo: 'ГРУМІНГ У ЛЕЙПЦИГУ',
       selectLanguage: 'Обрати мову',
     },
     de: {
@@ -104,6 +108,8 @@
       rating: 'BEWERTUNGEN',
       partner: 'PARTNERSCHAFT',
       promotions: 'ANGEBOTE',
+      documents: 'DOKUMENTE',
+      localSeo: 'HUNDEFRISEUR LEIPZIG',
       selectLanguage: 'Sprache wählen',
     },
     en: {
@@ -122,6 +128,8 @@
       rating: 'RATING',
       partner: 'PARTNERSHIP OFFER',
       promotions: 'PROMOTIONS',
+      documents: 'DOCUMENTS',
+      localSeo: 'DOG GROOMING LEIPZIG',
       selectLanguage: 'Select language',
     },
   };
@@ -3487,9 +3495,14 @@
     'onlayn-bronirovanie.html',
     'blog.html',
     'blog/kak-podgotovit-sobaku.html',
+    'blog/preimushchestva-ekspress-linki.html',
     'blog/plokhaya-strizhka.html',
     'blog/strizhka-koshek.html',
     'blog/zashchita-ot-parazitov.html',
+    'documents.html',
+    'hundefriseur-leipzig.html',
+    'hundesalon-leipzig.html',
+    'dog-grooming-leipzig.html',
     'vvedenie.html',
     'social.html',
     'reyting.html',
@@ -3833,6 +3846,8 @@
   <a href="${pathPrefix}social.html" class="mobile-nav-link--secondary">${copy.socials}</a>
   <a href="${pathPrefix}reyting.html" class="mobile-nav-link--secondary">${copy.rating}</a>
   <a href="${pathPrefix}partnerstvo.html" class="mobile-nav-link--secondary">${copy.partner}</a>
+  <a href="${pathPrefix}documents.html" class="mobile-nav-link--secondary">${copy.documents}</a>
+  <a href="${pathPrefix}hundefriseur-leipzig.html" class="mobile-nav-link--secondary">${copy.localSeo}</a>
   <a href="${pathPrefix}onlayn-bronirovanie.html" class="mobile-nav-link--secondary">${copy.booking}</a>`;
 
     const activeClass = key => (activeKey === key ? ' active' : '');

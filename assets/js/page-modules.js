@@ -17,89 +17,145 @@ document.addEventListener('DOMContentLoaded', () => {
     ru: {
       weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
       services: [
-        'Стрижка собак (мелкие)',
-        'Стрижка собак (средние)',
-        'Стрижка собак (крупные)',
-        'Стрижка собак (XXL)',
-        'Стрижка кошек',
-        'Стрижка кроликов',
-        'Тримминг',
+        'Стрижка собак',
         'Купание',
-        'Чистка зубов ультразвуком',
-        'Креативный груминг',
-        'Озонотерапия',
+        'Тримминг',
+        'Экспресс-линька',
+        'Стрижка кошек',
       ],
       fallbackService: 'Выбранная услуга',
       chooseService: 'Выберите услугу',
       chooseDate: 'Выберите дату',
       chooseTime: 'Выберите время',
       chooseContact: 'Заполните имя, email и телефон',
+      choosePrivacy: 'Подтвердите согласие на обработку персональных данных',
+      dateInPast: 'Выберите будущую дату',
+      fileType: 'Можно загрузить только JPG или PNG',
+      fileSize: 'Файл должен быть не больше 5 МБ',
+      summaryTitle: 'Проверьте запись перед отправкой',
+      summaryConfirm: 'Подтвердить и отправить',
+      summaryEdit: 'Изменить данные',
+      labels: {
+        service: 'Услуга',
+        date: 'Дата',
+        time: 'Время',
+        name: 'Имя',
+        email: 'Email',
+        phone: 'Телефон',
+        payment: 'Оплата',
+        file: 'Файл',
+        payNow: 'Оплатить сейчас',
+        payLater: 'Оплата в салоне',
+        noFile: 'Без файла',
+      },
       closeModal: 'Закрыть окно',
     },
     uk: {
       weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
       services: [
-        'Стрижка собак (малі)',
-        'Стрижка собак (середні)',
-        'Стрижка собак (великі)',
-        'Стрижка собак (XXL)',
-        'Стрижка котів',
-        'Стрижка кроликів',
-        'Тримінг',
+        'Стрижка собак',
         'Купання',
-        'Чистка зубів ультразвуком',
-        'Креативний грумінг',
-        'Озонотерапія',
+        'Тримінг',
+        'Експрес-линька',
+        'Стрижка котів',
       ],
       fallbackService: 'Обрана послуга',
       chooseService: 'Оберіть послугу',
       chooseDate: 'Оберіть дату',
       chooseTime: 'Оберіть час',
       chooseContact: 'Заповніть імʼя, email і телефон',
+      choosePrivacy: 'Підтвердьте згоду на обробку персональних даних',
+      dateInPast: 'Оберіть майбутню дату',
+      fileType: 'Можна завантажити лише JPG або PNG',
+      fileSize: 'Файл має бути не більше 5 МБ',
+      summaryTitle: 'Перевірте запис перед надсиланням',
+      summaryConfirm: 'Підтвердити й надіслати',
+      summaryEdit: 'Змінити дані',
+      labels: {
+        service: 'Послуга',
+        date: 'Дата',
+        time: 'Час',
+        name: 'Імʼя',
+        email: 'Email',
+        phone: 'Телефон',
+        payment: 'Оплата',
+        file: 'Файл',
+        payNow: 'Оплатити зараз',
+        payLater: 'Оплата в салоні',
+        noFile: 'Без файлу',
+      },
       closeModal: 'Закрити вікно',
     },
     en: {
       weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
       services: [
-        'Dog grooming (small)',
-        'Dog grooming (medium)',
-        'Dog grooming (large)',
-        'Dog grooming (XXL)',
-        'Cat grooming',
-        'Rabbit grooming',
-        'Hand stripping',
+        'Dog haircut',
         'Bathing',
-        'Ultrasonic teeth cleaning',
-        'Creative grooming',
-        'Ozone therapy',
+        'Hand stripping',
+        'Express deshedding',
+        'Cat grooming',
       ],
       fallbackService: 'Selected service',
       chooseService: 'Please select a service',
       chooseDate: 'Please select a date',
       chooseTime: 'Please select a time',
       chooseContact: 'Please fill in name, email, and phone',
+      choosePrivacy: 'Please confirm personal data processing consent',
+      dateInPast: 'Please choose a future date',
+      fileType: 'Only JPG or PNG files are allowed',
+      fileSize: 'File size must be up to 5 MB',
+      summaryTitle: 'Review your booking before sending',
+      summaryConfirm: 'Confirm and send',
+      summaryEdit: 'Edit details',
+      labels: {
+        service: 'Service',
+        date: 'Date',
+        time: 'Time',
+        name: 'Name',
+        email: 'Email',
+        phone: 'Phone',
+        payment: 'Payment',
+        file: 'File',
+        payNow: 'Pay now',
+        payLater: 'Pay at salon',
+        noFile: 'No file',
+      },
       closeModal: 'Close dialog',
     },
     de: {
       weekdays: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
       services: [
-        'Hundefrisur (klein)',
-        'Hundefrisur (mittel)',
-        'Hundefrisur (groß)',
-        'Hundefrisur (XXL)',
-        'Katzenpflege',
-        'Kaninchenpflege',
-        'Trimming',
+        'Hundeschnitt',
         'Baden',
-        'Ultraschall-Zahnreinigung',
-        'Kreatives Grooming',
-        'Ozontherapie',
+        'Trimming',
+        'Express-Fellwechselpflege',
+        'Katzenpflege',
       ],
       fallbackService: 'Ausgewählte Leistung',
       chooseService: 'Bitte wählen Sie eine Leistung',
       chooseDate: 'Bitte wählen Sie ein Datum',
       chooseTime: 'Bitte wählen Sie eine Uhrzeit',
       chooseContact: 'Bitte füllen Sie Name, E-Mail und Telefon aus',
+      choosePrivacy: 'Bitte bestätigen Sie die Verarbeitung personenbezogener Daten',
+      dateInPast: 'Bitte wählen Sie ein zukünftiges Datum',
+      fileType: 'Nur JPG- oder PNG-Dateien sind erlaubt',
+      fileSize: 'Die Datei darf maximal 5 MB groß sein',
+      summaryTitle: 'Bitte prüfen Sie Ihre Buchung vor dem Absenden',
+      summaryConfirm: 'Bestätigen und senden',
+      summaryEdit: 'Angaben ändern',
+      labels: {
+        service: 'Leistung',
+        date: 'Datum',
+        time: 'Uhrzeit',
+        name: 'Name',
+        email: 'E-Mail',
+        phone: 'Telefon',
+        payment: 'Zahlung',
+        file: 'Datei',
+        payNow: 'Jetzt bezahlen',
+        payLater: 'Zahlung im Salon',
+        noFile: 'Keine Datei',
+      },
       closeModal: 'Dialog schließen',
     },
   };
@@ -559,6 +615,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedServiceField = modal.querySelector('#selected-service');
     const selectedDateField = modal.querySelector('#selected-date');
     const selectedTimeField = modal.querySelector('#selected-time');
+    const bookingFileInput = modal.querySelector('input[name="pet_photo"]');
+    const privacyInput = modal.querySelector('input[name="privacy_consent"]');
+    const paymentInput = modal.querySelector('input[name="payment_now"]');
+    const uploadedFileUrlField = modal.querySelector('input[name="uploaded_file_url"]');
+    const bookingSummary = modal.querySelector('[data-booking-summary]');
+    const bookingFilePreview = modal.querySelector('[data-booking-file-preview]');
     const steps = Array.from(modal.querySelectorAll('.step'));
     const panels = {
       1: modal.querySelector('#step-1'),
@@ -610,6 +672,8 @@ document.addEventListener('DOMContentLoaded', () => {
       selectedService: selectedServiceField.value || '',
       selectedDate: selectedDateField.value || '',
       selectedTime: selectedTimeField.value || '',
+      summaryConfirmed: false,
+      uploadedFileUrl: uploadedFileUrlField?.value || '',
     };
     let lastFocusedElement = null;
     const formatLocalDate = date => {
@@ -623,6 +687,18 @@ document.addEventListener('DOMContentLoaded', () => {
       selectedServiceField.value = state.selectedService;
       selectedDateField.value = state.selectedDate;
       selectedTimeField.value = state.selectedTime;
+      if (uploadedFileUrlField) {
+        uploadedFileUrlField.value = state.uploadedFileUrl;
+      }
+    };
+
+    const resetSummaryConfirmation = () => {
+      state.summaryConfirmed = false;
+      bookingSummary?.setAttribute('hidden', 'hidden');
+      const submitBtn = form.querySelector('[type="submit"]');
+      if (submitBtn && submitBtn.dataset.originalText) {
+        submitBtn.textContent = submitBtn.dataset.originalText;
+      }
     };
 
     const clearValidationMessage = () => {
@@ -641,6 +717,123 @@ document.addEventListener('DOMContentLoaded', () => {
       window.requestAnimationFrame(() => {
         (focusTarget || validationMessage)?.focus?.({ preventScroll: true });
       });
+    };
+
+    const isFutureDate = value => {
+      if (!value) {
+        return false;
+      }
+      const selected = new Date(`${value}T00:00:00`);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      return selected >= today;
+    };
+
+    const validateBookingFile = () => {
+      const file = bookingFileInput?.files?.[0];
+      if (!file) {
+        return true;
+      }
+
+      const allowedTypes = ['image/jpeg', 'image/png'];
+      if (!allowedTypes.includes(file.type)) {
+        showValidationMessage(bookingCopy.fileType, bookingFileInput);
+        return false;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        showValidationMessage(bookingCopy.fileSize, bookingFileInput);
+        return false;
+      }
+
+      return true;
+    };
+
+    const renderFilePreview = () => {
+      if (!bookingFilePreview || !bookingFileInput) {
+        return;
+      }
+
+      const file = bookingFileInput.files?.[0];
+      if (!file) {
+        bookingFilePreview.hidden = true;
+        bookingFilePreview.innerHTML = '';
+        return;
+      }
+
+      const previewUrl = URL.createObjectURL(file);
+      bookingFilePreview.hidden = false;
+      bookingFilePreview.innerHTML = `
+        <span>${bookingCopy.labels.file}: ${file.name}</span>
+        <img src="${previewUrl}" alt="" loading="lazy">
+      `;
+    };
+
+    const ensureBookingFileUploaded = async () => {
+      const file = bookingFileInput?.files?.[0];
+      if (!file || state.uploadedFileUrl) {
+        return true;
+      }
+
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      uploadData.append('lang', pageLang);
+      uploadData.append('service', state.selectedService);
+      uploadData.append('date', state.selectedDate);
+      uploadData.append('time', state.selectedTime);
+
+      try {
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: uploadData,
+          headers: { Accept: 'application/json' },
+        });
+        const result = await response.json().catch(() => ({}));
+        if (response.ok && result.success && result.fileUrl) {
+          state.uploadedFileUrl = result.fileUrl;
+          syncHiddenFields();
+          if (bookingFilePreview) {
+            bookingFilePreview.hidden = false;
+            const link = document.createElement('a');
+            link.href = result.fileUrl;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = result.fileUrl;
+            bookingFilePreview.appendChild(link);
+          }
+        }
+        return true;
+      } catch {
+        return true;
+      }
+    };
+
+    const renderBookingSummary = ({ nameValue, emailValue, phoneValue }) => {
+      if (!bookingSummary) {
+        return;
+      }
+
+      const labels = bookingCopy.labels;
+      const file = bookingFileInput?.files?.[0];
+      const paymentLabel = paymentInput?.checked ? labels.payNow : labels.payLater;
+      const rows = [
+        [labels.service, state.selectedService],
+        [labels.date, state.selectedDate],
+        [labels.time, state.selectedTime],
+        [labels.name, nameValue],
+        [labels.email, emailValue],
+        [labels.phone, phoneValue],
+        [labels.payment, paymentLabel],
+        [labels.file, state.uploadedFileUrl || file?.name || labels.noFile],
+      ];
+
+      bookingSummary.innerHTML = `
+        <h4>${bookingCopy.summaryTitle}</h4>
+        <dl>
+          ${rows.map(([label, value]) => `<dt>${label}</dt><dd>${value || '—'}</dd>`).join('')}
+        </dl>
+      `;
+      bookingSummary.hidden = false;
     };
 
     const setStep = step => {
@@ -675,6 +868,7 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('click', () => {
           state.selectedService = serviceName;
           syncHiddenFields();
+          resetSummaryConfirmation();
           clearValidationMessage();
           renderServiceList();
         });
@@ -733,6 +927,7 @@ document.addEventListener('DOMContentLoaded', () => {
           cell.addEventListener('click', () => {
             state.selectedDate = isoDate;
             syncHiddenFields();
+            resetSummaryConfirmation();
             clearValidationMessage();
             renderCalendar();
           });
@@ -772,11 +967,48 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('click', () => {
           state.selectedTime = time;
           syncHiddenFields();
+          resetSummaryConfirmation();
           clearValidationMessage();
           renderTimeSlots();
         });
 
-        timeSlotsContainer.appendChild(button);
+      timeSlotsContainer.appendChild(button);
+      });
+    };
+
+    const bindNativeBookingFields = () => {
+      const today = formatLocalDate(new Date());
+      selectedDateField.setAttribute('min', today);
+      selectedTimeField.setAttribute('min', '09:00');
+      selectedTimeField.setAttribute('max', '19:00');
+
+      selectedDateField.addEventListener('change', () => {
+        state.selectedDate = selectedDateField.value;
+        resetSummaryConfirmation();
+        clearValidationMessage();
+        renderCalendar();
+      });
+
+      selectedTimeField.addEventListener('change', () => {
+        state.selectedTime = selectedTimeField.value;
+        resetSummaryConfirmation();
+        clearValidationMessage();
+        renderTimeSlots();
+      });
+
+      form.querySelectorAll('input, textarea, select').forEach(control => {
+        control.addEventListener('input', resetSummaryConfirmation);
+        control.addEventListener('change', resetSummaryConfirmation);
+      });
+
+      bookingFileInput?.addEventListener('change', () => {
+        state.uploadedFileUrl = '';
+        syncHiddenFields();
+        resetSummaryConfirmation();
+        clearValidationMessage();
+        if (validateBookingFile()) {
+          renderFilePreview();
+        }
       });
     };
 
@@ -794,7 +1026,9 @@ document.addEventListener('DOMContentLoaded', () => {
       lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       state.step = 1;
       state.selectedService = serviceName || state.selectedService;
+      state.summaryConfirmed = false;
       clearValidationMessage();
+      resetSummaryConfirmation();
       modal.classList.remove('booking-modal-sent');
       syncHiddenFields();
       setStep(1);
@@ -810,6 +1044,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const closeModal = () => {
       clearValidationMessage();
+      resetSummaryConfirmation();
       modal.classList.remove('booking-modal-sent');
       modal.classList.remove('active');
       modal.setAttribute('aria-hidden', 'true');
@@ -837,6 +1072,11 @@ document.addEventListener('DOMContentLoaded', () => {
           bookingCopy.chooseDate,
           calendarContainer.querySelector('.calendar-day.selected, .calendar-day:not(.is-empty):not(.is-disabled)')
         );
+        return;
+      }
+
+      if (!isFutureDate(state.selectedDate)) {
+        showValidationMessage(bookingCopy.dateInPast, selectedDateField);
         return;
       }
 
@@ -911,6 +1151,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      if (!isFutureDate(state.selectedDate)) {
+        setStep(2);
+        renderCalendar();
+        renderTimeSlots();
+        showValidationMessage(bookingCopy.dateInPast, selectedDateField);
+        return;
+      }
+
       if (!state.selectedTime) {
         setStep(2);
         renderCalendar();
@@ -941,6 +1189,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      if (!validateBookingFile()) {
+        setStep(3);
+        return;
+      }
+
+      if (privacyInput && !privacyInput.checked) {
+        setStep(3);
+        showValidationMessage(bookingCopy.choosePrivacy, privacyInput);
+        return;
+      }
+
+      if (!state.summaryConfirmed) {
+        renderBookingSummary({ nameValue, emailValue, phoneValue });
+        state.summaryConfirmed = true;
+        const submitBtn = form.querySelector('[type="submit"]');
+        if (submitBtn) {
+          submitBtn.dataset.originalText = submitBtn.dataset.originalText || submitBtn.textContent;
+          submitBtn.textContent = bookingCopy.summaryConfirm;
+        }
+        window.requestAnimationFrame(() => bookingSummary?.focus?.({ preventScroll: true }));
+        return;
+      }
+
+      await ensureBookingFileUploaded();
       const submitBtn = form.querySelector('[type="submit"]');
       const sent = await submitSendmailForm(form, submitBtn);
       if (sent) {
@@ -948,9 +1220,15 @@ document.addEventListener('DOMContentLoaded', () => {
         state.selectedService = '';
         state.selectedDate = '';
         state.selectedTime = '';
+        state.summaryConfirmed = false;
+        state.uploadedFileUrl = '';
         syncHiddenFields();
+        resetSummaryConfirmation();
+        renderFilePreview();
       }
     });
+
+    bindNativeBookingFields();
   };
 
   initSendmailForms();

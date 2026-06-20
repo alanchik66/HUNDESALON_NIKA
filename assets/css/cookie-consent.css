@@ -1,0 +1,104 @@
+.cookie-consent {
+  position: fixed;
+  right: clamp(14px, 3vw, 34px);
+  bottom: clamp(14px, 3vw, 34px);
+  z-index: 9999;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  width: min(720px, calc(100vw - 28px));
+  padding: 18px;
+  color: #fff7e8;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(236, 205, 138, 0.26), transparent 38%),
+    linear-gradient(145deg, rgba(8, 15, 13, 0.9), rgba(4, 8, 7, 0.94));
+  border: 1px solid rgba(236, 205, 138, 0.34);
+  border-radius: 8px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: cookieConsentIn 260ms ease both;
+}
+
+.cookie-consent--leaving {
+  animation: cookieConsentOut 220ms ease both;
+}
+
+.cookie-consent__body {
+  display: grid;
+  gap: 6px;
+}
+
+.cookie-consent__body strong {
+  color: #f4d28b;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.cookie-consent__body p {
+  margin: 0;
+  color: rgba(255, 247, 232, 0.84);
+  font-size: 0.94rem;
+  line-height: 1.45;
+}
+
+.cookie-consent__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.cookie-consent__btn {
+  min-height: 42px;
+  padding: 0 18px;
+  color: #12110d;
+  cursor: pointer;
+  background: linear-gradient(135deg, #f7dfa2, #c99b42);
+  border: 1px solid rgba(255, 239, 198, 0.5);
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.cookie-consent__btn--ghost {
+  color: #f6dfad;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cookie-consent__btn:focus-visible {
+  outline: 2px solid #f7dfa2;
+  outline-offset: 3px;
+}
+
+@keyframes cookieConsentIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cookieConsentOut {
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media (width <= 680px) {
+  .cookie-consent {
+    grid-template-columns: 1fr;
+  }
+
+  .cookie-consent__actions {
+    justify-content: stretch;
+  }
+
+  .cookie-consent__btn {
+    flex: 1 1 160px;
+  }
+}

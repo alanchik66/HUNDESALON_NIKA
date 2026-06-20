@@ -16,6 +16,8 @@ const SKIP_RELATIVE_PATHS = new Set([
 const copyEntries = [
   'index.html',
   'assets',
+  'config',
+  'data',
   'de',
   'en',
   'ru',
@@ -30,6 +32,7 @@ const copyEntries = [
   'indexnow-key.txt',
   'favicon.ico',
   'site.webmanifest',
+  'sw.js',
   'browserconfig.xml',
   'BingSiteAuth.xml',
   'google8f5e729bf8a13cc7.html',

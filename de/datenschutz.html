@@ -60,6 +60,7 @@
   <meta name="msapplication-TileColor" content="#0f6d66">
   <meta name="msapplication-TileImage" content="/assets/images/favicon/mstile-150x150.png?v=20260520-brand-bing">
   <meta name="msapplication-config" content="/browserconfig.xml">
+  <link rel="stylesheet" href="../assets/css/cookie-consent.css?v=20260620-full-stack-upgrade">
 </head>
 <body>
 
@@ -152,6 +153,24 @@
 
 <!-- ══════════════════ Fußzeile (Footer) ══════════════════════════════ -->
 
+<section class="newsletter-section section reveal" data-newsletter-section>
+  <div class="container">
+    <div class="newsletter-card">
+      <div>
+        <p class="section-kicker">Salonpost</p>
+        <h2 class="section-title">Pflege-Tipps und Angebote per E-Mail</h2>
+        <p>Ausgewählte Empfehlungen, saisonale Hinweise und ruhige Angebote direkt von HUNDESALON NIKA.</p>
+      </div>
+      <form class="newsletter-form" data-newsletter-form action="/subscribe" method="POST">
+        <input type="hidden" name="lang" value="de">
+        <input type="hidden" name="page" value="">
+        <input type="email" name="email" placeholder="E-Mail-Adresse" autocomplete="email" required>
+        <button type="submit" class="btn-neon">Abonnieren</button>
+      </form>
+    </div>
+  </div>
+</section>
+
 <footer class="footer">
   <div class="footer-container">
     <div class="footer-nav">
@@ -183,5 +202,8 @@
 <script src="../assets/js/main.js?v=20260515-02"></script>
 <script src="../assets/js/page-modules.js?v=20260613-message-draft-v2"></script>
 <script src="../assets/js/tooltip.js?v=20260330-0001"></script>
+<script src="../assets/js/cookie-consent.js?v=20260620-full-stack-upgrade"></script>
+<script src="../assets/js/newsletter.js?v=20260620-full-stack-upgrade"></script>
+<script src="../assets/js/pwa.js?v=20260620-full-stack-upgrade"></script>
 </body>
 </html>

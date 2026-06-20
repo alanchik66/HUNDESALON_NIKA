@@ -34,87 +34,16 @@
   <meta name="msapplication-TileColor" content="#0f6d66">
   <meta name="msapplication-TileImage" content="/assets/images/favicon/mstile-150x150.png?v=20260520-brand-bing">
   <meta name="msapplication-config" content="/browserconfig.xml">
+  <link rel="stylesheet" href="../../assets/css/cookie-consent.css?v=20260620-full-stack-upgrade">
 </head>
 <body>
 
 <div id="preloader"><div class="loader"></div></div>
 
-<!-- Header (replaced dynamically by site-shell.js) -->
-<header class="header">
-  <div class="top-row">
-    <div class="logo-wrapper">
-      <div class="logo">
-        <a href="../index.html">
-          <img src="../../assets/images/logo.png" alt="HUNDESALON_NIKA" class="logo-img">
-        </a>
-      </div>
-      <button class="premium-burger" id="burger-btn" aria-label="Відкрити меню" aria-expanded="false" aria-controls="mobile-nav">
-        <span></span><span></span><span></span>
-      </button>
-    </div>
-    <nav class="nav-main">
-      <a href="../o-nas.html" class="btn-neon">ПРО НАС</a>
-      <a href="../nashi-uslugi.html" class="btn-neon">НАШІ ПОСЛУГИ</a>
-      <a href="../prays-list.html" class="btn-neon">ПРАЙС-ЛИСТ</a>
-      <div class="dropdown">
-        <a href="../galereya.html" class="btn-neon">ГАЛЕРЕЯ</a>
-        <div class="dropdown-menu">
-          <a href="../galereya.html">НАША ГАЛЕРЕЯ</a>
-          <a href="../do-i-posle.html">ДО ТА ПІСЛЯ</a>
-        </div>
-      </div>
-      <a href="../kontakty.html" class="btn-neon">КОНТАКТИ</a>
-    </nav>
-    <div class="header-controls">
-      <div class="language-dropdown">
-        <button class="lang-dropdown-btn" type="button" aria-label="Обрати мову" title="Обрати мову"><i class="fas fa-globe"></i> <i class="fas fa-chevron-down"></i></button>
-        <ul class="lang-dropdown-menu">
-          <li data-lang="de"><span class="flag">🇩🇪</span> Deutsch</li>
-          <li data-lang="ru"><span class="flag">🇷🇺</span> Русский</li>
-          <li data-lang="uk"><span class="flag">🇺🇦</span> Українська</li>
-          <li data-lang="en"><span class="flag">🇬🇧</span> English</li>
-        </ul>
-      </div>
-      <a href="../onlayn-bronirovanie.html" class="header-online-btn">ОНЛАЙН ЗАПИС</a>
-      <button id="theme-toggle" class="theme-btn"></button>
-    </div>
-  </div>
-  <div class="social-bar">
-    <div class="social-bar-inner">
-      <div class="social-home">
-        <a href="../index.html" title="ГОЛОВНА">ГОЛОВНА</a>
-      </div>
-      <div class="social-icons">
-        <a href="https://wa.me/4915151708888" class="social-icon" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-        <a href="https://t.me/hundesalon_nika" class="social-icon" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i class="fab fa-telegram"></i></a>
-        <a href="https://www.instagram.com/hundesalon_nika?igsh=MWthdXgyY2llMWRndw==" class="social-icon" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-        <a href="https://www.tiktok.com/@hundesalon_nika" class="social-icon" target="_blank" rel="noopener noreferrer" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-        <a href="https://www.facebook.com/share/17SVsvkZEo/?mibextid=wwXIfr" class="social-icon" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-        <a href="https://www.youtube.com/@hundesalon_nika" class="social-icon" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
-        <a href="../social.html" class="social-icon" aria-label="Усі соцмережі"><i class="fas fa-share-alt"></i></a>
-      </div>
-    </div>
-  </div>
-</header>
-<!-- Mobile nav overlay -->
+<!-- Header and mobile nav (built by site-shell.js) -->
+<header class="header"></header>
 <div id="mobile-nav-overlay" hidden aria-hidden="true"></div>
-<nav id="mobile-nav" aria-hidden="true">
-  <a href="../o-nas.html">ПРО НАС</a>
-  <a href="../nashi-uslugi.html">НАШІ ПОСЛУГИ</a>
-  <a href="../prays-list.html">ПРАЙС-ЛИСТ</a>
-  <div class="mobile-dropdown">
-    <button class="mobile-dropdown-btn" id="mobile-gallery-btn">ГАЛЕРЕЯ</button>
-    <div class="mobile-dropdown-menu" id="mobile-gallery-menu">
-      <a href="../galereya.html">НАША ГАЛЕРЕЯ</a>
-      <a href="../do-i-posle.html">ДО ТА ПІСЛЯ</a>
-    </div>
-  </div>
-  <a href="../kontakty.html">КОНТАКТИ</a>
-  <div class="menu-separator"></div>
-  <a href="../social.html">СОЦІАЛЬНІ МЕРЕЖІ</a>
-  <a href="../reyting.html">РЕЙТИНГ І ВІДГУКИ</a>
-  <a href="../partnerstvo.html">ПАРТНЕРСЬКА ПРОПОЗИЦІЯ</a>
-</nav>
+<nav id="mobile-nav" aria-hidden="true"></nav>
 
 <div class="container page-offset-top">
   <article class="content-article">
@@ -130,6 +59,24 @@
     </div>
   </article>
 </div>
+
+<section class="newsletter-section section reveal" data-newsletter-section>
+  <div class="container">
+    <div class="newsletter-card">
+      <div>
+        <p class="section-kicker">Листи салону</p>
+        <h2 class="section-title">Поради з догляду та пропозиції на email</h2>
+        <p>Добірні рекомендації, сезонний догляд і теплі пропозиції від HUNDESALON NIKA.</p>
+      </div>
+      <form class="newsletter-form" data-newsletter-form action="/subscribe" method="POST">
+        <input type="hidden" name="lang" value="uk">
+        <input type="hidden" name="page" value="">
+        <input type="email" name="email" placeholder="Email" autocomplete="email" required>
+        <button type="submit" class="btn-neon">Підписатися</button>
+      </form>
+    </div>
+  </div>
+</section>
 
 <footer class="footer">
   <div class="footer-container">
@@ -161,5 +108,8 @@
 <script src="../../assets/js/main.js?v=20260515-02"></script>
 <script src="../../assets/js/page-modules.js?v=20260613-message-draft-v2"></script>
 <script src="../../assets/js/tooltip.js?v=20260330-0001"></script>
+<script src="../../assets/js/cookie-consent.js?v=20260620-full-stack-upgrade"></script>
+<script src="../../assets/js/newsletter.js?v=20260620-full-stack-upgrade"></script>
+<script src="../../assets/js/pwa.js?v=20260620-full-stack-upgrade"></script>
 </body>
 </html>

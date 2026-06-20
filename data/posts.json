@@ -1,0 +1,54 @@
+[
+  {
+    "slug": "kak-podgotovit-sobaku",
+    "date": "2024-04-22",
+    "languages": {
+      "de": {
+        "title": "Wie bereite ich meinen Hund auf den Salon vor",
+        "description": "Sanfte Vorbereitung auf den ersten Grooming-Termin bei HUNDESALON NIKA.",
+        "url": "/de/blog/kak-podgotovit-sobaku.html"
+      },
+      "en": {
+        "title": "How to prepare your pet for grooming",
+        "description": "A calm checklist before the first grooming visit at HUNDESALON NIKA.",
+        "url": "/en/blog/kak-podgotovit-sobaku.html"
+      },
+      "ru": {
+        "title": "Как подготовить питомца к грумингу",
+        "description": "Мягкая подготовка к первому визиту в HUNDESALON NIKA.",
+        "url": "/ru/blog/kak-podgotovit-sobaku.html"
+      },
+      "uk": {
+        "title": "Як підготувати улюбленця до грумінгу",
+        "description": "Спокійна підготовка до першого візиту в HUNDESALON NIKA.",
+        "url": "/uk/blog/kak-podgotovit-sobaku.html"
+      }
+    }
+  },
+  {
+    "slug": "preimushchestva-ekspress-linki",
+    "date": "2026-06-20",
+    "languages": {
+      "de": {
+        "title": "Vorteile der Express-Fellwechselpflege",
+        "description": "Warum Express-Entwollung das Zuhause sauberer macht und dem Tier Erleichterung schenkt.",
+        "url": "/de/blog/preimushchestva-ekspress-linki.html"
+      },
+      "en": {
+        "title": "Benefits of express deshedding",
+        "description": "How express deshedding reduces loose coat and keeps pets more comfortable.",
+        "url": "/en/blog/preimushchestva-ekspress-linki.html"
+      },
+      "ru": {
+        "title": "Преимущества экспресс-линьки",
+        "description": "Как экспресс-линька уменьшает шерсть дома и помогает питомцу чувствовать себя легче.",
+        "url": "/ru/blog/preimushchestva-ekspress-linki.html"
+      },
+      "uk": {
+        "title": "Переваги експрес-линьки",
+        "description": "Як експрес-линька зменшує шерсть удома й дарує тварині більше комфорту.",
+        "url": "/uk/blog/preimushchestva-ekspress-linki.html"
+      }
+    }
+  }
+]
