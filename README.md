@@ -244,7 +244,9 @@ npm run deploy
 | `SHEET_ID` | URL Google Sheets таблицы | лог бронирований и подписчиков |
 | `DRIVE_UPLOAD_FOLDER` | URL папки Google Drive | загрузка фото питомца |
 | `GMAIL_SENDER` | Gmail/Workspace адрес | отправка welcome и подтверждений |
-| `MS_GRAPH_ACCESS_TOKEN` | Microsoft Entra / Graph OAuth | Outlook Email и Teams через Graph |
+| `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET` | Microsoft Entra App Registration | постоянный серверный вход в Microsoft Graph |
+| `MS_GRAPH_ACCESS_TOKEN` | Microsoft Entra / Graph OAuth | временный fallback для Outlook Email и Teams через Graph |
+| `OUTLOOK_SENDER` | Microsoft 365 mailbox | отправитель для Graph `/users/{sender}/sendMail` |
 | `TEAM_ID`, `TEAM_CHANNEL_ID` | Microsoft Teams / Graph | уведомления команды |
 | `TEAMS_WEBHOOK_URL` | Teams Incoming Webhook | быстрый канал уведомлений |
 | `RESEND_API_KEY` | Resend dashboard | резервная отправка писем с сайта |

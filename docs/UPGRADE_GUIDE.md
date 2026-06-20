@@ -22,7 +22,11 @@
 - `SHEET_ID`
 - `DRIVE_UPLOAD_FOLDER`
 - `GMAIL_SENDER`
+- `MS_TENANT_ID`
+- `MS_CLIENT_ID`
+- `MS_CLIENT_SECRET`
 - `MS_GRAPH_ACCESS_TOKEN`
+- `OUTLOOK_SENDER`
 - `TEAM_ID`
 - `TEAM_CHANNEL_ID`
 - `TEAMS_WEBHOOK_URL`
@@ -52,9 +56,10 @@
 ## Microsoft Teams и Outlook
 
 1. Создайте app registration в Microsoft Entra.
-2. Выдайте Graph permissions для Mail.Send и ChannelMessage.Send.
-3. Сохраните `MS_GRAPH_ACCESS_TOKEN`, `TEAM_ID`, `TEAM_CHANNEL_ID`.
-4. Для простого уведомления можно использовать `TEAMS_WEBHOOK_URL`.
+2. Выдайте Microsoft Graph application permission `Mail.Send` и подтвердите admin consent.
+3. Создайте client secret и сохраните `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `OUTLOOK_SENDER`.
+4. Для Teams используйте `TEAMS_WEBHOOK_URL` как основной и самый стабильный канал уведомлений.
+5. `MS_GRAPH_ACCESS_TOKEN`, `TEAM_ID`, `TEAM_CHANNEL_ID` оставлены как fallback для ручной/делегированной Graph-настройки.
 
 ## Галерея до/после
 

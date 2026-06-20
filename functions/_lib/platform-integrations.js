@@ -29,6 +29,38 @@ export async function safeJsonFetch(url, options = {}) {
   return { ok: response.ok, status: response.status, body };
 }
 
+export async function getMicrosoftGraphToken(env) {
+  const directToken = getEnvValue(env, 'MS_GRAPH_ACCESS_TOKEN');
+  if (hasUsableValue(directToken)) {
+    return directToken;
+  }
+
+  const tenantId = getEnvValue(env, 'MS_TENANT_ID');
+  const clientId = getEnvValue(env, 'MS_CLIENT_ID');
+  const clientSecret = getEnvValue(env, 'MS_CLIENT_SECRET');
+  if (!hasUsableValue(tenantId) || !hasUsableValue(clientId) || !hasUsableValue(clientSecret)) {
+    return '';
+  }
+
+  const tokenResponse = await safeJsonFetch(
+    `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/oauth2/v2.0/token`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        scope: 'https://graph.microsoft.com/.default',
+        grant_type: 'client_credentials',
+      }),
+    }
+  );
+
+  return tokenResponse.ok && hasUsableValue(tokenResponse.body?.access_token)
+    ? tokenResponse.body.access_token
+    : '';
+}
+
 export async function appendGoogleSheetRow(env, { spreadsheetId, sheetName = 'bookings', values }) {
   const webhook = getEnvValue(env, 'GOOGLE_SHEETS_WEBHOOK_URL');
   if (hasUsableValue(webhook)) {
@@ -89,7 +121,7 @@ export async function sendTeamsMessage(env, payload) {
     });
   }
 
-  const graphToken = getEnvValue(env, 'MS_GRAPH_ACCESS_TOKEN');
+  const graphToken = await getMicrosoftGraphToken(env);
   const teamId = getEnvValue(env, 'TEAM_ID');
   const channelId = getEnvValue(env, 'TEAM_CHANNEL_ID');
   if (!hasUsableValue(graphToken) || !hasUsableValue(teamId) || !hasUsableValue(channelId)) {
@@ -138,12 +170,18 @@ export async function sendGmailEmail(env, { to, subject, text }) {
 }
 
 export async function sendOutlookEmail(env, { to, subject, text }) {
-  const token = getEnvValue(env, 'MS_GRAPH_ACCESS_TOKEN');
+  const token = await getMicrosoftGraphToken(env);
   if (!hasUsableValue(token) || !hasUsableValue(to)) {
     return { ok: false, skipped: true, reason: 'Outlook credentials are not configured.' };
   }
 
-  return safeJsonFetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+  const hasDirectToken = hasUsableValue(getEnvValue(env, 'MS_GRAPH_ACCESS_TOKEN'));
+  const sender = getEnvValue(env, 'OUTLOOK_SENDER', getEnvValue(env, 'GMAIL_SENDER', 'info@hundesalon-nika.com'));
+  const endpoint = hasDirectToken
+    ? 'https://graph.microsoft.com/v1.0/me/sendMail'
+    : `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(sender)}/sendMail`;
+
+  return safeJsonFetch(endpoint, {
     method: 'POST',
     headers: {
       ...JSON_HEADERS,
