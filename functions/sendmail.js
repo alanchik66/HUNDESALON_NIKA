@@ -22,8 +22,8 @@ import {
     sendTeamsMessage,
 } from './_lib/platform-integrations.js';
 
-const RECIPIENT = 'info@hundesalon-nika.com';
-const FROM      = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
+const DEFAULT_RECIPIENT = 'info@hundesalon-nika.com';
+const DEFAULT_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
 const SLACK_TIMEOUT_MS = 4500;
 const RESEND_USER_AGENT = 'hundesalon-nika.com/1.0 (Cloudflare Pages Function)';
 
@@ -65,6 +65,20 @@ function sanitize(val) {
  */
 function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+
+function getSalonRecipient(env, formType) {
+    const bookingRecipient = getEnvValue(env, 'BOOKING_RECIPIENT_EMAIL');
+    const contactRecipient = getEnvValue(env, 'CONTACT_RECIPIENT_EMAIL');
+    const fallbackRecipient = getEnvValue(env, 'SALON_EMAIL', DEFAULT_RECIPIENT);
+
+    if (formType === 'booking' && isValidEmail(bookingRecipient)) {
+        return bookingRecipient;
+    }
+    if (isValidEmail(contactRecipient)) {
+        return contactRecipient;
+    }
+    return isValidEmail(fallbackRecipient) ? fallbackRecipient : DEFAULT_RECIPIENT;
 }
 
 /**
@@ -228,6 +242,8 @@ export async function onRequest(ctx) {
 
     const copy = COPY[lang] ?? COPY.de;
     const requestUrl = new URL(request.url);
+    const recipient = getSalonRecipient(env, formType);
+    const resendFrom = getEnvValue(env, 'RESEND_FROM', DEFAULT_FROM);
 
     /* ── Validate required fields ──────────────────────────────── */
     if (!name || !email) {
@@ -366,10 +382,10 @@ export async function onRequest(ctx) {
                 to: email,
                 subject: 'Ihre Buchungsanfrage bei HUNDESALON NIKA',
                 text: `Danke für Ihre Anfrage.\n\n${bookingSummary}`,
-                replyTo: RECIPIENT,
+                replyTo: recipient,
             }),
             sendGmailEmail(env, {
-                to: RECIPIENT,
+                to: recipient,
                 subject,
                 text: textBody,
             }),
@@ -379,7 +395,7 @@ export async function onRequest(ctx) {
                 text: `Danke für Ihre Anfrage.\n\n${bookingSummary}`,
             }),
             sendOutlookEmail(env, {
-                to: RECIPIENT,
+                to: recipient,
                 subject,
                 text: textBody,
             }),
@@ -418,8 +434,8 @@ export async function onRequest(ctx) {
                 'User-Agent': RESEND_USER_AGENT,
             },
             body: JSON.stringify({
-                from:     FROM,
-                to:       [RECIPIENT],
+                from:     resendFrom,
+                to:       [recipient],
                 reply_to: email,
                 subject,
                 text:     textBody,

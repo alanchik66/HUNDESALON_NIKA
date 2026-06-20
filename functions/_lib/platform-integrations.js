@@ -337,7 +337,7 @@ export async function sendTeamsMessage(env, payload) {
 }
 
 export async function sendGmailEmail(env, { to, subject, text }) {
-  const sender = getEnvValue(env, 'GMAIL_SENDER', 'info@hundesalon-nika.com');
+  const sender = getEnvValue(env, 'GMAIL_SENDER');
   const serviceAccountSubject = getEnvValue(env, 'GOOGLE_SERVICE_ACCOUNT_SUBJECT');
   const token =
     (hasUsableValue(serviceAccountSubject)
@@ -347,9 +347,14 @@ export async function sendGmailEmail(env, { to, subject, text }) {
     return { ok: false, skipped: true, reason: 'Gmail credentials are not configured.' };
   }
 
-  const message = [`From: ${sender}`, `To: ${to}`, `Subject: ${subject}`, 'Content-Type: text/plain; charset=UTF-8', '', text].join(
-    '\r\n'
-  );
+  const message = [
+    hasUsableValue(sender) ? `From: ${sender}` : null,
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    'Content-Type: text/plain; charset=UTF-8',
+    '',
+    text,
+  ].filter((line) => line !== null).join('\r\n');
   const bytes = new TextEncoder().encode(message);
   let binary = '';
   for (let index = 0; index < bytes.length; index += 0x8000) {

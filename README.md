@@ -250,6 +250,8 @@ npm run deploy
 | `DRIVE_UPLOAD_FOLDER` | URL папки Google Drive | загрузка фото питомца |
 | `GMAIL_SENDER` | Gmail/Workspace адрес | отправка welcome и подтверждений |
 | `RESEND_FROM` | Resend verified domain | основной отправитель transactional email |
+| `SALON_EMAIL`, `CONTACT_RECIPIENT_EMAIL`, `BOOKING_RECIPIENT_EMAIL` | рабочая почта салона | получатель заявок, контактов и бронирований |
+| `GOOGLE_SHARE_EMAIL` | Google/Workspace аккаунт салона | доступ к созданным Calendar, Sheets и Drive; если рабочая почта не Google-аккаунт, укажите владелецкий Gmail |
 | `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET` | Microsoft Entra App Registration | постоянный серверный вход в Microsoft Graph |
 | `MS_GRAPH_ACCESS_TOKEN` | Microsoft Entra / Graph OAuth | временный fallback для Outlook Email и Teams через Graph |
 | `OUTLOOK_SENDER` | Microsoft 365 mailbox | опциональный отправитель для Graph `/users/{sender}/sendMail`; нужен лицензированный mailbox |
@@ -266,6 +268,14 @@ npm run deploy
 ```bash
 npm run dev:cf
 ```
+
+Для первичной настройки Google OAuth после скачивания Desktop app JSON из Google Auth Platform:
+
+```bash
+npm run google:setup-platform -- --salon-email info@hundesalon-nika.com --share-email info@hundesalon-nika.com
+```
+
+Скрипт создаёт Calendar, Sheet и Drive-папку, ставит Cloudflare secrets для Production/Preview и не выводит OAuth secrets в консоль.
 
 ### VS Code настройки
 

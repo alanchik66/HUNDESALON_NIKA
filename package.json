@@ -119,6 +119,7 @@
     "resend:check-live": "node tools/check-resend-live.mjs",
     "sync:service-key": "node tools/sync-service-gateway-from-devvars.mjs",
     "service-key:validate": "node tools/validate-service-gateway-key.mjs",
+    "google:setup-platform": "node tools/setup-google-platform.mjs",
     "check:message-draft": "node tools/check-message-draft-live.mjs",
     "slack:test": "node tools/slack-test-webhook.mjs",
     "check:prod": "npm run check:live-html && npm run google:gsc:audit && npm run check:message-draft",

@@ -29,6 +29,10 @@
 - `DRIVE_UPLOAD_FOLDER`
 - `GMAIL_SENDER`
 - `RESEND_FROM`
+- `SALON_EMAIL`
+- `CONTACT_RECIPIENT_EMAIL`
+- `BOOKING_RECIPIENT_EMAIL`
+- `GOOGLE_SHARE_EMAIL`
 - `MS_TENANT_ID`
 - `MS_CLIENT_ID`
 - `MS_CLIENT_SECRET`
@@ -60,6 +64,7 @@
    - Google Auth Platform → Clients → Create client → Desktop app.
    - Авторизуйте scopes `calendar`, `drive.file`, `spreadsheets`, `gmail.send`.
    - Сохраните `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REFRESH_TOKEN` только как Cloudflare secrets.
+   - Автоматический путь в репозитории: скачайте Desktop app JSON и запустите `npm run google:setup-platform -- --salon-email info@hundesalon-nika.com --share-email info@hundesalon-nika.com`.
 4. Для Google Workspace или проектов без запрета ключей можно использовать service account: сохраните `GOOGLE_SERVICE_ACCOUNT_EMAIL` и `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` в Cloudflare secrets.
 5. Apps Script gateway из `integrations/google-apps-script-gateway/` оставлен как резервный вариант. Он выполняется от имени владельца Google-аккаунта, создаёт Calendar/Sheets/Drive и принимает защищённые webhook-запросы от Cloudflare.
 6. Gmail API через service account работает только в Google Workspace с domain-wide delegation. Для обычного `@gmail.com` используйте Resend как основной канал email, а Gmail OAuth — как дополнительное подтверждение клиенту.
@@ -76,6 +81,12 @@
    - `GOOGLE_CALENDAR_ID`
    - `SHEET_ID`
    - `DRIVE_UPLOAD_FOLDER`
+
+## Рабочая почта и доступы
+
+- `CONTACT_RECIPIENT_EMAIL` и `BOOKING_RECIPIENT_EMAIL` — куда приходят заявки с сайта. По умолчанию используется `info@hundesalon-nika.com`.
+- `GOOGLE_SHARE_EMAIL` — кому выдать доступ к Google Calendar/Sheets/Drive. Это должен быть Google/Workspace-аккаунт. Если рабочая почта не является Google-аккаунтом, ресурсы создаются в авторизованном Gmail, а письма всё равно уходят на рабочий адрес через Resend.
+- `GMAIL_SENDER` должен быть авторизованным Gmail/Workspace адресом или подтверждённым Gmail alias. Если он пустой, Gmail API отправляет от владельца OAuth.
 
 ## Microsoft Teams и Outlook
 
