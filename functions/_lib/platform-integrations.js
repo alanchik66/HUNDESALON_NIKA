@@ -135,6 +135,46 @@ export async function getGoogleAccessToken(env, scopes, subject = '') {
   return token;
 }
 
+export async function getGoogleOAuthAccessToken(env) {
+  const directToken = getEnvValue(env, 'GOOGLE_OAUTH_ACCESS_TOKEN');
+  const clientId = getEnvValue(env, 'GOOGLE_OAUTH_CLIENT_ID');
+  const clientSecret = getEnvValue(env, 'GOOGLE_OAUTH_CLIENT_SECRET');
+  const refreshToken = getEnvValue(env, 'GOOGLE_OAUTH_REFRESH_TOKEN');
+
+  if (!hasUsableValue(clientId) || !hasUsableValue(clientSecret) || !hasUsableValue(refreshToken)) {
+    return hasUsableValue(directToken) ? directToken : '';
+  }
+
+  const cacheKey = `oauth|${clientId}|${refreshToken.slice(-12)}`;
+  const cached = googleTokenCache.get(cacheKey);
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (cached && cached.expiresAt - 90 > nowSeconds) {
+    return cached.token;
+  }
+
+  const tokenResponse = await safeJsonFetch(GOOGLE_TOKEN_URL, {
+    method: 'POST',
+    headers: FORM_HEADERS,
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token',
+    }),
+  });
+
+  if (!tokenResponse.ok || !hasUsableValue(tokenResponse.body?.access_token)) {
+    return '';
+  }
+
+  const token = tokenResponse.body.access_token;
+  googleTokenCache.set(cacheKey, {
+    token,
+    expiresAt: nowSeconds + Number(tokenResponse.body.expires_in || 3600),
+  });
+  return token;
+}
+
 export async function getMicrosoftGraphToken(env) {
   const directToken = getEnvValue(env, 'MS_GRAPH_ACCESS_TOKEN');
   if (hasUsableValue(directToken)) {
@@ -204,7 +244,7 @@ export async function appendGoogleSheetRow(env, { spreadsheetId, sheetName = 'bo
 
   const token =
     (await getGoogleAccessToken(env, ['https://www.googleapis.com/auth/spreadsheets'])) ||
-    getEnvValue(env, 'GOOGLE_OAUTH_ACCESS_TOKEN');
+    (await getGoogleOAuthAccessToken(env));
   if (!hasUsableValue(token) || !hasUsableValue(spreadsheetId)) {
     return { ok: false, skipped: true, reason: 'Google Sheets credentials are not configured.' };
   }
@@ -249,7 +289,7 @@ export async function createGoogleCalendarEvent(env, { calendarId, summary, desc
 
   const token =
     (await getGoogleAccessToken(env, ['https://www.googleapis.com/auth/calendar'])) ||
-    getEnvValue(env, 'GOOGLE_OAUTH_ACCESS_TOKEN');
+    (await getGoogleOAuthAccessToken(env));
   if (!hasUsableValue(token) || !hasUsableValue(calendarId)) {
     return { ok: false, skipped: true, reason: 'Google Calendar credentials are not configured.' };
   }
@@ -302,7 +342,7 @@ export async function sendGmailEmail(env, { to, subject, text }) {
   const token =
     (hasUsableValue(serviceAccountSubject)
       ? await getGoogleAccessToken(env, ['https://www.googleapis.com/auth/gmail.send'], serviceAccountSubject)
-      : '') || getEnvValue(env, 'GOOGLE_OAUTH_ACCESS_TOKEN');
+      : '') || (await getGoogleOAuthAccessToken(env));
   if (!hasUsableValue(token) || !hasUsableValue(to)) {
     return { ok: false, skipped: true, reason: 'Gmail credentials are not configured.' };
   }
@@ -429,7 +469,7 @@ export async function uploadFileToDrive(env, { file, fileName, metadata = {} }) 
 
   const token =
     (await getGoogleAccessToken(env, ['https://www.googleapis.com/auth/drive.file'])) ||
-    getEnvValue(env, 'GOOGLE_OAUTH_ACCESS_TOKEN');
+    (await getGoogleOAuthAccessToken(env));
   const folderId = getEnvValue(env, 'DRIVE_UPLOAD_FOLDER');
   if (!hasUsableValue(token) || !hasUsableValue(folderId)) {
     return { ok: false, skipped: true, reason: 'Google Drive credentials are not configured.' };

@@ -241,8 +241,9 @@ npm run deploy
 | `GA_MEASUREMENT_ID` | Google Analytics → Admin → Data streams | аналитика после cookie-согласия |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | Google Cloud IAM service account | стабильный серверный доступ к Calendar, Sheets, Drive |
 | `GOOGLE_SERVICE_ACCOUNT_SUBJECT` | Google Workspace Admin | опционально для Gmail domain-wide delegation |
-| `GOOGLE_OAUTH_ACCESS_TOKEN` | Google Cloud OAuth / service gateway | временный fallback для Google API |
-| `GOOGLE_APPS_SCRIPT_WEBHOOK_URL` | Apps Script Web App | основной gateway для обычного Gmail-аккаунта без Workspace |
+| `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REFRESH_TOKEN` | Google Auth Platform → OAuth client → Desktop app | основной путь для обычного Gmail-аккаунта: Calendar, Sheets, Drive и Gmail через refresh token |
+| `GOOGLE_OAUTH_ACCESS_TOKEN` | Google Cloud OAuth / service gateway | временный fallback для ручной проверки Google API |
+| `GOOGLE_APPS_SCRIPT_WEBHOOK_URL` | Apps Script Web App | резервный gateway для обычного Gmail-аккаунта без Workspace |
 | `GOOGLE_GATEWAY_SECRET` | локально сгенерированный секрет | защита Google gateway endpoint |
 | `GOOGLE_CALENDAR_ID` | Google Calendar settings | создание событий бронирования |
 | `SHEET_ID` | URL Google Sheets таблицы | лог бронирований и подписчиков |

@@ -18,6 +18,9 @@
 
 - `GA_MEASUREMENT_ID`
 - `GOOGLE_OAUTH_ACCESS_TOKEN`
+- `GOOGLE_OAUTH_CLIENT_ID`
+- `GOOGLE_OAUTH_CLIENT_SECRET`
+- `GOOGLE_OAUTH_REFRESH_TOKEN`
 - `GOOGLE_SERVICE_ACCOUNT_EMAIL`
 - `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`
 - `GOOGLE_SERVICE_ACCOUNT_SUBJECT`
@@ -53,10 +56,13 @@
 
 1. Создайте проект в Google Cloud.
 2. Включите Gmail API, Calendar API, Sheets API и Drive API.
-3. Для Google Workspace или проектов без запрета ключей можно использовать service account: сохраните `GOOGLE_SERVICE_ACCOUNT_EMAIL` и `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` в Cloudflare secrets.
-4. Для обычного `@gmail.com` используйте Apps Script gateway из `integrations/google-apps-script-gateway/`. Он выполняется от имени владельца Google-аккаунта, создаёт Calendar/Sheets/Drive и принимает защищённые webhook-запросы от Cloudflare.
-5. Если Google Cloud включает `iam.disableServiceAccountKeyCreation`, не отключайте защиту ради сайта. Используйте Apps Script gateway или Cloud Run gateway без private key.
-6. Gmail API через service account работает только в Google Workspace с domain-wide delegation. Для обычного `@gmail.com` используйте Resend как основной канал email, а `GOOGLE_SERVICE_ACCOUNT_SUBJECT` оставьте пустым.
+3. Если Google Cloud включает `iam.disableServiceAccountKeyCreation`, не отключайте защиту ради сайта. Основной путь для обычного `@gmail.com` — OAuth Desktop client и refresh token:
+   - Google Auth Platform → Clients → Create client → Desktop app.
+   - Авторизуйте scopes `calendar`, `drive.file`, `spreadsheets`, `gmail.send`.
+   - Сохраните `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REFRESH_TOKEN` только как Cloudflare secrets.
+4. Для Google Workspace или проектов без запрета ключей можно использовать service account: сохраните `GOOGLE_SERVICE_ACCOUNT_EMAIL` и `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` в Cloudflare secrets.
+5. Apps Script gateway из `integrations/google-apps-script-gateway/` оставлен как резервный вариант. Он выполняется от имени владельца Google-аккаунта, создаёт Calendar/Sheets/Drive и принимает защищённые webhook-запросы от Cloudflare.
+6. Gmail API через service account работает только в Google Workspace с domain-wide delegation. Для обычного `@gmail.com` используйте Resend как основной канал email, а Gmail OAuth — как дополнительное подтверждение клиенту.
 
 ## Google Apps Script gateway
 
@@ -82,7 +88,7 @@
 
 ## Текущий продакшен-канал email
 
-Resend — основной рабочий канал для заявок и welcome-писем. Gmail API оставлен опционально: он включается только при `GOOGLE_OAUTH_ACCESS_TOKEN` или Google Workspace domain-wide delegation через `GOOGLE_SERVICE_ACCOUNT_SUBJECT`.
+Resend — основной рабочий канал для заявок и welcome-писем. Gmail API оставлен опционально: он включается при `GOOGLE_OAUTH_CLIENT_ID` + `GOOGLE_OAUTH_CLIENT_SECRET` + `GOOGLE_OAUTH_REFRESH_TOKEN`, временном `GOOGLE_OAUTH_ACCESS_TOKEN` или Google Workspace domain-wide delegation через `GOOGLE_SERVICE_ACCOUNT_SUBJECT`.
 
 ## Галерея до/после
 
