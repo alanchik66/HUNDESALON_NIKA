@@ -90,6 +90,7 @@ function wranglerConfigCandidates() {
   const home = homedir();
   return [
     process.env.WRANGLER_CONFIG,
+    path.join(home, '.wrangler', 'config', 'default.toml'),
     path.join(home, '.config', '.wrangler', 'config', 'default.toml'),
     path.join(home, 'AppData', 'Roaming', '.wrangler', 'config', 'default.toml'),
     path.join(home, 'AppData', 'Roaming', 'xdg.config', '.wrangler', 'config', 'default.toml'),

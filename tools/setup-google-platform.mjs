@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { randomBytes } from 'node:crypto';
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { existsSync, readFileSync, readdirSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { homedir, tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 
@@ -141,6 +141,7 @@ async function waitForOAuthCode({ clientId, port, state }) {
 
     server.listen(port, '127.0.0.1', () => {
       console.log(`Open OAuth consent in browser. Waiting on localhost:${port} ...`);
+      console.log(`OAuth URL: ${authUrl.toString()}`);
       openBrowser(authUrl.toString());
     });
   });
@@ -291,16 +292,67 @@ function wranglerOAuthToken() {
   return raw.match(/oauth_token\s*=\s*"([^"]+)"/)?.[1] || '';
 }
 
+function compactSecrets(vars) {
+  return Object.fromEntries(
+    Object.entries(vars)
+      .filter(([, value]) => String(value || '').trim() !== '')
+      .map(([key, value]) => [key, String(value)])
+  );
+}
+
+function runCommand(command, args, options = {}) {
+  return new Promise((resolvePromise, rejectPromise) => {
+    const child = spawn(command, args, {
+      ...options,
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+    child.on('error', rejectPromise);
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolvePromise({ stdout, stderr });
+        return;
+      }
+      rejectPromise(new Error(`${command} ${args.join(' ')} failed ${code}: ${stderr || stdout}`));
+    });
+  });
+}
+
+async function updateCloudflareSecretsWithWrangler(vars) {
+  const envVars = compactSecrets(vars);
+  const tempFile = join(tmpdir(), `hundesalon-pages-secrets-${randomBytes(8).toString('hex')}.json`);
+  const wranglerArgs = ['wrangler', 'pages', 'secret', 'bulk', tempFile, '--project-name', PROJECT_NAME];
+  const command = process.platform === 'win32' ? 'cmd.exe' : 'npx';
+  const args = process.platform === 'win32' ? ['/d', '/s', '/c', 'npx.cmd', ...wranglerArgs] : wranglerArgs;
+  writeFileSync(tempFile, JSON.stringify(envVars, null, 2), 'utf8');
+  try {
+    await runCommand(command, args, { cwd: process.cwd() });
+    return { ok: true, via: 'wrangler' };
+  } finally {
+    try {
+      unlinkSync(tempFile);
+    } catch {
+      // The temp file only contains deployment secrets and should not persist.
+    }
+  }
+}
+
 async function updateCloudflareSecrets(vars) {
   const token = wranglerOAuthToken();
   if (!token) {
-    return { ok: false, message: 'Wrangler OAuth token not found.' };
+    return updateCloudflareSecretsWithWrangler(vars);
   }
 
   const envVars = Object.fromEntries(
-    Object.entries(vars)
-      .filter(([, value]) => String(value || '').trim() !== '')
-      .map(([key, value]) => [key, { type: 'secret_text', value: String(value) }])
+    Object.entries(compactSecrets(vars)).map(([key, value]) => [key, { type: 'secret_text', value }])
   );
   const body = {
     deployment_configs: {
@@ -319,9 +371,30 @@ async function updateCloudflareSecrets(vars) {
   });
   const result = await response.json();
   if (!response.ok || result.success === false) {
-    return { ok: false, message: JSON.stringify(result.errors || result) };
+    const fallback = await updateCloudflareSecretsWithWrangler(vars);
+    return {
+      ...fallback,
+      rest: { ok: false, message: JSON.stringify(result.errors || result) },
+    };
   }
-  return { ok: true };
+  return { ok: true, via: 'cloudflare-api' };
+}
+
+async function readExistingGoogleResources(accessToken, args) {
+  const calendarId = String(args['calendar-id'] || process.env.GOOGLE_CALENDAR_ID || '').trim();
+  const spreadsheetId = String(args['sheet-id'] || process.env.SHEET_ID || '').trim();
+  const driveFolderId = String(args['drive-folder-id'] || process.env.DRIVE_UPLOAD_FOLDER || '').trim();
+  if (!calendarId || !spreadsheetId || !driveFolderId) return null;
+
+  const profile = await googleFetch(accessToken, 'https://www.googleapis.com/oauth2/v2/userinfo');
+  return {
+    calendarId,
+    spreadsheetId,
+    driveFolderId,
+    driveFolderUrl: `https://drive.google.com/drive/folders/${driveFolderId}`,
+    googleAccountEmail: profile.email || '',
+    shareResults: ['existing Google resources reused'],
+  };
 }
 
 async function main() {
@@ -350,7 +423,8 @@ async function main() {
   const state = randomBytes(16).toString('hex');
   const { code, redirectUri } = await waitForOAuthCode({ clientId, port, state });
   const token = await exchangeCode({ clientId, clientSecret, code, redirectUri });
-  const resources = await createGoogleResources(token.access_token, shareEmails, prefix);
+  const resources = await readExistingGoogleResources(token.access_token, args)
+    || await createGoogleResources(token.access_token, shareEmails, prefix);
 
   const cloudflare = await updateCloudflareSecrets({
     GOOGLE_OAUTH_CLIENT_ID: clientId,
