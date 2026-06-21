@@ -48,7 +48,7 @@ If the message draft endpoint returns 401 after deploy: `npm run sync:service-ke
 3. Or step-by-step: `npm run bing:mail-setup` → `npm run bing:verify` → `npm run bing:automate`.
 4. Optional API key: Bing Webmaster → **Settings → API Access** → add to `.dev.vars` as `BING_WEBMASTER_API_KEY`, then `npm run bing:api`.
 5. **www**: `seo:indexnow` submits apex + www (152 URLs). `www` → apex via 301; canonical stays `https://hundesalon-nika.com`. Bing Submit quota 100/day — rest: `npm run bing:submit-www-rem` next day.
-6. **robots.txt**: Bing — только `https://hundesalon-nika.com/robots.txt`. `npm run cf:www-robots-setup`. **Cloudflare:** один токен `HUNDESALON — Zone API` → `npm run cf:ensure-api-token` (см. `docs/cloudflare-api-tokens.md`).
+6. **robots.txt**: Bing — только `https://hundesalon-nika.com/robots.txt`. `npm run cf:www-robots-setup`. **Cloudflare:** один токен `HUNDESALON_NIKA — Zone Ops` → `npm run cf:ensure-api-token` (см. `docs/cloudflare-api-tokens.md`).
 6. Favicon in Bing SERP often updates in **2–4 weeks** after crawl.
 
 ## Cloudflare tokens
@@ -60,15 +60,16 @@ Which Dashboard tokens are for what: `docs/cloudflare-api-tokens.md`.
 Use a **zone API token** (not a revoked/old token). Create via template:
 
 ```bash
-npm run cf:open-purge-token
+npm run cf:open-api-token
 # Copy token once, then:
-npm run cf:set-purge-token -- <paste-token>
+npm run cf:set-api-token -- <paste-token>
+npm run cf:ensure-api-token
 npm run cf:purge-cache
 ```
 
-`cf:set-purge-token` verifies the token before writing `.dev.vars`. Invalid tokens are rejected.
+`cf:set-api-token` verifies the token before writing `.dev.vars`. Invalid tokens are rejected.
 
-Permissions: **Zone → Read**, **Zone → Cache Purge**, resource `hundesalon-nika.com`.
+Permissions: **Zone → Read**, **Zone → DNS → Edit**, **Zone → Cache Purge**, **Zone → Page Rules → Edit**, **Zone → Zone Rules → Edit**, resource `hundesalon-nika.com`.
 
 Without token: Dashboard → **Caching → Purge Everything** after HTML deploys.
 

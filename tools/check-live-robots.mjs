@@ -6,8 +6,30 @@ function bodyOk(text) {
   return (
     /Sitemap:\s*https:\/\/hundesalon-nika\.com\/sitemap\.xml/i.test(text) &&
     /sitemap-brand\.xml/i.test(text) &&
+    /llms\.txt/i.test(text) &&
+    /Content-Signal:\s*search=yes,\s*ai-input=yes,\s*ai-train=no/i.test(text) &&
+    /User-agent:\s*GPTBot/i.test(text) &&
     (!/User-agent:\s*Bingbot/i.test(text) || /Allow:\s*\//m.test(text))
   );
+}
+
+function warnManagedAiSignals(text) {
+  const managed = /BEGIN Cloudflare Managed content/i.test(text);
+  const blockedAiAgents = ['GPTBot', 'ClaudeBot', 'Google-Extended'].filter((agent) => {
+    const pattern = new RegExp(
+      `User-agent:\\s*${agent}\\s*(?:\\r?\\n(?!User-agent:).*)*?\\r?\\nDisallow:\\s*/\\s*(?:#.*)?$`,
+      'im'
+    );
+    return pattern.test(text);
+  });
+
+  if (managed || blockedAiAgents.length) {
+    console.warn(
+      `WARN Cloudflare managed robots content is active${
+        blockedAiAgents.length ? `; blocked AI agents: ${blockedAiAgents.join(', ')}` : ''
+      }`
+    );
+  }
 }
 
 let failed = 0;
@@ -15,6 +37,7 @@ let failed = 0;
 try {
   const r = await fetch(`${APEX}/robots.txt`, { signal: AbortSignal.timeout(20000) });
   const text = await r.text();
+  warnManagedAiSignals(text);
   if (r.ok && bodyOk(text)) {
     console.log(`OK apex (${text.length} bytes, ${text.split('\n').length} lines)`);
   } else {

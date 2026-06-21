@@ -1,0 +1,38 @@
+# HUNDESALON NIKA
+
+HUNDESALON NIKA is a professional pet grooming salon in Leipzig, Germany. The site serves clients in German, English, Russian, and Ukrainian. The canonical public domain is https://hundesalon-nika.com/.
+
+## Primary URLs
+
+- German: https://hundesalon-nika.com/de/
+- English: https://hundesalon-nika.com/en/
+- Russian: https://hundesalon-nika.com/ru/
+- Ukrainian: https://hundesalon-nika.com/uk/
+- Sitemap: https://hundesalon-nika.com/sitemap.xml
+- Brand sitemap: https://hundesalon-nika.com/sitemap-brand.xml
+- Robots: https://hundesalon-nika.com/robots.txt
+
+## Business
+
+- Name: HUNDESALON NIKA
+- Category: Pet grooming salon, dog grooming, cat grooming
+- City: Leipzig
+- Address: Untere-Eichstaedtstrasse 38, 04299 Leipzig, Germany
+- Phone: +49 1515 1708888
+- Email: info@hundesalon-nika.com
+
+## Core Topics
+
+- Dog grooming in Leipzig
+- Cat grooming in Leipzig
+- Pet bathing, brushing, hygiene care, fur care, creative cuts
+- Online booking and salon contact
+- Grooming prices and service information
+
+## Language Routing
+
+The root URL redirects visitors to a language version using Accept-Language first and Cloudflare country data as a fallback. The default language is German.
+
+## Crawling Notes
+
+Public marketing, service, price, booking, gallery, contact, and blog pages are intended for indexing. Internal tool paths and Cloudflare Functions are not public content.

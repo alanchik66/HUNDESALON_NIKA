@@ -14,6 +14,18 @@
  * ================================================================
  */
 
+const escapeHtml = (value) =>
+  String(value ?? '').replace(/[&<>"']/g, (char) => {
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    };
+    return map[char];
+  });
+
 class BeforeAfterSlider {
   constructor(container, options = {}) {
     this.container = container;
@@ -35,21 +47,21 @@ class BeforeAfterSlider {
     this.container.innerHTML = `
       <div class="before-after-wrapper">
         <img
-          src="${this.options.beforeImage}"
+          src="${escapeHtml(this.options.beforeImage)}"
           alt="Before"
           class="before-after-image before-after-before"
           loading="lazy"
         >
         <img
-          src="${this.options.afterImage}"
+          src="${escapeHtml(this.options.afterImage)}"
           alt="After"
           class="before-after-image before-after-after"
           loading="lazy"
         >
         <div class="before-after-slider"></div>
-        <div class="before-after-label before-after-label-before">${this.options.beforeLabel}</div>
-        <div class="before-after-label before-after-label-after">${this.options.afterLabel}</div>
-        ${this.options.badge ? `<div class="before-after-badge">${this.options.badge}</div>` : ''}
+        <div class="before-after-label before-after-label-before">${escapeHtml(this.options.beforeLabel)}</div>
+        <div class="before-after-label before-after-label-after">${escapeHtml(this.options.afterLabel)}</div>
+        ${this.options.badge ? `<div class="before-after-badge">${escapeHtml(this.options.badge)}</div>` : ''}
       </div>
     `;
 
@@ -160,12 +172,13 @@ class BeforeAfterGallery {
   }
 
   renderFilters() {
+    const labels = this.options.filterLabels[this.options.lang] || this.options.filterLabels.de;
     const filterHTML = `
       <div class="before-after-filters">
-        <button class="filter-btn active" data-filter="all">${this.options.filterLabels[this.options.lang].all}</button>
-        <button class="filter-btn" data-filter="haircut">${this.options.filterLabels[this.options.lang].haircut}</button>
-        <button class="filter-btn" data-filter="creative">${this.options.filterLabels[this.options.lang].creative}</button>
-        <button class="filter-btn" data-filter="cats">${this.options.filterLabels[this.options.lang].cats}</button>
+        <button class="filter-btn active" data-filter="all">${escapeHtml(labels.all)}</button>
+        <button class="filter-btn" data-filter="haircut">${escapeHtml(labels.haircut)}</button>
+        <button class="filter-btn" data-filter="creative">${escapeHtml(labels.creative)}</button>
+        <button class="filter-btn" data-filter="cats">${escapeHtml(labels.cats)}</button>
       </div>
     `;
 
@@ -190,14 +203,14 @@ class BeforeAfterGallery {
       : this.items.filter(item => item.category === this.currentFilter);
 
     this.container.innerHTML = filteredItems.map(item => `
-      <div class="before-after-card" data-category="${item.category}">
-        <div class="before-after-container" data-before="${item.beforeImage}" data-after="${item.afterImage}"
-             data-before-label="${item.beforeLabel}" data-after-label="${item.afterLabel}"
-             data-badge="${item.badge || ''}">
+      <div class="before-after-card" data-category="${escapeHtml(item.category)}">
+        <div class="before-after-container" data-before="${escapeHtml(item.beforeImage)}" data-after="${escapeHtml(item.afterImage)}"
+             data-before-label="${escapeHtml(item.beforeLabel)}" data-after-label="${escapeHtml(item.afterLabel)}"
+             data-badge="${escapeHtml(item.badge || '')}">
         </div>
         <div class="before-after-card-info">
-          <h4 class="before-after-card-title">${item.title}</h4>
-          <p class="before-after-card-description">${item.description}</p>
+          <h4 class="before-after-card-title">${escapeHtml(item.title)}</h4>
+          <p class="before-after-card-description">${escapeHtml(item.description)}</p>
         </div>
       </div>
     `).join('');

@@ -51,12 +51,6 @@ TEAMS_WEBHOOK_URL=
 SLACK_WEBHOOK_URL=
 PAYMENT_PROVIDER_KEY=
 
-# Zone API token with Cache Purge (create via npm run cf:open-purge-token)
-# Full zone token (purge + rules): npm run cf:ensure-api-token
+# Scoped Zone Ops token (create via npm run cf:open-api-token)
+# Required: Zone Read + DNS Edit + Cache Purge + Page Rules Edit + Zone Rules Edit
 CLOUDFLARE_API_TOKEN=
-# Or Global API Key (My Profile → API Keys) to auto-create purge token:
-# Optional — auto-create Zone Rules token (npm run cf:ensure-zone-rules-token):
-# Prefer gitignored .cloudflare-global.json (see .cloudflare-global.json.example)
-# Or:
-# CLOUDFLARE_API_EMAIL=
-# CLOUDFLARE_API_KEY=

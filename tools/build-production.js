@@ -24,9 +24,11 @@ const copyEntries = [
   'uk',
   'functions',
   '3d-weather-codrops-main/dist-widget',
+  '.well-known',
   '_headers',
   '_redirects',
   'robots.txt',
+  'llms.txt',
   'sitemap.xml',
   'sitemap-brand.xml',
   'indexnow-key.txt',
@@ -85,10 +87,21 @@ function ensureLeafletVendorBundle() {
   console.log('Copied Leaflet vendor assets from node_modules.');
 }
 
+function emptyDirectory(directory) {
+  fs.mkdirSync(directory, { recursive: true });
+  for (const entry of fs.readdirSync(directory)) {
+    fs.rmSync(path.join(directory, entry), {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 250,
+    });
+  }
+}
+
 ensureLeafletVendorBundle();
 
-fs.rmSync(dist, { recursive: true, force: true });
-fs.mkdirSync(dist, { recursive: true });
+emptyDirectory(dist);
 
 for (const entry of copyEntries) {
   copyRecursive(path.join(root, entry), path.join(dist, entry));

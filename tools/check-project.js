@@ -11,6 +11,7 @@ const requiredFiles = [
   'ru/index.html',
   'uk/index.html',
   'robots.txt',
+  'llms.txt',
   'sitemap.xml',
   'sitemap-brand.xml',
   'indexnow-key.txt',
@@ -19,6 +20,10 @@ const requiredFiles = [
   '_headers',
   '_redirects',
   'wrangler.toml',
+  'assets/js/agent-tools.js',
+  '.well-known/api-catalog',
+  '.well-known/openapi.json',
+  '.well-known/agent-skills/index.json',
 ];
 
 const indexFiles = ['index.html', 'de/index.html', 'en/index.html', 'ru/index.html', 'uk/index.html'];
@@ -52,6 +57,20 @@ function walk(dir) {
 
 for (const file of requiredFiles) {
   assert(fs.existsSync(path.join(root, file)), `Missing required project file: ${file}`);
+}
+
+if (fs.existsSync(path.join(root, 'workers/pages-proxy.js'))) {
+  const workerConfigPath = path.join(root, 'workers/wrangler.toml');
+  assert(fs.existsSync(workerConfigPath), 'Missing worker config: workers/wrangler.toml');
+
+  if (fs.existsSync(workerConfigPath)) {
+    const workerWrangler = read('workers/wrangler.toml');
+    assert(
+      /main\s*=\s*"pages-proxy\.js"/.test(workerWrangler),
+      'workers/wrangler.toml must point main to pages-proxy.js'
+    );
+    assert(/routes\s*=\s*\[/.test(workerWrangler), 'workers/wrangler.toml must define routes');
+  }
 }
 
 if (fs.existsSync(path.join(root, 'wrangler.toml'))) {
@@ -88,6 +107,7 @@ for (const file of indexFiles) {
     `${file}: missing favicon.ico link`
   );
   assert(html.includes('/site.webmanifest'), `${file}: missing web manifest link`);
+  assert(html.includes('agent-tools.js'), `${file}: missing WebMCP agent tools script`);
   assert(html.includes('search-logo-clear-512.png'), `${file}: missing transparent search logo structured signal`);
 
   for (const match of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
@@ -103,6 +123,29 @@ if (fs.existsSync(path.join(root, 'robots.txt'))) {
   const robots = read('robots.txt');
   assert(robots.includes('Sitemap: https://hundesalon-nika.com/sitemap.xml'), 'robots.txt must point to sitemap.xml');
   assert(robots.includes('sitemap-brand.xml'), 'robots.txt must point to sitemap-brand.xml');
+  assert(robots.includes('llms.txt'), 'robots.txt should mention llms.txt for AI agents');
+  assert(robots.includes('Content-Signal:'), 'robots.txt should declare Content-Signal preferences');
+  assert(robots.includes('GPTBot'), 'robots.txt should include explicit AI bot rules');
+}
+
+if (fs.existsSync(path.join(root, 'llms.txt'))) {
+  const llms = read('llms.txt');
+  assert(llms.includes('https://hundesalon-nika.com/de/'), 'llms.txt must include the German landing page');
+  assert(llms.includes('https://hundesalon-nika.com/en/'), 'llms.txt must include the English landing page');
+  assert(llms.includes('https://hundesalon-nika.com/ru/'), 'llms.txt must include the Russian landing page');
+  assert(llms.includes('https://hundesalon-nika.com/uk/'), 'llms.txt must include the Ukrainian landing page');
+  assert(read('_headers').includes('/llms.txt'), '_headers must include cache policy for llms.txt');
+}
+
+if (fs.existsSync(path.join(root, '.well-known/api-catalog'))) {
+  const catalog = JSON.parse(read('.well-known/api-catalog'));
+  assert(Array.isArray(catalog.linkset), '.well-known/api-catalog must contain a linkset array');
+  assert(read('_headers').includes('rel="api-catalog"'), '_headers must advertise the API catalog');
+}
+
+if (fs.existsSync(path.join(root, '.well-known/agent-skills/index.json'))) {
+  const skills = JSON.parse(read('.well-known/agent-skills/index.json'));
+  assert(Array.isArray(skills.skills), 'agent-skills index must contain a skills array');
 }
 
 if (fs.existsSync(path.join(root, 'sitemap.xml'))) {

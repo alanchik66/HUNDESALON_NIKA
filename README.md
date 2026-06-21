@@ -23,7 +23,10 @@ HUNDESALON_NIKA/
 ├── 📧 functions/sendmail.js   # Cloudflare Pages Function для формы
 ├── ⚙️ _headers                # HTTP-заголовки Cloudflare Pages
 ├── 🔀 _redirects              # Редиректы Cloudflare Pages
-├── ☁️ wrangler.toml           # Конфигурация деплоя Cloudflare
+├── ☁️ wrangler.toml           # Cloudflare Pages-конфигурация
+├── 🛟 workers/                # Emergency Cloudflare Worker proxy
+│   ├── pages-proxy.js         # Прокси для custom domains
+│   └── wrangler.toml          # Worker-конфигурация
 │
 ├── 🌍 Языковые версии/
 │   ├── ru/                    # 🇷🇺 Русский
@@ -184,6 +187,18 @@ npm run deploy
 ```
 
 Команда запускает валидацию и деплой через Wrangler согласно `wrangler.toml`.
+
+Если нужен аварийный edge-proxy для custom domains, используйте отдельный Worker:
+
+```bash
+npm run deploy:worker
+```
+
+Локальный запуск Worker-прокси:
+
+```bash
+npm run dev:worker
+```
 
 ### 3. Настройка домена
 

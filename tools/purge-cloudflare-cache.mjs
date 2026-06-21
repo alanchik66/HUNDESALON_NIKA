@@ -13,11 +13,11 @@ import {
 
 async function runEnsurePurgeToken() {
   await new Promise((resolve, reject) => {
-    const child = spawn('npm', ['run', 'cf:ensure-purge-token'], {
+    const child = spawn('npm', ['run', 'cf:ensure-api-token'], {
       stdio: 'inherit',
       shell: true,
     });
-    child.on('close', code => (code === 0 ? resolve() : reject(new Error('cf:ensure-purge-token failed'))));
+    child.on('close', code => (code === 0 ? resolve() : reject(new Error('cf:ensure-api-token failed'))));
   });
   loadDevVars();
 }
@@ -49,7 +49,7 @@ async function main() {
       removeDevVar('CLOUDFLARE_API_TOKEN');
     }
 
-    if (!process.env.CLOUDFLARE_API_TOKEN?.trim() && !process.env.CLOUDFLARE_API_KEY?.trim()) {
+    if (!process.env.CLOUDFLARE_API_TOKEN?.trim()) {
       try {
         await runEnsurePurgeToken();
         await purgeEverything();
@@ -64,6 +64,6 @@ async function main() {
 
 main().catch(error => {
   console.error(error.message);
-  console.error('Run: npm run cf:open-purge-token');
+  console.error('Run: npm run cf:open-api-token');
   process.exit(1);
 });

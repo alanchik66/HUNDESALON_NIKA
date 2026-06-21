@@ -1,14 +1,14 @@
 /**
- * Open existing NIKA-Purge-Cache token edit page in default Edge (normal profile, not CDP).
+ * Open existing HUNDESALON_NIKA — Zone Ops token edit page in default Edge.
  * npm run cf:open-edit-token
  */
 import { exec } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
-import { EXISTING_PURGE_TOKEN_ID } from './lib/cf-api-token.mjs';
+import { ZONE_OPS_TOKEN_ID } from './lib/cf-api-token.mjs';
 
-const TOKEN_ID = EXISTING_PURGE_TOKEN_ID;
+const TOKEN_ID = ZONE_OPS_TOKEN_ID;
 const url = `https://dash.cloudflare.com/profile/api-tokens/${TOKEN_ID}/edit`;
 
 const edgeCandidates = [
@@ -16,7 +16,8 @@ const edgeCandidates = [
   path.join(process.env['ProgramFiles(x86)'] || '', 'Microsoft/Edge/Application/msedge.exe'),
 ].filter(existsSync);
 
-console.log('Add permission: Zone → Zone Rules → Edit');
+console.log('Edit token: HUNDESALON_NIKA — Zone Ops');
+console.log('Required permissions: Zone Read, DNS Edit, Cache Purge, Page Rules Edit, Zone Rules Edit');
 console.log('Then save → npm run cf:ensure-api-token\n');
 console.log(url);
 

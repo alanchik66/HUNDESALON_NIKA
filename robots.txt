@@ -1,7 +1,20 @@
 # hundesalon-nika.com — deploy to site root; Cloudflare may prepend Content-Signal block.
 # Bing: test https://hundesalon-nika.com/robots.txt (www redirects to apex).
+# AI agents: structured site summary is available at https://hundesalon-nika.com/llms.txt
 
 User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=no
+Allow: /
+Disallow: /tools/
+Disallow: /functions/
+Crawl-delay: 1
+
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: OAI-SearchBot
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: PerplexityBot
 Allow: /
 Disallow: /tools/
 Disallow: /functions/

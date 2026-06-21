@@ -12,7 +12,7 @@
   "editor.guides.bracketPairs": "active",
   "editor.linkedEditing": true,
   "editor.cursorSmoothCaretAnimation": "on",
-  "editor.minimap.enabled": false,
+  "editor.minimap.enabled": true,
   "editor.stickyScroll.enabled": true,
   "editor.inlineSuggest.enabled": true,
   "editor.quickSuggestions": {
@@ -133,22 +133,12 @@
   "git.confirmSync": false,
   "git.enableSmartCommit": true,
   "git.inputValidationSubjectLength": 72,
-  "gitlens.defaultCurrentUserNameStyle": "you",
-  "gitlens.graph.details.location": "right",
-  "gitlens.graph.experimental.kanban.enabled": true,
-  "gitlens.graph.experimental.visualizations.enabled": true,
-  "gitlens.rebaseEditor.openBehavior": "auto",
   "gitlab.pipelineGitRemoteName": "gitlab",
   // ── Терминал ─────────────────────────────────────────────────────────────
   "terminal.integrated.defaultProfile.windows": "HUNDESALON PowerShell",
   "terminal.integrated.profiles.windows": {
     "HUNDESALON PowerShell": {
       "path": "${env:windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-      "args": [
-        "-NoLogo",
-        "-ExecutionPolicy",
-        "Bypass"
-      ],
       "icon": "terminal-powershell"
     },
     "Command Prompt": {
@@ -158,19 +148,10 @@
   },
   "terminal.integrated.automationProfile.windows": {
     "path": "${env:windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-    "args": [
-      "-NoLogo",
-      "-NoProfile",
-      "-ExecutionPolicy",
-      "Bypass"
-    ],
     "icon": "terminal-powershell"
   },
   "terminal.integrated.cwd": "${workspaceFolder}",
   "terminal.integrated.inheritEnv": true,
-  "terminal.integrated.env.windows": {
-    "NODE_TLS_REJECT_UNAUTHORIZED": null
-  },
   "terminal.integrated.windowsEnableConpty": true,
   "terminal.integrated.scrollback": 5000,
   "terminal.integrated.copyOnSelection": true,
@@ -197,9 +178,7 @@
   "[powershell]": {
     "editor.defaultFormatter": "ms-vscode.powershell"
   },
-  // ── Обновления ────────────────────────────────────────────────────────────
-  "update.mode": "default",
-  "extensions.autoUpdate": true,
-  "extensions.autoCheckUpdates": true,
-  "liveServer.settings.port": 5503
+  "liveServer.settings.port": 5503,
+  "gitlens.enabled": false,
+  "gitlens.gitkraken.mcp.autoEnabled": false
 }

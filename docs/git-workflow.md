@@ -11,6 +11,7 @@
 Cloudflare Pages: проект `hundesalon-nika`, тип **Direct Upload**. Продакшен обновляется через:
 
 - GitHub Actions: `.github/workflows/cloudflare-pages.yml`;
+- GitHub Actions CI: `.github/workflows/ci.yml`;
 - GitLab CI fallback: `.gitlab-ci.yml`;
 - локально вручную:
 
@@ -25,13 +26,20 @@ npm run deploy:full   # deploy + проверки (+ purge если есть т�
 
 Settings → Secrets and variables → Actions:
 
-| Secret                       | Purpose                                                                         |
-| ---------------------------- | ------------------------------------------------------------------------------- |
-| `CLOUDFLARE_ACCOUNT_ID`      | `25e872aeab8cb246c69142ab07cd0fee`                                              |
-| `CLOUDFLARE_PAGES_API_TOKEN` | Cloudflare token with **Account → Cloudflare Pages → Edit**                     |
-| `CLOUDFLARE_ZONE_API_TOKEN`  | Optional purge token with **Zone Read + Cache Purge** for `hundesalon-nika.com` |
+Secrets:
 
-`CLOUDFLARE_ZONE_API_TOKEN` is enough only for purge/rules. It cannot deploy Pages by itself.
+| Secret                       | Purpose                                                     |
+| ---------------------------- | ----------------------------------------------------------- |
+| `CLOUDFLARE_PAGES_API_TOKEN` | Cloudflare token `HUNDESALON_NIKA — Pages Deploy` with `Pages Write` |
+
+Variables:
+
+| Variable                         | Value                                |
+| -------------------------------- | ------------------------------------ |
+| `CLOUDFLARE_ACCOUNT_ID`          | `25e872aeab8cb246c69142ab07cd0fee`   |
+| `CLOUDFLARE_PAGES_PROJECT_NAME`  | `hundesalon-nika`                    |
+
+Zone automation stays local in `HUNDESALON_NIKA — Zone Ops`; it is not used for GitHub Pages deploy.
 
 ### GitLab CI
 
@@ -114,7 +122,9 @@ npm run git:cleanup
 
 ## Cloudflare после push в GitHub
 
-Текущий проект Pages — **Direct Upload**, поэтому автоматический деплой идёт через GitHub Actions, когда задан `CLOUDFLARE_PAGES_API_TOKEN`. Если секрет ещё не задан:
+Текущий проект Pages — **Direct Upload**, поэтому автоматический деплой идёт через GitHub Actions, когда задан `CLOUDFLARE_PAGES_API_TOKEN`. CI проверяет `npm run validate` и production build; deploy запускается на `main` и вручную через `workflow_dispatch`.
+
+Если GitHub Actions временно недоступен:
 
 ```bash
 npm run deploy:full

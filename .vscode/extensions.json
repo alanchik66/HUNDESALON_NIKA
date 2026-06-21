@@ -16,8 +16,9 @@
     // ─── QA / тестирование ──────────────────────────────────────────
     "ms-playwright.playwright",
     // ─── Git ──────────────────────────────────────────────────────
-    "eamodio.gitlens",
     "mhutchie.git-graph",
+    "github.vscode-pull-request-github",
+    "github.vscode-github-actions",
     // ─── Проверка орфографии (DE / EN / RU / UK) ──────────────────
     "streetsidesoftware.code-spell-checker",
     "streetsidesoftware.code-spell-checker-german",
@@ -27,13 +28,17 @@
     "ms-vscode.powershell",
     // ─── Cloudflare Pages / Workers bindings ──────────────────────
     "cloudflare.cloudflare-workers-bindings-extension",
+    // ─── AI assistants ─────────────────────────────────────────────
+    "openai.chatgpt",
+    "google.geminicodeassist",
     // ─── Утилиты ────────────────────────────────────────────────────
     "editorconfig.editorconfig",
     "mikestead.dotenv",
-    "yzhang.markdown-all-in-one",
-    "googlecloudtools.cloudcode"
+    "yzhang.markdown-all-in-one"
   ],
   "unwantedRecommendations": [
+    "eamodio.gitlens",
+    "googlecloudtools.cloudcode",
     "webhint.vscode-webhint",
     "ritwickdey.liveserver",
     "hookyqr.beautify"

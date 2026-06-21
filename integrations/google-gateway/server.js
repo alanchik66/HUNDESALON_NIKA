@@ -10,6 +10,8 @@ const SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets',
   'https://www.googleapis.com/auth/drive',
 ];
+const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT || 'hundesalon-nika-shell-2026';
+const STORAGE_BUCKET = process.env.STORAGE_BUCKET || 'hundesalon-nika-shell-uploads';
 
 const tokenCache = new Map();
 
@@ -114,6 +116,76 @@ async function googleJson(url, { method = 'GET', body = null, scopes = SCOPES } 
   return data;
 }
 
+function firestoreValue(value) {
+  if (value === null || value === undefined) return { nullValue: null };
+  if (value instanceof Date) return { timestampValue: value.toISOString() };
+  if (Array.isArray(value)) return { arrayValue: { values: value.map(firestoreValue) } };
+  if (typeof value === 'boolean') return { booleanValue: value };
+  if (typeof value === 'number' && Number.isFinite(value)) return Number.isInteger(value) ? { integerValue: value } : { doubleValue: value };
+  if (typeof value === 'object') {
+    return {
+      mapValue: {
+        fields: Object.fromEntries(Object.entries(value).map(([key, nested]) => [key, firestoreValue(nested)])),
+      },
+    };
+  }
+  return { stringValue: String(value) };
+}
+
+async function writeFirestoreDocument(collection, data) {
+  const documentId = `${Date.now()}-${crypto.randomUUID()}`;
+  const fields = Object.fromEntries(Object.entries(data).map(([key, value]) => [key, firestoreValue(value)]));
+  return googleJson(
+    `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/${encodeURIComponent(collection)}?documentId=${encodeURIComponent(documentId)}`,
+    {
+      method: 'POST',
+      body: { fields },
+      scopes: ['https://www.googleapis.com/auth/datastore'],
+    }
+  );
+}
+
+function safeObjectName(fileName) {
+  const cleaned = String(fileName || 'upload.bin')
+    .normalize('NFKD')
+    .replace(/[^\w.-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 120);
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  return `uploads/${stamp}-${crypto.randomUUID()}-${cleaned || 'upload.bin'}`;
+}
+
+async function uploadStorageObject(file, metadata = {}) {
+  const objectName = safeObjectName(file.fileName);
+  const token = await getGoogleToken(['https://www.googleapis.com/auth/devstorage.read_write']);
+  const response = await fetch(
+    `https://storage.googleapis.com/upload/storage/v1/b/${encodeURIComponent(STORAGE_BUCKET)}/o?uploadType=media&name=${encodeURIComponent(objectName)}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': file.mimeType || 'application/octet-stream',
+        'X-Goog-Meta-Source': 'hundesalon-nika',
+        'X-Goog-Meta-Details': Buffer.from(JSON.stringify(metadata)).toString('base64url').slice(0, 1024),
+      },
+      body: file.buffer,
+    }
+  );
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(`Cloud Storage upload failed: ${response.status} ${JSON.stringify(data).slice(0, 600)}`);
+  }
+  return {
+    success: true,
+    id: data.id,
+    name: data.name,
+    bucket: STORAGE_BUCKET,
+    object: objectName,
+    webViewLink: `https://console.cloud.google.com/storage/browser/_details/${encodeURIComponent(STORAGE_BUCKET)}/${encodeURIComponent(objectName)}?project=${encodeURIComponent(PROJECT_ID)}`,
+  };
+}
+
 async function shareDriveFile(fileId, emailAddress) {
   if (!emailAddress) return;
   await googleJson(
@@ -148,101 +220,37 @@ async function createSetup(ownerEmail) {
     );
   }
 
-  const spreadsheetFile = await googleJson('https://www.googleapis.com/drive/v3/files?fields=id,name,webViewLink', {
-    method: 'POST',
-    body: {
-      name: 'HUNDESALON NIKA Platform Log',
-      mimeType: 'application/vnd.google-apps.spreadsheet',
-    },
-    scopes: ['https://www.googleapis.com/auth/drive'],
+  await writeFirestoreDocument('platform_setup', {
+    createdAt: new Date().toISOString(),
+    ownerEmail,
+    calendarId: calendar.id,
+    storageBucket: STORAGE_BUCKET,
+    storageMode: 'cloud-storage',
+    logMode: 'firestore',
   });
-  const spreadsheetId = spreadsheetFile.id;
-
-  await googleJson(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
-    method: 'POST',
-    body: {
-      requests: [
-        {
-          updateSpreadsheetProperties: {
-            properties: { locale: 'de_DE', timeZone: 'Europe/Berlin' },
-            fields: 'locale,timeZone',
-          },
-        },
-        {
-          updateSheetProperties: {
-            properties: { sheetId: 0, title: 'bookings', gridProperties: { rowCount: 1000, columnCount: 16 } },
-            fields: 'title,gridProperties(rowCount,columnCount)',
-          },
-        },
-        {
-          addSheet: {
-            properties: { title: 'subscribers', gridProperties: { rowCount: 1000, columnCount: 8 } },
-          },
-        },
-      ],
-    },
-    scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'],
-  });
-
-  await googleJson(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/bookings!A1:L1?valueInputOption=USER_ENTERED`,
-    {
-      method: 'PUT',
-      body: {
-        values: [
-          [
-            'created_at',
-            'lang',
-            'form_type',
-            'name',
-            'email',
-            'phone',
-            'service',
-            'date',
-            'time',
-            'file_url',
-            'payment_status',
-            'message',
-          ],
-        ],
-      },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'],
-    }
-  );
-  await googleJson(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/subscribers!A1:E1?valueInputOption=USER_ENTERED`,
-    {
-      method: 'PUT',
-      body: { values: [['created_at', 'email', 'lang', 'page', 'origin']] },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'],
-    }
-  );
-
-  await shareDriveFile(spreadsheetId, ownerEmail);
-
-  const folder = await googleJson('https://www.googleapis.com/drive/v3/files?fields=id,name,webViewLink', {
-    method: 'POST',
-    body: {
-      name: 'HUNDESALON NIKA Uploads',
-      mimeType: 'application/vnd.google-apps.folder',
-    },
-    scopes: ['https://www.googleapis.com/auth/drive'],
-  });
-  await shareDriveFile(folder.id, ownerEmail);
 
   return {
     success: true,
     calendarId: calendar.id,
-    spreadsheetId,
-    driveFolderId: folder.id,
-    driveFolderUrl: folder.webViewLink,
+    logMode: 'firestore',
+    storageBucket: STORAGE_BUCKET,
   };
 }
 
 async function appendSheetRow(payload) {
   const spreadsheetId = payload.spreadsheetId || process.env.SHEET_ID;
   const sheetName = payload.sheetName || 'bookings';
-  if (!spreadsheetId) throw new Error('Missing spreadsheetId.');
+  if (!spreadsheetId || process.env.GOOGLE_LOG_MODE === 'firestore') {
+    const collection = sheetName === 'subscribers' ? 'subscribers' : 'bookings';
+    const document = await writeFirestoreDocument(collection, {
+      createdAt: new Date().toISOString(),
+      sheetName,
+      spreadsheetId: spreadsheetId || '',
+      values: payload.values || [],
+      source: 'cloudflare-pages',
+    });
+    return { success: true, logMode: 'firestore', documentName: document.name };
+  }
 
   return googleJson(
     `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(`${sheetName}!A:Z`)}:append?valueInputOption=USER_ENTERED`,
@@ -275,6 +283,10 @@ async function uploadDriveFile(req) {
   if (!file) throw new Error('Missing file.');
 
   const metadata = JSON.parse(fields.metadata || '{}');
+  if (STORAGE_BUCKET && process.env.GOOGLE_UPLOAD_MODE !== 'drive') {
+    return uploadStorageObject(file, metadata);
+  }
+
   const folderId = metadata.folderId || process.env.DRIVE_UPLOAD_FOLDER;
   if (!folderId) throw new Error('Missing Drive folder.');
 

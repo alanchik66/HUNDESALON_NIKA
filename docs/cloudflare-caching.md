@@ -22,14 +22,18 @@ Path: **Caching → Cache Rules** → rule #2. Rename from the old “4 hours”
 
 Wrangler OAuth (`npx wrangler login`) can deploy Pages but often **cannot** purge zone cache.
 
-1. [Cloudflare Dashboard → API Tokens](https://dash.cloudflare.com/profile/api-tokens) → **Create Token**
-2. Use **Custom token** with:
-   - **Zone** → **Cache Purge**, **Zone** → **Zone** (Read)
-   - **Account** → **Cloudflare Pages** → **Edit** (if you deploy via `CLOUDFLARE_API_TOKEN` instead of Wrangler OAuth)
-3. Zone resources: **Include** → **Specific zone** → `hundesalon-nika.com`
-4. Copy the token once; set `CLOUDFLARE_API_TOKEN` in `.dev.vars` (local, see `.dev.vars.example`) or Cloudflare Pages secrets — never commit it.
+Use the canonical local token **HUNDESALON_NIKA — Zone Ops**:
 
-Test: `npm run cf:purge-cache` (or first `npm run cf:ensure-purge-token` if `.dev.vars` has no token yet — requires creating the token once in Dashboard; Wrangler OAuth cannot create API tokens).
+- Zone resources: **Include** → **Specific zone** → `hundesalon-nika.com`
+- Permissions: Zone Read, DNS Edit, Cache Purge, Page Rules Edit, Zone Rules Edit
+- Local secret: `CLOUDFLARE_API_TOKEN` in `.dev.vars` and `.cloudflare-api.token` (both gitignored)
+
+Test:
+
+```bash
+npm run cf:ensure-api-token
+npm run cf:purge-cache
+```
 
 ## After every production deploy
 
@@ -41,8 +45,7 @@ This runs:
 
 1. `npm run deploy` — build + Cloudflare Pages upload
 2. `npm run cf:purge-cache` — purge zone cache. **Wrangler OAuth cannot purge** (scopes: `zone:read`, `pages:write`, no Cache Purge). Use one of:
-   - `CLOUDFLARE_API_TOKEN` in `.dev.vars` (create via `npm run cf:open-purge-token` → `npm run cf:set-purge-token -- <token>`)
-   - `CLOUDFLARE_API_EMAIL` + `CLOUDFLARE_API_KEY` (Global API Key) — then `npm run cf:ensure-purge-token` auto-creates a zone token
+   - `CLOUDFLARE_API_TOKEN` in `.dev.vars` (create via `npm run cf:open-api-token` → `npm run cf:set-api-token -- <token>`)
    - Dashboard: **Caching → Configuration → Purge Everything**
 3. `npm run check:live-html` — quick favicon/canonical check
 4. `npm run google:gsc:audit` — full GSC readiness check

@@ -1,0 +1,11 @@
+name = "hundesalon-nika"
+account_id = "25e872aeab8cb246c69142ab07cd0fee"
+main = "pages-proxy.js"
+compatibility_date = "2026-06-26"
+keep_vars = true
+workers_dev = false
+
+routes = [
+  { pattern = "hundesalon-nika.com/*", zone_name = "hundesalon-nika.com" },
+  { pattern = "www.hundesalon-nika.com/*", zone_name = "hundesalon-nika.com" }
+]

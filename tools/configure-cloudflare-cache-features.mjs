@@ -2,7 +2,7 @@
  * Enable Cloudflare zone features: Crawler Hints + CSAM content scanning (API).
  * CSAM in Dashboard also requires a verified notification email — see caching/configuration/csam.
  *
- * Auth: CLOUDFLARE_API_TOKEN (Zone Settings Edit or Global API Key) in .dev.vars
+ * Auth: CLOUDFLARE_API_TOKEN with Zone Settings Edit in .dev.vars
  * Usage:
  *   npm run cf:configure-cache-features
  *   npm run cf:configure-cache-features -- --email you@example.com
@@ -160,6 +160,6 @@ async function main() {
 
 main().catch(error => {
   console.error(error.message);
-  console.error('\nNeed Zone Settings Edit (or Global API Key). See docs/cloudflare-api-tokens.md');
+  console.error('\nNeed CLOUDFLARE_API_TOKEN with Zone Settings Edit. See docs/cloudflare-api-tokens.md');
   process.exit(1);
 });

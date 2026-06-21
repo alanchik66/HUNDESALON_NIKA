@@ -55,6 +55,7 @@ coverage/
 
 # ═══════════════ CLOUDFLARE / WRANGLER ═══════════════
 .wrangler/
+**/.wrangler/
 
 # ═══════════════ РЕДАКТОРЫ И IDE ═══════════════
 .idea/
@@ -145,7 +146,6 @@ tools/_create-*.mjs
 .cloudflare-api.token
 .cloudflare-purge.token
 .cloudflare-rules.token
-.cloudflare-global.json
 .local-backups/
 *.bundle
 fix-repo-report.txt

@@ -71,7 +71,7 @@ function runNpm(script, { optional = false } = {}) {
   });
 }
 
-await runNpm('cf:ensure-purge-token', { optional: true });
+await runNpm('cf:ensure-api-token', { optional: true });
 await runNpm('cf:purge-cache', { optional: true });
 
 try {

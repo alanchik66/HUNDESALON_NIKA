@@ -1,5 +1,5 @@
 /**
- * Shared Cloudflare auth: .dev.vars, API token, Global API Key, or Wrangler OAuth (read-only).
+ * Shared Cloudflare auth: .dev.vars, scoped API token, or Wrangler OAuth (read-only).
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -13,27 +13,10 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 export { DOMAIN, ACCOUNT_ID, REPO_ROOT };
 
 export function loadDevVars(filePath = path.join(REPO_ROOT, '.dev.vars')) {
-  for (const file of ['.cloudflare-api.token', '.cloudflare-purge.token', '.cloudflare-rules.token']) {
-    const tokenPath = path.join(REPO_ROOT, file);
-    if (existsSync(tokenPath) && !process.env.CLOUDFLARE_API_TOKEN) {
-      const fromFile = readFileSync(tokenPath, 'utf8').trim();
-      if (fromFile) process.env.CLOUDFLARE_API_TOKEN = fromFile;
-    }
-  }
-
-  const globalFile = path.join(REPO_ROOT, '.cloudflare-global.json');
-  if (existsSync(globalFile) && !process.env.CLOUDFLARE_API_KEY) {
-    try {
-      const data = JSON.parse(readFileSync(globalFile, 'utf8'));
-      const email = String(data.email || data.CLOUDFLARE_API_EMAIL || '').trim();
-      const key = String(data.api_key || data.CLOUDFLARE_API_KEY || '').trim();
-      if (email && key) {
-        process.env.CLOUDFLARE_API_EMAIL = email;
-        process.env.CLOUDFLARE_API_KEY = key;
-      }
-    } catch {
-      // ignore
-    }
+  const tokenPath = path.join(REPO_ROOT, '.cloudflare-api.token');
+  if (existsSync(tokenPath) && !process.env.CLOUDFLARE_API_TOKEN) {
+    const fromFile = readFileSync(tokenPath, 'utf8').trim();
+    if (fromFile) process.env.CLOUDFLARE_API_TOKEN = fromFile;
   }
 
   if (!existsSync(filePath)) return;
@@ -61,26 +44,17 @@ function looksLikeWranglerOAuthToken(apiToken) {
   return false;
 }
 
-/** Headers for Cloudflare API v4 (token or Global API Key). */
+/** Headers for Cloudflare API v4 (scoped API token only). */
 export function getCloudflareAuthHeaders({ allowOAuthToken = false } = {}) {
   loadDevVars();
   const apiToken = process.env.CLOUDFLARE_API_TOKEN?.trim();
   if (apiToken) {
     if (!allowOAuthToken && looksLikeWranglerOAuthToken(apiToken)) {
       throw new Error(
-        'CLOUDFLARE_API_TOKEN matches Wrangler OAuth (no Cache Purge). Create a zone API token: npm run cf:open-purge-token'
+        'CLOUDFLARE_API_TOKEN matches Wrangler OAuth (no Cache Purge). Create a zone API token: npm run cf:open-api-token'
       );
     }
     return { Authorization: `Bearer ${apiToken}` };
-  }
-
-  const email = process.env.CLOUDFLARE_API_EMAIL?.trim();
-  const globalKey = process.env.CLOUDFLARE_API_KEY?.trim();
-  if (email && globalKey) {
-    return {
-      'X-Auth-Email': email,
-      'X-Auth-Key': globalKey,
-    };
   }
 
   return null;
@@ -90,6 +64,7 @@ function wranglerConfigCandidates() {
   const home = homedir();
   return [
     process.env.WRANGLER_CONFIG,
+    path.join(home, '.wrangler', 'config', 'default.toml'),
     path.join(home, '.config', '.wrangler', 'config', 'default.toml'),
     path.join(home, 'AppData', 'Roaming', '.wrangler', 'config', 'default.toml'),
     path.join(home, 'AppData', 'Roaming', 'xdg.config', '.wrangler', 'config', 'default.toml'),
@@ -176,12 +151,12 @@ export async function resolveZoneId(auth) {
   return zone.id;
 }
 
-/** Auth that can purge cache (API token or Global API Key — not Wrangler OAuth). */
+/** Auth that can purge cache (scoped API token — not Wrangler OAuth). */
 export function resolvePurgeAuth() {
   const headers = getCloudflareAuthHeaders();
   if (headers) return headers;
   throw new Error(
-    'No purge credentials. Add CLOUDFLARE_API_TOKEN (zone: Cache Purge) or CLOUDFLARE_API_EMAIL + CLOUDFLARE_API_KEY to .dev.vars. Run: npm run cf:open-purge-token'
+    'No purge credentials. Add CLOUDFLARE_API_TOKEN with Cache Purge to .dev.vars. Run: npm run cf:open-api-token'
   );
 }
 

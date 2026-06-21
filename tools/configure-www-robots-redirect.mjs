@@ -117,7 +117,7 @@ const desiredRule = {
 loadDevVars();
 const auth = resolveCfAuth();
 if (!auth) {
-  console.error('Set CLOUDFLARE_API_TOKEN, .cloudflare-rules.token, or .cloudflare-global.json');
+  console.error('Set CLOUDFLARE_API_TOKEN or run: npm run cf:open-api-token');
   process.exit(1);
 }
 

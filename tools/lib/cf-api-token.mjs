@@ -1,5 +1,5 @@
 /**
- * Unified Cloudflare zone API token for HUNDESALON NIKA (purge + rules).
+ * Unified Cloudflare zone operations token for HUNDESALON NIKA.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -12,11 +12,12 @@ import {
   upsertDevVar,
 } from './cloudflare-auth.mjs';
 
-export const TOKEN_NAME = 'HUNDESALON — Zone API';
-/** Existing purge token in Dashboard (NIKA-Purge-Cache). */
-export const EXISTING_PURGE_TOKEN_ID = 'bc69976db0ebad603102ba39837d609e';
+export const TOKEN_NAME = 'HUNDESALON_NIKA — Zone Ops';
+/** Current Dashboard token used by local zone automation. */
+export const ZONE_OPS_TOKEN_ID = 'aa00284c2a404f75d68630a57c451a31';
 export const GROUP_IDS = {
   zoneRead: 'c8fed203ed3043cba015a93ad1616f1f',
+  dnsWrite: '4755a26eedb94da69e1066d98aa820be',
   cachePurge: 'e22dca3480a4436b9c8a7100414e84b5',
   pageRules: 'ed07f73c33134c868f263e309f1c4e4a',
   zoneRules: 'dfe707eb8a1c476cb7f423c5a16b2b6c',
@@ -24,26 +25,6 @@ export const GROUP_IDS = {
 
 const PHASE = 'http_request_dynamic_redirect';
 const TOKEN_FILE = path.join(REPO_ROOT, '.cloudflare-api.token');
-const GLOBAL_FILE = path.join(REPO_ROOT, '.cloudflare-global.json');
-const LEGACY_PURGE_FILE = path.join(REPO_ROOT, '.cloudflare-purge.token');
-const LEGACY_RULES_FILE = path.join(REPO_ROOT, '.cloudflare-rules.token');
-
-export function loadGlobalKeyFile() {
-  if (!existsSync(GLOBAL_FILE)) return null;
-  try {
-    const data = JSON.parse(readFileSync(GLOBAL_FILE, 'utf8'));
-    const email = String(data.email || data.CLOUDFLARE_API_EMAIL || '').trim();
-    const key = String(data.api_key || data.CLOUDFLARE_API_KEY || '').trim();
-    if (email && key) {
-      process.env.CLOUDFLARE_API_EMAIL = email;
-      process.env.CLOUDFLARE_API_KEY = key;
-      return { email, key };
-    }
-  } catch {
-    // ignore
-  }
-  return null;
-}
 
 function loadTokenFile(filePath, envKey) {
   if (!existsSync(filePath)) return '';
@@ -54,13 +35,8 @@ function loadTokenFile(filePath, envKey) {
 
 export function loadAllCredentials() {
   loadDevVars();
-  loadGlobalKeyFile();
   if (!process.env.CLOUDFLARE_API_TOKEN?.trim()) {
-    const fromApi = loadTokenFile(TOKEN_FILE, 'CLOUDFLARE_API_TOKEN');
-    if (!fromApi) loadTokenFile(LEGACY_PURGE_FILE, 'CLOUDFLARE_API_TOKEN');
-  }
-  if (!process.env.CLOUDFLARE_API_TOKEN?.trim()) {
-    loadTokenFile(LEGACY_RULES_FILE, 'CLOUDFLARE_API_TOKEN');
+    loadTokenFile(TOKEN_FILE, 'CLOUDFLARE_API_TOKEN');
   }
 }
 
@@ -74,83 +50,10 @@ export function resolveCfAuth() {
 /** @deprecated use resolveCfAuth */
 export const resolveRulesAuth = resolveCfAuth;
 
-async function findGroup(auth, name) {
-  const groups = await cloudflareApi(
-    auth,
-    `/user/tokens/permission_groups?name=${encodeURIComponent(name)}&per_page=50`
-  );
-  const hit = groups.find(g => g.name === name);
-  if (!hit?.id) throw new Error(`Permission group not found: ${name}`);
-  return hit.id;
-}
-
-/** Add Zone Rules Edit to an existing user API token (requires Global API Key). */
-export async function upgradeExistingZoneToken(globalAuth, tokenId, zoneId) {
-  const existing = await cloudflareApi(globalAuth, `/user/tokens/${tokenId}`);
-  const permIds = new Set(Object.values(GROUP_IDS));
-  for (const policy of existing.policies || []) {
-    for (const g of policy.permission_groups || []) {
-      if (g?.id) permIds.add(g.id);
-    }
-  }
-  try {
-    permIds.add(await findGroup(globalAuth, 'Zone Rules Edit'));
-  } catch {
-    // keep GROUP_IDS.zoneRules
-  }
-
-  const resources =
-    existing.policies?.[0]?.resources || {
-      [`com.cloudflare.api.account.zone.${zoneId}`]: '*',
-    };
-
-  return cloudflareApi(globalAuth, `/user/tokens/${tokenId}`, {
-    method: 'PUT',
-    body: JSON.stringify({
-      name: existing.name || TOKEN_NAME,
-      status: existing.status || 'active',
-      policies: [
-        {
-          effect: 'allow',
-          permission_groups: [...permIds].map(id => ({ id })),
-          resources,
-        },
-      ],
-    }),
-  });
-}
-
-export async function createFullZoneToken(auth, zoneId) {
-  let ids = { ...GROUP_IDS };
-  try {
-    ids.zoneRead = await findGroup(auth, 'Zone Read');
-    ids.cachePurge = await findGroup(auth, 'Cache Purge');
-    ids.pageRules = await findGroup(auth, 'Page Rules Write');
-    ids.zoneRules = await findGroup(auth, 'Zone Rules Edit');
-  } catch {
-    // documented fallback IDs
-  }
-
-  return cloudflareApi(auth, '/user/tokens', {
-    method: 'POST',
-    body: JSON.stringify({
-      name: `${TOKEN_NAME} ${new Date().toISOString().slice(0, 10)}`,
-      policies: [
-        {
-          effect: 'allow',
-          permission_groups: Object.values(ids).map(id => ({ id })),
-          resources: {
-            [`com.cloudflare.api.account.zone.${zoneId}`]: '*',
-          },
-        },
-      ],
-    }),
-  });
-}
-
 export async function auditToken(auth, zoneId) {
   const report = {
     zoneRead: false,
+    dnsWrite: false,
     cachePurge: false,
     zoneRules: false,
     pageRules: false,
@@ -161,6 +64,30 @@ export async function auditToken(auth, zoneId) {
     report.zoneRead = true;
   } catch {
     return report;
+  }
+
+  try {
+    const response = await fetch(`https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`, {
+      method: 'POST',
+      headers: {
+        ...auth,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'INVALID_PROBE',
+        name: '_codex-permission-check.hundesalon-nika.com',
+        content: 'permission-check',
+      }),
+    });
+    const payload = await response.json();
+    if (
+      response.status === 400 &&
+      payload.errors?.some(error => /record type .* invalid/i.test(String(error.message)))
+    ) {
+      report.dnsWrite = true;
+    }
+  } catch {
+    // missing
   }
 
   try {
@@ -193,12 +120,13 @@ export async function auditToken(auth, zoneId) {
 }
 
 export function isFullToken(report) {
-  return report.zoneRead && report.cachePurge && report.zoneRules && report.pageRules;
+  return report.zoneRead && report.dnsWrite && report.cachePurge && report.zoneRules && report.pageRules;
 }
 
 export function printAudit(report) {
   const row = (label, ok) => `${ok ? '✓' : '✗'} ${label}`;
   console.log(row('Zone Read', report.zoneRead));
+  console.log(row('DNS Records Edit', report.dnsWrite));
   console.log(row('Cache Purge', report.cachePurge));
   console.log(row('Zone Rules Edit', report.zoneRules));
   console.log(row('Page Rules Write', report.pageRules));
@@ -217,6 +145,7 @@ export async function verifyBearerToken(token) {
   const audit = await auditToken(auth, zoneId);
   if (!isFullToken(audit)) {
     const missing = [];
+    if (!audit.dnsWrite) missing.push('DNS Records Edit');
     if (!audit.cachePurge) missing.push('Cache Purge');
     if (!audit.zoneRules) missing.push('Zone Rules Edit');
     if (!audit.pageRules) missing.push('Page Rules Write');
