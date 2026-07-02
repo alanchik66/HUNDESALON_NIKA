@@ -286,6 +286,12 @@ document.addEventListener('DOMContentLoaded', () => {
       en: 'Draft service is temporarily unavailable in local mode.',
       de: 'Der Entwurfsdienst ist lokal vorubergehend nicht verfugbar.',
     },
+    authFailed: {
+      ru: 'Сервис черновиков временно недоступен из-за ошибки авторизации.',
+      uk: 'Сервіс чернеток тимчасово недоступний через помилку авторизації.',
+      en: 'Draft service is temporarily unavailable due to authorization issues.',
+      de: 'Der Entwurfsdienst ist vorübergehend wegen eines Autorisierungsfehlers nicht verfügbar.',
+    },
   };
 
   const normalizeDraftMessage = value => {
