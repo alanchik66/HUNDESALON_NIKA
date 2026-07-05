@@ -14,8 +14,8 @@
  * ================================================================
  */
 
-const escapeHtml = (value) =>
-  String(value ?? '').replace(/[&<>"']/g, (char) => {
+const escapeHtml = value =>
+  String(value ?? '').replace(/[&<>"']/g, char => {
     const map = {
       '&': '&amp;',
       '<': '&lt;',
@@ -35,7 +35,7 @@ class BeforeAfterSlider {
       beforeLabel: options.beforeLabel || 'BEFORE',
       afterLabel: options.afterLabel || 'AFTER',
       badge: options.badge || '',
-      ...options
+      ...options,
     };
 
     this.isDragging = false;
@@ -72,17 +72,17 @@ class BeforeAfterSlider {
 
   setupEvents() {
     // Mouse events
-    this.slider.addEventListener('mousedown', (e) => this.startDrag(e));
-    document.addEventListener('mousemove', (e) => this.drag(e));
+    this.slider.addEventListener('mousedown', e => this.startDrag(e));
+    document.addEventListener('mousemove', e => this.drag(e));
     document.addEventListener('mouseup', () => this.stopDrag());
 
     // Touch events
-    this.slider.addEventListener('touchstart', (e) => this.startDrag(e), { passive: false });
-    document.addEventListener('touchmove', (e) => this.drag(e), { passive: false });
+    this.slider.addEventListener('touchstart', e => this.startDrag(e), { passive: false });
+    document.addEventListener('touchmove', e => this.drag(e), { passive: false });
     document.addEventListener('touchend', () => this.stopDrag());
 
     // Click to jump
-    this.container.addEventListener('click', (e) => {
+    this.container.addEventListener('click', e => {
       if (!this.isDragging) {
         const rect = this.container.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -129,7 +129,7 @@ class BeforeAfterGallery {
     this.options = {
       lang: options.lang || 'de',
       filterLabels: options.filterLabels || this.getDefaultFilterLabels(),
-      ...options
+      ...options,
     };
 
     this.currentFilter = 'all';
@@ -142,26 +142,26 @@ class BeforeAfterGallery {
         all: 'Alle',
         haircut: 'Schnitte',
         creative: 'Kreativ',
-        cats: 'Katzen'
+        cats: 'Katzen',
       },
       en: {
         all: 'All',
         haircut: 'Haircuts',
         creative: 'Creative',
-        cats: 'Cats'
+        cats: 'Cats',
       },
       ru: {
         all: 'Все',
         haircut: 'Стрижки',
         creative: 'Креатив',
-        cats: 'Кошки'
+        cats: 'Кошки',
       },
       uk: {
         all: 'Всі',
         haircut: 'Стрижки',
         creative: 'Креатив',
-        cats: 'Коти'
-      }
+        cats: 'Коти',
+      },
     };
   }
 
@@ -198,11 +198,12 @@ class BeforeAfterGallery {
   }
 
   renderGallery() {
-    const filteredItems = this.currentFilter === 'all'
-      ? this.items
-      : this.items.filter(item => item.category === this.currentFilter);
+    const filteredItems =
+      this.currentFilter === 'all' ? this.items : this.items.filter(item => item.category === this.currentFilter);
 
-    this.container.innerHTML = filteredItems.map(item => `
+    this.container.innerHTML = filteredItems
+      .map(
+        item => `
       <div class="before-after-card" data-category="${escapeHtml(item.category)}">
         <div class="before-after-container" data-before="${escapeHtml(item.beforeImage)}" data-after="${escapeHtml(item.afterImage)}"
              data-before-label="${escapeHtml(item.beforeLabel)}" data-after-label="${escapeHtml(item.afterLabel)}"
@@ -213,7 +214,9 @@ class BeforeAfterGallery {
           <p class="before-after-card-description">${escapeHtml(item.description)}</p>
         </div>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
   }
 
   initSliders() {
@@ -224,14 +227,14 @@ class BeforeAfterGallery {
         afterImage: container.dataset.after,
         beforeLabel: container.dataset.beforeLabel,
         afterLabel: container.dataset.afterLabel,
-        badge: container.dataset.badge
+        badge: container.dataset.badge,
       });
     });
   }
 }
 
 const BEFORE_AFTER_IMAGE_BASE = '../assets/images/before-after/';
-const beforeAfterImage = (fileName) => `${BEFORE_AFTER_IMAGE_BASE}${fileName}`;
+const beforeAfterImage = fileName => `${BEFORE_AFTER_IMAGE_BASE}${fileName}`;
 
 // Before/after data built from real local TikTok work samples.
 const beforeAfterItems = {
@@ -244,7 +247,7 @@ const beforeAfterItems = {
       badge: 'Schnitt',
       category: 'haircut',
       title: 'Saubere Salon-Transformation',
-      description: 'Fellpflege, Kontur und gepflegtes Finish'
+      description: 'Fellpflege, Kontur und gepflegtes Finish',
     },
     {
       beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev2.jpeg'),
@@ -254,7 +257,7 @@ const beforeAfterItems = {
       badge: 'Kreativ',
       category: 'creative',
       title: 'Ausdrucksstarker Pflege-Look',
-      description: 'Weiche Linien, klare Silhouette, goldener Salon-Glow'
+      description: 'Weiche Linien, klare Silhouette, goldener Salon-Glow',
     },
     {
       beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev3.jpeg'),
@@ -264,7 +267,7 @@ const beforeAfterItems = {
       badge: 'Katze',
       category: 'cats',
       title: 'Sanfte Pflege fuer sensible Tiere',
-      description: 'Ruhige Atmosphaere, geduldige Handgriffe, liebevolle Behandlung'
+      description: 'Ruhige Atmosphaere, geduldige Handgriffe, liebevolle Behandlung',
     },
     {
       beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev4.jpeg'),
@@ -274,7 +277,7 @@ const beforeAfterItems = {
       badge: 'Schnitt',
       category: 'haircut',
       title: 'Frischer Pflegeabschluss',
-      description: 'Baden, Buersten, Trimmen und ein weicher Salon-Look'
+      description: 'Baden, Buersten, Trimmen und ein weicher Salon-Look',
     },
     {
       beforeImage: beforeAfterImage('tiktok-home-check.jpeg'),
@@ -284,8 +287,8 @@ const beforeAfterItems = {
       badge: 'Kreativ',
       category: 'creative',
       title: 'Social-ready Salonmoment',
-      description: 'Ein gepflegter Look mit warmer Praesenz fuer Foto und Video'
-    }
+      description: 'Ein gepflegter Look mit warmer Praesenz fuer Foto und Video',
+    },
   ],
   en: [
     {
@@ -296,7 +299,7 @@ const beforeAfterItems = {
       badge: 'Haircut',
       category: 'haircut',
       title: 'Clean Salon Transformation',
-      description: 'Coat care, contour shaping and a polished finish'
+      description: 'Coat care, contour shaping and a polished finish',
     },
     {
       beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev2.jpeg'),
@@ -306,7 +309,7 @@ const beforeAfterItems = {
       badge: 'Creative',
       category: 'creative',
       title: 'Expressive Grooming Look',
-      description: 'Soft lines, clear silhouette and a warm salon glow'
+      description: 'Soft lines, clear silhouette and a warm salon glow',
     },
     {
       beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev3.jpeg'),
@@ -316,7 +319,7 @@ const beforeAfterItems = {
       badge: 'Cat',
       category: 'cats',
       title: 'Gentle Care for Sensitive Pets',
-      description: 'Calm atmosphere, patient handling and loving care'
+      description: 'Calm atmosphere, patient handling and loving care',
     },
     {
       beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev4.jpeg'),
@@ -326,7 +329,7 @@ const beforeAfterItems = {
       badge: 'Haircut',
       category: 'haircut',
       title: 'Fresh Grooming Finish',
-      description: 'Bathing, brushing, trimming and a soft salon look'
+      description: 'Bathing, brushing, trimming and a soft salon look',
     },
     {
       beforeImage: beforeAfterImage('tiktok-home-check.jpeg'),
@@ -336,8 +339,8 @@ const beforeAfterItems = {
       badge: 'Creative',
       category: 'creative',
       title: 'Social-ready Salon Moment',
-      description: 'A polished look with warm presence for photo and video'
-    }
+      description: 'A polished look with warm presence for photo and video',
+    },
   ],
   ru: [
     {
@@ -348,7 +351,7 @@ const beforeAfterItems = {
       badge: 'Стрижка',
       category: 'haircut',
       title: 'Аккуратная салонная трансформация',
-      description: 'Уход за шерстью, чистый контур и ухоженный финиш'
+      description: 'Уход за шерстью, чистый контур и ухоженный финиш',
     },
     {
       beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev2.jpeg'),
@@ -358,7 +361,7 @@ const beforeAfterItems = {
       badge: 'Креатив',
       category: 'creative',
       title: 'Выразительный образ после груминга',
-      description: 'Мягкие линии, чистый силуэт и теплое салонное сияние'
+      description: 'Мягкие линии, чистый силуэт и теплое салонное сияние',
     },
     {
       beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev3.jpeg'),
@@ -368,7 +371,7 @@ const beforeAfterItems = {
       badge: 'Кошка',
       category: 'cats',
       title: 'Бережный груминг кошек',
-      description: 'Спокойная обстановка, терпеливые руки и заботливый уход'
+      description: 'Спокойная обстановка, терпеливые руки и заботливый уход',
     },
     {
       beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev4.jpeg'),
@@ -378,7 +381,7 @@ const beforeAfterItems = {
       badge: 'Стрижка',
       category: 'haircut',
       title: 'Свежий результат после ухода',
-      description: 'Купание, вычесывание, тримминг и мягкий салонный вид'
+      description: 'Купание, вычесывание, тримминг и мягкий салонный вид',
     },
     {
       beforeImage: beforeAfterImage('tiktok-home-check.jpeg'),
@@ -388,8 +391,8 @@ const beforeAfterItems = {
       badge: 'Креатив',
       category: 'creative',
       title: 'Салонный момент для соцсетей',
-      description: 'Ухоженный образ с теплым светом для фото и видео'
-    }
+      description: 'Ухоженный образ с теплым светом для фото и видео',
+    },
   ],
   uk: [
     {
@@ -400,7 +403,7 @@ const beforeAfterItems = {
       badge: 'Стрижка',
       category: 'haircut',
       title: 'Охайна салонна трансформація',
-      description: 'Догляд за шерстю, чистий контур і доглянутий фініш'
+      description: 'Догляд за шерстю, чистий контур і доглянутий фініш',
     },
     {
       beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev2.jpeg'),
@@ -410,7 +413,7 @@ const beforeAfterItems = {
       badge: 'Креатив',
       category: 'creative',
       title: 'Виразний образ після грумінгу',
-      description: "М'які лінії, чистий силует і тепле салонне сяйво"
+      description: "М'які лінії, чистий силует і тепле салонне сяйво",
     },
     {
       beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev3.jpeg'),
@@ -420,7 +423,7 @@ const beforeAfterItems = {
       badge: 'Кіт',
       category: 'cats',
       title: 'Дбайливий грумінг котів',
-      description: 'Спокійна атмосфера, терплячі руки й турботливий догляд'
+      description: 'Спокійна атмосфера, терплячі руки й турботливий догляд',
     },
     {
       beforeImage: beforeAfterImage('tiktok-new-mikemozg-slide-prev4.jpeg'),
@@ -430,7 +433,7 @@ const beforeAfterItems = {
       badge: 'Стрижка',
       category: 'haircut',
       title: 'Свіжий результат після догляду',
-      description: "Купання, вичісування, тримінг і м'який салонний вигляд"
+      description: "Купання, вичісування, тримінг і м'який салонний вигляд",
     },
     {
       beforeImage: beforeAfterImage('tiktok-home-check.jpeg'),
@@ -440,9 +443,9 @@ const beforeAfterItems = {
       badge: 'Креатив',
       category: 'creative',
       title: 'Салонний момент для соцмереж',
-      description: 'Доглянутий образ із теплим світлом для фото й відео'
-    }
-  ]
+      description: 'Доглянутий образ із теплим світлом для фото й відео',
+    },
+  ],
 };
 
 // Initialize gallery when DOM is ready
@@ -459,8 +462,8 @@ document.addEventListener('DOMContentLoaded', () => {
         de: { all: 'Alle', haircut: 'Schnitte', creative: 'Kreativ', cats: 'Katzen' },
         en: { all: 'All', haircut: 'Haircuts', creative: 'Creative', cats: 'Cats' },
         ru: { all: 'Все', haircut: 'Стрижки', creative: 'Креатив', cats: 'Кошки' },
-        uk: { all: 'Всі', haircut: 'Стрижки', creative: 'Креатив', cats: 'Коти' }
-      }
+        uk: { all: 'Всі', haircut: 'Стрижки', creative: 'Креатив', cats: 'Коти' },
+      },
     });
   }
 });

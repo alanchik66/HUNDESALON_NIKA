@@ -5,20 +5,13 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { getJson, openCdpSession, sleep } from './browser-cdp.mjs';
 
 const browser = (process.env.CF_CDP_BROWSER || 'edge').toLowerCase();
 const defaultPort = browser === 'chrome' ? 9226 : 9225;
 export const CF_CDP_PORT = Number(process.env.CF_CDP_PORT || defaultPort);
 
-export async function sleep(ms) {
-  return new Promise(r => setTimeout(r, ms));
-}
-
-export async function getJson(url) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(String(r.status));
-  return r.json();
-}
+export { getJson, sleep };
 
 function browserExe() {
   if (browser === 'chrome') {
@@ -71,38 +64,13 @@ export async function ensureCfCdp(startUrl = 'https://dash.cloudflare.com/profil
 }
 
 export async function connectCfTab() {
-  const list = await getJson(`http://127.0.0.1:${CF_CDP_PORT}/json/list`);
-  const t =
-    list.find(x => x.type === 'page' && x.url?.includes('cloudflare.com')) ||
-    list.find(x => x.type === 'page');
-  if (!t?.webSocketDebuggerUrl) throw new Error(`No Cloudflare tab on port ${CF_CDP_PORT}`);
-
-  let nextId = 1;
-  const pending = new Map();
-  const ws = new WebSocket(t.webSocketDebuggerUrl);
-  await new Promise((res, rej) => {
-    ws.addEventListener('open', res);
-    ws.addEventListener('error', rej);
-  });
-  ws.onmessage = e => {
-    const m = JSON.parse(e.data);
-    if (!m.id) return;
-    const x = pending.get(m.id);
-    pending.delete(m.id);
-    m.error ? x.reject(new Error(m.error.message)) : x.resolve(m.result);
-  };
-  const send = (method, params = {}) =>
-    new Promise((res, rej) => {
-      const id = nextId++;
-      pending.set(id, { resolve: res, reject: rej });
-      ws.send(JSON.stringify({ id, method, params }));
-    });
+  const session = await openCdpSession({ port: CF_CDP_PORT, targetPattern: /cloudflare\.com/i });
 
   return {
-    url: t.url,
-    send,
+    url: session.target.url,
+    send: session.send,
     eval: async (expression, timeoutMs = 60000) => {
-      const r = await send('Runtime.evaluate', {
+      const r = await session.send('Runtime.evaluate', {
         expression,
         awaitPromise: true,
         returnByValue: true,
@@ -111,9 +79,9 @@ export async function connectCfTab() {
       return r.result?.value;
     },
     navigate: async (url, waitMs = 12000) => {
-      await send('Page.navigate', { url });
+      await session.send('Page.navigate', { url });
       await sleep(waitMs);
     },
-    close: () => ws.close(),
+    close: session.close,
   };
 }

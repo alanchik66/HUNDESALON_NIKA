@@ -1,49 +1,45 @@
 {
-  // ── Редактор ──────────────────────────────────────────────────────────────
-  "editor.tabSize": 2,
-  "editor.insertSpaces": true,
+  // ─── Редактор ──────────────────────────────────────────────────────
   "editor.formatOnSave": true,
+  "editor.formatOnPaste": false,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.wordWrap": "on",
-  "editor.rulers": [
-    120
-  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.stylelint": "explicit"
+  },
+  "editor.linkedEditing": true,
   "editor.bracketPairColorization.enabled": true,
   "editor.guides.bracketPairs": "active",
-  "editor.linkedEditing": true,
-  "editor.cursorSmoothCaretAnimation": "on",
-  "editor.minimap.enabled": true,
-  "editor.stickyScroll.enabled": true,
-  "editor.inlineSuggest.enabled": true,
+  "editor.minimap.enabled": false,
+  "editor.wordWrap": "on",
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.suggestSelection": "first",
   "editor.quickSuggestions": {
-    "other": "off",
-    "comments": "off",
-    "strings": "on"
+    "strings": true
   },
-  // ── Файлы ─────────────────────────────────────────────────────────────────
+  "editor.inlineSuggest.enabled": true,
+
+  // ─── Файлы ─────────────────────────────────────────────────────────
   "files.eol": "\n",
-  "files.encoding": "utf8",
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
-  "files.associations": {
-    "*.html": "html",
-    "*.css": "css",
-    "*.js": "javascript"
-  },
+  "files.trimFinalNewlines": true,
+  "files.encoding": "utf8",
   "files.exclude": {
-    "node_modules": true,
-    ".wrangler": true,
-    "dist": true,
-    "**/.DS_Store": true,
-    "**/*.map": true
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/.wrangler": true,
+    "**/dist": false
   },
   "files.watcherExclude": {
     "**/node_modules/**": true,
     "**/dist/**": true,
-    "**/.wrangler/**": true,
-    "**/3d-weather-codrops-main/node_modules/**": true
+    "**/.wrangler/**": true
   },
-  // ── Форматирование по типу файла ──────────────────────────────────────────
+
+  // ─── Языковые настройки ────────────────────────────────────────────
   "[html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
@@ -54,131 +50,95 @@
   },
   "[javascript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": "explicit"
-    }
+    "editor.formatOnSave": true
   },
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
   },
   "[jsonc]": {
-    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
   },
   "[markdown]": {
-    "editor.wordWrap": "on",
-    "editor.formatOnSave": false
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.wordWrap": "on"
   },
-  // ── ESLint ────────────────────────────────────────────────────────────────
-  "eslint.enable": true,
-  "eslint.validate": [
-    "javascript",
-    "html"
-  ],
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+
+  // ─── Prettier ──────────────────────────────────────────────────────
+  "prettier.requireConfig": true,
+  "prettier.useEditorConfig": true,
+
+  // ─── ESLint ────────────────────────────────────────────────────────
+  "eslint.validate": ["javascript"],
   "eslint.useFlatConfig": true,
-  "eslint.codeActionsOnSave.mode": "problems",
-  // ── Stylelint ─────────────────────────────────────────────────────────────
-  "stylelint.enable": true,
-  "stylelint.run": "onSave",
-  "stylelint.configFile": "${workspaceFolder}/.stylelintrc.json",
-  "stylelint.packageManager": "npm",
-  "stylelint.validate": [
-    "css"
-  ],
-  "stylelint.lintFiles.glob": "assets/css/**/*.css",
-  "stylelint.logLevel": "warn",
+
+  // ─── Stylelint ─────────────────────────────────────────────────────
+  "stylelint.validate": ["css"],
   "css.validate": false,
-  "scss.validate": false,
-  // ── HTMLHint ──────────────────────────────────────────────────────────────
+
+  // ─── HTMLHint ──────────────────────────────────────────────────────
   "htmlhint.enable": true,
-  "webhint.enable": false,
-  // ── Emmet ─────────────────────────────────────────────────────────────────
+
+  // ─── Emmet ─────────────────────────────────────────────────────────
   "emmet.includeLanguages": {
     "javascript": "html"
   },
   "emmet.triggerExpansionOnTab": true,
-  // ── Spell checker ────────────────────────────────────────────────────────
-  "cSpell.language": "en,de,ru,uk",
-  "cSpell.enableFiletypes": [
-    "html",
-    "css",
-    "javascript",
-    "markdown"
-  ],
-  "cSpell.ignorePaths": [
-    "node_modules",
-    "dist",
-    "3d-weather-codrops-main",
-    "package-lock.json",
-    "assets/fonts"
-  ],
-  // ── npm-скрипты ───────────────────────────────────────────────────────────
-  "npm.scriptRunnerShowNotification": "onError",
-  "npm.enableRunFromFolder": true,
-  "npm.autoDetect": "off",
-  "task.allowAutomaticTasks": "off",
-  "task.autoDetect": "off",
-  // ── Поиск ────────────────────────────────────────────────────────────────
-  "search.exclude": {
-    "node_modules": true,
-    ".wrangler": true,
-    "dist": true,
-    "3d-weather-codrops-main/node_modules": true,
-    "package-lock.json": true
-  },
-  // ── Git ───────────────────────────────────────────────────────────────────
-  "git.autofetch": true,
-  "git.confirmSync": false,
+
+  // ─── Git ───────────────────────────────────────────────────────────
   "git.enableSmartCommit": true,
-  "git.inputValidationSubjectLength": 72,
-  "gitlab.pipelineGitRemoteName": "gitlab",
-  // ── Терминал ─────────────────────────────────────────────────────────────
-  "terminal.integrated.defaultProfile.windows": "HUNDESALON PowerShell",
-  "terminal.integrated.profiles.windows": {
-    "HUNDESALON PowerShell": {
-      "path": "${env:windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-      "icon": "terminal-powershell"
-    },
-    "Command Prompt": {
-      "path": "${env:windir}\\System32\\cmd.exe",
-      "icon": "terminal-cmd"
-    }
+  "git.confirmSync": false,
+  "git.autofetch": true,
+  "git.pruneOnFetch": true,
+
+  // ─── Поиск ─────────────────────────────────────────────────────────
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.wrangler": true,
+    "**/3d-weather-codrops-main/dist-widget": true,
+    "**/assets/vendor": true
   },
-  "terminal.integrated.automationProfile.windows": {
-    "path": "${env:windir}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-    "icon": "terminal-powershell"
-  },
-  "terminal.integrated.cwd": "${workspaceFolder}",
-  "terminal.integrated.inheritEnv": true,
-  "terminal.integrated.windowsEnableConpty": true,
-  "terminal.integrated.scrollback": 5000,
-  "terminal.integrated.copyOnSelection": true,
-  "terminal.integrated.hideOnStartup": "always",
-  // ── Python (не перехватывать) ──────────────────────────────────────────────
-  "python.terminal.activateEnvironment": false,
-  "python.terminal.activateEnvInCurrentTerminal": false,
-  // ── Path Intellisense ────────────────────────────────────────────────────
-  "path-intellisense.mappings": {
-    "/assets": "${workspaceFolder}/assets"
-  },
-  "path-intellisense.autoTriggerNextSuggestion": true,
-  // ── Workbench ─────────────────────────────────────────────────────────────
-  "workbench.diffEditorAssociations": {
-    "*.md": "vscode.markdown.preview.editor"
-  },
-  "markdown.preview.frontMatter": "table",
-  "workbench.editor.highlightModifiedTabs": true,
-  "workbench.tree.indent": 16,
-  "breadcrumbs.enabled": true,
-  "markdown.preview.doubleClickToSwitchToEditor": false,
-  "markdown.preview.markEditorSelection": false,
-  "extensions.ignoreRecommendations": true,
-  "[powershell]": {
-    "editor.defaultFormatter": "ms-vscode.powershell"
-  },
-  "liveServer.settings.port": 5503,
-  "gitlens.enabled": false,
-  "gitlens.gitkraken.mcp.autoEnabled": false
+
+  // ─── Терминал ──────────────────────────────────────────────────────
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+
+  // ─── Spell Checker (cSpell) ────────────────────────────────────────
+  "cSpell.enabled": true,
+  "cSpell.language": "en,de,ru,uk",
+
+  // ─── AI: Kilo Code ────────────────────────────────────────────────
+  "kilo.enable": true,
+  "kilo.configPath": "C:\\Users\\snaip\\.config\\kilo\\kilo.jsonc",
+  "kilo.workspaceMode": "user",
+  "kilo.ignoreBun": true,
+  "kilo.autoCollapseReasoning": false,
+  "kilo.terminalCommandDisplay": "expanded",
+  "kilo.renderMarkdownDiffs": true,
+  "kilo.enableInlineCompletion": true,
+  "kilo.enableCodeActions": true,
+  "kilo.enableContextualPrompts": true,
+  "kilo-code.chat.utilityModel": "anthropic/claude-3-5-sonnet-20241022",
+  "kilo-code.chat.utilitySmallModel": "anthropic/claude-3-5-haiku-20241022",
+  "kilo-code.chat.autoExpandHistory": true,
+  "kilo-code.chat.codeEditDisplay": "expanded",
+  "kilo-code.chat.hidePromptTrainingModels": false,
+  "kilo-code.inlineCompletion.enable": true,
+  "kilo-code.inlineCompletion.model": "anthropic/claude-3-5-haiku-20241022",
+  "kilo-code.inlineCompletion.debounce": 150,
+  "kilo-code.inlineCompletion.maxSuggestions": 5,
+
+  // ─── AI: Continue.dev (Ollama) ─────────────────────────────────────
+  "continue.enableTabAutocomplete": true,
+  "continue.telemetryEnabled": false,
+
+  // ─── AI: Ollama Codex ──────────────────────────────────────────────
+  "ollama-codex.model": "qwen2.5-coder:latest",
+  "ollama-codex.endpoint": "http://localhost:11434"
 }

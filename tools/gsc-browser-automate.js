@@ -1,69 +1,14 @@
-const port = Number(process.env.GSC_EDGE_PORT || process.argv.find(arg => arg.startsWith('--port='))?.split('=')[1] || 9224);
+import { openCdpSession, sleep as wait } from './lib/browser-cdp.mjs';
+
+const port = Number(
+  process.env.GSC_EDGE_PORT || process.argv.find(arg => arg.startsWith('--port='))?.split('=')[1] || 9224
+);
 const property = 'sc-domain:hundesalon-nika.com';
 const sitemapPath = 'sitemap.xml';
 const sitemapsUrl = `https://search.google.com/search-console/sitemaps?resource_id=${encodeURIComponent(property)}`;
 
-let nextId = 1;
-const pending = new Map();
-
-async function getJson(url) {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
-  return response.json();
-}
-
-async function getTarget() {
-  const targets = await getJson(`http://127.0.0.1:${port}/json/list`);
-  const pages = targets.filter(target => target.type === 'page');
-  return (
-    pages.find(target => target.url.includes('search.google.com/search-console')) ||
-    pages.find(target => target.url.includes('accounts.google.com')) ||
-    pages[0]
-  );
-}
-
-function connect(wsUrl) {
-  const ws = new WebSocket(wsUrl);
-  ws.addEventListener('message', event => {
-    const message = JSON.parse(event.data);
-    if (!message.id) return;
-    const entry = pending.get(message.id);
-    if (!entry) return;
-    pending.delete(message.id);
-    if (message.error) entry.reject(new Error(message.error.message));
-    else entry.resolve(message.result);
-  });
-
-  return new Promise((resolve, reject) => {
-    ws.addEventListener('open', () => {
-      const send = (method, params = {}) => new Promise((resolveCommand, rejectCommand) => {
-        const id = nextId++;
-        pending.set(id, { resolve: resolveCommand, reject: rejectCommand });
-        ws.send(JSON.stringify({ id, method, params }));
-      });
-      resolve({ ws, send });
-    });
-    ws.addEventListener('error', reject);
-  });
-}
-
-async function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function evaluate(send, expression, awaitPromise = true) {
-  const result = await send('Runtime.evaluate', {
-    expression,
-    awaitPromise,
-    returnByValue: true,
-  });
-
-  if (result.exceptionDetails) throw new Error(result.exceptionDetails.text || 'Runtime.evaluate failed');
-  return result.result.value;
-}
-
-async function pageSummary(send) {
-  return evaluate(send, `(() => ({
+async function pageSummary(session) {
+  return session.evaluate(`(() => ({
     url: location.href,
     title: document.title,
     text: document.body ? document.body.innerText.slice(0, 3000) : '',
@@ -85,8 +30,8 @@ async function pageSummary(send) {
   }))()`);
 }
 
-async function submitSitemap(send) {
-  return evaluate(send, `(async () => {
+async function submitSitemap(session) {
+  return session.evaluate(`(async () => {
     const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
     const visible = el => !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
     const setNativeValue = (el, value) => {
@@ -142,35 +87,44 @@ async function submitSitemap(send) {
   })()`);
 }
 
-const target = await getTarget();
-if (!target?.webSocketDebuggerUrl) {
+let session;
+try {
+  session = await openCdpSession({
+    port,
+    targetPattern: /search\.google\.com\/search-console|accounts\.google\.com/i,
+  });
+} catch {
   console.error(`No debuggable Edge page found on port ${port}.`);
   process.exit(1);
 }
 
-const { ws, send } = await connect(target.webSocketDebuggerUrl);
+const { send } = session;
 
 try {
-  await send('Runtime.enable');
-  await send('Page.enable');
-
   await send('Page.navigate', { url: sitemapsUrl });
   await wait(6000);
 
-  const summary = await pageSummary(send);
+  const summary = await pageSummary(session);
   if (summary.url.includes('accounts.google.com')) {
-    console.log(JSON.stringify({
-      status: 'LOGIN_REQUIRED',
-      message: 'Google asks for sign-in in the controlled Edge window. Sign in there, then run npm run google:gsc:browser again.',
-      url: summary.url,
-      title: summary.title,
-      inputs: summary.inputs,
-    }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          status: 'LOGIN_REQUIRED',
+          message:
+            'Google asks for sign-in in the controlled Edge window. Sign in there, then run npm run google:gsc:browser again.',
+          url: summary.url,
+          title: summary.title,
+          inputs: summary.inputs,
+        },
+        null,
+        2
+      )
+    );
     process.exit(2);
   }
 
-  const result = await submitSitemap(send);
+  const result = await submitSitemap(session);
   console.log(JSON.stringify({ status: result.ok ? 'SUBMIT_ATTEMPTED' : 'NEEDS_MANUAL_REVIEW', result }, null, 2));
 } finally {
-  ws.close();
+  session.close();
 }

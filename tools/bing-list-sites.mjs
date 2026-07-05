@@ -1,57 +1,21 @@
 /**
  * Open Bing Webmaster site picker and list all sites on the account.
  */
+import { openCdpSession, sleep as wait } from './lib/browser-cdp.mjs';
+
 const port = Number(process.env.BING_EDGE_PORT || 9224);
 
-let nextId = 1;
-const pending = new Map();
-
-async function getJson(url) {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
-  return response.json();
-}
-
-function connect(wsUrl) {
-  const ws = new WebSocket(wsUrl);
-  ws.addEventListener('message', event => {
-    const message = JSON.parse(event.data);
-    if (!message.id) return;
-    const entry = pending.get(message.id);
-    if (!entry) return;
-    pending.delete(message.id);
-    if (message.error) entry.reject(new Error(message.error.message));
-    else entry.resolve(message.result);
-  });
-  return new Promise((resolve, reject) => {
-    ws.addEventListener('open', () => {
-      const send = (method, params = {}) =>
-        new Promise((res, rej) => {
-          const id = nextId++;
-          pending.set(id, { resolve: res, reject: rej });
-          ws.send(JSON.stringify({ id, method, params }));
-        });
-      resolve({ ws, send });
-    });
-    ws.addEventListener('error', reject);
-  });
-}
-
-async function wait(ms) {
-  return new Promise(r => setTimeout(r, ms));
-}
-
-const list = await getJson(`http://127.0.0.1:${port}/json/list`);
-const target = list.find(t => t.type === 'page' && t.url.includes('bing.com')) || list.find(t => t.type === 'page');
-if (!target?.webSocketDebuggerUrl) {
+let session;
+try {
+  session = await openCdpSession({ port, targetPattern: /bing\.com/i });
+} catch {
   console.error('Edge not found. Run: npm run bing:edge');
   process.exit(1);
 }
 
-const { ws, send } = await connect(target.webSocketDebuggerUrl);
+const { send } = session;
 
 try {
-  await send('Runtime.enable');
   await send('Page.navigate', { url: 'https://www.bing.com/webmasters/home?siteUrl=https://hundesalon-nika.com/' });
   await wait(6000);
 
@@ -114,5 +78,5 @@ try {
     console.log('\n? Сайт не найден в списке — возможно другой аккаунт Microsoft или сайт не добавлен.');
   }
 } finally {
-  ws.close();
+  session.close();
 }

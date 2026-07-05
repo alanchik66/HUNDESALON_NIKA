@@ -4,12 +4,21 @@
 # Обратная совместимость: старый URL sendmail.php → новый /sendmail
 /sendmail.php /sendmail 308
 
+# Канонический корень сайта: немецкая версия является default locale
+/ /de/ 301
+
 # Канонические URL без index.html для Google Search Console
-/index.html / 301
+/index.html /de/ 301
 /de/index.html /de/ 301
 /en/index.html /en/ 301
 /ru/index.html /ru/ 301
 /uk/index.html /uk/ 301
+
+# Украинский legacy-алиас: каноническая языковая папка проекта — /uk/
+/ua /uk/ 301
+/ua/ /uk/ 301
+/ua/index.html /uk/ 301
+/ua/* /uk/:splat 301
 
 
 /hundefriseur-leipzig /de/hundefriseur-leipzig.html 301

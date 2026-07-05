@@ -145,8 +145,11 @@ export class HeaderWeatherSunScene {
     const doy = dayOfYearUtc(date);
     const yearPhase = (doy / 365.2422) * TAU - Math.PI * 0.5;
     const utcHours =
-      date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600 + date.getUTCMilliseconds() / 3600000;
-    const solarHour = ((utcHours + this.geoState.longitude / 15) % 24 + 24) % 24;
+      date.getUTCHours() +
+      date.getUTCMinutes() / 60 +
+      date.getUTCSeconds() / 3600 +
+      date.getUTCMilliseconds() / 3600000;
+    const solarHour = (((utcHours + this.geoState.longitude / 15) % 24) + 24) % 24;
     const dayPhase = (solarHour / 24) * TAU;
 
     const earthX = Math.cos(yearPhase) * EARTH_ORBIT_AU;

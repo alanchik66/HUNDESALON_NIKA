@@ -4,23 +4,12 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { evalPage as runEvalPage, getJson, sleep as wait, withCdpSession } from './lib/browser-cdp.mjs';
 
 const mailPort = Number(process.env.BING_MAIL_EDGE_PORT || 9224);
 const siteUrl = 'https://hundesalon-nika.com/';
 const siteQ = encodeURIComponent(siteUrl);
 const mailAccount = 'snaiper1984@mail.ru';
-
-let nextId = 1;
-
-async function getJson(url) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`${url}: ${r.status}`);
-  return r.json();
-}
-
-async function wait(ms) {
-  return new Promise(r => setTimeout(r, ms));
-}
 
 async function ensureMailEdge() {
   try {
@@ -52,59 +41,10 @@ async function ensureMailEdge() {
   }
 }
 
-async function withCdp(fn) {
-  const list = await getJson(`http://127.0.0.1:${mailPort}/json/list`);
-  const target = list.find(t => t.type === 'page') || list[0];
-  const pending = new Map();
-  const ws = new WebSocket(target.webSocketDebuggerUrl);
-  await new Promise((res, rej) => {
-    ws.addEventListener('open', res);
-    ws.addEventListener('error', rej);
-  });
-  ws.addEventListener('message', e => {
-    const m = JSON.parse(e.data);
-    if (!m.id) return;
-    const entry = pending.get(m.id);
-    if (!entry) return;
-    pending.delete(m.id);
-    if (m.error) entry.reject(new Error(m.error.message));
-    else entry.resolve(m.result);
-  });
-  const send = (method, params = {}) =>
-    new Promise((res, rej) => {
-      const id = nextId++;
-      pending.set(id, { resolve: res, reject: rej });
-      ws.send(JSON.stringify({ id, method, params }));
-    });
-  await send('Runtime.enable');
-  await send('Page.enable');
-  try {
-    return await fn(send);
-  } finally {
-    ws.close();
-  }
-}
+const withCdp = task => withCdpSession({ port: mailPort, targetPattern: /.*/ }, ({ send }) => task(send));
 
-async function evalPage(send, body) {
-  const expr = `(async () => {
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
-    const visible = el => !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
-    const norm = s => (s || '').replace(/\\s+/g, ' ').trim();
-    const txt = el => norm(el.innerText || el.value || el.getAttribute('aria-label') || '');
-    const clickMatch = pattern => {
-      const re = new RegExp(pattern, 'i');
-      for (const el of document.querySelectorAll('a, button, [role="button"], [role="menuitem"]')) {
-        if (!visible(el) || el.disabled) continue;
-        if (re.test(txt(el))) { el.click(); return txt(el); }
-      }
-      return null;
-    };
-    ${body}
-  })()`;
-  const result = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true });
-  if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description);
-  return result.result?.value;
-}
+const evalPage = (send, body) =>
+  runEvalPage(send, body, { clickSelectors: 'a, button, [role="button"], [role="menuitem"]' });
 
 const hadEdge = await ensureMailEdge();
 if (!hadEdge) {

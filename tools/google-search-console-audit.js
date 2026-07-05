@@ -21,7 +21,8 @@ const requiredLiveUrls = [
   `${origin}/assets/images/favicon/favicon-48x48.png?v=${brandIconVersion}`,
 ];
 
-const indexUrls = [`${origin}/`, `${origin}/de/`, `${origin}/en/`, `${origin}/ru/`, `${origin}/uk/`];
+const canonicalRootUrl = `${origin}/de/`;
+const indexUrls = [`${origin}/de/`, `${origin}/en/`, `${origin}/ru/`, `${origin}/uk/`];
 const failures = [];
 const warnings = [];
 
@@ -48,6 +49,25 @@ async function checkStatus(url) {
   const { response } = await fetchText(url);
   if (!response.ok) fail(`${url}: HTTP ${response.status}`);
   return response;
+}
+
+async function checkRedirect(from, to) {
+  const response = await fetch(from, {
+    redirect: 'manual',
+    headers: {
+      'User-Agent': 'HUNDESALON-NIKA-GSC-Audit/1.0',
+      'Cache-Control': 'no-cache',
+    },
+  });
+  const location = response.headers.get('location') || '';
+  const resolved = location ? new URL(location, from).toString() : '';
+
+  if (![301, 302, 307, 308].includes(response.status)) {
+    fail(`${from}: expected redirect to ${to}, got HTTP ${response.status}`);
+    return;
+  }
+
+  if (resolved !== to) fail(`${from}: redirects to ${resolved || 'MISSING'}, expected ${to}`);
 }
 
 function sitemapUrls(xml) {
@@ -117,6 +137,7 @@ if (!urls.includes(`${origin}/ru/`) || !urls.includes(`${origin}/uk/`) || !urls.
 }
 
 for (const url of requiredLiveUrls) await checkStatus(url);
+await checkRedirect(`${origin}/`, canonicalRootUrl);
 
 for (const url of urls) {
   const response = await checkStatus(url);
@@ -157,6 +178,10 @@ const report = {
   urlCount: urls.length,
   checks: {
     requiredLiveUrls,
+    rootRedirect: {
+      from: `${origin}/`,
+      to: canonicalRootUrl,
+    },
     indexUrls,
   },
   warnings,

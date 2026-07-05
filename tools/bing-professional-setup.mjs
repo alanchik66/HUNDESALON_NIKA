@@ -6,6 +6,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { evalPage, getJson, sleep, withCdpSession } from './lib/browser-cdp.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.BING_MAIL_EDGE_PORT || process.env.BING_EDGE_PORT || 9224);
@@ -23,91 +24,7 @@ const inspectUrls = [
   'https://hundesalon-nika.com/de/onlayn-bronirovanie.html',
 ];
 
-let nextId = 1;
-const pending = new Map();
-
-async function getJson(url) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
-  return r.json();
-}
-
-async function wait(ms) {
-  return new Promise(r => setTimeout(r, ms));
-}
-
-function pageScript(body) {
-  return `(async () => {
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
-    const visible = el => !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
-    const norm = s => (s || '').replace(/\\s+/g, ' ').trim();
-    const txt = el => norm(el.innerText || el.value || el.getAttribute('aria-label') || '');
-    const setNativeValue = (el, value) => {
-      const proto = Object.getPrototypeOf(el);
-      const d = Object.getOwnPropertyDescriptor(proto, 'value');
-      if (d?.set) d.set.call(el, value);
-      else el.value = value;
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-    };
-    const clickMatch = (pattern, root = document) => {
-      const re = new RegExp(pattern, 'i');
-      for (const el of root.querySelectorAll('a, button, [role="button"], input[type="submit"]')) {
-        if (!visible(el) || el.disabled) continue;
-        if (re.test(txt(el))) { el.click(); return txt(el); }
-      }
-      return null;
-    };
-    ${body}
-  })()`;
-}
-
-async function withCdp(fn) {
-  const list = await getJson(`http://127.0.0.1:${port}/json/list`);
-  const target = list.find(t => t.type === 'page' && /bing|live\.com/i.test(t.url)) || list.find(t => t.type === 'page');
-  if (!target?.webSocketDebuggerUrl) throw new Error('NO_EDGE');
-
-  const ws = new WebSocket(target.webSocketDebuggerUrl);
-  await new Promise((res, rej) => {
-    ws.addEventListener('open', res);
-    ws.addEventListener('error', rej);
-  });
-  ws.addEventListener('message', e => {
-    const m = JSON.parse(e.data);
-    if (!m.id) return;
-    const entry = pending.get(m.id);
-    if (!entry) return;
-    pending.delete(m.id);
-    if (m.error) entry.reject(new Error(m.error.message));
-    else entry.resolve(m.result);
-  });
-  const send = (method, params = {}) =>
-    new Promise((res, rej) => {
-      const id = nextId++;
-      pending.set(id, { resolve: res, reject: rej });
-      ws.send(JSON.stringify({ id, method, params }));
-    });
-
-  await send('Runtime.enable');
-  await send('Page.enable');
-  try {
-    return await fn(send);
-  } finally {
-    ws.close();
-  }
-}
-
-async function evalPage(send, body) {
-  const result = await send('Runtime.evaluate', {
-    expression: pageScript(body),
-    awaitPromise: true,
-    returnByValue: true,
-  });
-  if (result.exceptionDetails) {
-    throw new Error(result.exceptionDetails.exception?.description || 'evaluate failed');
-  }
-  return result.result?.value;
-}
+const withCdp = task => withCdpSession({ port, targetPattern: /bing|live\.com/i }, ({ send }) => task(send));
 
 async function runNpm(script) {
   return new Promise((resolve, reject) => {
@@ -141,7 +58,9 @@ report.steps.account = await withCdp(async send => {
 });
 
 if (report.steps.account?.isGmail && !report.steps.account?.isMail) {
-  console.error(JSON.stringify({ error: 'WRONG_ACCOUNT', hint: `Sign in as ${mailAccount} in Edge (npm run bing:edge)` }, null, 2));
+  console.error(
+    JSON.stringify({ error: 'WRONG_ACCOUNT', hint: `Sign in as ${mailAccount} in Edge (npm run bing:edge)` }, null, 2)
+  );
   process.exit(2);
 }
 
@@ -272,7 +191,14 @@ for (const url of inspectUrls) {
 report.steps.submitUrls = await withCdp(async send => {
   const listPath = path.join(root, 'tools', 'bing-submit-urls.txt');
   const urls = fs.existsSync(listPath)
-    ? [...new Set(fs.readFileSync(listPath, 'utf8').split(/\r?\n/).filter(l => l.startsWith('https://')))].slice(0, 100)
+    ? [
+        ...new Set(
+          fs
+            .readFileSync(listPath, 'utf8')
+            .split(/\r?\n/)
+            .filter(l => l.startsWith('https://'))
+        ),
+      ].slice(0, 100)
     : inspectUrls;
   const payload = JSON.stringify(urls);
   await send('Page.navigate', { url: `https://www.bing.com/webmasters/submiturl?siteUrl=${siteQ}` });
@@ -300,10 +226,7 @@ report.steps.submitUrls = await withCdp(async send => {
 report.steps.indexnowPage = await withCdp(async send => {
   await send('Page.navigate', { url: `https://www.bing.com/webmasters/indexnow?siteUrl=${siteQ}` });
   await wait(5000);
-  return evalPage(
-    send,
-    `return { url: location.href, text: (document.body?.innerText||'').slice(0, 800) };`
-  );
+  return evalPage(send, `return { url: location.href, text: (document.body?.innerText||'').slice(0, 800) };`);
 });
 
 try {
@@ -339,10 +262,7 @@ report.steps.finalAudit = await withCdp(async send => {
 });
 
 report.finishedAt = new Date().toISOString();
-report.ok =
-  report.steps.account?.isMail &&
-  report.steps.finalAudit?.dashboard &&
-  !report.steps.finalAudit?.notVerified;
+report.ok = report.steps.account?.isMail && report.steps.finalAudit?.dashboard && !report.steps.finalAudit?.notVerified;
 
 console.log(JSON.stringify(report, null, 2));
 process.exit(report.ok ? 0 : 1);

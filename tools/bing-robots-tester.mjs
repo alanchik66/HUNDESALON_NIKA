@@ -5,107 +5,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { openBingWebmasterSession } from './lib/browser-cdp.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.BING_MAIL_EDGE_PORT || 9224);
 const siteQ = encodeURIComponent('https://hundesalon-nika.com/');
 const robotsUrl = 'https://hundesalon-nika.com/robots.txt';
-
-let nextId = 1;
-const pending = new Map();
-
-async function getJson(url) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(String(r.status));
-  return r.json();
-}
-async function wait(ms) {
-  return new Promise(r => setTimeout(r, ms));
-}
-
-function pageScript(body) {
-  return `(async () => {
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
-    const visible = el => !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
-    const norm = s => (s || '').replace(/\\s+/g, ' ').trim();
-    const txt = el => norm(el.innerText || el.value || el.getAttribute('aria-label') || '');
-    const setNativeValue = (el, value) => {
-      const proto = Object.getPrototypeOf(el);
-      const d = Object.getOwnPropertyDescriptor(proto, 'value');
-      if (d?.set) d.set.call(el, value);
-      else el.value = value;
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-    };
-    const clickMatch = (pattern, { exclude } = {}) => {
-      const re = new RegExp(pattern, 'i');
-      const ex = exclude ? new RegExp(exclude, 'i') : null;
-      for (const el of document.querySelectorAll('a, button, [role="button"], input[type="submit"]')) {
-        if (!visible(el) || el.disabled) continue;
-        const t = txt(el);
-        if (ex && ex.test(t)) continue;
-        if (re.test(t)) { el.click(); return t; }
-      }
-      return null;
-    };
-    ${body}
-  })()`;
-}
-
-async function openSession() {
-  await getJson(`http://127.0.0.1:${port}/json/version`);
-  const list = await getJson(`http://127.0.0.1:${port}/json/list`);
-  const target =
-    list.find(t => t.type === 'page' && /bing\.com\/webmaster/i.test(t.url)) ||
-    list.find(t => t.type === 'page');
-  if (!target?.webSocketDebuggerUrl) throw new Error('NO_EDGE — npm run bing:edge');
-
-  const ws = new WebSocket(target.webSocketDebuggerUrl);
-  await new Promise((res, rej) => {
-    ws.addEventListener('open', res);
-    ws.addEventListener('error', rej);
-  });
-  ws.onmessage = e => {
-    const m = JSON.parse(e.data);
-    if (!m.id) return;
-    const x = pending.get(m.id);
-    pending.delete(m.id);
-    m.error ? x.reject(new Error(m.error.message)) : x.resolve(m.result);
-  };
-  const send = (method, params = {}) =>
-    new Promise((res, rej) => {
-      const id = nextId++;
-      pending.set(id, { resolve: res, reject: rej });
-      ws.send(JSON.stringify({ id, method, params }));
-    });
-  await send('Runtime.enable');
-
-  return {
-    async nav(url) {
-      await send('Page.navigate', { url });
-      await wait(10000);
-      for (let i = 0; i < 4; i++) {
-        const ok = await send('Runtime.evaluate', {
-          expression: `!location.href.includes('chrome-error') && (document.body?.innerText||'').length > 100`,
-          returnByValue: true,
-        });
-        if (ok.result?.value) break;
-        await send('Page.reload', { ignoreCache: true });
-        await wait(7000);
-      }
-    },
-    eval: async body => {
-      const r = await send('Runtime.evaluate', {
-        expression: pageScript(body),
-        awaitPromise: true,
-        returnByValue: true,
-      });
-      if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description);
-      return r.result?.value;
-    },
-    close: () => ws.close(),
-  };
-}
 
 const live = await fetch(robotsUrl, { signal: AbortSignal.timeout(20000) }).then(r => r.text());
 const report = {
@@ -119,7 +24,7 @@ const report = {
   },
 };
 
-const s = await openSession();
+const s = await openBingWebmasterSession({ port, siteQ, waitMs: 10000, reloadAttempts: 4 });
 try {
   await s.nav(`https://www.bing.com/webmasters/robotstxttester?siteUrl=${siteQ}`);
   report.bing = await s.eval(`

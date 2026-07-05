@@ -23,7 +23,9 @@
   };
 
   const getLang = form =>
-    (form.querySelector('input[name="lang"]')?.value || document.documentElement.lang || 'de').toLowerCase().slice(0, 2);
+    (form.querySelector('input[name="lang"]')?.value || document.documentElement.lang || 'de')
+      .toLowerCase()
+      .slice(0, 2);
 
   const setStatus = (form, type, message) => {
     let status = form.querySelector('.newsletter-form__status');

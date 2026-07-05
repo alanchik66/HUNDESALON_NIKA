@@ -26,21 +26,25 @@
     "streetsidesoftware.code-spell-checker-ukrainian",
     // ─── PowerShell ─────────────────────────────────────────────────
     "ms-vscode.powershell",
-    // ─── Cloudflare Pages / Workers bindings ──────────────────────
+    // ─── Cloudflare Pages / Workers ─────────────────────────────────
     "cloudflare.cloudflare-workers-bindings-extension",
-    // ─── AI assistants ─────────────────────────────────────────────
-    "openai.chatgpt",
+    // ─── AI-агенты (бесплатные) ──────────────────────────────────
+    "continue.continue",
+    "codeium.codeium",
+    "kilocode.kilo-code",
+    "kparth01.ollama-codex",
     "google.geminicodeassist",
     // ─── Утилиты ────────────────────────────────────────────────────
     "editorconfig.editorconfig",
     "mikestead.dotenv",
-    "yzhang.markdown-all-in-one"
+    "yzhang.markdown-all-in-one",
+    "redhat.vscode-yaml",
+    "aaron-bond.better-comments"
   ],
   "unwantedRecommendations": [
     "eamodio.gitlens",
     "googlecloudtools.cloudcode",
     "webhint.vscode-webhint",
-    "ritwickdey.liveserver",
     "hookyqr.beautify"
   ]
 }

@@ -84,7 +84,8 @@ if (fs.existsSync(path.join(root, 'wrangler.toml'))) {
 if (fs.existsSync(path.join(root, '_redirects'))) {
   const redirects = read('_redirects');
   for (const rule of [
-    '/index.html / 301',
+    '/ /de/ 301',
+    '/index.html /de/ 301',
     '/de/index.html /de/ 301',
     '/en/index.html /en/ 301',
     '/ru/index.html /ru/ 301',
@@ -96,6 +97,9 @@ if (fs.existsSync(path.join(root, '_redirects'))) {
 
 for (const file of indexFiles) {
   if (!fs.existsSync(path.join(root, file))) continue;
+
+  // Skip root index.html - it's just a redirect
+  if (file === 'index.html') continue;
 
   const html = read(file);
   assert(html.includes('Leipzig'), `${file}: missing Leipzig geo signal`);

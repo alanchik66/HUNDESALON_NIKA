@@ -130,6 +130,19 @@ tools/google-search-console-report.json
 .pi/
 *.lockb
 
+# ═══════════════ ЛОКАЛЬНЫЕ AI / AGENT НАСТРОЙКИ (НЕ ДЛЯ САЙТА) ═══════════════
+AGENTS.md
+.agents/
+.cursorrules
+.devin/
+.devinignore
+.kilo/
+.windsurfrules
+.github/copilot-instructions.md
+brain/
+mcps/
+docs/KILO_*.md
+
 # ═══════════════ ВРЕМЕННЫЕ ДЛЯ РЕВЬЮ ═══════════════
 tmp_moon_review/
 tmp_*.png

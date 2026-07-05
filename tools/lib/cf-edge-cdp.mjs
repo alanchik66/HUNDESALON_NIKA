@@ -1,17 +1,10 @@
 /** CDP session for Cloudflare Dashboard (Edge CF_EDGE_PORT). */
 import { spawn } from 'node:child_process';
+import { getJson, openCdpSession, sleep } from './browser-cdp.mjs';
 
 const port = Number(process.env.CF_EDGE_PORT || 9225);
 
-export async function sleep(ms) {
-  return new Promise(r => setTimeout(r, ms));
-}
-
-export async function getJson(url) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(String(r.status));
-  return r.json();
-}
+export { getJson, sleep };
 
 export async function ensureCfEdge() {
   try {
@@ -33,36 +26,17 @@ export async function ensureCfEdge() {
 }
 
 export async function connectCfTab() {
-  const list = await getJson(`http://127.0.0.1:${port}/json/list`);
-  const t = list.find(x => x.type === 'page' && x.url?.includes('cloudflare.com'));
-  if (!t?.webSocketDebuggerUrl) throw new Error('No Cloudflare tab on port ' + port);
-
-  let nextId = 1;
-  const pending = new Map();
-  const ws = new WebSocket(t.webSocketDebuggerUrl);
-  await new Promise((res, rej) => {
-    ws.addEventListener('open', res);
-    ws.addEventListener('error', rej);
+  const session = await openCdpSession({
+    port,
+    targetPattern: /cloudflare\.com/i,
+    fallbackAny: false,
   });
-  ws.onmessage = e => {
-    const m = JSON.parse(e.data);
-    if (!m.id) return;
-    const x = pending.get(m.id);
-    pending.delete(m.id);
-    m.error ? x.reject(new Error(m.error.message)) : x.resolve(m.result);
-  };
-  const send = (method, params = {}) =>
-    new Promise((res, rej) => {
-      const id = nextId++;
-      pending.set(id, { resolve: res, reject: rej });
-      ws.send(JSON.stringify({ id, method, params }));
-    });
 
   return {
-    url: t.url,
-    send,
+    url: session.target.url,
+    send: session.send,
     eval: async (expression, timeoutMs = 45000) => {
-      const r = await send('Runtime.evaluate', {
+      const r = await session.send('Runtime.evaluate', {
         expression,
         awaitPromise: true,
         returnByValue: true,
@@ -70,6 +44,6 @@ export async function connectCfTab() {
       });
       return r.result?.value;
     },
-    close: () => ws.close(),
+    close: session.close,
   };
 }

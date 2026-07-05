@@ -2,71 +2,13 @@
  * List Bing Webmaster sites and signed-in account hints via Edge CDP (port 9224).
  * Run: npm run bing:edge  (sign in)  then  npm run bing:audit
  */
+import { openCdpSession, sleep as wait } from './lib/browser-cdp.mjs';
+
 const port = Number(process.env.BING_EDGE_PORT || 9224);
-const targets = [
-  'https://www.bing.com/webmasters/home',
-  'https://www.bing.com/webmasters/settings/user',
-];
+const targets = ['https://www.bing.com/webmasters/home', 'https://www.bing.com/webmasters/settings/user'];
 
-let nextId = 1;
-const pending = new Map();
-
-async function getJson(url) {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
-  return response.json();
-}
-
-async function getTarget() {
-  const list = await getJson(`http://127.0.0.1:${port}/json/list`);
-  const pages = list.filter(t => t.type === 'page');
-  return pages.find(t => t.url.includes('bing.com/webmaster')) || pages[0];
-}
-
-function connect(wsUrl) {
-  const ws = new WebSocket(wsUrl);
-  ws.addEventListener('message', event => {
-    const message = JSON.parse(event.data);
-    if (!message.id) return;
-    const entry = pending.get(message.id);
-    if (!entry) return;
-    pending.delete(message.id);
-    if (message.error) entry.reject(new Error(message.error.message));
-    else entry.resolve(message.result);
-  });
-  return new Promise((resolve, reject) => {
-    ws.addEventListener('open', () => {
-      const send = (method, params = {}) =>
-        new Promise((res, rej) => {
-          const id = nextId++;
-          pending.set(id, { resolve: res, reject: rej });
-          ws.send(JSON.stringify({ id, method, params }));
-        });
-      resolve({ ws, send });
-    });
-    ws.addEventListener('error', reject);
-  });
-}
-
-async function wait(ms) {
-  return new Promise(r => setTimeout(r, ms));
-}
-
-async function evaluate(send, expression) {
-  const result = await send('Runtime.evaluate', {
-    expression,
-    awaitPromise: true,
-    returnByValue: true,
-  });
-  if (result.exceptionDetails) {
-    throw new Error(result.exceptionDetails.text || 'evaluate failed');
-  }
-  return result.result.value;
-}
-
-async function scrapePage(send) {
-  return evaluate(
-    send,
+async function scrapePage(session) {
+  return session.evaluate(
     `(() => {
       const text = document.body ? document.body.innerText : '';
       const links = Array.from(document.querySelectorAll('a[href]'))
@@ -90,24 +32,23 @@ async function scrapePage(send) {
   );
 }
 
-const target = await getTarget().catch(() => null);
-if (!target?.webSocketDebuggerUrl) {
+let session;
+try {
+  session = await openCdpSession({ port, targetPattern: /bing\.com\/webmaster/i });
+} catch {
   console.error(`Edge not on port ${port}. Run: npm run bing:edge`);
   process.exit(1);
 }
 
-const { ws, send } = await connect(target.webSocketDebuggerUrl);
+const { send } = session;
 
 try {
-  await send('Runtime.enable');
-  await send('Page.enable');
-
   const report = { scrapedAt: new Date().toISOString(), pages: [] };
 
   for (const url of targets) {
     await send('Page.navigate', { url });
     await wait(6000);
-    const data = await scrapePage(send);
+    const data = await scrapePage(session);
     report.pages.push(data);
   }
 
@@ -129,5 +70,5 @@ try {
 
   console.log(JSON.stringify(report, null, 2));
 } finally {
-  ws.close();
+  session.close();
 }

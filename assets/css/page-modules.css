@@ -16,6 +16,8 @@
   border: 1px solid var(--glass-border);
   border-radius: 28px;
   background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(8px);
+
   backdrop-filter: blur(8px);
 }
 
@@ -232,7 +234,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: rgb(255 255 255 / 6%);
+  background: #ffffff0f;
 }
 
 .booking-container .booking-title {
@@ -249,7 +251,7 @@
   max-width: 70ch;
   font-size: clamp(1.02rem, 1.5vw, 1.08rem);
   line-height: 1.55;
-  color: rgb(236 232 223 / 92%);
+  color: #ece8dfeb;
 }
 
 .booking-highlights {
@@ -269,8 +271,8 @@
   padding: 12px 16px;
   border: 1px solid rgb(232 212 139 / 20%);
   border-radius: 16px;
-  background: rgb(255 255 255 / 4%);
-  color: rgb(236 232 223 / 95%);
+  background: #ffffff0a;
+  color: #ece8dff2;
   transition:
     border-color 0.28s ease,
     background-color 0.28s ease,
@@ -278,8 +280,8 @@
 }
 
 .booking-highlights li:hover {
-  border-color: rgb(232 212 139 / 34%);
-  background: rgb(255 255 255 / 7%);
+  border-color: #e8d48b57;
+  background: #ffffff12;
   transform: translateY(-2px);
 }
 
@@ -319,7 +321,7 @@
 }
 
 body.light .booking-hero {
-  border-color: rgb(174 137 58 / 32%);
+  border-color: #ae893a52;
   background:
     radial-gradient(110% 140% at 0% -10%, rgb(232 205 147 / 45%) 0%, transparent 52%),
     linear-gradient(150deg, rgb(244 236 222 / 92%) 0%, rgb(238 226 204 / 94%) 74%);
@@ -329,19 +331,19 @@ body.light .booking-hero {
 }
 
 body.light .booking-kicker {
-  border-color: rgb(163 123 42 / 38%);
+  border-color: #a37b2a61;
   color: #8d692d;
-  background: rgb(255 255 255 / 56%);
+  background: #ffffff8f;
 }
 
 body.light .booking-lead,
 body.light .booking-highlights li {
-  color: rgb(62 47 24 / 92%);
+  color: #3e2f18eb;
 }
 
 body.light .booking-highlights li {
-  border-color: rgb(174 137 58 / 22%);
-  background: rgb(255 255 255 / 42%);
+  border-color: #ae893a38;
+  background: #ffffff6b;
 }
 
 body.light .booking-secondary-link {
@@ -376,7 +378,7 @@ body.light .direct-booking-btn:focus-visible {
     width: 100%;
     padding: 10px 12px;
     border-radius: 14px;
-    background: rgb(255 255 255 / 5%);
+    background: #ffffff0d;
   }
 }
 
@@ -459,6 +461,8 @@ body.light .direct-booking-btn:focus-visible {
   overflow-x: auto;
   margin: 2rem 0;
   background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(8px);
+
   backdrop-filter: blur(8px);
   border-radius: 32px;
   padding: 1px;
@@ -491,6 +495,8 @@ body.light .direct-booking-btn:focus-visible {
 .complaint-form,
 .booking-container:not(.booking-hero) {
   background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(8px);
+
   backdrop-filter: blur(8px);
   border-radius: 28px;
   border: 1px solid var(--glass-border);
@@ -574,7 +580,9 @@ body.light .direct-booking-btn:focus-visible {
   justify-content: center;
   align-items: center;
   padding: 1.5rem;
-  background: rgb(0 0 0 / 70%);
+  background: #000000b3;
+  -webkit-backdrop-filter: blur(10px);
+
   backdrop-filter: blur(10px);
 }
 
@@ -635,8 +643,11 @@ body.light .direct-booking-btn:focus-visible {
     );
   background-clip: padding-box, border-box;
   background-origin: padding-box, border-box;
-  backdrop-filter: blur(24px) saturate(1.6);
+
   -webkit-backdrop-filter: blur(24px) saturate(1.6);
+
+
+  backdrop-filter: blur(24px) saturate(1.6);
   color: var(--text-dark);
   box-shadow:
     0 24px 48px rgb(0 0 0 / 52%),
@@ -663,7 +674,7 @@ body.light .direct-booking-btn:focus-visible {
   height: 36px;
   border: 1px solid rgb(255 255 255 / 12%);
   border-radius: 999px;
-  background: rgb(255 255 255 / 6%);
+  background: #ffffff0f;
   color: var(--accent-gold);
   font-size: 20px;
   line-height: 1;
@@ -674,8 +685,8 @@ body.light .direct-booking-btn:focus-visible {
 }
 
 .modal-close:hover {
-  background: rgb(201 168 76 / 16%);
-  border-color: rgb(201 168 76 / 40%);
+  background: #c9a84c29;
+  border-color: #c9a84c66;
 }
 
 /* =========================================================
@@ -832,8 +843,8 @@ body.light .direct-booking-btn:focus-visible {
   padding: 0.95rem 1rem;
   border-radius: 18px;
   border: 1px solid rgb(255 255 255 / 12%);
-  background: rgb(255 255 255 / 5%);
-  color: rgb(255 239 209 / 95%);
+  background: #ffffff0d;
+  color: #ffefd1f2;
   font-size: 0.94rem;
   line-height: 1.45;
   box-shadow:
@@ -842,15 +853,15 @@ body.light .direct-booking-btn:focus-visible {
 }
 
 .form-status--success {
-  border-color: rgb(163 217 163 / 38%);
+  border-color: #a3d9a361;
   background: linear-gradient(135deg, rgb(82 140 82 / 22%) 0%, rgb(255 255 255 / 5%) 100%);
-  color: rgb(204 255 213 / 96%);
+  color: #ccffd5f5;
 }
 
 .form-status--error {
-  border-color: rgb(240 162 162 / 34%);
+  border-color: #f0a2a257;
   background: linear-gradient(135deg, rgb(96 24 24 / 26%) 0%, rgb(255 255 255 / 5%) 100%);
-  color: rgb(255 218 218 / 96%);
+  color: #ffdadaf5;
 }
 
 .booking-native-grid {
@@ -864,7 +875,7 @@ body.light .direct-booking-btn:focus-visible {
 .booking-check-label {
   display: grid;
   gap: 7px;
-  color: rgb(255 246 224 / 88%);
+  color: #fff6e0e0;
   font-size: 0.92rem;
 }
 
@@ -873,7 +884,7 @@ body.light .direct-booking-btn:focus-visible {
   min-height: 44px;
   width: 100%;
   color: #fff7e8;
-  background: rgb(255 255 255 / 8%);
+  background: #ffffff14;
   border: 1px solid rgb(236 205 138 / 24%);
   border-radius: 8px;
   padding: 0 12px;
@@ -897,7 +908,7 @@ body.light .direct-booking-btn:focus-visible {
 .booking-summary {
   margin: 14px 0;
   padding: 14px;
-  color: rgb(255 247 232 / 90%);
+  color: #fff7e8e5;
   background:
     radial-gradient(circle at 0 0, rgb(236 205 138 / 14%), transparent 34%),
     rgb(255 255 255 / 6%);
@@ -924,7 +935,7 @@ body.light .direct-booking-btn:focus-visible {
 }
 
 .booking-summary dt {
-  color: rgb(255 247 232 / 66%);
+  color: #fff7e8a8;
 }
 
 .booking-summary dd {
@@ -962,8 +973,11 @@ body.light .direct-booking-btn:focus-visible {
   box-shadow:
     0 18px 52px rgb(0 0 0 / 28%),
     inset 0 1px 0 rgb(255 255 255 / 10%);
-  backdrop-filter: blur(16px);
+
   -webkit-backdrop-filter: blur(16px);
+
+
+  backdrop-filter: blur(16px);
 }
 
 .section-kicker {
@@ -1003,7 +1017,7 @@ body.light .direct-booking-btn:focus-visible {
 .seo-local-card p,
 .newsletter-card p {
   margin: 0;
-  color: rgb(255 247 232 / 82%);
+  color: #fff7e8d1;
   line-height: 1.55;
 }
 
@@ -1034,7 +1048,7 @@ body.light .direct-booking-btn:focus-visible {
 .newsletter-form input {
   min-height: 48px;
   color: #fff7e8;
-  background: rgb(255 255 255 / 8%);
+  background: #ffffff14;
   border: 1px solid rgb(236 205 138 / 26%);
   border-radius: 8px;
   padding: 0 14px;
@@ -1076,7 +1090,7 @@ body.light .direct-booking-btn:focus-visible {
 .seo-local-card ul {
   margin: 0;
   padding-left: 1.1rem;
-  color: rgb(255 247 232 / 84%);
+  color: #fff7e8d6;
   line-height: 1.7;
 }
 
@@ -1086,14 +1100,14 @@ body.light .testimonial-card__text,
 body.light .document-card p,
 body.light .seo-local-card p,
 body.light .newsletter-card p {
-  color: rgb(33 24 12 / 78%);
+  color: #21180cc7;
 }
 
 body.light .booking-field-label input,
 body.light .booking-field-label select,
 body.light .newsletter-form input {
   color: #24180d;
-  background: rgb(255 255 255 / 72%);
+  background: #ffffffb8;
 }
 
 @media (width <= 820px) {
@@ -1116,17 +1130,20 @@ body.light .newsletter-form input {
   margin: 0.75rem 0;
   padding-right: 2px;
   scrollbar-width: thin;
-  scrollbar-color: rgb(198 161 91 / 28%) transparent;
+  scrollbar-color: #c6a15b47 transparent;
 }
 
 .service-option,
 .time-slot,
 .calendar-day {
   border: 1px solid rgb(255 255 255 / 10%);
-  background: rgb(255 255 255 / 5%);
+  background: #ffffff0d;
   color: inherit;
-  backdrop-filter: blur(8px);
+
   -webkit-backdrop-filter: blur(8px);
+
+
+  backdrop-filter: blur(8px);
   transition:
     border-color 0.22s cubic-bezier(0.2, 0.9, 0.4, 1),
     background 0.22s cubic-bezier(0.2, 0.9, 0.4, 1),
@@ -1150,9 +1167,9 @@ body.light .newsletter-form input {
 .service-option.selected,
 .time-slot.selected,
 .calendar-day.selected {
-  border-color: rgb(198 161 91 / 70%);
+  border-color: #c6a15bb3;
   background: linear-gradient(180deg, rgb(226 190 116 / 14%) 0%, rgb(226 190 116 / 8%) 100%);
-  color: rgb(255 232 176 / 100%);
+  color: #ffe8b0ff;
   box-shadow:
     0 4px 24px rgb(0 0 0 / 14%),
     0 0 14px rgb(226 190 116 / 14%),
@@ -1170,12 +1187,12 @@ body.light .newsletter-form input {
 .time-slot:focus-visible,
 .calendar-day:hover,
 .calendar-day:focus-visible {
-  border-color: rgb(198 161 91 / 45%);
-  background: rgb(255 255 255 / 6%);
+  border-color: #c6a15b73;
+  background: #ffffff0f;
   box-shadow:
     0 6px 28px rgb(0 0 0 / 16%),
     inset 0 0.5px 0 rgb(255 255 255 / 7%);
-  color: rgb(255 230 168 / 95%);
+  color: #ffe6a8f2;
   transform: translateY(-2px);
   filter: brightness(1.05);
   outline: none;
@@ -1355,6 +1372,8 @@ body.light .newsletter-form input {
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%),
     rgba(14, 18, 16, 0.92);
+  -webkit-backdrop-filter: blur(14px);
+
   backdrop-filter: blur(14px);
   box-shadow:
     0 12px 32px rgba(0, 0, 0, 0.28),
@@ -1773,12 +1792,12 @@ body .btn-read:hover .site-icon-arrow-right {
     padding: 0.68rem 0.82rem;
     border: 1px solid var(--glass-border);
     border-radius: 14px;
-    background: rgb(255 255 255 / 3%);
+    background: #ffffff08;
   }
 
   .step.active {
-    background: rgb(198 161 91 / 18%);
-    border-color: rgb(198 161 91 / 45%);
+    background: #c6a15b2e;
+    border-color: #c6a15b73;
   }
 
   .step.active::after {
@@ -1851,6 +1870,8 @@ body .btn-read:hover .site-icon-arrow-right {
   border-radius: 24px;
   overflow: hidden;
   background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(12px);
+
   backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-sm);
@@ -1871,6 +1892,7 @@ body .btn-read:hover .site-icon-arrow-right {
   width: 100%;
   height: 100%;
   object-fit: cover;
+
   user-select: none;
   -webkit-user-select: none;
   pointer-events: none;
@@ -1936,6 +1958,8 @@ body .btn-read:hover .site-icon-arrow-right {
   bottom: 16px;
   padding: 8px 16px;
   background: rgba(0, 0, 0, 0.7);
+  -webkit-backdrop-filter: blur(8px);
+
   backdrop-filter: blur(8px);
   color: white;
   font-size: 14px;
@@ -1986,6 +2010,8 @@ body .btn-read:hover .site-icon-arrow-right {
   border-radius: 24px;
   overflow: hidden;
   background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(8px);
+
   backdrop-filter: blur(8px);
   border: 1px solid var(--glass-border);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -2034,6 +2060,8 @@ body .btn-read:hover .site-icon-arrow-right {
   padding: 10px 20px;
   border: 1px solid var(--glass-border);
   background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(8px);
+
   backdrop-filter: blur(8px);
   color: var(--text-dark);
   font-size: 14px;

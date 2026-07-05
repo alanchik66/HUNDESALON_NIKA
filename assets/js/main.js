@@ -1424,34 +1424,37 @@ document.addEventListener('DOMContentLoaded', () => {
        noisy console logs. */
 
   /* ========== SCROLL REVEAL ========== */
-  const reveals = document.querySelectorAll('.reveal');
-  const revealVisibleContent = () => {
-    reveals.forEach(el => {
+  const revealElements = Array.from(document.querySelectorAll('.reveal'));
+
+  if (revealElements.length) {
+    const activateReveal = el => el.classList.add('active');
+    const isNearViewport = el => {
       const rect = el.getBoundingClientRect();
-      const isNearViewport = rect.top < window.innerHeight + 120 && rect.bottom > -120;
-      if (isNearViewport) {
-        el.classList.add('active');
-      }
-    });
-  };
+      return rect.top < window.innerHeight + 120 && rect.bottom > -120;
+    };
+    const revealVisibleContent = () => {
+      revealElements.filter(isNearViewport).forEach(activateReveal);
+    };
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  if ('IntersectionObserver' in window) {
-    const revealObserver = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('active');
-            revealObserver.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.15, root: scrollRoot }
-    );
+    if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+      revealElements.forEach(activateReveal);
+    } else {
+      const revealObserver = new IntersectionObserver(
+        (entries, observer) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              activateReveal(entry.target);
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.15, root: scrollRoot || null }
+      );
 
-    reveals.forEach(el => revealObserver.observe(el));
-    window.setTimeout(revealVisibleContent, 700);
-  } else {
-    reveals.forEach(el => el.classList.add('active'));
+      revealElements.forEach(el => revealObserver.observe(el));
+      window.setTimeout(revealVisibleContent, 700);
+    }
   }
 
   /* ========== POINTER GLOW ==========

@@ -16,13 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const bookingCopyByLang = {
     ru: {
       weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
-      services: [
-        'Стрижка собак',
-        'Купание',
-        'Тримминг',
-        'Экспресс-линька',
-        'Стрижка кошек',
-      ],
+      services: ['Стрижка собак', 'Купание', 'Тримминг', 'Экспресс-линька', 'Стрижка кошек'],
       fallbackService: 'Выбранная услуга',
       chooseService: 'Выберите услугу',
       chooseDate: 'Выберите дату',
@@ -52,13 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     uk: {
       weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
-      services: [
-        'Стрижка собак',
-        'Купання',
-        'Тримінг',
-        'Експрес-линька',
-        'Стрижка котів',
-      ],
+      services: ['Стрижка собак', 'Купання', 'Тримінг', 'Експрес-линька', 'Стрижка котів'],
       fallbackService: 'Обрана послуга',
       chooseService: 'Оберіть послугу',
       chooseDate: 'Оберіть дату',
@@ -88,13 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     en: {
       weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      services: [
-        'Dog haircut',
-        'Bathing',
-        'Hand stripping',
-        'Express deshedding',
-        'Cat grooming',
-      ],
+      services: ['Dog haircut', 'Bathing', 'Hand stripping', 'Express deshedding', 'Cat grooming'],
       fallbackService: 'Selected service',
       chooseService: 'Please select a service',
       chooseDate: 'Please select a date',
@@ -124,13 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     de: {
       weekdays: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
-      services: [
-        'Hundeschnitt',
-        'Baden',
-        'Trimming',
-        'Express-Fellwechselpflege',
-        'Katzenpflege',
-      ],
+      services: ['Hundeschnitt', 'Baden', 'Trimming', 'Express-Fellwechselpflege', 'Katzenpflege'],
       fallbackService: 'Ausgewählte Leistung',
       chooseService: 'Bitte wählen Sie eine Leistung',
       chooseDate: 'Bitte wählen Sie ein Datum',
@@ -198,7 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
         `Локальная страница открыта без серверной отправки. Откройте ${url} — там форма отправит заявку правильно.`,
       uk: url =>
         `Локальну сторінку відкрито без серверного надсилання. Відкрийте ${url} — там форма надішле заявку правильно.`,
-      en: url => `This local page is running without server sending. Open ${url} and the booking form will submit correctly.`,
+      en: url =>
+        `This local page is running without server sending. Open ${url} and the booking form will submit correctly.`,
       de: url =>
         `Diese lokale Seite läuft ohne Server-Versand. Öffnen Sie ${url}, dann sendet das Buchungsformular korrekt.`,
     },
@@ -285,6 +262,12 @@ document.addEventListener('DOMContentLoaded', () => {
       uk: 'Сервіс чернеток зараз недоступний у локальному режимі.',
       en: 'Draft service is temporarily unavailable in local mode.',
       de: 'Der Entwurfsdienst ist lokal vorubergehend nicht verfugbar.',
+    },
+    authFailed: {
+      ru: 'Сервис черновиков временно недоступен из-за ошибки авторизации.',
+      uk: 'Сервіс чернеток тимчасово недоступний через помилку авторизації.',
+      en: 'Draft service is temporarily unavailable due to authorization issues.',
+      de: 'Der Entwurfsdienst ist vorübergehend wegen eines Autorisierungsfehlers nicht verfügbar.',
     },
   };
 
@@ -558,7 +541,9 @@ document.addEventListener('DOMContentLoaded', () => {
               ? (messageDraftCopy.localDevHint[pageLang] ?? messageDraftCopy.localDevHint.de)
               : error?.message === 'DRAFT_SERVICE_UNCONFIGURED'
                 ? (messageDraftCopy.apiKeyMissing[pageLang] ?? messageDraftCopy.apiKeyMissing.de)
-                : (messageDraftCopy.failed[pageLang] ?? messageDraftCopy.failed.de);
+                : error?.message === 'SERVICE_GATEWAY_AUTH_FAILED'
+                  ? (messageDraftCopy.authFailed[pageLang] ?? messageDraftCopy.authFailed.de)
+                  : (messageDraftCopy.failed[pageLang] ?? messageDraftCopy.failed.de);
         } finally {
           button.disabled = false;
         }
@@ -972,7 +957,7 @@ document.addEventListener('DOMContentLoaded', () => {
           renderTimeSlots();
         });
 
-      timeSlotsContainer.appendChild(button);
+        timeSlotsContainer.appendChild(button);
       });
     };
 
@@ -1179,11 +1164,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showValidationMessage(
           bookingCopy.chooseContact,
           form.querySelector(
-            !nameValue
-              ? 'input[name="name"]'
-              : !emailValue
-                ? 'input[name="email"]'
-                : 'input[name="phone"]'
+            !nameValue ? 'input[name="name"]' : !emailValue ? 'input[name="email"]' : 'input[name="phone"]'
           )
         );
         return;

@@ -2,7 +2,7 @@
   'use strict';
 
   const modelContext = [document.modelContext, navigator.modelContext].find(
-    (api) => api && typeof api.registerTool === 'function'
+    api => api && typeof api.registerTool === 'function'
   );
   if (!modelContext) return;
 
@@ -30,7 +30,9 @@
   };
 
   function normalizeLanguage(language) {
-    const value = String(language || '').trim().toLowerCase();
+    const value = String(language || '')
+      .trim()
+      .toLowerCase();
     return Object.prototype.hasOwnProperty.call(languagePages, value) ? value : 'de';
   }
 
@@ -55,8 +57,7 @@
     {
       name: 'hundesalon_nika.get_public_info',
       title: 'Get public salon information',
-      description:
-        'Returns public HUNDESALON NIKA contact, address, language, booking page and discovery links.',
+      description: 'Returns public HUNDESALON NIKA contact, address, language, booking page and discovery links.',
       inputSchema: {
         type: 'object',
         additionalProperties: false,
@@ -99,8 +100,7 @@
     },
   ];
 
-  const controller =
-    typeof window.AbortController === 'function' ? new window.AbortController() : null;
+  const controller = typeof window.AbortController === 'function' ? new window.AbortController() : null;
   const options = controller ? { signal: controller.signal } : undefined;
   for (const tool of tools) {
     try {

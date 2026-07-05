@@ -3,12 +3,7 @@
  * Secure proxy for contact-form draft completions.
  */
 
-import {
-  sanitizeOrigin,
-  assertAllowedOrigin,
-  enforceRateLimit,
-  jsonResponse,
-} from './http-security.js';
+import { sanitizeOrigin, assertAllowedOrigin, enforceRateLimit, jsonResponse } from './http-security.js';
 
 const LEGACY_SERVICE_PREFIX = ['OPEN', 'ROUTER'].join('');
 const DEFAULT_SERVICE_GATEWAY_URL = ['https://', 'open', 'router.ai', '/api/v1/chat/completions'].join('');
@@ -128,6 +123,160 @@ async function getLocalApiKeyFromAssets(runtimeEnv) {
   return { key: '', status: 'assets-key-not-found' };
 }
 
+function parseDraftPayloadDetails(payload) {
+  const details = {
+    language: 'de',
+    formType: 'contact',
+    name: '',
+    service: '',
+    existingMessage: '',
+  };
+
+  const userMessage = Array.isArray(payload?.messages)
+    ? payload.messages.find(message => message?.role === 'user')?.content
+    : '';
+
+  if (typeof userMessage !== 'string' || !userMessage.trim()) {
+    return details;
+  }
+
+  for (const rawLine of userMessage.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || !line.includes(':')) continue;
+
+    const [rawKey, ...rawValue] = line.split(':');
+    const key = rawKey.trim().toLowerCase();
+    const value = rawValue.join(':').trim();
+    if (!value) continue;
+
+    switch (key) {
+      case 'language':
+        details.language = value.toLowerCase();
+        break;
+      case 'form type':
+        details.formType = value.toLowerCase();
+        break;
+      case 'customer name':
+        details.name = value;
+        break;
+      case 'service':
+        details.service = value;
+        break;
+      case 'existing message':
+        details.existingMessage = value;
+        break;
+      default:
+        break;
+    }
+  }
+
+  return details;
+}
+
+function normalizeDraftLanguage(language) {
+  if (!language || typeof language !== 'string') return 'de';
+  const normalized = language.trim().toLowerCase();
+  if (normalized.startsWith('en')) return 'en';
+  if (normalized.startsWith('ru')) return 'ru';
+  if (normalized.startsWith('uk') || normalized.startsWith('ua')) return 'uk';
+  if (normalized.startsWith('de')) return 'de';
+  return 'de';
+}
+
+function buildLocalDraftText(payload) {
+  const { language, formType, name, service, existingMessage } = parseDraftPayloadDetails(payload);
+  const locale = normalizeDraftLanguage(language);
+  const hasService = Boolean(service && service.toLowerCase() !== 'not provided');
+  const hasExisting = Boolean(existingMessage && existingMessage.toLowerCase() !== 'empty');
+  const userName = name ? name.trim() : '';
+  const serviceText = hasService ? service.trim() : '';
+  const messageText = hasExisting ? existingMessage.trim() : '';
+
+  const templates = {
+    en: {
+      intro: userName ? `Hello, my name is ${userName}.` : 'Hello, I hope you are doing well.',
+      request:
+        formType === 'booking'
+          ? 'I would like to schedule an appointment for my pet.'
+          : formType === 'feedback'
+            ? 'I would like to share feedback about a recent visit.'
+            : 'I need help writing a clear message for your salon.',
+      service: hasService ? `I am interested in ${serviceText}.` : 'I would like to know more about your services.',
+      existing: hasExisting
+        ? `Here is what I have written so far: "${messageText}". Please rewrite it clearly and politely.`
+        : 'Please write a polite and concise message with my request and contact details.',
+      closing: 'Thank you, and please get back to me with the next available time.',
+    },
+    de: {
+      intro: userName ? `Guten Tag, mein Name ist ${userName}.` : 'Guten Tag, ich hoffe, es geht Ihnen gut.',
+      request:
+        formType === 'booking'
+          ? 'Ich möchte einen Termin für mein Haustier vereinbaren.'
+          : formType === 'feedback'
+            ? 'Ich möchte ein Feedback zu einem aktuellen Besuch geben.'
+            : 'Ich brauche Hilfe beim Formulieren einer klaren Nachricht für Ihren Salon.',
+      service: hasService
+        ? `Ich interessiere mich für ${serviceText}.`
+        : 'Ich möchte mehr über Ihre Dienstleistungen erfahren.',
+      existing: hasExisting
+        ? `Hier ist mein bisheriger Text: "${messageText}". Bitte formulieren Sie ihn klar und freundlich um.`
+        : 'Bitte schreiben Sie eine kurze, höfliche Nachricht mit meiner Anfrage und Kontaktbitte.',
+      closing: 'Vielen Dank, bitte teilen Sie mir die nächste verfügbare Zeit mit.',
+    },
+    ru: {
+      intro: userName ? `Здравствуйте, меня зовут ${userName}.` : 'Здравствуйте, надеюсь, у вас все хорошо.',
+      request:
+        formType === 'booking'
+          ? 'Я хотел(а) бы записаться на прием для своего питомца.'
+          : formType === 'feedback'
+            ? 'Я хотел(а) бы оставить отзыв о недавнем визите.'
+            : 'Мне нужна помощь в составлении понятного сообщения для вашего салона.',
+      service: hasService ? `Меня интересует ${serviceText}.` : 'Я хотел(а) бы узнать больше о ваших услугах.',
+      existing: hasExisting
+        ? `Вот что я написал(а): "${messageText}". Пожалуйста, перепишите это ясно и вежливо.`
+        : 'Пожалуйста, напишите короткое вежливое сообщение с моей просьбой и контактной информацией.',
+      closing: 'Спасибо, свяжитесь со мной, пожалуйста, с ближайшим удобным временем.',
+    },
+    uk: {
+      intro: userName ? `Добрий день, мене звати ${userName}.` : 'Добрий день, сподіваюсь, у вас все добре.',
+      request:
+        formType === 'booking'
+          ? 'Я хотів(ла) би записати свого улюбленця на прийом.'
+          : formType === 'feedback'
+            ? 'Я хотів(ла) би залишити відгук про недавній візит.'
+            : 'Мені потрібна допомога у складанні чіткого повідомлення для вашого салону.',
+      service: hasService ? `Мене цікавить ${serviceText}.` : 'Я хотів(ла) би дізнатися більше про ваші послуги.',
+      existing: hasExisting
+        ? `Ось що я написав(ла): "${messageText}". Будь ласка, перепишіть це ясно і ввічливо.`
+        : 'Будь ласка, напишіть коротке ввічливе повідомлення з моїм запитом і контактними даними.',
+      closing: 'Дякую, будь ласка, зв’яжіться зі мною з найближчим зручним часом.',
+    },
+  };
+
+  const selected = templates[locale] || templates.de;
+  return `${selected.intro} ${selected.request} ${selected.service} ${selected.existing} ${selected.closing}`
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function buildLocalDraftResponse(payload, reason) {
+  return {
+    id: 'local-draft-fallback',
+    object: 'chat.completion',
+    choices: [
+      {
+        index: 0,
+        message: {
+          role: 'assistant',
+          content: buildLocalDraftText(payload),
+        },
+      },
+    ],
+    fallback: true,
+    reason: reason || 'SERVICE_GATEWAY_FALLBACK',
+  };
+}
+
 function resolveProviderDefaults(context, payloadProvider) {
   const providerOrder = parseCsv(
     getEnvVarFromContext(context, 'SERVICE_GATEWAY_PROVIDER_ORDER') ||
@@ -163,6 +312,15 @@ function isCacheEnabled(context, payload) {
   );
   const payloadEnabled = parseBoolean(payload?.cache, false);
   return envEnabled || payloadEnabled;
+}
+
+function isLocalFallbackAllowed(context, origin) {
+  const envValue = parseBoolean(
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_ALLOW_FALLBACKS') ||
+      getEnvVarFromContext(context, legacyEnvName('ALLOW_FALLBACKS')),
+    false
+  );
+  return envValue || isLocalRequest(origin);
 }
 
 function getCacheTTLSeconds(context, payload) {
@@ -288,15 +446,12 @@ export async function handleMessageDraft(context) {
     return rateLimited;
   }
 
-  let apiKey = getEnvVarFromContext(context, 'SERVICE_GATEWAY_API_KEY') || getEnvVarFromContext(context, legacyEnvName('API_KEY'));
+  let apiKey =
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_API_KEY') || getEnvVarFromContext(context, legacyEnvName('API_KEY'));
 
   if (!apiKey && isLocalRequest(origin)) {
     const localAssets = await getLocalApiKeyFromAssets(primaryRuntimeEnv);
     apiKey = localAssets.key;
-  }
-
-  if (!apiKey) {
-    return jsonResponse({ error: 'Draft service is not configured' }, 503, origin);
   }
 
   let payload;
@@ -308,6 +463,13 @@ export async function handleMessageDraft(context) {
 
   const payloadError = validatePayload(payload);
   if (payloadError) return jsonResponse({ error: payloadError }, 400, origin);
+
+  if (!apiKey) {
+    if (isLocalFallbackAllowed(context, origin)) {
+      return jsonResponse(buildLocalDraftResponse(payload, 'SERVICE_GATEWAY_NOT_CONFIGURED'), 200, origin);
+    }
+    return jsonResponse({ error: 'Draft service is not configured' }, 503, origin);
+  }
 
   const resolvedModel = String(
     payload.model ||
@@ -342,8 +504,7 @@ export async function handleMessageDraft(context) {
       getEnvVarFromContext(context, legacyEnvName('SITE_NAME')) ||
       DEFAULT_SITE_NAME
   ).trim();
-  const serviceGatewayUrl =
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_URL') || DEFAULT_SERVICE_GATEWAY_URL;
+  const serviceGatewayUrl = getEnvVarFromContext(context, 'SERVICE_GATEWAY_URL') || DEFAULT_SERVICE_GATEWAY_URL;
 
   const upstreamHeaders = {
     Authorization: `Bearer ${apiKey}`,
@@ -388,6 +549,10 @@ export async function handleMessageDraft(context) {
       502,
       origin
     );
+  }
+
+  if (upstream.status === 401 || upstream.status === 403) {
+    return jsonResponse(buildLocalDraftResponse(payload, 'SERVICE_GATEWAY_AUTH_FAILED'), 200, origin);
   }
 
   const canRetryWithFallback =

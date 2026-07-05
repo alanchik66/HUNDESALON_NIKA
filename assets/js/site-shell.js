@@ -5834,9 +5834,7 @@
     const chipBox = feelsLikeChip.getBoundingClientRect();
     const targetRightPx = Number.isFinite(labelBox.right) ? labelBox.right : labelBox.left + labelBox.width;
     const referenceWidthPx =
-      Number.isFinite(targetRightPx) && Number.isFinite(chipBox.left)
-        ? Math.max(0, targetRightPx - chipBox.left)
-        : 0;
+      Number.isFinite(targetRightPx) && Number.isFinite(chipBox.left) ? Math.max(0, targetRightPx - chipBox.left) : 0;
     const blockWidthPx = Math.max(
       1,
       Math.round(Math.max(baselineWidthPx, contentMinWidthPx, referenceWidthPx) * 10) / 10
@@ -7552,14 +7550,9 @@
       : Number.isFinite(Number(host?.__weatherCardVerticalInsetPx))
         ? Math.max(0, Number(host.__weatherCardVerticalInsetPx))
         : 0;
-    const _resolvedTopInset =
-      Number.isFinite(_infoPanelTop) && _infoPanelTop >= 0
-        ? _infoPanelTop
-        : _hostTopInset;
+    const _resolvedTopInset = Number.isFinite(_infoPanelTop) && _infoPanelTop >= 0 ? _infoPanelTop : _hostTopInset;
     const _resolvedBottomInset =
-      Number.isFinite(_infoPanelBottom) && _infoPanelBottom >= 0
-        ? _infoPanelBottom
-        : _hostBottomInset;
+      Number.isFinite(_infoPanelBottom) && _infoPanelBottom >= 0 ? _infoPanelBottom : _hostBottomInset;
     const rightTopInsetPx = _resolvedTopInset;
     const rightBottomInsetPx = _resolvedBottomInset;
 
@@ -7756,14 +7749,9 @@
       const infoPanelH = infoPanel.getBoundingClientRect().height;
       const cardNode = rightColumn.closest('.weather-header-card');
       const cardH = cardNode instanceof HTMLElement ? cardNode.getBoundingClientRect().height : 0;
-      const availableColumnH =
-        cardH > 0 ? Math.max(0, cardH - rightTopInsetPx - rightBottomInsetPx) : null;
+      const availableColumnH = cardH > 0 ? Math.max(0, cardH - rightTopInsetPx - rightBottomInsetPx) : null;
       const resolvedH =
-        availableColumnH !== null && availableColumnH > 0
-          ? availableColumnH
-          : infoPanelH > 0
-            ? infoPanelH
-            : null;
+        availableColumnH !== null && availableColumnH > 0 ? availableColumnH : infoPanelH > 0 ? infoPanelH : null;
       if (resolvedH !== null) {
         rightColumn.style.setProperty('height', `${resolvedH}px`, 'important');
         rightColumn.style.setProperty('min-height', `${resolvedH}px`, 'important');
@@ -7982,9 +7970,7 @@
 
   function syncHeaderWeatherMetaWidthToEyebrow(host, refs = {}) {
     const root =
-      host instanceof ShadowRoot || host instanceof DocumentFragment
-        ? host
-        : host?.shadowRoot || refs.root || null;
+      host instanceof ShadowRoot || host instanceof DocumentFragment ? host : host?.shadowRoot || refs.root || null;
     if (!(root instanceof ShadowRoot || root instanceof DocumentFragment)) {
       return;
     }
@@ -8164,7 +8150,9 @@
       metaTextBox.width < targetWidthPx - 0.35
     ) {
       const stretchPx = (targetWidthPx - metaTextBox.width) / (characterCount - 1);
-      letterSpacingPx = Number(Math.min(maxLetterSpacingPx, Math.max(letterSpacingPx, letterSpacingPx + stretchPx)).toFixed(3));
+      letterSpacingPx = Number(
+        Math.min(maxLetterSpacingPx, Math.max(letterSpacingPx, letterSpacingPx + stretchPx)).toFixed(3)
+      );
       applyMetaTypography();
     }
   }
@@ -10737,7 +10725,9 @@
             ':scope > .weather-header-card__pressure-separator'
           );
           const finalPressureValueNode = finalPressureChipNode.querySelector(':scope > span:last-child') || null;
-          const finalPressureMetaNode = finalPressureChipNode.querySelector(':scope > .weather-header-card__pressure-meta');
+          const finalPressureMetaNode = finalPressureChipNode.querySelector(
+            ':scope > .weather-header-card__pressure-meta'
+          );
           const finalPressureMetaLabelNode =
             finalPressureChipNode.querySelector(':scope .weather-header-card__pressure-meta-label') ||
             finalPressureChipNode.querySelector(':scope > span:first-child');
@@ -10815,7 +10805,9 @@
           }
 
           if (finalHumidityLabelNode instanceof HTMLElement) {
-            let humidityLabelTextNode = finalHumidityLabelNode.querySelector('.weather-header-card__humidity-label-text');
+            let humidityLabelTextNode = finalHumidityLabelNode.querySelector(
+              '.weather-header-card__humidity-label-text'
+            );
             if (!(humidityLabelTextNode instanceof HTMLElement)) {
               humidityLabelTextNode = document.createElement('span');
               humidityLabelTextNode.className = 'weather-header-card__humidity-label-text';

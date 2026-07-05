@@ -1,5 +1,7 @@
 # HUNDESALON_NIKA service audit - 2026-06-26
 
+Status note, 2026-07-05: this report is superseded by `docs/service-audit-2026-07-05.md`. The old Cloudflare DNS blocker and the old Google project delete blocker were resolved after this report was written.
+
 ## Executive status
 
 Production content is built and available on Cloudflare Pages at:
