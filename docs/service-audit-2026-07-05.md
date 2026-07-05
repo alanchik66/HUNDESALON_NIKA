@@ -30,8 +30,8 @@ Pages project:
 
 - Account ID: `25e872aeab8cb246c69142ab07cd0fee`
 - Project: `hundesalon-nika`
-- Latest observed production deployment: `4f993177-7ba8-4db6-8521-8d5e34e11d1d`
-- Deployment source: `main`, commit `34df584`
+- Latest observed production deployment: direct Wrangler deployment from `main`
+- Deployment source: `main`
 
 Zone token check:
 
@@ -48,6 +48,7 @@ Production checks:
 - `npm run resend:check-live`: passed on production domain
 - `npm run check:live-crawl`: passed, 96 sitemap URLs OK
 - `npm run google:gsc:audit`: passed, 96 sitemap URLs ready
+- `npm run deploy`: passed; production was deployed directly through Wrangler because GitHub Actions jobs were blocked before runner startup by GitHub account billing lock.
 
 ## Google Cloud
 
@@ -112,6 +113,7 @@ Local validation on 2026-07-05:
 - `npm run validate`: passed
 - `npm run build`: passed
 - `npm run check:all`: passed
+- `npm run deploy`: passed
 - `git diff --check`: passed
 - Qodana workflow formatting check: passed
 - Bing Webmaster CDP tool syntax checks: passed
@@ -126,7 +128,6 @@ Local validation on 2026-07-05:
 Notes:
 
 - `stylelint` completed successfully, with non-fatal `csstree-match` iteration break messages.
-- Google Search Console audit reports the expected root canonical warning because `/` canonicalizes to `/de/`.
-- The working tree contains many pre-existing modified website files. They were not reverted.
-- Local branch is `auto/report_20260703_103656` at `34df584`; `check:all` confirms both `origin/main` and `gitlab/main` at `a012d60`.
-- `.prettierignore`, `.github/workflows/qodana_code_quality.yml`, `docs/service-audit-2026-07-05.md`, and `tools/lib/browser-cdp.mjs` remain untracked project/CI/tooling candidates until they are intentionally committed.
+- Root URL now redirects to `/de/`, and language canonicals pass live checks.
+- Local `main`, `origin/main`, `github/main`, and `gitlab/main` are aligned after the final push.
+- GitHub Actions workflows are valid but cannot run while the GitHub account is locked for billing. This is external to the repository; production deploy was completed through Wrangler.
