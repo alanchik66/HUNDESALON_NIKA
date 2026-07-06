@@ -49,7 +49,7 @@ https://hundesalon-nika.com/assets/images/brand/search-logo-clear-512.png
 https://hundesalon-nika.com/assets/images/brand/search-logo-transparent-512.png
 https://hundesalon-nika.com/assets/images/brand/social-preview-1200x630.png
 https://hundesalon-nika.com/browserconfig.xml
-https://hundesalon-nika.com/de/blog.html
+https://hundesalon-nika.com/de/blog/
 https://hundesalon-nika.com/de/blog/kak-podgotovit-sobaku.html
 https://hundesalon-nika.com/de/blog/plokhaya-strizhka.html
 https://hundesalon-nika.com/de/blog/preimushchestva-ekspress-linki.html
@@ -69,7 +69,7 @@ https://hundesalon-nika.com/de/partnerstvo.html
 https://hundesalon-nika.com/de/reyting.html
 https://hundesalon-nika.com/de/social.html
 https://hundesalon-nika.com/de/vvedenie.html
-https://hundesalon-nika.com/en/blog.html
+https://hundesalon-nika.com/en/blog/
 https://hundesalon-nika.com/en/blog/kak-podgotovit-sobaku.html
 https://hundesalon-nika.com/en/blog/plokhaya-strizhka.html
 https://hundesalon-nika.com/en/blog/preimushchestva-ekspress-linki.html
@@ -90,7 +90,7 @@ https://hundesalon-nika.com/en/reyting.html
 https://hundesalon-nika.com/en/social.html
 https://hundesalon-nika.com/en/vvedenie.html
 https://hundesalon-nika.com/favicon.ico
-https://hundesalon-nika.com/ru/blog.html
+https://hundesalon-nika.com/ru/blog/
 https://hundesalon-nika.com/ru/blog/kak-podgotovit-sobaku.html
 https://hundesalon-nika.com/ru/blog/plokhaya-strizhka.html
 https://hundesalon-nika.com/ru/blog/preimushchestva-ekspress-linki.html
@@ -111,7 +111,7 @@ https://hundesalon-nika.com/ru/reyting.html
 https://hundesalon-nika.com/ru/social.html
 https://hundesalon-nika.com/ru/vvedenie.html
 https://hundesalon-nika.com/site.webmanifest
-https://hundesalon-nika.com/uk/blog.html
+https://hundesalon-nika.com/uk/blog/
 https://hundesalon-nika.com/uk/blog/kak-podgotovit-sobaku.html
 https://hundesalon-nika.com/uk/blog/plokhaya-strizhka.html
 https://hundesalon-nika.com/uk/blog/preimushchestva-ekspress-linki.html
@@ -150,7 +150,7 @@ https://www.hundesalon-nika.com/assets/images/brand/search-logo-clear-512.png
 https://www.hundesalon-nika.com/assets/images/brand/search-logo-transparent-512.png
 https://www.hundesalon-nika.com/assets/images/brand/social-preview-1200x630.png
 https://www.hundesalon-nika.com/browserconfig.xml
-https://www.hundesalon-nika.com/de/blog.html
+https://www.hundesalon-nika.com/de/blog/
 https://www.hundesalon-nika.com/de/blog/kak-podgotovit-sobaku.html
 https://www.hundesalon-nika.com/de/blog/plokhaya-strizhka.html
 https://www.hundesalon-nika.com/de/blog/preimushchestva-ekspress-linki.html
@@ -170,7 +170,7 @@ https://www.hundesalon-nika.com/de/partnerstvo.html
 https://www.hundesalon-nika.com/de/reyting.html
 https://www.hundesalon-nika.com/de/social.html
 https://www.hundesalon-nika.com/de/vvedenie.html
-https://www.hundesalon-nika.com/en/blog.html
+https://www.hundesalon-nika.com/en/blog/
 https://www.hundesalon-nika.com/en/blog/kak-podgotovit-sobaku.html
 https://www.hundesalon-nika.com/en/blog/plokhaya-strizhka.html
 https://www.hundesalon-nika.com/en/blog/preimushchestva-ekspress-linki.html
@@ -191,7 +191,7 @@ https://www.hundesalon-nika.com/en/reyting.html
 https://www.hundesalon-nika.com/en/social.html
 https://www.hundesalon-nika.com/en/vvedenie.html
 https://www.hundesalon-nika.com/favicon.ico
-https://www.hundesalon-nika.com/ru/blog.html
+https://www.hundesalon-nika.com/ru/blog/
 https://www.hundesalon-nika.com/ru/blog/kak-podgotovit-sobaku.html
 https://www.hundesalon-nika.com/ru/blog/plokhaya-strizhka.html
 https://www.hundesalon-nika.com/ru/blog/preimushchestva-ekspress-linki.html
@@ -212,7 +212,7 @@ https://www.hundesalon-nika.com/ru/reyting.html
 https://www.hundesalon-nika.com/ru/social.html
 https://www.hundesalon-nika.com/ru/vvedenie.html
 https://www.hundesalon-nika.com/site.webmanifest
-https://www.hundesalon-nika.com/uk/blog.html
+https://www.hundesalon-nika.com/uk/blog/
 https://www.hundesalon-nika.com/uk/blog/kak-podgotovit-sobaku.html
 https://www.hundesalon-nika.com/uk/blog/plokhaya-strizhka.html
 https://www.hundesalon-nika.com/uk/blog/preimushchestva-ekspress-linki.html

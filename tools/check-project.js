@@ -92,6 +92,10 @@ if (fs.existsSync(path.join(root, 'assets/js/site-shell.js'))) {
     'site-shell.js: gallery nav must expose submenu markup for galereya and do-i-posle'
   );
   assert(
+    siteShell.includes('${pathPrefix}blog/') && !siteShell.includes('${pathPrefix}blog.html'),
+    'site-shell.js: blog nav must point to /blog/ folder index'
+  );
+  assert(
     siteShell.includes('do-i-posle.html') && siteShell.includes('galleryAllHint'),
     'site-shell.js: gallery submenu must include before/after page and descriptive hints'
   );
@@ -102,6 +106,21 @@ if (fs.existsSync(path.join(root, 'assets/js/main.js'))) {
   assert(
     mainJs.includes('mobileGalleryBtn') && mainJs.includes('setGalleryMenuState'),
     'main.js: gallery mobile submenu toggle must be wired'
+  );
+  assert(
+    mainJs.includes('initGalleryNavDropdown'),
+    'main.js: desktop gallery submenu toggle must be wired'
+  );
+}
+
+for (const lang of ['de', 'en', 'ru', 'uk']) {
+  assert(
+    fs.existsSync(path.join(root, lang, 'blog', 'index.html')),
+    `Missing blog index page: ${lang}/blog/index.html`
+  );
+  assert(
+    !fs.existsSync(path.join(root, lang, 'blog.html')),
+    `Legacy blog page must be removed: ${lang}/blog.html`
   );
 }
 

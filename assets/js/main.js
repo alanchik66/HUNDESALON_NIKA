@@ -1718,8 +1718,47 @@ document.addEventListener('DOMContentLoaded', () => {
     window.location.assign(href);
   };
 
+  /* ========== GALLERY NAV — DESKTOP SUBMENU ========== */
+  const initGalleryNavDropdown = () => {
+    const dropdown = document.querySelector('.nav-gallery-dropdown');
+    if (!dropdown) return;
+
+    const trigger = dropdown.querySelector(':scope > a');
+    const menuLinks = dropdown.querySelectorAll(':scope > .dropdown-menu a[href]');
+    if (!trigger) return;
+
+    trigger.setAttribute('aria-haspopup', 'true');
+    trigger.setAttribute('aria-expanded', 'false');
+
+    const setOpen = isOpen => {
+      dropdown.classList.toggle('is-open', isOpen);
+      trigger.setAttribute('aria-expanded', String(isOpen));
+    };
+
+    trigger.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      setOpen(!dropdown.classList.contains('is-open'));
+    });
+
+    menuLinks.forEach(link => {
+      link.addEventListener('click', () => setOpen(false));
+    });
+
+    document.addEventListener('click', event => {
+      if (!dropdown.contains(event.target)) setOpen(false);
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') setOpen(false);
+    });
+  };
+
+  initGalleryNavDropdown();
+
   /* ========== NAV CLICK — PLASMA EFFECT + DELAY NAVIGATION ========== */
   document.querySelectorAll('.nav-main > a, .nav-main > .dropdown > a').forEach(link => {
+    if (link.closest('.nav-gallery-dropdown')) return;
     if (link.classList.contains('active') || link.getAttribute('aria-current') === 'page') {
       const activePlasma = document.createElement('span');
       activePlasma.className = 'nav-plasma--active';

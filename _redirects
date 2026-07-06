@@ -26,6 +26,12 @@
 /dog-grooming-leipzig /en/dog-grooming-leipzig.html 301
 /documents /de/documents.html 302
 
+# Blog index lives only under /{lang}/blog/
+/de/blog.html /de/blog/ 301
+/en/blog.html /en/blog/ 301
+/ru/blog.html /ru/blog/ 301
+/uk/blog.html /uk/blog/ 301
+
 # Favicon assets live only under /assets/images/favicon/
 /assets/images/favicon-48x48.png /assets/images/favicon/favicon-48x48.png 301
 /assets/images/favicon-64x64.png /assets/images/favicon/favicon-64x64.png 301

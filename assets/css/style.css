@@ -1769,6 +1769,21 @@ body.light .premium-burger span {
   flex-wrap: wrap;
   margin-right: 0;
   transform: none;
+  overflow: visible;
+}
+
+.nav-main > .dropdown {
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-main > .dropdown > a.btn-neon {
+  margin-top: 0;
+  min-height: 42px;
+  padding: var(--nav-pill-pad-y) var(--nav-pill-pad-x);
+  font-size: 13px;
+  border-radius: var(--nav-pill-radius);
+  display: inline-flex;
 }
 
 .nav-main > a,

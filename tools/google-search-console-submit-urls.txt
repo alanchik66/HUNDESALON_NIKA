@@ -6,7 +6,7 @@ https://hundesalon-nika.com/de/galereya.html
 https://hundesalon-nika.com/de/do-i-posle.html
 https://hundesalon-nika.com/de/kontakty.html
 https://hundesalon-nika.com/de/onlayn-bronirovanie.html
-https://hundesalon-nika.com/de/blog.html
+https://hundesalon-nika.com/de/blog/
 https://hundesalon-nika.com/de/blog/kak-podgotovit-sobaku.html
 https://hundesalon-nika.com/de/blog/plokhaya-strizhka.html
 https://hundesalon-nika.com/de/blog/strizhka-koshek.html
@@ -25,7 +25,7 @@ https://hundesalon-nika.com/ru/galereya.html
 https://hundesalon-nika.com/ru/do-i-posle.html
 https://hundesalon-nika.com/ru/kontakty.html
 https://hundesalon-nika.com/ru/onlayn-bronirovanie.html
-https://hundesalon-nika.com/ru/blog.html
+https://hundesalon-nika.com/ru/blog/
 https://hundesalon-nika.com/ru/blog/kak-podgotovit-sobaku.html
 https://hundesalon-nika.com/ru/blog/plokhaya-strizhka.html
 https://hundesalon-nika.com/ru/blog/strizhka-koshek.html
@@ -44,7 +44,7 @@ https://hundesalon-nika.com/uk/galereya.html
 https://hundesalon-nika.com/uk/do-i-posle.html
 https://hundesalon-nika.com/uk/kontakty.html
 https://hundesalon-nika.com/uk/onlayn-bronirovanie.html
-https://hundesalon-nika.com/uk/blog.html
+https://hundesalon-nika.com/uk/blog/
 https://hundesalon-nika.com/uk/blog/kak-podgotovit-sobaku.html
 https://hundesalon-nika.com/uk/blog/plokhaya-strizhka.html
 https://hundesalon-nika.com/uk/blog/strizhka-koshek.html
@@ -63,7 +63,7 @@ https://hundesalon-nika.com/en/galereya.html
 https://hundesalon-nika.com/en/do-i-posle.html
 https://hundesalon-nika.com/en/kontakty.html
 https://hundesalon-nika.com/en/onlayn-bronirovanie.html
-https://hundesalon-nika.com/en/blog.html
+https://hundesalon-nika.com/en/blog/
 https://hundesalon-nika.com/en/blog/kak-podgotovit-sobaku.html
 https://hundesalon-nika.com/en/blog/plokhaya-strizhka.html
 https://hundesalon-nika.com/en/blog/strizhka-koshek.html

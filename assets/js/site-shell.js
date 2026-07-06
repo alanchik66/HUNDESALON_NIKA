@@ -3501,7 +3501,7 @@
     'do-i-posle.html',
     'kontakty.html',
     'onlayn-bronirovanie.html',
-    'blog.html',
+    'blog/index.html',
     'blog/kak-podgotovit-sobaku.html',
     'blog/preimushchestva-ekspress-linki.html',
     'blog/plokhaya-strizhka.html',
@@ -3784,6 +3784,7 @@
     const normalizePageRoute = route => {
       const trimmed = String(route || '').replace(/\/$/, '');
       if (!trimmed) return 'index.html';
+      if (trimmed === 'blog') return 'blog/index.html';
       return trimmed.endsWith('.html') ? trimmed : `${trimmed}.html`;
     };
     const currentRouteNormalized = normalizePageRoute(context.currentRoute);
@@ -3802,7 +3803,7 @@
       if (currentRouteNormalized === 'nashi-uslugi.html') return 'services';
       if (currentRouteNormalized === 'prays-list.html') return 'price';
       if (currentRouteNormalized === 'galereya.html' || currentRouteNormalized === 'do-i-posle.html') return 'gallery';
-      if (currentRouteNormalized === 'blog.html' || currentRouteNormalized.startsWith('blog/')) return 'blog';
+      if (currentRouteNormalized === 'blog/index.html' || currentRouteNormalized.startsWith('blog/')) return 'blog';
       if (currentRouteNormalized === 'kontakty.html') return 'contacts';
       return '';
     })();
@@ -3875,14 +3876,14 @@
   <a href="${pathPrefix}nashi-uslugi.html"${mobileLinkAttrs('services')}>${copy.services}</a>
   <a href="${pathPrefix}prays-list.html"${mobileLinkAttrs('price')}>${copy.price}</a>
   ${galleryMobileNavMarkup}
-  <a href="${pathPrefix}blog.html"${mobileLinkAttrs('blog')}>${copy.blog}</a>
+  <a href="${pathPrefix}blog/"${mobileLinkAttrs('blog')}>${copy.blog}</a>
   <a href="${pathPrefix}kontakty.html"${mobileLinkAttrs('contacts')}>${copy.contacts}</a>`
         : `
   <a href="${pathPrefix}o-nas.html"${mobileLinkAttrs('about')}>${copy.about}</a>
   <a href="${pathPrefix}nashi-uslugi.html"${mobileLinkAttrs('services')}>${copy.services}</a>
   <a href="${pathPrefix}prays-list.html"${mobileLinkAttrs('price')}>${copy.price}</a>
   ${galleryMobileNavMarkup}
-  <a href="${pathPrefix}blog.html"${mobileLinkAttrs('blog')}>${copy.blog}</a>
+  <a href="${pathPrefix}blog/"${mobileLinkAttrs('blog')}>${copy.blog}</a>
   <a href="${pathPrefix}kontakty.html"${mobileLinkAttrs('contacts')}>${copy.contacts}</a>`;
     const isHomeRoute = currentRouteNormalized === '' || currentRouteNormalized === 'index.html';
 
