@@ -1045,6 +1045,18 @@ body.light .direct-booking-btn:focus-visible {
   gap: 10px;
 }
 
+.newsletter-form__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+  border: 0;
+}
+
 .newsletter-form input {
   min-height: 48px;
   color: #fff7e8;

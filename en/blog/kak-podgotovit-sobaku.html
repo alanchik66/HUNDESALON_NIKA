@@ -152,7 +152,15 @@
           <form class="newsletter-form" data-newsletter-form action="/subscribe" method="POST">
             <input type="hidden" name="lang" value="en" />
             <input type="hidden" name="page" value="" />
-            <input type="email" name="email" placeholder="Email address" autocomplete="email" required />
+            <label class="newsletter-form__label" for="newsletter-email-en">Email address</label>
+            <input
+              id="newsletter-email-en"
+              type="email"
+              name="email"
+              placeholder="Email address"
+              autocomplete="email"
+              required
+            />
             <button type="submit" class="btn-neon">Subscribe</button>
           </form>
         </div>
