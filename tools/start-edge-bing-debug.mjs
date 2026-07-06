@@ -1,7 +1,7 @@
 /**
  * Start Edge with remote debugging for npm run bing:automate (Windows).
  */
-import { exec, spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
@@ -22,8 +22,39 @@ if (!candidates.length) {
 const edge = candidates[0];
 const userDataDir = path.join(process.env.TEMP || '.', 'hundesalon-nika-edge-debug');
 
+async function cdpReady() {
+  try {
+    const response = await fetch(`http://127.0.0.1:${port}/json/version`, {
+      signal: AbortSignal.timeout(2000),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+function stopStaleProfileEdge() {
+  if (process.platform !== 'win32') return;
+
+  const marker = 'hundesalon-nika-edge-debug';
+  const ps = spawnSync(
+    'pwsh',
+    [
+      '-NoProfile',
+      '-Command',
+      `Get-CimInstance Win32_Process -Filter "name='msedge.exe'" | Where-Object { $_.CommandLine -like '*${marker}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`,
+    ],
+    { encoding: 'utf8' }
+  );
+  if (ps.stderr?.trim()) {
+    console.log(ps.stderr.trim());
+  }
+}
+
 console.log(`Starting Edge (port ${port})…`);
 console.log(startUrl);
+
+stopStaleProfileEdge();
 
 const child = spawn(
   edge,
@@ -43,11 +74,14 @@ console.log('\n1. Sign in to Microsoft if prompted');
 console.log('2. Wait for Bing Webmaster Tools to load');
 console.log('3. Run: npm run bing:automate');
 
-if (process.platform === 'win32') {
-  setTimeout(() => {
-    exec(`curl -s http://127.0.0.1:${port}/json/version`, (error, stdout) => {
-      if (error) console.log(`\nDebug port not ready yet — wait a few seconds, then npm run bing:automate`);
-      else console.log(`\nDebug OK: ${stdout.trim().slice(0, 120)}…`);
-    });
-  }, 4000);
+for (let i = 0; i < 30; i += 1) {
+  if (await cdpReady()) {
+    const json = await fetch(`http://127.0.0.1:${port}/json/version`).then(r => r.json());
+    console.log(`\nDebug OK: ${json.Browser || 'Edge'} (port ${port})`);
+    process.exit(0);
+  }
+  await new Promise(r => setTimeout(r, 500));
 }
+
+console.error(`\nCDP port ${port} not ready after 15s — close other Edge windows using the debug profile and rerun.`);
+process.exit(1);

@@ -21,6 +21,7 @@ If the message draft endpoint returns 401 after deploy: `npm run sync:service-ke
 | `npm run check:live-crawl` | Live HEAD/GET for all 76 sitemap URLs |
 | `docs/operations.md` | Project operations, SEO/search accounts, deploy notes |
 | `npm run bing:complete` | All 16 Bing WMT sections — see `docs/bing-webmaster-checklist.md` |
+| `npm run bing:finish-all` | Edge CDP + Site Scan + robots + Clarity (one command) |
 | `npm run check:prod` | Live HTML, GSC audit, message draft endpoint |
 | `npm run git:push` | Push `main` to GitHub and GitLab |
 | `npm run deploy:full` | Build, deploy Pages, optional purge, IndexNow, prod checks |

@@ -2,18 +2,19 @@
 
 Сайт: `https://hundesalon-nika.com/` · Аккаунт: **snaiper1984@mail.ru** · [Bing Webmaster](https://www.bing.com/webmasters)
 
-Автоматизация (Edge CDP): `npm run bing:edge` → `npm run bing:complete` → `npm run bing:finish-manual` → `npm run bing:finish-remaining`
+Автоматизация (Edge CDP): `npm run bing:edge` → `npm run bing:complete` → `npm run bing:finish-manual` → `npm run bing:finish-remaining`  
+Одной командой (Site Scan + Clarity + robots): `npm run bing:finish-all`
 
-## Статус (2026-05-19)
+## Статус (2026-07-07)
 
 | Шаг | Статус |
 |-----|--------|
 | Sitemaps + IndexNow + Submit URL | ✅ |
 | URL Inspection `/de/` | ✅ «Успешно проиндексировано» |
 | Robots.txt tester | ✅ Apex only: «Получить последний» → «Тест» → **Разрешено**. `npm run bing:robots-tester`, `npm run check:live-robots`. www `/robots.txt` → 301 apex (Page Rule `www/*`) |
-| Site Scan | ⚠️ Кнопка нажимается, UI всё ещё «Сканирование не проводилось» — один клик вручную в Edge |
+| Site Scan | ✅ Запущен через `npm run bing:finish-all` (Start Scan + имя скана) |
 | API Access | Опционально: `npm run cf:ensure-api-token` (единый Zone API токен) |
-| Microsoft Clarity | ⚠️ Инфо-страница без кнопки в DOM; опционально на [clarity.microsoft.com](https://clarity.microsoft.com) |
+| Microsoft Clarity | ✅ Сайт добавлен в Clarity (Bing WMT → Clarity; скрипт в `<head>` опционально) |
 | `BING_WEBMASTER_API_KEY` | ✅ не требуется — IndexNow уведомляет Bing; ключ API опционален (`npm run bing:api:setup`) |
 
 Отчёты: `temp/bing-finish-manual-report.json`, `temp/bing-finish-remaining-report.json`, `temp/bing-finish-last-report.json`
