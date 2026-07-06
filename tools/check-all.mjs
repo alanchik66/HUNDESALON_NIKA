@@ -18,7 +18,7 @@ function run(label, cmd, args, { optional = false } = {}) {
 
 function runNpm(label, script) {
   if (process.platform === 'win32') {
-    return run(label, 'cmd.exe', ['/d', '/s', '/c', `npm run ${script}`]);
+    return run(label, process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', `npm run ${script}`]);
   }
   return run(label, 'npm', ['run', script]);
 }
