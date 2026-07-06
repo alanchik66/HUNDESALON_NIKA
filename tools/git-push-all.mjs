@@ -46,11 +46,11 @@ if (mirror.status !== 0) {
 
 console.log('');
 console.log('→ Verify remote parity');
-for (const remote of ['origin', 'github', 'gitlab']) {
+for (const remote of ['origin', 'gitlab']) {
   run('git', ['fetch', remote]);
 }
 const local = spawnSync('git', ['rev-parse', 'main'], { encoding: 'utf8' }).stdout.trim();
-for (const ref of ['origin/main', 'github/main', 'gitlab/main']) {
+for (const ref of ['origin/main', 'gitlab/main']) {
   const remoteSha = spawnSync('git', ['rev-parse', ref], { encoding: 'utf8' }).stdout.trim();
   if (remoteSha !== local) {
     console.error(`${ref} mismatch: ${remoteSha.slice(0, 7)} != ${local.slice(0, 7)}`);

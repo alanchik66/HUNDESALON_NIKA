@@ -63,7 +63,7 @@ if (kept.length) {
   console.warn(`Unmerged local branch(es) kept for manual review: ${kept.join(', ')}`);
 }
 
-for (const remote of ['origin', 'github', 'gitlab']) {
+for (const remote of ['origin', 'gitlab']) {
   spawnSync('git', ['fetch', remote, '--prune'], { stdio: 'inherit' });
 }
 
@@ -72,7 +72,7 @@ const remoteBranches = git(['branch', '-r'])
   .map(line => line.trim())
   .filter(Boolean)
   .filter(ref => !ref.includes(' -> '))
-  .filter(ref => !/^origin\/main$|^github\/main$|^gitlab\/main$/.test(ref));
+  .filter(ref => !/^origin\/main$|^gitlab\/main$/.test(ref));
 
 if (remoteBranches.length) {
   console.warn(`Remote branch(es) outside main remain: ${remoteBranches.join(', ')}`);

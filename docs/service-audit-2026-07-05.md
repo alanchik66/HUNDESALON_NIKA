@@ -129,5 +129,5 @@ Notes:
 
 - `stylelint` completed successfully, with non-fatal `csstree-match` iteration break messages.
 - Root URL now redirects to `/de/`, and language canonicals pass live checks.
-- Local `main`, `origin/main`, `github/main`, and `gitlab/main` are aligned after the final push.
+- Local `main`, `origin/main`, and `gitlab/main` are aligned after the final push.
 - GitHub Actions workflows are valid but cannot run while the GitHub account is locked for billing. This is external to the repository; production deploy was completed through Wrangler.

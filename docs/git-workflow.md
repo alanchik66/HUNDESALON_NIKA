@@ -69,7 +69,7 @@ npm run git:push
 
 1. Пушит `main` на **GitHub** (`origin`)
 2. Зеркалит `main` на **GitLab**
-3. Проверяет parity: `origin/main`, `github/main`, `gitlab/main` должны указывать на один commit
+3. Проверяет parity: `origin/main` и `gitlab/main` должны указывать на один commit
 
 Для зеркала на GitLab ветка `main` должна позволять push/force push (Maintainers) или быть временно без защиты.
 
@@ -100,7 +100,6 @@ GitLab в этом случае остаётся зеркалом `main` и fall
 
 ```
 origin  → GitHub (fetch + push)
-github  → GitHub (alias)
 gitlab  → GitLab (зеркало main)
 ```
 
