@@ -109,6 +109,16 @@
   // ─── Терминал ──────────────────────────────────────────────────────
   "terminal.integrated.defaultProfile.windows": "PowerShell",
 
+  // ─── AI Agents: GCP + Cloudflare env (auto) ───
+  "terminal.integrated.env.windows": {
+    "GOOGLE_CLOUD_PROJECT": "hundesalon-nika-shell-2026",
+    "GCP_PROJECT": "hundesalon-nika-shell-2026",
+    "CLOUDSDK_CORE_PROJECT": "hundesalon-nika-shell-2026",
+    "CLOUDSDK_COMPUTE_REGION": "europe-west3",
+    "GOOGLE_AUTH_IMPERSONATE_SERVICE_ACCOUNT": "ai-agents-admin@hundesalon-nika-shell-2026.iam.gserviceaccount.com",
+    "CLOUDFLARE_ACCOUNT_ID": "25e872aeab8cb246c69142ab07cd0fee"
+  },,
+
   // ─── Spell Checker (cSpell) ────────────────────────────────────────
   "cSpell.enabled": true,
   "cSpell.language": "en,de,ru,uk",

@@ -5,13 +5,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { getJson, sleep, withCdpSession } from './lib/browser-cdp.mjs';
+import { getJson, sleep as wait, withCdpSession } from './lib/browser-cdp.mjs';
+import { SITE_URL, WWW_SITE_URL, siteQuery } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.BING_MAIL_EDGE_PORT || process.env.BING_EDGE_PORT || 9224);
-const siteUrl = 'https://hundesalon-nika.com/';
-const wwwSiteUrl = 'https://www.hundesalon-nika.com/';
-const siteQ = encodeURIComponent(siteUrl);
+const siteUrl = SITE_URL;
+const wwwSiteUrl = WWW_SITE_URL;
+const siteQ = siteQuery(siteUrl);
 const listPath = path.join(root, 'tools', 'bing-submit-urls.txt');
 const apexOrigin = 'https://hundesalon-nika.com';
 const wwwOrigin = 'https://www.hundesalon-nika.com';

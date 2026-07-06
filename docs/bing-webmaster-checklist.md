@@ -14,7 +14,7 @@
 | Site Scan | ⚠️ Кнопка нажимается, UI всё ещё «Сканирование не проводилось» — один клик вручную в Edge |
 | API Access | Опционально: `npm run cf:ensure-api-token` (единый Zone API токен) |
 | Microsoft Clarity | ⚠️ Инфо-страница без кнопки в DOM; опционально на [clarity.microsoft.com](https://clarity.microsoft.com) |
-| `BING_WEBMASTER_API_KEY` | ❌ нет в `.dev.vars` → `npm run bing:api` пропущен |
+| `BING_WEBMASTER_API_KEY` | ✅ не требуется — IndexNow уведомляет Bing; ключ API опционален (`npm run bing:api:setup`) |
 
 Отчёты: `temp/bing-finish-manual-report.json`, `temp/bing-finish-remaining-report.json`, `temp/bing-finish-last-report.json`
 

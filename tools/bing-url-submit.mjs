@@ -5,21 +5,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadDevVars } from './lib/cloudflare-auth.mjs';
+import { getBingApiKey, logBingApiNotConfigured } from './lib/bing-api.mjs';
+import { SITE_URL } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const siteUrl = 'https://hundesalon-nika.com/';
+const siteUrl = SITE_URL;
 const listPath = path.join(root, 'tools', 'bing-submit-urls.txt');
 const batchSize = 500;
+const verbose = process.argv.includes('--verbose');
 
-loadDevVars();
-
-const apiKey = process.env.BING_WEBMASTER_API_KEY || process.env.BING_API_KEY || '';
+const apiKey = getBingApiKey();
 if (!apiKey) {
-  console.warn('Skip Bing URL API: BING_WEBMASTER_API_KEY is not configured.');
-  console.warn('Setup: npm run bing:edge → sign in (mail.ru) → npm run bing:fetch-api-key');
-  console.warn('Or manual: npm run bing:set-api-key');
-  console.warn('IndexNow (npm run seo:indexnow) already notifies Bing; API adds batch SubmitUrl for all listed URLs.');
+  logBingApiNotConfigured({ verbose });
   process.exit(0);
 }
 

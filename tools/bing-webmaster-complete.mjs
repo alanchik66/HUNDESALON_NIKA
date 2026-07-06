@@ -6,13 +6,14 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getJson, openBingWebmasterSession, sleep } from './lib/browser-cdp.mjs';
+import { getJson, openBingWebmasterSession, sleep as wait } from './lib/browser-cdp.mjs';
+import { GMAIL_ACCOUNT, SITE_URL, siteQuery } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.BING_MAIL_EDGE_PORT || 9224);
-const site = 'https://hundesalon-nika.com/';
-const siteQ = encodeURIComponent(site);
-const gmailAccount = 'snaiper1984@gmail.com';
+const site = SITE_URL;
+const siteQ = siteQuery(site);
+const gmailAccount = GMAIL_ACCOUNT;
 const reportPath = path.join(root, 'temp', 'bing-webmaster-complete-report.json');
 
 const sections = [
@@ -55,8 +56,25 @@ function loadSubmitUrls() {
   ].slice(0, 100);
 }
 
+const SECTION_TIMEOUT_MS = 90_000;
+
 async function runSection(session, sec) {
   const out = { section: sec.id, path: sec.path };
+  try {
+    return await Promise.race([
+      runSectionBody(session, sec, out),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`timeout after ${SECTION_TIMEOUT_MS}ms`)), SECTION_TIMEOUT_MS)
+      ),
+    ]);
+  } catch (e) {
+    out.ok = false;
+    out.error = String(e.message);
+    return out;
+  }
+}
+
+async function runSectionBody(session, sec, out) {
   try {
     await session.nav(sec.path);
 

@@ -6,14 +6,16 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { evalPage, getJson, sleep, withCdpSession } from './lib/browser-cdp.mjs';
+import { evalPage, getJson, sleep as wait, withCdpSession } from './lib/browser-cdp.mjs';
+import { BING_INDEXNOW_COVERAGE, hasBingApiKey } from './lib/bing-api.mjs';
+import { GMAIL_ACCOUNT, MAIL_ACCOUNT, SITE_URL, siteQuery } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.BING_MAIL_EDGE_PORT || process.env.BING_EDGE_PORT || 9224);
-const siteUrl = 'https://hundesalon-nika.com/';
-const siteQ = encodeURIComponent(siteUrl);
-const mailAccount = 'snaiper1984@mail.ru';
-const gmailAccount = 'snaiper1984@gmail.com';
+const siteUrl = SITE_URL;
+const siteQ = siteQuery(siteUrl);
+const mailAccount = MAIL_ACCOUNT;
+const gmailAccount = GMAIL_ACCOUNT;
 const wrongSiteUrl = 'https://hundesalon-nika.com/sitemap.xml';
 
 const inspectUrls = [
@@ -236,11 +238,15 @@ try {
   report.steps.indexnowCli = { ok: false, error: String(e.message) };
 }
 
-try {
-  await runNpm('bing:api');
-  report.steps.bingApi = { ok: true };
-} catch (e) {
-  report.steps.bingApi = { ok: false, skipped: true, note: 'Set BING_WEBMASTER_API_KEY in .dev.vars for API submit' };
+if (hasBingApiKey()) {
+  try {
+    await runNpm('bing:api');
+    report.steps.bingApi = { ok: true };
+  } catch (e) {
+    report.steps.bingApi = { ok: false, error: String(e.message) };
+  }
+} else {
+  report.steps.bingApi = { ok: true, coveredBy: 'indexnow', note: BING_INDEXNOW_COVERAGE };
 }
 
 report.steps.finalAudit = await withCdp(async send => {

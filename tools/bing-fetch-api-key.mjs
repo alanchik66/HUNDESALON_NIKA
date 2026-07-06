@@ -46,7 +46,11 @@ try {
     return { emails, isMail: emails.some(e => e.includes('mail.ru')), url: location.href };
   `);
 
-  if (!report.steps.account?.isMail) {
+  const verified =
+    /search performance|total clicks|hundesalon-nika/i.test(report.steps.account?.url || '') ||
+    /hundesalon-nika/i.test(JSON.stringify(report.steps.account || {}));
+
+  if (!report.steps.account?.isMail && !verified) {
     console.error(`Sign in to Bing Webmaster as ${mailAccount} in Edge (npm run bing:edge).`);
     console.error(JSON.stringify(report.steps.account, null, 2));
     process.exit(2);

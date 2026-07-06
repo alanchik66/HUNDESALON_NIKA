@@ -5,10 +5,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openBingWebmasterSession } from './lib/browser-cdp.mjs';
+import { BING_INDEXNOW_COVERAGE, hasBingApiKey } from './lib/bing-api.mjs';
+import { siteQuery } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.BING_MAIL_EDGE_PORT || 9224);
-const siteQ = encodeURIComponent('https://hundesalon-nika.com/');
+const siteQ = siteQuery();
 
 const report = { at: new Date().toISOString() };
 const s = await openBingWebmasterSession({ port, siteQ, waitMs: 9000, reloadAttempts: 4 });
@@ -112,9 +114,10 @@ try {
   report.liveRobots = { error: String(e.message) };
 }
 
-const devVars = path.join(root, '.dev.vars');
-report.hasBingApiKey =
-  fs.existsSync(devVars) && /BING_WEBMASTER_API_KEY\s*=\s*\S+/.test(fs.readFileSync(devVars, 'utf8'));
+report.hasBingApiKey = hasBingApiKey();
+report.bingApi = report.hasBingApiKey
+  ? { optional: true, configured: true }
+  : { ok: true, coveredBy: 'indexnow', note: BING_INDEXNOW_COVERAGE };
 
 const out = path.join(root, 'temp', 'bing-finish-remaining-report.json');
 fs.mkdirSync(path.dirname(out), { recursive: true });

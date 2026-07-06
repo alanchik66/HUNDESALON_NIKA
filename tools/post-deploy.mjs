@@ -6,6 +6,7 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { loadDevVars } from './lib/cloudflare-auth.mjs';
+import { hasBingApiKey } from './lib/bing-api.mjs';
 
 loadDevVars();
 
@@ -77,7 +78,9 @@ await runNpm('cf:purge-cache', { optional: true });
 try {
   await runNpm('check:live-html');
   await runNpm('seo:indexnow', { optional: true });
-  await runNpm('bing:api', { optional: true });
+  if (hasBingApiKey()) {
+    await runNpm('bing:api', { optional: true });
+  }
   await runNpm('google:gsc:audit');
   await runNpm('check:message-draft', { optional: true });
   await notifySlack('success', 'CDN очищен, live HTML в норме, IndexNow и аудит GSC выполнены.');

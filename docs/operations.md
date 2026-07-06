@@ -31,7 +31,7 @@ If the message draft endpoint returns 401 after deploy: `npm run sync:service-ke
 | `npm run bing:edge` | Edge with CDP for `bing:automate` (sign in once) |
 | `npm run bing:setup` | Full Bing Webmaster setup (sitemap, users, submit, inspect, IndexNow) |
 | `npm run bing:automate` | Submit URLs + request indexing via Edge CDP |
-| `npm run bing:api` | Bing URL API (needs `BING_WEBMASTER_API_KEY` in `.dev.vars`) |
+| `npm run bing:api` | Bing URL API — опционально; IndexNow уже уведомляет Bing (ключ в `.dev.vars`) |
 | `npm run sync:service-key` | Copy service key from `.dev.vars` -> Pages secret |
 
 ## Bing favicon / indexing
@@ -46,7 +46,7 @@ If the message draft endpoint returns 401 after deploy: `npm run sync:service-ke
 1. After favicon deploy: `npm run seo:post-favicon` (IndexNow + live checks).
 2. Full Bing setup (recommended): `npm run bing:edge` → sign in as mail.ru → `npm run bing:setup` (sitemap, users, URL submit, inspections, IndexNow).
 3. Or step-by-step: `npm run bing:mail-setup` → `npm run bing:verify` → `npm run bing:automate`.
-4. Optional API key: Bing Webmaster → **Settings → API Access** → add to `.dev.vars` as `BING_WEBMASTER_API_KEY`, then `npm run bing:api`.
+4. **IndexNow** (`seo:indexnow`) — основной канал для Bing; API key опционален: Bing Webmaster → **Settings → API Access** → `.dev.vars` → `npm run bing:api`.
 5. **www**: `seo:indexnow` submits apex + www (152 URLs). `www` → apex via 301; canonical stays `https://hundesalon-nika.com`. Bing Submit quota 100/day — rest: `npm run bing:submit-www-rem` next day.
 6. **robots.txt**: Bing — только `https://hundesalon-nika.com/robots.txt`. `npm run cf:www-robots-setup`. **Cloudflare:** один токен `HUNDESALON_NIKA — Zone Ops` → `npm run cf:ensure-api-token` (см. `docs/cloudflare-api-tokens.md`).
 6. Favicon in Bing SERP often updates in **2–4 weeks** after crawl.

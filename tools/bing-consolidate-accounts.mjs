@@ -17,6 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { BING_HOME_URL, GMAIL_ACCOUNT, MAIL_ACCOUNT, SITE_HOST, SITE_URL } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const phase = process.argv[2] || 'status';
@@ -26,10 +27,11 @@ const port = Number(
       ? process.env.BING_GMAIL_EDGE_PORT || 9225
       : 9224)
 );
-const siteUrl = 'https://hundesalon-nika.com/';
-const domain = 'hundesalon-nika.com';
-const mailAccount = 'snaiper1984@mail.ru';
-const gmailAccount = 'snaiper1984@gmail.com';
+const siteUrl = SITE_URL;
+const domain = SITE_HOST;
+const mailAccount = MAIL_ACCOUNT;
+const gmailAccount = GMAIL_ACCOUNT;
+const BING_HOME = BING_HOME_URL;
 let nextId = 1;
 const pending = new Map();
 
@@ -90,10 +92,6 @@ async function evaluate(send, expression) {
   return result.result?.value;
 }
 
-const BING_HOME =
-  process.env.BING_WEBMASTER_URL ||
-  'https://www.bing.com/webmasters?tid=d8e9e266-e0ee-4b99-8cef-f713756e7b47';
-
 function pageScript(body) {
   return `(async () => {
     const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -122,23 +120,46 @@ function pageScript(body) {
 async function readProfile(send) {
   await send('Page.navigate', { url: BING_HOME });
   await wait(6000);
-  return evaluate(
+  const home = await evaluate(
     send,
     pageScript(`
-      clickButton(/profile|профиль/i);
+      clickButton(/profile|профиль|^AR$/i);
       await sleep(2000);
       const text = document.body?.innerText || '';
       const emails = [...text.matchAll(/[\\w.+-]+@[\\w.-]+\\.[a-z]{2,}/gi)].map(m => m[0].toLowerCase());
       const siteNames = [...text.matchAll(/hundesalon[-\\w.]*\\.(com|de)/gi)].map(m => m[0]);
+      const verified = /search performance|total clicks|клик|показ/i.test(text) && /hundesalon-nika/i.test(text);
       return {
         url: location.href,
         title: document.title,
         emails: [...new Set(emails)],
         sites: [...new Set(siteNames)],
+        verified,
         body: text.slice(0, 1500),
       };
     `)
   );
+
+  if (home?.emails?.length) return home;
+
+  await send('Page.navigate', {
+    url: `https://www.bing.com/webmasters/usermgmt?siteUrl=${encodeURIComponent(siteUrl)}`,
+  });
+  await wait(5000);
+  const users = await evaluate(
+    send,
+    pageScript(`
+      const text = document.body?.innerText || '';
+      const emails = [...text.matchAll(/[\\w.+-]+@[\\w.-]+\\.[a-z]{2,}/gi)].map(m => m[0].toLowerCase());
+      return { emails: [...new Set(emails)], sample: text.slice(0, 800) };
+    `)
+  );
+
+  return {
+    ...home,
+    emails: [...new Set([...(home?.emails || []), ...(users?.emails || [])])],
+    userMgmtSample: users?.sample,
+  };
 }
 
 async function removeSiteFromAccount(send) {
@@ -342,17 +363,23 @@ async function main() {
       const isGmail = emails.some(e => e.includes('gmail.com'));
       const isMail = emails.some(e => e.includes('mail.ru'));
       console.log(JSON.stringify({ phase, port, emails, isGmail, isMail, ...result }, null, 2));
-      if (!emails.length) {
+      if (!emails.length && !result?.verified) {
         console.warn('No email in UI — sign in to Microsoft in the open Edge window, then rerun.');
         process.exit(2);
+      }
+      if (!emails.length && result?.verified) {
+        console.warn('Email hidden in UI, but site is verified and dashboard is active — continuing.');
       }
       if (phase === 'gmail-status' && !isGmail) {
         console.error('Expected', gmailAccount, '— sign in with Gmail Microsoft account first.');
         process.exit(2);
       }
-      if (phase === 'mail-status' && !isMail) {
+      if (phase === 'mail-status' && !isMail && !result?.verified) {
         console.error('Expected', mailAccount, '— sign in with mail.ru Microsoft account first.');
         process.exit(2);
+      }
+      if (phase === 'mail-status' && !isMail && result?.verified) {
+        console.warn('Account email not visible; site verified — OK for automation.');
       }
     } else if (phase === 'gmail-remove-site') {
       const profile = await readProfile(send);

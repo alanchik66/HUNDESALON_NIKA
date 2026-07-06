@@ -3,6 +3,7 @@
  */
 import { spawn } from 'node:child_process';
 import { loadDevVars } from './lib/cloudflare-auth.mjs';
+import { hasBingApiKey } from './lib/bing-api.mjs';
 
 loadDevVars();
 
@@ -41,7 +42,9 @@ for (const url of probes) {
 
 console.log('');
 await runNpm('seo:indexnow');
-await runNpm('bing:api', { optional: true });
+if (hasBingApiKey()) {
+  await runNpm('bing:api', { optional: true });
+}
 await runNpm('cf:purge-cache', { optional: true });
 await runNpm('check:live-html');
 await runNpm('google:gsc:audit', { optional: true });

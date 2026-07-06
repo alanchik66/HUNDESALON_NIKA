@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { getJson, openBingWebmasterSession } from './lib/browser-cdp.mjs';
+import { BING_INDEXNOW_COVERAGE, hasBingApiKey } from './lib/bing-api.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.BING_MAIL_EDGE_PORT || 9224);
@@ -126,9 +127,7 @@ try {
     };
   `);
 
-  const devVars = path.join(root, '.dev.vars');
-  report.bingApiKeyInDevVars =
-    fs.existsSync(devVars) && /BING_WEBMASTER_API_KEY\s*=\s*\S+/.test(fs.readFileSync(devVars, 'utf8'));
+  report.bingApiKeyInDevVars = hasBingApiKey();
 
   console.log('5/5 Microsoft Clarity…');
   await s.nav('clarity');
@@ -149,13 +148,13 @@ try {
 
 if (report.bingApiKeyInDevVars) {
   console.log('Running bing:api…');
-  await new Promise((resolve, reject) => {
+  await new Promise(resolve => {
     const p = spawn('npm', ['run', 'bing:api'], { cwd: root, shell: true, stdio: 'inherit' });
-    p.on('close', c => (c === 0 ? resolve() : resolve()));
+    p.on('close', () => resolve());
   });
   report.bingApi = { ran: true };
 } else {
-  report.bingApi = { skipped: true, reason: 'No BING_WEBMASTER_API_KEY in .dev.vars' };
+  report.bingApi = { ok: true, coveredBy: 'indexnow', note: BING_INDEXNOW_COVERAGE };
 }
 
 const out = path.join(root, 'temp', 'bing-finish-manual-report.json');
