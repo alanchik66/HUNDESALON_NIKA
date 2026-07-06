@@ -38,11 +38,17 @@
 /assets/images/favicon/*
   Cache-Control: public, max-age=86400
 
-/assets/images/search-logo-transparent-512.png
+/assets/images/brand/*
   Cache-Control: public, max-age=86400
 
-/assets/images/search-logo-clear-512.png
-  Cache-Control: public, max-age=86400
+/assets/images/hero/*
+  Cache-Control: public, max-age=31536000
+
+/assets/images/icons/*
+  Cache-Control: public, max-age=31536000
+
+/assets/images/before-after/*
+  Cache-Control: public, max-age=31536000
 
 /site.webmanifest
   Cache-Control: public, max-age=86400

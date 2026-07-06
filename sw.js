@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hundesalon-nika-static-v1';
+const CACHE_NAME = 'hundesalon-nika-static-v2';
 const CORE_ASSETS = [
   '/',
   '/de/',
@@ -14,8 +14,8 @@ const CORE_ASSETS = [
   '/assets/js/page-modules.js',
   '/assets/js/cookie-consent.js',
   '/assets/js/pwa.js',
-  '/assets/images/hero-dog.jpg',
-  '/assets/images/logo.png',
+  '/assets/images/brand/hero-dog.jpg',
+  '/assets/images/brand/logo.png',
 ];
 
 self.addEventListener('install', event => {

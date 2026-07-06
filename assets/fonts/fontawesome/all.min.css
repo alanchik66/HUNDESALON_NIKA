@@ -137,37 +137,37 @@
 }
 
 .fab.fa-instagram::before {
-  background-image: url("../../images/icon-pak/Gotovie iconki dlya saita/instagram.png");
+  background-image: url("../../images/icons/instagram.png");
 }
 
 .fab.fa-telegram::before {
-  background-image: url("../../images/icon-pak/Gotovie iconki dlya saita/Telegramm.png");
+  background-image: url("../../images/icons/telegram.png");
 }
 
 .fab.fa-whatsapp::before {
-  background-image: url("../../images/icon-pak/Gotovie iconki dlya saita/whatsapp_alt3.png");
+  background-image: url("../../images/icons/whatsapp.png");
 }
 
 .fab.fa-viber::before {
-  background-image: url("../../images/icon-pak/Gotovie iconki dlya saita/Viber.png");
+  background-image: url("../../images/icons/viber.png");
 }
 
 .fab.fa-tiktok::before {
-  background-image: url("../../images/icon-pak/Gotovie iconki dlya saita/tiktok.png");
+  background-image: url("../../images/icons/tiktok.png");
 }
 
 .fab.fa-youtube::before {
-  background-image: url("../../images/icon-pak/Gotovie iconki dlya saita/youtube_alt1.png");
+  background-image: url("../../images/icons/youtube.png");
 }
 
 .fab.fa-facebook-f::before {
-  background-image: url("../../images/icon-pak/Gotovie iconki dlya saita/Facebook.png");
+  background-image: url("../../images/icons/facebook.png");
 }
 
 .fa-envelope::before,
 .fas.fa-envelope::before,
 .far.fa-envelope::before {
-  background-image: url("../../images/icon-pak/Gotovie iconki dlya saita/mail.png");
+  background-image: url("../../images/icons/mail.png");
 }
 
 .fab.fa-google::before {

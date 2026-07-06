@@ -108,17 +108,17 @@
 
 .site-icon--euro,
 .site-icon-euro {
-  background-image: url("../images/icon-pak/Gotovie iconki dlya saita/currency_euro.png");
+  background-image: url("../images/icons/currency-euro.png");
 }
 
 .site-icon--job,
 .site-icon-job {
-  background-image: url("../images/icon-pak/Gotovie iconki dlya saita/Job.png");
+  background-image: url("../images/icons/job.png");
 }
 
 .site-icon--social,
 .site-icon-social {
-  background-image: url("../images/icon-pak/Gotovie iconki dlya saita/sozial-links.png");
+  background-image: url("../images/icons/social-links.png");
 }
 
 .site-icon--euro,
@@ -1568,7 +1568,7 @@ body .btn-read .site-icon-arrow-right {
   font-size: 0;
   line-height: 0;
   vertical-align: middle;
-  background: url("../images/icon-pak/Gotovie iconki dlya saita/unter.png") center/contain no-repeat;
+  background: url("../images/icons/chevron-down.png") center/contain no-repeat;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.28)) drop-shadow(0 0 5px rgba(247, 199, 68, 0.18));
   --arrow-rotate: rotate(-90deg);
   --arrow-shift-x: 0px;

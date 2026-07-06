@@ -291,8 +291,8 @@ class BeforeAfterGallery {
 const GALLERY_IMAGE_BASE = '../assets/images/before-after/';
 const GALLERY_CARD_COUNT = 9;
 const beforeAfterCardFolder = index => `card-${String(index).padStart(2, '0')}`;
-const galleryBeforeImage = index => `${GALLERY_IMAGE_BASE}${beforeAfterCardFolder(index)}/gallery-before-${index}.jpg`;
-const galleryAfterImage = index => `${GALLERY_IMAGE_BASE}${beforeAfterCardFolder(index)}/gallery-after-${index}.jpg`;
+const galleryBeforeImage = index => `${GALLERY_IMAGE_BASE}${beforeAfterCardFolder(index)}/before.jpg`;
+const galleryAfterImage = index => `${GALLERY_IMAGE_BASE}${beforeAfterCardFolder(index)}/after.jpg`;
 
 const beforeAfterLabelsByLang = {
   de: { before: 'VORHER', after: 'NACHHER' },
@@ -332,10 +332,10 @@ const galleryCardTitle = (lang, index) => {
 const galleryCardDescription = (lang, index) => {
   const folder = beforeAfterCardFolder(index);
   const copy = {
-    de: `Vorher/Nachher — ${folder}/gallery-before-${index}.jpg`,
-    en: `Before/after — ${folder}/gallery-before-${index}.jpg`,
-    ru: `До и после — ${folder}/gallery-before-${index}.jpg`,
-    uk: `До і після — ${folder}/gallery-before-${index}.jpg`,
+    de: `Vorher/Nachher — ${folder}/before.jpg`,
+    en: `Before/after — ${folder}/before.jpg`,
+    ru: `До и после — ${folder}/before.jpg`,
+    uk: `До і після — ${folder}/before.jpg`,
   };
   return copy[lang] || copy.de;
 };

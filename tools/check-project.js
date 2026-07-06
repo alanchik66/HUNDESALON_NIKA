@@ -90,6 +90,9 @@ if (fs.existsSync(path.join(root, '_redirects'))) {
     '/en/index.html /en/ 301',
     '/ru/index.html /ru/ 301',
     '/uk/index.html /uk/ 301',
+    '/assets/images/logo.png /assets/images/brand/logo.png 301',
+    '/assets/images/gallery1.jpg /assets/images/hero/slide-01.jpg 301',
+    '/assets/images/icon-pak/Gotovie iconki dlya saita/Home.png /assets/images/icons/home.png 301',
   ]) {
     assert(redirects.includes(rule), `_redirects missing canonical rule: ${rule}`);
   }
@@ -169,6 +172,16 @@ if (fs.existsSync(path.join(root, 'indexnow-key.txt'))) {
   assert(read('_headers').includes('/indexnow-key.txt'), '_headers must include cache policy for indexnow-key.txt');
 }
 
+for (let card = 1; card <= 9; card += 1) {
+  const folder = `card-${String(card).padStart(2, '0')}`;
+  for (const name of ['before.jpg', 'after.jpg']) {
+    assert(
+      fs.existsSync(path.join(root, 'assets/images/before-after', folder, name)),
+      `Missing before-after asset: assets/images/before-after/${folder}/${name}`
+    );
+  }
+}
+
 for (const file of [
   'assets/images/favicon/favicon.ico',
   'assets/images/favicon/favicon-48x48.png',
@@ -180,8 +193,11 @@ for (const file of [
   'assets/images/favicon/android-chrome-512x512.png',
   'assets/images/favicon/maskable-icon-512x512.png',
   'assets/images/favicon/mstile-150x150.png',
-  'assets/images/search-logo-clear-512.png',
-  'assets/images/social-preview-1200x630.png',
+  'assets/images/brand/logo.png',
+  'assets/images/brand/search-logo-clear-512.png',
+  'assets/images/brand/social-preview-1200x630.png',
+  'assets/images/hero/slide-01.jpg',
+  'assets/images/icons/home.png',
 ]) {
   assert(fs.existsSync(path.join(root, file)), `Missing brand search asset: ${file}`);
 }
@@ -206,6 +222,42 @@ for (const lang of ['de', 'en', 'ru', 'uk']) {
       content.includes(`for="newsletter-email-${lang}"`),
       `${relativePath}: newsletter label for attribute must target newsletter-email-${lang}`
     );
+  }
+}
+
+const staleImagePatterns = [
+  { pattern: /icon-pak\/Gotovie iconki dlya saita/i, label: 'legacy icon-pak path' },
+  { pattern: /\/assets\/images\/gallery[1-6]\.jpg/i, label: 'legacy gallery slide path' },
+  { pattern: /\/assets\/images\/logo\.png/i, label: 'legacy root logo path' },
+  { pattern: /gallery-before-\d+\.jpg/i, label: 'legacy before-after filename' },
+];
+
+const staleImageScanRoots = ['assets', 'de', 'en', 'ru', 'uk'];
+const staleImageScanFiles = ['index.html', 'sw.js', 'sitemap-brand.xml'];
+
+function collectStaleImageScanFiles() {
+  const files = staleImageScanFiles
+    .map(relativePath => path.join(root, relativePath))
+    .filter(filePath => fs.existsSync(filePath));
+
+  for (const scanRoot of staleImageScanRoots) {
+    const absoluteRoot = path.join(root, scanRoot);
+    if (!fs.existsSync(absoluteRoot)) continue;
+    files.push(...walk(absoluteRoot));
+  }
+
+  return files;
+}
+
+for (const file of collectStaleImageScanFiles()) {
+  const relativePath = path.relative(root, file).replaceAll(path.sep, '/');
+  if (!/\.(?:html|xml|js|css)$/i.test(relativePath)) continue;
+
+  const content = fs.readFileSync(file, 'utf8');
+  for (const { pattern, label } of staleImagePatterns) {
+    if (pattern.test(content)) {
+      failures.push(`${relativePath}: contains ${label}`);
+    }
   }
 }
 

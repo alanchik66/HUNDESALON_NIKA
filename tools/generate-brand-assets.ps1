@@ -1,8 +1,8 @@
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
-$sourcePath = Join-Path $root 'assets/images/logo.png'
-$imagesDir = Join-Path $root 'assets/images'
+$sourcePath = Join-Path $root 'assets/images/brand/logo.png'
+$imagesDir = Join-Path $root 'assets/images/brand'
 $faviconDir = Join-Path $imagesDir 'favicon'
 
 Add-Type -AssemblyName System.Drawing

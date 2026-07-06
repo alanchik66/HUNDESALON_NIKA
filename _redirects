@@ -37,3 +37,64 @@
 /assets/images/maskable-icon-512x512.png /assets/images/favicon/maskable-icon-512x512.png 301
 /assets/images/mstile-150x150.png /assets/images/favicon/mstile-150x150.png 301
 /assets/images/apple-touch-icon.png /assets/images/favicon/apple-touch-icon.png 301
+
+# Brand assets moved under /assets/images/brand/
+/assets/images/logo.png /assets/images/brand/logo.png 301
+/assets/images/hero-dog.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/search-logo-clear-512.png /assets/images/brand/search-logo-clear-512.png 301
+/assets/images/search-logo-512.png /assets/images/brand/search-logo-512.png 301
+/assets/images/search-logo-transparent-512.png /assets/images/brand/search-logo-transparent-512.png 301
+/assets/images/social-preview-1200x630.png /assets/images/brand/social-preview-1200x630.png 301
+
+# Hero carousel slides renamed under /assets/images/hero/
+/assets/images/gallery1.jpg /assets/images/hero/slide-01.jpg 301
+/assets/images/gallery2.jpg /assets/images/hero/slide-02.jpg 301
+/assets/images/gallery3.jpg /assets/images/hero/slide-03.jpg 301
+/assets/images/gallery4.jpg /assets/images/hero/slide-04.jpg 301
+/assets/images/gallery5.jpg /assets/images/hero/slide-05.jpg 301
+/assets/images/gallery6.jpg /assets/images/hero/slide-06.jpg 301
+
+# Before/after gallery legacy filenames
+/assets/images/before-after/card-01/gallery-before-1.jpg /assets/images/before-after/card-01/before.jpg 301
+/assets/images/before-after/card-01/gallery-after-1.jpg /assets/images/before-after/card-01/after.jpg 301
+/assets/images/before-after/card-02/gallery-before-2.jpg /assets/images/before-after/card-02/before.jpg 301
+/assets/images/before-after/card-02/gallery-after-2.jpg /assets/images/before-after/card-02/after.jpg 301
+/assets/images/before-after/card-03/gallery-before-3.jpg /assets/images/before-after/card-03/before.jpg 301
+/assets/images/before-after/card-03/gallery-after-3.jpg /assets/images/before-after/card-03/after.jpg 301
+/assets/images/before-after/card-04/gallery-before-4.jpg /assets/images/before-after/card-04/before.jpg 301
+/assets/images/before-after/card-04/gallery-after-4.jpg /assets/images/before-after/card-04/after.jpg 301
+/assets/images/before-after/card-05/gallery-before-5.jpg /assets/images/before-after/card-05/before.jpg 301
+/assets/images/before-after/card-05/gallery-after-5.jpg /assets/images/before-after/card-05/after.jpg 301
+/assets/images/before-after/card-06/gallery-before-6.jpg /assets/images/before-after/card-06/before.jpg 301
+/assets/images/before-after/card-06/gallery-after-6.jpg /assets/images/before-after/card-06/after.jpg 301
+/assets/images/before-after/card-07/gallery-before-7.jpg /assets/images/before-after/card-07/before.jpg 301
+/assets/images/before-after/card-07/gallery-after-7.jpg /assets/images/before-after/card-07/after.jpg 301
+/assets/images/before-after/card-08/gallery-before-8.jpg /assets/images/before-after/card-08/before.jpg 301
+/assets/images/before-after/card-08/gallery-after-8.jpg /assets/images/before-after/card-08/after.jpg 301
+/assets/images/before-after/card-09/gallery-before-9.jpg /assets/images/before-after/card-09/before.jpg 301
+/assets/images/before-after/card-09/gallery-after-9.jpg /assets/images/before-after/card-09/after.jpg 301
+
+# UI icons moved from icon-pak to /assets/images/icons/ (kebab-case filenames)
+/assets/images/icon-pak/Gotovie iconki dlya saita/apple_music.png /assets/images/icons/apple-music.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/clash_royale.png /assets/images/icons/clash-royale.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/currency_euro.png /assets/images/icons/currency-euro.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/FA User.png /assets/images/icons/user.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/Facebook.png /assets/images/icons/facebook.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/Globus language.png /assets/images/icons/globe-language.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/Home.png /assets/images/icons/home.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/Job.png /assets/images/icons/job.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/Locate.png /assets/images/icons/locate.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/Multimedia.png /assets/images/icons/multimedia.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/Telegramm.png /assets/images/icons/telegram.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/Viber.png /assets/images/icons/viber.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/moon_reader.png /assets/images/icons/moon-reader.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/phone_alt.png /assets/images/icons/phone.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/sozial-links.png /assets/images/icons/social-links.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/unter.png /assets/images/icons/chevron-down.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/whatsapp_alt3.png /assets/images/icons/whatsapp.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/youtube_alt1.png /assets/images/icons/youtube.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/instagram.png /assets/images/icons/instagram.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/mail.png /assets/images/icons/mail.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/spotify.png /assets/images/icons/spotify.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/sunrise.png /assets/images/icons/sunrise.png 301
+/assets/images/icon-pak/Gotovie iconki dlya saita/tiktok.png /assets/images/icons/tiktok.png 301

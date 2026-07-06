@@ -2080,7 +2080,7 @@
   visibility: visible !important;
   font-size: 0 !important;
   line-height: 0 !important;
-  background: url('/assets/images/icon-pak/Gotovie%20iconki%20dlya%20saita/unter.png') center/contain no-repeat !important;
+  background: url('/assets/images/icons/chevron-down.png') center/contain no-repeat !important;
   --arrow-rotate: ${HEADER_WEATHER_TOGGLE_ARROW_CLOSED};
   --arrow-shift-x: 0px;
   transform: var(--arrow-rotate) translateX(var(--arrow-shift-x)) !important;
@@ -3311,7 +3311,7 @@
   width: 15px;
   height: 15px;
   flex: 0 0 15px;
-  background-image: url('/assets/images/icon-pak/Gotovie%20iconki%20dlya%20saita/Locate.png');
+  background-image: url('/assets/images/icons/locate.png');
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;
@@ -3861,7 +3861,7 @@
     <div class="logo-wrapper">
       <div class="logo">
         <a href="${homeHref}">
-          <img src="${assetPrefix}/images/logo.png" alt="HUNDESALON_NIKA" class="logo-img">
+          <img src="${assetPrefix}/images/brand/logo.png" alt="HUNDESALON_NIKA" class="logo-img">
         </a>
       </div>
     </div>
@@ -3913,7 +3913,7 @@
       <div class="social-bar-start">
         <div class="social-home">
           <a href="${homeHref}"${isHomeRoute ? ' class="active"' : ''} aria-label="${copy.home}" title="${copy.home}">
-            <img class="home-icon-img" src="${assetPrefix}/images/icon-pak/Gotovie iconki dlya saita/Home.png" alt="" aria-hidden="true">
+            <img class="home-icon-img" src="${assetPrefix}/images/icons/home.png" alt="" aria-hidden="true">
             <span>${copy.home}</span>
           </a>
         </div>
@@ -3924,10 +3924,10 @@
           </button>
           <div class="social-service-picker" id="social-service-picker" hidden aria-hidden="true">
             <button class="social-service-btn" type="button" data-panel="social-spotify-panel" aria-label="Spotify">
-              <img src="${assetPrefix}/images/icon-pak/Gotovie iconki dlya saita/spotify.png" alt="Spotify">
+              <img src="${assetPrefix}/images/icons/spotify.png" alt="Spotify">
             </button>
             <button class="social-service-btn" type="button" data-panel="social-apple-panel" aria-label="Apple Music">
-              <img src="${assetPrefix}/images/icon-pak/Gotovie iconki dlya saita/apple_music.png" alt="Apple Music">
+              <img src="${assetPrefix}/images/icons/apple-music.png" alt="Apple Music">
             </button>
           </div>
           <div class="social-player-panel" id="social-spotify-panel" hidden aria-hidden="true">
@@ -3956,7 +3956,7 @@
       </div>
       <div class="social-icons-wrap">
         <button class="social-icons-toggle" type="button" aria-label="${copy.socials}" aria-expanded="false" aria-controls="social-icons-list">
-          <img src="${assetPrefix}/images/icon-pak/Gotovie iconki dlya saita/sozial-links.png" alt="" aria-hidden="true" class="social-icons-toggle-img">
+          <img src="${assetPrefix}/images/icons/social-links.png" alt="" aria-hidden="true" class="social-icons-toggle-img">
         </button>
         <div class="social-icons" id="social-icons-list" hidden aria-hidden="true">
           ${socialBarMarkup}
@@ -3972,7 +3972,7 @@
   </div>
   <a href="${pathPrefix}index.html#promotions" class="promo-burger-btn">
     <span class="promo-btn-inner">
-      <img src="${assetPrefix}/images/icon-pak/Gotovie iconki dlya saita/clash_royale.png" class="promo-btn-icon" alt="" aria-hidden="true">
+      <img src="${assetPrefix}/images/icons/clash-royale.png" class="promo-btn-icon" alt="" aria-hidden="true">
       <span class="promo-btn-label">${copy.promotions}</span>
     </span>
   </a>
@@ -7384,7 +7384,7 @@
     toggleIcon.setAttribute('aria-hidden', 'true');
     toggleIcon.style.setProperty(
       'background-image',
-      "url('/assets/images/icon-pak/Gotovie%20iconki%20dlya%20saita/unter.png')",
+      "url('/assets/images/icons/chevron-down.png')",
       'important'
     );
     toggleIcon.style.setProperty('background-position', 'center', 'important');

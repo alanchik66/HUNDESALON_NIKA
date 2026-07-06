@@ -3078,7 +3078,7 @@ body.light .dropdown-menu a:hover {
   z-index: 1;
   width: 45px;
   height: 45px;
-  background: url('../images/icon-pak/Gotovie iconki dlya saita/sunrise.png') center/contain
+  background: url('../images/icons/sunrise.png') center/contain
     no-repeat;
   filter: drop-shadow(0 3px 6px rgb(0 0 0 / 28%)) saturate(1.06) brightness(1.04);
   animation:
@@ -3087,7 +3087,7 @@ body.light .dropdown-menu a:hover {
 }
 
 body.light .theme-btn::before {
-  background-image: url('../images/icon-pak/Gotovie iconki dlya saita/moon_reader.png');
+  background-image: url('../images/icons/moon-reader.png');
   filter: drop-shadow(0 3px 6px rgb(0 0 0 / 28%)) saturate(1.06) brightness(1.04);
 }
 
@@ -3203,7 +3203,7 @@ body.light .theme-btn::before {
   min-width: 23px;
   height: 23px;
   font-size: 0;
-  background: url('../images/icon-pak/Gotovie iconki dlya saita/Globus language.png') center/contain
+  background: url('../images/icons/globe-language.png') center/contain
     no-repeat;
   filter: drop-shadow(0 6px 12px rgb(0 0 0 / 26%)) saturate(1.04) brightness(1.03);
   animation:
@@ -3225,7 +3225,7 @@ body.light .theme-btn::before {
   margin-left: 0;
   margin-right: 2px;
   opacity: 0.9;
-  background: url('../images/icon-pak/Gotovie iconki dlya saita/unter.png') center/contain no-repeat;
+  background: url('../images/icons/chevron-down.png') center/contain no-repeat;
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 28%)) drop-shadow(0 0 5px rgb(247 199 68 / 18%));
   --arrow-rotate: rotate(-90deg);
   --arrow-shift-x: 0px;
@@ -4057,7 +4057,7 @@ body.light .header-controls .lang-dropdown-menu li:hover .flag {
   width: var(--social-bar-icon-size);
   height: var(--social-bar-icon-size);
   display: inline-block;
-  background: url('../images/icon-pak/Gotovie iconki dlya saita/Multimedia.png') center/contain
+  background: url('../images/icons/multimedia.png') center/contain
     no-repeat;
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 32%)) drop-shadow(0 0 8px rgb(212 176 102 / 16%));
 }
@@ -4227,12 +4227,12 @@ body.light .header-controls .lang-dropdown-menu li:hover .flag {
 }
 
 .social-music-item-icon--spotify {
-  background-image: url('../images/icon-pak/Gotovie iconki dlya saita/spotify.png');
+  background-image: url('../images/icons/spotify.png');
   background-size: 88%;
 }
 
 .social-music-item-icon--apple {
-  background-image: url('../images/icon-pak/Gotovie iconki dlya saita/apple_music.png');
+  background-image: url('../images/icons/apple-music.png');
   background-size: 96%;
 }
 
@@ -4710,7 +4710,7 @@ body.light .social-music-item-icon {
 .social-bar .social-icon .fa-share-alt,
 .footer-socials .social-link--primary .fa-share-alt,
 .footer-socials .social-link-primary .fa-share-alt {
-  background-image: url('../images/icon-pak/Gotovie iconki dlya saita/sozial-links.png');
+  background-image: url('../images/icons/social-links.png');
 }
 
 .social-bar .social-icon:has(.fa-share-alt) {
@@ -4723,7 +4723,7 @@ body.light .social-music-item-icon {
 .social-bar .social-icon .fa-instagram,
 .footer-socials .social-link--icon .fa-instagram,
 .footer-socials .social-link-icon .fa-instagram {
-  background-image: url('../images/icon-pak/Gotovie iconki dlya saita/instagram.png');
+  background-image: url('../images/icons/instagram.png');
 }
 
 .header-social-link .fa-telegram,
@@ -4734,28 +4734,28 @@ body.light .social-music-item-icon {
 .footer-socials .social-link--icon .fa-telegram-plane,
 .footer-socials .social-link-icon .fa-telegram,
 .footer-socials .social-link-icon .fa-telegram-plane {
-  background-image: url('../images/icon-pak/Gotovie iconki dlya saita/Telegramm.png');
+  background-image: url('../images/icons/telegram.png');
 }
 
 .header-social-link .fa-whatsapp,
 .social-bar .social-icon .fa-whatsapp,
 .footer-socials .social-link--icon .fa-whatsapp,
 .footer-socials .social-link-icon .fa-whatsapp {
-  background-image: url('../images/icon-pak/Gotovie iconki dlya saita/whatsapp_alt3.png');
+  background-image: url('../images/icons/whatsapp.png');
 }
 
 .header-social-link .fa-envelope,
 .social-bar .social-icon .fa-envelope,
 .footer-socials .social-link--icon .fa-envelope,
 .footer-socials .social-link-icon .fa-envelope {
-  background-image: url('../images/icon-pak/Gotovie iconki dlya saita/mail.png');
+  background-image: url('../images/icons/mail.png');
 }
 
 .header-social-link .fa-phone,
 .social-bar .social-icon .fa-phone,
 .footer-socials .social-link--icon .fa-phone,
 .footer-socials .social-link-icon .fa-phone {
-  background-image: url('../images/icon-pak/Gotovie iconki dlya saita/phone_alt.png');
+  background-image: url('../images/icons/phone.png');
 }
 
 .header-social-link .fa-facebook,
@@ -4766,28 +4766,28 @@ body.light .social-music-item-icon {
 .footer-socials .social-link--icon .fa-facebook-f,
 .footer-socials .social-link-icon .fa-facebook,
 .footer-socials .social-link-icon .fa-facebook-f {
-  background-image: url('../images/icon-pak/Gotovie iconki dlya saita/Facebook.png');
+  background-image: url('../images/icons/facebook.png');
 }
 
 .header-social-link .fa-tiktok,
 .social-bar .social-icon .fa-tiktok,
 .footer-socials .social-link--icon .fa-tiktok,
 .footer-socials .social-link-icon .fa-tiktok {
-  background-image: url('../images/icon-pak/Gotovie iconki dlya saita/tiktok.png');
+  background-image: url('../images/icons/tiktok.png');
 }
 
 .header-social-link .fa-youtube,
 .social-bar .social-icon .fa-youtube,
 .footer-socials .social-link--icon .fa-youtube,
 .footer-socials .social-link-icon .fa-youtube {
-  background-image: url('../images/icon-pak/Gotovie iconki dlya saita/youtube_alt1.png');
+  background-image: url('../images/icons/youtube.png');
 }
 
 .header-social-link .fa-viber,
 .social-bar .social-icon .fa-viber,
 .footer-socials .social-link--icon .fa-viber,
 .footer-socials .social-link-icon .fa-viber {
-  background-image: url('../images/icon-pak/Gotovie iconki dlya saita/Viber.png');
+  background-image: url('../images/icons/viber.png');
 }
 
 @media (width >= 900px) {
@@ -5749,7 +5749,7 @@ body.scrollbar-dragging {
   width: 15px;
   height: 15px;
   margin-left: auto;
-  background: url('../images/icon-pak/Gotovie iconki dlya saita/unter.png') center/contain no-repeat;
+  background: url('../images/icons/chevron-down.png') center/contain no-repeat;
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 28%)) drop-shadow(0 0 5px rgb(247 199 68 / 18%));
   transition:
     transform 0.44s cubic-bezier(0.22, 1, 0.36, 1),
@@ -6360,7 +6360,7 @@ body.light .hero-title {
   min-width: 1em;
   height: 1em;
   vertical-align: -0.14em;
-  background: url('../images/icon-pak/Gotovie iconki dlya saita/unter.png') center/contain no-repeat;
+  background: url('../images/icons/chevron-down.png') center/contain no-repeat;
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 28%)) drop-shadow(0 0 5px rgb(247 199 68 / 18%));
   flex: 0 0 auto;
   --arrow-rotate: rotate(0deg);
@@ -6525,7 +6525,7 @@ body.light .currency-inline {
   width: 15px;
   height: 15px;
   margin-left: auto;
-  background: url('../images/icon-pak/Gotovie iconki dlya saita/unter.png') center/contain no-repeat;
+  background: url('../images/icons/chevron-down.png') center/contain no-repeat;
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 28%)) drop-shadow(0 0 5px rgb(247 199 68 / 18%));
   --arrow-rotate: rotate(0deg);
   --arrow-shift-x: 0px;
@@ -8023,7 +8023,7 @@ body.light .footer-legal-sep {
   position: relative;
   width: 57px;
   height: 57px;
-  background: url('../images/logo.png') center/contain no-repeat;
+  background: url('../images/brand/logo.png') center/contain no-repeat;
   filter: drop-shadow(0 8px 18px rgb(0 0 0 / 34%)) drop-shadow(0 0 16px rgb(198 161 91 / 18%));
   animation: preloaderLogoReveal var(--motion-sync-pulse) var(--motion-sync-luxury) infinite;
 }
@@ -9106,32 +9106,32 @@ body.light .nika-tooltip--visible {
 
 .gallery-item--1,
 .gallery-item-1 {
-  background-image: url('../images/gallery1.jpg');
+  background-image: url('../images/hero/slide-01.jpg');
 }
 
 .gallery-item--2,
 .gallery-item-2 {
-  background-image: url('../images/gallery2.jpg');
+  background-image: url('../images/hero/slide-02.jpg');
 }
 
 .gallery-item--3,
 .gallery-item-3 {
-  background-image: url('../images/gallery3.jpg');
+  background-image: url('../images/hero/slide-03.jpg');
 }
 
 .gallery-item--4,
 .gallery-item-4 {
-  background-image: url('../images/gallery4.jpg');
+  background-image: url('../images/hero/slide-04.jpg');
 }
 
 .gallery-item--5,
 .gallery-item-5 {
-  background-image: url('../images/gallery5.jpg');
+  background-image: url('../images/hero/slide-05.jpg');
 }
 
 .gallery-item--6,
 .gallery-item-6 {
-  background-image: url('../images/gallery6.jpg');
+  background-image: url('../images/hero/slide-06.jpg');
 }
 
 .header-weather-shell,
