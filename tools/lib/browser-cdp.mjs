@@ -45,17 +45,38 @@ export function pageScript(body, options = {}) {
 }
 
 export async function evalPage(send, body, options = {}) {
-  const result = await send('Runtime.evaluate', {
-    expression: pageScript(body, options),
-    awaitPromise: true,
-    returnByValue: true,
-  });
+  const retries = options.retries ?? 4;
+  let lastError;
 
-  if (result.exceptionDetails) {
-    throw new Error(result.exceptionDetails.exception?.description || 'eval failed');
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    try {
+      const result = await send('Runtime.evaluate', {
+        expression: pageScript(body, options),
+        awaitPromise: true,
+        returnByValue: true,
+      });
+
+      if (result.exceptionDetails) {
+        const detail = result.exceptionDetails.exception?.description || 'eval failed';
+        if (/execution context was destroyed/i.test(detail) && attempt < retries - 1) {
+          await sleep(1200 + attempt * 800);
+          continue;
+        }
+        throw new Error(detail);
+      }
+
+      return result.result?.value;
+    } catch (error) {
+      lastError = error;
+      if (/execution context was destroyed/i.test(error.message) && attempt < retries - 1) {
+        await sleep(1200 + attempt * 800);
+        continue;
+      }
+      throw error;
+    }
   }
 
-  return result.result?.value;
+  throw lastError || new Error('eval failed');
 }
 
 export async function openCdpSession(options = {}) {
@@ -104,16 +125,34 @@ export async function openCdpSession(options = {}) {
     ws,
     send,
     close: () => ws.close(),
-    evaluate: async expression => {
-      const result = await send('Runtime.evaluate', {
-        expression,
-        awaitPromise: true,
-        returnByValue: true,
-      });
-      if (result.exceptionDetails) {
-        throw new Error(result.exceptionDetails.exception?.description || 'evaluate failed');
+    evaluate: async (expression, retries = 4) => {
+      let lastError;
+      for (let attempt = 0; attempt < retries; attempt += 1) {
+        try {
+          const result = await send('Runtime.evaluate', {
+            expression,
+            awaitPromise: true,
+            returnByValue: true,
+          });
+          if (result.exceptionDetails) {
+            const detail = result.exceptionDetails.exception?.description || 'evaluate failed';
+            if (/execution context was destroyed/i.test(detail) && attempt < retries - 1) {
+              await sleep(1200 + attempt * 800);
+              continue;
+            }
+            throw new Error(detail);
+          }
+          return result.result?.value;
+        } catch (error) {
+          lastError = error;
+          if (/execution context was destroyed/i.test(error.message) && attempt < retries - 1) {
+            await sleep(1200 + attempt * 800);
+            continue;
+          }
+          throw error;
+        }
       }
-      return result.result?.value;
+      throw lastError || new Error('evaluate failed');
     },
     evalPage: (body, evalOptions = {}) => evalPage(send, body, evalOptions),
   };
