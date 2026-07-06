@@ -15,8 +15,8 @@ function walk(dir) {
     if (!ent.name.endsWith('.html')) continue;
     const original = fs.readFileSync(fullPath, 'utf8');
     const next = original
-      .replace(/site-shell\.js\?v=[^"']+/g, 'site-shell.js?v=20260706-nav-gallery-plain-v1')
-      .replace(/main\.js\?v=[^"']+/g, 'main.js?v=20260706-nav-gallery-plain-v1');
+      .replace(/site-shell\.js\?v=[^"']+/g, 'site-shell.js?v=20260706-nav-gallery-menu-v1')
+      .replace(/main\.js\?v=[^"']+/g, 'main.js?v=20260706-nav-gallery-menu-v1');
     if (next !== original) {
       fs.writeFileSync(fullPath, next, 'utf8');
       updated += 1;

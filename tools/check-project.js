@@ -85,19 +85,23 @@ if (fs.existsSync(path.join(root, 'assets/js/site-shell.js'))) {
   const siteShell = read('assets/js/site-shell.js');
   assert(
     siteShell.includes('galereya.html" class="btn-neon'),
-    'site-shell.js: gallery nav must be a plain btn-neon link like other nav items'
+    'site-shell.js: gallery nav trigger must stay a btn-neon link like other nav items'
   );
   assert(
-    !siteShell.includes('mobileGalleryBtn') && !siteShell.includes('nav-gallery-dropdown'),
-    'site-shell.js: gallery nav must not use dropdown markup'
+    siteShell.includes('nav-gallery-dropdown') && siteShell.includes('mobileGalleryBtn'),
+    'site-shell.js: gallery nav must expose submenu markup for galereya and do-i-posle'
+  );
+  assert(
+    siteShell.includes('do-i-posle.html') && siteShell.includes('galleryAllHint'),
+    'site-shell.js: gallery submenu must include before/after page and descriptive hints'
   );
 }
 
 if (fs.existsSync(path.join(root, 'assets/js/main.js'))) {
   const mainJs = read('assets/js/main.js');
   assert(
-    !mainJs.includes('mobileGalleryBtn') && !mainJs.includes('mobileGalleryMenu'),
-    'main.js: gallery mobile dropdown logic must stay removed; gallery uses plain nav links'
+    mainJs.includes('mobileGalleryBtn') && mainJs.includes('setGalleryMenuState'),
+    'main.js: gallery mobile submenu toggle must be wired'
   );
 }
 

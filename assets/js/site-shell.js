@@ -169,18 +169,26 @@
     ru: {
       openMenu: 'Открыть меню',
       closeMenu: 'Закрыть меню',
+      expandGallery: 'Открыть раздел галереи',
+      collapseGallery: 'Скрыть раздел галереи',
     },
     uk: {
       openMenu: 'Відкрити меню',
       closeMenu: 'Закрити меню',
+      expandGallery: 'Відкрити розділ галереї',
+      collapseGallery: 'Згорнути розділ галереї',
     },
     de: {
       openMenu: 'Menü öffnen',
       closeMenu: 'Menü schließen',
+      expandGallery: 'Galeriebereich öffnen',
+      collapseGallery: 'Galeriebereich schließen',
     },
     en: {
       openMenu: 'Open menu',
       closeMenu: 'Close menu',
+      expandGallery: 'Open gallery section',
+      collapseGallery: 'Close gallery section',
     },
   };
 
@@ -3822,6 +3830,42 @@
     const activeClass = key => (activeKey === key ? ' active' : '');
     const activeAria = key => (activeKey === key ? ' aria-current="page"' : '');
     const mobileLinkAttrs = key => `${activeKey === key ? ' class="active"' : ''}${activeAria(key)}`;
+    const submenuItemAttrs = route =>
+      currentRouteNormalized === route ? ' class="active" aria-current="page"' : '';
+
+    const galleryDesktopNavMarkup = `
+      <div class="dropdown nav-gallery-dropdown">
+        <a href="${pathPrefix}galereya.html" class="btn-neon${activeClass('gallery')}"${activeAria('gallery')}>${copy.gallery}</a>
+        <div class="dropdown-menu">
+          <a href="${pathPrefix}galereya.html"${submenuItemAttrs('galereya.html')}>
+            <span class="dropdown-menu__item">
+              <span class="dropdown-menu__label">${copy.galleryAll}</span>
+              <span class="dropdown-menu__hint">${copy.galleryAllHint}</span>
+            </span>
+          </a>
+          <a href="${pathPrefix}do-i-posle.html"${submenuItemAttrs('do-i-posle.html')}>
+            <span class="dropdown-menu__item">
+              <span class="dropdown-menu__label">${copy.beforeAfter}</span>
+              <span class="dropdown-menu__hint">${copy.beforeAfterHint}</span>
+            </span>
+          </a>
+        </div>
+      </div>`;
+
+    const galleryMobileNavMarkup = `
+  <div class="mobile-dropdown">
+    <button class="mobile-dropdown-btn${activeClass('gallery')}" id="mobileGalleryBtn" type="button" aria-expanded="false" aria-controls="mobileGalleryMenu" aria-label="${context.menuA11y.expandGallery}">${copy.gallery}</button>
+    <div class="mobile-dropdown-menu" id="mobileGalleryMenu">
+      <a href="${pathPrefix}galereya.html"${submenuItemAttrs('galereya.html')}>
+        <span class="mobile-dropdown-menu__label">${copy.galleryAll}</span>
+        <span class="mobile-dropdown-menu__hint">${copy.galleryAllHint}</span>
+      </a>
+      <a href="${pathPrefix}do-i-posle.html"${submenuItemAttrs('do-i-posle.html')}>
+        <span class="mobile-dropdown-menu__label">${copy.beforeAfter}</span>
+        <span class="mobile-dropdown-menu__hint">${copy.beforeAfterHint}</span>
+      </a>
+    </div>
+  </div>`;
 
     const primaryLinks =
       context.currentLang === 'ru'
@@ -3830,14 +3874,14 @@
   <a href="${pathPrefix}o-nas.html"${mobileLinkAttrs('about')}>${copy.about}</a>
   <a href="${pathPrefix}nashi-uslugi.html"${mobileLinkAttrs('services')}>${copy.services}</a>
   <a href="${pathPrefix}prays-list.html"${mobileLinkAttrs('price')}>${copy.price}</a>
-  <a href="${pathPrefix}galereya.html"${mobileLinkAttrs('gallery')}>${copy.gallery}</a>
+  ${galleryMobileNavMarkup}
   <a href="${pathPrefix}blog.html"${mobileLinkAttrs('blog')}>${copy.blog}</a>
   <a href="${pathPrefix}kontakty.html"${mobileLinkAttrs('contacts')}>${copy.contacts}</a>`
         : `
   <a href="${pathPrefix}o-nas.html"${mobileLinkAttrs('about')}>${copy.about}</a>
   <a href="${pathPrefix}nashi-uslugi.html"${mobileLinkAttrs('services')}>${copy.services}</a>
   <a href="${pathPrefix}prays-list.html"${mobileLinkAttrs('price')}>${copy.price}</a>
-  <a href="${pathPrefix}galereya.html"${mobileLinkAttrs('gallery')}>${copy.gallery}</a>
+  ${galleryMobileNavMarkup}
   <a href="${pathPrefix}blog.html"${mobileLinkAttrs('blog')}>${copy.blog}</a>
   <a href="${pathPrefix}kontakty.html"${mobileLinkAttrs('contacts')}>${copy.contacts}</a>`;
     const isHomeRoute = currentRouteNormalized === '' || currentRouteNormalized === 'index.html';
@@ -3881,7 +3925,7 @@
       <a href="${pathPrefix}o-nas.html" class="btn-neon${activeClass('about')}"${activeAria('about')}>${copy.about}</a>
       <a href="${pathPrefix}nashi-uslugi.html" class="btn-neon${activeClass('services')}"${activeAria('services')}>${copy.services}</a>
       <a href="${pathPrefix}prays-list.html" class="btn-neon${activeClass('price')}"${activeAria('price')}>${copy.price}</a>
-      <a href="${pathPrefix}galereya.html" class="btn-neon${activeClass('gallery')}"${activeAria('gallery')}>${copy.gallery}</a>
+      ${galleryDesktopNavMarkup}
       <a href="${pathPrefix}kontakty.html" class="btn-neon${activeClass('contacts')}"${activeAria('contacts')}>${copy.contacts}</a>
     </nav>
 
