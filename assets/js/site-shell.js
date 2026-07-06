@@ -59,7 +59,9 @@
       price: 'ПРАЙС-ЛИСТ',
       gallery: 'ГАЛЕРЕЯ',
       galleryAll: 'НАША ГАЛЕРЕЯ',
+      galleryAllHint: 'Фото лучших работ салона',
       beforeAfter: 'ДО И ПОСЛЕ',
+      beforeAfterHint: 'Интерактивный слайдер сравнения',
       contacts: 'КОНТАКТЫ',
       booking: 'ОНЛАЙН ЗАКАЗ',
       blog: 'БЛОГ',
@@ -80,6 +82,8 @@
       gallery: 'ГАЛЕРЕЯ',
       galleryAll: 'НАША ГАЛЕРЕЯ',
       beforeAfter: 'ДО ТА ПІСЛЯ',
+      galleryAllHint: 'Фото найкращих робіт салону',
+      beforeAfterHint: 'Інтерактивний слайдер порівняння',
       contacts: 'КОНТАКТИ',
       booking: 'ОНЛАЙН ЗАПИС',
       blog: 'БЛОГ',
@@ -99,7 +103,9 @@
       price: 'PREISLISTE',
       gallery: 'GALERIE',
       galleryAll: 'UNSERE GALERIE',
+      galleryAllHint: 'Fotos unserer besten Arbeiten',
       beforeAfter: 'VORHER & NACHHER',
+      beforeAfterHint: 'Interaktiver Vorher-Nachher-Slider',
       contacts: 'KONTAKTE',
       booking: 'ONLINE BUCHEN',
       blog: 'BLOG',
@@ -119,7 +125,9 @@
       price: 'PRICE LIST',
       gallery: 'GALLERY',
       galleryAll: 'OUR GALLERY',
+      galleryAllHint: 'Photos of our best work',
       beforeAfter: 'BEFORE & AFTER',
+      beforeAfterHint: 'Interactive comparison slider',
       contacts: 'CONTACTS',
       booking: 'BOOK ONLINE',
       blog: 'BLOG',
@@ -3773,7 +3781,12 @@
   }
 
   function createHeaderMarkup(context) {
-    const currentRouteNormalized = context.currentRoute || 'index.html';
+    const normalizePageRoute = route => {
+      const trimmed = String(route || '').replace(/\/$/, '');
+      if (!trimmed) return 'index.html';
+      return trimmed.endsWith('.html') ? trimmed : `${trimmed}.html`;
+    };
+    const currentRouteNormalized = normalizePageRoute(context.currentRoute);
     const depth = currentRouteNormalized.startsWith('blog/') ? 2 : 1;
     const pathPrefix = depth === 1 ? '' : '../';
     const assetPrefix = depth === 1 ? '../assets' : '../../assets';
@@ -3787,7 +3800,7 @@
       if (currentRouteNormalized === 'o-nas.html') return 'about';
       if (currentRouteNormalized === 'nashi-uslugi.html') return 'services';
       if (currentRouteNormalized === 'prays-list.html') return 'price';
-      if (currentRouteNormalized === 'galereya.html' || currentRouteNormalized === 'do-i-posle.html') return 'gallery';
+      if (currentRouteNormalized === 'galereya.html') return 'gallery';
       if (currentRouteNormalized === 'kontakty.html') return 'contacts';
       return '';
     })();
@@ -3819,28 +3832,20 @@
   <a href="${pathPrefix}o-nas.html">${copy.about}</a>
   <a href="${pathPrefix}nashi-uslugi.html">${copy.services}</a>
   <a href="${pathPrefix}prays-list.html">${copy.price}</a>
-  <div class="mobile-dropdown">
-    <button class="mobile-dropdown-btn" id="mobileGalleryBtn" type="button" aria-expanded="false" aria-controls="mobileGalleryMenu" aria-label="${context.menuA11y.expandGallery}">${copy.gallery}</button>
-    <div class="mobile-dropdown-menu" id="mobileGalleryMenu">
-      <a href="${pathPrefix}galereya.html">${copy.galleryAll}</a>
-      <a href="${pathPrefix}do-i-posle.html">${copy.beforeAfter}</a>
-    </div>
-  </div>
+  <a href="${pathPrefix}galereya.html">${copy.gallery}</a>
   <a href="${pathPrefix}blog.html">${copy.blog}</a>
   <a href="${pathPrefix}kontakty.html">${copy.contacts}</a>`
         : `
   <a href="${pathPrefix}o-nas.html">${copy.about}</a>
   <a href="${pathPrefix}nashi-uslugi.html">${copy.services}</a>
   <a href="${pathPrefix}prays-list.html">${copy.price}</a>
-  <div class="mobile-dropdown">
-    <button class="mobile-dropdown-btn" id="mobileGalleryBtn" type="button" aria-expanded="false" aria-controls="mobileGalleryMenu" aria-label="${context.menuA11y.expandGallery}">${copy.gallery}</button>
-    <div class="mobile-dropdown-menu" id="mobileGalleryMenu">
-      <a href="${pathPrefix}galereya.html">${copy.galleryAll}</a>
-      <a href="${pathPrefix}do-i-posle.html">${copy.beforeAfter}</a>
-    </div>
-  </div>
+  <a href="${pathPrefix}galereya.html">${copy.gallery}</a>
   <a href="${pathPrefix}blog.html">${copy.blog}</a>
   <a href="${pathPrefix}kontakty.html">${copy.contacts}</a>`;
+
+    const activeClass = key => (activeKey === key ? ' active' : '');
+    const activeAria = key => (activeKey === key ? ' aria-current="page"' : '');
+    const isHomeRoute = currentRouteNormalized === '' || currentRouteNormalized === 'index.html';
 
     const secondaryLinks = `
   <a href="${pathPrefix}social.html" class="mobile-nav-link--secondary">${copy.socials}</a>
@@ -3849,10 +3854,6 @@
   <a href="${pathPrefix}documents.html" class="mobile-nav-link--secondary">${copy.documents}</a>
   <a href="${pathPrefix}hundefriseur-leipzig.html" class="mobile-nav-link--secondary">${copy.localSeo}</a>
   <a href="${pathPrefix}onlayn-bronirovanie.html" class="mobile-nav-link--secondary">${copy.booking}</a>`;
-
-    const activeClass = key => (activeKey === key ? ' active' : '');
-    const activeAria = key => (activeKey === key ? ' aria-current="page"' : '');
-    const isHomeRoute = currentRouteNormalized === '' || currentRouteNormalized === 'index.html';
 
     return `
 <header class="header">
@@ -3885,13 +3886,7 @@
       <a href="${pathPrefix}o-nas.html" class="btn-neon${activeClass('about')}"${activeAria('about')}>${copy.about}</a>
       <a href="${pathPrefix}nashi-uslugi.html" class="btn-neon${activeClass('services')}"${activeAria('services')}>${copy.services}</a>
       <a href="${pathPrefix}prays-list.html" class="btn-neon${activeClass('price')}"${activeAria('price')}>${copy.price}</a>
-      <div class="dropdown">
-        <a href="${pathPrefix}galereya.html" class="btn-neon${activeClass('gallery')}"${activeAria('gallery')}>${copy.gallery}</a>
-        <div class="dropdown-menu">
-          <a href="${pathPrefix}galereya.html">${copy.galleryAll}</a>
-          <a href="${pathPrefix}do-i-posle.html"${currentRouteNormalized === 'do-i-posle.html' ? ' class="active"' : ''}>${copy.beforeAfter}</a>
-        </div>
-      </div>
+      <a href="${pathPrefix}galereya.html" class="btn-neon${activeClass('gallery')}"${activeAria('gallery')}>${copy.gallery}</a>
       <a href="${pathPrefix}kontakty.html" class="btn-neon${activeClass('contacts')}"${activeAria('contacts')}>${copy.contacts}</a>
     </nav>
 

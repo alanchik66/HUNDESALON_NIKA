@@ -25,3 +25,15 @@
 /hundesalon-leipzig /de/hundesalon-leipzig.html 301
 /dog-grooming-leipzig /en/dog-grooming-leipzig.html 301
 /documents /de/documents.html 302
+
+# Favicon assets live only under /assets/images/favicon/
+/assets/images/favicon-48x48.png /assets/images/favicon/favicon-48x48.png 301
+/assets/images/favicon-64x64.png /assets/images/favicon/favicon-64x64.png 301
+/assets/images/favicon-128x128.png /assets/images/favicon/favicon-128x128.png 301
+/assets/images/favicon-384x384.png /assets/images/favicon/favicon-384x384.png 301
+/assets/images/favicon-512x512.png /assets/images/favicon/favicon-512x512.png 301
+/assets/images/favicon-search-512.png /assets/images/favicon/favicon-search-512.png 301
+/assets/images/android-chrome-512x512.png /assets/images/favicon/android-chrome-512x512.png 301
+/assets/images/maskable-icon-512x512.png /assets/images/favicon/maskable-icon-512x512.png 301
+/assets/images/mstile-150x150.png /assets/images/favicon/mstile-150x150.png 301
+/assets/images/apple-touch-icon.png /assets/images/favicon/apple-touch-icon.png 301

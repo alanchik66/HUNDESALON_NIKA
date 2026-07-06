@@ -35,19 +35,7 @@
 /favicon.ico
   Cache-Control: public, max-age=86400
 
-/assets/images/favicon-*.png
-  Cache-Control: public, max-age=86400
-
-/assets/images/android-chrome-*.png
-  Cache-Control: public, max-age=86400
-
-/assets/images/apple-touch-icon.png
-  Cache-Control: public, max-age=86400
-
-/assets/images/maskable-icon-512x512.png
-  Cache-Control: public, max-age=86400
-
-/assets/images/mstile-150x150.png
+/assets/images/favicon/*
   Cache-Control: public, max-age=86400
 
 /assets/images/search-logo-transparent-512.png

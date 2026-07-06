@@ -293,21 +293,6 @@ try {
   New-Ico -Images $icoImages -OutputPath $icoRoot
   Copy-Item -Path $icoRoot -Destination $icoFavicon -Force
 
-  $compatCopies = @(
-    @{ From = 'favicon-48x48.png'; To = 'favicon-48x48.png' },
-    @{ From = 'favicon-64x64.png'; To = 'favicon-64x64.png' },
-    @{ From = 'favicon-128x128.png'; To = 'favicon-128x128.png' },
-    @{ From = 'favicon-384x384.png'; To = 'favicon-384x384.png' },
-    @{ From = 'favicon-512x512.png'; To = 'favicon-512x512.png' },
-    @{ From = 'favicon-search-512.png'; To = 'favicon-search-512.png' },
-    @{ From = 'android-chrome-512x512.png'; To = 'android-chrome-512x512.png' },
-    @{ From = 'maskable-icon-512x512.png'; To = 'maskable-icon-512x512.png' },
-    @{ From = 'mstile-150x150.png'; To = 'mstile-150x150.png' }
-  )
-
-  foreach ($item in $compatCopies) {
-    Copy-Item -Path (Join-Path $faviconDir $item.From) -Destination (Join-Path $imagesDir $item.To) -Force
-  }
 }
 finally {
   $source.Dispose()

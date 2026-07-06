@@ -48,20 +48,13 @@
       media="print"
       onload="this.media = 'all'"
     />
-    <link rel="preload" href="../assets/css/page-modules.css?v=20260606-booking-flow-v1" as="style" />
-    <link
-      rel="stylesheet"
-      href="../assets/css/page-modules.css?v=20260606-booking-flow-v1"
-      media="print"
-      onload="this.media = 'all'"
-    />
+    <link rel="stylesheet" href="../assets/css/page-modules.css?v=20260706-before-after-v11" />
     <noscript>
       <link
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@400;700&family=Old+Standard+TT:wght@400;700&display=swap"
       />
       <link rel="stylesheet" href="../assets/fonts/fontawesome/all.min.css?v=20260329-0192" />
-      <link rel="stylesheet" href="../assets/css/page-modules.css?v=20260606-booking-flow-v1" />
     </noscript>
 
     <link rel="icon" href="/favicon.ico?v=20260520-brand-bing" sizes="any" />
@@ -149,21 +142,18 @@
     <div id="mobile-nav-overlay" hidden aria-hidden="true"></div>
     <nav id="mobile-nav" aria-hidden="true"></nav>
 
-    <section class="gallery section reveal">
-      <div class="container">
-        <h1 class="section-title">Перетворення у нашому салоні</h1>
-        <p class="section-center">
-          Подивіться, яка трансформація може відбутися після стрижки, купання та інших косметичних процедур вашого
-          чотирилапого улюбленця.
-        </p>
-        <div class="gallery-grid">
-          <div class="gallery-item gallery-item-1"><div class="gallery-caption">До</div></div>
-          <div class="gallery-item gallery-item-2"><div class="gallery-caption">Після</div></div>
-          <div class="gallery-item gallery-item-3"><div class="gallery-caption">До</div></div>
-          <div class="gallery-item gallery-item-4"><div class="gallery-caption">Після</div></div>
+    <main>
+      <section class="gallery section reveal active">
+        <div class="container">
+          <h1 class="section-title">Перетворення у нашому салоні</h1>
+          <p class="gallery-intro">Інтерактивна галерея: До і Після — потягніть повзунок!</p>
+          <div class="gallery-before-after-grid" id="before-after-gallery"></div>
+          <div class="gallery-cta">
+            <a href="galereya.html" class="btn-neon">Переглянути всі роботи</a>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </main>
 
     <!-- ══════════════════ Підвал сайту (Footer) ══════════════════════════ -->
 
@@ -266,10 +256,11 @@
     </footer>
 
     <!-- ═══════════════ Підключення скриптів ═════════════════════════════ -->
-    <script src="../assets/js/site-shell.js?v=20260613-weather-meta-compact-v43"></script>
-    <script src="../assets/js/main.js?v=20260515-02"></script>
+    <script src="../assets/js/site-shell.js?v=20260706-nav-gallery-v3"></script>
+    <script src="../assets/js/main.js?v=20260706-nav-gallery-v3"></script>
     <script src="../assets/js/page-modules.js?v=20260613-message-draft-v2"></script>
     <script src="../assets/js/tooltip.js?v=20260330-0001"></script>
+    <script src="../assets/js/before-after.js?v=20260706-before-after-v11"></script>
     <script src="../assets/js/cookie-consent.js?v=20260620-full-stack-upgrade"></script>
     <script src="../assets/js/newsletter.js?v=20260620-full-stack-upgrade"></script>
     <script src="../assets/js/pwa.js?v=20260620-full-stack-upgrade"></script>

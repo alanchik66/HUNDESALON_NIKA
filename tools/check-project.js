@@ -170,19 +170,43 @@ if (fs.existsSync(path.join(root, 'indexnow-key.txt'))) {
 }
 
 for (const file of [
-  'assets/images/favicon-48x48.png',
-  'assets/images/favicon-64x64.png',
-  'assets/images/favicon-128x128.png',
-  'assets/images/favicon-384x384.png',
-  'assets/images/favicon-512x512.png',
-  'assets/images/favicon-search-512.png',
-  'assets/images/android-chrome-512x512.png',
-  'assets/images/maskable-icon-512x512.png',
-  'assets/images/mstile-150x150.png',
+  'assets/images/favicon/favicon.ico',
+  'assets/images/favicon/favicon-48x48.png',
+  'assets/images/favicon/favicon-64x64.png',
+  'assets/images/favicon/favicon-128x128.png',
+  'assets/images/favicon/favicon-384x384.png',
+  'assets/images/favicon/favicon-512x512.png',
+  'assets/images/favicon/favicon-search-512.png',
+  'assets/images/favicon/android-chrome-512x512.png',
+  'assets/images/favicon/maskable-icon-512x512.png',
+  'assets/images/favicon/mstile-150x150.png',
   'assets/images/search-logo-clear-512.png',
   'assets/images/social-preview-1200x630.png',
 ]) {
   assert(fs.existsSync(path.join(root, file)), `Missing brand search asset: ${file}`);
+}
+
+for (const lang of ['de', 'en', 'ru', 'uk']) {
+  const langDir = path.join(root, lang);
+  if (!fs.existsSync(langDir)) continue;
+
+  for (const file of walk(langDir)) {
+    if (!file.endsWith('.html')) continue;
+
+    const relativePath = path.relative(root, file).replaceAll(path.sep, '/');
+    const content = fs.readFileSync(file, 'utf8');
+    if (!content.includes('data-newsletter-form')) continue;
+
+    assert(content.includes('newsletter-form__label'), `${relativePath}: missing newsletter-form__label`);
+    assert(
+      content.includes(`id="newsletter-email-${lang}"`),
+      `${relativePath}: missing newsletter-email-${lang} input id`
+    );
+    assert(
+      content.includes(`for="newsletter-email-${lang}"`),
+      `${relativePath}: newsletter label for attribute must target newsletter-email-${lang}`
+    );
+  }
 }
 
 for (const file of walk(root)) {

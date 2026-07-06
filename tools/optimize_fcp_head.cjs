@@ -30,7 +30,7 @@ function walkHtmlFiles(dirPath) {
 
 function getOptimizedHeadBlock(indentation) {
     return [
-        `${indentation}<link rel="icon" type="image/png" href="../assets/images/favicon.png">`,
+        `${indentation}<link rel="icon" type="image/png" href="../assets/images/favicon/favicon-32x32.png">`,
         `${indentation}<link rel="preconnect" href="https://fonts.googleapis.com">`,
         `${indentation}<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`,
         `${indentation}<link rel="preload" href="${styleHref}" as="style">`,
