@@ -11,8 +11,8 @@ const performanceUrl = `https://www.bing.com/webmasters/aiperformance?siteUrl=${
 
 const logoUrls = [
   'https://hundesalon-nika.com/favicon.ico',
-  'https://hundesalon-nika.com/assets/images/search-logo-clear-512.png',
-  'https://hundesalon-nika.com/assets/images/logo.png',
+  'https://hundesalon-nika.com/assets/images/brand/search-logo-clear-512.png',
+  'https://hundesalon-nika.com/assets/images/brand/logo.png',
   'https://hundesalon-nika.com/assets/images/favicon/favicon-search-512.png',
   'https://hundesalon-nika.com/de/',
 ];
@@ -68,7 +68,7 @@ report.logoSubmit = await withCdpSession({ port, targetPattern: /bing/i }, async
 
 for (const url of [
   'https://hundesalon-nika.com/de/',
-  'https://hundesalon-nika.com/assets/images/search-logo-clear-512.png',
+  'https://hundesalon-nika.com/assets/images/brand/search-logo-clear-512.png',
 ]) {
   const step = await withCdpSession({ port, targetPattern: /bing/i }, async ({ send, evalPage }) => {
     await send('Page.navigate', {
