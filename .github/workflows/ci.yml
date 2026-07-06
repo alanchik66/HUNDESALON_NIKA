@@ -30,6 +30,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Google gateway dependencies
+        run: npm --prefix integrations/google-gateway ci
+
+      - name: Audit dependencies
+        run: npm run audit:all
+
       - name: Validate
         run: npm run validate
 

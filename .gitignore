@@ -29,6 +29,7 @@ __pycache__/
 # ═══════════════ ВРЕМЕННЫЕ И СЛУЖЕБНЫЕ ФАЙЛЫ ═══════════════
 temp/
 tmp/
+terminals/
 test-results/
 .temp/
 *.tmp

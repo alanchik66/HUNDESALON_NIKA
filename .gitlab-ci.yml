@@ -25,11 +25,12 @@ qodana:
 # Зеркальный пайплайн GitHub Actions CI
 
 stages:
+  - security
   - validate
   - build
 
 variables:
-  NODE_VERSION: "24"
+  NODE_VERSION: '24'
 
 # ─── Кэширование npm ──────────────────────────────────────────────────
 .npm-cache: &npm-cache
@@ -37,9 +38,26 @@ variables:
     key:
       files:
         - package-lock.json
+        - integrations/google-gateway/package-lock.json
     paths:
       - node_modules/
+      - integrations/google-gateway/node_modules/
     policy: pull-push
+
+# ─── Аудит зависимостей (GitHub Dependabot parity) ─────────────────────
+dependency_audit:
+  stage: security
+  image: node:${NODE_VERSION}-alpine
+  <<: *npm-cache
+  before_script:
+    - npm ci --prefer-offline
+    - npm --prefix integrations/google-gateway ci --prefer-offline
+  script:
+    - npm run audit:all
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
 
 # ─── Валидация (линтеры + проверка ссылок) ─────────────────────────────
 validate:
@@ -49,7 +67,7 @@ validate:
   before_script:
     - npm ci --prefer-offline
   script:
-    - npm run lint
+    - npm run validate
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
