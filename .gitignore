@@ -30,6 +30,12 @@ __pycache__/
 temp/
 tmp/
 terminals/
+agent-tools/
+ua/
+install/
+.junie/
+exports/
+.ai/
 test-results/
 .temp/
 *.tmp
