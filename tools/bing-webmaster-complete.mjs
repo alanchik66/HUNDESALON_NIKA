@@ -6,7 +6,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getJson, openBingWebmasterSession, sleep as wait } from './lib/browser-cdp.mjs';
+import { getJson, openBingWebmasterSession, sleep } from './lib/browser-cdp.mjs';
 import { GMAIL_ACCOUNT, SITE_URL, siteQuery } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -217,7 +217,7 @@ try {
   for (const sec of sections) {
     console.log(`Bing WMT: ${sec.id}…`);
     report.sections.push(await runSection(session, sec));
-    await wait(800);
+    await sleep(800);
   }
 } finally {
   session.close();

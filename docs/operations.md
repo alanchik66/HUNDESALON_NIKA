@@ -33,6 +33,23 @@ If the message draft endpoint returns 401 after deploy: `npm run sync:service-ke
 | `npm run bing:automate` | Submit URLs + request indexing via Edge CDP |
 | `npm run bing:api` | Bing URL API — опционально; IndexNow уже уведомляет Bing (ключ в `.dev.vars`) |
 | `npm run sync:service-key` | Copy service key from `.dev.vars` -> Pages secret |
+| `npm run agents:setup` | GCP impersonation + Cloudflare env + MCP + WIF for all local AI agents |
+| `npm run google:setup-agents` | GCP only: gcloud profile + ADC impersonation |
+| `npm run google:setup-wif` | Workload Identity Federation for GitHub Actions / remote CI |
+| `npm run agents:reload-ides` | Reload Cursor/VS Code windows after env changes |
+
+## AI agents (GCP + Cloudflare)
+
+Project: `hundesalon-nika-shell-2026` · Region: `europe-west3` · SA: `ai-agents-admin@…`
+
+```bash
+npm run agents:setup
+```
+
+- **Local** (Cursor, VS Code, WebStorm, Grok): gcloud impersonation — no SA JSON keys (org policy blocks them).
+- **Remote** (Devin, CI): Cloud Shell script `tools/cloud-shell-gcp-bootstrap.sh` or WIF pool `ai-agents-pool` (GitHub OIDC).
+- **Cloudflare**: `CLOUDFLARE_API_TOKEN` from `.dev.vars` → user env + IDE terminals.
+- After setup: restart terminals or `npm run agents:reload-ides`.
 
 ## Bing favicon / indexing
 

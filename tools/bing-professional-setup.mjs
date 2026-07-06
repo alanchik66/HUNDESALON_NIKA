@@ -6,7 +6,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { evalPage, getJson, sleep as wait, withCdpSession } from './lib/browser-cdp.mjs';
+import { evalPage, getJson, sleep, withCdpSession } from './lib/browser-cdp.mjs';
 import { BING_INDEXNOW_COVERAGE, hasBingApiKey } from './lib/bing-api.mjs';
 import { GMAIL_ACCOUNT, MAIL_ACCOUNT, SITE_URL, siteQuery } from './lib/bing-wmt.mjs';
 
@@ -46,7 +46,7 @@ try {
 
 report.steps.account = await withCdp(async send => {
   await send('Page.navigate', { url: `https://www.bing.com/webmasters/home?siteUrl=${siteQ}` });
-  await wait(7000);
+  await sleep(7000);
   return evalPage(
     send,
     `
@@ -68,7 +68,7 @@ if (report.steps.account?.isGmail && !report.steps.account?.isMail) {
 
 report.steps.removeWrongProperty = await withCdp(async send => {
   await send('Page.navigate', { url: 'https://www.bing.com/webmasters/home' });
-  await wait(7000);
+  await sleep(7000);
   return evalPage(
     send,
     `
@@ -97,7 +97,7 @@ report.steps.removeWrongProperty = await withCdp(async send => {
 
 report.steps.sitemaps = await withCdp(async send => {
   await send('Page.navigate', { url: `https://www.bing.com/webmasters/sitemaps?siteUrl=${siteQ}` });
-  await wait(6000);
+  await sleep(6000);
   return evalPage(
     send,
     `
@@ -116,7 +116,7 @@ report.steps.sitemaps = await withCdp(async send => {
 
 report.steps.users = await withCdp(async send => {
   await send('Page.navigate', { url: `https://www.bing.com/webmasters/usermgmt?siteUrl=${siteQ}` });
-  await wait(6000);
+  await sleep(6000);
   return evalPage(
     send,
     `
@@ -152,7 +152,7 @@ for (const url of inspectUrls) {
     await send('Page.navigate', {
       url: `https://www.bing.com/webmasters/urlinspection?siteUrl=${siteQ}&urlToInspect=${encodeURIComponent(url)}`,
     });
-    await wait(8000);
+    await sleep(8000);
     return evalPage(
       send,
       `
@@ -187,7 +187,7 @@ for (const url of inspectUrls) {
     );
   });
   report.steps.inspections.push(step);
-  await wait(1500);
+  await sleep(1500);
 }
 
 report.steps.submitUrls = await withCdp(async send => {
@@ -204,7 +204,7 @@ report.steps.submitUrls = await withCdp(async send => {
     : inspectUrls;
   const payload = JSON.stringify(urls);
   await send('Page.navigate', { url: `https://www.bing.com/webmasters/submiturl?siteUrl=${siteQ}` });
-  await wait(7000);
+  await sleep(7000);
   return evalPage(
     send,
     `
@@ -227,7 +227,7 @@ report.steps.submitUrls = await withCdp(async send => {
 
 report.steps.indexnowPage = await withCdp(async send => {
   await send('Page.navigate', { url: `https://www.bing.com/webmasters/indexnow?siteUrl=${siteQ}` });
-  await wait(5000);
+  await sleep(5000);
   return evalPage(send, `return { url: location.href, text: (document.body?.innerText||'').slice(0, 800) };`);
 });
 
@@ -251,7 +251,7 @@ if (hasBingApiKey()) {
 
 report.steps.finalAudit = await withCdp(async send => {
   await send('Page.navigate', { url: `https://www.bing.com/webmasters/home?siteUrl=${siteQ}` });
-  await wait(6000);
+  await sleep(6000);
   return evalPage(
     send,
     `

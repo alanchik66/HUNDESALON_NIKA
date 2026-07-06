@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { getJson, sleep as wait, withCdpSession } from './lib/browser-cdp.mjs';
+import { getJson, sleep, withCdpSession } from './lib/browser-cdp.mjs';
 import { SITE_URL, WWW_SITE_URL, siteQuery } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -70,7 +70,7 @@ console.log('2/4 Bing Submit URLs — apex + www (до 100)…');
 report.bingSubmit = await withCdpSession({ port, targetPattern: /bing/i }, async ({ send, evalPage }) => {
   const payload = JSON.stringify(urls);
   await send('Page.navigate', { url: `https://www.bing.com/webmasters/submiturl?siteUrl=${siteQ}` });
-  await wait(8000);
+  await sleep(8000);
   return evalPage(`
     const urls = ${payload};
     const textarea = document.querySelector('textarea');
@@ -108,7 +108,7 @@ for (const url of priorityInspect) {
     await send('Page.navigate', {
       url: `https://www.bing.com/webmasters/urlinspection?siteUrl=${siteQ}&urlToInspect=${encodeURIComponent(url)}`,
     });
-    await wait(9000);
+    await sleep(9000);
     return evalPage(`
       const target = '${url}';
       const input = document.querySelector('input[placeholder*="URL" i], input[type="url"], input[type="search"], input[type="text"]');
@@ -122,13 +122,13 @@ for (const url of priorityInspect) {
     `);
   });
   report.inspections.push(step);
-  await wait(1000);
+  await sleep(1000);
 }
 
 console.log('4/4 Bing — свойство www.hundesalon-nika.com…');
 report.wwwProperty = await withCdpSession({ port, targetPattern: /bing/i }, async ({ send, evalPage }) => {
   await send('Page.navigate', { url: 'https://www.bing.com/webmasters/home' });
-  await wait(7000);
+  await sleep(7000);
   const listed = await evalPage(`
     const body = document.body?.innerText || '';
     return { hasWww: body.includes('www.hundesalon-nika.com'), sample: body.slice(0, 500) };
@@ -136,7 +136,7 @@ report.wwwProperty = await withCdpSession({ port, targetPattern: /bing/i }, asyn
   if (listed.hasWww) return { alreadyListed: true };
 
   await send('Page.navigate', { url: 'https://www.bing.com/webmasters/' });
-  await wait(6000);
+  await sleep(6000);
   await evalPage(`
     const input = document.querySelector('input');
     if (input) { setNativeValue(input, '${wwwSiteUrl}'); await sleep(500); }

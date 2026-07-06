@@ -7,11 +7,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getJson, openBingWebmasterSession } from './lib/browser-cdp.mjs';
 import { upsertDevVar } from './lib/cloudflare-auth.mjs';
+import { MAIL_ACCOUNT, SITE_URL, siteQuery } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.BING_MAIL_EDGE_PORT || process.env.BING_EDGE_PORT || 9224);
-const siteQ = encodeURIComponent('https://hundesalon-nika.com/');
-const mailAccount = 'snaiper1984@mail.ru';
+const siteQ = siteQuery(SITE_URL);
+const mailAccount = MAIL_ACCOUNT;
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
