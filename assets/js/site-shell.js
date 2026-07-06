@@ -169,26 +169,18 @@
     ru: {
       openMenu: 'Открыть меню',
       closeMenu: 'Закрыть меню',
-      expandGallery: 'Открыть раздел галереи',
-      collapseGallery: 'Скрыть раздел галереи',
     },
     uk: {
       openMenu: 'Відкрити меню',
       closeMenu: 'Закрити меню',
-      expandGallery: 'Відкрити розділ галереї',
-      collapseGallery: 'Згорнути розділ галереї',
     },
     de: {
       openMenu: 'Menü öffnen',
       closeMenu: 'Menü schließen',
-      expandGallery: 'Galeriebereich öffnen',
-      collapseGallery: 'Galeriebereich schließen',
     },
     en: {
       openMenu: 'Open menu',
       closeMenu: 'Close menu',
-      expandGallery: 'Open gallery section',
-      collapseGallery: 'Close gallery section',
     },
   };
 
@@ -3797,10 +3789,12 @@
     const mediaLibraryCopy = context.mediaLibraryCopy;
 
     const activeKey = (() => {
+      if (currentRouteNormalized === 'vvedenie.html') return 'intro';
       if (currentRouteNormalized === 'o-nas.html') return 'about';
       if (currentRouteNormalized === 'nashi-uslugi.html') return 'services';
       if (currentRouteNormalized === 'prays-list.html') return 'price';
-      if (currentRouteNormalized === 'galereya.html') return 'gallery';
+      if (currentRouteNormalized === 'galereya.html' || currentRouteNormalized === 'do-i-posle.html') return 'gallery';
+      if (currentRouteNormalized === 'blog.html' || currentRouteNormalized.startsWith('blog/')) return 'blog';
       if (currentRouteNormalized === 'kontakty.html') return 'contacts';
       return '';
     })();
@@ -3825,26 +3819,27 @@
 
     const desktopSocialBarMarkup = socialBarMarkup;
 
+    const activeClass = key => (activeKey === key ? ' active' : '');
+    const activeAria = key => (activeKey === key ? ' aria-current="page"' : '');
+    const mobileLinkAttrs = key => `${activeKey === key ? ' class="active"' : ''}${activeAria(key)}`;
+
     const primaryLinks =
       context.currentLang === 'ru'
         ? `
-  <a href="${pathPrefix}vvedenie.html">${copy.intro}</a>
-  <a href="${pathPrefix}o-nas.html">${copy.about}</a>
-  <a href="${pathPrefix}nashi-uslugi.html">${copy.services}</a>
-  <a href="${pathPrefix}prays-list.html">${copy.price}</a>
-  <a href="${pathPrefix}galereya.html">${copy.gallery}</a>
-  <a href="${pathPrefix}blog.html">${copy.blog}</a>
-  <a href="${pathPrefix}kontakty.html">${copy.contacts}</a>`
+  <a href="${pathPrefix}vvedenie.html"${mobileLinkAttrs('intro')}>${copy.intro}</a>
+  <a href="${pathPrefix}o-nas.html"${mobileLinkAttrs('about')}>${copy.about}</a>
+  <a href="${pathPrefix}nashi-uslugi.html"${mobileLinkAttrs('services')}>${copy.services}</a>
+  <a href="${pathPrefix}prays-list.html"${mobileLinkAttrs('price')}>${copy.price}</a>
+  <a href="${pathPrefix}galereya.html"${mobileLinkAttrs('gallery')}>${copy.gallery}</a>
+  <a href="${pathPrefix}blog.html"${mobileLinkAttrs('blog')}>${copy.blog}</a>
+  <a href="${pathPrefix}kontakty.html"${mobileLinkAttrs('contacts')}>${copy.contacts}</a>`
         : `
-  <a href="${pathPrefix}o-nas.html">${copy.about}</a>
-  <a href="${pathPrefix}nashi-uslugi.html">${copy.services}</a>
-  <a href="${pathPrefix}prays-list.html">${copy.price}</a>
-  <a href="${pathPrefix}galereya.html">${copy.gallery}</a>
-  <a href="${pathPrefix}blog.html">${copy.blog}</a>
-  <a href="${pathPrefix}kontakty.html">${copy.contacts}</a>`;
-
-    const activeClass = key => (activeKey === key ? ' active' : '');
-    const activeAria = key => (activeKey === key ? ' aria-current="page"' : '');
+  <a href="${pathPrefix}o-nas.html"${mobileLinkAttrs('about')}>${copy.about}</a>
+  <a href="${pathPrefix}nashi-uslugi.html"${mobileLinkAttrs('services')}>${copy.services}</a>
+  <a href="${pathPrefix}prays-list.html"${mobileLinkAttrs('price')}>${copy.price}</a>
+  <a href="${pathPrefix}galereya.html"${mobileLinkAttrs('gallery')}>${copy.gallery}</a>
+  <a href="${pathPrefix}blog.html"${mobileLinkAttrs('blog')}>${copy.blog}</a>
+  <a href="${pathPrefix}kontakty.html"${mobileLinkAttrs('contacts')}>${copy.contacts}</a>`;
     const isHomeRoute = currentRouteNormalized === '' || currentRouteNormalized === 'index.html';
 
     const secondaryLinks = `

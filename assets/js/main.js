@@ -14,8 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const menuA11y = siteShell.menuA11y || {
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
-    expandGallery: 'Open gallery section',
-    collapseGallery: 'Close gallery section',
   };
   siteShell.initLanguageDropdown?.();
 
@@ -136,9 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const burger = getByAnyId('burgerBtn', 'burger-btn');
   const mobileNav = getByAnyId('mobile-nav', 'mobileNav');
   const overlay = getByAnyId('mobile-nav-overlay', 'mobileNavOverlay');
-  const mobileGalleryBtn = getByAnyId('mobileGalleryBtn', 'mobile-gallery-btn');
-  const mobileGalleryMenu = getByAnyId('mobileGalleryMenu', 'mobile-gallery-menu');
-
   const createLiquidScrollbar = ({
     scrollTarget,
     thumbParent,
@@ -607,15 +602,6 @@ document.addEventListener('DOMContentLoaded', () => {
       refreshMobileNavScrollbar();
     };
 
-    const setGalleryMenuState = isOpen => {
-      if (!mobileGalleryBtn || !mobileGalleryMenu) return;
-      mobileGalleryBtn.classList.toggle('is-open', isOpen);
-      mobileGalleryBtn.setAttribute('aria-expanded', String(isOpen));
-      mobileGalleryBtn.setAttribute('aria-label', isOpen ? menuA11y.collapseGallery : menuA11y.expandGallery);
-      mobileGalleryMenu.classList.toggle('open', isOpen);
-      refreshMobileNavScrollbar();
-    };
-
     const setMenuState = (isOpen, { restoreFocus = true } = {}) => {
       if (isOpen && !isAtMenuOpenTop()) {
         return;
@@ -673,7 +659,6 @@ document.addEventListener('DOMContentLoaded', () => {
           mobileNav.querySelector(focusableSelector)?.focus({ preventScroll: true });
         });
       } else {
-        setGalleryMenuState(false);
         if (restoreFocus) {
           lastFocusedElement?.focus({ preventScroll: true });
         }
@@ -707,7 +692,6 @@ document.addEventListener('DOMContentLoaded', () => {
       mobileNav.inert = true;
     }
     syncMobileNavLayout();
-    setGalleryMenuState(false);
     refreshMobileNavScrollbar();
     normalizeNavLockState();
 
@@ -796,7 +780,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const link = target.closest('a[href]');
       if (!link || !mobileNav.contains(link)) return;
 
-      setGalleryMenuState(false);
       closeMenu({ restoreFocus: false });
     };
 
@@ -816,13 +799,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (event.type === 'touchend' || event.type === 'pointerup') {
         window.setTimeout(() => {
           if (!isMenuOpen()) return;
-          setGalleryMenuState(false);
           closeMenu({ restoreFocus: false });
         }, 0);
         return;
       }
 
-      setGalleryMenuState(false);
       closeMenu({ restoreFocus: false });
     };
 
@@ -840,28 +821,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // принудительно закрываем меню после смены hash.
     window.addEventListener('hashchange', () => {
       if (!isMenuOpen()) return;
-      setGalleryMenuState(false);
       closeMenu({ restoreFocus: false });
     });
-
-    if (mobileGalleryBtn && mobileGalleryMenu) {
-      // Кнопка галереи открывает/закрывает только dropdown, не закрывает меню
-      mobileGalleryBtn.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        setGalleryMenuState(!mobileGalleryMenu.classList.contains('open'));
-      });
-
-      // Другие кнопки в меню закрывают dropdown если он открыт
-      const navButtons = mobileNav.querySelectorAll('button:not(#mobileGalleryBtn)');
-      navButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-          if (mobileGalleryMenu.classList.contains('open')) {
-            setGalleryMenuState(false);
-          }
-        });
-      });
-    }
   }
 
   /* ========== HEADER SCROLL + SOCIAL BAR + HERO PARALLAX ========== */
