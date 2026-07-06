@@ -38,6 +38,7 @@ If the message draft endpoint returns 401 after deploy: `npm run sync:service-ke
 | `npm run google:setup-agents` | GCP only: gcloud profile + ADC impersonation |
 | `npm run google:setup-wif` | Workload Identity Federation for GitHub Actions / remote CI |
 | `npm run agents:reload-ides` | Reload Cursor/VS Code windows after env changes |
+| `npm run ops:finish-manual` | Bing Site Scan + Clarity + CSAM dashboard steps (Edge CDP) |
 
 ## AI agents (GCP + Cloudflare)
 
@@ -99,15 +100,14 @@ Without token: Dashboard → **Caching → Purge Everything** after HTML deploys
 | **Email Routing** (`info@`) | OK | Dashboard → Email → Routing: active, DNS configured; mail to `info@` is forwarded |
 | **CSAM notify email** | Pending verify | Use `info@hundesalon-nika.com` (matches site imprint); see below |
 
-**CSAM (one-time, ~2 min):**
+**CSAM (one-time):**
 
 ```bash
-npm run cf:open-csam-setup
+npm run ops:finish-manual
+# or: npm run cf:open-csam-setup
 ```
 
-1. Email field: `info@hundesalon-nika.com` (already set in Dashboard if you followed the assistant).
-2. Open the inbox for `info@` (or Gmail if routing forwards there) and click Cloudflare’s verification link.
-3. On the CSAM page, click **Submit** / **Absenden** when the button is enabled.
+Notify email: `info@hundesalon-nika.com` (forwards to Gmail via Email Routing). Verify link in inbox → Dashboard **Submit**.
 
 Resend vs Routing: **Resend** sends mail from the site (`noreply@hundesalon-nika.com`). **Email Routing** receives mail at `@hundesalon-nika.com`. Both are independent and already configured for production.
 

@@ -40,16 +40,18 @@ async function runBingSiteScan() {
     await sleep(2500);
 
     const started = await s.eval(`
-      const nameInput = Array.from(document.querySelectorAll('input')).find(el =>
-        visible(el) && (/scan|name|имя/i.test(el.placeholder || '') || /text|search/i.test(el.type || ''))
-      );
-      if (nameInput && !nameInput.value) {
-        setNativeValue(nameInput, 'HUNDESALON SEO scan ${new Date().toISOString().slice(0, 10)}');
+      const nameInput = document.querySelector('#scanNameId');
+      const limitInput = document.querySelector('#scanLimit');
+      if (nameInput) setNativeValue(nameInput, 'HUNDESALON SEO scan ${new Date().toISOString().slice(0, 10)}');
+      if (limitInput) setNativeValue(limitInput, '500');
+      await sleep(1000);
+
+      let submit = null;
+      for (const el of document.querySelectorAll('button, [role=button]')) {
+        if (!visible(el) || el.disabled) continue;
+        if (/^start scan$/i.test(txt(el))) { el.click(); submit = txt(el); break; }
       }
-      await sleep(800);
-      let submit = clickMatch('^start scan$|^start$|^начать$|^scan$|run scan|запустить');
-      if (!submit) submit = clickMatch('start new scan|начать новое сканирование');
-      await sleep(6000);
+      await sleep(10000);
       const body = document.body?.innerText || '';
       const active = /scanning|сканир|in progress|выполняется|queued|очеред|scheduled|заплан|completed|заверш/i.test(body);
       const notStarted = /no scans initiated|сканирование не проводилось|not scanned/i.test(body);
