@@ -114,14 +114,42 @@ if (fs.existsSync(path.join(root, 'assets/js/main.js'))) {
 }
 
 for (const lang of ['de', 'en', 'ru', 'uk']) {
-  assert(
-    fs.existsSync(path.join(root, lang, 'blog', 'index.html')),
-    `Missing blog index page: ${lang}/blog/index.html`
-  );
+  const blogIndexPath = path.join(root, lang, 'blog', 'index.html');
+  assert(fs.existsSync(blogIndexPath), `Missing blog index page: ${lang}/blog/index.html`);
   assert(
     !fs.existsSync(path.join(root, lang, 'blog.html')),
     `Legacy blog page must be removed: ${lang}/blog.html`
   );
+
+  const blogIndex = read(`${lang}/blog/index.html`);
+  assert(
+    blogIndex.includes(`https://hundesalon-nika.com/${lang}/blog/`),
+    `${lang}/blog/index.html: canonical must point to /${lang}/blog/`
+  );
+  for (const hrefLang of ['de', 'en', 'ru', 'uk']) {
+    assert(
+      blogIndex.includes(`hreflang="${hrefLang}"`) &&
+        blogIndex.includes(`https://hundesalon-nika.com/${hrefLang}/blog/`),
+      `${lang}/blog/index.html: missing hreflang="${hrefLang}" blog URL`
+    );
+  }
+  assert(
+    blogIndex.includes('../../assets/js/site-shell.js'),
+    `${lang}/blog/index.html: asset paths must use ../../assets like de/blog/index.html`
+  );
+}
+
+for (const lang of ['de', 'en', 'ru', 'uk']) {
+  const langDir = path.join(root, lang);
+  if (!fs.existsSync(langDir)) continue;
+  for (const file of walk(langDir)) {
+    if (!file.endsWith('.html')) continue;
+    const relativePath = path.relative(root, file).replaceAll(path.sep, '/');
+    const content = fs.readFileSync(file, 'utf8');
+    if (content.includes('blog.html')) {
+      failures.push(`${relativePath}: contains legacy blog.html reference; use blog/ for all locales`);
+    }
+  }
 }
 
 if (fs.existsSync(path.join(root, '_redirects'))) {
@@ -136,8 +164,22 @@ if (fs.existsSync(path.join(root, '_redirects'))) {
     '/assets/images/logo.png /assets/images/brand/logo.png 301',
     '/assets/images/gallery1.jpg /assets/images/hero/slide-01.jpg 301',
     '/assets/images/icon-pak/Gotovie iconki dlya saita/Home.png /assets/images/icons/home.png 301',
+    '/de/blog.html /de/blog/ 301',
+    '/en/blog.html /en/blog/ 301',
+    '/ru/blog.html /ru/blog/ 301',
+    '/uk/blog.html /uk/blog/ 301',
   ]) {
     assert(redirects.includes(rule), `_redirects missing canonical rule: ${rule}`);
+  }
+}
+
+if (fs.existsSync(path.join(root, 'sitemap.xml'))) {
+  const sitemap = read('sitemap.xml');
+  for (const lang of ['de', 'en', 'ru', 'uk']) {
+    assert(
+      sitemap.includes(`https://hundesalon-nika.com/${lang}/blog/</loc>`),
+      `sitemap.xml missing blog index URL for ${lang}`
+    );
   }
 }
 
