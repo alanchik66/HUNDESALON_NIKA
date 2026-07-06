@@ -6,6 +6,7 @@ import { exec } from 'node:child_process';
 const site = encodeURIComponent('https://hundesalon-nika.com/');
 const urls = [
   `https://www.bing.com/webmasters/home?siteUrl=${site}`,
+  `https://www.bing.com/webmasters/settings/apiaccess?siteUrl=${site}`,
   `https://www.bing.com/webmasters/urlinspection?siteUrl=${site}`,
   `https://www.bing.com/webmasters/indexnow?siteUrl=${site}`,
 ];
@@ -22,5 +23,6 @@ for (const url of urls) {
   exec(start);
 }
 
-console.log('\nPriority: URL Inspection → https://hundesalon-nika.com/de/ → Request indexing');
-console.log('IndexNow tab should show recent submissions after npm run seo:indexnow');
+console.log('\nAPI key: Settings → API Access → Generate → npm run bing:set-api-key');
+console.log('Or automated: npm run bing:api:setup (Edge CDP, mail.ru account)');
+console.log('Priority: URL Inspection → https://hundesalon-nika.com/de/ → Request indexing');

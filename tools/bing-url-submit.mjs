@@ -16,8 +16,10 @@ loadDevVars();
 
 const apiKey = process.env.BING_WEBMASTER_API_KEY || process.env.BING_API_KEY || '';
 if (!apiKey) {
-  console.log('Skip Bing URL API: set BING_WEBMASTER_API_KEY in .dev.vars (Bing Webmaster → Settings → API Access).');
-  console.log('IndexNow (npm run seo:indexnow) already notifies Bing without this key.');
+  console.warn('Skip Bing URL API: BING_WEBMASTER_API_KEY is not configured.');
+  console.warn('Setup: npm run bing:edge → sign in (mail.ru) → npm run bing:fetch-api-key');
+  console.warn('Or manual: npm run bing:set-api-key');
+  console.warn('IndexNow (npm run seo:indexnow) already notifies Bing; API adds batch SubmitUrl for all listed URLs.');
   process.exit(0);
 }
 
