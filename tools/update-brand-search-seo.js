@@ -95,7 +95,6 @@ function logoObject() {
     '@type': 'ImageObject',
     '@id': `${domain}/#logo`,
     url: searchLogo,
-    contentUrl: searchLogo,
     width: 512,
     height: 512,
   };

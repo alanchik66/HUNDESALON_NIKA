@@ -108,6 +108,11 @@
     "sync:service-key": "node tools/sync-service-gateway-from-devvars.mjs",
     "service-key:validate": "node tools/validate-service-gateway-key.mjs",
     "google:setup-platform": "node tools/setup-google-platform.mjs",
+    "google:oauth-bootstrap": "node tools/google-oauth-console-bootstrap.mjs",
+    "google:oauth-create-client": "node tools/google-auth-platform-create-desktop-client.mjs",
+    "google:oauth-playwright": "node tools/google-oauth-playwright-setup.mjs",
+    "google:sync-local": "node tools/sync-google-local-secrets.mjs",
+    "mcp:configure": "node tools/configure-mcp-clients.mjs",
     "check:message-draft": "node tools/check-message-draft-live.mjs",
     "slack:test": "node tools/slack-test-webhook.mjs",
     "check:prod": "npm run check:live-html && npm run google:gsc:audit && npm run check:message-draft",
@@ -117,7 +122,6 @@
     "sync:gitlab:push": "git fetch gitlab && git push gitlab main:main --force-with-lease",
     "sync:gitlab:mr": "node -e \"console.error('GitLab sync MR disabled: repository must keep only main. Use npm run git:push.'); process.exit(1)\"",
     "check:live-html": "node tools/check-live-html.mjs",
-    "print-report": "node -e \"console.log(require('fs').readFileSync('fix-repo-report.txt', 'utf8').substring(0, 5000))\"",
     "rollout:plan": "node -e \"console.log('See docs/operations.md')\""
   },
   "keywords": [

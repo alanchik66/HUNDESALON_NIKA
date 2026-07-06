@@ -139,6 +139,10 @@ tools/google-search-console-report.json
 *.lockb
 
 # ═══════════════ ЛОКАЛЬНЫЕ AI / AGENT НАСТРОЙКИ (НЕ ДЛЯ САЙТА) ═══════════════
+.codex/
+.secrets/
+.vscode/mcp.json
+tools/_*.mjs
 AGENTS.md
 .agents/
 .cursorrules

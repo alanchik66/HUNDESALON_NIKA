@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { randomBytes } from 'node:crypto';
-import { existsSync, readFileSync, readdirSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -51,20 +51,74 @@ function parseEmailList(value, fallback = []) {
   });
 }
 
+const SECRETS_DIR = join(process.cwd(), '.secrets');
+const ADC_PATH = join(homedir(), 'AppData', 'Roaming', 'gcloud', 'application_default_credentials.json');
+const DEFAULT_CALENDAR_ID = 'ddf6fc992a66cc1808cdb0b6d99594cb20b548e692b1b6778614e3fdb26b5589@group.calendar.google.com';
+
 function latestOAuthClientJson() {
-  const downloads = join(homedir(), 'Downloads');
-  if (!existsSync(downloads)) return '';
-  const candidates = readdirSync(downloads, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && /\.json$/i.test(entry.name))
-    .filter((entry) => /client_secret|oauth|credentials/i.test(entry.name))
-    .map((entry) => {
-      const fullPath = join(downloads, entry.name);
-      return { fullPath, mtimeMs: statSync(fullPath).mtimeMs };
-    });
+  const roots = [join(homedir(), 'Downloads'), SECRETS_DIR];
+  const candidates = [];
+
+  for (const root of roots) {
+    if (!existsSync(root)) continue;
+    for (const entry of readdirSync(root, { withFileTypes: true })) {
+      if (!entry.isFile() || !/\.json$/i.test(entry.name)) continue;
+      if (!/client_secret|oauth|credentials|desktop/i.test(entry.name)) continue;
+      const fullPath = join(root, entry.name);
+      candidates.push({ fullPath, mtimeMs: statSync(fullPath).mtimeMs });
+    }
+  }
 
   return candidates
     .sort((a, b) => b.mtimeMs - a.mtimeMs)
     .map((item) => item.fullPath)[0] || '';
+}
+
+function readDevVarsValue(key) {
+  const devVarsPath = join(process.cwd(), '.dev.vars');
+  if (!existsSync(devVarsPath)) return '';
+  const line = readFileSync(devVarsPath, 'utf8')
+    .split(/\r?\n/)
+    .find((entry) => entry.startsWith(`${key}=`));
+  if (!line) return '';
+  const value = line.slice(key.length + 1).trim();
+  return value && !/^YOUR_|^ВАШ_/i.test(value) ? value : '';
+}
+
+function resolveOAuthClient(args = {}) {
+  const cliClientId = String(args['client-id'] || process.env.GOOGLE_OAUTH_CLIENT_ID || readDevVarsValue('GOOGLE_OAUTH_CLIENT_ID') || '').trim();
+  const cliClientSecret = String(args['client-secret'] || process.env.GOOGLE_OAUTH_CLIENT_SECRET || readDevVarsValue('GOOGLE_OAUTH_CLIENT_SECRET') || '').trim();
+  if (cliClientId && cliClientSecret) {
+    return { clientId: cliClientId, clientSecret: cliClientSecret, clientFile: '' };
+  }
+
+  const clientFile = args['client-file'] ? resolve(String(args['client-file'])) : latestOAuthClientJson();
+  if (clientFile && existsSync(clientFile)) {
+    const client = readOAuthClient(clientFile);
+    return { ...client, clientFile };
+  }
+
+  if (args['allow-gcloud-adc'] && existsSync(ADC_PATH)) {
+    const adc = JSON.parse(readFileSync(ADC_PATH, 'utf8'));
+    if (adc.client_id && adc.client_secret) {
+      console.warn('Using gcloud ADC client. Calendar/Sheets scopes may be blocked by Google; prefer a Desktop OAuth client from Google Auth Platform.');
+      return {
+        clientId: adc.client_id,
+        clientSecret: adc.client_secret,
+        clientFile: ADC_PATH,
+      };
+    }
+  }
+
+  throw new Error([
+    'OAuth Desktop client credentials were not found.',
+    'Google Auth Platform -> Clients -> Create client -> Desktop app -> Download JSON.',
+    'Then rerun with one of:',
+    '  --client-file <desktop-app.json>',
+    '  --wait-for-client-json (auto-waits for Downloads/.secrets/)',
+    '  --client-id + --client-secret',
+    '  GOOGLE_OAUTH_CLIENT_ID + GOOGLE_OAUTH_CLIENT_SECRET in env/.dev.vars',
+  ].join('\n'));
 }
 
 function readOAuthClient(filePath) {
@@ -90,6 +144,27 @@ function openBrowser(url) {
   }
   const command = process.platform === 'darwin' ? 'open' : 'xdg-open';
   spawn(command, [url], { detached: true, stdio: 'ignore' }).unref();
+}
+
+function parseOAuthCallbackUrl(callbackUrl) {
+  const url = new URL(callbackUrl);
+  if (!url.pathname.endsWith('/oauth2callback')) {
+    throw new Error('Callback URL must point to /oauth2callback');
+  }
+
+  const code = url.searchParams.get('code');
+  const error = url.searchParams.get('error');
+  if (error) {
+    throw new Error(`OAuth error: ${error}`);
+  }
+  if (!code) {
+    throw new Error('Callback URL is missing the OAuth code parameter');
+  }
+
+  const port = Number(url.port || (url.protocol === 'https:' ? 443 : 80));
+  const needsPort = port && port !== 80 && port !== 443;
+  const redirectUri = `${url.protocol}//${url.hostname}${needsPort ? `:${port}` : ''}/oauth2callback`;
+  return { code, redirectUri };
 }
 
 async function waitForOAuthCode({ clientId, port, state }) {
@@ -129,7 +204,7 @@ async function waitForOAuthCode({ clientId, port, state }) {
         }
 
         response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }).end(
-          '<!doctype html><meta charset="utf-8"><title>HUNDESALON NIKA</title><body><h1>Google connected</h1><p>You can close this tab and return to Codex.</p></body>'
+          '<!doctype html><meta charset="utf-8"><title>HUNDESALON NIKA</title><body><h1>Google connected</h1><p>Authorization received. You can close this tab and return to the terminal.</p></body>'
         );
         resolvePromise({ code, redirectUri });
         server.close();
@@ -397,12 +472,37 @@ async function readExistingGoogleResources(accessToken, args) {
   };
 }
 
+async function waitForOAuthClientJson(timeoutMs = 180000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const filePath = latestOAuthClientJson();
+    if (filePath) return filePath;
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, 2000));
+  }
+  return '';
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const clientFile = args['client-file'] ? resolve(String(args['client-file'])) : latestOAuthClientJson();
-  if (!clientFile || !existsSync(clientFile)) {
-    throw new Error('OAuth client JSON was not found. Download the Desktop app JSON from Google Auth Platform first.');
+  if (args['open-client-create']) {
+    openBrowser(`https://console.cloud.google.com/auth/clients/create?project=hundesalon-nika-shell-2026`);
+    console.log('Opened Google Auth Platform client creation page.');
+    if (!args['callback-url']) return;
   }
+
+  let oauthClient;
+  try {
+    oauthClient = resolveOAuthClient(args);
+  } catch (error) {
+    if (!args['wait-for-client-json']) throw error;
+    openBrowser(`https://console.cloud.google.com/auth/clients/create?project=hundesalon-nika-shell-2026`);
+    console.log('Create a Desktop OAuth client and download JSON to Downloads/. Waiting up to 3 minutes...');
+    const downloaded = await waitForOAuthClientJson();
+    if (!downloaded) throw error;
+    oauthClient = { ...readOAuthClient(downloaded), clientFile: downloaded };
+  }
+
+  const { clientId, clientSecret, clientFile } = oauthClient;
 
   const salonEmail = String(args['salon-email'] || process.env.SALON_EMAIL || DEFAULT_SALON_EMAIL).trim();
   const adminEmails = parseEmailList(
@@ -418,13 +518,30 @@ async function main() {
   const clientEmailFrom = String(args['client-email-from'] || process.env.CLIENT_EMAIL_FROM || DEFAULT_CLIENT_EMAIL_FROM).trim();
   const gmailSender = String(args['gmail-sender'] || process.env.GMAIL_SENDER || '').trim();
   const prefix = String(args.prefix || DEFAULT_RESOURCE_PREFIX).trim();
-  const { clientId, clientSecret } = readOAuthClient(clientFile);
   const port = Number(args.port || 53682);
   const state = randomBytes(16).toString('hex');
-  const { code, redirectUri } = await waitForOAuthCode({ clientId, port, state });
+  const callbackUrl = String(args['callback-url'] || '').trim();
+  const { code, redirectUri } = callbackUrl
+    ? parseOAuthCallbackUrl(callbackUrl)
+    : await waitForOAuthCode({ clientId, port, state });
   const token = await exchangeCode({ clientId, clientSecret, code, redirectUri });
-  const resources = await readExistingGoogleResources(token.access_token, args)
-    || await createGoogleResources(token.access_token, shareEmails, prefix);
+  const resources = await readExistingGoogleResources(token.access_token, {
+    ...args,
+    'calendar-id': args['calendar-id'] || process.env.GOOGLE_CALENDAR_ID || readDevVarsValue('GOOGLE_CALENDAR_ID') || DEFAULT_CALENDAR_ID,
+    'sheet-id': args['sheet-id'] || process.env.SHEET_ID || readDevVarsValue('SHEET_ID'),
+    'drive-folder-id': args['drive-folder-id'] || process.env.DRIVE_UPLOAD_FOLDER || readDevVarsValue('DRIVE_UPLOAD_FOLDER'),
+  }) || await createGoogleResources(token.access_token, shareEmails, prefix);
+
+  if (!existsSync(SECRETS_DIR)) {
+    mkdirSync(SECRETS_DIR, { recursive: true });
+  }
+  writeFileSync(join(SECRETS_DIR, 'google-oauth-token.json'), JSON.stringify({
+    client_id: clientId,
+    refresh_token: token.refresh_token,
+    scope: token.scope,
+    token_type: token.token_type,
+    updated_at: new Date().toISOString(),
+  }, null, 2), 'utf8');
 
   const cloudflare = await updateCloudflareSecrets({
     GOOGLE_OAUTH_CLIENT_ID: clientId,
@@ -445,7 +562,7 @@ async function main() {
   });
 
   console.log(JSON.stringify({
-    clientFile: basename(clientFile),
+    clientFile: clientFile ? basename(clientFile) : 'cli/env',
     calendarId: resources.calendarId,
     spreadsheetId: resources.spreadsheetId,
     driveFolderId: resources.driveFolderId,
