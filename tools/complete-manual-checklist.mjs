@@ -54,7 +54,7 @@ async function runBingSiteScan() {
       const active = /scanning|сканир|in progress|выполняется|queued|очеред|scheduled|заплан|completed|заверш/i.test(body);
       const notStarted = /no scans initiated|сканирование не проводилось|not scanned/i.test(body);
       return {
-        opened,
+        opened: ${JSON.stringify(opened)},
         submit,
         active: active && !notStarted,
         notStarted,
