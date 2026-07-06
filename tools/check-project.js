@@ -92,8 +92,8 @@ if (fs.existsSync(path.join(root, 'assets/js/site-shell.js'))) {
     'site-shell.js: gallery nav must expose submenu markup for galereya and do-i-posle'
   );
   assert(
-    siteShell.includes('${pathPrefix}blog/') && !siteShell.includes('${pathPrefix}blog.html'),
-    'site-shell.js: blog nav must point to /blog/ folder index'
+    siteShell.includes('${pathPrefix}blog/blog.html'),
+    'site-shell.js: blog nav must point to blog/blog.html in each locale'
   );
   assert(
     siteShell.includes('do-i-posle.html') && siteShell.includes('galleryAllHint'),
@@ -114,28 +114,32 @@ if (fs.existsSync(path.join(root, 'assets/js/main.js'))) {
 }
 
 for (const lang of ['de', 'en', 'ru', 'uk']) {
-  const blogIndexPath = path.join(root, lang, 'blog', 'index.html');
-  assert(fs.existsSync(blogIndexPath), `Missing blog index page: ${lang}/blog/index.html`);
+  const blogPagePath = path.join(root, lang, 'blog', 'blog.html');
+  assert(fs.existsSync(blogPagePath), `Missing blog page: ${lang}/blog/blog.html`);
+  assert(
+    !fs.existsSync(path.join(root, lang, 'blog', 'index.html')),
+    `Legacy blog index must be removed: ${lang}/blog/index.html`
+  );
   assert(
     !fs.existsSync(path.join(root, lang, 'blog.html')),
     `Legacy blog page must be removed: ${lang}/blog.html`
   );
 
-  const blogIndex = read(`${lang}/blog/index.html`);
+  const blogPage = read(`${lang}/blog/blog.html`);
   assert(
-    blogIndex.includes(`https://hundesalon-nika.com/${lang}/blog/`),
-    `${lang}/blog/index.html: canonical must point to /${lang}/blog/`
+    blogPage.includes(`https://hundesalon-nika.com/${lang}/blog/blog.html`),
+    `${lang}/blog/blog.html: canonical must point to /${lang}/blog/blog.html`
   );
   for (const hrefLang of ['de', 'en', 'ru', 'uk']) {
     assert(
-      blogIndex.includes(`hreflang="${hrefLang}"`) &&
-        blogIndex.includes(`https://hundesalon-nika.com/${hrefLang}/blog/`),
-      `${lang}/blog/index.html: missing hreflang="${hrefLang}" blog URL`
+      blogPage.includes(`hreflang="${hrefLang}"`) &&
+        blogPage.includes(`https://hundesalon-nika.com/${hrefLang}/blog/blog.html`),
+      `${lang}/blog/blog.html: missing hreflang="${hrefLang}" blog URL`
     );
   }
   assert(
-    blogIndex.includes('../../assets/js/site-shell.js'),
-    `${lang}/blog/index.html: asset paths must use ../../assets like de/blog/index.html`
+    blogPage.includes('../../assets/js/site-shell.js'),
+    `${lang}/blog/blog.html: asset paths must use ../../assets like de/blog/blog.html`
   );
 }
 
@@ -146,8 +150,8 @@ for (const lang of ['de', 'en', 'ru', 'uk']) {
     if (!file.endsWith('.html')) continue;
     const relativePath = path.relative(root, file).replaceAll(path.sep, '/');
     const content = fs.readFileSync(file, 'utf8');
-    if (content.includes('blog.html')) {
-      failures.push(`${relativePath}: contains legacy blog.html reference; use blog/ for all locales`);
+    if (!relativePath.includes('/blog/') && /href=["']blog\.html["']/.test(content)) {
+      failures.push(`${relativePath}: contains legacy root blog.html reference; use blog/blog.html`);
     }
   }
 }
@@ -164,10 +168,14 @@ if (fs.existsSync(path.join(root, '_redirects'))) {
     '/assets/images/logo.png /assets/images/brand/logo.png 301',
     '/assets/images/gallery1.jpg /assets/images/hero/slide-01.jpg 301',
     '/assets/images/icon-pak/Gotovie iconki dlya saita/Home.png /assets/images/icons/home.png 301',
-    '/de/blog.html /de/blog/ 301',
-    '/en/blog.html /en/blog/ 301',
-    '/ru/blog.html /ru/blog/ 301',
-    '/uk/blog.html /uk/blog/ 301',
+    '/de/blog.html /de/blog/blog.html 301',
+    '/en/blog.html /en/blog/blog.html 301',
+    '/ru/blog.html /ru/blog/blog.html 301',
+    '/uk/blog.html /uk/blog/blog.html 301',
+    '/de/blog/ /de/blog/blog.html 301',
+    '/en/blog/ /en/blog/blog.html 301',
+    '/ru/blog/ /ru/blog/blog.html 301',
+    '/uk/blog/ /uk/blog/blog.html 301',
   ]) {
     assert(redirects.includes(rule), `_redirects missing canonical rule: ${rule}`);
   }
@@ -177,8 +185,8 @@ if (fs.existsSync(path.join(root, 'sitemap.xml'))) {
   const sitemap = read('sitemap.xml');
   for (const lang of ['de', 'en', 'ru', 'uk']) {
     assert(
-      sitemap.includes(`https://hundesalon-nika.com/${lang}/blog/</loc>`),
-      `sitemap.xml missing blog index URL for ${lang}`
+      sitemap.includes(`https://hundesalon-nika.com/${lang}/blog/blog.html</loc>`),
+      `sitemap.xml missing blog page URL for ${lang}`
     );
   }
 }

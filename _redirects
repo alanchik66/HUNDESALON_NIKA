@@ -26,11 +26,19 @@
 /dog-grooming-leipzig /en/dog-grooming-leipzig.html 301
 /documents /de/documents.html 302
 
-# Blog index lives only under /{lang}/blog/
-/de/blog.html /de/blog/ 301
-/en/blog.html /en/blog/ 301
-/ru/blog.html /ru/blog/ 301
-/uk/blog.html /uk/blog/ 301
+# Blog index lives only under /{lang}/blog/blog.html
+/de/blog.html /de/blog/blog.html 301
+/en/blog.html /en/blog/blog.html 301
+/ru/blog.html /ru/blog/blog.html 301
+/uk/blog.html /uk/blog/blog.html 301
+/de/blog/ /de/blog/blog.html 301
+/en/blog/ /en/blog/blog.html 301
+/ru/blog/ /ru/blog/blog.html 301
+/uk/blog/ /uk/blog/blog.html 301
+/de/blog/index.html /de/blog/blog.html 301
+/en/blog/index.html /en/blog/blog.html 301
+/ru/blog/index.html /ru/blog/blog.html 301
+/uk/blog/index.html /uk/blog/blog.html 301
 
 # Favicon assets live only under /assets/images/favicon/
 /assets/images/favicon-48x48.png /assets/images/favicon/favicon-48x48.png 301
