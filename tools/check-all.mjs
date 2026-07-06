@@ -21,9 +21,10 @@ const branch = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { encodin
 if (branch !== 'main') {
   console.warn(`Warning: not on main (on ${branch})`);
 }
-spawnSync('git', ['fetch', 'origin'], { shell: true, stdio: 'inherit' });
-spawnSync('git', ['fetch', 'gitlab'], { shell: true, stdio: 'inherit' });
-for (const ref of ['origin/main', 'gitlab/main']) {
+for (const remote of ['origin', 'github', 'gitlab']) {
+  spawnSync('git', ['fetch', remote], { shell: true, stdio: 'inherit' });
+}
+for (const ref of ['origin/main', 'github/main', 'gitlab/main']) {
   const sha = spawnSync('git', ['rev-parse', ref], { encoding: 'utf8' }).stdout.trim();
   const local = spawnSync('git', ['rev-parse', 'main'], { encoding: 'utf8' }).stdout.trim();
   const ok = sha === local;

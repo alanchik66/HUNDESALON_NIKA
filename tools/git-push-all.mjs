@@ -1,5 +1,8 @@
 /**
- * Push local main to GitHub (origin) and mirror to GitLab (gitlab).
+ * Push local main to GitHub and GitLab, then verify parity.
+ *
+ * Branch policy: keep only main on both remotes. If GitHub Actions is blocked
+ * by billing or policy, GitLab main and direct Cloudflare deploy remain usable.
  */
 import { spawnSync } from 'node:child_process';
 
@@ -42,4 +45,19 @@ if (mirror.status !== 0) {
 }
 
 console.log('');
-console.log('Done. Cloudflare Pages deploys from GitHub main (or: npm run deploy).');
+console.log('→ Verify remote parity');
+for (const remote of ['origin', 'github', 'gitlab']) {
+  run('git', ['fetch', remote]);
+}
+const local = spawnSync('git', ['rev-parse', 'main'], { encoding: 'utf8' }).stdout.trim();
+for (const ref of ['origin/main', 'github/main', 'gitlab/main']) {
+  const remoteSha = spawnSync('git', ['rev-parse', ref], { encoding: 'utf8' }).stdout.trim();
+  if (remoteSha !== local) {
+    console.error(`${ref} mismatch: ${remoteSha.slice(0, 7)} != ${local.slice(0, 7)}`);
+    process.exit(1);
+  }
+  console.log(`${ref}: ${remoteSha.slice(0, 7)} OK`);
+}
+
+console.log('');
+console.log('Done. GitHub and GitLab main are aligned. Deploy with: npm run deploy:full');

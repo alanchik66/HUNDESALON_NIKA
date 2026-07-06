@@ -8,6 +8,8 @@
 | **GitLab** `hundesalon-nika/hundesalon-nika` | Зеркало + fallback CI (`.gitlab-ci.yml`), ветка `main` **защищена** |
 | **Локально**                                 | Всегда работайте в `main` на `C:\PROJEKT\HUNDESALON_NIKA`           |
 
+Правило проекта: в GitHub и GitLab держим только `main`. Временные ветки допустимы только локально на время работы и удаляются после попадания изменений в `main`.
+
 Cloudflare Pages: проект `hundesalon-nika`, тип **Direct Upload**. Продакшен обновляется через:
 
 - GitHub Actions: `.github/workflows/cloudflare-pages.yml`;
@@ -66,7 +68,8 @@ npm run git:push
 `npm run git:push`:
 
 1. Пушит `main` на **GitHub** (`origin`)
-2. Зеркалит `main` на **GitLab** (`git push gitlab main --force-with-lease`)
+2. Зеркалит `main` на **GitLab**
+3. Проверяет parity: `origin/main`, `github/main`, `gitlab/main` должны указывать на один commit
 
 Для зеркала на GitLab ветка `main` должна позволять push/force push (Maintainers) или быть временно без защиты.
 
@@ -84,6 +87,15 @@ git push gitlab main --force-with-lease
 
 В GitHub и GitLab держим только `main`. Не создаем sync/fallback ветки. Если GitLab push не проходит из-за защиты `main`, исправляем права protected branch и повторяем `npm run git:push`.
 
+Если GitHub Actions не стартует из-за billing/account/policy issue, код не ветвим и не переносим в отдельную ветку. Делаем так:
+
+```bash
+npm run git:push       # GitHub + GitLab main должны остаться одинаковыми
+npm run deploy:full    # прямой Cloudflare deploy через Wrangler
+```
+
+GitLab в этом случае остаётся зеркалом `main` и fallback-источником истории; Cloudflare production можно выкатывать напрямую до восстановления GitHub Actions.
+
 ## Remotes (не трогать без нужды)
 
 ```
@@ -100,7 +112,7 @@ gitlab  → GitLab (зеркало main)
 npm run git:cleanup
 ```
 
-Удаляет старые локальные служебные ветки и prunable worktree. В репозиториях GitHub/GitLab должна оставаться только ветка `main`.
+Удаляет merged локальные служебные ветки, чистит prunable worktree metadata и показывает remote-ветки вне `main`, если они снова появились. В репозиториях GitHub/GitLab должна оставаться только ветка `main`.
 
 ## Оранжевое предупреждение в Protected branches
 
