@@ -111,9 +111,7 @@ function parseScanRow(body) {
   };
 }
 
-async function readScanList(session) {
-  await session.nav('sitescan');
-  return session.eval(`
+const scanStateEval = `
     const body = document.body?.innerText || '';
     const rows = [...document.querySelectorAll('table tr, [role="row"], .ms-DetailsRow')].map(row => ({
       text: (row.innerText || '').replace(/\\s+/g, ' ').trim(),
@@ -146,7 +144,61 @@ async function readScanList(session) {
       rows: rows.slice(0, 8),
       bodySample: body.slice(0, 1500),
     };
-  `);
+`;
+
+const cdpWaitMs = Number(process.env.BING_CDP_WAIT_MS || 10_000);
+const cdpReloadAttempts = Number(process.env.BING_CDP_RELOAD_ATTEMPTS || 4);
+
+async function waitForSitescanBody(session, waitMs = 6000) {
+  for (let i = 0; i < cdpReloadAttempts; i += 1) {
+    const chars = await session.evaluate('(document.body?.innerText || "").length');
+    if (chars > 200) return true;
+    await sleep(1500);
+    await session.send('Page.reload', { ignoreCache: true });
+    await sleep(waitMs);
+  }
+  return false;
+}
+
+async function openSitescan(session) {
+  await session.nav('sitescan');
+  await waitForSitescanBody(session, cdpWaitMs);
+}
+
+async function refreshSitescan(session) {
+  await session.send('Page.reload', { ignoreCache: true });
+  await sleep(Math.min(cdpWaitMs, 7000));
+  await waitForSitescanBody(session, 5000);
+}
+
+async function evalScanState(session) {
+  return session.eval(scanStateEval);
+}
+
+async function readScanList(session, { navigate = false } = {}) {
+  if (navigate) await openSitescan(session);
+  else await refreshSitescan(session);
+  return evalScanState(session);
+}
+
+async function readScanListWithRetry(session, options = {}) {
+  const retries = options.retries ?? 3;
+  let lastError;
+
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    try {
+      return await readScanList(session, options);
+    } catch (error) {
+      lastError = error;
+      if (!/destroyed|target closed|websocket/i.test(String(error.message)) || attempt === retries - 1) {
+        throw error;
+      }
+      await sleep(2000 + attempt * 1000);
+      if (attempt > 0) await openSitescan(session);
+    }
+  }
+
+  throw lastError || new Error('readScanList failed');
 }
 
 async function openScanDetails(session) {
@@ -245,63 +297,77 @@ async function extractFindings(session) {
   `);
 }
 
-if (!(await ensureCdp())) {
-  console.error(`Edge CDP missing on port ${port}. Run: npm run bing:edge`);
-  process.exit(1);
+function writeReport(report) {
+  fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+  fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
 }
 
-const report = {
-  at: new Date().toISOString(),
-  scanName: 'HUNDESALON SEO scan',
-  polls: [],
-};
-
-const session = await openBingWebmasterSession({
-  port,
-  siteQ,
-  waitMs: Number(process.env.BING_CDP_WAIT_MS || 10_000),
-  reloadAttempts: Number(process.env.BING_CDP_RELOAD_ATTEMPTS || 4),
-});
-const started = Date.now();
-
-try {
-  let listState = await readScanList(session);
-  report.initial = listState;
-
-  while (listState.inProgress && !listState.failed && Date.now() - started < maxWaitMs) {
-    const elapsedMin = Math.round((Date.now() - started) / 60000);
-    console.log(`Scan ${listState.status || 'pending'} (${listState.statusSample?.slice(0, 120) || 'unknown'}) — poll again in ${pollMs / 1000}s (elapsed ${elapsedMin}m)…`);
-    report.polls.push({
-      at: new Date().toISOString(),
-      status: listState.status,
-      statusSample: listState.statusSample,
-      inProgress: true,
-    });
-    await sleep(pollMs);
-    listState = await readScanList(session);
+async function main() {
+  if (!(await ensureCdp())) {
+    console.error(`Edge CDP missing on port ${port}. Run: npm run bing:edge`);
+    process.exitCode = 1;
+    return;
   }
 
-  report.finalList = listState;
-  report.completed = Boolean(listState.completed);
+  const report = {
+    at: new Date().toISOString(),
+    scanName: 'HUNDESALON SEO scan',
+    polls: [],
+  };
 
-  if (!report.completed) {
-    report.error = 'Scan still in progress after max wait';
-    fs.mkdirSync(path.dirname(reportPath), { recursive: true });
-    fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
+  const session = await openBingWebmasterSession({
+    port,
+    siteQ,
+    waitMs: cdpWaitMs,
+    reloadAttempts: cdpReloadAttempts,
+  });
+  const started = Date.now();
+
+  try {
+    let listState = await readScanListWithRetry(session, { navigate: true });
+    report.initial = listState;
+
+    while (listState.inProgress && !listState.failed && Date.now() - started < maxWaitMs) {
+      const elapsedMin = Math.round((Date.now() - started) / 60000);
+      console.log(
+        `Scan ${listState.status || 'pending'} (${listState.statusSample?.slice(0, 120) || 'unknown'}) — poll again in ${pollMs / 1000}s (elapsed ${elapsedMin}m)…`
+      );
+      report.polls.push({
+        at: new Date().toISOString(),
+        status: listState.status,
+        statusSample: listState.statusSample,
+        inProgress: true,
+      });
+      await sleep(pollMs);
+      if (Date.now() - started >= maxWaitMs) break;
+      listState = await readScanListWithRetry(session, { navigate: false });
+    }
+
+    report.finalList = listState;
+    report.completed = Boolean(listState.completed);
+
+    if (!report.completed) {
+      report.error = listState.failed ? 'Scan failed or was cancelled' : 'Scan still in progress after max wait';
+      writeReport(report);
+      console.log(JSON.stringify(report, null, 2));
+      process.exitCode = listState.failed ? 2 : 3;
+      return;
+    }
+
+    console.log('Scan completed — opening results…');
+    report.details = await openScanDetails(session);
+    await sleep(3000);
+    report.findings = await extractFindings(session);
+    report.parsedRow = parseScanRow(listState.bodySample || listState.statusSample || '');
+    writeReport(report);
+    console.log(`\nReport: ${path.relative(root, reportPath)}`);
     console.log(JSON.stringify(report, null, 2));
-    process.exit(3);
+  } finally {
+    session.close();
   }
-
-  console.log('Scan completed — opening results…');
-  report.details = await openScanDetails(session);
-  await sleep(3000);
-  report.findings = await extractFindings(session);
-  report.parsedRow = parseScanRow(listState.bodySample || listState.statusSample || '');
-} finally {
-  session.close();
 }
 
-fs.mkdirSync(path.dirname(reportPath), { recursive: true });
-fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
-console.log(`\nReport: ${path.relative(root, reportPath)}`);
-console.log(JSON.stringify(report, null, 2));
+main().catch(error => {
+  console.error(error);
+  process.exitCode = 1;
+});
