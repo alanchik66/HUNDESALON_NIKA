@@ -116,8 +116,9 @@
     "CLOUDSDK_CORE_PROJECT": "hundesalon-nika-shell-2026",
     "CLOUDSDK_COMPUTE_REGION": "europe-west3",
     "GOOGLE_AUTH_IMPERSONATE_SERVICE_ACCOUNT": "ai-agents-admin@hundesalon-nika-shell-2026.iam.gserviceaccount.com",
-    "CLOUDFLARE_ACCOUNT_ID": "25e872aeab8cb246c69142ab07cd0fee"
-  },,
+    "CLOUDFLARE_ACCOUNT_ID": "25e872aeab8cb246c69142ab07cd0fee",
+    "NPM_CONFIG_MIN_RELEASE_AGE": null
+  },
 
   // ─── Spell Checker (cSpell) ────────────────────────────────────────
   "cSpell.enabled": true,

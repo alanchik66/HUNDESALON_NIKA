@@ -21,6 +21,7 @@ const AGENT_ENV = {
   CLOUDSDK_COMPUTE_REGION: REGION,
   GOOGLE_AUTH_IMPERSONATE_SERVICE_ACCOUNT: SERVICE_ACCOUNT,
   CLOUDFLARE_ACCOUNT_ID: ACCOUNT_ID,
+  NPM_CONFIG_MIN_RELEASE_AGE: null,
 };
 
 function runPwsh(script, args = []) {
@@ -61,7 +62,11 @@ function clearWindowsUserEnv(key) {
 
 function syncUserEnv() {
   for (const [key, value] of Object.entries(AGENT_ENV)) {
-    setWindowsUserEnv(key, value);
+    if (value === null || value === undefined) {
+      clearWindowsUserEnv(key);
+    } else {
+      setWindowsUserEnv(key, value);
+    }
   }
   clearWindowsUserEnv('GOOGLE_APPLICATION_CREDENTIALS');
 
@@ -144,24 +149,27 @@ function configureDevinLocal() {
 function main() {
   console.log('HUNDESALON — full AI agents environment setup\n');
 
-  console.log('1/6 GCP impersonation (gcloud profile + ADC)...');
+  console.log('1/7 GCP impersonation (gcloud profile + ADC)...');
   runPwsh(join(ROOT, 'tools', 'setup-ai-agents-gcp.ps1'), ['-SkipAdcLogin']);
 
-  console.log('2/6 Windows user env vars (GCP + Cloudflare)...');
+  console.log('2/7 Windows user env vars (GCP + Cloudflare)...');
   syncUserEnv();
   console.log('     User env synced.');
 
-  console.log('3/6 VS Code / Cursor terminal env...');
+  console.log('3/7 VS Code / Cursor terminal env...');
   console.log(`     ${configureVsCodeTerminalEnv()}`);
 
-  console.log('4/6 Devin local config...');
+  console.log('4/7 Devin local config...');
   console.log(`     ${configureDevinLocal()}`);
 
-  console.log('5/6 MCP clients + Workload Identity Federation...');
+  console.log('5/7 MCP clients + Workload Identity Federation...');
   runNode(join(ROOT, 'tools', 'configure-mcp-clients.mjs'));
   runNode(join(ROOT, 'tools', 'setup-gcp-workload-identity.mjs'));
 
-  console.log('6/6 Reload IDE windows...');
+  console.log('6/7 WebStorm quiet profile (MCP + AI promo)...');
+  runPwsh(join(ROOT, 'tools', 'configure-webstorm-notifications.ps1'));
+
+  console.log('7/7 Reload IDE windows...');
   runPwsh(join(ROOT, 'tools', 'reload-agent-ides.ps1'));
 
   console.log('\nAll agent environments configured.');
