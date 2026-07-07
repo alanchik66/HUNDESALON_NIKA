@@ -117,7 +117,6 @@ raw_images/
 
 # ═══════════════ ХОСТИНГ И ДЕПЛОЙ ═══════════════
 .cpanel/
-.well-known/
 cpanel_logs/
 error_log
 access_log

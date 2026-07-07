@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "browse-salon-information",
+      "type": "skill-md",
+      "description": "Find public HUNDESALON NIKA service, booking, price, contact, language, and salon information.",
+      "url": "https://hundesalon-nika.com/.well-known/agent-skills/browse-salon-information.md",
+      "digest": "sha256:e3b729de223be7203949aff10855b49f8d5b96b07547a84d035c63c379932094"
+    }
+  ]
+}
