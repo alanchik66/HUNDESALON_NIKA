@@ -354,6 +354,53 @@ for (const file of collectStaleImageScanFiles()) {
   }
 }
 
+function readMetaDescription(html) {
+  const patterns = [
+    /<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i,
+    /<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["'][^>]*>/i,
+    /<meta\s+[\s\S]*?name=["']description["'][\s\S]*?content=["']([^"']*)["'][\s\S]*?\/?>/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match?.[1]) {
+      return match[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+    }
+  }
+
+  return '';
+}
+
+const minMetaDescription = 155;
+const maxMetaDescription = 170;
+
+for (const lang of ['de', 'en', 'ru', 'uk']) {
+  const langDir = path.join(root, lang);
+  if (!fs.existsSync(langDir)) continue;
+
+  for (const file of walk(langDir)) {
+    if (!file.endsWith('.html')) continue;
+    const relativePath = path.relative(root, file).replaceAll(path.sep, '/');
+    const description = readMetaDescription(fs.readFileSync(file, 'utf8'));
+    if (description.length < minMetaDescription) {
+      failures.push(
+        `${relativePath}: meta description too short (${description.length}, min ${minMetaDescription})`
+      );
+    }
+    if (description.length > maxMetaDescription) {
+      failures.push(
+        `${relativePath}: meta description too long (${description.length}, max ${maxMetaDescription})`
+      );
+    }
+  }
+}
+
+for (const file of indexFiles) {
+  if (file === 'index.html' || !fs.existsSync(path.join(root, file))) continue;
+  const html = read(file);
+  assert(html.includes('google.com/maps'), `${file}: JSON-LD sameAs should include Google Maps profile`);
+}
+
 for (const file of walk(root)) {
   const relativePath = path.relative(root, file).replaceAll(path.sep, '/');
   if (relativePath.includes('node_modules/') || relativePath.includes('.git/')) continue;

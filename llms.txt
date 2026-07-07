@@ -36,3 +36,20 @@ The root URL redirects visitors to a language version using Accept-Language firs
 ## Crawling Notes
 
 Public marketing, service, price, booking, gallery, contact, and blog pages are intended for indexing. Internal tool paths and Cloudflare Functions are not public content.
+
+## Official profiles (citation)
+
+- Website: https://hundesalon-nika.com/de/
+- Google Maps: https://www.google.com/maps/place/St%C5%99%C3%ADh%C3%A1n%C3%AD+ps%C5%AF+a+ko%C4%8Dek+PetGrooming+Leipzig/@50.6413683,13.8410258,17z/data=!3m1!4b1!4m6!3m5!1s0x47098f181a16e7e9:0x1e5103069a50da9e!8m2!3d50.6413683!4d13.8410258!16s%2Fg%2F11ksntmkjr
+- Instagram: https://www.instagram.com/hundesalon_nika
+- Facebook: https://www.facebook.com/share/17SVsvkZEo/?mibextid=wwXIfr
+- YouTube: https://www.youtube.com/@hundesalon_nika
+- TikTok: https://www.tiktok.com/@hundesalon_nika
+- Telegram: https://t.me/hundesalon_nika
+
+## Citation (NAP)
+
+- HUNDESALON NIKA
+- Untere-Eichstädtstraße 38, 04299 Leipzig, Sachsen, DE
+- Phone: +49 1515 1708888
+- Email: info@hundesalon-nika.com

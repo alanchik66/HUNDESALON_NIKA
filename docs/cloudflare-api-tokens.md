@@ -86,7 +86,7 @@ npm run cf:open-edit-token   # открывает страницу редакт�
 | DNS / DNS-AID        | `HUNDESALON_NIKA — Zone Ops` with `DNS Records Edit`       |
 | WAF rate limits      | `npm run cf:configure-waf-rate-limits`                     |
 | Crawler Hints / CSAM | `npm run cf:configure-cache-features`                      |
-| Pages deploy         | `npx wrangler login` + `npm run deploy`                    |
+| Pages deploy         | `npx wrangler login` + `npm run deploy` (OAuth auto; Zone Ops token skipped) |
 | www robots → apex    | `npm run cf:www-robots-setup` (Page Rule `www/*` уже есть) |
 
 ## Pages deploy token: GitHub/GitLab CI

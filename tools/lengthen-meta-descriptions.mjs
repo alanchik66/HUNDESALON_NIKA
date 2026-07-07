@@ -9,7 +9,8 @@ import { META_DESCRIPTIONS } from '../config/meta-descriptions.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const langs = ['de', 'en', 'ru', 'uk'];
-const MIN_LEN = 120;
+const MIN_LEN = 155;
+const MAX_LEN = 170;
 
 function escapeAttr(value) {
   return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
@@ -47,7 +48,8 @@ function setMetaContent(html, attrName, attrValue, content, { property = false }
 }
 
 function pageKey(relPath) {
-  const parts = relPath.split(path.sep);
+  const normalized = relPath.replace(/\\/g, '/');
+  const parts = normalized.split('/');
   if (parts.length === 2) return parts[1];
   if (parts.length === 3 && parts[1] === 'blog') return `blog/${parts[2]}`;
   return null;
@@ -71,6 +73,10 @@ for (const lang of langs) {
     const desc = META_DESCRIPTIONS[key][lang];
     if (!desc || desc.length < MIN_LEN) {
       report.skipped.push({ file: rel, reason: 'short-config', len: desc?.length || 0 });
+      continue;
+    }
+    if (desc.length > MAX_LEN) {
+      report.skipped.push({ file: rel, reason: 'long-config', len: desc.length });
       continue;
     }
 

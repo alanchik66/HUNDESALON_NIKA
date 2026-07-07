@@ -1,33 +1,62 @@
+/**
+ * Audit meta description lengths across lang HTML pages.
+ */
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { META_DESCRIPTIONS } from '../config/meta-descriptions.mjs';
 
-const root = process.cwd();
-const skip = new Set(['node_modules', 'dist', '.git', '.wrangler', '3d-weather-codrops-main']);
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const langs = ['de', 'en', 'ru', 'uk'];
+const MIN = 140;
+const TARGET = 155;
 
-function walk(dir, acc = []) {
-  for (const name of fs.readdirSync(dir)) {
-    const full = path.join(dir, name);
-    const st = fs.statSync(full);
-    if (st.isDirectory()) {
-      if (skip.has(name)) continue;
-      walk(full, acc);
-    } else if (name.endsWith('.html')) acc.push(full);
+function readDesc(html) {
+  const patterns = [
+    /<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i,
+    /<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["'][^>]*>/i,
+    /<meta\s+[\s\S]*?name=["']description["'][\s\S]*?content=["']([^"']*)["'][\s\S]*?\/?>/i,
+  ];
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match?.[1]) return match[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&');
   }
-  return acc;
+  return '';
 }
 
-const short = [];
-const broken = [];
+const report = { htmlShort: [], configShort: [], missingHtml: [], ok: 0 };
 
-for (const file of walk(root)) {
-  const html = fs.readFileSync(file, 'utf8');
-  const match = html.match(/name=["']description["'][^>]*content=["']([^"']+)["']/i)
-    || html.match(/name=["']description["'][\s\S]*?content=["']([^"']+)["']/i);
-  if (!match) continue;
-  const desc = match[1].replace(/\s+/g, ' ').trim();
-  if (/Hashtable/i.test(desc)) broken.push(path.relative(root, file));
-  else if (desc.length < 120) short.push({ file: path.relative(root, file), len: desc.length, desc });
+for (const lang of langs) {
+  const dir = path.join(root, lang);
+  for (const file of fs.readdirSync(dir, { recursive: true })) {
+    if (typeof file !== 'string' || !file.endsWith('.html')) continue;
+    const rel = path.join(lang, file).replace(/\\/g, '/');
+    const normalized = file.replace(/\\/g, '/');
+    const key = normalized.includes('blog/') ? `blog/${path.basename(file)}` : path.basename(file);
+    const html = fs.readFileSync(path.join(root, rel), 'utf8');
+    const desc = readDesc(html);
+    const len = desc.length;
+
+    if (len < MIN) report.htmlShort.push({ file: rel, len, desc });
+    else report.ok += 1;
+
+    const cfg = META_DESCRIPTIONS[key]?.[lang];
+    if (!cfg) report.missingHtml.push({ file: rel, key });
+    else if (cfg.length < MIN) report.configShort.push({ file: rel, key, len: cfg.length });
+    else if (desc !== cfg) report.htmlShort.push({ file: rel, len, mismatch: true, cfgLen: cfg.length });
+  }
 }
 
-short.sort((a, b) => a.len - b.len);
-console.log(JSON.stringify({ shortCount: short.length, brokenCount: broken.length, short, broken }, null, 2));
+console.log(JSON.stringify({
+  min: MIN,
+  target: TARGET,
+  ok: report.ok,
+  htmlShort: report.htmlShort.length,
+  configShort: report.configShort.length,
+  missingConfig: report.missingHtml.length,
+  samples: {
+    htmlShort: report.htmlShort.slice(0, 15),
+    configShort: report.configShort.slice(0, 10),
+    missingConfig: report.missingHtml.slice(0, 10),
+  },
+}, null, 2));
