@@ -177,28 +177,28 @@ class BeforeAfterGallery {
   getDefaultFilterLabels() {
     return {
       de: {
-        all: 'Alle',
-        haircut: 'Schnitte',
-        creative: 'Kreativ',
+        all: 'Gesamte Mediathek',
+        dogs: 'Hunde',
         cats: 'Katzen',
+        salon: 'Salon',
       },
       en: {
-        all: 'All',
-        haircut: 'Haircuts',
-        creative: 'Creative',
+        all: 'Full Media Library',
+        dogs: 'Dogs',
         cats: 'Cats',
+        salon: 'Salon',
       },
       ru: {
-        all: 'Все',
-        haircut: 'Стрижки',
-        creative: 'Креатив',
-        cats: 'Кошки',
+        all: 'ВСЯ МЕДИАТЕКА',
+        dogs: 'СОБАКИ',
+        cats: 'КОШКИ',
+        salon: 'САЛОН',
       },
       uk: {
-        all: 'Всі',
-        haircut: 'Стрижки',
-        creative: 'Креатив',
-        cats: 'Коти',
+        all: 'ВСЯ МЕДІАТЕКА',
+        dogs: 'СОБАКИ',
+        cats: 'КОТИ',
+        salon: 'САЛОН',
       },
     };
   }
@@ -212,9 +212,9 @@ class BeforeAfterGallery {
   renderFilters() {
     const labels = this.options.filterLabels[this.options.lang] || this.options.filterLabels.de;
     const filterOrder = [
-      { key: 'haircut', label: labels.haircut },
-      { key: 'creative', label: labels.creative },
+      { key: 'dogs', label: labels.dogs },
       { key: 'cats', label: labels.cats },
+      { key: 'salon', label: labels.salon },
       { key: 'all', label: labels.all },
     ];
     const filterHTML = `
@@ -301,19 +301,20 @@ const beforeAfterLabelsByLang = {
   uk: { before: 'ДО', after: 'ПІСЛЯ' },
 };
 
-const badgeByCategory = {
-  haircut: { de: 'Schnitt', en: 'Haircut', ru: 'Стрижка', uk: 'Стрижка' },
-  creative: { de: 'Kreativ', en: 'Creative', ru: 'Креатив', uk: 'Креатив' },
-  cats: { de: 'Katze', en: 'Cat', ru: 'Кошки', uk: 'Коти' },
+const categoryBadgeByLang = {
+  de: { dogs: 'Hunde', cats: 'Katzen', salon: 'Salon' },
+  en: { dogs: 'Dogs', cats: 'Cats', salon: 'Salon' },
+  ru: { dogs: 'СОБАКИ', cats: 'КОШКИ', salon: 'САЛОН' },
+  uk: { dogs: 'СОБАКИ', cats: 'КОТИ', salon: 'САЛОН' },
 };
 
 const cardCategories = [
-  'haircut',
-  'haircut',
-  'haircut',
-  'creative',
-  'creative',
-  'creative',
+  'dogs',
+  'dogs',
+  'dogs',
+  'salon',
+  'salon',
+  'salon',
   'cats',
   'cats',
   'cats',
@@ -342,7 +343,7 @@ const galleryCardDescription = (lang, index) => {
 
 const beforeAfterCardBlueprints = Array.from({ length: GALLERY_CARD_COUNT }, (_, offset) => {
   const gallery = offset + 1;
-  const category = cardCategories[offset] || 'haircut';
+  const category = cardCategories[offset] || 'dogs';
 
   return { gallery, category };
 });
@@ -355,7 +356,7 @@ const buildBeforeAfterItems = lang => {
     afterImage: galleryAfterImage(card.gallery),
     beforeLabel: labels.before,
     afterLabel: labels.after,
-    badge: badgeByCategory[card.category]?.[lang] || badgeByCategory.haircut.de,
+    badge: categoryBadgeByLang[lang]?.[card.category] || categoryBadgeByLang.de[card.category],
     category: card.category,
     title: galleryCardTitle(lang, card.gallery),
     description: galleryCardDescription(lang, card.gallery),
@@ -397,10 +398,10 @@ function initBeforeAfterGallery() {
   new BeforeAfterGallery(galleryContainer, items, {
     lang,
     filterLabels: {
-      de: { all: 'Alle', haircut: 'Schnitte', creative: 'Kreativ', cats: 'Katzen' },
-      en: { all: 'All', haircut: 'Haircuts', creative: 'Creative', cats: 'Cats' },
-      ru: { all: 'Все', haircut: 'Стрижки', creative: 'Креатив', cats: 'Кошки' },
-      uk: { all: 'Всі', haircut: 'Стрижки', creative: 'Креатив', cats: 'Коти' },
+      de: { all: 'Gesamte Mediathek', dogs: 'Hunde', cats: 'Katzen', salon: 'Salon' },
+      en: { all: 'Full Media Library', dogs: 'Dogs', cats: 'Cats', salon: 'Salon' },
+      ru: { all: 'ВСЯ МЕДИАТЕКА', dogs: 'СОБАКИ', cats: 'КОШКИ', salon: 'САЛОН' },
+      uk: { all: 'ВСЯ МЕДІАТЕКА', dogs: 'СОБАКИ', cats: 'КОТИ', salon: 'САЛОН' },
     },
   });
 
