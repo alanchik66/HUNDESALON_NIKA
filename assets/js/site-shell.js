@@ -3897,7 +3897,7 @@
   <a href="${pathPrefix}partnerstvo.html" class="mobile-nav-link--secondary">${copy.partner}</a>
   <a href="${pathPrefix}documents.html" class="mobile-nav-link--secondary">${copy.documents}</a>
   <a href="${pathPrefix}hundefriseur-leipzig.html" class="mobile-nav-link--secondary">${copy.localSeo}</a>
-  <a href="${pathPrefix}onlayn-bronirovanie.html" class="mobile-nav-link--secondary">${copy.booking}</a>`;
+  <a href="${pathPrefix}onlayn-bronirovanie.html" class="mobile-nav-link--secondary online-order-pill online-order-pill--menu">${copy.booking}</a>`;
 
     return `
 <header class="header">
@@ -3947,7 +3947,7 @@
           <li data-lang="en"><span class="flag">🇬🇧</span> English</li>
         </ul>
       </div>
-      <a href="${pathPrefix}onlayn-bronirovanie.html" class="header-online-btn">${copy.booking}</a>
+      <a href="${pathPrefix}onlayn-bronirovanie.html" class="header-online-btn online-order-pill">${copy.booking}</a>
       <button id="theme-toggle" class="theme-btn" type="button"></button>
     </div>
   </div>

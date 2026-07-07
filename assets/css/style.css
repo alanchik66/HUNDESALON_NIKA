@@ -1923,9 +1923,202 @@ body.light .premium-burger span {
   animation: navPillBreathActive var(--motion-sync-breath) ease-in-out infinite;
 }
 
+/* ===== ONLINE ORDER CTA — premium nav pill everywhere ===== */
+
+.online-order-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  isolation: isolate;
+  text-decoration: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  min-height: 42px;
+  padding: var(--nav-pill-pad-y) calc(var(--nav-pill-pad-x) + 4px);
+  border-radius: var(--nav-pill-radius);
+  color: #fff0c8ff;
+  background:
+    linear-gradient(180deg, rgb(226 190 116 / 7%) 0%, rgb(226 190 116 / 2.5%) 100%),
+    #ffffff0c;
+  -webkit-backdrop-filter: blur(44px) saturate(1.9) brightness(0.9);
+
+  backdrop-filter: blur(44px) saturate(1.9) brightness(0.9);
+  box-shadow:
+    0 6px 28px rgb(0 0 0 / 14%),
+    0 0 22px rgb(226 190 116 / 10%),
+    0 0 44px rgb(226 190 116 / 5%),
+    inset 0 0.5px 0 rgb(255 255 255 / 6%);
+  text-shadow:
+    0 1px 0 rgb(14 10 4 / 36%),
+    0 0 20px rgb(226 190 116 / 24%),
+    0 0 34px rgb(247 199 68 / 14%);
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.32s ease,
+    background 0.32s ease,
+    box-shadow 0.32s ease,
+    filter 0.32s ease;
+  animation:
+    navPillBreathActive calc(var(--motion-sync-breath) * 0.92) ease-in-out infinite,
+    onlineOrderAura 5.6s ease-in-out infinite;
+  will-change: transform, box-shadow;
+}
+
+.online-order-pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 30% 0%, rgb(255 255 255 / 8%) 0%, transparent 62%);
+  opacity: 0.28;
+  animation: navLiquidMatteBreath var(--motion-sync-breath) ease-in-out infinite;
+  animation-delay: calc(var(--motion-sync-breath) * -0.18);
+  pointer-events: none;
+}
+
+.online-order-pill::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    120deg,
+    rgb(255 244 210 / 0%) 0%,
+    rgb(255 244 210 / 55%) 24%,
+    rgb(255 220 150 / 35%) 50%,
+    rgb(255 244 210 / 55%) 76%,
+    rgb(255 244 210 / 0%) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.55;
+  pointer-events: none;
+  animation: onlineOrderRing 7.2s linear infinite;
+}
+
+.online-order-pill:hover,
+.online-order-pill:focus-visible {
+  transform: translateY(-2px) scale(1.028);
+  color: #fff6d8ff;
+  background:
+    linear-gradient(180deg, rgb(226 190 116 / 11%) 0%, rgb(226 190 116 / 4%) 100%),
+    #ffffff14;
+  box-shadow:
+    0 10px 34px rgb(0 0 0 / 18%),
+    0 0 30px rgb(226 190 116 / 16%),
+    0 0 56px rgb(226 190 116 / 8%),
+    inset 0 0.5px 0 rgb(255 255 255 / 9%);
+  filter: brightness(1.06);
+}
+
+.online-order-pill:active {
+  animation: navClickFlash 0.25s ease-out;
+}
+
+.online-order-pill--menu {
+  width: 100%;
+  min-height: 34px;
+  margin-top: 6px;
+  font-size: 11px;
+}
+
+.nav-plasma--cta {
+  inset: -14%;
+  animation: navPlasmaActiveBreath 4.2s ease-in-out infinite;
+}
+
+.nav-plasma--cta::before {
+  filter: blur(1px) url('#plasma-warp') brightness(1.18) saturate(1.2);
+  animation: navPlasmaActiveSpin 36s linear infinite;
+}
+
+.nav-plasma--cta::after {
+  filter: blur(2px) brightness(1.12);
+  animation: navPlasmaActivePulse 5.5s ease-in-out infinite;
+}
+
+.nav-plasma--cta-flash {
+  inset: -35%;
+  animation: navPlasmaLifecycle 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  filter: brightness(1.25) saturate(1.35);
+}
+
+@keyframes onlineOrderAura {
+  0%,
+  100% {
+    box-shadow:
+      0 6px 28px rgb(0 0 0 / 14%),
+      0 0 18px rgb(226 190 116 / 8%),
+      0 0 36px rgb(226 190 116 / 4%),
+      inset 0 0.5px 0 rgb(255 255 255 / 6%);
+  }
+
+  50% {
+    box-shadow:
+      0 8px 32px rgb(0 0 0 / 16%),
+      0 0 28px rgb(226 190 116 / 14%),
+      0 0 52px rgb(226 190 116 / 7%),
+      inset 0 0.5px 0 rgb(255 255 255 / 8%);
+  }
+}
+
+@keyframes onlineOrderRing {
+  0% {
+    transform: rotate(0deg);
+    opacity: 0.42;
+  }
+
+  50% {
+    opacity: 0.72;
+  }
+
+  100% {
+    transform: rotate(360deg);
+    opacity: 0.42;
+  }
+}
+
+body.light .online-order-pill {
+  color: #6e5528ff;
+  background:
+    linear-gradient(180deg, rgb(200 175 120 / 12%) 0%, rgb(200 175 120 / 4%) 100%),
+    rgb(255 252 245 / 24%);
+  box-shadow:
+    0 6px 22px rgb(80 60 30 / 8%),
+    0 0 18px rgb(180 155 100 / 10%),
+    inset 0 0.5px 0 rgb(255 255 250 / 42%);
+  text-shadow:
+    0 1px 0 rgb(255 255 250 / 34%),
+    0 0 16px rgb(180 155 100 / 16%);
+}
+
+body.light .online-order-pill:hover,
+body.light .online-order-pill:focus-visible {
+  color: #7a5f2fff;
+  background:
+    linear-gradient(180deg, rgb(200 175 120 / 16%) 0%, rgb(200 175 120 / 6%) 100%),
+    rgb(255 252 245 / 30%);
+}
+
 /* Click flash */
 
 .nav-main > :is(a, .filter-btn):active,
+.online-order-pill:active,
 .btn-neon:active,
 .header-online-btn:active,
 .btn-map:active,
@@ -2992,77 +3185,7 @@ body.light .dropdown-menu a:hover {
   flex-shrink: 0;
 }
 
-.header-online-btn {
-  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%);
-  border: none;
-  color: #fff;
-  min-height: 44px;
-  padding: 10px 22px;
-  border-radius: 999px;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition:
-    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.28s ease,
-    filter 0.28s ease;
-  box-shadow:
-    0 4px 16px rgb(0 0 0 / 18%),
-    inset 0 1px 0 rgb(255 255 255 / 15%);
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  -webkit-backdrop-filter: none;
-
-  backdrop-filter: none;
-  animation: none;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 20%);
-}
-
-.header-online-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    120deg,
-    rgb(255 255 255 / 25%) 0%,
-    rgb(255 255 255 / 6%) 30%,
-    rgb(255 255 255 / 0%) 50%
-  );
-  pointer-events: none;
-}
-
-/* Убираем старый ::after у header-online-btn, заменяем на glassmorphism эффект */
-
-.header-online-btn::after {
-  top: -30%;
-  bottom: -30%;
-  left: -30%;
-  width: 50%;
-  background: linear-gradient(
-    105deg,
-    rgb(255 255 255 / 0%) 0%,
-    rgb(255 255 255 / 7%) 30%,
-    rgb(255 255 255 / 4%) 50%,
-    rgb(255 255 255 / 0%) 70%
-  );
-  opacity: 0.3;
-  filter: blur(6px);
-  transform: skewX(-20deg);
-  animation: navLiquidRefraction 10.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-}
-
-.header-online-btn:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow:
-    0 8px 24px rgb(0 0 0 / 22%),
-    inset 0 1px 0 rgb(255 255 255 / 20%);
-  filter: brightness(1.08);
-}
+/* Header booking control inherits visual system from .online-order-pill */
 
 .theme-btn {
   position: relative;
@@ -10528,86 +10651,16 @@ body.light .social-icons-toggle.is-open {
   background: #b897551a;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   ONLINE BUTTON: btn-neon style on mobile (≤900px), smaller size
-   ══════════════════════════════════════════════════════════════════ */
+/* Mobile header booking pill — compact, same premium system */
 @media (width <= 900px) {
-  .header .top-row > .header-controls a.header-online-btn,
-  .header .top-row > .header-controls .header-online-btn {
-    /* Reset gold pill styles */
-    background: #ffffff0f !important;
-    border: none !important;
-    color: #f1c978e0 !important;
-    text-shadow:
-      0 1px 0 rgb(14 10 4 / 36%),
-      0 0 12px rgb(226 190 116 / 8%) !important;
-    -webkit-backdrop-filter: blur(32px) saturate(1.5) brightness(0.92) !important;
-
-    backdrop-filter: blur(32px) saturate(1.5) brightness(0.92) !important;
-    box-shadow:
-      0 4px 20px rgb(0 0 0 / 14%),
-      inset 0 0.5px 0 rgb(255 255 255 / 6%) !important;
-    border-radius: 60px !important;
-    font-family: var(--font-display) !important;
-    font-weight: 650 !important;
-    font-size: 10px !important;
-    letter-spacing: 0.06em !important;
-    text-transform: uppercase !important;
-    /* Compact sizing */
-    min-height: 30px !important;
-    height: 30px !important;
-    padding: 0 12px !important;
-    white-space: nowrap !important;
-    overflow: visible !important;
-    text-overflow: unset !important;
-    filter: none !important;
-    /* btn-neon animations */
-    animation: navPillBreath var(--motion-sync-breath) ease-in-out infinite !important;
-    transition:
-      transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-      color 0.32s ease,
-      background 0.32s ease,
-      box-shadow 0.32s ease !important;
-    isolation: isolate !important;
-    position: relative !important;
-  }
-
-  .header .top-row > .header-controls a.header-online-btn::before,
-  .header .top-row > .header-controls .header-online-btn::before {
-    content: '' !important;
-    position: absolute !important;
-    inset: 0 !important;
-    border-radius: inherit !important;
-    background: linear-gradient(
-      120deg,
-      rgb(255 255 255 / 10%) 0%,
-      rgb(255 255 255 / 3%) 40%,
-      transparent 60%
-    ) !important;
-    pointer-events: none !important;
-  }
-
-  .header .top-row > .header-controls a.header-online-btn:hover,
-  .header .top-row > .header-controls .header-online-btn:hover {
-    transform: translateY(-1px) scale(1.03) !important;
-    color: #f1c978ff !important;
-    background: #ffffff17 !important;
-    box-shadow:
-      0 6px 20px rgb(0 0 0 / 18%),
-      inset 0 0.5px 0 rgb(255 255 255 / 10%) !important;
-  }
-
-  body.light .header .top-row > .header-controls a.header-online-btn,
-  body.light .header .top-row > .header-controls .header-online-btn {
-    color: #8c6c34e0 !important;
-    background: #0000000a !important;
-    -webkit-backdrop-filter: blur(32px) saturate(1.4) brightness(1.04) !important;
-
-    backdrop-filter: blur(32px) saturate(1.4) brightness(1.04) !important;
-    box-shadow:
-      0 4px 16px rgb(96 73 36 / 8%),
-      inset 0 0.5px 0 rgb(255 255 255 / 28%) !important;
-    text-shadow: 0 1px 0 rgb(255 255 250 / 40%) !important;
+  .header .top-row > .header-controls .online-order-pill {
+    min-height: var(--header-mobile-control-size);
+    height: var(--header-mobile-control-size);
+    padding: 0 12px;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    border-radius: 999px;
+    white-space: nowrap;
   }
 }
 
@@ -12124,6 +12177,7 @@ body.light .social-icons-toggle.is-open {
   .section-title,
   .btn-neon,
   .nav-main > :is(a, .filter-btn),
+  .online-order-pill,
   .nav-main > .dropdown > a,
   .site-icon,
   .logo-img,

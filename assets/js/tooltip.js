@@ -290,7 +290,7 @@
     /* --- контекст элемента --- */
     const isBurger = target.id === 'burgerBtn' || !!target.closest('#burgerBtn');
     const isLangBtn = !!target.closest('.lang-dropdown-btn') || !!target.closest('.language-dropdown');
-    const isOnlineBtn = !!target.closest('.header-online-btn');
+    const isOnlineBtn = !!target.closest('.online-order-pill, .header-online-btn');
     const inMobileNav = !!target.closest('#mobile-nav');
     const inHeader = !!target.closest('.header');
     const isPageTitle = !!target.closest('.page-title, .breadcrumb, h1');
@@ -522,7 +522,7 @@
     document.querySelectorAll('.lang-dropdown-btn').forEach(el => attach(el, t['btn:lang']));
 
     /* кнопка онлайн-заказа */
-    document.querySelectorAll('.header-online-btn').forEach(el => attach(el, t['btn:online']));
+    document.querySelectorAll('.online-order-pill, .header-online-btn').forEach(el => attach(el, t['btn:online']));
 
     /* Media library toggle and submenu services */
     document.querySelectorAll('.social-player-toggle').forEach(el => attach(el, mediaTooltip.mediaLibrary));

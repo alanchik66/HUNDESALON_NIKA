@@ -123,10 +123,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const bodyChildren = Array.from(document.body.childNodes);
     bodyChildren.forEach(node => {
       if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'SCRIPT') return;
+      if (node.nodeType === Node.ELEMENT_NODE && node.id === 'booking-modal') return;
       root.appendChild(node);
     });
 
     document.body.insertBefore(root, document.body.firstChild);
+
+    const bookingModal = document.getElementById('booking-modal');
+    if (bookingModal?.parentElement === root) {
+      document.body.appendChild(bookingModal);
+    }
+
     return root;
   })();
 
@@ -1770,15 +1777,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  const mountActivePlasma = link => {
+  const mountActivePlasma = (link, options = {}) => {
+    const { cta = false } = options;
     if (link.querySelector('.nav-plasma--active')) return;
 
     const activePlasma = document.createElement('span');
-    activePlasma.className = 'nav-plasma--active';
+    activePlasma.className = cta ? 'nav-plasma--active nav-plasma--cta' : 'nav-plasma--active';
     link.appendChild(activePlasma);
 
+    const wandererCount = cta ? 5 : 3;
+    const cursorTipCount = cta ? 4 : 3;
     const cursorTips = [];
-    for (let i = 0; i < 3; i += 1) {
+    for (let i = 0; i < wandererCount; i += 1) {
       const wanderer = document.createElement('span');
       wanderer.className = 'nav-plasma-touch';
       activePlasma.appendChild(wanderer);
@@ -1793,7 +1803,7 @@ document.addEventListener('DOMContentLoaded', () => {
       allTouchPoints.push(wanderer);
     }
 
-    for (let i = 0; i < 3; i += 1) {
+    for (let i = 0; i < cursorTipCount; i += 1) {
       const cursorTip = document.createElement('span');
       cursorTip.className = 'nav-plasma-touch nav-plasma-touch--pointer';
       activePlasma.appendChild(cursorTip);
@@ -1844,7 +1854,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cursorTip._active = false;
         cursorTip.classList.remove('active');
       });
-      const count = 1 + Math.floor(Math.random() * 3);
+      const count = cta ? 2 + Math.floor(Math.random() * 3) : 1 + Math.floor(Math.random() * 3);
       const shuffled = cursorTips.slice().sort(() => Math.random() - 0.5);
       activeCursorTips = shuffled.slice(0, count);
       activeCursorTips.forEach((cursorTip, index) => {
@@ -1888,9 +1898,9 @@ document.addEventListener('DOMContentLoaded', () => {
     activePlasma.remove();
   };
 
-  const playNavPillClickFlash = link => {
+  const playNavPillClickFlash = (link, options = {}) => {
     const plasma = document.createElement('span');
-    plasma.className = 'nav-plasma';
+    plasma.className = options.cta ? 'nav-plasma nav-plasma--cta-flash' : 'nav-plasma';
     link.appendChild(plasma);
     plasma.addEventListener('animationend', function handler(event) {
       if (event.animationName === 'navPlasmaLifecycle') {
@@ -1906,8 +1916,11 @@ document.addEventListener('DOMContentLoaded', () => {
     link.dataset.navPillBound = '1';
 
     const isFilterPill = link.classList.contains('filter-btn');
+    const isOnlineOrderPill = link.classList.contains('online-order-pill');
 
-    if (isNavPillActive(link)) {
+    if (isOnlineOrderPill) {
+      mountActivePlasma(link, { cta: true });
+    } else if (isNavPillActive(link)) {
       mountActivePlasma(link);
     }
 
@@ -1917,17 +1930,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      if (isOnlineOrderPill && link.tagName === 'BUTTON') {
+        playNavPillClickFlash(link, { cta: true });
+        return;
+      }
+
       const href = link.getAttribute('href');
       if (!isSafeNavigationHref(href)) return;
       event.preventDefault();
       link.style.pointerEvents = 'none';
-      playNavPillClickFlash(link);
+      playNavPillClickFlash(link, { cta: isOnlineOrderPill });
       setTimeout(() => navigateToSafeHref(href), 1400);
     });
   };
 
   const navPillSelector =
-    '.nav-main > a, .nav-main > .dropdown > a, .before-after-filters.nav-main > .filter-btn';
+    '.nav-main > a, .nav-main > .dropdown > a, .before-after-filters.nav-main > .filter-btn, .online-order-pill';
 
   document.querySelectorAll(navPillSelector).forEach(link => {
     if (link.closest('.nav-gallery-dropdown')) return;
@@ -1936,7 +1954,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.HundesalonNavPill = {
     scan(root = document) {
-      root.querySelectorAll('.before-after-filters.nav-main > .filter-btn').forEach(bindNavPill);
+      root
+        .querySelectorAll('.before-after-filters.nav-main > .filter-btn, .online-order-pill')
+        .forEach(bindNavPill);
     },
     activate(link) {
       if (!link) return;

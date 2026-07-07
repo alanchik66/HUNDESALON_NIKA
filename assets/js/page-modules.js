@@ -591,6 +591,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('booking-modal');
     if (!modal) return;
 
+    if (modal.closest('.site-scroll-root')) {
+      document.body.appendChild(modal);
+    }
+
     const closeControl = modal.querySelector('.modal-close');
     const closeTriggers = modal.querySelectorAll('[data-booking-close]');
     const form = modal.querySelector('#booking-form');
@@ -629,6 +633,174 @@ document.addEventListener('DOMContentLoaded', () => {
     ) {
       return;
     }
+
+    const step2Panel = panels[2];
+    const nativeFieldsGrid = modal.querySelector('[data-booking-native-fields]');
+    let datetimeBody = step2Panel?.querySelector('.booking-datetime-body');
+
+    if (step2Panel && !datetimeBody) {
+      datetimeBody = document.createElement('div');
+      datetimeBody.className = 'booking-datetime-body';
+      step2Panel.insertBefore(datetimeBody, calendarContainer);
+      datetimeBody.append(calendarContainer, timeSlotsContainer);
+      if (nativeFieldsGrid) {
+        datetimeBody.append(nativeFieldsGrid);
+      }
+    }
+
+    const stepIndicator = modal.querySelector('.step-indicator');
+    const siteScrollRoot = document.querySelector('.site-scroll-root');
+    let savedSiteScrollTop = 0;
+    let wheelBlockHandler = null;
+    let touchBlockHandler = null;
+
+    const refreshDatetimeScrollState = () => {
+      if (!datetimeBody) {
+        return;
+      }
+
+      const hasOverflow = datetimeBody.scrollHeight > datetimeBody.clientHeight + 2;
+      const canScrollMore =
+        datetimeBody.scrollTop + datetimeBody.clientHeight < datetimeBody.scrollHeight - 2;
+
+      datetimeBody.classList.toggle('has-overflow', hasOverflow);
+      datetimeBody.classList.toggle('can-scroll-more', hasOverflow && canScrollMore);
+    };
+
+    const lockSiteScroll = () => {
+      savedSiteScrollTop = siteScrollRoot?.scrollTop || 0;
+      siteScrollRoot?.classList.add('booking-scroll-locked');
+      document.documentElement.classList.add('booking-modal-open');
+      document.body.classList.add('booking-modal-open');
+
+      wheelBlockHandler = event => {
+        if (!modal.classList.contains('active')) {
+          return;
+        }
+
+        const scrollable = event.target.closest('.booking-datetime-body, .service-list, #booking-form');
+        if (!scrollable) {
+          event.preventDefault();
+          return;
+        }
+
+        const maxScroll = scrollable.scrollHeight - scrollable.clientHeight;
+        if (maxScroll <= 0) {
+          event.preventDefault();
+          return;
+        }
+
+        const atTop = scrollable.scrollTop <= 0;
+        const atBottom = scrollable.scrollTop >= maxScroll - 1;
+        if ((atTop && event.deltaY < 0) || (atBottom && event.deltaY > 0)) {
+          event.preventDefault();
+        }
+      };
+
+      touchBlockHandler = event => {
+        if (!modal.classList.contains('active')) {
+          return;
+        }
+
+        if (event.target.closest('.booking-datetime-body, .service-list, #booking-form, .modal-content')) {
+          return;
+        }
+
+        event.preventDefault();
+      };
+
+      document.addEventListener('wheel', wheelBlockHandler, { passive: false, capture: true });
+      document.addEventListener('touchmove', touchBlockHandler, { passive: false, capture: true });
+    };
+
+    const unlockSiteScroll = () => {
+      siteScrollRoot?.classList.remove('booking-scroll-locked');
+      if (siteScrollRoot) {
+        siteScrollRoot.scrollTop = savedSiteScrollTop;
+      }
+      document.documentElement.classList.remove('booking-modal-open');
+      document.body.classList.remove('booking-modal-open');
+
+      if (wheelBlockHandler) {
+        document.removeEventListener('wheel', wheelBlockHandler, { capture: true });
+        wheelBlockHandler = null;
+      }
+
+      if (touchBlockHandler) {
+        document.removeEventListener('touchmove', touchBlockHandler, { capture: true });
+        touchBlockHandler = null;
+      }
+    };
+
+    const updateStepTabs = () => {
+      steps.forEach((item, index) => {
+        const stepNumber = index + 1;
+        const isActive = stepNumber === state.step;
+        const isComplete = stepNumber < state.step;
+
+        item.classList.toggle('is-complete', isComplete);
+        item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        item.setAttribute('tabindex', isActive ? '0' : '-1');
+      });
+    };
+
+    const navigateToStep = targetStep => {
+      if (targetStep === state.step) {
+        return;
+      }
+
+      if (targetStep < state.step) {
+        setStep(targetStep);
+        if (targetStep === 2) {
+          renderCalendar();
+          renderTimeSlots();
+        }
+        return;
+      }
+
+      if (targetStep === 2) {
+        moveToDateStep();
+        return;
+      }
+
+      if (targetStep === 3) {
+        if (!state.selectedService) {
+          setStep(1);
+          showValidationMessage(
+            bookingCopy.chooseService,
+            serviceList.querySelector('.service-option.selected, .service-option')
+          );
+          return;
+        }
+
+        moveToContactStep();
+      }
+    };
+
+    if (stepIndicator) {
+      stepIndicator.setAttribute('role', 'tablist');
+    }
+
+    steps.forEach((stepEl, index) => {
+      const stepNumber = index + 1;
+      stepEl.setAttribute('role', 'tab');
+      stepEl.dataset.bookingStep = String(stepNumber);
+
+      if (stepEl.tagName !== 'BUTTON') {
+        stepEl.setAttribute('tabindex', stepNumber === 1 ? '0' : '-1');
+      }
+
+      stepEl.addEventListener('click', () => navigateToStep(stepNumber));
+      stepEl.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          navigateToStep(stepNumber);
+        }
+      });
+    });
+
+    datetimeBody?.addEventListener('scroll', refreshDatetimeScrollState, { passive: true });
+    window.addEventListener('resize', refreshDatetimeScrollState, { passive: true });
 
     // Add missing accessibility hooks without having to duplicate markup across all pages.
     modal.setAttribute('role', 'dialog');
@@ -821,6 +993,18 @@ document.addEventListener('DOMContentLoaded', () => {
       bookingSummary.hidden = false;
     };
 
+    const resetStepScroll = step => {
+      const modalContent = modal.querySelector('.modal-content');
+      modalContent?.scrollTo?.({ top: 0, behavior: 'auto' });
+
+      const activePanel = panels[step];
+      activePanel?.scrollTo?.({ top: 0, behavior: 'auto' });
+      activePanel?.querySelector('.booking-datetime-body, .service-list, form')?.scrollTo?.({
+        top: 0,
+        behavior: 'auto',
+      });
+    };
+
     const setStep = step => {
       state.step = step;
       clearValidationMessage();
@@ -833,6 +1017,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const isActive = index + 1 === step;
         item.classList.toggle('active', isActive);
         item.setAttribute('aria-current', isActive ? 'step' : 'false');
+      });
+
+      updateStepTabs();
+
+      window.requestAnimationFrame(() => {
+        resetStepScroll(step);
+        refreshDatetimeScrollState();
       });
     };
 
@@ -924,6 +1115,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       calendarContainer.innerHTML = '';
       calendarContainer.appendChild(calendar);
+      window.requestAnimationFrame(refreshDatetimeScrollState);
     };
 
     const renderTimeSlots = () => {
@@ -959,6 +1151,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         timeSlotsContainer.appendChild(button);
       });
+
+      window.requestAnimationFrame(refreshDatetimeScrollState);
     };
 
     const bindNativeBookingFields = () => {
@@ -1020,9 +1214,10 @@ document.addEventListener('DOMContentLoaded', () => {
       renderServiceList();
       modal.classList.add('active');
       modal.setAttribute('aria-hidden', 'false');
-      document.body.classList.add('booking-modal-open');
+      lockSiteScroll();
 
       window.requestAnimationFrame(() => {
+        refreshDatetimeScrollState();
         modal.querySelector('.service-option.selected, .service-option, input, button')?.focus();
       });
     };
@@ -1033,7 +1228,7 @@ document.addEventListener('DOMContentLoaded', () => {
       modal.classList.remove('booking-modal-sent');
       modal.classList.remove('active');
       modal.setAttribute('aria-hidden', 'true');
-      document.body.classList.remove('booking-modal-open');
+      unlockSiteScroll();
       lastFocusedElement?.focus();
     };
 

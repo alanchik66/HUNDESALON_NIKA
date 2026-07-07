@@ -315,7 +315,7 @@
   text-decoration: underline;
 }
 
-.booking-hero .direct-booking-btn {
+.booking-hero .online-order-pill {
   margin-top: 0;
   min-width: 240px;
 }
@@ -367,7 +367,7 @@ body.light .direct-booking-btn:focus-visible {
     align-items: stretch;
   }
 
-  .booking-hero .direct-booking-btn {
+  .booking-hero .online-order-pill {
     min-width: 0;
     width: 100%;
   }
@@ -523,10 +523,8 @@ body.light .direct-booking-btn:focus-visible {
 }
 
 .select-service-btn,
-.online-order-btn,
 .btn-modal,
-.btn-google,
-.direct-booking-btn {
+.btn-google {
   border-radius: 40px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1);
@@ -545,11 +543,6 @@ body.light .direct-booking-btn:focus-visible {
   position: absolute;
   top: 0;
   right: 0;
-  padding: 10px 24px;
-  background: var(--accent-gold);
-  color: #000;
-  border: 0;
-  font-weight: 600;
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
@@ -572,13 +565,25 @@ body.light .direct-booking-btn:focus-visible {
 /* =========================================================
    BOOKING MODAL
    ========================================================= */
+html.booking-modal-open,
+body.booking-modal-open {
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+.site-scroll-root.booking-scroll-locked {
+  overflow: hidden !important;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
 .modal {
   display: none;
   position: fixed;
   inset: 0;
   z-index: 2000;
   justify-content: center;
-  align-items: center;
+  align-items: safe center;
   padding: 1.5rem;
   background: #000000b3;
   -webkit-backdrop-filter: blur(10px);
@@ -622,9 +627,12 @@ body.light .direct-booking-btn:focus-visible {
 }
 
 .modal-content {
+  display: flex;
+  flex-direction: column;
   width: min(100%, 620px);
-  max-height: min(92vh, 860px);
-  overflow-y: auto;
+  height: min(92dvh, 860px);
+  max-height: min(92dvh, 860px);
+  overflow: hidden;
   position: relative;
   padding: 3.25rem 1.75rem 1.75rem;
   border-radius: 28px;
@@ -775,8 +783,120 @@ body.light .direct-booking-btn:focus-visible {
 }
 
 .booking-step.active {
-  display: block;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
   animation: step-in 0.28s cubic-bezier(0.2, 0.9, 0.4, 1) both;
+}
+
+.booking-step.active > h3 {
+  flex: 0 0 auto;
+  margin-bottom: 0.35rem;
+}
+
+.booking-datetime-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  margin: 0.35rem 0 0.5rem;
+  padding-right: 4px;
+  -ms-overflow-style: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgb(198 161 91 / 55%) rgb(255 255 255 / 6%) !important;
+}
+
+.booking-datetime-body.has-overflow.can-scroll-more::after {
+  content: "";
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 34px;
+  margin-top: -34px;
+  background: linear-gradient(to bottom, rgb(8 12 10 / 0%), rgb(8 12 10 / 88%) 68%, rgb(8 12 10 / 96%) 100%);
+  pointer-events: none;
+}
+
+.booking-datetime-body::-webkit-scrollbar,
+#step-3.booking-step.active form::-webkit-scrollbar,
+#step-1.booking-step.active .service-list::-webkit-scrollbar {
+  display: block !important;
+  width: 6px !important;
+  height: 6px !important;
+  background: rgb(255 255 255 / 6%) !important;
+}
+
+.booking-datetime-body::-webkit-scrollbar-thumb,
+#step-3.booking-step.active form::-webkit-scrollbar-thumb,
+#step-1.booking-step.active .service-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgb(198 161 91 / 55%) !important;
+}
+
+.booking-datetime-body::-webkit-scrollbar-track,
+#step-3.booking-step.active form::-webkit-scrollbar-track,
+#step-1.booking-step.active .service-list::-webkit-scrollbar-track {
+  background: rgb(255 255 255 / 6%) !important;
+}
+
+#step-2 .booking-native-grid {
+  margin: 0.85rem 0 0;
+  padding: 0.72rem 0.82rem;
+  border: 1px solid rgb(236 205 138 / 18%);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 5%);
+}
+
+#step-2 .booking-field-label {
+  gap: 4px;
+  font-size: 0.82rem;
+}
+
+#step-2 .booking-field-label input {
+  min-height: 38px;
+  font-size: 0.9rem;
+}
+
+.booking-step-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(198 161 91 / 42%) transparent;
+}
+
+.booking-step-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.booking-step-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgb(198 161 91 / 42%);
+}
+
+#step-3.booking-step.active form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+  -ms-overflow-style: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgb(198 161 91 / 55%) rgb(255 255 255 / 6%) !important;
 }
 
 @keyframes step-in {
@@ -792,9 +912,10 @@ body.light .direct-booking-btn:focus-visible {
 
 .step-indicator {
   display: flex;
+  flex: 0 0 auto;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.35rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--glass-border);
 }
@@ -802,13 +923,40 @@ body.light .direct-booking-btn:focus-visible {
 .step {
   flex: 1;
   position: relative;
+  margin: 0;
+  padding: 0.55rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
   text-align: center;
-  color: rgba(236, 232, 223, 0.7);
+  color: rgb(236 232 223 / 70%);
+  font: inherit;
+  line-height: 1.25;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.step:hover,
+.step:focus-visible {
+  color: #ffe8b0e6;
+  border-color: rgb(198 161 91 / 28%);
+  background: rgb(255 255 255 / 6%);
+  outline: none;
+}
+
+.step.is-complete {
+  color: rgb(236 232 223 / 88%);
 }
 
 .step.active {
   color: var(--accent-gold);
   font-weight: 600;
+  border-color: rgb(198 161 91 / 42%);
+  background: rgb(198 161 91 / 12%);
 }
 
 .step.active::after {
@@ -1122,6 +1270,15 @@ body.light .newsletter-form input {
   background: #ffffffb8;
 }
 
+body.light .booking-step .modal-buttons {
+  background: linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 0%) 0%,
+    rgb(255 250 240 / 88%) 34%,
+    rgb(255 250 240 / 96%) 100%
+  );
+}
+
 @media (width <= 820px) {
   .booking-native-grid,
   .newsletter-card,
@@ -1134,15 +1291,20 @@ body.light .newsletter-form input {
 }
 
 .service-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.42rem;
-  max-height: 300px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+  flex: 0 1 auto;
+  align-content: start;
+  align-items: start;
+  min-height: 0;
+  max-height: min(210px, 28dvh);
   overflow-y: auto;
-  margin: 0.75rem 0;
-  padding-right: 2px;
-  scrollbar-width: thin;
-  scrollbar-color: #c6a15b47 transparent;
+  margin: 0.55rem 0 0.35rem;
+  padding-right: 4px;
+  -ms-overflow-style: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgb(198 161 91 / 55%) rgb(255 255 255 / 6%) !important;
 }
 
 .service-option,
@@ -1163,20 +1325,47 @@ body.light .newsletter-form input {
     box-shadow 0.22s cubic-bezier(0.2, 0.9, 0.4, 1);
 }
 
-.service-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem;
-}
-
 .service-option {
-  padding: 11px 14px;
-  border-radius: 14px;
-  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 7px 9px;
+  border-radius: 11px;
+  background: linear-gradient(145deg, rgb(255 255 255 / 9%) 0%, rgb(255 255 255 / 4%) 100%);
+  color: rgb(255 247 232 / 88%);
+  font-size: 0.84rem;
+  line-height: 1.28;
+  letter-spacing: 0.01em;
+  text-align: center;
   cursor: pointer;
 }
 
-.service-option.selected,
+.service-option.selected {
+  border-color: rgb(198 161 91 / 62%);
+  background: linear-gradient(135deg, rgb(226 190 116 / 20%) 0%, rgb(255 255 255 / 7%) 100%);
+  color: #ffe8b0;
+  box-shadow:
+    0 2px 14px rgb(0 0 0 / 14%),
+    0 0 10px rgb(226 190 116 / 12%),
+    inset 0 1px 0 rgb(255 255 255 / 10%);
+  transform: none;
+  filter: none;
+  outline: none;
+}
+
+.service-option:hover,
+.service-option:focus-visible {
+  border-color: rgb(198 161 91 / 42%);
+  background: linear-gradient(145deg, rgb(255 255 255 / 12%) 0%, rgb(255 255 255 / 6%) 100%);
+  color: #ffe6a8;
+  box-shadow:
+    0 4px 16px rgb(0 0 0 / 14%),
+    inset 0 1px 0 rgb(255 255 255 / 8%);
+  transform: translateY(-1px);
+  outline: none;
+}
+
 .time-slot.selected,
 .calendar-day.selected {
   border-color: #c6a15bb3;
@@ -1193,8 +1382,6 @@ body.light .newsletter-form input {
   animation: navPillBreathActive var(--motion-sync-breath) ease-in-out infinite;
 }
 
-.service-option:hover,
-.service-option:focus-visible,
 .time-slot:hover,
 .time-slot:focus-visible,
 .calendar-day:hover,
@@ -1208,6 +1395,21 @@ body.light .newsletter-form input {
   transform: translateY(-2px);
   filter: brightness(1.05);
   outline: none;
+}
+
+body.light .service-option {
+  color: rgb(33 24 12 / 82%);
+  background: linear-gradient(145deg, rgb(255 255 255 / 82%) 0%, rgb(255 255 255 / 62%) 100%);
+}
+
+body.light .service-option.selected {
+  color: #6d4f12;
+  background: linear-gradient(135deg, rgb(236 205 138 / 34%) 0%, rgb(255 255 255 / 78%) 100%);
+}
+
+body.light .service-option:hover,
+body.light .service-option:focus-visible {
+  color: #4f390d;
 }
 
 .calendar {
@@ -1245,10 +1447,10 @@ body.light .newsletter-form input {
 }
 
 .time-slots {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
   gap: 8px;
-  margin: 0.75rem 0;
+  margin: 0.75rem 0 0;
 }
 
 .time-slot {
@@ -1283,9 +1485,20 @@ body.light .newsletter-form input {
 
 .modal-buttons {
   display: flex;
+  flex: 0 0 auto;
   justify-content: space-between;
   gap: 1rem;
-  margin-top: 2rem;
+  margin-top: auto;
+  padding-top: 1.15rem;
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  background: linear-gradient(
+    to bottom,
+    rgb(8 12 10 / 0%) 0%,
+    rgb(8 12 10 / 82%) 34%,
+    rgb(8 12 10 / 96%) 100%
+  );
 }
 
 .btn-modal {
@@ -1295,8 +1508,6 @@ body.light .newsletter-form input {
   color: var(--accent-gold);
 }
 
-.btn-modal-primary,
-.direct-booking-btn,
 .btn-google {
   background: var(--accent-gold);
   color: #000;
@@ -1314,20 +1525,19 @@ body.light .newsletter-form input {
   color: var(--accent-gold);
 }
 
-.direct-booking-btn {
+.online-order-pill--hero,
+.booking-hero .online-order-pill {
   margin-top: 20px;
+  min-height: 48px;
   padding: 14px 38px;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 16px;
 }
 
-.direct-booking-btn:hover,
 .btn-google:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 20px rgba(198, 161, 91, 0.3);
 }
 
-.direct-booking-btn:focus-visible,
 .booking-secondary-link:focus-visible {
   outline: 2px solid #f5e6b2;
   outline-offset: 3px;
@@ -1712,18 +1922,18 @@ body .btn-read:hover .site-icon-arrow-right {
   }
 
   #step-1.booking-step.active .service-list {
-    max-height: min(34dvh, 240px);
-    margin-bottom: 0.6rem;
+    max-height: min(200px, 26dvh);
+    margin-bottom: 0.35rem;
   }
 
   .service-list {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.38rem;
   }
 
   .service-option {
-    min-height: 46px;
-    padding: 12px 14px;
+    padding: 7px 8px;
+    font-size: 0.82rem;
   }
 
   .calendar {
@@ -1745,26 +1955,10 @@ body .btn-read:hover .site-icon-arrow-right {
   }
 
   .booking-step .modal-buttons {
-    position: sticky;
-    bottom: 0;
-    z-index: 2;
-    padding-top: 1.4rem;
+    padding-top: 1.1rem;
     padding-bottom: 0.35rem;
     margin-inline: -1.75rem;
     padding-inline: 1.75rem;
-    background: linear-gradient(
-      to bottom,
-      rgb(8 12 10 / 0%) 0%,
-      rgb(8 12 10 / 82%) 38%,
-      rgb(8 12 10 / 96%) 100%
-    );
-  }
-
-  #step-2.booking-step.active .modal-buttons,
-  #step-3.booking-step.active .modal-buttons {
-    position: sticky;
-    bottom: 0;
-    z-index: 3;
   }
 }
 
@@ -1776,6 +1970,7 @@ body .btn-read:hover .site-icon-arrow-right {
 
   .modal-content {
     width: 100%;
+    height: calc(100dvh - 1rem);
     max-height: calc(100dvh - 1rem);
     border-radius: 24px;
     padding: 1.2rem;
@@ -1816,22 +2011,23 @@ body .btn-read:hover .site-icon-arrow-right {
     content: none;
   }
 
-  .service-list {
-    max-height: 250px;
+  .step {
+    cursor: pointer;
   }
 
   #step-1.booking-step.active .service-list {
-    max-height: min(28dvh, 185px);
+    max-height: min(188px, 24dvh);
   }
 
   .service-list {
-    grid-template-columns: 1fr;
-    gap: 0.44rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.34rem;
   }
 
   .service-option {
-    min-height: 44px;
-    padding: 11px 13px;
+    padding: 6px 7px;
+    font-size: 0.8rem;
+    border-radius: 10px;
   }
 
   .calendar {
