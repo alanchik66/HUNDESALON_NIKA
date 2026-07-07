@@ -17,13 +17,13 @@ function isPrivateIpv4Hostname(hostname) {
   if (!match) return false;
 
   const octets = match.slice(1).map(Number);
-  if (octets.some(octet => !Number.isInteger(octet) || octet < 0 || octet > 255)) {
+  if (octets.some(octet => octet < 0 || octet > 255)) {
     return false;
   }
 
   return (
     octets[0] === 10 ||
-    (octets[0] === 127 && octets[1] === 0 && octets[2] === 0 && octets[3] === 1) ||
+    octets[0] === 127 ||
     (octets[0] === 192 && octets[1] === 168) ||
     (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31)
   );

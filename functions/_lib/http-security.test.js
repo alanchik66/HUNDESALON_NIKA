@@ -9,12 +9,19 @@ test('allows exact same-origin requests', () => {
 
 test('allows local development cross-port requests on the same exact host', () => {
   assert.equal(isAllowedOrigin('http://127.0.0.1:5502', 'http://127.0.0.1:8788/sendmail'), true);
+  assert.equal(isAllowedOrigin('http://127.1.2.3:5502', 'http://127.1.2.3:8788/sendmail'), true);
+  assert.equal(isAllowedOrigin('http://10.2.3.4:5502', 'http://10.2.3.4:8788/sendmail'), true);
+  assert.equal(isAllowedOrigin('http://172.20.10.5:5502', 'http://172.20.10.5:8788/sendmail'), true);
   assert.equal(isAllowedOrigin('http://192.168.1.25:5502', 'http://192.168.1.25:8788/sendmail'), true);
 });
 
 test('rejects attacker-controlled localhost lookalikes', () => {
   assert.equal(isLocalDevOrigin('http://localhost.attacker.tld:5502'), false);
   assert.equal(isAllowedOrigin('http://localhost.attacker.tld:5502', 'https://hundesalon-nika.com/sendmail'), false);
+});
+
+test('rejects protocol mismatches', () => {
+  assert.equal(isAllowedOrigin('http://hundesalon-nika.com', 'https://hundesalon-nika.com/sendmail'), false);
 });
 
 test('rejects non-local cross-port origins for production hosts', () => {
