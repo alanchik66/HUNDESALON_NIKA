@@ -11,8 +11,9 @@ const server = http.createServer((req, res) => {
   if (urlPath === '/') {
     urlPath = '/ru/index.html';
   }
-  const filePath = path.join(root, urlPath.replace(/^\//, ''));
-  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+  const filePath = path.resolve(root, urlPath.replace(/^\//, ''));
+  const isInsideRoot = filePath === root || filePath.startsWith(`${root}${path.sep}`);
+  if (!isInsideRoot || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
     res.writeHead(404);
     res.end('not found');
     return;

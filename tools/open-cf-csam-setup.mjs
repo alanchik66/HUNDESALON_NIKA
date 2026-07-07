@@ -6,7 +6,7 @@ import { ACCOUNT_ID, DOMAIN } from './lib/cloudflare-auth.mjs';
 
 const url = `https://dash.cloudflare.com/${ACCOUNT_ID}/${DOMAIN}/caching/configuration/csam`;
 
-console.log('CSAM setup:', url);
+console.log('CSAM setup: opening Cloudflare dashboard.');
 console.log('1) Set notify email: info@hundesalon-nika.com (forwards via Email Routing)');
 console.log('2) Confirm verification link from Cloudflare (inbox for info@ or forwarded Gmail)');
 console.log('3) Return to the page and click Submit (Absenden)');
@@ -19,5 +19,5 @@ const start =
       : `xdg-open "${url}"`;
 
 exec(start, error => {
-  if (error) console.log(url);
+  if (error) console.log('Open the Cloudflare CSAM page manually if the browser did not launch.');
 });
