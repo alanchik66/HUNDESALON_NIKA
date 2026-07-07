@@ -35,6 +35,3 @@ if (remoteSha !== local) {
 }
 console.log(`origin/main: ${remoteSha.slice(0, 7)} OK`);
 console.log('\nDone. GitHub main is up-to-date. Deploy with: npm run deploy:full');
-
-console.log('');
-console.log('Done. GitHub and GitLab main are aligned. Deploy with: npm run deploy:full');
