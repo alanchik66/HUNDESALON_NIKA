@@ -109,13 +109,27 @@ function buildCommonStdioServers() {
 function buildGithubServer(useInput = false) {
   const token = process.env.GITHUB_PERSONAL_ACCESS_TOKEN || process.env.GITHUB_TOKEN || '';
   if (!token && !useInput) return null;
-  return {
+  const server = {
     command: 'npx',
     args: ['-y', '@modelcontextprotocol/server-github'],
-    env: {
-      GITHUB_PERSONAL_ACCESS_TOKEN: useInput ? '${input:github-token}' : token,
-    },
   };
+
+  if (useInput) {
+    server.env = {
+      GITHUB_PERSONAL_ACCESS_TOKEN: '${input:github-token}',
+    };
+  }
+
+  return server;
+}
+
+function removeGithubPromptConfig(existing) {
+  if (Array.isArray(existing.inputs)) {
+    existing.inputs = existing.inputs.filter(item => item?.id !== 'github-token');
+  }
+  if (existing.servers?.github) {
+    delete existing.servers.github;
+  }
 }
 
 function configureCursor() {
@@ -130,6 +144,7 @@ function configureCursor() {
 function configureVsCodeUser() {
   const filePath = join(homedir(), 'AppData', 'Roaming', 'Code', 'User', 'mcp.json');
   const existing = readJson(filePath, { inputs: [], servers: {} });
+  removeGithubPromptConfig(existing);
   const servers = {
     'filesystem-hundesalon': {
       command: 'node',
@@ -157,18 +172,8 @@ function configureVsCodeUser() {
     },
   };
 
-  const github = buildGithubServer(true);
+  const github = buildGithubServer(false);
   if (github) {
-    existing.inputs = Array.isArray(existing.inputs) ? existing.inputs : [];
-    const hasGithubInput = existing.inputs.some((item) => item?.id === 'github-token');
-    if (!hasGithubInput) {
-      existing.inputs.push({
-        type: 'promptString',
-        id: 'github-token',
-        description: 'GitHub Personal Access Token for MCP (repo scope)',
-        password: true,
-      });
-    }
     servers.github = github;
   }
 
@@ -451,5 +456,7 @@ for (const [name, path] of results) {
 
 const githubConfigured = Boolean(process.env.GITHUB_PERSONAL_ACCESS_TOKEN || process.env.GITHUB_TOKEN);
 console.log('\nServers: filesystem-hundesalon, memory, sequential-thinking, playwright, cloudflare-docs, webstorm');
-console.log(`GitHub MCP: ${githubConfigured ? 'enabled (token found in environment)' : 'skipped (set GITHUB_PERSONAL_ACCESS_TOKEN to enable)'}`);
+console.log(
+  `GitHub MCP: ${githubConfigured ? 'enabled (token found in environment)' : 'skipped (set GITHUB_PERSONAL_ACCESS_TOKEN to enable)'}`
+);
 console.log('\nRestart VS Code, Cursor, Devin, Claude, Windsurf and Codex to apply changes.');
