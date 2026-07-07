@@ -13,7 +13,9 @@ function parseUrl(value) {
 }
 
 function isPrivateIpv4Hostname(hostname) {
-  const match = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(String(hostname || ''));
+  const match = /^(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})$/.exec(
+    String(hostname || '')
+  );
   if (!match) return false;
 
   const octets = match.slice(1).map(Number);
