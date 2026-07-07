@@ -112,9 +112,7 @@ try {
           status: 'LOGIN_REQUIRED',
           message:
             'Google asks for sign-in in the controlled Edge window. Sign in there, then run npm run google:gsc:browser again.',
-          url: summary.url,
-          title: summary.title,
-          inputs: summary.inputs,
+          inputCount: summary.inputs.length,
         },
         null,
         2
@@ -124,7 +122,22 @@ try {
   }
 
   const result = await submitSitemap(session);
-  console.log(JSON.stringify({ status: result.ok ? 'SUBMIT_ATTEMPTED' : 'NEEDS_MANUAL_REVIEW', result }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        status: result.ok ? 'SUBMIT_ATTEMPTED' : 'NEEDS_MANUAL_REVIEW',
+        result: {
+          ok: Boolean(result.ok),
+          reason: result.reason || '',
+          clicked: result.clicked || '',
+          value: result.value || '',
+          has: Boolean(result.has),
+        },
+      },
+      null,
+      2
+    )
+  );
 } finally {
   session.close();
 }

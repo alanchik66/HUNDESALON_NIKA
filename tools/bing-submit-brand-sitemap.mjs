@@ -14,17 +14,19 @@ for (const sm of sitemaps) {
   const r = await withCdp(async send => {
     await send('Page.navigate', { url: `https://www.bing.com/webmasters/sitemaps?siteUrl=${siteQ}` });
     await wait(6000);
+    const sitemapLiteral = JSON.stringify(sm);
     const result = await send('Runtime.evaluate', {
       expression: `(async () => {
         const sleep = ms => new Promise(r => setTimeout(r, ms));
         const body = document.body?.innerText || '';
-        if (body.includes('${sm.replace(/'/g, "\\'")}')) return { already: true, sm: '${sm}' };
+        const sitemap = ${sitemapLiteral};
+        if (body.includes(sitemap)) return { already: true, sm: sitemap };
         const input = document.querySelector('input[type="url"], input');
         if (input) {
           const proto = Object.getPrototypeOf(input);
           const d = Object.getOwnPropertyDescriptor(proto, 'value');
-          if (d?.set) d.set.call(input, '${sm}');
-          else input.value = '${sm}';
+          if (d?.set) d.set.call(input, sitemap);
+          else input.value = sitemap;
           input.dispatchEvent(new Event('input', { bubbles: true }));
         }
         await sleep(500);
@@ -33,7 +35,7 @@ for (const sm of sitemaps) {
           if (/submit|add|добав|отправ/i.test(t)) { el.click(); break; }
         }
         await sleep(3000);
-        return { added: true, sm: '${sm}', has: (document.body?.innerText||'').includes('sitemap-brand') };
+        return { added: true, sm: sitemap, has: (document.body?.innerText||'').includes('sitemap-brand') };
       })()`,
       awaitPromise: true,
       returnByValue: true,

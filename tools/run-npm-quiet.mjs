@@ -4,7 +4,6 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 const args = process.argv.slice(2);
 if (args.length === 0) {
@@ -27,18 +26,17 @@ function resolveNpmCmd() {
 }
 
 const npmCmd = resolveNpmCmd();
-function quoteArg(a) {
-  if (/^[a-zA-Z0-9_\-./:]+=?$/.test(a)) return a;
-  return '"' + String(a).replace(/"/g, '\\"') + '"';
-}
-
 let result;
 if (process.platform === 'win32') {
-  const cmd = [npmCmd, ...args].map(quoteArg).join(' ');
-  result = spawnSync(cmd, {
+  const npmCliCandidates = [
+    join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js'),
+    'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+  ];
+  const npmCli = npmCliCandidates.find(candidate => candidate === npmCliCandidates[1] || existsSync(candidate));
+  result = spawnSync(process.execPath, [npmCli || npmCmd, ...args], {
     stdio: 'inherit',
     env,
-    shell: true,
+    shell: false,
   });
 } else {
   result = spawnSync(npmCmd, args, {

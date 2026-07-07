@@ -263,7 +263,8 @@ async function printStatus(auth, zoneId) {
 
 function openDashboard() {
   const url = `https://dash.cloudflare.com/${ACCOUNT_ID}/${DOMAIN}/security/waf/rate-limiting-rules`;
-  console.log(`\nDashboard (manual edit): ${url}`);
+  // Log static message only - do not log the URL containing account IDs
+  console.log('\nOpen Cloudflare dashboard → Security → WAF → Rate limiting rules.');
   const start =
     process.platform === 'win32'
       ? `start "" "${url}"`
@@ -288,9 +289,7 @@ async function main() {
     await printStatus(auth, zoneId);
   } catch (error) {
     console.error(`\n${error.message}`);
-    console.error(
-      'Token needs Zone → WAF Write. Create a custom API token or configure rules in Dashboard.'
-    );
+    console.error('Token needs Zone → WAF Write. Create a custom API token or configure rules in Dashboard.');
     openDashboard();
     process.exitCode = 1;
   }

@@ -160,4 +160,13 @@ if (report.bingApiKeyInDevVars) {
 const out = path.join(root, 'temp', 'bing-finish-manual-report.json');
 fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, `${JSON.stringify(report, null, 2)}\n`);
-console.log(JSON.stringify(report, null, 2));
+// Use explicit boolean conversions to avoid taint-flow from API key presence checks
+const summary = {
+  ok: Boolean(report.ok),
+  siteScan: Boolean(report.siteScan?.success),
+  robots: Boolean(report.robots?.success),
+  liveRobots: Boolean(report.liveRobots?.success),
+  bingApi: Boolean(report.bingApi?.success),
+  clarity: Boolean(report.clarity?.success),
+};
+console.log(JSON.stringify(summary, null, 2));

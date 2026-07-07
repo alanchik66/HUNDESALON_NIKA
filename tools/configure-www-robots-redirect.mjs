@@ -3,12 +3,7 @@
  * npm run cf:www-robots-redirect
  */
 import { execFileSync } from 'node:child_process';
-import {
-  DOMAIN,
-  cloudflareApi,
-  loadDevVars,
-  resolveZoneId,
-} from './lib/cloudflare-auth.mjs';
+import { DOMAIN, cloudflareApi, loadDevVars, resolveZoneId } from './lib/cloudflare-auth.mjs';
 import { resolveCfAuth } from './lib/cf-api-token.mjs';
 
 const PHASE = 'http_request_dynamic_redirect';
@@ -25,7 +20,12 @@ function verifyLiveRedirect() {
     });
     const status = Number(raw.match(/HTTP\/\S+\s+(\d+)/)?.[1] || 0);
     const loc = raw.match(/^location:\s*(.+)$/im)?.[1]?.trim() || '';
-    const ok = status >= 301 && status < 400 && loc.includes('hundesalon-nika.com/robots.txt');
+    const locationUrl = loc ? new URL(loc) : null;
+    const ok =
+      status >= 301 &&
+      status < 400 &&
+      locationUrl?.hostname === 'hundesalon-nika.com' &&
+      locationUrl?.pathname === '/robots.txt';
     return { ok, status, loc };
   } catch (e) {
     return { ok: false, error: e.message };
@@ -47,9 +47,7 @@ function hasWildcardRedirect(rules) {
 
 function hasRobotsRedirect(rules) {
   return (rules || []).some(
-    r =>
-      r.targets?.[0]?.constraint?.value === PAGE_RULE_URL &&
-      r.actions?.[0]?.id === 'forwarding_url'
+    r => r.targets?.[0]?.constraint?.value === PAGE_RULE_URL && r.actions?.[0]?.id === 'forwarding_url'
   );
 }
 

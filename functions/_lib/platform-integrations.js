@@ -4,10 +4,19 @@ const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const googleTokenCache = new Map();
 
 export function cleanText(value, maxLength = 2000) {
-  return String(value ?? '')
+  let s = String(value ?? '')
+    .normalize('NFKC')
+    .replace(/[\u0000-\u001F\u007F]/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
-    .replace(/<[^>]*>/g, '')
     .slice(0, maxLength);
+  // Iteratively strip HTML tags to prevent partial-tag injection (e.g. <<script>)
+  let prev;
+  do {
+    prev = s;
+    s = s.replace(/<[^>]*>/g, '');
+  } while (s !== prev);
+  return s;
 }
 
 export function getEnvValue(env, name, fallback = '') {
@@ -18,7 +27,7 @@ export function getEnvList(env, name, fallback = '') {
   const value = Array.isArray(env?.[name]) ? env[name].join(',') : getEnvValue(env, name, fallback);
   return String(value || '')
     .split(',')
-    .map((item) => item.trim())
+    .map(item => item.trim())
     .filter(Boolean);
 }
 
@@ -32,10 +41,7 @@ function base64UrlEncode(value) {
   for (let index = 0; index < bytes.length; index += 0x8000) {
     binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
   }
-  return btoa(binary)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '');
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
 function base64Encode(value) {
@@ -69,11 +75,7 @@ async function signServiceAccountJwt(privateKeyPem, unsignedJwt) {
     false,
     ['sign']
   );
-  const signature = await crypto.subtle.sign(
-    { name: 'RSASSA-PKCS1-v1_5' },
-    key,
-    new TextEncoder().encode(unsignedJwt)
-  );
+  const signature = await crypto.subtle.sign({ name: 'RSASSA-PKCS1-v1_5' }, key, new TextEncoder().encode(unsignedJwt));
   return `${unsignedJwt}.${base64UrlEncode(new Uint8Array(signature))}`;
 }
 
@@ -210,9 +212,7 @@ export async function getMicrosoftGraphToken(env) {
     }
   );
 
-  return tokenResponse.ok && hasUsableValue(tokenResponse.body?.access_token)
-    ? tokenResponse.body.access_token
-    : '';
+  return tokenResponse.ok && hasUsableValue(tokenResponse.body?.access_token) ? tokenResponse.body.access_token : '';
 }
 
 export async function callGoogleAppsScriptGateway(env, action, payload) {
@@ -367,17 +367,16 @@ export async function sendGmailEmail(env, { to, subject, text, replyTo = '', all
     'Content-Type: text/plain; charset=UTF-8',
     '',
     text,
-  ].filter((line) => line !== null).join('\r\n');
+  ]
+    .filter(line => line !== null)
+    .join('\r\n');
   const bytes = new TextEncoder().encode(message);
   let binary = '';
   for (let index = 0; index < bytes.length; index += 0x8000) {
     const chunk = bytes.subarray(index, index + 0x8000);
     binary += String.fromCharCode(...chunk);
   }
-  const raw = btoa(binary)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '');
+  const raw = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 
   return safeJsonFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
     method: 'POST',
@@ -424,7 +423,7 @@ export async function sendOutlookEmail(env, { to, subject, text }) {
 export async function sendResendEmail(env, { to, subject, text, replyTo = '', from = '' }) {
   const apiKey = getEnvValue(env, 'RESEND_API_KEY');
   const recipients = (Array.isArray(to) ? to : String(to || '').split(','))
-    .map((item) => String(item || '').trim())
+    .map(item => String(item || '').trim())
     .filter(Boolean);
   if (!hasUsableValue(apiKey) || recipients.length === 0) {
     return { ok: false, skipped: true, reason: 'Resend credentials are not configured.' };
@@ -513,14 +512,17 @@ export async function uploadFileToDrive(env, { file, fileName, metadata = {} }) 
   body.set(new Uint8Array(fileBytes), head.byteLength);
   body.set(tail, head.byteLength + fileBytes.byteLength);
 
-  const upload = await safeJsonFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': `multipart/related; boundary=${boundary}`,
-    },
-    body,
-  });
+  const upload = await safeJsonFetch(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': `multipart/related; boundary=${boundary}`,
+      },
+      body,
+    }
+  );
 
   if (upload.ok && upload.body?.id) {
     return {

@@ -56,7 +56,9 @@ async function evalRetry(s, body, { retries = 2 } = {}) {
 await withSession(async s => {
   console.log('1/4 Site Scan — start…');
   await s.nav('sitescan');
-  report.siteScan = await evalRetry(s, `
+  report.siteScan = await evalRetry(
+    s,
+    `
     const openScan = () => {
       const patterns = ['start new scan', 'начать новое сканирование', 'run scan', 'scan now', 'новое сканирование'];
       for (const p of patterns) {
@@ -116,7 +118,8 @@ await withSession(async s => {
       success: Boolean(confirmed) && (scanning || !modalOpen),
       sample: body.slice(0, 700),
     };
-  `);
+  `
+  );
 
   if (report.siteScan?.modalOpen) {
     await new Promise(r => setTimeout(r, 5000));
@@ -130,7 +133,9 @@ await withSession(async s => {
     await new Promise(r => setTimeout(r, 3000));
   }
 
-  report.robots = await evalRetry(s, `
+  report.robots = await evalRetry(
+    s,
+    `
     if (!location.href.includes('robotstxttester')) {
       return { success: false, wrongPage: location.href };
     }
@@ -148,7 +153,8 @@ await withSession(async s => {
       success: /allow:\\s*\\//i.test(body) && /sitemap/i.test(body),
       sample: body.slice(0, 1200),
     };
-  `);
+  `
+  );
 
   console.log('3/4 API Access…');
   for (const apiPath of ['settings/apiaccess', 'settings/api', 'settings']) {
@@ -163,7 +169,9 @@ await withSession(async s => {
     }
     report.apiProbe = probe;
   }
-  report.apiAccess = await evalRetry(s, `
+  report.apiAccess = await evalRetry(
+    s,
+    `
     const body = document.body?.innerText || '';
     const gen = clickMatch('generate api|создать ключ|generate key|new api|сгенерировать|create api');
     await sleep(2000);
@@ -174,11 +182,14 @@ await withSession(async s => {
       success: /api|ключ|key|token/i.test(body),
       sample: body.slice(0, 800),
     };
-  `);
+  `
+  );
 
   console.log('4/4 Microsoft Clarity…');
   await s.nav('clarity');
-  report.clarity = await evalRetry(s, `
+  report.clarity = await evalRetry(
+    s,
+    `
     let clicked = clickMatch('get started|начать работу|sign up|зарегистр|подключ|try clarity|попробовать|enable clarity|создать|бесплатно');
     await sleep(3000);
 
@@ -208,7 +219,8 @@ await withSession(async s => {
       success: Boolean(termsAccepted || accepted || /complete setup|clarity is enabled|clarity enabled/i.test(body)),
       sample: body.slice(0, 800),
     };
-  `);
+  `
+  );
 });
 
 try {
@@ -240,7 +252,16 @@ report.ok =
 const out = path.join(root, 'temp', 'bing-finish-remaining-report.json');
 fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, `${JSON.stringify(report, null, 2)}\n`);
-console.log(JSON.stringify(report, null, 2));
+// Use explicit boolean conversions to avoid taint-flow from API key presence checks
+const summary = {
+  ok: Boolean(report.ok),
+  siteScan: Boolean(report.siteScan?.success),
+  robots: Boolean(report.robots?.success),
+  liveRobots: Boolean(report.liveRobots?.success),
+  bingApi: Boolean(report.bingApi?.success),
+  clarity: Boolean(report.clarity?.success),
+};
+console.log(JSON.stringify(summary, null, 2));
 
 if (!report.ok) {
   console.error('\nBing finish-remaining: some steps need attention (see report).');
