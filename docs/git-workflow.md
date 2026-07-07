@@ -2,7 +2,6 @@
 
 > NOTE: GitLab зеркало удалено. Репозиторий теперь поддерживается только через GitHub; упоминания GitLab сохранены для исторического контекста.
 
-
 ## Источник правды
 
 | Сервис                                       | Роль                                                                |
@@ -17,7 +16,6 @@ Cloudflare Pages: проект `hundesalon-nika`, тип **Direct Upload**. Пр
 
 - GitHub Actions: `.github/workflows/cloudflare-pages.yml`;
 - GitHub Actions CI: `.github/workflows/ci.yml`;
-- GitLab CI fallback: `.gitlab-ci.yml`;
 - локально вручную:
 
 ```bash
@@ -33,16 +31,16 @@ Settings → Secrets and variables → Actions:
 
 Secrets:
 
-| Secret                       | Purpose                                                     |
-| ---------------------------- | ----------------------------------------------------------- |
+| Secret                       | Purpose                                                              |
+| ---------------------------- | -------------------------------------------------------------------- |
 | `CLOUDFLARE_PAGES_API_TOKEN` | Cloudflare token `HUNDESALON_NIKA — Pages Deploy` with `Pages Write` |
 
 Variables:
 
-| Variable                         | Value                                |
-| -------------------------------- | ------------------------------------ |
-| `CLOUDFLARE_ACCOUNT_ID`          | `25e872aeab8cb246c69142ab07cd0fee`   |
-| `CLOUDFLARE_PAGES_PROJECT_NAME`  | `hundesalon-nika`                    |
+| Variable                        | Value                              |
+| ------------------------------- | ---------------------------------- |
+| `CLOUDFLARE_ACCOUNT_ID`         | `25e872aeab8cb246c69142ab07cd0fee` |
+| `CLOUDFLARE_PAGES_PROJECT_NAME` | `hundesalon-nika`                  |
 
 Zone automation stays local in `HUNDESALON_NIKA — Zone Ops`; it is not used for GitHub Pages deploy.
 
@@ -70,43 +68,31 @@ npm run git:push
 
 `npm run git:push`:
 
-1. Пушит `main` на **GitHub** (`origin`)
-2. Зеркалит `main` на **GitLab**
-3. Проверяет parity: `origin/main` и `gitlab/main` должны указывать на один commit
+1. Пушит `main` на **GitHub** (`origin`).
 
-Для зеркала на GitLab ветка `main` должна позволять push/force push (Maintainers) или быть временно без защиты.
+> NOTE: зеркалирование на GitLab удалено. Если вам нужно вручную выровнять зеркала в другой службе, делайте это отдельно.
 
-### Первичное выравнивание GitLab (один раз)
-
-Settings → Repository → Protected branches → **Unprotect** `main` (или Allow force push), затем:
-
-```bash
-git push gitlab main --force-with-lease
-```
-
-Снова включите защиту `main` (рекомендуется). Дальше достаточно `npm run git:push`.
+(Ранее здесь описывалось выравнивание зеркала на GitLab; инструкция удалена — зеркалирование отменено.)
 
 ### Политика веток
 
 В GitHub и GitLab держим только `main`. Не создаем sync/fallback ветки. Если GitLab push не проходит из-за защиты `main`, исправляем права protected branch и повторяем `npm run git:push`.
 
-Если GitHub Actions не стартует из-за billing/account/policy issue, код не ветвим и не переносим в отдельную ветку. Делаем так:
+Если GitHub Actions не стартует из-за billing/account/policy issue, делайте прямой деплой:
 
 ```bash
-npm run git:push       # GitHub + GitLab main должны остаться одинаковыми
 npm run deploy:full    # прямой Cloudflare deploy через Wrangler
 ```
 
-GitLab в этом случае остаётся зеркалом `main` и fallback-источником истории; Cloudflare production можно выкатывать напрямую до восстановления GitHub Actions.
+Cloudflare production можно выкатывать напрямую до восстановления GitHub Actions.
 
 ## Remotes (не трогать без нужды)
 
 ```
 origin  → GitHub (fetch + push)
-gitlab  → GitLab (зеркало main)
 ```
 
-Раньше `origin` пушил в оба репозитория сразу — из‑за этого появлялась ошибка non-fast-forward на GitLab. Сейчас push только на GitHub; GitLab — через `git:push`.
+Раньше `origin` мог пушить в оба репозитория; теперь push выполняется только на GitHub.
 
 ## Убрать лишние ветки локально
 

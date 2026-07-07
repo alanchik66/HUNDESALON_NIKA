@@ -173,3 +173,10 @@ tools/_create-*.mjs
 .local-backups/
 *.bundle
 fix-repo-report.txt
+
+tmp-*.jpg
+tmp-*.png
+RESET_LOG.md
+scripts/revoke-gitlab-*.ps1
+scripts/*-reset.ps1
+scripts/setup-gh-secrets.ps1

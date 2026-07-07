@@ -4,9 +4,9 @@
 
 Для проекта должна быть понятная схема из **двух максимум** рабочих токенов:
 
-| Назначение      | Имя                              | Где используется                                       |
-| --------------- | -------------------------------- | ------------------------------------------------------ |
-| Zone automation | `HUNDESALON_NIKA — Zone Ops`     | локально: DNS, purge, redirects, WAF, cache settings   |
+| Назначение      | Имя                              | Где используется                                                                                     |
+| --------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Zone automation | `HUNDESALON_NIKA — Zone Ops`     | локально: DNS, purge, redirects, WAF, cache settings                                                 |
 | Pages CI deploy | `HUNDESALON_NIKA — Pages Deploy` | только GitHub CI (GitLab mirror removed); если деплой идет без Wrangler — настройте локальный deploy |
 
 Не нужно держать отдельные токены под `purge`, `DNS audit`, `redirects`, `WordPress` и разовые Cloudflare Agent conversations. Истекшие `Cloudflare Agent (conversation)` токены можно удалять из Dashboard как мусор. Production-схема проекта — два scoped-токена ниже, без broad user/account tokens.
@@ -81,13 +81,13 @@ npm run cf:open-edit-token   # открывает страницу редакт�
 
 ## Другие задачи (отдельные токены не нужны)
 
-| Задача               | Команда                                                    |
-| -------------------- | ---------------------------------------------------------- |
-| DNS / DNS-AID        | `HUNDESALON_NIKA — Zone Ops` with `DNS Records Edit`       |
-| WAF rate limits      | `npm run cf:configure-waf-rate-limits`                     |
-| Crawler Hints / CSAM | `npm run cf:configure-cache-features`                      |
+| Задача               | Команда                                                                      |
+| -------------------- | ---------------------------------------------------------------------------- |
+| DNS / DNS-AID        | `HUNDESALON_NIKA — Zone Ops` with `DNS Records Edit`                         |
+| WAF rate limits      | `npm run cf:configure-waf-rate-limits`                                       |
+| Crawler Hints / CSAM | `npm run cf:configure-cache-features`                                        |
 | Pages deploy         | `npx wrangler login` + `npm run deploy` (OAuth auto; Zone Ops token skipped) |
-| www robots → apex    | `npm run cf:www-robots-setup` (Page Rule `www/*` уже есть) |
+| www robots → apex    | `npm run cf:www-robots-setup` (Page Rule `www/*` уже есть)                   |
 
 ## Pages deploy token: GitHub/GitLab CI
 

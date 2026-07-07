@@ -16,6 +16,7 @@
     "format": "prettier --write assets/js/**/*.js assets/css/**/*.css ru/**/*.html de/**/*.html en/**/*.html uk/**/*.html *.html",
     "backup:full": "node tools/create-full-backup.mjs",
     "validate": "node tools/run-npm-quiet.mjs run lint && node tools/run-npm-quiet.mjs run check:links && node tools/run-npm-quiet.mjs run check:project",
+    "qa:max": "npm run validate && npm run build:production",
     "check": "npm run validate",
     "check:links": "node tools/check-links.js",
     "check:live-crawl": "node tools/site-crawl-live.mjs",
