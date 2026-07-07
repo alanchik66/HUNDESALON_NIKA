@@ -3,7 +3,7 @@
  * Secure proxy for contact-form draft completions.
  */
 
-import { sanitizeOrigin, assertAllowedOrigin, enforceRateLimit, jsonResponse } from './http-security.js';
+import { sanitizeOrigin, assertAllowedOrigin, enforceRateLimit, isLocalDevOrigin, jsonResponse } from './http-security.js';
 
 const LEGACY_SERVICE_PREFIX = ['OPEN', 'ROUTER'].join('');
 const DEFAULT_SERVICE_GATEWAY_URL = ['https://', 'open', 'router.ai', '/api/v1/chat/completions'].join('');
@@ -20,7 +20,7 @@ function legacyEnvName(suffix) {
 }
 
 function isLocalRequest(origin) {
-  return origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1');
+  return isLocalDevOrigin(origin);
 }
 
 function parseBoolean(value, fallback = false) {

@@ -2,7 +2,32 @@
  * Shared HTTP security helpers for Cloudflare Pages Functions.
  */
 
-const LOCAL_ORIGIN_PREFIXES = ['http://localhost', 'http://127.0.0.1'];
+const LOCAL_DEV_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
+
+function parseUrl(value) {
+  try {
+    return new URL(String(value || ''));
+  } catch {
+    return null;
+  }
+}
+
+function isPrivateIpv4Hostname(hostname) {
+  const match = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(String(hostname || ''));
+  if (!match) return false;
+
+  const octets = match.slice(1).map(Number);
+  if (octets.some(octet => !Number.isInteger(octet) || octet < 0 || octet > 255)) {
+    return false;
+  }
+
+  return (
+    octets[0] === 10 ||
+    (octets[0] === 127 && octets[1] === 0 && octets[2] === 0 && octets[3] === 1) ||
+    (octets[0] === 192 && octets[1] === 168) ||
+    (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31)
+  );
+}
 
 export function sanitizeOrigin(value) {
   const raw = String(value || '').trim();
@@ -11,39 +36,44 @@ export function sanitizeOrigin(value) {
 }
 
 export function getOriginHost(origin) {
-  try {
-    return new URL(origin).host;
-  } catch {
-    return '';
-  }
+  return parseUrl(origin)?.host || '';
+}
+
+export function isLocalDevOrigin(origin) {
+  const originUrl = parseUrl(origin);
+  if (!originUrl) return false;
+  if (!['http:', 'https:'].includes(originUrl.protocol)) return false;
+
+  return LOCAL_DEV_HOSTNAMES.has(originUrl.hostname) || isPrivateIpv4Hostname(originUrl.hostname);
 }
 
 /**
  * POST from the public site must include a trusted Origin header.
- * Local dev (localhost / 127.0.0.1) is allowed for wrangler pages dev.
+ * Local dev is allowed only for exact localhost / loopback / private LAN origins.
  */
-export function isAllowedOrigin(origin, host) {
+export function isAllowedOrigin(origin, requestUrl) {
   if (!origin) return false;
 
-  if (LOCAL_ORIGIN_PREFIXES.some(prefix => origin.startsWith(prefix))) {
+  const originUrl = parseUrl(origin);
+  const targetUrl = parseUrl(requestUrl);
+  if (!originUrl || !targetUrl) return false;
+
+  if (originUrl.origin === targetUrl.origin) {
     return true;
   }
 
-  const originHost = getOriginHost(origin);
-  if (!originHost || !host) return false;
-
-  const requestHost = host.toLowerCase();
-  const requestHostBase = requestHost.split(':')[0];
-  const originHostLower = originHost.toLowerCase();
-  const originHostBase = originHostLower.split(':')[0];
-
-  return originHostLower === requestHost || originHostBase === requestHostBase;
+  return (
+    originUrl.protocol === targetUrl.protocol &&
+    originUrl.hostname === targetUrl.hostname &&
+    isLocalDevOrigin(origin) &&
+    isLocalDevOrigin(targetUrl.origin)
+  );
 }
 
 export function assertAllowedOrigin(request) {
   const origin = sanitizeOrigin(request.headers.get('Origin'));
   const host = sanitizeOrigin(request.headers.get('Host'));
-  if (!isAllowedOrigin(origin, host)) {
+  if (!isAllowedOrigin(origin, request.url)) {
     return { ok: false, origin, host };
   }
   return { ok: true, origin, host };
