@@ -2027,19 +2027,50 @@ body .btn-read:hover .site-icon-arrow-right {
 .before-after-card {
   position: relative;
   aspect-ratio: 4/3;
-  border-radius: 24px;
+  border-radius: 28px;
   overflow: hidden;
   background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
 
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--glass-border);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  backdrop-filter: blur(18px) saturate(1.2);
+  border: none;
+  box-shadow:
+    0 16px 28px rgb(0 0 0 / 18%),
+    12px 18px 30px rgb(40 94 72 / 22%),
+    inset 0 0.5px 0 rgb(255 255 255 / 3%);
+  transform-style: preserve-3d;
+  transform: perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition:
+    transform 0.15s ease-out,
+    box-shadow 0.35s ease;
+  will-change: transform;
+}
+
+.before-after-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    rgb(255 255 255 / 22%),
+    transparent 55%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 6;
 }
 
 .before-after-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 24px 40px rgb(0 0 0 / 28%),
+    14px 22px 36px rgb(40 94 72 / 28%),
+    inset 0 0.5px 0 rgb(255 255 255 / 4%);
+}
+
+.before-after-card:hover::before {
+  opacity: 1;
 }
 
 .before-after-card-info {
@@ -2068,44 +2099,24 @@ body .btn-read:hover .site-icon-arrow-right {
   line-height: 1.4;
 }
 
-/* Filter Buttons */
-.before-after-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 24px;
+/* Filter pills — reuse nav-main glass pill system */
+.before-after-filters.nav-main {
+  grid-column: auto;
+  place-self: auto;
+  margin: 0 auto 24px;
+  width: 100%;
   justify-content: center;
 }
 
-.filter-btn {
-  padding: 10px 20px;
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(8px);
-
-  backdrop-filter: blur(8px);
-  color: var(--text-dark);
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 20px;
+.before-after-filters.nav-main > .filter-btn {
+  margin-top: 0;
+  border: none;
+  outline: none;
   cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.filter-btn:hover {
-  background: var(--accent-gold);
-  color: var(--bg-dark);
-  border-color: var(--accent-gold);
-  transform: translateY(-2px);
-}
-
-.filter-btn.active {
-  background: var(--accent-gold);
-  color: var(--bg-dark);
-  border-color: var(--accent-gold);
-  box-shadow: 0 4px 12px rgba(198, 161, 91, 0.4);
+  font: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+  text-decoration: none;
 }
 
 /* Touch-friendly for mobile */
@@ -2121,13 +2132,8 @@ body .btn-read:hover .site-icon-arrow-right {
     gap: 20px;
   }
 
-  .before-after-filters {
-    gap: 8px;
-  }
-
-  .filter-btn {
-    padding: 8px 16px;
-    font-size: 13px;
+  .before-after-filters.nav-main {
+    gap: var(--nav-pill-gap-y) var(--nav-pill-gap-x);
   }
 
   .before-after-label {

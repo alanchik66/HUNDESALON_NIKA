@@ -218,24 +218,41 @@ class BeforeAfterGallery {
       { key: 'all', label: labels.all },
     ];
     const filterHTML = `
-      <div class="before-after-filters">
+      <div class="before-after-filters nav-main" role="tablist" aria-label="Media filters">
         ${filterOrder
-          .map(
-            ({ key, label }) =>
-              `<button class="filter-btn${key === 'all' ? ' active' : ''}" data-filter="${key}">${escapeHtml(label)}</button>`
-          )
+          .map(({ key, label }) => {
+            const isActive = key === 'all';
+            return `<button type="button" class="filter-btn${isActive ? ' active' : ''}" role="tab" data-filter="${key}" aria-selected="${isActive}"${isActive ? ' aria-current="true"' : ''}>${escapeHtml(label)}</button>`;
+          })
           .join('\n        ')}
       </div>
     `;
 
     this.container.insertAdjacentHTML('beforebegin', filterHTML);
 
-    // Add filter functionality
-    const filterButtons = this.container.previousElementSibling.querySelectorAll('.filter-btn');
+    const filtersRoot = this.container.previousElementSibling;
+    const filterButtons = filtersRoot.querySelectorAll('.filter-btn');
+    window.HundesalonNavPill?.scan?.(filtersRoot);
+
     filterButtons.forEach(btn => {
+      if (btn.classList.contains('active')) {
+        window.HundesalonNavPill?.activate?.(btn);
+      }
+
       btn.addEventListener('click', () => {
-        filterButtons.forEach(b => b.classList.remove('active'));
+        if (btn.classList.contains('active')) return;
+
+        filterButtons.forEach(button => {
+          button.classList.remove('active');
+          button.setAttribute('aria-selected', 'false');
+          button.removeAttribute('aria-current');
+          window.HundesalonNavPill?.deactivate?.(button);
+        });
+
         btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        btn.setAttribute('aria-current', 'true');
+        window.HundesalonNavPill?.activate?.(btn);
         this.currentFilter = btn.dataset.filter;
         this.renderGallery();
         this.initSliders();

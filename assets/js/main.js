@@ -1534,7 +1534,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ========== 3D TILT + GLOW FOR ALL TILES ========== */
   const tiltCards = document.querySelectorAll(
-    '.service-card, .promo-card, .review-card, .gallery-item, .social-card, .news-card, .winner-card'
+    '.service-card, .promo-card, .review-card, .gallery-item, .before-after-card, .social-card, .news-card, .winner-card'
   );
   const TILT_MAX = 12;
 
@@ -1756,144 +1756,197 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initGalleryNavDropdown();
 
-  /* ========== NAV CLICK — PLASMA EFFECT + DELAY NAVIGATION ========== */
-  document.querySelectorAll('.nav-main > a, .nav-main > .dropdown > a').forEach(link => {
-    if (link.closest('.nav-gallery-dropdown')) return;
-    if (link.classList.contains('active') || link.getAttribute('aria-current') === 'page') {
-      const activePlasma = document.createElement('span');
-      activePlasma.className = 'nav-plasma--active';
-      link.appendChild(activePlasma);
+  /* ========== NAV PILL — PLASMA EFFECT + ACTIVE STATE ========== */
+  const isNavPillActive = link =>
+    link.classList.contains('active') ||
+    link.getAttribute('aria-current') === 'page' ||
+    link.getAttribute('aria-current') === 'true';
 
-      const wanderers = [];
-      for (let i = 0; i < 3; i++) {
-        const tp = document.createElement('span');
-        tp.className = 'nav-plasma-touch';
-        activePlasma.appendChild(tp);
-        animateTouchPoint(tp);
-        tp._active = true;
-        const p = edgePositions[Math.floor(Math.random() * edgePositions.length)];
-        tp._cx = p[0];
-        tp._cy = p[1];
-        tp._tx = p[0];
-        tp._ty = p[1];
-        tp._nextMove = now() + i * 600 + Math.random() * 1500;
-        allTouchPoints.push(tp);
-        wanderers.push(tp);
-      }
+  const removeTouchPoints = root => {
+    root?.querySelectorAll('.nav-plasma-touch').forEach(tp => {
+      const index = allTouchPoints.indexOf(tp);
+      if (index >= 0) allTouchPoints.splice(index, 1);
+      tp._active = false;
+    });
+  };
 
-      const cursorTips = [];
-      for (let i = 0; i < 3; i++) {
-        const ct = document.createElement('span');
-        ct.className = 'nav-plasma-touch nav-plasma-touch--pointer';
-        activePlasma.appendChild(ct);
-        animateTouchPoint(ct);
-        ct._active = false;
-        ct._isCursor = true;
-        ct._cx = 50;
-        ct._cy = 50;
-        allTouchPoints.push(ct);
-        cursorTips.push(ct);
-      }
+  const mountActivePlasma = link => {
+    if (link.querySelector('.nav-plasma--active')) return;
 
-      startTouchLoop();
+    const activePlasma = document.createElement('span');
+    activePlasma.className = 'nav-plasma--active';
+    link.appendChild(activePlasma);
 
-      let activeCursorTips = [];
-
-      link.addEventListener('mouseenter', e => {
-        cursorTips.forEach(ct => {
-          ct._active = false;
-          ct.classList.remove('active');
-        });
-        const count = 1 + Math.floor(Math.random() * 3);
-        const shuffled = cursorTips.slice().sort(() => Math.random() - 0.5);
-        activeCursorTips = shuffled.slice(0, count);
-        activeCursorTips.forEach((ct, i) => {
-          ct._angleOffset = (i - Math.floor(count / 2)) * (0.18 + Math.random() * 0.12);
-          ct._active = true;
-          ct.classList.add('active');
-          ct._tsz = 18 + Math.random() * 12;
-        });
-        const rect = link.getBoundingClientRect();
-        const mx = ((e.clientX - rect.left) / rect.width) * 100;
-        const my = ((e.clientY - rect.top) / rect.height) * 100;
-        positionCursorTips(mx, my);
-        moveRaysToward(mx, my);
-      });
-
-      function positionCursorTips(mx, my) {
-        const ep = projectToEdge(mx, my);
-        const baseAngle = Math.atan2(ep[1] - 50, ep[0] - 50);
-        activeCursorTips.forEach((ct, idx) => {
-          const a = baseAngle + ct._angleOffset;
-          const edgeX = 50 + 48 * Math.cos(a);
-          const edgeY = 50 + 46 * Math.sin(a);
-          let t;
-          if (idx === 0) {
-            t = 0;
-          } else {
-            t = 0.4 + idx * 0.3;
-          }
-          const px = mx + (edgeX - mx) * t;
-          const py = my + (edgeY - my) * t;
-          ct._cx = px;
-          ct._cy = py;
-          ct._tx = px;
-          ct._ty = py;
-          ct.style.left = px.toFixed(1) + '%';
-          ct.style.top = py.toFixed(1) + '%';
-          const sz = (1 - t * 0.4) * ct._tsz;
-          ct.style.width = ct.style.height = sz.toFixed(1) + 'px';
-        });
-      }
-
-      function moveRaysToward(mx, my) {
-        const dx = (mx - 50) * 0.5;
-        const dy = (my - 50) * 0.5;
-        activePlasma.style.setProperty('--plasma-x', dx.toFixed(1));
-        activePlasma.style.setProperty('--plasma-y', dy.toFixed(1));
-      }
-
-      link.addEventListener('mousemove', e => {
-        const rect = link.getBoundingClientRect();
-        const mx = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-        const my = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
-        positionCursorTips(mx, my);
-        moveRaysToward(mx, my);
-      });
-
-      link.addEventListener('mouseleave', () => {
-        activeCursorTips.forEach(ct => {
-          ct.classList.remove('active');
-          setTimeout(() => {
-            ct._active = false;
-          }, 600);
-        });
-        activeCursorTips = [];
-        activePlasma.style.setProperty('--plasma-x', '0');
-        activePlasma.style.setProperty('--plasma-y', '0');
-      });
+    const cursorTips = [];
+    for (let i = 0; i < 3; i += 1) {
+      const wanderer = document.createElement('span');
+      wanderer.className = 'nav-plasma-touch';
+      activePlasma.appendChild(wanderer);
+      animateTouchPoint(wanderer);
+      wanderer._active = true;
+      const position = edgePositions[Math.floor(Math.random() * edgePositions.length)];
+      wanderer._cx = position[0];
+      wanderer._cy = position[1];
+      wanderer._tx = position[0];
+      wanderer._ty = position[1];
+      wanderer._nextMove = now() + i * 600 + Math.random() * 1500;
+      allTouchPoints.push(wanderer);
     }
 
-    link.addEventListener('click', e => {
+    for (let i = 0; i < 3; i += 1) {
+      const cursorTip = document.createElement('span');
+      cursorTip.className = 'nav-plasma-touch nav-plasma-touch--pointer';
+      activePlasma.appendChild(cursorTip);
+      animateTouchPoint(cursorTip);
+      cursorTip._active = false;
+      cursorTip._isCursor = true;
+      cursorTip._cx = 50;
+      cursorTip._cy = 50;
+      allTouchPoints.push(cursorTip);
+      cursorTips.push(cursorTip);
+    }
+
+    startTouchLoop();
+
+    let activeCursorTips = [];
+
+    const positionCursorTips = (mx, my) => {
+      const edgePoint = projectToEdge(mx, my);
+      const baseAngle = Math.atan2(edgePoint[1] - 50, edgePoint[0] - 50);
+      activeCursorTips.forEach((cursorTip, idx) => {
+        const angle = baseAngle + cursorTip._angleOffset;
+        const edgeX = 50 + 48 * Math.cos(angle);
+        const edgeY = 50 + 46 * Math.sin(angle);
+        const t = idx === 0 ? 0 : 0.4 + idx * 0.3;
+        const px = mx + (edgeX - mx) * t;
+        const py = my + (edgeY - my) * t;
+        cursorTip._cx = px;
+        cursorTip._cy = py;
+        cursorTip._tx = px;
+        cursorTip._ty = py;
+        cursorTip.style.left = `${px.toFixed(1)}%`;
+        cursorTip.style.top = `${py.toFixed(1)}%`;
+        const size = (1 - t * 0.4) * cursorTip._tsz;
+        cursorTip.style.width = `${size.toFixed(1)}px`;
+        cursorTip.style.height = `${size.toFixed(1)}px`;
+      });
+    };
+
+    const moveRaysToward = (mx, my) => {
+      const dx = (mx - 50) * 0.5;
+      const dy = (my - 50) * 0.5;
+      activePlasma.style.setProperty('--plasma-x', dx.toFixed(1));
+      activePlasma.style.setProperty('--plasma-y', dy.toFixed(1));
+    };
+
+    link.addEventListener('mouseenter', event => {
+      cursorTips.forEach(cursorTip => {
+        cursorTip._active = false;
+        cursorTip.classList.remove('active');
+      });
+      const count = 1 + Math.floor(Math.random() * 3);
+      const shuffled = cursorTips.slice().sort(() => Math.random() - 0.5);
+      activeCursorTips = shuffled.slice(0, count);
+      activeCursorTips.forEach((cursorTip, index) => {
+        cursorTip._angleOffset = (index - Math.floor(count / 2)) * (0.18 + Math.random() * 0.12);
+        cursorTip._active = true;
+        cursorTip.classList.add('active');
+        cursorTip._tsz = 18 + Math.random() * 12;
+      });
+      const rect = link.getBoundingClientRect();
+      const mx = ((event.clientX - rect.left) / rect.width) * 100;
+      const my = ((event.clientY - rect.top) / rect.height) * 100;
+      positionCursorTips(mx, my);
+      moveRaysToward(mx, my);
+    });
+
+    link.addEventListener('mousemove', event => {
+      const rect = link.getBoundingClientRect();
+      const mx = Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100));
+      const my = Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100));
+      positionCursorTips(mx, my);
+      moveRaysToward(mx, my);
+    });
+
+    link.addEventListener('mouseleave', () => {
+      activeCursorTips.forEach(cursorTip => {
+        cursorTip.classList.remove('active');
+        setTimeout(() => {
+          cursorTip._active = false;
+        }, 600);
+      });
+      activeCursorTips = [];
+      activePlasma.style.setProperty('--plasma-x', '0');
+      activePlasma.style.setProperty('--plasma-y', '0');
+    });
+  };
+
+  const unmountActivePlasma = link => {
+    const activePlasma = link.querySelector('.nav-plasma--active');
+    if (!activePlasma) return;
+    removeTouchPoints(activePlasma);
+    activePlasma.remove();
+  };
+
+  const playNavPillClickFlash = link => {
+    const plasma = document.createElement('span');
+    plasma.className = 'nav-plasma';
+    link.appendChild(plasma);
+    plasma.addEventListener('animationend', function handler(event) {
+      if (event.animationName === 'navPlasmaLifecycle') {
+        plasma.remove();
+        plasma.removeEventListener('animationend', handler);
+      }
+    });
+    setTimeout(() => plasma.remove(), 1400);
+  };
+
+  const bindNavPill = link => {
+    if (link.dataset.navPillBound === '1') return;
+    link.dataset.navPillBound = '1';
+
+    const isFilterPill = link.classList.contains('filter-btn');
+
+    if (isNavPillActive(link)) {
+      mountActivePlasma(link);
+    }
+
+    link.addEventListener('click', event => {
+      if (isFilterPill) {
+        playNavPillClickFlash(link);
+        return;
+      }
+
       const href = link.getAttribute('href');
       if (!isSafeNavigationHref(href)) return;
-      e.preventDefault();
+      event.preventDefault();
       link.style.pointerEvents = 'none';
-      const plasma = document.createElement('span');
-      plasma.className = 'nav-plasma';
-      link.appendChild(plasma);
-      plasma.addEventListener('animationend', function handler(ev) {
-        if (ev.animationName === 'navPlasmaLifecycle') {
-          plasma.remove();
-          plasma.removeEventListener('animationend', handler);
-        }
-      });
-      setTimeout(() => {
-        plasma.remove();
-        navigateToSafeHref(href);
-      }, 1400);
+      playNavPillClickFlash(link);
+      setTimeout(() => navigateToSafeHref(href), 1400);
     });
+  };
+
+  const navPillSelector =
+    '.nav-main > a, .nav-main > .dropdown > a, .before-after-filters.nav-main > .filter-btn';
+
+  document.querySelectorAll(navPillSelector).forEach(link => {
+    if (link.closest('.nav-gallery-dropdown')) return;
+    bindNavPill(link);
   });
+
+  window.HundesalonNavPill = {
+    scan(root = document) {
+      root.querySelectorAll('.before-after-filters.nav-main > .filter-btn').forEach(bindNavPill);
+    },
+    activate(link) {
+      if (!link) return;
+      mountActivePlasma(link);
+    },
+    deactivate(link) {
+      if (!link) return;
+      unmountActivePlasma(link);
+    },
+  };
 
   /* ========== SOCIAL ICONS — ENTRANCE ANIMATION ON PAGE LOAD ========== */
   requestAnimationFrame(() => {

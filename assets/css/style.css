@@ -1786,7 +1786,7 @@ body.light .premium-burger span {
   display: inline-flex;
 }
 
-.nav-main > a,
+.nav-main > :is(a, .filter-btn),
 .nav-main > .dropdown > a,
 .nav-main > .dropdown > .nav-dropdown-trigger {
   position: relative;
@@ -1828,7 +1828,7 @@ body.light .premium-burger span {
   isolation: isolate;
 }
 
-.nav-main > a::before,
+.nav-main > :is(a, .filter-btn)::before,
 .nav-main > .dropdown > a::before,
 .nav-main > .dropdown > .nav-dropdown-trigger::before {
   content: '';
@@ -1842,7 +1842,7 @@ body.light .premium-burger span {
   pointer-events: none;
 }
 
-.nav-main > a::after,
+.nav-main > :is(a, .filter-btn)::after,
 .nav-main > .dropdown > a::after,
 .nav-main > .dropdown > .nav-dropdown-trigger::after {
   content: '';
@@ -1866,7 +1866,7 @@ body.light .premium-burger span {
   pointer-events: none;
 }
 
-.nav-main > a:focus-visible,
+.nav-main > :is(a, .filter-btn):focus-visible,
 .nav-main > .dropdown > a:focus-visible,
 .nav-main > .dropdown > .nav-dropdown-trigger:focus-visible {
   outline: none;
@@ -1879,7 +1879,7 @@ body.light .premium-burger span {
   text-decoration: none;
 }
 
-.nav-main > a:hover,
+.nav-main > :is(a, .filter-btn):hover,
 .dropdown:hover > a,
 .dropdown:hover > .nav-dropdown-trigger,
 .dropdown:focus-within > a,
@@ -1899,8 +1899,9 @@ body.light .premium-burger span {
 
 /* Активная навигационная плитка — мягкое золотое свечение внутри стекла */
 
-.nav-main > a.active,
-.nav-main > a[aria-current='page'],
+.nav-main > :is(a, .filter-btn).active,
+.nav-main > :is(a, .filter-btn)[aria-current='page'],
+.nav-main > .filter-btn[aria-current='true'],
 .nav-main > .dropdown > a.active,
 .nav-main > .dropdown > a[aria-current='page'],
 .nav-main > .dropdown > .nav-dropdown-trigger.active,
@@ -1924,7 +1925,7 @@ body.light .premium-burger span {
 
 /* Click flash */
 
-.nav-main > a:active,
+.nav-main > :is(a, .filter-btn):active,
 .btn-neon:active,
 .header-online-btn:active,
 .btn-map:active,
@@ -2718,7 +2719,7 @@ body.light .nav-plasma-touch--pointer {
     0 0 14px rgb(146 108 42 / 12%);
 }
 
-body.light .nav-main > a,
+body.light .nav-main > :is(a, .filter-btn),
 body.light .nav-main > .dropdown > a,
 body.light .nav-main > .dropdown > .nav-dropdown-trigger {
   /* Lighter glass keeps the light-theme menu aligned with the warm site palette. */
@@ -2737,19 +2738,19 @@ body.light .nav-main > .dropdown > .nav-dropdown-trigger {
     0 0 6px rgb(180 155 100 / 6%);
 }
 
-body.light .nav-main > a::before,
+body.light .nav-main > :is(a, .filter-btn)::before,
 body.light .nav-main > .dropdown > a::before,
 body.light .nav-main > .dropdown > .nav-dropdown-trigger::before {
   background: radial-gradient(ellipse at 30% 0%, rgb(255 255 255 / 34%) 0%, transparent 60%);
 }
 
-body.light .nav-main > a:hover,
+body.light .nav-main > :is(a, .filter-btn):hover,
 body.light .dropdown:hover > a,
 body.light .dropdown:hover > .nav-dropdown-trigger,
 body.light .dropdown:focus-within > a,
 body.light .dropdown:focus-within > .nav-dropdown-trigger,
 body.light .dropdown.is-open > .nav-dropdown-trigger,
-body.light .nav-main > a:focus-visible,
+body.light .nav-main > :is(a, .filter-btn):focus-visible,
 body.light .nav-main > .dropdown > a:focus-visible,
 body.light .nav-main > .dropdown > .nav-dropdown-trigger:focus-visible {
   color: #644e26f2;
@@ -2760,8 +2761,9 @@ body.light .nav-main > .dropdown > .nav-dropdown-trigger:focus-visible {
   filter: brightness(1.02);
 }
 
-body.light .nav-main > a.active,
-body.light .nav-main > a[aria-current='page'],
+body.light .nav-main > :is(a, .filter-btn).active,
+body.light .nav-main > :is(a, .filter-btn)[aria-current='page'],
+body.light .nav-main > .filter-btn[aria-current='true'],
 body.light .nav-main > .dropdown > a.active,
 body.light .nav-main > .dropdown > a[aria-current='page'],
 body.light .nav-main > .dropdown > .nav-dropdown-trigger.active,
@@ -12121,7 +12123,7 @@ body.light .social-icons-toggle.is-open {
   .hero-title,
   .section-title,
   .btn-neon,
-  .nav-main > a,
+  .nav-main > :is(a, .filter-btn),
   .nav-main > .dropdown > a,
   .site-icon,
   .logo-img,
