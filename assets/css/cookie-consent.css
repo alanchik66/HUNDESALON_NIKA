@@ -1,4 +1,5 @@
 .cookie-consent {
+  font-weight: 540;
   position: fixed;
   right: clamp(14px, 3vw, 34px);
   bottom: clamp(14px, 3vw, 34px);
@@ -36,6 +37,8 @@
   color: #f4d28b;
   font-size: 1rem;
   line-height: 1.25;
+  font-weight: 700;
+  text-shadow: var(--text-vol-accent);
 }
 
 .cookie-consent__body p {
@@ -60,7 +63,8 @@
   background: linear-gradient(135deg, #f7dfa2, #c99b42);
   border: 1px solid rgba(255, 239, 198, 0.5);
   border-radius: 8px;
-  font-weight: 700;
+  font-weight: 740;
+  text-shadow: var(--text-vol-pill);
 }
 
 .cookie-consent__btn--ghost {

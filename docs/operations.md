@@ -1,6 +1,8 @@
 # Operations runbook — HUNDESALON NIKA
 
-## Routine release (local → GitHub → GitLab → production)
+## Routine release (local → GitHub → production)
+
+> NOTE: GitLab mirror removed. Use GitHub (`origin`) as the single canonical remote.
 
 ```bash
 git checkout main

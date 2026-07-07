@@ -16,8 +16,8 @@ function walk(dir) {
     const original = fs.readFileSync(fullPath, 'utf8');
     const next = original
       .replace(/site-shell\.js\?v=[^"']+/g, 'site-shell.js?v=20260706-blog-gallery-v1')
-      .replace(/main\.js\?v=[^"']+/g, 'main.js?v=20260707-nav-pill-filters-v1')
-      .replace(/style\.css\?v=[^"']+/g, 'style.css?v=20260707-nav-pill-filters-v1');
+      .replace(/main\.js\?v=[^"']+/g, 'main.js?v=20260707-perf-balanced-v1')
+      .replace(/style\.css\?v=[^"']+/g, 'style.css?v=20260707-perf-balanced-v1');
     if (next !== original) {
       fs.writeFileSync(fullPath, next, 'utf8');
       updated += 1;

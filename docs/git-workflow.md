@@ -1,4 +1,7 @@
-# Git: один main, GitHub + GitLab, Cloudflare
+# Git: один main, GitHub (GitLab mirror removed), Cloudflare
+
+> NOTE: GitLab зеркало удалено. Репозиторий теперь поддерживается только через GitHub; упоминания GitLab сохранены для исторического контекста.
+
 
 ## Источник правды
 

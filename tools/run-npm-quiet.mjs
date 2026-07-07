@@ -18,11 +18,7 @@ delete env.npm_config_min_release_age;
 
 function resolveNpmCmd() {
   if (process.platform === 'win32') {
-    const candidates = [
-      join(dirname(process.execPath), 'npm.cmd'),
-      'C:\\Program Files\\nodejs\\npm.cmd',
-      'npm.cmd',
-    ];
+    const candidates = [join(dirname(process.execPath), 'npm.cmd'), 'C:\\Program Files\\nodejs\\npm.cmd', 'npm.cmd'];
     for (const candidate of candidates) {
       if (candidate === 'npm.cmd' || existsSync(candidate)) return candidate;
     }
@@ -31,11 +27,26 @@ function resolveNpmCmd() {
 }
 
 const npmCmd = resolveNpmCmd();
-const result = spawnSync(npmCmd, args, {
-  stdio: 'inherit',
-  env,
-  shell: process.platform === 'win32',
-});
+function quoteArg(a) {
+  if (/^[a-zA-Z0-9_\-./:]+=?$/.test(a)) return a;
+  return '"' + String(a).replace(/"/g, '\\"') + '"';
+}
+
+let result;
+if (process.platform === 'win32') {
+  const cmd = [npmCmd, ...args].map(quoteArg).join(' ');
+  result = spawnSync(cmd, {
+    stdio: 'inherit',
+    env,
+    shell: true,
+  });
+} else {
+  result = spawnSync(npmCmd, args, {
+    stdio: 'inherit',
+    env,
+    shell: false,
+  });
+}
 
 if (result.error) {
   console.error(result.error.message);

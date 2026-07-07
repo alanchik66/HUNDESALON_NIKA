@@ -1,19 +1,6 @@
-const CACHE_NAME = 'hundesalon-nika-static-v2';
+const CACHE_NAME = 'hundesalon-nika-static-v7';
 const CORE_ASSETS = [
-  '/',
-  '/de/',
-  '/en/',
-  '/ru/',
-  '/uk/',
   '/site.webmanifest',
-  '/assets/css/style.css',
-  '/assets/css/page-modules.css',
-  '/assets/css/cookie-consent.css',
-  '/assets/js/site-shell.js',
-  '/assets/js/main.js',
-  '/assets/js/page-modules.js',
-  '/assets/js/cookie-consent.js',
-  '/assets/js/pwa.js',
   '/assets/images/brand/hero-dog.jpg',
   '/assets/images/brand/logo.png',
 ];
@@ -21,9 +8,7 @@ const CORE_ASSETS = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache =>
-      cache.addAll(CORE_ASSETS).catch(() => {
-        return Promise.resolve();
-      })
+      cache.addAll(CORE_ASSETS).catch(() => Promise.resolve())
     )
   );
   self.skipWaiting();
@@ -38,6 +23,22 @@ self.addEventListener('activate', event => {
   );
 });
 
+function isNetworkFirstRequest(request, url) {
+  if (request.mode === 'navigate' || request.destination === 'document') {
+    return true;
+  }
+
+  if (url.pathname.endsWith('.html')) {
+    return true;
+  }
+
+  if ((url.pathname.endsWith('.css') || url.pathname.endsWith('.js')) && url.search.includes('v=')) {
+    return true;
+  }
+
+  return false;
+}
+
 self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') {
@@ -46,6 +47,21 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  if (isNetworkFirstRequest(request, url)) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
     return;
   }
 

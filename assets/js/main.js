@@ -3,6 +3,26 @@
  * Shared header, language navigation, and weather widget bootstrap live in site-shell.js.
  */
 document.addEventListener('DOMContentLoaded', () => {
+  const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+  const isCoarsePointer = window.matchMedia?.('(hover: none), (pointer: coarse)')?.matches ?? false;
+  const isLowPowerDevice =
+    (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
+    (navigator.deviceMemory && navigator.deviceMemory <= 4);
+  document.documentElement.classList.add('site-perf-balanced');
+
+  const sitePerfLite =
+    prefersReducedMotion ||
+    isCoarsePointer ||
+    isLowPowerDevice ||
+    window.innerWidth < 1280;
+
+  if (sitePerfLite) {
+    document.documentElement.classList.add('site-perf-lite');
+  }
+
+  /* Heavy effects (permanent RAF, SVG filters, parallax) only when explicitly full — balanced is default. */
+  const sitePerfHeavy = false;
+
   const siteShell = window.SiteShell?.init?.() || {};
   const preloaderNotice = siteShell.preloaderNotice || {
     title: 'Sorry, the website is temporarily unavailable',
@@ -308,6 +328,10 @@ document.addEventListener('DOMContentLoaded', () => {
     return { updateThumb, thumb, track };
   };
 
+  window.HundesalonLiquidScrollbar = {
+    bind: createLiquidScrollbar,
+  };
+
   const pageScrollbar = createLiquidScrollbar({
     scrollTarget: scrollRoot,
     thumbParent: document.body,
@@ -350,7 +374,6 @@ document.addEventListener('DOMContentLoaded', () => {
     )
     .filter(Boolean);
 
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const hasFinePointer = window.matchMedia('(pointer: fine)').matches;
 
   const normalizeWheelDelta = (event, delta) => {
@@ -1296,6 +1319,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let lastScroll = scrollRoot.scrollTop;
   let ticking = false;
+  let navProgressBar = null;
 
   const handleScroll = () => {
     const current = scrollRoot.scrollTop;
@@ -1333,11 +1357,22 @@ document.addEventListener('DOMContentLoaded', () => {
       pageHeader?.classList.remove('header-social-visible');
     }
 
-    /* Hero parallax */
+    /* Hero parallax — only in full perf mode (scroll + transform = extra paint) */
     if (hero) {
-      const offset = Math.min(current * 0.15, 80);
-      hero.style.transform = `translateY(${offset}px)`;
-      hero.style.filter = 'none';
+      if (sitePerfHeavy) {
+        const offset = Math.min(current * 0.15, 80);
+        hero.style.transform = `translateY(${offset}px)`;
+        hero.style.filter = 'none';
+      } else {
+        hero.style.transform = '';
+        hero.style.filter = '';
+      }
+    }
+
+    if (navProgressBar) {
+      const max = scrollRoot.scrollHeight - scrollRoot.clientHeight;
+      const progress = max > 0 ? current / max : 0;
+      navProgressBar.style.transform = `scaleX(${Math.min(1, Math.max(0, progress))})`;
     }
 
     updatePageScrollbarOffset();
@@ -1364,6 +1399,7 @@ document.addEventListener('DOMContentLoaded', () => {
        turning a cut gemstone in the hand. Each facet has a unique
        rotation multiplier so they move independently (natural stone feel).
        Uses a spring/lerp so motion is smooth and has inertia. */
+  if (sitePerfHeavy) {
   (function initGemRotation() {
     const BASE = { a1: 122, a2: 158, a3: 98, a4: 38, a5: 178, base: 132 };
     /* How many degrees each facet rotates per 1000px of scroll.
@@ -1422,6 +1458,7 @@ document.addEventListener('DOMContentLoaded', () => {
       { passive: true }
     );
   })();
+  }
 
   /* Language dropdown is already initialized near the top of DOMContentLoaded
        (see siteShell.initLanguageDropdown?.() call after the siteShell init).
@@ -1440,8 +1477,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const revealVisibleContent = () => {
       revealElements.filter(isNearViewport).forEach(activateReveal);
     };
-    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
     if (prefersReducedMotion || !('IntersectionObserver' in window)) {
       revealElements.forEach(activateReveal);
     } else {
@@ -1463,86 +1498,85 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ========== POINTER GLOW ==========
-       Simple, natural circular halo that follows pointer movement with a gentle
-       trailing motion. The halo is centred on the pointer — no rotation,
-       no tear-drop shape. CSS handles the visual; JS only animates the
-       position. */
-  const pointerGlow = document.createElement('div');
-  pointerGlow.className = 'pointer-glow is-idle';
-  document.body.appendChild(pointerGlow);
+       Runs only while the pointer is active — no idle RAF loop. */
+  if (sitePerfHeavy && !isCoarsePointer) {
+    const pointerGlow = document.createElement('div');
+    pointerGlow.className = 'pointer-glow is-idle';
+    document.body.appendChild(pointerGlow);
 
-  let pointerGlowX = window.innerWidth * 0.5;
-  let pointerGlowY = window.innerHeight * 0.5;
-  let pointerGlowTargetX = pointerGlowX;
-  let pointerGlowTargetY = pointerGlowY;
-  let pointerGlowVelocityX = 0;
-  let pointerGlowVelocityY = 0;
-  let pointerGlowRafId = null;
+    let pointerGlowX = window.innerWidth * 0.5;
+    let pointerGlowY = window.innerHeight * 0.5;
+    let pointerGlowTargetX = pointerGlowX;
+    let pointerGlowTargetY = pointerGlowY;
+    let pointerGlowVelocityX = 0;
+    let pointerGlowVelocityY = 0;
+    let pointerGlowRafId = null;
+    let pointerGlowActive = false;
 
-  const renderPointerGlow = () => {
-    const dx = pointerGlowTargetX - pointerGlowX;
-    const dy = pointerGlowTargetY - pointerGlowY;
+    const renderPointerGlow = () => {
+      const dx = pointerGlowTargetX - pointerGlowX;
+      const dy = pointerGlowTargetY - pointerGlowY;
 
-    /* Gentle spring follow — not too snappy, not too laggy. */
-    pointerGlowVelocityX = (pointerGlowVelocityX + dx * 0.03) * 0.84;
-    pointerGlowVelocityY = (pointerGlowVelocityY + dy * 0.03) * 0.84;
-    pointerGlowX += pointerGlowVelocityX;
-    pointerGlowY += pointerGlowVelocityY;
+      pointerGlowVelocityX = (pointerGlowVelocityX + dx * 0.03) * 0.84;
+      pointerGlowVelocityY = (pointerGlowVelocityY + dy * 0.03) * 0.84;
+      pointerGlowX += pointerGlowVelocityX;
+      pointerGlowY += pointerGlowVelocityY;
+      pointerGlow.style.transform = `translate3d(${pointerGlowX}px, ${pointerGlowY}px, 0)`;
 
-    /* CSS centres the halo via negative margin, so we just translate to
-           the raw pointer coordinates — no rotation, no offset hacks. */
-    pointerGlow.style.transform = `translate(${pointerGlowX}px, ${pointerGlowY}px)`;
+      const isSettled =
+        Math.abs(dx) < 0.35 &&
+        Math.abs(dy) < 0.35 &&
+        Math.abs(pointerGlowVelocityX) < 0.08 &&
+        Math.abs(pointerGlowVelocityY) < 0.08;
 
-    const isSettled =
-      Math.abs(dx) < 0.35 &&
-      Math.abs(dy) < 0.35 &&
-      Math.abs(pointerGlowVelocityX) < 0.08 &&
-      Math.abs(pointerGlowVelocityY) < 0.08;
+      if (!pointerGlowActive || (isSettled && pointerGlow.classList.contains('is-idle'))) {
+        pointerGlowRafId = null;
+        return;
+      }
 
-    if (isSettled && pointerGlow.classList.contains('is-idle')) {
-      pointerGlowRafId = null;
-      return;
-    }
-
-    pointerGlowRafId = window.requestAnimationFrame(renderPointerGlow);
-  };
-
-  const startPointerGlowLoop = () => {
-    if (pointerGlowRafId === null) {
       pointerGlowRafId = window.requestAnimationFrame(renderPointerGlow);
-    }
-  };
+    };
 
-  startPointerGlowLoop();
+    const startPointerGlowLoop = () => {
+      if (pointerGlowRafId === null) {
+        pointerGlowRafId = window.requestAnimationFrame(renderPointerGlow);
+      }
+    };
 
-  document.addEventListener(
-    'mousemove',
-    e => {
-      pointerGlowTargetX = e.clientX;
-      pointerGlowTargetY = e.clientY;
-      pointerGlow.classList.remove('is-idle');
-      pointerGlow.classList.add('is-active');
-      startPointerGlowLoop();
-    },
-    { passive: true }
-  );
+    document.addEventListener(
+      'mousemove',
+      e => {
+        pointerGlowTargetX = e.clientX;
+        pointerGlowTargetY = e.clientY;
+        pointerGlowActive = true;
+        pointerGlow.classList.remove('is-idle');
+        pointerGlow.classList.add('is-active');
+        startPointerGlowLoop();
+      },
+      { passive: true }
+    );
 
-  document.addEventListener('mouseout', e => {
-    if (!e.relatedTarget) {
+    document.addEventListener('mouseout', e => {
+      if (!e.relatedTarget) {
+        pointerGlowActive = false;
+        pointerGlow.classList.remove('is-active');
+        pointerGlow.classList.add('is-idle');
+      }
+    });
+
+    window.addEventListener('blur', () => {
+      pointerGlowActive = false;
       pointerGlow.classList.remove('is-active');
       pointerGlow.classList.add('is-idle');
-    }
-  });
-
-  window.addEventListener('blur', () => {
-    pointerGlow.classList.remove('is-active');
-    pointerGlow.classList.add('is-idle');
-  });
+    });
+  }
 
   /* ========== 3D TILT + GLOW FOR ALL TILES ========== */
-  const tiltCards = document.querySelectorAll(
-    '.service-card, .promo-card, .review-card, .gallery-item, .before-after-card, .social-card, .news-card, .winner-card'
-  );
+  const tiltCards = sitePerfHeavy
+    ? document.querySelectorAll(
+        '.service-card, .promo-card, .review-card, .gallery-item, .before-after-card, .social-card, .news-card, .winner-card'
+      )
+    : [];
   const TILT_MAX = 12;
 
   tiltCards.forEach(card => {
@@ -1577,7 +1611,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ========== SVG TURBULENCE FILTER FOR PLASMA ========== */
-  if (!document.getElementById('plasma-filters')) {
+  if (sitePerfHeavy && !document.getElementById('plasma-filters')) {
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNS, 'svg');
     svg.setAttribute('id', 'plasma-filters');
@@ -1785,6 +1819,8 @@ document.addEventListener('DOMContentLoaded', () => {
     activePlasma.className = cta ? 'nav-plasma--active nav-plasma--cta' : 'nav-plasma--active';
     link.appendChild(activePlasma);
 
+    if (!sitePerfHeavy) return;
+
     const wandererCount = cta ? 5 : 3;
     const cursorTipCount = cta ? 4 : 3;
     const cursorTips = [];
@@ -1945,7 +1981,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const navPillSelector =
-    '.nav-main > a, .nav-main > .dropdown > a, .before-after-filters.nav-main > .filter-btn, .online-order-pill';
+    '.nav-main > a, .nav-main > .dropdown > a, .before-after-filters.nav-main > .filter-btn, #booking-modal .nav-main > .filter-btn, .select-btn-wrapper.nav-main > .filter-btn, .online-order-pill';
 
   document.querySelectorAll(navPillSelector).forEach(link => {
     if (link.closest('.nav-gallery-dropdown')) return;
@@ -1955,7 +1991,9 @@ document.addEventListener('DOMContentLoaded', () => {
   window.HundesalonNavPill = {
     scan(root = document) {
       root
-        .querySelectorAll('.before-after-filters.nav-main > .filter-btn, .online-order-pill')
+        .querySelectorAll(
+          '.before-after-filters.nav-main > .filter-btn, #booking-modal .nav-main > .filter-btn, .select-btn-wrapper.nav-main > .filter-btn, .online-order-pill'
+        )
         .forEach(bindNavPill);
     },
     activate(link) {
@@ -2034,22 +2072,14 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ========== NAV PROGRESS LINE ========== */
   const navMain = document.querySelector('.nav-main');
   if (navMain) {
-    let progressBar = navMain.querySelector('.nav-progress');
-    if (!progressBar) {
-      progressBar = document.createElement('div');
-      progressBar.className = 'nav-progress';
-      navMain.appendChild(progressBar);
+    navProgressBar = navMain.querySelector('.nav-progress');
+    if (!navProgressBar) {
+      navProgressBar = document.createElement('div');
+      navProgressBar.className = 'nav-progress';
+      navMain.appendChild(navProgressBar);
     }
-
-    const updateScrollProgress = () => {
-      const max = scrollRoot.scrollHeight - scrollRoot.clientHeight;
-      const p = max > 0 ? scrollRoot.scrollTop / max : 0;
-      progressBar.style.transform = `scaleX(${Math.min(1, Math.max(0, p))})`;
-    };
-
-    updateScrollProgress();
-    scrollRoot.addEventListener('scroll', updateScrollProgress, { passive: true });
-    window.addEventListener('resize', updateScrollProgress);
+    handleScroll();
+    window.addEventListener('resize', handleScroll, { passive: true });
   }
 });
 

@@ -13,7 +13,7 @@
   - npm audit --omit=dev (0 vulnerabilities)
 - Проверены remotes:
   - GitHub remote доступен
-  - GitLab remote доступен
+  - GitLab mirror удалён — репозиторий поддерживается через GitHub
 - Проверен Cloudflare deployment readiness:
   - wrangler whoami (OK)
   - wrangler pages project list (проект hundesalon-nika найден)

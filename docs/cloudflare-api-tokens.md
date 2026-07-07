@@ -7,7 +7,7 @@
 | Назначение      | Имя                              | Где используется                                       |
 | --------------- | -------------------------------- | ------------------------------------------------------ |
 | Zone automation | `HUNDESALON_NIKA — Zone Ops`     | локально: DNS, purge, redirects, WAF, cache settings   |
-| Pages CI deploy | `HUNDESALON_NIKA — Pages Deploy` | только GitHub/GitLab CI, если деплой идет без Wrangler |
+| Pages CI deploy | `HUNDESALON_NIKA — Pages Deploy` | только GitHub CI (GitLab mirror removed); если деплой идет без Wrangler — настройте локальный deploy |
 
 Не нужно держать отдельные токены под `purge`, `DNS audit`, `redirects`, `WordPress` и разовые Cloudflare Agent conversations. Истекшие `Cloudflare Agent (conversation)` токены можно удалять из Dashboard как мусор. Production-схема проекта — два scoped-токена ниже, без broad user/account tokens.
 

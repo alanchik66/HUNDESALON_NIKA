@@ -3835,8 +3835,7 @@
     const activeClass = key => (activeKey === key ? ' active' : '');
     const activeAria = key => (activeKey === key ? ' aria-current="page"' : '');
     const mobileLinkAttrs = key => `${activeKey === key ? ' class="active"' : ''}${activeAria(key)}`;
-    const submenuItemAttrs = route =>
-      currentRouteNormalized === route ? ' class="active" aria-current="page"' : '';
+    const submenuItemAttrs = route => (currentRouteNormalized === route ? ' class="active" aria-current="page"' : '');
 
     const galleryDesktopNavMarkup = `
       <div class="dropdown nav-gallery-dropdown">
@@ -7426,11 +7425,7 @@
     toggleIcon.dataset.arrowBaseReady = 'true';
     toggleIcon.textContent = '';
     toggleIcon.setAttribute('aria-hidden', 'true');
-    toggleIcon.style.setProperty(
-      'background-image',
-      "url('/assets/images/icons/chevron-down.png')",
-      'important'
-    );
+    toggleIcon.style.setProperty('background-image', "url('/assets/images/icons/chevron-down.png')", 'important');
     toggleIcon.style.setProperty('background-position', 'center', 'important');
     toggleIcon.style.setProperty('background-repeat', 'no-repeat', 'important');
     toggleIcon.style.setProperty('background-size', 'contain', 'important');
@@ -11468,134 +11463,7 @@
     renderFrame();
   }
 
-  // Kept for optional future fallback; moon uses MP4 + canvas chroma-key.
-  // eslint-disable-next-line no-unused-vars
-  function startHeaderWeatherOrbTextureRender(overlay, texture) {
-    stopHeaderWeatherOrbRender(overlay);
-    const canvas = overlay.querySelector('canvas');
-    if (!canvas) return;
-
-    const offCanvas = document.createElement('canvas');
-    const offCtx = offCanvas.getContext('2d', { alpha: true });
-    const REVOLUTION_MS = 200000;
-    // Show only the equatorial band — tighter crop eliminates bright polar zones
-    const BAND_START = 0.26; // skip top 26% (polar distortion + bright crater rims)
-    const BAND_END = 0.74; // skip bottom 26%
-    let startTime = null;
-
-    const renderFrame = ts => {
-      if (overlay.hidden) return;
-      if (!startTime) startTime = ts;
-
-      const pixelRatio = window.devicePixelRatio || 1;
-      const w = overlay.clientWidth;
-      const h = overlay.clientHeight;
-      if (w < 8 || h < 8) {
-        // Layout not ready yet, retry next frame
-        overlay.__orbFrameScheduler = 'raf';
-        overlay.__orbFrameHandle = requestAnimationFrame(renderFrame);
-        return;
-      }
-
-      const targetWidth = Math.round(w * pixelRatio);
-      const targetHeight = Math.round(h * pixelRatio);
-
-      if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
-      }
-      if (offCanvas.width !== targetWidth || offCanvas.height !== targetHeight) {
-        offCanvas.width = targetWidth;
-        offCanvas.height = targetHeight;
-      }
-
-      // Sphere radius — inset by 1px to avoid clip-edge artifacts
-      const r = Math.min(targetWidth, targetHeight) / 2 - 1;
-      const cx = targetWidth / 2;
-      const cy = targetHeight / 2;
-      const phase = ((ts - startTime) / REVOLUTION_MS) % 1;
-
-      const texW = texture.naturalWidth || texture.width;
-      const texH = texture.naturalHeight || texture.height;
-      const srcY = Math.round(texH * BAND_START);
-      const srcH = Math.round(texH * (BAND_END - BAND_START));
-      // Keep correct aspect of the cropped band
-      const croppedAspect = texW / srcH;
-      const drawH = r * 2;
-      const drawW = drawH * croppedAspect;
-      const scrollX = phase * drawW;
-      const startX = cx - r - scrollX;
-
-      // Black background — eliminates any white from alpha:true canvas
-      offCtx.clearRect(0, 0, targetWidth, targetHeight);
-      offCtx.fillStyle = '#000';
-      offCtx.fillRect(0, 0, targetWidth, targetHeight);
-
-      offCtx.imageSmoothingEnabled = true;
-      offCtx.imageSmoothingQuality = 'high';
-      // Draw two copies side-by-side for seamless looping; +2px overlap prevents hairline seam
-      offCtx.drawImage(texture, 0, srcY, texW, srcH, startX, cy - r, drawW, drawH);
-      offCtx.drawImage(texture, 0, srcY, texW, srcH, startX + drawW - 2, cy - r, drawW, drawH);
-
-      // Hard black ring — seals antialiasing fringe at sphere edge
-      offCtx.beginPath();
-      offCtx.arc(cx, cy, r, 0, Math.PI * 2);
-      offCtx.strokeStyle = 'rgba(0,0,0,1)';
-      offCtx.lineWidth = 2.5;
-      offCtx.stroke();
-
-      // Draw onto main canvas — glow halo first (no clip), then moon sphere clipped to circle
-      const ctx = canvas.getContext('2d', { alpha: true });
-      ctx.clearRect(0, 0, targetWidth, targetHeight);
-
-      // Atmospheric glow outside the sphere — warm silver, no blue
-      const halo = ctx.createRadialGradient(cx, cy, r * 0.82, cx, cy, r * 1.38);
-      halo.addColorStop(0, 'rgba(210,205,195,0.10)');
-      halo.addColorStop(0.5, 'rgba(190,185,170,0.05)');
-      halo.addColorStop(1, 'rgba(170,165,150,0)');
-      ctx.fillStyle = halo;
-      ctx.fillRect(0, 0, targetWidth, targetHeight);
-
-      // Moon sphere — clipped to circle
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(offCanvas, 0, 0);
-      ctx.restore();
-
-      // Polar contour arcs — thin silver rim only at top and bottom of sphere perimeter
-      const polarArcSpan = Math.PI * 0.38; // ~68° arc at each pole
-      ctx.save();
-      ctx.lineWidth = 1.2;
-      ctx.lineCap = 'round';
-      // Top pole arc
-      const topGrad = ctx.createLinearGradient(cx - r * 0.4, cy - r, cx + r * 0.4, cy - r);
-      topGrad.addColorStop(0, 'rgba(200,198,190,0)');
-      topGrad.addColorStop(0.5, 'rgba(200,198,190,0.32)');
-      topGrad.addColorStop(1, 'rgba(200,198,190,0)');
-      ctx.strokeStyle = topGrad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r - 1, -Math.PI / 2 - polarArcSpan / 2, -Math.PI / 2 + polarArcSpan / 2);
-      ctx.stroke();
-      // Bottom pole arc
-      const botGrad = ctx.createLinearGradient(cx - r * 0.4, cy + r, cx + r * 0.4, cy + r);
-      botGrad.addColorStop(0, 'rgba(200,198,190,0)');
-      botGrad.addColorStop(0.5, 'rgba(200,198,190,0.28)');
-      botGrad.addColorStop(1, 'rgba(200,198,190,0)');
-      ctx.strokeStyle = botGrad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r - 1, Math.PI / 2 - polarArcSpan / 2, Math.PI / 2 + polarArcSpan / 2);
-      ctx.stroke();
-      ctx.restore();
-
-      overlay.__orbFrameScheduler = 'raf';
-      overlay.__orbFrameHandle = requestAnimationFrame(renderFrame);
-    };
-
-    overlay.__orbFrameScheduler = 'raf';
-    overlay.__orbFrameHandle = requestAnimationFrame(renderFrame);
-  }
+  // (Removed unused optional fallback renderer `startHeaderWeatherOrbTextureRender`)
 
   async function mountHeaderWeatherNasaEyesSun(overlay, assetConfig) {
     const canvas = overlay?.querySelector('canvas');

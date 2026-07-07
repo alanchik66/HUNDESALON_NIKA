@@ -16,7 +16,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const bookingCopyByLang = {
     ru: {
       weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
-      services: ['Стрижка собак', 'Купание', 'Тримминг', 'Экспресс-линька', 'Стрижка кошек'],
+      services: [
+        'Стрижка собак',
+        'Купание',
+        'Тримминг',
+        'Экспресс-линька',
+        'Стрижка кошек',
+        'Ваши предложения',
+      ],
       fallbackService: 'Выбранная услуга',
       chooseService: 'Выберите услугу',
       chooseDate: 'Выберите дату',
@@ -43,10 +50,20 @@ document.addEventListener('DOMContentLoaded', () => {
         noFile: 'Без файла',
       },
       closeModal: 'Закрыть окно',
+      datetimePickDate: 'Сначала выберите дату в календаре',
+      datetimePickTime: 'Теперь выберите удобное время',
+      datetimeDateChosen: 'Дата выбрана',
     },
     uk: {
       weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
-      services: ['Стрижка собак', 'Купання', 'Тримінг', 'Експрес-линька', 'Стрижка котів'],
+      services: [
+        'Стрижка собак',
+        'Купання',
+        'Тримінг',
+        'Експрес-линька',
+        'Стрижка котів',
+        'Ваші пропозиції',
+      ],
       fallbackService: 'Обрана послуга',
       chooseService: 'Оберіть послугу',
       chooseDate: 'Оберіть дату',
@@ -73,10 +90,20 @@ document.addEventListener('DOMContentLoaded', () => {
         noFile: 'Без файлу',
       },
       closeModal: 'Закрити вікно',
+      datetimePickDate: 'Спочатку оберіть дату в календарі',
+      datetimePickTime: 'Тепер оберіть зручний час',
+      datetimeDateChosen: 'Дату обрано',
     },
     en: {
       weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      services: ['Dog haircut', 'Bathing', 'Hand stripping', 'Express deshedding', 'Cat grooming'],
+      services: [
+        'Dog haircut',
+        'Bathing',
+        'Hand stripping',
+        'Express deshedding',
+        'Cat grooming',
+        'Your suggestions',
+      ],
       fallbackService: 'Selected service',
       chooseService: 'Please select a service',
       chooseDate: 'Please select a date',
@@ -103,10 +130,20 @@ document.addEventListener('DOMContentLoaded', () => {
         noFile: 'No file',
       },
       closeModal: 'Close dialog',
+      datetimePickDate: 'Start by choosing a date in the calendar',
+      datetimePickTime: 'Now pick a convenient time',
+      datetimeDateChosen: 'Date selected',
     },
     de: {
       weekdays: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
-      services: ['Hundeschnitt', 'Baden', 'Trimming', 'Express-Fellwechselpflege', 'Katzenpflege'],
+      services: [
+        'Hundeschnitt',
+        'Baden',
+        'Trimming',
+        'Express-Fellwechselpflege',
+        'Katzenpflege',
+        'Ihre Vorschläge',
+      ],
       fallbackService: 'Ausgewählte Leistung',
       chooseService: 'Bitte wählen Sie eine Leistung',
       chooseDate: 'Bitte wählen Sie ein Datum',
@@ -133,8 +170,19 @@ document.addEventListener('DOMContentLoaded', () => {
         noFile: 'Keine Datei',
       },
       closeModal: 'Dialog schließen',
+      datetimePickDate: 'Wählen Sie zuerst ein Datum im Kalender',
+      datetimePickTime: 'Wählen Sie nun eine passende Uhrzeit',
+      datetimeDateChosen: 'Datum gewählt',
     },
   };
+
+  const bookingLocaleByLang = {
+    ru: 'ru-RU',
+    uk: 'uk-UA',
+    en: 'en-GB',
+    de: 'de-DE',
+  };
+  const bookingLocale = bookingLocaleByLang[pageLang] || bookingLocaleByLang.en;
   const bookingCopy = bookingCopyByLang[pageLang] || bookingCopyByLang.en;
 
   const injectHiddenValue = (form, name, value) => {
@@ -637,18 +685,370 @@ document.addEventListener('DOMContentLoaded', () => {
     const step2Panel = panels[2];
     const nativeFieldsGrid = modal.querySelector('[data-booking-native-fields]');
     let datetimeBody = step2Panel?.querySelector('.booking-datetime-body');
+    let datetimeStatusEl = step2Panel?.querySelector('[data-booking-datetime-status]');
+    let calendarBlockEl = step2Panel?.querySelector('.booking-datetime-block--calendar');
+    let timeBlockEl = step2Panel?.querySelector('.booking-datetime-block--time');
+    let choiceRowEl = step2Panel?.querySelector('[data-booking-datetime-choice]');
+    let monthTitleEl = step2Panel?.querySelector('[data-booking-month-title]');
+    let timeHintEl = step2Panel?.querySelector('[data-booking-time-hint]');
+    let choiceDateEl = step2Panel?.querySelector('[data-booking-choice-date]');
+    let choiceTimeEl = step2Panel?.querySelector('[data-booking-choice-time]');
 
-    if (step2Panel && !datetimeBody) {
-      datetimeBody = document.createElement('div');
-      datetimeBody.className = 'booking-datetime-body';
-      step2Panel.insertBefore(datetimeBody, calendarContainer);
-      datetimeBody.append(calendarContainer, timeSlotsContainer);
-      if (nativeFieldsGrid) {
-        datetimeBody.append(nativeFieldsGrid);
+    const formatDisplayDate = isoDate => {
+      if (!isoDate) {
+        return '';
       }
-    }
+
+      const [year, month, day] = isoDate.split('-').map(Number);
+      return new Intl.DateTimeFormat(bookingLocale, {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }).format(new Date(year, month - 1, day));
+    };
+
+    const formatMonthTitle = referenceDate => {
+      return new Intl.DateTimeFormat(bookingLocale, {
+        month: 'long',
+        year: 'numeric',
+      }).format(referenceDate);
+    };
+
+    const ensureDatetimeBlock = (className, kickerText, metaSelector) => {
+      const blockSelector = `.${className.split(' ')[0]}`;
+      let blockEl = step2Panel?.querySelector(blockSelector);
+
+      if (!blockEl) {
+        blockEl = document.createElement('section');
+        blockEl.className = `booking-datetime-block ${className}`;
+        blockEl.innerHTML = `
+          <div class="booking-datetime-block__head">
+            <span class="booking-datetime-block__kicker"></span>
+            <span class="booking-datetime-block__meta" ${metaSelector}></span>
+          </div>`;
+        blockEl.querySelector('.booking-datetime-block__kicker').textContent = kickerText;
+      }
+
+      return blockEl;
+    };
+
+    const buildDatetimeStepLayout = () => {
+      if (!step2Panel) {
+        return;
+      }
+
+      const step2Buttons = step2Panel.querySelector('.modal-buttons');
+
+      step2Panel.querySelector('[data-booking-datetime-summary]')?.remove();
+      step2Panel.querySelectorAll('.booking-datetime-section').forEach(section => {
+        if (calendarContainer.parentElement === section) {
+          section.removeChild(calendarContainer);
+        }
+
+        if (timeSlotsContainer.parentElement === section) {
+          section.removeChild(timeSlotsContainer);
+        }
+
+        section.remove();
+      });
+      step2Panel.querySelector('.booking-datetime-panels')?.remove();
+
+      if (!datetimeBody) {
+        datetimeBody = document.createElement('div');
+        datetimeBody.className = 'booking-datetime-body';
+        step2Panel.insertBefore(datetimeBody, step2Buttons);
+      }
+
+      if (!datetimeStatusEl) {
+        datetimeStatusEl = document.createElement('div');
+        datetimeStatusEl.className = 'booking-datetime-status';
+        datetimeStatusEl.dataset.bookingDatetimeStatus = '';
+        datetimeStatusEl.dataset.state = 'date';
+      }
+
+      calendarBlockEl = ensureDatetimeBlock(
+        'booking-datetime-block--calendar',
+        bookingCopy.labels.date,
+        'data-booking-month-title'
+      );
+      monthTitleEl = calendarBlockEl.querySelector('[data-booking-month-title]');
+
+      timeBlockEl = ensureDatetimeBlock(
+        'booking-datetime-block--time is-awaiting-date',
+        bookingCopy.labels.time,
+        'data-booking-time-hint'
+      );
+      timeHintEl = timeBlockEl.querySelector('[data-booking-time-hint]');
+
+      if (!choiceRowEl) {
+        choiceRowEl = document.createElement('div');
+        choiceRowEl.className = 'booking-datetime-choice';
+        choiceRowEl.dataset.bookingDatetimeChoice = '';
+        choiceRowEl.innerHTML = `
+          <div class="booking-datetime-choice__item" data-booking-choice-item="date" data-filled="false">
+            <span class="booking-datetime-choice__label"></span>
+            <span class="booking-datetime-choice__value" data-booking-choice-date>—</span>
+          </div>
+          <div class="booking-datetime-choice__item" data-booking-choice-item="time" data-filled="false">
+            <span class="booking-datetime-choice__label"></span>
+            <span class="booking-datetime-choice__value" data-booking-choice-time>—</span>
+          </div>`;
+        choiceRowEl.querySelector('[data-booking-choice-item="date"] .booking-datetime-choice__label').textContent =
+          bookingCopy.labels.date;
+        choiceRowEl.querySelector('[data-booking-choice-item="time"] .booking-datetime-choice__label').textContent =
+          bookingCopy.labels.time;
+      }
+
+      choiceDateEl = choiceRowEl.querySelector('[data-booking-choice-date]');
+      choiceTimeEl = choiceRowEl.querySelector('[data-booking-choice-time]');
+
+      calendarBlockEl.appendChild(calendarContainer);
+      timeBlockEl.appendChild(timeSlotsContainer);
+
+      datetimeBody.append(datetimeStatusEl, calendarBlockEl, timeBlockEl, choiceRowEl);
+
+      if (nativeFieldsGrid) {
+        nativeFieldsGrid.classList.add('booking-native-grid--hidden');
+        if (form && nativeFieldsGrid.parentElement !== form) {
+          form.append(nativeFieldsGrid);
+        }
+      }
+    };
+
+    const updateDatetimeStepState = () => {
+      const hasDate = Boolean(state.selectedDate);
+      const hasTime = Boolean(state.selectedTime);
+      const monthReference = hasDate
+        ? (() => {
+            const [year, month, day] = state.selectedDate.split('-').map(Number);
+            return new Date(year, month - 1, day);
+          })()
+        : new Date();
+
+      timeBlockEl?.classList.toggle('is-awaiting-date', !hasDate);
+      timeBlockEl?.classList.toggle('is-ready', hasDate && !hasTime);
+      timeBlockEl?.classList.toggle('is-complete', hasTime);
+
+      timeSlotsContainer.classList.toggle('is-awaiting-date', !hasDate);
+      timeSlotsContainer.classList.toggle('is-ready', hasDate && !hasTime);
+      timeSlotsContainer.classList.toggle('is-complete', hasTime);
+
+      if (datetimeStatusEl) {
+        if (!hasDate) {
+          datetimeStatusEl.textContent = bookingCopy.datetimePickDate;
+          datetimeStatusEl.dataset.state = 'date';
+        } else if (!hasTime) {
+          datetimeStatusEl.textContent = `${bookingCopy.datetimeDateChosen}: ${formatDisplayDate(state.selectedDate)}`;
+          datetimeStatusEl.dataset.state = 'time';
+        } else {
+          datetimeStatusEl.textContent = `${formatDisplayDate(state.selectedDate)} · ${state.selectedTime}`;
+          datetimeStatusEl.dataset.state = 'ready';
+        }
+      }
+
+      if (timeHintEl) {
+        timeHintEl.textContent = hasDate ? bookingCopy.datetimePickTime : bookingCopy.datetimePickDate;
+      }
+
+      if (monthTitleEl) {
+        monthTitleEl.textContent = formatMonthTitle(monthReference);
+      }
+
+      if (choiceDateEl) {
+        choiceDateEl.textContent = hasDate ? formatDisplayDate(state.selectedDate) : '—';
+        choiceDateEl.closest('[data-booking-choice-item]')?.setAttribute('data-filled', hasDate ? 'true' : 'false');
+      }
+
+      if (choiceTimeEl) {
+        choiceTimeEl.textContent = hasTime ? state.selectedTime : '—';
+        choiceTimeEl.closest('[data-booking-choice-item]')?.setAttribute('data-filled', hasTime ? 'true' : 'false');
+      }
+
+      if (selectedTimeField) {
+        selectedTimeField.disabled = !hasDate;
+        if (!hasDate) {
+          selectedTimeField.value = '';
+        }
+      }
+
+      window.requestAnimationFrame(refreshDatetimeScrollState);
+    };
+
+    buildDatetimeStepLayout();
+
+    const bookingScrollbars = {
+      services: null,
+      calendarDays: null,
+      timeSlots: null,
+      form: null,
+    };
+
+    const bindBookingScrollbar = (scrollTarget, thumbParent = scrollTarget) => {
+      const bind = window.HundesalonLiquidScrollbar?.bind;
+      if (!bind || !scrollTarget || scrollTarget.dataset.customScrollbarBound === 'true') {
+        return null;
+      }
+
+      scrollTarget.setAttribute('data-custom-scrollbar-host', '');
+
+      return bind({
+        scrollTarget,
+        thumbParent,
+        thumbClass: 'custom-scrollbar-thumb--panel',
+        viewportPadding: 10,
+        minHeight: 34,
+      });
+    };
+
+    const getCalendarDaysScroll = () => calendarContainer?.querySelector('.calendar-days-scroll');
+
+    const ensureBookingScrollbars = () => {
+      if (!bookingScrollbars.services) {
+        bookingScrollbars.services = bindBookingScrollbar(serviceList, serviceList);
+      }
+
+      const calendarDaysScroll = getCalendarDaysScroll();
+      if (calendarDaysScroll && calendarDaysScroll.dataset.customScrollbarBound !== 'true') {
+        bookingScrollbars.calendarDays = bindBookingScrollbar(calendarDaysScroll, calendarBlockEl || calendarDaysScroll);
+      }
+
+      if (timeSlotsContainer && timeSlotsContainer.dataset.customScrollbarBound !== 'true') {
+        bookingScrollbars.timeSlots = bindBookingScrollbar(timeSlotsContainer, timeBlockEl || timeSlotsContainer);
+      }
+
+      const step3Form = panels[3]?.querySelector('form');
+      if (step3Form && !bookingScrollbars.form && step3Form.dataset.customScrollbarBound !== 'true') {
+        bookingScrollbars.form = bindBookingScrollbar(step3Form, step3Form);
+      }
+    };
+
+    const refreshBookingScrollbars = () => {
+      Object.values(bookingScrollbars).forEach(handle => {
+        handle?.updateThumb?.();
+      });
+    };
+
+    ensureBookingScrollbars();
 
     const stepIndicator = modal.querySelector('.step-indicator');
+    const modalContent = modal.querySelector('.modal-content');
+    const modalButtonRows = modal.querySelectorAll('.modal-buttons');
+    const BOOKING_STEP_MOTION_MS = 420;
+    let stepMotionTimer = null;
+    let tiltResetTimer = null;
+
+    const ensureBookingGlassLayers = () => {
+      if (!modalContent || modalContent.querySelector('.booking-glass-lens')) {
+        return;
+      }
+
+      const lens = document.createElement('span');
+      lens.className = 'booking-glass-lens booking-glass-layer';
+      lens.setAttribute('aria-hidden', 'true');
+
+      const caustic = document.createElement('span');
+      caustic.className = 'booking-glass-caustic booking-glass-layer';
+      caustic.setAttribute('aria-hidden', 'true');
+
+      modalContent.insertBefore(caustic, modalContent.firstChild);
+      modalContent.insertBefore(lens, modalContent.firstChild);
+    };
+
+    const resetBookingTilt = () => {
+      modalContent?.style.setProperty('--booking-tilt-x', '0deg');
+      modalContent?.style.setProperty('--booking-tilt-y', '0deg');
+      modal.classList.remove('is-tilting');
+    };
+
+    const handleBookingPointerMove = event => {
+      if (!modal.classList.contains('active') || !modalContent || modal.classList.contains('is-closing')) {
+        return;
+      }
+
+      const rect = modalContent.getBoundingClientRect();
+      if (!rect.width || !rect.height) {
+        return;
+      }
+
+      const x = (event.clientX - rect.left) / rect.width - 0.5;
+      const y = (event.clientY - rect.top) / rect.height - 0.5;
+
+      modal.classList.add('is-tilting');
+      modalContent.style.setProperty('--booking-tilt-y', `${(x * 4.2).toFixed(2)}deg`);
+      modalContent.style.setProperty('--booking-tilt-x', `${(-y * 3.1).toFixed(2)}deg`);
+
+      if (tiltResetTimer) {
+        window.clearTimeout(tiltResetTimer);
+      }
+
+      tiltResetTimer = window.setTimeout(() => {
+        resetBookingTilt();
+        tiltResetTimer = null;
+      }, 900);
+    };
+
+    ensureBookingGlassLayers();
+
+    if (window.matchMedia('(pointer: fine)').matches) {
+      modal.addEventListener('pointermove', handleBookingPointerMove, { passive: true });
+      modal.addEventListener('pointerleave', resetBookingTilt, { passive: true });
+    }
+
+    serviceList.classList.add('nav-main');
+    timeSlotsContainer.classList.add('nav-main');
+    stepIndicator?.classList.add('nav-main');
+    modalButtonRows.forEach(row => row.classList.add('nav-main'));
+
+    const sanitizeModalActionButtons = () => {
+      modal.querySelectorAll('.modal-buttons .filter-btn').forEach(button => {
+        button.classList.remove('online-order-pill', 'booking-modal-cta', 'active');
+        button.removeAttribute('aria-current');
+        button.setAttribute('aria-selected', 'false');
+        button.querySelectorAll('.nav-plasma--active, .nav-plasma').forEach(layer => layer.remove());
+        window.HundesalonNavPill?.deactivate?.(button);
+        delete button.dataset.navPillBound;
+      });
+    };
+
+    modal.querySelectorAll('.btn-modal:not(.btn-modal-primary)').forEach(button => {
+      button.classList.add('filter-btn');
+    });
+    modal.querySelectorAll('.btn-modal-primary').forEach(button => {
+      button.classList.remove('online-order-pill', 'booking-modal-cta');
+      button.classList.add('filter-btn');
+    });
+    sanitizeModalActionButtons();
+
+    document.querySelectorAll('.select-btn-wrapper').forEach(wrapper => {
+      wrapper.classList.add('nav-main');
+      wrapper.querySelector('.select-service-btn')?.classList.add('filter-btn');
+    });
+
+    const scanBookingNavPills = (root = modal) => {
+      window.HundesalonNavPill?.scan?.(root);
+    };
+
+    const clearBookingPillGroup = buttons => {
+      buttons.forEach(button => {
+        button.classList.remove('active', 'selected');
+        button.setAttribute('aria-selected', 'false');
+        button.removeAttribute('aria-current');
+        window.HundesalonNavPill?.deactivate?.(button);
+      });
+    };
+
+    const activateBookingPill = button => {
+      if (!button) {
+        return;
+      }
+
+      button.classList.add('active');
+      button.classList.remove('selected');
+      button.setAttribute('aria-selected', 'true');
+      button.setAttribute('aria-current', 'true');
+      window.HundesalonNavPill?.activate?.(button);
+    };
+
     const siteScrollRoot = document.querySelector('.site-scroll-root');
     let savedSiteScrollTop = 0;
     let wheelBlockHandler = null;
@@ -659,12 +1059,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const hasOverflow = datetimeBody.scrollHeight > datetimeBody.clientHeight + 2;
-      const canScrollMore =
-        datetimeBody.scrollTop + datetimeBody.clientHeight < datetimeBody.scrollHeight - 2;
-
-      datetimeBody.classList.toggle('has-overflow', hasOverflow);
-      datetimeBody.classList.toggle('can-scroll-more', hasOverflow && canScrollMore);
+      datetimeBody.classList.remove('has-overflow', 'can-scroll-more');
     };
 
     const lockSiteScroll = () => {
@@ -673,23 +1068,29 @@ document.addEventListener('DOMContentLoaded', () => {
       document.documentElement.classList.add('booking-modal-open');
       document.body.classList.add('booking-modal-open');
 
+      const resolveBookingWheelScrollTarget = target => {
+        const candidates = [
+          target.closest('#booking-modal .calendar-days-scroll'),
+          target.closest('#booking-modal #time-slots-container'),
+          target.closest('#booking-modal .service-list'),
+          target.closest('#booking-modal #booking-form'),
+        ].filter(Boolean);
+
+        return candidates.find(element => element.scrollHeight > element.clientHeight + 2) || null;
+      };
+
       wheelBlockHandler = event => {
         if (!modal.classList.contains('active')) {
           return;
         }
 
-        const scrollable = event.target.closest('.booking-datetime-body, .service-list, #booking-form');
+        const scrollable = resolveBookingWheelScrollTarget(event.target);
         if (!scrollable) {
           event.preventDefault();
           return;
         }
 
         const maxScroll = scrollable.scrollHeight - scrollable.clientHeight;
-        if (maxScroll <= 0) {
-          event.preventDefault();
-          return;
-        }
-
         const atTop = scrollable.scrollTop <= 0;
         const atBottom = scrollable.scrollTop >= maxScroll - 1;
         if ((atTop && event.deltaY < 0) || (atBottom && event.deltaY > 0)) {
@@ -702,7 +1103,11 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-        if (event.target.closest('.booking-datetime-body, .service-list, #booking-form, .modal-content')) {
+        if (
+          event.target.closest(
+            '.calendar-days-scroll, #time-slots-container, .service-list, #booking-form, .modal-content'
+          )
+        ) {
           return;
         }
 
@@ -741,6 +1146,14 @@ document.addEventListener('DOMContentLoaded', () => {
         item.classList.toggle('is-complete', isComplete);
         item.setAttribute('aria-selected', isActive ? 'true' : 'false');
         item.setAttribute('tabindex', isActive ? '0' : '-1');
+
+        if (isActive) {
+          activateBookingPill(item);
+        } else {
+          item.classList.remove('active');
+          item.removeAttribute('aria-current');
+          window.HundesalonNavPill?.deactivate?.(item);
+        }
       });
     };
 
@@ -751,10 +1164,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (targetStep < state.step) {
         setStep(targetStep);
-        if (targetStep === 2) {
-          renderCalendar();
-          renderTimeSlots();
-        }
         return;
       }
 
@@ -768,7 +1177,7 @@ document.addEventListener('DOMContentLoaded', () => {
           setStep(1);
           showValidationMessage(
             bookingCopy.chooseService,
-            serviceList.querySelector('.service-option.selected, .service-option')
+            serviceList.querySelector('.service-option.active, .service-option')
           );
           return;
         }
@@ -783,6 +1192,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     steps.forEach((stepEl, index) => {
       const stepNumber = index + 1;
+      stepEl.classList.add('filter-btn');
       stepEl.setAttribute('role', 'tab');
       stepEl.dataset.bookingStep = String(stepNumber);
 
@@ -799,7 +1209,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    datetimeBody?.addEventListener('scroll', refreshDatetimeScrollState, { passive: true });
+    timeSlotsContainer?.addEventListener('scroll', refreshDatetimeScrollState, { passive: true });
     window.addEventListener('resize', refreshDatetimeScrollState, { passive: true });
 
     // Add missing accessibility hooks without having to duplicate markup across all pages.
@@ -993,37 +1403,75 @@ document.addEventListener('DOMContentLoaded', () => {
       bookingSummary.hidden = false;
     };
 
+    const updateModalLayout = step => {
+      modal.classList.remove('is-booking-step-1-active', 'is-booking-step-2-active', 'is-booking-step-3-active');
+      modal.classList.add(`is-booking-step-${step}-active`);
+
+      if (!modalContent) {
+        return;
+      }
+
+      modalContent.classList.remove('is-booking-step-1', 'is-booking-step-2', 'is-booking-step-3');
+      modalContent.classList.add(`is-booking-step-${step}`);
+      stepIndicator?.style.setProperty('--booking-progress', String(step));
+    };
+
     const resetStepScroll = step => {
-      const modalContent = modal.querySelector('.modal-content');
       modalContent?.scrollTo?.({ top: 0, behavior: 'auto' });
 
       const activePanel = panels[step];
       activePanel?.scrollTo?.({ top: 0, behavior: 'auto' });
-      activePanel?.querySelector('.booking-datetime-body, .service-list, form')?.scrollTo?.({
+      activePanel?.querySelector('.calendar-days-scroll')?.scrollTo?.({ top: 0, behavior: 'auto' });
+      activePanel?.querySelector('#time-slots-container')?.scrollTo?.({ top: 0, behavior: 'auto' });
+      activePanel?.querySelector('.service-list, form')?.scrollTo?.({
         top: 0,
         behavior: 'auto',
       });
     };
 
     const setStep = step => {
+      const prevStep = state.step;
       state.step = step;
       clearValidationMessage();
+
+      if (stepMotionTimer) {
+        window.clearTimeout(stepMotionTimer);
+        stepMotionTimer = null;
+      }
+
+      modal.classList.remove('is-step-forward', 'is-step-back');
+      if (step !== prevStep) {
+        modal.classList.add(step > prevStep ? 'is-step-forward' : 'is-step-back');
+        stepMotionTimer = window.setTimeout(() => {
+          modal.classList.remove('is-step-forward', 'is-step-back');
+          stepMotionTimer = null;
+        }, BOOKING_STEP_MOTION_MS);
+      }
 
       Object.entries(panels).forEach(([key, panel]) => {
         panel?.classList.toggle('active', Number(key) === step);
       });
 
       steps.forEach((item, index) => {
-        const isActive = index + 1 === step;
-        item.classList.toggle('active', isActive);
-        item.setAttribute('aria-current', isActive ? 'step' : 'false');
+        item.classList.toggle('active', index + 1 === step);
       });
 
       updateStepTabs();
+      updateModalLayout(step);
+
+      if (step === 2) {
+        renderCalendar();
+        renderTimeSlots();
+        updateDatetimeStepState();
+      }
 
       window.requestAnimationFrame(() => {
         resetStepScroll(step);
         refreshDatetimeScrollState();
+        ensureBookingScrollbars();
+        refreshBookingScrollbars();
+        sanitizeModalActionButtons();
+        scanBookingNavPills(modal);
       });
     };
 
@@ -1034,23 +1482,42 @@ document.addEventListener('DOMContentLoaded', () => {
           ? bookingCopy.services
           : [state.selectedService, ...bookingCopy.services];
 
-      services.forEach(serviceName => {
+      const serviceButtons = [];
+
+      services.forEach((serviceName, index) => {
         const button = document.createElement('button');
+        const isActive = state.selectedService === serviceName;
+
         button.type = 'button';
-        button.className = 'service-option';
+        button.className = 'filter-btn service-option';
         button.textContent = serviceName;
-        button.classList.toggle('selected', state.selectedService === serviceName);
+        button.style.setProperty('--service-i', String(index));
+        button.setAttribute('role', 'tab');
+        button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        if (isActive) {
+          button.classList.add('active');
+          button.setAttribute('aria-current', 'true');
+        }
 
         button.addEventListener('click', () => {
+          if (button.classList.contains('active')) {
+            return;
+          }
+
+          clearBookingPillGroup(serviceButtons);
+          activateBookingPill(button);
           state.selectedService = serviceName;
           syncHiddenFields();
           resetSummaryConfirmation();
           clearValidationMessage();
-          renderServiceList();
         });
 
+        serviceButtons.push(button);
         serviceList.appendChild(button);
       });
+
+      scanBookingNavPills(serviceList);
+      serviceButtons.filter(button => button.classList.contains('active')).forEach(activateBookingPill);
     };
 
     const renderCalendar = () => {
@@ -1058,6 +1525,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const normalizedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
       const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
       let startDayOfWeek = firstDay.getDay();
       let dayNumber = 1;
 
@@ -1065,23 +1533,41 @@ document.addEventListener('DOMContentLoaded', () => {
         startDayOfWeek = 7;
       }
 
+      let weekdaysRow = calendarContainer.querySelector('.calendar-weekdays');
+      let daysScroll = calendarContainer.querySelector('.calendar-days-scroll');
+
+      if (!weekdaysRow) {
+        weekdaysRow = document.createElement('div');
+        weekdaysRow.className = 'calendar-weekdays';
+        bookingCopy.weekdays.forEach(weekday => {
+          const cell = document.createElement('div');
+          cell.className = 'calendar-weekday';
+          cell.textContent = weekday;
+          weekdaysRow.appendChild(cell);
+        });
+      }
+
+      if (!daysScroll) {
+        daysScroll = document.createElement('div');
+        daysScroll.className = 'calendar-days-scroll';
+        daysScroll.addEventListener('scroll', refreshDatetimeScrollState, { passive: true });
+        calendarContainer.append(weekdaysRow, daysScroll);
+      }
+
       const calendar = document.createElement('div');
-      calendar.className = 'calendar';
+      calendar.className = 'calendar calendar-days nav-main';
+      const dayButtons = [];
 
-      bookingCopy.weekdays.forEach(weekday => {
-        const cell = document.createElement('div');
-        cell.className = 'calendar-weekday';
-        cell.textContent = weekday;
-        calendar.appendChild(cell);
-      });
+      const leadingBlanks = startDayOfWeek - 1;
+      const daysInMonth = lastDay.getDate();
+      const cellCount = Math.ceil((leadingBlanks + daysInMonth) / 7) * 7;
 
-      for (let index = 0; index < 42; index += 1) {
+      for (let index = 0; index < cellCount; index += 1) {
         const cell = document.createElement('button');
         cell.type = 'button';
-        cell.className = 'calendar-day';
 
-        if (index < startDayOfWeek - 1 || dayNumber > lastDay.getDate()) {
-          cell.classList.add('is-empty');
+        if (index < leadingBlanks || dayNumber > daysInMonth) {
+          cell.className = 'calendar-day is-empty';
           cell.setAttribute('tabindex', '-1');
           cell.setAttribute('aria-hidden', 'true');
           calendar.appendChild(cell);
@@ -1091,31 +1577,51 @@ document.addEventListener('DOMContentLoaded', () => {
         const date = new Date(today.getFullYear(), today.getMonth(), dayNumber);
         const isoDate = formatLocalDate(date);
         const isPastDay = date < normalizedToday;
+        const isActive = state.selectedDate === isoDate;
 
+        cell.className = 'filter-btn calendar-day';
         cell.textContent = String(dayNumber);
+        cell.style.setProperty('--calendar-i', String(dayNumber));
         cell.dataset.date = isoDate;
-        cell.classList.toggle('selected', state.selectedDate === isoDate);
+        cell.setAttribute('role', 'tab');
+        cell.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        if (isActive) {
+          cell.classList.add('active');
+          cell.setAttribute('aria-current', 'true');
+        }
 
         if (isPastDay) {
           cell.classList.add('is-disabled');
           cell.disabled = true;
         } else {
           cell.addEventListener('click', () => {
+            if (cell.classList.contains('active')) {
+              return;
+            }
+
+            clearBookingPillGroup(dayButtons);
+            activateBookingPill(cell);
             state.selectedDate = isoDate;
+            state.selectedTime = '';
             syncHiddenFields();
             resetSummaryConfirmation();
             clearValidationMessage();
-            renderCalendar();
+            renderTimeSlots();
+            updateDatetimeStepState();
           });
+          dayButtons.push(cell);
         }
 
         calendar.appendChild(cell);
         dayNumber += 1;
       }
 
-      calendarContainer.innerHTML = '';
-      calendarContainer.appendChild(calendar);
-      window.requestAnimationFrame(refreshDatetimeScrollState);
+      daysScroll.replaceChildren(calendar);
+      ensureBookingScrollbars();
+      scanBookingNavPills(calendar);
+      dayButtons.filter(button => button.classList.contains('active')).forEach(activateBookingPill);
+      updateDatetimeStepState();
+      window.requestAnimationFrame(refreshBookingScrollbars);
     };
 
     const renderTimeSlots = () => {
@@ -1133,26 +1639,45 @@ document.addEventListener('DOMContentLoaded', () => {
         '19:00',
       ];
       timeSlotsContainer.innerHTML = '';
+      const slotButtons = [];
 
-      timeSlots.forEach(time => {
+      timeSlots.forEach((time, index) => {
         const button = document.createElement('button');
+        const isActive = state.selectedTime === time;
+
         button.type = 'button';
-        button.className = 'time-slot';
+        button.className = 'filter-btn time-slot';
         button.textContent = time;
-        button.classList.toggle('selected', state.selectedTime === time);
+        button.style.setProperty('--slot-i', String(index));
+        button.setAttribute('role', 'tab');
+        button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        if (isActive) {
+          button.classList.add('active');
+          button.setAttribute('aria-current', 'true');
+        }
 
         button.addEventListener('click', () => {
+          if (button.classList.contains('active')) {
+            return;
+          }
+
+          clearBookingPillGroup(slotButtons);
+          activateBookingPill(button);
           state.selectedTime = time;
           syncHiddenFields();
           resetSummaryConfirmation();
           clearValidationMessage();
-          renderTimeSlots();
+          updateDatetimeStepState();
         });
 
+        slotButtons.push(button);
         timeSlotsContainer.appendChild(button);
       });
 
-      window.requestAnimationFrame(refreshDatetimeScrollState);
+      scanBookingNavPills(timeSlotsContainer);
+      slotButtons.filter(button => button.classList.contains('active')).forEach(activateBookingPill);
+      updateDatetimeStepState();
+      window.requestAnimationFrame(refreshBookingScrollbars);
     };
 
     const bindNativeBookingFields = () => {
@@ -1163,9 +1688,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       selectedDateField.addEventListener('change', () => {
         state.selectedDate = selectedDateField.value;
+        state.selectedTime = '';
         resetSummaryConfirmation();
         clearValidationMessage();
         renderCalendar();
+        renderTimeSlots();
       });
 
       selectedTimeField.addEventListener('change', () => {
@@ -1201,56 +1728,94 @@ document.addEventListener('DOMContentLoaded', () => {
       return rowLabel || bookingCopy.fallbackService;
     };
 
+    const BOOKING_MODAL_OPEN_MS = 860;
+    const BOOKING_MODAL_DISMISS_MS = 440;
+    let openingTimer = null;
+    let closingTimer = null;
+
     const openModal = (serviceName = '') => {
+      if (closingTimer) {
+        window.clearTimeout(closingTimer);
+        closingTimer = null;
+      }
+
       lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       state.step = 1;
       state.selectedService = serviceName || state.selectedService;
       state.summaryConfirmed = false;
       clearValidationMessage();
       resetSummaryConfirmation();
-      modal.classList.remove('booking-modal-sent');
+      modal.classList.remove('booking-modal-sent', 'is-closing', 'is-alive', 'is-tilting');
+      resetBookingTilt();
       syncHiddenFields();
       setStep(1);
       renderServiceList();
-      modal.classList.add('active');
+      modal.classList.add('active', 'is-opening');
       modal.setAttribute('aria-hidden', 'false');
       lockSiteScroll();
 
+      if (openingTimer) {
+        window.clearTimeout(openingTimer);
+      }
+
+      openingTimer = window.setTimeout(() => {
+        modal.classList.remove('is-opening');
+        modal.classList.add('is-alive');
+        openingTimer = null;
+      }, BOOKING_MODAL_OPEN_MS);
+
       window.requestAnimationFrame(() => {
+        ensureBookingScrollbars();
         refreshDatetimeScrollState();
-        modal.querySelector('.service-option.selected, .service-option, input, button')?.focus();
+        refreshBookingScrollbars();
+        sanitizeModalActionButtons();
+        scanBookingNavPills(modal);
+        modal.querySelector('.service-option.active, .service-option, input, button')?.focus();
       });
     };
 
     const closeModal = () => {
+      if (!modal.classList.contains('active') || modal.classList.contains('is-closing')) {
+        return;
+      }
+
+      if (openingTimer) {
+        window.clearTimeout(openingTimer);
+        openingTimer = null;
+      }
+
       clearValidationMessage();
       resetSummaryConfirmation();
-      modal.classList.remove('booking-modal-sent');
-      modal.classList.remove('active');
+      modal.classList.remove('booking-modal-sent', 'is-opening', 'is-alive', 'is-tilting', 'is-step-forward', 'is-step-back');
+      resetBookingTilt();
+      modal.classList.add('is-closing');
       modal.setAttribute('aria-hidden', 'true');
-      unlockSiteScroll();
-      lastFocusedElement?.focus();
+
+      closingTimer = window.setTimeout(() => {
+        modal.classList.remove('active', 'is-closing');
+        closingTimer = null;
+        unlockSiteScroll();
+        lastFocusedElement?.focus();
+      }, BOOKING_MODAL_DISMISS_MS);
     };
 
     const moveToDateStep = () => {
       if (!state.selectedService) {
         showValidationMessage(
           bookingCopy.chooseService,
-          serviceList.querySelector('.service-option.selected, .service-option')
+          serviceList.querySelector('.service-option.active, .service-option')
         );
         return;
       }
 
       setStep(2);
-      renderCalendar();
-      renderTimeSlots();
     };
 
     const moveToContactStep = () => {
       if (!state.selectedDate) {
         showValidationMessage(
           bookingCopy.chooseDate,
-          calendarContainer.querySelector('.calendar-day.selected, .calendar-day:not(.is-empty):not(.is-disabled)')
+          calendarContainer.querySelector('.calendar-day.active, .calendar-day:not(.is-empty):not(.is-disabled)')
         );
         return;
       }
@@ -1263,7 +1828,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!state.selectedTime) {
         showValidationMessage(
           bookingCopy.chooseTime,
-          timeSlotsContainer.querySelector('.time-slot.selected, .time-slot')
+          timeSlotsContainer.querySelector('.time-slot.active, .time-slot')
         );
         return;
       }
@@ -1315,37 +1880,31 @@ document.addEventListener('DOMContentLoaded', () => {
         setStep(1);
         showValidationMessage(
           bookingCopy.chooseService,
-          serviceList.querySelector('.service-option.selected, .service-option')
+          serviceList.querySelector('.service-option.active, .service-option')
         );
         return;
       }
 
       if (!state.selectedDate) {
         setStep(2);
-        renderCalendar();
-        renderTimeSlots();
         showValidationMessage(
           bookingCopy.chooseDate,
-          calendarContainer.querySelector('.calendar-day.selected, .calendar-day:not(.is-empty):not(.is-disabled)')
+          calendarContainer.querySelector('.calendar-day.active, .calendar-day:not(.is-empty):not(.is-disabled)')
         );
         return;
       }
 
       if (!isFutureDate(state.selectedDate)) {
         setStep(2);
-        renderCalendar();
-        renderTimeSlots();
         showValidationMessage(bookingCopy.dateInPast, selectedDateField);
         return;
       }
 
       if (!state.selectedTime) {
         setStep(2);
-        renderCalendar();
-        renderTimeSlots();
         showValidationMessage(
           bookingCopy.chooseTime,
-          timeSlotsContainer.querySelector('.time-slot.selected, .time-slot')
+          timeSlotsContainer.querySelector('.time-slot.active, .time-slot')
         );
         return;
       }
@@ -1405,6 +1964,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     bindNativeBookingFields();
+    updateDatetimeStepState();
+    scanBookingNavPills(modal);
+    scanBookingNavPills(document);
   };
 
   initSendmailForms();
