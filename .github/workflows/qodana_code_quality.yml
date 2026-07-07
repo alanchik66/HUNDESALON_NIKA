@@ -2,10 +2,9 @@ name: Qodana
 
 on:
   workflow_dispatch:
-  pull_request:
-  push:
-    branches:
-      - main
+
+# Disabled: requires QODANA_TOKEN (JetBrains Cloud subscription)
+# To enable: add QODANA_TOKEN secret and change "on:" to include push/pull_request
 
 permissions:
   contents: read
