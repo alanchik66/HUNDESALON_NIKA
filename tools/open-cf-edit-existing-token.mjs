@@ -19,7 +19,7 @@ const edgeCandidates = [
 console.log('Edit token: HUNDESALON_NIKA — Zone Ops');
 console.log('Required permissions: Zone Read, DNS Edit, Cache Purge, Page Rules Edit, Zone Rules Edit');
 console.log('Then save → npm run cf:ensure-api-token\n');
-console.log(url);
+console.log('Opening Cloudflare token edit page.');
 
 if (edgeCandidates[0]) {
   exec(`"${edgeCandidates[0]}" "${url}"`, () => {});

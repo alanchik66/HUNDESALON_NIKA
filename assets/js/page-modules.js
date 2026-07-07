@@ -16,14 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const bookingCopyByLang = {
     ru: {
       weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
-      services: [
-        'Стрижка собак',
-        'Купание',
-        'Тримминг',
-        'Экспресс-линька',
-        'Стрижка кошек',
-        'Ваши предложения',
-      ],
+      services: ['Стрижка собак', 'Купание', 'Тримминг', 'Экспресс-линька', 'Стрижка кошек', 'Ваши предложения'],
       fallbackService: 'Выбранная услуга',
       chooseService: 'Выберите услугу',
       chooseDate: 'Выберите дату',
@@ -56,14 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     uk: {
       weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
-      services: [
-        'Стрижка собак',
-        'Купання',
-        'Тримінг',
-        'Експрес-линька',
-        'Стрижка котів',
-        'Ваші пропозиції',
-      ],
+      services: ['Стрижка собак', 'Купання', 'Тримінг', 'Експрес-линька', 'Стрижка котів', 'Ваші пропозиції'],
       fallbackService: 'Обрана послуга',
       chooseService: 'Оберіть послугу',
       chooseDate: 'Оберіть дату',
@@ -96,14 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     en: {
       weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      services: [
-        'Dog haircut',
-        'Bathing',
-        'Hand stripping',
-        'Express deshedding',
-        'Cat grooming',
-        'Your suggestions',
-      ],
+      services: ['Dog haircut', 'Bathing', 'Hand stripping', 'Express deshedding', 'Cat grooming', 'Your suggestions'],
       fallbackService: 'Selected service',
       chooseService: 'Please select a service',
       chooseDate: 'Please select a date',
@@ -136,14 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     de: {
       weekdays: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
-      services: [
-        'Hundeschnitt',
-        'Baden',
-        'Trimming',
-        'Express-Fellwechselpflege',
-        'Katzenpflege',
-        'Ihre Vorschläge',
-      ],
+      services: ['Hundeschnitt', 'Baden', 'Trimming', 'Express-Fellwechselpflege', 'Katzenpflege', 'Ihre Vorschläge'],
       fallbackService: 'Ausgewählte Leistung',
       chooseService: 'Bitte wählen Sie eine Leistung',
       chooseDate: 'Bitte wählen Sie ein Datum',
@@ -909,7 +881,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const calendarDaysScroll = getCalendarDaysScroll();
       if (calendarDaysScroll && calendarDaysScroll.dataset.customScrollbarBound !== 'true') {
-        bookingScrollbars.calendarDays = bindBookingScrollbar(calendarDaysScroll, calendarBlockEl || calendarDaysScroll);
+        bookingScrollbars.calendarDays = bindBookingScrollbar(
+          calendarDaysScroll,
+          calendarBlockEl || calendarDaysScroll
+        );
       }
 
       if (timeSlotsContainer && timeSlotsContainer.dataset.customScrollbarBound !== 'true') {
@@ -1330,10 +1305,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const previewUrl = URL.createObjectURL(file);
       bookingFilePreview.hidden = false;
-      bookingFilePreview.innerHTML = `
-        <span>${bookingCopy.labels.file}: ${file.name}</span>
-        <img src="${previewUrl}" alt="" loading="lazy">
-      `;
+      bookingFilePreview.replaceChildren();
+      const fileLabel = document.createElement('span');
+      fileLabel.textContent = `${bookingCopy.labels.file}: ${file.name}`;
+      const previewImage = document.createElement('img');
+      previewImage.src = previewUrl;
+      previewImage.alt = '';
+      previewImage.loading = 'lazy';
+      bookingFilePreview.append(fileLabel, previewImage);
     };
 
     const ensureBookingFileUploaded = async () => {
@@ -1394,12 +1373,18 @@ document.addEventListener('DOMContentLoaded', () => {
         [labels.file, state.uploadedFileUrl || file?.name || labels.noFile],
       ];
 
-      bookingSummary.innerHTML = `
-        <h4>${bookingCopy.summaryTitle}</h4>
-        <dl>
-          ${rows.map(([label, value]) => `<dt>${label}</dt><dd>${value || '—'}</dd>`).join('')}
-        </dl>
-      `;
+      bookingSummary.replaceChildren();
+      const heading = document.createElement('h4');
+      heading.textContent = bookingCopy.summaryTitle;
+      const list = document.createElement('dl');
+      for (const [label, value] of rows) {
+        const term = document.createElement('dt');
+        term.textContent = label;
+        const definition = document.createElement('dd');
+        definition.textContent = value || '—';
+        list.append(term, definition);
+      }
+      bookingSummary.append(heading, list);
       bookingSummary.hidden = false;
     };
 
@@ -1786,7 +1771,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       clearValidationMessage();
       resetSummaryConfirmation();
-      modal.classList.remove('booking-modal-sent', 'is-opening', 'is-alive', 'is-tilting', 'is-step-forward', 'is-step-back');
+      modal.classList.remove(
+        'booking-modal-sent',
+        'is-opening',
+        'is-alive',
+        'is-tilting',
+        'is-step-forward',
+        'is-step-back'
+      );
       resetBookingTilt();
       modal.classList.add('is-closing');
       modal.setAttribute('aria-hidden', 'true');

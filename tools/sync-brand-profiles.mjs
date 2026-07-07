@@ -22,6 +22,16 @@ function langFromPath(file) {
   return file.split('/')[0];
 }
 
+function pickSameAsHost(hostname) {
+  return SAME_AS.find(url => {
+    try {
+      return new URL(url).hostname === hostname;
+    } catch {
+      return false;
+    }
+  });
+}
+
 function updateJsonLd(html, lang) {
   return html.replace(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g, (match, raw) => {
     try {
@@ -55,12 +65,12 @@ function updateLlmsTxt() {
   const block = `## Official profiles (citation)
 
 - Website: ${NAP.url}
-- Google Maps: ${SAME_AS.find(u => u.includes('google.com/maps'))}
-- Instagram: ${SAME_AS.find(u => u.includes('instagram.com'))}
-- Facebook: ${SAME_AS.find(u => u.includes('facebook.com'))}
-- YouTube: ${SAME_AS.find(u => u.includes('youtube.com'))}
-- TikTok: ${SAME_AS.find(u => u.includes('tiktok.com'))}
-- Telegram: ${SAME_AS.find(u => u.includes('t.me'))}
+- Google Maps: ${pickSameAsHost('google.com')}
+- Instagram: ${pickSameAsHost('instagram.com')}
+- Facebook: ${pickSameAsHost('facebook.com')}
+- YouTube: ${pickSameAsHost('youtube.com')}
+- TikTok: ${pickSameAsHost('tiktok.com')}
+- Telegram: ${pickSameAsHost('t.me')}
 
 ## Citation (NAP)
 

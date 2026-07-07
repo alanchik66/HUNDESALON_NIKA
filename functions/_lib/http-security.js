@@ -134,14 +134,15 @@ export function applyApiResponseHeaders(response, origin) {
   }
   return new Response(response.body, {
     status: response.status,
-    statusText: response.statusText,
     headers,
   });
 }
 
 export function jsonResponse(data, status = 200, origin = '') {
+  // Never expose stack traces or Error internals in API responses
+  const safe = data instanceof Error ? { error: data.message } : data;
   return applyApiResponseHeaders(
-    new Response(JSON.stringify(data), {
+    new Response(JSON.stringify(safe), {
       status,
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
     }),

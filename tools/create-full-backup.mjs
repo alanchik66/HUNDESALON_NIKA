@@ -10,6 +10,11 @@ import path from 'node:path';
 const projectDir = path.resolve(import.meta.dirname, '..');
 const parentDir = path.dirname(projectDir);
 const projectName = path.basename(projectDir);
+// Validate project name to prevent shell injection from environment-derived path
+if (!/^[\w.-]+$/.test(projectName)) {
+  process.stderr.write(`Unsafe project name: ${projectName}\n`);
+  process.exit(1);
+}
 const backupDir = path.join(parentDir, 'backups');
 const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 const archiveName = `${projectName}_FULL_BACKUP_${stamp}.tar`;
@@ -27,11 +32,10 @@ const excludes = [
 
 fs.mkdirSync(backupDir, { recursive: true });
 
-const excludeArgs = excludes.flatMap((item) => ['--exclude', item]);
-const tarCmd = ['tar', '-cf', archivePath, ...excludeArgs, projectName];
-execSync(tarCmd.join(' '), { cwd: parentDir, stdio: 'inherit' });
+const excludeArgs = excludes.flatMap(item => ['--exclude', item]);
+execSync('tar', ['-cf', archivePath, ...excludeArgs, projectName], { cwd: parentDir, stdio: 'inherit' });
 
-const listing = execSync(`tar -tf "${archivePath}"`, { encoding: 'utf8' });
+const listing = execSync('tar', ['-tf', archivePath], { encoding: 'utf8' });
 const entryCount = listing.trim().split('\n').filter(Boolean).length;
 const sizeBytes = fs.statSync(archivePath).size;
 

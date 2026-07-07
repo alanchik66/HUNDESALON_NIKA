@@ -13,7 +13,6 @@ const urls = [
 
 console.log('Opening Bing Webmaster Tools…\n');
 for (const url of urls) {
-  console.log(url);
   const start =
     process.platform === 'win32'
       ? `start "" "${url}"`

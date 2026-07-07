@@ -26,5 +26,5 @@ const start =
       : `xdg-open "${url}"`;
 
 exec(start, error => {
-  if (error) console.log(url);
+  if (error) console.log('Open the Cloudflare token page manually if the browser did not launch.');
 });

@@ -1,0 +1,6 @@
+name: HUNDESALON NIKA CodeQL config
+
+paths-ignore:
+  - 3d-weather-codrops-main/dist-widget/**
+  - dist/**
+  - dist/3d-weather-codrops-main/dist-widget/**

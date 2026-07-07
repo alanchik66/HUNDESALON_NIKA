@@ -3535,8 +3535,8 @@
   const HEADER_WEATHER_CURRENT_META_MAX_AGE = 10 * 60 * 1000;
   const HEADER_WEATHER_CURRENT_MODEL_MAX_AGE = 2 * 60 * 60 * 1000;
   const HEADER_WEATHER_ASTRO_CACHE_TTL = 12 * 60 * 60 * 1000;
-  const HEADER_WEATHER_GEO_STORAGE_KEY = 'header_weather_geo_v1';
   const HEADER_WEATHER_GEO_CACHE_TTL = 30 * 60 * 1000;
+  let headerWeatherGeoCache = null;
   const HEADER_WEATHER_READINGS_STORAGE_KEY = 'header_weather_readings_v1';
   const HEADER_WEATHER_READINGS_CACHE_TTL = 12 * 60 * 60 * 1000;
   let headerWeatherReverseGeoProxyUnavailable = false;
@@ -4187,43 +4187,32 @@
   }
 
   function readHeaderWeatherStoredGeo() {
-    try {
-      const raw = localStorage.getItem(HEADER_WEATHER_GEO_STORAGE_KEY);
-      if (!raw) {
-        return null;
-      }
-
-      const parsed = JSON.parse(raw);
-      const latitude = Number(parsed?.latitude);
-      const longitude = Number(parsed?.longitude);
-      const expiresAt = Number(parsed?.expiresAt);
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !Number.isFinite(expiresAt)) {
-        return null;
-      }
-
-      if (expiresAt <= Date.now()) {
-        return null;
-      }
-
-      return { latitude, longitude, expiresAt };
-    } catch {
+    if (!headerWeatherGeoCache) {
       return null;
     }
+
+    const latitude = Number(headerWeatherGeoCache.latitude);
+    const longitude = Number(headerWeatherGeoCache.longitude);
+    const expiresAt = Number(headerWeatherGeoCache.expiresAt);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !Number.isFinite(expiresAt)) {
+      headerWeatherGeoCache = null;
+      return null;
+    }
+
+    if (expiresAt <= Date.now()) {
+      headerWeatherGeoCache = null;
+      return null;
+    }
+
+    return { latitude, longitude, expiresAt };
   }
 
   function storeHeaderWeatherGeo(latitude, longitude) {
-    try {
-      localStorage.setItem(
-        HEADER_WEATHER_GEO_STORAGE_KEY,
-        JSON.stringify({
-          latitude,
-          longitude,
-          expiresAt: Date.now() + HEADER_WEATHER_GEO_CACHE_TTL,
-        })
-      );
-    } catch {
-      // Ignore storage failures in private mode.
-    }
+    headerWeatherGeoCache = {
+      latitude,
+      longitude,
+      expiresAt: Date.now() + HEADER_WEATHER_GEO_CACHE_TTL,
+    };
   }
 
   async function resolveHeaderWeatherBrowserGeoCoords() {

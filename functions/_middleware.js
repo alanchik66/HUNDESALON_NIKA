@@ -9,10 +9,7 @@ const UNSUPPORTED_AGENT_ENDPOINTS = new Map([
     '/.well-known/oauth-authorization-server',
     'HUNDESALON NIKA does not operate a public OAuth authorization server for agents.',
   ],
-  [
-    '/.well-known/openid-configuration',
-    'HUNDESALON NIKA does not operate a public OpenID Connect issuer for agents.',
-  ],
+  ['/.well-known/openid-configuration', 'HUNDESALON NIKA does not operate a public OpenID Connect issuer for agents.'],
   [
     '/.well-known/oauth-protected-resource',
     'There is no public protected-resource metadata because the published website API is unauthenticated.',
@@ -38,7 +35,7 @@ const MARKDOWN_PAGE_PATH = /^\/(?:index\.html)?$|^\/(?:de|en|ru|uk)\/(?:index\.h
 function pickLanguage(acceptLanguage = '', country = '') {
   const candidates = String(acceptLanguage || '')
     .split(',')
-    .map((item) => item.split(';')[0].trim().toLowerCase())
+    .map(item => item.split(';')[0].trim().toLowerCase())
     .filter(Boolean);
 
   for (const candidate of candidates) {
@@ -47,7 +44,9 @@ function pickLanguage(acceptLanguage = '', country = '') {
     if (SUPPORTED_LANGS.has(primary)) return primary;
   }
 
-  const countryCode = String(country || '').trim().toUpperCase();
+  const countryCode = String(country || '')
+    .trim()
+    .toUpperCase();
   if (countryCode) {
     for (const [lang, countries] of COUNTRY_LANGUAGE_MAP.entries()) {
       if (countries.has(countryCode)) {
@@ -93,7 +92,7 @@ function unsupportedAgentEndpointResponse(pathname, message, method) {
       message,
       '',
       'Public discovery documents:',
-      ...publicDiscovery.map((path) => `- https://hundesalon-nika.com${path}`),
+      ...publicDiscovery.map(path => `- https://hundesalon-nika.com${path}`),
       '',
     ].join('\n');
 
@@ -133,7 +132,12 @@ function appendVary(headers, value) {
     return;
   }
 
-  const parts = new Set(current.split(',').map((item) => item.trim()).filter(Boolean));
+  const parts = new Set(
+    current
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean)
+  );
   for (const item of value.split(',')) {
     const trimmed = item.trim();
     if (trimmed) parts.add(trimmed);
@@ -145,23 +149,54 @@ function wantsMarkdown(request) {
   return String(request.headers.get('Accept') || '')
     .toLowerCase()
     .split(',')
-    .some((item) => item.trim().startsWith('text/markdown'));
+    .some(item => item.trim().startsWith('text/markdown'));
 }
 
 function decodeHtml(value) {
-  return String(value || '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/&#x([a-f0-9]+);/gi, (_, code) => String.fromCharCode(Number.parseInt(code, 16)));
+  let text = String(value || '');
+  const replacements = [
+    ['&nbsp;', ' '],
+    ['&lt;', '<'],
+    ['&gt;', '>'],
+    ['&quot;', '"'],
+    ['&#39;', "'"],
+    ['&amp;', '&'], // must be last to avoid double-unescaping &amp;lt; → &lt; → <
+  ];
+
+  for (const [needle, replacement] of replacements) {
+    text = text.split(needle).join(replacement);
+  }
+
+  let output = '';
+  for (let index = 0; index < text.length; index += 1) {
+    if (text[index] !== '&' || text[index + 1] !== '#') {
+      output += text[index];
+      continue;
+    }
+
+    const semicolonIndex = text.indexOf(';', index + 2);
+    if (semicolonIndex < 0) {
+      output += text[index];
+      continue;
+    }
+
+    const entity = text.slice(index + 2, semicolonIndex);
+    const isHex = entity.startsWith('x') || entity.startsWith('X');
+    const code = Number.parseInt(isHex ? entity.slice(1) : entity, isHex ? 16 : 10);
+    if (Number.isFinite(code)) {
+      output += String.fromCodePoint(code);
+      index = semicolonIndex;
+      continue;
+    }
+
+    output += text[index];
+  }
+
+  return output;
 }
 
 function inlineText(fragment) {
-  return decodeHtml(String(fragment || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+  return collapseWhitespace(decodeHtml(stripTags(String(fragment || ''))));
 }
 
 function absoluteUrl(href, sourceUrl) {
@@ -172,35 +207,103 @@ function absoluteUrl(href, sourceUrl) {
   }
 }
 
+function stripTags(html) {
+  let output = '';
+  let inTag = false;
+  for (const char of String(html || '')) {
+    if (char === '<') {
+      inTag = true;
+      continue;
+    }
+    if (char === '>') {
+      inTag = false;
+      continue;
+    }
+    if (!inTag) {
+      output += char;
+    }
+  }
+  return output;
+}
+
+function collapseWhitespace(value) {
+  let output = '';
+  let previousWasSpace = false;
+  for (const char of String(value || '')) {
+    const isSpace = /\s/.test(char);
+    if (isSpace) {
+      if (!previousWasSpace) {
+        output += ' ';
+      }
+      previousWasSpace = true;
+      continue;
+    }
+    output += char;
+    previousWasSpace = false;
+  }
+  return output.trim();
+}
+
+function extractTagText(html, tagName) {
+  const source = String(html || '');
+  const lower = source.toLowerCase();
+  const openTag = `<${tagName}`;
+  const closeTag = `</${tagName}>`;
+  const start = lower.indexOf(openTag);
+  if (start < 0) {
+    return '';
+  }
+
+  const startEnd = lower.indexOf('>', start);
+  if (startEnd < 0) {
+    return '';
+  }
+
+  const end = lower.indexOf(closeTag, startEnd + 1);
+  if (end < 0) {
+    return '';
+  }
+
+  return source.slice(startEnd + 1, end);
+}
+
+function removeTagSection(html, tagName) {
+  const source = String(html || '');
+  const lower = source.toLowerCase();
+  const openTag = `<${tagName}`;
+  const closeTag = `</${tagName}>`;
+  let index = 0;
+  let output = '';
+
+  while (index < source.length) {
+    const start = lower.indexOf(openTag, index);
+    if (start < 0) {
+      output += source.slice(index);
+      break;
+    }
+
+    output += source.slice(index, start);
+    const startEnd = lower.indexOf('>', start);
+    if (startEnd < 0) {
+      break;
+    }
+
+    const end = lower.indexOf(closeTag, startEnd + 1);
+    if (end < 0) {
+      break;
+    }
+
+    index = end + closeTag.length;
+  }
+
+  return output;
+}
+
 function htmlToMarkdown(html, sourceUrl) {
-  const title = inlineText(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || 'HUNDESALON NIKA');
-  const description = inlineText(
-    html.match(/<meta\s+name=["']description["'][^>]*content=["']([^"']+)["'][^>]*>/i)?.[1] || ''
-  );
-  let content = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[1] || html;
-
-  content = content
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<svg[\s\S]*?<\/svg>/gi, ' ')
-    .replace(/<img\b[^>]*alt=["']([^"']*)["'][^>]*>/gi, (_, alt) => (alt ? ` ${decodeHtml(alt)} ` : ' '))
-    .replace(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, href, label) => {
-      const text = inlineText(label);
-      return text ? `[${text}](${absoluteUrl(href, sourceUrl)})` : absoluteUrl(href, sourceUrl);
-    })
-    .replace(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi, (_, level, text) => {
-      return `\n\n${'#'.repeat(Number(level))} ${inlineText(text)}\n\n`;
-    })
-    .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, (_, text) => `\n- ${inlineText(text)}`)
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(?:p|div|section|article|header|footer|nav|main|ul|ol)>/gi, '\n\n')
-    .replace(/<[^>]+>/g, ' ');
-
-  const body = decodeHtml(content)
-    .replace(/[ \t]+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/[ \t]{2,}/g, ' ')
-    .trim();
+  const title = collapseWhitespace(decodeHtml(extractTagText(html, 'title') || 'HUNDESALON NIKA'));
+  const bodyHtml = removeTagSection(removeTagSection(removeTagSection(String(html || ''), 'script'), 'style'), 'svg');
+  const body = collapseWhitespace(decodeHtml(stripTags(bodyHtml)));
+  const description = '';
 
   return [`# ${title}`, description, `Source: ${sourceUrl}`, body].filter(Boolean).join('\n\n');
 }
@@ -221,7 +324,6 @@ async function markdownResponse(context, url) {
 
   return new Response(context.request.method === 'HEAD' ? null : markdown, {
     status: response.status,
-    statusText: response.statusText,
     headers,
   });
 }
@@ -247,7 +349,11 @@ export async function onRequest(context) {
     );
   }
 
-  if (['GET', 'HEAD'].includes(context.request.method) && wantsMarkdown(context.request) && MARKDOWN_PAGE_PATH.test(url.pathname)) {
+  if (
+    ['GET', 'HEAD'].includes(context.request.method) &&
+    wantsMarkdown(context.request) &&
+    MARKDOWN_PAGE_PATH.test(url.pathname)
+  ) {
     return markdownResponse(context, url);
   }
 
@@ -256,10 +362,7 @@ export async function onRequest(context) {
     (url.pathname === '/' || url.pathname === '/index.html') &&
     (context.request.headers.get('Accept') || '').includes('text/html')
   ) {
-    const lang = pickLanguage(
-      context.request.headers.get('Accept-Language'),
-      context.request.cf?.country
-    );
+    const lang = pickLanguage(context.request.headers.get('Accept-Language'), context.request.cf?.country);
     const target = new URL(`/${lang}/`, url.origin);
     target.search = url.search;
     return redirectResponse(target.toString(), 302);

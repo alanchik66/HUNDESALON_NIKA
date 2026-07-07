@@ -224,10 +224,17 @@ if (fs.existsSync(path.join(root, 'robots.txt'))) {
 
 if (fs.existsSync(path.join(root, 'llms.txt'))) {
   const llms = read('llms.txt');
-  assert(llms.includes('https://hundesalon-nika.com/de/'), 'llms.txt must include the German landing page');
-  assert(llms.includes('https://hundesalon-nika.com/en/'), 'llms.txt must include the English landing page');
-  assert(llms.includes('https://hundesalon-nika.com/ru/'), 'llms.txt must include the Russian landing page');
-  assert(llms.includes('https://hundesalon-nika.com/uk/'), 'llms.txt must include the Ukrainian landing page');
+  assert(
+    llms.includes('The canonical public domain is https://hundesalon-nika.com/.'),
+    'llms.txt must include the canonical website URL'
+  );
+  assert(llms.includes('- German: https://hundesalon-nika.com/de/'), 'llms.txt must include the German landing page');
+  assert(llms.includes('- English: https://hundesalon-nika.com/en/'), 'llms.txt must include the English landing page');
+  assert(llms.includes('- Russian: https://hundesalon-nika.com/ru/'), 'llms.txt must include the Russian landing page');
+  assert(
+    llms.includes('- Ukrainian: https://hundesalon-nika.com/uk/'),
+    'llms.txt must include the Ukrainian landing page'
+  );
   assert(read('_headers').includes('/llms.txt'), '_headers must include cache policy for llms.txt');
 }
 
