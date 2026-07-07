@@ -139,5 +139,5 @@ npm run dev:cf
 - booking-форму с будущей датой и файлом JPG/PNG;
 - подписку на новостную рассылку;
 - страницы `documents.html`;
-- SEO-страницы `hundefriseur-leipzig.html`, `hundesalon-leipzig.html`, `dog-grooming-leipzig.html`;
+- SEO-страницы `de/nashi-uslugi.html`, `en/nashi-uslugi.html`, `ru/nashi-uslugi.html`, `uk/nashi-uslugi.html`, `hundesalon-leipzig.html`;
 - PWA installability и offline fallback.

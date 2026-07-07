@@ -3508,9 +3508,7 @@
     'blog/strizhka-koshek.html',
     'blog/zashchita-ot-parazitov.html',
     'documents.html',
-    'hundefriseur-leipzig.html',
     'hundesalon-leipzig.html',
-    'dog-grooming-leipzig.html',
     'vvedenie.html',
     'social.html',
     'reyting.html',
@@ -3895,7 +3893,7 @@
   <a href="${pathPrefix}reyting.html" class="mobile-nav-link--secondary">${copy.rating}</a>
   <a href="${pathPrefix}partnerstvo.html" class="mobile-nav-link--secondary">${copy.partner}</a>
   <a href="${pathPrefix}documents.html" class="mobile-nav-link--secondary">${copy.documents}</a>
-  <a href="${pathPrefix}hundefriseur-leipzig.html" class="mobile-nav-link--secondary">${copy.localSeo}</a>
+  <a href="${pathPrefix}nashi-uslugi.html" class="mobile-nav-link--secondary">${copy.localSeo}</a>
   <a href="${pathPrefix}onlayn-bronirovanie.html" class="mobile-nav-link--secondary online-order-pill online-order-pill--menu">${copy.booking}</a>`;
 
     return `

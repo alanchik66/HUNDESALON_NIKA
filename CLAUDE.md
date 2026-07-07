@@ -54,7 +54,7 @@ HUNDESALON NIKA — многоязычный сайт груминг-салон�
 - index.html и языковые entry pages
 - assets/css/ и assets/js/
 - functions/ для форм и edge-логики
-- _headers, _redirects, wrangler.toml для Cloudflare
+- \_headers, \_redirects, wrangler.toml для Cloudflare
 - docs/ для операций, SEO и развертывания
 
 ## Особенности контента

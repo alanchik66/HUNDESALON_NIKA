@@ -107,10 +107,7 @@ if (fs.existsSync(path.join(root, 'assets/js/main.js'))) {
     mainJs.includes('mobileGalleryBtn') && mainJs.includes('setGalleryMenuState'),
     'main.js: gallery mobile submenu toggle must be wired'
   );
-  assert(
-    mainJs.includes('initGalleryNavDropdown'),
-    'main.js: desktop gallery submenu toggle must be wired'
-  );
+  assert(mainJs.includes('initGalleryNavDropdown'), 'main.js: desktop gallery submenu toggle must be wired');
 }
 
 for (const lang of ['de', 'en', 'ru', 'uk']) {
@@ -120,10 +117,7 @@ for (const lang of ['de', 'en', 'ru', 'uk']) {
     !fs.existsSync(path.join(root, lang, 'blog', 'index.html')),
     `Legacy blog index must be removed: ${lang}/blog/index.html`
   );
-  assert(
-    !fs.existsSync(path.join(root, lang, 'blog.html')),
-    `Legacy blog page must be removed: ${lang}/blog.html`
-  );
+  assert(!fs.existsSync(path.join(root, lang, 'blog.html')), `Legacy blog page must be removed: ${lang}/blog.html`);
 
   const blogPage = read(`${lang}/blog/blog.html`);
   assert(
@@ -167,7 +161,7 @@ if (fs.existsSync(path.join(root, '_redirects'))) {
     '/uk/index.html /uk/ 301',
     '/assets/images/logo.png /assets/images/brand/logo.png 301',
     '/assets/images/gallery1.jpg /assets/images/hero/slide-01.jpg 301',
-    '/assets/images/icon-pak/Gotovie iconki dlya saita/Home.png /assets/images/icons/home.png 301',
+    '/assets/images/icon-pak/Gotovie%20iconki%20dlya%20saita/Home.png /assets/images/icons/home.png 301',
     '/de/blog.html /de/blog/blog.html 301',
     '/en/blog.html /en/blog/blog.html 301',
     '/ru/blog.html /ru/blog/blog.html 301',
@@ -319,7 +313,7 @@ for (const lang of ['de', 'en', 'ru', 'uk']) {
 }
 
 const staleImagePatterns = [
-  { pattern: /icon-pak\/Gotovie iconki dlya saita/i, label: 'legacy icon-pak path' },
+  { pattern: /icon-pak\/Gotovie(?:%20| )iconki(?:%20| )dlya(?:%20| )saita/i, label: 'legacy icon-pak path' },
   { pattern: /\/assets\/images\/gallery[1-6]\.jpg/i, label: 'legacy gallery slide path' },
   { pattern: /\/assets\/images\/logo\.png/i, label: 'legacy root logo path' },
   { pattern: /gallery-before-\d+\.jpg/i, label: 'legacy before-after filename' },
@@ -383,14 +377,10 @@ for (const lang of ['de', 'en', 'ru', 'uk']) {
     const relativePath = path.relative(root, file).replaceAll(path.sep, '/');
     const description = readMetaDescription(fs.readFileSync(file, 'utf8'));
     if (description.length < minMetaDescription) {
-      failures.push(
-        `${relativePath}: meta description too short (${description.length}, min ${minMetaDescription})`
-      );
+      failures.push(`${relativePath}: meta description too short (${description.length}, min ${minMetaDescription})`);
     }
     if (description.length > maxMetaDescription) {
-      failures.push(
-        `${relativePath}: meta description too long (${description.length}, max ${maxMetaDescription})`
-      );
+      failures.push(`${relativePath}: meta description too long (${description.length}, max ${maxMetaDescription})`);
     }
   }
 }

@@ -2,48 +2,6 @@ name: CI
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [24.x]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Validate (lint, links, project checks)
-        run: npm run validate
-
-      - name: NPM audit (moderate)
-        run: npm audit --audit-level=moderate || true
-
-      - name: Upload validation logs
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: validation-logs
-          path: |
-            ./npm-debug.log
-            ./test-results || true
-name: CI
-
-on:
-  push:
   pull_request:
   workflow_dispatch:
 

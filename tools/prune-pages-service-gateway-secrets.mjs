@@ -20,8 +20,8 @@ for (const name of REMOVE) {
     { encoding: 'utf8', input: 'y\n' }
   );
   if (result.status !== 0) {
-    const out = `${result.stdout}\n${result.stderr}`;
-    if (/not found|does not exist|Unknown secret/i.test(out)) {
+    const out = [result.stdout, result.stderr].filter(Boolean).join('\n').trim();
+    if (!out || /not found|does not exist|Unknown secret/i.test(out)) {
       console.log(`skip ${name} (not set)`);
       continue;
     }

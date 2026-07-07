@@ -610,8 +610,8 @@ body.light .about-text p {
 body.light .booking-container .booking-title {
   background: var(--gold-foil);
   background-size: var(--title-gradient-size);
-  background-clip: text;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
   text-shadow: none;
@@ -630,8 +630,8 @@ h6 {
   font-kerning: normal;
   background: var(--gold-foil);
   background-size: var(--title-gradient-size);
-  background-clip: text;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
   text-shadow: none;
@@ -3139,8 +3139,8 @@ body.light .nav-plasma-touch--pointer {
 
 .nav-dropdown-trigger {
   cursor: pointer;
-  appearance: none;
   -webkit-appearance: none;
+  appearance: none;
   gap: 7px;
   white-space: nowrap;
 }
@@ -7099,8 +7099,8 @@ body > .section:first-of-type {
 .hero-title {
   background: var(--gold-foil);
   background-size: var(--title-gradient-size);
-  background-clip: text;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
   -webkit-text-stroke: var(--text-vol-stroke-display);
