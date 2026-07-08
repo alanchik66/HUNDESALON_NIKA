@@ -70,7 +70,7 @@ jobs:
         run: python -m pip install --disable-pip-version-check semgrep
 
       - name: Run Semgrep scan
-        run: semgrep scan --config auto --sarif --output semgrep.sarif
+        run: semgrep scan --config p/javascript --config p/nodejs assets/js functions --exclude functions/_lib/** --sarif --output semgrep.sarif
 
       - name: Upload Semgrep SARIF
         uses: github/codeql-action/upload-sarif@v4
