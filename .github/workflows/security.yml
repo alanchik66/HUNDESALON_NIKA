@@ -22,19 +22,24 @@ concurrency:
 jobs:
   dependency-review:
     name: Dependency review
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
+        if: github.event_name == 'pull_request'
         uses: actions/checkout@v7
 
       - name: Review dependency changes
+        if: github.event_name == 'pull_request'
         uses: actions/dependency-review-action@v5
         with:
           fail-on-severity: moderate
           vulnerability-check: true
           license-check: false
+
+      - name: Skip dependency review on push
+        if: github.event_name != 'pull_request'
+        run: echo "Dependency review runs on pull requests only; marking push job successful."
 
   codeql:
     name: CodeQL JavaScript analysis
