@@ -1271,6 +1271,24 @@ document.addEventListener('DOMContentLoaded', () => {
       return selected >= today;
     };
 
+    const normalizeUploadedFileUrl = rawUrl => {
+      try {
+        const parsed = new URL(String(rawUrl || ''), window.location.origin);
+        if (!['http:', 'https:'].includes(parsed.protocol)) {
+          return '';
+        }
+        if (parsed.origin !== window.location.origin) {
+          return '';
+        }
+        if (!parsed.pathname.startsWith('/uploads/')) {
+          return '';
+        }
+        return parsed.toString();
+      } catch {
+        return '';
+      }
+    };
+
     const validateBookingFile = () => {
       const file = bookingFileInput?.files?.[0];
       if (!file) {
@@ -1335,16 +1353,17 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { Accept: 'application/json' },
         });
         const result = await response.json().catch(() => ({}));
-        if (response.ok && result.success && result.fileUrl) {
-          state.uploadedFileUrl = result.fileUrl;
+        const safeFileUrl = normalizeUploadedFileUrl(result.fileUrl);
+        if (response.ok && result.success && safeFileUrl) {
+          state.uploadedFileUrl = safeFileUrl;
           syncHiddenFields();
           if (bookingFilePreview) {
             bookingFilePreview.hidden = false;
             const link = document.createElement('a');
-            link.href = result.fileUrl;
+            link.href = safeFileUrl;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
-            link.textContent = result.fileUrl;
+            link.textContent = safeFileUrl;
             bookingFilePreview.appendChild(link);
           }
         }

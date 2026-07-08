@@ -104,10 +104,9 @@ async function main() {
   const auth = await resolveAuth();
   const zoneId = await resolveZoneId(auth);
 
-  const zoneSummary = zoneId ? `resolved (${String(zoneId).length} chars)` : 'unresolved';
-  const accountSummary = ACCOUNT_ID ? `configured (${String(ACCOUNT_ID).length} chars)` : 'not configured';
-  console.log(`Zone: ${DOMAIN} (${zoneSummary})`);
-  console.log(`Account: ${accountSummary}`);
+  console.log(`Zone: ${DOMAIN} (resolved)`);
+  void zoneId;
+  void ACCOUNT_ID;
   console.log('Dashboard: Cloudflare → Caching → Configuration');
 
   const crawler = await getCrawlerHintsStatus(auth, zoneId);
