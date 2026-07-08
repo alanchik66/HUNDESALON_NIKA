@@ -1321,16 +1321,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const previewUrl = URL.createObjectURL(file);
       bookingFilePreview.hidden = false;
       bookingFilePreview.replaceChildren();
       const fileLabel = document.createElement('span');
       fileLabel.textContent = `${bookingCopy.labels.file}: ${file.name}`;
-      const previewImage = document.createElement('img');
-      previewImage.src = previewUrl;
-      previewImage.alt = '';
-      previewImage.loading = 'lazy';
-      bookingFilePreview.append(fileLabel, previewImage);
+      bookingFilePreview.append(fileLabel);
     };
 
     const ensureBookingFileUploaded = async () => {
