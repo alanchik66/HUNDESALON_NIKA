@@ -19,9 +19,17 @@ const wwwOrigin = 'https://www.hundesalon-nika.com';
 
 const wwwRemOnly = process.argv.includes('--www-rem');
 
+function matchesOrigin(rawUrl, expectedOrigin) {
+  try {
+    return new URL(String(rawUrl || '')).origin.toLowerCase() === String(expectedOrigin).toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
 function prioritizeForBingSubmit(urls) {
-  const apex = urls.filter(u => u.startsWith(apexOrigin));
-  const www = urls.filter(u => u.startsWith(wwwOrigin));
+  const apex = urls.filter(u => matchesOrigin(u, apexOrigin));
+  const www = urls.filter(u => matchesOrigin(u, wwwOrigin));
   if (wwwRemOnly) return www.slice(0, 100);
   return [...apex, ...www].slice(0, 100);
 }
@@ -52,8 +60,8 @@ const allUrls = fs.existsSync(listPath)
 const urls = prioritizeForBingSubmit(allUrls);
 report.indexnow = {
   total: allUrls.length,
-  apex: allUrls.filter(u => u.startsWith(apexOrigin)).length,
-  www: allUrls.filter(u => u.startsWith(wwwOrigin)).length,
+  apex: allUrls.filter(u => matchesOrigin(u, apexOrigin)).length,
+  www: allUrls.filter(u => matchesOrigin(u, wwwOrigin)).length,
 };
 console.log(
   `   ${report.indexnow.apex} apex + ${report.indexnow.www} www → Bing Submit: ${urls.length} (квота 100/день)`

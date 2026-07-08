@@ -35,6 +35,30 @@ const BING_HOME = BING_HOME_URL;
 let nextId = 1;
 const pending = new Map();
 
+function getEmailDomain(email) {
+  const value = String(email || '')
+    .trim()
+    .toLowerCase();
+  const at = value.lastIndexOf('@');
+  return at > 0 ? value.slice(at + 1) : '';
+}
+
+function isEmailOnDomain(email, domain) {
+  return getEmailDomain(email) === String(domain || '').toLowerCase();
+}
+
+function hasAllowedHost(rawUrl, allowedHosts) {
+  try {
+    const host = new URL(String(rawUrl || '')).hostname.toLowerCase();
+    return allowedHosts.some(allowed => {
+      const value = String(allowed || '').toLowerCase();
+      return host === value || host.endsWith(`.${value}`);
+    });
+  } catch {
+    return false;
+  }
+}
+
 async function getJson(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
@@ -44,7 +68,7 @@ async function getJson(url) {
 async function getTarget() {
   const list = await getJson(`http://127.0.0.1:${port}/json/list`);
   const pages = list.filter(t => t.type === 'page');
-  return pages.find(t => t.url.includes('bing.com') || t.url.includes('login.live')) || pages[0];
+  return pages.find(t => hasAllowedHost(t.url, ['bing.com', 'login.live.com'])) || pages[0];
 }
 
 function connect(wsUrl) {
@@ -313,12 +337,7 @@ async function startEdgeProfile(profileDir, startUrl) {
   const userDataDir = path.join(process.env.TEMP || '.', profileDir);
   spawn(
     candidates[0],
-    [
-      `--remote-debugging-port=${port}`,
-      `--user-data-dir=${userDataDir}`,
-      '--no-first-run',
-      startUrl,
-    ],
+    [`--remote-debugging-port=${port}`, `--user-data-dir=${userDataDir}`, '--no-first-run', startUrl],
     { detached: true, stdio: 'ignore' }
   ).unref();
   for (let i = 0; i < 15; i++) {
@@ -360,8 +379,8 @@ async function main() {
     if (phase === 'status' || phase === 'gmail-status' || phase === 'mail-status') {
       result = await readProfile(send);
       const emails = result?.emails || [];
-      const isGmail = emails.some(e => e.includes('gmail.com'));
-      const isMail = emails.some(e => e.includes('mail.ru'));
+      const isGmail = emails.some(e => isEmailOnDomain(e, 'gmail.com'));
+      const isMail = emails.some(e => isEmailOnDomain(e, 'mail.ru'));
       console.log(JSON.stringify({ phase, port, emails, isGmail, isMail, ...result }, null, 2));
       if (!emails.length && !result?.verified) {
         console.warn('No email in UI — sign in to Microsoft in the open Edge window, then rerun.');
@@ -383,7 +402,7 @@ async function main() {
       }
     } else if (phase === 'gmail-remove-site') {
       const profile = await readProfile(send);
-      if (!profile.emails?.some(e => e.includes('gmail.com'))) {
+      if (!profile.emails?.some(e => isEmailOnDomain(e, 'gmail.com'))) {
         console.error('Not signed in as gmail. Sign in as', gmailAccount, 'then rerun.');
         process.exit(2);
       }
@@ -394,7 +413,7 @@ async function main() {
       console.log(JSON.stringify({ phase, ...result }, null, 2));
     } else if (phase === 'mail-setup') {
       const profile = await readProfile(send);
-      if (!profile.emails?.some(e => e.includes('mail.ru'))) {
+      if (!profile.emails?.some(e => isEmailOnDomain(e, 'mail.ru'))) {
         console.error('Not signed in as mail.ru. Sign in as', mailAccount, 'then rerun.');
         process.exit(2);
       }
@@ -404,8 +423,8 @@ async function main() {
     } else if (phase === 'auto') {
       const profile = await readProfile(send);
       const emails = profile?.emails || [];
-      const isGmail = emails.some(e => e.includes('gmail.com'));
-      const isMail = emails.some(e => e.includes('mail.ru'));
+      const isGmail = emails.some(e => isEmailOnDomain(e, 'gmail.com'));
+      const isMail = emails.some(e => isEmailOnDomain(e, 'mail.ru'));
       console.log('Detected:', { emails, isGmail, isMail, url: profile?.url });
 
       if (isGmail) {

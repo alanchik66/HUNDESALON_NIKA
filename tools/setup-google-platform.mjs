@@ -600,15 +600,14 @@ async function main() {
     GOOGLE_SHARE_EMAIL: shareEmails.join(','),
   });
 
-  // Use explicit String() conversions on OAuth-derived resource IDs to avoid
-  // taint-flow logging — IDs are not credentials but CodeQL traces the data flow
+  // Avoid logging OAuth-derived identifiers in clear text.
   console.log(
     JSON.stringify(
       {
         clientFile: clientFile ? basename(clientFile) : 'cli/env',
-        calendarId: resources.calendarId ? String(resources.calendarId) : null,
-        spreadsheetId: resources.spreadsheetId ? String(resources.spreadsheetId) : null,
-        driveFolderId: resources.driveFolderId ? String(resources.driveFolderId) : null,
+        calendarConfigured: Boolean(resources.calendarId),
+        spreadsheetConfigured: Boolean(resources.spreadsheetId),
+        driveFolderConfigured: Boolean(resources.driveFolderId),
         gmailSenderConfigured: Boolean(gmailSender),
         shareEmailCount: Number(shareEmails.length),
         adminEmailCount: Number(adminEmails.length),
