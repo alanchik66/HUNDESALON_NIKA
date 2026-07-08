@@ -121,8 +121,8 @@ jobs:
             body += `${runLine('Security', securityRun)}\n`;
             body += `${runLine('OSV Dependency Scan', osvRun)}\n\n`;
             body += `### Notes\n`;
-            body += `- This issue is updated automatically by workflow \\`weekly-security-health.yml\\`.\n`;
-            body += `- If any metric is \\`n/a\\`, verify repository permissions for \\`GITHUB_TOKEN\\`.\n`;
+            body += `- This issue is updated automatically by workflow \`weekly-security-health.yml\`.\n`;
+            body += `- If any metric is \`n/a\`, verify repository permissions for \`GITHUB_TOKEN\`.\n`;
 
             await ensureLabel(labelName);
 
