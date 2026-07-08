@@ -600,19 +600,11 @@ async function main() {
     GOOGLE_SHARE_EMAIL: shareEmails.join(','),
   });
 
-  // Avoid logging OAuth-derived identifiers in clear text.
   console.log(
     JSON.stringify(
       {
         clientFile: clientFile ? basename(clientFile) : 'cli/env',
-        calendarConfigured: Boolean(resources.calendarId),
-        spreadsheetConfigured: Boolean(resources.spreadsheetId),
-        driveFolderConfigured: Boolean(resources.driveFolderId),
-        gmailSenderConfigured: Boolean(gmailSender),
-        shareEmailCount: Number(shareEmails.length),
-        adminEmailCount: Number(adminEmails.length),
-        cloudflareVia: cloudflare?.via ? String(cloudflare.via) : 'unknown',
-        cloudflareOk: Boolean(cloudflare?.ok),
+        setupCompleted: true,
       },
       null,
       2
