@@ -136,9 +136,32 @@ export function applyApiResponseHeaders(response, origin) {
   });
 }
 
+function sanitizeApiPayload(value) {
+  if (value instanceof Error) {
+    return { error: 'Internal server error' };
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(sanitizeApiPayload);
+  }
+
+  if (value && typeof value === 'object') {
+    const output = {};
+    for (const [key, item] of Object.entries(value)) {
+      if (/stack|trace|exception/i.test(key)) {
+        continue;
+      }
+      output[key] = sanitizeApiPayload(item);
+    }
+    return output;
+  }
+
+  return value;
+}
+
 export function jsonResponse(data, status = 200, origin = '') {
-  // Never expose stack traces or Error internals in API responses
-  const safe = data instanceof Error ? { error: 'Internal server error' } : data;
+  // Never expose stack traces or Error internals in API responses.
+  const safe = sanitizeApiPayload(data);
   return applyApiResponseHeaders(
     new Response(JSON.stringify(safe), {
       status,
