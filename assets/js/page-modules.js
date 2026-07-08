@@ -1359,12 +1359,9 @@ document.addEventListener('DOMContentLoaded', () => {
           syncHiddenFields();
           if (bookingFilePreview) {
             bookingFilePreview.hidden = false;
-            const link = document.createElement('a');
-            link.href = safeFileUrl;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            link.textContent = safeFileUrl;
-            bookingFilePreview.appendChild(link);
+            const fileUrlText = document.createElement('span');
+            fileUrlText.textContent = safeFileUrl;
+            bookingFilePreview.appendChild(fileUrlText);
           }
         }
         return true;
