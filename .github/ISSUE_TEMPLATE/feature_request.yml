@@ -1,0 +1,36 @@
+name: Feature request
+description: Suggest an improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What user or business problem should be solved?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe your preferred implementation
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any other options you considered
+  - type: textarea
+    id: impact
+    attributes:
+      label: Expected impact
+      description: SEO, UX, conversion, performance, operations
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: Impacts multilingual pages (de/en/ru/uk)
+        - label: Impacts Cloudflare/edge behavior
+        - label: Requires content update
