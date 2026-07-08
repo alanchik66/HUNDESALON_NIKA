@@ -5,11 +5,13 @@ import { spawn } from 'node:child_process';
 import { loadDevVars } from './lib/cloudflare-auth.mjs';
 import { hasBingApiKey } from './lib/bing-api.mjs';
 
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+
 loadDevVars();
 
 function runNpm(script, { optional = false } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn('npm', ['run', script], { stdio: 'inherit', shell: true, env: process.env });
+    const child = spawn(npmCommand, ['run', script], { stdio: 'inherit', env: process.env });
     child.on('close', code => {
       if (code === 0) return resolve();
       if (optional) {

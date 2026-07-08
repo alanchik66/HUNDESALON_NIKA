@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { getJson, openCdpSession, sleep } from './browser-cdp.mjs';
 
 const port = Number(process.env.CF_EDGE_PORT || 9225);
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 export { getJson, sleep };
 
@@ -11,7 +12,7 @@ export async function ensureCfEdge() {
     await getJson(`http://127.0.0.1:${port}/json/version`);
     return;
   } catch {
-    spawn('npm', ['run', 'cf:edge-dashboard'], { shell: true, detached: true, stdio: 'ignore' }).unref();
+    spawn(npmCommand, ['run', 'cf:edge-dashboard'], { detached: true, stdio: 'ignore' }).unref();
     for (let i = 0; i < 30; i++) {
       await sleep(2000);
       try {

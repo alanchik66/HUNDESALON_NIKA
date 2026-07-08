@@ -78,7 +78,6 @@ if (wantsPages) {
       encoding: 'utf8',
       stdio: ['pipe', 'pipe', 'pipe'],
       env: process.env,
-      shell: true,
     }
   );
 

@@ -2,17 +2,12 @@
  * Ensure one Cloudflare API token with purge + zone/page rules for hundesalon-nika.com.
  * npm run cf:ensure-api-token
  */
-import { exec } from 'node:child_process';
-import {
-  auditToken,
-  isFullToken,
-  loadAllCredentials,
-  printAudit,
-  resolveCfAuth,
-} from './lib/cf-api-token.mjs';
+import { spawn } from 'node:child_process';
+import { auditToken, isFullToken, loadAllCredentials, printAudit, resolveCfAuth } from './lib/cf-api-token.mjs';
 import { resolveZoneId } from './lib/cloudflare-auth.mjs';
 
 async function main() {
+  const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
   loadAllCredentials();
 
   const auth = resolveCfAuth();
@@ -42,7 +37,11 @@ async function main() {
     console.log('  → npm run cf:open-edit-token');
     console.log('');
     if (process.stdin.isTTY) {
-      exec('npm run cf:open-edit-token', { shell: true, cwd: process.cwd() });
+      spawn(npmCommand, ['run', 'cf:open-edit-token'], {
+        cwd: process.cwd(),
+        detached: true,
+        stdio: 'ignore',
+      }).unref();
     }
   }
 
@@ -53,7 +52,11 @@ async function main() {
   console.log('');
 
   if (process.stdin.isTTY) {
-    exec('npm run cf:open-api-token', { shell: true, cwd: process.cwd() });
+    spawn(npmCommand, ['run', 'cf:open-api-token'], {
+      cwd: process.cwd(),
+      detached: true,
+      stdio: 'ignore',
+    }).unref();
   }
 
   process.exit(1);

@@ -11,6 +11,7 @@ import { BING_INDEXNOW_COVERAGE, hasBingApiKey } from './lib/bing-api.mjs';
 import { GMAIL_ACCOUNT, MAIL_ACCOUNT, SITE_URL, siteQuery } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const port = Number(process.env.BING_MAIL_EDGE_PORT || process.env.BING_EDGE_PORT || 9224);
 const siteUrl = SITE_URL;
 const siteQ = siteQuery(siteUrl);
@@ -30,7 +31,7 @@ const withCdp = task => withCdpSession({ port, targetPattern: /bing|live\.com/i 
 
 async function runNpm(script) {
   return new Promise((resolve, reject) => {
-    const p = spawn('npm', ['run', script], { cwd: root, shell: true, stdio: 'inherit' });
+    const p = spawn(npmCommand, ['run', script], { cwd: root, stdio: 'inherit' });
     p.on('close', code => (code === 0 ? resolve() : reject(new Error(`${script} exit ${code}`))));
   });
 }

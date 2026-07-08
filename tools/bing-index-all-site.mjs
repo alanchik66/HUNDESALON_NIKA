@@ -9,6 +9,7 @@ import { getJson, sleep, withCdpSession } from './lib/browser-cdp.mjs';
 import { SITE_URL, WWW_SITE_URL, siteQuery } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const port = Number(process.env.BING_MAIL_EDGE_PORT || process.env.BING_EDGE_PORT || 9224);
 const siteUrl = SITE_URL;
 const wwwSiteUrl = WWW_SITE_URL;
@@ -36,7 +37,7 @@ function prioritizeForBingSubmit(urls) {
 
 function runNpm(script) {
   return new Promise((resolve, reject) => {
-    const p = spawn('npm', ['run', script], { cwd: root, shell: true, stdio: 'inherit' });
+    const p = spawn(npmCommand, ['run', script], { cwd: root, stdio: 'inherit' });
     p.on('close', code => (code === 0 ? resolve() : reject(new Error(`${script} failed`))));
   });
 }

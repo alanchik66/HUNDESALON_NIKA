@@ -9,6 +9,7 @@ import { getJson, openBingWebmasterSession } from './lib/browser-cdp.mjs';
 import { BING_INDEXNOW_COVERAGE, hasBingApiKey } from './lib/bing-api.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const port = Number(process.env.BING_MAIL_EDGE_PORT || 9224);
 const siteQ = encodeURIComponent('https://hundesalon-nika.com/');
 const inspectUrl = 'https://hundesalon-nika.com/de/';
@@ -149,7 +150,7 @@ try {
 if (report.bingApiKeyInDevVars) {
   console.log('Running bing:api…');
   await new Promise(resolve => {
-    const p = spawn('npm', ['run', 'bing:api'], { cwd: root, shell: true, stdio: 'inherit' });
+    const p = spawn(npmCommand, ['run', 'bing:api'], { cwd: root, stdio: 'inherit' });
     p.on('close', () => resolve());
   });
   report.bingApi = { ran: true };

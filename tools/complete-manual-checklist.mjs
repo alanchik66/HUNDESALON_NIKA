@@ -11,6 +11,7 @@ import { getJson, openBingWebmasterSession } from './lib/browser-cdp.mjs';
 import { SITE_URL, siteQuery } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const bingPort = Number(process.env.BING_MAIL_EDGE_PORT || 9224);
 const siteQ = siteQuery();
 const report = { at: new Date().toISOString(), steps: {} };
@@ -125,7 +126,11 @@ async function runBingClarity() {
     `);
 
     report.steps.clarity = { bing, clarity };
-    console.log(clarity.success ? '  ✓ Clarity reachable / project present' : '  ⚠ Clarity optional — sign in at clarity.microsoft.com');
+    console.log(
+      clarity.success
+        ? '  ✓ Clarity reachable / project present'
+        : '  ⚠ Clarity optional — sign in at clarity.microsoft.com'
+    );
     return clarity.success;
   } finally {
     s.close();
@@ -239,7 +244,7 @@ async function main() {
   if (!(await ensureBingCdp())) {
     console.log('Starting Bing Edge CDP…');
     const { spawn } = await import('node:child_process');
-    spawn('npm', ['run', 'bing:edge'], { shell: true, detached: true, stdio: 'ignore' }).unref();
+    spawn(npmCommand, ['run', 'bing:edge'], { detached: true, stdio: 'ignore' }).unref();
     for (let i = 0; i < 25; i++) {
       await sleep(2000);
       if (await ensureBingCdp()) break;
