@@ -167,8 +167,13 @@ function sanitizeApiPayload(value) {
 }
 
 export function jsonResponse(data, status = 200, origin = '') {
-  // Never expose stack traces or Error internals in API responses.
-  const safe = status >= 500 ? { error: 'Internal server error' } : sanitizeApiPayload(data);
+  // Never expose stack traces or internal diagnostics in error responses.
+  const safe =
+    status >= 500
+      ? { error: 'Internal server error' }
+      : status >= 400
+        ? { error: 'Request failed' }
+        : sanitizeApiPayload(data);
   return applyApiResponseHeaders(
     new Response(JSON.stringify(safe), {
       status,
