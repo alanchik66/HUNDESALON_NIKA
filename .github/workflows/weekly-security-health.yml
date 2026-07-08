@@ -129,7 +129,7 @@ jobs:
             const existing = await github.paginate('GET /repos/{owner}/{repo}/issues', {
               owner,
               repo,
-              state: 'open',
+              state: 'all',
               per_page: 100,
               labels: labelName,
             });
@@ -142,6 +142,7 @@ jobs:
                 repo,
                 issue_number: target.number,
                 body,
+                state: target.state,
               });
               core.info(`Updated issue #${target.number}`);
             } else {
@@ -151,6 +152,12 @@ jobs:
                 title,
                 body,
                 labels: [labelName],
+              });
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: created.data.number,
+                state: 'closed',
               });
               core.info(`Created issue #${created.data.number}`);
             }
