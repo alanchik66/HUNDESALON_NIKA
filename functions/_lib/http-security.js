@@ -148,12 +148,19 @@ function sanitizeApiPayload(value) {
   if (value && typeof value === 'object') {
     const output = {};
     for (const [key, item] of Object.entries(value)) {
-      if (/stack|trace|exception/i.test(key)) {
+      if (/stack|trace|exception|details|raw/i.test(key)) {
         continue;
       }
       output[key] = sanitizeApiPayload(item);
     }
     return output;
+  }
+
+  if (typeof value === 'string') {
+    // Remove values that look like stack traces or internal diagnostics.
+    if (/\bat\s+.+\(.+\)/i.test(value) || /\b(node:internal|file:\/\/|webpack:)/i.test(value)) {
+      return 'Internal server error';
+    }
   }
 
   return value;
