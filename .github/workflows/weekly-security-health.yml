@@ -1,0 +1,156 @@
+name: Weekly Security Health
+
+on:
+  schedule:
+    - cron: '35 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  security-events: read
+
+concurrency:
+  group: weekly-security-health-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  report:
+    name: Generate weekly security report
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Build and publish report issue
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const now = new Date();
+            const isoNow = now.toISOString();
+            const title = 'Weekly Security Health Report';
+            const labelName = 'ops-report';
+
+            async function safeCount(requestPath) {
+              try {
+                const results = await github.paginate(`GET ${requestPath}`);
+                return { ok: true, count: results.length };
+              } catch (error) {
+                return { ok: false, count: null, error: String(error.message || error) };
+              }
+            }
+
+            async function getLastRun(workflowId) {
+              try {
+                const res = await github.rest.actions.listWorkflowRuns({
+                  owner,
+                  repo,
+                  workflow_id: workflowId,
+                  per_page: 1,
+                });
+                const run = res.data.workflow_runs?.[0];
+                if (!run) return null;
+                return {
+                  name: run.name,
+                  status: run.status,
+                  conclusion: run.conclusion,
+                  updated_at: run.updated_at,
+                  html_url: run.html_url,
+                  head_sha: run.head_sha,
+                };
+              } catch {
+                return null;
+              }
+            }
+
+            async function ensureLabel(name) {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name });
+              } catch {
+                await github.rest.issues.createLabel({
+                  owner,
+                  repo,
+                  name,
+                  color: '0052cc',
+                  description: 'Automated operations and security health reports',
+                });
+              }
+            }
+
+            const openPrs = await github.paginate('GET /repos/{owner}/{repo}/pulls', {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+
+            const codeScanning = await safeCount(`/repos/${owner}/${repo}/code-scanning/alerts?state=open&per_page=100`);
+            const dependabot = await safeCount(`/repos/${owner}/${repo}/dependabot/alerts?state=open&per_page=100`);
+            const secretScanning = await safeCount(`/repos/${owner}/${repo}/secret-scanning/alerts?state=open&per_page=100`);
+
+            const securityRun = await getLastRun('security.yml');
+            const osvRun = await getLastRun('osv-scanner.yml');
+
+            const rows = [
+              ['Open pull requests', String(openPrs.length)],
+              ['Open code scanning alerts', codeScanning.ok ? String(codeScanning.count) : 'n/a'],
+              ['Open dependabot alerts', dependabot.ok ? String(dependabot.count) : 'n/a'],
+              ['Open secret scanning alerts', secretScanning.ok ? String(secretScanning.count) : 'n/a'],
+            ];
+
+            const table = [
+              '| Metric | Value |',
+              '| --- | ---: |',
+              ...rows.map(([k, v]) => `| ${k} | ${v} |`),
+            ].join('\n');
+
+            function runLine(label, run) {
+              if (!run) return `- ${label}: n/a`;
+              const status = `${run.status}${run.conclusion ? `/${run.conclusion}` : ''}`;
+              const sha = run.head_sha ? run.head_sha.slice(0, 7) : 'n/a';
+              const updated = run.updated_at || 'n/a';
+              return `- ${label}: [${status}](${run.html_url}) at ${updated} (sha ${sha})`;
+            }
+
+            let body = `## Weekly Security Health\n\n`;
+            body += `Generated at: ${isoNow}\n\n`;
+            body += `${table}\n\n`;
+            body += `### Last workflow runs\n`;
+            body += `${runLine('Security', securityRun)}\n`;
+            body += `${runLine('OSV Dependency Scan', osvRun)}\n\n`;
+            body += `### Notes\n`;
+            body += `- This issue is updated automatically by workflow \\`weekly-security-health.yml\\`.\n`;
+            body += `- If any metric is \\`n/a\\`, verify repository permissions for \\`GITHUB_TOKEN\\`.\n`;
+
+            await ensureLabel(labelName);
+
+            const existing = await github.paginate('GET /repos/{owner}/{repo}/issues', {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+              labels: labelName,
+            });
+
+            const target = existing.find(issue => issue.title === title && !issue.pull_request);
+
+            if (target) {
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: target.number,
+                body,
+              });
+              core.info(`Updated issue #${target.number}`);
+            } else {
+              const created = await github.rest.issues.create({
+                owner,
+                repo,
+                title,
+                body,
+                labels: [labelName],
+              });
+              core.info(`Created issue #${created.data.number}`);
+            }
