@@ -3,6 +3,7 @@
  */
 const gmailPort = Number(process.env.BING_GMAIL_EDGE_PORT || 9225);
 const mailPort = Number(process.env.BING_EDGE_PORT || 9224);
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const siteUrl = 'https://hundesalon-nika.com/';
 const siteQ = encodeURIComponent(siteUrl);
 
@@ -282,7 +283,7 @@ console.log(JSON.stringify(mail, null, 2));
 console.log('\nIndexNow…');
 const { spawn } = await import('node:child_process');
 await new Promise((resolve, reject) => {
-  const p = spawn('npm', ['run', 'seo:indexnow'], { shell: true, stdio: 'inherit' });
+  const p = spawn(npmCommand, ['run', 'seo:indexnow'], { stdio: 'inherit' });
   p.on('close', c => (c === 0 ? resolve() : reject(new Error('indexnow failed'))));
 });
 

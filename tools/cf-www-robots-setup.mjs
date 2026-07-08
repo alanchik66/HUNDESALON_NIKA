@@ -10,7 +10,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 function run(script) {
-  const r = spawnSync(npm, ['run', script], { cwd: root, stdio: 'inherit', shell: true });
+  const r = spawnSync(npm, ['run', script], { cwd: root, stdio: 'inherit' });
   return r.status ?? 1;
 }
 

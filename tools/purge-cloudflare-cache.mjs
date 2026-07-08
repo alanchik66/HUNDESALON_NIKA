@@ -11,11 +11,12 @@ import {
   resolveZoneId,
 } from './lib/cloudflare-auth.mjs';
 
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+
 async function runEnsurePurgeToken() {
   await new Promise((resolve, reject) => {
-    const child = spawn('npm', ['run', 'cf:ensure-api-token'], {
+    const child = spawn(npmCommand, ['run', 'cf:ensure-api-token'], {
       stdio: 'inherit',
-      shell: true,
     });
     child.on('close', code => (code === 0 ? resolve() : reject(new Error('cf:ensure-api-token failed'))));
   });
