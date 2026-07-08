@@ -600,16 +600,7 @@ async function main() {
     GOOGLE_SHARE_EMAIL: shareEmails.join(','),
   });
 
-  console.log(
-    JSON.stringify(
-      {
-        clientFile: clientFile ? basename(clientFile) : 'cli/env',
-        setupCompleted: true,
-      },
-      null,
-      2
-    )
-  );
+  console.log('Google platform setup completed.');
 }
 
 main().catch(error => {
