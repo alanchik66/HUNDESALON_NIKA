@@ -6,15 +6,35 @@ import { chromium } from 'playwright';
 const root = process.cwd();
 const port = 5515;
 
-const server = http.createServer((req, res) => {
-  let urlPath = req.url?.split('?')[0] || '/';
+function resolveSafeFilePath(rawRequestUrl) {
+  const parsed = new URL(String(rawRequestUrl || '/'), 'http://127.0.0.1');
+  let urlPath = decodeURIComponent(parsed.pathname || '/');
   if (urlPath === '/') {
     urlPath = '/ru/index.html';
   }
-  const filePath = path.resolve(root, urlPath.replace(/^\//, ''));
-  const isInsideRoot = filePath === root || filePath.startsWith(`${root}${path.sep}`);
-  // Reject path-traversal attempts before any filesystem access
-  if (!isInsideRoot) {
+
+  if (!/^\/[a-zA-Z0-9/_\-.]+$/.test(urlPath)) {
+    return null;
+  }
+
+  const normalizedPath = path.posix.normalize(urlPath);
+  if (normalizedPath.includes('..')) {
+    return null;
+  }
+
+  const relativePath = normalizedPath.replace(/^\//, '');
+  const filePath = path.resolve(root, relativePath);
+  const relativeToRoot = path.relative(root, filePath);
+  if (relativeToRoot.startsWith('..') || path.isAbsolute(relativeToRoot)) {
+    return null;
+  }
+
+  return filePath;
+}
+
+const server = http.createServer((req, res) => {
+  const filePath = resolveSafeFilePath(req.url);
+  if (!filePath) {
     res.writeHead(403);
     res.end('forbidden');
     return;

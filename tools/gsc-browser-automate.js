@@ -7,6 +7,14 @@ const property = 'sc-domain:hundesalon-nika.com';
 const sitemapPath = 'sitemap.xml';
 const sitemapsUrl = `https://search.google.com/search-console/sitemaps?resource_id=${encodeURIComponent(property)}`;
 
+function isHost(rawUrl, expectedHost) {
+  try {
+    return new URL(String(rawUrl || '')).hostname.toLowerCase() === String(expectedHost).toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
 async function pageSummary(session) {
   return session.evaluate(`(() => ({
     url: location.href,
@@ -105,7 +113,7 @@ try {
   await wait(6000);
 
   const summary = await pageSummary(session);
-  if (summary.url.includes('accounts.google.com')) {
+  if (isHost(summary.url, 'accounts.google.com')) {
     console.log(
       JSON.stringify(
         {

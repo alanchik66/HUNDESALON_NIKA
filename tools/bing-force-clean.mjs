@@ -8,6 +8,18 @@ const siteQ = encodeURIComponent(siteUrl);
 
 let nextId = 1;
 
+function hasAllowedHost(rawUrl, allowedHosts) {
+  try {
+    const host = new URL(String(rawUrl || '')).hostname.toLowerCase();
+    return allowedHosts.some(allowed => {
+      const value = String(allowed || '').toLowerCase();
+      return host === value || host.endsWith(`.${value}`);
+    });
+  } catch {
+    return false;
+  }
+}
+
 async function getJson(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`${url}: ${r.status}`);
@@ -20,7 +32,7 @@ async function wait(ms) {
 
 async function getPageTarget(port) {
   const list = await getJson(`http://127.0.0.1:${port}/json/list`);
-  return list.find(t => t.type === 'page' && t.url.includes('bing.com')) || list.find(t => t.type === 'page');
+  return list.find(t => t.type === 'page' && hasAllowedHost(t.url, ['bing.com'])) || list.find(t => t.type === 'page');
 }
 
 async function withCdp(port, fn) {

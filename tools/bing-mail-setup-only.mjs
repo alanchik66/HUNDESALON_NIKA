@@ -11,6 +11,18 @@ const siteUrl = 'https://hundesalon-nika.com/';
 const siteQ = encodeURIComponent(siteUrl);
 const mailAccount = 'snaiper1984@mail.ru';
 
+function getEmailDomain(email) {
+  const value = String(email || '')
+    .trim()
+    .toLowerCase();
+  const at = value.lastIndexOf('@');
+  return at > 0 ? value.slice(at + 1) : '';
+}
+
+function isEmailOnDomain(email, domain) {
+  return getEmailDomain(email) === String(domain || '').toLowerCase();
+}
+
 async function ensureMailEdge() {
   try {
     await getJson(`http://127.0.0.1:${mailPort}/json/version`);
@@ -71,8 +83,8 @@ const report = await withCdp(async send => {
   `
   );
 
-  const isGmail = state.emails?.some(e => e.includes('gmail.com'));
-  const isMail = state.emails?.some(e => e.includes('mail.ru'));
+  const isGmail = state.emails?.some(e => isEmailOnDomain(e, 'gmail.com'));
+  const isMail = state.emails?.some(e => isEmailOnDomain(e, 'mail.ru'));
 
   if (isGmail && !isMail) {
     return { error: 'WRONG_ACCOUNT_GMAIL', state, hint: 'Sign out and use ' + mailAccount };

@@ -1299,7 +1299,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const file = bookingFileInput.files?.[0];
       if (!file) {
         bookingFilePreview.hidden = true;
-        bookingFilePreview.innerHTML = '';
+        bookingFilePreview.replaceChildren();
         return;
       }
 

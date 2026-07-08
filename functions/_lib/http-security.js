@@ -13,9 +13,7 @@ function parseUrl(value) {
 }
 
 function isPrivateIpv4Hostname(hostname) {
-  const match = /^(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})$/.exec(
-    String(hostname || '')
-  );
+  const match = /^(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})$/.exec(String(hostname || ''));
   if (!match) return false;
 
   const octets = match.slice(1).map(Number);
@@ -140,7 +138,7 @@ export function applyApiResponseHeaders(response, origin) {
 
 export function jsonResponse(data, status = 200, origin = '') {
   // Never expose stack traces or Error internals in API responses
-  const safe = data instanceof Error ? { error: data.message } : data;
+  const safe = data instanceof Error ? { error: 'Internal server error' } : data;
   return applyApiResponseHeaders(
     new Response(JSON.stringify(safe), {
       status,

@@ -37,11 +37,19 @@ async function listPageRules(auth, zoneId) {
 }
 
 function hasWildcardRedirect(rules) {
+  const isApexRedirectTarget = urlValue => {
+    try {
+      return new URL(String(urlValue || '')).hostname.toLowerCase() === 'hundesalon-nika.com';
+    } catch {
+      return false;
+    }
+  };
+
   return (rules || []).some(
     r =>
       r.targets?.[0]?.constraint?.value === WWW_WILDCARD &&
       r.actions?.[0]?.id === 'forwarding_url' &&
-      String(r.actions?.[0]?.value?.url || '').includes('hundesalon-nika.com')
+      isApexRedirectTarget(r.actions?.[0]?.value?.url)
   );
 }
 
