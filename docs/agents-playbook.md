@@ -50,8 +50,9 @@
 - Полная пересборка кода: `npm run graphify` (AST, без API).
 - После правок JS/tools: `npm run graphify:update`.
 - Запросы: `graphify query "…"`, `graphify explain "…"`, `graphify path "A" "B"`.
-- Карта: `graphify-out/graph.html`. Отчёт: `graphify-out/GRAPH_REPORT.md`.
-- Игнор шума: `.graphifyignore` (vendor, weather dist, медиа).
+- Карта: `graphify-out/graph.html` (локально: `npm run graphify`). В git только `GRAPH_REPORT.md`.
+- Отчёт: `graphify-out/GRAPH_REPORT.md`.
+- Игнор шума: `.graphifyignore` (vendor, weather dist, медиа); тяжёлые `graph.json`/`graph.html` не коммитим.
 - Post-commit/checkout hooks + merge driver для `graph.json` уже установлены локально.
 - Новый клон: `npm run graphify:setup` (регистрирует Cursor rule + hooks + merge driver `merge.graphify` из `.gitattributes`).
 
