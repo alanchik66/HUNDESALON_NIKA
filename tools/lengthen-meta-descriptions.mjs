@@ -9,7 +9,7 @@ import { META_DESCRIPTIONS } from '../config/meta-descriptions.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const langs = ['de', 'en', 'ru', 'uk'];
-const MIN_LEN = 155;
+const MIN_LEN = 160;
 const MAX_LEN = 170;
 
 function escapeAttr(value) {

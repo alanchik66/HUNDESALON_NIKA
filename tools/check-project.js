@@ -373,7 +373,7 @@ function readMetaDescription(html) {
   return '';
 }
 
-const minMetaDescription = 155;
+const minMetaDescription = 160;
 const maxMetaDescription = 170;
 
 for (const lang of ['de', 'en', 'ru', 'uk']) {
