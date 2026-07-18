@@ -121,16 +121,18 @@ npm run git:cleanup
 
 ## Cloudflare после push в GitHub
 
-Текущий проект Pages — **Direct Upload**, поэтому автоматический деплой идёт через GitHub Actions, когда задан `CLOUDFLARE_PAGES_API_TOKEN`. CI проверяет `npm run validate` и production build; deploy запускается на `main` и вручную через `workflow_dispatch`.
-
-Если GitHub Actions временно недоступен:
+Текущий проект Pages — **Direct Upload** (Git Provider: No). **Канонический деплой не зависит от GitHub Actions / биллинга GitHub:**
 
 ```bash
 npm run deploy:full
 ```
+
+Workflow `Deploy Cloudflare Pages` — только `workflow_dispatch` (опционально, когда Actions разблокированы). Push на `main` сам по себе Pages не деплоит.
 
 Проверка продакшена:
 
 ```bash
 npm run check:prod
 ```
+
+Gmail MCP (чтение/удаление писем агентом): `npx @gongrzhe/server-gmail-autoauth-mcp` в `.cursor/mcp.json` / `.vscode/mcp.json`; ключи в `~/.gmail-mcp/`. Очистка failed-run писем: `node tools/gmail-cleanup-actions-failures.mjs`.

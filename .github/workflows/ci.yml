@@ -1,9 +1,10 @@
 name: CI
 
+# Optional while GitHub account billing can lock Actions runners.
+# Production validate/deploy path: `npm run validate` / `npm run deploy:full` (Wrangler).
 on:
-  push:
-  pull_request:
   workflow_dispatch:
+  pull_request:
 
 permissions:
   contents: read

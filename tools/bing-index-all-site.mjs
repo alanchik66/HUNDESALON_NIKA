@@ -37,7 +37,11 @@ function prioritizeForBingSubmit(urls) {
 
 function runNpm(script) {
   return new Promise((resolve, reject) => {
-    const p = spawn(npmCommand, ['run', script], { cwd: root, stdio: 'inherit' });
+    const p = spawn(npmCommand, ['run', script], {
+      cwd: root,
+      stdio: 'inherit',
+      shell: process.platform === 'win32',
+    });
     p.on('close', code => (code === 0 ? resolve() : reject(new Error(`${script} failed`))));
   });
 }

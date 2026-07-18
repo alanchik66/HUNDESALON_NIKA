@@ -1,9 +1,9 @@
 name: Deploy Cloudflare Pages
 
+# Primary production path is Wrangler Direct Upload: `npm run deploy` / `deploy:full`.
+# GitHub Actions is optional and fails when the GitHub account is billing-locked.
+# Keep workflow_dispatch only so push-to-main never depends on Actions billing.
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:

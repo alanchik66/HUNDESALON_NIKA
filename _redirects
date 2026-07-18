@@ -20,6 +20,56 @@
 /ua/index.html /uk/ 301
 /ua/* /uk/:splat 301
 
+# Legacy English slugs (GSC 404 → soft-404 homepage). Map to canonical filenames.
+/de/price-list.html /de/prays-list.html 301
+/en/price-list.html /en/prays-list.html 301
+/ru/price-list.html /ru/prays-list.html 301
+/uk/price-list.html /uk/prays-list.html 301
+/de/price-list /de/prays-list.html 301
+/en/price-list /en/prays-list.html 301
+/ru/price-list /ru/prays-list.html 301
+/uk/price-list /uk/prays-list.html 301
+/de/booking.html /de/onlayn-bronirovanie.html 301
+/en/booking.html /en/onlayn-bronirovanie.html 301
+/ru/booking.html /ru/onlayn-bronirovanie.html 301
+/uk/booking.html /uk/onlayn-bronirovanie.html 301
+/de/booking /de/onlayn-bronirovanie.html 301
+/en/booking /en/onlayn-bronirovanie.html 301
+/ru/booking /ru/onlayn-bronirovanie.html 301
+/uk/booking /uk/onlayn-bronirovanie.html 301
+/de/gallery.html /de/galereya.html 301
+/en/gallery.html /en/galereya.html 301
+/ru/gallery.html /ru/galereya.html 301
+/uk/gallery.html /uk/galereya.html 301
+/de/gallery /de/galereya.html 301
+/en/gallery /en/galereya.html 301
+/ru/gallery /ru/galereya.html 301
+/uk/gallery /uk/galereya.html 301
+/de/legal.html /de/impressum.html 301
+/en/legal.html /en/impressum.html 301
+/ru/legal.html /ru/impressum.html 301
+/uk/legal.html /uk/impressum.html 301
+/de/legal /de/impressum.html 301
+/en/legal /en/impressum.html 301
+/ru/legal /ru/impressum.html 301
+/uk/legal /uk/impressum.html 301
+/de/reviews.html /de/reyting.html 301
+/en/reviews.html /en/reyting.html 301
+/ru/reviews.html /ru/reyting.html 301
+/uk/reviews.html /uk/reyting.html 301
+/de/reviews /de/reyting.html 301
+/en/reviews /en/reyting.html 301
+/ru/reviews /ru/reyting.html 301
+/uk/reviews /uk/reyting.html 301
+/de/about.html /de/o-nas.html 301
+/en/about.html /en/o-nas.html 301
+/ru/about.html /ru/o-nas.html 301
+/uk/about.html /uk/o-nas.html 301
+/de/about /de/o-nas.html 301
+/en/about /en/o-nas.html 301
+/ru/about /ru/o-nas.html 301
+/uk/about /uk/o-nas.html 301
+
 
 /hundefriseur-leipzig /de/nashi-uslugi.html 301
 /de/hundefriseur-leipzig /de/nashi-uslugi.html 301

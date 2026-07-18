@@ -1,12 +1,9 @@
 name: Security
 
+# Push-to-main disabled: GitHub billing lock blocks runners and floods Gmail.
+# Re-enable push/schedule after billing is unlocked.
 on:
-  push:
-    branches:
-      - main
   pull_request:
-  schedule:
-    - cron: '17 4 * * 1'
   workflow_dispatch:
 
 permissions:

@@ -16,6 +16,7 @@ const SKIP_RELATIVE_PATHS = new Set([
 
 const copyEntries = [
   'index.html',
+  '404.html',
   'assets',
   'config',
   'data',

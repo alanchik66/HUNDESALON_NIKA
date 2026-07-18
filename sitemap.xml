@@ -10,7 +10,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://hundesalon-nika.com/ru/"/>
     <xhtml:link rel="alternate" hreflang="uk" href="https://hundesalon-nika.com/uk/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://hundesalon-nika.com/en/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://hundesalon-nika.com/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://hundesalon-nika.com/de/"/>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -41,7 +41,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://hundesalon-nika.com/ru/"/>
     <xhtml:link rel="alternate" hreflang="uk" href="https://hundesalon-nika.com/uk/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://hundesalon-nika.com/en/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://hundesalon-nika.com/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://hundesalon-nika.com/de/"/>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -72,7 +72,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://hundesalon-nika.com/ru/"/>
     <xhtml:link rel="alternate" hreflang="uk" href="https://hundesalon-nika.com/uk/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://hundesalon-nika.com/en/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://hundesalon-nika.com/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://hundesalon-nika.com/de/"/>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -103,7 +103,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://hundesalon-nika.com/ru/"/>
     <xhtml:link rel="alternate" hreflang="uk" href="https://hundesalon-nika.com/uk/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://hundesalon-nika.com/en/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://hundesalon-nika.com/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://hundesalon-nika.com/de/"/>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
