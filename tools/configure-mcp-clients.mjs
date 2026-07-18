@@ -118,6 +118,10 @@ function buildGithubServer(useInput = false) {
     server.env = {
       GITHUB_PERSONAL_ACCESS_TOKEN: '${input:github-token}',
     };
+  } else if (token) {
+    server.env = {
+      GITHUB_PERSONAL_ACCESS_TOKEN: token,
+    };
   }
 
   return server;
