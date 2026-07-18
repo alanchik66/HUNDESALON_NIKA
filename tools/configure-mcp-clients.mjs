@@ -2,7 +2,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-const PROJECT_PATH = process.env.MCP_PROJECT_PATH || 'C:\\PROJEKT\\HUNDESALON_NIKA';
+const PROJECT_PATH =
+  process.env.MCP_PROJECT_PATH || 'C:\\PROJEKT\\HUNDESALON_NIKA\\HUNDESALON_NIKA';
 const WEBSTORM_SSE_URL = process.env.WEBSTORM_SSE_URL || 'http://127.0.0.1:63343/sse';
 const NPM_GLOBAL = join(homedir(), 'AppData', 'Roaming', 'npm', 'node_modules');
 const WEBSTORM_DIR = 'C:\\Program Files\\JetBrains\\WebStorm 2026.1.4';
@@ -26,7 +27,29 @@ const playwrightArgs = [
   'notifications',
 ];
 
-const cloudflareRemoteArgs = ['-y', 'mcp-remote', 'https://docs.mcp.cloudflare.com/mcp'];
+const CLOUDFLARE_MCP_URLS = {
+  cloudflare: 'https://mcp.cloudflare.com/mcp',
+  'cloudflare-docs': 'https://docs.mcp.cloudflare.com/mcp',
+  'cloudflare-bindings': 'https://bindings.mcp.cloudflare.com/mcp',
+  'cloudflare-builds': 'https://builds.mcp.cloudflare.com/mcp',
+  'cloudflare-observability': 'https://observability.mcp.cloudflare.com/mcp',
+};
+
+function buildCloudflareUrlServers() {
+  return Object.fromEntries(Object.entries(CLOUDFLARE_MCP_URLS).map(([name, url]) => [name, { url }]));
+}
+
+function buildCloudflareHttpServers() {
+  return Object.fromEntries(
+    Object.entries(CLOUDFLARE_MCP_URLS).map(([name, url]) => [name, { type: 'http', url }])
+  );
+}
+
+function buildCloudflareWindsurfServers() {
+  return Object.fromEntries(
+    Object.entries(CLOUDFLARE_MCP_URLS).map(([name, url]) => [name, { serverUrl: url }])
+  );
+}
 
 function ensureDir(filePath) {
   const dir = dirname(filePath);
@@ -96,10 +119,7 @@ function buildCommonStdioServers() {
       command: 'npx',
       args: playwrightArgs,
     },
-    'cloudflare-docs': {
-      command: 'npx',
-      args: cloudflareRemoteArgs,
-    },
+    ...buildCloudflareUrlServers(),
     webstorm: {
       url: WEBSTORM_SSE_URL,
     },
@@ -166,10 +186,7 @@ function configureVsCodeUser() {
       command: 'npx',
       args: playwrightArgs,
     },
-    'cloudflare-docs': {
-      type: 'http',
-      url: 'https://docs.mcp.cloudflare.com/mcp',
-    },
+    ...buildCloudflareHttpServers(),
     webstorm: {
       type: 'sse',
       url: WEBSTORM_SSE_URL,
@@ -222,10 +239,7 @@ function configureVsCodeWorkspace() {
         command: 'npx',
         args: playwrightArgs,
       },
-      'cloudflare-docs': {
-        type: 'http',
-        url: 'https://docs.mcp.cloudflare.com/mcp',
-      },
+      ...buildCloudflareHttpServers(),
       webstorm: {
         type: 'sse',
         url: WEBSTORM_SSE_URL,
@@ -278,10 +292,9 @@ function configureWindsurf() {
       args: playwrightArgs,
       disabled: false,
     },
-    'cloudflare-docs': {
-      serverUrl: 'https://docs.mcp.cloudflare.com/mcp',
-      disabled: false,
-    },
+    ...Object.fromEntries(
+      Object.entries(buildCloudflareWindsurfServers()).map(([name, cfg]) => [name, { ...cfg, disabled: false }])
+    ),
     webstorm: {
       serverUrl: WEBSTORM_SSE_URL,
       disabled: false,
@@ -332,10 +345,12 @@ function configureDevin(filePath) {
       args: playwrightArgs,
       transport: 'stdio',
     },
-    'cloudflare-docs': {
-      serverUrl: 'https://docs.mcp.cloudflare.com/mcp',
-      transport: 'http',
-    },
+    ...Object.fromEntries(
+      Object.entries(CLOUDFLARE_MCP_URLS).map(([name, url]) => [
+        name,
+        { serverUrl: url, transport: 'http' },
+      ])
+    ),
     webstorm: {
       serverUrl: WEBSTORM_SSE_URL,
       transport: 'sse',
@@ -374,11 +389,12 @@ function upsertCodexToml(filePath) {
     'command = "npx"',
     'enabled = true',
     '',
-    '[mcp_servers.cloudflare-docs]',
-    'args = ["-y", "mcp-remote", "https://docs.mcp.cloudflare.com/mcp"]',
-    'command = "npx"',
-    'enabled = true',
-    '',
+    ...Object.entries(CLOUDFLARE_MCP_URLS).flatMap(([name, url]) => [
+      `[mcp_servers.${name}]`,
+      `url = "${url}"`,
+      'enabled = true',
+      '',
+    ]),
     '[mcp_servers.webstorm]',
     'args = ["-y", "mcp-remote", "' + WEBSTORM_SSE_URL + '"]',
     'command = "npx"',
@@ -392,12 +408,12 @@ function upsertCodexToml(filePath) {
     'memory',
     'sequential-thinking',
     'playwright',
-    'cloudflare-docs',
+    ...Object.keys(CLOUDFLARE_MCP_URLS),
     'webstorm',
   ];
 
   for (const section of sections) {
-    const pattern = new RegExp(`\\[mcp_servers\\.${section.replace('-', '\\-')}\\][\\s\\S]*?(?=\\n\\[|$)`, 'm');
+    const pattern = new RegExp(`\\[mcp_servers\\.${section.replace(/-/g, '\\-')}\\][\\s\\S]*?(?=\\n\\[|$)`, 'm');
     content = content.replace(pattern, '');
   }
 
@@ -426,9 +442,7 @@ function configureJetBrainsImport() {
         command: 'npx',
         args: ['-y', '@playwright/mcp@latest', '--caps', 'vision,pdf,devtools'],
       },
-      'cloudflare-docs': {
-        url: 'https://docs.mcp.cloudflare.com/mcp',
-      },
+      ...buildCloudflareUrlServers(),
       webstorm: {
         url: WEBSTORM_SSE_URL,
       },
@@ -460,7 +474,9 @@ for (const [name, path] of results) {
 }
 
 const githubConfigured = Boolean(process.env.GITHUB_PERSONAL_ACCESS_TOKEN || process.env.GITHUB_TOKEN);
-console.log('\nServers: filesystem-hundesalon, memory, sequential-thinking, playwright, cloudflare-docs, webstorm');
+console.log(
+  '\nServers: filesystem-hundesalon, memory, sequential-thinking, playwright, cloudflare, cloudflare-docs, cloudflare-bindings, cloudflare-builds, cloudflare-observability, webstorm'
+);
 console.log(
   `GitHub MCP: ${githubConfigured ? 'enabled (token found in environment)' : 'skipped (set GITHUB_PERSONAL_ACCESS_TOKEN to enable)'}`
 );
