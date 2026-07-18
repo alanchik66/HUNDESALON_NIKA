@@ -158,7 +158,10 @@
     "rooflow:process": "node tools/rooflow/process-prompts.mjs",
     "rooflow:setup": "node tools/setup-rooflow.mjs",
     "ponytail:sync": "node tools/setup-ponytail.mjs",
-    "ponytail:setup": "node tools/setup-ponytail.mjs"
+    "ponytail:setup": "node tools/setup-ponytail.mjs",
+    "browser:edge": "node tools/start-persistent-browser.mjs edge",
+    "browser:chrome": "node tools/start-persistent-browser.mjs chrome",
+    "browser:cf": "node tools/start-persistent-browser.mjs edge https://dash.cloudflare.com"
   },
   "keywords": [
     "grooming",
