@@ -132,6 +132,18 @@ tools/google-search-console-report.json
 .git/
 .gitignore.backup
 
+# ═══════════════ GRAPHIFY ═══════════════
+graphify-out/cost.json
+graphify-out/cache/
+
+# ═══════════════ AGENT TOOLING ═══════════════
+.tmp-tools/
+system_prompt.md
+install_rooflow.cmd
+install_rooflow.sh
+install_rooflow_conport.cmd
+install_rooflow_conport.sh
+
 # ═══════════════ ПРОЧЕЕ ═══════════════
 .continue/
 .pi/

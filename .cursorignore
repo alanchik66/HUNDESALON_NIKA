@@ -1,0 +1,18 @@
+# Heavy / generated - keep Cursor Review and indexing responsive
+graphify-out/cache/
+graphify-out/graph.html
+graphify-out/graph.json
+graphify-out/.graphify_*.json
+graphify-out/.graphify_*.sig
+
+.playwright-mcp/
+.playwright-cli/
+output/
+.anima/
+node_modules/
+dist/
+.wrangler/
+3d-weather-codrops-main/node_modules/
+3d-weather-codrops-main/dist-widget/assets/Moon/
+.tmp-tools/
+system_prompt.md

@@ -150,7 +150,15 @@
     "sync:gitlab:push": "echo \"GitLab mirror removed; use npm run git:push for GitHub only.\"",
     "sync:gitlab:mr": "node -e \"console.error('GitLab sync MR disabled: repository must keep only main. GitLab mirror removed.'); process.exit(1)\"",
     "check:live-html": "node tools/check-live-html.mjs",
-    "rollout:plan": "node -e \"console.log('See docs/operations.md')\""
+    "rollout:plan": "node -e \"console.log('See docs/operations.md')\"",
+    "graphify": "graphify extract . --code-only --force && graphify cluster-only . --no-label",
+    "graphify:update": "graphify update . --force",
+    "graphify:report": "graphify cluster-only . --no-label",
+    "graphify:setup": "graphify cursor install --project && graphify hook install",
+    "rooflow:process": "node tools/rooflow/process-prompts.mjs",
+    "rooflow:setup": "node tools/setup-rooflow.mjs",
+    "ponytail:sync": "node tools/setup-ponytail.mjs",
+    "ponytail:setup": "node tools/setup-ponytail.mjs"
   },
   "keywords": [
     "grooming",

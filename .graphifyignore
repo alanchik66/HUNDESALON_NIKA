@@ -1,0 +1,56 @@
+# Build / deps (also covered by .gitignore — kept explicit)
+node_modules/
+dist/
+build/
+.wrangler/
+coverage/
+
+# Weather widget vendor / minified bundles (noise in god-nodes)
+3d-weather-codrops-main/
+assets/vendor/
+*.min.js
+*.min.css
+*.bundle.js
+*.map
+
+# Heavy / binary assets — code graph only
+assets/images/
+assets/fonts/
+assets/video/
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.svg
+*.ico
+*.woff
+*.woff2
+*.ttf
+*.mp4
+*.mp3
+*.wav
+*.pdf
+*.zip
+*.psd
+
+# Local tooling / secrets / caches
+.dev.vars
+.dev.vars.*
+*.token
+.cloudflare-*.token
+.cloudflare-global.json
+.playwright-cli/
+test-results/
+.tmp/
+temp/
+tmp/
+backup/
+archives/
+graphify-out/cost.json
+graphify-out/cache/
+
+# Agent / IDE noise
+.cursor/projects/
+agent-transcripts/
+uploads/
