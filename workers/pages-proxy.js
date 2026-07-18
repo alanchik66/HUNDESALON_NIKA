@@ -1,3 +1,9 @@
+/**
+ * Zone Worker: custom domain → Cloudflare Pages (*.pages.dev).
+ *
+ * Browser Origin stays on the public host (apex/www). Pages Functions must
+ * accept those origins via functions/_lib/http-security.js TRUSTED_SITE_ORIGINS.
+ */
 const PAGES_ORIGIN = 'hundesalon-nika.pages.dev';
 const PUBLIC_HOSTS = new Set(['hundesalon-nika.com', 'www.hundesalon-nika.com']);
 
@@ -37,8 +43,10 @@ export default {
     originUrl.protocol = 'https:';
 
     const originRequest = new Request(originUrl.toString(), request);
+    // Preserve public Host for Pages Functions CSRF / CORS (do not rewrite Origin).
     originRequest.headers.set('X-Forwarded-Host', requestUrl.hostname);
     originRequest.headers.set('X-Forwarded-Proto', 'https');
+    originRequest.headers.set('X-Hundesalon-Public-Origin', `https://${requestUrl.hostname}`);
 
     const response = await fetch(originRequest, { redirect: 'manual' });
     const headers = new Headers(response.headers);

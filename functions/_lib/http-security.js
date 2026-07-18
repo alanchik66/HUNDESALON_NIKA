@@ -4,12 +4,20 @@
 
 const LOCAL_DEV_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
 
+/** Browser origins for the public site (apex + www). */
+const TRUSTED_SITE_ORIGINS = new Set(['https://hundesalon-nika.com', 'https://www.hundesalon-nika.com']);
+
 function parseUrl(value) {
   try {
     return new URL(String(value || ''));
   } catch {
     return null;
   }
+}
+
+function isTrustedPagesDevHostname(hostname) {
+  const host = String(hostname || '').toLowerCase();
+  return host === 'hundesalon-nika.pages.dev' || /^[a-z0-9-]+\.hundesalon-nika\.pages\.dev$/.test(host);
 }
 
 function isPrivateIpv4Hostname(hostname) {
@@ -50,6 +58,9 @@ export function isLocalDevOrigin(origin) {
 /**
  * POST from the public site must include a trusted Origin header.
  * Local dev is allowed only for exact localhost / loopback / private LAN origins.
+ *
+ * Custom domain traffic is reverse-proxied to *.pages.dev (workers/pages-proxy.js)
+ * while the browser Origin stays on the public host — that pair must be allowed.
  */
 export function isAllowedOrigin(origin, requestUrl) {
   if (!origin) return false;
@@ -60,6 +71,12 @@ export function isAllowedOrigin(origin, requestUrl) {
 
   if (originUrl.origin === targetUrl.origin) {
     return true;
+  }
+
+  if (TRUSTED_SITE_ORIGINS.has(originUrl.origin)) {
+    if (TRUSTED_SITE_ORIGINS.has(targetUrl.origin) || isTrustedPagesDevHostname(targetUrl.hostname)) {
+      return true;
+    }
   }
 
   return (

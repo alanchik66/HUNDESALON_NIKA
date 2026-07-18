@@ -15,6 +15,8 @@ npm run deploy:full        # Cloudflare Pages + post-deploy checks
 
 If the message draft endpoint returns 401 after deploy: `npm run sync:service-key`, wait ~10s, `npm run check:message-draft`.
 
+If `/message-draft`, `/sendmail`, or `/seo-generate` return **403** on the custom domain while `*.pages.dev` works: the zone Worker (`workers/pages-proxy.js`) proxies apex/www → Pages. Browser `Origin` stays on the public host; Pages Functions must allow it via `TRUSTED_SITE_ORIGINS` in `functions/_lib/http-security.js`. Redeploy Pages (and the Worker only if proxy code changed).
+
 ## Commands
 
 | Script                        | Purpose                                                                       |
