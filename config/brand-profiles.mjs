@@ -1,8 +1,9 @@
 /** Official HUNDESALON NIKA profiles — sameAs + citation links (JSON-LD, llms.txt). */
 export const BRAND_PROFILES = {
   website: 'https://hundesalon-nika.com/',
+  // Address pin Leipzig (no GBP place yet). Replace with claimed Business Profile URL after verify.
   googleMaps:
-    'https://www.google.com/maps/place/St%C5%99%C3%ADh%C3%A1n%C3%AD+ps%C5%AF+a+ko%C4%8Dek+PetGrooming+Leipzig/@50.6413683,13.8410258,17z/data=!3m1!4b1!4m6!3m5!1s0x47098f181a16e7e9:0x1e5103069a50da9e!8m2!3d50.6413683!4d13.8410258!16s%2Fg%2F11ksntmkjr',
+    'https://www.google.com/maps/search/?api=1&query=HUNDESALON+NIKA%2C+Untere-Eichst%C3%A4dtstra%C3%9Fe+38%2C+04299+Leipzig',
   instagram: 'https://www.instagram.com/hundesalon_nika',
   tiktok: 'https://www.tiktok.com/@hundesalon_nika',
   youtube: 'https://www.youtube.com/@hundesalon_nika',

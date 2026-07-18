@@ -25,7 +25,8 @@ function langFromPath(file) {
 function pickSameAsHost(hostname) {
   return SAME_AS.find(url => {
     try {
-      return new URL(url).hostname === hostname;
+      const host = new URL(url).hostname;
+      return host === hostname || host.endsWith(`.${hostname}`);
     } catch {
       return false;
     }
