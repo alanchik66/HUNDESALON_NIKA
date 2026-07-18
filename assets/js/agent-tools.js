@@ -18,7 +18,7 @@
     name: 'HUNDESALON NIKA',
     url: `${origin}/`,
     address: 'Untere-Eichstaedtstrasse 38, 04299 Leipzig, Germany',
-    phone: '+49 1515 1708888',
+    phone: '+49 151 72450988',
     email: 'info@hundesalon-nika.com',
     languages: Object.keys(languagePages),
     publicDiscovery: {

@@ -9,7 +9,7 @@ export const BRAND_PROFILES = {
   youtube: 'https://www.youtube.com/@hundesalon_nika',
   telegram: 'https://t.me/hundesalon_nika',
   facebook: 'https://www.facebook.com/share/17SVsvkZEo/?mibextid=wwXIfr',
-  whatsapp: 'https://wa.me/4915151708888',
+  whatsapp: 'https://wa.me/4915172450988',
 };
 
 /** Deduplicated list for schema.org sameAs */
@@ -30,7 +30,7 @@ export const NAP = {
   locality: 'Leipzig',
   region: 'Sachsen',
   country: 'DE',
-  phone: '+49 1515 1708888',
+  phone: '+49 151 72450988',
   email: 'info@hundesalon-nika.com',
   url: 'https://hundesalon-nika.com/de/',
 };

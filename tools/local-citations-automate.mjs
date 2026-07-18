@@ -57,7 +57,7 @@ try {
   report.googleMaps = {
     status: mapsRes.status,
     hasWebsite: /hundesalon-nika\.com/i.test(mapsHtml),
-    hasPhone: /1515|1708888/.test(mapsHtml),
+    hasPhone: /151\s*72450988|72450988|4915172450988/.test(mapsHtml),
     hasAddress: /04299|Eichst/i.test(mapsHtml),
     url: BRAND_PROFILES.googleMaps,
   };

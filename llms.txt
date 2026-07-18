@@ -18,7 +18,7 @@ HUNDESALON NIKA is a professional pet grooming salon in Leipzig, Germany. The si
 - Category: Pet grooming salon, dog grooming, cat grooming
 - City: Leipzig
 - Address: Untere-Eichstaedtstrasse 38, 04299 Leipzig, Germany
-- Phone: +49 1515 1708888
+- Phone: +49 151 72450988
 - Email: info@hundesalon-nika.com
 
 ## Core Topics
@@ -51,5 +51,5 @@ Public marketing, service, price, booking, gallery, contact, and blog pages are 
 
 - HUNDESALON NIKA
 - Untere-Eichstädtstraße 38, 04299 Leipzig, Sachsen, DE
-- Phone: +49 1515 1708888
+- Phone: +49 151 72450988
 - Email: info@hundesalon-nika.com

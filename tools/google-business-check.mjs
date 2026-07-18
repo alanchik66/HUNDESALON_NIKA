@@ -39,7 +39,7 @@ try {
       url: location.href,
       title: document.title,
       hasWebsite: /hundesalon-nika\\.com/i.test(body + html),
-      hasPhone: /1515|1708888/.test(body),
+      hasPhone: /151\s*72450988|72450988|4915172450988/.test(body),
       hasAddress: /04299|Eichst|Leipzig/i.test(body),
       hasReview: /bewert|review|rezension|отзыв/i.test(body),
       sample: body.slice(0, 1200),

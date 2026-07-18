@@ -5,10 +5,35 @@ Session status: recent changes, current goals, open questions.
 
 ## Current Focus
 
-- Finish Cloudflare MCP OAuth: wait for user to enable Public OAuth App access (`oauth_app_access_enabled`), then authenticate MCP servers.
+- Local citations follow-up mostly done (Maps live, GS confirmed, GBP created pending verify, 11880 submitted).
+- **GBP still unverified** — only **video** offered; wait poll finished with **no upload** (still waiting). Verify URL: `https://business.google.com/verify/l/07906466805416970763` (`snaiper1984@gmail.com`). User must record at salon + upload.
 - Standing rule: when login/OAuth needed — open URLs, wait for user login, then continue automatically (see `.cursor/rules/wait-for-user-login.mdc`).
 
 ## Recent Changes
+
+2026-07-18 22:15:00 - GBP video verify wait (wait-for-user-login):
+
+- Opened/kept verify URL in Edge + Playwright as `snaiper1984@gmail.com`: `https://business.google.com/verify/l/07906466805416970763`.
+- Advanced wizard past duplicate list («Ничего не подходит») → only method **Отправить видео компании**; tips / «Начать запись» ready.
+- Polled ~45–60+ min wall time: **no video submitted**, status still needs confirmation (wizard ~20–27%, not pending review). Profile still not public (“Ваша компания не видна пользователям”).
+- Leipzig Branchenbuch email skipped (no RESEND_API_KEY).
+- **Next (user):** at salon, one continuous clip — street → permanent HUNDESALON NIKA sign → interior; use «Начать запись» / upload in open Edge tab (Google disallows pre-recorded). After pending review → recheck website `https://hundesalon-nika.com/de/` then go public when Google approves.
+
+2026-07-18 21:05:00 - GBP follow-up (post citations deploy):
+
+- Opened GBP as `snaiper1984@gmail.com`; status still **Требуется подтверждение / 0% verified**. Duplicate-business list → none match; only **video** verification (no postcard/SMS). Edge left on verify flow “Начать запись”.
+- Profile filled without verify: **Tierfriseur**; phone `0151 72450988`; website `/de/`; DE description saved; **Öffnungszeiten Mo–So 09:00–21:00** saved.
+- Leipzig Branchenbuch email **not sent** — `RESEND_API_KEY` absent from `.dev.vars` / env; draft still `temp/leipzig-branchenbuch-email.txt` (To intended: `wirtschaft@leipzig.de`).
+- User must: shoot continuous verification video at Untere-Eichstädtstraße 38 (street + sign + interior access), upload in open verify tab; optionally send Branchenbuch email once Resend key available.
+
+2026-07-18 20:50:00 - Local citations / Maps NAP fix:
+
+- **Teplice Maps bug fixed:** `config/brand-profiles.mjs` + ~20 locale pages + `llms.txt` pointed at wrong CZ PetGrooming place; now Leipzig NAP search URL. Commit `c1e3795`. Deployed + CDN purge + IndexNow; live `/de/` and `/de/kontakty` verified Leipzig (no Teplice).
+- **Gelbe Seiten:** confirmation email found in `snaiper1984@gmail.com` (forwarded from `info@`); confirm link opened — status: already confirmed, entry in review (“wird bereits bearbeitet”).
+- **GBP:** created under `snaiper1984@gmail.com` — HUNDESALON NIKA, Tierfriseur, Untere-Eichstädtstraße 38, 04299 Leipzig, phone +49 151 72450988, website `https://hundesalon-nika.com/de/`. Verify later chosen (video was only immediate option). Profile setup ~100%; **public visibility blocked until user verifies** (video or later postcard/phone if offered). Location verify URL path id `07906466805416970763`.
+- **11880:** submitted successfully (Branche `Hundefriseur`, step Bestätigung — “Vielen Dank für Ihren Eintrag”).
+- **Leipzig Branchenbuch email:** draft remains `temp/leipzig-branchenbuch-email.txt`; not sent (no Resend key locally; draft has no explicit recipient).
+- Still for user: GBP verification (video/other), optional hours/photos/description polish in Business Profile, optional send Leipzig city directory email.
 
 2026-07-18 19:40:00 - SEO soft-404 + Bing + GSC:
 

@@ -3811,9 +3811,9 @@
     })();
 
     const socialIcons = [
-      ['https://wa.me/4915151708888', 'fab fa-whatsapp', 'WhatsApp'],
+      ['https://wa.me/4915172450988', 'fab fa-whatsapp', 'WhatsApp'],
       ['https://t.me/hundesalon_nika', 'fab fa-telegram', 'Telegram'],
-      ['viber://chat?number=%2B4915151708888', 'fab fa-viber', 'Viber'],
+      ['viber://chat?number=%2B4915172450988', 'fab fa-viber', 'Viber'],
       ['https://www.instagram.com/hundesalon_nika?igsh=MWthdXgyY2llMWRndw==', 'fab fa-instagram', 'Instagram'],
       ['https://www.tiktok.com/@hundesalon_nika', 'fab fa-tiktok', 'TikTok'],
       ['https://www.facebook.com/share/17SVsvkZEo/?mibextid=wwXIfr', 'fab fa-facebook-f', 'Facebook'],
