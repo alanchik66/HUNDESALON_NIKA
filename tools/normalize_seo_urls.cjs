@@ -30,7 +30,9 @@ function getLocalizedUrl(language, relativePath) {
     if (relativePath === "index.html") {
         return `${siteRoot}/${language}/`;
     }
-    return `${siteRoot}/${language}/${relativePath.replace(/\\/g, "/")}`;
+    // CF Pages permanently redirects *.html → extensionless; keep SEO URLs final.
+    const clean = relativePath.replace(/\\/g, "/").replace(/\.html$/i, "");
+    return `${siteRoot}/${language}/${clean}`;
 }
 
 function replaceSingle(source, pattern, replacement) {
@@ -50,7 +52,7 @@ for (const language of languages) {
     for (const filePath of htmlFiles) {
         const relativePath = path.relative(languageDir, filePath).replace(/\\/g, "/");
         const canonicalUrl = getLocalizedUrl(language, relativePath);
-        const xDefaultUrl = getLocalizedUrl("en", relativePath);
+        const xDefaultUrl = getLocalizedUrl("de", relativePath);
         let content = fs.readFileSync(filePath, "utf8");
         const original = content;
 

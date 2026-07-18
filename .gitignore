@@ -83,6 +83,8 @@ secrets.*
 .dev.vars
 .dev.vars.*
 !.dev.vars.example
+!.dev.vars.op.example
+.1password/
 *.key
 *.pem
 

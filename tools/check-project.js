@@ -120,14 +120,15 @@ for (const lang of ['de', 'en', 'ru', 'uk']) {
   assert(!fs.existsSync(path.join(root, lang, 'blog.html')), `Legacy blog page must be removed: ${lang}/blog.html`);
 
   const blogPage = read(`${lang}/blog/blog.html`);
+  // CF Pages 308-strips .html; public canonicals are extensionless.
   assert(
-    blogPage.includes(`https://hundesalon-nika.com/${lang}/blog/blog.html`),
-    `${lang}/blog/blog.html: canonical must point to /${lang}/blog/blog.html`
+    blogPage.includes(`https://hundesalon-nika.com/${lang}/blog/blog`),
+    `${lang}/blog/blog.html: canonical must point to /${lang}/blog/blog`
   );
   for (const hrefLang of ['de', 'en', 'ru', 'uk']) {
     assert(
       blogPage.includes(`hreflang="${hrefLang}"`) &&
-        blogPage.includes(`https://hundesalon-nika.com/${hrefLang}/blog/blog.html`),
+        blogPage.includes(`https://hundesalon-nika.com/${hrefLang}/blog/blog`),
       `${lang}/blog/blog.html: missing hreflang="${hrefLang}" blog URL`
     );
   }
@@ -162,14 +163,14 @@ if (fs.existsSync(path.join(root, '_redirects'))) {
     '/assets/images/logo.png /assets/images/brand/logo.png 301',
     '/assets/images/gallery1.jpg /assets/images/hero/slide-01.jpg 301',
     '/assets/images/icon-pak/Gotovie%20iconki%20dlya%20saita/Home.png /assets/images/icons/home.png 301',
-    '/de/blog.html /de/blog/blog.html 301',
-    '/en/blog.html /en/blog/blog.html 301',
-    '/ru/blog.html /ru/blog/blog.html 301',
-    '/uk/blog.html /uk/blog/blog.html 301',
-    '/de/blog/ /de/blog/blog.html 301',
-    '/en/blog/ /en/blog/blog.html 301',
-    '/ru/blog/ /ru/blog/blog.html 301',
-    '/uk/blog/ /uk/blog/blog.html 301',
+    '/de/blog.html /de/blog/blog 301',
+    '/en/blog.html /en/blog/blog 301',
+    '/ru/blog.html /ru/blog/blog 301',
+    '/uk/blog.html /uk/blog/blog 301',
+    '/de/blog/ /de/blog/blog 301',
+    '/en/blog/ /en/blog/blog 301',
+    '/ru/blog/ /ru/blog/blog 301',
+    '/uk/blog/ /uk/blog/blog 301',
   ]) {
     assert(redirects.includes(rule), `_redirects missing canonical rule: ${rule}`);
   }
@@ -179,7 +180,7 @@ if (fs.existsSync(path.join(root, 'sitemap.xml'))) {
   const sitemap = read('sitemap.xml');
   for (const lang of ['de', 'en', 'ru', 'uk']) {
     assert(
-      sitemap.includes(`https://hundesalon-nika.com/${lang}/blog/blog.html</loc>`),
+      sitemap.includes(`https://hundesalon-nika.com/${lang}/blog/blog</loc>`),
       `sitemap.xml missing blog page URL for ${lang}`
     );
   }

@@ -37,11 +37,11 @@ function prioritizeForBingSubmit(urls) {
 
 function runNpm(script) {
   return new Promise((resolve, reject) => {
-    const p = spawn(npmCommand, ['run', script], {
-      cwd: root,
-      stdio: 'inherit',
-      shell: process.platform === 'win32',
-    });
+    // Windows: shell + single command string (avoids EINVAL on npm.cmd and DEP0190).
+    const p =
+      process.platform === 'win32'
+        ? spawn(`${npmCommand} run ${script}`, { cwd: root, stdio: 'inherit', shell: true })
+        : spawn(npmCommand, ['run', script], { cwd: root, stdio: 'inherit' });
     p.on('close', code => (code === 0 ? resolve() : reject(new Error(`${script} failed`))));
   });
 }
