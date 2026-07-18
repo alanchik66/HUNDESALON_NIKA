@@ -76,7 +76,7 @@ Cloud agents run on Ubuntu. Configuration lives in `.cursor/environment.json`.
 - **No hello-world** site tour, browser onboarding, or “navigate and interact” checklist.
 - **No pull request** unless the user explicitly asks for a PR.
 - **No extra branches** — work only on `main`.
-- **No** `sync/gitlab-main` MR flow unless `git push gitlab main` fails (see `docs/git-workflow.md`).
+- **No** `sync/gitlab-main` MR flow — GitLab removed; use GitHub `origin` only.
 
 ### Git (after code changes)
 
@@ -85,10 +85,10 @@ git checkout main
 git pull origin main
 npm run validate   # optional but recommended
 git add -A && git commit -m "…"
-npm run git:push   # GitHub origin + GitLab mirror
+npm run git:push   # GitHub origin only
 ```
 
-Details: `docs/git-workflow.md`. Remotes: `origin`/`github` → GitHub; `gitlab` → GitLab.
+Details: `docs/git-workflow.md`. Remote: `origin` → GitHub `alanchik66/HUNDESALON_NIKA`.
 
 ### Bootstrap (every agent start)
 
