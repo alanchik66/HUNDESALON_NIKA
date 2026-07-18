@@ -397,6 +397,7 @@ function upsertCodexToml(filePath) {
     content = content.replace(pattern, '');
   }
 
+  ensureDir(filePath);
   writeFileSync(filePath, `${content.trimEnd()}\n${block}\n`, 'utf8');
   return filePath;
 }
