@@ -134,7 +134,8 @@
     "Qwen",
     "mstile",
     "bing",
-    "Eichstädtstraße"
+    "Walter-Markov-Ring",
+    "Zuckelhausen"
   ],
   "ignorePaths": ["node_modules/**", "assets/fonts/**", "3d-weather-codrops-main/**"],
   "overrides": [

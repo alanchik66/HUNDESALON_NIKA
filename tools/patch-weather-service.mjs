@@ -15,8 +15,8 @@ if (inStart >= 0 && inEnd >= 0) {
 
 const dollarNeedle = '$=async({latitude:e,longitude:t},n=`en`)=>{';
 const salonShortcut =
-  '$=async({latitude:e,longitude:t},n=`en`)=>{if(Math.abs(e-51.320486)<0.001&&Math.abs(t-12.416501)<0.001){let r=Z(n),i=`${r}:51.3205,12.4165`;if(Sn.has(i))return Sn.get(i);let a={latitude:e,longitude:t,name:`Stötteritz`,region:`Sachsen`,country:`Germany`,countryCode:`DE`,timezone:`Europe/Berlin`};return Sn.set(i,a),a}';
-if (s.includes(dollarNeedle) && !s.includes('51.320486')) {
+  '$=async({latitude:e,longitude:t},n=`en`)=>{if(Math.abs(e-51.313317)<0.001&&Math.abs(t-12.45543)<0.001){let r=Z(n),i=`${r}:51.3133,12.4554`;if(Sn.has(i))return Sn.get(i);let a={latitude:e,longitude:t,name:`Zuckelhausen`,region:`Sachsen`,country:`Germany`,countryCode:`DE`,timezone:`Europe/Berlin`};return Sn.set(i,a),a}';
+if (s.includes(dollarNeedle) && !s.includes('51.313317')) {
   s = s.replace(dollarNeedle, salonShortcut);
 }
 

@@ -3522,7 +3522,7 @@
   const HEADER_WEATHER_CURRENT_ENDPOINT = 'https://api.open-meteo.com/v1/forecast';
   const HEADER_WEATHER_ASTRO_ENDPOINT = 'https://api.sunrise-sunset.org/json';
   const HEADER_WEATHER_REVERSE_GEOCODE_PROXY_ENDPOINT = '/reverse-geocode';
-  const HEADER_WEATHER_STATIC_FALLBACK_COORDS = Object.freeze({ latitude: 51.320486, longitude: 12.416501 });
+  const HEADER_WEATHER_STATIC_FALLBACK_COORDS = Object.freeze({ latitude: 51.313317, longitude: 12.45543 });
   const HEADER_WEATHER_ASTRO_REFRESH_INTERVAL = 60000;
   const HEADER_WEATHER_WIDGET_REFRESH_INTERVAL = 60 * 1000;
   const HEADER_WEATHER_TIME_SYNC_INTERVAL = 30 * 60 * 1000;
@@ -3594,16 +3594,16 @@
 
       const language = normalizeLangCode(stubUrl.searchParams.get('accept-language') || 'ru');
       const cityByLang = {
-        ru: 'Лейпциг - Штёттериц',
-        uk: 'Лейпциг - Штеттеріц',
-        de: 'Leipzig - Stotteritz',
-        en: 'Leipzig - Stotteritz',
+        ru: 'Лейпциг - Цукельхаузен',
+        uk: 'Лейпциг - Цукельхаузен',
+        de: 'Leipzig - Zuckelhausen',
+        en: 'Leipzig - Zuckelhausen',
       };
       const payload = JSON.stringify({
         payload: {
           name: cityByLang[language] || cityByLang.en,
           address: {
-            suburb: 'Stotteritz',
+            suburb: 'Zuckelhausen',
             city: 'Leipzig',
             state: 'Sachsen',
             country: 'Deutschland',
@@ -4151,8 +4151,8 @@
     return (
       normalizedKey === 'leipzig' ||
       (normalizedKey.includes('leipzig') &&
-        (normalizedKey.includes('stotteritz') ||
-          normalizedKey.includes('stoetteritz') ||
+        (normalizedKey.includes('zuckelhausen') ||
+          normalizedKey.includes('walter-markov') ||
           normalizedKey.includes('sachsen')))
     );
   }
@@ -4161,7 +4161,7 @@
     return {
       latitude: HEADER_WEATHER_STATIC_FALLBACK_COORDS.latitude,
       longitude: HEADER_WEATHER_STATIC_FALLBACK_COORDS.longitude,
-      label: 'Leipzig - Stötteritz',
+      label: 'Leipzig - Zuckelhausen',
       regionLabel: 'Sachsen',
       timezone: HEADER_WEATHER_DEFAULT_TIMEZONE,
     };
@@ -4238,11 +4238,11 @@
           return { latitude, longitude, source: 'gps', expiresAt: Date.now() + HEADER_WEATHER_GEO_CACHE_TTL };
         }
       } catch {
-        // GPS permission denied or unavailable. Use salon static coordinates (Stötteritz) directly.
+        // GPS permission denied or unavailable. Use salon static coordinates (Zuckelhausen) directly.
       }
     }
 
-    // Primary fallback: salon static coordinates (Stötteritz)
+    // Primary fallback: salon static coordinates (Zuckelhausen)
     return {
       latitude: HEADER_WEATHER_STATIC_FALLBACK_COORDS.latitude,
       longitude: HEADER_WEATHER_STATIC_FALLBACK_COORDS.longitude,
@@ -6633,7 +6633,7 @@
           const coordinateValue = {
             latitude: coordinateMatch.latitude,
             longitude: coordinateMatch.longitude,
-            label: 'Leipzig - Stötteritz',
+            label: 'Leipzig - Zuckelhausen',
             regionLabel: 'Sachsen',
             timezone: getHeaderWeatherBrowserTimeZone() || HEADER_WEATHER_DEFAULT_TIMEZONE,
           };

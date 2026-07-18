@@ -2,7 +2,7 @@
 import { NAP } from './brand-profiles.mjs';
 
 const q = encodeURIComponent('HUNDESALON NIKA Leipzig');
-const q2 = encodeURIComponent('Hundesalon Nika Untere-Eichstädtstraße');
+const q2 = encodeURIComponent('Hundesalon Nika Walter-Markov-Ring');
 
 export const LOCAL_DIRECTORIES = [
   {

@@ -83,7 +83,7 @@ for (const lang of ['de', 'en', 'ru', 'uk']) {
     );
   }
   html = html.replace(
-    'href="https://maps.google.com/?q=Untere-Eichst%C3%A4dtstra%C3%9Fe+38%2C+04299+Leipzig"',
+    'href="https://maps.google.com/?q=Walter-Markov-Ring+1%2C+04288+Leipzig"',
     `href="${BRAND_PROFILES.googleMaps}"`
   );
   fs.writeFileSync(file, html, 'utf8');

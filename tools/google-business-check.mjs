@@ -40,7 +40,7 @@ try {
       title: document.title,
       hasWebsite: /hundesalon-nika\\.com/i.test(body + html),
       hasPhone: /151\s*72450988|72450988|4915172450988/.test(body),
-      hasAddress: /04299|Eichst|Leipzig/i.test(body),
+      hasAddress: /04288|Walter-Markov|Leipzig/i.test(body),
       hasReview: /bewert|review|rezension|отзыв/i.test(body),
       sample: body.slice(0, 1200),
     };

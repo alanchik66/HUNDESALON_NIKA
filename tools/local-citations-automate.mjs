@@ -25,7 +25,7 @@ async function ensureCdp() {
 async function probeUrl(session, url, matchSource) {
   await session.send('Page.navigate', { url, transitionType: 'reload' });
   await sleep(9000);
-  const napProbe = '04299|1515|Eichst';
+  const napProbe = '04288|1515|Walter-Markov';
   return session.evaluate(`(() => {
     const body = document.body?.innerText || '';
     const re = new RegExp(${JSON.stringify(matchSource)}, 'i');
@@ -58,7 +58,7 @@ try {
     status: mapsRes.status,
     hasWebsite: /hundesalon-nika\.com/i.test(mapsHtml),
     hasPhone: /151\s*72450988|72450988|4915172450988/.test(mapsHtml),
-    hasAddress: /04299|Eichst/i.test(mapsHtml),
+    hasAddress: /04288|Walter-Markov/i.test(mapsHtml),
     url: BRAND_PROFILES.googleMaps,
   };
 } catch (e) {

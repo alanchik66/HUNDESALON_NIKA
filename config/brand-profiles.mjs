@@ -3,7 +3,7 @@ export const BRAND_PROFILES = {
   website: 'https://hundesalon-nika.com/',
   // Address pin Leipzig (no GBP place yet). Replace with claimed Business Profile URL after verify.
   googleMaps:
-    'https://www.google.com/maps/search/?api=1&query=HUNDESALON+NIKA%2C+Untere-Eichst%C3%A4dtstra%C3%9Fe+38%2C+04299+Leipzig',
+    'https://www.google.com/maps/search/?api=1&query=HUNDESALON+NIKA%2C+Walter-Markov-Ring+1%2C+04288+Leipzig',
   instagram: 'https://www.instagram.com/hundesalon_nika',
   tiktok: 'https://www.tiktok.com/@hundesalon_nika',
   youtube: 'https://www.youtube.com/@hundesalon_nika',
@@ -25,8 +25,8 @@ export const SAME_AS = [
 
 export const NAP = {
   name: 'HUNDESALON NIKA',
-  street: 'Untere-Eichstädtstraße 38',
-  postalCode: '04299',
+  street: 'Walter-Markov-Ring 1',
+  postalCode: '04288',
   locality: 'Leipzig',
   region: 'Sachsen',
   country: 'DE',

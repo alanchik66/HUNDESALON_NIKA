@@ -17,7 +17,7 @@
   const publicInfo = {
     name: 'HUNDESALON NIKA',
     url: `${origin}/`,
-    address: 'Untere-Eichstaedtstrasse 38, 04299 Leipzig, Germany',
+    address: 'Walter-Markov-Ring 1, 04288 Leipzig, Germany',
     phone: '+49 151 72450988',
     email: 'info@hundesalon-nika.com',
     languages: Object.keys(languagePages),

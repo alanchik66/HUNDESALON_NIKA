@@ -195,8 +195,8 @@ for (const file of indexFiles) {
   const html = read(file);
   assert(html.includes('Leipzig'), `${file}: missing Leipzig geo signal`);
   assert(html.includes('"addressLocality": "Leipzig"'), `${file}: JSON-LD addressLocality must be Leipzig`);
-  assert(html.includes('"streetAddress": "Untere-Eichstädtstraße 38"'), `${file}: JSON-LD streetAddress is missing`);
-  assert(html.includes('"postalCode": "04299"'), `${file}: JSON-LD postalCode is missing`);
+  assert(html.includes('"streetAddress": "Walter-Markov-Ring 1"'), `${file}: JSON-LD streetAddress is missing`);
+  assert(html.includes('"postalCode": "04288"'), `${file}: JSON-LD postalCode is missing`);
   assert(
     html.includes('/favicon.ico') || html.includes('/assets/images/favicon/favicon.ico'),
     `${file}: missing favicon.ico link`

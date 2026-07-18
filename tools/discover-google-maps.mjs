@@ -53,7 +53,7 @@ try {
         url: location.href,
         title: document.title,
         hasNika: /hundesalon\\s*nika|nika.*hundesalon/i.test(body),
-        hasLeipzig: /leipzig|04299/i.test(body),
+        hasLeipzig: /leipzig|04288/i.test(body),
         hasWrongTeplice: /teplice|strihanipsu/i.test(body),
         hasWebsite: /hundesalon-nika\\.com/i.test(body + html),
         placeLinks,
