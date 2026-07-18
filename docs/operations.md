@@ -9,7 +9,7 @@ git checkout main
 git pull origin main
 npm run check:all          # validate, build, prod checks, git parity
 git add -A && git commit -m "…"
-npm run git:push           # origin + gitlab
+npm run git:push           # origin (GitHub only)
 npm run deploy:full        # Cloudflare Pages + post-deploy checks
 ```
 
@@ -27,7 +27,7 @@ If `/message-draft`, `/sendmail`, or `/seo-generate` return **403** on the custo
 | `npm run bing:complete`       | All 16 Bing WMT sections — see `docs/bing-webmaster-checklist.md`             |
 | `npm run bing:finish-all`     | Edge CDP + Site Scan + robots + Clarity (one command)                         |
 | `npm run check:prod`          | Live HTML, GSC audit, message draft endpoint                                  |
-| `npm run git:push`            | Push `main` to GitHub and GitLab                                              |
+| `npm run git:push`            | Push `main` to GitHub (`origin`)                                              |
 | `npm run deploy:full`         | Build, deploy Pages, optional purge, IndexNow, prod checks                    |
 | `npm run seo:indexnow`        | IndexNow: all sitemap URLs on **apex + www** hosts                            |
 | `npm run bing:index-all`      | IndexNow + Bing Submit (100/day) + URL inspection + www property              |
