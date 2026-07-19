@@ -60,3 +60,11 @@ Session status: recent changes, current goals, open questions.
 - **User MCPs** (`~/.cursor/mcp.json`): filesystem-hundesalon, memory, sequential-thinking, playwright (msedge), github, cloudflare-docs/bindings/builds/observability. No Datadog, no webstorm, no gmail, no broken `mcp.cloudflare.com` Code Mode.
 - **Rules**: `wait-for-user-login.mdc` + new alwaysApply `do-it-yourself-settings.mdc` (agent executes Settings/plugin/MCP cleanup; no click-path dumping).
 - **Skills/hooks/subagents**: no new fluff; project skills stay under `.agents/skills/` (Cloudflare, graphify, ponytail, etc.).
+
+2026-07-19 02:35:55 - Google Ads wrap-up (ryndenko, non-media, PAUSED):
+
+- Account ryndenko1982@gmail.com · CID 530-092-3191 · Chrome CDP — campaign draft stays PAUSED / not launched.
+- Fixed Final URL back to https://hundesalon-nika.com/ (had been corrupted mid-session).
+- Scrubbed EN long headlines containing «grooming»; short HL DE-first; logos (2) / images (20) left as-is; videos (0) postponed.
+- Status file: temp/ads-ryndenko-prep-status.md. Draft promos on disk under assets/video/ads/ for tomorrow media.
+- €400 promo: documented only, not claimed. snaiper1984: deferred (needs account switch login).
