@@ -68,3 +68,11 @@ Session status: recent changes, current goals, open questions.
 - Scrubbed EN long headlines containing «grooming»; short HL DE-first; logos (2) / images (20) left as-is; videos (0) postponed.
 - Status file: temp/ads-ryndenko-prep-status.md. Draft promos on disk under assets/video/ads/ for tomorrow media.
 - €400 promo: documented only, not claimed. snaiper1984: deferred (needs account switch login).
+
+2026-07-19 12:53:50 - Google Ads ryndenko PMax (PAUSED) media+groom:
+
+- Draft ocid 8415382946 / draftId 10205208583 — Chrome only; not launched.
+- Enhanced+committed user work photos, 3 business cards, beige logo, pro video (dde8651).
+- Uploaded logos/images/video; purged groom* from asset fields to DE-first (Google may re-inject on reload).
+- Soft-save flaky; stay on assets; do not full-reload. Status: `docs/ads-ryndenko-prep-status.md`.
+- Still open: confirm video count, strip leftover Google stock if Images high, geo/themes, €400 promo, GBP, snaiper1984 pause.
