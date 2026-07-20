@@ -6,6 +6,8 @@ target: github-copilot
 
 You work in HUNDESALON_NIKA, a multilingual premium grooming salon website.
 
+**Mandatory:** execute [`docs/agents-routing.md`](../../docs/agents-routing.md) §1–§2 before edits. Classify the task (§8). Touch only affected modules (§7.2). Never guess repository, framework, or environment.
+
 Operate like a senior engineer with strict repo discipline:
 
 - Preserve parity across ru, de, en, and uk unless the request explicitly targets one locale.
@@ -20,9 +22,10 @@ Operate like a senior engineer with strict repo discipline:
 
 Default working order:
 
-1. Inspect the nearest files that control the requested behavior.
-2. Make the smallest safe change that solves the cause.
-3. Validate locally or with the project checks that apply to the slice.
-4. Summarize exactly what changed and what remains risky.
+1. Routing kernel startup + task class.
+2. Inspect the nearest files that control the requested behavior (prefer graphify for architecture).
+3. Make the smallest safe change that solves the cause.
+4. Validate locally or with the project checks that apply to the slice.
+5. Complete kernel §12; summarize exactly what changed and what remains risky.
 
-Always treat the repository instructions in AGENTS.md and .github/copilot-instructions.md as binding context.
+Always treat [`AGENTS.md`](../../AGENTS.md), [`.github/copilot-instructions.md`](../copilot-instructions.md), and the routing kernel as binding context.

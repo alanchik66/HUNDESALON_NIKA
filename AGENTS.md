@@ -1,7 +1,10 @@
 # HUNDESALON NIKA — Codex Project Profile
 
-**Master AI operating contract:** `docs/agents-master.md`
-**Agent playbook (routing, SEO accounts, checklists):** `docs/agents-playbook.md`
+**Routing kernel (mandatory every task):** [`docs/agents-routing.md`](docs/agents-routing.md)  
+**Master AI operating contract:** [`docs/agents-master.md`](docs/agents-master.md)  
+**Agent playbook (commands, SEO accounts):** [`docs/agents-playbook.md`](docs/agents-playbook.md)
+
+Before any edit: run routing kernel §1 (Startup) → §2 (Decision Pipeline) → §8 (Task class). Do not guess repository, environment, or module scope.
 
 ## Project
 
@@ -11,6 +14,7 @@
 - Languages: `de/` default, plus `en/`, `ru/`, `uk/`.
 - Main shared files: `assets/css/style.css`, `assets/css/page-modules.css`, `assets/js/site-shell.js`, `assets/js/main.js`, `assets/js/page-modules.js`.
 - The site uses `.site-scroll-root` as the fixed scroll container and a fixed premium header.
+- Modules (scope boundaries): locales, `assets/`, `functions/`, `workers/`, `tools/`, `docs/` + AI surfaces — see routing kernel §7.2.
 
 ## Brand
 
@@ -31,6 +35,7 @@
 - After UI/CSS/JS changes, run at least:
   - `npm run lint`
   - browser smoke checks with Playwright or a local server when layout visibility is affected.
+- Prefer graphify / scoped search over whole-repo scans (routing kernel §11).
 
 ## Commands
 
@@ -67,6 +72,7 @@
 - Full post-deploy path: `npm run deploy:full` (deploy, CDN purge, live HTML check, GSC audit).
 - HTML caching pitfalls and Cache Rules: `docs/cloudflare-caching.md`.
 - Before deploy, prefer validating with `npm run lint` and a quick local browser smoke test.
+- Deploy only when explicitly requested (routing kernel §10).
 
 ## Cursor Cloud specific instructions
 
@@ -75,11 +81,13 @@ Cloud agents run on Ubuntu. Configuration lives in `.cursor/environment.json`.
 ### Do not run by default
 
 - **No hello-world** site tour, browser onboarding, or “navigate and interact” checklist.
-- **No pull request** unless the user explicitly asks for a PR.
-- **No extra branches** — work only on `main`.
+- **No pull request** unless the user explicitly asks for a PR **or** the active platform/session mandate requires it (routing kernel §3 / §10).
+- **No extra branches** by default — work on `main` unless a session mandate requires `cursor/<name>-…` branches.
 - **No** `sync/gitlab-main` MR flow — GitLab removed; use GitHub `origin` only.
 
 ### Git (after code changes)
+
+Default:
 
 ```bash
 git checkout main
@@ -89,13 +97,16 @@ git add -A && git commit -m "…"
 npm run git:push   # GitHub origin only
 ```
 
+When a session mandate requires feature branches/PRs, follow that mandate without force-push or history rewrite.
+
 Details: `docs/git-workflow.md`. Remote: `origin` → GitHub `alanchik66/HUNDESALON_NIKA`.
 
 ### Bootstrap (every agent start)
 
-1. `npm install` runs automatically from `environment.json`.
-2. Dev preview: terminal `dev` or `npm run dev` → http://localhost:5502 (root redirects to `/de/`).
-3. Cloudflare Pages + Functions locally: `npm run dev:cf` → port 8788 (builds `dist/` first).
+1. Confirm repository identity via routing kernel §4 (expect `alanchik66/HUNDESALON_NIKA`).
+2. `npm install` runs automatically from `environment.json`.
+3. Dev preview: terminal `dev` or `npm run dev` → http://localhost:5502 (root redirects to `/de/`).
+4. Cloudflare Pages + Functions locally: `npm run dev:cf` → port 8788 (builds `dist/` first).
 
 ### Validation before deploy
 

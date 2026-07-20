@@ -1,12 +1,27 @@
 # Playbook для AI-агентов — HUNDESALON NIKA
 
-Документ для **Cursor Cloud Agents**, Codex, Claude и локальных ассистентов. Читай перед любой задачей по сайту, SEO или деплою.
+Документ для **Cursor Cloud Agents**, Codex, Claude, Gemini CLI и локальных ассистентов.
 
-**Master-контракт агента (полный):** [`docs/agents-master.md`](agents-master.md) — аудит, SEO/UX/юридика, QA, отчётность. Этот playbook — операционный маршрутизатор команд и аккаунтов.
+**Сначала routing:** каждый запрос проходит [`docs/agents-routing.md`](agents-routing.md) (§1 Startup → §2 Decision Pipeline → §8 Task matrix). Этот playbook — **операционный** слой: команды, skills, аккаунты. Он не дублирует detection и не переопределяет conflict priority.
+
+| Слой | Файл |
+|------|------|
+| Routing kernel (SSOT) | [`agents-routing.md`](agents-routing.md) |
+| Профиль проекта | [`../AGENTS.md`](../AGENTS.md) |
+| Quality / domain contract | [`agents-master.md`](agents-master.md) |
+| Этот playbook | команды · skills · SEO-аккаунты · чеклисты |
 
 ## Проект в одном абзаце
 
 Статический многоязычный сайт салона в Лейпциге (`de` / `en` / `ru` / `uk`), хостинг **Cloudflare Pages**, shell в `site-shell.js`, продакшен: https://hundesalon-nika.com (`www` → 301 на apex).
+
+## Startup (кратко)
+
+1. Resolve repo / workspace / env / tech / module → kernel §4–§7.  
+2. Load AI docs → kernel §9.  
+3. Classify task → kernel §8.  
+4. Run the matching command table below.  
+5. Complete → kernel §12.
 
 ## Аккаунты (не путать)
 
@@ -15,22 +30,27 @@
 | Google Search Console | `ryndenko1982@gmail.com` (sole Verified Owner) |
 | Bing Webmaster Tools | `snaiper1984@mail.ru` (Edge CDP `npm run bing:edge`, порт 9224) |
 
+Не маршрутизировать GSC на `snaiper1984@gmail.com` (cutover 2026-07-19).
+
 ## Маршрутизация задач → команды
 
-| Задача | Команда |
-|--------|---------|
+После kernel §8:
+
+| Задача (класс) | Команда |
+|----------------|---------|
 | Правка UI/вёрстки | Правки в `assets/*` + 4 локали; `npm run lint` |
 | Проверка ссылок (локально) | `npm run check:links` |
 | Живой обход всех URL sitemap | `npm run check:live-crawl` |
 | Полная валидация | `npm run validate` |
 | Сборка | `npm run build` |
-| Деплой | `npm run deploy:full` (только по запросу) |
+| Деплой | `npm run deploy:full` (только по запросу; kernel §10) |
 | IndexNow apex + www | `npm run seo:indexnow` |
 | Полная индексация Bing | `npm run bing:index-all` |
 | Остаток www в Bing (квота) | `npm run bing:submit-www-rem` |
 | Аудит Bing в браузере | `npm run bing:audit` |
 | Аудит GSC | `npm run google:gsc:audit` |
 | После смены favicon | `npm run seo:post-favicon` |
+| Архитектура / связи | `graphify query\|path\|explain` (не полный обход дерева) |
 
 ## Skills (подключать по теме)
 
@@ -68,7 +88,7 @@
 
 - Memory Bank: `memory-bank/{productContext,activeContext,progress,decisionLog,systemPatterns}.md`.
 - Cursor: `.cursor/rules/rooflow-memory-bank.mdc` — читать банк в начале нетривиальной работы; **UMB** / Update Memory Bank — записать итог.
-- Roo Code extension: режимы Flow-* из `.roo/` + `.roomodes`.
+- Roo Code extension: режимы Flow-* из `.roo/` + `.roomodes` — перед делегированием выполнить routing kernel.
 - Обработка плейсхолдеров: `npm run rooflow:process`. Обновление с upstream: `npm run rooflow:setup`.
 - Опционально MCP в Flow-промпты: положить `system_prompt.md` в корень и снова `rooflow:process`.
 
@@ -97,13 +117,15 @@
 - `3d-weather-codrops-main/dist-widget/` — собранный виджет погоды
 - `indexnow-key.txt`, `.dev.vars` — секреты, не в git
 - Дублировать header/footer в HTML — запрещено (есть `site-shell.js`)
+- Чужой репозиторий / несвязанный module — запрещено (kernel §7.2 / §10)
 
 ## Чеклист после заметных изменений
 
-1. `npm run validate`
-2. При деплое HTML: `npm run deploy:full` → purge + IndexNow
-3. При смене иконок/бренда: `npm run brand:assets` → `npm run brand:seo` → deploy → `npm run seo:post-favicon`
-4. Smoke: `de/index.html` + одна другая локаль
+1. Kernel §12 (routing gate)
+2. `npm run validate`
+3. При деплое HTML: `npm run deploy:full` → purge + IndexNow
+4. При смене иконок/бренда: `npm run brand:assets` → `npm run brand:seo` → deploy → `npm run seo:post-favicon`
+5. Smoke: `de/index.html` + одна другая локаль
 
 ## Cursor Cloud Agents — bootstrap
 
@@ -115,6 +137,8 @@ npm run check:live-crawl   # опционально, нужен сеть
 
 Секреты в [Cursor Dashboard → Cloud Agents → Secrets](https://cursor.com/dashboard/cloud-agents): `CLOUDFLARE_API_TOKEN`, `RESEND_API_KEY`, `OPENROUTER_API_KEY`. Локально: `.dev.vars` из `.dev.vars.example`.
 
+Git: default policy = `main` + commit по запросу пользователя. Если session mandate требует feature branch / PR (Cloud Agent), следуй kernel §3 item 2 и §10 — без force-push и без rewrite history.
+
 ## Перспектива (регулярно)
 
 - После каждого деплоя контента: `seo:indexnow` (152 URL: apex + www)
@@ -124,4 +148,4 @@ npm run check:live-crawl   # опционально, нужен сеть
 
 ## Git
 
-Только `main`, пуш: `npm run git:push`. Коммиты — по явной просьбе пользователя.
+Default: только `main`, пуш: `npm run git:push`. Коммиты — по явной просьбе пользователя, если нет platform/session override (kernel §10).

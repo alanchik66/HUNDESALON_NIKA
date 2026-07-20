@@ -5,13 +5,19 @@ Session status: recent changes, current goals, open questions.
 
 ## Current Focus
 
+- **AI system:** Routing kernel SSOT at `docs/agents-routing.md` — integrated across AGENTS/CLAUDE/GEMINI/Copilot/Cursor rules/playbook/master workflows (2026-07-20).
 - **GBP (ryndenko):** HUNDESALON_NIKA created, profile filled, **not public** until video verify after salon opens. Verify: `https://business.google.com/verify/l/09116836504441086909`
 - **Stripe:** test keys in CF; bank ••••1334 + 2FA On; Dashboard submit still blocked (`Unternehmensinformationen Unvollständig` / USt empty). Site payments **OFF** (`PAYMENTS_ONLINE_ENABLED=false`).
 - Standing rule: login/OAuth → open URL, wait, resume (`.cursor/rules/wait-for-user-login.mdc`).
 
 ## Recent Changes
 
-2026-07-19 20:40:00 - Eric Schumann price list + salon rules on site (ru/de/en/uk):
+2026-07-20 02:40:00 - Production-grade AI routing kernel integrated:
+
+- New SSOT: `docs/agents-routing.md` (startup, detection, decision pipeline, task matrix, safety, completion).
+- Wired: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/40-agent-routing.mdc`, playbook, master workflows §4–7/69/81/88–92/132–134/150.
+- Fixed obsolete GSC account in Cursor routing rule (`ryndenko1982@gmail.com`).
+- Documented session-mandate override for Cloud Agent PR/branch policy vs default `main`-only.
 
 - `prays-list.html`: breed/service prices (dogs full groom, hygiene, deshed, SPA, cats, extras).
 - `agb.html`: full salon rules (prep, health, behaviour, mats 1€/min, parasites from 40€, owner presence, cancel/deposit).

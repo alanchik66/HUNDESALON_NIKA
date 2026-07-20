@@ -177,7 +177,6 @@ AGENTS.md
 .devinignore
 .kilo/
 .windsurfrules
-.github/copilot-instructions.md
 brain/
 mcps/
 docs/KILO_*.md

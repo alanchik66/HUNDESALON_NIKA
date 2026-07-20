@@ -1,34 +1,45 @@
 ---
-description: Маршрутизация задач для AI-агентов (SEO, Bing, деплой, аудит)
+description: AI routing kernel — startup, detection, task matrix, safety (always on)
 alwaysApply: true
 ---
 
 # Agent routing
 
-Полный playbook: `docs/agents-playbook.md`. Профиль: `AGENTS.md`.
+**Canonical kernel:** [`docs/agents-routing.md`](../../docs/agents-routing.md)  
+**Profile:** [`AGENTS.md`](../../AGENTS.md) · **Playbook:** [`docs/agents-playbook.md`](../../docs/agents-playbook.md) · **Master:** [`docs/agents-master.md`](../../docs/agents-master.md)
+
+## Every task (do not skip)
+
+1. Resolve repository → workspace → environment → technology → active module (`agents-routing.md` §4–§7).  
+2. Load AI instructions in kernel order (§0 / §9).  
+3. Classify task (§8) → run decision pipeline (§2).  
+4. Touch **only** affected modules; never guess repo / framework / env.  
+5. Finish with completion gate (§12).
+
+Conflict priority: user → platform/session mandate → routing kernel → playbook/rules → `AGENTS.md` → master → conventions.
 
 ## Search & indexing
 
-- GSC → `snaiper1984@gmail.com` — не переносить на mail.ru.
-- Bing → `snaiper1984@mail.ru` — `npm run bing:edge` затем `bing:index-all` / `bing:setup`.
-- IndexNow: `npm run seo:indexnow` (apex + www, все URL из sitemap).
+- GSC → `ryndenko1982@gmail.com` (sole Verified Owner; do not use snaiper for GSC).  
+- Bing → `snaiper1984@mail.ru` — `npm run bing:edge` затем `bing:index-all` / `bing:setup`.  
+- IndexNow: `npm run seo:indexnow` (apex + www, все URL из sitemap).  
 - После HTML deploy: `deploy:full` или минимум `seo:indexnow` + `cf:purge-cache`.
 
 ## Site audit
 
-- Локальные ссылки: `npm run check:links`.
-- Живой обход sitemap: `npm run check:live-crawl`.
+- Локальные ссылки: `npm run check:links`.  
+- Живой обход sitemap: `npm run check:live-crawl`.  
 - Конфиг/SEO файлы: `npm run check:project`.
 
 ## Skills
 
-- UI → hundesalon-frontend
-- SEO/hreflang → hundesalon-seo-multilingual
-- Cloudflare → hundesalon-cloudflare + cloudflare-deploy
-- Архитектура / связи кода → graphify (`graphify query|path|explain`, skill `.agents/skills/graphify/`)
-- Минимальный diff → ponytail (`.cursor/rules/ponytail.mdc`, skills `ponytail*`)
+- UI → hundesalon-frontend  
+- SEO/hreflang → hundesalon-seo-multilingual  
+- Cloudflare → hundesalon-cloudflare + cloudflare-deploy  
+- Архитектура / связи кода → graphify (`graphify query|path|explain`, skill `.agents/skills/graphify/`)  
+- Минимальный diff → ponytail (`.cursor/rules/ponytail.mdc`, skills `ponytail*`)  
 - Сессионный контекст → RooFlow Memory Bank (`memory-bank/`, UMB)
 
 ## Cloud agents
 
-Не делать hello-world тур по сайту. Не создавать PR/ветки без запроса. Секреты только в Dashboard, не в git.
+Не делать hello-world тур по сайту. Default: не создавать PR/ветки без запроса. Если session mandate требует branch/PR — следуй kernel §10. Секреты только в Dashboard, не в git. Deploy только по явному запросу.

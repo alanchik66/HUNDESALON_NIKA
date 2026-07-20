@@ -1,9 +1,11 @@
 # HUNDESALON NIKA — Project Workflow
 
+AI agents: every task starts with [`docs/agents-routing.md`](docs/agents-routing.md) (repo/workspace/env/module → plan → edit → verify).
+
 ## Daily Work
 
 1. Start local preview with `npm run dev`.
-2. Edit native HTML/CSS/JS files directly.
+2. Edit native HTML/CSS/JS files directly (affected modules only).
 3. Keep multilingual pages aligned across `de`, `en`, `ru`, `uk`.
 4. Run `npm run validate` before deploy or after broad UI/SEO changes.
 

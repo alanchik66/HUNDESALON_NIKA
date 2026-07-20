@@ -1,13 +1,20 @@
-# AGENTS.md
-
 # Hundesalon NIKA — Master AI System Prompt
 
 ## Production AI Agent Operating System
 
-Project: Hundesalon NIKA
-Document Type: Master AI Agent Instruction File
-Purpose: Professional AI-driven development, optimization, maintenance and evolution of the Hundesalon NIKA website
+Project: Hundesalon NIKA  
+Document Type: Master AI Agent Instruction File (domain quality contract)  
+Purpose: Professional AI-driven development, optimization, maintenance and evolution of the Hundesalon NIKA website  
 Target AI Systems: Cursor AI, Claude Code, OpenAI Codex, OpenAI Agents, Gemini CLI, GitHub Copilot Agents and compatible autonomous coding agents
+
+**Routing is not optional.** Before any audit, plan, or edit, execute the canonical **[AI Routing Kernel](agents-routing.md)** (§1 Startup + §2 Decision Pipeline). This master file defines *quality and domain standards*. It does **not** redefine repository detection, environment detection, conflict priority, or git safety — those live only in the routing kernel.
+
+| Concern | Source of truth |
+|---------|-----------------|
+| Routing / detection / decision order / safety bounds | [`docs/agents-routing.md`](agents-routing.md) |
+| Project profile & Cloud bootstrap | [`AGENTS.md`](../AGENTS.md) |
+| Commands, skills, SEO accounts | [`docs/agents-playbook.md`](agents-playbook.md) |
+| SEO / UX / legal / QA depth | **This file** |
 
 ---
 
@@ -113,23 +120,21 @@ The agent must not:
 
 # 4. PROJECT UNDERSTANDING REQUIREMENT
 
-Before making any modification, the AI agent MUST understand the complete project.
+Before making any modification, the AI agent MUST understand the project **through the Routing Kernel**.
 
-No direct editing is allowed before completing the initial audit process.
+**Mandatory first action:** execute [`agents-routing.md`](agents-routing.md) §1 (Startup) and §2 (Decision Pipeline).
 
-The agent must first perform:
+No direct editing is allowed before repository, workspace, environment, technology, and active module are identified (kernel §4–§7). Never guess those values.
 
-- repository analysis;
-- architecture analysis;
-- framework detection;
-- dependency analysis;
-- content analysis;
-- language analysis;
-- SEO analysis;
-- UX analysis;
-- legal page analysis;
-- component analysis;
-- routing analysis.
+Depth of further analysis scales with task class (kernel §8):
+
+| Task class | Additional analysis |
+|------------|---------------------|
+| Micro-edit (known file/symbol) | Confirm module + blast radius; skip full-site audit |
+| Feature / multi-file | Architecture neighbors (prefer graphify), dependencies, locales |
+| Broad / unknown area | Full discovery below (§5) plus relevant domain sections in this file |
+
+Always include, when relevant: content, language, SEO, UX, legal, and component impact for the **affected modules only**.
 
 ---
 
@@ -137,9 +142,13 @@ The agent must first perform:
 
 ## 5.1 Mandatory First Action
 
-Before changing any file, execute a complete project discovery phase.
+1. Run Routing Kernel startup (§1) and task routing (§8).  
+2. Load documentation per kernel §9.  
+3. Only then, if the task is broad or the area is unfamiliar, execute discovery.
 
-The agent must inspect:
+Discovery (scoped to need — prefer graphify / symbol search over whole-tree scans):
+
+The agent must inspect as required:
 ├── source code
 ├── application structure
 ├── components
@@ -160,59 +169,34 @@ The agent must inspect:
 
 # 6. TECHNOLOGY STACK IDENTIFICATION
 
-The agent must determine:
+Use Routing Kernel §6–§7. Detect from evidence in this repository; do not assume a framework that is not present.
 
-- Framework
-- Programming language
-- Build system
-- Package manager
-- Rendering strategy
-- Routing system
-- Styling system
-- Component architecture
-- CMS usage
-- Database usage
-- API connections
-- Third-party services
+For HUNDESALON NIKA the verified baseline (re-confirm via manifests if the tree changes) is:
 
-Examples:
+- **Stack:** native HTML / CSS / JS — no app framework  
+- **Package manager:** npm (`package-lock.json`)  
+- **Build:** `npm run build` → `dist/`  
+- **Hosting:** Cloudflare Pages + `functions/` (+ optional `workers/`)  
+- **Locales:** `de/` (default), `en/`, `ru/`, `uk/`  
+- **Shared UI:** `assets/css/*`, `assets/js/site-shell.js`, `main.js`, `page-modules.js`
 
-Possible detection targets:
-
-- Next.js
-- React
-- Vue
-- Angular
-- Astro
-- Svelte
-- WordPress
-- Static HTML
-- Headless CMS
-- Custom framework
-
-The agent must document findings internally before modification.
+If detection contradicts this baseline, stop and reconcile before rewriting architecture. Document findings internally before modification.
 
 ---
 
 # 7. REPOSITORY STRUCTURE ANALYSIS
 
-The agent must analyze:
-
 ## 7.1 Folder Structure
 
-Identify:
+Apply Routing Kernel §5 (workspace) and §7.2 (module boundaries). Identify only what the task needs:
 
-- application folders;
-- components;
-- reusable modules;
-- page hierarchy;
-- localization folders;
-- public assets;
-- configuration files;
-- scripts;
-- utilities.
+- locale trees and shared assets;
+- edge functions / workers;
+- configuration and SEO files;
+- tools/scripts;
+- AI instruction surfaces (`docs/agents-*.md`, `.cursor/rules`).
 
-The agent must understand the purpose of every important directory.
+Do not treat nested folders as separate repositories. Do not modify unrelated modules.
 
 ---
 
@@ -1275,16 +1259,22 @@ Code must be:
 
 # 53. REFACTORING RULES
 
-Refactoring is allowed when it improves:
+Execute Routing Kernel §1–§2 with task class **refactor**. Touch only affected modules (§7.2).
 
-- maintainability;
-- performance;
-- reliability;
-- readability.
+Refactoring is allowed when it:
 
-However:
+- reduces complexity;
+- improves maintainability;
+- removes duplication;
+- improves performance, reliability, or readability;
+- does not break existing behavior.
 
-The agent must avoid unnecessary large-scale rewrites.
+Refactoring must not:
+
+- rewrite architecture without justification;
+- expand scope to unrelated modules;
+- mix large behavior changes with pure cleanup in one uncontrolled pass;
+- perform unnecessary large-scale rewrites.
 
 ---
 
@@ -1363,19 +1353,21 @@ Evaluate:
 
 # 58. PERFORMANCE ENGINEERING
 
-The AI agent must operate as a Performance Engineer.
+Execute Routing Kernel §1–§2 with task class **performance**. Measure before large optimizations; avoid drive-by rewrites outside the affected module.
 
-The website must remain fast.
+The AI agent must operate as a Performance Engineer. The website must remain fast.
 
-Analyze:
+Monitor and analyze:
 
+- page weight;
 - loading speed;
-- JavaScript size;
-- CSS size;
-- images;
-- fonts;
-- rendering;
-- network requests.
+- JavaScript / CSS size;
+- images and fonts;
+- render-critical work;
+- network requests;
+- unnecessary client work.
+
+Improvements must preserve design language and SEO.
 
 ---
 
@@ -1442,18 +1434,25 @@ The agent must ensure:
 
 # 62. SECURITY CONSIDERATIONS
 
-The AI agent must consider:
+Execute Routing Kernel §1–§2 with task class **security** before security-related edits.
+
+The agent must consider and protect:
 
 - dependency vulnerabilities;
 - unsafe inputs;
-- exposed secrets;
+- exposed secrets and API keys (never commit `.dev.vars` or tokens);
+- form endpoints and trust boundaries in `functions/`;
+- HTTP headers (`_headers`) and Cloudflare configuration;
 - insecure configurations.
 
 The agent must never:
 
 - expose API keys;
 - commit secrets;
-- disable security protections without reason.
+- disable security protections without reason;
+- weaken production controls for convenience.
+
+Prefer project security workflows and least-privilege changes.
 
 ---
 
@@ -1472,6 +1471,12 @@ the agent must analyze consequences.
 # 64. VERSION CONTROL DISCIPLINE
 
 The agent must create changes suitable for professional Git workflows.
+
+Follow Routing Kernel §10:
+
+- Default: work on `main`; commit/push when the user asks; no unsolicited PRs.
+- If a platform/session mandate requires feature branches or PRs, follow kernel §3 item 2 — never force-push or rewrite history.
+- Never modify another repository or unrelated modules.
 
 Changes should be:
 
@@ -1520,12 +1525,17 @@ The agent must check:
 
 # 67. TESTING REQUIREMENTS
 
-Depending on project structure, execute:
+Execute Routing Kernel §1–§2 with task class **testing / QA**.
 
-- build tests;
-- lint checks;
-- type checks;
-- automated tests.
+Depending on task class and project structure, execute:
+
+- `npm run lint`;
+- `npm run check:links` / `npm run check:project` when links/SEO/config touched;
+- `npm run validate` for broader changes;
+- build tests (`npm run build`) when deploy/dist is in scope;
+- Playwright / browser smoke when layout visibility is affected.
+
+Prefer the smallest check set that would fail if the change is wrong (ponytail).
 
 ---
 
@@ -1546,11 +1556,9 @@ Prevent regressions and ensure that every change improves the Hundesalon NIKA pl
 
 # 69. CHANGE VALIDATION PIPELINE
 
-Every modification follows this sequence:
+Every modification follows the Routing Kernel decision pipeline (§2), then domain validation:
 
-Analysis
-↓
-Planning
+Routing → Repository → Environment → Dependencies → Architecture → Security
 ↓
 Implementation
 ↓
@@ -1558,15 +1566,15 @@ Self Review
 ↓
 Technical Validation
 ↓
-UX Validation
+UX Validation (if UI/UX touched)
 ↓
-SEO Validation
+SEO Validation (if SEO/content/URLs touched)
 ↓
-Language Validation
+Language Validation (if locale surfaces touched)
 ↓
-Final Approval
+Completion checklist (kernel §12)
 
-No stage should be skipped.
+No stage should be skipped; mark N/A with reason when a domain stage does not apply.
 
 ---
 
@@ -1834,8 +1842,13 @@ Maintain one source of truth.
 
 # 81. AI AGENT DECISION FRAMEWORK
 
-When deciding whether to make a change, evaluate:
+First apply Routing Kernel conflict resolution (§3) and task routing (§8).
 
+Then, when deciding whether to make a change, evaluate:
+
+Does this stay inside the resolved repository and affected modules?
+|
+↓
 Does this improve customer experience?
 |
 ↓
@@ -2083,31 +2096,39 @@ A task is complete only when:
 
 ## 88.1 General Workflow Philosophy
 
-The AI agent must work according to a professional software engineering workflow.
+The AI agent must work according to a professional software engineering workflow **anchored in the Routing Kernel**.
 
 The agent must not immediately modify files after receiving a request.
 
 Every task must follow:
 
-Understand
+Routing Kernel startup (§1)
 ↓
-Inspect
+Task class routing (§8)
 ↓
-Analyze
+Understand (business + technical)
+↓
+Inspect (scoped; prefer graphify)
+↓
+Analyze risks & blast radius
 ↓
 Plan
 ↓
-Modify
+Validate plan (kernel §2 gates)
 ↓
-Validate
+Modify (affected modules only)
 ↓
-Report
+Verify (class-appropriate checks)
+↓
+Complete (kernel §12) + report
+
+Named workflows (bug fix, refactor, SEO, deploy, security, performance, review, AI-system edits) **begin with the same kernel**, then apply domain rules from this file and commands from the playbook.
 
 ---
 
 # 89. TASK RECEIVING PROCEDURE
 
-When receiving a new request, the AI agent must first determine:
+When receiving a new request, execute Routing Kernel §1–§2, then determine:
 
 ## Business Context
 
@@ -2122,9 +2143,9 @@ Understand:
 
 ## Technical Context
 
-Determine:
+Determine (after repository / module detection):
 
-- Which part of the application is affected?
+- Which module(s) are affected (kernel §7.2)?
 - Which files may be involved?
 - Which components are responsible?
 - Which dependencies exist?
@@ -2143,23 +2164,23 @@ Evaluate:
 
 # 90. REQUIRED PRE-CHANGE ANALYSIS
 
-Before editing, the agent must inspect:
+Before editing, the agent must complete kernel detection, then inspect as needed:
 
-Project structure
+Resolved repository + active module(s)
 +
 Relevant files
 +
 Existing components
 +
-Existing content
+Existing content / translations
 +
-Translation system
+SEO configuration (if relevant)
 +
-SEO configuration
-+
-Legal information
+Legal information (if relevant)
 +
 Related functionality
+
+Prefer graphify / symbol search over whole-repository scans (kernel §11).
 
 ---
 
@@ -2170,13 +2191,15 @@ The AI agent must never:
 - edit unknown files without inspection;
 - replace large sections without understanding;
 - remove code because it "looks unused";
-- rewrite content without checking references.
+- rewrite content without checking references;
+- modify files outside the resolved repository or unrelated modules;
+- guess framework, environment, or deploy target.
 
 ---
 
 # 92. CHANGE PLANNING REQUIREMENT
 
-For medium and large changes, the agent should create an internal implementation plan.
+For medium and large changes, the agent should create an internal implementation plan **after** routing.
 
 The plan should include:
 
@@ -2186,7 +2209,7 @@ What will be improved.
 
 ## Scope
 
-Which areas are affected.
+Which modules / locales are affected (and which are out of scope).
 
 ## Implementation
 
@@ -2194,7 +2217,7 @@ How the change will be performed.
 
 ## Validation
 
-How correctness will be verified.
+How correctness will be verified (playbook commands + kernel §12).
 
 ---
 
@@ -2921,7 +2944,7 @@ The agent must verify:
 
 When new Hundesalon NIKA rules are provided:
 
-The agent must:
+Execute Routing Kernel §1–§2 (task class: content / i18n), then:
 
 Step 1:
 Identify all existing rule locations.
@@ -2947,9 +2970,7 @@ Report all affected areas.
 
 When prices change:
 
-The agent must:
-
-Search:
+Execute Routing Kernel §1–§2, then search:
 
 - service pages;
 - booking forms;
@@ -2970,7 +2991,7 @@ Then:
 
 When forms change:
 
-Review:
+Execute Routing Kernel §1–§2 (modules: `assets/`, locale pages, `functions/` as needed), then review:
 
 - fields;
 - labels;
@@ -3361,6 +3382,12 @@ Human confirmation is required for:
 # 150. FINAL ACCEPTANCE CRITERIA
 
 A task is considered complete only when:
+
+## Routing
+
+✓ Repository / workspace / environment / module identified (not guessed)
+✓ Only affected modules changed
+✓ Conflict priority respected ([`agents-routing.md`](agents-routing.md) §3 + §12)
 
 ## Technical
 

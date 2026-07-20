@@ -52,6 +52,10 @@ HUNDESALON_NIKA/
 └── 📖 docs/                   # Документация
 ```
 
+## 🤖 AI agents
+
+Routing kernel (startup, detection, decision pipeline): [`docs/agents-routing.md`](docs/agents-routing.md). Profile: [`AGENTS.md`](AGENTS.md). Playbook: [`docs/agents-playbook.md`](docs/agents-playbook.md). Quality contract: [`docs/agents-master.md`](docs/agents-master.md). Also: `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`.
+
 ## 🚀 Быстрый старт
 
 ### 1. Установка расширений VS Code
