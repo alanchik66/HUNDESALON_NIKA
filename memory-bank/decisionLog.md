@@ -43,12 +43,14 @@ Make routing a single reusable kernel (`docs/agents-routing.md`) integrated into
 
 ---
 
-2026-07-20 02:40:00 — Parallel kernel draft (PR #27, not yet reconciled with #26)
+2026-07-20 03:10:00 — Routing conflict resolution (#26 vs #27)
 
 ## Decision
 
-Alternate SSOT draft: combine kernel always-on into `40-agent-routing.mdc` (no separate `00-` rule); elevate platform/session mandate explicitly in conflict order; document Cloud Agent branch/PR override vs default `main`-only.
+Keep **#26 architecture** as canonical: `docs/agents-routing.md` + always-on `.cursor/rules/00-routing-kernel.mdc` + thin `.cursor/rules/40-agent-routing.mdc` + `npm run check:agents-routing`. Retain from #27 only the useful docs (git-workflow Cloud-Agent mandate note, CONTRIBUTING / PROJECT_WORKFLOW / llms pointers) after correcting section refs to kernel §1 / §11.
 
-## Note
+## Rationale
 
-Same goal as #26; architecture differs. Merge conflicts in kernel + host adapters are **complicated** (conflicting intents) and need an explicit choose/merge decision — do not auto-resolve by picking one side blindly.
+- Integrity checker and split Cursor rules already shipped on `main` via #26.
+- Parallel combined-`40` dialect would have duplicated routing and broken `check:agents-routing` expectations.
+- Explicit Git default-vs-mandate text belongs in kernel §11 + `docs/git-workflow.md`, not a second conflict hierarchy.

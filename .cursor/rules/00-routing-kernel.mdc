@@ -29,7 +29,7 @@ User instruction → project AI rules → `AGENTS.md` → `CLAUDE.md` → repo s
 
 ## Safety
 
-No unrelated files, no other repos, no force-push / history rewrite / branch deletion, no secret commits, no production deploy without explicit request, no guessing repo/framework/env.
+No unrelated files, no other repos, no force-push / history rewrite / branch deletion, no secret commits, no production deploy without explicit request, no guessing repo/framework/env. Git default = `main`; Cloud Agent / user task may require a feature branch or PR (§1 / §11 of the kernel).
 
 ## Performance
 
