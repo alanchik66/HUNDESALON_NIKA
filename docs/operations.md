@@ -63,7 +63,7 @@ npm run agents:setup
 
 | Service               | Account                                                                                    |
 | --------------------- | ------------------------------------------------------------------------------------------ |
-| Google Search Console | `snaiper1984@gmail.com` — keep as-is                                                       |
+| Google Search Console | `ryndenko1982@gmail.com` — sole Verified Owner                                              |
 | Bing Webmaster Tools  | `snaiper1984@mail.ru` — sign in via `npm run bing:edge` (isolated Edge profile, port 9224) |
 
 1. After favicon deploy: `npm run seo:post-favicon` (IndexNow + live checks).
@@ -96,13 +96,21 @@ Permissions: **Zone → Read**, **Zone → DNS → Edit**, **Zone → Cache Purg
 
 Without token: Dashboard → **Caching → Purge Everything** after HTML deploys.
 
-## Email (contact forms, info@, CSAM)
+## Email (info@ / support@ / CSAM)
 
-| Service                      | Status         | Notes                                                                                 |
-| ---------------------------- | -------------- | ------------------------------------------------------------------------------------- |
-| **Resend** (forms → `info@`) | Check          | Pages must have `RESEND_API_KEY`; test: `npm run resend:check-live` → `success: true` |
-| **Email Routing** (`info@`)  | OK             | Dashboard → Email → Routing: active, DNS configured; mail to `info@` is forwarded     |
-| **CSAM notify email**        | Pending verify | Use `info@hundesalon-nika.com` (matches site imprint); see below                      |
+Cloudflare Email Routing: **enabled / ready**. Destinations: `snaiper1984@gmail.com` + `ryndenko1982@gmail.com`.
+
+| Address | Role | Inbound (CF Routing) | Outbound |
+| ------- | ---- | -------------------- | -------- |
+| **`info@hundesalon-nika.com`** | Public NAP (site, Ads, Impressum, JSON-LD) | → both Gmails | — |
+| **`support@hundesalon-nika.com`** | Support on site; replies & confirmations | → both Gmails | Resend From / Reply-To |
+| **`booking@` / `contact@` / `admin@`** | Aliases | → both Gmails | — |
+| **`noreply@…`** | System only | catch-all → both Gmails | Resend `RESEND_FROM` (admin copies) |
+| Catch-all | Any other `@hundesalon-nika.com` | → both Gmails | — |
+
+Pages secrets: `SALON_EMAIL` / `CONTACT_*` / `BOOKING_*` = `info@`; `SUPPORT_*` / `CLIENT_EMAIL_FROM` = `support@`.
+
+**Resend** (outbound API): Pages secret `RESEND_API_KEY`; test: `npm run resend:check-live` → `success: true`.
 
 **CSAM (one-time):**
 
@@ -111,9 +119,7 @@ npm run ops:finish-manual
 # or: npm run cf:open-csam-setup
 ```
 
-Notify email: `info@hundesalon-nika.com` (forwards to Gmail via Email Routing). Verify link in inbox → Dashboard **Submit**.
-
-Resend vs Routing: **Resend** sends mail from the site (`noreply@hundesalon-nika.com`). **Email Routing** receives mail at `@hundesalon-nika.com`. Both are independent and already configured for production.
+Notify email: `info@hundesalon-nika.com` (forwards via Email Routing). Verify link in inbox → Dashboard **Submit**.
 
 ## Secrets
 

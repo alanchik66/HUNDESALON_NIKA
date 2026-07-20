@@ -58,22 +58,29 @@ export async function onRequest(context) {
   const email = cleanText(body.email, 180).toLowerCase();
   const lang = cleanText(body.lang, 8) || 'de';
   const page = cleanText(body.page, 260);
+  const consentRaw = String(body.newsletter_consent || body.consent || '').toLowerCase();
+  const hasConsent = consentRaw === 'on' || consentRaw === 'true' || consentRaw === '1' || consentRaw === 'yes';
   if (!isValidEmail(email)) {
     return jsonResponse({ success: false, message: 'Invalid email' }, 400, originCheck.origin);
+  }
+  if (!hasConsent) {
+    return jsonResponse({ success: false, message: 'Newsletter consent required' }, 400, originCheck.origin);
   }
 
   const createdAt = new Date().toISOString();
   const supportReplyTo =
     getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') ||
     getEnvValue(env, 'SUPPORT_EMAIL') ||
-    getEnvValue(env, 'SALON_EMAIL', DEFAULT_RECIPIENT);
-  const clientEmailFrom = getEnvValue(env, 'CLIENT_EMAIL_FROM') || getEnvValue(env, 'RESEND_FROM', DEFAULT_FROM);
+    'support@hundesalon-nika.com';
+  const clientEmailFrom =
+    getEnvValue(env, 'CLIENT_EMAIL_FROM') ||
+    'Hundesalon Nika <support@hundesalon-nika.com>';
   const adminRecipients = uniqueEmailList(getEnvList(env, 'ADMIN_NOTIFICATION_EMAILS', DEFAULT_ADMIN_EMAILS.join(',')));
 
   await appendGoogleSheetRow(env, {
     spreadsheetId: getEnvValue(env, 'SHEET_ID'),
     sheetName: 'subscribers',
-    values: [createdAt, email, lang, page, originCheck.origin],
+    values: [createdAt, email, lang, page, originCheck.origin, 'consent:yes'],
   });
 
   await sendResendEmail(env, {

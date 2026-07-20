@@ -343,11 +343,14 @@
 
 .weather-header-preview__stars-back {
   position: absolute !important;
-  top: calc(-1 * var(--header-weather-cloud-rise, 0px)) !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: 100% !important;
-  height: calc(100% + var(--header-weather-cloud-rise, 0px) + var(--header-weather-cloud-extra-h, 24px)) !important;
+  top: var(--header-stars-top, calc(-1 * var(--header-weather-cloud-rise, 0px))) !important;
+  left: var(--header-stars-left, 0px) !important;
+  right: auto !important;
+  width: var(--header-stars-width, 100%) !important;
+  height: var(
+    --header-stars-height,
+    calc(100% + var(--header-weather-cloud-rise, 0px) + var(--header-weather-cloud-extra-h, 24px))
+  ) !important;
   bottom: auto !important;
   z-index: 1 !important;
   pointer-events: none !important;
@@ -372,6 +375,7 @@
   overflow: visible !important;
   opacity: 1 !important;
   visibility: visible !important;
+  transform: translateX(var(--header-stars-scene-shift-x, 0px)) !important;
 }
 
 .weather-header-preview__stars-back.is-night-sky .weather-app__stars-scene--header-panel {
@@ -3508,13 +3512,13 @@
     'blog/strizhka-koshek.html',
     'blog/zashchita-ot-parazitov.html',
     'documents.html',
-    'hundesalon-leipzig.html',
     'vvedenie.html',
     'social.html',
     'reyting.html',
     'partnerstvo.html',
     'impressum.html',
     'datenschutz.html',
+    'agb.html',
   ]);
 
   let headerWeatherLoaderPromise = null;
@@ -3944,7 +3948,7 @@
           <li data-lang="en"><span class="flag">🇬🇧</span> English</li>
         </ul>
       </div>
-      <a href="${pathPrefix}onlayn-bronirovanie.html" class="header-online-btn online-order-pill">${copy.booking}</a>
+      <a href="${pathPrefix}onlayn-bronirovanie.html" class="header-online-btn online-order-pill"><span class="header-online-btn__label">${copy.booking}</span></a>
       <button id="theme-toggle" class="theme-btn" type="button"></button>
     </div>
   </div>
@@ -11936,6 +11940,30 @@
         const starOpacity = showNightStars ? clampHeaderWeatherValue(1.08 - cloudAlpha * 0.52, 0.78, 1) : 0;
         const starsBack = ensureHeaderWeatherStarsBackLayer(previewContainer);
         if (starsBack) {
+          const syncExistingStarsToHeader = () => {
+            const siteHeader = document.querySelector('.header');
+            if (!siteHeader?.isConnected || !previewContainer.isConnected || !starsBack.isConnected) return;
+            const headerRect = siteHeader.getBoundingClientRect();
+            const previewRect = previewContainer.getBoundingClientRect();
+            const headerCenter = headerRect.left + headerRect.width / 2;
+            const previewCenter = previewRect.left + previewRect.width / 2;
+            const sceneShift = clampHeaderWeatherValue((previewCenter - headerCenter) * 0.75, -360, 360);
+            starsBack.style.setProperty('--header-stars-left', `${(headerRect.left - previewRect.left).toFixed(2)}px`);
+            starsBack.style.setProperty('--header-stars-top', `${(headerRect.top - previewRect.top).toFixed(2)}px`);
+            starsBack.style.setProperty('--header-stars-width', `${headerRect.width.toFixed(2)}px`);
+            starsBack.style.setProperty('--header-stars-height', `${headerRect.height.toFixed(2)}px`);
+            starsBack.style.setProperty('--header-stars-scene-shift-x', `${sceneShift.toFixed(2)}px`);
+          };
+          syncExistingStarsToHeader();
+          if (!starsBack.__headerBoundsSyncBound) {
+            starsBack.__headerBoundsSyncBound = true;
+            window.addEventListener('resize', syncExistingStarsToHeader, { passive: true });
+            if (typeof ResizeObserver === 'function') {
+              starsBack.__headerBoundsObserver = new ResizeObserver(syncExistingStarsToHeader);
+              const siteHeader = document.querySelector('.header');
+              if (siteHeader) starsBack.__headerBoundsObserver.observe(siteHeader);
+            }
+          }
           starsBack.classList.toggle('is-night-sky', showNightStars);
           starsBack.classList.remove('is-day-sky');
           starsBack.style.setProperty('--preview-stars-opacity', `${starOpacity.toFixed(3)}`);

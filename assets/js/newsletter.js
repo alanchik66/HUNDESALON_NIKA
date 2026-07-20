@@ -4,21 +4,33 @@
       sending: 'Wird gesendet...',
       success: 'Danke. Die Begrüßungsmail ist unterwegs.',
       error: 'Die Anmeldung ist gerade nicht möglich. Bitte versuchen Sie es später erneut.',
+      consentRequired: 'Bitte bestätigen Sie die Einwilligung zum Newsletter.',
+      consentHtml:
+        'Ich willige in den Erhalt ausgewählter Pflege-Tipps und Angebote per E-Mail ein. Details in der <a href="datenschutz.html">Datenschutzerklärung</a>. Abmeldung jederzeit möglich.',
     },
     ru: {
       sending: 'Отправляем...',
       success: 'Спасибо. Приветственное письмо уже отправляется.',
       error: 'Подписка сейчас недоступна. Попробуйте позже.',
+      consentRequired: 'Подтвердите согласие на получение рассылки.',
+      consentHtml:
+        'Я соглашаюсь получать выбранные советы по уходу и предложения по e-mail. Подробности в <a href="datenschutz.html">политике конфиденциальности</a>. Отписка в любое время.',
     },
     en: {
       sending: 'Sending...',
       success: 'Thank you. The welcome email is on its way.',
       error: 'Subscription is not available right now. Please try again later.',
+      consentRequired: 'Please confirm newsletter consent.',
+      consentHtml:
+        'I agree to receive selected care tips and offers by email. Details in the <a href="datenschutz.html">privacy policy</a>. Unsubscribe anytime.',
     },
     uk: {
       sending: 'Надсилаємо...',
       success: 'Дякуємо. Вітальний лист уже надсилається.',
       error: 'Підписка зараз недоступна. Спробуйте пізніше.',
+      consentRequired: 'Підтвердьте згоду на отримання розсилки.',
+      consentHtml:
+        'Я погоджуюся отримувати вибрані поради з догляду та пропозиції електронною поштою. Деталі в <a href="datenschutz.html">політиці конфіденційності</a>. Відписка будь-коли.',
     },
   };
 
@@ -26,6 +38,32 @@
     (form.querySelector('input[name="lang"]')?.value || document.documentElement.lang || 'de')
       .toLowerCase()
       .slice(0, 2);
+
+  const ensureConsentField = form => {
+    if (form.querySelector('input[name="newsletter_consent"]')) {
+      return;
+    }
+    const lang = getLang(form);
+    const copy = COPY[lang] || COPY.de;
+    const label = document.createElement('label');
+    label.className = 'newsletter-form__consent';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.name = 'newsletter_consent';
+    input.required = true;
+    input.value = 'on';
+    const span = document.createElement('span');
+    span.innerHTML = copy.consentHtml;
+    const privacyLink = span.querySelector('a');
+    if (privacyLink) privacyLink.href = `/${lang}/datenschutz.html`;
+    label.append(input, span);
+    const submit = form.querySelector('[type="submit"]');
+    if (submit) {
+      form.insertBefore(label, submit);
+    } else {
+      form.appendChild(label);
+    }
+  };
 
   const setStatus = (form, type, message) => {
     let status = form.querySelector('.newsletter-form__status');
@@ -45,11 +83,18 @@
       return;
     }
     form.dataset.newsletterReady = 'true';
+    ensureConsentField(form);
 
     form.addEventListener('submit', async event => {
       event.preventDefault();
       const lang = getLang(form);
       const copy = COPY[lang] || COPY.de;
+      const consent = form.querySelector('input[name="newsletter_consent"]');
+      if (consent && !consent.checked) {
+        setStatus(form, 'error', copy.consentRequired);
+        consent.focus();
+        return;
+      }
       const submit = form.querySelector('[type="submit"]');
       const originalText = submit?.textContent || '';
       const pageField = form.querySelector('input[name="page"]');

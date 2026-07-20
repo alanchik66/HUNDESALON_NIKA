@@ -8,8 +8,9 @@ import { spawn } from 'node:child_process';
 const PROJECT_NAME = 'hundesalon-nika';
 const ACCOUNT_ID = '25e872aeab8cb246c69142ab07cd0fee';
 const DEFAULT_SALON_EMAIL = 'info@hundesalon-nika.com';
+const DEFAULT_SUPPORT_EMAIL = 'support@hundesalon-nika.com';
 const DEFAULT_ADMIN_EMAILS = ['snaiper1984@gmail.com', 'ryndenko1982@gmail.com'];
-const DEFAULT_CLIENT_EMAIL_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
+const DEFAULT_CLIENT_EMAIL_FROM = 'Hundesalon Nika <support@hundesalon-nika.com>';
 const DEFAULT_RESOURCE_PREFIX = 'HUNDESALON NIKA';
 const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/calendar',
@@ -536,8 +537,12 @@ async function main() {
     DEFAULT_ADMIN_EMAILS
   );
   const shareEmails = parseEmailList(args['share-email'] || process.env.GOOGLE_SHARE_EMAIL, adminEmails);
-  const supportEmail = String(args['support-email'] || process.env.SUPPORT_EMAIL || salonEmail).trim();
-  const supportReplyTo = String(args['support-reply-to'] || process.env.SUPPORT_REPLY_TO_EMAIL || supportEmail).trim();
+  const supportEmail = String(
+    args['support-email'] || process.env.SUPPORT_EMAIL || DEFAULT_SUPPORT_EMAIL
+  ).trim();
+  const supportReplyTo = String(
+    args['support-reply-to'] || process.env.SUPPORT_REPLY_TO_EMAIL || supportEmail
+  ).trim();
   const clientEmailFrom = String(
     args['client-email-from'] || process.env.CLIENT_EMAIL_FROM || DEFAULT_CLIENT_EMAIL_FROM
   ).trim();

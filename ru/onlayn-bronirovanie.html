@@ -29,28 +29,28 @@
     <meta property="og:site_name" content="HUNDESALON_NIKA" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preload" href="../assets/css/style.css?v=20260707-perf-balanced-v1" as="style" />
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260707-perf-balanced-v1" />
+    <link rel="preload" href="../assets/css/style.css?v=20260720-prod-v2" as="style" />
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260720-prod-v2" />
     <link
       rel="preload"
-      href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@400;700&family=Old+Standard+TT:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Forum&family=Great+Vibes&family=Marck+Script&display=swap"
       as="style"
     />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@400;700&family=Old+Standard+TT:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Forum&family=Great+Vibes&family=Marck+Script&display=swap"
     />
     <link rel="preload" href="../assets/fonts/fontawesome/all.min.css?v=20260329-0192" as="style" />
     <link rel="stylesheet" href="../assets/fonts/fontawesome/all.min.css?v=20260329-0192" />
-    <link rel="preload" href="../assets/css/page-modules.css?v=20260707-liquid-glass-v28" as="style" />
-    <link rel="stylesheet" href="../assets/css/page-modules.css?v=20260707-liquid-glass-v28" />
+    <link rel="preload" href="../assets/css/page-modules.css?v=20260720-prod-v2" as="style" />
+    <link rel="stylesheet" href="../assets/css/page-modules.css?v=20260720-prod-v2" />
     <noscript>
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@400;700&family=Old+Standard+TT:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Forum&family=Great+Vibes&family=Marck+Script&display=swap"
       />
       <link rel="stylesheet" href="../assets/fonts/fontawesome/all.min.css?v=20260329-0192" />
-      <link rel="stylesheet" href="../assets/css/page-modules.css?v=20260707-liquid-glass-v28" />
+      <link rel="stylesheet" href="../assets/css/page-modules.css?v=20260720-prod-v2" />
     </noscript>
 
     <link rel="icon" href="/favicon.ico?v=20260520-brand-bing" sizes="any" />
@@ -147,7 +147,7 @@
       </p>
       <ul class="booking-highlights">
         <li>Подтверждение записи в ближайшее время</li>
-        <li>Индивидуальный подход под породу и характер</li>
+        <li>Индивидуальный подход с учётом породы и характера</li>
         <li>Прозрачная стоимость без скрытых доплат</li>
         <li>Комфортная атмосфера без лишнего стресса</li>
       </ul>
@@ -209,13 +209,30 @@
               Фото питомца (JPG/PNG до 5 МБ)
               <input type="file" name="pet_photo" accept="image/jpeg,image/png" />
             </label>
+                        <fieldset class="booking-payment-fieldset">
+              <legend>Способ оплаты</legend>
+              <label class="booking-check-label">
+                <input type="radio" name="payment_choice" value="salon_cash" checked />
+                <span>Оплата наличными в салоне</span>
+              </label>
+              <label class="booking-check-label">
+                <input type="radio" name="payment_choice" value="salon_card" />
+                <span>Оплата картой в салоне</span>
+              </label>
+              <p class="booking-payment-hint">Онлайн-оплата пока не активна (салон ещё не открыт). Оплата наличными или картой в салоне. См. <a href="agb.html">условия</a>.</p>
+            </fieldset>
+            <div class="info-card booking-rules-summary">
+              <h3>Правила перед первым визитом</h3>
+              <p>Подготовка питомца · сообщение о здоровье и поведении · колтуны 1&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>/мин · паразиты от 40&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span> · владелец в рабочей зоне только по согласованию · отмена заранее (иначе возможна предоплата при следующих записях).</p>
+              <p><a href="agb.html">Полные правила салона</a></p>
+            </div>
             <label class="booking-check-label">
-              <input type="checkbox" name="payment_now" />
-              <span>Оплатить сейчас</span>
+              <input type="checkbox" name="agb_consent" required />
+              <span>Я ознакомлен(а) с <a href="agb.html">правилами салона и условиями (AGB)</a> и принимаю их.</span>
             </label>
             <label class="booking-check-label">
               <input type="checkbox" name="privacy_consent" required />
-              <span>Я согласен на обработку персональных данных по GDPR.</span>
+              <span>Я согласен(на) на обработку персональных данных в соответствии с GDPR. Подробнее: <a href="datenschutz.html">политика конфиденциальности</a>.</span>
             </label>
             <div class="booking-file-preview" data-booking-file-preview hidden></div>
             <div class="booking-summary" data-booking-summary hidden tabindex="-1"></div>
@@ -323,18 +340,20 @@
           <a href="impressum.html">Импрессум</a>
           <span class="footer-legal-sep">|</span>
           <a href="datenschutz.html">Конфиденциальность</a>
+          <span class="footer-legal-sep">|</span>
+          <a href="agb.html">Условия</a>
         </div>
         <div class="footer-copy">© 2026 HUNDESALON_NIKA | Все права защищены</div>
       </div>
     </footer>
 
     <!-- ═══════════════ Подключение скриптов ═════════════════════════════ -->
-    <script src="../assets/js/site-shell.js?v=20260707-light-type-v1"></script>
-    <script src="../assets/js/main.js?v=20260707-perf-balanced-v1"></script>
-    <script src="../assets/js/page-modules.js?v=20260707-liquid-glass-v28"></script>
+    <script src="../assets/js/site-shell.js?v=20260720-prod-v2"></script>
+    <script src="../assets/js/main.js?v=20260720-prod-v2"></script>
+    <script src="../assets/js/page-modules.js?v=20260720-prod-v2"></script>
     <script src="../assets/js/tooltip.js?v=20260330-0001"></script>
     <script src="../assets/js/cookie-consent.js?v=20260620-full-stack-upgrade"></script>
-    <script src="../assets/js/newsletter.js?v=20260620-full-stack-upgrade"></script>
+    <script src="../assets/js/newsletter.js?v=20260720-prod-v2"></script>
     <script src="../assets/js/pwa.js?v=20260707-sw-dev-fix"></script>
   </body>
 </html>

@@ -16,16 +16,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const bookingCopyByLang = {
     ru: {
       weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
-      services: ['Стрижка собак', 'Купание', 'Тримминг', 'Экспресс-линька', 'Стрижка кошек', 'Ваши предложения'],
+      services: ['Полный груминг собаки', 'Экспресс-линька', 'Гигиенический уход', 'Груминг кошки', 'SPA-уход', 'Ваши предложения'],
       fallbackService: 'Выбранная услуга',
       chooseService: 'Выберите услугу',
       chooseDate: 'Выберите дату',
       chooseTime: 'Выберите время',
       chooseContact: 'Заполните имя, email и телефон',
       choosePrivacy: 'Подтвердите согласие на обработку персональных данных',
+      chooseAgb: 'Подтвердите ознакомление с правилами салона (AGB)',
+      paymentRedirect: 'Переходим к безопасной онлайн-оплате…',
+      paymentUnavailable:
+        'Онлайн-оплата пока отключена. Выберите оплату в салоне (наличные или карта).',
+      paymentSuccess: 'Онлайн-предоплата получена. Запись отправлена в салон.',
       dateInPast: 'Выберите будущую дату',
       fileType: 'Можно загрузить только JPG или PNG',
       fileSize: 'Файл должен быть не больше 5 МБ',
+      fileUploadFailed: 'Не удалось загрузить фото. Попробуйте ещё раз или отправьте запись без файла.',
       summaryTitle: 'Проверьте запись перед отправкой',
       summaryConfirm: 'Подтвердить и отправить',
       summaryEdit: 'Изменить данные',
@@ -38,8 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
         phone: 'Телефон',
         payment: 'Оплата',
         file: 'Файл',
-        payNow: 'Оплатить сейчас',
+        payNow: 'Онлайн-предоплата',
         payLater: 'Оплата в салоне',
+        paySalonCash: 'Наличные в салоне',
+        paySalonCard: 'Карта в салоне',
+        payOnline: 'Онлайн-предоплата (Stripe)',
         noFile: 'Без файла',
       },
       closeModal: 'Закрыть окно',
@@ -49,16 +58,22 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     uk: {
       weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
-      services: ['Стрижка собак', 'Купання', 'Тримінг', 'Експрес-линька', 'Стрижка котів', 'Ваші пропозиції'],
+      services: ['Повний грумінг собаки', 'Експрес-линька', 'Гігієнічний догляд', 'Грумінг кота', 'SPA-догляд', 'Ваші пропозиції'],
       fallbackService: 'Обрана послуга',
       chooseService: 'Оберіть послугу',
       chooseDate: 'Оберіть дату',
       chooseTime: 'Оберіть час',
       chooseContact: 'Заповніть імʼя, email і телефон',
       choosePrivacy: 'Підтвердьте згоду на обробку персональних даних',
+      chooseAgb: 'Підтвердьте ознайомлення з правилами салону (AGB)',
+      paymentRedirect: 'Переходимо до безпечної онлайн-оплати…',
+      paymentUnavailable:
+        'Онлайн-оплата поки вимкнена. Оберіть оплату в салоні (готівка або картка).',
+      paymentSuccess: 'Онлайн-передоплату отримано. Запис надіслано в салон.',
       dateInPast: 'Оберіть майбутню дату',
       fileType: 'Можна завантажити лише JPG або PNG',
       fileSize: 'Файл має бути не більше 5 МБ',
+      fileUploadFailed: 'Не вдалося завантажити фото. Спробуйте ще раз або надішліть запис без файлу.',
       summaryTitle: 'Перевірте запис перед надсиланням',
       summaryConfirm: 'Підтвердити й надіслати',
       summaryEdit: 'Змінити дані',
@@ -71,8 +86,11 @@ document.addEventListener('DOMContentLoaded', () => {
         phone: 'Телефон',
         payment: 'Оплата',
         file: 'Файл',
-        payNow: 'Оплатити зараз',
+        payNow: 'Онлайн-передоплата',
         payLater: 'Оплата в салоні',
+        paySalonCash: 'Готівка в салоні',
+        paySalonCard: 'Картка в салоні',
+        payOnline: 'Онлайн-передоплата (Stripe)',
         noFile: 'Без файлу',
       },
       closeModal: 'Закрити вікно',
@@ -82,16 +100,22 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     en: {
       weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      services: ['Dog haircut', 'Bathing', 'Hand stripping', 'Express deshedding', 'Cat grooming', 'Your suggestions'],
+      services: ['Full dog grooming', 'Express deshedding', 'Hygiene care', 'Cat grooming', 'SPA care', 'Your suggestions'],
       fallbackService: 'Selected service',
       chooseService: 'Please select a service',
       chooseDate: 'Please select a date',
       chooseTime: 'Please select a time',
       chooseContact: 'Please fill in name, email, and phone',
       choosePrivacy: 'Please confirm personal data processing consent',
+      chooseAgb: 'Please confirm you have read the salon rules (AGB)',
+      paymentRedirect: 'Redirecting to secure online payment…',
+      paymentUnavailable:
+        'Online payment is turned off for now. Please choose salon payment (cash or card).',
+      paymentSuccess: 'Online deposit received. Your booking was sent to the salon.',
       dateInPast: 'Please choose a future date',
       fileType: 'Only JPG or PNG files are allowed',
       fileSize: 'File size must be up to 5 MB',
+      fileUploadFailed: 'Photo upload failed. Try again or submit the booking without a file.',
       summaryTitle: 'Review your booking before sending',
       summaryConfirm: 'Confirm and send',
       summaryEdit: 'Edit details',
@@ -106,6 +130,9 @@ document.addEventListener('DOMContentLoaded', () => {
         file: 'File',
         payNow: 'Pay now',
         payLater: 'Pay at salon',
+        paySalonCash: 'Cash at the salon',
+        paySalonCard: 'Card at the salon',
+        payOnline: 'Online deposit (Stripe)',
         noFile: 'No file',
       },
       closeModal: 'Close dialog',
@@ -115,16 +142,22 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     de: {
       weekdays: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
-      services: ['Hundeschnitt', 'Baden', 'Trimming', 'Express-Fellwechselpflege', 'Katzenpflege', 'Ihre Vorschläge'],
+      services: ['Komplett-Grooming Hund', 'Express-Fellwechsel', 'Hygienepflege', 'Katzenpflege', 'SPA-Pflege', 'Ihre Vorschläge'],
       fallbackService: 'Ausgewählte Leistung',
       chooseService: 'Bitte wählen Sie eine Leistung',
       chooseDate: 'Bitte wählen Sie ein Datum',
       chooseTime: 'Bitte wählen Sie eine Uhrzeit',
       chooseContact: 'Bitte füllen Sie Name, E-Mail und Telefon aus',
       choosePrivacy: 'Bitte bestätigen Sie die Verarbeitung personenbezogener Daten',
+      chooseAgb: 'Bitte bestätigen Sie die Salonregeln (AGB)',
+      paymentRedirect: 'Weiterleitung zur sicheren Online-Zahlung…',
+      paymentUnavailable:
+        'Online-Zahlung ist derzeit deaktiviert. Bitte Zahlung im Salon wählen (bar oder Karte).',
+      paymentSuccess: 'Online-Anzahlung erhalten. Die Buchung wurde an den Salon gesendet.',
       dateInPast: 'Bitte wählen Sie ein zukünftiges Datum',
       fileType: 'Nur JPG- oder PNG-Dateien sind erlaubt',
       fileSize: 'Die Datei darf maximal 5 MB groß sein',
+      fileUploadFailed: 'Foto-Upload fehlgeschlagen. Bitte erneut versuchen oder ohne Datei buchen.',
       summaryTitle: 'Bitte prüfen Sie Ihre Buchung vor dem Absenden',
       summaryConfirm: 'Bestätigen und senden',
       summaryEdit: 'Angaben ändern',
@@ -139,6 +172,9 @@ document.addEventListener('DOMContentLoaded', () => {
         file: 'Datei',
         payNow: 'Jetzt bezahlen',
         payLater: 'Zahlung im Salon',
+        paySalonCash: 'Bar im Salon',
+        paySalonCard: 'Karte im Salon',
+        payOnline: 'Online-Anzahlung (Stripe)',
         noFile: 'Keine Datei',
       },
       closeModal: 'Dialog schließen',
@@ -626,7 +662,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedTimeField = modal.querySelector('#selected-time');
     const bookingFileInput = modal.querySelector('input[name="pet_photo"]');
     const privacyInput = modal.querySelector('input[name="privacy_consent"]');
-    const paymentInput = modal.querySelector('input[name="payment_now"]');
+    const agbInput = modal.querySelector('input[name="agb_consent"]');
+    const getPaymentChoice = () =>
+      modal.querySelector('input[name="payment_choice"]:checked')?.value || 'salon_cash';
     const uploadedFileUrlField = modal.querySelector('input[name="uploaded_file_url"]');
     const bookingSummary = modal.querySelector('[data-booking-summary]');
     const bookingFilePreview = modal.querySelector('[data-booking-file-preview]');
@@ -1277,13 +1315,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!['http:', 'https:'].includes(parsed.protocol)) {
           return '';
         }
-        if (parsed.origin !== window.location.origin) {
-          return '';
+        // Same-origin upload proxy
+        if (parsed.origin === window.location.origin && parsed.pathname.startsWith('/uploads/')) {
+          return parsed.toString();
         }
-        if (!parsed.pathname.startsWith('/uploads/')) {
-          return '';
+        // Google Drive webViewLink from /upload (functions/upload.js)
+        const host = parsed.hostname.replace(/^www\./, '');
+        if (
+          (host === 'drive.google.com' || host === 'docs.google.com') &&
+          (parsed.pathname.includes('/file/') || parsed.pathname.includes('/open') || parsed.searchParams.has('id'))
+        ) {
+          return parsed.toString();
         }
-        return parsed.toString();
+        return '';
       } catch {
         return '';
       }
@@ -1349,6 +1393,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const result = await response.json().catch(() => ({}));
         const safeFileUrl = normalizeUploadedFileUrl(result.fileUrl);
+        // Drive not configured: allow booking without link (server returns success + empty fileUrl)
+        if (response.ok && result.success && result.configured === false && !result.fileUrl) {
+          return true;
+        }
         if (response.ok && result.success && safeFileUrl) {
           state.uploadedFileUrl = safeFileUrl;
           syncHiddenFields();
@@ -1358,10 +1406,13 @@ document.addEventListener('DOMContentLoaded', () => {
             fileUrlText.textContent = safeFileUrl;
             bookingFilePreview.appendChild(fileUrlText);
           }
+          return true;
         }
-        return true;
+        showValidationMessage(bookingCopy.fileUploadFailed, bookingFileInput);
+        return false;
       } catch {
-        return true;
+        showValidationMessage(bookingCopy.fileUploadFailed, bookingFileInput);
+        return false;
       }
     };
 
@@ -1372,7 +1423,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const labels = bookingCopy.labels;
       const file = bookingFileInput?.files?.[0];
-      const paymentLabel = paymentInput?.checked ? labels.payNow : labels.payLater;
+      const choice = getPaymentChoice();
+      const paymentLabel =
+        choice === 'online'
+          ? labels.payOnline
+          : choice === 'salon_card'
+            ? labels.paySalonCard
+            : labels.paySalonCash;
       const rows = [
         [labels.service, state.selectedService],
         [labels.date, state.selectedDate],
@@ -1938,6 +1995,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      if (agbInput && !agbInput.checked) {
+        setStep(3);
+        showValidationMessage(bookingCopy.chooseAgb, agbInput);
+        return;
+      }
+
       if (!state.summaryConfirmed) {
         renderBookingSummary({ nameValue, emailValue, phoneValue });
         state.summaryConfirmed = true;
@@ -1950,8 +2013,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      await ensureBookingFileUploaded();
+      const uploadedOk = await ensureBookingFileUploaded();
+      if (!uploadedOk) {
+        setStep(3);
+        return;
+      }
+
+      const paymentChoice = getPaymentChoice();
       const submitBtn = form.querySelector('[type="submit"]');
+
+      if (paymentChoice === 'online') {
+        showValidationMessage(bookingCopy.paymentUnavailable, submitBtn);
+        return;
+      }
+
       const sent = await submitSendmailForm(form, submitBtn);
       if (sent) {
         modal.classList.add('booking-modal-sent');
@@ -1970,6 +2045,9 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDatetimeStepState();
     scanBookingNavPills(modal);
     scanBookingNavPills(document);
+
+    // Stripe return path intentionally inactive while PAYMENTS_ONLINE_ENABLED is off.
+    // Re-enable together with the online payment_choice UI when the salon opens.
   };
 
   initSendmailForms();

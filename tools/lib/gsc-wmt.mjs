@@ -1,6 +1,6 @@
 /** Google Search Console constants for browser automation. */
 export const GSC_PROPERTY = 'sc-domain:hundesalon-nika.com';
-export const GSC_ACCOUNT = 'snaiper1984@gmail.com';
+export const GSC_ACCOUNT = 'ryndenko1982@gmail.com';
 
 export function gscUrl(section = '', extra = '') {
   const path = section.replace(/^\//, '');

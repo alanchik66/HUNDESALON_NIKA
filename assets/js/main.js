@@ -157,6 +157,30 @@ document.addEventListener('DOMContentLoaded', () => {
     return root;
   })();
 
+  const heroPhoto = document.querySelector('.hero-photo');
+  const aboutPhoto = document.querySelector('.about-photo:not(:empty)');
+  if (heroPhoto && aboutPhoto) {
+    const syncAboutPhotoFrame = () => {
+      const rootStyle = document.documentElement.style;
+      if (window.innerWidth <= 900) {
+        rootStyle.removeProperty('--matched-hero-photo-width');
+        rootStyle.removeProperty('--matched-hero-photo-height');
+        return;
+      }
+
+      const rect = heroPhoto.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      rootStyle.setProperty('--matched-hero-photo-width', `${rect.width.toFixed(2)}px`);
+      rootStyle.setProperty('--matched-hero-photo-height', `${rect.height.toFixed(2)}px`);
+    };
+
+    const heroPhotoObserver =
+      typeof ResizeObserver === 'function' ? new ResizeObserver(syncAboutPhotoFrame) : null;
+    heroPhotoObserver?.observe(heroPhoto);
+    window.addEventListener('resize', syncAboutPhotoFrame, { passive: true });
+    requestAnimationFrame(syncAboutPhotoFrame);
+  }
+
   /* ========== BURGER MENU — PROFESSIONAL MOBILE PANEL ========== */
   const getByAnyId = (...ids) => ids.map(id => document.getElementById(id)).find(Boolean) || null;
 
@@ -632,8 +656,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const syncMobileNavLayout = () => {
       const viewportHeight = window.visualViewport?.height || window.innerHeight;
       const availableHeight = Math.max(viewportHeight, 0);
+      const contentOffset = Math.max(0, getVisibleHeaderBottom());
       mobileNav.style.setProperty('--mobile-nav-offset', '0px');
       mobileNav.style.setProperty('--mobile-nav-height', `${availableHeight}px`);
+      mobileNav.style.setProperty('--mobile-nav-content-offset', `${contentOffset}px`);
       refreshMobileNavScrollbar();
     };
 

@@ -40,7 +40,7 @@
 
 ## Вне Bing (но обязательно)
 
-- **Google Search Console** — `snaiper1984@gmail.com` (отдельно)
+- **Google Search Console** — `ryndenko1982@gmail.com` (sole Owner; отдельно от Bing)
 - **IndexNow** — apex + www (`npm run seo:indexnow`)
 - **Favicon/лого** — на сайте, не загрузка в панели Bing
 - **Деплой** — `npm run deploy:full` после изменений HTML/brand

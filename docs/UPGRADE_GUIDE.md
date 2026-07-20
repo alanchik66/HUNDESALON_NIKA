@@ -88,8 +88,8 @@
 
 ## Рабочая почта и доступы
 
-- `CONTACT_RECIPIENT_EMAIL` и `BOOKING_RECIPIENT_EMAIL` — куда приходят заявки с сайта. По умолчанию используется `info@hundesalon-nika.com`.
-- `SUPPORT_EMAIL` и `SUPPORT_REPLY_TO_EMAIL` — рабочий адрес, куда должны попадать ответы клиентов. Для текущей схемы: `info@hundesalon-nika.com`.
+- `CONTACT_RECIPIENT_EMAIL` / `BOOKING_RECIPIENT_EMAIL` / `SALON_EMAIL` — куда приходят заявки с сайта и публичный NAP: `info@hundesalon-nika.com` (Search / Ads).
+- `SUPPORT_EMAIL` / `SUPPORT_REPLY_TO_EMAIL` / `CLIENT_EMAIL_FROM` — рабочий адрес для исходящих и ответов: `support@hundesalon-nika.com` (From / Reply-To к клиенту).
 - `ADMIN_NOTIFICATION_EMAILS` — внутренние копии заявок для администраторов: `snaiper1984@gmail.com,ryndenko1982@gmail.com`.
 - `GOOGLE_SHARE_EMAIL` — кому выдать доступ к Google Calendar/Sheets/Drive. Можно указать несколько Google-аккаунтов через запятую.
 - `GMAIL_SENDER` должен быть только рабочим Gmail/Workspace alias. Если он пустой, код не отправляет клиентские письма через Gmail, чтобы клиент не видел личный Gmail владельца OAuth.
@@ -113,7 +113,7 @@ TikTok JPEG перенесены в `assets/images/before-after/` и подкл�
 
 ## Платежи
 
-`functions/payment.js` пока возвращает статус `TODO`. Для продакшена подключите Stripe или PayPal только на сервере, ключи храните в Cloudflare env vars, а клиенту возвращайте только payment session/client token.
+Stripe Checkout реализован серверными функциями `functions/payment.js` и `functions/payment-webhook.js`, но до открытия салона заблокирован флагом `PAYMENTS_ONLINE_ENABLED=false`. Перед включением нужны live-ключи, `STRIPE_WEBHOOK_SECRET` и KV binding `PAYMENT_EVENTS` для дедупликации webhook-событий. Сумма депозита берётся только из серверного `STRIPE_DEPOSIT_AMOUNT_CENTS`; клиент не может задавать её самостоятельно.
 
 ## Рассылка
 

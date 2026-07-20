@@ -5,74 +5,66 @@ Session status: recent changes, current goals, open questions.
 
 ## Current Focus
 
-- Local citations follow-up mostly done (Maps live, GS confirmed, GBP created pending verify, 11880 submitted).
-- **GBP still unverified** — only **video** offered; wait poll finished with **no upload** (still waiting). Verify URL: `https://business.google.com/verify/l/07906466805416970763` (`snaiper1984@gmail.com`). User must record at salon + upload.
-- Standing rule: when login/OAuth needed — open URLs, wait for user login, then continue automatically (see `.cursor/rules/wait-for-user-login.mdc`).
+- **GBP (ryndenko):** HUNDESALON_NIKA created, profile filled, **not public** until video verify after salon opens. Verify: `https://business.google.com/verify/l/09116836504441086909`
+- **Stripe:** test keys in CF; bank ••••1334 + 2FA On; Dashboard submit still blocked (`Unternehmensinformationen Unvollständig` / USt empty). Site payments **OFF** (`PAYMENTS_ONLINE_ENABLED=false`).
+- Standing rule: login/OAuth → open URL, wait, resume (`.cursor/rules/wait-for-user-login.mdc`).
 
 ## Recent Changes
 
-2026-07-18 22:15:00 - GBP video verify wait (wait-for-user-login):
+2026-07-19 20:40:00 - Eric Schumann price list + salon rules on site (ru/de/en/uk):
 
-- Opened/kept verify URL in Edge + Playwright as `snaiper1984@gmail.com`: `https://business.google.com/verify/l/07906466805416970763`.
-- Advanced wizard past duplicate list («Ничего не подходит») → only method **Отправить видео компании**; tips / «Начать запись» ready.
-- Polled ~45–60+ min wall time: **no video submitted**, status still needs confirmation (wizard ~20–27%, not pending review). Profile still not public (“Ваша компания не видна пользователям”).
-- Leipzig Branchenbuch email skipped (no RESEND_API_KEY).
-- **Next (user):** at salon, one continuous clip — street → permanent HUNDESALON NIKA sign → interior; use «Начать запись» / upload in open Edge tab (Google disallows pre-recorded). After pending review → recheck website `https://hundesalon-nika.com/de/` then go public when Google approves.
+- `prays-list.html`: breed/service prices (dogs full groom, hygiene, deshed, SPA, cats, extras).
+- `agb.html`: full salon rules (prep, health, behaviour, mats 1€/min, parasites from 40€, owner presence, cancel/deposit).
+- Booking forms: short rules summary + checkbox «ознакомлен с правилами салона».
+- `nashi-uslugi.html` cards aligned; booking service list in `page-modules.js` updated.
 
-2026-07-18 21:05:00 - GBP follow-up (post citations deploy):
+2026-07-19 20:20:00 - Professional junk cleanup:
 
-- Opened GBP as `snaiper1984@gmail.com`; status still **Требуется подтверждение / 0% verified**. Duplicate-business list → none match; only **video** verification (no postcard/SMS). Edge left on verify flow “Начать запись”.
-- Profile filled without verify: **Tierfriseur**; phone `0151 72450988`; website `/de/`; DE description saved; **Öffnungszeiten Mo–So 09:00–21:00** saved.
-- Leipzig Branchenbuch email **not sent** — `RESEND_API_KEY` absent from `.dev.vars` / env; draft still `temp/leipzig-branchenbuch-email.txt` (To intended: `wirtschaft@leipzig.de`).
-- User must: shoot continuous verification video at Walter-Markov-Ring 1 (street + sign + interior access), upload in open verify tab; optionally send Branchenbuch email once Resend key available.
+- `npm run clean` (dist/temp/test-results); removed Edge CDP profiles (`edge-stripe-cdp`, hundesalon edge debug), ~200+ `playwright-artifacts-*`, Cursor `agent-tools` dumps, `.wrangler` local state.
+- Kept durable status docs (`docs/gbp-ryndenko-status-*.md`, snaiper cleanup, ads audits) + product code. Dropped one-off Stripe CDP scripts and private temp bank note path.
+- GBP socials kept: Instagram + Facebook + TikTok (YouTube deferred by owner). Facebook canonical in `config/brand-profiles.mjs`.
 
-2026-07-18 20:50:00 - Local citations / Maps NAP fix:
+2026-07-19 20:15:00 - Earlier session cleanup note (temp already mostly cleared).
 
-- **Teplice Maps bug fixed:** `config/brand-profiles.mjs` + ~20 locale pages + `llms.txt` pointed at wrong CZ PetGrooming place; now Leipzig NAP search URL. Commit `c1e3795`. Deployed + CDN purge + IndexNow; live `/de/` and `/de/kontakty` verified Leipzig (no Teplice).
-- **Gelbe Seiten:** confirmation email found in `snaiper1984@gmail.com` (forwarded from `info@`); confirm link opened — status: already confirmed, entry in review (“wird bereits bearbeitet”).
-- **GBP:** created under `snaiper1984@gmail.com` — HUNDESALON NIKA, Tierfriseur, Walter-Markov-Ring 1, 04288 Leipzig, phone +49 151 72450988, website `https://hundesalon-nika.com/de/`. Verify later chosen (video was only immediate option). Profile setup ~100%; **public visibility blocked until user verifies** (video or later postcard/phone if offered). Location verify URL path id `07906466805416970763`.
-- **11880:** submitted successfully (Branche `Hundefriseur`, step Bestätigung — “Vielen Dank für Ihren Eintrag”).
-- **Leipzig Branchenbuch email:** draft remains `temp/leipzig-branchenbuch-email.txt`; not sent (no Resend key locally; draft has no explicit recipient).
-- Still for user: GBP verification (video/other), optional hours/photos/description polish in Business Profile, optional send Leipzig city directory email.
+2026-07-19 19:55:00 - support@ on site + CF mail map (info public / support send-reply).
 
-2026-07-18 19:40:00 - SEO soft-404 + Bing + GSC:
+2026-07-19 19:30:00 - Email roles + hours Mo–Fr / weekends closed (site + GBP).
 
-- Root cause soft-404: Pages treated site as SPA (index.html without 404.html) → missing URLs returned homepage 200.
-- Added `404.html`, legacy EN-slug 301s in `_redirects`, soft-404 self-check `tools/check-soft-404.mjs`.
-- Deployed; missing URLs now 404; legacy slugs 301 to canonical pages; GSC 404 validation started.
-- Bing: IndexNow 109+109; Submit URL 100 apex; sitemaps OK (2 maps, 0 errors, 152 URLs); `bing-index-all` Windows spawn fixed (`shell: true`).
+2026-07-19 19:25:00 - Stripe bank prep + GBP profile tabs (payments still OFF).
+
+2026-07-19 18:45:00 - Online payments kill-switch live; AGB + legal hardening; master agents prompt.
+
+2026-07-19 17:16:00 - Google cutover to ryndenko (GSC/Ads/GBP snaiper cleaned). See `docs/google-snaiper-cleanup-2026-07-19.md`.
+
+2026-07-19 23:04:00 - Typography matched to salon sign across all locales:
+
+- Trajan-style Cinzel Regular for Latin, Forum fallback for Cyrillic, Great Vibes / Marck Script accents.
+- Replaced legacy shimmer and green-glow text effects with one static, embossed liquid-gold material.
+- Separate high-contrast liquid-gold calibration for dark and light themes; visually checked both.
+- Final metal hierarchy: all typography uses dimensional yellow gold; the hero H1 alone uses deep glossy white gold in both themes.
+- Global layout compacted: removed hero `100vh` expansion and double top spacing, applied header clearance only to the first content block, hid empty about-photo placeholders, placed mobile hero copy before media, restored static social icons, and returned long-form copy to Cormorant Garamond.
+- Long-form copy is justified with language-aware hyphenation on desktop/tablet; narrow screens switch to left-aligned `text-wrap: pretty` to avoid word-spacing rivers. Header/weather selectors are explicitly outside this typography scope.
+- Home hero H1 uses a fixed, centered three-line localized composition in all locales: professional care / for your / beloved pets, with locale-specific responsive sizing and no overflow.
+- Hero-left now uses one shared column width: title, subtitle and CTA are 680px/100%; desktop subtitle is justified, mobile copy remains centered, and CTA spans the same grid width.
+- `.btn-neon` is now one canonical navigation-derived component across hero, newsletter, blog and content CTAs: 38px min-height, 7×13px padding, Cinzel 13/500, shared glass, radius, shadows and motion in both themes.
+- Desktop hero uses equal 1:1 columns up to 680px; the photo frame stretches to the exact width and height of the localized hero-left content. Mobile retains a 3:2 image ratio.
+- Homepage about-photo reuses the hero frame treatment and is ResizeObserver-synced to the exact locale-specific hero-photo width/height on desktop; both frames use 360×240 at phone width.
+- Photo darkening overlays are disabled globally for hero, about, gallery and before/after media; caption readability uses text shadow rather than a black image veil.
+- Homepage about section now uses the same full-width two-column grid as hero: exact desktop edges at x=60/833 and equal 679px columns; mobile collapses to a clean single column.
+- Shared photo-depth tokens now give hero, about, gallery and before/after frames a gold edge plus layered external depth shadows; light theme uses a softer brown-gold shadow, with no image-darkening overlay.
+- Header booking CTA now shares the exact desktop nav-pill geometry and motion (38px, 7×13px, 16px radius, Cinzel 13/500, glass/shadows); only width differs naturally with label length.
+- Existing weather-widget star canvas (no generated replacement) is resized/repositioned to the exact full header bounds and tracks header/viewport resize; its original night/day logic and star assets remain authoritative.
+- Existing star scene is optically shifted toward the weather preview center (75% of the header/preview center delta, clamped ±360px), keeping desktop stars behind weather instead of navigation while leaving mobile nearly unshifted.
+- Active nav pills now have explicit combined hover/focus states after the active rules, so active styling no longer cancels lift/scale; both themes transition 1.01→1.018 with brighter glass and stronger depth.
+- Unified narrative copy scale: hero/about/section intros/articles/legal/booking all use Cormorant Garamond 18px/1.6/500 on desktop-tablet and 16px/1.55/500 on phones, with 0.01em tracking.
+- Homepage About heading now mirrors the locale-specific first hero line exactly (font size, line-height, tracking, glossy white-gold material) and is centered within its 679px text column; responsive sizes match on mobile.
+- Header booking label now has its own liquid-gold text span with high-contrast gradient, 0.3px metallic rim, four-layer depth/glow and a slow vertical material flow; light theme has a darker readable calibration.
+- Completed full native-language audit and high-confidence correction pass across all 88 DE/EN/RU/UK HTML pages (including metadata, legal, services and blogs); current approved hero subtitles were preserved where audits were stale.
+- Release audit passed: 0 dependency vulnerabilities, 40 meta-description violations fixed, all asset versions unified, payment/webhook trust boundaries hardened, 19 obsolete one-off tools removed, production build and 4-locale desktop/mobile smoke green.
 
 ## Open Questions/Issues
 
-- Full RooFlow Flow-* modes require the Roo Code VS Code extension; Cursor uses this Memory Bank via `.cursor/rules/rooflow-memory-bank.mdc`.
-- Semantic Graphify pass (HTML/docs) needs an LLM API key if desired later.
-
-2026-07-18 18:45:00 - MCP professional setup:
-- Enabled Cloudflare `oauth_app_access_enabled` (Public OAuth App access) via Edge CDP on HUNDESALON_NIKA.
-- Authenticated Cloudflare MCP: cloudflare, bindings, builds, observability (+ docs already ok).
-- Authenticated Notion MCP.
-- Playwright MCP set to `--browser msedge`.
-- Rule saved: wait-for-user-login (`.cursor/rules/wait-for-user-login.mdc` + memory).
-
-2026-07-18 19:10:00 - Cursor Customize lean config (Alan Sakarjaew / HUNDESALON_NIKA):
-- **Plugins uninstalled** via Dashboard API: Datadog (`1411`), Omni Analytics (`2729`), 1Password (`768`). Local `installedIds` + caches cleaned.
-- **Plugins kept**: Notion Workspace (`404`), Linear (`512`), Figma (`657`).
-- **User MCPs** (`~/.cursor/mcp.json`): filesystem-hundesalon, memory, sequential-thinking, playwright (msedge), github, cloudflare-docs/bindings/builds/observability. No Datadog, no webstorm, no gmail, no broken `mcp.cloudflare.com` Code Mode.
-- **Rules**: `wait-for-user-login.mdc` + new alwaysApply `do-it-yourself-settings.mdc` (agent executes Settings/plugin/MCP cleanup; no click-path dumping).
-- **Skills/hooks/subagents**: no new fluff; project skills stay under `.agents/skills/` (Cloudflare, graphify, ponytail, etc.).
-
-2026-07-19 02:35:55 - Google Ads wrap-up (ryndenko, non-media, PAUSED):
-
-- Account ryndenko1982@gmail.com · CID 530-092-3191 · Chrome CDP — campaign draft stays PAUSED / not launched.
-- Fixed Final URL back to https://hundesalon-nika.com/ (had been corrupted mid-session).
-- Scrubbed EN long headlines containing «grooming»; short HL DE-first; logos (2) / images (20) left as-is; videos (0) postponed.
-- Status file: temp/ads-ryndenko-prep-status.md. Draft promos on disk under assets/video/ads/ for tomorrow media.
-- €400 promo: documented only, not claimed. snaiper1984: deferred (needs account switch login).
-
-2026-07-19 12:53:50 - Google Ads ryndenko PMax (PAUSED) media+groom:
-
-- Draft ocid 8415382946 / draftId 10205208583 — Chrome only; not launched.
-- Enhanced+committed user work photos, 3 business cards, beige logo, pro video (dde8651).
-- Uploaded logos/images/video; purged groom* from asset fields to DE-first (Google may re-inject on reload).
-- Soft-save flaky; stay on assets; do not full-reload. Status: `docs/ads-ryndenko-prep-status.md`.
-- Still open: confirm video count, strip leftover Google stock if Images high, geo/themes, €400 promo, GBP, snaiper1984 pause.
+- USt-IdNr → Impressum (4 locales) + Stripe company when available.
+- Stripe **Zustimmen und absenden** when Dashboard Incomplete clears.
+- GBP video verify at salon; then Maps URL → `brand-profiles.mjs`.
+- Unlock site payments only when salon opens.

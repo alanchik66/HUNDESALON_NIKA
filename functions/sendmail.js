@@ -17,12 +17,15 @@ import {
   createGoogleCalendarEvent,
   getEnvList,
   getEnvValue,
+  hasUsableValue,
   sendResendEmail,
   sendTeamsMessage,
 } from './_lib/platform-integrations.js';
 
 const DEFAULT_RECIPIENT = 'info@hundesalon-nika.com';
+const DEFAULT_SUPPORT = 'support@hundesalon-nika.com';
 const DEFAULT_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
+const DEFAULT_CLIENT_FROM = 'Hundesalon Nika <support@hundesalon-nika.com>';
 const DEFAULT_ADMIN_EMAILS = ['snaiper1984@gmail.com', 'ryndenko1982@gmail.com'];
 const SLACK_TIMEOUT_MS = 4500;
 const RESEND_USER_AGENT = 'hundesalon-nika.com/1.0 (Cloudflare Pages Function)';
@@ -70,6 +73,35 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
 }
 
+function paymentsOnlineEnabled(env) {
+  const raw = String(getEnvValue(env, 'PAYMENTS_ONLINE_ENABLED') || '').trim().toLowerCase();
+  return raw === '1' || raw === 'true' || raw === 'on' || raw === 'yes';
+}
+
+async function verifyStripeBookingSession(env, sessionId, booking) {
+  const secret = getEnvValue(env, 'STRIPE_SECRET_KEY') || getEnvValue(env, 'PAYMENT_PROVIDER_KEY');
+  if (!hasUsableValue(secret) || !sessionId.startsWith('cs_')) return false;
+  const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`, {
+    headers: { Authorization: `Bearer ${secret}` },
+  });
+  if (!response.ok) return false;
+  const session = await response.json().catch(() => null);
+  if (!session || session.payment_status !== 'paid' || session.currency !== 'eur') return false;
+
+  const expectedAmount = Number(getEnvValue(env, 'STRIPE_DEPOSIT_AMOUNT_CENTS') || 2000);
+  const metadata = session.metadata || {};
+  const sessionEmail = sanitize(metadata.email || session.customer_details?.email || session.customer_email).toLowerCase();
+  return (
+    Number.isFinite(expectedAmount) &&
+    session.amount_total === Math.round(expectedAmount) &&
+    metadata.payment_kind === 'booking_deposit' &&
+    sessionEmail === booking.email.toLowerCase() &&
+    sanitize(metadata.service) === booking.service &&
+    sanitize(metadata.date) === booking.date &&
+    sanitize(metadata.time) === booking.time
+  );
+}
+
 function getSalonRecipient(env, formType) {
   const bookingRecipient = getEnvValue(env, 'BOOKING_RECIPIENT_EMAIL');
   const contactRecipient = getEnvValue(env, 'CONTACT_RECIPIENT_EMAIL');
@@ -99,12 +131,13 @@ function getAdminEmails(env) {
   return uniqueEmailList(getEnvList(env, 'ADMIN_NOTIFICATION_EMAILS', DEFAULT_ADMIN_EMAILS.join(',')));
 }
 
-function getSupportReplyTo(env, fallback = DEFAULT_RECIPIENT) {
-  const supportEmail = getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') || getEnvValue(env, 'SUPPORT_EMAIL') || fallback;
+function getSupportReplyTo(env, fallback = DEFAULT_SUPPORT) {
+  const supportEmail =
+    getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') || getEnvValue(env, 'SUPPORT_EMAIL') || fallback;
   return isValidEmail(supportEmail) ? supportEmail : fallback;
 }
 
-function getClientEmailFrom(env, fallback = DEFAULT_FROM) {
+function getClientEmailFrom(env, fallback = DEFAULT_CLIENT_FROM) {
   return getEnvValue(env, 'CLIENT_EMAIL_FROM') || fallback;
 }
 
@@ -260,9 +293,38 @@ export async function onRequest(ctx) {
   const date = sanitize(fields.date);
   const time = sanitize(fields.time);
   const uploadedFileUrl = sanitize(fields.uploaded_file_url || fields.file_url);
-  const paymentNow = sanitize(fields.payment_now || fields.pay_now) === 'on';
+  const paymentChoice = sanitize(fields.payment_choice || fields.payment_method || '');
+  const stripeSessionId = sanitize(fields.stripe_session_id);
+  const paymentNow =
+    sanitize(fields.payment_now || fields.pay_now) === 'on' || paymentChoice === 'online';
   const privacyConsent = sanitize(fields.privacy_consent);
-  const paymentStatus = paymentNow ? 'prepayment_requested' : 'pay_at_salon';
+  const agbConsent = sanitize(fields.agb_consent);
+
+  let stripePaymentVerified = false;
+  if (paymentNow || stripeSessionId) {
+    if (!paymentsOnlineEnabled(env) || !stripeSessionId) {
+      return jsonResponse({ success: false, message: 'Online payment is unavailable' }, 400, origin);
+    }
+    stripePaymentVerified = await verifyStripeBookingSession(env, stripeSessionId, {
+      email,
+      service,
+      date,
+      time,
+    });
+    if (!stripePaymentVerified) {
+      return jsonResponse({ success: false, message: 'Online payment could not be verified' }, 400, origin);
+    }
+  }
+
+  const paymentStatus = paymentNow
+    ? stripePaymentVerified
+      ? `paid_online:${stripeSessionId}`
+      : 'online_deposit_pending'
+    : paymentChoice === 'salon_card'
+      ? 'pay_at_salon_card'
+      : paymentChoice === 'salon_cash'
+        ? 'pay_at_salon_cash'
+        : 'pay_at_salon';
 
   const copy = COPY[lang] ?? COPY.de;
   const requestUrl = new URL(request.url);
@@ -288,6 +350,9 @@ export async function onRequest(ctx) {
       return jsonResponse({ success: false, message: copy.error }, 400, origin);
     }
     if (!privacyConsent) {
+      return jsonResponse({ success: false, message: copy.error }, 400, origin);
+    }
+    if (!agbConsent) {
       return jsonResponse({ success: false, message: copy.error }, 400, origin);
     }
   } else if (!message) {

@@ -75,7 +75,7 @@ npm run validate           # lint + links + project
 
 | Сервис | Email |
 |--------|-------|
-| Google Search Console | snaiper1984@gmail.com |
+| Google Search Console | ryndenko1982@gmail.com |
 | Bing Webmaster | snaiper1984@mail.ru |
 
 Подробнее: `docs/operations.md`.

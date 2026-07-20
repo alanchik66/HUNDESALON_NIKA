@@ -1,5 +1,6 @@
 # HUNDESALON NIKA — Codex Project Profile
 
+**Master AI operating contract:** `docs/agents-master.md`
 **Agent playbook (routing, SEO accounts, checklists):** `docs/agents-playbook.md`
 
 ## Project

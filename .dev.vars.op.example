@@ -1,0 +1,19 @@
+# 1Password secret references for `op run` (Windows-safe inject).
+# Copy to `.dev.vars.op` (gitignored) after creating the vault item, then:
+#   op run --env-file=.dev.vars.op -- npm run deploy
+#   op run --env-file=.dev.vars.op -- npm run deploy:full
+#
+# Local `npm run dev:cf` still uses gitignored plaintext `.dev.vars`
+# (Wrangler reads the file from disk; op:// refs are not resolved there).
+# Optional: after unlock, regenerate plaintext via:
+#   op inject -i .dev.vars.op -o .dev.vars
+#
+# Replace Personal/HUNDESALON_NIKA_SECRETS if your vault/item names differ.
+# (Import script uses HUNDESALON_NIKA_SECRETS when an Identity item already owns HUNDESALON_NIKA.)
+
+CLOUDFLARE_API_TOKEN=op://Personal/HUNDESALON_NIKA_SECRETS/CLOUDFLARE_API_TOKEN
+SERVICE_GATEWAY_API_KEY=op://Personal/HUNDESALON_NIKA_SECRETS/SERVICE_GATEWAY_API_KEY
+OPENROUTER_API_KEY=op://Personal/HUNDESALON_NIKA_SECRETS/OPENROUTER_API_KEY
+RESEND_API_KEY=op://Personal/HUNDESALON_NIKA_SECRETS/RESEND_API_KEY
+BING_WEBMASTER_API_KEY=op://Personal/HUNDESALON_NIKA_SECRETS/BING_WEBMASTER_API_KEY
+SLACK_WEBHOOK_URL=op://Personal/HUNDESALON_NIKA_SECRETS/SLACK_WEBHOOK_URL

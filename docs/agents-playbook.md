@@ -2,6 +2,8 @@
 
 Документ для **Cursor Cloud Agents**, Codex, Claude и локальных ассистентов. Читай перед любой задачей по сайту, SEO или деплою.
 
+**Master-контракт агента (полный):** [`docs/agents-master.md`](agents-master.md) — аудит, SEO/UX/юридика, QA, отчётность. Этот playbook — операционный маршрутизатор команд и аккаунтов.
+
 ## Проект в одном абзаце
 
 Статический многоязычный сайт салона в Лейпциге (`de` / `en` / `ru` / `uk`), хостинг **Cloudflare Pages**, shell в `site-shell.js`, продакшен: https://hundesalon-nika.com (`www` → 301 на apex).
@@ -10,7 +12,7 @@
 
 | Сервис | Аккаунт |
 |--------|---------|
-| Google Search Console | `snaiper1984@gmail.com` |
+| Google Search Console | `ryndenko1982@gmail.com` (sole Verified Owner) |
 | Bing Webmaster Tools | `snaiper1984@mail.ru` (Edge CDP `npm run bing:edge`, порт 9224) |
 
 ## Маршрутизация задач → команды

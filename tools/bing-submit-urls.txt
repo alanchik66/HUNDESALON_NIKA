@@ -25,6 +25,7 @@ https://hundesalon-nika.com/assets/images/favicon/favicon.ico
 https://hundesalon-nika.com/assets/images/favicon/maskable-icon-512x512.png
 https://hundesalon-nika.com/assets/images/favicon/mstile-150x150.png
 https://hundesalon-nika.com/browserconfig.xml
+https://hundesalon-nika.com/de/agb
 https://hundesalon-nika.com/de/blog/blog
 https://hundesalon-nika.com/de/blog/kak-podgotovit-sobaku
 https://hundesalon-nika.com/de/blog/plokhaya-strizhka
@@ -35,7 +36,6 @@ https://hundesalon-nika.com/de/datenschutz
 https://hundesalon-nika.com/de/do-i-posle
 https://hundesalon-nika.com/de/documents
 https://hundesalon-nika.com/de/galereya
-https://hundesalon-nika.com/de/hundesalon-leipzig
 https://hundesalon-nika.com/de/impressum
 https://hundesalon-nika.com/de/kontakty
 https://hundesalon-nika.com/de/nashi-uslugi
@@ -46,6 +46,7 @@ https://hundesalon-nika.com/de/prays-list
 https://hundesalon-nika.com/de/reyting
 https://hundesalon-nika.com/de/social
 https://hundesalon-nika.com/de/vvedenie
+https://hundesalon-nika.com/en/agb
 https://hundesalon-nika.com/en/blog/blog
 https://hundesalon-nika.com/en/blog/kak-podgotovit-sobaku
 https://hundesalon-nika.com/en/blog/plokhaya-strizhka
@@ -56,7 +57,6 @@ https://hundesalon-nika.com/en/datenschutz
 https://hundesalon-nika.com/en/do-i-posle
 https://hundesalon-nika.com/en/documents
 https://hundesalon-nika.com/en/galereya
-https://hundesalon-nika.com/en/hundesalon-leipzig
 https://hundesalon-nika.com/en/impressum
 https://hundesalon-nika.com/en/kontakty
 https://hundesalon-nika.com/en/nashi-uslugi
@@ -68,6 +68,7 @@ https://hundesalon-nika.com/en/reyting
 https://hundesalon-nika.com/en/social
 https://hundesalon-nika.com/en/vvedenie
 https://hundesalon-nika.com/favicon.ico
+https://hundesalon-nika.com/ru/agb
 https://hundesalon-nika.com/ru/blog/blog
 https://hundesalon-nika.com/ru/blog/kak-podgotovit-sobaku
 https://hundesalon-nika.com/ru/blog/plokhaya-strizhka
@@ -78,7 +79,6 @@ https://hundesalon-nika.com/ru/datenschutz
 https://hundesalon-nika.com/ru/do-i-posle
 https://hundesalon-nika.com/ru/documents
 https://hundesalon-nika.com/ru/galereya
-https://hundesalon-nika.com/ru/hundesalon-leipzig
 https://hundesalon-nika.com/ru/impressum
 https://hundesalon-nika.com/ru/kontakty
 https://hundesalon-nika.com/ru/nashi-uslugi
@@ -90,6 +90,7 @@ https://hundesalon-nika.com/ru/reyting
 https://hundesalon-nika.com/ru/social
 https://hundesalon-nika.com/ru/vvedenie
 https://hundesalon-nika.com/site.webmanifest
+https://hundesalon-nika.com/uk/agb
 https://hundesalon-nika.com/uk/blog/blog
 https://hundesalon-nika.com/uk/blog/kak-podgotovit-sobaku
 https://hundesalon-nika.com/uk/blog/plokhaya-strizhka
@@ -100,7 +101,6 @@ https://hundesalon-nika.com/uk/datenschutz
 https://hundesalon-nika.com/uk/do-i-posle
 https://hundesalon-nika.com/uk/documents
 https://hundesalon-nika.com/uk/galereya
-https://hundesalon-nika.com/uk/hundesalon-leipzig
 https://hundesalon-nika.com/uk/impressum
 https://hundesalon-nika.com/uk/kontakty
 https://hundesalon-nika.com/uk/nashi-uslugi
@@ -130,6 +130,7 @@ https://www.hundesalon-nika.com/assets/images/favicon/favicon.ico
 https://www.hundesalon-nika.com/assets/images/favicon/maskable-icon-512x512.png
 https://www.hundesalon-nika.com/assets/images/favicon/mstile-150x150.png
 https://www.hundesalon-nika.com/browserconfig.xml
+https://www.hundesalon-nika.com/de/agb
 https://www.hundesalon-nika.com/de/blog/blog
 https://www.hundesalon-nika.com/de/blog/kak-podgotovit-sobaku
 https://www.hundesalon-nika.com/de/blog/plokhaya-strizhka
@@ -140,7 +141,6 @@ https://www.hundesalon-nika.com/de/datenschutz
 https://www.hundesalon-nika.com/de/do-i-posle
 https://www.hundesalon-nika.com/de/documents
 https://www.hundesalon-nika.com/de/galereya
-https://www.hundesalon-nika.com/de/hundesalon-leipzig
 https://www.hundesalon-nika.com/de/impressum
 https://www.hundesalon-nika.com/de/kontakty
 https://www.hundesalon-nika.com/de/nashi-uslugi
@@ -151,6 +151,7 @@ https://www.hundesalon-nika.com/de/prays-list
 https://www.hundesalon-nika.com/de/reyting
 https://www.hundesalon-nika.com/de/social
 https://www.hundesalon-nika.com/de/vvedenie
+https://www.hundesalon-nika.com/en/agb
 https://www.hundesalon-nika.com/en/blog/blog
 https://www.hundesalon-nika.com/en/blog/kak-podgotovit-sobaku
 https://www.hundesalon-nika.com/en/blog/plokhaya-strizhka
@@ -161,7 +162,6 @@ https://www.hundesalon-nika.com/en/datenschutz
 https://www.hundesalon-nika.com/en/do-i-posle
 https://www.hundesalon-nika.com/en/documents
 https://www.hundesalon-nika.com/en/galereya
-https://www.hundesalon-nika.com/en/hundesalon-leipzig
 https://www.hundesalon-nika.com/en/impressum
 https://www.hundesalon-nika.com/en/kontakty
 https://www.hundesalon-nika.com/en/nashi-uslugi
@@ -173,6 +173,7 @@ https://www.hundesalon-nika.com/en/reyting
 https://www.hundesalon-nika.com/en/social
 https://www.hundesalon-nika.com/en/vvedenie
 https://www.hundesalon-nika.com/favicon.ico
+https://www.hundesalon-nika.com/ru/agb
 https://www.hundesalon-nika.com/ru/blog/blog
 https://www.hundesalon-nika.com/ru/blog/kak-podgotovit-sobaku
 https://www.hundesalon-nika.com/ru/blog/plokhaya-strizhka
@@ -183,7 +184,6 @@ https://www.hundesalon-nika.com/ru/datenschutz
 https://www.hundesalon-nika.com/ru/do-i-posle
 https://www.hundesalon-nika.com/ru/documents
 https://www.hundesalon-nika.com/ru/galereya
-https://www.hundesalon-nika.com/ru/hundesalon-leipzig
 https://www.hundesalon-nika.com/ru/impressum
 https://www.hundesalon-nika.com/ru/kontakty
 https://www.hundesalon-nika.com/ru/nashi-uslugi
@@ -195,6 +195,7 @@ https://www.hundesalon-nika.com/ru/reyting
 https://www.hundesalon-nika.com/ru/social
 https://www.hundesalon-nika.com/ru/vvedenie
 https://www.hundesalon-nika.com/site.webmanifest
+https://www.hundesalon-nika.com/uk/agb
 https://www.hundesalon-nika.com/uk/blog/blog
 https://www.hundesalon-nika.com/uk/blog/kak-podgotovit-sobaku
 https://www.hundesalon-nika.com/uk/blog/plokhaya-strizhka
@@ -205,7 +206,6 @@ https://www.hundesalon-nika.com/uk/datenschutz
 https://www.hundesalon-nika.com/uk/do-i-posle
 https://www.hundesalon-nika.com/uk/documents
 https://www.hundesalon-nika.com/uk/galereya
-https://www.hundesalon-nika.com/uk/hundesalon-leipzig
 https://www.hundesalon-nika.com/uk/impressum
 https://www.hundesalon-nika.com/uk/kontakty
 https://www.hundesalon-nika.com/uk/nashi-uslugi
