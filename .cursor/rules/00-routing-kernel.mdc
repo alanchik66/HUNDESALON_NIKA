@@ -1,0 +1,40 @@
+---
+description: Mandatory AI routing kernel — startup, detection, decision pipeline (all tasks)
+alwaysApply: true
+---
+
+# Routing kernel (mandatory)
+
+Canonical spec: `docs/agents-routing.md`. Execute it on **every** task before edits. Do not invent a parallel routing dialect.
+
+## Startup (in order)
+
+Repository → Workspace → Environment → Technology → Framework → Module → Load AI docs → Load domain docs → Dependencies → Risks → Plan → Validate plan → Implement
+
+## Decision pipeline
+
+Routing → Repository validation → Environment validation → Dependency validation → Architecture validation → Security validation → Implementation → Verification → Completion
+
+## Detection (never guess)
+
+- **Repo:** explicit path/name → workspace → `git` root/remote → lockfiles/manifests → README → ask user. Positive ID: GitHub `alanchik66/HUNDESALON_NIKA`, package `hundesalon-nika-website`.
+- **Workspace:** keep workspace, repo root, cwd, active module, opened folder distinct.
+- **Environment:** evidence from `.dev.vars`, CI, `wrangler.toml`, scripts — Local / Dev / Preview / Prod / Sandbox / Cloudflare / GitHub Actions as applicable. Not Netlify/Vercel for this site.
+- **Tech:** static HTML/CSS/JS + Cloudflare Pages Functions unless markers prove otherwise.
+- **Modules:** touch only needed zones (`de|en|ru|uk`, `assets/`, `functions/`, `workers/`, `tools/`, `docs/`, weather dist, `integrations/`).
+
+## Instruction conflict order
+
+User instruction → project AI rules → `AGENTS.md` → `CLAUDE.md` → repo standards / playbook → architecture / master → framework conventions → language conventions → AI defaults.
+
+## Safety
+
+No unrelated files, no other repos, no force-push / history rewrite / branch deletion, no secret commits, no production deploy without explicit request, no guessing repo/framework/env.
+
+## Performance
+
+Prefer Graphify / affected modules / recent diffs over whole-repo scans.
+
+## After routing
+
+Ops map: `docs/agents-playbook.md`. Domain policies: `docs/agents-master.md`. Task/skill shortcuts: `.cursor/rules/40-agent-routing.mdc`.

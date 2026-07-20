@@ -15,7 +15,7 @@ Recurring patterns for HUNDESALON NIKA.
 - Header/nav from `standardizePageHeader()` — do not duplicate markup in HTML.
 - Deploy: Cloudflare Pages only (`npm run deploy` / `deploy:full`); no Netlify.
 - Secrets only in Dashboard / `.dev.vars` — never commit.
-- AI agents: every workflow starts with `docs/agents-routing.md` (detection → decision pipeline → module scope). Playbook = commands/accounts; `agents-master.md` = domain quality. Do not duplicate routing logic in entry files.
+- AI work always starts with Routing Kernel (`docs/agents-routing.md`); hosts are thin adapters; playbook = commands/accounts; `agents-master.md` = domain quality; no parallel routing dialects. Integrity: `npm run check:agents-routing`.
 
 ## Testing Patterns
 

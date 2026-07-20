@@ -1,45 +1,37 @@
 ---
-description: AI routing kernel — startup, detection, task matrix, safety (always on)
+description: Task/skill routing after kernel — SEO accounts, audit commands, skills
 alwaysApply: true
 ---
 
-# Agent routing
+# Agent task routing
 
-**Canonical kernel:** [`docs/agents-routing.md`](../../docs/agents-routing.md)  
-**Profile:** [`AGENTS.md`](../../AGENTS.md) · **Playbook:** [`docs/agents-playbook.md`](../../docs/agents-playbook.md) · **Master:** [`docs/agents-master.md`](../../docs/agents-master.md)
+**Prerequisite:** `.cursor/rules/00-routing-kernel.mdc` + `docs/agents-routing.md` already applied for this task.
 
-## Every task (do not skip)
-
-1. Resolve repository → workspace → environment → technology → active module (`agents-routing.md` §4–§7).  
-2. Load AI instructions in kernel order (§0 / §9).  
-3. Classify task (§8) → run decision pipeline (§2).  
-4. Touch **only** affected modules; never guess repo / framework / env.  
-5. Finish with completion gate (§12).
-
-Conflict priority: user → platform/session mandate → routing kernel → playbook/rules → `AGENTS.md` → master → conventions.
+Full ops playbook: `docs/agents-playbook.md`. Profile: `AGENTS.md`. Domain contract: `docs/agents-master.md`.
 
 ## Search & indexing
 
-- GSC → `ryndenko1982@gmail.com` (sole Verified Owner; do not use snaiper for GSC).  
-- Bing → `snaiper1984@mail.ru` — `npm run bing:edge` затем `bing:index-all` / `bing:setup`.  
-- IndexNow: `npm run seo:indexnow` (apex + www, все URL из sitemap).  
-- После HTML deploy: `deploy:full` или минимум `seo:indexnow` + `cf:purge-cache`.
+- GSC → `ryndenko1982@gmail.com` (sole Verified Owner) — do not move GSC to mail.ru.
+- Bing → `snaiper1984@mail.ru` — `npm run bing:edge` then `bing:index-all` / `bing:setup`.
+- IndexNow: `npm run seo:indexnow` (apex + www, all sitemap URLs).
+- After HTML deploy: `deploy:full` or at least `seo:indexnow` + `cf:purge-cache`.
 
 ## Site audit
 
-- Локальные ссылки: `npm run check:links`.  
-- Живой обход sitemap: `npm run check:live-crawl`.  
-- Конфиг/SEO файлы: `npm run check:project`.
+- Local links: `npm run check:links`.
+- Live sitemap crawl: `npm run check:live-crawl`.
+- Config/SEO files: `npm run check:project`.
+- AI routing integrity: `npm run check:agents-routing`.
 
-## Skills
+## Skills (after module detection)
 
-- UI → hundesalon-frontend  
-- SEO/hreflang → hundesalon-seo-multilingual  
-- Cloudflare → hundesalon-cloudflare + cloudflare-deploy  
-- Архитектура / связи кода → graphify (`graphify query|path|explain`, skill `.agents/skills/graphify/`)  
-- Минимальный diff → ponytail (`.cursor/rules/ponytail.mdc`, skills `ponytail*`)  
-- Сессионный контекст → RooFlow Memory Bank (`memory-bank/`, UMB)
+- UI → hundesalon-frontend
+- SEO/hreflang → hundesalon-seo-multilingual
+- Cloudflare → hundesalon-cloudflare + cloudflare-deploy
+- Architecture / code links → graphify (`graphify query|path|explain`, `.agents/skills/graphify/`)
+- Minimal diff → ponytail (`.cursor/rules/ponytail.mdc`, skills `ponytail*`)
+- Session context → RooFlow Memory Bank (`memory-bank/`, UMB)
 
 ## Cloud agents
 
-Не делать hello-world тур по сайту. Default: не создавать PR/ветки без запроса. Если session mandate требует branch/PR — следуй kernel §10. Секреты только в Dashboard, не в git. Deploy только по явному запросу.
+No hello-world site tour. No PR/branches unless the task or user explicitly requires them. Secrets only in Dashboard, never in git.

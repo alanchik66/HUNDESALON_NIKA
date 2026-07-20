@@ -1,352 +1,291 @@
 # AI Routing Kernel — HUNDESALON NIKA
 
-**Status:** Canonical source of truth for agent routing  
-**Consumers:** Cursor Agent, Claude Code, OpenAI Codex, Gemini CLI, GitHub Copilot Agents, RooFlow  
-**Related:** [`AGENTS.md`](../AGENTS.md) (profile) · [`docs/agents-master.md`](agents-master.md) (quality contract) · [`docs/agents-playbook.md`](agents-playbook.md) (commands & accounts)
-
-This document is not an optional appendix. Every AI workflow **starts**, **decides**, and **finishes** through this kernel. Other instruction files may specialize domain rules; they must not redefine detection, conflict priority, or the decision pipeline.
+**Document type:** Canonical routing capability (single source of truth)  
+**Consumers:** Cursor Agent, Claude Code, OpenAI Codex, Gemini CLI, GitHub Copilot Agents, Roo Flow, and compatible coding agents  
+**Not a standalone checklist:** every workflow below *is* routing. Entry points must execute this kernel; they must not invent a parallel routing dialect.
 
 ---
 
-## 0. Document map (load order)
+## 0. How this document is used
 
-| Priority | File | Role |
-|----------|------|------|
-| 1 | **This file** (`docs/agents-routing.md`) | Routing, detection, decision pipeline, safety bounds |
-| 2 | `AGENTS.md` | Project profile, stack facts, Cloud bootstrap |
-| 3 | `docs/agents-master.md` | Domain quality contract (SEO, UX, legal, QA) |
-| 4 | `docs/agents-playbook.md` | Task → command / skill / account routing |
-| 5 | `.cursor/rules/*.mdc` | Always-on Cursor constraints (must align with this kernel) |
-| 6 | `CLAUDE.md` / `GEMINI.md` / `.github/copilot-instructions.md` | Thin entry points → this kernel |
-| 7 | `memory-bank/*` | Session continuity (RooFlow / UMB) |
-| 8 | `README.md`, `docs/*`, architecture notes | Supporting context after routing |
+| Role | File | Duty |
+|------|------|------|
+| Kernel (this file) | `docs/agents-routing.md` | Detection, startup, decision pipeline, safety, conflict order, performance |
+| Domain contract | `docs/agents-master.md` | SEO, UX, legal, content, QA policies — after routing succeeds |
+| Ops map | `docs/agents-playbook.md` | Task → commands / accounts / skills |
+| Host profiles | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md` | Thin adapters that bootstrap the kernel |
+| Cursor always-on | `.cursor/rules/00-routing-kernel.mdc` | Forces kernel before edits |
+| Task/skill map | `.cursor/rules/40-agent-routing.mdc` | SEO accounts + skill routing (after kernel) |
 
-If two files disagree on routing/detection/git safety, **this kernel wins** except where §3 Conflict Resolution elevates an explicit user or platform mandate.
+**Rule:** If a host profile and this kernel disagree on *how to start a task*, this kernel wins unless the user gave an explicit contrary instruction.
 
 ---
 
-## 1. Startup workflow (mandatory, never skip)
+## 1. Conflict resolution (instruction priority)
 
-Every task executes this sequence before implementation:
+When rules collide, apply **exactly this order** — never invent a new hierarchy:
 
-```
-Determine Repository
-        ↓
-Determine Workspace
-        ↓
-Determine Environment
-        ↓
-Determine Technology / Framework
-        ↓
-Determine Active Module / Scope
-        ↓
-Load AI Instructions (map in §0)
-        ↓
-Load Relevant Documentation
-        ↓
-Analyze Dependencies & Blast Radius
-        ↓
-Analyze Risks
-        ↓
-Plan Changes
-        ↓
-Validate Plan (architecture + safety + scope)
-        ↓
-Begin Implementation
-```
+1. **Explicit user instruction** for this turn (including Cloud Agent / PR task overrides)
+2. **Project AI rules** (`.cursor/rules/*`, host profile for the current tool)
+3. **`AGENTS.md`** (Codex / Cursor project profile)
+4. **`CLAUDE.md`** (Claude Code profile)
+5. **Repository standards** (`docs/agents-playbook.md`, `docs/git-workflow.md`, `CONTRIBUTING` if present)
+6. **Architecture** (`docs/agents-master.md`, `memory-bank/systemPatterns.md`, `graphify-out/`)
+7. **Framework / platform conventions** (Cloudflare Pages, static HTML/CSS/JS)
+8. **Language conventions** (`de` / `en` / `ru` / `uk` grammar rules)
+9. **AI product defaults**
 
-**Shortcuts allowed only for evidence-backed micro-edits** (known file, known symbol, no cross-module risk). Even then: confirm repository + module + conflict priority, then edit. Never skip repository validation.
+Business/legal priority for *product* decisions (booking, AGB, prices) remains in `docs/agents-master.md` §139. That hierarchy answers *what is safe to change*; **this** hierarchy answers *which instruction wins*.
 
 ---
 
 ## 2. Decision pipeline (every request)
 
+Every request — code, docs, SEO, deploy, review — passes through:
+
 ```
-Routing (§4–§8)
-        ↓
-Repository Validation
-        ↓
-Environment Validation
-        ↓
-Dependency / Blast-Radius Validation
-        ↓
-Architecture Validation
-        ↓
-Security Validation
-        ↓
-Implementation
-        ↓
-Verification (project checks)
-        ↓
-Completion (§12)
+Routing
+  → Repository Validation
+  → Environment Validation
+  → Dependency Validation
+  → Architecture Validation
+  → Security Validation
+  → Implementation
+  → Verification
+  → Completion
 ```
 
-No stage may be silently skipped. If a stage is N/A, record why internally (one line) and continue.
+Skip a stage only when it is **provably N/A** (e.g. pure docs typo → Dependency Validation = “no runtime deps touched”). Log the skip mentally; never skip silently on ambiguous tasks.
 
 ---
 
-## 3. Conflict resolution (deterministic)
+## 3. Startup workflow (mandatory, every task)
 
-Highest wins:
+Execute in order. Do not begin implementation until the chain completes:
 
-1. **Explicit user instruction** for this turn  
-2. **Active platform / session mandate** (e.g. Cloud Agent PR/branch rules injected into the session)  
-3. **This routing kernel**  
-4. **Project AI rules** (`.cursor/rules`, playbook accounts/commands)  
-5. **`AGENTS.md`**  
-6. **`CLAUDE.md` / `GEMINI.md` / Copilot entry**  
-7. **`docs/agents-master.md`** domain standards  
-8. **Repository standards** (`CONTRIBUTING.md`, `docs/git-workflow.md`)  
-9. **Architecture / design docs**  
-10. **Framework / language conventions**  
-11. **Model defaults**
+```
+Determine Repository
+  → Determine Workspace
+  → Determine Environment
+  → Determine Technology
+  → Determine Framework
+  → Determine Module / package boundary
+  → Load AI Instructions
+  → Load Documentation
+  → Analyze Dependencies
+  → Analyze Risks
+  → Plan Changes
+  → Validate Plan
+  → Begin Implementation
+```
 
-Never invent a tie-break. If still ambiguous after evidence, ask the user — do not guess repository, environment, or hosting target.
-
----
-
-## 4. Repository detection (never guess)
-
-Resolve identity in this order; stop at first **high-confidence** match:
-
-1. Explicit repository path from the user  
-2. Explicit project name from the user  
-3. Current Cursor / IDE workspace root  
-4. Current Git repository root (`git rev-parse --show-toplevel`)  
-5. Git remote (`origin` → expected: `alanchik66/HUNDESALON_NIKA`)  
-6. `.git` metadata  
-7. `package.json` (`name`: `hundesalon-nika-website`)  
-8. `pnpm-workspace.yaml` / `yarn.lock` / `package-lock.json` (lockfile evidence)  
-9. Other manifests only if present (`pyproject.toml`, `Cargo.toml`, `go.mod`, `composer.json`, `build.gradle`, `pom.xml`, `*.sln`)  
-10. Workspace configuration (`.cursor/environment.json`, `wrangler.toml`)  
-11. `README.md` / brand markers (`HUNDESALON NIKA`, Leipzig)  
-12. **User clarification** — if identity remains uncertain
-
-**Hard stop:** If the resolved repo is not HUNDESALON_NIKA (or the user-named target), do not modify files. Do not cross repositories.
-
-Canonical facts for this project when detection succeeds:
-
-| Signal | Expected |
-|--------|----------|
-| GitHub | `https://github.com/alanchik66/HUNDESALON_NIKA` |
-| Production | `https://hundesalon-nika.com` (Cloudflare Pages `hundesalon-nika`) |
-| Local Windows root (owner) | `C:\laragon\www\HUNDESALON_NIKA` |
-| Cloud agent root | workspace root containing `AGENTS.md` + `wrangler.toml` |
+**Never guess** repository, environment, framework, or module. If evidence is insufficient after the detection stacks below, stop and ask for clarification.
 
 ---
 
-## 5. Workspace detection (never assume)
+## 4. Repository detection
 
-Always determine and keep consistent:
+Resolve **one** repository identity using this priority. Stop at the first conclusive match:
 
-| Concept | How |
-|---------|-----|
+1. Explicit repository path from the user
+2. Explicit project name from the user
+3. Current Cursor / IDE workspace root
+4. Current Git repository (`git rev-parse --show-toplevel`)
+5. Git remote (`origin` → expected `alanchik66/HUNDESALON_NIKA`)
+6. `.git` metadata
+7. `package.json` (`name`: `hundesalon-nika-website`)
+8. `pnpm-workspace.yaml` (if present)
+9. `yarn.lock` / `package-lock.json`
+10. `pyproject.toml` / `Cargo.toml` / `go.mod` / `composer.json` / `build.gradle` / `pom.xml` / `*.sln`
+11. Workspace configuration (`.cursor/environment.json`, VS Code multi-root)
+12. `README.md` identity markers
+13. User clarification (last resort)
+
+**This repo’s positive ID (when confirmed):**
+
+- Remote: GitHub `alanchik66/HUNDESALON_NIKA`
+- Package: `hundesalon-nika-website`
+- Host: Cloudflare Pages project `hundesalon-nika`
+- Site: `https://hundesalon-nika.com`
+
+If the open folder is a different git root or remote, **do not modify it**. Say so and stop.
+
+---
+
+## 5. Workspace detection
+
+Always determine and keep distinct:
+
+| Signal | How |
+|--------|-----|
 | Current workspace | IDE workspace / opened folder |
-| Repository root | `git rev-parse --show-toplevel` or workspace root with `AGENTS.md` |
-| Working directory | shell `cwd` / tool `working_directory` |
-| Active module | path under edit (§7) |
-| Opened folder | editor context; may be a subfolder — still resolve to repo root |
+| Repository root | `git rev-parse --show-toplevel` or conclusive markers from §4 |
+| Working directory | process `cwd` |
+| Active module | nearest package / boundary under the monorepo layout (§8) |
+| Opened folder | user-selected folder (may be a subfolder of the repo) |
 
-Never treat a nested folder (`de/`, `tools/`, `functions/`) as a separate repository.
-
----
-
-## 6. Environment detection (evidence only)
-
-Classify using files and variables — do not invent:
-
-| Environment | Evidence |
-|-------------|----------|
-| Local / Development | `npm run dev` / port 5502; no `CI`; optional `.dev.vars` |
-| Cloudflare Pages preview | `npm run dev:cf` / port 8788; `dist/` build |
-| Production | live apex; `npm run deploy` / Pages production |
-| Testing / CI | `CI=true`, GitHub Actions workflows under `.github/workflows/` |
-| Sandbox / Cloud Agent | Cursor Cloud Ubuntu; `.cursor/environment.json` |
-| Docker / Compose / K8s | only if compose/Dockerfile/k8s manifests exist and are in use |
-| Vercel / Netlify | **not used** for this site — do not route deploys there |
-| AWS / GCP / Azure | only if task explicitly targets those integrations |
-| Cloudflare | `wrangler.toml`, `functions/`, `_headers`, `_redirects`, Pages project |
-
-Env file hints (local only; never commit secrets): `.env`, `.env.local`, `.env.development`, `.env.production`, `.dev.vars` (from `.dev.vars.example`).
+Never assume `cwd` == repository root == active module.
 
 ---
 
-## 7. Technology & module detection
+## 6. Environment detection
 
-### 7.1 Stack (this repository — verify, don’t assume alternatives)
+Classify the *execution* environment from evidence (files + env vars). Multiple labels may apply (e.g. Local + Docker):
 
-Detect from tree + manifests:
+| Label | Evidence |
+|-------|----------|
+| Development | `npm run dev`, `.dev.vars`, local ports `5502` / `8788` |
+| Preview | Cloudflare preview / `wrangler pages dev` |
+| Production | live apex, `deploy` / `deploy:full`, production secrets only in Dashboard |
+| Testing | `CI=true`, Playwright, `npm run validate` |
+| Sandbox | Cursor Cloud / ephemeral agent VM |
+| Local | developer machine, Laragon path in docs |
+| Docker | `Dockerfile`, running container |
+| Docker Compose | `docker-compose*.yml` |
+| Kubernetes | manifests / `kubectl` context (rare here) |
+| Vercel / Netlify | **not** this project’s host — do not deploy there unless strategy changes |
+| GitHub Actions | `.github/workflows/*`, `GITHUB_ACTIONS` |
+| GitLab CI | absent (removed) |
+| Azure / AWS / GCP | only when tools/docs explicitly target them |
+| Cloudflare | `wrangler.toml`, Pages Functions, `CLOUDFLARE_API_TOKEN` |
 
-| Layer | This project |
-|-------|----------------|
-| Languages | HTML, CSS, JS (ES modules), Markdown |
-| App framework | **None** — native static site |
-| Hosting | Cloudflare Pages + Functions (`functions/`), optional `workers/` |
+Inspect: `.env*`, `.dev.vars`, `.dev.vars.example`, CI variables, `wrangler.toml`, `package.json` scripts. **Never commit secrets.** Never treat production as a playground.
+
+---
+
+## 7. Technology & framework detection
+
+Detect from the tree — do not assume a SPA framework:
+
+| Layer | This repository (when ID matches §4) |
+|-------|--------------------------------------|
+| Languages | HTML, CSS, JS (ES modules), optional Python/PowerShell in `tools/` |
+| Frontend | Static multilingual pages `de/` `en/` `ru/` `uk/`; shared `assets/` |
+| Backend | Cloudflare Pages Functions (`functions/`), optional `workers/` |
+| Hosting | Cloudflare Pages (`wrangler.toml`), output `dist/` |
+| Build | `npm run build` → static bundle |
 | Package manager | npm (`package-lock.json`) |
-| Build | `npm run build` → `dist/` |
-| Locales | `de/` (default), `en/`, `ru/`, `uk/` |
-| Shared UI | `assets/css/*`, `assets/js/site-shell.js`, `main.js`, `page-modules.js` |
-| Config / brand | `config/`, `wrangler.toml`, sitemaps |
-| Tooling | `tools/`, `scripts/` |
-| Knowledge graph | `graphify-out/` + `npm run graphify*` |
-| Session memory | `memory-bank/` |
-| Vendor island | `3d-weather-codrops-main/dist-widget/` (prebuilt; do not casual-edit) |
+| Testing | `npm run lint`, `check:links`, `validate`, Playwright |
+| Knowledge graph | Graphify (`graphify-out/`, `npm run graphify`) |
+| AI session memory | RooFlow Memory Bank (`memory-bank/`) |
 
-If detection finds a different primary framework, stop and reconcile with the user before rewriting architecture.
-
-### 7.2 Module boundaries (monorepo-style scope)
-
-Not an npm workspaces monorepo. Treat these as **modules** — touch only those affected:
-
-| Module | Path | Notes |
-|--------|------|-------|
-| Locale surfaces | `de/`, `en/`, `ru/`, `uk/` | Keep parity unless task is locale-specific |
-| Shared frontend | `assets/` | Prefer edit once vs four HTML copies |
-| Edge functions | `functions/` | Forms, mail, proxies |
-| Workers | `workers/` | Emergency / proxy only |
-| Tooling | `tools/`, `scripts/` | Node CLIs |
-| AI system | `AGENTS.md`, `docs/agents-*.md`, `.cursor/rules/`, `.github/agents/` | Instruction changes |
-| CI | `.github/workflows/` | Production safety |
-| Docs | `docs/`, `README.md`, `memory-bank/` | Ops / continuity |
-| Weather vendor | `3d-weather-codrops-main/` | Out of scope unless explicitly requested |
-
-**Rule:** Only modify affected modules. Never “while here” refactor unrelated packages.
+If markers contradict (e.g. `next.config.js` appears), re-run detection — **never** apply Next.js/React assumptions to this static site.
 
 ---
 
-## 8. Task routing matrix
+## 8. Monorepo / multi-package boundaries
 
-Route the request to a **workflow class**, then follow that class’s pipeline (each class still runs §1–§2).
+Treat these as **separate blast-radius zones**. Change only zones required by the task:
 
-| Class | Triggers | Primary surfaces | Default validation |
-|-------|----------|------------------|--------------------|
-| **UI / frontend** | layout, CSS, shell, forms UX | `assets/*`, locale HTML | `npm run lint`; smoke `de/` + one locale |
-| **Content / i18n** | copy, grammar, pages | `de|en|ru|uk/**` | multilingual grammar rule; `check:links` if links/meta |
-| **SEO** | hreflang, canonical, JSON-LD, sitemap | HTML heads, `sitemap*.xml`, tools | `check:project`; IndexNow after deploy |
-| **Bug fix** | broken behavior | root-cause module | minimal repro + targeted checks |
-| **Refactor** | structure/debt | affected module only | lint + no behavior drift |
-| **Security** | secrets, headers, trust boundaries | `functions/`, `_headers`, workflows | security workflows; never commit secrets |
-| **Testing / QA** | checks, Playwright | tools + pages | `validate` / `qa:max` as scoped |
-| **Review** | PR/diff review | changed paths | correctness + ponytail over-engineering |
-| **Deploy** | publish, purge, live | wrangler, CF | **only if explicitly requested**; `deploy:full` |
-| **Performance** | CWV, assets, CSS/JS weight | assets, images | measure before/after; no drive-by rewrites |
-| **Architecture** | “what connects X” | graphify first | `graphify query\|path\|explain` |
-| **AI system** | agent rules, routing | this kernel + entry points | consistency audit (§13) |
-| **Git / repo hygiene** | commit, branch, push | git | follow §10 + session mandate |
+| Zone | Path | Notes |
+|------|------|-------|
+| Site pages | `de/` `en/` `ru/` `uk/` | Keep locale parity unless task is locale-scoped |
+| Shared UI | `assets/css/` `assets/js/` | Prefer editing once vs four HTML copies |
+| Edge functions | `functions/` | Forms, mail, AI proxy |
+| Emergency worker | `workers/` | Separate wrangler project |
+| Weather widget | `3d-weather-codrops-main/` | Prebuilt `dist-widget/` — do not casual-rebuild |
+| Integrations | `integrations/` | e.g. Google gateway Docker |
+| Tools | `tools/` | Node CLIs for SEO/deploy/QA |
+| Docs / AI system | `docs/` `.cursor/` `AGENTS.md` `CLAUDE.md` `GEMINI.md` | This routing surface |
+| Agent skills | `.agents/skills/` | Graphify, Ponytail, … |
 
-### 8.1 Skill / plugin routing
+Also watch for classic monorepo folders if they appear later: `apps/`, `packages/`, `libs/`, `modules/`, `shared/`, `services/`, `examples/`.
 
-| Need | Route to |
-|------|----------|
-| HTML/CSS/JS UI | `hundesalon-frontend` (owner skills) + shared assets |
-| SEO / hreflang | `hundesalon-seo-multilingual` |
-| Cloudflare Pages / purge / Functions | `hundesalon-cloudflare` + `cloudflare-deploy` |
-| Architecture links | project `graphify` skill |
-| Minimal diff | `ponytail*` + `.cursor/rules/ponytail.mdc` |
-| Session context | RooFlow `memory-bank/` (UMB) |
-| Browser smoke | Playwright skills |
-| GitHub issues/PR/CI | GitHub plugin |
-| Figma | only when a Figma file is in scope |
-
-### 8.2 Account routing (do not swap)
-
-| Service | Account |
-|---------|---------|
-| Google Search Console | `ryndenko1982@gmail.com` (sole Verified Owner) |
-| Bing Webmaster Tools | `snaiper1984@mail.ru` (`npm run bing:edge`, then index commands) |
-| Cloudflare | project secrets / Dashboard — never commit tokens |
-
-Obsolete: do **not** route GSC to `snaiper1984@gmail.com` (cutover 2026-07-19).
+**Never** “clean up” an unrelated zone while fixing another.
 
 ---
 
 ## 9. Documentation loading (before code generation)
 
-Load in order, stopping when enough context exists for the task:
+Load in this order until enough context exists (prefer targeted reads over whole-repo scans):
 
-1. This routing kernel  
-2. `AGENTS.md`  
-3. Relevant `.cursor/rules` (always-on already applied in Cursor)  
-4. `docs/agents-playbook.md` for command/account tasks  
-5. `docs/agents-master.md` sections matching the workflow class  
-6. `memory-bank/activeContext.md` + `productContext.md` (non-trivial work)  
-7. `README.md` / `docs/operations.md` / `docs/git-workflow.md` / caching docs as needed  
-8. Existing patterns in code (prefer graphify over full-tree scan)
-
----
-
-## 10. Git & safety rails
-
-### Never
-
-- Modify unrelated files or another repository  
-- Guess the destination repository, framework, or environment  
-- Delete branches, rewrite history, or force-push  
-- Ignore this kernel, `AGENTS.md`, or architecture boundaries  
-- Commit secrets (`.dev.vars`, API keys, tokens)  
-- Deploy to production without explicit user request  
-- Use Netlify/Vercel for this site’s hosting path  
-
-### Prefer
-
-- Smallest blast radius; shared shell/CSS/JS once for all locales  
-- Symbol / graphify / import references over whole-repo scans  
-- Root-cause fixes in shared functions over per-caller patches  
-
-### Git policy (default vs session)
-
-- **Default project policy:** work on `main`; commit/push when the user asks; no unsolicited PRs (`AGENTS.md`, playbook).  
-- **Session override:** if the active platform mandate requires feature branches / PRs (e.g. Cursor Cloud Agent instructions), follow §3 item 2 — create `cursor/<name>-…` branches and PRs as mandated, still without force-push or history rewrite.
+1. `AGENTS.md`
+2. `CLAUDE.md` / `GEMINI.md` / Copilot instructions (as applicable to the host)
+3. Cursor rules (`.cursor/rules/`) — especially `00-routing-kernel.mdc`
+4. This kernel (`docs/agents-routing.md`) — already required
+5. `docs/agents-playbook.md`
+6. `docs/agents-master.md` (domain policies relevant to the task)
+7. `README.md` / `docs/site-overview.md` / architecture docs as needed
+8. ADR / RFC / design docs if present
+9. `memory-bank/activeContext.md` + `productContext.md` for non-trivial work
+10. Existing patterns: Graphify (`graphify query|path|explain`) before broad Grep
 
 ---
 
-## 11. Performance of agent work
+## 10. Workflow router (routing *is* the workflow)
 
-Avoid full-repository scans when unnecessary. Prefer:
+Map the user request to a workflow. Each workflow **starts** with §§2–3 (pipeline + startup), then applies its focus:
 
-1. Graphify (`graphify query|path|explain`)  
-2. Symbol / filename search scoped to module  
-3. Import / dependency neighbors  
-4. Recent changes (`git`)  
-5. Architecture docs  
+| Workflow | Focus after routing | Typical verify |
+|----------|---------------------|----------------|
+| AI / general | Scope + skill routing (playbook) | Plan validated |
+| Code generation | Affected modules only; reuse patterns | lint / targeted checks |
+| Refactoring | Blast radius; no behavior change unless asked | lint + smoke |
+| Bug fix | Root cause; all callers of shared fn | reproduce + fix verify |
+| Security | Trust boundaries, secrets, Functions | no secret leak; validate |
+| Testing | Existing npm scripts first | `validate` / Playwright |
+| Review | Correctness + ponytail over-engineering | findings only unless asked to fix |
+| Deployment | Explicit user request only | `deploy:full` path |
+| Performance | CWV, assets, CSS/JS weight | measure before/after when possible |
+| SEO / multilingual | hreflang, canonical, 4 locales | `check:links` |
+| Git | `docs/git-workflow.md`; no force-push / history rewrite | status clean |
 
-Full audits (agents-master discovery lists) apply to **broad** or **unknown-area** tasks, not every typo fix.
-
----
-
-## 12. Completion checklist (routing gate)
-
-A task is complete only when:
-
-- [ ] Repository and module were identified (not guessed)  
-- [ ] Environment matched the action (local vs CI vs deploy)  
-- [ ] Only affected modules changed  
-- [ ] Conflict priority was respected  
-- [ ] Domain validations for the workflow class ran (`lint` / `check:links` / `validate` as applicable)  
-- [ ] Multilingual parity held when content/UI touched  
-- [ ] No secrets committed; no unsolicited production deploy  
-- [ ] Report states what changed, what was verified, residual risk  
+Skill routing after module detection: see `docs/agents-playbook.md` and `.cursor/rules/40-agent-routing.mdc`.
 
 ---
 
-## 13. Consistency rule for AI-system edits
+## 11. Safety (hard stops)
 
-When editing agent instructions:
+Never:
 
-1. Change **this kernel** first for routing/detection/pipeline/safety.  
-2. Update entry points to **reference**, not copy, the kernel.  
-3. Remove or rewrite conflicting duplicates elsewhere.  
-4. Keep playbook as **operational** command/account table — not a second pipeline.  
-5. Keep `agents-master.md` as **quality/domain** contract — workflows there must call this kernel, not redefine it.
+- Modify unrelated files or another repository
+- Guess the destination repository, framework, or environment
+- Delete branches, rewrite Git history, or force-push
+- Ignore `AGENTS.md`, architecture, or repository boundaries
+- Commit secrets (`.dev.vars`, API tokens)
+- Deploy to production without an explicit request
+- Run hello-world site tours on Cloud Agents by default
 
 ---
 
-## 14. Workflow hooks (how other docs must integrate)
+## 12. Performance (context loading)
 
-Every named workflow in the AI system must begin with: **“Execute Routing Kernel §1–§2, then …”**
+Avoid whole-repository scans when unnecessary. Prefer:
 
-Applies to: code generation, refactoring, bug fix, security, testing, review, deployment, performance, SEO, content/i18n, architecture, and AI-system maintenance.
+1. Graphify symbol / path / explain
+2. Import / dependency edges for the touched file
+3. Affected modules (§8)
+4. Recent changes (`git log` / diff) for the zone
+5. File references from the user or stack traces
+6. Architecture docs / Memory Bank
 
-Playbook command tables answer *which npm script / skill*.  
-Master contract answers *what quality bar*.  
-This kernel answers *where you are, what you may touch, and in what order you decide*.
+---
+
+## 13. Validation & completion
+
+Before claiming done:
+
+1. Routing stages completed (or explicitly N/A)
+2. Only intended zones modified
+3. Domain checks for the workflow (`npm run lint`, `check:links`, `validate` as applicable)
+4. Locale parity if HTML/content changed
+5. No new instruction conflicts introduced (entry points still point at this kernel)
+
+Integrity automation: `npm run check:agents-routing` (see `tools/check-agents-routing.js`).
+
+---
+
+## 14. HUNDESALON NIKA quick bind (after detection)
+
+When §4 confirms this project, bind defaults:
+
+- Stack: native HTML/CSS/JS, Cloudflare Pages, no app framework
+- Locales: `de` (default), `en`, `ru`, `uk`
+- Shell: `assets/js/site-shell.js` — do not hand-duplicate header/footer
+- GSC: `ryndenko1982@gmail.com` · Bing: `snaiper1984@mail.ru`
+- Deploy: `npm run deploy` / `deploy:full` only on request
+- Minimal diffs: Ponytail always-on; Graphify for architecture questions
+
+---
+
+*End of routing kernel. Domain policies continue in `docs/agents-master.md`. Commands and accounts continue in `docs/agents-playbook.md`.*

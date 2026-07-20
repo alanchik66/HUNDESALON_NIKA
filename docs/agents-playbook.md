@@ -2,26 +2,25 @@
 
 Документ для **Cursor Cloud Agents**, Codex, Claude, Gemini CLI и локальных ассистентов.
 
-**Сначала routing:** каждый запрос проходит [`docs/agents-routing.md`](agents-routing.md) (§1 Startup → §2 Decision Pipeline → §8 Task matrix). Этот playbook — **операционный** слой: команды, skills, аккаунты. Он не дублирует detection и не переопределяет conflict priority.
+**Сначала — Routing Kernel:** [`docs/agents-routing.md`](agents-routing.md) (detection, startup, decision pipeline, safety).  
+**Доменный контракт:** [`docs/agents-master.md`](agents-master.md).  
+**Профили хостов:** [`AGENTS.md`](../AGENTS.md) · [`CLAUDE.md`](../CLAUDE.md) · [`GEMINI.md`](../GEMINI.md) · [`.github/copilot-instructions.md`](../.github/copilot-instructions.md).
 
-| Слой | Файл |
-|------|------|
-| Routing kernel (SSOT) | [`agents-routing.md`](agents-routing.md) |
-| Профиль проекта | [`../AGENTS.md`](../AGENTS.md) |
-| Quality / domain contract | [`agents-master.md`](agents-master.md) |
-| Этот playbook | команды · skills · SEO-аккаунты · чеклисты |
+Этот playbook — операционная карта **после** успешного routing: команды, аккаунты, skills. Он не заменяет kernel и не дублирует detection.
+
+## Bootstrap каждой задачи
+
+```
+Routing Kernel (§§2–9)
+  → подтвердить HUNDESALON_NIKA
+  → определить module/zone
+  → выбрать строку из таблиц ниже
+  → выполнить decision pipeline до Implementation
+```
 
 ## Проект в одном абзаце
 
 Статический многоязычный сайт салона в Лейпциге (`de` / `en` / `ru` / `uk`), хостинг **Cloudflare Pages**, shell в `site-shell.js`, продакшен: https://hundesalon-nika.com (`www` → 301 на apex).
-
-## Startup (кратко)
-
-1. Resolve repo / workspace / env / tech / module → kernel §4–§7.  
-2. Load AI docs → kernel §9.  
-3. Classify task → kernel §8.  
-4. Run the matching command table below.  
-5. Complete → kernel §12.
 
 ## Аккаунты (не путать)
 
@@ -30,29 +29,29 @@
 | Google Search Console | `ryndenko1982@gmail.com` (sole Verified Owner) |
 | Bing Webmaster Tools | `snaiper1984@mail.ru` (Edge CDP `npm run bing:edge`, порт 9224) |
 
-Не маршрутизировать GSC на `snaiper1984@gmail.com` (cutover 2026-07-19).
-
 ## Маршрутизация задач → команды
 
-После kernel §8:
-
-| Задача (класс) | Команда |
-|----------------|---------|
-| Правка UI/вёрстки | Правки в `assets/*` + 4 локали; `npm run lint` |
+| Задача / workflow | Команда / действие |
+|-------------------|--------------------|
+| Code generation / UI | Правки в `assets/*` + 4 локали; `npm run lint` |
+| Bug fix | Root cause в общем хелпере; затем lint / reproduce |
+| Refactor | Только затронутая zone; без смены поведения без запроса |
+| Security | Secrets/Functions boundaries; без коммита `.dev.vars` |
+| Testing | `npm run validate` / Playwright по зоне |
+| Review | Findings; ponytail-review при запросе упрощения |
+| Deployment | Только по запросу: `npm run deploy:full` |
+| Performance | Измерить до/после; не трогать weather dist без нужды |
+| SEO / IndexNow | `npm run seo:indexnow` |
 | Проверка ссылок (локально) | `npm run check:links` |
-| Живой обход всех URL sitemap | `npm run check:live-crawl` |
+| Живой обход sitemap | `npm run check:live-crawl` |
 | Полная валидация | `npm run validate` |
+| AI routing integrity | `npm run check:agents-routing` |
 | Сборка | `npm run build` |
-| Деплой | `npm run deploy:full` (только по запросу; kernel §10) |
-| IndexNow apex + www | `npm run seo:indexnow` |
 | Полная индексация Bing | `npm run bing:index-all` |
-| Остаток www в Bing (квота) | `npm run bing:submit-www-rem` |
-| Аудит Bing в браузере | `npm run bing:audit` |
 | Аудит GSC | `npm run google:gsc:audit` |
 | После смены favicon | `npm run seo:post-favicon` |
-| Архитектура / связи | `graphify query\|path\|explain` (не полный обход дерева) |
 
-## Skills (подключать по теме)
+## Skills (подключать по теме, после module detection)
 
 | Skill | Когда |
 |-------|--------|
@@ -88,7 +87,7 @@
 
 - Memory Bank: `memory-bank/{productContext,activeContext,progress,decisionLog,systemPatterns}.md`.
 - Cursor: `.cursor/rules/rooflow-memory-bank.mdc` — читать банк в начале нетривиальной работы; **UMB** / Update Memory Bank — записать итог.
-- Roo Code extension: режимы Flow-* из `.roo/` + `.roomodes` — перед делегированием выполнить routing kernel.
+- Roo Code extension: режимы Flow-* из `.roo/` + `.roomodes` — перед делегированием выполнить Routing Kernel.
 - Обработка плейсхолдеров: `npm run rooflow:process`. Обновление с upstream: `npm run rooflow:setup`.
 - Опционально MCP в Flow-промпты: положить `system_prompt.md` в корень и снова `rooflow:process`.
 
@@ -117,11 +116,10 @@
 - `3d-weather-codrops-main/dist-widget/` — собранный виджет погоды
 - `indexnow-key.txt`, `.dev.vars` — секреты, не в git
 - Дублировать header/footer в HTML — запрещено (есть `site-shell.js`)
-- Чужой репозиторий / несвязанный module — запрещено (kernel §7.2 / §10)
 
 ## Чеклист после заметных изменений
 
-1. Kernel §12 (routing gate)
+1. `npm run check:agents-routing` (если менялись AI-инструкции)
 2. `npm run validate`
 3. При деплое HTML: `npm run deploy:full` → purge + IndexNow
 4. При смене иконок/бренда: `npm run brand:assets` → `npm run brand:seo` → deploy → `npm run seo:post-favicon`
@@ -130,14 +128,14 @@
 ## Cursor Cloud Agents — bootstrap
 
 ```bash
+# 1) Routing kernel mentally: confirm repo + env + module
 npm install
+npm run check:agents-routing
 npm run validate
 npm run check:live-crawl   # опционально, нужен сеть
 ```
 
 Секреты в [Cursor Dashboard → Cloud Agents → Secrets](https://cursor.com/dashboard/cloud-agents): `CLOUDFLARE_API_TOKEN`, `RESEND_API_KEY`, `OPENROUTER_API_KEY`. Локально: `.dev.vars` из `.dev.vars.example`.
-
-Git: default policy = `main` + commit по запросу пользователя. Если session mandate требует feature branch / PR (Cloud Agent), следуй kernel §3 item 2 и §10 — без force-push и без rewrite history.
 
 ## Перспектива (регулярно)
 
@@ -148,4 +146,4 @@ Git: default policy = `main` + commit по запросу пользовател
 
 ## Git
 
-Default: только `main`, пуш: `npm run git:push`. Коммиты — по явной просьбе пользователя, если нет platform/session override (kernel §10).
+Только `main`, пуш: `npm run git:push`, если задача Cloud Agent не требует feature branch/PR. Коммиты — по явной просьбе пользователя (или по требованиям Cloud Agent task).

@@ -1,61 +1,84 @@
 # CLAUDE.md
 
-Проектные инструкции для Claude Code и совместимых агентов на HUNDESALON NIKA.
+Этот файл содержит проектные инструкции для Claude Code и других AI-ассистентов, работающих с HUNDESALON NIKA.
 
-## Routing (обязательно)
+**Ядро маршрутизации (обязательно первым):** [`docs/agents-routing.md`](docs/agents-routing.md)  
+Профиль: [`AGENTS.md`](AGENTS.md) · Playbook: [`docs/agents-playbook.md`](docs/agents-playbook.md) · Доменный контракт: [`docs/agents-master.md`](docs/agents-master.md) · Gemini: [`GEMINI.md`](GEMINI.md)
 
-Перед любой правкой выполни [`docs/agents-routing.md`](docs/agents-routing.md):
+## Старт каждой задачи
 
-1. Repository → Workspace → Environment → Technology → Module  
-2. Load AI docs (порядок в kernel §0 / §9)  
-3. Task class + decision pipeline (kernel §8 / §2)  
-4. Implement только в affected modules  
-5. Completion gate (kernel §12)
-
-Профиль: [`AGENTS.md`](AGENTS.md) · Playbook: [`docs/agents-playbook.md`](docs/agents-playbook.md) · Quality contract: [`docs/agents-master.md`](docs/agents-master.md)
-
-Conflict priority: user → session/platform mandate → routing kernel → project rules → AGENTS → this file → master → conventions.
+1. Выполнить Routing Kernel: репозиторий → workspace → environment → technology → framework → module.
+2. Не угадывать репозиторий/окружение/фреймворк; при недостаточности доказательств — уточнить у пользователя.
+3. Загрузить AI-инструкции и документацию в порядке kernel.
+4. Пройти decision pipeline → план → валидация плана → реализация только затронутых зон → проверка.
 
 ## Проект
 
-HUNDESALON NIKA — многоязычный сайт груминг-салона в Лейпциге. Цель: быстрый, SEO-ориентированный, конверсионный сайт на `de`, `en`, `ru`, `uk`. Стек: native HTML/CSS/JS, Cloudflare Pages (+ `functions/`), без app-framework.
+HUNDESALON NIKA — многоязычный сайт груминг-салона в Лейпциге. Основная цель: красивый, быстрый, SEO-ориентированный и удобный для конверсии сайт на 4 языках: ru, de, en, uk.
 
-## Ключевые принципы
+## Ключевые принципы работы
 
-- Профессиональный подрядчик: точечные правки, без лишнего.
-- Единый стиль и структура между локалями.
-- Не ломать SEO, a11y, mobile, Cloudflare.
-- UI: только чётные значения в px.
-- Коммерческий фокус: запись, контакты, доверие, Leipzig.
+- Работать как профессиональный подрядчик по сайту: аккуратно, по существу, без лишних правок.
+- Сохранять единый стиль и структуру между всеми языковыми версиями.
+- Предпочитать минимальные, точечные изменения перед общими переработками.
+- Не ломать SEO, доступность, мобильную версию и Cloudflare-логику.
+- Для интерфейсных правок использовать только чётные значения в px.
+- При работе с контентом и SEO держать в голове коммерческий результат: запись на услуги, контакты, доверие, локальная релевантность.
 
-## Архитектура (модули)
+## Архитектура проекта
 
-| Module | Path |
-|--------|------|
-| Locales | `de/`, `en/`, `ru/`, `uk/` |
-| Shared UI | `assets/` |
-| Edge | `functions/`, `workers/` |
-| Tooling | `tools/`, `scripts/` |
-| AI system | `docs/agents-*.md`, `.cursor/rules/`, `AGENTS.md` |
+- Статический сайт с HTML/CSS/JS.
+- Многоязычные страницы в папках ru/, de/, en/, uk/.
+- Общие стили и скрипты в assets/.
+- Серверная логика через Cloudflare Pages Functions в functions/.
+- Деплой и продакшен-операции через Wrangler/Cloudflare Pages.
 
-Не править несвязанные modules. Не дублировать header/footer — есть `site-shell.js`.
+## Обязательные правила
 
-## Workflow
+1. Сначала routing + понять задачу и найти наиболее подходящие файлы/модули.
+2. Сохранять согласованность между языковыми версиями.
+3. Не добавлять лишние зависимости без необходимости.
+4. Не трогать secrets, токены, ключи и приватные данные.
+5. После изменений проверять результат через локальную валидацию.
+6. При исправлении багов делать root-cause fix, а не временные костыли.
+7. Если меняется контент, SEO или структура страниц — проверять ссылки, метаданные и каноникализацию.
+8. Не модифицировать чужой репозиторий и несвязанные зоны monorepo.
 
-1. Routing kernel startup.  
-2. Найти нужные файлы (prefer graphify / scoped search).  
-3. Минимальное изменение (ponytail).  
-4. Проверка: `npm run lint` / `validate` / `check:links` по классу задачи.  
-5. Completion checklist kernel §12.
+## Команды для проверки
 
-## Команды
+- npm run lint
+- npm run check:links
+- npm run check:agents-routing
+- npm run validate
+- npm run qa:max
+- npm run build
 
-- `npm run lint` · `npm run check:links` · `npm run validate` · `npm run qa:max` · `npm run build`
-- Deploy только по явному запросу: `npm run deploy:full`
+## Рекомендуемый workflow
+
+1. Routing Kernel (detection + docs + plan).
+2. Изучить нужные файлы в затронутом модуле.
+3. Внести точечное изменение.
+4. Проверить локально.
+5. Если затрагивается UI/SEO/маршрутизация — прогнать validate и check:links.
+6. Только после этого считать задачу завершённой.
+
+## Важные зоны проекта
+
+- index.html и языковые entry pages
+- assets/css/ и assets/js/
+- functions/ для форм и edge-логики
+- \_headers, \_redirects, wrangler.toml для Cloudflare
+- docs/ для операций, SEO, развертывания и AI routing
+
+## Особенности контента
+
+- Сайт должен выглядеть премиально и профессионально.
+- Тексты и структура должны быть понятны для клиентов, которые ищут груминг в Лейпциге.
+- Мультиязычность — не просто перевод, а аккуратная адаптация под локальный контекст.
 
 ## Ограничения
 
-- Не угадывать репозиторий, framework или environment.
-- Не трогать secrets / `.dev.vars`.
-- Не делать массовые рефакторинги без необходимости.
-- GSC: `ryndenko1982@gmail.com` · Bing: `snaiper1984@mail.ru`.
+- Не использовать сомнительные внешние зависимости без обсуждения.
+- Не делать массовые рефакторинги без явной необходимости.
+- Не менять рабочую логику форм, редиректов и SEO без проверки.
+- Не создавать отдельную «Gemini/Claude-only» маршрутизацию — только общий kernel.

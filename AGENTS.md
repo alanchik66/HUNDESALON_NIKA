@@ -1,10 +1,19 @@
 # HUNDESALON NIKA — Codex Project Profile
 
-**Routing kernel (mandatory every task):** [`docs/agents-routing.md`](docs/agents-routing.md)  
-**Master AI operating contract:** [`docs/agents-master.md`](docs/agents-master.md)  
-**Agent playbook (commands, SEO accounts):** [`docs/agents-playbook.md`](docs/agents-playbook.md)
+**AI Routing Kernel (mandatory first):** `docs/agents-routing.md`  
+**Master AI operating contract:** `docs/agents-master.md`  
+**Agent playbook (commands, SEO accounts, skills):** `docs/agents-playbook.md`  
+**Also:** `CLAUDE.md` · `GEMINI.md` · `.github/copilot-instructions.md`
 
-Before any edit: run routing kernel §1 (Startup) → §2 (Decision Pipeline) → §8 (Task class). Do not guess repository, environment, or module scope.
+## Bootstrap (every task)
+
+1. Execute the **Routing Kernel** startup + decision pipeline (`docs/agents-routing.md`).
+2. Confirm repository identity (never guess): GitHub `alanchik66/HUNDESALON_NIKA`, package `hundesalon-nika-website`.
+3. Detect workspace, environment, technology, framework, and active module/zone.
+4. Load AI instructions and domain docs in kernel order; use Graphify before broad tours.
+5. Plan → validate plan → implement only affected zones → verify.
+
+Cursor always-on: `.cursor/rules/00-routing-kernel.mdc`. Task/skill map: `.cursor/rules/40-agent-routing.mdc`.
 
 ## Project
 
@@ -14,7 +23,6 @@ Before any edit: run routing kernel §1 (Startup) → §2 (Decision Pipeline) �
 - Languages: `de/` default, plus `en/`, `ru/`, `uk/`.
 - Main shared files: `assets/css/style.css`, `assets/css/page-modules.css`, `assets/js/site-shell.js`, `assets/js/main.js`, `assets/js/page-modules.js`.
 - The site uses `.site-scroll-root` as the fixed scroll container and a fixed premium header.
-- Modules (scope boundaries): locales, `assets/`, `functions/`, `workers/`, `tools/`, `docs/` + AI surfaces — see routing kernel §7.2.
 
 ## Brand
 
@@ -35,7 +43,6 @@ Before any edit: run routing kernel §1 (Startup) → §2 (Decision Pipeline) �
 - After UI/CSS/JS changes, run at least:
   - `npm run lint`
   - browser smoke checks with Playwright or a local server when layout visibility is affected.
-- Prefer graphify / scoped search over whole-repo scans (routing kernel §11).
 
 ## Commands
 
@@ -45,6 +52,7 @@ Before any edit: run routing kernel §1 (Startup) → §2 (Decision Pipeline) �
 - Full validation: `npm run validate`
 - Link check: `npm run check:links`
 - Project health check: `npm run check:project`
+- AI routing integrity: `npm run check:agents-routing`
 - Production bundle: `npm run build`
 - Cloudflare deploy: `npm run deploy`
 - Knowledge graph (Graphify): `npm run graphify` (full rebuild), `npm run graphify:update` (after JS/tools edits), `graphify query|path|explain`
@@ -52,6 +60,8 @@ Before any edit: run routing kernel §1 (Startup) → §2 (Decision Pipeline) �
 - Minimal diffs (Ponytail): always-on rule `.cursor/rules/ponytail.mdc`; skills under `.agents/skills/ponytail*`
 
 ## Plugin And Skill Routing
+
+Apply after the routing kernel has identified the active module:
 
 - Use GitHub plugin for repository, issue, PR, branch, review, and CI tasks.
 - Use Figma plugin and Figma skills only when a Figma design/file/component is involved.
@@ -72,7 +82,6 @@ Before any edit: run routing kernel §1 (Startup) → §2 (Decision Pipeline) �
 - Full post-deploy path: `npm run deploy:full` (deploy, CDN purge, live HTML check, GSC audit).
 - HTML caching pitfalls and Cache Rules: `docs/cloudflare-caching.md`.
 - Before deploy, prefer validating with `npm run lint` and a quick local browser smoke test.
-- Deploy only when explicitly requested (routing kernel §10).
 
 ## Cursor Cloud specific instructions
 
@@ -81,13 +90,11 @@ Cloud agents run on Ubuntu. Configuration lives in `.cursor/environment.json`.
 ### Do not run by default
 
 - **No hello-world** site tour, browser onboarding, or “navigate and interact” checklist.
-- **No pull request** unless the user explicitly asks for a PR **or** the active platform/session mandate requires it (routing kernel §3 / §10).
-- **No extra branches** by default — work on `main` unless a session mandate requires `cursor/<name>-…` branches.
+- **No pull request** unless the user explicitly asks for a PR (or the Cloud Agent task requires one).
+- **No extra branches** — work only on `main` unless the Cloud Agent task requires a feature branch.
 - **No** `sync/gitlab-main` MR flow — GitLab removed; use GitHub `origin` only.
 
 ### Git (after code changes)
-
-Default:
 
 ```bash
 git checkout main
@@ -97,13 +104,11 @@ git add -A && git commit -m "…"
 npm run git:push   # GitHub origin only
 ```
 
-When a session mandate requires feature branches/PRs, follow that mandate without force-push or history rewrite.
-
 Details: `docs/git-workflow.md`. Remote: `origin` → GitHub `alanchik66/HUNDESALON_NIKA`.
 
 ### Bootstrap (every agent start)
 
-1. Confirm repository identity via routing kernel §4 (expect `alanchik66/HUNDESALON_NIKA`).
+1. Run routing kernel detection (repo / workspace / env / tech / module).
 2. `npm install` runs automatically from `environment.json`.
 3. Dev preview: terminal `dev` or `npm run dev` → http://localhost:5502 (root redirects to `/de/`).
 4. Cloudflare Pages + Functions locally: `npm run dev:cf` → port 8788 (builds `dist/` first).
@@ -114,10 +119,11 @@ Details: `docs/git-workflow.md`. Remote: `origin` → GitHub `alanchik66/HUNDESA
 npm run lint
 npm run check:links
 npm run check:project
+npm run check:agents-routing
 npm run build
 ```
 
-Full gate: `npm run validate` (lint + link check + project health).
+Full gate: `npm run validate` (lint + link check + project health + agents routing).
 
 ### Deploy (only when explicitly requested)
 

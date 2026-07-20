@@ -21,20 +21,34 @@ Install RooFlow file-based Memory Bank for Cursor (and full `.roo` Flow modes fo
 
 ---
 
-2026-07-20 02:40:00 — AI Routing Kernel as SSOT
+2026-07-20 02:45:00 - **AI Routing Kernel as shared capability** (landed on main via #26)
 
 ## Decision
 
-Introduce `docs/agents-routing.md` as the single source of truth for agent startup, repository/workspace/environment/technology detection, decision pipeline, task-class routing, conflict priority, module boundaries, and safety rails. Wire all entry points (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/40-agent-routing.mdc`, playbook, master workflows) to invoke the kernel instead of maintaining isolated/duplicated routing sections.
+Make routing a single reusable kernel (`docs/agents-routing.md`) integrated into every host workflow, instead of an isolated “Routing Rules” appendix duplicated per tool.
 
 ## Rationale
 
-- Prior state had operational routing only in the playbook + a thin Cursor rule; workflows in `agents-master.md` and entry files each reinvented “inspect then edit” without deterministic detection or conflict resolution.
-- GSC account in the Cursor rule conflicted with the post-cutover playbook (`snaiper` vs `ryndenko`).
-- `.github/copilot-instructions.md` was referenced but missing.
-- Enterprise requirement: routing must be a reusable capability inside every workflow, not an appendix.
+- Prior state: task→command map only; no deterministic repo/workspace/env/module detection; GSC account conflict; missing Copilot/Gemini adapters; `agents-master` workflows started at Understand without routing.
+- One kernel + thin host adapters avoids dialect drift across Cursor / Claude / Codex / Gemini / Copilot.
+- Integrity enforced by `npm run check:agents-routing` inside `validate`.
 
-## Consequences
+## Implementation Details
 
-- Domain quality stays in `agents-master.md`; commands/accounts stay in the playbook; detection/pipeline/safety live only in the kernel.
-- Git default (`main`, no unsolicited PR) remains, with explicit session-mandate override documented in kernel §3/§10.
+- Kernel: `docs/agents-routing.md`
+- Cursor: `.cursor/rules/00-routing-kernel.mdc` (alwaysApply); `40-agent-routing.mdc` = task/skill map after kernel
+- Hosts: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, Copilot agent profile
+- Domain contract `docs/agents-master.md` §§4–7, 81, 88–92, 139, 143, 150 bound to kernel
+- GSC owner corrected to `ryndenko1982@gmail.com` in Cursor task routing
+
+---
+
+2026-07-20 02:40:00 — Parallel kernel draft (PR #27, not yet reconciled with #26)
+
+## Decision
+
+Alternate SSOT draft: combine kernel always-on into `40-agent-routing.mdc` (no separate `00-` rule); elevate platform/session mandate explicitly in conflict order; document Cloud Agent branch/PR override vs default `main`-only.
+
+## Note
+
+Same goal as #26; architecture differs. Merge conflicts in kernel + host adapters are **complicated** (conflicting intents) and need an explicit choose/merge decision — do not auto-resolve by picking one side blindly.

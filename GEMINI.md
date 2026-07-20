@@ -1,33 +1,19 @@
-# GEMINI.md
+# HUNDESALON NIKA — Gemini CLI Project Instructions
 
-Instructions for Gemini CLI and compatible coding agents working in **HUNDESALON NIKA**.
+Bootstrap every task with the **AI Routing Kernel**: [`docs/agents-routing.md`](docs/agents-routing.md).
 
-## Mandatory routing
+Then load:
 
-Before any file change, execute [`docs/agents-routing.md`](docs/agents-routing.md):
+1. [`AGENTS.md`](AGENTS.md) — project profile  
+2. [`docs/agents-playbook.md`](docs/agents-playbook.md) — commands / accounts / skills  
+3. [`docs/agents-master.md`](docs/agents-master.md) — domain policies (SEO, UX, legal, QA)  
+4. [`CLAUDE.md`](CLAUDE.md) — Claude-oriented summary (same project rules)
 
-1. Detect repository / workspace / environment / technology / active module (never guess).  
-2. Load AI docs in kernel order (§0 / §9).  
-3. Classify the task (§8) and run the decision pipeline (§2).  
-4. Edit only affected modules.  
-5. Complete with kernel §12.
+## Project bind (after kernel confirms this repo)
 
-Also read: [`AGENTS.md`](AGENTS.md), [`docs/agents-playbook.md`](docs/agents-playbook.md), domain standards in [`docs/agents-master.md`](docs/agents-master.md).
+- Static multilingual site (`de` / `en` / `ru` / `uk`), Cloudflare Pages, shared shell in `assets/js/site-shell.js`
+- Prefer minimal root-cause diffs (Ponytail); use Graphify before broad codebase tours
+- Validate with `npm run lint`, `npm run check:links`, `npm run validate` as applicable
+- Deploy only on explicit request (`npm run deploy:full`)
 
-## Project facts
-
-- Multilingual static site (`de` default, `en`, `ru`, `uk`) for a Leipzig grooming salon.  
-- Native HTML/CSS/JS; Cloudflare Pages + `functions/`; npm; no React/Next app framework.  
-- Shared UI: `assets/`; do not duplicate header/footer (use `site-shell.js`).  
-- Hosting is Cloudflare only — not Netlify/Vercel.
-
-## Default workflow
-
-Route → inspect (prefer graphify) → minimal change → validate (`npm run lint` / `validate` / `check:links` as applicable) → report.
-
-Deploy only on explicit request (`npm run deploy:full`). Secrets stay in Dashboard / `.dev.vars`, never in git.
-
-## Accounts
-
-- GSC: `ryndenko1982@gmail.com`  
-- Bing: `snaiper1984@mail.ru`
+Do not invent a separate Gemini-only routing system — reuse the kernel.
