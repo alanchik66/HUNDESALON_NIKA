@@ -7362,9 +7362,10 @@ body.light .hero-title {
   margin-top: 0;
   margin-bottom: 36px;
   position: relative;
-  display: inline-block;
-  left: 50%;
-  transform: translateX(-50%);
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
 }
 
 .section-intro {
@@ -11148,6 +11149,18 @@ body.header-weather-expanded .site-scroll-root {
     margin-top: 0.75em;
     padding: 0.48em 0.6em;
     gap: 0.4em;
+  }
+
+  .footer-socials .social-link--primary,
+  .footer-socials .social-link-primary {
+    margin-left: 0;
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .footer-socials .social-link--primary::after,
+  .footer-socials .social-link-primary::after {
+    content: none;
   }
 
   .footer-nav {
