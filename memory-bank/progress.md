@@ -22,9 +22,12 @@ Task list for project / agent-tooling progress.
 - [x] 2026-07-20: release cleanup (~2k lines obsolete migration/probe tooling removed), SEO metadata 160–170 chars, production build + 4-locale browser smoke passed
 - [x] 2026-07-20: AI Routing Kernel integrated across all agent hosts + `check:agents-routing` in validate (#26 / #27)
 - [x] 2026-07-20: Routing finalize — #26 architecture locked; git-workflow § refs fixed; Memory Bank merge noise cleared
+- [x] 2026-07-20: lean `.cursor/mcp.json` (#30); Cloud Agent MCP check — Notion needs Desktop Authenticate; CF/Playwright/GitHub via CLI OK; production deploy success `11a2cbf9`
+- [x] 2026-07-20: root `wrangler.toml` `account_id` so Pages CLI works without `CLOUDFLARE_ACCOUNT_ID` secret
 
 ## Current Tasks
 
+- [ ] Notion MCP Authenticate in Cursor Desktop (Cloud Agent cannot open interactive MCP OAuth)
 - [ ] Stripe onboarding **Zustimmen und absenden** — Incomplete на Unternehmensinformationen (USt пусто; Dashboard flaky). Payments на сайте OFF
 - [ ] GBP video verification after salon opens (`…/verify/l/09116836504441086909`)
 - [ ] Owner: USt-IdNr → Impressum (4 locales) + Stripe company
