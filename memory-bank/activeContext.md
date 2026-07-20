@@ -12,6 +12,13 @@ Session status: recent changes, current goals, open questions.
 
 ## Recent Changes
 
+2026-07-20 17:24:00 - Re-check after user Cursor/Foundry screenshot:
+
+- Notion still `needsAuth`; Cloud Agent cannot open Authenticate (Desktop-only).
+- `CLOUDFLARE_API_TOKEN` in this Cloud env is now **Invalid** (verify 1000) — refresh in Cursor Dashboard → Cloud Agents → Secrets (Zone Ops or Pages Deploy scoped token).
+- `pages.dev/de/` still HTTP 200; validate still green; PR #31 draft mergeable.
+- Foundry Local tiny models (0.5b–3b) are fine for chat experiments, not for this Cloud Agent / site ops work.
+
 2026-07-20 03:52:00 - MCP + validate + production deploy check (Cloud Agent):
 
 - `npm run validate` green (lint, links, project, agents-routing, payments).
