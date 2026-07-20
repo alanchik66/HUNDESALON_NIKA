@@ -5,19 +5,25 @@ Session status: recent changes, current goals, open questions.
 
 ## Current Focus
 
-- **AI Routing Kernel** integrated across Cursor / Claude / Codex / Gemini / Copilot (`docs/agents-routing.md`, `check:agents-routing`).
+- **AI Routing Kernel** at `docs/agents-routing.md` — integrated across AGENTS/CLAUDE/GEMINI/Copilot/Cursor rules/playbook/master; integrity via `check:agents-routing` (2026-07-20). **Merge note:** PR #26 (main) and PR #27 (this branch) both shipped kernels — unresolved architecture conflicts remain in the merge.
 - **GBP (ryndenko):** HUNDESALON_NIKA created, profile filled, **not public** until video verify after salon opens. Verify: `https://business.google.com/verify/l/09116836504441086909`
 - **Stripe:** test keys in CF; bank ••••1334 + 2FA On; Dashboard submit still blocked (`Unternehmensinformationen Unvollständig` / USt empty). Site payments **OFF** (`PAYMENTS_ONLINE_ENABLED=false`).
 - Standing rule: login/OAuth → open URL, wait, resume (`.cursor/rules/wait-for-user-login.mdc`).
 
 ## Recent Changes
 
-2026-07-20 02:45:00 - Production AI routing kernel:
+2026-07-20 02:45:00 - Production AI routing kernel (main / #26):
 
 - Canonical `docs/agents-routing.md` (detection, startup, decision pipeline, monorepo, safety, conflicts).
 - Wired into `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, Copilot instructions/agent, playbook, `agents-master` workflows.
 - Cursor `00-routing-kernel.mdc` alwaysApply; fixed GSC account in `40-agent-routing.mdc`.
 - `npm run check:agents-routing` added to `validate`.
+
+2026-07-20 02:40:00 - Parallel routing kernel work (this branch / #27):
+
+- Alternate SSOT shape in `docs/agents-routing.md` + combined Cursor `40-agent-routing.mdc` (no separate `00-` rule).
+- Session-mandate override for Cloud Agent PR/branch policy vs default `main`-only documented in that draft.
+- Same GSC fix (`ryndenko1982@gmail.com`). Merge with #26 left as complicated conflicts.
 
 2026-07-19 20:40:00 - Eric Schumann price list + salon rules on site (ru/de/en/uk):
 
@@ -72,6 +78,7 @@ Session status: recent changes, current goals, open questions.
 
 ## Open Questions/Issues
 
+- **Open merge decision:** keep main (#26) kernel shape (`00-routing-kernel.mdc` + `check:agents-routing`) vs branch (#27) combined `40-agent-routing` + session-mandate git wording — see PR conflict report.
 - USt-IdNr → Impressum (4 locales) + Stripe company when available.
 - Stripe **Zustimmen und absenden** when Dashboard Incomplete clears.
 - GBP video verify at salon; then Maps URL → `brand-profiles.mjs`.

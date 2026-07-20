@@ -21,7 +21,7 @@ Install RooFlow file-based Memory Bank for Cursor (and full `.roo` Flow modes fo
 
 ---
 
-2026-07-20 02:45:00 - **AI Routing Kernel as shared capability**
+2026-07-20 02:45:00 - **AI Routing Kernel as shared capability** (landed on main via #26)
 
 ## Decision
 
@@ -40,3 +40,15 @@ Make routing a single reusable kernel (`docs/agents-routing.md`) integrated into
 - Hosts: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, Copilot agent profile
 - Domain contract `docs/agents-master.md` §§4–7, 81, 88–92, 139, 143, 150 bound to kernel
 - GSC owner corrected to `ryndenko1982@gmail.com` in Cursor task routing
+
+---
+
+2026-07-20 02:40:00 — Parallel kernel draft (PR #27, not yet reconciled with #26)
+
+## Decision
+
+Alternate SSOT draft: combine kernel always-on into `40-agent-routing.mdc` (no separate `00-` rule); elevate platform/session mandate explicitly in conflict order; document Cloud Agent branch/PR override vs default `main`-only.
+
+## Note
+
+Same goal as #26; architecture differs. Merge conflicts in kernel + host adapters are **complicated** (conflicting intents) and need an explicit choose/merge decision — do not auto-resolve by picking one side blindly.

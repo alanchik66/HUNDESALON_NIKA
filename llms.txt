@@ -2,6 +2,10 @@
 
 HUNDESALON NIKA is a professional pet grooming salon in Leipzig, Germany. The site serves clients in German, English, Russian, and Ukrainian. The canonical public domain is https://hundesalon-nika.com/.
 
+## AI agent routing
+
+Coding agents must follow repository instructions in `AGENTS.md` and `docs/agents-routing.md` (startup detection, decision pipeline, module scope). Never guess the repository or hosting target.
+
 ## Primary URLs
 
 - German: https://hundesalon-nika.com/de/
