@@ -1,103 +1,118 @@
 # Cloudflare API token — HUNDESALON NIKA
 
-## Canonical token policy
+## Один токен — не «глобальный ключ»
 
-Для проекта должна быть понятная схема из **двух максимум** рабочих токенов:
+В Dashboard много записей — это нормально путает. Разделить нужно так:
 
-| Назначение      | Имя                              | Где используется                                                                                     |
-| --------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Zone automation | `HUNDESALON_NIKA — Zone Ops`     | локально: DNS, purge, redirects, WAF, cache settings                                                 |
-| Pages CI deploy | `HUNDESALON_NIKA — Pages Deploy` | только GitHub CI (GitLab mirror removed); если деплой идет без Wrangler — настройте локальный deploy |
+| Что видите в Dashboard | Нужно ли проекту | Действие |
+| --- | --- | --- |
+| **Global API Key / Origin CA Key** | Нет | Legacy, не использовать (оранжевое предупреждение до 2026 — скрыть нельзя) |
+| **Cloudflare Agent (conversation)** | Нет | Мусор после сессий Ask AI — удалять |
+| Старые `NIKA-Purge`, `WordPress`, … | Нет | Удалить |
+| **`HUNDESALON_NIKA — Automation`** | **Да — один на всё** | Единственный рабочий automation token |
+| Wrangler OAuth (не в списке API Tokens) | Fallback | Локально, если API token не настроен |
 
-Не нужно держать отдельные токены под `purge`, `DNS audit`, `redirects`, `WordPress` и разовые Cloudflare Agent conversations. Истекшие `Cloudflare Agent (conversation)` токены можно удалять из Dashboard как мусор. Production-схема проекта — два scoped-токена ниже, без broad user/account tokens.
+**Не делать:** один «глобальный» Global API Key — он deprecated, слишком широкий и небезопасный.
 
-Текущее состояние Dashboard:
+**Делать:** один **scoped User API Token** с минимальными правами на зону + Pages.
 
-- `HUNDESALON_NIKA — Zone Ops`: zone-only token для `hundesalon-nika.com`.
-- `HUNDESALON_NIKA — Pages Deploy`: account-only token с `Pages Write`.
-- Старые `NIKA-Purge-Cache`, `NIKA-Zone-Audit-2025`, `WordPress`, `Cloudflare Agent Token` и истекшие conversation tokens удалены.
+## Canonical token: `HUNDESALON_NIKA — Automation`
 
-Cloudflare Dashboard Ask AI/Agent может заново создавать `Cloudflare Agent (conversation)` токены. Они не являются частью production-схемы проекта; после завершения сессии их можно удалять. В рабочей схеме должны оставаться только `HUNDESALON_NIKA — Zone Ops` и `HUNDESALON_NIKA — Pages Deploy`. Для снижения этого шума `Public OAuth App access` выключен на уровне аккаунта.
+| Поле | Значение |
+| --- | --- |
+| **Имя** | `HUNDESALON_NIKA — Automation` |
+| **Account** | `HUNDESALON_NIKA` (`25e872aeab8cb246c69142ab07cd0fee`) |
+| **Zone** | `hundesalon-nika.com` |
+| **Локально** | `CLOUDFLARE_API_TOKEN` в `.dev.vars` + `.cloudflare-api.token` |
+| **GitHub CI** | тот же секрет (можно `CLOUDFLARE_API_TOKEN` или legacy `CLOUDFLARE_PAGES_API_TOKEN`) |
 
-Желтое предупреждение `Origin CA Key (Deprecated)` в секции **API Keys** не является старым User API Token и не означает, что в проекте остался deprecated token. Это системное предупреждение Cloudflare о deprecated типе ключей для Origin CA. Его нельзя убрать переименованием или обновлением `HUNDESALON_NIKA — Zone Ops` / `HUNDESALON_NIKA — Pages Deploy`; оно остается в UI, пока Cloudflare показывает секцию legacy API Keys. Проект не использует Origin CA Key или Global API Key для автоматизации; все рабочие операции идут через scoped API tokens.
+### Права (в одном токене)
 
-Человеческий доступ держим отдельно от automation tokens:
+**Account**
 
-- `snaiper1984@gmail.com` — основной владелец/администратор.
-- `ryndenko1982@gmail.com` — второй доверенный пользователь; добавлен как `Administrator`.
+- Cloudflare Pages → Edit
 
-Для людей не создаем API tokens вместо доступа в аккаунт. Правильная схема: отдельный Cloudflare Member invite с выбранной ролью и обязательной 2FA.
+**Zone** (`hundesalon-nika.com`)
 
-Проверено в Dashboard на 2026-07-01:
+- Zone → Read
+- DNS → Edit
+- Cache Purge → Purge
+- Page Rules → Edit
+- Zone Rules → Edit
+- WAF → Edit (только если автоматизируем WAF)
 
-- `snaiper1984@gmail.com`: `accepted`, `Super Administrator - All Privileges`, 2FA включена.
-- `ryndenko1982@gmail.com`: `accepted`, без API-token; при следующем доступе Cloudflare должен потребовать включить 2FA.
-- Members → Settings: `Require two-factor authentication (2FA) for all members` включен.
-- Members → Settings: `Public OAuth App access` выключен; деплой и automation используют scoped API tokens.
-
-## Zone token: DNS, кеш, redirects, WAF
-
-| Имя       | `HUNDESALON_NIKA — Zone Ops`                                                               |
-| --------- | ------------------------------------------------------------------------------------------ |
-| **Зона**  | `hundesalon-nika.com`                                                                      |
-| **Права** | Zone Read · DNS Records Edit · Cache Purge · Page Rules Edit · Zone Rules Edit · WAF Write |
-| **Файл**  | `CLOUDFLARE_API_TOKEN` в `.dev.vars` (копия: `.cloudflare-api.token`, gitignored)          |
+### Команды
 
 ```bash
-npm run cf:ensure-api-token    # проверка или авто-создание
-npm run cf:open-edit-token     # правка старого токена, если нужно расширить права
-npm run cf:open-api-token      # мастер нового токена
+npm run cf:cleanup-dashboard-tokens   # авто: Edge CDP → создать/проверить + убрать мусор
+npm run cf:open-unified-token         # мастер (account-scoped template, без выбора аккаунта)
+npm run cf:open-edit-token            # расширить существующий Zone Ops → добавить Pages
+npm run cf:set-api-token -- <token>   # сохранить + проверить zone + Pages
+npm run cf:ensure-api-token           # аудит: unified OK?
+npm run cf:consolidate-tokens         # слить два локальных токена в один
+npm run deploy:full
+```
+
+### Если Dashboard застрял на выборе аккаунта
+
+Старый шаблон подставлял `accountId=<uuid>` — Cloudflare открывал picker и форма не редактировалась.
+
+**Исправлено в репо:**
+
+- `cf:open-unified-token` → `https://dash.cloudflare.com/<account-id>/api-tokens?...` (без `:account` picker)
+- fallback: profile URL с `accountId=*` (официальный формат)
+- `cf:open-edit-token` → account-scoped edit URL
+- `cf:cleanup-dashboard-tokens` → CDP проходит account picker и UI-bug «пустые permissions»
+
+## Миграция с двух токенов
+
+Раньше было два: `Zone Ops` + `Pages Deploy`. Теперь достаточно одного.
+
+**Вариант A (быстрее):** отредактировать существующий Zone Ops token
+
+```bash
+npm run cf:open-edit-token
+```
+
+В Dashboard: **Add permission** → Account → Cloudflare Pages → Edit → Save.  
+Переименовать токен в `HUNDESALON_NIKA — Automation`.  
+`npm run cf:set-api-token -- <token>` (тот же или новый после rotate).
+
+**Вариант B:** создать новый unified token, удалить старые два + Agent tokens.
+
+```bash
+npm run cf:open-unified-token
 npm run cf:set-api-token -- <token>
 ```
 
-**Практичнее всего:** не создавать новый токен под каждую задачу. Держим один scoped zone-token для `hundesalon-nika.com` и расширяем его только нужными zone permissions. Для Agent Ready / DNS-AID нужен `Zone → DNS → Edit`, иначе DNS-записи приходится добавлять вручную через Dashboard.
+В Dashboard удалить: старый Zone Ops, Pages Deploy, все `Cloudflare Agent (conversation)`.
 
-После деплоя HTML: `npm run cf:purge-cache` или `npm run deploy:full`.
+## Что покрывает один токен
 
-## Дополнить текущий токен (без нового секрета)
+| Задача | Команда |
+| --- | --- |
+| Pages deploy | `npm run deploy` |
+| CDN purge | `npm run cf:purge-cache` |
+| DNS / redirects | zone scripts |
+| WAF rate limits | `npm run cf:configure-waf-rate-limits` |
+| Post-deploy checks | `npm run deploy:full` |
 
-Текущий рабочий токен: **HUNDESALON_NIKA — Zone Ops** (`aa00284c…`). Если Cloudflare добавляет новые automation-задачи, не создавай новый token под каждую задачу: расширяй этот scoped zone-token только нужными zone permissions.
+Wrangler OAuth остаётся только как **fallback**, если API token не настроен. Для стабильности — один API token.
 
-```bash
-npm run cf:open-edit-token   # открывает страницу редактирования в Edge
-```
+## Origin CA Key (Deprecated)
 
-Минимальный набор прав:
+Оранжевый блок **Origin CA Key (Deprecated)** в API Keys — не ошибка проекта. Миграция на User API Tokens уже выполнена. Убрать блок из UI нельзя.
 
-- `Zone → Zone → Read`
-- `Zone → DNS → Edit`
-- `Zone → Cache Purge → Purge`
-- `Zone → Page Rules → Edit`
-- `Zone → Zone Rules → Edit`
-- `Zone → WAF → Edit` только если автоматизируем WAF/rate limits
+## Люди vs automation
 
-После сохранения в Dashboard: `npm run cf:ensure-api-token` (локальный token должен проходить проверку).
+- Люди: `snaiper1984@gmail.com`, `ryndenko1982@gmail.com` — Member + 2FA, без API tokens.
+- Automation: один `HUNDESALON_NIKA — Automation`.
+- `Public OAuth App access` выключен на аккаунте.
 
-## Авто-создание (рекомендуется один раз)
+## Legacy aliases (совместимость)
 
-1. [Profile → API Tokens](https://dash.cloudflare.com/profile/api-tokens) → **Create Token**
-2. Создать custom token `HUNDESALON_NIKA — Zone Ops` с правами из таблицы выше.
-3. `npm run cf:set-api-token -- <token>` — проверит токен и запишет его в `.dev.vars` / `.cloudflare-api.token`.
-
-## Другие задачи (отдельные токены не нужны)
-
-| Задача               | Команда                                                                      |
-| -------------------- | ---------------------------------------------------------------------------- |
-| DNS / DNS-AID        | `HUNDESALON_NIKA — Zone Ops` with `DNS Records Edit`                         |
-| WAF rate limits      | `npm run cf:configure-waf-rate-limits`                                       |
-| Crawler Hints / CSAM | `npm run cf:configure-cache-features`                                        |
-| Pages deploy         | `npx wrangler login` + `npm run deploy` (OAuth auto; Zone Ops token skipped) |
-| www robots → apex    | `npm run cf:www-robots-setup` (Page Rule `www/*` уже есть)                   |
-
-## Pages deploy token: GitHub/GitLab CI
-
-Для CI-деплоя нужен отдельный Cloudflare token:
-
-| Имя                 | `HUNDESALON_NIKA — Pages Deploy`                       |
-| ------------------- | ------------------------------------------------------ |
-| **Права**           | Account → Cloudflare Pages → Edit                      |
-| **Account**         | `HUNDESALON_NIKA` (`25e872aeab8cb246c69142ab07cd0fee`) |
-| **GitHub secret**   | `CLOUDFLARE_PAGES_API_TOKEN`                           |
-| **GitLab variable** | `CLOUDFLARE_API_TOKEN`                                 |
-
-Текущий zone-token не подходит для Pages deploy. Он правильный для purge/rules, но Cloudflare Pages upload требует account-level permission.
+| Переменная | Статус |
+| --- | --- |
+| `CLOUDFLARE_API_TOKEN` | основная |
+| `CLOUDFLARE_PAGES_API_TOKEN` | alias; при unified set-api-token пишет туда же |
+| `cf:open-pages-token`, `cf:set-pages-token` | aliases; используй `cf:open-unified-token` |

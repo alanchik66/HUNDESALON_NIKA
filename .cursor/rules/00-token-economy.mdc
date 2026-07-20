@@ -1,0 +1,19 @@
+---
+description: Token economy — minimize context for ALL Cursor agents/subagents
+alwaysApply: true
+---
+
+# Token economy (all agents)
+
+Goal: spend the fewest tokens that still finish the task correctly.
+
+## Hard rules
+
+1. **Orient cheap, then read thin.** For architecture / “what connects X”: MCP `graphify` or `npm run graphify:query -- "…"` / `path` / `explain` / `graphify-out/wiki/` — **before** broad Grep/Glob/Read tours. Never dump `graph.json` into chat.
+2. **No whole-file tourism.** Read only the lines you need (`offset`/`limit`). Prefer one shared helper fix over N call-site patches.
+3. **Memory Bank selective.** Non-trivial work: `activeContext.md` (+ `productContext.md` if product facts). Do **not** read all five bank files unless Architect/UMB. Append short bullets on UMB — never rewrite whole files.
+4. **Subagents inherit this.** Every Task/subagent prompt must say: graphify-first, thin reads, no hello-world site tour, no unrelated file dumps.
+5. **Reply short.** Answer the ask; skip restating the task, long preambles, and “what I won’t do”.
+6. **Skills on demand.** Load Flow/ponytail/graphify skills only when the trigger matches — do not paste entire skill bodies into the reply.
+
+Skip graphify only for known one-file edits or when `graphify-out/graph.json` is missing (`npm run graphify`).

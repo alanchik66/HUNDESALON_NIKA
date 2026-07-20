@@ -1,30 +1,8 @@
 /**
- * Open Cloudflare dashboard — create HUNDESALON_NIKA — Zone Ops token.
+ * Open Cloudflare dashboard — create HUNDESALON_NIKA — Automation token.
+ * Alias for cf:open-unified-token.
  */
-import { exec } from 'node:child_process';
-import { TOKEN_NAME } from './lib/cf-api-token.mjs';
+import { spawn } from 'node:child_process';
 
-const url = 'https://dash.cloudflare.com/profile/api-tokens/create';
-
-console.log(`Create custom token: ${TOKEN_NAME}`);
-console.log('Zone resources: hundesalon-nika.com — include all:');
-console.log('  • Zone → Zone → Read');
-console.log('  • Zone → DNS → Edit');
-console.log('  • Zone → Cache Purge');
-console.log('  • Zone → Page Rules → Edit');
-console.log('  • Zone → Zone Rules → Edit');
-console.log('  • Zone → WAF → Edit (only if automating WAF/rate limits)');
-console.log('');
-console.log('Then: npm run cf:set-api-token -- <paste-token-once>');
-console.log('');
-
-const start =
-  process.platform === 'win32'
-    ? `start "" "${url}"`
-    : process.platform === 'darwin'
-      ? `open "${url}"`
-      : `xdg-open "${url}"`;
-
-exec(start, error => {
-  if (error) console.log('Open the Cloudflare token page manually if the browser did not launch.');
-});
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+spawn(npmCommand, ['run', 'cf:open-unified-token'], { stdio: 'inherit', shell: true });

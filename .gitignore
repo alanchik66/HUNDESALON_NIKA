@@ -83,8 +83,6 @@ secrets.*
 .dev.vars
 .dev.vars.*
 !.dev.vars.example
-!.dev.vars.op.example
-.1password/
 *.key
 *.pem
 
@@ -195,6 +193,7 @@ booking-*-browser.png
 tools/_test-*.mjs
 tools/_create-*.mjs
 .cloudflare-api.token
+.cloudflare-pages.token
 .cloudflare-purge.token
 .cloudflare-rules.token
 .local-backups/

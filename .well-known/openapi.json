@@ -201,7 +201,7 @@
           "file": {
             "type": "string",
             "format": "binary",
-            "description": "JPG or PNG, maximum 5 MB"
+            "description": "JPG or PNG, maximum 150 MB"
           },
           "lang": {
             "type": "string"

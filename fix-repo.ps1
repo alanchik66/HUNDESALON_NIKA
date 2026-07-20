@@ -1,9 +1,9 @@
 # ============================================================
 #  fix-repo.ps1  -  Repository Auto-Diagnostics after relocation
-#  Run from: C:\PROJEKT\HUNDESALON_NIKA
+#  Run from: D:\HUNDESALON_NIKA
 # ============================================================
 
-$RepoPath   = "C:\PROJEKT\HUNDESALON_NIKA"
+$RepoPath   = "D:\HUNDESALON_NIKA"
 $LogFile    = "$RepoPath\fix-repo-report.txt"
 $Divider    = "=" * 60
 

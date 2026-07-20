@@ -12,9 +12,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Онлайн-запис — HUNDESALON_NIKA</title>
-    <meta name="twitter:description" content="Онлайн-запис у HUNDESALON NIKA у Лейпцигу: забронюйте грумінг для собаки чи кота за кілька кліків зі зрозумілим вибором послуг і дбайливим підходом — запишіться." />
+    <meta
+      name="twitter:description"
+      content="Онлайн-запис у HUNDESALON NIKA у Лейпцигу: забронюйте грумінг для собаки чи кота за кілька кліків зі зрозумілим вибором послуг і дбайливим підходом — запишіться."
+    />
     <meta name="msvalidate.01" content="B67A37AB236F9D14E1F99A12DDCA531C" />
-    <meta name="description" content="Онлайн-запис у HUNDESALON NIKA у Лейпцигу: забронюйте грумінг для собаки чи кота за кілька кліків зі зрозумілим вибором послуг і дбайливим підходом — запишіться." />
+    <meta
+      name="description"
+      content="Онлайн-запис у HUNDESALON NIKA у Лейпцигу: забронюйте грумінг для собаки чи кота за кілька кліків зі зрозумілим вибором послуг і дбайливим підходом — запишіться."
+    />
     <link rel="canonical" href="https://hundesalon-nika.com/uk/onlayn-bronirovanie" />
     <link rel="alternate" hreflang="ru" href="https://hundesalon-nika.com/ru/onlayn-bronirovanie" />
     <link rel="alternate" hreflang="uk" href="https://hundesalon-nika.com/uk/onlayn-bronirovanie" />
@@ -24,7 +30,10 @@
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="uk_UA" />
     <meta property="og:title" content="Онлайн-запис — HUNDESALON_NIKA" />
-    <meta property="og:description" content="Онлайн-запис у HUNDESALON NIKA у Лейпцигу: забронюйте грумінг для собаки чи кота за кілька кліків зі зрозумілим вибором послуг і дбайливим підходом — запишіться." />
+    <meta
+      property="og:description"
+      content="Онлайн-запис у HUNDESALON NIKA у Лейпцигу: забронюйте грумінг для собаки чи кота за кілька кліків зі зрозумілим вибором послуг і дбайливим підходом — запишіться."
+    />
     <meta property="og:url" content="https://hundesalon-nika.com/uk/onlayn-bronirovanie" />
     <meta property="og:site_name" content="HUNDESALON_NIKA" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -142,8 +151,8 @@
       <p class="booking-kicker">Онлайн-запис</p>
       <h1 class="booking-title" id="booking-title-uk">Онлайн-запис до HUNDESALON_NIKA</h1>
       <p class="booking-lead">
-        Оберіть послугу та зручний час за кілька кроків. Після надсилання заявки ми швидко підтвердимо візит і підготуємо все
-        для спокійної та комфортної процедури.
+        Оберіть послугу та зручний час за кілька кроків. Після надсилання заявки ми швидко підтвердимо візит і
+        підготуємо все для спокійної та комфортної процедури.
       </p>
       <ul class="booking-highlights">
         <li>Швидке підтвердження запису</li>
@@ -152,7 +161,13 @@
         <li>Дбайлива атмосфера без зайвого стресу</li>
       </ul>
       <div class="booking-actions">
-        <button id="open-booking-btn" type="button" class="direct-booking-btn online-order-pill online-order-pill--hero">Відкрити онлайн-запис</button>
+        <button
+          id="open-booking-btn"
+          type="button"
+          class="direct-booking-btn online-order-pill online-order-pill--hero"
+        >
+          Відкрити онлайн-запис
+        </button>
         <a href="prays-list.html" class="online-order-pill online-order-pill--hero">Переглянути прайс</a>
       </div>
     </div>
@@ -205,11 +220,15 @@
             </div>
             <input type="hidden" name="service" id="selected-service" />
             <input type="hidden" name="uploaded_file_url" value="" />
-            <label class="booking-field-label">
-              Фото улюбленця (JPG/PNG до 5 МБ)
-              <input type="file" name="pet_photo" accept="image/jpeg,image/png" />
+            <label class="booking-field-label booking-file-field">
+              <span class="booking-file-field__title">Фото улюбленця (JPG/PNG до 150 МБ)</span>
+              <span class="booking-file-field__control">
+                <span class="booking-file-field__button">Обрати файл</span>
+                <span class="booking-file-field__name" data-booking-file-name>Файл не обрано</span>
+                <input type="file" name="pet_photo" class="booking-file-field__input" accept="image/jpeg,image/png" />
+              </span>
             </label>
-                        <fieldset class="booking-payment-fieldset">
+            <fieldset class="booking-payment-fieldset">
               <legend>Спосіб оплати</legend>
               <label class="booking-check-label">
                 <input type="radio" name="payment_choice" value="salon_cash" checked />
@@ -219,20 +238,39 @@
                 <input type="radio" name="payment_choice" value="salon_card" />
                 <span>Оплата карткою в салоні</span>
               </label>
-              <p class="booking-payment-hint">Онлайн-оплата поки неактивна (салон ще не відкрито). Оплата готівкою або карткою в салоні. Див. <a href="agb.html">умови</a>.</p>
+              <p class="booking-payment-hint">
+                Онлайн-оплата поки неактивна (салон ще не відкрито). Оплата готівкою або карткою в салоні. Див.
+                <a href="agb.html">умови</a>
+                .
+              </p>
             </fieldset>
             <div class="info-card booking-rules-summary">
               <h3>Правила перед першим візитом</h3>
-              <p>Підготовка улюбленця · повідомлення про здоровʼя та поведінку · ковтуни 1&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>/хв · паразити від 40&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span> · власник у робочій зоні лише за погодженням · скасування заздалегідь (інакше можлива передоплата при наступних записах).</p>
+              <p>
+                Підготовка улюбленця · повідомлення про здоровʼя та поведінку · ковтуни 1&nbsp;
+                <span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>
+                /хв · паразити від 40&nbsp;
+                <span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>
+                · власник у робочій зоні лише за погодженням · скасування заздалегідь (інакше можлива передоплата при
+                наступних записах).
+              </p>
               <p><a href="agb.html">Повні правила салону</a></p>
             </div>
             <label class="booking-check-label">
               <input type="checkbox" name="agb_consent" required />
-              <span>Я ознайомлений(а) з <a href="agb.html">правилами салону та умовами (AGB)</a> і приймаю їх.</span>
+              <span>
+                Я ознайомлений(а) з
+                <a href="agb.html">правилами салону та умовами (AGB)</a>
+                і приймаю їх.
+              </span>
             </label>
             <label class="booking-check-label">
               <input type="checkbox" name="privacy_consent" required />
-              <span>Я погоджуюся на обробку персональних даних за GDPR. Деталі: <a href="datenschutz.html">політика конфіденційності</a>.</span>
+              <span>
+                Я погоджуюся на обробку персональних даних за GDPR. Деталі:
+                <a href="datenschutz.html">політика конфіденційності</a>
+                .
+              </span>
             </label>
             <div class="booking-file-preview" data-booking-file-preview hidden></div>
             <div class="booking-summary" data-booking-summary hidden tabindex="-1"></div>

@@ -480,7 +480,71 @@ mcp_servers_info:
       "- To execute a tool provided by the server: Use the 'use_mcp_tool' tool."
       "- To access a data resource provided by the server: Use the 'access_mcp_resource' tool."
 
-  # [CONNECTED_MCP_SERVERS]
+# MCP Server list injected by script
+    servers:
+    - name: "playwright"
+      command: "http://localhost:8931/mcp"
+      description: "HTTP/SSE MCP server (mcp.json)."
+      tools: []
+      resources: []
+    - name: "filesystem-hundesalon"
+      command: "node C:\\Users\\snaip\\AppData\\Roaming\\npm\\node_modules\\@modelcontextprotocol\\server-filesystem\\dist\\index.js C:\\PROJEKT\\HUNDESALON_NIKA\\HUNDESALON_NIKA"
+      description: "Stdio MCP server (mcp.json)."
+      tools: []
+      resources: []
+    - name: "memory"
+      command: "node C:\\Users\\snaip\\AppData\\Roaming\\npm\\node_modules\\@modelcontextprotocol\\server-memory\\dist\\index.js"
+      description: "Stdio MCP server (mcp.json)."
+      tools: []
+      resources: []
+    - name: "sequential-thinking"
+      command: "node C:\\Users\\snaip\\AppData\\Roaming\\npm\\node_modules\\@modelcontextprotocol\\server-sequential-thinking\\dist\\index.js"
+      description: "Stdio MCP server (mcp.json)."
+      tools: []
+      resources: []
+    - name: "github"
+      command: "npx -y @modelcontextprotocol/server-github"
+      description: "Stdio MCP server (mcp.json)."
+      tools: []
+      resources: []
+    - name: "cloudflare-docs"
+      command: "https://docs.mcp.cloudflare.com/mcp"
+      description: "HTTP/SSE MCP server (mcp.json)."
+      tools: []
+      resources: []
+    - name: "cloudflare-bindings"
+      command: "https://bindings.mcp.cloudflare.com/mcp"
+      description: "HTTP/SSE MCP server (mcp.json)."
+      tools: []
+      resources: []
+    - name: "cloudflare-builds"
+      command: "https://builds.mcp.cloudflare.com/mcp"
+      description: "HTTP/SSE MCP server (mcp.json)."
+      tools: []
+      resources: []
+    - name: "cloudflare-observability"
+      command: "https://observability.mcp.cloudflare.com/mcp"
+      description: "HTTP/SSE MCP server (mcp.json)."
+      tools: []
+      resources: []
+    - name: "cloudflare"
+      command: "https://mcp.cloudflare.com/mcp"
+      description: "HTTP/SSE MCP server (mcp.json)."
+      tools: []
+      resources: []
+    - name: "webstorm"
+      command: "http://127.0.0.1:63343/sse"
+      description: "HTTP/SSE MCP server (mcp.json)."
+      tools: []
+      resources: []
+    - name: "gmail"
+      command: "npx -y @gongrzhe/server-gmail-autoauth-mcp"
+      description: "Stdio MCP server (mcp.json)."
+      tools: []
+      resources: []
+# End MCP Server list
+
+
 
 # Guidance for Creating MCP Servers
 mcp_server_creation_guidance:
@@ -616,7 +680,7 @@ modes:
 # --- Core Behavioral Rules ---
 rules:
   R01_PathsAndCWD:
-    description: All file paths relative to "C:\PROJEKT\HUNDESALON_NIKA\HUNDESALON_NIKA". Do not use `~` or `$HOME`. Use `cd <dir> && command` within `execute_command`'s `<command>` parameter to run in a specific directory. Cannot use `cd` tool itself. Respect CWD from command responses if provided.
+    description: All file paths relative to `C:\PROJEKT\HUNDESALON_NIKA\HUNDESALON_NIKA`. Do not use `~` or `$HOME`. Use `cd <dir> && command` within `execute_command`'s `<command>` parameter to run in a specific directory. Cannot use `cd` tool itself. Respect CWD from command responses if provided.
   R02_ToolSequenceAndConfirmation:
     description: Use tools (incl MCP ops) one at a time. CRITICAL - Wait for user confirmation after each tool use before proceeding.
   R03_EditingToolPreference:
@@ -661,7 +725,7 @@ rules:
 system_information:
   description: "Provides details about the user's operating environment."
   details:
-    operating_system: Windows 11
+    operating_system: Windows_NT 10.0.26200
     default_shell: powershell
     home_directory: C:\Users\snaip
     current_workspace_directory: C:\PROJEKT\HUNDESALON_NIKA\HUNDESALON_NIKA

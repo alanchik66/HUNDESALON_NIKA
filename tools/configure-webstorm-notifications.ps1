@@ -7,7 +7,7 @@
 param(
   [switch]$Restart,
   [string]$WebStormVersion = 'WebStorm2026.1',
-  [string]$ProjectPath = 'C:\PROJEKT\HUNDESALON_NIKA'
+  [string]$ProjectPath = 'D:\HUNDESALON_NIKA'
 )
 
 $ErrorActionPreference = 'Stop'

@@ -10,6 +10,9 @@
  * ================================================================
  */
 document.addEventListener('DOMContentLoaded', () => {
+  const PET_PHOTO_MAX_BYTES = 150 * 1024 * 1024;
+  const PET_PHOTO_PROXY_MAX_BYTES = 90 * 1024 * 1024;
+  const PET_PHOTO_ALLOWED_TYPES = ['image/jpeg', 'image/png'];
   const pageLang = (document.documentElement.lang || 'ru').toLowerCase().slice(0, 2);
   const scrollRoot = document.querySelector('.site-scroll-root');
 
@@ -30,8 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
       paymentSuccess: 'Онлайн-предоплата получена. Запись отправлена в салон.',
       dateInPast: 'Выберите будущую дату',
       fileType: 'Можно загрузить только JPG или PNG',
-      fileSize: 'Файл должен быть не больше 5 МБ',
+      fileSize: 'Файл должен быть не больше 150 МБ',
       fileUploadFailed: 'Не удалось загрузить фото. Попробуйте ещё раз или отправьте запись без файла.',
+      chooseFile: 'Выбрать файл',
+      noFileChosen: 'Файл не выбран',
       summaryTitle: 'Проверьте запись перед отправкой',
       summaryConfirm: 'Подтвердить и отправить',
       summaryEdit: 'Изменить данные',
@@ -72,8 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
       paymentSuccess: 'Онлайн-передоплату отримано. Запис надіслано в салон.',
       dateInPast: 'Оберіть майбутню дату',
       fileType: 'Можна завантажити лише JPG або PNG',
-      fileSize: 'Файл має бути не більше 5 МБ',
+      fileSize: 'Файл має бути не більше 150 МБ',
       fileUploadFailed: 'Не вдалося завантажити фото. Спробуйте ще раз або надішліть запис без файлу.',
+      chooseFile: 'Обрати файл',
+      noFileChosen: 'Файл не обрано',
       summaryTitle: 'Перевірте запис перед надсиланням',
       summaryConfirm: 'Підтвердити й надіслати',
       summaryEdit: 'Змінити дані',
@@ -114,8 +121,10 @@ document.addEventListener('DOMContentLoaded', () => {
       paymentSuccess: 'Online deposit received. Your booking was sent to the salon.',
       dateInPast: 'Please choose a future date',
       fileType: 'Only JPG or PNG files are allowed',
-      fileSize: 'File size must be up to 5 MB',
+      fileSize: 'File size must be up to 150 MB',
       fileUploadFailed: 'Photo upload failed. Try again or submit the booking without a file.',
+      chooseFile: 'Choose file',
+      noFileChosen: 'No file chosen',
       summaryTitle: 'Review your booking before sending',
       summaryConfirm: 'Confirm and send',
       summaryEdit: 'Edit details',
@@ -156,8 +165,10 @@ document.addEventListener('DOMContentLoaded', () => {
       paymentSuccess: 'Online-Anzahlung erhalten. Die Buchung wurde an den Salon gesendet.',
       dateInPast: 'Bitte wählen Sie ein zukünftiges Datum',
       fileType: 'Nur JPG- oder PNG-Dateien sind erlaubt',
-      fileSize: 'Die Datei darf maximal 5 MB groß sein',
+      fileSize: 'Die Datei darf maximal 150 MB groß sein',
       fileUploadFailed: 'Foto-Upload fehlgeschlagen. Bitte erneut versuchen oder ohne Datei buchen.',
+      chooseFile: 'Datei auswählen',
+      noFileChosen: 'Keine Datei ausgewählt',
       summaryTitle: 'Bitte prüfen Sie Ihre Buchung vor dem Absenden',
       summaryConfirm: 'Bestätigen und senden',
       summaryEdit: 'Angaben ändern',
@@ -192,6 +203,104 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   const bookingLocale = bookingLocaleByLang[pageLang] || bookingLocaleByLang.en;
   const bookingCopy = bookingCopyByLang[pageLang] || bookingCopyByLang.en;
+
+  const priceConfiguratorCopyByLang = {
+    ru: {
+      kicker: 'Прайс-консультант',
+      title: 'Подберите услугу, породу и ориентировочную стоимость',
+      lead:
+        'Выберите формат ухода и породу или категорию питомца. Система покажет ориентировочную цену и краткое описание процедуры.',
+      labels: {
+        service: 'Услуга',
+        option: 'Порода или категория',
+        price: 'Ориентировочная цена',
+        description: 'Описание',
+        note: 'Важно',
+        button: 'Записаться с этим вариантом',
+        chooseService: 'Выберите услугу',
+        chooseOption: 'Выберите породу или категорию',
+        emptyTitle: 'Подберите подходящий вариант',
+        emptyPrice: 'Стоимость появится после выбора услуги и породы.',
+        tableService: 'Услуга / порода',
+        tablePrice: 'Цена',
+        mismatch: 'Для этой услуги выберите подходящую категорию питомца.',
+      },
+    },
+    uk: {
+      kicker: 'Прайс-консультант',
+      title: 'Підберіть послугу, породу та орієнтовну вартість',
+      lead:
+        'Оберіть формат догляду та породу або категорію улюбленця. Система покаже орієнтовну ціну й короткий опис процедури.',
+      labels: {
+        service: 'Послуга',
+        option: 'Порода або категорія',
+        price: 'Орієнтовна ціна',
+        description: 'Опис',
+        note: 'Важливо',
+        button: 'Записатися з цим варіантом',
+        chooseService: 'Оберіть послугу',
+        chooseOption: 'Оберіть породу або категорію',
+        emptyTitle: 'Підберіть відповідний варіант',
+        emptyPrice: 'Вартість з’явиться після вибору послуги та породи.',
+        tableService: 'Послуга / порода',
+        tablePrice: 'Ціна',
+        mismatch: 'Для цієї послуги оберіть відповідну категорію улюбленця.',
+      },
+    },
+    en: {
+      kicker: 'Price assistant',
+      title: 'Choose a service, breed and estimated price',
+      lead:
+        'Select the care format and your pet’s breed or category. The page will show an estimated price and a short description of the treatment.',
+      labels: {
+        service: 'Service',
+        option: 'Breed or category',
+        price: 'Estimated price',
+        description: 'Description',
+        note: 'Important',
+        button: 'Book this option',
+        chooseService: 'Choose a service',
+        chooseOption: 'Choose a breed or category',
+        emptyTitle: 'Find the right option',
+        emptyPrice: 'The price will appear after you choose a service and breed.',
+        tableService: 'Service / breed',
+        tablePrice: 'Price',
+        mismatch: 'Please choose a pet category that matches this service.',
+      },
+    },
+    de: {
+      kicker: 'Preisberater',
+      title: 'Leistung, Rasse und Richtpreis auswählen',
+      lead:
+        'Wählen Sie die Pflegeart sowie Rasse oder Kategorie Ihres Tieres. Danach sehen Sie einen Richtpreis und eine kurze Leistungsbeschreibung.',
+      labels: {
+        service: 'Leistung',
+        option: 'Rasse oder Kategorie',
+        price: 'Richtpreis',
+        description: 'Beschreibung',
+        note: 'Wichtig',
+        button: 'Diesen Termin anfragen',
+        chooseService: 'Leistung wählen',
+        chooseOption: 'Rasse oder Kategorie wählen',
+        emptyTitle: 'Passende Variante auswählen',
+        emptyPrice: 'Der Preis erscheint nach Auswahl von Leistung und Rasse.',
+        tableService: 'Leistung / Rasse',
+        tablePrice: 'Preis',
+        mismatch: 'Bitte wählen Sie eine passende Tierkategorie für diese Leistung.',
+      },
+    },
+  };
+  const priceUiCopy = priceConfiguratorCopyByLang[pageLang] || priceConfiguratorCopyByLang.en;
+  const priceCatalog = window.PriceCatalog?.build?.(pageLang) || window.PriceCatalog?.build?.('en');
+  const priceCopy = {
+    ...priceUiCopy,
+    services: priceCatalog?.services || [],
+    breedGroups: priceCatalog?.breedGroups || {},
+    breedValue: priceCatalog?.breedValue,
+    findBreed: priceCatalog?.findBreed,
+    resolveQuote: priceCatalog?.resolveQuote,
+  };
+
 
   const injectHiddenValue = (form, name, value) => {
     let field = form.querySelector(`input[name="${name}"]`);
@@ -661,6 +770,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedDateField = modal.querySelector('#selected-date');
     const selectedTimeField = modal.querySelector('#selected-time');
     const bookingFileInput = modal.querySelector('input[name="pet_photo"]');
+    const bookingFileName = modal.querySelector('[data-booking-file-name]');
     const privacyInput = modal.querySelector('input[name="privacy_consent"]');
     const agbInput = modal.querySelector('input[name="agb_consent"]');
     const getPaymentChoice = () =>
@@ -1033,6 +1143,10 @@ document.addEventListener('DOMContentLoaded', () => {
     sanitizeModalActionButtons();
 
     document.querySelectorAll('.select-btn-wrapper').forEach(wrapper => {
+      if (wrapper.closest('[data-price-configurator]')) {
+        return;
+      }
+
       wrapper.classList.add('nav-main');
       wrapper.querySelector('.select-service-btn')?.classList.add('filter-btn');
     });
@@ -1339,18 +1453,26 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
       }
 
-      const allowedTypes = ['image/jpeg', 'image/png'];
-      if (!allowedTypes.includes(file.type)) {
+      if (!PET_PHOTO_ALLOWED_TYPES.includes(file.type)) {
         showValidationMessage(bookingCopy.fileType, bookingFileInput);
         return false;
       }
 
-      if (file.size > 5 * 1024 * 1024) {
+      if (file.size > PET_PHOTO_MAX_BYTES) {
         showValidationMessage(bookingCopy.fileSize, bookingFileInput);
         return false;
       }
 
       return true;
+    };
+
+    const updateBookingFileName = () => {
+      if (!bookingFileName) {
+        return;
+      }
+
+      const file = bookingFileInput?.files?.[0];
+      bookingFileName.textContent = file ? file.name : bookingCopy.noFileChosen;
     };
 
     const renderFilePreview = () => {
@@ -1362,6 +1484,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!file) {
         bookingFilePreview.hidden = true;
         bookingFilePreview.replaceChildren();
+        updateBookingFileName();
         return;
       }
 
@@ -1370,6 +1493,72 @@ document.addEventListener('DOMContentLoaded', () => {
       const fileLabel = document.createElement('span');
       fileLabel.textContent = `${bookingCopy.labels.file}: ${file.name}`;
       bookingFilePreview.append(fileLabel);
+      updateBookingFileName();
+    };
+
+    const uploadPetPhotoFile = async file => {
+      const metadata = {
+        lang: pageLang,
+        service: state.selectedService,
+        date: state.selectedDate,
+        time: state.selectedTime,
+      };
+
+      if (file.size <= PET_PHOTO_PROXY_MAX_BYTES) {
+        const uploadData = new FormData();
+        uploadData.append('file', file);
+        uploadData.append('lang', metadata.lang);
+        uploadData.append('service', metadata.service);
+        uploadData.append('date', metadata.date);
+        uploadData.append('time', metadata.time);
+
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: uploadData,
+          headers: { Accept: 'application/json' },
+        });
+        return response.json().catch(() => ({}));
+      }
+
+      const sessionResponse = await fetch('/upload', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          intent: 'session',
+          fileName: file.name,
+          mimeType: file.type,
+          size: file.size,
+          ...metadata,
+        }),
+      });
+      const session = await sessionResponse.json().catch(() => ({}));
+      if (!sessionResponse.ok || !session.success) {
+        return session;
+      }
+      if (session.configured === false) {
+        return session;
+      }
+      if (!session.uploadUrl) {
+        return { success: false };
+      }
+
+      const uploadResponse = await fetch(session.uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+      if (!uploadResponse.ok) {
+        return { success: false };
+      }
+
+      const driveFile = await uploadResponse.json().catch(() => ({}));
+      const fileId = driveFile?.id || '';
+      const fileUrl =
+        driveFile?.webViewLink || (fileId ? `https://drive.google.com/file/d/${fileId}/view` : '');
+      return { success: true, fileUrl, fileId };
     };
 
     const ensureBookingFileUploaded = async () => {
@@ -1378,26 +1567,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
       }
 
-      const uploadData = new FormData();
-      uploadData.append('file', file);
-      uploadData.append('lang', pageLang);
-      uploadData.append('service', state.selectedService);
-      uploadData.append('date', state.selectedDate);
-      uploadData.append('time', state.selectedTime);
-
       try {
-        const response = await fetch('/upload', {
-          method: 'POST',
-          body: uploadData,
-          headers: { Accept: 'application/json' },
-        });
-        const result = await response.json().catch(() => ({}));
+        const result = await uploadPetPhotoFile(file);
         const safeFileUrl = normalizeUploadedFileUrl(result.fileUrl);
         // Drive not configured: allow booking without link (server returns success + empty fileUrl)
-        if (response.ok && result.success && result.configured === false && !result.fileUrl) {
+        if (result.success && result.configured === false && !result.fileUrl) {
           return true;
         }
-        if (response.ok && result.success && safeFileUrl) {
+        if (result.success && safeFileUrl) {
           state.uploadedFileUrl = safeFileUrl;
           syncHiddenFields();
           if (bookingFilePreview) {
@@ -1767,8 +1944,12 @@ document.addEventListener('DOMContentLoaded', () => {
         clearValidationMessage();
         if (validateBookingFile()) {
           renderFilePreview();
+        } else {
+          updateBookingFileName();
         }
       });
+
+      updateBookingFileName();
     };
 
     const resolveServiceFromTrigger = trigger => {
@@ -2050,8 +2231,158 @@ document.addEventListener('DOMContentLoaded', () => {
     // Re-enable together with the online payment_choice UI when the salon opens.
   };
 
+  const initPriceConfigurator = () => {
+    if (document.body.classList.contains('price-page')) {
+      document.querySelectorAll('.table-wrapper table').forEach(table => {
+        const headers = Array.from(table.querySelectorAll('thead th')).map(cell => cell.textContent.trim());
+        table.querySelectorAll('tbody tr').forEach(row => {
+          Array.from(row.children).forEach((cell, index) => {
+            if (cell instanceof HTMLElement) {
+              cell.dataset.label = headers[index] || '';
+            }
+          });
+        });
+      });
+    }
+
+    const root = document.querySelector('[data-price-configurator]');
+    if (!root) return;
+
+    const serviceSelect = root.querySelector('[data-price-service-select]');
+    const optionSelect = root.querySelector('[data-price-option-select]');
+    const resultTitle = root.querySelector('[data-price-result-title]');
+    const resultPrice = root.querySelector('[data-price-result-price]');
+    const resultDescription = root.querySelector('[data-price-result-description]');
+    const resultNote = root.querySelector('[data-price-result-note]');
+    const buttonWrapper = root.querySelector('[data-price-booking-wrapper]');
+    const bookingButton = root.querySelector('.select-service-btn');
+
+    if (
+      !serviceSelect ||
+      !optionSelect ||
+      !resultTitle ||
+      !resultPrice ||
+      !resultDescription ||
+      !resultNote ||
+      !buttonWrapper ||
+      !bookingButton
+    ) {
+      return;
+    }
+
+    root.querySelector('[data-price-kicker]')?.replaceChildren(priceCopy.kicker);
+    root.querySelector('[data-price-title]')?.replaceChildren(priceCopy.title);
+    root.querySelector('[data-price-lead]')?.replaceChildren(priceCopy.lead);
+    root.querySelector('[data-price-label-service]')?.replaceChildren(priceCopy.labels.service);
+    root.querySelector('[data-price-label-option]')?.replaceChildren(priceCopy.labels.option);
+    root.querySelector('[data-price-label-price]')?.replaceChildren(priceCopy.labels.price);
+    root.querySelector('[data-price-label-description]')?.replaceChildren(priceCopy.labels.description);
+    root.querySelector('[data-price-label-note]')?.replaceChildren(priceCopy.labels.note);
+    bookingButton.textContent = priceCopy.labels.button;
+
+    const servicesByKey = new Map(priceCopy.services.map(service => [service.key, service]));
+
+    const renderEmptyState = () => {
+      resultTitle.textContent = priceCopy.labels.emptyTitle;
+      resultPrice.textContent = priceCopy.labels.emptyPrice;
+      resultDescription.textContent = '';
+      resultNote.textContent = '';
+      buttonWrapper.dataset.service = '';
+      bookingButton.disabled = true;
+    };
+
+    const renderSelection = () => {
+      const service = servicesByKey.get(serviceSelect.value);
+      const breed = priceCopy.findBreed?.(priceCopy.breedGroups, optionSelect.value);
+
+      if (!service || !breed) {
+        renderEmptyState();
+        return;
+      }
+
+      if (!service.groups.includes(breed.group)) {
+        resultTitle.textContent = priceCopy.labels.emptyTitle;
+        resultPrice.textContent = priceCopy.labels.mismatch;
+        resultDescription.textContent = '';
+        resultNote.textContent = service.note;
+        buttonWrapper.dataset.service = '';
+        bookingButton.disabled = true;
+        return;
+      }
+
+      const quote = priceCopy.resolveQuote?.(service, breed, pageLang) || {};
+      resultTitle.textContent = `${service.label}: ${breed.label}`;
+      resultPrice.textContent = quote.price || priceCopy.labels.emptyPrice;
+      resultDescription.textContent = quote.description || service.description || '';
+      resultNote.textContent = service.note;
+      buttonWrapper.dataset.service = `${service.bookingService} — ${breed.label}`;
+      bookingButton.disabled = !quote.price;
+    };
+
+    const populateBreeds = serviceKey => {
+      const service = servicesByKey.get(serviceKey);
+      optionSelect.innerHTML = '';
+
+      if (!service || !priceCopy.breedGroups) {
+        renderEmptyState();
+        optionSelect.disabled = true;
+        return;
+      }
+
+      const groupOrder = window.PriceCatalog?.GROUP_ORDER || ['dogs', 'cats', 'others'];
+      let hasOptions = false;
+
+      groupOrder.forEach(groupKey => {
+        if (!service.groups.includes(groupKey)) return;
+        const group = priceCopy.breedGroups[groupKey];
+        if (!group?.items?.length) return;
+
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = group.label;
+
+        group.items.forEach(item => {
+          const optionEl = document.createElement('option');
+          optionEl.value = priceCopy.breedValue(item);
+          optionEl.textContent = item.label;
+          if (item.isOther) {
+            optionEl.dataset.other = 'true';
+            optionEl.className = 'site-select-option-other';
+          }
+          optgroup.append(optionEl);
+          hasOptions = true;
+        });
+
+        optionSelect.append(optgroup);
+      });
+
+      optionSelect.disabled = !hasOptions;
+      if (hasOptions) {
+        optionSelect.selectedIndex = 0;
+      }
+      window.refreshSiteSelect?.(optionSelect);
+      renderSelection();
+    };
+
+    serviceSelect.innerHTML = '';
+    priceCopy.services.forEach(service => {
+      const optionEl = document.createElement('option');
+      optionEl.value = service.key;
+      optionEl.textContent = service.label;
+      serviceSelect.append(optionEl);
+    });
+    serviceSelect.value = servicesByKey.has('full-groom') ? 'full-groom' : priceCopy.services[0]?.key || '';
+    window.refreshSiteSelect?.(serviceSelect);
+
+    serviceSelect.addEventListener('change', () => populateBreeds(serviceSelect.value));
+    optionSelect.addEventListener('change', renderSelection);
+
+    populateBreeds(serviceSelect.value);
+    root.setAttribute('data-price-ready', 'true');
+  };
+
   initSendmailForms();
   initMessageDraftTools();
   initSmoothHashLinks();
+  initPriceConfigurator();
   initBookingModal();
 });

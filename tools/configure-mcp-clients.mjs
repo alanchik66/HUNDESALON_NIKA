@@ -1,9 +1,14 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  buildPlaywrightHttpServer,
+  buildPlaywrightStdioServer,
+} from './playwright-mcp-shared.mjs';
 
 const PROJECT_PATH =
-  process.env.MCP_PROJECT_PATH || 'C:\\PROJEKT\\HUNDESALON_NIKA\\HUNDESALON_NIKA';
+  process.env.MCP_PROJECT_PATH || resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const WEBSTORM_SSE_URL = process.env.WEBSTORM_SSE_URL || 'http://127.0.0.1:63343/sse';
 const NPM_GLOBAL = join(homedir(), 'AppData', 'Roaming', 'npm', 'node_modules');
 const WEBSTORM_DIR = 'C:\\Program Files\\JetBrains\\WebStorm 2026.1.4';
@@ -17,6 +22,8 @@ const paths = {
 const playwrightArgs = [
   '-y',
   '@playwright/mcp@latest',
+  '--browser',
+  'chrome',
   '--caps',
   'vision,pdf,devtools',
   '--allow-unrestricted-file-access',
@@ -26,6 +33,13 @@ const playwrightArgs = [
   'clipboard-write',
   'notifications',
 ];
+
+function buildPlaywrightServer() {
+  return buildPlaywrightStdioServer(PROJECT_PATH) || {
+    command: 'npx',
+    args: playwrightArgs,
+  };
+}
 
 const CLOUDFLARE_MCP_URLS = {
   cloudflare: 'https://mcp.cloudflare.com/mcp',
@@ -115,10 +129,7 @@ function buildCommonStdioServers() {
       command: 'node',
       args: [paths.sequentialThinking],
     },
-    playwright: {
-      command: 'npx',
-      args: playwrightArgs,
-    },
+    playwright: buildPlaywrightServer(),
     ...buildCloudflareUrlServers(),
     webstorm: {
       url: WEBSTORM_SSE_URL,
@@ -159,8 +170,20 @@ function removeGithubPromptConfig(existing) {
 function configureCursor() {
   const filePath = join(homedir(), '.cursor', 'mcp.json');
   const data = mergeServers(readJson(filePath), buildCommonStdioServers());
+  data.mcpServers.playwright = buildPlaywrightHttpServer();
   const github = buildGithubServer(false);
   if (github) data.mcpServers.github = github;
+  writeJson(filePath, data);
+  return filePath;
+}
+
+function configureCursorProject() {
+  const filePath = join(PROJECT_PATH, '.cursor', 'mcp.json');
+  const data = readJson(filePath, { mcpServers: {} });
+  data.mcpServers = {
+    ...(data.mcpServers || {}),
+    playwright: buildPlaywrightHttpServer(),
+  };
   writeJson(filePath, data);
   return filePath;
 }
@@ -182,10 +205,7 @@ function configureVsCodeUser() {
       command: 'node',
       args: [paths.sequentialThinking],
     },
-    playwright: {
-      command: 'npx',
-      args: playwrightArgs,
-    },
+    playwright: buildPlaywrightHttpServer(),
     ...buildCloudflareHttpServers(),
     webstorm: {
       type: 'sse',
@@ -235,10 +255,7 @@ function configureVsCodeWorkspace() {
         command: 'node',
         args: [paths.sequentialThinking],
       },
-      playwright: {
-        command: 'npx',
-        args: playwrightArgs,
-      },
+      playwright: buildPlaywrightHttpServer(),
       ...buildCloudflareHttpServers(),
       webstorm: {
         type: 'sse',
@@ -288,8 +305,7 @@ function configureWindsurf() {
       disabled: false,
     },
     playwright: {
-      command: 'npx',
-      args: playwrightArgs,
+      ...buildPlaywrightServer(),
       disabled: false,
     },
     ...Object.fromEntries(
@@ -340,11 +356,7 @@ function configureDevin(filePath) {
       args: [paths.sequentialThinking],
       transport: 'stdio',
     },
-    playwright: {
-      command: 'npx',
-      args: playwrightArgs,
-      transport: 'stdio',
-    },
+    playwright: buildPlaywrightServer(),
     ...Object.fromEntries(
       Object.entries(CLOUDFLARE_MCP_URLS).map(([name, url]) => [
         name,
@@ -456,6 +468,7 @@ function configureJetBrainsImport() {
 
 const results = [
   ['Cursor', configureCursor()],
+  ['Cursor (project)', configureCursorProject()],
   ['VSCode (user)', configureVsCodeUser()],
   ['VSCode (workspace)', configureVsCodeWorkspace()],
   ['Claude App', configureClaude()],

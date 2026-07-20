@@ -1,15 +1,14 @@
 ---
-description: Wait for user login/auth, then continue automatically
-alwaysApply: true
+description: Wait for OAuth/login/passkey then resume (Cloudflare, Notion, GitHub, MCP auth)
+alwaysApply: false
 ---
 
 # Wait for login, then continue
 
-When a task needs interactive login, OAuth consent, passkey, or an admin toggle the agent cannot flip via API:
+When blocked on human login/OAuth/passkey/admin toggle:
 
-1. Do everything possible yourself first (API, CLI, existing tokens, Edge/Playwright).
-2. If blocked on human login: open the exact URL(s), tell the user briefly what to do, and **wait/poll** until success — do not abandon the task or only leave instructions.
-3. After login/enable succeeds, **resume immediately** and finish the remaining steps without asking “should I continue?”.
-4. Prefer external Edge for auth (Cursor Browser often hangs on passkeys).
-5. Apply this always for Cloudflare, Notion, Google, GitHub, MCP Authenticate, and similar flows.
-6. For plugin/MCP/Settings cleanup that needs no human click path, follow `do-it-yourself-settings.mdc` — execute yourself; do not hand the user a Settings checklist.
+1. Exhaust API/CLI/tokens/Edge first.
+2. Open exact URL(s), tell user briefly, **poll until success** — do not abandon.
+3. Resume immediately after success — no “should I continue?”.
+4. Prefer external Edge for passkeys (Cursor Browser often hangs).
+5. Settings/MCP cleanup with no human click → `do-it-yourself-settings` / DIY always.

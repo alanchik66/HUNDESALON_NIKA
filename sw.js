@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hundesalon-nika-static-v7';
+const CACHE_NAME = 'hundesalon-nika-static-v8';
 const CORE_ASSETS = [
   '/site.webmanifest',
   '/assets/images/brand/hero-dog.jpg',

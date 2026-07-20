@@ -1,10 +1,21 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
 const MAX_PAGES_FILE_BYTES = 24 * 1024 * 1024;
+
+const STAMPED_ASSETS = [
+  'style.css',
+  'page-modules.css',
+  'main.js',
+  'page-modules.js',
+  'site-shell.js',
+  'price-catalog.js',
+  'newsletter.js',
+];
 
 const SKIP_RELATIVE_PATHS = new Set([
   '3d-weather-codrops-main/dist-widget/assets/Moon/Moon_NASA_LRO_23k_Topo.usdz',
@@ -109,4 +120,57 @@ for (const entry of copyEntries) {
   copyRecursive(path.join(root, entry), path.join(dist, entry));
 }
 
+function deployAssetVersion() {
+  if (process.env.DEPLOY_ASSET_VERSION?.trim()) {
+    return process.env.DEPLOY_ASSET_VERSION.trim();
+  }
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  try {
+    const hash = execSync('git rev-parse --short HEAD', { cwd: root, encoding: 'utf8' }).trim();
+    return `${date}-prod-${hash}`;
+  } catch {
+    return `${date}-prod-build`;
+  }
+}
+
+function stampDistAssetVersions(directory, version) {
+  let htmlFiles = 0;
+
+  function walk(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath);
+        continue;
+      }
+      if (!entry.name.endsWith('.html')) continue;
+
+      const original = fs.readFileSync(fullPath, 'utf8');
+      let next = original;
+      for (const asset of STAMPED_ASSETS) {
+        const pattern = new RegExp(`(${asset.replace('.', '\\.')})\\?v=[^"'\\s>]+`, 'g');
+        next = next.replace(pattern, `$1?v=${version}`);
+      }
+      // CSP blocks inline onload handlers, leaving deferred stylesheets stuck at media="print".
+      next = next.replace(
+        /\s+media="print"\s+onload="this\.media\s*=\s*'all'"/g,
+        ''
+      );
+      if (next !== original) {
+        fs.writeFileSync(fullPath, next, 'utf8');
+        htmlFiles += 1;
+      }
+    }
+  }
+
+  walk(directory);
+  fs.mkdirSync(path.join(directory, 'config'), { recursive: true });
+  fs.writeFileSync(path.join(directory, 'config', 'deploy-asset-version.txt'), `${version}\n`, 'utf8');
+  return htmlFiles;
+}
+
+const assetVersion = deployAssetVersion();
+const stamped = stampDistAssetVersions(dist, assetVersion);
+
 console.log('Production bundle created in dist/.');
+console.log(`Asset cache version: ${assetVersion} (${stamped} HTML files stamped).`);

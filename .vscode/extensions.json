@@ -1,50 +1,46 @@
 {
   "recommendations": [
-    // ─── Форматирование и линтинг ─────────────────────────────────
+    // ─── Lint / format (project npm scripts) ─────────────────────
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
     "stylelint.vscode-stylelint",
     "htmlhint.vscode-htmlhint",
-    // ─── HTML / CSS / JS помощники ────────────────────────────────
-    "ecmel.vscode-html-css",
+    // ─── HTML / CSS helpers ──────────────────────────────────────
     "zignd.html-css-class-completion",
     "pranaygp.vscode-css-peek",
-    "christian-kohler.path-intellisense",
-    "formulahendry.auto-close-tag",
     "formulahendry.auto-rename-tag",
     "naumovs.color-highlight",
-    // ─── QA / тестирование ──────────────────────────────────────────
+    // ─── QA ──────────────────────────────────────────────────────
     "ms-playwright.playwright",
-    // ─── Git ──────────────────────────────────────────────────────
-    "mhutchie.git-graph",
+    // ─── GitHub ──────────────────────────────────────────────────
     "github.vscode-pull-request-github",
     "github.vscode-github-actions",
-    // ─── Проверка орфографии (DE / EN / RU / UK) ──────────────────
+    // ─── Spellcheck DE / EN / RU / UK ────────────────────────────
     "streetsidesoftware.code-spell-checker",
     "streetsidesoftware.code-spell-checker-german",
     "streetsidesoftware.code-spell-checker-russian",
     "streetsidesoftware.code-spell-checker-ukrainian",
-    // ─── PowerShell ─────────────────────────────────────────────────
+    // ─── Project tooling ─────────────────────────────────────────
     "ms-vscode.powershell",
-    // ─── Cloudflare Pages / Workers ─────────────────────────────────
-    "cloudflare.cloudflare-workers-bindings-extension",
-    // ─── AI-агенты (бесплатные) ──────────────────────────────────
-    "continue.continue",
-    "codeium.codeium",
-    "kilocode.kilo-code",
-    "kparth01.ollama-codex",
-    "google.geminicodeassist",
-    // ─── Утилиты ────────────────────────────────────────────────────
     "editorconfig.editorconfig",
     "mikestead.dotenv",
-    "yzhang.markdown-all-in-one",
-    "redhat.vscode-yaml",
-    "aaron-bond.better-comments"
+    "redhat.vscode-yaml"
   ],
   "unwantedRecommendations": [
+    // Cursor already covers AI coding — do not reinstall rivals
+    "continue.continue",
+    "kilocode.kilo-code",
+    "ollama.ollama",
+    "google.geminicodeassist",
+    "openai.chatgpt",
+    "codeium.codeium",
+    "Codeium.codeium",
     "eamodio.gitlens",
     "googlecloudtools.cloudcode",
     "webhint.vscode-webhint",
-    "hookyqr.beautify"
+    "hookyqr.beautify",
+    "ritwickdey.liveserver",
+    "ms-edgedevtools.vscode-edge-devtools",
+    "cloudflare.cloudflare-workers-bindings-extension"
   ]
 }

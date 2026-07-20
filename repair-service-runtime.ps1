@@ -8,7 +8,7 @@ remotes.
 
 [CmdletBinding()]
 param(
-  [string]$RepoPath = 'C:\PROJEKT\HUNDESALON_NIKA',
+  [string]$RepoPath = 'D:\HUNDESALON_NIKA',
   [switch]$DeepRepoSanitize,
   [switch]$SetCloudflareSecrets,
   [switch]$RewriteHistory,
@@ -97,8 +97,8 @@ function Invoke-NpmScript {
 }
 
 $resolvedRepo = (Resolve-Path -LiteralPath $RepoPath -ErrorAction Stop).Path
-if ($resolvedRepo -ne 'C:\PROJEKT\HUNDESALON_NIKA') {
-  Write-Warn "RepoPath is '$resolvedRepo'. Current project path is C:\PROJEKT\HUNDESALON_NIKA."
+if ($resolvedRepo -ne 'D:\HUNDESALON_NIKA') {
+  Write-Warn "RepoPath is '$resolvedRepo'. Current project path is D:\HUNDESALON_NIKA."
 }
 
 if (!(Test-Path -LiteralPath (Join-Path $resolvedRepo 'package.json'))) {

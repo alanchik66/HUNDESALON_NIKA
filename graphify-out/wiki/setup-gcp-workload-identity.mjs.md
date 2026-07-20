@@ -1,0 +1,27 @@
+# setup-gcp-workload-identity.mjs
+
+> 3 nodes · cohesion 1.00
+
+## Key Concepts
+
+- **setup-gcp-workload-identity.mjs** (2 connections) — `tools/setup-gcp-workload-identity.mjs`
+- **main()** (2 connections) — `tools/setup-gcp-workload-identity.mjs`
+- **run()** (2 connections) — `tools/setup-gcp-workload-identity.mjs`
+
+## Relationships
+
+- No strong cross-community connections detected
+
+## Source Files
+
+- `tools/setup-gcp-workload-identity.mjs`
+
+## Audit Trail
+
+- EXTRACTED: 6 (100%)
+- INFERRED: 0 (0%)
+- AMBIGUOUS: 0 (0%)
+
+---
+
+*Part of the graphify knowledge wiki. See [index](index.md) to navigate.*

@@ -20,7 +20,7 @@ Path: **Caching → Cache Rules** → rule #2. Rename from the old “4 hours”
 
 ## API token for automated purge
 
-`npm run deploy` uses Wrangler OAuth automatically (`tools/deploy-pages.mjs` omits `CLOUDFLARE_API_TOKEN` for upload). Wrangler OAuth can deploy Pages but often **cannot** purge zone cache — post-deploy purge still uses Zone Ops token.
+`npm run deploy` uses **HUNDESALON_NIKA — Automation** (`CLOUDFLARE_API_TOKEN`): zone purge/DNS/rules + Pages deploy in one scoped token. See `docs/cloudflare-api-tokens.md`.
 
 Use the canonical local token **HUNDESALON_NIKA — Zone Ops**:
 

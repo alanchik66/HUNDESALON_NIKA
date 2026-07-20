@@ -179,7 +179,7 @@ Audit-created files:
 
 Canonical project path:
 
-- `C:\PROJEKT\HUNDESALON_NIKA`
+- `D:\HUNDESALON_NIKA`
 
 Configured profiles:
 
@@ -192,7 +192,7 @@ All three editor profiles point to:
 
 - Google Cloud project: `hundesalon-nika-shell-2026`
 - region: `europe-west3`
-- terminal working directory: `C:\PROJEKT\HUNDESALON_NIKA`
+- terminal working directory: `D:\HUNDESALON_NIKA`
 
 Extension state after cleanup:
 

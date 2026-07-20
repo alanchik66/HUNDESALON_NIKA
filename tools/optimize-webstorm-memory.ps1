@@ -10,7 +10,7 @@
 param(
   [switch]$Restart,
   [switch]$OpenProject,
-  [string]$ProjectPath = 'C:\PROJEKT\HUNDESALON_NIKA',
+  [string]$ProjectPath = 'D:\HUNDESALON_NIKA',
   [string]$WebStormVersion = 'WebStorm2026.1',
   [string]$WebStormHome = 'C:\Program Files\JetBrains\WebStorm 2026.1.4',
   [int]$GracefulShutdownSeconds = 20

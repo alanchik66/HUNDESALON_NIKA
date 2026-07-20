@@ -6,7 +6,7 @@
 [CmdletBinding()]
 param(
   [string]$WebStormSseUrl = 'http://127.0.0.1:63343/sse',
-  [string]$ProjectPath = 'C:\PROJEKT\HUNDESALON_NIKA'
+  [string]$ProjectPath = 'D:\HUNDESALON_NIKA'
 )
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path

@@ -145,6 +145,11 @@ for (const lang of ['de', 'en', 'ru', 'uk']) {
     if (!file.endsWith('.html')) continue;
     const relativePath = path.relative(root, file).replaceAll(path.sep, '/');
     const content = fs.readFileSync(file, 'utf8');
+    if (/onload="this\.media\s*=\s*'all'"/.test(content)) {
+      failures.push(
+        `${relativePath}: CSP blocks inline stylesheet onload; load the stylesheet normally`
+      );
+    }
     if (!relativePath.includes('/blog/') && /href=["']blog\.html["']/.test(content)) {
       failures.push(`${relativePath}: contains legacy root blog.html reference; use blog/blog.html`);
     }

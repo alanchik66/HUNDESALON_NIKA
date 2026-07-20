@@ -77,6 +77,8 @@ await runNpm('cf:purge-cache', { optional: true });
 
 try {
   await runNpm('check:live-html');
+  await runNpm('check:live-prays-list');
+  await runNpm('price:smoke:prod', { optional: true });
   await runNpm('seo:indexnow', { optional: true });
   if (hasBingApiKey()) {
     await runNpm('bing:api', { optional: true });

@@ -49,22 +49,16 @@
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Forum&family=Great+Vibes&family=Marck+Script&display=swap"
-      media="print"
-      onload="this.media = 'all'"
     />
     <link rel="preload" href="../assets/fonts/fontawesome/all.min.css?v=20260329-0192" as="style" />
     <link
       rel="stylesheet"
       href="../assets/fonts/fontawesome/all.min.css?v=20260329-0192"
-      media="print"
-      onload="this.media = 'all'"
     />
     <link rel="preload" href="../assets/css/page-modules.css?v=20260720-prod-v2" as="style" />
     <link
       rel="stylesheet"
       href="../assets/css/page-modules.css?v=20260720-prod-v2"
-      media="print"
-      onload="this.media = 'all'"
     />
     <noscript>
       <link
@@ -155,7 +149,7 @@
     <link rel="stylesheet" href="../assets/css/cookie-consent.css?v=20260620-full-stack-upgrade" />
   </head>
 
-  <body>
+  <body class="price-page">
     <!-- Header and mobile nav (built by site-shell.js) -->
     <header class="header"></header>
     <div id="mobile-nav-overlay" hidden aria-hidden="true"></div>
@@ -178,6 +172,46 @@
           All prices include VAT (MwSt.) unless otherwise stated.
         </div>
       </div>
+
+      <section class="price-configurator" data-price-configurator>
+        <div class="price-configurator__intro">
+          <p class="section-kicker" data-price-kicker></p>
+          <h2 class="section-title" data-price-title></h2>
+          <p class="price-configurator__lead" data-price-lead></p>
+        </div>
+        <div class="price-configurator__grid">
+          <div class="price-configurator__controls">
+            <label class="price-configurator__field">
+              <span class="price-configurator__field-label" data-price-label-service></span>
+              <select class="price-configurator__select" data-price-service-select></select>
+            </label>
+            <label class="price-configurator__field">
+              <span class="price-configurator__field-label" data-price-label-option></span>
+              <select class="price-configurator__select" data-price-option-select></select>
+            </label>
+          </div>
+          <div class="price-configurator__result" aria-live="polite">
+            <div class="price-configurator__result-main">
+              <span class="price-configurator__result-label" data-price-label-price></span>
+              <h3 class="price-configurator__result-title" data-price-result-title></h3>
+              <p class="price-configurator__result-price" data-price-result-price></p>
+            </div>
+            <div>
+              <span class="price-configurator__result-label" data-price-label-description></span>
+              <p class="price-configurator__result-description" data-price-result-description></p>
+            </div>
+            <div class="price-configurator__result-note">
+              <span class="price-configurator__result-label" data-price-label-note></span>
+              <p data-price-result-note></p>
+            </div>
+          </div>
+          <div class="price-configurator__actions">
+            <div class="select-btn-wrapper price-configurator__cta" data-price-booking-wrapper data-service="">
+              <button type="button" class="select-service-btn btn-neon" disabled>Book this option</button>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <h2>Dogs</h2>
       <h3>Full grooming</h3>
@@ -542,9 +576,13 @@
             </div>
             <input type="hidden" name="service" id="selected-service" />
             <input type="hidden" name="uploaded_file_url" value="" />
-            <label class="booking-field-label">
-              Pet photo (JPG/PNG up to 5 MB)
-              <input type="file" name="pet_photo" accept="image/jpeg,image/png" />
+            <label class="booking-field-label booking-file-field">
+              <span class="booking-file-field__title">Pet photo (JPG/PNG up to 150 MB)</span>
+              <span class="booking-file-field__control">
+                <span class="booking-file-field__button">Choose file</span>
+                <span class="booking-file-field__name" data-booking-file-name>No file chosen</span>
+                <input type="file" name="pet_photo" class="booking-file-field__input" accept="image/jpeg,image/png" />
+              </span>
             </label>
                         <fieldset class="booking-payment-fieldset">
               <legend>Payment method</legend>
@@ -686,6 +724,7 @@
 
     <!-- ═══════════════ Script Includes ══════════════════════════════════ -->
     <script src="../assets/js/site-shell.js?v=20260720-prod-v2"></script>
+    <script src="../assets/js/price-catalog.js?v=20260720-prod-v2"></script>
     <script src="../assets/js/main.js?v=20260720-prod-v2"></script>
     <script src="../assets/js/page-modules.js?v=20260720-prod-v2"></script>
     <script src="../assets/js/tooltip.js?v=20260330-0001"></script>

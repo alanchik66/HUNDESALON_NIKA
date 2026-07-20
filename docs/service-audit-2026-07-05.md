@@ -79,7 +79,7 @@ Data path:
 
 Canonical project path:
 
-- `C:\PROJEKT\HUNDESALON_NIKA`
+- `D:\HUNDESALON_NIKA`
 
 Local AI/MCP artifacts were moved out of the website repo to:
 

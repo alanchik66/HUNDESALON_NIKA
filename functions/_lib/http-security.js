@@ -175,7 +175,10 @@ function sanitizeApiPayload(value) {
 
   if (typeof value === 'string') {
     // Remove values that look like stack traces or internal diagnostics.
-    if (/\bat\s+.+\(.+\)/i.test(value) || /\b(node:internal|file:\/\/|webpack:)/i.test(value)) {
+    if (
+      /(?:^|\n)\s*at\s+(?:async\s+)?[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*\s*\([^\n()]+:\d+:\d+\)/.test(value) ||
+      /\b(node:internal|file:\/\/|webpack:)/i.test(value)
+    ) {
       return 'Internal server error';
     }
   }

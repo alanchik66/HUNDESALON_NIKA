@@ -451,9 +451,55 @@ export async function sendResendEmail(env, { to, subject, text, replyTo = '', fr
   });
 }
 
+const APPS_SCRIPT_MAX_BYTES = 35 * 1024 * 1024;
+
+export async function createDriveResumableUploadSession(env, { fileName, mimeType, fileSize, metadata = {} }) {
+  const token =
+    (await getGoogleAccessToken(env, ['https://www.googleapis.com/auth/drive.file'])) ||
+    (await getGoogleOAuthAccessToken(env));
+  const folderId = getEnvValue(env, 'DRIVE_UPLOAD_FOLDER');
+  if (!hasUsableValue(token) || !hasUsableValue(folderId)) {
+    return { ok: false, skipped: true, reason: 'Google Drive credentials are not configured.' };
+  }
+
+  const safeName = String(fileName || 'pet-photo').replace(/[^\w.-]+/g, '-').slice(-90);
+  const uniqueName = `${Date.now()}-${crypto.randomUUID()}-${safeName}`;
+  const meta = {
+    name: uniqueName,
+    parents: [folderId],
+    description: JSON.stringify(metadata),
+  };
+
+  const response = await fetch(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json; charset=UTF-8',
+        'X-Upload-Content-Type': mimeType || 'application/octet-stream',
+        'X-Upload-Content-Length': String(fileSize),
+      },
+      body: JSON.stringify(meta),
+    }
+  );
+
+  if (!response.ok) {
+    const bodyText = await response.text().catch(() => '');
+    return { ok: false, status: response.status, body: bodyText };
+  }
+
+  const uploadUrl = response.headers.get('Location');
+  if (!uploadUrl) {
+    return { ok: false, reason: 'Missing resumable upload URL.' };
+  }
+
+  return { ok: true, uploadUrl, fileName: uniqueName };
+}
+
 export async function uploadFileToDrive(env, { file, fileName, metadata = {} }) {
   const appsScriptWebhook = getEnvValue(env, 'GOOGLE_APPS_SCRIPT_WEBHOOK_URL');
-  if (hasUsableValue(appsScriptWebhook)) {
+  if (hasUsableValue(appsScriptWebhook) && file.size <= APPS_SCRIPT_MAX_BYTES) {
     const fileBytes = new Uint8Array(await file.arrayBuffer());
     const appsScriptResult = await callGoogleAppsScriptGateway(env, 'drive', {
       fileName,

@@ -12,7 +12,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Online-Buchung — HUNDESALON_NIKA</title>
-    <meta name="twitter:description" content="Online-Terminbuchung bei HUNDESALON NIKA in Leipzig: Grooming für Hund und Katze mit wenigen Klicks, klarer Leistungswahl und ruhiger Betreuung reservieren. Jetzt buchen." />
+    <meta
+      name="twitter:description"
+      content="Online-Terminbuchung bei HUNDESALON NIKA in Leipzig: Grooming für Hund und Katze mit wenigen Klicks, klarer Leistungswahl und ruhiger Betreuung reservieren. Jetzt buchen."
+    />
     <meta name="msvalidate.01" content="B67A37AB236F9D14E1F99A12DDCA531C" />
     <meta
       name="description"
@@ -158,7 +161,13 @@
         <li>Stressarme Betreuung im Salon</li>
       </ul>
       <div class="booking-actions">
-        <button id="open-booking-btn" type="button" class="direct-booking-btn online-order-pill online-order-pill--hero">Online buchen</button>
+        <button
+          id="open-booking-btn"
+          type="button"
+          class="direct-booking-btn online-order-pill online-order-pill--hero"
+        >
+          Online buchen
+        </button>
         <a href="prays-list.html" class="online-order-pill online-order-pill--hero">Preisliste ansehen</a>
       </div>
     </div>
@@ -211,11 +220,15 @@
             </div>
             <input type="hidden" name="service" id="selected-service" />
             <input type="hidden" name="uploaded_file_url" value="" />
-            <label class="booking-field-label">
-              Foto des Tieres (JPG/PNG bis 5 MB)
-              <input type="file" name="pet_photo" accept="image/jpeg,image/png" />
+            <label class="booking-field-label booking-file-field">
+              <span class="booking-file-field__title">Foto des Tieres (JPG/PNG bis 150 MB)</span>
+              <span class="booking-file-field__control">
+                <span class="booking-file-field__button">Datei auswählen</span>
+                <span class="booking-file-field__name" data-booking-file-name>Keine Datei ausgewählt</span>
+                <input type="file" name="pet_photo" class="booking-file-field__input" accept="image/jpeg,image/png" />
+              </span>
             </label>
-                        <fieldset class="booking-payment-fieldset">
+            <fieldset class="booking-payment-fieldset">
               <legend>Zahlungsart</legend>
               <label class="booking-check-label">
                 <input type="radio" name="payment_choice" value="salon_cash" checked />
@@ -225,20 +238,40 @@
                 <input type="radio" name="payment_choice" value="salon_card" />
                 <span>Im Salon mit Karte bezahlen (EC/Kreditkarte)</span>
               </label>
-              <p class="booking-payment-hint">Online-Zahlungen sind noch nicht verfügbar, da der Salon noch nicht eröffnet ist. Bitte bar oder mit Karte im Salon bezahlen. Details: <a href="agb.html">AGB</a>.</p>
+              <p class="booking-payment-hint">
+                Online-Zahlungen sind noch nicht verfügbar, da der Salon noch nicht eröffnet ist. Bitte bar oder mit
+                Karte im Salon bezahlen. Details:
+                <a href="agb.html">AGB</a>
+                .
+              </p>
             </fieldset>
             <div class="info-card booking-rules-summary">
               <h3>Regeln vor dem ersten Besuch</h3>
-              <p>Tier vorbereiten · Gesundheit/Verhalten mitteilen · Verfilzungen 1&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>/Min. · Parasiten ab 40&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span> · Halter im Arbeitsbereich nur nach Absprache · rechtzeitig absagen (sonst ggf. Anzahlung bei Folgeterminen).</p>
+              <p>
+                Tier vorbereiten · Gesundheit/Verhalten mitteilen · Verfilzungen 1&nbsp;
+                <span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>
+                /Min. · Parasiten ab 40&nbsp;
+                <span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>
+                · Halter im Arbeitsbereich nur nach Absprache · rechtzeitig absagen (sonst ggf. Anzahlung bei
+                Folgeterminen).
+              </p>
               <p><a href="agb.html">Vollständige Salonregeln</a></p>
             </div>
             <label class="booking-check-label">
               <input type="checkbox" name="agb_consent" required />
-              <span>Ich habe die <a href="agb.html">Salonregeln und AGB</a> gelesen und akzeptiere sie.</span>
+              <span>
+                Ich habe die
+                <a href="agb.html">Salonregeln und AGB</a>
+                gelesen und akzeptiere sie.
+              </span>
             </label>
             <label class="booking-check-label">
               <input type="checkbox" name="privacy_consent" required />
-              <span>Ich stimme der Verarbeitung meiner personenbezogenen Daten gemäß der DSGVO zu. Details: <a href="datenschutz.html">Datenschutzerklärung</a>.</span>
+              <span>
+                Ich stimme der Verarbeitung meiner personenbezogenen Daten gemäß der DSGVO zu. Details:
+                <a href="datenschutz.html">Datenschutzerklärung</a>
+                .
+              </span>
             </label>
             <div class="booking-file-preview" data-booking-file-preview hidden></div>
             <div class="booking-summary" data-booking-summary hidden tabindex="-1"></div>

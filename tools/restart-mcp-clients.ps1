@@ -1,7 +1,7 @@
 # Applies MCP profile, stores GitHub token, and restarts AI clients.
 [CmdletBinding()]
 param(
-  [string]$ProjectPath = 'C:\PROJEKT\HUNDESALON_NIKA'
+  [string]$ProjectPath = 'D:\HUNDESALON_NIKA'
 )
 
 $ErrorActionPreference = 'Stop'

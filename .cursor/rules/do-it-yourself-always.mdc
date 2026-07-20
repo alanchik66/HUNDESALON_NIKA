@@ -1,0 +1,14 @@
+---
+description: Do everything yourself — never leave the owner a manual checklist
+alwaysApply: true
+---
+
+# Do it yourself — always
+
+Owner order: **делай все сам всегда**.
+
+1. Prefer API/CLI/scripts/Edge/Playwright/`gsudo` — not “open Settings and click…”.
+2. No manual checklists when you can run the action.
+3. Human gate only (UAC/OAuth/passkey): open prompt/URL, wait/poll, finish remaining work (`wait-for-user-login` when relevant).
+4. Defender/IDE/MCP/plugins: automate; re-enable Defender after temp off.
+5. Customize/MCP cleanup: lean tools (CF MCPs, Playwright, GitHub, Figma/Notion/Linear). Do not reinstall unused erroring plugins (e.g. Datadog).

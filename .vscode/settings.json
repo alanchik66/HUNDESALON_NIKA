@@ -31,12 +31,25 @@
     "**/.git": true,
     "**/node_modules": true,
     "**/.wrangler": true,
-    "**/dist": false
+    "**/dist": false,
+    "**/.claude": true,
+    "**/.codex": true,
+    "**/.codex-logs": true,
+    "**/.devin": true,
+    "**/.pi": true,
+    "**/.roo": true,
+    "**/.playwright-mcp": true,
+    "**/.secrets": true,
+    "**/.venv": true
   },
   "files.watcherExclude": {
     "**/node_modules/**": true,
     "**/dist/**": true,
-    "**/.wrangler/**": true
+    "**/.wrangler/**": true,
+    "**/.pi/**": true,
+    "**/.playwright-mcp/**": true,
+    "**/.codex-logs/**": true,
+    "**/.venv/**": true
   },
 
   // ─── Языковые настройки ────────────────────────────────────────────
@@ -120,36 +133,33 @@
     "NPM_CONFIG_MIN_RELEASE_AGE": null
   },
 
+  // Gemini Code Assist — must match GCP project (not mega-copilot-*)
+  "geminicodeassist.project": "hundesalon-nika-shell-2026",
+
   // ─── Spell Checker (cSpell) ────────────────────────────────────────
   "cSpell.enabled": true,
   "cSpell.language": "en,de,ru,uk",
 
-  // ─── AI: Kilo Code ────────────────────────────────────────────────
-  "kilo.enable": true,
-  "kilo.configPath": "C:\\Users\\snaip\\.config\\kilo\\kilo.jsonc",
-  "kilo.workspaceMode": "user",
-  "kilo.ignoreBun": true,
-  "kilo.autoCollapseReasoning": false,
-  "kilo.terminalCommandDisplay": "expanded",
-  "kilo.renderMarkdownDiffs": true,
-  "kilo.enableInlineCompletion": true,
-  "kilo.enableCodeActions": true,
-  "kilo.enableContextualPrompts": true,
-  "kilo-code.chat.utilityModel": "anthropic/claude-3-5-sonnet-20241022",
-  "kilo-code.chat.utilitySmallModel": "anthropic/claude-3-5-haiku-20241022",
-  "kilo-code.chat.autoExpandHistory": true,
-  "kilo-code.chat.codeEditDisplay": "expanded",
-  "kilo-code.chat.hidePromptTrainingModels": false,
-  "kilo-code.inlineCompletion.enable": true,
-  "kilo-code.inlineCompletion.model": "anthropic/claude-3-5-haiku-20241022",
-  "kilo-code.inlineCompletion.debounce": 150,
-  "kilo-code.inlineCompletion.maxSuggestions": 5,
+  // ─── AI: Kilo Code (VS Code / Devin — agent via local Ollama) ─────
+  // Autocomplete: Kilo gateway only (mistral/inception/kilo) — use Continue for local tab.
+  "kilo-code.new.model.providerID": "ollama",
+  "kilo-code.new.model.modelID": "qwen2.5-coder:7b",
+  "kilo-code.new.autocomplete.enableAutoTrigger": false,
+  "kilo-code.new.autoApprove.enabled": true,
+  "kilo-code.new.browserAutomation.enabled": true,
+  "kilo-code.new.browserAutomation.useSystemChrome": true,
+  "kilo-code.new.browserAutomation.headless": false,
+  "kilo-code.new.agentWorkStyle": "autonomous",
+  "kilo-code.new.showTaskTimeline": false,
+  "kilo-code.new.diff.renderMarkdown": true,
+  "kilo-code.new.language": "Русский",
+  "kilo-code.new.maxCost": 0,
 
   // ─── AI: Continue.dev (Ollama) ─────────────────────────────────────
   "continue.enableTabAutocomplete": true,
   "continue.telemetryEnabled": false,
 
   // ─── AI: Ollama Codex ──────────────────────────────────────────────
-  "ollama-codex.model": "qwen2.5-coder:latest",
-  "ollama-codex.endpoint": "http://localhost:11434"
+  "ollama-codex.model": "qwen2.5-coder:7b",
+  "ollama-codex.endpoint": "http://127.0.0.1:11434"
 }

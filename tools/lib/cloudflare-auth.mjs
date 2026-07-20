@@ -71,12 +71,43 @@ function wranglerConfigCandidates() {
   ].filter(Boolean);
 }
 
-export function loadWranglerOAuth() {
+export function getWranglerConfigPath() {
   const configPath = wranglerConfigCandidates().find(candidate => existsSync(candidate));
   if (!configPath) {
     throw new Error('Wrangler config not found. Run: npx wrangler login');
   }
+  return configPath;
+}
 
+function upsertTomlQuotedField(raw, key, value) {
+  const pattern = new RegExp(`^${key}\\s*=\\s*"[^"]*"`, 'm');
+  const line = `${key} = "${value}"`;
+  if (pattern.test(raw)) return raw.replace(pattern, line);
+  return `${raw.trimEnd()}\n${line}\n`;
+}
+
+/** Keep Wrangler CLI config in sync after OAuth refresh (prevents stale-token deploy failures). */
+export function persistWranglerOAuth(payload) {
+  const configPath = getWranglerConfigPath();
+  let raw = readFileSync(configPath, 'utf8');
+
+  raw = upsertTomlQuotedField(raw, 'oauth_token', payload.access_token);
+
+  const expiration =
+    payload.expiration_time != null
+      ? new Date(payload.expiration_time).toISOString()
+      : new Date(Date.now() + (Number(payload.expires_in) || 3600) * 1000).toISOString();
+  raw = upsertTomlQuotedField(raw, 'expiration_time', expiration);
+
+  if (payload.refresh_token) {
+    raw = upsertTomlQuotedField(raw, 'refresh_token', payload.refresh_token);
+  }
+
+  writeFileSync(configPath, raw, 'utf8');
+}
+
+export function loadWranglerOAuth() {
+  const configPath = getWranglerConfigPath();
   const raw = readFileSync(configPath, 'utf8');
   const oauthToken = raw.match(/^oauth_token\s*=\s*"([^"]+)"/m)?.[1];
   const refreshToken = raw.match(/^refresh_token\s*=\s*"([^"]+)"/m)?.[1];
@@ -87,6 +118,7 @@ export function loadWranglerOAuth() {
   }
 
   return {
+    configPath,
     access_token: oauthToken,
     refresh_token: refreshToken,
     expiration_time: expirationTime ? Date.parse(expirationTime) : 0,
@@ -114,6 +146,12 @@ export async function refreshWranglerOAuth(stored) {
   if (!response.ok || !payload.access_token) {
     throw new Error('Failed to refresh Wrangler OAuth token. Run: npx wrangler login');
   }
+
+  persistWranglerOAuth({
+    access_token: payload.access_token,
+    refresh_token: payload.refresh_token || stored.refresh_token,
+    expires_in: payload.expires_in,
+  });
 
   return payload.access_token;
 }

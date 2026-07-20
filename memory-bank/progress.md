@@ -22,6 +22,12 @@ Task list for project / agent-tooling progress.
 - [x] 2026-07-20: release cleanup (~2k lines obsolete migration/probe tooling removed), SEO metadata 160–170 chars, production build + 4-locale browser smoke passed
 - [x] 2026-07-20: AI Routing Kernel integrated across all agent hosts + `check:agents-routing` in validate (#26 / #27)
 - [x] 2026-07-20: Routing finalize — #26 architecture locked; git-workflow § refs fixed; Memory Bank merge noise cleared
+- [x] 2026-07-20: production deploy to Cloudflare Pages + CDN purge + live checks (`20260720-prod-v2` live on hundesalon-nika.com)
+- [x] 2026-07-20: GitHub `main` synced — Ads draft MP4s local-only (gitignore); LFS push unblocked without buying quota
+- [x] 2026-07-20: graphify-out + RooFlow (`.roo`) repaired vs upstream — absolute root/python, wrappers, MCP inject into Flow prompts
+- [x] 2026-07-20: Cursor Flow bridge (`.agents/skills/flow-*`) + Graphify MCP + wiki — Flow modes work in Cursor without Roo XML
+- [x] 2026-07-20: Token economy for all Cursor agents — always-on ~898 tok, Graphify HTTP MCP, global user rule, `tokens:calibrate`
+- [x] 2026-07-20: Cloud Agent diffs applied via git pull (#26–#30); Cursor commit-provider reset script ready
 
 ## Current Tasks
 
@@ -32,6 +38,7 @@ Task list for project / agent-tooling progress.
 
 ## Next Steps
 
+- Optional: GitHub Billing → Budgets → allow small LFS overage if weather/media LFS uploads are needed before monthly reset.
 - When salon opens: provision `PAYMENT_EVENTS` KV binding, set `PAYMENTS_ONLINE_ENABLED=true`, restore online radio UI, optionally switch to `sk_live_…`, redeploy.
 - Webhook (already configured): `https://hundesalon-nika.com/payment-webhook`
-- Flow-* modes in Roo Code when available; in Cursor use Memory Bank + Graphify + Ponytail.
+- Flow-* modes in Cursor: say `Flow-Code` / `Flow-Architect` / … (skills under `.agents/skills/flow-*`); in Roo Code use `.roomodes`. Memory Bank + Graphify + Ponytail always available.

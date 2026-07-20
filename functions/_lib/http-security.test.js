@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { isAllowedOrigin, isLocalDevOrigin } from './http-security.js';
+import { isAllowedOrigin, isLocalDevOrigin, jsonResponse } from './http-security.js';
 
 test('allows exact same-origin requests', () => {
   assert.equal(isAllowedOrigin('https://hundesalon-nika.com', 'https://hundesalon-nika.com/sendmail'), true);
@@ -30,4 +30,9 @@ test('rejects protocol mismatches', () => {
 
 test('rejects non-local cross-port origins for production hosts', () => {
   assert.equal(isAllowedOrigin('https://hundesalon-nika.com:444', 'https://hundesalon-nika.com/sendmail'), false);
+});
+
+test('preserves customer-facing text that is not a stack trace', async () => {
+  const response = jsonResponse({ message: 'Please pay at the salon (cash or card).' });
+  assert.deepEqual(await response.json(), { message: 'Please pay at the salon (cash or card).' });
 });

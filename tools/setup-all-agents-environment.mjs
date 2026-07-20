@@ -114,7 +114,7 @@ function configureDevinLocal() {
   data.workspace = {
     ...(data.workspace || {}),
     name: 'HUNDESALON_NIKA Google-Shell',
-    root: 'C:\\PROJEKT\\HUNDESALON_NIKA',
+    root: 'D:\\HUNDESALON_NIKA',
     googleCloudProject: PROJECT_ID,
     googleCloudRegion: REGION,
     googleCloudServiceAccount: SERVICE_ACCOUNT,

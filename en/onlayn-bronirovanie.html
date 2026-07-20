@@ -12,7 +12,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Online Booking — HUNDESALON_NIKA</title>
-    <meta name="twitter:description" content="Book grooming online at HUNDESALON NIKA in Leipzig: arrange an appointment for your dog or cat in a few clicks, with clear service choices and calm salon care. Book now." />
+    <meta
+      name="twitter:description"
+      content="Book grooming online at HUNDESALON NIKA in Leipzig: arrange an appointment for your dog or cat in a few clicks, with clear service choices and calm salon care. Book now."
+    />
     <meta name="msvalidate.01" content="B67A37AB236F9D14E1F99A12DDCA531C" />
     <meta
       name="description"
@@ -158,7 +161,13 @@
         <li>Stress-aware handling for every pet</li>
       </ul>
       <div class="booking-actions">
-        <button id="open-booking-btn" type="button" class="direct-booking-btn online-order-pill online-order-pill--hero">Open online booking</button>
+        <button
+          id="open-booking-btn"
+          type="button"
+          class="direct-booking-btn online-order-pill online-order-pill--hero"
+        >
+          Open online booking
+        </button>
         <a href="prays-list.html" class="online-order-pill online-order-pill--hero">View price list</a>
       </div>
     </div>
@@ -211,11 +220,15 @@
             </div>
             <input type="hidden" name="service" id="selected-service" />
             <input type="hidden" name="uploaded_file_url" value="" />
-            <label class="booking-field-label">
-              Pet photo (JPG/PNG up to 5 MB)
-              <input type="file" name="pet_photo" accept="image/jpeg,image/png" />
+            <label class="booking-field-label booking-file-field">
+              <span class="booking-file-field__title">Pet photo (JPG/PNG up to 150 MB)</span>
+              <span class="booking-file-field__control">
+                <span class="booking-file-field__button">Choose file</span>
+                <span class="booking-file-field__name" data-booking-file-name>No file chosen</span>
+                <input type="file" name="pet_photo" class="booking-file-field__input" accept="image/jpeg,image/png" />
+              </span>
             </label>
-                        <fieldset class="booking-payment-fieldset">
+            <fieldset class="booking-payment-fieldset">
               <legend>Payment method</legend>
               <label class="booking-check-label">
                 <input type="radio" name="payment_choice" value="salon_cash" checked />
@@ -225,20 +238,40 @@
                 <input type="radio" name="payment_choice" value="salon_card" />
                 <span>Pay by card at the salon</span>
               </label>
-              <p class="booking-payment-hint">Online payment is not available yet because the salon is opening soon. Please pay cash or by card at the salon. See <a href="agb.html">Terms</a>.</p>
+              <p class="booking-payment-hint">
+                Online payment is not available yet because the salon is opening soon. Please pay cash or by card at the
+                salon. See
+                <a href="agb.html">Terms</a>
+                .
+              </p>
             </fieldset>
             <div class="info-card booking-rules-summary">
               <h3>Rules before your first visit</h3>
-              <p>Prepare your pet · tell us about health/behaviour · mats 1&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>/min · parasites from 40&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span> · owner in work area only by agreement · cancel in advance (otherwise a deposit may be required for future bookings).</p>
+              <p>
+                Prepare your pet · tell us about health/behaviour · mats 1&nbsp;
+                <span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>
+                /min · parasites from 40&nbsp;
+                <span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>
+                · owner in work area only by agreement · cancel in advance (otherwise a deposit may be required for
+                future bookings).
+              </p>
               <p><a href="agb.html">Full salon rules</a></p>
             </div>
             <label class="booking-check-label">
               <input type="checkbox" name="agb_consent" required />
-              <span>I have read and accept the <a href="agb.html">salon rules and terms (AGB)</a>.</span>
+              <span>
+                I have read and accept the
+                <a href="agb.html">salon rules and terms (AGB)</a>
+                .
+              </span>
             </label>
             <label class="booking-check-label">
               <input type="checkbox" name="privacy_consent" required />
-              <span>I consent to the processing of my personal data under GDPR. Details: <a href="datenschutz.html">privacy policy</a>.</span>
+              <span>
+                I consent to the processing of my personal data under GDPR. Details:
+                <a href="datenschutz.html">privacy policy</a>
+                .
+              </span>
             </label>
             <div class="booking-file-preview" data-booking-file-preview hidden></div>
             <div class="booking-summary" data-booking-summary hidden tabindex="-1"></div>

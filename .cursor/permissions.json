@@ -1,7 +1,11 @@
 {
   "approvalMode": "unrestricted",
-  "terminalAllowlist": ["*"],
-  "mcpAllowlist": ["*:*"],
+  "terminalAllowlist": [
+    "*"
+  ],
+  "mcpAllowlist": [
+    "*:*"
+  ],
   "autoRun": {
     "allow_instructions": [
       "Owner granted standing full autonomy: auto-approve all shell, MCP, Fetch, browser, deploy, git, Cloudflare, validation, lint, install, and config commands without asking."

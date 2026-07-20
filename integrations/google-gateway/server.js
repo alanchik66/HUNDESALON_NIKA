@@ -48,7 +48,7 @@ async function readMultipart(req) {
   return new Promise((resolve, reject) => {
     const fields = {};
     let file = null;
-    const busboy = Busboy({ headers: req.headers, limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
+    const busboy = Busboy({ headers: req.headers, limits: { fileSize: 150 * 1024 * 1024, files: 1 } });
 
     busboy.on('field', (name, value) => {
       fields[name] = value;
@@ -57,7 +57,7 @@ async function readMultipart(req) {
     busboy.on('file', (name, stream, info) => {
       const chunks = [];
       stream.on('data', chunk => chunks.push(chunk));
-      stream.on('limit', () => reject(new Error('File is larger than 5 MB.')));
+      stream.on('limit', () => reject(new Error('File is larger than 150 MB.')));
       stream.on('end', () => {
         file = {
           fieldName: name,

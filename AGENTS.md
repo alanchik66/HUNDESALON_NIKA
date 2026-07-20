@@ -18,7 +18,7 @@ Cursor always-on: `.cursor/rules/00-routing-kernel.mdc`. Task/skill map: `.curso
 ## Project
 
 - Website: `https://hundesalon-nika.com`
-- Local root: `C:\laragon\www\HUNDESALON_NIKA`
+- Local root: `D:\HUNDESALON_NIKA`
 - Stack: native HTML/CSS/JS, Cloudflare Pages, no app framework.
 - Languages: `de/` default, plus `en/`, `ru/`, `uk/`.
 - Main shared files: `assets/css/style.css`, `assets/css/page-modules.css`, `assets/js/site-shell.js`, `assets/js/main.js`, `assets/js/page-modules.js`.
@@ -33,6 +33,7 @@ Cursor always-on: `.cursor/rules/00-routing-kernel.mdc`. Task/skill map: `.curso
 
 ## Work Rules
 
+- **Token economy:** prefer graphify/wiki/thin reads over dumping files; see `.cursor/rules/00-token-economy.mdc`. Calibrate: `npm run tokens:calibrate`.
 - If the request is incomplete, choose the best implementation and complete it.
 - Protect user work: never revert unrelated local changes.
 - Before broad HTML changes, check one representative page per language and the shared shell files.
@@ -55,8 +56,8 @@ Cursor always-on: `.cursor/rules/00-routing-kernel.mdc`. Task/skill map: `.curso
 - AI routing integrity: `npm run check:agents-routing`
 - Production bundle: `npm run build`
 - Cloudflare deploy: `npm run deploy`
-- Knowledge graph (Graphify): `npm run graphify` (full rebuild), `npm run graphify:update` (after JS/tools edits), `graphify query|path|explain`
-- Memory Bank (RooFlow): read/update `memory-bank/`; `npm run rooflow:setup` / `rooflow:process`
+- Knowledge graph (Graphify): `npm run graphify` / `graphify:update` / `graphify:setup` / `graphify:wiki` (wrappers in `tools/graphify-run.mjs`); MCP server `graphify` via `npm run graphify:mcp`; query via `npm run graphify:query -- "…"` or MCP tools
+- Memory Bank + Flow modes (RooFlow): `memory-bank/`; Cursor skills `.agents/skills/flow-*`; refresh with `npm run rooflow:setup` (also exports Cursor bridge) / `rooflow:export`
 - Minimal diffs (Ponytail): always-on rule `.cursor/rules/ponytail.mdc`; skills under `.agents/skills/ponytail*`
 
 ## Plugin And Skill Routing
@@ -69,9 +70,9 @@ Apply after the routing kernel has identified the active module:
 - Use `playwright` or `playwright-interactive` for real browser checks, screenshots, mobile/desktop layout QA, and visual regressions.
 - Use `screenshot` only when an OS-level screenshot is explicitly needed.
 - Use `security-best-practices` only for explicit security review or secure-by-default work.
-- Use project Graphify (`.agents/skills/graphify/`, `graphify-out/`) for architecture and cross-file questions before broad codebase tours.
+- Use project Graphify (`.agents/skills/graphify/`, `graphify-out/`, MCP `graphify`) for architecture and cross-file questions before broad codebase tours.
+- Use RooFlow Flow skills (`.agents/skills/flow-*`) when the user asks for Flow-Architect / Flow-Code / Flow-Debug / Flow-Ask / Flow-Orchestrator; Memory Bank in `memory-bank/`.
 - Use Ponytail skills (`ponytail-review`, `ponytail-audit`, …) to cut over-engineering from diffs/repos.
-- Use RooFlow Memory Bank (`memory-bank/`) for session continuity; Flow-* modes only inside Roo Code.
 - Do not use Netlify for this project unless the hosting strategy changes; this site is Cloudflare Pages.
 - Gmail, Google Calendar, and Slack are not project-default tools; use them only when the user explicitly asks for mailbox, scheduling, or Slack work.
 

@@ -58,9 +58,12 @@ STRIPE_WEBHOOK_SECRET=
 STRIPE_DEPOSIT_AMOUNT_CENTS=2000
 SITE_ORIGIN=https://hundesalon-nika.com
 
-# Scoped Zone Ops token (create via npm run cf:open-api-token)
-# Required: Zone Read + DNS Edit + Cache Purge + Page Rules Edit + Zone Rules Edit
+# Scoped automation token (zone + Pages deploy in one token)
+# Create via npm run cf:open-unified-token
 CLOUDFLARE_API_TOKEN=
+
+# Legacy alias — same value as CLOUDFLARE_API_TOKEN when unified
+# CLOUDFLARE_PAGES_API_TOKEN=
 
 # Online deposits: set true only after salon opens
 PAYMENTS_ONLINE_ENABLED=false

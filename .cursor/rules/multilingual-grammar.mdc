@@ -1,19 +1,19 @@
 ---
-description: Enforce native-quality grammar and typography across all four site locales
-alwaysApply: true
+description: Multilingual grammar for de/en/ru/uk content and HTML/CSS
+globs:
+  - "de/**"
+  - "en/**"
+  - "ru/**"
+  - "uk/**"
+  - "**/*.html"
+  - "assets/css/**"
+alwaysApply: false
 ---
 
 # Multilingual grammar
 
-For every content, UI, SEO, or layout change:
-
-- Treat `de`, `en`, `ru`, and `uk` as independently localized languages, not literal translations.
-- Preserve meaning, prices, legal facts, Leipzig relevance, links, and brand spelling.
-- Verify grammar, spelling, punctuation, capitalization, agreement, and idiomatic wording in every affected locale.
-- Avoid Russianisms in Ukrainian, anglicisms in German, and machine-translated phrasing in every language.
-- Use locale-appropriate punctuation, quotation marks, dashes, non-breaking spaces, currency placement, and date formats.
-- Keep forced line breaks semantically natural in every locale; never copy break positions blindly between languages.
-- Use `lang`-aware CSS hyphenation for long-form text. Do not insert soft hyphens manually unless a browser-safe exception is documented.
-- Full justification is acceptable only where line width supports it; use left alignment on narrow screens to avoid spacing rivers.
-- Do not alter business/legal wording unless the correction is high-confidence. Research uncertain usage before editing.
-- After multilingual HTML changes, run `npm run lint` and `npm run check:links`.
+- Treat `de`, `en`, `ru`, `uk` as independently localized — not literal translations.
+- Preserve meaning, prices, legal facts, Leipzig relevance, links, brand spelling.
+- Verify grammar/idiom per locale; no Russianisms in UK, no needless anglicisms in DE.
+- Locale punctuation, quotes, dashes, NBSP, currency, dates.
+- After multilingual HTML: `npm run lint` and `npm run check:links`.

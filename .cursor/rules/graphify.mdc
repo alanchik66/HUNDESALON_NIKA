@@ -1,34 +1,12 @@
 ---
-description: graphify knowledge graph — query-first for architecture and cross-file exploration
+description: graphify knowledge graph — query-first (token-cheap orientation)
 alwaysApply: true
 ---
 
 # Graphify
 
-This project has a knowledge graph at `graphify-out/` (AST of JS/tools; rebuilt with `npm run graphify` / `graphify update .`).
+Map: `graphify-out/` (wrappers: `tools/graphify-run.mjs`).
 
-## When to use graphify first
+**Before broad exploration:** MCP `graphify` → else `npm run graphify:query -- "…"` / `node tools/graphify-run.mjs path|explain` → else `graphify-out/wiki/index.md`.
 
-For architecture, “what connects X to Y”, god-nodes, or unfamiliar cross-file flow — **before** broad Grep/Glob tours:
-
-- `graphify query "<question>"` — scoped subgraph
-- `graphify path "<A>" "<B>"` — dependency path between symbols
-- `graphify explain "<concept>"` — node + neighbors
-
-Pass the same guidance into subagents that explore the codebase.
-
-## When Read/Grep is fine without graphify
-
-- Editing a known file or fixing a concrete line/bug
-- UI/CSS/copy tweaks where the target file is already clear
-- `graphify-out/graph.json` is missing (then build: `npm run graphify`)
-
-## After JS / tools changes
-
-Keep the graph current (AST-only, no API cost):
-
-```bash
-npm run graphify:update
-```
-
-Broad architecture review: `graphify-out/GRAPH_REPORT.md`. Interactive map: `graphify-out/graph.html`.
+Never paste full `graph.json`. After JS/tools edits: `npm run graphify:update`. Setup: `npm run graphify:setup`. MCP HTTP: `npm run mcp:graphify` (`http://127.0.0.1:8932/mcp`).

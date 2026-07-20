@@ -16,3 +16,12 @@ dist/
 3d-weather-codrops-main/dist-widget/assets/Moon/
 .tmp-tools/
 system_prompt.md
+graphify-out/obsidian/
+graphify-out/**/*.bak
+**/node_modules/
+assets/images/
+assets/video/
+assets/fonts/
+**/*.mp4
+**/*.psd
+**/*.zip

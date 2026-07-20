@@ -1,6 +1,6 @@
 ---
-description: Task/skill routing after kernel — SEO accounts, audit commands, skills
-alwaysApply: true
+description: Agent routing for SEO (GSC/Bing/IndexNow), deploy, and skill pick
+alwaysApply: false
 ---
 
 # Agent task routing

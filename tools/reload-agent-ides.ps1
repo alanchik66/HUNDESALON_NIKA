@@ -1,7 +1,7 @@
 # Reload open IDE windows so terminal.integrated.env and MCP configs apply.
 $ErrorActionPreference = 'SilentlyContinue'
 
-$project = 'C:\PROJEKT\HUNDESALON_NIKA'
+$project = 'D:\HUNDESALON_NIKA'
 $reloads = @(
   @{ Name = 'Cursor'; Cmd = 'cursor.cmd' },
   @{ Name = 'VS Code'; Cmd = 'code.cmd' }

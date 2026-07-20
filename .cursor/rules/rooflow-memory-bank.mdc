@@ -1,37 +1,12 @@
 ---
-description: RooFlow Memory Bank — persistent project context across sessions
+description: RooFlow Memory Bank + Cursor Flow-* skills (selective context)
 alwaysApply: true
 ---
 
-# RooFlow Memory Bank
+# RooFlow
 
-Persistent context lives in `memory-bank/` (from [RooFlow](https://github.com/GreatScottyMac/RooFlow)).
-
-## Files
-
-| File | Role |
-|------|------|
-| `productContext.md` | Product goals, features, architecture |
-| `activeContext.md` | Current focus, recent changes, open questions |
-| `progress.md` | Completed / current / next tasks |
-| `decisionLog.md` | Architecture decisions + rationale |
-| `systemPatterns.md` | Coding / arch / test patterns |
-
-## When to read
-
-At the start of non-trivial work (architecture, multi-file features, continuing a prior thread), read at least `activeContext.md` and `productContext.md`. For patterns/decisions, also `systemPatterns.md` / `decisionLog.md`.
-
-## When to update (UMB)
-
-When the user says **Update Memory Bank**, **UMB**, or after a meaningful decision/milestone:
-
-1. Append a timestamped note (`YYYY-MM-DD HH:MM:SS`) to the relevant file(s).
-2. Prefer short factual bullets — do not rewrite the whole bank.
-3. Put session clarifications in `activeContext.md` or `decisionLog.md`.
-
-## Hosts
-
-- **Cursor / Codex / Agent**: this rule + `memory-bank/` files.
-- **Roo Code**: Flow-* modes in `.roomodes` + prompts in `.roo/` (install/update: `npm run rooflow:setup`).
-
-Do not invent product facts that contradict `AGENTS.md` or `memory-bank/productContext.md`.
+- Bank: `memory-bank/` — read selectively (see `00-token-economy`).
+- Cursor Flow modes: skills `.agents/skills/flow-*` when user says Flow-Architect/Code/Debug/Ask/Orchestrator.
+- Roo Code only: `.roo/` + `.roomodes` (refresh `npm run rooflow:setup`).
+- UMB / Update Memory Bank → append timestamped bullets.
+- Do not invent facts vs `AGENTS.md` / `productContext.md`.
