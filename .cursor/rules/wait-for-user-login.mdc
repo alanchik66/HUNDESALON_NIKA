@@ -8,8 +8,8 @@ alwaysApply: true
 When a task needs interactive login, OAuth consent, passkey, or an admin toggle the agent cannot flip via API:
 
 1. Do everything possible yourself first (API, CLI, existing tokens, Edge/Playwright).
-2. If blocked on human login: open the exact URL(s), tell the user briefly what to do, and **wait/poll** until success — do not abandon the task or only leave instructions.
-3. After login/enable succeeds, **resume immediately** and finish the remaining steps without asking “should I continue?”.
+2. If blocked on human login: open the exact URL(s), state the one blocker in one line, and **wait/poll** until success — do not abandon the task or only leave instructions. Do not ask “напиши готово” / “should I continue?”.
+3. After login/enable succeeds, **resume immediately** and finish the remaining steps without asking.
 4. Prefer external Edge for auth (Cursor Browser often hangs on passkeys).
 5. Apply this always for Cloudflare, Notion, Google, GitHub, MCP Authenticate, and similar flows.
 6. For plugin/MCP/Settings cleanup that needs no human click path, follow `do-it-yourself-settings.mdc` — execute yourself; do not hand the user a Settings checklist.

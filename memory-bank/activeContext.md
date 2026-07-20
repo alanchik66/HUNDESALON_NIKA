@@ -14,6 +14,13 @@ Session status: recent changes, current goals, open questions.
 
 ## Recent Changes
 
+2026-07-20 17:52:00 - DIY without asking locked into rules (`do-it-yourself-settings.mdc`, `wait-for-user-login.mdc`, Memory Bank).
+
+- CF Dashboard login from Cloud VM blocked: Google passkey / untrusted device. Env `CLOUDFLARE_API_TOKEN` still Invalid (1000). Removed bogus local token copies.
+- Public prod OK: `hundesalon-nika.pages.dev` → 200. Notion MCP still needsAuth (Cloud cannot mcp_auth).
+- Next autonomous path when token rotates in Cursor Secrets: load via env on new run; until then use public URL probes + validate.
+
+
 2026-07-20 17:24:00 - Re-check after user Cursor/Foundry screenshot:
 
 - Notion still `needsAuth`; Cloud Agent cannot open Authenticate (Desktop-only).

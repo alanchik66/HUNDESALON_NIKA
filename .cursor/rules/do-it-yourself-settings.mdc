@@ -5,9 +5,11 @@ alwaysApply: true
 
 # Do it yourself (Settings / Plugins / MCP)
 
+Owner standing rule: **always execute yourself — never ask for confirmation, “should I continue?”, or “reply when done”.** Open login URLs, wait/poll, resume.
+
 When Cursor Customize needs a plugin disable, MCP fix, OAuth cleanup, or similar IDE config change:
 
 1. **Do it yourself** via API, CLI, editing `~/.cursor/mcp.json`, plugin state (`state.vscdb` / Dashboard API), filesystem, or Edge/Playwright — not by telling the user to open Settings.
 2. Prefer a **clean disable/uninstall** over leaving a red MCP Error.
 3. For HUNDESALON_NIKA: keep lean tools (Cloudflare MCPs, Playwright, GitHub, Figma/Notion/Linear plugins). Do **not** reinstall Datadog or other unused erroring plugins.
-4. Only ask the user when a human login/consent gate is unavoidable — then follow `wait-for-user-login.mdc` (open URL, wait, resume).
+4. Only stop for an unavoidable human login/consent/passkey gate — then follow `wait-for-user-login.mdc` (open exact URL, wait/poll, resume). Do not abandon the task with a checklist.
