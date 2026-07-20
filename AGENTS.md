@@ -141,11 +141,13 @@ Add in [Cloud Agents → Secrets](https://cursor.com/dashboard/cloud-agents) for
 
 | Variable | Purpose |
 |----------|---------|
-| `CLOUDFLARE_API_TOKEN` | Zone Cache Purge + deploy (`npm run cf:purge-cache`, `deploy:full`) |
+| `CLOUDFLARE_API_TOKEN` | Zone Cache Purge + deploy (`npm run cf:purge-cache`, `deploy:full`); Pages CLI also uses root `wrangler.toml` `account_id` |
 | `RESEND_API_KEY` | Production email via `functions/sendmail.js` |
 | `OPENROUTER_API_KEY` | AI proxy (`/openrouter`) and SEO generate — **only this OpenRouter secret is required** |
 
 Remove from Cursor if present (defaults are in code): `OPENROUTER_SITE_URL`, `OPENROUTER_SITE_NAME`, `OPENROUTER_DEFAULT_MODEL`, `OPENROUTER_FALLBACK_MODEL`.
+
+`CLOUDFLARE_ACCOUNT_ID` is optional: root `wrangler.toml` already sets `account_id` for Pages. MCP OAuth (Notion / Cloudflare HTTP MCP) needs **Cursor Desktop Authenticate** — not available from Cloud Agent or iPhone-only sessions. See `docs/agents-playbook.md` § MCP.
 
 Local-only: copy `.dev.vars.example` to `.dev.vars` — never commit `.dev.vars`.
 

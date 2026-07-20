@@ -54,3 +54,16 @@ Keep **#26 architecture** as canonical: `docs/agents-routing.md` + always-on `.c
 - Integrity checker and split Cursor rules already shipped on `main` via #26.
 - Parallel combined-`40` dialect would have duplicated routing and broken `check:agents-routing` expectations.
 - Explicit Git default-vs-mandate text belongs in kernel §11 + `docs/git-workflow.md`, not a second conflict hierarchy.
+
+---
+
+2026-07-20 03:55:00 — Cloud Agent MCP: CLI fallbacks, Desktop OAuth only
+
+## Decision
+
+Keep lean MCP in `.cursor/mcp.json` (Cloudflare suite + Playwright + GitHub) and Notion/Figma/Linear plugins. Do **not** expect interactive MCP Authenticate inside Cloud Agents or iPhone-only sessions. Document CLI fallbacks (`wrangler`/`gh`/Playwright) in playbook; put Pages `account_id` in root `wrangler.toml` so `CLOUDFLARE_ACCOUNT_ID` secret is optional.
+
+## Rationale
+
+- Hosted Notion/Cloudflare MCP need browser OAuth with `cursor://` callback — Cloud Agent reports Authenticate unavailable; iPhone cannot complete it for the agent.
+- Leaving Notion `needsAuth` is acceptable vs uninstalling (lean set keeps Notion); Zone/Pages work continues via API token + wrangler.

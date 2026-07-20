@@ -135,7 +135,18 @@ npm run validate
 npm run check:live-crawl   # опционально, нужен сеть
 ```
 
-Секреты в [Cursor Dashboard → Cloud Agents → Secrets](https://cursor.com/dashboard/cloud-agents): `CLOUDFLARE_API_TOKEN`, `RESEND_API_KEY`, `OPENROUTER_API_KEY`. Локально: `.dev.vars` из `.dev.vars.example`.
+Секреты в [Cursor Dashboard → Cloud Agents → Secrets](https://cursor.com/dashboard/cloud-agents): `CLOUDFLARE_API_TOKEN`, `RESEND_API_KEY`, `OPENROUTER_API_KEY`. Локально: `.dev.vars` из `.dev.vars.example`. Root `wrangler.toml` уже содержит `account_id` — отдельный `CLOUDFLARE_ACCOUNT_ID` для Pages CLI не обязателен.
+
+### MCP (Cloud vs Desktop)
+
+Lean project template: `.cursor/mcp.json` — Cloudflare (main/docs/bindings/builds/observability), Playwright, GitHub. Plugins: Notion / Figma / Linear (без Datadog).
+
+| Среда | Что реально доступно |
+|---|---|
+| **Cursor Desktop** | Project MCP + plugins; OAuth **Authenticate** для Notion/Cloudflare/GitHub HTTP |
+| **Cloud Agent** | В каталоге обычно только plugin MCP (часто Notion = `needsAuth`) + `cursor-cloud`. Interactive MCP Authenticate **недоступен** (нет `cursor://` OAuth). iPhone / web-only — то же ограничение |
+
+Fallback без MCP OAuth: `CLOUDFLARE_API_TOKEN` + `wrangler` / Pages API, `gh`, локальный Playwright (`npx` / `@playwright/mcp`). Notion MCP — только после Desktop Authenticate; с iPhone OAuth для Cloud Agent не завершить.
 
 ## Перспектива (регулярно)
 
