@@ -533,6 +533,28 @@ body.light .direct-booking-btn:focus-visible {
   font-weight: 540;
 }
 
+.table-wrapper th:first-child,
+.table-wrapper td:first-child {
+  min-width: 0;
+}
+
+.table-wrapper th:last-child,
+.table-wrapper td:last-child {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+  vertical-align: top;
+}
+
+.page-offset-top > h1 + p {
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.site-scroll-root > .page-offset-top > h1 + p {
+  text-align: center;
+}
+
 .info-card,
 .partner-card,
 .complaint-form,
@@ -2916,6 +2938,10 @@ body .btn-read:hover .site-icon-arrow-right {
 }
 
 @media (max-width: 768px) {
+  .site-scroll-root > .page-offset-top > h1 + p {
+    text-align: center;
+  }
+
   .social-page .section-title {
     font-size: 2rem;
   }
