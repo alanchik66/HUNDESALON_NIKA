@@ -11,7 +11,7 @@
 
 Правило проекта: на GitHub держим только `main`. Временные ветки допустимы только локально на время работы и удаляются после попадания изменений в `main`.
 
-AI agents: follow [`docs/agents-routing.md`](agents-routing.md) §10. If a platform/session mandate requires feature branches or PRs, that mandate overrides the default (no force-push / no history rewrite).
+AI agents: follow [`docs/agents-routing.md`](agents-routing.md) §1 (conflict order) and §11 (safety). Default is `main` only. If the active Cloud Agent / user task explicitly requires a feature branch or PR, that mandate wins — still no force-push and no history rewrite.
 
 Cloudflare Pages: проект `hundesalon-nika`, тип **Direct Upload**. Продакшен обновляется через:
 

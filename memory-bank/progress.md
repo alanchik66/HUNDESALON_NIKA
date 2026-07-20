@@ -20,7 +20,8 @@ Task list for project / agent-tooling progress.
 - [x] 2026-07-20: full DE/EN/RU/UK grammar pass, premium typography/layout system, navigation/photo/weather QA
 - [x] 2026-07-20: payment trust boundaries hardened + automated `check:payments`; payments remain OFF
 - [x] 2026-07-20: release cleanup (~2k lines obsolete migration/probe tooling removed), SEO metadata 160–170 chars, production build + 4-locale browser smoke passed
-- [x] 2026-07-20: AI Routing Kernel integrated across all agent hosts + `check:agents-routing` in validate (main #26); parallel PR #27 draft pending conflict resolution
+- [x] 2026-07-20: AI Routing Kernel integrated across all agent hosts + `check:agents-routing` in validate (#26 / #27)
+- [x] 2026-07-20: Routing finalize — #26 architecture locked; git-workflow § refs fixed; Memory Bank merge noise cleared
 
 ## Current Tasks
 

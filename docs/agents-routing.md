@@ -228,7 +228,7 @@ Map the user request to a workflow. Each workflow **starts** with §§2–3 (pip
 | Deployment | Explicit user request only | `deploy:full` path |
 | Performance | CWV, assets, CSS/JS weight | measure before/after when possible |
 | SEO / multilingual | hreflang, canonical, 4 locales | `check:links` |
-| Git | `docs/git-workflow.md`; no force-push / history rewrite | status clean |
+| Git | `docs/git-workflow.md`; default `main`; no force-push / history rewrite | status clean |
 
 Skill routing after module detection: see `docs/agents-playbook.md` and `.cursor/rules/40-agent-routing.mdc`.
 
@@ -245,6 +245,12 @@ Never:
 - Commit secrets (`.dev.vars`, API tokens)
 - Deploy to production without an explicit request
 - Run hello-world site tours on Cloud Agents by default
+
+### Git policy (default vs task mandate)
+
+- **Default:** work on `main`; no unsolicited feature branches or PRs (`AGENTS.md`, `docs/git-workflow.md`).
+- **Override:** when the user or an active Cloud Agent task explicitly requires a feature branch / PR, follow that mandate (§1 item 1). Still never force-push or rewrite history.
+- Remote is GitHub `origin` only (`alanchik66/HUNDESALON_NIKA`).
 
 ---
 
