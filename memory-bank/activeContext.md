@@ -12,6 +12,14 @@ Session status: recent changes, current goals, open questions.
 
 ## Recent Changes
 
+2026-07-20 03:52:00 - MCP + validate + production deploy check (Cloud Agent):
+
+- `npm run validate` green (lint, links, project, agents-routing, payments).
+- Pages production `hundesalon-nika` latest deploy **success** (`11a2cbf9`, commit `54248ce`, aliases apex+www). `pages.dev` HTML OK; apex from agent egress hits CF bot challenge 403.
+- Cloud Agent MCP catalog: only `cursor-cloud` (ready) + `Notion` (`needsAuth`). Interactive MCP Authenticate **not available** in Cloud Agent — Notion must be Authenticate’d in Cursor Desktop IDE.
+- Project `.cursor/mcp.json` already has Cloudflare suite + Playwright + GitHub (lean template from #30); those HTTP/stdio servers are **not injected** into this Cloud session catalog (Desktop/project MCP). CLI equivalents OK: `gh` authed, Playwright MCP package runnable, Pages API/wrangler with account `25e872aeab8cb246c69142ab07cd0fee`.
+- Cursor secret `CLOUDFLARE_API_TOKEN` works for Pages (not Zone list). Root `wrangler.toml` getting explicit `account_id` so Pages CLI does not require `CLOUDFLARE_ACCOUNT_ID` env.
+
 2026-07-20 03:10:00 - Routing system finalized:
 
 - Canonical kernel = #26 shape (`00-routing-kernel.mdc` + thin `40-agent-routing.mdc` + `check:agents-routing`).

@@ -64,3 +64,7 @@ CLOUDFLARE_API_TOKEN=
 
 # Online deposits: set true only after salon opens
 PAYMENTS_ONLINE_ENABLED=false
+
+# Optional for Wrangler Pages CLI if account_id is missing from wrangler.toml
+# (root wrangler.toml already has account_id = 25e872aeab8cb246c69142ab07cd0fee)
+# CLOUDFLARE_ACCOUNT_ID=25e872aeab8cb246c69142ab07cd0fee
