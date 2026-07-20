@@ -116,6 +116,8 @@ raw_images/
 3d-weather-codrops-main/dist-widget/assets/Moon/mission_2160p30.mp4
 3d-weather-codrops-main/dist-widget/assets/Moon/moon_texture_23k.png
 3d-weather-codrops-main/dist-widget/assets/Moon/moon_texture_web.png
+# Google Ads draft videos — keep local only (not site assets; avoid Git LFS quota)
+assets/video/ads/*.mp4
 
 # ═══════════════ ХОСТИНГ И ДЕПЛОЙ ═══════════════
 .cpanel/
