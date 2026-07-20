@@ -1,0 +1,83 @@
+name: Cleanup stale auto-branches
+
+# Deletes abandoned cursor/*, dependabot/*, copilot/* branches that have no open PR.
+# Keeps main (and any other human branches) untouched.
+on:
+  schedule:
+    - cron: '0 5 * * 1' # Monday 05:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: cleanup-stale-branches
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Delete stale auto-branches
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete stale cursor/dependabot/copilot branches
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const keep = new Set(['main']);
+            const prefixes = ['cursor/', 'dependabot/', 'copilot/'];
+
+            const openPrs = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const protectedHeads = new Set(openPrs.map((pr) => pr.head.ref));
+
+            const branches = await github.paginate(github.rest.repos.listBranches, {
+              owner,
+              repo,
+              per_page: 100,
+            });
+
+            const deleted = [];
+            const skipped = [];
+
+            for (const branch of branches) {
+              const name = branch.name;
+              if (keep.has(name)) {
+                skipped.push(`${name} (protected)`);
+                continue;
+              }
+              if (!prefixes.some((p) => name.startsWith(p))) {
+                skipped.push(`${name} (not auto-prefix)`);
+                continue;
+              }
+              if (protectedHeads.has(name)) {
+                skipped.push(`${name} (open PR)`);
+                continue;
+              }
+
+              try {
+                await github.rest.git.deleteRef({
+                  owner,
+                  repo,
+                  ref: `heads/${name}`,
+                });
+                deleted.push(name);
+                core.info(`Deleted ${name}`);
+              } catch (err) {
+                core.warning(`Failed to delete ${name}: ${err.message}`);
+              }
+            }
+
+            core.summary
+              .addHeading('Stale branch cleanup')
+              .addRaw(`Deleted: **${deleted.length}**`)
+              .addList(deleted.length ? deleted : ['(none)'])
+              .addRaw(`Skipped: **${skipped.length}**`)
+              .addList(skipped.length ? skipped : ['(none)'])
+              .write();
