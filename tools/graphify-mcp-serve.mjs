@@ -45,7 +45,8 @@ const child = spawn(
   ],
   {
     cwd: root,
-    stdio: 'inherit',
+    stdio: process.stdout.isTTY ? 'inherit' : 'ignore',
+    windowsHide: true,
     env: {
       ...process.env,
       PYTHONHASHSEED: '0',

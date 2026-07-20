@@ -21,23 +21,17 @@
       "url": "https://observability.mcp.cloudflare.com/mcp"
     },
     "playwright": {
+      "url": "http://localhost:8931/mcp"
+    },
+    "github": {
       "command": "npx",
       "args": [
         "-y",
-        "@playwright/mcp@latest",
-        "--caps",
-        "vision,pdf,devtools",
-        "--allow-unrestricted-file-access",
-        "--grant-permissions",
-        "geolocation",
-        "clipboard-read",
-        "clipboard-write",
-        "notifications"
+        "@modelcontextprotocol/server-github"
       ]
     },
-    "github": {
-      "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/"
+    "graphify": {
+      "url": "http://127.0.0.1:8932/mcp"
     }
   }
 }

@@ -2,51 +2,17 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  buildPlaywrightHttpServer,
-  buildPlaywrightStdioServer,
-} from './playwright-mcp-shared.mjs';
 
-const PROJECT_PATH =
-  process.env.MCP_PROJECT_PATH || resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const WEBSTORM_SSE_URL = process.env.WEBSTORM_SSE_URL || 'http://127.0.0.1:63343/sse';
+const PROJECT_PATH = process.env.MCP_PROJECT_PATH || resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const NPM_GLOBAL = join(homedir(), 'AppData', 'Roaming', 'npm', 'node_modules');
-const WEBSTORM_DIR = 'C:\\Program Files\\JetBrains\\WebStorm 2026.1.4';
 
 const paths = {
   filesystem: join(NPM_GLOBAL, '@modelcontextprotocol', 'server-filesystem', 'dist', 'index.js'),
-  memory: join(NPM_GLOBAL, '@modelcontextprotocol', 'server-memory', 'dist', 'index.js'),
-  sequentialThinking: join(NPM_GLOBAL, '@modelcontextprotocol', 'server-sequential-thinking', 'dist', 'index.js'),
 };
-
-const playwrightArgs = [
-  '-y',
-  '@playwright/mcp@latest',
-  '--browser',
-  'chrome',
-  '--caps',
-  'vision,pdf,devtools',
-  '--allow-unrestricted-file-access',
-  '--grant-permissions',
-  'geolocation',
-  'clipboard-read',
-  'clipboard-write',
-  'notifications',
-];
-
-function buildPlaywrightServer() {
-  return buildPlaywrightStdioServer(PROJECT_PATH) || {
-    command: 'npx',
-    args: playwrightArgs,
-  };
-}
 
 const CLOUDFLARE_MCP_URLS = {
   cloudflare: 'https://mcp.cloudflare.com/mcp',
   'cloudflare-docs': 'https://docs.mcp.cloudflare.com/mcp',
-  'cloudflare-bindings': 'https://bindings.mcp.cloudflare.com/mcp',
-  'cloudflare-builds': 'https://builds.mcp.cloudflare.com/mcp',
-  'cloudflare-observability': 'https://observability.mcp.cloudflare.com/mcp',
 };
 
 function buildCloudflareUrlServers() {
@@ -54,15 +20,11 @@ function buildCloudflareUrlServers() {
 }
 
 function buildCloudflareHttpServers() {
-  return Object.fromEntries(
-    Object.entries(CLOUDFLARE_MCP_URLS).map(([name, url]) => [name, { type: 'http', url }])
-  );
+  return Object.fromEntries(Object.entries(CLOUDFLARE_MCP_URLS).map(([name, url]) => [name, { type: 'http', url }]));
 }
 
 function buildCloudflareWindsurfServers() {
-  return Object.fromEntries(
-    Object.entries(CLOUDFLARE_MCP_URLS).map(([name, url]) => [name, { serverUrl: url }])
-  );
+  return Object.fromEntries(Object.entries(CLOUDFLARE_MCP_URLS).map(([name, url]) => [name, { serverUrl: url }]));
 }
 
 function ensureDir(filePath) {
@@ -92,48 +54,13 @@ function mergeServers(target, servers) {
   return target;
 }
 
-function getWebstormStdio() {
-  const javaExe = join(WEBSTORM_DIR, 'jbr', 'bin', 'java.exe');
-  const classpath = [
-    join(WEBSTORM_DIR, 'plugins', 'mcpserver', 'lib', 'mcpserver-frontend.jar'),
-    join(WEBSTORM_DIR, 'lib', 'util-8.jar'),
-    join(WEBSTORM_DIR, 'lib', 'intellij.libraries.kotlinx.coroutines.core.jar'),
-    join(WEBSTORM_DIR, 'lib', 'intellij.libraries.ktor.client.cio.jar'),
-    join(WEBSTORM_DIR, 'lib', 'intellij.libraries.ktor.client.jar'),
-    join(WEBSTORM_DIR, 'lib', 'intellij.libraries.ktor.network.tls.jar'),
-    join(WEBSTORM_DIR, 'lib', 'intellij.libraries.ktor.io.jar'),
-    join(WEBSTORM_DIR, 'lib', 'intellij.libraries.ktor.utils.jar'),
-    join(WEBSTORM_DIR, 'lib', 'intellij.libraries.kotlinx.io.jar'),
-    join(WEBSTORM_DIR, 'lib', 'intellij.libraries.kotlinx.serialization.core.jar'),
-    join(WEBSTORM_DIR, 'lib', 'intellij.libraries.kotlinx.serialization.json.jar'),
-  ].join(';');
-
-  return {
-    command: javaExe,
-    args: ['-classpath', classpath, 'com.intellij.mcpserver.stdio.McpStdioRunnerKt'],
-    env: { IJ_MCP_SERVER_PORT: '63343' },
-  };
-}
-
 function buildCommonStdioServers() {
   return {
     'filesystem-hundesalon': {
       command: 'node',
       args: [paths.filesystem, PROJECT_PATH],
     },
-    memory: {
-      command: 'node',
-      args: [paths.memory],
-    },
-    'sequential-thinking': {
-      command: 'node',
-      args: [paths.sequentialThinking],
-    },
-    playwright: buildPlaywrightServer(),
     ...buildCloudflareUrlServers(),
-    webstorm: {
-      url: WEBSTORM_SSE_URL,
-    },
   };
 }
 
@@ -170,7 +97,6 @@ function removeGithubPromptConfig(existing) {
 function configureCursor() {
   const filePath = join(homedir(), '.cursor', 'mcp.json');
   const data = mergeServers(readJson(filePath), buildCommonStdioServers());
-  data.mcpServers.playwright = buildPlaywrightHttpServer();
   const github = buildGithubServer(false);
   if (github) data.mcpServers.github = github;
   writeJson(filePath, data);
@@ -180,9 +106,9 @@ function configureCursor() {
 function configureCursorProject() {
   const filePath = join(PROJECT_PATH, '.cursor', 'mcp.json');
   const data = readJson(filePath, { mcpServers: {} });
+  // Keep existing project config or add minimal servers
   data.mcpServers = {
     ...(data.mcpServers || {}),
-    playwright: buildPlaywrightHttpServer(),
   };
   writeJson(filePath, data);
   return filePath;
@@ -197,20 +123,7 @@ function configureVsCodeUser() {
       command: 'node',
       args: [paths.filesystem, PROJECT_PATH],
     },
-    memory: {
-      command: 'node',
-      args: [paths.memory],
-    },
-    'sequential-thinking': {
-      command: 'node',
-      args: [paths.sequentialThinking],
-    },
-    playwright: buildPlaywrightHttpServer(),
     ...buildCloudflareHttpServers(),
-    webstorm: {
-      type: 'sse',
-      url: WEBSTORM_SSE_URL,
-    },
   };
 
   const github = buildGithubServer(false);
@@ -247,20 +160,7 @@ function configureVsCodeWorkspace() {
         command: 'node',
         args: [paths.filesystem, PROJECT_PATH],
       },
-      memory: {
-        command: 'node',
-        args: [paths.memory],
-      },
-      'sequential-thinking': {
-        command: 'node',
-        args: [paths.sequentialThinking],
-      },
-      playwright: buildPlaywrightHttpServer(),
       ...buildCloudflareHttpServers(),
-      webstorm: {
-        type: 'sse',
-        url: WEBSTORM_SSE_URL,
-      },
     },
   };
   writeJson(filePath, data);
@@ -272,7 +172,6 @@ function configureClaude() {
   const existing = readJson(filePath, { mcpServers: {} });
   const servers = {
     ...buildCommonStdioServers(),
-    webstorm: getWebstormStdio(),
   };
   existing.mcpServers = {
     ...(existing.mcpServers || {}),
@@ -294,27 +193,9 @@ function configureWindsurf() {
       args: [paths.filesystem, PROJECT_PATH],
       disabled: false,
     },
-    memory: {
-      command: 'node',
-      args: [paths.memory],
-      disabled: false,
-    },
-    'sequential-thinking': {
-      command: 'node',
-      args: [paths.sequentialThinking],
-      disabled: false,
-    },
-    playwright: {
-      ...buildPlaywrightServer(),
-      disabled: false,
-    },
     ...Object.fromEntries(
       Object.entries(buildCloudflareWindsurfServers()).map(([name, cfg]) => [name, { ...cfg, disabled: false }])
     ),
-    webstorm: {
-      serverUrl: WEBSTORM_SSE_URL,
-      disabled: false,
-    },
   });
   writeJson(filePath, data);
   return filePath;
@@ -346,27 +227,9 @@ function configureDevin(filePath) {
       args: [paths.filesystem, PROJECT_PATH],
       transport: 'stdio',
     },
-    memory: {
-      command: 'node',
-      args: [paths.memory],
-      transport: 'stdio',
-    },
-    'sequential-thinking': {
-      command: 'node',
-      args: [paths.sequentialThinking],
-      transport: 'stdio',
-    },
-    playwright: buildPlaywrightServer(),
     ...Object.fromEntries(
-      Object.entries(CLOUDFLARE_MCP_URLS).map(([name, url]) => [
-        name,
-        { serverUrl: url, transport: 'http' },
-      ])
+      Object.entries(CLOUDFLARE_MCP_URLS).map(([name, url]) => [name, { serverUrl: url, transport: 'http' }])
     ),
-    webstorm: {
-      serverUrl: WEBSTORM_SSE_URL,
-      transport: 'sse',
-    },
   };
 
   const github = buildGithubServer(false);
@@ -386,43 +249,16 @@ function upsertCodexToml(filePath) {
     'command = "node"',
     'enabled = true',
     '',
-    '[mcp_servers.memory]',
-    'args = ["' + paths.memory.replace(/\\/g, '/') + '"]',
-    'command = "node"',
-    'enabled = true',
-    '',
-    '[mcp_servers.sequential-thinking]',
-    'args = ["' + paths.sequentialThinking.replace(/\\/g, '/') + '"]',
-    'command = "node"',
-    'enabled = true',
-    '',
-    '[mcp_servers.playwright]',
-    'args = ["-y", "@playwright/mcp@latest", "--caps", "vision,pdf,devtools", "--allow-unrestricted-file-access", "--grant-permissions", "geolocation", "clipboard-read", "clipboard-write", "notifications"]',
-    'command = "npx"',
-    'enabled = true',
-    '',
     ...Object.entries(CLOUDFLARE_MCP_URLS).flatMap(([name, url]) => [
       `[mcp_servers.${name}]`,
       `url = "${url}"`,
       'enabled = true',
       '',
     ]),
-    '[mcp_servers.webstorm]',
-    'args = ["-y", "mcp-remote", "' + WEBSTORM_SSE_URL + '"]',
-    'command = "npx"',
-    'enabled = true',
-    'type = "stdio"',
   ].join('\n');
 
   let content = existsSync(filePath) ? readFileSync(filePath, 'utf8') : '';
-  const sections = [
-    'filesystem-hundesalon',
-    'memory',
-    'sequential-thinking',
-    'playwright',
-    ...Object.keys(CLOUDFLARE_MCP_URLS),
-    'webstorm',
-  ];
+  const sections = ['filesystem-hundesalon', ...Object.keys(CLOUDFLARE_MCP_URLS)];
 
   for (const section of sections) {
     const pattern = new RegExp(`\\[mcp_servers\\.${section.replace(/-/g, '\\-')}\\][\\s\\S]*?(?=\\n\\[|$)`, 'm');
@@ -431,38 +267,6 @@ function upsertCodexToml(filePath) {
 
   ensureDir(filePath);
   writeFileSync(filePath, `${content.trimEnd()}\n${block}\n`, 'utf8');
-  return filePath;
-}
-
-function configureJetBrainsImport() {
-  const filePath = join(homedir(), '.jetbrains', 'mcp-import-hundesalon.json');
-  const data = {
-    mcpServers: {
-      'filesystem-hundesalon': {
-        command: 'node',
-        args: [paths.filesystem, PROJECT_PATH],
-      },
-      memory: {
-        command: 'node',
-        args: [paths.memory],
-      },
-      'sequential-thinking': {
-        command: 'node',
-        args: [paths.sequentialThinking],
-      },
-      playwright: {
-        command: 'npx',
-        args: ['-y', '@playwright/mcp@latest', '--caps', 'vision,pdf,devtools'],
-      },
-      ...buildCloudflareUrlServers(),
-      webstorm: {
-        url: WEBSTORM_SSE_URL,
-      },
-    },
-  };
-  const github = buildGithubServer(false);
-  if (github) data.mcpServers.github = github;
-  writeJson(filePath, data);
   return filePath;
 }
 
@@ -477,7 +281,6 @@ const results = [
   ['Devin (alt)', configureDevin(join(homedir(), 'AppData', 'Roaming', 'devin', 'config.json'))],
   ['Codex', upsertCodexToml(join(homedir(), '.codex', 'config.toml'))],
   ['Codex (Project)', upsertCodexToml(join(PROJECT_PATH, '.codex', 'config.toml'))],
-  ['WebStorm import', configureJetBrainsImport()],
 ];
 
 console.log('HUNDESALON MCP profile applied:\n');
@@ -487,9 +290,7 @@ for (const [name, path] of results) {
 }
 
 const githubConfigured = Boolean(process.env.GITHUB_PERSONAL_ACCESS_TOKEN || process.env.GITHUB_TOKEN);
-console.log(
-  '\nServers: filesystem-hundesalon, memory, sequential-thinking, playwright, cloudflare, cloudflare-docs, cloudflare-bindings, cloudflare-builds, cloudflare-observability, webstorm'
-);
+console.log('\nServers: filesystem-hundesalon, cloudflare, cloudflare-docs');
 console.log(
   `GitHub MCP: ${githubConfigured ? 'enabled (token found in environment)' : 'skipped (set GITHUB_PERSONAL_ACCESS_TOKEN to enable)'}`
 );

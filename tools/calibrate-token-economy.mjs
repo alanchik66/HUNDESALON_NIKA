@@ -138,6 +138,23 @@ async function ensureGraphifyHttp() {
   console.warn('Graphify MCP did not become ready in time — check python -m graphify.serve');
 }
 
+function ensureHiddenLauncher() {
+  const vbsPath = join(homedir(), '.cursor', 'run-hidden.vbs');
+  if (!existsSync(vbsPath)) {
+    writeFileSync(
+      vbsPath,
+      'If WScript.Arguments.Count = 0 Then WScript.Quit 1\r\n\r\n' +
+        'command = ""\r\n' +
+        'For Each argument In WScript.Arguments\r\n' +
+        '  command = command & """" & Replace(argument, """", """""") & """ "\r\n' +
+        'Next\r\n\r\n' +
+        'CreateObject("WScript.Shell").Run command, 0, False\r\n',
+      'utf8'
+    );
+  }
+  return vbsPath;
+}
+
 function installAutostart() {
   if (process.platform !== 'win32') return null;
   const startup = join(
@@ -149,8 +166,11 @@ function installAutostart() {
     'Startup'
   );
   mkdirSync(startup, { recursive: true });
+  const hiddenVbs = ensureHiddenLauncher();
+  const serve = join(root, 'tools', 'graphify-mcp-serve.mjs');
   const cmdPath = join(startup, 'HundesalonGraphifyMcp.cmd');
-  const body = `@echo off\r\nstart "" /MIN "${process.execPath}" "${join(root, 'tools', 'graphify-mcp-serve.mjs')}"\r\n`;
+  // Hidden launcher — never `start /MIN` (still opens a console window).
+  const body = `@echo off\r\nwscript.exe "${hiddenVbs}" "${process.execPath}" "${serve}"\r\n`;
   writeFileSync(cmdPath, body, 'utf8');
   return cmdPath;
 }

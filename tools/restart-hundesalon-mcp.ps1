@@ -45,12 +45,26 @@ if ($SkipStart) {
   exit 0
 }
 
-Write-Host 'Starting MCP serve scripts...'
-# Direct start only (no -WindowStyle Hidden). Logon tasks remain for boot; this script is for manual restart.
-Start-Process -FilePath $node -ArgumentList "`"$playwright`"" -WorkingDirectory $Root
-Start-Process -FilePath $node -ArgumentList "`"$graphify`"" -WorkingDirectory $Root
+Write-Host 'Starting MCP serve scripts (hidden)...'
+# Hidden via wscript + run-hidden.vbs (avoids visible consoles; safer than -WindowStyle Hidden for Defender).
+$hiddenVbs = Join-Path $env:USERPROFILE '.cursor\run-hidden.vbs'
+$wscript = Join-Path $env:SystemRoot 'System32\wscript.exe'
+if (-not (Test-Path -LiteralPath $hiddenVbs)) {
+  @'
+If WScript.Arguments.Count = 0 Then WScript.Quit 1
 
-$deadline = (Get-Date).AddSeconds(12)
+command = ""
+For Each argument In WScript.Arguments
+  command = command & """" & Replace(argument, """", """""") & """ "
+Next
+
+CreateObject("WScript.Shell").Run command, 0, False
+'@ | Set-Content -LiteralPath $hiddenVbs -Encoding ASCII
+}
+Start-Process -FilePath $wscript -ArgumentList @("`"$hiddenVbs`"", "`"$node`"", "`"$playwright`"") -WorkingDirectory $Root -WindowStyle Hidden
+Start-Process -FilePath $wscript -ArgumentList @("`"$hiddenVbs`"", "`"$node`"", "`"$graphify`"") -WorkingDirectory $Root -WindowStyle Hidden
+
+$deadline = (Get-Date).AddSeconds(20)
 do {
   Start-Sleep -Milliseconds 800
   $p8931 = Test-PortOpen 8931

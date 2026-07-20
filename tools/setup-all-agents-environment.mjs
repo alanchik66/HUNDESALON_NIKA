@@ -36,8 +36,14 @@ function runPwsh(script, args = []) {
   return (result.stdout || '').trim();
 }
 
-function runNode(script) {
-  const result = spawnSync(process.execPath, [script], { cwd: ROOT, encoding: 'utf8' });
+function runNode(script, args = []) {
+  const result = spawnSync(process.execPath, [script, ...args], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    windowsHide: true,
+  });
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
   if (result.status !== 0) {
     throw new Error((result.stderr || result.stdout || `node failed: ${script}`).trim());
   }
@@ -149,6 +155,9 @@ function configureDevinLocal() {
 function main() {
   console.log('HUNDESALON — full AI agents environment setup\n');
 
+  console.log('0/7 Soft root helper (Devin → D:\\HUNDESALON_NIKA; never deletes C:\\PROJEKT)...');
+  runNode(join(ROOT, 'tools', 'enforce-canonical-root.mjs'));
+
   console.log('1/7 GCP impersonation (gcloud profile + ADC)...');
   runPwsh(join(ROOT, 'tools', 'setup-ai-agents-gcp.ps1'), ['-SkipAdcLogin']);
 
@@ -176,6 +185,7 @@ function main() {
   console.log('  Local:  gcloud impersonation + ADC');
   console.log('  Remote: WIF pool ai-agents-pool (GitHub OIDC)');
   console.log('  DNS:    CLOUDFLARE_API_TOKEN from .dev.vars');
+  console.log('  Path:   agents default to D:\\HUNDESALON_NIKA (other folders allowed)');
 }
 
 try {

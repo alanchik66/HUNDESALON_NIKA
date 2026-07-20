@@ -1,8 +1,10 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Point C:\PROJEKT\HUNDESALON_NIKA -> D:\HUNDESALON_NIKA (junction).
-  Close Cursor/VS Code windows that use the empty C:\ path first.
+  Optional: point C:\PROJEKT\HUNDESALON_NIKA -> D:\HUNDESALON_NIKA (junction).
+
+  Canonical project content lives on D:\HUNDESALON_NIKA.
+  Creating C:\PROJEKT is allowed — this only links the HUNDESALON folder if you want it.
 #>
 $ErrorActionPreference = 'Stop'
 $c = 'C:\PROJEKT\HUNDESALON_NIKA'

@@ -148,6 +148,7 @@
     "google:setup-agents": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/setup-ai-agents-gcp.ps1",
     "google:setup-wif": "node tools/setup-gcp-workload-identity.mjs",
     "agents:setup": "node tools/setup-all-agents-environment.mjs",
+    "agents:enforce-root": "node tools/enforce-canonical-root.mjs",
     "agents:reload-ides": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/reload-agent-ides.ps1",
     "ops:finish-manual": "node tools/complete-manual-checklist.mjs",
     "mcp:configure": "node tools/configure-mcp-clients.mjs",

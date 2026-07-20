@@ -156,3 +156,17 @@ Session status: recent changes, current goals, open questions.
 - Autocomplete via Kilo disabled (schema has no Ollama) — use Continue for local tab.
 - CLI config: C:\Users\snaip\.config\kilo\kilo.jsonc; Devin root D:\HUNDESALON_NIKA.
 - Ollama smoke OK (chat returns OK).
+
+2026-07-20 20:23:48 - Deleted locked `C:\PROJEKT` (empty stale tree). Lockers: Explorer.exe + Foundry Local (`foundrylocald.exe`). Handles closed; folder removed. Sixth MCP + Devin/VS Code storage pointed only at `D:\HUNDESALON_NIKA`; RunOnce `RetireHundesalonC` cleared; Foundry server restarted.
+
+2026-07-20 20:28:54 - Purged VS Code + Devin caches of `C:\PROJEKT`: History folders, chatSessions, state.vscdb path rewrites, trust model → `/d:/HUNDESALON_NIKA`, terminal buffer cleared. Canonical root only `D:\HUNDESALON_NIKA`.
+
+2026-07-20 20:43:11 - Durable canonical-root guard: `tools/enforce-canonical-root.mjs` + `npm run agents:enforce-root`; daily task `HundesalonCanonicalRoot`; `link-c-projekt.ps1` now refuses and re-enforces; wired into `agents:setup`. Forbidden: `C:\PROJEKT`. Only `D:\HUNDESALON_NIKA`.
+
+2026-07-20 20:50:52 - Softened path policy: never auto-delete `C:\PROJEKT`; removed `HundesalonCanonicalRoot` task. Cursor `chatSubmitOnCmdEnter=false` so Enter sends chat (no Ctrl+Enter).
+
+2026-07-20 21:32:11 - Full professional deploy (deploy:full) completed:
+
+- Pages: https://f0b76a10.hundesalon-nika.pages.dev → production hundesalon-nika.com
+- Asset cache: 20260720-prod-0632e53; CDN purged; live HTML + prays-list + price smoke OK
+- IndexNow 109+109; GSC audit 88 URLs; message-draft 200

@@ -18,7 +18,7 @@ Cursor always-on: `.cursor/rules/00-routing-kernel.mdc`. Task/skill map: `.curso
 ## Project
 
 - Website: `https://hundesalon-nika.com`
-- Local root: `D:\HUNDESALON_NIKA`
+- Local root: `D:\HUNDESALON_NIKA` (project default for agents; other folders like `C:\PROJEKT` are allowed)
 - Stack: native HTML/CSS/JS, Cloudflare Pages, no app framework.
 - Languages: `de/` default, plus `en/`, `ru/`, `uk/`.
 - Main shared files: `assets/css/style.css`, `assets/css/page-modules.css`, `assets/js/site-shell.js`, `assets/js/main.js`, `assets/js/page-modules.js`.

@@ -21,9 +21,11 @@ if (await isPlaywrightMcpRunning()) {
   process.exit(0);
 }
 
+const interactive = Boolean(process.stdout.isTTY);
 const child = spawn(process.execPath, buildPlaywrightMcpArgs(projectRoot), {
   cwd: projectRoot,
-  stdio: 'inherit',
+  stdio: interactive ? 'inherit' : 'ignore',
+  windowsHide: true,
   env: process.env,
 });
 
