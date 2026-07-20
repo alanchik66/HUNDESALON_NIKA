@@ -5,11 +5,19 @@ Session status: recent changes, current goals, open questions.
 
 ## Current Focus
 
+- **AI Routing Kernel** integrated across Cursor / Claude / Codex / Gemini / Copilot (`docs/agents-routing.md`, `check:agents-routing`).
 - **GBP (ryndenko):** HUNDESALON_NIKA created, profile filled, **not public** until video verify after salon opens. Verify: `https://business.google.com/verify/l/09116836504441086909`
 - **Stripe:** test keys in CF; bank ••••1334 + 2FA On; Dashboard submit still blocked (`Unternehmensinformationen Unvollständig` / USt empty). Site payments **OFF** (`PAYMENTS_ONLINE_ENABLED=false`).
 - Standing rule: login/OAuth → open URL, wait, resume (`.cursor/rules/wait-for-user-login.mdc`).
 
 ## Recent Changes
+
+2026-07-20 02:45:00 - Production AI routing kernel:
+
+- Canonical `docs/agents-routing.md` (detection, startup, decision pipeline, monorepo, safety, conflicts).
+- Wired into `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, Copilot instructions/agent, playbook, `agents-master` workflows.
+- Cursor `00-routing-kernel.mdc` alwaysApply; fixed GSC account in `40-agent-routing.mdc`.
+- `npm run check:agents-routing` added to `validate`.
 
 2026-07-19 20:40:00 - Eric Schumann price list + salon rules on site (ru/de/en/uk):
 
