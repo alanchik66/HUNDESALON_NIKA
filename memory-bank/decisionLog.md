@@ -67,3 +67,16 @@ Keep lean MCP in `.cursor/mcp.json` (Cloudflare suite + Playwright + GitHub) and
 
 - Hosted Notion/Cloudflare MCP need browser OAuth with `cursor://` callback — Cloud Agent reports Authenticate unavailable; iPhone cannot complete it for the agent.
 - Leaving Notion `needsAuth` is acceptable vs uninstalling (lean set keeps Notion); Zone/Pages work continues via API token + wrangler.
+
+
+---
+
+2026-07-20 17:29:40 — Owner: agent must DIY without asking
+
+## Decision
+
+Never pause for confirmation or "reply when done". Execute via API/CLI/filesystem/browser; on login gates open URL, wait/poll, resume (`wait-for-user-login.mdc` + `do-it-yourself-settings.mdc`).
+
+## Rationale
+
+Owner works from phone / intermittent Cursor; asking blocks progress.

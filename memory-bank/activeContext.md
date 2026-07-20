@@ -5,6 +5,8 @@ Session status: recent changes, current goals, open questions.
 
 ## Current Focus
 
+2026-07-20 17:29:40 - Standing owner instruction: **always do everything yourself without asking** (no "напиши готово", no confirmation prompts). Open login URLs, wait/poll, resume. Human only for unavoidable MFA/passkey.
+
 - **AI Routing Kernel** live on `main` (`docs/agents-routing.md`, `00-routing-kernel.mdc`, `check:agents-routing`) — #26 architecture; #27 docs merged and reconciled.
 - **GBP (ryndenko):** HUNDESALON_NIKA created, profile filled, **not public** until video verify after salon opens. Verify: `https://business.google.com/verify/l/09116836504441086909`
 - **Stripe:** test keys in CF; bank ••••1334 + 2FA On; Dashboard submit still blocked (`Unternehmensinformationen Unvollständig` / USt empty). Site payments **OFF** (`PAYMENTS_ONLINE_ENABLED=false`).
