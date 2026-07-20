@@ -1,8 +1,22 @@
 # Playbook для AI-агентов — HUNDESALON NIKA
 
-Документ для **Cursor Cloud Agents**, Codex, Claude и локальных ассистентов. Читай перед любой задачей по сайту, SEO или деплою.
+Документ для **Cursor Cloud Agents**, Codex, Claude, Gemini CLI и локальных ассистентов.
 
-**Master-контракт агента (полный):** [`docs/agents-master.md`](agents-master.md) — аудит, SEO/UX/юридика, QA, отчётность. Этот playbook — операционный маршрутизатор команд и аккаунтов.
+**Сначала — Routing Kernel:** [`docs/agents-routing.md`](agents-routing.md) (detection, startup, decision pipeline, safety).  
+**Доменный контракт:** [`docs/agents-master.md`](agents-master.md).  
+**Профили хостов:** [`AGENTS.md`](../AGENTS.md) · [`CLAUDE.md`](../CLAUDE.md) · [`GEMINI.md`](../GEMINI.md) · [`.github/copilot-instructions.md`](../.github/copilot-instructions.md).
+
+Этот playbook — операционная карта **после** успешного routing: команды, аккаунты, skills. Он не заменяет kernel и не дублирует detection.
+
+## Bootstrap каждой задачи
+
+```
+Routing Kernel (§§2–9)
+  → подтвердить HUNDESALON_NIKA
+  → определить module/zone
+  → выбрать строку из таблиц ниже
+  → выполнить decision pipeline до Implementation
+```
 
 ## Проект в одном абзаце
 
@@ -17,22 +31,27 @@
 
 ## Маршрутизация задач → команды
 
-| Задача | Команда |
-|--------|---------|
-| Правка UI/вёрстки | Правки в `assets/*` + 4 локали; `npm run lint` |
+| Задача / workflow | Команда / действие |
+|-------------------|--------------------|
+| Code generation / UI | Правки в `assets/*` + 4 локали; `npm run lint` |
+| Bug fix | Root cause в общем хелпере; затем lint / reproduce |
+| Refactor | Только затронутая zone; без смены поведения без запроса |
+| Security | Secrets/Functions boundaries; без коммита `.dev.vars` |
+| Testing | `npm run validate` / Playwright по зоне |
+| Review | Findings; ponytail-review при запросе упрощения |
+| Deployment | Только по запросу: `npm run deploy:full` |
+| Performance | Измерить до/после; не трогать weather dist без нужды |
+| SEO / IndexNow | `npm run seo:indexnow` |
 | Проверка ссылок (локально) | `npm run check:links` |
-| Живой обход всех URL sitemap | `npm run check:live-crawl` |
+| Живой обход sitemap | `npm run check:live-crawl` |
 | Полная валидация | `npm run validate` |
+| AI routing integrity | `npm run check:agents-routing` |
 | Сборка | `npm run build` |
-| Деплой | `npm run deploy:full` (только по запросу) |
-| IndexNow apex + www | `npm run seo:indexnow` |
 | Полная индексация Bing | `npm run bing:index-all` |
-| Остаток www в Bing (квота) | `npm run bing:submit-www-rem` |
-| Аудит Bing в браузере | `npm run bing:audit` |
 | Аудит GSC | `npm run google:gsc:audit` |
 | После смены favicon | `npm run seo:post-favicon` |
 
-## Skills (подключать по теме)
+## Skills (подключать по теме, после module detection)
 
 | Skill | Когда |
 |-------|--------|
@@ -68,7 +87,7 @@
 
 - Memory Bank: `memory-bank/{productContext,activeContext,progress,decisionLog,systemPatterns}.md`.
 - Cursor: `.cursor/rules/rooflow-memory-bank.mdc` — читать банк в начале нетривиальной работы; **UMB** / Update Memory Bank — записать итог.
-- Roo Code extension: режимы Flow-* из `.roo/` + `.roomodes`.
+- Roo Code extension: режимы Flow-* из `.roo/` + `.roomodes` — перед делегированием выполнить Routing Kernel.
 - Обработка плейсхолдеров: `npm run rooflow:process`. Обновление с upstream: `npm run rooflow:setup`.
 - Опционально MCP в Flow-промпты: положить `system_prompt.md` в корень и снова `rooflow:process`.
 
@@ -100,15 +119,18 @@
 
 ## Чеклист после заметных изменений
 
-1. `npm run validate`
-2. При деплое HTML: `npm run deploy:full` → purge + IndexNow
-3. При смене иконок/бренда: `npm run brand:assets` → `npm run brand:seo` → deploy → `npm run seo:post-favicon`
-4. Smoke: `de/index.html` + одна другая локаль
+1. `npm run check:agents-routing` (если менялись AI-инструкции)
+2. `npm run validate`
+3. При деплое HTML: `npm run deploy:full` → purge + IndexNow
+4. При смене иконок/бренда: `npm run brand:assets` → `npm run brand:seo` → deploy → `npm run seo:post-favicon`
+5. Smoke: `de/index.html` + одна другая локаль
 
 ## Cursor Cloud Agents — bootstrap
 
 ```bash
+# 1) Routing kernel mentally: confirm repo + env + module
 npm install
+npm run check:agents-routing
 npm run validate
 npm run check:live-crawl   # опционально, нужен сеть
 ```
@@ -124,4 +146,4 @@ npm run check:live-crawl   # опционально, нужен сеть
 
 ## Git
 
-Только `main`, пуш: `npm run git:push`. Коммиты — по явной просьбе пользователя.
+Только `main`, пуш: `npm run git:push`, если задача Cloud Agent не требует feature branch/PR. Коммиты — по явной просьбе пользователя (или по требованиям Cloud Agent task).

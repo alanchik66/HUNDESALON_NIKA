@@ -15,6 +15,7 @@ Recurring patterns for HUNDESALON NIKA.
 - Header/nav from `standardizePageHeader()` — do not duplicate markup in HTML.
 - Deploy: Cloudflare Pages only (`npm run deploy` / `deploy:full`); no Netlify.
 - Secrets only in Dashboard / `.dev.vars` — never commit.
+- AI work always starts with Routing Kernel (`docs/agents-routing.md`); hosts are thin adapters; no parallel routing dialects.
 
 ## Testing Patterns
 

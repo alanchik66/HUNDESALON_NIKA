@@ -1,34 +1,37 @@
 ---
-description: Маршрутизация задач для AI-агентов (SEO, Bing, деплой, аудит)
+description: Task/skill routing after kernel — SEO accounts, audit commands, skills
 alwaysApply: true
 ---
 
-# Agent routing
+# Agent task routing
 
-Полный playbook: `docs/agents-playbook.md`. Профиль: `AGENTS.md`.
+**Prerequisite:** `.cursor/rules/00-routing-kernel.mdc` + `docs/agents-routing.md` already applied for this task.
+
+Full ops playbook: `docs/agents-playbook.md`. Profile: `AGENTS.md`. Domain contract: `docs/agents-master.md`.
 
 ## Search & indexing
 
-- GSC → `snaiper1984@gmail.com` — не переносить на mail.ru.
-- Bing → `snaiper1984@mail.ru` — `npm run bing:edge` затем `bing:index-all` / `bing:setup`.
-- IndexNow: `npm run seo:indexnow` (apex + www, все URL из sitemap).
-- После HTML deploy: `deploy:full` или минимум `seo:indexnow` + `cf:purge-cache`.
+- GSC → `ryndenko1982@gmail.com` (sole Verified Owner) — do not move GSC to mail.ru.
+- Bing → `snaiper1984@mail.ru` — `npm run bing:edge` then `bing:index-all` / `bing:setup`.
+- IndexNow: `npm run seo:indexnow` (apex + www, all sitemap URLs).
+- After HTML deploy: `deploy:full` or at least `seo:indexnow` + `cf:purge-cache`.
 
 ## Site audit
 
-- Локальные ссылки: `npm run check:links`.
-- Живой обход sitemap: `npm run check:live-crawl`.
-- Конфиг/SEO файлы: `npm run check:project`.
+- Local links: `npm run check:links`.
+- Live sitemap crawl: `npm run check:live-crawl`.
+- Config/SEO files: `npm run check:project`.
+- AI routing integrity: `npm run check:agents-routing`.
 
-## Skills
+## Skills (after module detection)
 
 - UI → hundesalon-frontend
 - SEO/hreflang → hundesalon-seo-multilingual
 - Cloudflare → hundesalon-cloudflare + cloudflare-deploy
-- Архитектура / связи кода → graphify (`graphify query|path|explain`, skill `.agents/skills/graphify/`)
-- Минимальный diff → ponytail (`.cursor/rules/ponytail.mdc`, skills `ponytail*`)
-- Сессионный контекст → RooFlow Memory Bank (`memory-bank/`, UMB)
+- Architecture / code links → graphify (`graphify query|path|explain`, `.agents/skills/graphify/`)
+- Minimal diff → ponytail (`.cursor/rules/ponytail.mdc`, skills `ponytail*`)
+- Session context → RooFlow Memory Bank (`memory-bank/`, UMB)
 
 ## Cloud agents
 
-Не делать hello-world тур по сайту. Не создавать PR/ветки без запроса. Секреты только в Dashboard, не в git.
+No hello-world site tour. No PR/branches unless the task or user explicitly requires them. Secrets only in Dashboard, never in git.
