@@ -68,6 +68,11 @@ async function reservePaymentEvent(env, eventId) {
   return { ok: true, duplicate: false, key, store };
 }
 
+/** Integration helpers return `{ ok }` instead of throwing — allSettled "fulfilled" is not enough. */
+export function sideEffectDelivered(result) {
+  return result?.status === 'fulfilled' && result.value?.ok === true;
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   if (request.method !== 'POST') {
@@ -111,7 +116,8 @@ export async function onRequest(context) {
     return jsonResponse({ success: true, ignored: true, reason: 'unsupported_payment_kind' }, 200);
   }
 
-  const reservation = await reservePaymentEvent(env, cleanText(event.id || session.id, 160));
+  // Key by Checkout Session so completed + async_payment_succeeded cannot double-notify.
+  const reservation = await reservePaymentEvent(env, cleanText(session.id || event.id, 160));
   if (!reservation.ok) {
     return jsonResponse({ success: false, message: reservation.reason }, 503);
   }
@@ -163,7 +169,7 @@ export async function onRequest(context) {
     }),
   ]);
 
-  if (sideEffects.every(result => result.status === 'rejected')) {
+  if (!sideEffects.some(sideEffectDelivered)) {
     await reservation.store.delete?.(reservation.key);
     return jsonResponse({ success: false, message: 'Payment notifications failed' }, 502);
   }

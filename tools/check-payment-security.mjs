@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import { onRequest as payment } from '../functions/payment.js';
-import { onRequest as paymentWebhook } from '../functions/payment-webhook.js';
+import { onRequest as paymentWebhook, sideEffectDelivered } from '../functions/payment-webhook.js';
 import { onRequest as sendmail } from '../functions/sendmail.js';
 
 const origin = 'https://hundesalon-nika.com';
@@ -110,6 +110,100 @@ try {
     },
   });
   assert.equal(sendmailResponse.status, 400);
+
+  // Helpers return `{ ok:false }` without throwing — "fulfilled" must not count as delivered.
+  assert.equal(sideEffectDelivered({ status: 'fulfilled', value: { ok: false } }), false);
+  assert.equal(sideEffectDelivered({ status: 'fulfilled', value: { ok: false, skipped: true } }), false);
+  assert.equal(sideEffectDelivered({ status: 'rejected', reason: new Error('boom') }), false);
+  assert.equal(sideEffectDelivered({ status: 'fulfilled', value: { ok: true } }), true);
+
+  const kv = new Map();
+  const paymentEvents = {
+    async get(key) {
+      return kv.has(key) ? kv.get(key) : null;
+    },
+    async put(key, value) {
+      kv.set(key, value);
+    },
+    async delete(key) {
+      kv.delete(key);
+    },
+  };
+
+  const paidEvent = JSON.stringify({
+    id: 'evt_test_paid_notify',
+    type: 'checkout.session.completed',
+    data: {
+      object: {
+        id: 'cs_test_paid_notify',
+        payment_status: 'paid',
+        amount_total: 2000,
+        currency: 'eur',
+        customer_email: 'payer@example.com',
+        metadata: {
+          payment_kind: 'booking_deposit',
+          name: 'Payer',
+          email: 'payer@example.com',
+          phone: '+491234567',
+          service: 'Test grooming',
+          date: '2026-08-01',
+          time: '10:00',
+          lang: 'de',
+        },
+      },
+    },
+  });
+  const paidSignature = createHmac('sha256', webhookSecret)
+    .update(`${timestamp}.${paidEvent}`)
+    .digest('hex');
+
+  globalThis.fetch = async url => {
+    if (String(url).includes('api.resend.com')) {
+      return Response.json({ message: 'unauthorized' }, { status: 401 });
+    }
+    throw new Error(`Unexpected fetch: ${url}`);
+  };
+
+  const failedNotify = await paymentWebhook({
+    request: new Request(`${origin}/payment-webhook`, {
+      method: 'POST',
+      headers: { 'Stripe-Signature': `t=${timestamp},v1=${paidSignature}` },
+      body: paidEvent,
+    }),
+    env: {
+      PAYMENTS_ONLINE_ENABLED: 'true',
+      STRIPE_WEBHOOK_SECRET: webhookSecret,
+      RESEND_API_KEY: 're_test_placeholder',
+      BOOKING_RECIPIENT_EMAIL: 'info@hundesalon-nika.com',
+      PAYMENT_EVENTS: paymentEvents,
+    },
+  });
+  assert.equal(failedNotify.status, 502);
+  assert.equal(kv.has('stripe:cs_test_paid_notify'), false);
+
+  globalThis.fetch = async url => {
+    if (String(url).includes('api.resend.com')) {
+      return Response.json({ id: 'email_ok' }, { status: 200 });
+    }
+    throw new Error(`Unexpected fetch: ${url}`);
+  };
+
+  const delivered = await paymentWebhook({
+    request: new Request(`${origin}/payment-webhook`, {
+      method: 'POST',
+      headers: { 'Stripe-Signature': `t=${timestamp},v1=${paidSignature}` },
+      body: paidEvent,
+    }),
+    env: {
+      PAYMENTS_ONLINE_ENABLED: 'true',
+      STRIPE_WEBHOOK_SECRET: webhookSecret,
+      RESEND_API_KEY: 're_test_placeholder',
+      BOOKING_RECIPIENT_EMAIL: 'info@hundesalon-nika.com',
+      PAYMENT_EVENTS: paymentEvents,
+    },
+  });
+  assert.equal(delivered.status, 200);
+  assert.equal(kv.get('stripe:cs_test_paid_notify'), 'completed');
 
   console.log('Payment trust-boundary checks passed.');
 } finally {
