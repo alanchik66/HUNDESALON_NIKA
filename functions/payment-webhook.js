@@ -68,6 +68,21 @@ async function reservePaymentEvent(env, eventId) {
   return { ok: true, duplicate: false, key, store };
 }
 
+/**
+ * Integration helpers resolve to `{ ok, skipped? }` and only reject on hard throws.
+ * Soft `{ ok:false }` failures must still trigger a Stripe retry when nothing was delivered.
+ * All-skipped (nothing configured) stays non-retry so undeployed channels do not loop forever.
+ */
+export function shouldRetryPaymentNotifications(settledResults) {
+  const values = settledResults.map(result =>
+    result.status === 'fulfilled' ? result.value : { ok: false, error: true }
+  );
+  if (values.some(value => value?.ok === true)) {
+    return false;
+  }
+  return values.some(value => value && value.ok !== true && !value.skipped);
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   if (request.method !== 'POST') {
@@ -163,7 +178,7 @@ export async function onRequest(context) {
     }),
   ]);
 
-  if (sideEffects.every(result => result.status === 'rejected')) {
+  if (shouldRetryPaymentNotifications(sideEffects)) {
     await reservation.store.delete?.(reservation.key);
     return jsonResponse({ success: false, message: 'Payment notifications failed' }, 502);
   }

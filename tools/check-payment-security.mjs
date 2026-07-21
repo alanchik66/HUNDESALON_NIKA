@@ -1,8 +1,29 @@
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import { onRequest as payment } from '../functions/payment.js';
-import { onRequest as paymentWebhook } from '../functions/payment-webhook.js';
+import { onRequest as paymentWebhook, shouldRetryPaymentNotifications } from '../functions/payment-webhook.js';
 import { onRequest as sendmail } from '../functions/sendmail.js';
+
+function signStripeBody(secret, body, timestamp = Math.floor(Date.now() / 1000)) {
+  const signature = createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
+  return { timestamp, header: `t=${timestamp},v1=${signature}` };
+}
+
+function memoryKv() {
+  const kv = new Map();
+  return {
+    store: {
+      get: async key => kv.get(key) || null,
+      put: async (key, value) => {
+        kv.set(key, value);
+      },
+      delete: async key => {
+        kv.delete(key);
+      },
+    },
+    kv,
+  };
+}
 
 const origin = 'https://hundesalon-nika.com';
 const originalFetch = globalThis.fetch;
@@ -64,19 +85,16 @@ try {
   assert.equal(missingSecret.status, 503);
 
   const webhookSecret = 'whsec_test_placeholder';
-  const timestamp = Math.floor(Date.now() / 1000);
   const unpaidEvent = JSON.stringify({
     id: 'evt_test_unpaid',
     type: 'checkout.session.completed',
     data: { object: { id: 'cs_test_unpaid', payment_status: 'unpaid', metadata: { payment_kind: 'booking_deposit' } } },
   });
-  const validSignature = createHmac('sha256', webhookSecret)
-    .update(`${timestamp}.${unpaidEvent}`)
-    .digest('hex');
+  const unpaidSig = signStripeBody(webhookSecret, unpaidEvent);
   const unpaidResponse = await paymentWebhook({
     request: new Request(`${origin}/payment-webhook`, {
       method: 'POST',
-      headers: { 'Stripe-Signature': `t=${timestamp},v1=invalid,v1=${validSignature}` },
+      headers: { 'Stripe-Signature': `t=${unpaidSig.timestamp},v1=invalid,${unpaidSig.header.replace(/^t=\d+,/, '')}` },
       body: unpaidEvent,
     }),
     env: { PAYMENTS_ONLINE_ENABLED: 'true', STRIPE_WEBHOOK_SECRET: webhookSecret },
@@ -110,6 +128,106 @@ try {
     },
   });
   assert.equal(sendmailResponse.status, 400);
+
+  assert.equal(
+    shouldRetryPaymentNotifications([
+      { status: 'fulfilled', value: { ok: false, status: 503 } },
+      { status: 'fulfilled', value: { ok: false, skipped: true } },
+    ]),
+    true
+  );
+
+  // Soft Resend failure must 502 + clear reservation so Stripe retries delivery.
+  const paidEvent = JSON.stringify({
+    id: 'evt_test_paid_softfail',
+    type: 'checkout.session.completed',
+    data: {
+      object: {
+        id: 'cs_test_paid_softfail',
+        payment_status: 'paid',
+        amount_total: 2000,
+        currency: 'eur',
+        customer_email: 'client@example.com',
+        metadata: {
+          payment_kind: 'booking_deposit',
+          name: 'Client',
+          email: 'client@example.com',
+          phone: '+49111',
+          service: 'Wash',
+          date: '2026-08-01',
+          time: '10:00',
+        },
+      },
+    },
+  });
+  const paidSig = signStripeBody(webhookSecret, paidEvent);
+  const { store, kv } = memoryKv();
+  globalThis.fetch = async url => {
+    if (String(url).includes('api.resend.com')) {
+      return new Response(JSON.stringify({ message: 'unavailable' }), { status: 503 });
+    }
+    throw new Error(`Unexpected fetch: ${url}`);
+  };
+  const softFailResponse = await paymentWebhook({
+    request: new Request(`${origin}/payment-webhook`, {
+      method: 'POST',
+      headers: { 'Stripe-Signature': paidSig.header },
+      body: paidEvent,
+    }),
+    env: {
+      PAYMENTS_ONLINE_ENABLED: 'true',
+      STRIPE_WEBHOOK_SECRET: webhookSecret,
+      RESEND_API_KEY: 're_test_placeholder',
+      PAYMENT_EVENTS: store,
+    },
+  });
+  assert.equal(softFailResponse.status, 502);
+  assert.equal(kv.has('stripe:evt_test_paid_softfail'), false);
+
+  const paidOkEvent = JSON.stringify({
+    id: 'evt_test_paid_ok',
+    type: 'checkout.session.completed',
+    data: {
+      object: {
+        id: 'cs_test_paid_ok',
+        payment_status: 'paid',
+        amount_total: 2000,
+        currency: 'eur',
+        customer_email: 'client@example.com',
+        metadata: {
+          payment_kind: 'booking_deposit',
+          name: 'Client',
+          email: 'client@example.com',
+          service: 'Wash',
+          date: '2026-08-01',
+          time: '10:00',
+        },
+      },
+    },
+  });
+  const paidOkSig = signStripeBody(webhookSecret, paidOkEvent);
+  const okStore = memoryKv();
+  globalThis.fetch = async url => {
+    if (String(url).includes('api.resend.com')) {
+      return Response.json({ id: 'email_ok' });
+    }
+    throw new Error(`Unexpected fetch: ${url}`);
+  };
+  const okResponse = await paymentWebhook({
+    request: new Request(`${origin}/payment-webhook`, {
+      method: 'POST',
+      headers: { 'Stripe-Signature': paidOkSig.header },
+      body: paidOkEvent,
+    }),
+    env: {
+      PAYMENTS_ONLINE_ENABLED: 'true',
+      STRIPE_WEBHOOK_SECRET: webhookSecret,
+      RESEND_API_KEY: 're_test_placeholder',
+      PAYMENT_EVENTS: okStore.store,
+    },
+  });
+  assert.equal(okResponse.status, 200);
+  assert.equal(okStore.kv.get('stripe:evt_test_paid_ok'), 'completed');
 
   console.log('Payment trust-boundary checks passed.');
 } finally {
