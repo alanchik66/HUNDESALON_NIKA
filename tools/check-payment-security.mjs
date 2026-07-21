@@ -84,6 +84,58 @@ try {
   assert.equal(unpaidResponse.status, 200);
   assert.equal((await unpaidResponse.json()).reason, 'payment_not_paid');
 
+  // Paid event with no working notification channel must 502 (Stripe retries), not ack.
+  const kv = new Map();
+  const paymentEvents = {
+    get: async key => kv.get(key) || null,
+    put: async (key, value) => {
+      kv.set(key, value);
+    },
+    delete: async key => {
+      kv.delete(key);
+    },
+  };
+  const paidEvent = JSON.stringify({
+    id: 'evt_test_paid_no_notify',
+    type: 'checkout.session.completed',
+    data: {
+      object: {
+        id: 'cs_test_paid_no_notify',
+        payment_status: 'paid',
+        amount_total: 2000,
+        currency: 'eur',
+        customer_email: 'payer@example.com',
+        metadata: {
+          payment_kind: 'booking_deposit',
+          name: 'Payer',
+          email: 'payer@example.com',
+          phone: '+491234',
+          service: 'Test',
+          date: '2026-08-01',
+          time: '10:00',
+        },
+      },
+    },
+  });
+  const paidSignature = createHmac('sha256', webhookSecret)
+    .update(`${timestamp}.${paidEvent}`)
+    .digest('hex');
+  const paidNoNotify = await paymentWebhook({
+    request: new Request(`${origin}/payment-webhook`, {
+      method: 'POST',
+      headers: { 'Stripe-Signature': `t=${timestamp},v1=${paidSignature}` },
+      body: paidEvent,
+    }),
+    env: {
+      PAYMENTS_ONLINE_ENABLED: 'true',
+      STRIPE_WEBHOOK_SECRET: webhookSecret,
+      PAYMENT_EVENTS: paymentEvents,
+      // Intentionally omit Resend / Teams / Sheets credentials so all channels return ok:false.
+    },
+  });
+  assert.equal(paidNoNotify.status, 502);
+  assert.equal(kv.has('stripe:evt_test_paid_no_notify'), false);
+
   const sendmailResponse = await sendmail({
     request: new Request(`${origin}/sendmail`, {
       method: 'POST',

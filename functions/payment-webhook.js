@@ -163,7 +163,11 @@ export async function onRequest(context) {
     }),
   ]);
 
-  if (sideEffects.every(result => result.status === 'rejected')) {
+  // Integrations return { ok:false } instead of throwing — do not treat that as delivery.
+  const delivered = sideEffects.some(
+    result => result.status === 'fulfilled' && result.value && result.value.ok === true
+  );
+  if (!delivered) {
     await reservation.store.delete?.(reservation.key);
     return jsonResponse({ success: false, message: 'Payment notifications failed' }, 502);
   }
