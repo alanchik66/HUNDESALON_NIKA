@@ -497,6 +497,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (response.ok && result.success) {
           statusEl.classList.add('form-status--success');
           statusEl.textContent = result.message || (formCopy.success[pageLang] ?? formCopy.success.de);
+          try {
+            window.hundesalonTrackConversion?.({ currency: 'EUR' });
+          } catch {
+            /* ignore analytics errors */
+          }
           form.reset();
           break;
         }
@@ -2211,6 +2216,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const sent = await submitSendmailForm(form, submitBtn);
       if (sent) {
         modal.classList.add('booking-modal-sent');
+        try {
+          window.hundesalonTrackConversion?.({ currency: 'EUR' });
+        } catch {
+          /* ignore */
+        }
         state.selectedService = '';
         state.selectedDate = '';
         state.selectedTime = '';

@@ -1,16 +1,16 @@
 # Graph Report - HUNDESALON_NIKA  (2026-07-20)
 
 ## Corpus Check
-- 287 files · ~268,988 words
+- 287 files · ~268,427 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2798 nodes · 4207 edges · 248 communities (205 shown, 43 thin omitted)
+- 2792 nodes · 4163 edges · 260 communities (216 shown, 44 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 8 edges (avg confidence: 0.57)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0632e53f`
+- Built from commit: `062eb8bc`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -235,9 +235,21 @@
 - open-cf-unified-token.mjs
 - set-bing-api-key.mjs
 - 139. FINAL DECISION HIERARCHY
+- repair-playwright-mcp.mjs
+- http-security.js
+- sendmail.js
+- upload.js
+- enforceRateLimit
+- bing-robots-tester.mjs
+- HUNDESALON NIKA — Project Workflow
+- bing-submit-brand-sitemap.mjs
+- discover-google-maps.mjs
+- graphify-mcp-shared.mjs
+- graphify-mcp-serve.mjs
+- playwright-mcp-serve.mjs
 
 ## God Nodes (most connected - your core abstractions)
-1. `scripts` - 183 edges
+1. `scripts` - 182 edges
 2. `sleep()` - 55 edges
 3. `syncHeaderWeatherOrbOverlay()` - 33 edges
 4. `enforceHeaderWeatherMenuPlacement()` - 32 edges
@@ -263,23 +275,23 @@
 ## Import Cycles
 - None detected.
 
-## Communities (248 total, 43 thin omitted)
+## Communities (260 total, 44 thin omitted)
 
 ### Community 0 - "scripts"
 Cohesion: 0.01
-Nodes (183): scripts, agents:enforce-root, agents:enforce-root:install, agents:reload-ides, agents:setup, audit, audit:all, audit:gateway (+175 more)
+Nodes (182): scripts, agents:enforce-root, agents:reload-ides, agents:setup, audit, audit:all, audit:gateway, audit:root (+174 more)
 
 ### Community 1 - "agents-master.md"
 Cohesion: 0.02
 Nodes (123): 100. CUSTOMER TRUST OPTIMIZATION, 101. IMAGE AND MEDIA CONTENT REVIEW, 102. FILE ORGANIZATION RULES, 103. NAMING CONVENTIONS, 104. ERROR HANDLING REQUIREMENTS, 105. USER EXPERIENCE ERROR MESSAGES, 106. FORM VALIDATION QUALITY, 107. RESPONSIBLE AUTOMATION (+115 more)
 
 ### Community 2 - "getEnvValue"
-Cohesion: 0.05
-Nodes (105): onRequest(), forwardJson(), getBearerToken(), getEnvVarFromContext(), getInternalOrigin(), getRuntimeEnvs(), isAuthorizedBySharedSecret(), onRequest() (+97 more)
+Cohesion: 0.22
+Nodes (28): appendGoogleSheetRow(), base64Encode(), base64UrlEncode(), callGoogleAppsScriptGateway(), createDriveResumableUploadSession(), createGoogleCalendarEvent(), FORM_HEADERS, getEnvValue() (+20 more)
 
 ### Community 3 - "configure-mcp-clients.mjs"
-Cohesion: 0.09
-Nodes (38): configureCursorSettings(), configureProjectPermissions(), ensurePlaywrightMcp(), patchMcpConfigs(), permPath, PLAYWRIGHT_TOOLS, projectRoot, readJson() (+30 more)
+Cohesion: 0.14
+Nodes (20): configureCursorSettings(), configureProjectPermissions(), ensurePlaywrightMcp(), patchMcpConfigs(), permPath, PLAYWRIGHT_TOOLS, projectRoot, readJson() (+12 more)
 
 ### Community 4 - "rules"
 Cohesion: 0.06
@@ -290,8 +302,8 @@ Cohesion: 0.05
 Nodes (37): 1. Подготовка к деплою, 1. Установка расширений VS Code, 2. Деплой в Cloudflare Pages, 2. Запуск локального сервера, 3. Настройка домена, 3. Проверка кода, 🤖 AI-агенты (Cursor / Claude / Codex / Gemini / Copilot), 🐕 HUNDESALON NIKA - Профессиональный груминг-салон (+29 more)
 
 ### Community 6 - "browser-cdp.mjs"
-Cohesion: 0.09
-Nodes (25): port, port, port, targets, out, port, queries, results (+17 more)
+Cohesion: 0.07
+Nodes (38): port, ensureMailEdge(), evalPage(), getEmailDomain(), isEmailOnDomain(), mailPort, siteQ, withCdp() (+30 more)
 
 ### Community 7 - "site-shell.js"
 Cohesion: 0.13
@@ -310,28 +322,28 @@ Cohesion: 0.05
 Nodes (35): All-in-One Command, Environment Variables (Already Set in Cloudflare), Google Cloud Shell Setup Guide – HUNDESALON_NIKA, Issue: Authentication fails, Issue: Build fails with "dist/ already exists", Issue: Deployment says "Project not found", Issue: `npm: command not found`, Issue: `wrangler: command not found` (+27 more)
 
 ### Community 11 - "bing-finish-remaining.mjs"
-Cohesion: 0.07
-Nodes (25): out, port, report, root, siteQ, summary, out, port (+17 more)
+Cohesion: 0.10
+Nodes (18): out, port, report, root, siteQ, summary, apiKey, listPath (+10 more)
 
 ### Community 12 - "before-after.js"
 Cohesion: 0.12
 Nodes (16): beforeAfterCardBlueprints, beforeAfterCardFolder(), BeforeAfterGallery, beforeAfterItems, beforeAfterLabelsByLang, BeforeAfterSlider, buildBeforeAfterItems(), cardCategories (+8 more)
 
 ### Community 13 - "bing-sitescan.mjs"
-Cohesion: 0.12
-Nodes (24): port, report, root, siteQ, main(), port, reportPath, root (+16 more)
+Cohesion: 0.23
+Nodes (14): main(), port, reportPath, root, main(), clickScanMenuItem(), confirmDialog(), deleteBingSiteScan() (+6 more)
 
 ### Community 14 - "draft-service.js"
-Cohesion: 0.17
-Nodes (26): buildCacheRequest(), buildLocalDraftResponse(), buildLocalDraftText(), DEFAULT_SERVICE_GATEWAY_URL, getCacheStore(), getCacheTTLSeconds(), getEnvVar(), getEnvVarFromContext() (+18 more)
+Cohesion: 0.16
+Nodes (27): buildCacheRequest(), buildLocalDraftResponse(), buildLocalDraftText(), DEFAULT_SERVICE_GATEWAY_URL, getCacheStore(), getCacheTTLSeconds(), getEnvVar(), getEnvVarFromContext() (+19 more)
 
 ### Community 15 - "cf-api-token.mjs"
-Cohesion: 0.22
-Nodes (21): candidates, main(), auditPagesDeploy(), auditToken(), GROUP_IDS, isDeployToken(), isFullZoneToken(), isUnifiedToken() (+13 more)
+Cohesion: 0.23
+Nodes (19): candidates, main(), auditPagesDeploy(), auditToken(), GROUP_IDS, isDeployToken(), isFullZoneToken(), isUnifiedToken() (+11 more)
 
 ### Community 16 - "seo-search-watch.mjs"
-Cohesion: 0.15
-Nodes (21): analyzeBingFindings(), extractBingSiteScanFindings(), analyzeGscIndexing(), acquireLock(), cdpReady(), edgePath(), ensureCdp(), main() (+13 more)
+Cohesion: 0.13
+Nodes (25): analyzeBingFindings(), extractBingSiteScanFindings(), analyzeGscIndexing(), KEY_URLS, readGscIndexing(), GSC_SECTIONS, gscUrl(), acquireLock() (+17 more)
 
 ### Community 17 - "cloudflare-auth.mjs"
 Cohesion: 0.14
@@ -350,8 +362,8 @@ Cohesion: 0.14
 Nodes (25): applyHeaderWeatherOrbAtmosphere(), applyHeaderWeatherOrbCrossfade(), applyHeaderWeatherOrbLayout(), applyHeaderWeatherTextReadability(), clampHeaderWeatherValue(), createHeaderWeatherOrbOverlay(), ensureHeaderWeatherDropdownStarsBackLayer(), ensureHeaderWeatherOrbStack() (+17 more)
 
 ### Community 21 - "bing-professional-setup.mjs"
-Cohesion: 0.09
-Nodes (19): inspectUrls, port, report, root, siteQ, withCdp(), port, results (+11 more)
+Cohesion: 0.25
+Nodes (6): inspectUrls, port, report, root, siteQ, withCdp()
 
 ### Community 22 - "setup-google-platform.mjs"
 Cohesion: 0.16
@@ -370,8 +382,8 @@ Cohesion: 0.09
 Nodes (18): bitrateK, buildFallbackMp4(), buildWebm(), DURATION_META_OUT, FALLBACK_MP4_OUT, ffmpeg, LEGACY_FILES, moonDir (+10 more)
 
 ### Community 26 - "brand-profiles.mjs"
-Cohesion: 0.14
-Nodes (11): BRAND_PROFILES, NAP, COPY, root, COPY, root, COPY, LINK (+3 more)
+Cohesion: 0.16
+Nodes (9): BRAND_PROFILES, NAP, COPY, root, COPY, root, COPY, LINK (+1 more)
 
 ### Community 27 - "server.js"
 Cohesion: 0.19
@@ -410,8 +422,8 @@ Cohesion: 0.13
 Nodes (14): checkRedirect(), checkStatus(), fail(), failures, fetchText(), indexUrls, parseJsonLd(), report (+6 more)
 
 ### Community 37 - "cf-pages-token.mjs"
-Cohesion: 0.11
-Nodes (24): bootstrapViaDashboard(), TEMPLATE_URL, browser, browserExe(), connectCfTab(), ensureCfCdp(), userDataDir(), extractTokenFromText() (+16 more)
+Cohesion: 0.09
+Nodes (29): bootstrapViaDashboard(), TEMPLATE_URL, unifiedTokenProfileTemplateUrl(), unifiedTokenTemplateUrl(), extractTokenFromText(), loadPagesDeployCredentials(), loadTokenFile(), PAGES_PERMISSION_KEYS (+21 more)
 
 ### Community 38 - "google-oauth-console-bootstrap.mjs"
 Cohesion: 0.23
@@ -430,8 +442,8 @@ Cohesion: 0.12
 Nodes (16): Bootstrap каждой задачи, Cursor Cloud Agents — bootstrap, Git, GitLens 18.0 (релиз 2026-05-27) — что внедрено, Graphify (операционка), Playbook для AI-агентов — HUNDESALON NIKA, Ponytail (операционка), RooFlow (операционка) (+8 more)
 
 ### Community 42 - "configure-cloudflare-waf-rate-limits.mjs"
-Cohesion: 0.23
-Nodes (15): addRule(), buildCombinedRulePayload(), buildRulePayload(), COMBINED_RULE_LIMIT, createPhaseRuleset(), ENDPOINT_LIMITS, ensureRules(), getPhaseRuleset() (+7 more)
+Cohesion: 0.22
+Nodes (16): addRule(), buildCombinedRulePayload(), buildRulePayload(), COMBINED_RULE_LIMIT, createPhaseRuleset(), ENDPOINT_LIMITS, ensureRules(), getPhaseRuleset() (+8 more)
 
 ### Community 43 - "indexnow-submit.js"
 Cohesion: 0.13
@@ -454,8 +466,8 @@ Cohesion: 0.14
 Nodes (11): collectStaleImageScanFiles(), failures, ignoredDirs, indexFiles, outdatedCityPattern, requiredFiles, root, staleImagePatterns (+3 more)
 
 ### Community 48 - "configure-cloudflare-cache-features.mjs"
-Cohesion: 0.10
-Nodes (18): ensureCdp(), port, report, root, siteQ, verify, ensureMailEdge(), evalPage() (+10 more)
+Cohesion: 0.22
+Nodes (6): ensureCdp(), port, report, root, siteQ, verify
 
 ### Community 49 - "setHeaderWeatherOrbSource"
 Cohesion: 0.22
@@ -482,8 +494,8 @@ Cohesion: 0.15
 Nodes (12): author, description, license, main, name, overrides, esbuild, ws (+4 more)
 
 ### Community 55 - "bing-force-clean.mjs"
-Cohesion: 0.14
-Nodes (27): cleanupGmail(), evalPage(), getJson(), getPageTarget(), gmailPort, hasAllowedHost(), mailPort, navigate() (+19 more)
+Cohesion: 0.16
+Nodes (22): cleanupGmail(), evalPage(), getJson(), getPageTarget(), gmailPort, hasAllowedHost(), mailPort, navigate() (+14 more)
 
 ### Community 56 - "bing-webmaster-complete.mjs"
 Cohesion: 0.18
@@ -498,8 +510,8 @@ Cohesion: 0.18
 Nodes (9): collectHtmlFiles(), failures, htmlRoots, ignoredDirs, resolveLocalReference(), root, stripUrl(), validRoutes (+1 more)
 
 ### Community 59 - "extend-meta-descriptions-config.mjs"
-Cohesion: 0.10
-Nodes (23): budget, ensureGraphifyHttp(), ensureHiddenLauncher(), ensureMeta(), installAutostart(), mergeMcpHttp(), patchCursorSettings(), projectMcp (+15 more)
+Cohesion: 0.15
+Nodes (14): budget, ensureGraphifyHttp(), ensureHiddenLauncher(), ensureMeta(), installAutostart(), mergeMcpHttp(), patchCursorSettings(), projectMcp (+6 more)
 
 ### Community 60 - "fetch-nasa-sun-source.mjs"
 Cohesion: 0.18
@@ -683,7 +695,7 @@ Nodes (6): Multilingual Impact, Notes, Risk and Rollback, Root Cause, Summary, V
 
 ### Community 107 - "deploy-pages.mjs"
 Cohesion: 0.19
-Nodes (19): enableContentScan(), getContentScanStatus(), getCrawlerHintsStatus(), main(), parseArgs(), resolveAuth(), setCrawlerHints(), resolveAuth() (+11 more)
+Nodes (19): enableContentScan(), getContentScanStatus(), getCrawlerHintsStatus(), main(), parseArgs(), resolveAuth(), setCrawlerHints(), deployPages() (+11 more)
 
 ### Community 109 - "optimize_fcp_head.cjs"
 Cohesion: 0.29
@@ -698,8 +710,8 @@ Cohesion: 0.33
 Nodes (6): adcPath, devVarsPath, main(), root, secretsDir, upsertDevVar()
 
 ### Community 112 - "Contributing"
-Cohesion: 0.33
-Nodes (5): Before You Start, Commit Messages, Contributing, Development Checklist, Pull Requests
+Cohesion: 0.11
+Nodes (17): port, report, root, siteQ, out, port, report, root (+9 more)
 
 ### Community 113 - "42. NEW PAGE CREATION REQUIREMENTS"
 Cohesion: 0.33
@@ -715,7 +727,7 @@ Nodes (5): Created, GBP HUNDESALON_NIKA — ryndenko1982, Notes, Profile tabs fi
 
 ### Community 116 - "HUNDESALON NIKA — Project Workflow"
 Cohesion: 0.12
-Nodes (14): Moon assets (header orb), Playback (site-shell), Production output, Source, HUNDESALON NIKA — Gemini CLI Project Instructions, Project bind (after kernel confirms this repo), GitHub Copilot — HUNDESALON NIKA, Mandatory routing (+6 more)
+Nodes (14): Before You Start, Commit Messages, Contributing, Development Checklist, Pull Requests, Moon assets (header orb), Playback (site-shell), Production output (+6 more)
 
 ### Community 117 - "convert_to_webm.ps1"
 Cohesion: 0.53
@@ -958,40 +970,84 @@ Cohesion: 0.29
 Nodes (6): MODES, root, rulesDir, skillBody(), skillsRoot, writeSkills()
 
 ### Community 243 - "bing-robots-tester.mjs"
-Cohesion: 0.14
-Nodes (17): out, port, report, root, siteQ, testLabel, bingPort, ensureBingCdp() (+9 more)
+Cohesion: 0.15
+Nodes (16): bingPort, ensureBingCdp(), main(), report, root, runBingClarity(), runBingSiteScan(), runCsamSetup() (+8 more)
 
 ### Community 245 - "open-cf-unified-token.mjs"
-Cohesion: 0.29
-Nodes (6): unifiedTokenProfileTemplateUrl(), unifiedTokenTemplateUrl(), encodePermissionGroupKeys(), userTokenTemplateUrl(), fallbackUrl, url
+Cohesion: 0.20
+Nodes (18): assertLocalePayload(), buildPrompt(), buildSnippets(), DEFAULT_SERVICE_GATEWAY_URL, escapeHtml(), getEnvVar(), getEnvVarFromContext(), getQualityIssues() (+10 more)
 
 ### Community 246 - "set-bing-api-key.mjs"
-Cohesion: 0.33
-Nodes (3): apiKey, args, positional
+Cohesion: 0.24
+Nodes (15): assertAllowedOrigin(), cleanText(), getEnvList(), depositCents(), onRequest(), paymentsOnlineEnabled(), siteOrigin(), stripeForm() (+7 more)
 
 ### Community 247 - "139. FINAL DECISION HIERARCHY"
 Cohesion: 0.67
 Nodes (3): 139.1 Instruction conflict order (which rule wins), 139.2 Product priority (what is safe to change), 139. FINAL DECISION HIERARCHY
 
+### Community 248 - "repair-playwright-mcp.mjs"
+Cohesion: 0.24
+Nodes (14): cli, configureProjectCursorMcp(), configureUserCursorMcp(), configureVsCodeUserMcp(), configureWorkspaceMcp(), ensureAutostartTask(), ensureHiddenLauncher(), ensureServerRunning() (+6 more)
+
+### Community 249 - "http-security.js"
+Cohesion: 0.28
+Nodes (12): onRequest(), applyApiResponseHeaders(), getOriginHost(), isAllowedOrigin(), isLocalDevOrigin(), isPrivateIpv4Hostname(), isTrustedPagesDevHostname(), jsonResponse() (+4 more)
+
+### Community 250 - "sendmail.js"
+Cohesion: 0.29
+Nodes (14): buildSlackPayload(), COPY, DEFAULT_ADMIN_EMAILS, getAdminEmails(), getClientEmailFrom(), getSalonRecipient(), getSupportReplyTo(), isValidEmail() (+6 more)
+
+### Community 251 - "upload.js"
+Cohesion: 0.42
+Nodes (8): isAllowedPetPhotoType(), PET_PHOTO_ALLOWED_TYPES, petPhotoTooLarge(), bookingMetadata(), driveNotConfiguredResponse(), handleMultipartUpload(), handleUploadSession(), onRequest()
+
+### Community 252 - "enforceRateLimit"
+Cohesion: 0.36
+Nodes (9): forwardJson(), getBearerToken(), getEnvVarFromContext(), getInternalOrigin(), getRuntimeEnvs(), isAuthorizedBySharedSecret(), onRequest(), enforceRateLimit() (+1 more)
+
+### Community 253 - "bing-robots-tester.mjs"
+Cohesion: 0.29
+Nodes (6): out, port, report, root, siteQ, testLabel
+
+### Community 254 - "HUNDESALON NIKA — Project Workflow"
+Cohesion: 0.33
+Nodes (5): Checks, Daily Work, Deploy, HUNDESALON NIKA — Project Workflow, Key Files
+
+### Community 255 - "bing-submit-brand-sitemap.mjs"
+Cohesion: 0.33
+Nodes (5): port, results, sitemaps, siteQ, withCdp()
+
+### Community 256 - "discover-google-maps.mjs"
+Cohesion: 0.33
+Nodes (5): out, port, queries, results, root
+
+### Community 258 - "graphify-mcp-serve.mjs"
+Cohesion: 0.40
+Nodes (4): child, graphJson, py, root
+
+### Community 259 - "playwright-mcp-serve.mjs"
+Cohesion: 0.40
+Nodes (4): child, cli, interactive, projectRoot
+
 ## Knowledge Gaps
-- **1358 isolated node(s):** `cloudflare`, `cloudflare-docs`, `cloudflare-bindings`, `cloudflare-builds`, `cloudflare-observability` (+1353 more)
+- **1357 isolated node(s):** `cloudflare`, `cloudflare-docs`, `cloudflare-bindings`, `cloudflare-builds`, `cloudflare-observability` (+1352 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **43 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **44 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `sleep()` connect `browser-cdp.mjs` to `bing-index-all-site.mjs`, `cf-pages-token.mjs`, `google-oauth-console-bootstrap.mjs`, `bing-sitescan.mjs`, `configure-cloudflare-cache-features.mjs`, `seo-search-watch.mjs`, `bing-robots-tester.mjs`, `local-citations-automate.mjs`, `bing-professional-setup.mjs`, `bing-webmaster-automate.mjs`, `sleep`, `bing-webmaster-complete.mjs`, `brand-profiles.mjs`?**
-  _High betweenness centrality (0.009) - this node is a cross-community bridge._
+- **Why does `sleep()` connect `browser-cdp.mjs` to `discover-google-maps.mjs`, `bing-index-all-site.mjs`, `cf-pages-token.mjs`, `google-oauth-console-bootstrap.mjs`, `bing-sitescan.mjs`, `Contributing`, `seo-search-watch.mjs`, `bing-robots-tester.mjs`, `local-citations-automate.mjs`, `bing-professional-setup.mjs`, `bing-webmaster-automate.mjs`, `sleep`, `bing-webmaster-complete.mjs`, `bing-submit-brand-sitemap.mjs`?**
+  _High betweenness centrality (0.013) - this node is a cross-community bridge._
 - **Why does `scripts` connect `scripts` to `package.json`?**
-  _High betweenness centrality (0.006) - this node is a cross-community bridge._
-- **Why does `NAP` connect `brand-profiles.mjs` to `expand-thin-pages.mjs`, `sync-brand-profiles.mjs`, `browser-cdp.mjs`, `local-citations-automate.mjs`?**
-  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+- **Why does `NAP` connect `brand-profiles.mjs` to `discover-google-maps.mjs`, `expand-thin-pages.mjs`, `browser-cdp.mjs`, `sync-brand-profiles.mjs`, `local-citations-automate.mjs`?**
+  _High betweenness centrality (0.005) - this node is a cross-community bridge._
 - **What connects `cloudflare`, `cloudflare-docs`, `cloudflare-bindings` to the rest of the system?**
-  _1358 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1357 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `scripts` be split into smaller, more focused modules?**
-  _Cohesion score 0.01092896174863388 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.01098901098901099 - nodes in this community are weakly interconnected._
 - **Should `agents-master.md` be split into smaller, more focused modules?**
   _Cohesion score 0.016129032258064516 - nodes in this community are weakly interconnected._
-- **Should `getEnvValue` be split into smaller, more focused modules?**
-  _Cohesion score 0.0524141860133884 - nodes in this community are weakly interconnected._
+- **Should `configure-mcp-clients.mjs` be split into smaller, more focused modules?**
+  _Cohesion score 0.14 - nodes in this community are weakly interconnected._

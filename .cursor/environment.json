@@ -1,0 +1,29 @@
+{
+  "name": "HUNDESALON_NIKA",
+  "install": "npm install",
+  "start": "npm run dev",
+  "terminals": [
+    {
+      "name": "dev",
+      "command": "npm run dev",
+      "description": "Static preview http://127.0.0.1:5502 (root → /de/)"
+    },
+    {
+      "name": "dev:cf",
+      "command": "npm run dev:cf",
+      "description": "Cloudflare Pages + Functions on :8788 (builds dist/)"
+    }
+  ],
+  "ports": [
+    { "name": "dev", "port": 5502 },
+    { "name": "dev:cf", "port": 8788 }
+  ],
+  "mcpServerAllowlist": [
+    { "serverUrl": "https://mcp.cloudflare.com/mcp" },
+    { "serverUrl": "https://docs.mcp.cloudflare.com/mcp" },
+    { "serverUrl": "https://bindings.mcp.cloudflare.com/mcp" },
+    { "serverUrl": "https://builds.mcp.cloudflare.com/mcp" },
+    { "serverUrl": "https://observability.mcp.cloudflare.com/mcp" },
+    { "command": "npx" }
+  ]
+}

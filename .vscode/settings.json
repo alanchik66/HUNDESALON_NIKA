@@ -1,32 +1,52 @@
 {
-  // ─── Редактор ──────────────────────────────────────────────────────
+  // ============================================================
+  // WORKSPACE — HUNDESALON_NIKA only (overrides User)
+  // Stack: static HTML/CSS/JS + Cloudflare Pages Functions
+  // ============================================================
+
+  // ─── Commonly Used / Text Editor ───────────────────────────
   "editor.formatOnSave": true,
   "editor.formatOnPaste": false,
+  "editor.formatOnType": false,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
     "source.fixAll.stylelint": "explicit"
   },
-  "editor.linkedEditing": true,
-  "editor.bracketPairColorization.enabled": true,
-  "editor.guides.bracketPairs": "active",
-  "editor.minimap.enabled": false,
-  "editor.wordWrap": "on",
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
   "editor.detectIndentation": false,
+  "editor.wordWrap": "on",
+  "editor.minimap.enabled": false,
+  "editor.linkedEditing": true,
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "editor.guides.indentation": true,
+  "editor.stickyScroll.enabled": true,
   "editor.suggestSelection": "first",
   "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
     "strings": true
   },
   "editor.inlineSuggest.enabled": true,
+  "editor.rulers": [100],
+  "editor.renderWhitespace": "selection",
 
-  // ─── Файлы ─────────────────────────────────────────────────────────
+  // ─── Files (project noise) ─────────────────────────────────
   "files.eol": "\n",
+  "files.encoding": "utf8",
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
-  "files.encoding": "utf8",
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "files.associations": {
+    "*.dev.vars": "dotenv",
+    "*.dev.vars.example": "dotenv",
+    "_headers": "plaintext",
+    "_redirects": "plaintext"
+  },
   "files.exclude": {
     "**/.git": true,
     "**/node_modules": true,
@@ -49,10 +69,12 @@
     "**/.pi/**": true,
     "**/.playwright-mcp/**": true,
     "**/.codex-logs/**": true,
-    "**/.venv/**": true
+    "**/.venv/**": true,
+    "**/graphify-out/**": true,
+    "**/3d-weather-codrops-main/dist-widget/**": true
   },
 
-  // ─── Языковые настройки ────────────────────────────────────────────
+  // ─── Language formatters ───────────────────────────────────
   "[html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
@@ -82,47 +104,45 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
   },
-
-  // ─── Prettier ──────────────────────────────────────────────────────
-  "prettier.requireConfig": true,
-  "prettier.useEditorConfig": true,
-
-  // ─── ESLint ────────────────────────────────────────────────────────
-  "eslint.validate": ["javascript"],
-  "eslint.useFlatConfig": true,
-
-  // ─── Stylelint ─────────────────────────────────────────────────────
-  "stylelint.validate": ["css"],
-  "css.validate": false,
-
-  // ─── HTMLHint ──────────────────────────────────────────────────────
-  "htmlhint.enable": true,
-
-  // ─── Emmet ─────────────────────────────────────────────────────────
-  "emmet.includeLanguages": {
-    "javascript": "html"
+  "[toml]": {
+    "editor.formatOnSave": false
   },
-  "emmet.triggerExpansionOnTab": true,
 
-  // ─── Git ───────────────────────────────────────────────────────────
-  "git.enableSmartCommit": true,
-  "git.confirmSync": false,
-  "git.autofetch": true,
-  "git.pruneOnFetch": true,
+  // ─── Workbench (project UX) ────────────────────────────────
+  "workbench.editor.enablePreview": false,
+  "workbench.editor.highlightModifiedTabs": true,
+  "breadcrumbs.enabled": true,
 
-  // ─── Поиск ─────────────────────────────────────────────────────────
+  // ─── Features › Search / Explorer / Git ────────────────────
+  "search.smartCase": true,
+  "search.useIgnoreFiles": true,
   "search.exclude": {
     "**/node_modules": true,
     "**/dist": true,
     "**/.wrangler": true,
     "**/3d-weather-codrops-main/dist-widget": true,
-    "**/assets/vendor": true
+    "**/assets/vendor": true,
+    "**/graphify-out": true,
+    "**/.playwright-mcp": true
   },
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "package.json": "package-lock.json, .npmrc, .nvmrc, .editorconfig, .prettierrc*, eslint.config.*, stylelint.config.*",
+    "wrangler.toml": ".dev.vars, .dev.vars.example, _headers, _redirects",
+    "index.html": "robots.txt, sitemap.xml, favicon*",
+    "AGENTS.md": "CLAUDE.md, GEMINI.md, README.md"
+  },
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "git.autofetch": true,
+  "git.pruneOnFetch": true,
 
-  // ─── Терминал ──────────────────────────────────────────────────────
+  // ─── Features › Terminal (+ GCP / Cloudflare for agents) ───
   "terminal.integrated.defaultProfile.windows": "PowerShell",
-
-  // ─── AI Agents: GCP + Cloudflare env (auto) ───
+  "terminal.integrated.cwd": "${workspaceFolder}",
   "terminal.integrated.env.windows": {
     "GOOGLE_CLOUD_PROJECT": "hundesalon-nika-shell-2026",
     "GCP_PROJECT": "hundesalon-nika-shell-2026",
@@ -133,19 +153,34 @@
     "NPM_CONFIG_MIN_RELEASE_AGE": null
   },
 
-  // Gemini Code Assist — must match GCP project (not mega-copilot-*)
-  "geminicodeassist.project": "hundesalon-nika-shell-2026",
+  // ─── Security ──────────────────────────────────────────────
+  "security.workspace.trust.untrustedFiles": "open",
 
-  // ─── Spell Checker (cSpell) ────────────────────────────────────────
+  // ─── Extensions › Lint / format / HTML ─────────────────────
+  "prettier.requireConfig": true,
+  "prettier.useEditorConfig": true,
+  "eslint.validate": ["javascript"],
+  "eslint.useFlatConfig": true,
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+  "stylelint.validate": ["css"],
+  "css.validate": false,
+  "htmlhint.enable": true,
+  "emmet.includeLanguages": {
+    "javascript": "html"
+  },
+  "emmet.triggerExpansionOnTab": true,
   "cSpell.enabled": true,
   "cSpell.language": "en,de,ru,uk",
+  "cSpell.diagnosticLevel": "Hint",
+  "cSpell.enableFiletypes": ["html", "css", "javascript", "markdown", "json", "yaml"],
 
-  // ─── AI: Kilo Code (VS Code / Devin — agent via local Ollama) ─────
-  // Autocomplete: Kilo gateway only (mistral/inception/kilo) — use Continue for local tab.
+  // ─── Extensions › Free AI agents (Ollama $0) ───────────────
+  // Kilo = agent chat/edit; Continue = Tab autocomplete
   "kilo-code.new.model.providerID": "ollama",
   "kilo-code.new.model.modelID": "qwen2.5-coder:7b",
   "kilo-code.new.autocomplete.enableAutoTrigger": false,
   "kilo-code.new.autoApprove.enabled": true,
+  "kilo-code.new.autoApprove.executeSafeCommands": true,
   "kilo-code.new.browserAutomation.enabled": true,
   "kilo-code.new.browserAutomation.useSystemChrome": true,
   "kilo-code.new.browserAutomation.headless": false,
@@ -154,12 +189,10 @@
   "kilo-code.new.diff.renderMarkdown": true,
   "kilo-code.new.language": "Русский",
   "kilo-code.new.maxCost": 0,
-
-  // ─── AI: Continue.dev (Ollama) ─────────────────────────────────────
   "continue.enableTabAutocomplete": true,
   "continue.telemetryEnabled": false,
 
-  // ─── AI: Ollama Codex ──────────────────────────────────────────────
-  "ollama-codex.model": "qwen2.5-coder:7b",
-  "ollama-codex.endpoint": "http://127.0.0.1:11434"
+  // Gemini project must match GCP (inline off — Continue owns Tab)
+  "geminicodeassist.project": "hundesalon-nika-shell-2026",
+  "geminicodeassist.inlineSuggestions.enableAuto": false
 }

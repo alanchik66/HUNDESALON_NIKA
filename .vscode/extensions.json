@@ -24,12 +24,13 @@
     "ms-vscode.powershell",
     "editorconfig.editorconfig",
     "mikestead.dotenv",
-    "redhat.vscode-yaml"
+    "redhat.vscode-yaml",
+    // ─── Free local AI agents (Ollama — unlimited $0) ────────────
+    "continue.continue",
+    "kilocode.kilo-code"
   ],
   "unwantedRecommendations": [
-    // Cursor already covers AI coding — do not reinstall rivals
-    "continue.continue",
-    "kilocode.kilo-code",
+    // Paid / overlapping cloud AI — keep Cursor Agent + local Ollama stack
     "ollama.ollama",
     "google.geminicodeassist",
     "openai.chatgpt",

@@ -185,7 +185,14 @@
     "browser:chrome": "node tools/start-persistent-browser.mjs chrome",
     "browser:edge:cdp": "node tools/start-persistent-browser.mjs edge --cdp 9222",
     "browser:chrome:cdp": "node tools/start-persistent-browser.mjs chrome --cdp 9222",
-    "browser:cf": "node tools/start-persistent-browser.mjs edge --cdp 9225 https://dash.cloudflare.com"
+    "browser:cf": "node tools/start-persistent-browser.mjs edge --cdp 9225 https://dash.cloudflare.com",
+    "cursor:settings": "node tools/cursor-settings-apply.mjs",
+    "cursor:settings:ui": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/cursor-settings-professional.ps1",
+    "cursor:keep-awake": "wscript tools/cursor-keep-awake.vbs",
+    "cursor:yolo": "node tools/cursor-yolo-full-access.mjs",
+    "cursor:yolo:reboot": "node tools/cursor-yolo-reboot-apply.mjs",
+    "cursor:yolo:persist": "node tools/cursor-yolo-persist.mjs",
+    "cursor:yolo:ui": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/cursor-yolo-ui-enable.ps1"
   },
   "keywords": [
     "grooming",

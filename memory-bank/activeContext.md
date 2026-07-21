@@ -14,6 +14,54 @@ Session status: recent changes, current goals, open questions.
 
 ## Recent Changes
 
+2026-07-20 23:10:00 - Chat Enter + full auto-approve + keep-awake:
+
+- `chatSubmitOnCmdEnter=false` → Enter sends (Shift+Enter newline).
+- Run Everything / permissions `*:*` / outside-workspace allowed; CLI `autoAcceptWebSearch=true`.
+- `tools/cursor-keep-awake.ps1` + Startup shortcut; AC monitor/standby/hibernate never; PID running.
+
+2026-07-20 23:05:00 - Post-reboot verification: files/extensions/Ollama/MCP OK; Semantic Search was flipped off by Cursor memory — re-applied (`npm run cursor:settings`). All status green.
+
+2026-07-20 22:25:00 - Finished leftover Cursor Settings gaps:
+
+- Hooks: `.cursor/hooks.json` + `block-secrets.mjs` (deny `.dev.vars`/`.env`/keys).
+- Apply script: busy_timeout + INSERT OR REPLACE; `chatSubmitOnCmdEnter=true`; CLI attribution on.
+- Semantic Search / hierarchical ignore / YOLO re-applied (hooks:true in apply output).
+- UI walk: Hooks, Attribution, Indexing, Browser, Cloud Agents, Rules.
+
+2026-07-20 22:20:00 - Cursor Settings applied files+DB+UI automation:
+
+- `tools/cursor-settings-apply.mjs` + `npm run cursor:settings` (reactive storage, privacy, models, YOLO, MCP allowlist).
+- `npm run cursor:settings:ui` / `tools/cursor-settings-professional.ps1` — focuses Cursor, opens Cursor Settings, walks Privacy/Indexing/Tab/Run Mode/Bugbot/Models/MCP.
+- `cursor.cmdCommaOpensCursorSettings: true`. Re-apply after Reload if IDE overwrites memory.
+
+2026-07-20 22:00:00 - Cursor Settings (Pro) full pass:
+
+- General/Privacy: NO_TRAINING already on; no OpenAI base URL override (keeps Pro models).
+- Agents: Run Everything + permissions.json DIY allowlists; block secrets/force-push/prod deploy.
+- Cloud Agents: added `.cursor/environment.json` (npm install, dev :5502 / :8788).
+- Models: Agent=Grok 4.5 high+fast; Cloud/Cmd+K/Quick=Auto.
+- Tab: cppEnabled + partial accepts; Indexing: semantic search on, hierarchical .cursorignore.
+- Tools & MCPs: project mcp.json + ports 8931/8932 restarted hidden.
+- Rules: existing `.cursor/rules/*`; Continue/Kilo remain as $0 local backup.
+
+2026-07-20 21:55:00 - Workspace settings pass (`.vscode/settings.json` + launch):
+
+- All sidebar zones for this repo: editor, files/exclude, search, explorer nesting, git, terminal env (GCP/CF), lint, free Continue/Kilo.
+- `launch.json`: ports fixed to `:5502` (dev) and `:8788` (dev:cf), not 8080.
+
+2026-07-20 21:52:00 - Full User settings sidebar pass (all categories):
+
+- Commonly Used / Text Editor / Workbench / Window / Features (Explorer, Search, Git, Terminal, Debug) / Application / Security / Extensions.
+- Cursor section: composer chime off, Cmd+K themed diffs, AI terminal checks, partial accepts.
+- Free agents unchanged: Continue + Kilo → Ollama.
+
+2026-07-20 21:45:00 - Cursor User settings + free local AI agents:
+
+- Commonly Used: Cascadia Code + ligatures, smooth caret, autoSave afterDelay, tab 2, format-on-save.
+- Free agents: Continue + Kilo reinstalled; Ollama `qwen2.5-coder:7b` (agent) / `1.5b` (tab) / `nomic-embed-text` verified OK.
+- `.vscode/extensions.json`: Continue + Kilo recommended (removed from unwanted).
+
 2026-07-20 19:24:00 - Cloud Agent apply-diff failure fixed locally:
 
 - Symptom: `Failed to apply diffs from Cloud Agent: No full commit provider registered` (Cursor git provider not registered).
@@ -170,3 +218,55 @@ Session status: recent changes, current goals, open questions.
 - Pages: https://f0b76a10.hundesalon-nika.pages.dev → production hundesalon-nika.com
 - Asset cache: 20260720-prod-0632e53; CDN purged; live HTML + prays-list + price smoke OK
 - IndexNow 109+109; GSC audit 88 URLs; message-draft 200
+
+2026-07-21 13:10:00 - Mail triage (Mail.ru + Gmail ryndenko):
+
+- «Skiethaben» = GitHub emails on snaiper1984@mail.ru + Cursor/Bing.
+- GitHub PAT classic «Devin (repo workflow)» with broad scopes (expected Devin setup 2026-07-20) — verify at github.com/settings/tokens after login.
+- Cursor: connect source control + possible unfinished Pro checkout (abandon drip).
+- Site fix applied: Google Ads gtag `AW-18333140047` in `config/env.js` + `assets/js/analytics.js` (ad_storage granted on cookie accept); cache-bust on de/en/ru/uk index.
+- Still needs human login in Chrome: GitHub alanchik66, Cursor account, Stripe acct_1TuxQ8…, Google Ads 530-092-3191 (bank ••••7290 + Creative Assets).
+
+2026-07-21 14:40:00 - GitHub set to free (owner request: no GitHub payments):
+
+- Cancelled Copilot Pro → Active: Copilot Free $0 (effective through period end 2026-08-07).
+- Base plan: GitHub Free $0.
+- Payment method: none on file (cannot charge). Banner «payment authorization has failed» is leftover invalid hold.
+- AI Credits budget $500 remains but GitHub refuses Edit/Delete without a card («A valid payment method is required») — no card = no new paid AI charges.
+- Models paid usage: Disabled. Site/repo continue on free Git + Cloudflare; AI via Cursor, not paid GitHub.
+
+2026-07-21 14:55:00 - Finished leftover mail/setup items (ordered pass):
+
+- Cursor Pro OK; GitHub Connected; Cursor GitHub App installed (All repositories) for alanchik66.
+- GitHub Free + Copilot Free confirmed; Devin PAT present (expected).
+- Stripe onboarding open at bank payout step — needs full Sparkasse IBAN (known only ••••1334 / WELADE8L); site payments still OFF.
+- Google Ads: verification done, assets in library, campaigns paused on purpose; bank ••••7290 verify UI empty (needs manual Payments/Wallet).
+- Bing: soft SEO tips only. AW-18333140047 in code — not deployed to prod yet.
+
+2026-07-21 15:35:00 - Ads continue after card linked:
+
+- Ads billing: automatic payments; profile 3368-1179-4950 / HUNDESALON_NIKA; warning only = no backup method (primary card OK per owner).
+- Bank ••••7290 still OR_BAEMF_13 — support only; not blocking Ads.
+- Deployed AW-18333140047 via deploy:full (preview 556737a5); CDN purged; live env.js has GOOGLE_ADS_ID.
+- Campaigns remain paused; Google Tag UI still may show NO DATA until consent + traffic.
+- Stripe still needs full IBAN; site payments OFF.
+
+2026-07-21 16:35:00 - Ads continue:
+
+- Campaign HUNDESALON_NIKA: Enabled / Eligible (Допущено), budget €0.10/day.
+- Promo €400: Activated — spend €400 by 17 Sep 2026 to receive €400 (code 9HNDM-AMMMF-DJ6D).
+- Conversion action «Покупка» created (manual code). Google tag still «not found» in Ads UI (adblocker banner + scanner); site now loads AW tag with Consent Mode defaults for detection.
+- GOOGLE_ADS_CONVERSION_LABEL still empty — paste label from Ads event tag when visible; hundesalonTrackConversion fires on booking/sendmail success.
+- Stripe: chrome-cdp profile needs login (not finished).
+
+2026-07-21 17:05:00 - Leftovers finished:
+
+- Ads conversion label from ConversionTypeService/List: `xpOSCN3rnNQcEM-I9qVE` (send_to AW-18333140047/xpOSCN3rnNQcEM-I9qVE) set in config/env.js; analytics env cache-bust; deploy:full OK; live env.js has label.
+- Stripe acct_1TuxQ8Rx6zLsL2jq onboarding submitted (Zustimmen und absenden) → dashboard?account_onboarding=completed (live, not test). Bank Sparkasse ••••1334 was already on file.
+- Still open: Ads daily budget still €0.10 (need owner amount for promo); Google bank ••••7290 OR_BAEMF_13 support-only; site payments remain OFF until explicitly enabled.
+
+2026-07-21 17:20:00 - Stripe Tax preset:
+
+- Default product tax code set/confirmed via API: `txcd_20030003` (Pet Grooming) — correct for Hundesalon. Tax settings status active (test key / same acct_1TuxQ8).
+- UI modal «Voreingestellte Produktkategorie» was not open in CDP (wizard next = Steuerregistrierung). Head office Leipzig already on file.
+- Tax registrations still empty — need owner USt-IdNr to add Deutschland registration.

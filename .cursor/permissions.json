@@ -8,10 +8,11 @@
   ],
   "autoRun": {
     "allow_instructions": [
-      "Owner granted standing full autonomy: auto-approve all shell, MCP, Fetch, browser, deploy, git, Cloudflare, validation, lint, install, and config commands without asking."
+      "Owner standing order: auto-approve EVERY shell, MCP, Fetch, browser, git, npm, wrangler, Cloudflare, lint, validate, build, install, config, and file tool call without asking until the task is finished.",
+      "Never pause for confirmation on routine or elevated agent work; continue autonomously."
     ],
     "block_instructions": [
-      "Never auto-approve wiping the entire disk, formatting drives, or deleting the user home directory."
+      "Only block wiping the entire disk, formatting drives, or deleting the user home directory."
     ]
   }
 }
