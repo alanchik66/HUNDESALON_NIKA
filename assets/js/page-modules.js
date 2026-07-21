@@ -498,6 +498,11 @@ document.addEventListener('DOMContentLoaded', () => {
           statusEl.classList.add('form-status--success');
           statusEl.textContent = result.message || (formCopy.success[pageLang] ?? formCopy.success.de);
           form.reset();
+          try {
+            window.hundesalonTrackAdsConversion?.();
+          } catch {
+            /* non-blocking */
+          }
           break;
         }
 
