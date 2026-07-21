@@ -10,7 +10,7 @@
  * GET ?session_id= → verify paid session + metadata
  */
 import { assertAllowedOrigin, jsonResponse } from './_lib/http-security.js';
-import { cleanText, getEnvValue, hasUsableValue } from './_lib/platform-integrations.js';
+import { cleanText, getEnvValue, hasUsableValue, resolveStripeDepositCents } from './_lib/platform-integrations.js';
 
 const DEFAULT_DEPOSIT_CENTS = 2000;
 const DEFAULT_ORIGIN = 'https://hundesalon-nika.com';
@@ -30,8 +30,7 @@ function siteOrigin(env, requestOrigin) {
 }
 
 function depositCents(env) {
-  const fromEnv = Number(getEnvValue(env, 'STRIPE_DEPOSIT_AMOUNT_CENTS') || DEFAULT_DEPOSIT_CENTS);
-  return Number.isFinite(fromEnv) && fromEnv >= 500 ? Math.round(fromEnv) : DEFAULT_DEPOSIT_CENTS;
+  return resolveStripeDepositCents(env, DEFAULT_DEPOSIT_CENTS);
 }
 
 async function stripeForm(secretKey, path, params) {

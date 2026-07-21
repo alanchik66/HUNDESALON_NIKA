@@ -35,6 +35,12 @@ export function hasUsableValue(value) {
   return Boolean(value) && !/ВАШ_|YOUR_|XXXXXXXX|TODO/i.test(value);
 }
 
+/** Stripe deposit amount in cents; shared by Checkout create + booking verify. */
+export function resolveStripeDepositCents(env, fallback = 2000) {
+  const fromEnv = Number(getEnvValue(env, 'STRIPE_DEPOSIT_AMOUNT_CENTS') || fallback);
+  return Number.isFinite(fromEnv) && fromEnv >= 500 ? Math.round(fromEnv) : fallback;
+}
+
 function base64UrlEncode(value) {
   const bytes = value instanceof Uint8Array ? value : new TextEncoder().encode(String(value));
   let binary = '';

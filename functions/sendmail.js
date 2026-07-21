@@ -18,6 +18,7 @@ import {
   getEnvList,
   getEnvValue,
   hasUsableValue,
+  resolveStripeDepositCents,
   sendResendEmail,
   sendTeamsMessage,
 } from './_lib/platform-integrations.js';
@@ -88,12 +89,11 @@ async function verifyStripeBookingSession(env, sessionId, booking) {
   const session = await response.json().catch(() => null);
   if (!session || session.payment_status !== 'paid' || session.currency !== 'eur') return false;
 
-  const expectedAmount = Number(getEnvValue(env, 'STRIPE_DEPOSIT_AMOUNT_CENTS') || 2000);
+  const expectedAmount = resolveStripeDepositCents(env, 2000);
   const metadata = session.metadata || {};
   const sessionEmail = sanitize(metadata.email || session.customer_details?.email || session.customer_email).toLowerCase();
   return (
-    Number.isFinite(expectedAmount) &&
-    session.amount_total === Math.round(expectedAmount) &&
+    session.amount_total === expectedAmount &&
     metadata.payment_kind === 'booking_deposit' &&
     sessionEmail === booking.email.toLowerCase() &&
     sanitize(metadata.service) === booking.service &&

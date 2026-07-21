@@ -63,7 +63,14 @@ async function reservePaymentEvent(env, eventId) {
     return { ok: false, reason: 'payment_event_store_not_configured' };
   }
   const key = `stripe:${eventId}`;
-  if (await store.get(key)) return { ok: true, duplicate: true, key, store };
+  const existing = await store.get(key);
+  // Only a completed event is a true duplicate. An in-flight "processing" marker must
+  // not return HTTP 200 — otherwise a Stripe retry can ACK success while the first
+  // attempt still fails, deletes the key, and leaves the salon unnotified with no retry.
+  if (existing === 'completed') return { ok: true, duplicate: true, key, store };
+  if (existing === 'processing') {
+    return { ok: false, reason: 'payment_event_in_progress', retry: true, key, store };
+  }
   await store.put(key, 'processing', { expirationTtl: 60 * 60 * 24 * 7 });
   return { ok: true, duplicate: false, key, store };
 }
@@ -113,6 +120,7 @@ export async function onRequest(context) {
 
   const reservation = await reservePaymentEvent(env, cleanText(event.id || session.id, 160));
   if (!reservation.ok) {
+    // 503 keeps Stripe retrying for missing KV and for in-flight overlaps.
     return jsonResponse({ success: false, message: reservation.reason }, 503);
   }
   if (reservation.duplicate) {
