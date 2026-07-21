@@ -28,6 +28,9 @@ jobs:
             const repo = context.repo.repo;
             const keep = new Set(['main']);
             const prefixes = ['cursor/', 'dependabot/', 'copilot/'];
+            // Without an age gate this job deletes in-progress agent branches that
+            // have commits but no open PR yet (common for Cloud Agents mid-run).
+            const STALE_MS = 14 * 24 * 60 * 60 * 1000;
 
             const openPrs = await github.paginate(github.rest.pulls.list, {
               owner,
@@ -61,6 +64,26 @@ jobs:
                 continue;
               }
 
+              let committedAt = NaN;
+              try {
+                const { data: commit } = await github.rest.repos.getCommit({
+                  owner,
+                  repo,
+                  ref: name,
+                });
+                committedAt = Date.parse(
+                  commit.commit?.committer?.date || commit.commit?.author?.date || ''
+                );
+              } catch (err) {
+                core.warning(`Could not read tip commit for ${name}: ${err.message}`);
+                skipped.push(`${name} (commit lookup failed)`);
+                continue;
+              }
+              if (!Number.isFinite(committedAt) || Date.now() - committedAt < STALE_MS) {
+                skipped.push(`${name} (not stale)`);
+                continue;
+              }
+
               try {
                 await github.rest.git.deleteRef({
                   owner,
@@ -76,7 +99,7 @@ jobs:
 
             core.summary
               .addHeading('Stale branch cleanup')
-              .addRaw(`Deleted: **${deleted.length}**`)
+              .addRaw(`Deleted: **${deleted.length}** (tip commit older than 14 days, no open PR)`)
               .addList(deleted.length ? deleted : ['(none)'])
               .addRaw(`Skipped: **${skipped.length}**`)
               .addList(skipped.length ? skipped : ['(none)'])
