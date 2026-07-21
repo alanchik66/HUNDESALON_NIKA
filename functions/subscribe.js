@@ -9,7 +9,6 @@ import {
 } from './_lib/platform-integrations.js';
 
 const DEFAULT_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
-const DEFAULT_RECIPIENT = 'info@hundesalon-nika.com';
 const DEFAULT_ADMIN_EMAILS = ['snaiper1984@gmail.com', 'ryndenko1982@gmail.com'];
 
 const COPY = {
@@ -32,6 +31,18 @@ function uniqueEmailList(items) {
       seen.add(item);
       return true;
     });
+}
+
+function isOk(result) {
+  return result?.ok === true;
+}
+
+/**
+ * Subscription is durable only when the sheet row lands, or the salon is notified
+ * (admin email / Teams). A welcome mail alone must not count as "saved".
+ */
+export function subscriptionPersisted({ sheetResult, adminResult, teamsResult }) {
+  return isOk(sheetResult) || isOk(adminResult) || isOk(teamsResult);
 }
 
 export async function onRequest(context) {
@@ -77,12 +88,13 @@ export async function onRequest(context) {
     'Hundesalon Nika <support@hundesalon-nika.com>';
   const adminRecipients = uniqueEmailList(getEnvList(env, 'ADMIN_NOTIFICATION_EMAILS', DEFAULT_ADMIN_EMAILS.join(',')));
 
-  await appendGoogleSheetRow(env, {
+  const sheetResult = await appendGoogleSheetRow(env, {
     spreadsheetId: getEnvValue(env, 'SHEET_ID'),
     sheetName: 'subscribers',
     values: [createdAt, email, lang, page, originCheck.origin, 'consent:yes'],
   });
 
+  // Welcome mail is best-effort confirmation — never treat it as persistence.
   await sendResendEmail(env, {
     to: email,
     subject: 'HUNDESALON NIKA',
@@ -91,20 +103,29 @@ export async function onRequest(context) {
     from: clientEmailFrom,
   });
 
-  if (adminRecipients.length > 0) {
-    await sendResendEmail(env, {
-      to: adminRecipients,
-      subject: '[Admin] Neue Newsletter-Anmeldung — HUNDESALON NIKA',
-      text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}\nAntworten bitte über ${supportReplyTo}.`,
-      replyTo: supportReplyTo,
-      from: getEnvValue(env, 'RESEND_FROM', DEFAULT_FROM),
-    });
-  }
+  const adminResult =
+    adminRecipients.length > 0
+      ? await sendResendEmail(env, {
+          to: adminRecipients,
+          subject: '[Admin] Neue Newsletter-Anmeldung — HUNDESALON NIKA',
+          text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}\nAntworten bitte über ${supportReplyTo}.`,
+          replyTo: supportReplyTo,
+          from: getEnvValue(env, 'RESEND_FROM', DEFAULT_FROM),
+        })
+      : { ok: false, skipped: true, reason: 'No admin recipients.' };
 
-  await sendTeamsMessage(env, {
+  const teamsResult = await sendTeamsMessage(env, {
     title: 'Neue Newsletter-Anmeldung',
     text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}`,
   });
+
+  if (!subscriptionPersisted({ sheetResult, adminResult, teamsResult })) {
+    return jsonResponse(
+      { success: false, message: 'Subscription could not be saved. Please try again later.' },
+      503,
+      originCheck.origin
+    );
+  }
 
   return jsonResponse({ success: true, message: COPY[lang] || COPY.de }, 200, originCheck.origin);
 }
