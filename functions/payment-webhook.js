@@ -163,7 +163,13 @@ export async function onRequest(context) {
     }),
   ]);
 
-  if (sideEffects.every(result => result.status === 'rejected')) {
+  // Integration helpers return { ok:false } instead of throwing. Checking only
+  // Promise rejection would mark the event completed when every channel failed
+  // or was skipped — salon never notified, Stripe never retries.
+  const delivered = sideEffects.some(
+    result => result.status === 'fulfilled' && result.value?.ok === true
+  );
+  if (!delivered) {
     await reservation.store.delete?.(reservation.key);
     return jsonResponse({ success: false, message: 'Payment notifications failed' }, 502);
   }
