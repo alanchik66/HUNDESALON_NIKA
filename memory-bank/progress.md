@@ -12,7 +12,7 @@ Task list for project / agent-tooling progress.
 - [x] AGB pages (de/en/ru/uk) + footer links + booking AGB consent
 - [x] Stripe integration: `functions/payment.js` + webhook; CF secrets (`STRIPE_SECRET_KEY` test, `STRIPE_WEBHOOK_SECRET`, deposit, `SITE_ORIGIN`)
 - [x] Online payments **paused** until salon opens (`PAYMENTS_ONLINE_ENABLED=false`; UI salon cash/card only)
-- [x] Stripe bank payout prep: Sparkasse IBAN ••••1334 / WELADE8L + 2FA On + website (submit still open)
+- [x] Stripe bank payout prep: Sparkasse linked + 2FA On + website (submit still open; IBAN kept out of git)
 - [x] GBP HUNDESALON_NIKA on ryndenko: profile tabs, hours Mo–Fr 09–21 / Sa–So closed, salon payment attrs
 - [x] GBP socials: Instagram + Facebook + TikTok (YouTube deferred)
 - [x] 2026-07-19: session junk cleanup (temp/CDP/playwright dumps); Memory Bank trimmed
@@ -32,7 +32,7 @@ Task list for project / agent-tooling progress.
 ## Current Tasks
 
 - [ ] Stripe onboarding **Zustimmen und absenden** — Incomplete на Unternehmensinformationen (USt пусто; Dashboard flaky). Payments на сайте OFF
-- [ ] GBP video verification after salon opens (`…/verify/l/09116836504441086909`)
+- [ ] GBP video verification after salon opens (use Google Business Profile verify flow; no verify URL in git)
 - [ ] Owner: USt-IdNr → Impressum (4 locales) + Stripe company
 - [ ] After GBP public: `config/brand-profiles.mjs` → Maps place URL
 

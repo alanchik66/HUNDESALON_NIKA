@@ -27,6 +27,12 @@ if (!check.ok) {
 
 const npxCommand = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
+function redact(value) {
+  return String(value || '')
+    .replace(/sk-or-v1-[A-Za-z0-9_-]+/g, 'sk-or-v1-<redacted>')
+    .replace(/re_[A-Za-z0-9_-]+/g, 're_<redacted>');
+}
+
 function putSecret(name) {
   const result = spawnSync(
     npxCommand,
@@ -40,7 +46,8 @@ function putSecret(name) {
     }
   );
   if (result.status !== 0) {
-    throw new Error(`${name} put failed: ${result.stderr || result.stdout || result.error || result.status}`);
+    const detail = redact(result.stderr || result.stdout || result.error || result.status);
+    throw new Error(`${name} put failed: ${detail}`);
   }
   console.log(`Synced ${name} to Cloudflare Pages`);
 }

@@ -40,7 +40,7 @@
 
 ## Verify (deferred — after firm launch)
 
-- URL: https://business.google.com/verify/l/09116836504441086909?hl=de
+- URL: open from Google Business Profile → Verify (do not commit the personal verify link)
 - Method: **Video vom Unternehmen einreichen**
 - Profile stays **NICHT ÖFFENTLICH SICHTBAR** until video approved
 - Do video later at salon: street → sign → interior
