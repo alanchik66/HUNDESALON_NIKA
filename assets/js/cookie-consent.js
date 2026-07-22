@@ -3,25 +3,25 @@
   const COPY = {
     de: {
       title: 'Privatsphäre & Cookies',
-      text: 'Wir nutzen notwendige Cookies für den Betrieb und Analyse nur mit Ihrer Zustimmung.',
+      text: 'Wir nutzen notwendige Cookies für den Betrieb. Analyse und Google Ads-Messung nur mit Ihrer Zustimmung.',
       accept: 'Akzeptieren',
       decline: 'Nur notwendig',
     },
     ru: {
       title: 'Конфиденциальность и cookies',
-      text: 'Мы используем необходимые cookies для работы сайта, а аналитику включаем только с вашего согласия.',
+      text: 'Мы используем необходимые cookies для работы сайта. Аналитику и измерение Google Ads включаем только с вашего согласия.',
       accept: 'Принять',
       decline: 'Только необходимые',
     },
     en: {
       title: 'Privacy & cookies',
-      text: 'We use essential cookies for the site and analytics only with your consent.',
+      text: 'We use essential cookies for the site. Analytics and Google Ads measurement only with your consent.',
       accept: 'Accept',
       decline: 'Essential only',
     },
     uk: {
       title: 'Конфіденційність і cookies',
-      text: 'Ми використовуємо необхідні cookies для роботи сайту, а аналітику вмикаємо лише за вашою згодою.',
+      text: 'Ми використовуємо необхідні cookies для роботи сайту. Аналітику та вимірювання Google Ads вмикаємо лише за вашою згодою.',
       accept: 'Прийняти',
       decline: 'Лише необхідні',
     },

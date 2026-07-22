@@ -1,29 +1,23 @@
 {
-  "name": "HUNDESALON_NIKA",
-  "install": "npm install",
-  "start": "npm run dev",
+  "name": "hundesalon-nika",
+  "snapshot": "snapshot-20260519-beac9d2d-aab7-4cb4-b22e-62782c4c298c",
+  "install": "bash .cursor/cloud-agent-install.sh",
+  "start": "echo 'Dev server: npm run dev on port 5502. Validate with npm run validate.'",
+  "ports": [
+    {
+      "name": "static-preview",
+      "port": 5502
+    },
+    {
+      "name": "cloudflare-pages-dev",
+      "port": 8788
+    }
+  ],
   "terminals": [
     {
       "name": "dev",
       "command": "npm run dev",
-      "description": "Static preview http://127.0.0.1:5502 (root → /de/)"
-    },
-    {
-      "name": "dev:cf",
-      "command": "npm run dev:cf",
-      "description": "Cloudflare Pages + Functions on :8788 (builds dist/)"
+      "description": "Static site preview server on port 5502."
     }
-  ],
-  "ports": [
-    { "name": "dev", "port": 5502 },
-    { "name": "dev:cf", "port": 8788 }
-  ],
-  "mcpServerAllowlist": [
-    { "serverUrl": "https://mcp.cloudflare.com/mcp" },
-    { "serverUrl": "https://docs.mcp.cloudflare.com/mcp" },
-    { "serverUrl": "https://bindings.mcp.cloudflare.com/mcp" },
-    { "serverUrl": "https://builds.mcp.cloudflare.com/mcp" },
-    { "serverUrl": "https://observability.mcp.cloudflare.com/mcp" },
-    { "command": "npx" }
   ]
 }

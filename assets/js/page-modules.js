@@ -503,6 +503,11 @@ document.addEventListener('DOMContentLoaded', () => {
             /* ignore analytics errors */
           }
           form.reset();
+          try {
+            window.hundesalonTrackAdsConversion?.();
+          } catch {
+            /* non-blocking */
+          }
           break;
         }
 

@@ -15,6 +15,9 @@ RESEND_API_KEY=
 
 # Full-stack platform integrations. Keep production values in Cloudflare Pages secrets only.
 GA_MEASUREMENT_ID=
+# Public Google Ads tag IDs (also in config/env.js). Not secrets.
+# GOOGLE_ADS_ID=AW-16333140047
+# GOOGLE_ADS_CONVERSION_SEND_TO=AW-16333140047/qNqJCkzYu8QcEM-I9qvE
 GOOGLE_OAUTH_ACCESS_TOKEN=
 GOOGLE_OAUTH_CLIENT_ID=
 GOOGLE_OAUTH_CLIENT_SECRET=
