@@ -8,12 +8,19 @@ import {
 } from './_lib/pet-photo-upload.js';
 import { cleanText, createDriveResumableUploadSession, uploadFileToDrive } from './_lib/platform-integrations.js';
 
-function bookingMetadata(fields) {
+/** Read a field from JSON payloads or multipart FormData (FormData has no property access). */
+function readUploadField(fields, key) {
+  if (fields == null) return '';
+  if (typeof fields.get === 'function') return fields.get(key);
+  return fields[key];
+}
+
+export function bookingMetadata(fields) {
   return {
-    lang: cleanText(fields.lang, 8),
-    service: cleanText(fields.service, 160),
-    date: cleanText(fields.date, 32),
-    time: cleanText(fields.time, 32),
+    lang: cleanText(readUploadField(fields, 'lang'), 8),
+    service: cleanText(readUploadField(fields, 'service'), 160),
+    date: cleanText(readUploadField(fields, 'date'), 32),
+    time: cleanText(readUploadField(fields, 'time'), 32),
   };
 }
 
