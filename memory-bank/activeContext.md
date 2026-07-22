@@ -6,13 +6,19 @@ Session status: recent changes, current goals, open questions.
 ## Current Focus
 
 - **AI Routing Kernel** live on `main` (`docs/agents-routing.md`, `00-routing-kernel.mdc`, `check:agents-routing`) — #26 architecture; #27 docs merged and reconciled.
-- **GBP (ryndenko):** HUNDESALON_NIKA created, profile filled, **not public** until video verify after salon opens. Verify: `https://business.google.com/verify/l/09116836504441086909`
-- **Stripe:** test keys in CF; bank ••••1334 + 2FA On; Dashboard submit still blocked (`Unternehmensinformationen Unvollständig` / USt empty). Site payments **OFF** (`PAYMENTS_ONLINE_ENABLED=false`).
+- **GBP (ryndenko):** HUNDESALON_NIKA created, profile filled, **not public** until video verify after salon opens (verify link kept out of git).
+- **Stripe:** test keys in CF; 2FA On; Dashboard submit still blocked (`Unternehmensinformationen Unvollständig` / USt empty). Site payments **OFF** (`PAYMENTS_ONLINE_ENABLED=false`).
 - Standing rule: login/OAuth → open URL, wait, resume (`.cursor/rules/wait-for-user-login.mdc`).
 - Standing rule: **делай все сам всегда** — no handoff checklists; automate OS/IDE/security steps (`.cursor/rules/do-it-yourself-always.mdc`).
 - Standing rule: browser/Playwright checks — agent repairs MCP itself (`npm run mcp:playwright:repair`); OAuth/passkeys via Edge (`browser:edge`), never hand the user repair commands.
 
 ## Recent Changes
+
+2026-07-21 23:10:00 - Security harden from merged-PR review:
+
+- Playwright MCP: drop `--allow-unrestricted-file-access` + clipboard/geo/notification grants.
+- Redact inference keys in `sync-service-gateway-from-devvars` error output.
+- Pin Semgrep `1.170.1` in CI; scrub GBP verify URL / bank last4 from Memory Bank + GBP status doc.
 
 2026-07-20 19:24:00 - Cloud Agent apply-diff failure fixed locally:
 

@@ -1,8 +1,11 @@
 (function () {
   const CONSENT_KEY = 'hundesalon_cookie_consent';
   const FALLBACK_GA_ID = 'G-XXXXXXXXXX';
+  const FALLBACK_ADS_ID = 'AW-16333140047';
+  const FALLBACK_ADS_SEND_TO = 'AW-16333140047/qNqJCkzYu8QcEM-I9qvE';
 
-  const isPlaceholder = value => !value || value === 'G-XXXXXXXXXX' || value.includes('XXXXXXXX');
+  const isPlaceholder = value => !value || value === 'G-XXXXXXXXXX' || String(value).includes('XXXXXXXX');
+  const isAdsId = value => /^AW-\d+$/.test(String(value || ''));
 
   const getConsent = () => {
     try {
@@ -20,34 +23,71 @@
     try {
       return await import(envUrl);
     } catch {
-      return { GA_MEASUREMENT_ID: FALLBACK_GA_ID };
+      return {
+        GA_MEASUREMENT_ID: FALLBACK_GA_ID,
+        GOOGLE_ADS_ID: FALLBACK_ADS_ID,
+        GOOGLE_ADS_CONVERSION_SEND_TO: FALLBACK_ADS_SEND_TO,
+      };
     }
   };
 
-  const injectGtag = gaId => {
-    if (isPlaceholder(gaId) || window.__hundesalonAnalyticsReady) {
+  const injectGtag = ({ gaId, adsId, adsSendTo }) => {
+    if (window.__hundesalonAnalyticsReady) {
+      return;
+    }
+
+    const hasGa = !isPlaceholder(gaId);
+    const hasAds = isAdsId(adsId);
+    if (!hasGa && !hasAds) {
       return;
     }
 
     window.__hundesalonAnalyticsReady = true;
+    window.__hundesalonAdsSendTo = adsSendTo || FALLBACK_ADS_SEND_TO;
     window.dataLayer = window.dataLayer || [];
     window.gtag = function gtag() {
       window.dataLayer.push(arguments);
     };
 
+    const bootId = hasGa ? gaId : adsId;
     const script = document.createElement('script');
     script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(bootId)}`;
     document.head.appendChild(script);
 
     window.gtag('js', new Date());
+    // Accept cookie banner covers analytics + ads measurement (Consent Mode).
     window.gtag('consent', 'update', {
       analytics_storage: 'granted',
-      ad_storage: 'denied',
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted',
       functionality_storage: 'granted',
       security_storage: 'granted',
     });
-    window.gtag('config', gaId, { anonymize_ip: true });
+
+    if (hasGa) {
+      window.gtag('config', gaId, { anonymize_ip: true });
+    }
+    if (hasAds) {
+      window.gtag('config', adsId);
+    }
+  };
+
+  window.hundesalonTrackAdsConversion = (options = {}) => {
+    if (typeof window.gtag !== 'function') {
+      return false;
+    }
+    const sendTo = options.send_to || window.__hundesalonAdsSendTo || FALLBACK_ADS_SEND_TO;
+    if (!sendTo) {
+      return false;
+    }
+    window.gtag('event', 'conversion', {
+      send_to: sendTo,
+      value: typeof options.value === 'number' ? options.value : 1.0,
+      currency: options.currency || 'EUR',
+    });
+    return true;
   };
 
   const bootAnalytics = async () => {
@@ -56,7 +96,11 @@
     }
 
     const env = await loadEnv();
-    injectGtag(env.GA_MEASUREMENT_ID || FALLBACK_GA_ID);
+    injectGtag({
+      gaId: env.GA_MEASUREMENT_ID || FALLBACK_GA_ID,
+      adsId: env.GOOGLE_ADS_ID || FALLBACK_ADS_ID,
+      adsSendTo: env.GOOGLE_ADS_CONVERSION_SEND_TO || FALLBACK_ADS_SEND_TO,
+    });
   };
 
   window.addEventListener('hundesalon:cookie-consent', event => {
