@@ -11,8 +11,9 @@
     "preview": "serve . -l tcp://127.0.0.1:5502 --no-port-switching",
     "lint": "npm run lint:html && npm run lint:css && npm run lint:js",
     "lint:html": "htmlhint ru/**/*.html de/**/*.html en/**/*.html uk/**/*.html *.html",
-    "lint:css": "stylelint assets/css/**/*.css",
+    "lint:css": "node tools/stylelint-quiet.mjs assets/css/**/*.css",
     "lint:js": "eslint assets/js/**/*.js",
+    "image:read": "python tools/image-reader.py",
     "format": "prettier --write assets/js/**/*.js assets/css/**/*.css ru/**/*.html de/**/*.html en/**/*.html uk/**/*.html *.html",
     "backup:full": "node tools/create-full-backup.mjs",
     "validate": "node tools/run-npm-quiet.mjs run lint && node tools/run-npm-quiet.mjs run check:links && node tools/run-npm-quiet.mjs run check:project && node tools/run-npm-quiet.mjs run check:agents-routing && node tools/run-npm-quiet.mjs run check:payments",
@@ -221,7 +222,8 @@
   },
   "overrides": {
     "esbuild": "^0.28.1",
-    "ws": "^8.20.1"
+    "ws": "^8.20.1",
+    "sharp": "^0.35.3"
   },
   "engines": {
     "node": ">=24.16.0 <27",
