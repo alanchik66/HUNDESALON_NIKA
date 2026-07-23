@@ -1,0 +1,16 @@
+{
+  "setup-worktree-windows": [
+    "npm install",
+    "if exist \"%ROOT_WORKTREE_PATH%\\.dev.vars\" copy /Y \"%ROOT_WORKTREE_PATH%\\.dev.vars\" .dev.vars",
+    "npm run cursor:customize"
+  ],
+  "setup-worktree-unix": [
+    "npm install",
+    "if [ -f \"$ROOT_WORKTREE_PATH/.dev.vars\" ]; then cp \"$ROOT_WORKTREE_PATH/.dev.vars\" .dev.vars; fi",
+    "npm run cursor:customize"
+  ],
+  "setup-worktree": [
+    "npm install",
+    "npm run cursor:customize"
+  ]
+}

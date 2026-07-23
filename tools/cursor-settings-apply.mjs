@@ -133,6 +133,20 @@ if (Array.isArray(o.composerState.modes4)) {
   }
 }
 
+// Machine-scoped worktree isolation defaults (also mirrored in settings.json below)
+const settingsPath = path.join(process.env.APPDATA, 'Cursor/User/settings.json');
+try {
+  const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+  settings['cursor.worktreeMaxCount'] = 25;
+  settings['cursor.worktreeCleanupIntervalHours'] = 6;
+  // Prevent terminal revival from one Agent session into another
+  settings['terminal.integrated.enablePersistentSessions'] = false;
+  settings['terminal.integrated.persistentSessionReviveProcess'] = 'never';
+  fs.writeFileSync(settingsPath, `${JSON.stringify(settings, null, 4)}\n`);
+} catch (e) {
+  console.warn('settings.json isolation patch skipped:', e.message);
+}
+
 const n = withRetry(() => writeReactive(o));
 
 const kv = [

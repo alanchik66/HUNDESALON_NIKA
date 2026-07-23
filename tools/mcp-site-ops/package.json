@@ -1,0 +1,17 @@
+{
+  "name": "hundesalon-mcp-site-ops",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local MCP: validate / links / live HTML / IndexNow for HUNDESALON NIKA",
+  "type": "module",
+  "bin": {
+    "hundesalon-mcp-site-ops": "./server.mjs"
+  },
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.0.0"
+  }
+}

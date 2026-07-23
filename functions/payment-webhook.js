@@ -163,9 +163,11 @@ export async function onRequest(context) {
     }),
   ]);
 
-  // Integrations return { ok:false } instead of throwing — do not treat that as delivery.
+  // Integration helpers return { ok:false } instead of throwing. Checking only
+  // Promise rejection would mark the event completed when every channel failed
+  // or was skipped — salon never notified, Stripe never retries.
   const delivered = sideEffects.some(
-    result => result.status === 'fulfilled' && result.value && result.value.ok === true
+    result => result.status === 'fulfilled' && result.value?.ok === true
   );
   if (!delivered) {
     await reservation.store.delete?.(reservation.key);

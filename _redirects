@@ -1,6 +1,9 @@
 # Cloudflare Pages — правила редиректов
 # https://developers.cloudflare.com/pages/configuration/redirects/
 
+# Канонический хост: www → apex
+https://www.hundesalon-nika.com/* https://hundesalon-nika.com/:splat 301
+
 # Обратная совместимость: старый URL sendmail.php → новый /sendmail
 /sendmail.php /sendmail 308
 

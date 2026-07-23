@@ -101,10 +101,18 @@ try {
   });
   if ((ex.status ?? 1) !== 0) throw new Error('rooflow:export failed');
 
+  console.log('Syncing Cursor Customize skills (.cursor/skills)…');
+  const sync = spawnSync('node', [path.join(root, 'tools', 'sync-cursor-customize.mjs')], {
+    cwd: root,
+    stdio: 'inherit',
+    shell: true,
+  });
+  if ((sync.status ?? 1) !== 0) throw new Error('cursor:customize failed');
+
   console.log('RooFlow setup complete.');
   console.log('  .roo/ + .roomodes refreshed from upstream (Roo Code)');
   console.log('  memory-bank/ stubs ensured (existing files kept)');
-  console.log('  Cursor: Flow-* skills in .agents/skills/flow-* + rule rooflow-memory-bank.mdc');
+  console.log('  Cursor: Flow-* skills in .agents/skills/flow-* + .cursor/skills + rule rooflow-memory-bank.mdc');
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
 }

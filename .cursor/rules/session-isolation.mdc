@@ -1,0 +1,34 @@
+---
+description: Isolate concurrent Cursor Agent sessions — never let parallel chats/MCP/browser/git stomp each other
+alwaysApply: true
+---
+
+# Session isolation (mandatory)
+
+Owner order: operations between sessions must **never** interfere.
+
+## Parallel work → worktrees
+
+- If another Agent chat may edit the same repo at the same time, use **Worktree** (Agents Window Local/Worktree/Cloud) or `/worktree` — not the main checkout.
+- Setup lives in `.cursor/worktrees.json`. Prefer `/apply-worktree` only when merging back intentionally.
+- Do not run `/best-of-n` or parallel Agents against overlapping files on the **same** working tree.
+
+## Shared resources (single machine)
+
+| Resource | Rule |
+| --- | --- |
+| Playwright MCP `:8931` | Isolated browser contexts (no shared tabs). Do **not** `mcp:restart` / `mcp:playwright:repair` unless health check fails. |
+| Graphify MCP `:8932` | Read/query freely; do not run `graphify:update`/`graphify` rebuild in two sessions at once. |
+| Dev servers `:5502` / `:8788` | Reuse if already up; never kill another session’s preview. Pick a free port only if needed. |
+| Git | No `reset --hard`, `clean -fdx`, force-checkout, or force-push unless the **user** explicitly ordered it for **this** chat. |
+| Memory Bank | Append short UMB bullets only; never rewrite whole bank files mid-flight of another session. |
+
+## File edits
+
+- Touch only the module/zone for **this** task. Leave unrelated dirty files alone.
+- Never revert another chat’s uncommitted work.
+- Subagents already have clean context — pass them explicit paths; do not assume they see other chats.
+
+## OAuth / human browser
+
+- Passkeys/OAuth → Edge persistent profile (`browser:edge`), never the Playwright MCP Chrome session used by other agents.

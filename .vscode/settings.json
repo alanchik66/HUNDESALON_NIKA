@@ -4,6 +4,12 @@
   // Stack: static HTML/CSS/JS + Cloudflare Pages Functions
   // ============================================================
 
+  // ─── Session isolation (parallel Agents / worktrees) ───────
+  "cursor.worktreeMaxCount": 25,
+  "cursor.worktreeCleanupIntervalHours": 6,
+  "terminal.integrated.enablePersistentSessions": false,
+  "terminal.integrated.persistentSessionReviveProcess": "never",
+
   // ─── Commonly Used / Text Editor ───────────────────────────
   "editor.formatOnSave": true,
   "editor.formatOnPaste": false,

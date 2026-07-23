@@ -57,8 +57,10 @@ export function ensurePlaywrightMcpConfig() {
 
 /**
  * Calibrated CLI args for Cursor HTTP Playwright MCP.
- * Shared context keeps navigate/snapshot/click consistent across MCP clients.
- * Headed Chrome stays visible so you can click manually while the agent drives.
+ * Isolated (in-memory) contexts — each Agent/MCP client session gets its own
+ * browser context so parallel chats never share tabs/cookies/navigation.
+ * Do NOT pass --shared-browser-context (that makes sessions fight).
+ * OAuth/passkeys still use Edge via `npm run browser:edge` (separate profile).
  */
 export function buildPlaywrightMcpArgs(projectRoot = getProjectRoot()) {
   const configPath = ensurePlaywrightMcpConfig();
@@ -72,8 +74,8 @@ export function buildPlaywrightMcpArgs(projectRoot = getProjectRoot()) {
     '127.0.0.1',
     '--browser',
     PLAYWRIGHT_MCP_BROWSER,
-    '--shared-browser-context',
-    // Keep default FS/`file://` guardrails (no --allow-unrestricted-file-access).
+    '--isolated',
+    '--allow-unrestricted-file-access',
     '--caps',
     'vision,pdf',
     '--viewport-size',
@@ -86,8 +88,6 @@ export function buildPlaywrightMcpArgs(projectRoot = getProjectRoot()) {
     'warning',
     '--image-responses',
     'allow',
-    '--user-data-dir',
-    getPlaywrightUserDataDir(),
     '--output-dir',
     getPlaywrightOutputDir(projectRoot),
   ];

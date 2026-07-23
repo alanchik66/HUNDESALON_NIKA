@@ -8,21 +8,6 @@
       "type": "http",
       "url": "https://docs.mcp.cloudflare.com/mcp"
     },
-    "cloudflare-bindings": {
-      "type": "http",
-      "url": "https://bindings.mcp.cloudflare.com/mcp"
-    },
-    "cloudflare-builds": {
-      "type": "http",
-      "url": "https://builds.mcp.cloudflare.com/mcp"
-    },
-    "cloudflare-observability": {
-      "type": "http",
-      "url": "https://observability.mcp.cloudflare.com/mcp"
-    },
-    "playwright": {
-      "url": "http://localhost:8931/mcp"
-    },
     "github": {
       "command": "npx",
       "args": [
@@ -32,6 +17,26 @@
     },
     "graphify": {
       "url": "http://127.0.0.1:8932/mcp"
+    },
+    "playwright": {
+      "url": "http://localhost:8931/mcp"
+    },
+    "zapier": {
+      "type": "http",
+      "url": "https://mcp.zapier.com/api/v1/connect"
+    },
+    "filesystem-hundesalon": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\snaip\\AppData\\Roaming\\npm\\node_modules\\@modelcontextprotocol\\server-filesystem\\dist\\index.js",
+        "D:\\HUNDESALON_NIKA"
+      ]
+    },
+    "site-ops": {
+      "command": "node",
+      "args": [
+        "D:\\HUNDESALON_NIKA\\tools\\mcp-site-ops\\server.mjs"
+      ]
     }
   }
 }

@@ -32,6 +32,44 @@ Full ops playbook: `docs/agents-playbook.md`. Profile: `AGENTS.md`. Domain contr
 - Minimal diff → ponytail (`.cursor/rules/ponytail.mdc`, skills `ponytail*`)
 - Session context → RooFlow Memory Bank (`memory-bank/`, UMB)
 
+## Subagents (`.cursor/agents/`)
+
+Delegate via Task / `/name` when context isolation helps:
+
+| Subagent | When |
+| --- | --- |
+| `verifier` | After edits — lint/validate gate before "done" |
+| `seo-auditor` | Meta/canonical/hreflang/JSON-LD review (readonly) |
+| `ui-smoke` | Visible UI — Playwright desktop+mobile smoke |
+| `cf-ops` | Preview/deploy/purge/live HTML (deploy only if explicit) |
+| `i18n-sync` | Structure/copy sync across `de|en|ru|uk` |
+| `minimal-diff` | Bloated diff / over-engineering pass (readonly) |
+
+## Slash commands (`.cursor/commands/`)
+
+`/validate` · `/deploy-check` · `/smoke-ui` · `/seo-audit` · `/i18n-sync` · `/umb` · `/graphify` · `/minimal-diff`
+
+Skills for Customize UI live in `.cursor/skills/` (synced from `.agents/skills` via `npm run cursor:customize`; D: is exFAT so copies, not junctions).
+
+## Session isolation
+
+Always-on rule: `.cursor/rules/session-isolation.mdc`. Parallel Agents → Worktree / `/worktree` / `/isolate`. Playwright MCP uses `--isolated` (no shared browser context). Hook blocks `git reset --hard` / `clean -f` / force-push.
+
 ## Cloud agents
 
 No hello-world site tour. No PR/branches unless the task or user explicitly requires them. Secrets only in Dashboard, never in git.
+
+
+## Marketplace policy (claude-plugins-official)
+
+Do **not** install stack-mismatched Marketplace plugins (LSPs for PHP/Ruby/Rust/Swift/Python, Terraform, Telegram, Serena, ralph-loop, playground, session-report, mcp-tunnels, plugin-dev, Datadog).
+
+| Need | Use instead |
+| --- | --- |
+| Browser QA | Project Playwright MCP `:8931` (not Marketplace playwright) |
+| Security review | Rule `security-site` + `/review-security` + hooks `block-secrets` |
+| PR quality | `/review-bugbot` + `minimal-diff` + GitHub MCP |
+| Skills authoring | Cursor `create-skill` + `.agents/skills` → `npm run cursor:customize` |
+| Code map | Graphify `:8932` |
+
+Allowlist (cursor-public): **figma**, **linear**, **notion-workspace**, **zapier**. Audit: `npm run cursor:customize`.
