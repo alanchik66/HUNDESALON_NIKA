@@ -1,239 +1,194 @@
-# Graph Report - HUNDESALON_NIKA  (2026-07-25)
+# Graph Report - instinctive-slope  (2026-07-25)
 
 ## Corpus Check
-- 465 files · ~398,531 words
+- 361 files · ~300,993 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4926 nodes · 8575 edges · 357 communities (289 shown, 68 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 218 edges (avg confidence: 0.55)
+- 3364 nodes · 4725 edges · 334 communities (279 shown, 55 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 16 edges (avg confidence: 0.67)
 - Token cost: 0 input · 0 output
-
-## Graph Freshness
-- Built from commit: `c82dab98`
-- Run `git rev-parse HEAD` and compare to check if the graph is stale.
-- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - scripts
-- Control
-- .GetPattern
-- TreeNode
-- uia/core.py
-- desktop/service.py
-- with_analytics
-- enums.py
-- WatchDog
-- __main__.py
-- Desktop
-- tree/service.py
-- test_tree_ia2.py
-- controls.py
-- vdm/core.py
+- agents-master.md
+- getEnvValue
 - rules
 - local-citations-automate.mjs
 - extend-meta-descriptions-config.mjs
-- Return `InvokePattern` if it supports the pattern else None(Conditional support
-- TreeElementNode
 - repair-playwright-mcp.mjs
-- GridPattern
 - browser-cdp.mjs
-- TextRange
-- .CreateControlFromElement
-- infrastructure/__init__.py
-- GetScreenSize
+- Текущий статус Google Ads для HUNDESALON NIKA
+- sleep
 - site-shell.js
 - rules
-- bing-sitescan.mjs
-- input.py
-- TransformPattern
-- before-after.js
-- sleep
-- get_claude_data_dir
-- BoundingBox
-- getEnvValue
-- draft-service.js
-- calibrate-token-economy.mjs
-- cf-pages-token.mjs
-- .instance
-- exceptions.py
-- withCdpSession
-- seo-search-watch.mjs
-- ia2.py
-- syncHeaderWeatherUnifiedReadings
+- Интерактивная галерея "До/После" — Руководство
+- Google Cloud Shell Setup Guide – HUNDESALON_NIKA
+- 🐕 HUNDESALON NIKA - Профессиональный груминг-салон
 - bing-finish-remaining.mjs
-- package.json
-- RangeValuePattern
-- TestDisplayFiltering
+- bing-sitescan.mjs
+- before-after.js
+- calibrate-token-economy.mjs
+- agents-routing.md
+- draft-service.js
+- syncHeaderWeatherUnifiedReadings
+- seo-search-watch.mjs
 - enforceHeaderWeatherMenuPlacement
 - syncHeaderWeatherOrbOverlay
+- What You Must Do When Invoked
+- cf-api-token.mjs
 - setup-google-platform.mjs
-- Refer https://docs.microsoft.com/en-us/windows/win32/api/uiautomationclient/nn-u
-- PostHogAnalytics
 - bing-force-clean.mjs
 - bing-sitescan-results.mjs
+- cf-pages-token.mjs
 - configure-mcp-clients.mjs
-- cf-api-token.mjs
-- TopLevel
-- devDependencies
-- patterns.py
-- build-moon-alpha-webm.mjs
 - cloudflare-auth.mjs
+- devDependencies
+- build-moon-alpha-webm.mjs
+- Google Ads — полная настройка аккаунта HUNDESALON NIKA
 - server.js
-- .MoveCursorToInnerPos
-- LegacyIAccessiblePattern
-- http-security.js
 - bing-consolidate-accounts.mjs
-- _DxcamBackend
+- configure-cloudflare-cache-features.mjs
 - resolveHeaderWeatherLocationMeta
 - sync-service-gateway-from-devvars.mjs
-- flash_overlay.py
-- screenshot.py
-- Rect
 - bindHeaderWeatherState
 - _middleware.js
-- seo-generate.js
 - build-sun-alpha-webm.mjs
 - google-search-console-audit.js
-- test_app_tool.py
-- jsonResponse
-- IntFlag
-- remove_private_use_chars
-- WindowPattern
-- test_wait_for_tool.py
+- AI Routing Kernel — HUNDESALON NIKA
 - cursor-settings-apply.mjs
 - google-oauth-console-bootstrap.mjs
 - sync-cursor-customize.mjs
-- GridItemPattern
 - HeaderWeatherSunScene
+- Playbook для AI-агентов — HUNDESALON NIKA
 - configure-cloudflare-waf-rate-limits.mjs
 - cursor-yolo-full-access.mjs
 - indexnow-submit.js
-- loadDevVars
 - reorganize-images.mjs
 - update-brand-search-seo.js
-- keybd_event
-- sendmail.js
+- Что уже сделано в этой сессии
 - mcp-site-ops/package.json
 - check-project.js
-- filesystem/service.py
-- main
-- powershell/service.py
-- test_flash_overlay.py
 - setHeaderWeatherOrbSource
-- IPAllowlistMiddleware
-- .execute_command
+- HUNDESALON NIKA Full-Stack Upgrade Guide
 - cloudflareApi
 - graphify-run.mjs
 - process-prompts.mjs
 - strip-static-shell.mjs
-- manifest.json
-- _OpenClipboard
-- CacheRequest
-- Rect
-- StylesPattern
-- test_registry.py
 - mcp.json
+- package.json
 - bing-webmaster-complete.mjs
 - build-production.js
 - check-links.js
 - cursor-yolo-reboot-apply.mjs
 - fetch-nasa-sun-source.mjs
-- _FakeRect
-- TestCapture
 - main.js
 - getHeaderWeatherNowMs
 - google-gateway/package.json
+- Cloudflare API token — HUNDESALON NIKA
+- Git: один main, GitHub (GitLab mirror removed), Cloudflare
+- НАСТРОЙКА КАМПАНИИ (Пошагово)
+- Slack для HUNDESALON NIKA: полная настройка
 - generate_mcp_yaml.py
 - bing-index-all-site.mjs
 - create-full-backup.mjs
 - google-oauth-playwright-setup.mjs
 - setup-all-agents-environment.mjs
-- env
-- DxcamOutput
-- AuthKeyMiddleware
-- oauth.py
-- Rect
-- _CreateInput
-- ProcessInfo
-- AnnotationPattern
-- TransformPattern2
+- CLAUDE.md
+- Инструкция по настройке Google Ads интерфейса для HUNDESALON NIKA
+- HUNDESALON_NIKA service audit - 2026-06-26
+- SMART Audit Report (2026-05-14)
 - repair-service-runtime.ps1
 - gmail-cleanup-actions-failures.mjs
-- test_screenshot_capture.py
-- Directory
-- powershell/utils.py
+- 🏗️ Flow Architect
+- ❓ Flow Ask
+- 💻 Flow Code
+- 🪲 Flow Debug
+- 🪃 Flow Orchestrator
+- Google Ads — ryndenko PMax draft status
+- 150. FINAL ACCEPTANCE CRITERIA
+- Decision Log
 - configure-webstorm-notifications.ps1
 - generate-brand-assets.ps1
-- server.json
-- _MssBackend
-- list_directory
-- snapshot.py
-- UIAutomationInitializerInThread
-- MultipleViewPattern
-- SelectionPattern2
-- test_cli_legacy_flags.py
 - tooltip.js
-- payment.js
+- graphify reference: extra exports and benchmark
+- Ponytail
+- 136. FINAL RELEASE CHECKLIST
+- 71. FINAL WEBSITE AUDIT BEFORE DELIVERY
+- 86. FINAL REPORT REQUIREMENT
 - keywords
+- bing-api-setup.mjs
 - bing-webmaster-automate.mjs
 - check-agents-routing.js
-- configure-cloudflare-cache-features.mjs
 - configure-webstorm-mcp-clients.ps1
 - cursor-yolo-persist.mjs
 - git-cleanup.mjs
 - optimize-webstorm-memory.ps1
 - site-crawl-live.mjs
-- test_deterministic_drag_desktop.py
-- _PillowBackend
-- ps_quote
-- .SetActive
-- DragPattern
-- TestFile
-- subscribe.js
+- Ponytail Help
+- Codex prompt: донастройка Google Ads HUNDESALON_NIKA
+- Google Ads Keyword Planner — HUNDESALON NIKA
+- Полное руководство по настройке Google Ads для HUNDESALON NIKA
+- Done
+- HUNDESALON_NIKA service audit - 2026-07-05
+- Карта сайта HUNDESALON NIKA
+- Security Policy
 - cursor-settings-status.mjs
 - import-sun-reference.mjs
 - normalize_seo_urls.cjs
 - export-cursor-flow.mjs
 - set-resend-secret.mjs
 - start-persistent-browser.mjs
-- is_elevated
-- copy_path
-- delete_path
-- app.py
-- SpreadsheetItemPattern
-- test_deterministic_drag_core.py
-- test_multi_tools.py
-- bing-robots-tester.mjs
+- Google Ads — ручная донастройка кампании HUNDESALON_NIKA
+- 111. COMPLETE PROJECT AUDIT CHECKLIST
+- Cloudflare caching for hundesalon-nika.com
+- Code of Conduct
+- ISSUE_TEMPLATE.md
+- pull_request_template.md
 - image-reader.py
+- bing-robots-tester.mjs
+- open-cf-unified-token.mjs
 - optimize_fcp_head.cjs
 - start-edge-bing-debug.mjs
 - sync-google-local-secrets.mjs
-- user_config
-- test_filesystem_service.py
-- search_files
-- read_file
-- keywords
-- args
+- graphify reference: query, path, explain
+- Google Ads — website conversions (2026-07-21)
+- 42. NEW PAGE CREATION REQUIREMENTS
+- 96. CONTENT QUALITY CHECKLIST
+- GBP HUNDESALON_NIKA — ryndenko1982
 - convert_to_webm.ps1
 - bing-edge-and-finish.mjs
 - generate-brand-sitemap.mjs
 - server.mjs
-- post-deploy.mjs
 - restart-mcp-clients.ps1
-- anonymized_telemetry
-- profile_snapshot
-- screenshot_backend
-- watchdog
-- get_file_info
-- GetWindowLong from Win32.     handle: int, the handle of a native window.
-- GetDisplays
-- .Select
-- .SetValue
-- SynchronizedInputPattern
-- TestRegistrySet
+- set-bing-api-key.mjs
+- cf-ops.md
 - block-secrets.mjs
-- compatibility
+- ponytail-audit/SKILL.md
+- Ponytail Gain
+- ponytail-review/SKILL.md
+- Google Ads — account negative keywords (HUNDESALON NIKA)
+- 17. COMPLETE SEO AUDIT BEFORE MAJOR CHANGES
+- 19. METADATA MANAGEMENT
+- 27. WCAG ANALYSIS
+- 54. CHANGE IMPACT ANALYSIS
+- 82. PRIORITY LEVELS
+- 83. FORBIDDEN AI BEHAVIOR
+- 92. CHANGE PLANNING REQUIREMENT
+- 9. PAGE ANALYSIS
+- Bing Webmaster Tools — полный чеклист
+- 2. Дополнительные конверсии (клик по телефону)
+- Шаг 6: Расширения объявлений
+- Шаг 2: Общие настройки
+- ПРОБЛЕМЫ И РЕШЕНИЯ
+- 3. КЛЮЧЕВЫЕ СЛОВА
+- 5. РАСШИРЕНИЯ ОБЪЯВЛЕНИЙ
+- 6. ПОСАДОЧНЫЕ СТРАНИЦЫ
+- Active Context
+- Product Context
+- Progress
+- System Patterns
+- browserslist
 - build_moon_alpha_assets.ps1
 - verify_outputs.ps1
 - add-newsletter-labels.mjs
@@ -241,6 +196,7 @@
 - check-message-draft-live.mjs
 - check-newsletter-labels.mjs
 - git-push-all.mjs
+- google-auth-platform-create-desktop-client.mjs
 - image-server.mjs
 - patch-weather-search.mjs
 - price-list-smoke.mjs
@@ -251,10 +207,35 @@
 - setup-rooflow.mjs
 - sync-dev-vars.js
 - weather-widget-smoke.mjs
-- show_capture_flash
-- OptionsMiddleware
-- ControlType
-- screenshots
+- Browse HUNDESALON NIKA Public Information
+- agents/i18n-sync.md
+- agents/minimal-diff.md
+- seo-auditor.md
+- ui-smoke.md
+- verifier.md
+- Memory Bank protocol (all Flow modes)
+- graphify reference: add a URL and watch a folder
+- graphify reference: commit hook and native AGENTS.md integration
+- graphify reference: incremental update and cluster-only
+- ponytail-debt/SKILL.md
+- 119. TECHNICAL SEO DEEP AUDIT
+- 127. ACCESSIBILITY ADVANCED CHECK
+- 141. UNCERTAINTY MANAGEMENT
+- 59. CORE WEB VITALS REVIEW
+- 89. TASK RECEIVING PROCEDURE
+- Шаг 4: Группы объявлений
+- НЕДЕЛЬНАЯ ОПТИМИЗАЦИЯ
+- СЛЕДУЮЩИЕ ШАГИ
+- РЕКОМЕНДАЦИИ ПО OПТИМИЗАЦИИ
+- 10. АНАЛИТИКА И ОПТИМИЗАЦИЯ
+- 14. ПОДДЕРЖКА И ТРАБЛШУТИНГ
+- 1. КОНВЕРСИОННОЕ ОТСЛЕЖИВАНИЕ (СНАЧАЛА САЙТ)
+- 2. СТРУКТУРА КАМПАНИИ
+- 4. ТЕКСТЫ ОБЪЯВЛЕНИЙ
+- 7. НАСТРОЙКИ АУДИЕНЦИЙ
+- 9. БИД СТРАТЕГИЯ
+- allowScripts
+- overrides
 - backlinks-pipeline.mjs
 - bing-launch-edge-api.mjs
 - bump-shell-cache.mjs
@@ -267,17 +248,16 @@
 - patch-weather-service.mjs
 - revert-weather-clouds.mjs
 - setup-ponytail.mjs
-- process/__init__.py
-- WaitHotKeyReleased
-- GetEditText
-- SetWindowPos
-- .RemoveFromSelection
-- .AddToSelection
-- .ScrollIntoView
-- TestFlashDisabled
 - pages-proxy.js
 - agent-tools.js
 - cloud-agent-install.sh
+- graphify reference: GitHub clone and cross-repo merge
+- graphify reference: transcribe video and audio
+- 139. FINAL DECISION HIERARCHY
+- 7. REPOSITORY STRUCTURE ANALYSIS
+- 11. РЕКОМЕНДАЦИИ ПО КОНТЕНТУ
+- 12. БЕЗОПАСНОСТЬ И СОБЛЮДЕНИЕ ПРАВИЛ
+- 15. КОНТАКТЫ И ПОДДЕРЖКА
 - sw.js
 - bump-perf-cache.mjs
 - check-live-html.mjs
@@ -291,11 +271,21 @@
 - stylelint-quiet.mjs
 - webstorm-open-preview.ps1
 - index.json
-- author
-- SetConsoleColor
-- EventId
-- .GetBoundingRectangles
 - env.js
+- extraction-spec.md
+- 112. ADVANCED AI AGENT OPERATING MODE
+- 137. FINAL AI AGENT OPERATING CONTRACT
+- 16. SEO ENGINEERING REQUIREMENTS
+- 1. CORE IDENTITY OF THE AI AGENT
+- 21. UX/UI PROFESSIONAL AUDIT
+- 26. ACCESSIBILITY REQUIREMENTS
+- 39. CONTENT MANAGEMENT AND PAGE IMPROVEMENT RULES
+- 3. GENERAL OPERATING PRINCIPLES
+- 5. INITIAL PROJECT AUDIT PROTOCOL
+- 68. QUALITY ASSURANCE SYSTEM
+- 72. LEGAL CONTENT MANAGEMENT
+- 88. AI AGENT OPERATIONAL WORKFLOW
+- Hundesalon NIKA — Master AI Domain Contract
 - check-cf-current-user.cjs
 - check-cf-role-detail.cjs
 - check-cf-roles.cjs
@@ -310,1108 +300,1010 @@
 - patch-weather-stars-layer.mjs
 - prune-pages-service-gateway-secrets.mjs
 - unpatch-weather-resilience.mjs
-- AccessibleRole
-- DockPattern
-- DockPosition
-- ExpandCollapseState
-- sync-brand-profiles.mjs
-- bing-api-setup.mjs
-- SW
-- fit-meta-descriptions.mjs
-- CalendarControl
-- TextAttributeId
-- TablePattern
 - CITATION_NAP
-- windows-mcp
 - isFullToken
 - resolveRulesAuth
-- Rect
-- expand-thin-pages.mjs
-- .SetTopmost
-- .SendKeys
-- AccessibleSelection
-- AnnotationType
-- ConsoleColor
-- KeyboardEventFlag
-- StyleId
-- RowOrColumnMajor
-- ToggleState
-- TextUnit
-- ZoomUnit
-- WindowVisualState
 
 ## God Nodes (most connected - your core abstractions)
-1. `Control` - 318 edges
-2. `scripts` - 193 edges
-3. `Desktop` - 75 edges
-4. `UIAException` - 62 edges
-5. `sleep()` - 55 edges
-6. `BoundingBox` - 45 edges
-7. `Refer https://docs.microsoft.com/en-us/windows/win32/api/uiautomationclient/nn-u` - 36 edges
-8. `with_analytics()` - 34 edges
-9. `syncHeaderWeatherOrbOverlay()` - 33 edges
-10. `enforceHeaderWeatherMenuPlacement()` - 32 edges
+1. `scripts` - 193 edges
+2. `sleep()` - 55 edges
+3. `syncHeaderWeatherOrbOverlay()` - 33 edges
+4. `enforceHeaderWeatherMenuPlacement()` - 32 edges
+5. `getEnvValue()` - 31 edges
+6. `rules` - 29 edges
+7. `jsonResponse()` - 25 edges
+8. `openCdpSession()` - 23 edges
+9. `handleMessageDraft()` - 21 edges
+10. `cloudflareApi()` - 21 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Invoke-NpmScript()` --calls--> `npm`  [INFERRED]
   repair-service-runtime.ps1 → package.json
-- `OptionsMiddleware` --uses--> `Desktop`  [INFERRED]
-  Windows-MCP/src/windows_mcp/__main__.py → Windows-MCP/src/windows_mcp/desktop/service.py
-- `Transport` --uses--> `Desktop`  [INFERRED]
-  Windows-MCP/src/windows_mcp/__main__.py → Windows-MCP/src/windows_mcp/desktop/service.py
-- `_LegacyAwareGroup` --uses--> `Desktop`  [INFERRED]
-  Windows-MCP/src/windows_mcp/__main__.py → Windows-MCP/src/windows_mcp/desktop/service.py
-- `_apply_tool_filter()` --indirect_call--> `_tools()`  [INFERRED]
-  Windows-MCP/src/windows_mcp/__main__.py → Windows-MCP/tests/test_deterministic_drag_input.py
+- `extractSupportedLang()` --references--> `SUPPORTED_LANGS`  [EXTRACTED]
+  assets/js/site-shell.js → functions/_middleware.js
+- `resolvePageContext()` --references--> `SUPPORTED_LANGS`  [EXTRACTED]
+  assets/js/site-shell.js → functions/_middleware.js
+- `buildLanguageUrl()` --references--> `SUPPORTED_LANGS`  [EXTRACTED]
+  assets/js/site-shell.js → functions/_middleware.js
+- `pickSameAsHost()` --references--> `SAME_AS`  [EXTRACTED]
+  tools/sync-brand-profiles.mjs → config/brand-profiles.mjs
 
 ## Import Cycles
 - None detected.
 
-## Communities (357 total, 68 thin omitted)
+## Communities (334 total, 55 thin omitted)
 
 ### Community 0 - "scripts"
 Cohesion: 0.01
 Nodes (193): scripts, agents:enforce-root, agents:reload-ides, agents:setup, audit, audit:all, audit:gateway, audit:root (+185 more)
 
-### Community 1 - "Control"
-Cohesion: 0.01
-Nodes (66): Control, EditControl, Call IUIAutomationElement::GetRuntimeId.         Return List[int], a list of in, Property ControlTypeName., Define how to search.         control: `Control` or its subclass.         dept, Gets the position of the center of the control.         ratioX: float., Call native MoveWindow if control has a valid native handle.         x: int., Call native GetWindowText if control has a valid native handle. (+58 more)
+### Community 1 - "agents-master.md"
+Cohesion: 0.02
+Nodes (123): 100. CUSTOMER TRUST OPTIMIZATION, 101. IMAGE AND MEDIA CONTENT REVIEW, 102. FILE ORGANIZATION RULES, 103. NAMING CONVENTIONS, 104. ERROR HANDLING REQUIREMENTS, 105. USER EXPERIENCE ERROR MESSAGES, 106. FORM VALIDATION QUALITY, 107. RESPONSIBLE AUTOMATION (+115 more)
 
-### Community 2 - ".GetPattern"
-Cohesion: 0.07
-Nodes (14): Get a pattern by patternId.         patternId: int, a value in class `PatternId, Return `InvokePattern` if it supports the pattern else None(Conditional support, Return `TablePattern` if it supports the pattern else None(Must support accordin, Return True if set successfully, Call IUIAutomationElement::GetCurrentPattern.         Get a new pattern by patt, Find `word` in the control's text (via `TextPattern`) and return its bounding bo, InvokePattern, Property ToggleState.         Call IUIAutomationTogglePattern::get_CurrentToggl (+6 more)
-
-### Community 3 - "TreeNode"
-Cohesion: 0.04
-Nodes (31): TreeNode, ButtonControl, CheckBoxControl, CustomControl, DataGridControl, DataItemControl, DocumentControl, GroupControl (+23 more)
-
-### Community 4 - "uia/core.py"
-Cohesion: 0.03
-Nodes (74): BringWindowToTop(), ClipboardFormat, _dpi_metadata(), DwmIsCompositionEnabled(), ExtendedProperty, _get_monitor_effective_dpi(), _get_system_dpi(), GetConsoleOriginalTitle() (+66 more)
-
-### Community 5 - "desktop/service.py"
-Cohesion: 0.07
-Nodes (16): Browser, DesktopState, Display, Enum, Size, Status, TestBrowser, TestDesktopState (+8 more)
-
-### Community 6 - "with_analytics"
-Cohesion: 0.08
-Nodes (26): Decorator to wrap tool functions with analytics tracking., with_analytics(), SecurityConfig, ToolsConfig, Infrastructure layer — cross-cutting concerns: auth, security, analytics, config, Clipboard tool — copy/paste clipboard operations., register(), Any (+18 more)
-
-### Community 7 - "enums.py"
-Cohesion: 0.09
-Nodes (42): IntEnum, ActiveEnd, AnimationStyle, AsyncContentLoadedState, AutomationElementMode, AutomationIdentifierType, BulletStyle, CapStyle (+34 more)
-
-### Community 8 - "WatchDog"
-Cohesion: 0.07
-Nodes (20): _AutomationClient, FocusChangedEventHandler, PropertyChangedEventHandler, Bump parent's consecutive-failure counter and request a client rebuild     once, _record_failure(), StructureChangedEventHandler, Unified WatchDog Service for monitoring UI Automation events. Allows single ins, Signal that the current UIA client/subscriptions should be torn         down an (+12 more)
-
-### Community 9 - "__main__.py"
-Cohesion: 0.07
-Nodes (43): CompletedProcess, Context, enable_debug(), is_debug(), Enable debug mode by setting the WINDOWS_MCP_DEBUG environment variable., Return True if debug mode is enabled via the WINDOWS_MCP_DEBUG environment varia, is_loopback_host(), Return True if host refers only to a loopback interface. (+35 more)
-
-### Community 10 - "Desktop"
+### Community 2 - "getEnvValue"
 Cohesion: 0.05
-Nodes (20): Desktop, _escape_text_for_sendkeys(), Image, Rect, Get installed apps. Tries Get-StartApps first, falls back to shortcut scanning., Scan Start Menu folders for .lnk shortcuts as a fallback for Get-StartApps., Give any node of the app and it will return True if the app is a browser, False, Find a window by fuzzy name match. Returns (window, error_msg).         If the (+12 more)
+Nodes (106): onRequest(), forwardJson(), getBearerToken(), getEnvVarFromContext(), getInternalOrigin(), getRuntimeEnvs(), isAuthorizedBySharedSecret(), onRequest() (+98 more)
 
-### Community 11 - "tree/service.py"
-Cohesion: 0.08
-Nodes (31): CachedControlHelper, CacheRequestFactory, UIA Caching Utilities for Performance Optimization  This module provides utili, Build a cached version of a control.                  Args:             node:, Get children with pre-cached properties.                  This is the most sig, Factory for creating optimized cache requests for different scenarios., Creates a cache request optimized for tree traversal.         Caches all common, Helper class for working with cached controls. (+23 more)
-
-### Community 12 - "test_tree_ia2.py"
-Cohesion: 0.05
-Nodes (19): Tests for the IAccessible2 / MSAA traversal helpers.  Only the pure-Python hel, The walker must (1) prune invisible subtrees and (2) only record inside document, Build a fake IAccessible node for walker traversal tests., Drive the walker against a tree of fake nodes (no COM)., Toolbar button (outside any document) must be excluded., A link inside a ROLE_DOCUMENT subtree should be captured., An invisible document (inactive Firefox tab) and its children must be skipped en, An offscreen document subtree is treated the same as invisible. (+11 more)
-
-### Community 13 - "controls.py"
-Cohesion: 0.06
-Nodes (14): Return `RangeValuePattern` if it supports the pattern else None(Conditional supp, Return `TransformPattern` if it supports the pattern else None(Must support acco, RangeValuePattern, Call IUIAutomationTextRange::Move.         Move the text range forward or backw, Property CanMove.         Call IUIAutomationTransformPattern::get_CurrentCanMov, Property CanResize.         Call IUIAutomationTransformPattern::get_CurrentCanR, Property CanRotate.         Call IUIAutomationTransformPattern::get_CurrentCanR, Call IUIAutomationTransformPattern::Move.         Move the UI Automation elemen (+6 more)
-
-### Community 14 - "vdm/core.py"
-Cohesion: 0.07
-Nodes (33): c_void_p, create_desktop(), create_hstring(), delete_hstring(), _get_manager(), get_window_desktop_id(), HSTRING, IApplicationView (+25 more)
-
-### Community 15 - "rules"
+### Community 3 - "rules"
 Cohesion: 0.06
 Nodes (48): env, browser, es2021, node, extends, globals, console, document (+40 more)
 
-### Community 16 - "local-citations-automate.mjs"
-Cohesion: 0.16
-Nodes (9): BRAND_PROFILES, NAP, COPY, root, COPY, root, COPY, LINK (+1 more)
+### Community 4 - "local-citations-automate.mjs"
+Cohesion: 0.06
+Nodes (32): BRAND_PROFILES, NAP, LOCAL_DIRECTORIES, q, q2, COPY, root, COPY (+24 more)
 
-### Community 17 - "extend-meta-descriptions-config.mjs"
-Cohesion: 0.16
-Nodes (10): META_DESCRIPTIONS, langs, report, root, rows, escapeAttr(), langs, report (+2 more)
+### Community 5 - "extend-meta-descriptions-config.mjs"
+Cohesion: 0.05
+Nodes (35): SAME_AS, META_DESCRIPTIONS, langs, report, root, rows, BOOST, changed (+27 more)
 
-### Community 18 - "Return `InvokePattern` if it supports the pattern else None(Conditional support"
-Cohesion: 0.10
-Nodes (10): _is_comtypes_variant_ord_typeerror(), TypeError, make_box(), TypeError, TestAppNameCorrection, TestComtypesVariantOrdTypeError, TestIouBoundingBox, TestTreeTraversal (+2 more)
-
-### Community 19 - "TreeElementNode"
-Cohesion: 0.09
-Nodes (15): Window, Center, TreeElementNode, TreeState, sample_bounding_box(), sample_center(), sample_desktop_state(), sample_scroll_element_node() (+7 more)
-
-### Community 20 - "repair-playwright-mcp.mjs"
+### Community 6 - "repair-playwright-mcp.mjs"
 Cohesion: 0.09
 Nodes (38): configureCursorSettings(), configureProjectPermissions(), ensurePlaywrightMcp(), patchMcpConfigs(), permPath, PLAYWRIGHT_TOOLS, projectRoot, readJson() (+30 more)
 
-### Community 21 - "GridPattern"
-Cohesion: 0.20
-Nodes (5): Return `GridPattern` if it supports the pattern else None(Must support according, GridPattern, Property ColumnCount.         Call IUIAutomationGridPattern::get_CurrentColumnC, Property RowCount.         Call IUIAutomationGridPattern::get_CurrentRowCount., Call IUIAutomationGridPattern::GetItem.         Return `Control` subclass, a co
-
-### Community 22 - "browser-cdp.mjs"
-Cohesion: 0.07
-Nodes (28): port, ensureMailEdge(), evalPage(), getEmailDomain(), isEmailOnDomain(), mailPort, siteQ, port (+20 more)
-
-### Community 23 - "TextRange"
+### Community 7 - "browser-cdp.mjs"
 Cohesion: 0.06
-Nodes (23): Rect, Call IUIAutomationTextRange::Clone.         return `TextRange`, identical to th, Call IUIAutomationTextRange::Compare.         textRange: `TextRange`., Call IUIAutomationTextRange::CompareEndpoints.         srcEndPoint: int, a valu, Call IUIAutomationTextRange::ExpandToEnclosingUnit.         Normalize the text, Call IUIAutomationTextRange::FindAttribute.         textAttributeID: int, a val, Call IUIAutomationTextRange::FindText.         text: str,         backward: bo, Call IUIAutomationTextRange::GetBoundingRectangles.         textAttributeId: in (+15 more)
+Nodes (36): ensureMailEdge(), evalPage(), getEmailDomain(), isEmailOnDomain(), mailPort, siteQ, withCdp(), logoUrls (+28 more)
 
-### Community 24 - ".CreateControlFromElement"
-Cohesion: 0.06
-Nodes (21): FindControl(), GetRootControl(), PaneControl, Return `LegacyIAccessiblePattern` if it supports the pattern else None., Return `Control` subclass or None., Get a sibling control that matches the condition.         forward: bool, if Tru, Return List[Control], a list of `Control` subclasses., Create a concreate `Control` from a com type `IUIAutomationElement`.         el (+13 more)
+### Community 8 - "Текущий статус Google Ads для HUNDESALON NIKA"
+Cohesion: 0.05
+Nodes (41): 1. Отслеживание конверсий на сайте, 1. Создать конверсию в Google Ads интерфейсе, 2. Конверсии в Google Ads, 2. Проверить существующие кампании, 3. Минус-слова на уровне аккаунта, 4. Документация, Google Ads Support:, В течение месяца: (+33 more)
 
-### Community 25 - "infrastructure/__init__.py"
+### Community 9 - "sleep"
 Cohesion: 0.09
-Nodes (35): discover_config_path(), _list_of_strings(), load_config(), Path, Configuration loading and merge utilities for windows-mcp., Serialize *cfg* to TOML at *path*, writing only non-default values., Find config path using precedence: explicit > ~/.windows-mcp/config.toml., Load and validate TOML config file. Returns defaults when path is None. (+27 more)
+Nodes (26): port, port, port, targets, bingPort, ensureBingCdp(), main(), report (+18 more)
 
-### Community 26 - "GetScreenSize"
-Cohesion: 0.08
-Nodes (41): Move window to screen center., Only work on Windows 8/8.1, if current window is Metro UI.         waitTime: fl, Click(), DragDrop(), GetCursorPos(), GetScreenSize(), GetVirtualScreenSize(), MiddleClick() (+33 more)
-
-### Community 27 - "site-shell.js"
+### Community 10 - "site-shell.js"
 Cohesion: 0.13
 Nodes (37): applyHeaderWeatherAutoGeoLocation(), bindHeaderWeatherLayoutObserver(), buildLanguageUrl(), createHeaderMarkup(), emitHeaderWeatherEvent(), extractSupportedLang(), fetchHeaderWeatherSourceTimeMs(), fitHomeLabelToLogo() (+29 more)
 
-### Community 28 - "rules"
+### Community 11 - "rules"
 Cohesion: 0.05
 Nodes (37): 3d-weather-codrops-main/build/**, 3d-weather-codrops-main/dist-widget/**, **/*.min.css, **/node_modules/**, stylelint-config-standard, **/vendor/**, extends, ignoreFiles (+29 more)
 
-### Community 29 - "bing-sitescan.mjs"
-Cohesion: 0.09
-Nodes (30): port, report, root, siteQ, inspectUrls, port, report, root (+22 more)
+### Community 12 - "Интерактивная галерея "До/После" — Руководство"
+Cohesion: 0.05
+Nodes (36): 1. Обновление изображений, 2. Категории, 3. Добавление новых примеров, CSS, HTML (все языковые версии), JavaScript, Lazy loading, 📱 Mobile оптимизация (+28 more)
 
-### Community 30 - "input.py"
-Cohesion: 0.11
-Nodes (28): WaitForCondition, _as_loc(), _iter_nodes(), _iter_text_sources(), _matches_wait_condition(), _metadata_text_matches(), _node_matches(), Any (+20 more)
+### Community 13 - "Google Cloud Shell Setup Guide – HUNDESALON_NIKA"
+Cohesion: 0.05
+Nodes (35): All-in-One Command, Environment Variables (Already Set in Cloudflare), Google Cloud Shell Setup Guide – HUNDESALON_NIKA, Issue: Authentication fails, Issue: Build fails with "dist/ already exists", Issue: Deployment says "Project not found", Issue: `npm: command not found`, Issue: `wrangler: command not found` (+27 more)
 
-### Community 31 - "TransformPattern"
-Cohesion: 0.19
-Nodes (4): Return `ExpandCollapsePattern` if it supports the pattern else None(Conditional, ExpandCollapsePattern, Property ExpandCollapseState.         Call IUIAutomationExpandCollapsePattern::, Call IUIAutomationExpandCollapsePattern::Collapse.         waitTime: float.
+### Community 14 - "🐕 HUNDESALON NIKA - Профессиональный груминг-салон"
+Cohesion: 0.05
+Nodes (37): 1. Подготовка к деплою, 1. Установка расширений VS Code, 2. Деплой в Cloudflare Pages, 2. Запуск локального сервера, 3. Настройка домена, 3. Проверка кода, 🤖 AI-агенты (Cursor / Claude / Codex / Gemini / Copilot), 🐕 HUNDESALON NIKA - Профессиональный груминг-салон (+29 more)
 
-### Community 32 - "before-after.js"
+### Community 15 - "bing-finish-remaining.mjs"
+Cohesion: 0.07
+Nodes (25): out, port, report, root, siteQ, summary, out, port (+17 more)
+
+### Community 16 - "bing-sitescan.mjs"
+Cohesion: 0.12
+Nodes (26): port, report, root, siteQ, main(), port, reportPath, root (+18 more)
+
+### Community 17 - "before-after.js"
 Cohesion: 0.12
 Nodes (16): beforeAfterCardBlueprints, beforeAfterCardFolder(), BeforeAfterGallery, beforeAfterItems, beforeAfterLabelsByLang, BeforeAfterSlider, buildBeforeAfterItems(), cardCategories (+8 more)
 
-### Community 33 - "sleep"
-Cohesion: 0.09
-Nodes (34): bootstrapViaDashboard(), TEMPLATE_URL, bingPort, ensureBingCdp(), main(), report, root, runBingClarity() (+26 more)
-
-### Community 34 - "get_claude_data_dir"
-Cohesion: 0.09
-Nodes (21): _find_msix_claude_dir(), _find_standard_claude_dir(), get_claude_config_path(), get_claude_data_dir(), is_msix_install(), Path, Resolve Claude Desktop data directories across installation types.  When Claud, Return the Claude Desktop data directory, or ``None`` if not found.      Resol (+13 more)
-
-### Community 36 - "getEnvValue"
-Cohesion: 0.23
-Nodes (28): appendGoogleSheetRow(), base64Encode(), base64UrlEncode(), callGoogleAppsScriptGateway(), createDriveResumableUploadSession(), createGoogleCalendarEvent(), FORM_HEADERS, getEnvValue() (+20 more)
-
-### Community 37 - "draft-service.js"
-Cohesion: 0.16
-Nodes (27): buildCacheRequest(), buildLocalDraftResponse(), buildLocalDraftText(), DEFAULT_SERVICE_GATEWAY_URL, getCacheStore(), getCacheTTLSeconds(), getEnvVar(), getEnvVarFromContext() (+19 more)
-
-### Community 38 - "calibrate-token-economy.mjs"
+### Community 18 - "calibrate-token-economy.mjs"
 Cohesion: 0.10
 Nodes (23): budget, ensureGraphifyHttp(), ensureHiddenLauncher(), ensureMeta(), installAutostart(), mergeMcpHttp(), patchCursorSettings(), projectMcp (+15 more)
 
-### Community 39 - "cf-pages-token.mjs"
-Cohesion: 0.10
-Nodes (10): Return `ScrollPattern` if it supports the pattern else None(Conditional support, Property HorizontallyScrollable.         Call IUIAutomationScrollPattern::get_C, Property HorizontalScrollPercent.         Call IUIAutomationScrollPattern::get_, Property HorizontalViewSize.         Call IUIAutomationScrollPattern::get_Curre, Property VerticallyScrollable.         Call IUIAutomationScrollPattern::get_Cur, Property VerticalScrollPercent.         Call IUIAutomationScrollPattern::get_Cu, Property VerticalViewSize.         Call IUIAutomationScrollPattern::get_Current, Call IUIAutomationScrollPattern::Scroll.         Scroll the visible region of t (+2 more)
-
-### Community 40 - ".instance"
-Cohesion: 0.08
-Nodes (28): AddAutomationEventHandler(), AddFocusChangedEventHandler(), AddPropertyChangedEventHandler(), AddStructureChangedEventHandler(), CreateAndCondition(), CreateFalseCondition(), CreateNotCondition(), CreateOrCondition() (+20 more)
-
-### Community 41 - "exceptions.py"
+### Community 19 - "agents-routing.md"
 Cohesion: 0.09
-Nodes (33): COMError, is_dead_element_error(), is_retryable_error(), UI Automation and COM error codes.      Source: Winerror.h, UIAutomationCoreAp, Check if error code indicates element or window no longer exists., Check if error code indicates app is busy but alive — may succeed on retry., UIAError, from_com_error() (+25 more)
+Nodes (19): Before You Start, Commit Messages, Contributing, Development Checklist, Pull Requests, Moon assets (header orb), Playback (site-shell), Production output (+11 more)
 
-### Community 42 - "withCdpSession"
-Cohesion: 0.08
-Nodes (23): withCdp(), logoUrls, port, report, siteQ, withCdp(), port, results (+15 more)
+### Community 20 - "draft-service.js"
+Cohesion: 0.17
+Nodes (26): buildCacheRequest(), buildLocalDraftResponse(), buildLocalDraftText(), DEFAULT_SERVICE_GATEWAY_URL, getCacheStore(), getCacheTTLSeconds(), getEnvVar(), getEnvVarFromContext() (+18 more)
 
-### Community 43 - "seo-search-watch.mjs"
-Cohesion: 0.13
-Nodes (25): analyzeBingFindings(), extractBingSiteScanFindings(), analyzeGscIndexing(), KEY_URLS, readGscIndexing(), GSC_SECTIONS, gscUrl(), acquireLock() (+17 more)
-
-### Community 44 - "ia2.py"
-Cohesion: 0.11
-Nodes (24): _acc_child_count(), _acc_location(), _acc_name(), _acc_role(), _acc_state(), _acc_value(), _accessible_object_from_window(), _bounding_box_from_location() (+16 more)
-
-### Community 45 - "syncHeaderWeatherUnifiedReadings"
+### Community 21 - "syncHeaderWeatherUnifiedReadings"
 Cohesion: 0.14
 Nodes (27): applyHeaderWeatherConditionTypography(), applyHeaderWeatherDropdownConditionTypography(), applyHeaderWeatherDropdownReadings(), applyHeaderWeatherPreviewReadings(), buildHeaderWeatherConditionLineTexts(), buildHeaderWeatherReadingsFromMeta(), convertHeaderWeatherHpaToMmHg(), ensureHeaderWeatherPreviewMetricsVisible() (+19 more)
 
-### Community 46 - "bing-finish-remaining.mjs"
-Cohesion: 0.12
-Nodes (16): apiKey, listPath, root, urlList, verbose, getBingApiKey(), hasBingApiKey(), logBingApiNotConfigured() (+8 more)
+### Community 22 - "seo-search-watch.mjs"
+Cohesion: 0.13
+Nodes (24): analyzeBingFindings(), analyzeGscIndexing(), KEY_URLS, readGscIndexing(), GSC_SECTIONS, gscUrl(), acquireLock(), cdpReady() (+16 more)
 
-### Community 47 - "package.json"
-Cohesion: 0.08
-Nodes (25): allowScripts, esbuild@0.28.1, sharp@0.34.5, workerd@1.20260617.1, author, browserslist, description, license (+17 more)
-
-### Community 48 - "RangeValuePattern"
-Cohesion: 0.10
-Nodes (10): ComboBoxControl, ListControl, ListItemControl, Property Element.         Return `ctypes.POINTER(IUIAutomationElement)`., maxSearchSeconds: float         searchIntervalSeconds: float         Find cont, Refind the control every searchIntervalSeconds seconds in maxSearchSeconds secon, Show combobox's popup menu and select a item by name.         itemName: str., Check if control exists in timeout seconds.     control: `Control` or its subcl (+2 more)
-
-### Community 49 - "TestDisplayFiltering"
-Cohesion: 0.10
-Nodes (11): DxcamOutput, DisplayInfo, Display identity and geometry from the Windows monitor APIs., FakeDesktop, FakeMCP, MonkeyPatch, test_display_inventory_returns_display_dpi_metadata(), test_display_orientation_falls_back_to_bounds() (+3 more)
-
-### Community 50 - "enforceHeaderWeatherMenuPlacement"
+### Community 23 - "enforceHeaderWeatherMenuPlacement"
 Cohesion: 0.11
 Nodes (25): alignHeaderWeatherFeelsLikeRow(), applyHeaderWeatherEqualMetricSpacing(), applyHeaderWeatherFeelsLikePreview(), applyHeaderWeatherFeelsReferencePresetLayout(), buildHeaderWeatherCelsiusUnitMarkup(), enforceHeaderWeatherMenuPlacement(), ensureHeaderWeatherCollapsedFeelsFallback(), ensureHeaderWeatherInfoPanel() (+17 more)
 
-### Community 51 - "syncHeaderWeatherOrbOverlay"
+### Community 24 - "syncHeaderWeatherOrbOverlay"
 Cohesion: 0.14
 Nodes (25): applyHeaderWeatherOrbAtmosphere(), applyHeaderWeatherOrbCrossfade(), applyHeaderWeatherOrbLayout(), applyHeaderWeatherTextReadability(), clampHeaderWeatherValue(), createHeaderWeatherOrbOverlay(), ensureHeaderWeatherDropdownStarsBackLayer(), ensureHeaderWeatherOrbStack() (+17 more)
 
-### Community 52 - "setup-google-platform.mjs"
+### Community 25 - "What You Must Do When Invoked"
+Cohesion: 0.08
+Nodes (24): For /graphify add and --watch, For /graphify query, For the commit hook and native AGENTS.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+16 more)
+
+### Community 26 - "cf-api-token.mjs"
+Cohesion: 0.22
+Nodes (21): candidates, main(), auditPagesDeploy(), auditToken(), GROUP_IDS, isDeployToken(), isFullZoneToken(), isUnifiedToken() (+13 more)
+
+### Community 27 - "setup-google-platform.mjs"
 Cohesion: 0.16
 Nodes (24): ADC_PATH, compactSecrets(), createGoogleResources(), DEFAULT_ADMIN_EMAILS, exchangeCode(), GOOGLE_SCOPES, googleFetch(), latestOAuthClientJson() (+16 more)
 
-### Community 53 - "Refer https://docs.microsoft.com/en-us/windows/win32/api/uiautomationclient/nn-u"
-Cohesion: 0.18
-Nodes (5): Return `SelectionPattern` if it supports the pattern else None(Conditional suppo, Property CanSelectMultiple.         Call IUIAutomationSelectionPattern::get_Cur, Property IsSelectionRequired.         Call IUIAutomationSelectionPattern::get_C, Call IUIAutomationSelectionPattern::GetCurrentSelection.         Return List[Co, SelectionPattern
-
-### Community 54 - "PostHogAnalytics"
-Cohesion: 0.10
-Nodes (11): Protocol, Analytics, PostHogAnalytics, Any, Exception, Path, Tracks the execution of a tool., Tracks an error that occurred during the execution of a tool. (+3 more)
-
-### Community 55 - "bing-force-clean.mjs"
+### Community 28 - "bing-force-clean.mjs"
 Cohesion: 0.16
 Nodes (22): cleanupGmail(), evalPage(), getJson(), getPageTarget(), gmailPort, hasAllowedHost(), mailPort, navigate() (+14 more)
 
-### Community 56 - "bing-sitescan-results.mjs"
+### Community 29 - "bing-sitescan-results.mjs"
 Cohesion: 0.14
 Nodes (23): cdpReady(), cdpReloadAttempts, cdpWaitMs, edgePath(), ensureCdp(), evalScanState(), extractFindings(), main() (+15 more)
 
-### Community 57 - "configure-mcp-clients.mjs"
+### Community 30 - "cf-pages-token.mjs"
+Cohesion: 0.16
+Nodes (19): bootstrapViaDashboard(), TEMPLATE_URL, extractTokenFromText(), loadPagesDeployCredentials(), loadTokenFile(), PAGES_PERMISSION_KEYS, PAGES_TOKEN_FILE, pagesTokenTemplateUrl() (+11 more)
+
+### Community 31 - "configure-mcp-clients.mjs"
 Cohesion: 0.18
 Nodes (23): buildCloudflareHttpServers(), buildCloudflareUrlServers(), buildCloudflareWindsurfServers(), buildCommonStdioServers(), buildGithubServer(), CLOUDFLARE_MCP_URLS, configureClaude(), configureCursor() (+15 more)
 
-### Community 58 - "cf-api-token.mjs"
-Cohesion: 0.21
-Nodes (21): candidates, main(), main(), auditToken(), GROUP_IDS, isDeployToken(), isFullZoneToken(), isUnifiedToken() (+13 more)
+### Community 32 - "cloudflare-auth.mjs"
+Cohesion: 0.13
+Nodes (16): clearLegacyPagesTokenAlias(), getWranglerConfigPath(), loadDevVars(), looksLikeWranglerOAuthToken(), persistWranglerOAuth(), removeDevVar(), resolvePurgeAuth(), upsertTomlQuotedField() (+8 more)
 
-### Community 59 - "TopLevel"
-Cohesion: 0.09
-Nodes (18): Get a native handle from self or ancestors until valid and call native `ShowWind, Call native `ShowWindow(SW.Show)`.         Return bool, True if succeed otherwi, Call native `ShowWindow(SW.Hide)`.         waitTime: float         Return bool, Determine whether current control is top level., Set top level window maximize., Restore window to normal state.         Similar to SwitchToThisWindow., Set top level window active., TopLevel (+10 more)
-
-### Community 60 - "devDependencies"
+### Community 33 - "devDependencies"
 Cohesion: 0.09
 Nodes (23): eslint, htmlhint, leaflet, markdownlint-cli2, devDependencies, eslint, htmlhint, leaflet (+15 more)
 
-### Community 61 - "patterns.py"
-Cohesion: 0.04
-Nodes (30): POINTER, CreatePattern(), CustomNavigationPattern, DropTargetPattern, GetPatternIdInterface(), ItemContainerPattern, ObjectModelPattern, IUnknown (+22 more)
-
-### Community 62 - "build-moon-alpha-webm.mjs"
+### Community 34 - "build-moon-alpha-webm.mjs"
 Cohesion: 0.09
 Nodes (18): bitrateK, buildFallbackMp4(), buildWebm(), DURATION_META_OUT, FALLBACK_MP4_OUT, ffmpeg, LEGACY_FILES, moonDir (+10 more)
 
-### Community 63 - "cloudflare-auth.mjs"
-Cohesion: 0.21
-Nodes (18): enableContentScan(), getContentScanStatus(), getCrawlerHintsStatus(), main(), parseArgs(), resolveAuth(), setCrawlerHints(), resolveAuth() (+10 more)
+### Community 35 - "Google Ads — полная настройка аккаунта HUNDESALON NIKA"
+Cohesion: 0.09
+Nodes (21): 1. Asset group — видео, 2. Asset group — изображения, 3. Asset group — sitelinks, 4. Asset group — темы поиска, 5. Аудитории, 6. Конверсии, 7. Сохранить и выйти, Google Ads — полная настройка аккаунта HUNDESALON NIKA (+13 more)
 
-### Community 64 - "server.js"
+### Community 36 - "server.js"
 Cohesion: 0.19
 Nodes (21): appendSheetRow(), createCalendarEvent(), createSetup(), firestoreValue(), getGoogleToken(), getSecret(), googleJson(), handle() (+13 more)
 
-### Community 65 - ".MoveCursorToInnerPos"
-Cohesion: 0.15
-Nodes (8): Call IUIAutomationElement::SetFocus.         Refer https://docs.microsoft.com/e, Move cursor to control's internal position, default to center.         x: int,, Move cursor to control's center.         Return Tuple[int, int], two ints tuple, x: int, if < 0, click self.BoundingRectangle.right + x, if not None, ignore rati, x: int, if < 0, middle click self.BoundingRectangle.right + x, if not None, igno, Make control have focus first, move cursor to the specified position and mouse w, GetDoubleClickTime(), GetDoubleClickTime from Win32.     Return int, in milliseconds.
-
-### Community 66 - "LegacyIAccessiblePattern"
-Cohesion: 0.08
-Nodes (12): LegacyIAccessiblePattern, Call IUIAutomationTransformPattern2::IUIAutomationValuePattern::SetValue., Property ChildId.         Call IUIAutomationLegacyIAccessiblePattern::get_Curre, Property DefaultAction.         Call IUIAutomationLegacyIAccessiblePattern::get, Property Description.         Call IUIAutomationLegacyIAccessiblePattern::get_C, Property Help.         Call IUIAutomationLegacyIAccessiblePattern::get_CurrentH, Property KeyboardShortcut.         Call IUIAutomationLegacyIAccessiblePattern::, Call IUIAutomationLegacyIAccessiblePattern::DoDefaultAction.         Perform th (+4 more)
-
-### Community 67 - "http-security.js"
-Cohesion: 0.20
-Nodes (18): forwardJson(), getBearerToken(), getEnvVarFromContext(), getInternalOrigin(), getRuntimeEnvs(), isAuthorizedBySharedSecret(), onRequest(), assertAllowedOrigin() (+10 more)
-
-### Community 68 - "bing-consolidate-accounts.mjs"
+### Community 37 - "bing-consolidate-accounts.mjs"
 Cohesion: 0.25
 Nodes (20): connect(), ensureEdge(), evaluate(), getEmailDomain(), getJson(), getTarget(), hasAllowedHost(), isEmailOnDomain() (+12 more)
 
-### Community 69 - "_DxcamBackend"
-Cohesion: 0.17
-Nodes (3): _DxcamBackend, DXGI-based capture via the *dxcam* library., TestDxcamBackend
+### Community 38 - "configure-cloudflare-cache-features.mjs"
+Cohesion: 0.20
+Nodes (18): enableContentScan(), getContentScanStatus(), getCrawlerHintsStatus(), main(), parseArgs(), resolveAuth(), setCrawlerHints(), resolveAuth() (+10 more)
 
-### Community 70 - "resolveHeaderWeatherLocationMeta"
+### Community 39 - "resolveHeaderWeatherLocationMeta"
 Cohesion: 0.14
 Nodes (20): buildHeaderWeatherDistrictLabel(), fetchHeaderWeatherAstroDay(), fetchHeaderWeatherReverseGeoMeta(), formatHeaderWeatherCityDistrictDisplayLabel(), getHeaderWeatherBrowserTimeZone(), getHeaderWeatherDateInTimeZone(), getHeaderWeatherLanguageFallbacks(), getHeaderWeatherLocationLabel() (+12 more)
 
-### Community 71 - "sync-service-gateway-from-devvars.mjs"
+### Community 40 - "sync-service-gateway-from-devvars.mjs"
 Cohesion: 0.13
 Nodes (15): createKey(), DEV_VARS, extractKeyFromPage(), ROOT, validateInferenceKey(), devPath, lines, newKey (+7 more)
 
-### Community 72 - "flash_overlay.py"
-Cohesion: 0.16
-Nodes (19): _BITMAPINFO, _BITMAPINFOHEADER, _BLENDFUNCTION, cancel_active_flash(), _create_layered_window(), _intensity_at(), _POINT, _premultiplied_bgra() (+11 more)
-
-### Community 73 - "screenshot.py"
-Cohesion: 0.21
-Nodes (8): _build_crop_box(), capture(), _crop_screenshot(), Image, Rect, Capture a screenshot.  Subclasses must override., Return ``(device_idx, output_idx, region)`` when one DXGI output contains the re, Capture a screenshot and return ``(image, backend_name_used)``.
-
-### Community 74 - "Rect"
-Cohesion: 0.15
-Nodes (8): DwmGetWindowExtendFrameBounds(), _get_display_orientation(), GetWindowRect(), Rect, Get Native Window Rect without invisible resize borders.     Return Rect or Non, GetWindowRect from user32.     Return RECT., class Rect, like `ctypes.wintypes.RECT`., Rect
-
-### Community 75 - "bindHeaderWeatherState"
+### Community 41 - "bindHeaderWeatherState"
 Cohesion: 0.18
 Nodes (19): applyHeaderWeatherLocationSearchCopy(), applyHeaderWeatherTransparency(), bindHeaderWeatherDropdownScrollState(), bindHeaderWeatherOutsideDismiss(), bindHeaderWeatherReadingsObserver(), bindHeaderWeatherScrollContainment(), bindHeaderWeatherState(), enforceHeaderWeatherToggleArrow() (+11 more)
 
-### Community 76 - "_middleware.js"
+### Community 42 - "_middleware.js"
 Cohesion: 0.21
 Nodes (17): appendVary(), collapseWhitespace(), COUNTRY_LANGUAGE_MAP, decodeHtml(), extractTagText(), htmlToMarkdown(), inlineText(), markdownResponse() (+9 more)
 
-### Community 77 - "seo-generate.js"
-Cohesion: 0.20
-Nodes (18): assertLocalePayload(), buildPrompt(), buildSnippets(), DEFAULT_SERVICE_GATEWAY_URL, escapeHtml(), getEnvVar(), getEnvVarFromContext(), getQualityIssues() (+10 more)
-
-### Community 78 - "build-sun-alpha-webm.mjs"
+### Community 43 - "build-sun-alpha-webm.mjs"
 Cohesion: 0.11
 Nodes (16): BITRATE_K, BRIGHTNESS, buildFromMp4(), CANVAS_SIZE, ffmpeg, KEY_BLEND, KEY_SIMILARITY, LOOP_SECONDS (+8 more)
 
-### Community 79 - "google-search-console-audit.js"
+### Community 44 - "google-search-console-audit.js"
 Cohesion: 0.13
 Nodes (14): checkRedirect(), checkStatus(), fail(), failures, fetchText(), indexUrls, parseJsonLd(), report (+6 more)
 
-### Community 80 - "test_app_tool.py"
-Cohesion: 0.22
-Nodes (14): FakeDesktop, FakeMCP, _mcp(), MonkeyPatch, Path, test_exact_launch_inputs_require_launch_executable_mode(), test_existing_app_modes_delegate_unchanged(), test_launch_executable_accepts_json_string_args() (+6 more)
+### Community 45 - "AI Routing Kernel — HUNDESALON NIKA"
+Cohesion: 0.12
+Nodes (17): 0. How this document is used, 10. Workflow router (routing *is* the workflow), 11. Safety (hard stops), 12. Performance (context loading), 13. Validation & completion, 14. HUNDESALON NIKA quick bind (after detection), 1. Conflict resolution (instruction priority), 2. Decision pipeline (every request) (+9 more)
 
-### Community 81 - "jsonResponse"
-Cohesion: 0.24
-Nodes (13): onRequest(), applyApiResponseHeaders(), jsonResponse(), sanitizeApiPayload(), isAllowedPetPhotoType(), PET_PHOTO_ALLOWED_TYPES, petPhotoTooLarge(), bookingMetadata() (+5 more)
-
-### Community 82 - "IntFlag"
-Cohesion: 0.11
-Nodes (18): IntFlag, AccessibleState, CoalesceEventsOptions, ConnectionRecoveryBehaviorOptions, Keys, MB, ModifierKey, MouseEventFlag (+10 more)
-
-### Community 83 - "remove_private_use_chars"
-Cohesion: 0.17
-Nodes (7): Desktop utilities. Input sanitization and text processing helpers., Remove Unicode Private Use Area characters that may cause rendering issues., remove_private_use_chars(), U+E000..U+F8FF (Basic Multilingual Plane private use area)., U+F0000..U+FFFFD (Supplementary Private Use Area-A)., U+100000..U+10FFFD (Supplementary Private Use Area-B)., TestRemovePrivateUseChars
-
-### Community 84 - "WindowPattern"
-Cohesion: 0.08
-Nodes (13): Property CurrentSelectedItem.         Call IUIAutomationSelectionPattern2::get_, Property FirstSelectedItem.         Call IUIAutomationSelectionPattern2::get_Cu, Property ItemCount.         Call IUIAutomationSelectionPattern2::get_CurrentIte, Call IUIAutomationWindowPattern::Close.         Close the window.         wait, Property CanMaximize.         Call IUIAutomationWindowPattern::get_CurrentCanMa, Property IsModal.         Call IUIAutomationWindowPattern::get_CurrentIsModal., Property IsTopmost.         Call IUIAutomationWindowPattern::get_CurrentIsTopmo, Property WindowInteractionState.         Call IUIAutomationWindowPattern::get_C (+5 more)
-
-### Community 85 - "test_wait_for_tool.py"
-Cohesion: 0.31
-Nodes (15): _box(), _element(), FakeDesktop, FakeMCP, _register_tools(), _state(), test_wait_for_active_window_matches_by_window_name(), test_wait_for_element_enabled_alias_matches_interactive_node() (+7 more)
-
-### Community 86 - "cursor-settings-apply.mjs"
+### Community 46 - "cursor-settings-apply.mjs"
 Cohesion: 0.13
 Nodes (15): auto, autoMax, cliPath, db, grok, kv, n, o (+7 more)
 
-### Community 87 - "google-oauth-console-bootstrap.mjs"
+### Community 47 - "google-oauth-console-bootstrap.mjs"
 Cohesion: 0.21
 Nodes (16): CDP_PORT, DOWNLOADS, exchangeCode(), GOOGLE_SCOPES, latestOAuthClientJson(), main(), navigateCdp(), openBrowser() (+8 more)
 
-### Community 88 - "sync-cursor-customize.mjs"
+### Community 48 - "sync-cursor-customize.mjs"
 Cohesion: 0.12
 Nodes (14): agentsDir, cachePublic, commandsDir, dstRoot, keepExtra, LEAN, localPlugins, MARKETPLACE_ALLOW (+6 more)
 
-### Community 89 - "GridItemPattern"
-Cohesion: 0.11
-Nodes (8): Return `ScrollItemPattern` if it supports the pattern else None(Conditional supp, Return `TableItemPattern` if it supports the pattern else None(Must support acco, Call IUIAutomationTableItemPattern::GetCurrentColumnHeaderItems.         Return, Call IUIAutomationTableItemPattern::GetCurrentRowHeaderItems.         Return Li, Call IUIAutomationTextRange::ScrollIntoView.         Cause the text control to, Call IUIAutomationScrollItemPattern::ScrollIntoView.         waitTime: float., ScrollItemPattern, TableItemPattern
-
-### Community 90 - "HeaderWeatherSunScene"
+### Community 49 - "HeaderWeatherSunScene"
 Cohesion: 0.21
 Nodes (6): buildCoronaSprite(), dayOfYearUtc(), EARTH_AXIAL_TILT, HeaderWeatherSunScene, mountHeaderWeatherSunScene(), unmountHeaderWeatherSunScene()
 
-### Community 91 - "configure-cloudflare-waf-rate-limits.mjs"
+### Community 50 - "Playbook для AI-агентов — HUNDESALON NIKA"
+Cohesion: 0.12
+Nodes (16): Bootstrap каждой задачи, Cursor Cloud Agents — bootstrap, Git, GitLens 18.0 (релиз 2026-05-27) — что внедрено, Graphify (операционка), Playbook для AI-агентов — HUNDESALON NIKA, Ponytail (операционка), RooFlow (операционка) (+8 more)
+
+### Community 51 - "configure-cloudflare-waf-rate-limits.mjs"
 Cohesion: 0.23
 Nodes (15): addRule(), buildCombinedRulePayload(), buildRulePayload(), COMBINED_RULE_LIMIT, createPhaseRuleset(), ENDPOINT_LIMITS, ensureRules(), getPhaseRuleset() (+7 more)
 
-### Community 92 - "cursor-yolo-full-access.mjs"
+### Community 52 - "cursor-yolo-full-access.mjs"
 Cohesion: 0.16
 Nodes (14): cliPath, db, home, n, o, perm, readReactive(), report (+6 more)
 
-### Community 93 - "indexnow-submit.js"
+### Community 53 - "indexnow-submit.js"
 Cohesion: 0.13
 Nodes (11): apexList, getSitemapUrls(), isDryRun, key, keyPath, manualListPath, read(), root (+3 more)
 
-### Community 94 - "loadDevVars"
-Cohesion: 0.17
-Nodes (11): clearLegacyPagesTokenAlias(), getWranglerConfigPath(), persistWranglerOAuth(), removeDevVar(), resolvePurgeAuth(), upsertTomlQuotedField(), wranglerConfigCandidates(), edgeCandidates (+3 more)
-
-### Community 95 - "reorganize-images.mjs"
+### Community 54 - "reorganize-images.mjs"
 Cohesion: 0.13
 Nodes (12): brandDir, ensureDir(), heroDir, iconRenameMap, ignoreDirs, imagesRoot, moveFile(), newIconDir (+4 more)
 
-### Community 96 - "update-brand-search-seo.js"
+### Community 55 - "update-brand-search-seo.js"
 Cohesion: 0.19
 Nodes (12): buildBrandHeadBlock(), getLanguage(), indexFiles, logoObject(), normalizeBrandHead(), normalizeJsonLd(), organizationObject(), root (+4 more)
 
-### Community 97 - "keybd_event"
-Cohesion: 0.12
-Nodes (16): keybd_event(), PressKey(), Simulate typing a key.     key: int, a value in class `Keys`., Simulate a key down for key.     key: int, a value in class `Keys`.     waitTi, Simulate a key up for key.     key: int, a value in class `Keys`.     waitTime, SendInput from Win32.     input: `INPUT`.     Return int, the number of events, Type a single unicode char.     char: str, len(char) must equal to 1.     char, This function is only for internal use in SendKeys.     key: int, a value in cl (+8 more)
+### Community 56 - "Что уже сделано в этой сессии"
+Cohesion: 0.13
+Nodes (14): 1. Подтверждение личности рекламодателя (критично), 2. Способ оплаты (критично), 3. Не включать кампании до пунктов 1–2, DE RSA (Search) — копипаст, Google Ads — полный аудит HUNDESALON NIKA, PMax `HUNDESALON_NIKA` (campaignId `24051075076`), Search-черновик `SEARCH_Hundesalon_Leipzig`, Аккаунт (+6 more)
 
-### Community 98 - "sendmail.js"
-Cohesion: 0.29
-Nodes (14): buildSlackPayload(), COPY, DEFAULT_ADMIN_EMAILS, getAdminEmails(), getClientEmailFrom(), getSalonRecipient(), getSupportReplyTo(), isValidEmail() (+6 more)
-
-### Community 99 - "mcp-site-ops/package.json"
+### Community 57 - "mcp-site-ops/package.json"
 Cohesion: 0.13
 Nodes (14): @modelcontextprotocol/sdk, bin, hundesalon-mcp-site-ops, dependencies, @modelcontextprotocol/sdk, zod, description, name (+6 more)
 
-### Community 100 - "check-project.js"
+### Community 58 - "check-project.js"
 Cohesion: 0.14
 Nodes (11): collectStaleImageScanFiles(), failures, ignoredDirs, indexFiles, outdatedCityPattern, requiredFiles, root, staleImagePatterns (+3 more)
 
-### Community 101 - "filesystem/service.py"
-Cohesion: 0.22
-Nodes (6): File system service for the Windows MCP server. Provides structured, safe file, File, format_size(), Data models and constants for filesystem operations., Format bytes into a human-readable string., TestFormatSize
-
-### Community 102 - "main"
-Cohesion: 0.24
-Nodes (13): main(), Windows-MCP: MCP server for Windows desktop automation., _prepare_serve(), test_both_ssl_and_both_oauth_accepted(), test_oauth_client_id_without_secret_errors(), test_oauth_client_secret_without_id_errors(), test_ssl_certfile_without_keyfile_errors(), test_ssl_keyfile_without_certfile_errors() (+5 more)
-
-### Community 103 - "powershell/service.py"
-Cohesion: 0.21
-Nodes (11): _dedup_path(), PowerShellExecutor, _prepare_env(), PowerShell command executor service, Static utility class for executing PowerShell commands., Read all environment variables from a registry key.      Returns (vars, path,, Join PATH segments and deduplicate entries (case-insensitive)., Call a Win32 GetXxxNameW(LPWSTR, LPDWORD) function.      Only suitable for API (+3 more)
-
-### Community 104 - "test_flash_overlay.py"
-Cohesion: 0.13
-Nodes (7): Unit tests for the screenshot flash overlay.  The actual Tk window is never cr, Each test starts and ends with no overlay registered., _reset_active_overlay(), TestCancelActiveFlash, TestIntensityCurve, TestPremultipliedBgra, TestRunOverlayFallthrough
-
-### Community 105 - "setHeaderWeatherOrbSource"
+### Community 59 - "setHeaderWeatherOrbSource"
 Cohesion: 0.22
 Nodes (14): clearHeaderWeatherOrbCanvas(), drawHeaderWeatherOrbFrame(), loadHeaderWeatherSunSceneModule(), mountHeaderWeatherNasaEyesSun(), resolveHeaderWeatherOrbCropBox(), resolveHeaderWeatherSunSceneModuleUrl(), setHeaderWeatherOrbSource(), startHeaderWeatherOrbRender() (+6 more)
 
-### Community 106 - "IPAllowlistMiddleware"
-Cohesion: 0.15
-Nodes (10): _BaseAddress, _BaseNetwork, IPAllowlistMiddleware, _is_private_target(), ASGIApp, BaseHTTPMiddleware, SSRF protection and IP allowlist utilities for outbound HTTP requests., Raise ValueError if the URL is unsafe to fetch (SSRF protection).      Blocks (+2 more)
+### Community 60 - "HUNDESALON NIKA Full-Stack Upgrade Guide"
+Cohesion: 0.14
+Nodes (13): Google, Google Apps Script gateway, HUNDESALON NIKA Full-Stack Upgrade Guide, Microsoft Teams и Outlook, Быстрая настройка в Cloudflare, Галерея до/после, Обязательные переменные, Платежи (+5 more)
 
-### Community 107 - ".execute_command"
+### Community 61 - "cloudflareApi"
 Cohesion: 0.20
-Nodes (11): RegistryType, delete_entry(), get_value(), list_key(), Registry service for the Windows MCP server. Provides structured operations for, Read a registry value at *path* with the given *name*., Create or update a registry value, creating the key if it does not exist., Delete a registry value when *name* is provided, otherwise remove the entire key (+3 more)
+Nodes (10): addRedirectRule(), auth, createRedirectEntrypoint(), createRobotsPageRule(), desiredRule, getRedirectEntrypoint(), listPageRules(), live (+2 more)
 
-### Community 108 - "cloudflareApi"
-Cohesion: 0.18
-Nodes (11): addRedirectRule(), auth, createRedirectEntrypoint(), createRobotsPageRule(), desiredRule, getRedirectEntrypoint(), listPageRules(), live (+3 more)
-
-### Community 109 - "graphify-run.mjs"
+### Community 62 - "graphify-run.mjs"
 Cohesion: 0.29
 Nodes (13): ensureMeta(), mcpConfig(), outDir, rebuild(), report(), resolvePython(), rest, root (+5 more)
 
-### Community 110 - "process-prompts.mjs"
+### Community 63 - "process-prompts.mjs"
 Cohesion: 0.18
 Nodes (13): buildMcpYamlBlock(), collectMcpServers(), count, describeServer(), home, problems, processPrompts(), readJson() (+5 more)
 
-### Community 111 - "strip-static-shell.mjs"
+### Community 64 - "strip-static-shell.mjs"
 Cohesion: 0.22
 Nodes (13): failures, files, findHeaderStart(), findShellEnd(), findShellStart(), isMinimalShell(), langs, listLocalizedHtmlFiles() (+5 more)
 
-### Community 112 - "manifest.json"
-Cohesion: 0.14
-Nodes (13): description, documentation, homepage, icon, license, long_description, manifest_version, name (+5 more)
-
-### Community 113 - "_OpenClipboard"
-Cohesion: 0.14
-Nodes (14): Bind functions with hotkeys, the function will be run or stopped in another thre, RunByHotKey(), GetClipboardFormats(), GetClipboardHtml(), GetClipboardText(), _GetDictKeyName(), _OpenClipboard(), Any (+6 more)
-
-### Community 114 - "CacheRequest"
-Cohesion: 0.15
-Nodes (7): CacheRequest, CreateCacheRequest(), Wrapper for IUIAutomationCacheRequest., Adds a property to the cache request.         propertyId: int, PropertyId., Adds a pattern to the cache request.         patternId: int, PatternId., Clones the cache request., Creates a new CacheRequest.
-
-### Community 116 - "StylesPattern"
-Cohesion: 0.14
-Nodes (7): Property ExtendedProperties.         Call IUIAutomationStylesPattern::get_Curre, Property FillColor.         Call IUIAutomationStylesPattern::get_CurrentFillCol, Property FillPatternColor.         Call IUIAutomationStylesPattern::get_Current, Property Shape.         Call IUIAutomationStylesPattern::get_CurrentShape., Property StyleId.         Call IUIAutomationStylesPattern::get_CurrentStyleId., Property StyleName.         Call IUIAutomationStylesPattern::get_CurrentStyleNa, StylesPattern
-
-### Community 117 - "test_registry.py"
-Cohesion: 0.14
-Nodes (3): TestRegistryDelete, TestRegistryGet, TestRegistryList
-
-### Community 118 - "mcp.json"
+### Community 65 - "mcp.json"
 Cohesion: 0.19
 Nodes (12): cloudflare-docs, filesystem-hundesalon, github, graphify, memory, playwright, sequential-thinking, site-ops (+4 more)
 
-### Community 119 - "bing-webmaster-complete.mjs"
+### Community 66 - "package.json"
+Cohesion: 0.15
+Nodes (12): author, description, license, main, name, packageManager, private, repository (+4 more)
+
+### Community 67 - "bing-webmaster-complete.mjs"
 Cohesion: 0.18
 Nodes (11): inspectTargets, loadSubmitUrls(), port, report, reportPath, root, runSection(), runSectionBody() (+3 more)
 
-### Community 120 - "build-production.js"
+### Community 68 - "build-production.js"
 Cohesion: 0.17
 Nodes (8): assetVersion, copyEntries, copyRecursive(), dist, root, SKIP_RELATIVE_PATHS, stamped, STAMPED_ASSETS
 
-### Community 121 - "check-links.js"
+### Community 69 - "check-links.js"
 Cohesion: 0.18
 Nodes (9): collectHtmlFiles(), failures, htmlRoots, ignoredDirs, resolveLocalReference(), root, stripUrl(), validRoutes (+1 more)
 
-### Community 122 - "cursor-yolo-reboot-apply.mjs"
+### Community 70 - "cursor-yolo-reboot-apply.mjs"
 Cohesion: 0.22
 Nodes (11): apply(), cursorExe, db, __dirname, killCursor(), ok, root, sleep() (+3 more)
 
-### Community 123 - "fetch-nasa-sun-source.mjs"
+### Community 71 - "fetch-nasa-sun-source.mjs"
 Cohesion: 0.18
 Nodes (10): buildLoopMp4(), buildWarmDisk(), ffmpeg, JPG_RAW, JPG_WARM, LOOP_SECONDS, MP4_OUT, root (+2 more)
 
-### Community 124 - "_FakeRect"
-Cohesion: 0.19
-Nodes (6): _FakeRect, When capture_rect is None the helper must read uia.GetMonitorsRect., Second call must signal the prior overlay's stop_event so it can be torn down., Stand-in for ``uia.Rect`` with the four corner attributes., Full-screen path with zero monitors must not start a thread., TestShowCaptureFlash
-
-### Community 125 - "TestCapture"
-Cohesion: 0.15
-Nodes (4): When an available backend's capture() raises, fall through to the next., Even an explicitly selected backend falls back to pillow on capture failure., Verify the returned image has actual pixel content (not all-zero)., TestCapture
-
-### Community 126 - "main.js"
+### Community 72 - "main.js"
 Cohesion: 0.21
 Nodes (5): enhanceSiteSelect(), initSiteSelects(), refreshSiteSelect(), startTouchLoop(), tickTouches()
 
-### Community 127 - "getHeaderWeatherNowMs"
+### Community 73 - "getHeaderWeatherNowMs"
 Cohesion: 0.24
 Nodes (12): buildHeaderWeatherMetaText(), formatHeaderWeatherLiveTime(), formatHeaderWeatherLiveWeekday(), getHeaderWeatherKnownWeekdayTokens(), getHeaderWeatherNowMs(), getHeaderWeatherTimestampMs(), isHeaderWeatherCurrentMetaFresh(), resolveHeaderWeatherDateLocale() (+4 more)
 
-### Community 128 - "google-gateway/package.json"
+### Community 74 - "google-gateway/package.json"
 Cohesion: 0.17
 Nodes (11): busboy, dependencies, busboy, engines, node, name, private, scripts (+3 more)
 
-### Community 129 - "generate_mcp_yaml.py"
+### Community 75 - "Cloudflare API token — HUNDESALON NIKA"
+Cohesion: 0.17
+Nodes (11): Canonical token: `HUNDESALON_NIKA — Automation`, Cloudflare API token — HUNDESALON NIKA, Legacy aliases (совместимость), Origin CA Key (Deprecated), Если Dashboard застрял на выборе аккаунта, Команды, Люди vs automation, Миграция с двух токенов (+3 more)
+
+### Community 76 - "Git: один main, GitHub (GitLab mirror removed), Cloudflare"
+Cohesion: 0.17
+Nodes (11): CI secrets, Cloudflare после push в GitHub, Git: один main, GitHub (GitLab mirror removed), Cloudflare, GitHub Actions, GitLab CI, Remotes (не трогать без нужды), Ежедневный цикл, Источник правды (+3 more)
+
+### Community 77 - "НАСТРОЙКА КАМПАНИИ (Пошагово)"
+Cohesion: 0.17
+Nodes (12): Бюджет:, Время показов:, Настройка:, НАСТРОЙКА КАМПАНИИ (Пошагово), Объявление 1 (Немецкое):, Объявление 2 (Немецкое):, Объявление 3 (Русское):, Ставки: (+4 more)
+
+### Community 78 - "Slack для HUNDESALON NIKA: полная настройка"
+Cohesion: 0.17
+Nodes (11): 1) Создать Slack App и webhook (Incoming Webhooks), 2) Подключить webhook в окружение проекта, 3) Проверить интеграцию, 4) Перевод Slack на русский язык, 5) Рекомендации по профессиональной эксплуатации, 6) Что настроено отдельно, Slack для HUNDESALON NIKA: полная настройка, Веб/десктоп клиент Slack (+3 more)
+
+### Community 79 - "generate_mcp_yaml.py"
 Cohesion: 0.18
 Nodes (9): Namespace, extract_balanced_json(), generate_mcp_yaml(), parse_mcp_servers_md(), process_target_file(), Generates the indented MCP YAML string from a list of server dicts., Reads target file, performs all substitutions, and writes back., Finds the first '{' and extracts the substring until the matching '}'. (+1 more)
 
-### Community 130 - "bing-index-all-site.mjs"
+### Community 80 - "bing-index-all-site.mjs"
 Cohesion: 0.18
 Nodes (10): listPath, matchesOrigin(), port, prioritizeForBingSubmit(), priorityInspect, report, root, siteQ (+2 more)
 
-### Community 131 - "create-full-backup.mjs"
+### Community 81 - "create-full-backup.mjs"
 Cohesion: 0.17
 Nodes (11): archivePath, backupDir, excludeArgs, excludes, listing, manifest, manifestPath, parentDir (+3 more)
 
-### Community 132 - "google-oauth-playwright-setup.mjs"
+### Community 82 - "google-oauth-playwright-setup.mjs"
 Cohesion: 0.26
 Nodes (10): clickByText(), DOWNLOADS, ensureDesktopClient(), exchangeCode(), GOOGLE_SCOPES, latestOAuthClientJson(), main(), readOAuthClient() (+2 more)
 
-### Community 133 - "setup-all-agents-environment.mjs"
+### Community 83 - "setup-all-agents-environment.mjs"
 Cohesion: 0.27
 Nodes (10): AGENT_ENV, clearWindowsUserEnv(), configureDevinLocal(), configureVsCodeTerminalEnv(), main(), ROOT, runNode(), runPwsh() (+2 more)
 
-### Community 134 - "env"
-Cohesion: 0.17
-Nodes (12): ANONYMIZED_TELEMETRY, UV_NO_SYNC, WINDOWS_MCP_DEBUG, WINDOWS_MCP_PROFILE_SNAPSHOT, WINDOWS_MCP_SCREENSHOT_BACKEND, WINDOWS_MCP_WATCHDOG, command, env (+4 more)
+### Community 84 - "CLAUDE.md"
+Cohesion: 0.18
+Nodes (10): Архитектура проекта, Важные зоны проекта, Ключевые принципы работы, Команды для проверки, Обязательные правила, Ограничения, Особенности контента, Проект (+2 more)
 
-### Community 136 - "AuthKeyMiddleware"
-Cohesion: 0.21
-Nodes (7): AuthKeyMiddleware, OAuthOnlyMiddleware, ASGIApp, BaseHTTPMiddleware, Bearer token and OAuth authentication middleware for HTTP transports., Require Bearer token on all non-public paths.      Accepts either the static a, Authenticate via OAuth Bearer tokens only (no static API key configured).
+### Community 85 - "Инструкция по настройке Google Ads интерфейса для HUNDESALON NIKA"
+Cohesion: 0.18
+Nodes (10): GDPR и приватность:, Google Ads политика:, БЕЗОПАСНОСТЬ И ПРАВИЛА, День 1 (Запуск):, День 2 (Анализ):, День 3 (Оптимизация):, ЗАПУСК И ПЕРВЫЕ 3 ДНЯ, Инструкция по настройке Google Ads интерфейса для HUNDESALON NIKA (+2 more)
 
-### Community 137 - "oauth.py"
-Cohesion: 0.20
-Nodes (8): AccessToken, AuthorizationCode, build_oauth_routes(), OAuthStore, Minimal OAuth 2.0 Authorization Server for MCP spec compatibility.  Supports:, Return a dict of {path: (handler, methods)} for OAuth endpoints., In-memory store for OAuth state (single-process)., RegisteredClient
+### Community 86 - "HUNDESALON_NIKA service audit - 2026-06-26"
+Cohesion: 0.18
+Nodes (10): Cloudflare Pages, Cloudflare Worker fallback, Critical Cloudflare action, Executive status, Google OAuth and Google Cloud, HUNDESALON_NIKA service audit - 2026-06-26, Local editor and agent setup, Post-DNS verification checklist (+2 more)
 
-### Community 138 - "Rect"
-Cohesion: 0.25
-Nodes (7): 3a. Покупка, 3b. Отправка формы, Регистрация, Телефон, Codex prompt: донастройка Google Ads HUNDESALON_NIKA, Задача 1. Asset group — Темы поиска, Задача 2. Аудитории — добавить сигналы, Задача 3. Конверсии — назначить цели и проверить source, После завершения
+### Community 87 - "SMART Audit Report (2026-05-14)"
+Cohesion: 0.18
+Nodes (10): 1) Что уже выполнено безопасно, 2) Текущее состояние репозитория, 3) Риски, которые не нужно делать автоматически, 4) Умный план следующего этапа (безопасный), 5) Рекомендуемые команды релиз-гейта, 6) Вывод, SMART Audit Report (2026-05-14), Этап A (гигиена и контроль изменений) (+2 more)
 
-### Community 139 - "_CreateInput"
-Cohesion: 0.23
-Nodes (12): _CreateInput(), HardwareInput(), KeyboardInput(), MouseInput(), Create Win32 struct `INPUT` for `SendInput`.     Return `INPUT`., Create Win32 struct `KEYBDINPUT` for `SendInput`., Create Win32 struct `HARDWAREINPUT` for `SendInput`., HARDWAREINPUT (+4 more)
-
-### Community 140 - "ProcessInfo"
-Cohesion: 0.17
-Nodes (9): EnumProcessByWMI(), GetProcesses(), ProcessInfo, Enum process by Win32 API.     detailedInfo: bool, only get pid and exeName if, Maybe slower, but can get system processes' info, exeName: str, such as notepad.exe     return int, process count that was termin, tagPROCESSENTRY32, TerminateProcess() (+1 more)
-
-### Community 141 - "AnnotationPattern"
-Cohesion: 0.17
-Nodes (6): AnnotationPattern, Property AnnotationTypeId.         Call IUIAutomationAnnotationPattern::get_Cur, Property AnnotationTypeName.         Call IUIAutomationAnnotationPattern::get_C, Property Author.         Call IUIAutomationAnnotationPattern::get_CurrentAuthor, Property DateTime.         Call IUIAutomationAnnotationPattern::get_CurrentDate, Property Target.         Call IUIAutomationAnnotationPattern::get_CurrentTarget
-
-### Community 142 - "TransformPattern2"
-Cohesion: 0.20
-Nodes (5): Property CanZoom.         Call IUIAutomationTransformPattern2::get_CurrentCanZo, Property ZoomLevel.         Call IUIAutomationTransformPattern2::get_CurrentZoo, Property ZoomMaximum.         Call IUIAutomationTransformPattern2::get_CurrentZ, Call IUIAutomationTransformPattern2::Zoom.         Zoom the viewport of the con, TransformPattern2
-
-### Community 143 - "repair-service-runtime.ps1"
+### Community 88 - "repair-service-runtime.ps1"
 Cohesion: 0.20
 Nodes (5): engines, node, npm, Invoke-NpmScript(), Write-Info()
 
-### Community 144 - "gmail-cleanup-actions-failures.mjs"
+### Community 89 - "gmail-cleanup-actions-failures.mjs"
 Cohesion: 0.18
 Nodes (10): creds, credsPath, gmail, gmailMcpRoot, { google }, keys, keysPath, mcpDir (+2 more)
 
-### Community 145 - "test_screenshot_capture.py"
-Cohesion: 0.43
-Nodes (3): get_screenshot_backend(), Read the preferred backend from the environment variable., TestGetScreenshotBackend
+### Community 90 - "🏗️ Flow Architect"
+Cohesion: 0.20
+Nodes (9): Cursor tool mapping (not Roo XML), 🏗️ Flow Architect, Focus, HUNDESALON_NIKA constraints, Memory Bank protocol (all Flow modes), Mode roster (handoffs), Role, Session start (non-trivial work) (+1 more)
 
-### Community 146 - "Directory"
-Cohesion: 0.25
-Nodes (3): Directory, TestConstants, TestDirectory
+### Community 91 - "❓ Flow Ask"
+Cohesion: 0.20
+Nodes (9): Cursor tool mapping (not Roo XML), ❓ Flow Ask, Focus, HUNDESALON_NIKA constraints, Memory Bank protocol (all Flow modes), Mode roster (handoffs), Role, Session start (non-trivial work) (+1 more)
 
-### Community 147 - "powershell/utils.py"
-Cohesion: 0.25
-Nodes (8): Send a Windows toast notification with a title and message.      Args:, send_notification(), check_pid_exists(), ps_quote_for_xml(), XML-escape then ps_quote. Use for values in XML passed to PowerShell., Check whether a process with the given PID is actively running., A Windows-oriented variant migrated from ``subprocess.run``.      This helper, run_with_graceful_timeout()
+### Community 92 - "💻 Flow Code"
+Cohesion: 0.20
+Nodes (9): Cursor tool mapping (not Roo XML), 💻 Flow Code, Focus, HUNDESALON_NIKA constraints, Memory Bank protocol (all Flow modes), Mode roster (handoffs), Role, Session start (non-trivial work) (+1 more)
 
-### Community 148 - "configure-webstorm-notifications.ps1"
+### Community 93 - "🪲 Flow Debug"
+Cohesion: 0.20
+Nodes (9): Cursor tool mapping (not Roo XML), 🪲 Flow Debug, Focus, HUNDESALON_NIKA constraints, Memory Bank protocol (all Flow modes), Mode roster (handoffs), Role, Session start (non-trivial work) (+1 more)
+
+### Community 94 - "🪃 Flow Orchestrator"
+Cohesion: 0.20
+Nodes (9): Cursor tool mapping (not Roo XML), 🪃 Flow Orchestrator, Focus, HUNDESALON_NIKA constraints, Memory Bank protocol (all Flow modes), Mode roster (handoffs), Role, Session start (non-trivial work) (+1 more)
+
+### Community 95 - "Google Ads — ryndenko PMax draft status"
+Cohesion: 0.20
+Nodes (9): Checklist, CRITICAL — groom purge (DONE this pass), Descriptions (5), Final headlines (15), Google Ads — ryndenko PMax draft status, Long headlines (5), Media (last known), OPEN (non-blocking for groom) (+1 more)
+
+### Community 96 - "150. FINAL ACCEPTANCE CRITERIA"
+Cohesion: 0.20
+Nodes (10): 150. FINAL ACCEPTANCE CRITERIA, Accessibility, Content, Languages, Legal, Quality, Routing, SEO (+2 more)
+
+### Community 97 - "Decision Log"
+Cohesion: 0.20
+Nodes (9): Decision, Decision, Decision, Decision Log, Implementation Details, Implementation Details, Rationale, Rationale (+1 more)
+
+### Community 98 - "configure-webstorm-notifications.ps1"
 Cohesion: 0.49
 Nodes (8): Backup-File(), Disable-AiOnboardingPromo(), Ensure-McpBraveMode(), Ensure-McpProcessedClients(), Ensure-QuietNpmEnv(), Set-XmlOptionValue(), Write-Ok(), Write-WarnLine()
 
-### Community 149 - "generate-brand-assets.ps1"
+### Community 99 - "generate-brand-assets.ps1"
 Cohesion: 0.40
 Nodes (8): Get-EdgePaddingPx(), Get-FittedSquareRect(), Get-ImageAlphaBounds(), New-BrandIconPng(), New-Canvas(), New-LogoPng(), New-SocialPreview(), Save-Png()
 
-### Community 150 - "server.json"
-Cohesion: 0.20
-Nodes (9): description, name, packages, repository, source, url, $schema, status (+1 more)
-
-### Community 151 - "_MssBackend"
-Cohesion: 0.31
-Nodes (4): _MssBackend, Capture via the *mss* library., Verify mss capture of a non-primary monitor region is not corrupted by double-cr, TestMssBackend
-
-### Community 152 - "list_directory"
-Cohesion: 0.33
-Nodes (3): list_directory(), List contents of a directory., TestListDirectory
-
-### Community 153 - "snapshot.py"
-Cohesion: 0.38
-Nodes (8): _as_bool(), build_snapshot_response(), capture_desktop_state(), Snapshot / Screenshot shared helpers.  These functions were originally defined, _screenshot_scale(), _snapshot_profile_enabled(), Snapshot and Screenshot tools — desktop state capture., register()
-
-### Community 154 - "UIAutomationInitializerInThread"
-Cohesion: 0.05
-Nodes (37): AppBarControl, ControlFromCursor(), ControlFromCursor2(), ControlFromHandle(), ControlFromPoint(), ControlFromPoint2(), ControlsAreSame(), EnumAndLogControl() (+29 more)
-
-### Community 155 - "MultipleViewPattern"
-Cohesion: 0.25
-Nodes (5): _get_backend(), Return a cached singleton instance for the given backend *name*., Base class for screenshot capture backends.      Subclasses **must** define tw, Return ``True`` if this backend can service the request., _ScreenshotBackend
-
-### Community 156 - "SelectionPattern2"
-Cohesion: 0.29
-Nodes (6): 1. Изображения, 2. Sitelinks, 3. Темы поиска, 4. Аудитории, 5. Конверсии, Google Ads — ручная донастройка кампании HUNDESALON_NIKA
-
-### Community 158 - "tooltip.js"
+### Community 100 - "tooltip.js"
 Cohesion: 0.47
 Nodes (8): attach(), getHeaderHeight(), hideTip(), normalizeTooltipText(), routeKey(), scanAndAttach(), showTip(), socialKey()
 
-### Community 159 - "payment.js"
-Cohesion: 0.42
-Nodes (7): depositCents(), onRequest(), paymentsOnlineEnabled(), siteOrigin(), stripeForm(), stripeGet(), stripeKey()
+### Community 101 - "graphify reference: extra exports and benchmark"
+Cohesion: 0.22
+Nodes (8): graphify reference: extra exports and benchmark, Step 6b - Wiki (only if --wiki flag), Step 7 - Neo4j export (only if --neo4j or --neo4j-push flag), Step 7a - FalkorDB export (only if --falkordb or --falkordb-push flag), Step 7b - SVG export (only if --svg flag), Step 7c - GraphML export (only if --graphml flag), Step 7d - MCP server (only if --mcp flag), Step 8 - Token reduction benchmark (only if total_words > 5000)
 
-### Community 160 - "keywords"
+### Community 102 - "Ponytail"
+Cohesion: 0.22
+Nodes (8): Boundaries, Intensity, Output, Persistence, Ponytail, Rules, The ladder, When NOT to be lazy
+
+### Community 103 - "136. FINAL RELEASE CHECKLIST"
+Cohesion: 0.22
+Nodes (9): 136. FINAL RELEASE CHECKLIST, Accessibility, Application, Content, Languages, Legal, Pages, SEO (+1 more)
+
+### Community 104 - "71. FINAL WEBSITE AUDIT BEFORE DELIVERY"
+Cohesion: 0.22
+Nodes (9): 71. FINAL WEBSITE AUDIT BEFORE DELIVERY, Accessibility Audit, Architecture Audit, Language Audit, Legal Audit, Performance Audit, SEO Audit, Technical Audit (+1 more)
+
+### Community 105 - "86. FINAL REPORT REQUIREMENT"
+Cohesion: 0.22
+Nodes (9): 86. FINAL REPORT REQUIREMENT, Files Modified, Language Changes, Legal Changes, SEO Changes, Summary, Technical Changes, UX Changes (+1 more)
+
+### Community 106 - "keywords"
 Cohesion: 0.22
 Nodes (9): keywords, cats, dogs, grooming, leipzig, multilingual, salon, weather-widget (+1 more)
 
-### Community 161 - "bing-webmaster-automate.mjs"
-Cohesion: 0.28
-Nodes (7): evaluate(), inspectHome(), listPath, port, priorityUrls, root, submitUrls()
-
-### Community 162 - "check-agents-routing.js"
-Cohesion: 0.31
-Nodes (8): assert(), entryPoints, exists(), failures, mustMention(), read(), requiredFiles, root
-
-### Community 163 - "configure-cloudflare-cache-features.mjs"
-Cohesion: 0.14
-Nodes (7): Return `GridItemPattern` if it supports the pattern else None(Conditional suppor, GridItemPattern, Property Column.         Call IUIAutomationGridItemPattern::get_CurrentColumn., Property ColumnSpan.         Call IUIAutomationGridItemPattern::get_CurrentColu, Property ContainingGrid.         Call IUIAutomationGridItemPattern::get_Current, Property Row.         Call IUIAutomationGridItemPattern::get_CurrentRow., Property RowSpan.         Call IUIAutomationGridItemPattern::get_CurrentRowSpan
-
-### Community 164 - "configure-webstorm-mcp-clients.ps1"
-Cohesion: 0.42
-Nodes (8): Configure-JsonClient(), ConvertTo-Hashtable(), Ensure-CodexWebstormToml(), Read-JsonHashtable(), Write-JsonFile(), Write-Ok(), Write-Step(), Write-WarnLine()
-
-### Community 165 - "cursor-yolo-persist.mjs"
-Cohesion: 0.22
-Nodes (6): apply, db, root, seconds, sqlite, tmp
-
-### Community 166 - "git-cleanup.mjs"
-Cohesion: 0.22
-Nodes (7): branches, current, kept, merged, prunable, remoteBranches, worktrees
-
-### Community 167 - "optimize-webstorm-memory.ps1"
-Cohesion: 0.47
-Nodes (8): Clear-AiAssistantCaches(), Ensure-VmOptions(), Get-DirSizeMb(), Start-WebStormProject(), Stop-WebStormGracefully(), Write-Ok(), Write-Step(), Write-WarnLine()
-
-### Community 168 - "site-crawl-live.mjs"
-Cohesion: 0.22
-Nodes (5): failed, outPath, report, root, urls
-
-### Community 169 - "test_deterministic_drag_desktop.py"
-Cohesion: 0.44
-Nodes (7): _desktop(), MonkeyPatch, test_desktop_drag_legacy_start_uses_current_cursor(), test_desktop_drag_rejects_boolean_duration_before_input(), test_desktop_drag_rejects_invalid_points_before_waiting_or_input(), test_desktop_drag_rejects_non_finite_duration(), test_desktop_drag_uses_explicit_start_and_duration()
-
-### Community 170 - "_PillowBackend"
-Cohesion: 0.33
-Nodes (4): _PillowBackend, Capture via PIL *ImageGrab* (always available)., Verify pillow capture of a non-primary monitor region is not corrupted by double, TestPillowBackend
-
-### Community 171 - "ps_quote"
-Cohesion: 0.36
-Nodes (3): ps_quote(), Wrap value in PowerShell single-quoted string literal (escapes ' as '')., TestPsQuote
-
-### Community 172 - ".SetActive"
-Cohesion: 0.29
-Nodes (6): unifiedTokenProfileTemplateUrl(), unifiedTokenTemplateUrl(), encodePermissionGroupKeys(), userTokenTemplateUrl(), fallbackUrl, url
-
-### Community 173 - "DragPattern"
-Cohesion: 0.25
-Nodes (4): DragPattern, Property DropEffect.         Call IUIAutomationDragPattern::get_CurrentDropEffe, Property IsGrabbed.         Call IUIAutomationDragPattern::get_CurrentIsGrabbed, Call IUIAutomationDragPattern::GetCurrentGrabbedItems.         Return List[Cont
-
-### Community 175 - "subscribe.js"
-Cohesion: 0.46
-Nodes (7): cleanText(), getEnvList(), COPY, DEFAULT_ADMIN_EMAILS, isValidEmail(), onRequest(), uniqueEmailList()
-
-### Community 176 - "cursor-settings-status.mjs"
-Cohesion: 0.29
-Nodes (7): cli, get(), live, o, q(), report, sqlite
-
-### Community 177 - "import-sun-reference.mjs"
-Cohesion: 0.25
-Nodes (6): OUT, root, searchRoots, sizeMb, source, sunDir
-
-### Community 178 - "normalize_seo_urls.cjs"
-Cohesion: 0.25
-Nodes (4): fs, languages, path, workspaceRoot
-
-### Community 179 - "export-cursor-flow.mjs"
-Cohesion: 0.29
-Nodes (6): MODES, root, rulesDir, skillBody(), skillsRoot, writeSkills()
-
-### Community 180 - "set-resend-secret.mjs"
-Cohesion: 0.25
-Nodes (4): args, flags, positional, resendKey
-
-### Community 181 - "start-persistent-browser.mjs"
-Cohesion: 0.25
-Nodes (7): args, argv, cdpIdx, exe, kind, profileDir, root
-
-### Community 182 - "is_elevated"
-Cohesion: 0.32
-Nodes (5): is_elevated(), Check if the current process has administrative privileges., Write or append text content to a file., write_file(), TestWriteFile
-
-### Community 183 - "copy_path"
-Cohesion: 0.39
-Nodes (3): copy_path(), Copy a file or directory to a new location., TestCopyPath
-
-### Community 184 - "delete_path"
-Cohesion: 0.39
-Nodes (3): delete_path(), Delete a file or directory., TestDeletePath
-
-### Community 185 - "app.py"
-Cohesion: 0.14
-Nodes (16): FastMCP, _as_args(), _launch_executable(), Path, App tool — launch, resize, switch applications., register(), _resolve_cwd(), _resolve_executable() (+8 more)
-
-### Community 186 - "SpreadsheetItemPattern"
-Cohesion: 0.33
-Nodes (3): apiKey, args, positional
-
-### Community 187 - "test_deterministic_drag_core.py"
-Cohesion: 0.43
-Nodes (7): MonkeyPatch, test_dragdrop_releases_mouse_after_move_failure(), test_dragdrop_releases_mouse_after_press_failure(), test_dragdrop_uses_duration_path_and_releases(), test_move_to_duration_emits_intermediate_and_final_positions(), test_move_to_duration_honors_short_positive_duration(), test_move_to_duration_zero_duration_sets_final_position()
-
-### Community 188 - "test_multi_tools.py"
-Cohesion: 0.20
-Nodes (10): _as_loc(), MultiSelect and MultiEdit tools — batch element interaction., Coerce a JSON-stringified list back to a list (Claude Desktop workaround)., register(), FakeMCP, make_desktop_with_tree_state(), register_tools(), test_get_coordinates_from_labels_returns_bulk_coordinates() (+2 more)
-
-### Community 189 - "bing-robots-tester.mjs"
-Cohesion: 0.08
-Nodes (20): out, port, report, root, siteQ, summary, out, port (+12 more)
-
-### Community 190 - "image-reader.py"
-Cohesion: 0.48
-Nodes (6): Path, analyze(), dominant_colors(), find_tesseract(), image_to_base64(), resolve_path()
-
-### Community 191 - "optimize_fcp_head.cjs"
-Cohesion: 0.29
-Nodes (4): fs, locales, path, workspaceRoot
-
-### Community 192 - "start-edge-bing-debug.mjs"
-Cohesion: 0.29
-Nodes (4): candidates, child, site, userDataDir
-
-### Community 193 - "sync-google-local-secrets.mjs"
-Cohesion: 0.33
-Nodes (6): adcPath, devVarsPath, main(), root, secretsDir, upsertDevVar()
-
-### Community 194 - "user_config"
-Cohesion: 0.29
-Nodes (7): default, description, required, title, type, user_config, debug
-
-### Community 195 - "test_filesystem_service.py"
-Cohesion: 0.38
-Nodes (3): move_path(), Move or rename a file or directory., TestMovePath
-
-### Community 196 - "search_files"
-Cohesion: 0.43
-Nodes (3): Search for files matching a glob pattern., search_files(), TestSearchFiles
-
-### Community 197 - "read_file"
-Cohesion: 0.43
-Nodes (3): Read the contents of a text file., read_file(), TestReadFile
-
-### Community 198 - "keywords"
-Cohesion: 0.33
-Nodes (6): ai, automation, computer-use, mcp, windows, keywords
-
-### Community 199 - "args"
-Cohesion: 0.33
-Nodes (6): --directory, ${__dirname}, run, serve, windows-mcp, args
-
-### Community 200 - "convert_to_webm.ps1"
-Cohesion: 0.53
-Nodes (4): Convert-FallbackMp4(), Convert-WithAlpha(), Format-CommandArgs(), Invoke-Ffmpeg()
-
-### Community 201 - "bing-edge-and-finish.mjs"
-Cohesion: 0.47
-Nodes (5): cdpReady(), child, ensureEdge(), root, startEdge()
-
-### Community 202 - "generate-brand-sitemap.mjs"
-Cohesion: 0.33
-Nodes (5): brandPaths, out, root, today, urls
-
-### Community 203 - "server.mjs"
-Cohesion: 0.33
-Nodes (3): ROOT, server, transport
-
-### Community 204 - "post-deploy.mjs"
-Cohesion: 0.15
-Nodes (11): LOCAL_DIRECTORIES, q, q2, out, port, probeUrl(), report, root (+3 more)
-
-### Community 205 - "restart-mcp-clients.ps1"
-Cohesion: 0.47
-Nodes (3): Start-App(), Write-Ok(), Write-WarnLine()
-
-### Community 206 - "anonymized_telemetry"
-Cohesion: 0.33
-Nodes (6): default, description, required, title, type, anonymized_telemetry
-
-### Community 207 - "profile_snapshot"
-Cohesion: 0.33
-Nodes (6): default, description, required, title, type, profile_snapshot
-
-### Community 208 - "screenshot_backend"
-Cohesion: 0.33
-Nodes (6): default, description, required, title, type, screenshot_backend
-
-### Community 209 - "watchdog"
-Cohesion: 0.33
-Nodes (6): watchdog, default, description, required, title, type
-
-### Community 210 - "get_file_info"
-Cohesion: 0.47
-Nodes (3): get_file_info(), Get detailed metadata about a file or directory., TestGetFileInfo
-
-### Community 211 - "GetWindowLong from Win32.     handle: int, the handle of a native window."
-Cohesion: 0.33
-Nodes (5): GetWindowLong(), GetWindowText(), GetWindowLong from Win32.     handle: int, the handle of a native window., SetWindowLong(), SetWindowText()
-
-### Community 212 - "GetDisplays"
-Cohesion: 0.33
-Nodes (6): _active_display_indices(), _DisplayDeviceW, GetDisplays(), GetMonitorsRect(), Get active displays keyed by zero-based active display index.     Return List[D, Get monitors' rect.     Return List[Rect].
-
-### Community 213 - ".Select"
-Cohesion: 0.15
-Nodes (7): Any, Get the cached controller for., Get the cached described by., Get the cached flows to., Get the cached labeled by., Retrieve a cached property value from this UI Automation element.         Call, Call IUIAutomationElement::GetCurrentPropertyValue.         propertyId: int, a
-
-### Community 214 - ".SetValue"
-Cohesion: 0.17
-Nodes (11): BOOST, changed, extendOne(), isLegal(), LEGAL_SUFFIX, next, outPath, root (+3 more)
-
-### Community 215 - "SynchronizedInputPattern"
-Cohesion: 0.17
-Nodes (6): Return `MultipleViewPattern` if it supports the pattern else None(Conditional su, MultipleViewPattern, Property CurrentView.         Call IUIAutomationMultipleViewPattern::get_Curren, Call IUIAutomationMultipleViewPattern::GetCurrentSupportedViews, todo., Call IUIAutomationMultipleViewPattern::GetViewName.         view: int, the cont, Call IUIAutomationMultipleViewPattern::SetCurrentView.         Set the view of
-
-### Community 217 - "block-secrets.mjs"
-Cohesion: 0.40
-Nodes (3): command, filePath, payload
-
-### Community 218 - "compatibility"
-Cohesion: 0.40
-Nodes (5): win32, compatibility, platforms, runtimes, python
-
-### Community 219 - "build_moon_alpha_assets.ps1"
-Cohesion: 0.60
-Nodes (3): Build-Job(), Format-CommandArgs(), Invoke-Ffmpeg()
-
-### Community 221 - "add-newsletter-labels.mjs"
-Cohesion: 0.40
-Nodes (3): labelText, langs, root
-
-### Community 222 - "cf-www-robots-setup.mjs"
-Cohesion: 0.40
-Nodes (3): redirect, root, token
-
-### Community 223 - "check-message-draft-live.mjs"
-Cohesion: 0.40
-Nodes (3): attempts, delayMs, payload
-
-### Community 224 - "check-newsletter-labels.mjs"
-Cohesion: 0.40
-Nodes (3): failures, langs, root
-
-### Community 225 - "git-push-all.mjs"
-Cohesion: 0.40
-Nodes (3): current, local, remoteSha
-
-### Community 226 - "image-server.mjs"
-Cohesion: 0.40
-Nodes (4): __dirname, PORT, ROOT, server
-
-### Community 227 - "patch-weather-search.mjs"
-Cohesion: 0.40
-Nodes (4): copyReplacements, service, servicePath, widgetFiles
-
-### Community 228 - "price-list-smoke.mjs"
-Cohesion: 0.40
-Nodes (3): checks, locales, outDir
-
-### Community 229 - "release.ps1"
-Cohesion: 0.60
-Nodes (3): Invoke-NpmScript(), Write-Ok(), Write-Step()
-
-### Community 230 - "restore-weather-clouds-original.mjs"
-Cohesion: 0.40
-Nodes (4): hEnd, hStart, replacements, s
-
-### Community 231 - "rewrite-meta-clean.mjs"
-Cohesion: 0.40
-Nodes (3): bad, META, root
-
-### Community 232 - "run-npm-quiet.mjs"
-Cohesion: 0.40
-Nodes (3): args, env, npmCmd
-
-### Community 234 - "sync-dev-vars.js"
-Cohesion: 0.40
-Nodes (4): distDir, keyAssetPath, lines, source
-
-### Community 235 - "weather-widget-smoke.mjs"
-Cohesion: 0.40
-Nodes (4): consoleErrors, failedRequests, host, sunScene404
-
-### Community 236 - "show_capture_flash"
-Cohesion: 0.40
-Nodes (4): _flash_disabled(), _Overlay, Show a fade-in/out orange-red glow for a screenshot capture.      Pass the sam, show_capture_flash()
-
-### Community 237 - "OptionsMiddleware"
-Cohesion: 0.50
-Nodes (3): OptionsMiddleware, Any, ASGI middleware that intercepts OPTIONS preflight requests.      Only echoes C
-
-### Community 238 - "ControlType"
-Cohesion: 0.67
-Nodes (3): ControlType, PropertyId, ControlType from IUIAutomation.     Refer https://docs.microsoft.com/en-us/wind
-
-### Community 240 - "screenshots"
-Cohesion: 0.50
-Nodes (4): assets/screenshots/screenshot_1.png, assets/screenshots/screenshot_2.png, assets/screenshots/screenshot_3.png, screenshots
-
-### Community 242 - "bing-launch-edge-api.mjs"
-Cohesion: 0.50
-Nodes (3): candidates, siteQ, userDataDir
-
-### Community 244 - "check-all.mjs"
-Cohesion: 0.67
-Nodes (3): branch, run(), runNpm()
-
-### Community 246 - "check-scene3d-brackets.mjs"
-Cohesion: 0.50
-Nodes (3): s, start, tail
-
-### Community 248 - "patch-weather-clouds.mjs"
-Cohesion: 0.50
-Nodes (3): intensityPatches, replacements, s
-
-### Community 249 - "patch-weather-clouds-fit.mjs"
-Cohesion: 0.50
-Nodes (3): replacements, s, widgetFiles
-
-### Community 250 - "patch-weather-service.mjs"
-Cohesion: 0.50
-Nodes (3): inEnd, inStart, s
-
-### Community 251 - "revert-weather-clouds.mjs"
-Cohesion: 0.50
-Nodes (3): replacements, s, widgetFiles
-
-### Community 252 - "setup-ponytail.mjs"
-Cohesion: 0.50
-Nodes (3): root, skills, tmp
-
-### Community 254 - "WaitHotKeyReleased"
-Cohesion: 0.50
-Nodes (4): hotkey: Tuple[int, int], two ints tuple (modifierKey, key), WaitHotKeyReleased(), IsKeyPressed(), key: int, a value in class `Keys`.     Return bool.
-
-### Community 255 - "GetEditText"
-Cohesion: 0.50
-Nodes (4): GetEditText(), Get text of a native Win32 Edit.     handle: int, the handle of a native window, SendMessage from Win32.     Return int, the return value specifies the result o, SendMessage()
-
-### Community 257 - ".RemoveFromSelection"
-Cohesion: 0.09
-Nodes (11): Return `SelectionItemPattern` if it supports the pattern else None(Must support, Property SelectionContainer.         Call IUIAutomationScrollPattern::get_Curre, Call IUIAutomationSelectionItemPattern::RemoveFromSelection.         Remove thi, Call IUIAutomationSelectionItemPattern::Select.         Clear any selected item, Call IUIAutomationTextRange::AddToSelection.         Add the text range to the, Call IUIAutomationTextRange::RemoveFromSelection.         Remove the text range, Call IUIAutomationTextRange::Select.         Select the span of text that corre, Call IUIAutomationLegacyIAccessiblePattern::Select.         Perform a Microsoft (+3 more)
-
-### Community 261 - "pages-proxy.js"
-Cohesion: 0.83
-Nodes (3): fetch(), PUBLIC_HOSTS, publicUrlFromPages()
-
-### Community 280 - "author"
-Cohesion: 0.67
-Nodes (3): author, name, url
-
-### Community 281 - "SetConsoleColor"
-Cohesion: 0.67
-Nodes (3): Change the text color on console window.     color: int, a value in class `Cons, SetConsoleColor(), ConsoleScreenBufferInfo
-
-### Community 308 - "DockPattern"
-Cohesion: 0.24
-Nodes (4): Return `DockPattern` if it supports the pattern else None(Conditional support ac, DockPattern, Property DockPosition.         Call IUIAutomationDockPattern::get_CurrentDockPo, Call IUIAutomationDockPattern::SetDockPosition.         dockPosition: int, a va
-
-### Community 311 - "sync-brand-profiles.mjs"
-Cohesion: 0.24
-Nodes (7): SAME_AS, businessDesc, indexFiles, pickSameAsHost(), report, root, updateLlmsTxt()
-
-### Community 312 - "bing-api-setup.mjs"
+### Community 107 - "bing-api-setup.mjs"
 Cohesion: 0.22
 Nodes (6): ensureCdp(), port, report, root, siteQ, verify
 
-### Community 314 - "fit-meta-descriptions.mjs"
-Cohesion: 0.25
-Nodes (7): bad, cleanBase(), CLOSE, fit(), next, report, root
+### Community 108 - "bing-webmaster-automate.mjs"
+Cohesion: 0.28
+Nodes (7): evaluate(), inspectHome(), listPath, port, priorityUrls, root, submitUrls()
 
-### Community 315 - "CalendarControl"
-Cohesion: 0.17
-Nodes (3): CalendarControl, ImageControl, TextControl
+### Community 109 - "check-agents-routing.js"
+Cohesion: 0.31
+Nodes (8): assert(), entryPoints, exists(), failures, mustMention(), read(), requiredFiles, root
 
-### Community 317 - "TablePattern"
-Cohesion: 0.25
-Nodes (3): Property RowOrColumnMajor.         Call IUIAutomationTablePattern::get_CurrentR, Call IUIAutomationTablePattern::GetCurrentColumnHeaders.         Return List[Co, TablePattern
+### Community 110 - "configure-webstorm-mcp-clients.ps1"
+Cohesion: 0.42
+Nodes (8): Configure-JsonClient(), ConvertTo-Hashtable(), Ensure-CodexWebstormToml(), Read-JsonHashtable(), Write-JsonFile(), Write-Ok(), Write-Step(), Write-WarnLine()
 
-### Community 343 - "Rect"
+### Community 111 - "cursor-yolo-persist.mjs"
 Cohesion: 0.22
-Nodes (5): Rect, Get the cached bounding rectangle., Property BoundingRectangle.         Call IUIAutomationElement::get_CurrentBound, Return the bounding box of the word at screen point (x, y), via `TextPattern`., Return the bounding box of every word in the control's visible text (via `TextPa
+Nodes (6): apply, db, root, seconds, sqlite, tmp
 
-### Community 344 - "expand-thin-pages.mjs"
+### Community 112 - "git-cleanup.mjs"
+Cohesion: 0.22
+Nodes (7): branches, current, kept, merged, prunable, remoteBranches, worktrees
+
+### Community 113 - "optimize-webstorm-memory.ps1"
+Cohesion: 0.47
+Nodes (8): Clear-AiAssistantCaches(), Ensure-VmOptions(), Get-DirSizeMb(), Start-WebStormProject(), Stop-WebStormGracefully(), Write-Ok(), Write-Step(), Write-WarnLine()
+
+### Community 114 - "site-crawl-live.mjs"
+Cohesion: 0.22
+Nodes (5): failed, outPath, report, root, urls
+
+### Community 115 - "Ponytail Help"
+Cohesion: 0.25
+Nodes (7): Configure Default Mode, Deactivate, Levels, More, Ponytail Help, Skills, Update
+
+### Community 116 - "Codex prompt: донастройка Google Ads HUNDESALON_NIKA"
+Cohesion: 0.25
+Nodes (7): 3a. Покупка, 3b. Отправка формы, Регистрация, Телефон, Codex prompt: донастройка Google Ads HUNDESALON_NIKA, Задача 1. Asset group — Темы поиска, Задача 2. Аудитории — добавить сигналы, Задача 3. Конверсии — назначить цели и проверить source, После завершения
+
+### Community 117 - "Google Ads Keyword Planner — HUNDESALON NIKA"
+Cohesion: 0.25
+Nodes (7): Google Ads Keyword Planner — HUNDESALON NIKA, Гео, Минус-слова, Не добавлять из подсказок Планировщика, Результаты из Планировщика (DE / Германия), Рекомендуемые ключи для Search (Phrase + Exact), Статус
+
+### Community 118 - "Полное руководство по настройке Google Ads для HUNDESALON NIKA"
+Cohesion: 0.25
+Nodes (7): 13. ЗАПУСК КАМПАНИИ, 8. РАСПИСАНИЕ ПОКАЗОВ, Время показов:, Запуск:, Настройка:, Полное руководство по настройке Google Ads для HUNDESALON NIKA, Чек-лист перед запуском:
+
+### Community 119 - "Done"
+Cohesion: 0.25
+Nodes (7): Done, Google Ads (snaiper), Google Business Profile (snaiper), Google cleanup — snaiper1984 → ryndenko1982, Google Search Console (`sc-domain:hundesalon-nika.com`), Repo pointers, Still later (salon ops on ryndenko)
+
+### Community 120 - "HUNDESALON_NIKA service audit - 2026-07-05"
+Cohesion: 0.25
+Nodes (7): Cloudflare, Executive status, Google Cloud, HUNDESALON_NIKA service audit - 2026-07-05, Local IDE and agent hygiene, Production domain, Validation
+
+### Community 121 - "Карта сайта HUNDESALON NIKA"
+Cohesion: 0.25
+Nodes (7): SEO / индексация, Аккаунты поиска, Карта сайта HUNDESALON NIKA, Общий shell (не дублировать в HTML), Проверки (регулярно), Страницы (одинаковые slug во всех локалях), Структура
+
+### Community 122 - "Security Policy"
+Cohesion: 0.25
+Nodes (6): Dependency Security, Reporting a Vulnerability, Secrets, Security Policy, Supported Surface, Security Policy Location
+
+### Community 123 - "cursor-settings-status.mjs"
 Cohesion: 0.29
-Nodes (5): block(), COPY, jobs, root, upsert()
+Nodes (7): cli, get(), live, o, q(), report, sqlite
 
-### Community 345 - ".SetTopmost"
+### Community 124 - "import-sun-reference.mjs"
+Cohesion: 0.25
+Nodes (6): OUT, root, searchRoots, sizeMb, source, sunDir
+
+### Community 125 - "normalize_seo_urls.cjs"
+Cohesion: 0.25
+Nodes (4): fs, languages, path, workspaceRoot
+
+### Community 126 - "export-cursor-flow.mjs"
+Cohesion: 0.29
+Nodes (6): MODES, root, rulesDir, skillBody(), skillsRoot, writeSkills()
+
+### Community 127 - "set-resend-secret.mjs"
+Cohesion: 0.25
+Nodes (4): args, flags, positional, resendKey
+
+### Community 128 - "start-persistent-browser.mjs"
+Cohesion: 0.25
+Nodes (7): args, argv, cdpIdx, exe, kind, profileDir, root
+
+### Community 129 - "Google Ads — ручная донастройка кампании HUNDESALON_NIKA"
+Cohesion: 0.29
+Nodes (6): 1. Изображения, 2. Sitelinks, 3. Темы поиска, 4. Аудитории, 5. Конверсии, Google Ads — ручная донастройка кампании HUNDESALON_NIKA
+
+### Community 130 - "111. COMPLETE PROJECT AUDIT CHECKLIST"
+Cohesion: 0.29
+Nodes (7): 111. COMPLETE PROJECT AUDIT CHECKLIST, Content, Languages, Legal, SEO, Structure, UX
+
+### Community 131 - "Cloudflare caching for hundesalon-nika.com"
+Cohesion: 0.29
+Nodes (6): After every production deploy, API token for automated purge, Cloudflare caching for hundesalon-nika.com, Problem, Recommended Cache Rules (Dashboard), Verify production HTML
+
+### Community 132 - "Code of Conduct"
+Cohesion: 0.29
+Nodes (6): Code of Conduct, Enforcement, Expected Behavior, Our Commitment, Reporting, Unacceptable Behavior
+
+### Community 133 - "ISSUE_TEMPLATE.md"
+Cohesion: 0.29
+Nodes (6): Actual Behavior, Additional Context, Environment, Expected Behavior, Steps to Reproduce, Summary
+
+### Community 134 - "pull_request_template.md"
+Cohesion: 0.29
+Nodes (6): Multilingual Impact, Notes, Risk and Rollback, Root Cause, Summary, Validation
+
+### Community 135 - "image-reader.py"
+Cohesion: 0.48
+Nodes (6): Path, analyze(), dominant_colors(), find_tesseract(), image_to_base64(), resolve_path()
+
+### Community 136 - "bing-robots-tester.mjs"
+Cohesion: 0.29
+Nodes (6): out, port, report, root, siteQ, testLabel
+
+### Community 137 - "open-cf-unified-token.mjs"
+Cohesion: 0.29
+Nodes (6): unifiedTokenProfileTemplateUrl(), unifiedTokenTemplateUrl(), encodePermissionGroupKeys(), userTokenTemplateUrl(), fallbackUrl, url
+
+### Community 138 - "optimize_fcp_head.cjs"
+Cohesion: 0.29
+Nodes (4): fs, locales, path, workspaceRoot
+
+### Community 139 - "start-edge-bing-debug.mjs"
+Cohesion: 0.29
+Nodes (4): candidates, child, site, userDataDir
+
+### Community 140 - "sync-google-local-secrets.mjs"
 Cohesion: 0.33
-Nodes (5): Set top level window topmost.         isTopmost: bool.         waitTime: float, SetWindowPos from Win32.     handle: int, the handle of a native window.     h, handle: int, the handle of a native window.     isTopmost: bool     Return boo, SetWindowPos(), SetWindowTopmost()
+Nodes (6): adcPath, devVarsPath, main(), root, secretsDir, upsertDevVar()
 
-### Community 346 - ".SendKeys"
+### Community 141 - "graphify reference: query, path, explain"
+Cohesion: 0.33
+Nodes (5): For /graphify explain, For /graphify path, graphify reference: query, path, explain, Step 0 — Constrained query expansion (REQUIRED before traversal), Step 1 — Traversal
+
+### Community 142 - "Google Ads — website conversions (2026-07-21)"
+Cohesion: 0.33
+Nodes (5): Actions in Google Ads, Deploy note, Google Ads — website conversions (2026-07-21), Site wiring, Tag IDs
+
+### Community 143 - "42. NEW PAGE CREATION REQUIREMENTS"
+Cohesion: 0.33
+Nodes (6): 42. NEW PAGE CREATION REQUIREMENTS, Step 1 — Purpose Definition, Step 2 — Information Architecture Review, Step 3 — SEO Preparation, Step 4 — Multi-Language Creation, Step 5 — Quality Verification
+
+### Community 144 - "96. CONTENT QUALITY CHECKLIST"
+Cohesion: 0.33
+Nodes (6): 96. CONTENT QUALITY CHECKLIST, Accuracy, Action, Clarity, Completeness, Trust
+
+### Community 145 - "GBP HUNDESALON_NIKA — ryndenko1982"
+Cohesion: 0.33
+Nodes (5): Created, GBP HUNDESALON_NIKA — ryndenko1982, Notes, Profile tabs filled (2026-07-19), Verify (deferred — after firm launch)
+
+### Community 146 - "convert_to_webm.ps1"
+Cohesion: 0.53
+Nodes (4): Convert-FallbackMp4(), Convert-WithAlpha(), Format-CommandArgs(), Invoke-Ffmpeg()
+
+### Community 147 - "bing-edge-and-finish.mjs"
+Cohesion: 0.47
+Nodes (5): cdpReady(), child, ensureEdge(), root, startEdge()
+
+### Community 148 - "generate-brand-sitemap.mjs"
+Cohesion: 0.33
+Nodes (5): brandPaths, out, root, today, urls
+
+### Community 149 - "server.mjs"
+Cohesion: 0.33
+Nodes (3): ROOT, server, transport
+
+### Community 150 - "restart-mcp-clients.ps1"
+Cohesion: 0.47
+Nodes (3): Start-App(), Write-Ok(), Write-WarnLine()
+
+### Community 151 - "set-bing-api-key.mjs"
+Cohesion: 0.33
+Nodes (3): apiKey, args, positional
+
+### Community 152 - "cf-ops.md"
 Cohesion: 0.40
-Nodes (3): Make control have focus first and type a key.         `self.SetFocus` may not w, Show Desktop by pressing win + d, ShowDesktop()
+Nodes (4): Common commands, Inheritance, Return format, Steps
+
+### Community 153 - "block-secrets.mjs"
+Cohesion: 0.40
+Nodes (3): command, filePath, payload
+
+### Community 154 - "ponytail-audit/SKILL.md"
+Cohesion: 0.40
+Nodes (4): Boundaries, Hunt, Output, Tags
+
+### Community 155 - "Ponytail Gain"
+Cohesion: 0.40
+Nodes (4): Boundaries, Honesty boundary, Ponytail Gain, Scoreboard
+
+### Community 156 - "ponytail-review/SKILL.md"
+Cohesion: 0.40
+Nodes (4): Boundaries, Examples, Format, Scoring
+
+### Community 157 - "Google Ads — account negative keywords (HUNDESALON NIKA)"
+Cohesion: 0.40
+Nodes (4): Active list, Google Ads — account negative keywords (HUNDESALON NIKA), Intentionally not excluded, Purpose
+
+### Community 158 - "17. COMPLETE SEO AUDIT BEFORE MAJOR CHANGES"
+Cohesion: 0.40
+Nodes (5): 17. COMPLETE SEO AUDIT BEFORE MAJOR CHANGES, Content SEO, Internal Linking SEO, On-Page SEO, Technical SEO
+
+### Community 159 - "19. METADATA MANAGEMENT"
+Cohesion: 0.40
+Nodes (5): 19. METADATA MANAGEMENT, Meta Description, Open Graph Data, Structured Data, Title
+
+### Community 160 - "27. WCAG ANALYSIS"
+Cohesion: 0.40
+Nodes (5): 27. WCAG ANALYSIS, Operable, Perceivable, Robust, Understandable
+
+### Community 161 - "54. CHANGE IMPACT ANALYSIS"
+Cohesion: 0.40
+Nodes (5): 54. CHANGE IMPACT ANALYSIS, Business Impact, SEO Impact, Technical Impact, User Impact
+
+### Community 162 - "82. PRIORITY LEVELS"
+Cohesion: 0.40
+Nodes (5): 82. PRIORITY LEVELS, Critical, High, Low, Medium
+
+### Community 163 - "83. FORBIDDEN AI BEHAVIOR"
+Cohesion: 0.40
+Nodes (5): 83. FORBIDDEN AI BEHAVIOR, Content, Legal, SEO, Technical
+
+### Community 164 - "92. CHANGE PLANNING REQUIREMENT"
+Cohesion: 0.40
+Nodes (5): 92. CHANGE PLANNING REQUIREMENT, Implementation, Objective, Scope, Validation
+
+### Community 165 - "9. PAGE ANALYSIS"
+Cohesion: 0.40
+Nodes (5): 9. PAGE ANALYSIS, Content, SEO, Technical Quality, UX
+
+### Community 166 - "Bing Webmaster Tools — полный чеклист"
+Cohesion: 0.40
+Nodes (4): Bing Webmaster Tools — полный чеклист, Вне Bing (но обязательно), Отчёт автопрохода, Статус (2026-07-07)
+
+### Community 167 - "2. Дополнительные конверсии (клик по телефону)"
+Cohesion: 0.40
+Nodes (5): 1. Создание конверсии "Запись на услугу", 2. Дополнительные конверсии (клик по телефону), Клик по WhatsApp:, Клик по телефону:, СРОЧНО: Настройка конверсий в Google Ads
+
+### Community 168 - "Шаг 6: Расширения объявлений"
+Cohesion: 0.40
+Nodes (5): Call Extensions (Звонки):, Callout Extensions (Фразы):, Location Extensions (Местоположение):, Sitelink Extensions (Ссылки):, Шаг 6: Расширения объявлений
+
+### Community 169 - "Шаг 2: Общие настройки"
+Cohesion: 0.40
+Nodes (5): Аудитории:, Местоположение:, Сеть:, Шаг 2: Общие настройки, Языки:
+
+### Community 170 - "ПРОБЛЕМЫ И РЕШЕНИЯ"
+Cohesion: 0.40
+Nodes (5): Высокий CPC:, Нет конверсий:, Нет показов:, Низкий CTR:, ПРОБЛЕМЫ И РЕШЕНИЯ
+
+### Community 171 - "3. КЛЮЧЕВЫЕ СЛОВА"
+Cohesion: 0.40
+Nodes (5): 3. КЛЮЧЕВЫЕ СЛОВА, Группа 1: Основные услуги (высокий приоритет), Группа 2: Конкретные услуги, Группа 3: Породы (если специализируетесь), Минус-слова (уже настроены на уровне аккаунта):
+
+### Community 172 - "5. РАСШИРЕНИЯ ОБЪЯВЛЕНИЙ"
+Cohesion: 0.40
+Nodes (5): 5. РАСШИРЕНИЯ ОБЪЯВЛЕНИЙ, Call Extensions (Звонки):, Callout Extensions (Краткие фразы):, Location Extensions (Местоположение):, Sitelink Extensions (Ссылки на сайте):
+
+### Community 173 - "6. ПОСАДОЧНЫЕ СТРАНИЦЫ"
+Cohesion: 0.40
+Nodes (5): 6. ПОСАДОЧНЫЕ СТРАНИЦЫ, Для английских запросов:, Для немецких запросов:, Для русских запросов:, Основная:
+
+### Community 174 - "Active Context"
+Cohesion: 0.40
+Nodes (4): Active Context, Current Focus, Open Questions/Issues, Recent Changes
+
+### Community 175 - "Product Context"
+Cohesion: 0.40
+Nodes (4): Key Features, Overall Architecture, Product Context, Project Goal
+
+### Community 176 - "Progress"
+Cohesion: 0.40
+Nodes (4): Completed Tasks, Current Tasks, Next Steps, Progress
+
+### Community 177 - "System Patterns"
+Cohesion: 0.40
+Nodes (4): Architectural Patterns, Coding Patterns, System Patterns, Testing Patterns
+
+### Community 178 - "browserslist"
+Cohesion: 0.40
+Nodes (5): browserslist, > 1%, last 2 versions, not dead, not ie <= 11
+
+### Community 179 - "build_moon_alpha_assets.ps1"
+Cohesion: 0.60
+Nodes (3): Build-Job(), Format-CommandArgs(), Invoke-Ffmpeg()
+
+### Community 181 - "add-newsletter-labels.mjs"
+Cohesion: 0.40
+Nodes (3): labelText, langs, root
+
+### Community 182 - "cf-www-robots-setup.mjs"
+Cohesion: 0.40
+Nodes (3): redirect, root, token
+
+### Community 183 - "check-message-draft-live.mjs"
+Cohesion: 0.40
+Nodes (3): attempts, delayMs, payload
+
+### Community 184 - "check-newsletter-labels.mjs"
+Cohesion: 0.40
+Nodes (3): failures, langs, root
+
+### Community 185 - "git-push-all.mjs"
+Cohesion: 0.40
+Nodes (3): current, local, remoteSha
+
+### Community 186 - "google-auth-platform-create-desktop-client.mjs"
+Cohesion: 0.40
+Nodes (3): CDP_PORT, DOWNLOADS, SECRETS_DIR
+
+### Community 187 - "image-server.mjs"
+Cohesion: 0.40
+Nodes (4): __dirname, PORT, ROOT, server
+
+### Community 188 - "patch-weather-search.mjs"
+Cohesion: 0.40
+Nodes (4): copyReplacements, service, servicePath, widgetFiles
+
+### Community 189 - "price-list-smoke.mjs"
+Cohesion: 0.40
+Nodes (3): checks, locales, outDir
+
+### Community 190 - "release.ps1"
+Cohesion: 0.60
+Nodes (3): Invoke-NpmScript(), Write-Ok(), Write-Step()
+
+### Community 191 - "restore-weather-clouds-original.mjs"
+Cohesion: 0.40
+Nodes (4): hEnd, hStart, replacements, s
+
+### Community 192 - "rewrite-meta-clean.mjs"
+Cohesion: 0.40
+Nodes (3): bad, META, root
+
+### Community 193 - "run-npm-quiet.mjs"
+Cohesion: 0.40
+Nodes (3): args, env, npmCmd
+
+### Community 195 - "sync-dev-vars.js"
+Cohesion: 0.40
+Nodes (4): distDir, keyAssetPath, lines, source
+
+### Community 196 - "weather-widget-smoke.mjs"
+Cohesion: 0.40
+Nodes (4): consoleErrors, failedRequests, host, sunScene404
+
+### Community 197 - "Browse HUNDESALON NIKA Public Information"
+Cohesion: 0.40
+Nodes (4): Boundaries, Browse HUNDESALON NIKA Public Information, Canonical Site, Useful Resources
+
+### Community 199 - "agents/i18n-sync.md"
+Cohesion: 0.50
+Nodes (3): Inheritance, Return format, Steps
+
+### Community 200 - "agents/minimal-diff.md"
+Cohesion: 0.50
+Nodes (3): Inheritance, Return format, Review
+
+### Community 201 - "seo-auditor.md"
+Cohesion: 0.50
+Nodes (3): Check (only what the prompt scopes), Inheritance, Return format
+
+### Community 202 - "ui-smoke.md"
+Cohesion: 0.50
+Nodes (3): Inheritance, Return format, Steps
+
+### Community 203 - "verifier.md"
+Cohesion: 0.50
+Nodes (3): Inheritance (mandatory), Return format (short), Steps
+
+### Community 204 - "Memory Bank protocol (all Flow modes)"
+Cohesion: 0.50
+Nodes (3): Memory Bank protocol (all Flow modes), Session start (non-trivial work), Updates (UMB)
+
+### Community 205 - "graphify reference: add a URL and watch a folder"
+Cohesion: 0.50
+Nodes (3): For /graphify add, For --watch, graphify reference: add a URL and watch a folder
+
+### Community 206 - "graphify reference: commit hook and native AGENTS.md integration"
+Cohesion: 0.50
+Nodes (3): For git commit hook, For native AGENTS.md integration, graphify reference: commit hook and native AGENTS.md integration
+
+### Community 207 - "graphify reference: incremental update and cluster-only"
+Cohesion: 0.50
+Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
+
+### Community 208 - "ponytail-debt/SKILL.md"
+Cohesion: 0.50
+Nodes (3): Boundaries, Output, Scan
+
+### Community 209 - "119. TECHNICAL SEO DEEP AUDIT"
+Cohesion: 0.50
+Nodes (4): 119. TECHNICAL SEO DEEP AUDIT, Crawlability, Index Control, Rendering
+
+### Community 210 - "127. ACCESSIBILITY ADVANCED CHECK"
+Cohesion: 0.50
+Nodes (4): 127. ACCESSIBILITY ADVANCED CHECK, Focus Management, Keyboard Navigation, Semantic HTML
+
+### Community 211 - "141. UNCERTAINTY MANAGEMENT"
+Cohesion: 0.50
+Nodes (4): 141. UNCERTAINTY MANAGEMENT, Assumptions, Known Information, Required Clarifications
+
+### Community 212 - "59. CORE WEB VITALS REVIEW"
+Cohesion: 0.50
+Nodes (4): 59. CORE WEB VITALS REVIEW, Cumulative Layout Shift (CLS), Interaction to Next Paint (INP), Largest Contentful Paint (LCP)
+
+### Community 213 - "89. TASK RECEIVING PROCEDURE"
+Cohesion: 0.50
+Nodes (4): 89. TASK RECEIVING PROCEDURE, Business Context, Risk Assessment, Technical Context
+
+### Community 214 - "Шаг 4: Группы объявлений"
+Cohesion: 0.50
+Nodes (4): Группа 1: Основные услуги, Группа 2: Конкретные услуги, Группа 3: По породам (опционально), Шаг 4: Группы объявлений
+
+### Community 215 - "НЕДЕЛЬНАЯ ОПТИМИЗАЦИЯ"
+Cohesion: 0.50
+Nodes (4): Каждую пятницу:, Каждую среду:, Каждый понедельник:, НЕДЕЛЬНАЯ ОПТИМИЗАЦИЯ
+
+### Community 216 - "СЛЕДУЮЩИЕ ШАГИ"
+Cohesion: 0.50
+Nodes (4): После запуска:, После первого месяца:, После первой недели:, СЛЕДУЮЩИЕ ШАГИ
+
+### Community 217 - "РЕКОМЕНДАЦИИ ПО OПТИМИЗАЦИИ"
+Cohesion: 0.50
+Nodes (4): РЕКОМЕНДАЦИИ ПО OПТИМИЗАЦИИ, Снижение CPC:, Увеличение конверсий:, Улучшение Quality Score:
+
+### Community 218 - "10. АНАЛИТИКА И ОПТИМИЗАЦИЯ"
+Cohesion: 0.50
+Nodes (4): 10. АНАЛИТИКА И ОПТИМИЗАЦИЯ, Ежемесячные оптимизации:, Еженедельные проверки:, Ключевые метрики:
+
+### Community 219 - "14. ПОДДЕРЖКА И ТРАБЛШУТИНГ"
+Cohesion: 0.50
+Nodes (4): 14. ПОДДЕРЖКА И ТРАБЛШУТИНГ, Если высокий CPC:, Если нет конверсий:, Если нет показов:
+
+### Community 220 - "1. КОНВЕРСИОННОЕ ОТСЛЕЖИВАНИЕ (СНАЧАЛА САЙТ)"
+Cohesion: 0.50
+Nodes (4): 1. КОНВЕРСИОННОЕ ОТСЛЕЖИВАНИЕ (СНАЧАЛА САЙТ), Код отслеживания:, Отслеживание записи на услугу:, Что отслеживаем:
+
+### Community 221 - "2. СТРУКТУРА КАМПАНИИ"
+Cohesion: 0.50
+Nodes (4): 2. СТРУКТУРА КАМПАНИИ, Бюджет:, Таргетинг:, Тип кампании:
+
+### Community 222 - "4. ТЕКСТЫ ОБЪЯВЛЕНИЙ"
+Cohesion: 0.50
+Nodes (4): 4. ТЕКСТЫ ОБЪЯВЛЕНИЙ, Объявление 1 (Основное):, Объявление 2 (Акцент на качестве):, Объявление 3 (Русскоязычное):
+
+### Community 223 - "7. НАСТРОЙКИ АУДИЕНЦИЙ"
+Cohesion: 0.50
+Nodes (4): 7. НАСТРОЙКИ АУДИЕНЦИЙ, In-Market Audiences:, Remarketing (если есть много посетителей):, Similar Audiences:
+
+### Community 224 - "9. БИД СТРАТЕГИЯ"
+Cohesion: 0.50
+Nodes (4): 9. БИД СТРАТЕГИЯ, Начальная стадия (первые 2 недели):, После сбора данных (через 2 недели):, Продвинутая стадия (через месяц):
+
+### Community 225 - "allowScripts"
+Cohesion: 0.50
+Nodes (4): allowScripts, esbuild@0.28.1, sharp@0.34.5, workerd@1.20260617.1
+
+### Community 226 - "overrides"
+Cohesion: 0.50
+Nodes (4): overrides, esbuild, sharp, ws
+
+### Community 228 - "bing-launch-edge-api.mjs"
+Cohesion: 0.50
+Nodes (3): candidates, siteQ, userDataDir
+
+### Community 230 - "check-all.mjs"
+Cohesion: 0.67
+Nodes (3): branch, run(), runNpm()
+
+### Community 232 - "check-scene3d-brackets.mjs"
+Cohesion: 0.50
+Nodes (3): s, start, tail
+
+### Community 234 - "patch-weather-clouds.mjs"
+Cohesion: 0.50
+Nodes (3): intensityPatches, replacements, s
+
+### Community 235 - "patch-weather-clouds-fit.mjs"
+Cohesion: 0.50
+Nodes (3): replacements, s, widgetFiles
+
+### Community 236 - "patch-weather-service.mjs"
+Cohesion: 0.50
+Nodes (3): inEnd, inStart, s
+
+### Community 237 - "revert-weather-clouds.mjs"
+Cohesion: 0.50
+Nodes (3): replacements, s, widgetFiles
+
+### Community 238 - "setup-ponytail.mjs"
+Cohesion: 0.50
+Nodes (3): root, skills, tmp
+
+### Community 239 - "pages-proxy.js"
+Cohesion: 0.83
+Nodes (3): fetch(), PUBLIC_HOSTS, publicUrlFromPages()
+
+### Community 244 - "139. FINAL DECISION HIERARCHY"
+Cohesion: 0.67
+Nodes (3): 139.1 Instruction conflict order (which rule wins), 139.2 Product priority (what is safe to change), 139. FINAL DECISION HIERARCHY
+
+### Community 245 - "7. REPOSITORY STRUCTURE ANALYSIS"
+Cohesion: 0.67
+Nodes (3): 7.1 Folder Structure, 7.2 Architecture Preservation Rule, 7. REPOSITORY STRUCTURE ANALYSIS
+
+### Community 246 - "11. РЕКОМЕНДАЦИИ ПО КОНТЕНТУ"
+Cohesion: 0.67
+Nodes (3): 11. РЕКОМЕНДАЦИИ ПО КОНТЕНТУ, Quality Score улучшения:, Для улучшения качества объявления:
+
+### Community 247 - "12. БЕЗОПАСНОСТЬ И СОБЛЮДЕНИЕ ПРАВИЛ"
+Cohesion: 0.67
+Nodes (3): 12. БЕЗОПАСНОСТЬ И СОБЛЮДЕНИЕ ПРАВИЛ, Проверьте:, Рекомендации:
+
+### Community 248 - "15. КОНТАКТЫ И ПОДДЕРЖКА"
+Cohesion: 0.67
+Nodes (3): 15. КОНТАКТЫ И ПОДДЕРЖКА, Google Ads Support:, Для HUNDESALON NIKA:
 
 ## Knowledge Gaps
-- **1037 isolated node(s):** `name`, `version`, `description`, `main`, `type` (+1032 more)
+- **1722 isolated node(s):** `cloud-agent-install.sh script`, `NVM_DIR`, `payload`, `command`, `filePath` (+1717 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **68 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **55 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Control` connect `Control` to `.RemoveFromSelection`, `.GetPattern`, `TreeNode`, `Desktop`, `tree/service.py`, `AnnotationPattern`, `controls.py`, `TransformPattern2`, `GridPattern`, `TextRange`, `.CreateControlFromElement`, `GetScreenSize`, `UIAutomationInitializerInThread`, `TransformPattern`, `configure-cloudflare-cache-features.mjs`, `cf-pages-token.mjs`, `exceptions.py`, `DragPattern`, `RangeValuePattern`, `DockPattern`, `Refer https://docs.microsoft.com/en-us/windows/win32/api/uiautomationclient/nn-u`, `TopLevel`, `CalendarControl`, `patterns.py`, `TablePattern`, `.MoveCursorToInnerPos`, `LegacyIAccessiblePattern`, `WindowPattern`, `.Select`, `Rect`, `SynchronizedInputPattern`, `GridItemPattern`, `.SendKeys`, `StylesPattern`?**
-  _High betweenness centrality (0.096) - this node is a cross-community bridge._
-- **Why does `Desktop` connect `Desktop` to `desktop/service.py`, `__main__.py`, `IPAllowlistMiddleware`, `tree/service.py`, `test_deterministic_drag_desktop.py`, `OptionsMiddleware`, `TestDisplayFiltering`, `TreeElementNode`, `snapshot.py`, `test_multi_tools.py`?**
-  _High betweenness centrality (0.047) - this node is a cross-community bridge._
-- **Why does `TextRange` connect `TextRange` to `Control`, `.RemoveFromSelection`, `controls.py`, `GridItemPattern`, `patterns.py`?**
-  _High betweenness centrality (0.013) - this node is a cross-community bridge._
-- **Are the 37 inferred relationships involving `Control` (e.g. with `UIAException` and `AnnotationPattern`) actually correct?**
-  _`Control` has 37 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 14 inferred relationships involving `Desktop` (e.g. with `Browser` and `DesktopState`) actually correct?**
-  _`Desktop` has 14 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 45 inferred relationships involving `UIAException` (e.g. with `AppBarControl` and `ButtonControl`) actually correct?**
-  _`UIAException` has 45 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `name`, `version`, `description` to the rest of the system?**
-  _1037 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `sleep()` connect `sleep` to `bing-webmaster-complete.mjs`, `local-citations-automate.mjs`, `browser-cdp.mjs`, `bing-webmaster-automate.mjs`, `google-oauth-console-bootstrap.mjs`, `bing-index-all-site.mjs`, `bing-sitescan.mjs`, `seo-search-watch.mjs`, `google-auth-platform-create-desktop-client.mjs`, `bing-sitescan-results.mjs`, `cf-pages-token.mjs`?**
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+- **Why does `scripts` connect `scripts` to `package.json`?**
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **Why does `111. COMPLETE PROJECT AUDIT CHECKLIST` connect `111. COMPLETE PROJECT AUDIT CHECKLIST` to `agents-master.md`?**
+  _High betweenness centrality (0.002) - this node is a cross-community bridge._
+- **What connects `cloud-agent-install.sh script`, `NVM_DIR`, `payload` to the rest of the system?**
+  _1722 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `scripts` be split into smaller, more focused modules?**
+  _Cohesion score 0.010362694300518135 - nodes in this community are weakly interconnected._
+- **Should `agents-master.md` be split into smaller, more focused modules?**
+  _Cohesion score 0.016129032258064516 - nodes in this community are weakly interconnected._
+- **Should `getEnvValue` be split into smaller, more focused modules?**
+  _Cohesion score 0.0512396694214876 - nodes in this community are weakly interconnected._
