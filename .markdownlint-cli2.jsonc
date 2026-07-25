@@ -1,0 +1,19 @@
+{
+    "globs": [
+        "ru/**/*.md",
+        "de/**/*.md",
+        "en/**/*.md",
+        "uk/**/*.md",
+        "blog/**/*.md",
+        "*.md"
+    ],
+    "ignores": [
+        "node_modules",
+        "dist",
+        "temp",
+        "test-results",
+        "3d-weather-codrops-main",
+        ".git",
+        "Windows-MCP"
+    ]
+}
