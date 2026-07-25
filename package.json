@@ -9,7 +9,7 @@
     "dev": "serve . -l tcp://127.0.0.1:5502 --no-port-switching",
     "dev:5502": "serve . -l 5502",
     "preview": "serve . -l tcp://127.0.0.1:5502 --no-port-switching",
-    "lint": "npm run lint:html && npm run lint:css && npm run lint:js",
+    "lint": "npm run lint:html && npm run lint:css && npm run lint:js && npm run lint:md",
     "lint:html": "htmlhint ru/**/*.html de/**/*.html en/**/*.html uk/**/*.html *.html",
     "lint:css": "npx stylelint \"assets/css/**/*.css\"",
     "lint:js": "eslint assets/js/**/*.js",

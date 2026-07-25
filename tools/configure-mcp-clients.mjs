@@ -153,17 +153,19 @@ function configureVsCodeUser() {
 
 function configureVsCodeWorkspace() {
   const filePath = join(PROJECT_PATH, '.vscode', 'mcp.json');
-  const data = {
-    inputs: [],
-    servers: {
-      'filesystem-hundesalon': {
-        command: 'node',
-        args: [paths.filesystem, PROJECT_PATH],
-      },
-      ...buildCloudflareHttpServers(),
+  const existing = readJson(filePath, { inputs: [], servers: {} });
+  const servers = {
+    'filesystem-hundesalon': {
+      command: 'node',
+      args: [paths.filesystem, PROJECT_PATH],
     },
+    ...buildCloudflareHttpServers(),
   };
-  writeJson(filePath, data);
+  existing.servers = {
+    ...(existing.servers || {}),
+    ...servers,
+  };
+  writeJson(filePath, existing);
   return filePath;
 }
 
