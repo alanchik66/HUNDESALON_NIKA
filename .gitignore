@@ -13,6 +13,7 @@ desktop.ini
 
 # ═══════════════ ЗАВИСИМОСТИ И ПАКЕТЫ ═══════════════
 node_modules/
+node_modules.broken/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
