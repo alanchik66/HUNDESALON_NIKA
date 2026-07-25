@@ -195,7 +195,8 @@
     "cursor:yolo": "node tools/cursor-yolo-full-access.mjs",
     "cursor:yolo:reboot": "node tools/cursor-yolo-reboot-apply.mjs",
     "cursor:yolo:persist": "node tools/cursor-yolo-persist.mjs",
-    "cursor:yolo:ui": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/cursor-yolo-ui-enable.ps1"
+    "cursor:yolo:ui": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/cursor-yolo-ui-enable.ps1",
+    "lint:md": "markdownlint-cli2"
   },
   "keywords": [
     "grooming",
@@ -215,6 +216,7 @@
     "eslint": "^10.6.0",
     "htmlhint": "^1.9.2",
     "leaflet": "^1.9.4",
+    "markdownlint-cli2": "^0.23.1",
     "playwright": "^1.61.1",
     "prettier": "^3.9.4",
     "serve": "^14.2.6",

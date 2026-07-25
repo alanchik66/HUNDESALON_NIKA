@@ -50,7 +50,6 @@ const copyEntries = [
   'sw.js',
   'browserconfig.xml',
   'BingSiteAuth.xml',
-  'google8f5e729bf8a13cc7.html',
 ];
 
 function copyRecursive(source, target) {

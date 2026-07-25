@@ -1,7 +1,10 @@
 # Active Context
 
 Session status: recent changes, current goals, open questions.
-2026-07-18 13:20:00 - Memory Bank initialized.
+2026-07-22 22:55:00 - Graphify + RooFlow setup + Memory Bank refresh:
+- Graphify: `npm run graphify:setup` complete; graph healthy (5864 nodes, 9091 edges, 473 communities); query-first rule at `.cursor/rules/graphify.mdc`; MCP at `http://127.0.0.1:8932/mcp`.
+- RooFlow: `npm run rooflow:setup` complete; Flow skills exported to `.agents/skills/flow-*`; Cursor bridge rule at `.cursor/rules/rooflow-memory-bank.mdc`; `.roo/` + `.roomodes` refreshed.
+- Parameterized: query-first for architecture questions, MCP > CLI > wiki fallback for Graphify; Memory Bank read-selective + UMB append workflow for RooFlow.
 
 ## Current Focus
 

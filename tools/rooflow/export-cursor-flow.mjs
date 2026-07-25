@@ -200,7 +200,7 @@ function writeSkills() {
     fs.writeFileSync(path.join(dir, 'SKILL.md'), skillBody(mode), 'utf8');
     console.log('Wrote', path.relative(root, path.join(dir, 'SKILL.md')));
   }
-  fs.writeFileSync(path.join(skillsRoot, 'flow-shared-memory-bank.md'), SHARED_MB, 'utf8');
+  fs.writeFileSync(path.join(skillsRoot, '_flow-shared-memory-bank.md'), SHARED_MB, 'utf8');
 }
 
 function writeRule() {

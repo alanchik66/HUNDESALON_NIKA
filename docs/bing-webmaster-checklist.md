@@ -14,7 +14,7 @@
 | Robots.txt tester | ✅ Apex only: «Получить последний» → «Тест» → **Разрешено**. `npm run bing:robots-tester`, `npm run check:live-robots`. www `/robots.txt` → 301 apex (Page Rule `www/*`) |
 | Site Scan | ✅ Запущен через `npm run bing:finish-all` (Start Scan + имя скана) |
 | API Access | Опционально: `npm run cf:ensure-api-token` (единый Zone API токен) |
-| Microsoft Clarity | ✅ Сайт добавлен в Clarity (Bing WMT → Clarity; скрипт в `<head>` опционально) |
+| Microsoft Clarity | ✅ Сайт добавлен в Clarity; project ID: `efbb2b19-7440-48bf-bc3a-166725c69d1b`; скрипт загружается через consent-gate в `analytics.js` |
 | `BING_WEBMASTER_API_KEY` | ✅ не требуется — IndexNow уведомляет Bing; ключ API опционален (`npm run bing:api:setup`) |
 
 Отчёты: `temp/bing-finish-manual-report.json`, `temp/bing-finish-remaining-report.json`, `temp/bing-finish-last-report.json`

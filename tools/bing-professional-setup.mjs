@@ -177,11 +177,32 @@ for (const url of inspectUrls) {
       const req = clickMatch('request indexing|запросить индексирование|indexierung anfordern|индексирование');
       await sleep(2500);
       const body = document.body?.innerText || '';
+      const canIndex = /can be indexed|может быть проиндексирован|indexiert werden|url is on bing/i.test(body);
+      let reason = '';
+      if (!canIndex) {
+        const errorEl = document.querySelector('.error-reason, [data-automation-id="error-message"], .alert-danger, .ms-MessageBar--error, [class*="Error"], [class*="Alert"]');
+        if (errorEl) {
+          reason = errorEl.innerText.trim();
+        } else {
+          const match = body.match(/(cannot be indexed|не может быть проиндексирован|kann nicht indexiert werden)[\s\S]{0,250}/i);
+          if (match) {
+            reason = match[0].trim();
+          } else {
+             const discoveredButNotCrawled = body.match(/Discovered but not crawled|Обнаружено, но не просканировано/i);
+             if (discoveredButNotCrawled) {
+                reason = discoveredButNotCrawled[0].trim();
+             } else {
+                reason = 'Indexing issue detected, but specific reason not found on page.';
+             }
+          }
+        }
+      }
       return {
         url: target,
         inspected,
         requestIndexing: req,
-        canIndex: /can be indexed|может быть проиндексирован|indexiert werden|url is on bing/i.test(body),
+        canIndex: canIndex,
+        reason: reason,
         snippet: body.slice(0, 400),
       };
     `
@@ -233,7 +254,11 @@ report.steps.indexnowPage = await withCdp(async send => {
 });
 
 try {
-  await runNpm('seo:indexnow');
+  await new Promise((resolve, reject) => {
+    const p = spawn('node', ['tools/indexnow-submit.js'], { cwd: root, stdio: 'inherit' });
+    p.on('close', code => (code === 0 ? resolve() : reject(new Error(`indexnow-submit.js exit ${code}`))));
+    p.on('error', err => reject(err));
+  });
   report.steps.indexnowCli = { ok: true };
 } catch (e) {
   report.steps.indexnowCli = { ok: false, error: String(e.message) };

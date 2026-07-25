@@ -1,9 +1,5 @@
 {
   "mcpServers": {
-    "cloudflare": {
-      "type": "http",
-      "url": "https://mcp.cloudflare.com/mcp"
-    },
     "cloudflare-docs": {
       "type": "http",
       "url": "https://docs.mcp.cloudflare.com/mcp"
@@ -30,6 +26,18 @@
       "args": [
         "C:\\Users\\snaip\\AppData\\Roaming\\npm\\node_modules\\@modelcontextprotocol\\server-filesystem\\dist\\index.js",
         "D:\\HUNDESALON_NIKA"
+      ]
+    },
+    "sequential-thinking": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\snaip\\AppData\\Roaming\\npm\\node_modules\\@modelcontextprotocol\\server-sequential-thinking\\dist\\index.js"
+      ]
+    },
+    "memory": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\snaip\\AppData\\Roaming\\npm\\node_modules\\@modelcontextprotocol\\server-memory\\dist\\index.js"
       ]
     },
     "site-ops": {

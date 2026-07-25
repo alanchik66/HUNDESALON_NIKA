@@ -75,7 +75,7 @@ export const META_DESCRIPTIONS = {
   "index.html": {
     de: "Professioneller Hundesalon in Leipzig: Grooming für Hunde und Katzen, Haarschnitt, Baden, Fellpflege, Express-Entwollung und Online-Buchung bei HUNDESALON NIKA.",
     en: "Premium dog and cat grooming in Leipzig: haircuts, bathing, coat care, express deshedding and easy online booking at HUNDESALON NIKA in a calm salon environment.",
-    ru: "Профессиональный груминг собак и кошек в Лейпциге: стрижка, купание, уход за шерстью, экспресс-линька и удобная онлайн-запись в салон HUNDESALON NIKA. Запишитесь онлайн.",
+    ru: "Профессиональный груминг собак и кошек в Лейпциге: стрижка, купание, уход за шерстью, экспресс-линька. Онлайн-запись в салон HUNDESALON NIKA — запишитесь.",
     uk: "Професійний грумінг собак і котів у Лейпцигу: стрижка, купання, догляд за шерстю, експрес-линька та зручний онлайн-запис у салоні HUNDESALON NIKA. Запис онлайн.",
   },
   "kontakty.html": {

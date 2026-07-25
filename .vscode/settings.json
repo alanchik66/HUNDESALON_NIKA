@@ -171,6 +171,14 @@
   "stylelint.validate": ["css"],
   "css.validate": false,
   "htmlhint.enable": true,
+  "markdownlint.config": {
+    "default": true,
+    "MD003": { "style": "atx_closed" },
+    "MD007": { "indent": 4 },
+    "MD013": false,
+    "line-length": false,
+    "no-hard-tabs": false
+  },
   "emmet.includeLanguages": {
     "javascript": "html"
   },
@@ -186,8 +194,10 @@
   // ─── Extensions › Free AI agents (Ollama $0) ───────────────
   // Kilo = agent chat/edit; Continue = Tab autocomplete
   "kilo-code.new.model.providerID": "ollama",
-  "kilo-code.new.model.modelID": "qwen2.5-coder:7b",
-  "kilo-code.new.autocomplete.enableAutoTrigger": false,
+  "kilo-code.new.model.modelID": "moondream:latest",
+  "kilo-code.new.autocomplete.provider": "kilo",
+  "kilo-code.new.autocomplete.model": "mercury-edit-2",
+  "kilo-code.new.autocomplete.enableAutoTrigger": true,
   "kilo-code.new.autoApprove.enabled": true,
   "kilo-code.new.autoApprove.executeSafeCommands": true,
   "kilo-code.new.browserAutomation.enabled": true,

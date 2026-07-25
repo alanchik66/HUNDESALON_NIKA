@@ -1,6 +1,6 @@
 # Google cleanup — snaiper1984 → ryndenko1982
 
-**Date:** 2026-07-19 (updated same day)
+**Date:** 2026-07-19 (updated 2026-07-23)
 **Primary account now:** `ryndenko1982@gmail.com`
 
 ## Done
@@ -10,7 +10,7 @@
 
 ### Google Search Console (`sc-domain:hundesalon-nika.com`)
 - `ryndenko1982@gmail.com` = **Verified owner** (DNS TXT `suodZSJEQZMEbGmK3NoG87RAZUWFs24JmF4dfvOrHlc` on Cloudflare).
-- snaiper DNS TXT removed; snaiper used **Удалить ресурс** → property gone from snaiper GSC (welcome screen).
+- `snaiper1984@gmail.com` = removed from GSC users completely.
 - Property remains fully under ryndenko.
 
 ### Google Ads (snaiper)

@@ -14,7 +14,6 @@ const requiredLiveUrls = [
   `${origin}/de/`,
   `${origin}/robots.txt`,
   sitemapUrl,
-  `${origin}/google8f5e729bf8a13cc7.html`,
   `${origin}/assets/images/favicon/favicon.ico?v=${brandIconVersion}`,
   `${origin}/site.webmanifest?v=${brandIconVersion}`,
   `${origin}/assets/images/brand/search-logo-clear-512.png?v=${brandIconVersion}`,

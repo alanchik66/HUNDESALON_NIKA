@@ -13,6 +13,15 @@
 4. Load AI instructions and domain docs in kernel order; use Graphify before broad tours.
 5. Plan → validate plan → implement only affected zones → verify.
 
+## Auto Subagents (every chat, in this order)
+
+Before executing any new user request in a fresh chat, automatically delegate to the project subagent squad in this fixed order:
+1. `@architect` — validate/refine the plan if this is a new feature or change
+2. `@frontend-specialist` — review HTML/CSS/JS touchpoints for accessibility, paths, responsive behavior, and brand constraints
+3. `@code-simplifier` — remove redundancy and unnecessary complexity
+4. `@code-reviewer` — verify security, performance, consistency, and Leipzig/i18n alignment
+5. `@docs-specialist` — update docs only if the change impacts documentation
+
 Cursor always-on: `.cursor/rules/00-routing-kernel.mdc`. Task/skill map: `.cursor/rules/40-agent-routing.mdc`.
 
 ## Project

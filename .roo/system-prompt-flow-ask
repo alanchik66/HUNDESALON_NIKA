@@ -54,7 +54,7 @@ tools:
     parameters:
       - name: path
         required: true
-        description: Relative path to file (relative to C:\PROJEKT\HUNDESALON_NIKA\HUNDESALON_NIKA).
+        description: Relative path to file (relative to D:\HUNDESALON_NIKA).
       - name: start_line
         required: false
         description: Start line (1-based). If omitted, starts from beginning.
@@ -99,7 +99,7 @@ tools:
     parameters:
       - name: path
         required: true
-        description: Relative path to directory (relative to C:\PROJEKT\HUNDESALON_NIKA\HUNDESALON_NIKA). Recursive search.
+        description: Relative path to directory (relative to D:\HUNDESALON_NIKA). Recursive search.
       - name: regex
         required: true
         description: Rust regex pattern to search for.
@@ -123,7 +123,7 @@ tools:
 
   - name: list_files
     description: |
-      Lists files/directories within a directory (relative to C:\PROJEKT\HUNDESALON_NIKA\HUNDESALON_NIKA).
+      Lists files/directories within a directory (relative to D:\HUNDESALON_NIKA).
       Use `recursive: true` for deep listing, `false` (default) for top-level.
       Do not use to confirm creation (user confirms).
     parameters:
@@ -154,7 +154,7 @@ tools:
   # --- Code Analysis ---
   - name: list_code_definition_names
     description: |
-      Lists definition names (classes, functions, etc.) from a source file or all top-level files in a directory (relative to C:\PROJEKT\HUNDESALON_NIKA\HUNDESALON_NIKA).
+      Lists definition names (classes, functions, etc.) from a source file or all top-level files in a directory (relative to D:\HUNDESALON_NIKA).
       Useful for code structure overview and understanding constructs.
     parameters:
       - name: path
@@ -199,7 +199,7 @@ tools:
       required: false
       description: >
         Optional. The path to the directory to search in, relative to the
-        current workspace directory (C:\PROJEKT\HUNDESALON_NIKA\HUNDESALON_NIKA).
+        current workspace directory (D:\HUNDESALON_NIKA).
 
         This parameter supports only directory paths, file paths are not supported.
 
@@ -481,18 +481,23 @@ mcp_servers_info:
 
 # MCP Server list injected by script
     servers:
-    - name: "playwright"
-      command: "http://localhost:8931/mcp"
+    - name: "cloudflare-docs"
+      command: "https://docs.mcp.cloudflare.com/mcp"
+      description: "HTTP/SSE MCP server (mcp.json)."
+      tools: []
+      resources: []
+    - name: "github"
+      command: "npx -y @modelcontextprotocol/server-github"
+      description: "Stdio MCP server (mcp.json)."
+      tools: []
+      resources: []
+    - name: "graphify"
+      command: "http://127.0.0.1:8932/mcp"
       description: "HTTP/SSE MCP server (mcp.json)."
       tools: []
       resources: []
     - name: "filesystem-hundesalon"
-      command: "node C:\\Users\\snaip\\AppData\\Roaming\\npm\\node_modules\\@modelcontextprotocol\\server-filesystem\\dist\\index.js C:\\PROJEKT\\HUNDESALON_NIKA\\HUNDESALON_NIKA"
-      description: "Stdio MCP server (mcp.json)."
-      tools: []
-      resources: []
-    - name: "memory"
-      command: "node C:\\Users\\snaip\\AppData\\Roaming\\npm\\node_modules\\@modelcontextprotocol\\server-memory\\dist\\index.js"
+      command: "node C:\\Users\\snaip\\AppData\\Roaming\\npm\\node_modules\\@modelcontextprotocol\\server-filesystem\\dist\\index.js D:\\HUNDESALON_NIKA"
       description: "Stdio MCP server (mcp.json)."
       tools: []
       resources: []
@@ -501,29 +506,9 @@ mcp_servers_info:
       description: "Stdio MCP server (mcp.json)."
       tools: []
       resources: []
-    - name: "github"
-      command: "npx -y @modelcontextprotocol/server-github"
+    - name: "memory"
+      command: "node C:\\Users\\snaip\\AppData\\Roaming\\npm\\node_modules\\@modelcontextprotocol\\server-memory\\dist\\index.js"
       description: "Stdio MCP server (mcp.json)."
-      tools: []
-      resources: []
-    - name: "cloudflare-docs"
-      command: "https://docs.mcp.cloudflare.com/mcp"
-      description: "HTTP/SSE MCP server (mcp.json)."
-      tools: []
-      resources: []
-    - name: "cloudflare-bindings"
-      command: "https://bindings.mcp.cloudflare.com/mcp"
-      description: "HTTP/SSE MCP server (mcp.json)."
-      tools: []
-      resources: []
-    - name: "cloudflare-builds"
-      command: "https://builds.mcp.cloudflare.com/mcp"
-      description: "HTTP/SSE MCP server (mcp.json)."
-      tools: []
-      resources: []
-    - name: "cloudflare-observability"
-      command: "https://observability.mcp.cloudflare.com/mcp"
-      description: "HTTP/SSE MCP server (mcp.json)."
       tools: []
       resources: []
     - name: "cloudflare"
@@ -531,18 +516,7 @@ mcp_servers_info:
       description: "HTTP/SSE MCP server (mcp.json)."
       tools: []
       resources: []
-    - name: "webstorm"
-      command: "http://127.0.0.1:63343/sse"
-      description: "HTTP/SSE MCP server (mcp.json)."
-      tools: []
-      resources: []
-    - name: "gmail"
-      command: "npx -y @gongrzhe/server-gmail-autoauth-mcp"
-      description: "Stdio MCP server (mcp.json)."
-      tools: []
-      resources: []
 # End MCP Server list
-
 
 
 # Guidance for Creating MCP Servers
@@ -608,7 +582,7 @@ capabilities:
 
   initial_context:
     source: "environment_details"
-    content: "Recursive list of all filepaths in the current workspace directory ('C:\PROJEKT\HUNDESALON_NIKA\HUNDESALON_NIKA')."
+    content: "Recursive list of all filepaths in the current workspace directory ('D:\HUNDESALON_NIKA')."
     purpose: |
       Provides an overview of the project's file structure (directory/file names, extensions).
       Offers insights into developer organization and language use.
@@ -679,7 +653,7 @@ modes:
 # --- Core Behavioral Rules ---
 rules:
   R01_PathsAndCWD:
-    description: All file paths relative to `C:\PROJEKT\HUNDESALON_NIKA\HUNDESALON_NIKA`. Do not use `~` or `$HOME`. Use `cd <dir> && command` within `execute_command`'s `<command>` parameter to run in a specific directory. Cannot use `cd` tool itself. Respect CWD from command responses if provided.
+    description: All file paths relative to `D:\HUNDESALON_NIKA`. Do not use `~` or `$HOME`. Use `cd <dir> && command` within `execute_command`'s `<command>` parameter to run in a specific directory. Cannot use `cd` tool itself. Respect CWD from command responses if provided.
   R02_ToolSequenceAndConfirmation:
     description: Use tools (incl MCP ops) one at a time. CRITICAL - Wait for user confirmation after each tool use before proceeding.
   R03_EditingToolPreference:
@@ -727,13 +701,13 @@ system_information:
     operating_system: Windows_NT 10.0.26200
     default_shell: powershell
     home_directory: C:\Users\snaip
-    current_workspace_directory: C:\PROJEKT\HUNDESALON_NIKA\HUNDESALON_NIKA
+    current_workspace_directory: D:\HUNDESALON_NIKA
 
 environment_rules:
   description: "Rules governing interaction with the user's environment."
   workspace_directory:
     rule: |
-      "The 'Current Workspace Directory' (C:\PROJEKT\HUNDESALON_NIKA\HUNDESALON_NIKA) is the active VS Code project directory."
+      "The 'Current Workspace Directory' (D:\HUNDESALON_NIKA) is the active VS Code project directory."
       "It is the DEFAULT directory for all tool operations unless explicitly overridden (e.g., 'cwd' parameter for 'execute_command')."
   terminal_behavior:
     rule: |
@@ -742,7 +716,7 @@ environment_rules:
       "You DO NOT have access to change the workspace directory itself."
   initial_file_list:
     source: "environment_details"
-    content: "A recursive list of all filepaths in the Current Workspace Directory ('C:\PROJEKT\HUNDESALON_NIKA\HUNDESALON_NIKA')."
+    content: "A recursive list of all filepaths in the Current Workspace Directory ('D:\HUNDESALON_NIKA')."
     purpose: |
       "Provides an overview of the project's file structure (directory/file names, extensions)."
       "Offers insights into developer organization and language use."

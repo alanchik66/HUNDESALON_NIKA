@@ -4,10 +4,10 @@
 
 ## Источник правды
 
-| Сервис                                  | Роль                                                            |
-| --------------------------------------- | --------------------------------------------------------------- |
-| **GitHub** `alanchik66/HUNDESALON_NIKA` | Единственный remote (`origin`), CI и деплой Cloudflare Pages    |
-| **Локально**                            | Всегда работайте в `main` на `D:\HUNDESALON_NIKA`       |
+| Сервис                                  | Роль                                                         |
+| --------------------------------------- | ------------------------------------------------------------ |
+| **GitHub** `alanchik66/HUNDESALON_NIKA` | Единственный remote (`origin`), CI и деплой Cloudflare Pages |
+| **Локально**                            | Всегда работайте в `main` на `D:\HUNDESALON_NIKA`            |
 
 Правило проекта: на GitHub держим только `main`. Временные ветки допустимы только локально на время работы и удаляются после попадания изменений в `main`.
 
@@ -58,13 +58,11 @@ The GitLab deploy job runs only on `main` and only when both variables exist.
 
 ## Ежедневный цикл
 
+Для полного цикла релиза (проверка, коммит, пуш и деплой) используйте единый скрипт:
+
 ```bash
-git checkout main
-git pull origin main
-# … правки …
-npm run validate
-git add -A && git commit -m "описание"
-npm run git:push
+# Запустите скрипт и следуйте инструкциям
+./tools/release.ps1
 ```
 
 `npm run git:push`:
