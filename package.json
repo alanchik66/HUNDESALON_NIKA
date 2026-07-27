@@ -5,10 +5,10 @@
   "main": "index.html",
   "type": "module",
   "scripts": {
-    "start": "serve . -l tcp://127.0.0.1:5502 --no-port-switching",
-    "dev": "serve . -l tcp://127.0.0.1:5502 --no-port-switching",
-    "dev:5502": "serve . -l 5502",
-    "preview": "serve . -l tcp://127.0.0.1:5502 --no-port-switching",
+    "start": "python -m http.server 5502 --bind 127.0.0.1",
+    "dev": "python -m http.server 5502 --bind 127.0.0.1",
+    "dev:5502": "python -m http.server 5502 --bind 127.0.0.1",
+    "preview": "python -m http.server 5502 --bind 127.0.0.1",
     "lint": "npm run lint:html && npm run lint:css && npm run lint:js && npm run lint:md",
     "lint:html": "htmlhint ru/**/*.html de/**/*.html en/**/*.html uk/**/*.html *.html",
     "lint:css": "npx stylelint \"assets/css/**/*.css\"",
@@ -180,7 +180,6 @@
     "markdownlint-cli2": "^0.23.1",
     "playwright": "^1.61.1",
     "prettier": "^3.9.4",
-    "serve": "^14.2.6",
     "stylelint": "^17.14.0",
     "stylelint-config-standard": "^40.0.0",
     "wrangler": "^4.108.0"
