@@ -35,6 +35,11 @@ export function hasUsableValue(value) {
   return Boolean(value) && !/ВАШ_|YOUR_|XXXXXXXX|TODO/i.test(value);
 }
 
+export function siteNotificationsEnabled(env) {
+  const raw = getEnvValue(env, 'SITE_NOTIFICATIONS_ENABLED', 'false').toLowerCase();
+  return raw === '1' || raw === 'true' || raw === 'on' || raw === 'yes';
+}
+
 function base64UrlEncode(value) {
   const bytes = value instanceof Uint8Array ? value : new TextEncoder().encode(String(value));
   let binary = '';
@@ -318,6 +323,9 @@ export async function createGoogleCalendarEvent(env, { calendarId, summary, desc
 }
 
 export async function sendTeamsMessage(env, payload) {
+  if (!siteNotificationsEnabled(env)) {
+    return { ok: false, skipped: true, reason: 'Site notifications are disabled.' };
+  }
   const webhook = getEnvValue(env, 'TEAMS_WEBHOOK_URL');
   if (hasUsableValue(webhook)) {
     return safeJsonFetch(webhook, {

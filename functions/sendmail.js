@@ -20,6 +20,7 @@ import {
   hasUsableValue,
   sendResendEmail,
   sendTeamsMessage,
+  siteNotificationsEnabled,
 } from './_lib/platform-integrations.js';
 
 const DEFAULT_RECIPIENT = 'info@hundesalon-nika.com';
@@ -215,6 +216,7 @@ function buildSlackPayload(data) {
  * @param {object} payload
  */
 async function sendSlackNotification(env, payload) {
+  if (!siteNotificationsEnabled(env)) return false;
   const webhook = String(env?.SLACK_WEBHOOK_URL || '').trim();
   if (!webhook) return false;
 
@@ -479,6 +481,9 @@ export async function onRequest(ctx) {
   };
 
   const sendAdminNotification = async () => {
+    if (!siteNotificationsEnabled(env)) {
+      return { ok: false, skipped: true, reason: 'Site notifications are disabled.' };
+    }
     if (adminRecipients.length === 0) {
       return { ok: false, skipped: true, reason: 'Admin notification recipients are not configured.' };
     }

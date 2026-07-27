@@ -6,6 +6,7 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { loadDevVars } from './lib/cloudflare-auth.mjs';
+import { siteNotificationsEnabled } from '../functions/_lib/platform-integrations.js';
 import { hasBingApiKey } from './lib/bing-api.mjs';
 
 loadDevVars();
@@ -40,7 +41,7 @@ function childEnv() {
 }
 
 async function notifySlack(status, details = '') {
-  if (!SLACK_WEBHOOK_URL) return;
+  if (!SLACK_WEBHOOK_URL || !siteNotificationsEnabled(process.env)) return;
   const ok = status === 'success';
   const emoji = ok ? ':white_check_mark:' : ':x:';
   const title = ok ? 'Деплой успешно завершен' : 'Ошибка деплоя';

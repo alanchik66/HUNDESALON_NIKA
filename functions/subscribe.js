@@ -6,6 +6,7 @@ import {
   getEnvValue,
   sendResendEmail,
   sendTeamsMessage,
+  siteNotificationsEnabled,
 } from './_lib/platform-integrations.js';
 
 const DEFAULT_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
@@ -92,13 +93,15 @@ export async function onRequest(context) {
   });
 
   if (adminRecipients.length > 0) {
-    await sendResendEmail(env, {
-      to: adminRecipients,
-      subject: '[Admin] Neue Newsletter-Anmeldung — HUNDESALON NIKA',
-      text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}\nAntworten bitte über ${supportReplyTo}.`,
-      replyTo: supportReplyTo,
-      from: getEnvValue(env, 'RESEND_FROM', DEFAULT_FROM),
-    });
+    if (siteNotificationsEnabled(env)) {
+      await sendResendEmail(env, {
+        to: adminRecipients,
+        subject: '[Admin] Neue Newsletter-Anmeldung — HUNDESALON NIKA',
+        text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}\nAntworten bitte über ${supportReplyTo}.`,
+        replyTo: supportReplyTo,
+        from: getEnvValue(env, 'RESEND_FROM', DEFAULT_FROM),
+      });
+    }
   }
 
   await sendTeamsMessage(env, {
