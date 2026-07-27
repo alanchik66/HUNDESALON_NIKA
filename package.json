@@ -220,7 +220,7 @@
     "playwright": "^1.61.1",
     "prettier": "^3.9.4",
     "serve": "^14.2.6",
-    "stylelint": "^17.14.0",
+    "stylelint": "^17.14.1",
     "stylelint-config-standard": "^40.0.0",
     "wrangler": "^4.108.0"
   },
