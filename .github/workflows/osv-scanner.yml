@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Run OSV Scanner
-        uses: google/osv-scanner-action/osv-scanner-action@8dc09193bb540e09b23da07ad7e30bd33bf87018 # v2.3.8
+        uses: google/osv-scanner-action/osv-scanner-action@9fd1bcce27f67e3bd819a0a7620e332803dc43bc # v2.3.8
         with:
           scan-args: |-
             --recursive
