@@ -323,33 +323,7 @@ export async function createGoogleCalendarEvent(env, { calendarId, summary, desc
 }
 
 export async function sendTeamsMessage(env, payload) {
-  if (!siteNotificationsEnabled(env)) {
-    return { ok: false, skipped: true, reason: 'Site notifications are disabled.' };
-  }
-  const webhook = getEnvValue(env, 'TEAMS_WEBHOOK_URL');
-  if (hasUsableValue(webhook)) {
-    return safeJsonFetch(webhook, {
-      method: 'POST',
-      headers: JSON_HEADERS,
-      body: JSON.stringify({ text: payload.text, title: payload.title || 'HUNDESALON NIKA' }),
-    });
-  }
-
-  const graphToken = await getMicrosoftGraphToken(env);
-  const teamId = getEnvValue(env, 'TEAM_ID');
-  const channelId = getEnvValue(env, 'TEAM_CHANNEL_ID');
-  if (!hasUsableValue(graphToken) || !hasUsableValue(teamId) || !hasUsableValue(channelId)) {
-    return { ok: false, skipped: true, reason: 'Microsoft Teams credentials are not configured.' };
-  }
-
-  return safeJsonFetch(`https://graph.microsoft.com/v1.0/teams/${teamId}/channels/${channelId}/messages`, {
-    method: 'POST',
-    headers: {
-      ...JSON_HEADERS,
-      Authorization: `Bearer ${graphToken}`,
-    },
-    body: JSON.stringify({ body: { contentType: 'html', content: payload.html || payload.text } }),
-  });
+  return { ok: false, skipped: true, reason: 'Microsoft Teams integration is disabled.' };
 }
 
 export async function sendGmailEmail(env, { to, subject, text, replyTo = '', allowImplicitSender = false }) {
