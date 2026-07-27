@@ -1,28 +1,5 @@
 const SUPPORTED_LANGS = new Set(['de', 'ru', 'uk', 'en']);
 
-const UNSUPPORTED_AGENT_ENDPOINTS = new Map([
-  [
-    '/.well-known/http-message-signatures-directory',
-    'Web Bot Auth request signing is not published for this public marketing site.',
-  ],
-  [
-    '/.well-known/oauth-authorization-server',
-    'HUNDESALON NIKA does not operate a public OAuth authorization server for agents.',
-  ],
-  ['/.well-known/openid-configuration', 'HUNDESALON NIKA does not operate a public OpenID Connect issuer for agents.'],
-  [
-    '/.well-known/oauth-protected-resource',
-    'There is no public protected-resource metadata because the published website API is unauthenticated.',
-  ],
-  ['/auth.md', 'Agent registration is not available because no public agent OAuth flow is offered.'],
-  ['/.well-known/mcp/server-card.json', 'No public MCP server is deployed for this domain.'],
-  ['/.well-known/mcp/server-cards.json', 'No public MCP server is deployed for this domain.'],
-  ['/.well-known/mcp.json', 'No public MCP server is deployed for this domain.'],
-  ['/.well-known/agent-card.json', 'No public A2A agent endpoint is deployed for this domain.'],
-  ['/.well-known/ucp', 'No Universal Commerce Protocol profile is published for this salon website.'],
-  ['/.well-known/acp.json', 'No Agentic Commerce Protocol discovery document is published for this salon website.'],
-]);
-
 const COUNTRY_LANGUAGE_MAP = new Map([
   ['de', new Set(['DE', 'AT', 'CH', 'LI', 'LU'])],
   ['en', new Set(['US', 'GB', 'IE', 'CA', 'AU', 'NZ'])],
@@ -65,62 +42,6 @@ function redirectResponse(location, status = 302) {
       Location: location,
       'Cache-Control': 'private, no-store, max-age=0',
       Vary: 'Accept-Language, CF-IPCountry',
-    },
-  });
-}
-
-async function staticAssetAlias(context, pathname) {
-  if (!context.env?.ASSETS?.fetch) return context.next();
-
-  const url = new URL(context.request.url);
-  url.pathname = pathname;
-  return context.env.ASSETS.fetch(new Request(url.toString(), context.request));
-}
-
-function unsupportedAgentEndpointResponse(pathname, message, method) {
-  const publicDiscovery = [
-    '/.well-known/api-catalog',
-    '/.well-known/openapi.json',
-    '/.well-known/agent-skills/index.json',
-    '/llms.txt',
-  ];
-
-  if (pathname === '/auth.md') {
-    const body = [
-      '# HUNDESALON NIKA Agent Authentication',
-      '',
-      message,
-      '',
-      'Public discovery documents:',
-      ...publicDiscovery.map(path => `- https://hundesalon-nika.com${path}`),
-      '',
-    ].join('\n');
-
-    return new Response(method === 'HEAD' ? null : body, {
-      status: 404,
-      headers: {
-        'Content-Type': 'text/markdown; charset=utf-8',
-        'Cache-Control': 'public, max-age=300, must-revalidate',
-      },
-    });
-  }
-
-  const body = JSON.stringify(
-    {
-      error: 'not_available',
-      endpoint: pathname,
-      message,
-      publicDiscovery,
-    },
-    null,
-    2
-  );
-
-  return new Response(method === 'HEAD' ? null : body, {
-    status: 404,
-    headers: {
-      'Content-Type': 'application/problem+json; charset=utf-8',
-      'Cache-Control': 'public, max-age=300, must-revalidate',
     },
   });
 }
@@ -335,18 +256,6 @@ export async function onRequest(context) {
   if (url.hostname.startsWith('www.') && url.pathname === '/robots.txt') {
     const apexHost = url.hostname.slice(4);
     return redirectResponse(`https://${apexHost}/robots.txt`, 301);
-  }
-
-  if (['GET', 'HEAD'].includes(context.request.method) && url.pathname === '/openapi.json') {
-    return staticAssetAlias(context, '/.well-known/openapi.json');
-  }
-
-  if (['GET', 'HEAD'].includes(context.request.method) && UNSUPPORTED_AGENT_ENDPOINTS.has(url.pathname)) {
-    return unsupportedAgentEndpointResponse(
-      url.pathname,
-      UNSUPPORTED_AGENT_ENDPOINTS.get(url.pathname),
-      context.request.method
-    );
   }
 
   if (

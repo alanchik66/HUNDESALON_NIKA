@@ -11,7 +11,6 @@ const requiredFiles = [
   'ru/index.html',
   'uk/index.html',
   'robots.txt',
-  'llms.txt',
   'sitemap.xml',
   'sitemap-brand.xml',
   'indexnow-key.txt',
@@ -20,10 +19,6 @@ const requiredFiles = [
   '_headers',
   '_redirects',
   'wrangler.toml',
-  'assets/js/agent-tools.js',
-  '.well-known/api-catalog',
-  '.well-known/openapi.json',
-  '.well-known/agent-skills/index.json',
 ];
 
 const indexFiles = ['index.html', 'de/index.html', 'en/index.html', 'ru/index.html', 'uk/index.html'];
@@ -207,7 +202,6 @@ for (const file of indexFiles) {
     `${file}: missing favicon.ico link`
   );
   assert(html.includes('/site.webmanifest'), `${file}: missing web manifest link`);
-  assert(html.includes('agent-tools.js'), `${file}: missing WebMCP agent tools script`);
   assert(html.includes('search-logo-clear-512.png'), `${file}: missing transparent search logo structured signal`);
 
   for (const match of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
@@ -223,36 +217,8 @@ if (fs.existsSync(path.join(root, 'robots.txt'))) {
   const robots = read('robots.txt');
   assert(robots.includes('Sitemap: https://hundesalon-nika.com/sitemap.xml'), 'robots.txt must point to sitemap.xml');
   assert(robots.includes('sitemap-brand.xml'), 'robots.txt must point to sitemap-brand.xml');
-  assert(robots.includes('llms.txt'), 'robots.txt should mention llms.txt for AI agents');
   assert(robots.includes('Content-Signal:'), 'robots.txt should declare Content-Signal preferences');
   assert(robots.includes('GPTBot'), 'robots.txt should include explicit AI bot rules');
-}
-
-if (fs.existsSync(path.join(root, 'llms.txt'))) {
-  const llms = read('llms.txt');
-  assert(
-    llms.includes('The canonical public domain is https://hundesalon-nika.com/.'),
-    'llms.txt must include the canonical website URL'
-  );
-  assert(llms.includes('- German: https://hundesalon-nika.com/de/'), 'llms.txt must include the German landing page');
-  assert(llms.includes('- English: https://hundesalon-nika.com/en/'), 'llms.txt must include the English landing page');
-  assert(llms.includes('- Russian: https://hundesalon-nika.com/ru/'), 'llms.txt must include the Russian landing page');
-  assert(
-    llms.includes('- Ukrainian: https://hundesalon-nika.com/uk/'),
-    'llms.txt must include the Ukrainian landing page'
-  );
-  assert(read('_headers').includes('/llms.txt'), '_headers must include cache policy for llms.txt');
-}
-
-if (fs.existsSync(path.join(root, '.well-known/api-catalog'))) {
-  const catalog = JSON.parse(read('.well-known/api-catalog'));
-  assert(Array.isArray(catalog.linkset), '.well-known/api-catalog must contain a linkset array');
-  assert(read('_headers').includes('rel="api-catalog"'), '_headers must advertise the API catalog');
-}
-
-if (fs.existsSync(path.join(root, '.well-known/agent-skills/index.json'))) {
-  const skills = JSON.parse(read('.well-known/agent-skills/index.json'));
-  assert(Array.isArray(skills.skills), 'agent-skills index must contain a skills array');
 }
 
 if (fs.existsSync(path.join(root, 'sitemap.xml'))) {

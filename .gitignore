@@ -151,6 +151,7 @@ graphify-out/manifest.json
 graphify-out/[0-9][0-9][0-9][0-9]-*/
 
 # ═══════════════ AGENT TOOLING ═══════════════
+.codesearch.db/
 .tmp-tools/
 system_prompt.md
 install_rooflow.cmd
@@ -174,7 +175,6 @@ booking-*-browser.png
 tools/_*.mjs
 AGENTS.md
 .agents/
-.cursorrules
 .devin/
 .devinignore
 .kilo/

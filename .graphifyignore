@@ -51,6 +51,5 @@ graphify-out/cost.json
 graphify-out/cache/
 
 # Agent / IDE noise
-.cursor/projects/
 agent-transcripts/
 uploads/

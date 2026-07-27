@@ -49,19 +49,8 @@ HUNDESALON_NIKA/
 │   └── launch.json            # Конфигурация отладки
 │
 ├── 🔧 tools/                  # Инструменты разработки
-└── 📖 docs/                   # Документация (в т.ч. AI routing)
+└── 📖 docs/                   # Документация
 ```
-
-## 🤖 AI-агенты (Cursor / Claude / Codex / Gemini / Copilot)
-
-Маршрутизация — общее ядро, не отдельная «секция на инструмент»:
-
-1. [`docs/agents-routing.md`](docs/agents-routing.md) — detection, startup, decision pipeline  
-2. [`AGENTS.md`](AGENTS.md) / [`CLAUDE.md`](CLAUDE.md) / [`GEMINI.md`](GEMINI.md) — тонкие профили хостов  
-3. [`docs/agents-playbook.md`](docs/agents-playbook.md) — команды и аккаунты  
-4. [`docs/agents-master.md`](docs/agents-master.md) — доменные политики  
-
-Проверка целостности: `npm run check:agents-routing` (входит в `npm run validate`).
 
 ## 🚀 Быстрый старт
 

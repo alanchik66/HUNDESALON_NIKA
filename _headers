@@ -5,7 +5,6 @@
 # seeing stale page markup after a successful Pages deploy.
 /
   Cache-Control: public, max-age=0, must-revalidate
-  Link: </.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json", </.well-known/openapi.json>; rel="service-desc"; type="application/vnd.oai.openapi+json", </llms.txt>; rel="service-doc"; type="text/plain", </.well-known/agent-skills/index.json>; rel="describedby"; type="application/json"
 
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
@@ -69,25 +68,6 @@
 # IndexNow key must be easy for search engines to verify
 /indexnow-key.txt
   Cache-Control: public, max-age=300
-
-/llms.txt
-  Cache-Control: public, max-age=3600, must-revalidate
-
-/.well-known/api-catalog
-  Content-Type: application/linkset+json; charset=utf-8
-  Cache-Control: public, max-age=3600, must-revalidate
-
-/.well-known/openapi.json
-  Content-Type: application/vnd.oai.openapi+json; charset=utf-8
-  Cache-Control: public, max-age=3600, must-revalidate
-
-/.well-known/agent-skills/index.json
-  Content-Type: application/json; charset=utf-8
-  Cache-Control: public, max-age=3600, must-revalidate
-
-/.well-known/agent-skills/*.md
-  Content-Type: text/markdown; charset=utf-8
-  Cache-Control: public, max-age=3600, must-revalidate
 
 /assets/vendor/*
   Cache-Control: public, max-age=31536000, immutable

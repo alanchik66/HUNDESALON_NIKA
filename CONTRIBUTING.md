@@ -7,11 +7,10 @@ Thank you for improving HUNDESALON_NIKA.
 - Check open issues and pull requests to avoid duplicate work.
 - Keep changes focused and minimal.
 - Preserve multilingual consistency across `de/`, `en/`, `ru/`, and `uk/` where applicable.
-- AI agents: follow [`docs/agents-routing.md`](docs/agents-routing.md) (startup → decision pipeline → affected modules only) before editing.
 
 ## Development Checklist
 
-1. Make targeted changes only (routing kernel module boundaries).
+1. Make targeted changes only.
 2. Run local checks:
    - `npm run lint`
    - `npm run check:links`

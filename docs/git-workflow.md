@@ -11,8 +11,6 @@
 
 Правило проекта: на GitHub держим только `main`. Временные ветки допустимы только локально на время работы и удаляются после попадания изменений в `main`.
 
-AI agents: follow [`docs/agents-routing.md`](agents-routing.md) §1 (conflict order) and §11 (safety). Default is `main` only. If the active Cloud Agent / user task explicitly requires a feature branch or PR, that mandate wins — still no force-push and no history rewrite.
-
 Cloudflare Pages: проект `hundesalon-nika`, тип **Direct Upload**. Продакшен обновляется через:
 
 - GitHub Actions: `.github/workflows/cloudflare-pages.yml`;
@@ -134,5 +132,3 @@ Workflow `Deploy Cloudflare Pages` — только `workflow_dispatch` (опц�
 ```bash
 npm run check:prod
 ```
-
-Gmail MCP (чтение/удаление писем агентом): `npx @gongrzhe/server-gmail-autoauth-mcp` в `.cursor/mcp.json` / `.vscode/mcp.json`; ключи в `~/.gmail-mcp/`. Очистка failed-run писем: `node tools/gmail-cleanup-actions-failures.mjs`.
