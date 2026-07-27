@@ -4,11 +4,10 @@
  * Обрабатывает контактные формы и заявки на бронирование.
  *
  * Настройка (один раз в Cloudflare Dashboard):
- *   1. Зарегистрируйтесь на https://resend.com (бесплатно, 3000 писем/мес.)
- *   2. Подтвердите домен hundesalon-nika.com в Resend → Domains
- *   3. Создайте API-ключ на https://resend.com/api-keys
- *   4. В Cloudflare Pages → Settings → Environment variables
- *      добавьте секрет: RESEND_API_KEY = <ваш ключ>
+ *   1. Зарегистрируйтесь в SendPulse и подтвердите домен в разделе Senders.
+ *   2. Создайте API key или Client credentials в SendPulse → API.
+ *   3. В Cloudflare Pages → Settings → Environment variables добавьте
+ *      SENDPULSE_API_KEY либо SENDPULSE_CLIENT_ID и SENDPULSE_CLIENT_SECRET.
  */
 
 import { assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http-security.js';
@@ -18,8 +17,9 @@ import {
   getEnvList,
   getEnvValue,
   hasUsableValue,
-  sendResendEmail,
+  sendSendPulseEmail,
   sendTeamsMessage,
+  upsertSendPulseContact,
   siteNotificationsEnabled,
 } from './_lib/platform-integrations.js';
 
@@ -29,7 +29,6 @@ const DEFAULT_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
 const DEFAULT_CLIENT_FROM = 'Hundesalon Nika <support@hundesalon-nika.com>';
 const DEFAULT_ADMIN_EMAILS = ['snaiper1984@gmail.com', 'ryndenko1982@gmail.com'];
 const SLACK_TIMEOUT_MS = 4500;
-const RESEND_USER_AGENT = 'hundesalon-nika.com/1.0 (Cloudflare Pages Function)';
 
 /** Строки для ответа на разных языках */
 const COPY = {
@@ -295,6 +294,8 @@ export async function onRequest(ctx) {
   const date = sanitize(fields.date);
   const time = sanitize(fields.time);
   const uploadedFileUrl = sanitize(fields.uploaded_file_url || fields.file_url);
+  const source = sanitize(fields.source || fields.page || request.headers.get('Referer') || 'website');
+  const inquiryType = sanitize(fields.inquiry_type).slice(0, 40);
   const paymentChoice = sanitize(fields.payment_choice || fields.payment_method || '');
   const stripeSessionId = sanitize(fields.stripe_session_id);
   const paymentNow =
@@ -331,9 +332,9 @@ export async function onRequest(ctx) {
   const copy = COPY[lang] ?? COPY.de;
   const requestUrl = new URL(request.url);
   const recipient = getSalonRecipient(env, formType);
-  const resendFrom = getEnvValue(env, 'RESEND_FROM', DEFAULT_FROM);
+  const senderFrom = getEnvValue(env, 'SENDPULSE_FROM', DEFAULT_FROM);
   const supportReplyTo = getSupportReplyTo(env, recipient);
-  const clientEmailFrom = getClientEmailFrom(env, resendFrom);
+  const clientEmailFrom = getClientEmailFrom(env, senderFrom);
   const adminRecipients = getAdminEmails(env);
 
   /* ── Validate required fields ──────────────────────────────── */
@@ -391,10 +392,18 @@ export async function onRequest(ctx) {
     feedback: 'Bewertung von der Website — HUNDESALON NIKA',
     contact: 'Neue Kontaktanfrage — HUNDESALON NIKA',
   };
-  const subject = subjects[formType] ?? subjects.contact;
+  const inquiryLabelsByLang = {
+    de: { booking: 'Termin vereinbaren', grooming: 'Frage zu Grooming', feedback: 'Feedback', partnership: 'Partnerschaft', general: 'Allgemeine Frage' },
+    en: { booking: 'Book an appointment', grooming: 'Grooming question', feedback: 'Feedback', partnership: 'Partnership', general: 'General question' },
+    ru: { booking: 'Запись на услугу', grooming: 'Вопрос о груминге', feedback: 'Отзыв и обратная связь', partnership: 'Партнёрство', general: 'Общий вопрос' },
+    uk: { booking: 'Запис на послугу', grooming: 'Питання про грумінг', feedback: 'Відгук', partnership: 'Партнерство', general: 'Загальне питання' },
+  };
+  const inquiryLabel = inquiryLabelsByLang[lang]?.[inquiryType] || '';
+  const subject = `${subjects[formType] ?? subjects.contact}${inquiryLabel ? ` — ${inquiryLabel}` : ''}`;
 
   const bodyLines = [
     `Formulartyp: ${formType}`,
+    inquiryLabel ? `Richtung:   ${inquiryLabel}` : null,
     `Sprache:     ${lang}`,
     `Name:        ${name}`,
     `E-Mail:      ${email}`,
@@ -466,13 +475,14 @@ export async function onRequest(ctx) {
         text: bookingSummary,
         html: bookingSummary.replaceAll('\n', '<br>'),
       }),
-      sendResendEmail(env, {
+      sendSendPulseEmail(env, {
         to: email,
         subject: 'Ihre Buchungsanfrage bei HUNDESALON NIKA',
         text: `Danke für Ihre Anfrage.\n\n${bookingSummary}`,
         replyTo: supportReplyTo,
         from: clientEmailFrom,
       }),
+      upsertSendPulseContact(env, { email, name, phone, lang, service, source, formType }),
     ]);
 
     return results.map(result =>
@@ -495,51 +505,39 @@ export async function onRequest(ctx) {
       textBody,
     ].join('\n');
 
-    return sendResendEmail(env, {
+    return sendSendPulseEmail(env, {
       to: adminRecipients,
       subject: `[Admin] ${subject}`,
       text: adminText,
       replyTo: supportReplyTo,
-      from: resendFrom,
+      from: senderFrom,
     });
   };
 
-  /* ── Send via Resend API ───────────────────────────────────── */
-  const apiKey = env?.RESEND_API_KEY;
-  if (!apiKey) {
-    console.error('[sendmail] RESEND_API_KEY not configured');
+  /* ── Send via SendPulse API ───────────────────────────────── */
+  const hasSendPulseCredentials =
+    Boolean(getEnvValue(env, 'SENDPULSE_API_KEY')) ||
+    Boolean(getEnvValue(env, 'SENDPULSE_CLIENT_ID') && getEnvValue(env, 'SENDPULSE_CLIENT_SECRET'));
+  if (!hasSendPulseCredentials) {
+    console.error('[sendmail] SendPulse credentials not configured');
     const slackDelivered = await sendSlackNotification(env, slackLeadPayload);
     const integrationResults = await runBookingIntegrations();
     const integrationDelivered = integrationResults.some(result => result?.ok === true);
     if (slackDelivered || integrationDelivered) {
-      console.warn('[sendmail] Delivered via fallback because RESEND_API_KEY is not configured');
+      console.warn('[sendmail] Delivered via fallback because SendPulse is not configured');
       return jsonResponse({ success: true, message: copy.success }, 200, origin);
     }
     return jsonResponse({ success: false, message: copy.error }, 503, origin);
   }
 
-  let resendRes;
+  let sendPulseRes;
   try {
-    const idempotencyKey =
-      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-    resendRes = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'Idempotency-Key': idempotencyKey,
-        'User-Agent': RESEND_USER_AGENT,
-      },
-      body: JSON.stringify({
-        from: resendFrom,
-        to: [recipient],
-        reply_to: email,
-        subject,
-        text: textBody,
-      }),
+    sendPulseRes = await sendSendPulseEmail(env, {
+      from: senderFrom,
+      to: recipient,
+      replyTo: email,
+      subject,
+      text: textBody,
     });
   } catch (err) {
     console.error('[sendmail] Network error:', err);
@@ -555,7 +553,7 @@ export async function onRequest(ctx) {
         service,
         date,
         time,
-        message: `Network error while sending via Resend: ${err?.message || 'unknown error'}`,
+        message: `Network error while sending via SendPulse: ${err?.message || 'unknown error'}`,
         origin,
         pagePath: requestUrl.pathname,
       })
@@ -563,7 +561,7 @@ export async function onRequest(ctx) {
     return jsonResponse({ success: false, message: copy.error }, 502, origin);
   }
 
-  if (resendRes.ok) {
+  if (sendPulseRes.ok) {
     await Promise.allSettled([
       sendSlackNotification(env, slackLeadPayload),
       runBookingIntegrations(),
@@ -572,8 +570,8 @@ export async function onRequest(ctx) {
     return jsonResponse({ success: true, message: copy.success }, 200, origin);
   }
 
-  const errBody = await resendRes.text().catch(() => '');
-  console.error('[sendmail] Resend error', resendRes.status, errBody);
+  const errBody = JSON.stringify(sendPulseRes.body || {});
+  console.error('[sendmail] SendPulse error', sendPulseRes.status, errBody);
   await sendSlackNotification(
     env,
     buildSlackPayload({
@@ -586,7 +584,7 @@ export async function onRequest(ctx) {
       service,
       date,
       time,
-      message: `Resend error ${resendRes.status}: ${errBody.slice(0, 600) || 'no details'}`,
+      message: `SendPulse error ${sendPulseRes.status}: ${errBody.slice(0, 600) || 'no details'}`,
       origin,
       pagePath: requestUrl.pathname,
     })

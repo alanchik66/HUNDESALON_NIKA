@@ -28,7 +28,7 @@
 - `SHEET_ID`
 - `DRIVE_UPLOAD_FOLDER`
 - `GMAIL_SENDER`
-- `RESEND_FROM`
+- `SENDPULSE_FROM`
 - `CLIENT_EMAIL_FROM`
 - `SALON_EMAIL`
 - `SUPPORT_EMAIL`
@@ -45,13 +45,14 @@
 - `TEAM_ID`
 - `TEAM_CHANNEL_ID`
 - `TEAMS_WEBHOOK_URL`
-- `RESEND_API_KEY`
+- `SENDPULSE_API_KEY` или `SENDPULSE_CLIENT_ID` + `SENDPULSE_CLIENT_SECRET`
+- `SENDPULSE_ADDRESSBOOK_ID`
 - `SLACK_WEBHOOK_URL`
 - `GOOGLE_SHEETS_WEBHOOK_URL`
 - `GOOGLE_DRIVE_UPLOAD_WEBHOOK_URL`
 - `PAYMENT_PROVIDER_KEY`
 
-Локальный пример лежит в `.dev.vars.example`. Реальные значения нельзя сгенерировать из репозитория: владелец аккаунтов должен войти в Google Cloud, Microsoft Entra/Teams, Resend и Cloudflare, создать ключи/токены и вставить их как Cloudflare Pages secrets. Файл `.dev.vars` остаётся только локальным и не коммитится.
+Локальный пример лежит в `.dev.vars.example`. Реальные значения нельзя сгенерировать из репозитория: владелец аккаунтов должен войти в Google Cloud, Microsoft Entra/Teams, SendPulse и Cloudflare, создать ключи/токены и вставить их как Cloudflare Pages secrets. Файл `.dev.vars` остаётся только локальным и не коммитится.
 
 ## Быстрая настройка в Cloudflare
 
@@ -71,7 +72,7 @@
    - Автоматический путь в репозитории: скачайте Desktop app JSON и запустите `npm run google:setup-platform -- --salon-email info@hundesalon-nika.com --share-email snaiper1984@gmail.com,ryndenko1982@gmail.com`.
 4. Для Google Workspace или проектов без запрета ключей можно использовать service account: сохраните `GOOGLE_SERVICE_ACCOUNT_EMAIL` и `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` в Cloudflare secrets.
 5. Apps Script gateway из `integrations/google-apps-script-gateway/` оставлен как резервный вариант. Он выполняется от имени владельца Google-аккаунта, создаёт Calendar/Sheets/Drive и принимает защищённые webhook-запросы от Cloudflare.
-6. Gmail API через service account работает только в Google Workspace с domain-wide delegation. Для обычного `@gmail.com` используйте Resend как основной канал email; Gmail OAuth нужен для Calendar/Sheets/Drive и не должен быть видимым отправителем для клиента.
+6. Gmail API через service account работает только в Google Workspace с domain-wide delegation. Email клиентов отправляется через SendPulse; Gmail OAuth используется только для Calendar/Sheets/Drive.
 
 ## Google Apps Script gateway
 
@@ -105,7 +106,7 @@
 
 ## Текущий продакшен-канал email
 
-Resend — основной рабочий канал для заявок, подтверждений бронирования и welcome-писем. Клиентские письма уходят с `CLIENT_EMAIL_FROM`, а ответы клиентов направляются на `SUPPORT_REPLY_TO_EMAIL`. Gmail API оставлен опционально и не используется для клиентских писем без явно настроенного рабочего `GMAIL_SENDER`.
+SendPulse — основной рабочий канал для заявок, подтверждений бронирования и welcome-писем. Клиентские письма уходят с `CLIENT_EMAIL_FROM`, а ответы клиентов направляются на `SUPPORT_REPLY_TO_EMAIL`.
 
 ## Галерея до/после
 
@@ -117,7 +118,7 @@ Stripe Checkout реализован серверными функциями `fu
 
 ## Рассылка
 
-`functions/subscribe.js` пишет подписчиков в лист `subscribers`, отправляет welcome-письмо через Resend и уведомляет админ-адреса. Регулярная рассылка оставлена как TODO: нужен отдельный cron-сервис или Cloudflare Scheduled Worker.
+`functions/subscribe.js` пишет подписчиков в лист `subscribers`, отправляет welcome-письмо через SendPulse и уведомляет админ-адреса. Регулярная рассылка оставлена как TODO: нужен отдельный cron-сервис или Cloudflare Scheduled Worker.
 
 ## Проверки перед деплоем
 

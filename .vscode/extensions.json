@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "editorconfig.editorconfig",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "stylelint.vscode-stylelint",
+    "htmlhint.vscode-htmlhint",
+    "davidanson.vscode-markdownlint",
+    "streetsidesoftware.code-spell-checker",
+    "github.vscode-github-actions",
+    "cloudflare.cloudflare-workers-bindings-extension"
+  ]
+}

@@ -9,9 +9,12 @@ SERVICE_GATEWAY_API_KEY=
 # SERVICE_GATEWAY_SEO_MAX_TOKENS=720
 # Bing Webmaster → Settings → API Access (optional; IndexNow works without it)
 BING_WEBMASTER_API_KEY=
-# Resend.com API key for local Cloudflare Pages Functions.
-# Starts with re_. Production value must be a Cloudflare Pages secret, not a committed file.
-RESEND_API_KEY=
+# SendPulse server-side credentials. Use either a static API key or OAuth client credentials.
+SENDPULSE_API_KEY=
+SENDPULSE_CLIENT_ID=
+SENDPULSE_CLIENT_SECRET=
+SENDPULSE_ADDRESSBOOK_ID=
+SENDPULSE_FROM=Hundesalon Nika <noreply@hundesalon-nika.com>
 
 # Full-stack platform integrations. Keep production values in Cloudflare Pages secrets only.
 GA_MEASUREMENT_ID=
@@ -30,7 +33,6 @@ SHEET_ID=
 DRIVE_UPLOAD_FOLDER=
 GMAIL_SENDER=
 # System / admin copies (not public). Client-facing mail uses CLIENT_EMAIL_FROM.
-RESEND_FROM=Hundesalon Nika <noreply@hundesalon-nika.com>
 # Public NAP for Search / Ads / site imprint — customers write here; forms land here.
 SALON_EMAIL=info@hundesalon-nika.com
 CONTACT_RECIPIENT_EMAIL=info@hundesalon-nika.com

@@ -8390,6 +8390,32 @@ body.light .review-card {
   transition: var(--transition-smooth);
 }
 
+.contact-form__label {
+  display: block;
+  margin: 2px 8px 8px;
+  color: var(--accent-gold);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.contact-form select {
+  appearance: none;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--accent-gold) 50%),
+    linear-gradient(135deg, var(--accent-gold) 50%, transparent 50%);
+  background-position: calc(100% - 22px) 50%, calc(100% - 16px) 50%;
+  background-repeat: no-repeat;
+  background-size: 6px 6px, 6px 6px;
+  padding-right: 44px;
+}
+
+.contact-form select option {
+  color: #1b211f;
+  background: #f4f0e8;
+}
+
 .contact-form input:focus,
 .contact-form textarea:focus,
 .contact-form select:focus {

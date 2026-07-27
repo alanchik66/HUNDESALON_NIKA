@@ -130,7 +130,7 @@ try {
     env: {
       PAYMENTS_ONLINE_ENABLED: 'true',
       STRIPE_WEBHOOK_SECRET: webhookSecret,
-      // No Resend / Teams / Sheets credentials → helpers return { ok:false, skipped:true }
+      // No SendPulse / Teams / Sheets credentials → helpers return { ok:false, skipped:true }
       PAYMENT_EVENTS: paymentEvents,
     },
   });
@@ -139,8 +139,11 @@ try {
 
   // One successful channel is enough to complete the event.
   globalThis.fetch = async (url, options = {}) => {
-    if (String(url).includes('api.resend.com/emails')) {
-      return Response.json({ id: 're_test' }, { status: 200 });
+    if (String(url).includes('api.sendpulse.com/oauth/access_token')) {
+      return Response.json({ access_token: 'sp_test', expires_in: 3600 }, { status: 200 });
+    }
+    if (String(url).includes('api.sendpulse.com/smtp/emails')) {
+      return Response.json({ result: true }, { status: 200 });
     }
     if (String(url).includes('/v1/checkout/sessions') && options.method === 'POST') {
       return Response.json({ id: 'cs_test_secure', url: 'https://checkout.stripe.com/test' });
@@ -189,7 +192,7 @@ try {
     env: {
       PAYMENTS_ONLINE_ENABLED: 'true',
       STRIPE_WEBHOOK_SECRET: webhookSecret,
-      RESEND_API_KEY: 're_test_key',
+      SENDPULSE_API_KEY: 'sp_test_key',
       PAYMENT_EVENTS: paymentEvents,
     },
   });

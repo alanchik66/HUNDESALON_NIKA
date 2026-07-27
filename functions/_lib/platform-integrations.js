@@ -1,7 +1,9 @@
 const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8' };
 const FORM_HEADERS = { 'Content-Type': 'application/x-www-form-urlencoded' };
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
+const SENDPULSE_API_URL = 'https://api.sendpulse.com';
 const googleTokenCache = new Map();
+let sendPulseTokenCache = null;
 
 export function cleanText(value, maxLength = 2000) {
   let s = String(value ?? '')
@@ -402,36 +404,106 @@ export async function sendOutlookEmail(env, { to, subject, text }) {
   });
 }
 
-export async function sendResendEmail(env, { to, subject, text, replyTo = '', from = '' }) {
-  const apiKey = getEnvValue(env, 'RESEND_API_KEY');
+async function getSendPulseAccessToken(env) {
+  const apiKey = getEnvValue(env, 'SENDPULSE_API_KEY');
+  if (hasUsableValue(apiKey)) return apiKey;
+
+  const clientId = getEnvValue(env, 'SENDPULSE_CLIENT_ID');
+  const clientSecret = getEnvValue(env, 'SENDPULSE_CLIENT_SECRET');
+  const now = Math.floor(Date.now() / 1000);
+  if (!hasUsableValue(clientId) || !hasUsableValue(clientSecret)) return '';
+  if (sendPulseTokenCache && sendPulseTokenCache.expiresAt - 90 > now) {
+    return sendPulseTokenCache.token;
+  }
+
+  const response = await safeJsonFetch(`${SENDPULSE_API_URL}/oauth/access_token`, {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ grant_type: 'client_credentials', client_id: clientId, client_secret: clientSecret }),
+  });
+  const token = response.body?.access_token;
+  if (!response.ok || !hasUsableValue(token)) return '';
+  sendPulseTokenCache = { token, expiresAt: now + Number(response.body.expires_in || 3600) };
+  return token;
+}
+
+function parseMailbox(value, fallbackName = 'HUNDESALON NIKA') {
+  const raw = String(value || '').trim();
+  const match = raw.match(/^(.*?)\s*<([^>]+)>$/);
+  return { name: (match?.[1] || fallbackName).trim(), email: (match?.[2] || raw).trim() };
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export async function sendSendPulseEmail(env, { to, subject, text, html = '', replyTo = '', from = '' }) {
   const recipients = (Array.isArray(to) ? to : String(to || '').split(','))
     .map(item => String(item || '').trim())
     .filter(Boolean);
-  if (!hasUsableValue(apiKey) || recipients.length === 0) {
-    return { ok: false, skipped: true, reason: 'Resend credentials are not configured.' };
+  const token = await getSendPulseAccessToken(env);
+  if (!hasUsableValue(token) || recipients.length === 0) {
+    return { ok: false, skipped: true, reason: 'SendPulse credentials are not configured.' };
   }
 
-  const payload = {
-    from: from || getEnvValue(env, 'RESEND_FROM', 'Hundesalon Nika <noreply@hundesalon-nika.com>'),
-    to: recipients,
-    subject,
-    text,
-  };
+  const payload = { email: {
+    from: parseMailbox(from || getEnvValue(env, 'SENDPULSE_FROM', 'Hundesalon Nika <noreply@hundesalon-nika.com>')),
+    to: recipients.map(email => parseMailbox(email, email)),
+    subject: String(subject || '').slice(0, 998),
+    text: String(text || ''),
+    html: String(html || '').trim() || undefined,
+  }};
   if (hasUsableValue(replyTo)) {
-    payload.reply_to = replyTo;
+    payload.email.reply_to = parseMailbox(replyTo, 'HUNDESALON NIKA');
   }
 
-  return safeJsonFetch('https://api.resend.com/emails', {
+  let lastResult = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const result = await safeJsonFetch(`${SENDPULSE_API_URL}/smtp/emails`, {
+        method: 'POST',
+        headers: {
+          ...JSON_HEADERS,
+          Authorization: `Bearer ${token}`,
+          'User-Agent': 'hundesalon-nika.com/1.0 (Cloudflare Pages Function)',
+        },
+        body: JSON.stringify(payload),
+      });
+      console.info('[sendpulse] email delivery', JSON.stringify({ ok: result.ok, status: result.status, attempt: attempt + 1 }));
+      if (result.ok || ![408, 429, 500, 502, 503, 504].includes(result.status)) return result;
+      lastResult = result;
+    } catch (error) {
+      lastResult = { ok: false, status: 0, body: { error: error?.message || 'network error' } };
+      console.error('[sendpulse] email delivery error', JSON.stringify({ attempt: attempt + 1, error: error?.message || 'unknown' }));
+    }
+    if (attempt < 2) await sleep(250 * 2 ** attempt);
+  };
+  return lastResult || { ok: false, status: 0, body: { error: 'SendPulse request failed' } };
+}
+
+export async function upsertSendPulseContact(env, { email, name = '', phone = '', lang = '', service = '', source = '', formType = '' }) {
+  const addressBookId = getEnvValue(env, 'SENDPULSE_ADDRESSBOOK_ID');
+  const token = await getSendPulseAccessToken(env);
+  if (!hasUsableValue(addressBookId) || !hasUsableValue(token) || !hasUsableValue(email)) {
+    return { ok: false, skipped: true, reason: 'SendPulse address book is not configured.' };
+  }
+
+  const variables = [
+    ['name', name],
+    ['phone', phone],
+    ['language', lang],
+    ['service_type', service],
+    ['lead_source', source],
+    ['form_type', formType],
+  ].filter(([, value]) => hasUsableValue(value)).map(([variableName, value]) => ({ name: variableName, value: String(value) }));
+
+  return safeJsonFetch(`${SENDPULSE_API_URL}/addressbooks/${encodeURIComponent(addressBookId)}/emails`, {
     method: 'POST',
-    headers: {
-      ...JSON_HEADERS,
-      Authorization: `Bearer ${apiKey}`,
-      'Idempotency-Key': crypto.randomUUID(),
-      'User-Agent': 'hundesalon-nika.com/1.0 (Cloudflare Pages Function)',
-    },
-    body: JSON.stringify(payload),
+    headers: { ...JSON_HEADERS, Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ emails: [{ email: String(email).trim().toLowerCase(), variables }] }),
   });
 }
+
 
 const APPS_SCRIPT_MAX_BYTES = 35 * 1024 * 1024;
 

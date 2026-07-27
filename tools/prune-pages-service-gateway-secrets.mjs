@@ -1,6 +1,6 @@
 /**
  * Remove redundant service gateway Pages secrets (defaults live in functions/*.js).
- * Keeps SERVICE_GATEWAY_API_KEY; does not touch RESEND_API_KEY.
+ * Keeps SERVICE_GATEWAY_API_KEY and SendPulse credentials.
  */
 import { spawnSync } from 'node:child_process';
 
@@ -30,4 +30,4 @@ for (const name of REMOVE) {
   console.log(`deleted ${name}`);
 }
 
-console.log('Done. Remaining secrets should include SERVICE_GATEWAY_API_KEY only (+ RESEND if configured).');
+console.log('Done. Remaining secrets should include SERVICE_GATEWAY_API_KEY and configured SendPulse credentials.');

@@ -1,5 +1,5 @@
 /**
- * Stripe webhook: checkout.session.completed → notify salon (Resend / Teams / Sheet).
+ * Stripe webhook: checkout.session.completed → notify salon (SendPulse / Teams / Sheet).
  * Env: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
  * Binding: PAYMENT_EVENTS (KV; required when online payments are enabled)
  */
@@ -9,7 +9,7 @@ import {
   cleanText,
   getEnvValue,
   hasUsableValue,
-  sendResendEmail,
+  sendSendPulseEmail,
   sendTeamsMessage,
 } from './_lib/platform-integrations.js';
 
@@ -133,14 +133,14 @@ export async function onRequest(context) {
     .join('\n');
 
   const sideEffects = await Promise.allSettled([
-    sendResendEmail(env, {
+    sendSendPulseEmail(env, {
       to:
         getEnvValue(env, 'BOOKING_RECIPIENT_EMAIL') ||
         getEnvValue(env, 'SALON_EMAIL') ||
         'info@hundesalon-nika.com',
       subject: 'Online-Anzahlung bezahlt — HUNDESALON NIKA',
       text: summary,
-      from: getEnvValue(env, 'RESEND_FROM', DEFAULT_FROM),
+      from: getEnvValue(env, 'SENDPULSE_FROM', DEFAULT_FROM),
     }),
     sendTeamsMessage(env, { title: 'Stripe: Anzahlung bezahlt', text: summary }),
     appendGoogleSheetRow(env, {

@@ -1,12 +1,12 @@
-# 🐕 HUNDESALON NIKA - Профессиональный груминг-салон
+# 🐕 HUNDESALON NIKA - Профессиональный груминг-салон #
 
 > Многоязычный сайт салона груминга для собак и кошек в Лейпциге
 
 [![License](https://img.shields.io/badge/license-UNLICENSED-red.svg)](LICENSE)
 [![VS Code](https://img.shields.io/badge/VS%20Code-configured-blue.svg)](https://code.visualstudio.com/)
-[![Languages](https://img.shields.io/badge/languages-4-green.svg)](#языки)
+[![Languages](https://img.shields.io/badge/languages-4-green.svg)](#-языки)
 
-## 🌟 Особенности
+## 🌟 Особенности ##
 
 - **4 языковые версии**: 🇷🇺 Русский | 🇩🇪 Немецкий | 🇬🇧 Английский | 🇺🇦 Украинский
 - **3D Виджет погоды**: Интерактивная погода Лейпцига
@@ -15,9 +15,9 @@
 - **Мобильная версия**: Адаптивная верстка
 - **Высокая производительность**: Сжатие, кэширование, CDN-ready
 
-## 📁 Структура проекта
+## 📁 Структура проекта ##
 
-```
+```text
 HUNDESALON_NIKA/
 ├── 🏠 index.html              # Главная страница (переадресация)
 ├── 📧 functions/sendmail.js   # Cloudflare Pages Function для формы
@@ -52,9 +52,9 @@ HUNDESALON_NIKA/
 └── 📖 docs/                   # Документация
 ```
 
-## 🚀 Быстрый старт
+## 🚀 Быстрый старт ##
 
-### 1. Установка расширений VS Code
+### 1. Установка расширений VS Code ###
 
 Откройте проект в VS Code и установите рекомендуемые расширения:
 
@@ -62,7 +62,7 @@ HUNDESALON_NIKA/
 Ctrl+Shift+P → "Extensions: Show Recommended Extensions"
 ```
 
-### 2. Запуск локального сервера
+### 2. Запуск локального сервера ###
 
 ```bash
 # Локальный просмотр
@@ -72,7 +72,7 @@ npm run dev
 npm run dev:cf
 ```
 
-### 3. Проверка кода
+### 3. Проверка кода ###
 
 ```bash
 # Полная проверка
@@ -84,9 +84,9 @@ npm run format      # Форматирование
 npm run validate    # Валидация
 ```
 
-## 🛠️ Разработка
+## 🛠️ Разработка ##
 
-### Команды разработки
+### Команды разработки ###
 
 ```bash
 npm start          # Запуск локального сервера
@@ -97,17 +97,17 @@ npm run validate   # Валидация всего проекта
 npm run build      # Сборка для продакшена
 ```
 
-### VS Code задачи
+### VS Code задачи ###
 
 - **Ctrl+Shift+P** → "Tasks: Run Task":
-  - `Полная проверка проекта` - комплексная валидация
-  - `Сборка для продакшена` - готовая версия в `dist/`
-  - `Валидация HTML всех языков`
-  - `Валидация CSS`
-  - `Валидация JavaScript`
-  - `Форматирование всех файлов`
+    - `Полная проверка проекта` - комплексная валидация
+    - `Сборка для продакшена` - готовая версия в `dist/`
+    - `Валидация HTML всех языков`
+    - `Валидация CSS`
+    - `Валидация JavaScript`
+    - `Форматирование всех файлов`
 
-### Горячие клавиши
+### Горячие клавиши ###
 
 - **Ctrl+Shift+P** - Палитра команд
 - **F5** - Запуск отладки
@@ -116,7 +116,7 @@ npm run build      # Сборка для продакшена
 - **Ctrl+Shift+E** - Проводник
 - **Ctrl+Shift+X** - Расширения
 
-## 🌙 Moon asset pipeline
+## 🌙 Moon asset pipeline ##
 
 Папка ассетов: `3d-weather-codrops-main/dist-widget/assets/Moon`.
 
@@ -168,9 +168,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\verify_outputs.ps1
 
 Полный регламент после мержа, чеклист ревью и требования к PR: [`docs/moon-asset-pipeline.md`](docs/moon-asset-pipeline.md).
 
-## 📦 Деплой на продакшен
+## 📦 Деплой на продакшен ##
 
-### 1. Подготовка к деплою
+### 1. Подготовка к деплою ###
 
 ```bash
 # Сборка продакшен-версии
@@ -180,7 +180,7 @@ npm run build
 Ctrl+Shift+P → "Tasks: Run Task" → "Сборка для продакшена"
 ```
 
-### 2. Деплой в Cloudflare Pages
+### 2. Деплой в Cloudflare Pages ###
 
 Для автоматизации всего процесса (линтинг, коммит, пуш и деплой) используйте единый скрипт:
 
@@ -189,6 +189,7 @@ Ctrl+Shift+P → "Tasks: Run Task" → "Сборка для продакшена
 ```
 
 Если требуется только ручной деплой уже собранной версии:
+
 ```bash
 npm run deploy
 ```
@@ -207,7 +208,7 @@ npm run deploy:worker
 npm run dev:worker
 ```
 
-### 3. Настройка домена
+### 3. Настройка домена ###
 
 - Настройте DNS на хостинг
 - Включите SSL-сертификат
@@ -215,16 +216,16 @@ npm run dev:worker
 
 > 📖 Подробная инструкция: [DEPLOY_GUIDE.md](DEPLOY_GUIDE.md)
 
-## 🌍 Языки
+## 🌍 Языки ##
 
 | Язык | Код | Папка | Статус |
-|------|-----|-------|--------|
+| ------ | ----- | ------- | -------- |
 | Русский | `ru` | `/ru/` | ✅ Готов |
 | Немецкий | `de` | `/de/` | ✅ Готов |
 | Английский | `en` | `/en/` | ✅ Готов |
 | Украинский | `uk` | `/uk/` | ✅ Готов |
 
-## 🎨 Технологии
+## 🎨 Технологии ##
 
 - **HTML5** - семантическая разметка
 - **CSS3** - адаптивная верстка, flexbox, grid
@@ -233,16 +234,16 @@ npm run dev:worker
 - **Three.js** - 3D виджет погоды
 - **Cloudflare Pages** - хостинг и CDN
 
-## 📋 Линтинг и форматирование
+## 📋 Линтинг и форматирование ##
 
-### Конфигурация инструментов:
+### Конфигурация инструментов ###
 
 - **HTMLHint** - валидация HTML ([.htmlhintrc](.htmlhintrc))
 - **ESLint** - проверка JavaScript ([eslint.config.js](eslint.config.js))
 - **Stylelint** - проверка CSS ([.stylelintrc.json](.stylelintrc.json))
 - **Prettier** - форматирование ([.prettierrc](.prettierrc))
 
-### Настройки линтинга:
+### Настройки линтинга ###
 
 ```json
 {
@@ -252,14 +253,14 @@ npm run dev:worker
 }
 ```
 
-## 🔧 Конфигурация
+## 🔧 Конфигурация ##
 
-### Переменные окружения для новых модулей
+### Переменные окружения для новых модулей ###
 
 Публичные placeholder-значения лежат в [`config/env.js`](config/env.js). Для реального деплоя секреты и рабочие ID задаются только в Cloudflare Pages → Settings → Environment variables.
 
 | Переменная | Где взять | Для чего нужна |
-|------------|-----------|----------------|
+| ------------ | ----------- | ---------------- |
 | `GA_MEASUREMENT_ID` | Google Analytics → Admin → Data streams | аналитика после cookie-согласия |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | Google Cloud IAM service account | стабильный серверный доступ к Calendar, Sheets, Drive |
 | `GOOGLE_SERVICE_ACCOUNT_SUBJECT` | Google Workspace Admin | опционально для Gmail domain-wide delegation |
@@ -271,7 +272,7 @@ npm run dev:worker
 | `SHEET_ID` | URL Google Sheets таблицы | лог бронирований и подписчиков |
 | `DRIVE_UPLOAD_FOLDER` | URL папки Google Drive | загрузка фото питомца |
 | `GMAIL_SENDER` | Gmail/Workspace alias | опционально; указывайте только рабочий alias, иначе Gmail не отправляет клиентам письма |
-| `RESEND_FROM`, `CLIENT_EMAIL_FROM` | Resend verified domain | основной отправитель transactional email для клиентов |
+| `SENDPULSE_FROM`, `CLIENT_EMAIL_FROM` | SendPulse → Senders | основной отправитель transactional email для клиентов |
 | `SALON_EMAIL`, `SUPPORT_EMAIL`, `SUPPORT_REPLY_TO_EMAIL`, `CONTACT_RECIPIENT_EMAIL`, `BOOKING_RECIPIENT_EMAIL` | рабочая почта салона | получатель заявок и адрес, куда клиенты отвечают |
 | `ADMIN_NOTIFICATION_EMAILS` | Gmail администраторов | внутренние копии заявок: `snaiper1984@gmail.com,ryndenko1982@gmail.com` |
 | `GOOGLE_SHARE_EMAIL` | Google/Workspace аккаунты администраторов | доступ к созданным Calendar, Sheets и Drive; можно указывать несколько адресов через запятую |
@@ -280,7 +281,8 @@ npm run dev:worker
 | `OUTLOOK_SENDER` | Microsoft 365 mailbox | опциональный отправитель для Graph `/users/{sender}/sendMail`; нужен лицензированный mailbox |
 | `TEAM_ID`, `TEAM_CHANNEL_ID` | Microsoft Teams / Graph | уведомления команды |
 | `TEAMS_WEBHOOK_URL` | Teams Incoming Webhook | быстрый канал уведомлений; нужен существующий Teams channel |
-| `RESEND_API_KEY` | Resend dashboard | резервная отправка писем с сайта |
+| `SENDPULSE_API_KEY` или `SENDPULSE_CLIENT_ID` + `SENDPULSE_CLIENT_SECRET` | SendPulse → API | единственный transport transactional email |
+| `SENDPULSE_ADDRESSBOOK_ID` | SendPulse → Email → Mailing lists | адресная книга для контактов и Automation 360 |
 | `SLACK_WEBHOOK_URL` | Slack app webhook | текущий fallback-канал уведомлений |
 | `GOOGLE_SHEETS_WEBHOOK_URL` | ваш backend/service gateway | fallback-запись в Google Sheets |
 | `GOOGLE_DRIVE_UPLOAD_WEBHOOK_URL` | ваш backend/service gateway | fallback-загрузка файлов в Google Drive |
@@ -300,7 +302,7 @@ npm run google:setup-platform -- --salon-email info@hundesalon-nika.com --share-
 
 Скрипт создаёт Calendar, Sheet и Drive-папку, шарит их на оба админ-адреса, ставит Cloudflare secrets для Production/Preview и не выводит OAuth secrets в консоль.
 
-### VS Code настройки
+### VS Code настройки ###
 
 Полная конфигурация в [`.vscode/settings.json`](.vscode/settings.json):
 
@@ -311,19 +313,19 @@ npm run google:setup-platform -- --salon-email info@hundesalon-nika.com --share-
 - ✅ Интеграция с Git
 - ✅ Оптимизация производительности
 
-### Рекомендуемые расширения
+### Рекомендуемые расширения ###
 
 25 профессиональных расширений в [`.vscode/extensions.json`](.vscode/extensions.json)
 
-## 🐛 Отладка
+## 🐛 Отладка ##
 
-### Запуск отладки
+### Запуск отладки ###
 
 1. **F5** - запуск отладки
 2. **Ctrl+Shift+D** - панель отладки
 3. **F10/F11** - пошаговое выполнение
 
-### Логи и ошибки
+### Логи и ошибки ###
 
 ```bash
 # Проверка консоли браузера
@@ -336,9 +338,9 @@ Ctrl+Shift+M → Problems
 Ctrl+` → Terminal
 ```
 
-## 📊 Производительность
+## 📊 Производительность ##
 
-### Оптимизации
+### Оптимизации ###
 
 - ✅ **Gzip сжатие** - уменьшение размера файлов на 70%
 - ✅ **Кэширование браузера** - изображения 1 год, CSS/JS 1 неделя
@@ -346,7 +348,7 @@ Ctrl+` → Terminal
 - ✅ **Оптимизация изображений** - проверка размеров
 - ✅ **CDN готовность** - статические ресурсы
 
-### Мониторинг
+### Мониторинг ###
 
 ```bash
 # Анализ производительности
@@ -359,9 +361,9 @@ npm run test:links
 npm run analyze:bundle
 ```
 
-## 🔒 Безопасность
+## 🔒 Безопасность ##
 
-### Заголовки безопасности
+### Заголовки безопасности ###
 
 - **X-Content-Type-Options**: nosniff
 - **X-Frame-Options**: SAMEORIGIN
@@ -369,22 +371,23 @@ npm run analyze:bundle
 - **Content-Security-Policy**: настроен для виджета
 - **HTTPS**: принудительное перенаправление
 
-### PHP безопасность
+### PHP безопасность ###
 
 - Отключены опасные функции
 - Безопасные сессии
 - Валидация входных данных
 
-## 📞 Контакты и поддержка
+## 📞 Контакты и поддержка ##
 
-**HUNDESALON NIKA**
+HUNDESALON NIKA
+
 - 📍 Лейпциг, Германия
 - 📧 [contact@hundesalon-nika.com](mailto:contact@hundesalon-nika.com)
 - 📱 Онлайн-бронирование доступно на сайте
 
 ---
 
-## 📄 Лицензия
+## 📄 Лицензия ##
 
 © 2024 HUNDESALON NIKA. Все права защищены.
 
@@ -392,4 +395,4 @@ npm run analyze:bundle
 
 ---
 
-*Разработано с ❤️ для любителей домашних животных*
+Разработано с ❤️ для любителей домашних животных

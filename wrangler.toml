@@ -14,4 +14,4 @@ pages_build_output_dir = "dist"
 #
 # Переменные окружения задаются в Cloudflare Dashboard:
 #   Pages → hundesalon-nika → Settings → Environment variables
-#   RESEND_API_KEY = <ваш ключ Resend.com>
+#   SENDPULSE_API_KEY = <ваш ключ SendPulse>

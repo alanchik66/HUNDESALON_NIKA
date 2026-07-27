@@ -14,7 +14,7 @@
 | Website | https://hundesalon-nika.com/ (→ /de/) |
 | Hours | Mo–Fr **09:00–21:00**, Sa–So **geschlossen** |
 | Public email | **`info@hundesalon-nika.com`** (site + Ads; GBP Kontakt has no separate E-Mail field) |
-| Ops / From | **`support@hundesalon-nika.com`** (Resend client From + Reply-To) |
+| Ops / From | **`support@hundesalon-nika.com`** (SendPulse client From + Reply-To) |
 | Description | DE Boutique-Pflege text saved |
 | Photos | Brand/cards uploaded in complete wizard |
 | Location verify id | `09116836504441086909` |

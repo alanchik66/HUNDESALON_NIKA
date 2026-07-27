@@ -52,4 +52,16 @@ graphify-out/cache/
 
 # Agent / IDE noise
 agent-transcripts/
+.agents/
+.codex/
+.kilo/
+.vscode/
+.playwright-mcp/
+.roo/
+
+# Vendored or duplicate repositories that do not belong to this site's graph
+Windows-MCP/
+node_modules.bak/
+node_modules.broken/
+empty_mirror/
 uploads/

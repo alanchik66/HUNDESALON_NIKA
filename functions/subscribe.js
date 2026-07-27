@@ -4,8 +4,9 @@ import {
   cleanText,
   getEnvList,
   getEnvValue,
-  sendResendEmail,
+  sendSendPulseEmail,
   sendTeamsMessage,
+  upsertSendPulseContact,
   siteNotificationsEnabled,
 } from './_lib/platform-integrations.js';
 
@@ -59,6 +60,7 @@ export async function onRequest(context) {
   const email = cleanText(body.email, 180).toLowerCase();
   const lang = cleanText(body.lang, 8) || 'de';
   const page = cleanText(body.page, 260);
+  const source = cleanText(body.source || page || 'website', 260);
   const consentRaw = String(body.newsletter_consent || body.consent || '').toLowerCase();
   const hasConsent = consentRaw === 'on' || consentRaw === 'true' || consentRaw === '1' || consentRaw === 'yes';
   if (!isValidEmail(email)) {
@@ -84,7 +86,7 @@ export async function onRequest(context) {
     values: [createdAt, email, lang, page, originCheck.origin, 'consent:yes'],
   });
 
-  await sendResendEmail(env, {
+  await sendSendPulseEmail(env, {
     to: email,
     subject: 'HUNDESALON NIKA',
     text: 'Danke für Ihre Anmeldung. Wir senden nur ausgewählte Neuigkeiten, Pflege-Tipps und Angebote.',
@@ -92,14 +94,16 @@ export async function onRequest(context) {
     from: clientEmailFrom,
   });
 
+  await upsertSendPulseContact(env, { email, lang, source, formType: 'newsletter' });
+
   if (adminRecipients.length > 0) {
     if (siteNotificationsEnabled(env)) {
-      await sendResendEmail(env, {
+      await sendSendPulseEmail(env, {
         to: adminRecipients,
         subject: '[Admin] Neue Newsletter-Anmeldung — HUNDESALON NIKA',
         text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}\nAntworten bitte über ${supportReplyTo}.`,
         replyTo: supportReplyTo,
-        from: getEnvValue(env, 'RESEND_FROM', DEFAULT_FROM),
+        from: getEnvValue(env, 'SENDPULSE_FROM', DEFAULT_FROM),
       });
     }
   }

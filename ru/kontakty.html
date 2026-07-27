@@ -250,6 +250,15 @@
             <input type="text" name="name" placeholder="Ваше имя" required />
             <input type="email" name="email" placeholder="Email" required />
             <input type="tel" name="phone" placeholder="Телефон" />
+            <label class="contact-form__label" for="contact-inquiry-ru">Тема обращения</label>
+            <select id="contact-inquiry-ru" name="inquiry_type" required>
+              <option value="" selected disabled>Выберите направление</option>
+              <option value="booking">Запись на услугу</option>
+              <option value="grooming">Вопрос о груминге и уходе</option>
+              <option value="feedback">Отзыв и обратная связь</option>
+              <option value="partnership">Партнёрство и сотрудничество</option>
+              <option value="general">Общий вопрос</option>
+            </select>
             <textarea name="message" rows="3" placeholder="Сообщение или вопрос о записи" required></textarea>
             <button type="submit" class="btn-neon">Отправить</button>
           </form>

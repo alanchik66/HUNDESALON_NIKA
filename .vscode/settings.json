@@ -1,0 +1,45 @@
+{
+  "files.eol": "\n",
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.requireConfig": true,
+  "eslint.format.enable": false,
+  "stylelint.format.enable": false,
+  "eslint.validate": ["javascript"],
+  "stylelint.validate": ["css"],
+  "htmlhint.enable": true,
+  "chat.agent.enabled": true,
+  "chat.agent.maxRequests": 25,
+  "github.copilot.chat.agent.autoFix": true,
+  "chat.mcp.access": true,
+  "chat.mcp.discovery.enabled": {
+    "claude-desktop": false,
+    "windsurf": false,
+    "cursor-global": false,
+    "cursor-workspace": false
+  },
+  "chat.mcp.apps.enabled": true,
+  "gitlens.launchpad.indicator.enabled": false,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "liveServer.settings.port": 5503,
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/test-results/**": true
+  }
+}

@@ -250,6 +250,15 @@
             <input type="text" name="name" placeholder="Ваше ім'я" required />
             <input type="email" name="email" placeholder="Email" required />
             <input type="tel" name="phone" placeholder="Телефон" />
+            <label class="contact-form__label" for="contact-inquiry-uk">Тема звернення</label>
+            <select id="contact-inquiry-uk" name="inquiry_type" required>
+              <option value="" selected disabled>Оберіть напрямок</option>
+              <option value="booking">Запис на послугу</option>
+              <option value="grooming">Питання про грумінг і догляд</option>
+              <option value="feedback">Відгук і зворотний зв'язок</option>
+              <option value="partnership">Партнерство та співпраця</option>
+              <option value="general">Загальне питання</option>
+            </select>
             <textarea name="message" rows="3" placeholder="Повідомлення або запит на запис" required></textarea>
             <button type="submit" class="btn-neon">Надіслати</button>
           </form>

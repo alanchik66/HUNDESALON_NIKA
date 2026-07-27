@@ -545,6 +545,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!forms.length) return;
 
     forms.forEach(form => {
+      const ensureHiddenField = (name, value) => {
+        let field = form.querySelector(`input[name="${name}"]`);
+        if (!field) {
+          field = document.createElement('input');
+          field.type = 'hidden';
+          field.name = name;
+          form.appendChild(field);
+        }
+        field.value = value;
+      };
+      ensureHiddenField('lang', pageLang);
+      ensureHiddenField('source', window.location.pathname);
+      ensureHiddenField('source_form', form.id || form.getAttribute('name') || 'sendmail');
       if (form.id === 'booking-form') {
         return;
       }

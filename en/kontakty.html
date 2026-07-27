@@ -249,6 +249,15 @@
             <input type="text" name="name" placeholder="Your name" required />
             <input type="email" name="email" placeholder="Email" required />
             <input type="tel" name="phone" placeholder="Phone" />
+            <label class="contact-form__label" for="contact-inquiry-en">What is your enquiry about?</label>
+            <select id="contact-inquiry-en" name="inquiry_type" required>
+              <option value="" selected disabled>Please choose an enquiry type</option>
+              <option value="booking">Book an appointment</option>
+              <option value="grooming">Grooming and care question</option>
+              <option value="feedback">Feedback and review</option>
+              <option value="partnership">Partnership and cooperation</option>
+              <option value="general">General question</option>
+            </select>
             <textarea name="message" rows="3" placeholder="Message or booking enquiry" required></textarea>
             <button type="submit" class="btn-neon">Send</button>
           </form>
