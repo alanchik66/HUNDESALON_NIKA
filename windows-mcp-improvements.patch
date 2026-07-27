@@ -160,10 +160,17 @@ index 320e0a1..8c63bb2 100755
          return content
  
 diff --git a/src/windows_mcp/desktop/utils.py b/src/windows_mcp/desktop/utils.py
-index 1f06200..9c48e50 100644
+index 1f06200..f6ef58f 100644
 --- a/src/windows_mcp/desktop/utils.py
 +++ b/src/windows_mcp/desktop/utils.py
-@@ -10,12 +10,14 @@ __all__ = [
+@@ -3,19 +3,18 @@
+ import os
+ import re
+
+-import pywintypes
+-from win32com.shell import shell
+-
+ __all__ = [
      "resolve_known_folder_guid_path",
      "remove_private_use_chars",
      "is_elevated",
@@ -178,7 +185,16 @@ index 1f06200..9c48e50 100644
      try:
          return ctypes.windll.shell32.IsUserAnAdmin() != 0
      except (AttributeError, Exception):
-@@ -59,14 +61,20 @@ def resolve_known_folder_guid_path(path_text: str) -> str:
+@@ -49,6 +48,8 @@ def resolve_known_folder_guid_path(path_text: str) -> str:
+     guid_text = "{" + m.group(1) + "}"
+     rest = m.group(2)
+     try:
++        import pywintypes
++        from win32com.shell import shell
+         folder_id = pywintypes.IID(guid_text)
+         base = shell.SHGetKnownFolderPath(folder_id, 0, 0)
+     except Exception:
+@@ -59,14 +60,20 @@ def resolve_known_folder_guid_path(path_text: str) -> str:
  
  
  _PRIVATE_USE_RE = re.compile(
@@ -1662,3 +1678,134 @@ index 9b21e56..6ed60a3 100755
 +            )
          except Exception:
              pass
+diff --git a/tests/test_desktop_utils.py b/tests/test_desktop_utils.py
+index 140d7db..d507e2c 100644
+--- a/tests/test_desktop_utils.py
++++ b/tests/test_desktop_utils.py
+@@ -1,4 +1,13 @@
+-from windows_mcp.desktop.utils import remove_private_use_chars
++import sys
++from unittest.mock import MagicMock
++import pytest
++
++from windows_mcp.desktop.utils import (
++    remove_private_use_chars,
++    is_elevated,
++    snapshot_profile_enabled,
++    resolve_known_folder_guid_path,
++)
+
+
+ class TestRemovePrivateUseChars:
+@@ -36,3 +45,111 @@ class TestRemovePrivateUseChars:
+
+     def test_only_private_use_chars(self):
+         assert remove_private_use_chars("\uE000\uF8FF\U000F0000\U0010FFFD") == ""
++
++
++class TestIsElevated:
++    def test_is_elevated_admin(self, monkeypatch):
++        """Test is_elevated when User is an Admin on Windows."""
++        import ctypes
++        # Mock ctypes.windll.shell32.IsUserAnAdmin to return 1
++        mock_windll = MagicMock()
++        mock_windll.shell32.IsUserAnAdmin.return_value = 1
++        monkeypatch.setattr(ctypes, "windll", mock_windll, raising=False)
++
++        assert is_elevated() is True
++
++    def test_is_elevated_non_admin(self, monkeypatch):
++        """Test is_elevated when User is not an Admin."""
++        import ctypes
++        mock_windll = MagicMock()
++        mock_windll.shell32.IsUserAnAdmin.return_value = 0
++        monkeypatch.setattr(ctypes, "windll", mock_windll, raising=False)
++
++        assert is_elevated() is False
++
++    def test_is_elevated_exception(self, monkeypatch):
++        """Test is_elevated on non-Windows platforms or when it throws an exception."""
++        import ctypes
++        # Simulate AttributeError (ctypes has no windll on Linux) or other Exception
++        monkeypatch.delattr(ctypes, "windll", raising=False)
++
++        assert is_elevated() is False
++
++
++class TestSnapshotProfileEnabled:
++    @pytest.mark.parametrize(
++        "env_value, expected",
++        [
++            ("1", True),
++            ("true", True),
++            ("YES", True),
++            ("On", True),
++            ("0", False),
++            ("false", False),
++            ("", False),
++            ("off", False),
++            ("enabled", False),
++        ],
++    )
++    def test_snapshot_profile_enabled_states(self, monkeypatch, env_value, expected):
++        monkeypatch.setenv("WINDOWS_MCP_PROFILE_SNAPSHOT", env_value)
++        assert snapshot_profile_enabled() is expected
++
++    def test_snapshot_profile_enabled_unset(self, monkeypatch):
++        monkeypatch.delenv("WINDOWS_MCP_PROFILE_SNAPSHOT", raising=False)
++        assert snapshot_profile_enabled() is False
++
++
++class TestResolveKnownFolderGuidPath:
++    def test_not_guid_path(self):
++        # Path with no guid-like format should be returned unchanged
++        path = "C:\\Windows\\System32"
++        assert resolve_known_folder_guid_path(path) == path
++
++    def test_guid_path_invalid_guid(self):
++        # A guid-like path with non-hex characters
++        path = "{ZZZZZZZZ-YYYY-XXXX-WWWW-VVVVVVVVVVVV}\\test.exe"
++        assert resolve_known_folder_guid_path(path) == path
++
++    def test_guid_path_exception_handling(self, monkeypatch):
++        """Test GUID path resolution when pywintypes/shell is missing or raises exception."""
++        # If pywintypes or win32com cannot be imported or raise exception, return unchanged path
++        monkeypatch.setitem(sys.modules, "pywintypes", None)
++        path = "{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\\msinfo32.exe"
++        assert resolve_known_folder_guid_path(path) == path
++
++    def test_guid_path_success(self, monkeypatch):
++        """Test successful Known Folder GUID resolution using mocks."""
++        mock_pywintypes = MagicMock()
++        mock_shell_mod = MagicMock()
++
++        # Mock SHGetKnownFolderPath to return a dummy folder path
++        mock_shell_mod.shell.SHGetKnownFolderPath.return_value = "C:\\MockWindows"
++
++        # Mock pywintypes.IID behavior
++        mock_pywintypes.IID.return_value = "dummy_iid"
++
++        # Apply mocks to sys.modules
++        monkeypatch.setitem(sys.modules, "pywintypes", mock_pywintypes)
++        monkeypatch.setitem(sys.modules, "win32com.shell", mock_shell_mod)
++
++        guid_path = "{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\\msinfo32.exe"
++        expected_path = "C:\\MockWindows/msinfo32.exe" if sys.platform != "win32" else "C:\\MockWindows\\msinfo32.exe"
++
++        resolved = resolve_known_folder_guid_path(guid_path)
++        assert resolved.replace("\\", "/") == expected_path.replace("\\", "/")
++
++    def test_guid_path_success_no_subpath(self, monkeypatch):
++        """Test successful Known Folder GUID resolution with no nested file/folder path."""
++        mock_pywintypes = MagicMock()
++        mock_shell_mod = MagicMock()
++
++        mock_shell_mod.shell.SHGetKnownFolderPath.return_value = "C:\\MockWindows"
++        mock_pywintypes.IID.return_value = "dummy_iid"
++
++        monkeypatch.setitem(sys.modules, "pywintypes", mock_pywintypes)
++        monkeypatch.setitem(sys.modules, "win32com.shell", mock_shell_mod)
++
++        guid_path = "{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}"
++        resolved = resolve_known_folder_guid_path(guid_path)
++        assert resolved == "C:\\MockWindows"
