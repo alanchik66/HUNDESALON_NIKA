@@ -1,6 +1,6 @@
 /**
- * Remove redundant service gateway Pages secrets (defaults live in functions/*.js).
- * Keeps SERVICE_GATEWAY_API_KEY; does not touch RESEND_API_KEY.
+ * Remove obsolete service gateway configuration from Pages.
+ * Keeps the existing Gemini inference key; does not touch RESEND_API_KEY.
  */
 import { spawnSync } from 'node:child_process';
 
@@ -10,7 +10,6 @@ const REMOVE = [
   'SERVICE_GATEWAY_SITE_URL',
   'SERVICE_GATEWAY_SITE_NAME',
   'SERVICE_GATEWAY_DEFAULT_MODEL',
-  'SERVICE_GATEWAY_FALLBACK_MODEL',
 ];
 
 for (const name of REMOVE) {

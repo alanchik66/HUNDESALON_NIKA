@@ -1,12 +1,11 @@
 # Copy to .dev.vars for local Cloudflare Pages dev (npm run dev:cf).
 # Never commit .dev.vars. For production, use Cloudflare Pages secrets.
 
-# Inference key only (chat). Do NOT use a management/provisioning key here.
+# Existing Gemini chat integration only; runtime calls require AI_SERVICE_WEBHOOK_SECRET.
 SERVICE_GATEWAY_API_KEY=
-# Optional SEO endpoint overrides. Code defaults are production-ready:
-# SERVICE_GATEWAY_SEO_MODEL=google/gemini-2.5-flash-lite
-# SERVICE_GATEWAY_SEO_FALLBACK_MODEL=deepseek/deepseek-v4-flash
-# SERVICE_GATEWAY_SEO_MAX_TOKENS=720
+AI_SERVICE_WEBHOOK_SECRET=
+# The only accepted model is google/gemini-2.5-flash-lite; this is a bounded token override.
+SERVICE_GATEWAY_MAX_TOKENS=320
 # Bing Webmaster → Settings → API Access (optional; IndexNow works without it)
 BING_WEBMASTER_API_KEY=
 # Resend.com API key for local Cloudflare Pages Functions.
@@ -39,7 +38,7 @@ BOOKING_RECIPIENT_EMAIL=info@hundesalon-nika.com
 SUPPORT_EMAIL=support@hundesalon-nika.com
 SUPPORT_REPLY_TO_EMAIL=support@hundesalon-nika.com
 CLIENT_EMAIL_FROM=Hundesalon Nika <support@hundesalon-nika.com>
-ADMIN_NOTIFICATION_EMAILS=snaiper1984@gmail.com,ryndenko1982@gmail.com
+ADMIN_NOTIFICATION_EMAILS=
 GOOGLE_SHARE_EMAIL=snaiper1984@gmail.com,ryndenko1982@gmail.com
 GOOGLE_SHEETS_WEBHOOK_URL=
 GOOGLE_DRIVE_UPLOAD_WEBHOOK_URL=

@@ -27,7 +27,8 @@ const DEFAULT_RECIPIENT = 'info@hundesalon-nika.com';
 const DEFAULT_SUPPORT = 'support@hundesalon-nika.com';
 const DEFAULT_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
 const DEFAULT_CLIENT_FROM = 'Hundesalon Nika <support@hundesalon-nika.com>';
-const DEFAULT_ADMIN_EMAILS = ['snaiper1984@gmail.com', 'ryndenko1982@gmail.com'];
+const DEFAULT_ADMIN_EMAILS = [];
+const ONLINE_PAYMENTS_HARD_DISABLED = true;
 const SLACK_TIMEOUT_MS = 4500;
 const RESEND_USER_AGENT = 'hundesalon-nika.com/1.0 (Cloudflare Pages Function)';
 
@@ -65,6 +66,18 @@ function sanitize(val) {
     .trim();
 }
 
+function sanitizeUploadedFileUrl(value) {
+  const raw = sanitize(value);
+  if (!raw) return '';
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'https:' || !['drive.google.com', 'docs.google.com'].includes(url.hostname)) return '';
+    return url.toString().slice(0, 600);
+  } catch {
+    return '';
+  }
+}
+
 /**
  * Basic email format validation.
  * @param {string} email
@@ -75,6 +88,7 @@ function isValidEmail(email) {
 }
 
 function paymentsOnlineEnabled(env) {
+  if (ONLINE_PAYMENTS_HARD_DISABLED) return false;
   const raw = String(getEnvValue(env, 'PAYMENTS_ONLINE_ENABLED') || '').trim().toLowerCase();
   return raw === '1' || raw === 'true' || raw === 'on' || raw === 'yes';
 }
@@ -294,7 +308,7 @@ export async function onRequest(ctx) {
   const service = sanitize(fields.service);
   const date = sanitize(fields.date);
   const time = sanitize(fields.time);
-  const uploadedFileUrl = sanitize(fields.uploaded_file_url || fields.file_url);
+  const uploadedFileUrl = sanitizeUploadedFileUrl(fields.uploaded_file_url || fields.file_url);
   const paymentChoice = sanitize(fields.payment_choice || fields.payment_method || '');
   const stripeSessionId = sanitize(fields.stripe_session_id);
   const paymentNow =

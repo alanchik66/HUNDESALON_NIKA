@@ -10,7 +10,6 @@
  *   SERVICE_GATEWAY_SITE_URL
  *   SERVICE_GATEWAY_SITE_NAME
  *   SERVICE_GATEWAY_SEO_MODEL
- *   SERVICE_GATEWAY_SEO_FALLBACK_MODEL
  *   SERVICE_GATEWAY_SEO_MAX_TOKENS
  */
 
@@ -20,12 +19,18 @@ import {
   enforceRateLimit,
   jsonResponse,
 } from './_lib/http-security.js';
+import {
+  AI_PROVIDER_POLICY,
+  APPROVED_AI_MODEL,
+  DEFAULT_SEO_MAX_TOKENS,
+  hasAiServiceAuth,
+  MAX_SEO_MAX_TOKENS,
+  parseBoundedTokens,
+  resolveApprovedModel,
+} from './_lib/ai-policy.js';
 
 const LEGACY_SERVICE_PREFIX = ['OPEN', 'ROUTER'].join('');
 const DEFAULT_SERVICE_GATEWAY_URL = ['https://', 'open', 'router.ai', '/api/v1/chat/completions'].join('');
-const DEFAULT_SEO_MODEL = 'google/gemini-2.5-flash-lite';
-const DEFAULT_SEO_FALLBACK_MODEL = 'deepseek/deepseek-v4-flash';
-const DEFAULT_SEO_MAX_TOKENS = 720;
 const LOCALES = ['de', 'en', 'ru', 'uk'];
 const SEO_LOCALE_FIELDS = ['title', 'description', 'h1', 'shortBlock'];
 
@@ -255,9 +260,13 @@ export async function onRequest(context) {
   }
   const { origin } = originCheck;
 
+  if (!hasAiServiceAuth(request, context)) {
+    return jsonResponse({ error: 'AI service authorization required' }, 401, origin);
+  }
+
   const rateLimited = await enforceRateLimit(request, {
     route: 'seo-generate',
-    limit: 8,
+    limit: 4,
     windowSec: 60,
   });
   if (rateLimited) {
@@ -279,6 +288,9 @@ export async function onRequest(context) {
   if (!input || typeof input !== 'object') {
     return jsonResponse({ error: 'Body must be an object' }, 400);
   }
+  if (JSON.stringify(input).length > 8000) {
+    return jsonResponse({ error: 'Input is too large' }, 413, origin);
+  }
 
   const referer =
     sanitizeOrigin(
@@ -290,25 +302,23 @@ export async function onRequest(context) {
       getEnvVarFromContext(context, legacyEnvName('SITE_NAME')) ||
       'HUNDESALON NIKA'
   ).trim();
-  const model = String(
+  const configuredModel = String(
     getEnvVarFromContext(context, 'SERVICE_GATEWAY_SEO_MODEL') ||
       getEnvVarFromContext(context, legacyEnvName('SEO_MODEL')) ||
-      DEFAULT_SEO_MODEL
+      APPROVED_AI_MODEL
   ).trim();
-  const fallbackModel = String(
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_SEO_FALLBACK_MODEL') ||
-      getEnvVarFromContext(context, legacyEnvName('SEO_FALLBACK_MODEL')) ||
-      DEFAULT_SEO_FALLBACK_MODEL
-  ).trim();
+  const model = resolveApprovedModel(configuredModel);
+  if (!model) {
+    return jsonResponse({ error: 'AI model configuration rejected' }, 503, origin);
+  }
   const maxTokens = parseBoundedInteger(
     getEnvVarFromContext(context, 'SERVICE_GATEWAY_SEO_MAX_TOKENS') ||
       getEnvVarFromContext(context, legacyEnvName('SEO_MAX_TOKENS')),
     DEFAULT_SEO_MAX_TOKENS,
     360,
-    1200
+    MAX_SEO_MAX_TOKENS
   );
-  const serviceGatewayUrl =
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_URL') || DEFAULT_SERVICE_GATEWAY_URL;
+  const serviceGatewayUrl = DEFAULT_SERVICE_GATEWAY_URL;
 
   const upstreamHeaders = {
     Authorization: `Bearer ${apiKey}`,
@@ -321,6 +331,7 @@ export async function onRequest(context) {
   const basePayload = {
     temperature: 0.25,
     max_tokens: maxTokens,
+    provider: AI_PROVIDER_POLICY,
     messages: [
       {
         role: 'system',
@@ -341,9 +352,7 @@ export async function onRequest(context) {
     });
   };
 
-  const modelCandidates = [model, fallbackModel].filter((candidate, index, list) => {
-    return Boolean(candidate) && list.indexOf(candidate) === index;
-  });
+  const modelCandidates = [model];
 
   let lastFailure = null;
   let bestUsableResponse = null;

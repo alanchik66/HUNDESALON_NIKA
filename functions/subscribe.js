@@ -11,7 +11,7 @@ import {
 
 const DEFAULT_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
 const DEFAULT_RECIPIENT = 'info@hundesalon-nika.com';
-const DEFAULT_ADMIN_EMAILS = ['snaiper1984@gmail.com', 'ryndenko1982@gmail.com'];
+const DEFAULT_ADMIN_EMAILS = [];
 
 const COPY = {
   de: 'Danke. Ihre Anmeldung wurde gespeichert.',
@@ -78,36 +78,51 @@ export async function onRequest(context) {
     'Hundesalon Nika <support@hundesalon-nika.com>';
   const adminRecipients = uniqueEmailList(getEnvList(env, 'ADMIN_NOTIFICATION_EMAILS', DEFAULT_ADMIN_EMAILS.join(',')));
 
-  await appendGoogleSheetRow(env, {
-    spreadsheetId: getEnvValue(env, 'SHEET_ID'),
-    sheetName: 'subscribers',
-    values: [createdAt, email, lang, page, originCheck.origin, 'consent:yes'],
-  });
+  const adminNotification =
+    adminRecipients.length > 0 && siteNotificationsEnabled(env)
+      ? sendResendEmail(env, {
+          to: adminRecipients,
+          subject: '[Admin] Neue Newsletter-Anmeldung — HUNDESALON NIKA',
+          text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}\nAntworten bitte über ${supportReplyTo}.`,
+          replyTo: supportReplyTo,
+          from: getEnvValue(env, 'RESEND_FROM', DEFAULT_FROM),
+        })
+      : Promise.resolve({ ok: false, skipped: true });
 
-  await sendResendEmail(env, {
-    to: email,
-    subject: 'HUNDESALON NIKA',
-    text: 'Danke für Ihre Anmeldung. Wir senden nur ausgewählte Neuigkeiten, Pflege-Tipps und Angebote.',
-    replyTo: supportReplyTo,
-    from: clientEmailFrom,
-  });
+  const attempts = await Promise.allSettled([
+    appendGoogleSheetRow(env, {
+      spreadsheetId: getEnvValue(env, 'SHEET_ID'),
+      sheetName: 'subscribers',
+      values: [createdAt, email, lang, page, originCheck.origin, 'consent:yes'],
+    }),
+    sendResendEmail(env, {
+      to: email,
+      subject: 'HUNDESALON NIKA',
+      text: 'Danke für Ihre Anmeldung. Wir senden nur ausgewählte Neuigkeiten, Pflege-Tipps und Angebote.',
+      replyTo: supportReplyTo,
+      from: clientEmailFrom,
+    }),
+    adminNotification,
+    sendTeamsMessage(env, {
+      title: 'Neue Newsletter-Anmeldung',
+      text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}`,
+    }),
+  ]);
 
-  if (adminRecipients.length > 0) {
-    if (siteNotificationsEnabled(env)) {
-      await sendResendEmail(env, {
-        to: adminRecipients,
-        subject: '[Admin] Neue Newsletter-Anmeldung — HUNDESALON NIKA',
-        text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}\nAntworten bitte über ${supportReplyTo}.`,
-        replyTo: supportReplyTo,
-        from: getEnvValue(env, 'RESEND_FROM', DEFAULT_FROM),
-      });
-    }
+  const succeeded = attempts.map(result => (result.status === 'fulfilled' ? result.value : null));
+  const persisted = succeeded[0]?.ok === true;
+  const confirmed = succeeded[1]?.ok === true;
+  if (!persisted && !confirmed) {
+    return jsonResponse(
+      { success: false, message: 'Subscription could not be saved. Please try again later.' },
+      503,
+      originCheck.origin
+    );
   }
 
-  await sendTeamsMessage(env, {
-    title: 'Neue Newsletter-Anmeldung',
-    text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}`,
-  });
-
-  return jsonResponse({ success: true, message: COPY[lang] || COPY.de }, 200, originCheck.origin);
+  return jsonResponse(
+    { success: true, message: COPY[lang] || COPY.de, degraded: !(persisted && confirmed) },
+    200,
+    originCheck.origin
+  );
 }

@@ -11,6 +11,7 @@ const payload = JSON.stringify({
   messages: [{ role: 'user', content: 'Reply with exactly: OK' }],
   max_tokens: 32,
 });
+const authorization = process.env.MESSAGE_DRAFT_CHECK_SECRET?.trim();
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -22,15 +23,23 @@ let lastBody = '';
 for (let attempt = 1; attempt <= attempts; attempt += 1) {
   const response = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Origin: origin },
+    headers: {
+      'Content-Type': 'application/json',
+      Origin: origin,
+      ...(authorization ? { Authorization: `Bearer ${authorization}` } : {}),
+    },
     body: payload,
   });
 
   lastStatus = response.status;
   lastBody = (await response.text()).slice(0, 300);
 
-  if (response.ok) {
+  if (response.ok || (!authorization && response.status === 401)) {
+    if (!response.ok) {
+      console.log(`Message draft endpoint correctly rejects unauthenticated calls (${url}, status ${response.status})`);
+    } else {
     console.log(`Message draft endpoint OK (${url}, status ${response.status})`);
+    }
     process.exitCode = 0;
     break;
   }

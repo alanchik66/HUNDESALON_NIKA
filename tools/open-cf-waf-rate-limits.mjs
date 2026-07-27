@@ -7,7 +7,7 @@ import { ACCOUNT_ID, DOMAIN } from './lib/cloudflare-auth.mjs';
 const url = `https://dash.cloudflare.com/${ACCOUNT_ID}/${DOMAIN}/security/waf/rate-limiting-rules`;
 
 console.log('Opening Cloudflare WAF rate limiting rules…');
-console.log('\nSuggested limits (POST, per IP, 60s): /sendmail 12, /message-draft 30, /seo-generate 8');
+console.log('\nSuggested limits (POST, per IP, 60s): /sendmail 12, /subscribe 5, /upload 4, /payment 2, /message-draft 10, /seo-generate 4');
 
 const start =
   process.platform === 'win32'

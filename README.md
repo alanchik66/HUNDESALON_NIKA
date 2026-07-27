@@ -272,8 +272,11 @@ npm run dev:worker
 | `DRIVE_UPLOAD_FOLDER` | URL папки Google Drive | загрузка фото питомца |
 | `GMAIL_SENDER` | Gmail/Workspace alias | опционально; указывайте только рабочий alias, иначе Gmail не отправляет клиентам письма |
 | `RESEND_FROM`, `CLIENT_EMAIL_FROM` | Resend verified domain | основной отправитель transactional email для клиентов |
+| `SERVICE_GATEWAY_API_KEY` | Existing Gemini gateway account | единственный разрешённый AI inference path; ключ хранится только как Cloudflare secret |
+| `AI_SERVICE_WEBHOOK_SECRET` | локально сгенерированный секрет | обязательная серверная авторизация AI routes; Origin сам по себе не является auth |
+| `SERVICE_GATEWAY_MAX_TOKENS` | bounded local setting | optional output cap, never above 320 for message drafts |
 | `SALON_EMAIL`, `SUPPORT_EMAIL`, `SUPPORT_REPLY_TO_EMAIL`, `CONTACT_RECIPIENT_EMAIL`, `BOOKING_RECIPIENT_EMAIL` | рабочая почта салона | получатель заявок и адрес, куда клиенты отвечают |
-| `ADMIN_NOTIFICATION_EMAILS` | Gmail администраторов | внутренние копии заявок: `snaiper1984@gmail.com,ryndenko1982@gmail.com` |
+| `ADMIN_NOTIFICATION_EMAILS` | explicitly configured operational mailbox list | optional internal copies; there is no hard-coded personal fallback |
 | `GOOGLE_SHARE_EMAIL` | Google/Workspace аккаунты администраторов | доступ к созданным Calendar, Sheets и Drive; можно указывать несколько адресов через запятую |
 | `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET` | Microsoft Entra App Registration | постоянный серверный вход в Microsoft Graph |
 | `MS_GRAPH_ACCESS_TOKEN` | Microsoft Entra / Graph OAuth | временный fallback для Outlook Email и Teams через Graph |
@@ -285,6 +288,8 @@ npm run dev:worker
 | `GOOGLE_SHEETS_WEBHOOK_URL` | ваш backend/service gateway | fallback-запись в Google Sheets |
 | `GOOGLE_DRIVE_UPLOAD_WEBHOOK_URL` | ваш backend/service gateway | fallback-загрузка файлов в Google Drive |
 | `PAYMENT_PROVIDER_KEY` | Stripe/PayPal dashboard | TODO для будущей предоплаты |
+
+Online Stripe payments are hard-disabled in the deployed code. Do not add payment secrets or enable the flag without verifying the booking flow, KV idempotency binding, and a no-charge decision.
 
 Для локальной проверки Cloudflare Functions используйте `.dev.vars` по образцу `.dev.vars.example`, затем запускайте:
 

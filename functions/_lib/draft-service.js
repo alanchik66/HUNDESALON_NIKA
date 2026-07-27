@@ -4,16 +4,22 @@
  */
 
 import { sanitizeOrigin, assertAllowedOrigin, enforceRateLimit, isLocalDevOrigin, jsonResponse } from './http-security.js';
+import {
+  AI_PROVIDER_POLICY,
+  APPROVED_AI_MODEL,
+  DEFAULT_DRAFT_MAX_TOKENS,
+  hasAiServiceAuth,
+  MAX_DRAFT_MAX_TOKENS,
+  MAX_DRAFT_MESSAGES,
+  MAX_DRAFT_MESSAGE_CONTENT_LENGTH,
+  getContextEnvVar,
+  parseBoundedTokens,
+  resolveApprovedModel,
+} from './ai-policy.js';
 
 const LEGACY_SERVICE_PREFIX = ['OPEN', 'ROUTER'].join('');
 const DEFAULT_SERVICE_GATEWAY_URL = ['https://', 'open', 'router.ai', '/api/v1/chat/completions'].join('');
-const DEFAULT_MODEL = 'google/gemini-2.5-flash-lite';
-const DEFAULT_FALLBACK_MODEL = 'deepseek/deepseek-v4-flash';
 const DEFAULT_SITE_NAME = 'HUNDESALON NIKA';
-const MAX_MESSAGES = 24;
-const MAX_MESSAGE_CONTENT_LENGTH = 8000;
-const DEV_KEY_ASSET_URL = 'https://local.dev/__dev_service_gateway_key.txt';
-const DEFAULT_CACHE_TTL_SECONDS = 300;
 
 function legacyEnvName(suffix) {
   return `${LEGACY_SERVICE_PREFIX}_${suffix}`;
@@ -21,29 +27,6 @@ function legacyEnvName(suffix) {
 
 function isLocalRequest(origin) {
   return isLocalDevOrigin(origin);
-}
-
-function parseBoolean(value, fallback = false) {
-  if (typeof value === 'boolean') return value;
-  if (value == null) return fallback;
-  const normalized = String(value).trim().toLowerCase();
-  if (!normalized) return fallback;
-  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
-  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
-  return fallback;
-}
-
-function parseNumber(value, fallback = 0) {
-  const asNumber = Number(value);
-  return Number.isFinite(asNumber) ? asNumber : fallback;
-}
-
-function parseCsv(value) {
-  if (typeof value !== 'string') return [];
-  return value
-    .split(',')
-    .map(item => item.trim())
-    .filter(Boolean);
 }
 
 function getRuntimeEnvs(context) {
@@ -88,39 +71,6 @@ function getEnvVarFromContext(context, key) {
   }
 
   return '';
-}
-
-async function getLocalApiKeyFromAssets(runtimeEnv) {
-  const assets = runtimeEnv?.ASSETS;
-  if (!assets || typeof assets.fetch !== 'function') {
-    return { key: '', status: 'no-assets-binding' };
-  }
-
-  try {
-    const response = await assets.fetch(DEV_KEY_ASSET_URL);
-    if (!response?.ok) {
-      return { key: '', status: `assets-status-${response?.status || 'unknown'}` };
-    }
-
-    const text = await response.text();
-    for (const rawLine of String(text || '').split(/\r?\n/)) {
-      const line = rawLine.replace(/^\uFEFF/, '').trim();
-      if (!line || line.startsWith('#')) continue;
-
-      const separatorIndex = line.indexOf('=');
-      if (separatorIndex < 1) continue;
-
-      const name = line.slice(0, separatorIndex).trim();
-      if (name !== 'SERVICE_GATEWAY_API_KEY' && name !== legacyEnvName('API_KEY')) continue;
-
-      const value = line.slice(separatorIndex + 1).trim();
-      return { key: value || '', status: value ? 'assets-ok' : 'assets-empty-key' };
-    }
-  } catch {
-    return { key: '', status: 'assets-fetch-error' };
-  }
-
-  return { key: '', status: 'assets-key-not-found' };
 }
 
 function parseDraftPayloadDetails(payload) {
@@ -277,155 +227,35 @@ function buildLocalDraftResponse(payload, reason) {
   };
 }
 
-function resolveProviderDefaults(context, payloadProvider) {
-  const providerOrder = parseCsv(
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_PROVIDER_ORDER') ||
-      getEnvVarFromContext(context, legacyEnvName('PROVIDER_ORDER'))
-  );
-  const fallbackAllowed = parseBoolean(
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_ALLOW_FALLBACKS') ||
-      getEnvVarFromContext(context, legacyEnvName('ALLOW_FALLBACKS')),
-    true
-  );
-  const sortStrategy =
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_PROVIDER_SORT') ||
-    getEnvVarFromContext(context, legacyEnvName('PROVIDER_SORT')) ||
-    '';
-
-  const envProvider = {};
-  if (providerOrder.length) envProvider.order = providerOrder;
-  if (sortStrategy) envProvider.sort = sortStrategy;
-  envProvider.allow_fallbacks = fallbackAllowed;
-
-  if (!Object.keys(envProvider).length && (!payloadProvider || typeof payloadProvider !== 'object')) {
-    return null;
-  }
-
-  return { ...envProvider, ...(payloadProvider && typeof payloadProvider === 'object' ? payloadProvider : {}) };
-}
-
-function isCacheEnabled(context, payload) {
-  const envEnabled = parseBoolean(
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_ENABLE_RESPONSE_CACHE') ||
-      getEnvVarFromContext(context, legacyEnvName('ENABLE_RESPONSE_CACHE')),
-    false
-  );
-  const payloadEnabled = parseBoolean(payload?.cache, false);
-  return envEnabled || payloadEnabled;
-}
-
-function isLocalFallbackAllowed(context, origin) {
-  const envValue = parseBoolean(
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_ALLOW_FALLBACKS') ||
-      getEnvVarFromContext(context, legacyEnvName('ALLOW_FALLBACKS')),
-    false
-  );
-  return envValue || isLocalRequest(origin);
-}
-
-function getCacheTTLSeconds(context, payload) {
-  const payloadTtl = parseNumber(payload?.cache_ttl_seconds, NaN);
-  if (Number.isFinite(payloadTtl) && payloadTtl > 0) {
-    return Math.min(Math.floor(payloadTtl), 3600);
-  }
-
-  const envTtl = parseNumber(
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_CACHE_TTL_SECONDS') ||
-      getEnvVarFromContext(context, legacyEnvName('CACHE_TTL_SECONDS')),
-    NaN
-  );
-  if (Number.isFinite(envTtl) && envTtl > 0) {
-    return Math.min(Math.floor(envTtl), 3600);
-  }
-
-  return DEFAULT_CACHE_TTL_SECONDS;
-}
-
-function getCacheStore() {
-  if (globalThis?.caches?.default && typeof globalThis.caches.default.match === 'function') {
-    return globalThis.caches.default;
-  }
-  return null;
-}
-
-async function sha256Hex(input) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(input);
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(digest))
-    .map(byte => byte.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-async function buildCacheRequest(request, requestPayload) {
-  const keySource = JSON.stringify({
-    model: requestPayload.model,
-    messages: requestPayload.messages,
-    temperature: requestPayload.temperature,
-    top_p: requestPayload.top_p,
-    max_tokens: requestPayload.max_tokens,
-    provider: requestPayload.provider,
-  });
-  const hash = await sha256Hex(keySource);
-  const cacheUrl = new URL(request.url);
-  cacheUrl.pathname = `/__draft_cache/${hash}`;
-  cacheUrl.search = '';
-
-  return new Request(cacheUrl.toString(), { method: 'GET' });
-}
-
-async function readCachedResponse(cacheStore, cacheRequest) {
-  if (!cacheStore || !cacheRequest) return null;
-
-  try {
-    const cached = await cacheStore.match(cacheRequest);
-    if (!cached) return null;
-    return cached;
-  } catch {
-    return null;
-  }
-}
-
-async function writeCachedResponse(cacheStore, cacheRequest, text, ttlSeconds) {
-  if (!cacheStore || !cacheRequest || !text) return;
-
-  const response = new Response(text, {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': `public, max-age=${ttlSeconds}`,
-      'X-Proxy-Cache': 'MISS',
-    },
-  });
-
-  try {
-    await cacheStore.put(cacheRequest, response.clone());
-  } catch {
-    // Ignore cache write failures to keep request path reliable.
-  }
-}
-
 function validatePayload(payload) {
   if (!payload || typeof payload !== 'object') return 'Body must be an object';
   if (!Array.isArray(payload.messages) || payload.messages.length < 1) return 'Body must include messages[]';
-  if (payload.messages.length > MAX_MESSAGES) return `Too many messages. Max allowed: ${MAX_MESSAGES}`;
+  if (payload.messages.length > MAX_DRAFT_MESSAGES) return `Too many messages. Max allowed: ${MAX_DRAFT_MESSAGES}`;
+
+  if (payload.model && resolveApprovedModel(payload.model) !== APPROVED_AI_MODEL) {
+    return 'Unsupported AI model';
+  }
+  if (payload.provider !== undefined) return 'Provider selection is managed by the service';
+
+  const hasInvalidMessage = payload.messages.some(
+    message =>
+      !['system', 'user', 'assistant'].includes(message?.role) ||
+      typeof message?.content !== 'string'
+  );
+  if (hasInvalidMessage) return 'Messages must use supported roles and text content';
 
   const hasOversizedMessage = payload.messages.some(msg => {
     const content = typeof msg?.content === 'string' ? msg.content : '';
-    return content.length > MAX_MESSAGE_CONTENT_LENGTH;
+    return content.length > MAX_DRAFT_MESSAGE_CONTENT_LENGTH;
   });
 
-  if (hasOversizedMessage) {
-    return `Message content too large. Max ${MAX_MESSAGE_CONTENT_LENGTH} chars per message.`;
-  }
+  if (hasOversizedMessage) return `Message content too large. Max ${MAX_DRAFT_MESSAGE_CONTENT_LENGTH} chars per message.`;
 
   return '';
 }
 
 export async function handleMessageDraft(context) {
   const { request } = context;
-  const runtimeEnvs = getRuntimeEnvs(context);
-  const primaryRuntimeEnv = runtimeEnvs[0] || {};
 
   if (request.method !== 'POST') {
     return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
@@ -437,9 +267,13 @@ export async function handleMessageDraft(context) {
   }
   const { origin } = originCheck;
 
+  if (!hasAiServiceAuth(request, context)) {
+    return jsonResponse({ error: 'AI service authorization required' }, 401, origin);
+  }
+
   const rateLimited = await enforceRateLimit(request, {
     route: 'message-draft',
-    limit: 30,
+    limit: 10,
     windowSec: 60,
   });
   if (rateLimited) {
@@ -448,11 +282,6 @@ export async function handleMessageDraft(context) {
 
   let apiKey =
     getEnvVarFromContext(context, 'SERVICE_GATEWAY_API_KEY') || getEnvVarFromContext(context, legacyEnvName('API_KEY'));
-
-  if (!apiKey && isLocalRequest(origin)) {
-    const localAssets = await getLocalApiKeyFromAssets(primaryRuntimeEnv);
-    apiKey = localAssets.key;
-  }
 
   let payload;
   try {
@@ -465,34 +294,33 @@ export async function handleMessageDraft(context) {
   if (payloadError) return jsonResponse({ error: payloadError }, 400, origin);
 
   if (!apiKey) {
-    if (isLocalFallbackAllowed(context, origin)) {
+    if (isLocalRequest(origin)) {
       return jsonResponse(buildLocalDraftResponse(payload, 'SERVICE_GATEWAY_NOT_CONFIGURED'), 200, origin);
     }
     return jsonResponse({ error: 'Draft service is not configured' }, 503, origin);
   }
 
-  const resolvedModel = String(
-    payload.model ||
-      getEnvVarFromContext(context, 'SERVICE_GATEWAY_DEFAULT_MODEL') ||
-      getEnvVarFromContext(context, legacyEnvName('DEFAULT_MODEL')) ||
-      DEFAULT_MODEL
-  ).trim();
-  const fallbackModel = String(
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_FALLBACK_MODEL') ||
-      getEnvVarFromContext(context, legacyEnvName('FALLBACK_MODEL')) ||
-      DEFAULT_FALLBACK_MODEL
-  ).trim();
-  const provider = resolveProviderDefaults(context, payload.provider);
+  const configuredModel =
+    getContextEnvVar(context, 'SERVICE_GATEWAY_DEFAULT_MODEL') ||
+    getContextEnvVar(context, legacyEnvName('DEFAULT_MODEL'));
+  const resolvedModel = resolveApprovedModel(configuredModel);
+  if (!resolvedModel) {
+    return jsonResponse({ error: 'AI model configuration rejected' }, 503, origin);
+  }
+  const maxTokens = parseBoundedTokens(
+    getContextEnvVar(context, 'SERVICE_GATEWAY_MAX_TOKENS'),
+    DEFAULT_DRAFT_MAX_TOKENS,
+    64,
+    MAX_DRAFT_MAX_TOKENS
+  );
 
   const requestPayload = {
-    ...payload,
+    messages: payload.messages.map(({ role, content }) => ({ role, content })),
     model: resolvedModel,
-    provider: provider || undefined,
+    temperature: 0.2,
+    max_tokens: maxTokens,
+    provider: AI_PROVIDER_POLICY,
   };
-
-  // Internal transport flags should not leak to the upstream service.
-  delete requestPayload.cache;
-  delete requestPayload.cache_ttl_seconds;
 
   const referer =
     sanitizeOrigin(
@@ -504,7 +332,7 @@ export async function handleMessageDraft(context) {
       getEnvVarFromContext(context, legacyEnvName('SITE_NAME')) ||
       DEFAULT_SITE_NAME
   ).trim();
-  const serviceGatewayUrl = getEnvVarFromContext(context, 'SERVICE_GATEWAY_URL') || DEFAULT_SERVICE_GATEWAY_URL;
+  const serviceGatewayUrl = DEFAULT_SERVICE_GATEWAY_URL;
 
   const upstreamHeaders = {
     Authorization: `Bearer ${apiKey}`,
@@ -512,26 +340,6 @@ export async function handleMessageDraft(context) {
   };
   if (referer) upstreamHeaders['HTTP-Referer'] = referer;
   if (title) upstreamHeaders[['X-Open', 'Router-Title'].join('')] = title;
-
-  const isStream = Boolean(requestPayload.stream);
-  const useCache = !isStream && isCacheEnabled(context, payload);
-  const cacheStore = useCache ? getCacheStore() : null;
-  const cacheTtlSeconds = getCacheTTLSeconds(context, payload);
-  const cacheRequest = useCache && cacheStore ? await buildCacheRequest(request, requestPayload) : null;
-
-  if (cacheStore && cacheRequest) {
-    const cached = await readCachedResponse(cacheStore, cacheRequest);
-    if (cached) {
-      const cachedText = await cached.text();
-      return new Response(cachedText, {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          'X-Proxy-Cache': 'HIT',
-        },
-      });
-    }
-  }
 
   const callDraftService = body =>
     fetch(serviceGatewayUrl, {
@@ -551,46 +359,10 @@ export async function handleMessageDraft(context) {
     );
   }
 
-  if (upstream.status === 401 || upstream.status === 403) {
-    return jsonResponse(buildLocalDraftResponse(payload, 'SERVICE_GATEWAY_AUTH_FAILED'), 200, origin);
-  }
-
-  const canRetryWithFallback =
-    !isStream &&
-    Boolean(fallbackModel) &&
-    fallbackModel !== resolvedModel &&
-    (upstream.status === 429 || upstream.status >= 500);
-
-  if (canRetryWithFallback) {
-    const fallbackPayload = { ...requestPayload, model: fallbackModel };
-    try {
-      upstream = await callDraftService(fallbackPayload);
-    } catch {
-      // Keep original upstream response if fallback call fails.
-    }
-  }
-
-  if (isStream) {
-    return new Response(upstream.body, {
-      status: upstream.status,
-      headers: {
-        'Content-Type': upstream.headers.get('Content-Type') || 'text/event-stream; charset=utf-8',
-        'Cache-Control': 'no-cache',
-      },
-    });
-  }
-
   const text = await upstream.text();
-
-  if (upstream.status === 200 && cacheStore && cacheRequest) {
-    await writeCachedResponse(cacheStore, cacheRequest, text, cacheTtlSeconds);
-  }
-
+  if (!upstream.ok) return jsonResponse({ error: 'Draft service request failed' }, 502, origin);
   return new Response(text, {
-    status: upstream.status,
-    headers: {
-      'Content-Type': upstream.headers.get('Content-Type') || 'application/json; charset=utf-8',
-      'X-Proxy-Cache': cacheStore && cacheRequest ? 'MISS' : 'BYPASS',
-    },
+    status: 200,
+    headers: { 'Content-Type': upstream.headers.get('Content-Type') || 'application/json; charset=utf-8' },
   });
 }

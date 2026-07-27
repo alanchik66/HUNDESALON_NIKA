@@ -111,6 +111,33 @@ function emptyDirectory(directory) {
   }
 }
 
+function assertNoSecretArtifacts(directory) {
+  const forbiddenName = /(?:^|\/)(?:\.dev\.vars(?:\.|$)|.*\.token$|__dev_service_gateway_key\.txt$|\.cloudflare-.*)$/i;
+  const forbiddenContent = /(?:SERVICE_GATEWAY_API_KEY|CLOUDFLARE_API_TOKEN)\s*=/;
+
+  function walk(current) {
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const fullPath = path.join(current, entry.name);
+      const relativePath = path.relative(directory, fullPath).replaceAll('\\', '/');
+      if (forbiddenName.test(relativePath)) {
+        throw new Error(`Refusing production build: secret-like artifact found in dist/${relativePath}`);
+      }
+      if (entry.isDirectory()) {
+        walk(fullPath);
+        continue;
+      }
+      if (entry.isFile() && fs.statSync(fullPath).size <= 2 * 1024 * 1024) {
+        const content = fs.readFileSync(fullPath, 'utf8');
+        if (forbiddenContent.test(content)) {
+          throw new Error(`Refusing production build: secret assignment found in dist/${relativePath}`);
+        }
+      }
+    }
+  }
+
+  walk(directory);
+}
+
 ensureLeafletVendorBundle();
 
 emptyDirectory(dist);
@@ -170,6 +197,7 @@ function stampDistAssetVersions(directory, version) {
 
 const assetVersion = deployAssetVersion();
 const stamped = stampDistAssetVersions(dist, assetVersion);
+assertNoSecretArtifacts(dist);
 
 console.log('Production bundle created in dist/.');
 console.log(`Asset cache version: ${assetVersion} (${stamped} HTML files stamped).`);
