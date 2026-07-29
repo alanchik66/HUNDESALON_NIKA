@@ -55,6 +55,25 @@ export function isLocalDevOrigin(origin) {
   return LOCAL_DEV_HOSTNAMES.has(originUrl.hostname) || isPrivateIpv4Hostname(originUrl.hostname);
 }
 
+export function getPublicReadCorsOrigin(request) {
+  const method = String(request?.method || '').toUpperCase();
+  if (!['GET', 'HEAD'].includes(method)) return '';
+
+  const origin = sanitizeOrigin(request?.headers?.get('Origin'));
+  const originUrl = parseUrl(origin);
+  if (!originUrl) return '';
+
+  if (
+    TRUSTED_SITE_ORIGINS.has(originUrl.origin) ||
+    isTrustedPagesDevHostname(originUrl.hostname) ||
+    isLocalDevOrigin(originUrl.origin)
+  ) {
+    return originUrl.origin;
+  }
+
+  return '';
+}
+
 /**
  * POST from the public site must include a trusted Origin header.
  * Local dev is allowed only for exact localhost / loopback / private LAN origins.
@@ -139,18 +158,38 @@ export async function enforceRateLimit(request, { route, limit, windowSec = 60 }
   return null;
 }
 
+export function applyCorsResponseHeaders(response, origin) {
+  if (!origin) return response;
+
+  const headers = new Headers(response.headers);
+  headers.set('Access-Control-Allow-Origin', origin);
+
+  const vary = headers.get('Vary');
+  const varyValues = String(vary || '')
+    .split(',')
+    .map(value => value.trim())
+    .filter(Boolean);
+  if (vary !== '*' && !varyValues.some(value => value.toLowerCase() === 'origin')) {
+    varyValues.push('Origin');
+    headers.set('Vary', varyValues.join(', '));
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export function applyApiResponseHeaders(response, origin) {
   const headers = new Headers(response.headers);
   headers.set('X-Content-Type-Options', 'nosniff');
   headers.set('Cache-Control', 'no-store');
-  if (origin) {
-    headers.set('Access-Control-Allow-Origin', origin);
-    headers.set('Vary', 'Origin');
-  }
-  return new Response(response.body, {
+  return applyCorsResponseHeaders(new Response(response.body, {
     status: response.status,
+    statusText: response.statusText,
     headers,
-  });
+  }), origin);
 }
 
 function sanitizeApiPayload(value) {

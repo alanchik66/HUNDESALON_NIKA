@@ -3476,7 +3476,7 @@
 }
 `;
 
-  const WEATHER_WIDGET_ASSET_VERSION = '20260728-weather-geo-v8';
+  const WEATHER_WIDGET_ASSET_VERSION = '20260729-weather-local-v9';
   /** Full mission_2160p30.mp4 timeline (7:38) mapped to each local night window. */
   const HEADER_WEATHER_MOON_VIDEO_DURATION_SEC = 458.233333;
   /** Fallback duration used by the shared orb timeline model. */
@@ -3510,10 +3510,13 @@
   ]);
 
   let headerWeatherLoaderPromise = null;
+  const HEADER_WEATHER_PUBLIC_API_ORIGIN = 'https://hundesalon-nika.com';
+  const HEADER_WEATHER_LOCAL_API_PATHS = new Set(['/api/weather', '/reverse-geocode']);
   const HEADER_WEATHER_GEOCODE_ENDPOINT = 'https://geocoding-api.open-meteo.com/v1/search';
-  const HEADER_WEATHER_CURRENT_ENDPOINT = '/api/weather';
+  const HEADER_WEATHER_CURRENT_ENDPOINT = resolveHeaderWeatherPublicEndpoint('/api/weather');
   const HEADER_WEATHER_ASTRO_ENDPOINT = 'https://api.sunrise-sunset.org/json';
-  const HEADER_WEATHER_REVERSE_GEOCODE_PROXY_ENDPOINT = '/reverse-geocode';
+  const HEADER_WEATHER_REVERSE_GEOCODE_PROXY_ENDPOINT =
+    resolveHeaderWeatherPublicEndpoint('/reverse-geocode');
   const HEADER_WEATHER_STATIC_FALLBACK_COORDS = Object.freeze({ latitude: 51.313317, longitude: 12.45543 });
   const HEADER_WEATHER_ASTRO_REFRESH_INTERVAL = 60000;
   const HEADER_WEATHER_WIDGET_REFRESH_INTERVAL = 5 * 60 * 1000;
@@ -3551,83 +3554,53 @@
   let headerWeatherServerTimeOffsetMs = 0;
   let headerWeatherServerTimeSyncedAt = 0;
 
-  function installHeaderWeatherLocalReverseGeocodeStub() {
+  function isHeaderWeatherStaticLocalPreview() {
+    return (
+      typeof window !== 'undefined' &&
+      window.location.protocol === 'http:' &&
+      /^(127\.0\.0\.1|localhost|\[::1\])$/i.test(window.location.hostname) &&
+      /^55\d{2}$/.test(window.location.port)
+    );
+  }
+
+  function resolveHeaderWeatherPublicEndpoint(pathname) {
+    return isHeaderWeatherStaticLocalPreview()
+      ? new URL(pathname, HEADER_WEATHER_PUBLIC_API_ORIGIN).toString()
+      : pathname;
+  }
+
+  function installHeaderWeatherLocalApiBridge() {
     if (
       typeof window === 'undefined' ||
-      window.__headerWeatherLocalReverseGeoStubInstalled ||
-      window.location.protocol !== 'http:' ||
-      !/^(127\.0\.0\.1|localhost)$/i.test(window.location.hostname) ||
-      window.location.port !== '5502' ||
+      window.__headerWeatherLocalApiBridgeInstalled ||
+      !isHeaderWeatherStaticLocalPreview() ||
       typeof window.XMLHttpRequest === 'undefined'
     ) {
       return;
     }
 
     const nativeOpen = window.XMLHttpRequest.prototype.open;
-    const nativeSend = window.XMLHttpRequest.prototype.send;
 
     window.XMLHttpRequest.prototype.open = function patchedOpen(method, url, ...rest) {
+      let targetUrl = url;
       try {
         const resolvedUrl = new URL(String(url), window.location.origin);
-        this.__headerWeatherReverseGeoStubUrl =
-          resolvedUrl.origin === window.location.origin && resolvedUrl.pathname === '/reverse-geocode'
-            ? resolvedUrl
-            : null;
-      } catch {
-        this.__headerWeatherReverseGeoStubUrl = null;
-      }
+        if (
+          resolvedUrl.origin === window.location.origin &&
+          HEADER_WEATHER_LOCAL_API_PATHS.has(resolvedUrl.pathname)
+        ) {
+          targetUrl = new URL(`${resolvedUrl.pathname}${resolvedUrl.search}`, HEADER_WEATHER_PUBLIC_API_ORIGIN)
+            .toString();
+        }
+      } catch {}
 
-      return nativeOpen.call(this, method, url, ...rest);
+      return nativeOpen.call(this, method, targetUrl, ...rest);
     };
 
-    window.XMLHttpRequest.prototype.send = function patchedSend(body) {
-      const stubUrl = this.__headerWeatherReverseGeoStubUrl;
-      if (!stubUrl) {
-        return nativeSend.call(this, body);
-      }
-
-      const language = normalizeLangCode(stubUrl.searchParams.get('accept-language') || 'ru');
-      const cityByLang = {
-        ru: 'Лейпциг - Цукельхаузен',
-        uk: 'Лейпциг - Цукельхаузен',
-        de: 'Leipzig - Zuckelhausen',
-        en: 'Leipzig - Zuckelhausen',
-      };
-      const payload = JSON.stringify({
-        payload: {
-          name: cityByLang[language] || cityByLang.en,
-          address: {
-            suburb: 'Zuckelhausen',
-            city: 'Leipzig',
-            state: 'Sachsen',
-            country: 'Deutschland',
-          },
-        },
-      });
-
-      window.setTimeout(() => {
-        Object.defineProperty(this, 'readyState', { configurable: true, value: 4 });
-        Object.defineProperty(this, 'status', { configurable: true, value: 200 });
-        Object.defineProperty(this, 'statusText', { configurable: true, value: 'OK' });
-        Object.defineProperty(this, 'responseURL', { configurable: true, value: stubUrl.toString() });
-        Object.defineProperty(this, 'responseText', { configurable: true, value: payload });
-        Object.defineProperty(this, 'response', { configurable: true, value: payload });
-
-        this.onreadystatechange?.(new Event('readystatechange'));
-        this.dispatchEvent?.(new Event('readystatechange'));
-        this.onload?.(new Event('load'));
-        this.dispatchEvent?.(new Event('load'));
-        this.onloadend?.(new Event('loadend'));
-        this.dispatchEvent?.(new Event('loadend'));
-      }, 0);
-
-      return undefined;
-    };
-
-    window.__headerWeatherLocalReverseGeoStubInstalled = true;
+    window.__headerWeatherLocalApiBridgeInstalled = true;
   }
 
-  installHeaderWeatherLocalReverseGeocodeStub();
+  installHeaderWeatherLocalApiBridge();
 
   const HEADER_WEATHER_ORB_RENDER_PROFILES = {
     sun: {
@@ -4633,15 +4606,6 @@
       return null;
     }
 
-    if (
-      window.location.protocol === 'http:' &&
-      /^(127\.0\.0\.1|localhost)$/i.test(window.location.hostname) &&
-      window.location.port === '5502'
-    ) {
-      headerWeatherReverseGeoProxyUnavailable = true;
-      return null;
-    }
-
     const languageFallbacks = getHeaderWeatherLanguageFallbacks();
 
     for (const language of languageFallbacks) {
@@ -4676,7 +4640,7 @@
 
       try {
         const proxyResponse = await fetch(proxyUrl.toString(), {
-          mode: 'same-origin',
+          mode: 'cors',
           credentials: 'omit',
           headers: {
             Accept: 'application/json',
@@ -7283,7 +7247,7 @@
     url.searchParams.set('lang', getHeaderWeatherPressureLang(host));
 
     const response = await fetch(url.toString(), {
-      mode: 'same-origin',
+      mode: 'cors',
       credentials: 'omit',
       cache: 'no-store',
       headers: { Accept: 'application/json' },

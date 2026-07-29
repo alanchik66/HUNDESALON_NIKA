@@ -1,4 +1,9 @@
-import { enforceRateLimit, jsonResponse } from './_lib/http-security.js';
+import {
+  applyCorsResponseHeaders,
+  enforceRateLimit,
+  getPublicReadCorsOrigin,
+  jsonResponse,
+} from './_lib/http-security.js';
 
 const NOMINATIM_REVERSE_ENDPOINT = 'https://nominatim.openstreetmap.org/reverse';
 const PHOTON_REVERSE_ENDPOINT = 'https://photon.komoot.io/reverse';
@@ -249,14 +254,17 @@ function storeCachedPayload(context, cache, cacheKey, payload) {
 
 export async function onRequest(context) {
   const { request } = context;
+  const corsOrigin = getPublicReadCorsOrigin(request);
+  const respond = response => applyCorsResponseHeaders(response, corsOrigin);
+
   if (!['GET', 'HEAD'].includes(request.method)) {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
+    return respond(jsonResponse({ error: 'Method not allowed' }, 405));
   }
 
   const url = new URL(request.url);
   const coordinates = parseReverseCoordinates(url.searchParams.get('lat'), url.searchParams.get('lon'));
   if (!coordinates) {
-    return jsonResponse({ error: 'Valid lat and lon values are required' }, 400);
+    return respond(jsonResponse({ error: 'Valid lat and lon values are required' }, 400));
   }
 
   const language = normalizeLanguage(
@@ -270,7 +278,7 @@ export async function onRequest(context) {
   );
   const cachedPayload = await readCachedPayload(cache, cacheKey);
   if (cachedPayload) {
-    return apiResponse(cachedPayload, { cacheStatus: 'HIT', method: request.method });
+    return respond(apiResponse(cachedPayload, { cacheStatus: 'HIT', method: request.method }));
   }
 
   const rateLimitResponse = await enforceRateLimit(request, {
@@ -279,7 +287,7 @@ export async function onRequest(context) {
     windowSec: 60,
   });
   if (rateLimitResponse) {
-    return rateLimitResponse;
+    return respond(rateLimitResponse);
   }
 
   let normalized = null;
@@ -304,7 +312,7 @@ export async function onRequest(context) {
   }
 
   if (!normalized) {
-    return jsonResponse({ error: 'Reverse geocoding providers are temporarily unavailable' }, 502);
+    return respond(jsonResponse({ error: 'Reverse geocoding providers are temporarily unavailable' }, 502));
   }
 
   const payload = {
@@ -312,5 +320,5 @@ export async function onRequest(context) {
     payload: normalized,
   };
   storeCachedPayload(context, cache, cacheKey, payload);
-  return apiResponse(payload, { method: request.method });
+  return respond(apiResponse(payload, { method: request.method }));
 }

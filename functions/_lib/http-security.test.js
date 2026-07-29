@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { isAllowedOrigin, isLocalDevOrigin, jsonResponse } from './http-security.js';
+import {
+  applyCorsResponseHeaders,
+  getPublicReadCorsOrigin,
+  isAllowedOrigin,
+  isLocalDevOrigin,
+  jsonResponse,
+} from './http-security.js';
 
 test('allows exact same-origin requests', () => {
   assert.equal(isAllowedOrigin('https://hundesalon-nika.com', 'https://hundesalon-nika.com/sendmail'), true);
@@ -30,6 +36,39 @@ test('rejects protocol mismatches', () => {
 
 test('rejects non-local cross-port origins for production hosts', () => {
   assert.equal(isAllowedOrigin('https://hundesalon-nika.com:444', 'https://hundesalon-nika.com/sendmail'), false);
+});
+
+test('allows public weather reads from local development without opening POST endpoints', () => {
+  const localRead = new Request('https://hundesalon-nika.com/api/weather', {
+    headers: { Origin: 'http://127.0.0.1:5503' },
+  });
+  const localPost = new Request('https://hundesalon-nika.com/api/weather', {
+    method: 'POST',
+    headers: { Origin: 'http://127.0.0.1:5503' },
+  });
+  const attackerRead = new Request('https://hundesalon-nika.com/api/weather', {
+    headers: { Origin: 'https://localhost.attacker.example' },
+  });
+
+  assert.equal(getPublicReadCorsOrigin(localRead), 'http://127.0.0.1:5503');
+  assert.equal(getPublicReadCorsOrigin(localPost), '');
+  assert.equal(getPublicReadCorsOrigin(attackerRead), '');
+});
+
+test('adds local CORS without replacing cache policy or existing Vary values', () => {
+  const response = applyCorsResponseHeaders(
+    new Response('ok', {
+      headers: {
+        'Cache-Control': 'private, max-age=60',
+        Vary: 'Accept-Language',
+      },
+    }),
+    'http://127.0.0.1:5503'
+  );
+
+  assert.equal(response.headers.get('Access-Control-Allow-Origin'), 'http://127.0.0.1:5503');
+  assert.equal(response.headers.get('Cache-Control'), 'private, max-age=60');
+  assert.equal(response.headers.get('Vary'), 'Accept-Language, Origin');
 });
 
 test('preserves customer-facing text that is not a stack trace', async () => {

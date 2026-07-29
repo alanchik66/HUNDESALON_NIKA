@@ -1,4 +1,9 @@
-import { enforceRateLimit, jsonResponse } from '../_lib/http-security.js';
+import {
+  applyCorsResponseHeaders,
+  enforceRateLimit,
+  getPublicReadCorsOrigin,
+  jsonResponse,
+} from '../_lib/http-security.js';
 
 const BRIGHT_SKY_CURRENT_ENDPOINT = 'https://api.brightsky.dev/current_weather';
 const MET_LOCATIONFORECAST_ENDPOINT = 'https://api.met.no/weatherapi/locationforecast/2.0/compact';
@@ -708,8 +713,11 @@ function storeCachedPayload(context, cache, cacheKey, payload) {
 
 export async function onRequest(context) {
   const { request } = context;
+  const corsOrigin = getPublicReadCorsOrigin(request);
+  const respond = response => applyCorsResponseHeaders(response, corsOrigin);
+
   if (!['GET', 'HEAD'].includes(request.method)) {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
+    return respond(jsonResponse({ error: 'Method not allowed' }, 405));
   }
 
   const url = new URL(request.url);
@@ -731,7 +739,7 @@ export async function onRequest(context) {
   }
 
   if (!location) {
-    return jsonResponse({ error: 'Valid coordinates or location are required' }, 400);
+    return respond(jsonResponse({ error: 'Valid coordinates or location are required' }, 400));
   }
 
   const cache = getDefaultCache();
@@ -741,7 +749,7 @@ export async function onRequest(context) {
   const cachedPayload = await readCachedPayload(cache, cacheKey);
   if (cachedPayload) {
     cachedPayload.cached = true;
-    return apiResponse(cachedPayload, { cacheStatus: 'HIT', method: request.method });
+    return respond(apiResponse(cachedPayload, { cacheStatus: 'HIT', method: request.method }));
   }
 
   const rateLimitResponse = await enforceRateLimit(request, {
@@ -750,7 +758,7 @@ export async function onRequest(context) {
     windowSec: 60,
   });
   if (rateLimitResponse) {
-    return rateLimitResponse;
+    return respond(rateLimitResponse);
   }
 
   const [brightSkyResult, metResult] = await Promise.allSettled([
@@ -765,10 +773,10 @@ export async function onRequest(context) {
     normalizeMetCurrent(metPayload, location, timeZone, nowMs);
 
   if (!currentMeta) {
-    return jsonResponse({ error: 'Weather providers are temporarily unavailable' }, 502);
+    return respond(jsonResponse({ error: 'Weather providers are temporarily unavailable' }, 502));
   }
 
   const payload = buildWeatherPayload(location, currentMeta, metPayload, timeZone);
   storeCachedPayload(context, cache, cacheKey, payload);
-  return apiResponse(payload, { method: request.method });
+  return respond(apiResponse(payload, { method: request.method }));
 }
