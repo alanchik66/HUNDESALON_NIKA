@@ -1,7 +1,7 @@
 param(
   [ValidateSet("de", "en", "ru", "uk")]
   [string]$Page = "de",
-  [string]$ProjectRoot = "D:\HUNDESALON_NIKA"
+  [string]$ProjectRoot = "C:\PROJEKT\HUNDESALON_NIKA"
 )
 
 $ErrorActionPreference = "Stop"
