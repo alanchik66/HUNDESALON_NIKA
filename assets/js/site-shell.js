@@ -3476,7 +3476,7 @@
 }
 `;
 
-  const WEATHER_WIDGET_ASSET_VERSION = '20260729-weather-local-v9';
+  const WEATHER_WIDGET_ASSET_VERSION = '20260729-weather-area-v11';
   /** Full mission_2160p30.mp4 timeline (7:38) mapped to each local night window. */
   const HEADER_WEATHER_MOON_VIDEO_DURATION_SEC = 458.233333;
   /** Fallback duration used by the shared orb timeline model. */
@@ -4127,7 +4127,7 @@
     return {
       latitude: HEADER_WEATHER_STATIC_FALLBACK_COORDS.latitude,
       longitude: HEADER_WEATHER_STATIC_FALLBACK_COORDS.longitude,
-      label: 'Leipzig - Walter-Markov-Ring 1',
+      label: 'Leipzig - Zuckelhausen',
       regionLabel: 'Sachsen',
       timezone: HEADER_WEATHER_DEFAULT_TIMEZONE,
     };
@@ -4470,43 +4470,18 @@
 
     const district =
       address.suburb ||
-      address.city_district ||
       address.neighbourhood ||
+      address.neighborhood ||
       address.quarter ||
-      address.borough ||
       address.hamlet ||
+      address.city_district ||
+      address.district ||
+      address.borough ||
       '';
 
     const city = address.city || address.town || address.village || address.county || '';
 
     return formatCityDistrictLabel(city, district);
-  }
-
-  function buildHeaderWeatherPreciseLocationLabel(address, fallbackName = '') {
-    if (!address || typeof address !== 'object') {
-      return String(fallbackName || '').trim() || null;
-    }
-
-    const city = address.city || address.town || address.village || address.municipality || address.county || '';
-    const road =
-      address.road ||
-      address.pedestrian ||
-      address.residential ||
-      address.footway ||
-      address.path ||
-      address.street ||
-      '';
-    const houseNumber = address.house_number || address.housenumber || '';
-    const streetAddress = [road, houseNumber]
-      .map(value => String(value || '').trim())
-      .filter(Boolean)
-      .join(' ');
-
-    if (city && streetAddress) {
-      return `${String(city).trim()} - ${streetAddress}`;
-    }
-
-    return buildHeaderWeatherDistrictLabel(address) || streetAddress || String(fallbackName || '').trim() || null;
   }
 
   function normalizeHeaderWeatherGermanStateLabel(value, address = null) {
@@ -4612,9 +4587,13 @@
       const parseGeoPayload = payload => {
         const address = payload?.address || null;
         const districtLabel = buildHeaderWeatherDistrictLabel(address);
-        const locationLabel =
-          String(payload?.label || '').trim() ||
-          buildHeaderWeatherPreciseLocationLabel(address, payload?.name || payload?.display_name);
+        const displayPrecision = String(payload?.display_precision || payload?.precision || '')
+          .trim()
+          .toLowerCase();
+        const publicAreaLabel = ['district', 'city', 'region', 'locality'].includes(displayPrecision)
+          ? String(payload?.label || '').trim()
+          : '';
+        const locationLabel = districtLabel || publicAreaLabel || null;
         const regionLabel = normalizeHeaderWeatherGermanStateLabel(
           address?.state || address?.region || address?.state_district || address?.county || null,
           address
@@ -6783,7 +6762,7 @@
         const coordinateValue = {
           latitude: coordinateMatch.latitude,
           longitude: coordinateMatch.longitude,
-          label: reverseMeta?.locationLabel || reverseMeta?.districtLabel || locationLabel.trim(),
+          label: reverseMeta?.districtLabel || reverseMeta?.locationLabel || locationLabel.trim(),
           regionLabel: reverseMeta?.regionLabel || null,
           timezone: getHeaderWeatherBrowserTimeZone() || HEADER_WEATHER_DEFAULT_TIMEZONE,
           geocodeProvider: reverseMeta?.provider || null,
@@ -7322,7 +7301,7 @@
     if (locationMeta.label) {
       const accessibleLocationLabel = String(locationMeta.label).replace(/[\u200B\u00A0]/g, ' ').trim();
       host.dataset.weatherResolvedLocationLabel = accessibleLocationLabel;
-      restoreHeaderWeatherPreciseLocationLabel(host);
+      restoreHeaderWeatherAreaLocationLabel(host);
     }
 
     if (locationMeta.regionLabel) {
@@ -7343,7 +7322,7 @@
     syncHeaderWeatherAttribution(host);
   }
 
-  function restoreHeaderWeatherPreciseLocationLabel(host) {
+  function restoreHeaderWeatherAreaLocationLabel(host) {
     const root = host?.shadowRoot;
     const accessibleLocationLabel = String(host?.dataset?.weatherResolvedLocationLabel || '').trim();
     if (!root || !accessibleLocationLabel) {
@@ -7362,7 +7341,7 @@
       });
   }
 
-  function scheduleHeaderWeatherPreciseLocationLabelRestore(host) {
+  function scheduleHeaderWeatherAreaLocationLabelRestore(host) {
     if (!host || host.__weatherLocationRestoreScheduled) {
       return;
     }
@@ -7370,7 +7349,7 @@
     host.__weatherLocationRestoreScheduled = true;
     window.queueMicrotask(() => {
       host.__weatherLocationRestoreScheduled = false;
-      restoreHeaderWeatherPreciseLocationLabel(host);
+      restoreHeaderWeatherAreaLocationLabel(host);
     });
   }
 
@@ -12448,7 +12427,7 @@ labelEl.style.setProperty('text-align', 'right', 'important');
         bindHeaderWeatherDropdownScrollState(host);
       }
       if (shouldRestoreLocation && host.dataset.weatherResolvedLocationLabel) {
-        scheduleHeaderWeatherPreciseLocationLabelRestore(host);
+        scheduleHeaderWeatherAreaLocationLabelRestore(host);
       }
     });
 

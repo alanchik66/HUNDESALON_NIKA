@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  buildPreciseAddressLabel,
+  buildDistrictLabel,
   normalizeNominatimReverse,
   normalizePhotonReverse,
   parseReverseCoordinates,
@@ -16,23 +16,33 @@ test('reverse geocoding validates coordinate ranges', () => {
   assert.equal(parseReverseCoordinates('51.313317', '181'), null);
 });
 
-test('precise address labels prefer city, road, and house number', () => {
+test('public location labels mask a precise address with its district', () => {
   assert.equal(
-    buildPreciseAddressLabel({
+    buildDistrictLabel({
       city: 'Leipzig',
       suburb: 'Stotteritz',
       road: 'Holzhauser Strasse',
       house_number: '95',
     }),
-    'Leipzig - Holzhauser Strasse 95'
+    'Leipzig - Stotteritz'
   );
   assert.equal(
-    buildPreciseAddressLabel({ city: 'Leipzig', suburb: 'Stotteritz' }),
+    buildDistrictLabel({ city: 'Leipzig', suburb: 'Stotteritz' }),
     'Leipzig - Stotteritz'
+  );
+  assert.equal(
+    buildDistrictLabel({
+      city: 'Leipzig',
+      city_district: 'Sudost',
+      hamlet: 'Zuckelhausen',
+      road: 'Walter-Markov-Ring',
+      house_number: '1',
+    }),
+    'Leipzig - Zuckelhausen'
   );
 });
 
-test('Nominatim payloads keep the detailed OSM address and attribution', () => {
+test('Nominatim payloads preserve coordinate precision without exposing street fields', () => {
   const normalized = normalizeNominatimReverse(
     {
       lat: '51.31331',
@@ -52,13 +62,17 @@ test('Nominatim payloads keep the detailed OSM address and attribution', () => {
     COORDINATES
   );
 
-  assert.equal(normalized.label, 'Leipzig - Holzhauser Strasse 95');
+  assert.equal(normalized.label, 'Leipzig - Stotteritz');
   assert.equal(normalized.precision, 'building');
+  assert.equal(normalized.display_precision, 'district');
   assert.equal(normalized.provider, 'nominatim');
   assert.equal(normalized.address.state, 'Sachsen');
+  assert.equal(normalized.address.road, undefined);
+  assert.equal(normalized.address.house_number, undefined);
+  assert.doesNotMatch(normalized.display_name, /Holzhauser|95/);
 });
 
-test('Photon fallback maps street fields to the same response shape', () => {
+test('Photon fallback exposes the same district-safe response shape', () => {
   const normalized = normalizePhotonReverse(
     {
       features: [
@@ -80,7 +94,10 @@ test('Photon fallback maps street fields to the same response shape', () => {
     COORDINATES
   );
 
-  assert.equal(normalized.label, 'Leipzig - Holzhauser Strasse 95');
+  assert.equal(normalized.label, 'Leipzig - Stotteritz');
+  assert.equal(normalized.display_precision, 'district');
+  assert.equal(normalized.address.road, undefined);
+  assert.equal(normalized.address.house_number, undefined);
   assert.equal(normalized.address.country_code, 'de');
   assert.equal(normalized.provider, 'photon');
 });

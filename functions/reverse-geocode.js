@@ -56,9 +56,9 @@ function firstText(...values) {
   return '';
 }
 
-export function buildPreciseAddressLabel(address, fallbackName = '') {
+export function buildDistrictLabel(address) {
   if (!address || typeof address !== 'object') {
-    return String(fallbackName || '').trim();
+    return '';
   }
 
   const city = firstText(
@@ -68,42 +68,67 @@ export function buildPreciseAddressLabel(address, fallbackName = '') {
     address.municipality,
     address.county
   );
-  const road = firstText(
-    address.road,
-    address.pedestrian,
-    address.residential,
-    address.footway,
-    address.path,
-    address.street
-  );
-  const houseNumber = firstText(address.house_number, address.housenumber);
   const district = firstText(
     address.suburb,
+    address.neighbourhood,
+    address.neighborhood,
+    address.quarter,
+    address.hamlet,
     address.city_district,
     address.district,
-    address.neighbourhood,
-    address.quarter,
-    address.borough,
-    address.hamlet
+    address.borough
   );
-  const streetAddress = [road, houseNumber].filter(Boolean).join(' ');
 
-  if (city && streetAddress) return `${city} - ${streetAddress}`;
   if (city && district && city.toLowerCase() !== district.toLowerCase()) {
     return `${city} - ${district}`;
   }
-  return streetAddress || city || district || String(fallbackName || '').trim();
+  return district || city || firstText(address.state_district, address.state, address.region, address.country);
 }
 
-function buildDisplayName(address, fallbackName = '') {
+function buildDisplayName(address) {
   return [
-    buildPreciseAddressLabel(address, fallbackName),
-    firstText(address.postcode),
+    buildDistrictLabel(address),
     firstText(address.state, address.region),
     firstText(address.country),
   ]
     .filter(Boolean)
     .join(', ');
+}
+
+function sanitizeDisplayAddress(address) {
+  const safeAddress = { ...address };
+  [
+    'house_number',
+    'housenumber',
+    'road',
+    'pedestrian',
+    'residential',
+    'footway',
+    'path',
+    'street',
+  ].forEach(key => delete safeAddress[key]);
+  return safeAddress;
+}
+
+function getDisplayPrecision(address) {
+  if (
+    firstText(
+      address.suburb,
+      address.neighbourhood,
+      address.neighborhood,
+      address.quarter,
+      address.hamlet,
+      address.city_district,
+      address.district,
+      address.borough
+    )
+  ) {
+    return 'district';
+  }
+  if (firstText(address.city, address.town, address.village, address.municipality, address.county)) {
+    return 'city';
+  }
+  return 'region';
 }
 
 export function normalizeNominatimReverse(payload, coordinates) {
@@ -114,19 +139,24 @@ export function normalizeNominatimReverse(payload, coordinates) {
 
   const latitude = finiteNumber(payload?.lat) ?? coordinates.latitude;
   const longitude = finiteNumber(payload?.lon) ?? coordinates.longitude;
-  const label = buildPreciseAddressLabel(address, payload?.name);
+  const label = buildDistrictLabel(address);
+  if (!label) {
+    return null;
+  }
+  const displayAddress = sanitizeDisplayAddress(address);
 
   return {
-    name: firstText(payload?.name, label),
+    name: label,
     label,
-    display_name: firstText(payload?.display_name, buildDisplayName(address, payload?.name)),
+    display_name: buildDisplayName(displayAddress),
     lat: String(latitude),
     lon: String(longitude),
-    address,
+    address: displayAddress,
     provider: 'nominatim',
     attribution: 'OpenStreetMap contributors',
     attribution_url: OSM_ATTRIBUTION_URL,
     precision: firstText(address.house_number) ? 'building' : firstText(address.road) ? 'road' : 'locality',
+    display_precision: getDisplayPrecision(address),
   };
 }
 
@@ -151,22 +181,24 @@ export function normalizePhotonReverse(payload, coordinates) {
     country: firstText(properties.country),
     country_code: String(properties.countrycode || '').toLowerCase(),
   };
-  const label = buildPreciseAddressLabel(address, properties.name);
+  const label = buildDistrictLabel(address);
   if (!label) {
     return null;
   }
+  const displayAddress = sanitizeDisplayAddress(address);
 
   return {
-    name: firstText(properties.name, label),
+    name: label,
     label,
-    display_name: buildDisplayName(address, properties.name),
+    display_name: buildDisplayName(displayAddress),
     lat: String(latitude),
     lon: String(longitude),
-    address,
+    address: displayAddress,
     provider: 'photon',
     attribution: 'OpenStreetMap contributors',
     attribution_url: OSM_ATTRIBUTION_URL,
     precision: address.house_number ? 'building' : address.road ? 'road' : 'locality',
+    display_precision: getDisplayPrecision(address),
   };
 }
 
@@ -274,7 +306,7 @@ export async function onRequest(context) {
   );
   const cache = getDefaultCache();
   const cacheKey = new Request(
-    `https://reverse-geocode-cache.hundesalon-nika.internal/v2/${coordinates.latitude.toFixed(5)}/${coordinates.longitude.toFixed(5)}/${language}`
+    `https://reverse-geocode-cache.hundesalon-nika.internal/v3/${coordinates.latitude.toFixed(5)}/${coordinates.longitude.toFixed(5)}/${language}`
   );
   const cachedPayload = await readCachedPayload(cache, cacheKey);
   if (cachedPayload) {
