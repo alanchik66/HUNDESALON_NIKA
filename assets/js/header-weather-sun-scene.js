@@ -1,50 +1,86 @@
 /**
- * Compact header sun (NASA Eyes–style): warm disc, transparent WebGL, CSS stars in shell.
- * No extra 3D moon here — night moon uses separate overlay.
+ * Compact rotating Sun for the header weather widget.
+ * The canvas stays transparent; the Moon continues to use its separate overlay.
  */
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js';
+import { Z as THREE } from '../../3d-weather-codrops-main/dist-widget/weather-3d-CKX6ob-m.mjs?v=20260728-weather-geo-v8';
 
 const TAU = Math.PI * 2;
-const EARTH_ORBIT_AU = 6.8;
-const SUN_RADIUS = 0.72;
-const EARTH_AXIAL_TILT = THREE.MathUtils.degToRad(23.44);
-const SUN_SPIN_DAYS = 25.38;
-const WARM_SUN_COLOR = 0xffc266;
+const SUN_RADIUS = 0.7;
+const SUN_GLOW_RADIUS = 0.784;
+const SUN_CAMERA_DISTANCE = 4.55;
+const SUN_AXIAL_TILT = THREE.MathUtils.degToRad(7.25);
+const SUN_ROTATION_SECONDS = 60 * 60;
+const SUN_START_ANGLE = THREE.MathUtils.degToRad(-34);
+const WARM_SUN_COLOR = 0xffffe6;
 
-function dayOfYearUtc(date) {
-  const start = Date.UTC(date.getUTCFullYear(), 0, 0);
-  return (Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) - start) / 86400000;
+function loadTexture(url, textures, renderer) {
+  if (!url) {
+    return Promise.resolve(null);
+  }
+
+  return new Promise(resolve => {
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      url,
+      texture => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.anisotropy = Math.min(renderer?.capabilities?.getMaxAnisotropy?.() || 1, 8);
+        texture.needsUpdate = true;
+        textures?.push?.(texture);
+        resolve(texture);
+      },
+      undefined,
+      () => resolve(null)
+    );
+  });
 }
 
-function buildCoronaSprite() {
-  const size = 128;
-  const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  const gradient = ctx.createRadialGradient(size / 2, size / 2, size * 0.1, size / 2, size / 2, size * 0.5);
-  gradient.addColorStop(0, 'rgba(255, 220, 150, 0.5)');
-  gradient.addColorStop(0.4, 'rgba(255, 170, 70, 0.18)');
-  gradient.addColorStop(1, 'rgba(255, 120, 40, 0)');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, size, size);
-  const texture = new THREE.CanvasTexture(canvas);
-  const material = new THREE.SpriteMaterial({
-    map: texture,
+function createGlowMaterial() {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      glowColor: { value: new THREE.Color(0xffb347) },
+      glowOpacity: { value: 0.32 },
+    },
+    vertexShader: `
+      varying vec3 vNormal;
+      varying vec3 vViewDirection;
+
+      void main() {
+        vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+        vNormal = normalize(mat3(modelMatrix) * normal);
+        vViewDirection = normalize(cameraPosition - worldPosition.xyz);
+        gl_Position = projectionMatrix * viewMatrix * worldPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 glowColor;
+      uniform float glowOpacity;
+      varying vec3 vNormal;
+      varying vec3 vViewDirection;
+
+      void main() {
+        float fresnel = pow(1.0 - max(dot(vNormal, vViewDirection), 0.0), 2.2);
+        float alpha = smoothstep(0.08, 0.92, fresnel) * glowOpacity;
+        gl_FragColor = vec4(glowColor, alpha);
+      }
+    `,
+    side: THREE.BackSide,
     transparent: true,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
+    depthTest: false,
+    toneMapped: false,
   });
-  const sprite = new THREE.Sprite(material);
-  sprite.scale.set(2.4, 2.4, 1);
-  return sprite;
 }
 
 export class HeaderWeatherSunScene {
   constructor(canvas, options = {}) {
     this.canvas = canvas;
-    this.sunTextureUrl = options.sunTextureUrl || '';
-    this.sunTextureFallbackUrl = options.sunTextureFallbackUrl || '';
+    this.options = options;
     this.geoState = {
       latitude: 51.32,
       longitude: 12.42,
@@ -57,8 +93,9 @@ export class HeaderWeatherSunScene {
     this.scene = null;
     this.camera = null;
     this.renderer = null;
+    this.sunGroup = null;
     this.sunMesh = null;
-    this.corona = null;
+    this.glowMesh = null;
     this.textures = [];
   }
 
@@ -79,50 +116,59 @@ export class HeaderWeatherSunScene {
     }
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 80);
+    const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 20);
     const renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       alpha: true,
       antialias: true,
+      premultipliedAlpha: false,
       powerPreference: 'high-performance',
     });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setClearColor(0x000000, 0);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.NoToneMapping;
 
-    const loader = new THREE.TextureLoader();
-    let sunTexture = null;
-    for (const url of [this.sunTextureUrl, this.sunTextureFallbackUrl]) {
-      if (!url) {
-        continue;
-      }
-      sunTexture = await loader.loadAsync(url).catch(() => null);
-      if (sunTexture) {
-        break;
-      }
-    }
+    const sunTexture = await loadTexture(this.options.sunTextureUrl, this.textures, renderer);
+
+    const surfaceColor = new THREE.Color(WARM_SUN_COLOR);
     if (sunTexture) {
-      sunTexture.colorSpace = THREE.SRGBColorSpace;
-      this.textures.push(sunTexture);
+      // Warm-white gain approximates the visible 5778 K solar photosphere.
+      surfaceColor.setRGB(1.26, 1.14, 1.02);
     }
-
     const sunMaterial = new THREE.MeshBasicMaterial({
-      map: sunTexture,
-      color: sunTexture ? WARM_SUN_COLOR : 0xffc45a,
+      map: sunTexture || null,
+      color: surfaceColor,
       toneMapped: false,
+      transparent: false,
+      depthWrite: true,
     });
-    const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(SUN_RADIUS, 48, 48), sunMaterial);
-    scene.add(sunMesh);
+    const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(SUN_RADIUS, 64, 48), sunMaterial);
+    sunMesh.renderOrder = 1;
 
-    const corona = buildCoronaSprite();
-    scene.add(corona);
+    const glowMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(SUN_GLOW_RADIUS, 64, 48),
+      createGlowMaterial()
+    );
+    glowMesh.renderOrder = 0;
+
+    const sunGroup = new THREE.Group();
+    sunGroup.position.y = -0.07;
+    sunGroup.rotation.z = SUN_AXIAL_TILT;
+    sunGroup.add(glowMesh, sunMesh);
+    scene.add(sunGroup);
+
+    camera.position.set(0, 0, SUN_CAMERA_DISTANCE);
+    camera.lookAt(0, 0, 0);
 
     this.scene = scene;
     this.camera = camera;
     this.renderer = renderer;
+    this.sunGroup = sunGroup;
     this.sunMesh = sunMesh;
-    this.corona = corona;
+    this.glowMesh = glowMesh;
     this.resize();
-    this.updateOrbit(0);
+    this.updateAnimation(0);
   }
 
   resize() {
@@ -138,40 +184,28 @@ export class HeaderWeatherSunScene {
     this.camera.updateProjectionMatrix();
   }
 
-  updateOrbit(elapsedSeconds) {
-    const date = new Date(this.geoState.timeMs);
-    const lat = THREE.MathUtils.degToRad(this.geoState.latitude);
-    const lon = THREE.MathUtils.degToRad(this.geoState.longitude);
-    const doy = dayOfYearUtc(date);
-    const yearPhase = (doy / 365.2422) * TAU - Math.PI * 0.5;
-    const utcHours =
-      date.getUTCHours() +
-      date.getUTCMinutes() / 60 +
-      date.getUTCSeconds() / 3600 +
-      date.getUTCMilliseconds() / 3600000;
-    const solarHour = (((utcHours + this.geoState.longitude / 15) % 24) + 24) % 24;
-    const dayPhase = (solarHour / 24) * TAU;
+  updateAnimation(elapsedSeconds) {
+    if (!this.sunMesh) {
+      return;
+    }
 
-    const earthX = Math.cos(yearPhase) * EARTH_ORBIT_AU;
-    const earthZ = Math.sin(yearPhase) * EARTH_ORBIT_AU;
-    const observerLift = Math.sin(lat) * 0.38;
-    const observerHoriz = Math.cos(lat) * 0.38;
-    const camX = earthX + observerHoriz * Math.sin(dayPhase + lon * 0.12);
-    const camY = observerLift + Math.sin(EARTH_AXIAL_TILT) * Math.sin(yearPhase) * 0.28;
-    const camZ = earthZ + observerHoriz * Math.cos(dayPhase + lon * 0.12);
-
-    this.camera.position.set(camX, camY, camZ);
-    this.camera.lookAt(0, 0, 0);
-
-    const sunSpin = this.reducedMotion ? yearPhase * 0.02 : (elapsedSeconds / SUN_SPIN_DAYS) * TAU;
+    const sunSpin = this.reducedMotion
+      ? SUN_START_ANGLE
+      : SUN_START_ANGLE + (elapsedSeconds / SUN_ROTATION_SECONDS) * TAU;
     this.sunMesh.rotation.y = sunSpin;
+
+    const glowMaterial = this.glowMesh?.material;
+    if (glowMaterial?.uniforms?.glowOpacity) {
+      const pulse = this.reducedMotion ? 0 : Math.sin(elapsedSeconds * 0.72) * 0.026;
+      glowMaterial.uniforms.glowOpacity.value = 0.32 + pulse;
+    }
   }
 
   renderFrame() {
     if (!this.renderer || !this.scene || !this.camera) {
       return;
     }
-    this.updateOrbit(this.clock.getElapsedTime());
+    this.updateAnimation(this.clock.getElapsedTime());
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -202,12 +236,11 @@ export class HeaderWeatherSunScene {
     this.stop();
     if (this.sunMesh) {
       this.sunMesh.geometry?.dispose();
-      this.sunMesh.material?.map?.dispose();
       this.sunMesh.material?.dispose();
     }
-    if (this.corona) {
-      this.corona.material?.map?.dispose();
-      this.corona.material?.dispose();
+    if (this.glowMesh) {
+      this.glowMesh.geometry?.dispose();
+      this.glowMesh.material?.dispose();
     }
     this.textures.forEach(texture => texture.dispose());
     this.textures = [];
@@ -215,8 +248,9 @@ export class HeaderWeatherSunScene {
     this.scene = null;
     this.camera = null;
     this.renderer = null;
+    this.sunGroup = null;
     this.sunMesh = null;
-    this.corona = null;
+    this.glowMesh = null;
   }
 }
 
