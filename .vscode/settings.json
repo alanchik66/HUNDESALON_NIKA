@@ -36,6 +36,22 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "liveServer.settings.port": 5503,
+  "liveServer.settings.root": "/",
+  "liveServer.settings.headers": {
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+  },
+  "liveServer.settings.ignoreFiles": [
+    ".vscode/**",
+    "**/*.scss",
+    "**/*.sass",
+    "**/*.ts",
+    "node_modules/**",
+    "venv/**",
+    ".venv/**",
+    "dist/**",
+    "test-results/**",
+    ".git/**"
+  ],
   "files.watcherExclude": {
     "**/node_modules/**": true,
     "**/dist/**": true,

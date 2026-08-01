@@ -3476,7 +3476,7 @@
 }
 `;
 
-  const WEATHER_WIDGET_ASSET_VERSION = '20260801-area-status-v13';
+  const WEATHER_WIDGET_ASSET_VERSION = '20260801-location-single-line-v14';
   /** Full mission_2160p30.mp4 timeline (7:38) mapped to each local night window. */
   const HEADER_WEATHER_MOON_VIDEO_DURATION_SEC = 458.233333;
   /** Fallback duration used by the shared orb timeline model. */
@@ -4402,19 +4402,20 @@
   }
 
   function formatHeaderWeatherCityDistrictDisplayLabel(value) {
-    const applySoftBreakHints = input => {
+    const formatSingleLine = input => {
       const normalized = String(input || '')
+        .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
+        .replace(/\u00A0/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
       const cityDistrictMatch = normalized.match(/^([^,]+?)\s-\s(.+)$/);
       if (cityDistrictMatch) {
-        const city = cityDistrictMatch[1].trim().replace(/\s+/g, '\u00a0');
+        const city = cityDistrictMatch[1].trim();
         const district = cityDistrictMatch[2].trim();
-        // First preferred wrap point: between city and district.
-        return `${city} -\u200B ${district}`.replace(/,\s+/g, ',\u200B ');
+        return `${city} - ${district}`;
       }
 
-      return normalized.replace(/,\s+/g, ',\u200B ');
+      return normalized;
     };
 
     const raw = String(value || '')
@@ -4426,7 +4427,7 @@
     }
 
     if (/\s-\s/.test(raw)) {
-      return applySoftBreakHints(raw);
+      return formatSingleLine(raw);
     }
 
     const commaParts = raw
@@ -4435,14 +4436,14 @@
       .filter(Boolean);
 
     if (commaParts.length === 2 && commaParts[0].toLowerCase() !== commaParts[1].toLowerCase()) {
-      return applySoftBreakHints(`${commaParts[1]} - ${commaParts[0]}`);
+      return formatSingleLine(`${commaParts[1]} - ${commaParts[0]}`);
     }
 
     if (!raw.includes(',') && !raw.includes('.') && /stötteritz/i.test(raw)) {
-      return applySoftBreakHints(`Leipzig - ${raw}`);
+      return formatSingleLine(`Leipzig - ${raw}`);
     }
 
-    return applySoftBreakHints(raw);
+    return formatSingleLine(raw);
   }
 
   function getHeaderWeatherLanguageFallbacks() {
@@ -9486,68 +9487,51 @@ labelEl.style.setProperty('text-align', 'right', 'important');
       }
 
       if (locationLabel instanceof HTMLElement && eyebrow instanceof HTMLElement) {
-        const eyebrowWidth = Math.round(eyebrow.getBoundingClientRect().width || 0);
-        const locationWidth = Math.round(locationLabel.getBoundingClientRect().width || 0);
-        if (eyebrowWidth > 0 && locationWidth > 0) {
-          const locationWrapTolerancePx = 4;
-          const maxSingleLineWidth = eyebrowWidth + locationWrapTolerancePx;
-          const targetRatio = eyebrowWidth / locationWidth;
-          const locationShrinkOnWrapPx = 2;
-          let adjustedLocationSize = Math.max(
-            14.2,
-            Math.min(17, Number(((locationSizePx + locationLabelBoostPx) * targetRatio + 0.1).toFixed(2)))
-          );
-          let adjustedLocationLineHeight = Math.max(14, Number((adjustedLocationSize * 1.22).toFixed(2)));
+        const baseLocationSize = locationSizePx + locationLabelBoostPx;
+        const cardWidth = card?.getBoundingClientRect().width || host.getBoundingClientRect().width || 0;
+        const maxSingleLineWidth = Math.max(144, Math.min(280, cardWidth * 0.44));
+
+        locationLabel.style.setProperty('display', 'inline-block', 'important');
+        locationLabel.style.setProperty('width', 'max-content', 'important');
+        locationLabel.style.setProperty('min-width', 'max-content', 'important');
+        locationLabel.style.setProperty('max-width', 'none', 'important');
+        locationLabel.style.setProperty('white-space', 'nowrap', 'important');
+        locationLabel.style.setProperty('word-break', 'keep-all', 'important');
+        locationLabel.style.setProperty('overflow-wrap', 'normal', 'important');
+        locationLabel.style.setProperty('hyphens', 'none', 'important');
+        locationLabel.style.setProperty('overflow', 'visible', 'important');
+        locationLabel.style.setProperty('text-overflow', 'clip', 'important');
+        locationLabel.style.removeProperty('-webkit-box-orient');
+        locationLabel.style.removeProperty('-webkit-line-clamp');
+        locationLabel.style.setProperty('font-size', `${baseLocationSize}px`, 'important');
+
+        const naturalWidth = locationLabel.getBoundingClientRect().width || 0;
+        let adjustedLocationSize =
+          naturalWidth > maxSingleLineWidth
+            ? Math.max(10.5, Number((baseLocationSize * (maxSingleLineWidth / naturalWidth)).toFixed(2)))
+            : baseLocationSize;
+        let fitGuard = 0;
+        locationLabel.style.setProperty('font-size', `${adjustedLocationSize}px`, 'important');
+        while (
+          locationLabel.getBoundingClientRect().width > maxSingleLineWidth + 0.5 &&
+          adjustedLocationSize > 10.5 &&
+          fitGuard < 16
+        ) {
+          adjustedLocationSize = Number(Math.max(10.5, adjustedLocationSize - 0.15).toFixed(2));
           locationLabel.style.setProperty('font-size', `${adjustedLocationSize}px`, 'important');
-          locationLabel.style.setProperty('line-height', `${adjustedLocationLineHeight}px`, 'important');
+          fitGuard += 1;
+        }
+        locationLabel.style.setProperty(
+          'line-height',
+          `${Math.max(13, Number((adjustedLocationSize * 1.18).toFixed(2)))}px`,
+          'important'
+        );
 
-          locationLabel.style.setProperty('display', 'block', 'important');
-          locationLabel.style.setProperty('width', 'auto', 'important');
-          locationLabel.style.setProperty('max-width', `${maxSingleLineWidth}px`, 'important');
-          locationLabel.style.setProperty('white-space', 'normal', 'important');
-          locationLabel.style.setProperty('word-break', 'normal', 'important');
-          locationLabel.style.setProperty('overflow-wrap', 'break-word', 'important');
-          locationLabel.style.setProperty('hyphens', 'auto', 'important');
-          locationLabel.style.setProperty('overflow', 'hidden', 'important');
-          locationLabel.style.setProperty('text-overflow', 'ellipsis', 'important');
-          locationLabel.style.setProperty('display', '-webkit-box', 'important');
-          locationLabel.style.setProperty('-webkit-box-orient', 'vertical', 'important');
-          locationLabel.style.setProperty('-webkit-line-clamp', '2', 'important');
-
-          const initialLineHeight =
-            Number.parseFloat(window.getComputedStyle(locationLabel).lineHeight) || adjustedLocationLineHeight;
-          const initialHeight = locationLabel.getBoundingClientRect().height || 0;
-          const initialLines = initialLineHeight > 0 ? initialHeight / initialLineHeight : 1;
-
-          if (initialLines > 1.05) {
-            adjustedLocationSize = Number(Math.max(12.2, adjustedLocationSize - locationShrinkOnWrapPx).toFixed(2));
-            adjustedLocationLineHeight = Number(Math.max(13.2, adjustedLocationSize * 1.16).toFixed(2));
-            locationLabel.style.setProperty('font-size', `${adjustedLocationSize}px`, 'important');
-            locationLabel.style.setProperty('line-height', `${adjustedLocationLineHeight}px`, 'important');
-          }
-
-          let fitGuard = 0;
-          while (fitGuard < 14) {
-            const currentHeight = locationLabel.getBoundingClientRect().height;
-            const currentLineHeight =
-              Number.parseFloat(window.getComputedStyle(locationLabel).lineHeight) || adjustedLocationLineHeight;
-            const currentLines = currentLineHeight > 0 ? currentHeight / currentLineHeight : 1;
-            if (currentLines <= 2.08 || adjustedLocationSize <= 12.8) {
-              break;
-            }
-
-            adjustedLocationSize = Number(Math.max(12.8, adjustedLocationSize - 0.2).toFixed(2));
-            adjustedLocationLineHeight = Number(Math.max(13.6, adjustedLocationSize * 1.18).toFixed(2));
-            locationLabel.style.setProperty('font-size', `${adjustedLocationSize}px`, 'important');
-            locationLabel.style.setProperty('line-height', `${adjustedLocationLineHeight}px`, 'important');
-            fitGuard += 1;
-          }
-
-          if (locationRow instanceof HTMLElement) {
-            locationRow.style.setProperty('align-items', 'flex-start', 'important');
-            locationRow.style.setProperty('min-height', 'auto', 'important');
-            locationRow.style.setProperty('margin-bottom', '0', 'important');
-          }
+        if (locationRow instanceof HTMLElement) {
+          locationRow.style.setProperty('align-items', 'flex-start', 'important');
+          locationRow.style.setProperty('min-height', 'auto', 'important');
+          locationRow.style.setProperty('margin-bottom', '0', 'important');
+          locationRow.style.setProperty('white-space', 'nowrap', 'important');
         }
       }
 
