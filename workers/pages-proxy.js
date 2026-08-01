@@ -6,6 +6,8 @@
  */
 const PAGES_ORIGIN = 'hundesalon-nika.pages.dev';
 const PUBLIC_HOSTS = new Set(['hundesalon-nika.com', 'www.hundesalon-nika.com']);
+const PERMISSIONS_POLICY =
+  'camera=(), microphone=(), geolocation=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()';
 
 function publicUrlFromPages(location, requestUrl) {
   if (!location) return location;
@@ -51,6 +53,7 @@ export default {
     const response = await fetch(originRequest, { redirect: 'manual' });
     const headers = new Headers(response.headers);
     headers.set('X-Hundesalon-Origin', 'cloudflare-pages-proxy');
+    headers.set('Permissions-Policy', PERMISSIONS_POLICY);
 
     const location = publicUrlFromPages(headers.get('Location'), request.url);
     if (location) headers.set('Location', location);

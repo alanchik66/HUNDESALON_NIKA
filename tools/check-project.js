@@ -56,7 +56,13 @@ for (const file of requiredFiles) {
 
 if (fs.existsSync(path.join(root, 'workers/pages-proxy.js'))) {
   const workerConfigPath = path.join(root, 'workers/wrangler.toml');
+  const workerSource = read('workers/pages-proxy.js');
   assert(fs.existsSync(workerConfigPath), 'Missing worker config: workers/wrangler.toml');
+  assert(
+    workerSource.includes('geolocation=(self)') &&
+      /headers\.set\(\s*['"]Permissions-Policy['"]/.test(workerSource),
+    'workers/pages-proxy.js must allow same-origin geolocation in the final response'
+  );
 
   if (fs.existsSync(workerConfigPath)) {
     const workerWrangler = read('workers/wrangler.toml');
