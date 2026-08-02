@@ -147,378 +147,52 @@
     <div id="mobile-nav-overlay" hidden aria-hidden="true"></div>
     <nav id="mobile-nav" aria-hidden="true"></nav>
 
-        <div class="container page-offset-top">
-      <h1 class="accent-center">Прайс-лист услуг</h1>
-      <p>Профессиональный уход за собаками, кошками и декоративными животными</p>
+      <main class="container page-offset-top price-page" data-price-page>
+        <section class="price-page-hero" data-price-hero></section>
+        <section class="price-categories-grid" data-price-categories></section>
+      </main>
 
-      <div class="info-card">
-        <h3>Важная информация</h3>
-        <div class="rules-grid">
-          <div>Окончательная стоимость зависит от размера и породы, состояния шерсти, колтунов, поведения и времени работы мастера.</div>
-          <div>Удаление колтунов: 1 минута работы — 1&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>.</div>
-          <div>При обнаружении паразитов — дополнительная обработка от 40&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>.</div>
-          <div>Полные правила салона — на странице <a href="agb.html">условий (AGB)</a>.</div>
-        </div>
-        <div>
-          <span class="site-icon site-icon-euro currency-inline" role="img" aria-label="евро"></span>
-          Все цены указаны с учётом НДС (MwSt.), если не оговорено иное.
-        </div>
-      </div>
-
-      <section class="price-configurator" data-price-configurator>
-        <div class="price-configurator__intro">
-          <p class="section-kicker" data-price-kicker></p>
-          <h2 class="section-title" data-price-title></h2>
-          <p class="price-configurator__lead" data-price-lead></p>
-        </div>
-        <div class="price-configurator__grid">
-          <div class="price-configurator__controls">
-            <label class="price-configurator__field">
-              <span class="price-configurator__field-label" data-price-label-service></span>
-              <select class="price-configurator__select" data-price-service-select></select>
-            </label>
-            <label class="price-configurator__field">
-              <span class="price-configurator__field-label" data-price-label-option></span>
-              <select class="price-configurator__select" data-price-option-select></select>
-            </label>
+      <div id="price-category-modal" class="modal" aria-hidden="true" data-price-modal>
+        <div class="modal-content price-category-modal__content">
+          <button type="button" class="modal-close price-category-modal__close" data-price-modal-close>&times;</button>
+          <div class="price-category-modal__hero">
+            <p class="section-kicker" data-price-modal-kicker></p>
+            <h2 class="section-title" data-price-modal-title></h2>
+            <p class="price-category-modal__summary" data-price-modal-summary></p>
           </div>
-          <div class="price-configurator__result" aria-live="polite">
-            <div class="price-configurator__result-main">
-              <span class="price-configurator__result-label" data-price-label-price></span>
-              <h3 class="price-configurator__result-title" data-price-result-title></h3>
-              <p class="price-configurator__result-price" data-price-result-price></p>
-            </div>
-            <div>
-              <span class="price-configurator__result-label" data-price-label-description></span>
-              <p class="price-configurator__result-description" data-price-result-description></p>
-            </div>
-            <div class="price-configurator__result-note">
-              <span class="price-configurator__result-label" data-price-label-note></span>
-              <p data-price-result-note></p>
-            </div>
+          <div class="price-category-modal__grid">
+            <section class="price-category-modal__panel">
+              <h3 data-price-modal-label-breeds></h3>
+              <ul class="price-category-modal__list price-category-modal__list--breeds" data-price-modal-breeds></ul>
+            </section>
+            <section class="price-category-modal__panel">
+              <h3 data-price-modal-label-services></h3>
+              <ul class="price-category-modal__list price-category-modal__list--chips" data-price-modal-services></ul>
+            </section>
           </div>
-          <div class="price-configurator__actions">
-            <div class="select-btn-wrapper price-configurator__cta" data-price-booking-wrapper data-service="">
-              <button type="button" class="select-service-btn btn-neon" disabled>Записаться</button>
+          <section class="price-category-modal__panel price-category-modal__panel--prices">
+            <h3 data-price-modal-label-prices></h3>
+            <div class="price-category-modal__table-wrap">
+              <table class="price-category-modal__table">
+                <thead>
+                  <tr>
+                    <th data-price-modal-price-head-service></th>
+                    <th data-price-modal-price-head-value></th>
+                  </tr>
+                </thead>
+                <tbody data-price-modal-prices></tbody>
+              </table>
             </div>
+          </section>
+          <section class="price-category-modal__panel">
+            <h3 data-price-modal-label-notes></h3>
+            <ul class="price-category-modal__list price-category-modal__list--notes" data-price-modal-notes></ul>
+          </section>
+          <div class="price-category-modal__footer">
+            <a class="btn-neon price-category-modal__booking" data-price-modal-booking href="onlayn-bronirovanie.html"></a>
           </div>
         </div>
-      </section>
-
-      <h2>Собаки</h2>
-      <h3>Полный груминг</h3>
-      <p>Профессиональный комплексный уход, включающий консультацию, стрижку когтей, уход за глазами, чистку ушей, купание с профессиональной косметикой, сушку, вычёсывание, стрижку и оформление шерсти.</p>
-      <p>Стоимость зависит от породы, размера собаки, состояния шерсти и сложности работы.</p>
-
-      <h3>Маленькие породы</h3>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Услуга / порода</th>
-              <th>Цена</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Йоркширский терьер</td>
-              <td>85–90&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Той-пудель</td>
-              <td>95–110&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Мальтезе, ши-тцу и другие маленькие породы с длинной шерстью</td>
-              <td>от 85&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-          </tbody>
-        </table>
       </div>
-      <div class="select-btn-wrapper" data-service="Полный груминг собаки">
-        <button type="button" class="select-service-btn">Выбрать услугу</button>
-      </div>
-
-      <h3>Пудели</h3>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Услуга / порода</th>
-              <th>Цена</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Карликовый пудель</td>
-              <td>от 110&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Малый пудель</td>
-              <td>от 120&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Средний и большой пудель</td>
-              <td>от 140&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>Средние породы</h3>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Услуга / порода</th>
-              <th>Цена</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Кокер-спаниель</td>
-              <td>105–115&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Шелти</td>
-              <td>от 100&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Другие средние породы</td>
-              <td>от 90&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>Большие породы</h3>
-      <p>Собаки с большим объёмом шерсти и подшёрстка (самоед, маламут, крупные овчарки и др.). Стоимость зависит от количества шерсти, состояния подшёрстка и времени работы.</p>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Услуга / порода</th>
-              <th>Цена</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Большие породы (объёмная шерсть / подшёрсток)</td>
-              <td>от 140&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>Гигантские породы</h3>
-      <p>Индивидуальный уход для сенбернара, ньюфаундленда, леонбергера, бернского зенненхунда, кавказской овчарки и других гигантских пород.</p>
-      <p>Полный уход включает: купание, сушку, тщательное вычёсывание, удаление лишнего подшёрстка, гигиенический уход, оформление необходимых зон, уход за когтями и ушами.</p>
-      <p>Доплата возможна при сильной линьке, большом количестве подшёрстка, колтунах, сложном поведении или необходимости дополнительных перерывов.</p>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Услуга / порода</th>
-              <th>Цена</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Полный уход для гигантских пород</td>
-              <td>от 150&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>Короткошёрстные собаки</h3>
-      <p>Той-терьер, доберман, боксёр, лабрадор, далматин и другие короткошёрстные породы. Включает подготовку кожи и шерсти, купание, сушку, удаление отмершей шерсти.</p>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Услуга / порода</th>
-              <th>Цена</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Короткошёрстные собаки</td>
-              <td>от 60&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>Гигиенический уход</h3>
-      <p>Поддерживающий уход между полноценными грумингами: купание, сушка, вычёсывание, уход за глазами, чистка ушей, стрижка когтей, обработка гигиенических зон.</p>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Услуга / порода</th>
-              <th>Цена</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Маленькие собаки</td>
-              <td>от 45&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Средние собаки</td>
-              <td>от 60&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Большие собаки</td>
-              <td>от 80&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>Экспресс-линька</h3>
-      <p>Профессиональное удаление отмершей шерсти и подшёрстка. Подходит для шпицев, хаски, маламутов, самоедов, собак с плотным подшёрстком и короткошёрстных в период линьки.</p>
-      <p>Экспресс-линька значительно уменьшает количество выпадающей шерсти, но не прекращает естественный процесс линьки.</p>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Услуга / порода</th>
-              <th>Цена</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Маленькие собаки</td>
-              <td>от 70&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Шпицы</td>
-              <td>80–100&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Крупные собаки</td>
-              <td>от 120&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="select-btn-wrapper" data-service="Экспресс-линька">
-        <button type="button" class="select-service-btn">Выбрать услугу</button>
-      </div>
-
-      <h3>SPA-уход</h3>
-      <p>Индивидуально подобранный уход: маски, восстановительный уход, уход за сухой и повреждённой шерстью, озонотерапия и специальные косметические процедуры.</p>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Услуга / порода</th>
-              <th>Цена</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>SPA-уход</td>
-              <td>от 15&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h2>Дополнительные услуги</h2>
-      <p><strong>Удаление колтунов</strong> — 1&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span> / минута.</p>
-      <p>Если удалить колтуны безопасно невозможно или их удаление причиняет боль либо сильный стресс, мастер может удалить свалявшуюся шерсть машинкой.</p>
-      <p><strong>Сложное поведение животного</strong>. Доплата возможна при сильном страхе, тревожности или необходимости дополнительных мер безопасности. Сообщите об особенностях заранее.</p>
-      <p><strong>Обработка при обнаружении паразитов</strong>. Дополнительная обработка животного, рабочего места, оборудования и инструментов. Это необходимо для безопасности питомца и других клиентов, а также для соблюдения санитарных условий в салоне.</p>
-      <p><strong>Ультразвуковой уход за зубами без анестезии</strong>. Бережная гигиена полости рта: оценка состояния зубов, ультразвуковая обработка, удаление мягкого налёта. Не заменяет ветеринарную стоматологию. При обильном зубном камне, воспалении или болезненности необходимо обратиться к ветеринару.</p>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Услуга / порода</th>
-              <th>Цена</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Удаление колтунов</td>
-              <td>1&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span> / минута</td>
-            </tr>
-            <tr>
-              <td>Обработка при паразитах</td>
-              <td>от 40&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Ультразвуковой уход за зубами</td>
-              <td>от 100&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Дополнительная уборка помещения</td>
-              <td>15&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Дезинфекция</td>
-              <td>20&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="select-btn-wrapper" data-service="Дополнительная услуга">
-        <button type="button" class="select-service-btn">Выбрать услугу</button>
-      </div>
-
-      <h2>Кошки</h2>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Услуга / порода</th>
-              <th>Цена</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Вычёсывание кошки (когти, глаза, уши, вычёсывание)</td>
-              <td>60&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Полный груминг кошки с купанием</td>
-              <td>90&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Стрижка кошки (машинкой + гигиена)</td>
-              <td>60&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-            <tr>
-              <td>Стрижка кошки с купанием (возможен вариант «под льва»)</td>
-              <td>80&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p>Доплата за мейн-куна и крупных кошек: +15&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>.</p>
-      <div class="select-btn-wrapper" data-service="Груминг кошки">
-        <button type="button" class="select-service-btn">Выбрать услугу</button>
-      </div>
-
-      <h2>Мелкие декоративные животные</h2>
-      <p>Стрижка когтей, вычёсывание, удаление колтунов, уход за шерстью декоративных кроликов и других мелких животных. Стоимость рассчитывается индивидуально.</p>
-
-      <div class="info-card">
-        <h3>Кратко перед записью</h3>
-        <div class="rules-grid">
-          <div>Подготовьте питомца: выгул, туалет до процедуры; не кормите непосредственно перед длительным уходом.</div>
-          <div>Сообщите о здоровье, страхах, агрессии и особенностях поведения заранее.</div>
-          <div>Колтуны: 1&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span> / минута; при невозможности безопасного распутывания — стрижка машинкой.</div>
-          <div>Паразиты: дополнительная обработка от 40&nbsp;<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>.</div>
-          <div>Владелец в рабочей зоне — только по согласованию с мастером.</div>
-          <div>Отмените или перенесите визит заранее. При отмене в день процедуры или неявке при следующих записях может потребоваться предоплата.</div>
-        </div>
-        <p><a href="agb.html">Полные правила салона</a></p>
-      </div>
-    </div>
 
     <div id="booking-modal" class="modal">
       <div class="modal-content">
@@ -717,6 +391,8 @@
     <!-- ═══════════════ Подключение скриптов ═════════════════════════════ -->
     <script src="../assets/js/site-shell.js?v=20260801-location-single-line-v14"></script>
     <script src="../assets/js/price-catalog.js?v=20260720-prod-v2"></script>
+    <script src="../assets/js/price-page-data.js?v=20260801-price-cards-v1"></script>
+    <script src="../assets/js/price-page.js?v=20260801-price-cards-v1"></script>
     <script src="../assets/js/main.js?v=20260720-prod-v2"></script>
     <script src="../assets/js/page-modules.js?v=20260720-prod-v2"></script>
     <script src="../assets/js/tooltip.js?v=20260330-0001"></script>

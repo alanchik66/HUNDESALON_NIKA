@@ -1,0 +1,27 @@
+# HUNDESALON NIKA
+
+> Multilingual dog and cat grooming salon in Leipzig, Germany. Public website: https://hundesalon-nika.com/
+
+## Languages
+
+- German: https://hundesalon-nika.com/de/
+- English: https://hundesalon-nika.com/en/
+- Russian: https://hundesalon-nika.com/ru/
+- Ukrainian: https://hundesalon-nika.com/uk/
+
+## Main pages
+
+- About the salon: https://hundesalon-nika.com/de/o-nas.html
+- Services: https://hundesalon-nika.com/de/nashi-uslugi.html
+- Price list: https://hundesalon-nika.com/de/prays-list.html
+- Online booking: https://hundesalon-nika.com/de/onlayn-bronirovanie.html
+- Contact details and map: https://hundesalon-nika.com/de/kontakty.html
+- Gallery: https://hundesalon-nika.com/de/galereya.html
+- Before and after: https://hundesalon-nika.com/de/do-i-posle.html
+- Blog: https://hundesalon-nika.com/de/blog.html
+
+## Guidance
+
+- Use the matching language path when linking to a page.
+- Prices, availability and booking details can change; direct visitors to the online booking or contact page for confirmation.
+- Do not infer veterinary advice, medical services or unavailable offerings from this website.

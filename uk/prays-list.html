@@ -520,6 +520,48 @@
       </div>
     </div>
 
+    <div id="price-category-modal" class="modal" aria-hidden="true" data-price-modal>
+      <div class="modal-content price-category-modal__content">
+        <button type="button" class="modal-close price-category-modal__close" data-price-modal-close>&times;</button>
+        <div class="price-category-modal__hero">
+          <p class="section-kicker" data-price-modal-kicker></p>
+          <h2 class="section-title" data-price-modal-title></h2>
+          <p class="price-category-modal__summary" data-price-modal-summary></p>
+        </div>
+        <div class="price-category-modal__grid">
+          <section class="price-category-modal__panel">
+            <h3 data-price-modal-label-breeds></h3>
+            <ul class="price-category-modal__list price-category-modal__list--breeds" data-price-modal-breeds></ul>
+          </section>
+          <section class="price-category-modal__panel">
+            <h3 data-price-modal-label-services></h3>
+            <ul class="price-category-modal__list price-category-modal__list--chips" data-price-modal-services></ul>
+          </section>
+        </div>
+        <section class="price-category-modal__panel price-category-modal__panel--prices">
+          <h3 data-price-modal-label-prices></h3>
+          <div class="price-category-modal__table-wrap">
+            <table class="price-category-modal__table">
+              <thead>
+                <tr>
+                  <th data-price-modal-price-head-service></th>
+                  <th data-price-modal-price-head-value></th>
+                </tr>
+              </thead>
+              <tbody data-price-modal-prices></tbody>
+            </table>
+          </div>
+        </section>
+        <section class="price-category-modal__panel">
+          <h3 data-price-modal-label-notes></h3>
+          <ul class="price-category-modal__list price-category-modal__list--notes" data-price-modal-notes></ul>
+        </section>
+        <div class="price-category-modal__footer">
+          <a class="btn-neon price-category-modal__booking" data-price-modal-booking href="onlayn-bronirovanie.html"></a>
+        </div>
+      </div>
+    </div>
+
     <div id="booking-modal" class="modal">
       <div class="modal-content">
         <span class="modal-close">&times;</span>
@@ -717,6 +759,8 @@
     <!-- ═══════════════ Підключення скриптів ═════════════════════════════ -->
     <script src="../assets/js/site-shell.js?v=20260801-location-single-line-v14"></script>
     <script src="../assets/js/price-catalog.js?v=20260720-prod-v2"></script>
+    <script src="../assets/js/price-page-data.js?v=20260801-price-cards-v1"></script>
+    <script src="../assets/js/price-page.js?v=20260801-price-cards-v1"></script>
     <script src="../assets/js/main.js?v=20260720-prod-v2"></script>
     <script src="../assets/js/page-modules.js?v=20260720-prod-v2"></script>
     <script src="../assets/js/tooltip.js?v=20260330-0001"></script>

@@ -2,6 +2,7 @@
  * Serve /robots.txt on Pages routes (site rules). Edge may prepend CF Content-Signal block.
  */
 const ROBOTS_BODY = `# hundesalon-nika.com — site crawl rules
+# AI guide: https://hundesalon-nika.com/llms.txt
 
 User-agent: *
 Content-Signal: search=yes, ai-input=yes, ai-train=no

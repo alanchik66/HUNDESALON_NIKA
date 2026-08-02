@@ -1,5 +1,6 @@
 # hundesalon-nika.com — deploy to site root; Cloudflare may prepend Content-Signal block.
 # Bing: test https://hundesalon-nika.com/robots.txt (www redirects to apex).
+# AI guide: https://hundesalon-nika.com/llms.txt
 
 User-agent: *
 Content-Signal: search=yes, ai-input=yes, ai-train=no
