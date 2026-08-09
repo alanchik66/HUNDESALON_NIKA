@@ -22,6 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
       services: ['Полный груминг собаки', 'Экспресс-линька', 'Гигиенический уход', 'Груминг кошки', 'SPA-уход', 'Ваши предложения'],
       fallbackService: 'Выбранная услуга',
       chooseService: 'Выберите услугу',
+      chooseBreed: 'Выберите породу или категорию питомца',
+      serviceStep: '1. Порода и услуга',
+      breedLabel: 'Порода или категория',
+      serviceLabel: 'Подходящая услуга',
+      priceLabel: 'Ориентировочная цена',
+      chooseBreedFirst: 'Сначала выберите породу или категорию питомца',
+      noServiceForBreed: 'Для выбранной породы пока нет доступной услуги.',
       chooseDate: 'Выберите дату',
       chooseTime: 'Выберите время',
       chooseContact: 'Заполните имя, email и телефон',
@@ -42,6 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
       summaryEdit: 'Изменить данные',
       labels: {
         service: 'Услуга',
+        breed: 'Порода',
+        servicePrice: 'Цена',
         date: 'Дата',
         time: 'Время',
         name: 'Имя',
@@ -66,6 +75,13 @@ document.addEventListener('DOMContentLoaded', () => {
       services: ['Повний грумінг собаки', 'Експрес-линька', 'Гігієнічний догляд', 'Грумінг кота', 'SPA-догляд', 'Ваші пропозиції'],
       fallbackService: 'Обрана послуга',
       chooseService: 'Оберіть послугу',
+      chooseBreed: 'Оберіть породу або категорію улюбленця',
+      serviceStep: '1. Порода та послуга',
+      breedLabel: 'Порода або категорія',
+      serviceLabel: 'Доступна послуга',
+      priceLabel: 'Орієнтовна вартість',
+      chooseBreedFirst: 'Спочатку оберіть породу або категорію улюбленця',
+      noServiceForBreed: 'Для обраної породи наразі немає доступної послуги.',
       chooseDate: 'Оберіть дату',
       chooseTime: 'Оберіть час',
       chooseContact: 'Заповніть імʼя, email і телефон',
@@ -86,6 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
       summaryEdit: 'Змінити дані',
       labels: {
         service: 'Послуга',
+        breed: 'Порода',
+        servicePrice: 'Вартість',
         date: 'Дата',
         time: 'Час',
         name: 'Імʼя',
@@ -110,6 +128,13 @@ document.addEventListener('DOMContentLoaded', () => {
       services: ['Full dog grooming', 'Express deshedding', 'Hygiene care', 'Cat grooming', 'SPA care', 'Your suggestions'],
       fallbackService: 'Selected service',
       chooseService: 'Please select a service',
+      chooseBreed: 'Choose your pet’s breed or category',
+      serviceStep: '1. Breed and service',
+      breedLabel: 'Breed or category',
+      serviceLabel: 'Available service',
+      priceLabel: 'Estimated price',
+      chooseBreedFirst: 'Choose a breed or pet category first',
+      noServiceForBreed: 'No service is currently available for this breed.',
       chooseDate: 'Please select a date',
       chooseTime: 'Please select a time',
       chooseContact: 'Please fill in name, email, and phone',
@@ -130,6 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
       summaryEdit: 'Edit details',
       labels: {
         service: 'Service',
+        breed: 'Breed',
+        servicePrice: 'Price',
         date: 'Date',
         time: 'Time',
         name: 'Name',
@@ -154,6 +181,13 @@ document.addEventListener('DOMContentLoaded', () => {
       services: ['Komplett-Grooming Hund', 'Express-Fellwechsel', 'Hygienepflege', 'Katzenpflege', 'SPA-Pflege', 'Ihre Vorschläge'],
       fallbackService: 'Ausgewählte Leistung',
       chooseService: 'Bitte wählen Sie eine Leistung',
+      chooseBreed: 'Wählen Sie Rasse oder Tierkategorie',
+      serviceStep: '1. Rasse und Leistung',
+      breedLabel: 'Rasse oder Kategorie',
+      serviceLabel: 'Passende Leistung',
+      priceLabel: 'Richtpreis',
+      chooseBreedFirst: 'Wählen Sie zuerst Rasse oder Tierkategorie',
+      noServiceForBreed: 'Für diese Rasse ist derzeit keine passende Leistung verfügbar.',
       chooseDate: 'Bitte wählen Sie ein Datum',
       chooseTime: 'Bitte wählen Sie eine Uhrzeit',
       chooseContact: 'Bitte füllen Sie Name, E-Mail und Telefon aus',
@@ -174,6 +208,8 @@ document.addEventListener('DOMContentLoaded', () => {
       summaryEdit: 'Angaben ändern',
       labels: {
         service: 'Leistung',
+        breed: 'Rasse',
+        servicePrice: 'Preis',
         date: 'Datum',
         time: 'Uhrzeit',
         name: 'Name',
@@ -300,6 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
     findBreed: priceCatalog?.findBreed,
     resolveQuote: priceCatalog?.resolveQuote,
   };
+  const bookingCatalog = window.PriceBookingCatalog?.build?.(pageLang) || null;
 
 
   const injectHiddenValue = (form, name, value) => {
@@ -811,7 +848,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextStep2 = modal.querySelector('#next-step-2');
     const prevStep2 = modal.querySelector('#prev-step-2');
     const prevStep3 = modal.querySelector('#prev-step-3');
-    const openTriggers = document.querySelectorAll('#open-booking-btn, .select-service-btn, .online-order-btn');
+    const openTriggers = document.querySelectorAll(
+      '#open-booking-btn, .select-service-btn, .online-order-btn, [data-price-modal-booking]'
+    );
 
     if (
       !form ||
@@ -823,6 +862,11 @@ document.addEventListener('DOMContentLoaded', () => {
       !selectedTimeField
     ) {
       return;
+    }
+
+    if (bookingCatalog) {
+      modal.querySelector('.step-indicator .step')?.replaceChildren(bookingCopy.serviceStep);
+      panels[1]?.querySelector('h3')?.replaceChildren(bookingCopy.chooseBreed);
     }
 
     const step2Panel = panels[2];
@@ -1327,7 +1371,7 @@ document.addEventListener('DOMContentLoaded', () => {
           setStep(1);
           showValidationMessage(
             bookingCopy.chooseService,
-            serviceList.querySelector('.service-option.active, .service-option')
+            serviceList.querySelector('[data-booking-service], .service-option')
           );
           return;
         }
@@ -1387,6 +1431,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const state = {
       step: 1,
       selectedService: selectedServiceField.value || '',
+      selectedCategoryId: '',
+      selectedBreedId: '',
+      selectedServiceId: '',
+      selectedPrice: '',
+      selectedServiceLabel: '',
+      selectedPriceOverride: '',
       selectedDate: selectedDateField.value || '',
       selectedTime: selectedTimeField.value || '',
       summaryConfirmed: false,
@@ -1404,6 +1454,9 @@ document.addEventListener('DOMContentLoaded', () => {
       selectedServiceField.value = state.selectedService;
       selectedDateField.value = state.selectedDate;
       selectedTimeField.value = state.selectedTime;
+      injectHiddenValue(form, 'breed', state.selectedBreedId);
+      injectHiddenValue(form, 'service_category', state.selectedCategoryId);
+      injectHiddenValue(form, 'service_price', state.selectedPrice);
       if (uploadedFileUrlField) {
         uploadedFileUrlField.value = state.uploadedFileUrl;
       }
@@ -1632,6 +1685,10 @@ document.addEventListener('DOMContentLoaded', () => {
             : labels.paySalonCash;
       const rows = [
         [labels.service, state.selectedService],
+        ...(state.selectedBreedId && bookingCatalog
+          ? [[labels.breed, bookingCatalog.getBreed(state.selectedBreedId)?.label || '—']]
+          : []),
+        ...(state.selectedPrice ? [[labels.servicePrice, state.selectedPrice]] : []),
         [labels.date, state.selectedDate],
         [labels.time, state.selectedTime],
         [labels.name, nameValue],
@@ -1730,47 +1787,154 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderServiceList = () => {
       serviceList.innerHTML = '';
-      const services =
-        bookingCopy.services.includes(state.selectedService) || !state.selectedService
-          ? bookingCopy.services
-          : [state.selectedService, ...bookingCopy.services];
 
-      const serviceButtons = [];
+      if (!bookingCatalog) {
+        const services =
+          bookingCopy.services.includes(state.selectedService) || !state.selectedService
+            ? bookingCopy.services
+            : [state.selectedService, ...bookingCopy.services];
+        const serviceButtons = [];
 
-      services.forEach((serviceName, index) => {
-        const button = document.createElement('button');
-        const isActive = state.selectedService === serviceName;
-
-        button.type = 'button';
-        button.className = 'filter-btn service-option';
-        button.textContent = serviceName;
-        button.style.setProperty('--service-i', String(index));
-        button.setAttribute('role', 'tab');
-        button.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        if (isActive) {
-          button.classList.add('active');
-          button.setAttribute('aria-current', 'true');
-        }
-
-        button.addEventListener('click', () => {
-          if (button.classList.contains('active')) {
-            return;
+        services.forEach((serviceName, index) => {
+          const button = document.createElement('button');
+          const isActive = state.selectedService === serviceName;
+          button.type = 'button';
+          button.className = 'filter-btn service-option';
+          button.textContent = serviceName;
+          button.style.setProperty('--service-i', String(index));
+          button.setAttribute('role', 'tab');
+          button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+          if (isActive) {
+            button.classList.add('active');
+            button.setAttribute('aria-current', 'true');
           }
-
-          clearBookingPillGroup(serviceButtons);
-          activateBookingPill(button);
-          state.selectedService = serviceName;
-          syncHiddenFields();
-          resetSummaryConfirmation();
-          clearValidationMessage();
+          button.addEventListener('click', () => {
+            if (button.classList.contains('active')) return;
+            clearBookingPillGroup(serviceButtons);
+            activateBookingPill(button);
+            state.selectedService = serviceName;
+            state.selectedPrice = '';
+            syncHiddenFields();
+            resetSummaryConfirmation();
+            clearValidationMessage();
+          });
+          serviceButtons.push(button);
+          serviceList.appendChild(button);
         });
+        scanBookingNavPills(serviceList);
+        serviceButtons.filter(button => button.classList.contains('active')).forEach(activateBookingPill);
+        return;
+      }
 
-        serviceButtons.push(button);
-        serviceList.appendChild(button);
+      const selection = document.createElement('div');
+      selection.className = 'booking-selection';
+      selection.innerHTML = `
+        <p class="booking-selection__intro">${bookingCopy.chooseBreed}</p>
+        <label class="booking-selection__field">
+          <span>${bookingCopy.breedLabel}</span>
+          <select data-booking-breed required></select>
+        </label>
+        <label class="booking-selection__field">
+          <span>${bookingCopy.serviceLabel}</span>
+          <select data-booking-service required disabled></select>
+        </label>
+        <div class="booking-selection__price" data-booking-price aria-live="polite">
+          ${bookingCopy.chooseBreedFirst}
+        </div>
+      `;
+
+      const breedSelect = selection.querySelector('[data-booking-breed]');
+      const serviceSelect = selection.querySelector('[data-booking-service]');
+      const priceOutput = selection.querySelector('[data-booking-price]');
+      const allBreeds = bookingCatalog.categories.flatMap(category =>
+        category.breeds.map(breed => ({ ...breed, categoryTitle: category.title }))
+      );
+
+      bookingCatalog.categories.forEach(category => {
+        if (!category.breeds.length) return;
+        const group = document.createElement('optgroup');
+        group.label = category.title;
+        category.breeds.forEach(breed => {
+          const option = document.createElement('option');
+          option.value = breed.id;
+          option.textContent = breed.label;
+          group.appendChild(option);
+        });
+        breedSelect.appendChild(group);
       });
 
-      scanBookingNavPills(serviceList);
-      serviceButtons.filter(button => button.classList.contains('active')).forEach(activateBookingPill);
+      const updateSelection = () => {
+        const selectedBreed = bookingCatalog.getBreed(breedSelect.value);
+        if (!selectedBreed) {
+          serviceSelect.replaceChildren();
+          serviceSelect.disabled = true;
+          priceOutput.textContent = bookingCopy.chooseBreedFirst;
+          state.selectedCategoryId = '';
+          state.selectedBreedId = '';
+          state.selectedServiceId = '';
+          state.selectedService = '';
+          state.selectedPrice = '';
+          state.selectedServiceLabel = '';
+          state.selectedPriceOverride = '';
+          syncHiddenFields();
+          return;
+        }
+
+        state.selectedCategoryId = selectedBreed.categoryId;
+        state.selectedBreedId = selectedBreed.id;
+        const services = bookingCatalog.getServices(selectedBreed.categoryId, selectedBreed.id);
+        serviceSelect.replaceChildren();
+        services.forEach(service => {
+          const option = document.createElement('option');
+          option.value = service.id;
+          option.textContent = service.label;
+          serviceSelect.appendChild(option);
+        });
+        serviceSelect.disabled = services.length === 0;
+
+        const selectedServiceId = services.some(service => service.id === state.selectedServiceId)
+          ? state.selectedServiceId
+          : services[0]?.id || '';
+        serviceSelect.value = selectedServiceId;
+        state.selectedServiceId = selectedServiceId;
+
+        const quote = bookingCatalog.resolveQuote(
+          state.selectedCategoryId,
+          state.selectedBreedId,
+          state.selectedServiceId
+        );
+        state.selectedService = state.selectedServiceLabel || quote.label;
+        state.selectedPrice = state.selectedPriceOverride || quote.price;
+        const displayedPrice = state.selectedPriceOverride || quote.price;
+        priceOutput.textContent = displayedPrice
+          ? `${bookingCopy.priceLabel}: ${displayedPrice}`
+          : bookingCopy.noServiceForBreed;
+        syncHiddenFields();
+      };
+
+      const initialBreed = allBreeds.some(breed => breed.id === state.selectedBreedId)
+        ? state.selectedBreedId
+        : allBreeds[0]?.id || '';
+      breedSelect.value = initialBreed;
+      breedSelect.addEventListener('change', () => {
+        state.selectedServiceId = '';
+        state.selectedServiceLabel = '';
+        state.selectedPriceOverride = '';
+        updateSelection();
+        resetSummaryConfirmation();
+        clearValidationMessage();
+      });
+      serviceSelect.addEventListener('change', () => {
+        state.selectedServiceId = serviceSelect.value;
+        state.selectedServiceLabel = '';
+        state.selectedPriceOverride = '';
+        updateSelection();
+        resetSummaryConfirmation();
+        clearValidationMessage();
+      });
+
+      serviceList.appendChild(selection);
+      updateSelection();
     };
 
     const renderCalendar = () => {
@@ -1985,12 +2149,22 @@ document.addEventListener('DOMContentLoaded', () => {
       return rowLabel || bookingCopy.fallbackService;
     };
 
+    const resolveBookingPreset = trigger => ({
+      serviceName: trigger.dataset.bookingServiceLabel || (trigger.id === 'open-booking-btn' ? '' : resolveServiceFromTrigger(trigger)),
+      categoryId: trigger.dataset.bookingCategory || '',
+      breedId: trigger.dataset.bookingBreed || '',
+      serviceId: trigger.dataset.bookingService || '',
+      price: trigger.dataset.bookingPrice || '',
+      serviceLabel: trigger.dataset.bookingServiceLabel || '',
+      priceOverride: trigger.dataset.bookingPrice || '',
+    });
+
     const BOOKING_MODAL_OPEN_MS = 860;
     const BOOKING_MODAL_DISMISS_MS = 440;
     let openingTimer = null;
     let closingTimer = null;
 
-    const openModal = (serviceName = '') => {
+    const openModal = (preset = {}) => {
       if (closingTimer) {
         window.clearTimeout(closingTimer);
         closingTimer = null;
@@ -1998,7 +2172,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       state.step = 1;
-      state.selectedService = serviceName || state.selectedService;
+      state.selectedCategoryId = preset.categoryId || '';
+      state.selectedBreedId = preset.breedId || '';
+      state.selectedServiceId = preset.serviceId || '';
+      state.selectedPrice = preset.price || '';
+      state.selectedServiceLabel = preset.serviceLabel || '';
+      state.selectedPriceOverride = preset.priceOverride || '';
+      state.selectedService = bookingCatalog ? '' : preset.serviceName || state.selectedService;
       state.summaryConfirmed = false;
       clearValidationMessage();
       resetSummaryConfirmation();
@@ -2027,7 +2207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         refreshBookingScrollbars();
         sanitizeModalActionButtons();
         scanBookingNavPills(modal);
-        modal.querySelector('.service-option.active, .service-option, input, button')?.focus();
+        modal.querySelector('[data-booking-breed], [data-booking-service], .service-option, input, button')?.focus();
       });
     };
 
@@ -2067,7 +2247,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!state.selectedService) {
         showValidationMessage(
           bookingCopy.chooseService,
-          serviceList.querySelector('.service-option.active, .service-option')
+          serviceList.querySelector('[data-booking-service], .service-option')
         );
         return;
       }
@@ -2102,9 +2282,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     openTriggers.forEach(trigger => {
       trigger.addEventListener('click', event => {
+        if (trigger.getAttribute('aria-disabled') === 'true') {
+          event.preventDefault();
+          return;
+        }
         event.preventDefault();
-        const preselectedService = trigger.id === 'open-booking-btn' ? '' : resolveServiceFromTrigger(trigger);
-        openModal(preselectedService);
+        openModal(resolveBookingPreset(trigger));
       });
     });
 
@@ -2144,7 +2327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setStep(1);
         showValidationMessage(
           bookingCopy.chooseService,
-          serviceList.querySelector('.service-option.active, .service-option')
+          serviceList.querySelector('[data-booking-service], .service-option')
         );
         return;
       }
