@@ -18,24 +18,42 @@ import {
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const distDir = 'dist';
 const projectName = process.env.CLOUDFLARE_PAGES_PROJECT || DEFAULT_PAGES_PROJECT;
+const localWrangler = path.join(root, 'node_modules', 'wrangler', 'bin', 'wrangler.js');
+
+function wranglerCommand(argv) {
+  if (existsSync(localWrangler)) {
+    return {
+      command: process.execPath,
+      args: [localWrangler, ...argv],
+      shell: false,
+    };
+  }
+
+  const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+  return {
+    command: npx,
+    args: ['wrangler', ...argv],
+    shell: process.platform === 'win32',
+  };
+}
 
 function runWrangler(argv, env) {
-  const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-  return spawnSync(npx, ['wrangler', ...argv], {
+  const command = wranglerCommand(argv);
+  return spawnSync(command.command, command.args, {
     cwd: root,
     env,
     stdio: 'inherit',
-    shell: process.platform === 'win32',
+    shell: command.shell,
   });
 }
 
 function runWranglerQuiet(argv, env) {
-  const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-  return spawnSync(npx, ['wrangler', ...argv], {
+  const command = wranglerCommand(argv);
+  return spawnSync(command.command, command.args, {
     cwd: root,
     env,
     encoding: 'utf8',
-    shell: process.platform === 'win32',
+    shell: command.shell,
   });
 }
 
