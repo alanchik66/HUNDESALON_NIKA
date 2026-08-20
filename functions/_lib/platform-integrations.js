@@ -2,6 +2,16 @@ const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8' };
 const FORM_HEADERS = { 'Content-Type': 'application/x-www-form-urlencoded' };
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const SENDPULSE_API_URL = 'https://api.sendpulse.com';
+const SENDPULSE_EVENT_API_URL = 'https://events.sendpulse.com/events/name';
+const TELEGRAM_API_URL = 'https://api.telegram.org';
+const SENDPULSE_EVENT_ENV_NAMES = Object.freeze({
+  booking: 'SENDPULSE_BOOKING_EVENT_NAME',
+  contact: 'SENDPULSE_CONTACT_EVENT_NAME',
+  feedback: 'SENDPULSE_CONTACT_EVENT_NAME',
+  client_registration: 'SENDPULSE_CONTACT_EVENT_NAME',
+  newsletter: 'SENDPULSE_NEWSLETTER_EVENT_NAME',
+});
+const SENDPULSE_EVENT_NAME_RE = /^[a-z0-9][a-z0-9._-]{0,79}$/i;
 const googleTokenCache = new Map();
 let sendPulseTokenCache = null;
 
@@ -35,6 +45,18 @@ export function getEnvList(env, name, fallback = '') {
 
 export function hasUsableValue(value) {
   return Boolean(value) && !/ВАШ_|YOUR_|XXXXXXXX|TODO/i.test(value);
+}
+
+const DEFAULT_FETCH_TIMEOUT_MS = 10000;
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = DEFAULT_FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort('timeout'), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export function siteNotificationsEnabled(env) {
@@ -87,7 +109,8 @@ async function signServiceAccountJwt(privateKeyPem, unsignedJwt) {
 }
 
 export async function safeJsonFetch(url, options = {}) {
-  const response = await fetch(url, options);
+  const { timeoutMs = DEFAULT_FETCH_TIMEOUT_MS, ...requestOptions } = options;
+  const response = await fetchWithTimeout(url, requestOptions, timeoutMs);
   const bodyText = await response.text().catch(() => '');
   let body = null;
 
@@ -278,13 +301,14 @@ export async function appendGoogleSheetRow(env, { spreadsheetId, sheetName = 'bo
   );
 }
 
-export async function createGoogleCalendarEvent(env, { calendarId, summary, description, startDateTime, endDateTime }) {
+export async function createGoogleCalendarEvent(env, { calendarId, summary, description, startDateTime, endDateTime, status = 'tentative' }) {
   const appsScriptResult = await callGoogleAppsScriptGateway(env, 'calendar', {
     calendarId,
     summary,
     description,
     startDateTime,
     endDateTime,
+    status,
   });
   if (!appsScriptResult.skipped) {
     return appsScriptResult;
@@ -298,7 +322,7 @@ export async function createGoogleCalendarEvent(env, { calendarId, summary, desc
         ...JSON_HEADERS,
         'X-Hundesalon-Gateway-Secret': getEnvValue(env, 'GOOGLE_GATEWAY_SECRET'),
       },
-      body: JSON.stringify({ calendarId, summary, description, startDateTime, endDateTime }),
+      body: JSON.stringify({ calendarId, summary, description, startDateTime, endDateTime, status }),
     });
   }
 
@@ -318,14 +342,149 @@ export async function createGoogleCalendarEvent(env, { calendarId, summary, desc
     body: JSON.stringify({
       summary,
       description,
+      status,
       start: { dateTime: startDateTime, timeZone: 'Europe/Berlin' },
       end: { dateTime: endDateTime, timeZone: 'Europe/Berlin' },
     }),
   });
 }
 
+export async function getGoogleCalendarBusyIntervals(env, { calendarId, timeMin, timeMax }) {
+  const gatewayPayload = { calendarId, timeMin, timeMax };
+  const appsScriptResult = await callGoogleAppsScriptGateway(env, 'calendar_freebusy', gatewayPayload);
+  if (!appsScriptResult.skipped) {
+    const busy =
+      appsScriptResult.body?.busyIntervals ||
+      appsScriptResult.body?.busy ||
+      appsScriptResult.body?.calendars?.[calendarId]?.busy;
+    return {
+      ok: appsScriptResult.ok && Array.isArray(busy),
+      configured: appsScriptResult.ok,
+      busyIntervals: Array.isArray(busy) ? busy : [],
+    };
+  }
+
+  const webhook = getEnvValue(env, 'GOOGLE_CALENDAR_WEBHOOK_URL');
+  if (hasUsableValue(webhook)) {
+    const webhookResult = await safeJsonFetch(webhook, {
+      method: 'POST',
+      headers: {
+        ...JSON_HEADERS,
+        'X-Hundesalon-Gateway-Secret': getEnvValue(env, 'GOOGLE_GATEWAY_SECRET'),
+      },
+      body: JSON.stringify({ action: 'calendar_freebusy', ...gatewayPayload }),
+    });
+    const busy =
+      webhookResult.body?.busyIntervals ||
+      webhookResult.body?.busy ||
+      webhookResult.body?.calendars?.[calendarId]?.busy;
+    return {
+      ok: webhookResult.ok && Array.isArray(busy),
+      configured: webhookResult.ok,
+      busyIntervals: Array.isArray(busy) ? busy : [],
+    };
+  }
+
+  const token =
+    (await getGoogleAccessToken(env, ['https://www.googleapis.com/auth/calendar.freebusy'])) ||
+    (await getGoogleOAuthAccessToken(env));
+  if (!hasUsableValue(token) || !hasUsableValue(calendarId)) {
+    return { ok: false, configured: false, busyIntervals: [] };
+  }
+
+  const response = await safeJsonFetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+    method: 'POST',
+    headers: {
+      ...JSON_HEADERS,
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ timeMin, timeMax, items: [{ id: calendarId }] }),
+  });
+  const busy = response.body?.calendars?.[calendarId]?.busy;
+  return {
+    ok: response.ok && Array.isArray(busy),
+    configured: response.ok,
+    busyIntervals: Array.isArray(busy) ? busy : [],
+  };
+}
+
 export async function sendTeamsMessage(env, payload) {
   return { ok: false, skipped: true, reason: 'Microsoft Teams integration is disabled.' };
+}
+
+/** Sends a plain-text notification to a Telegram chat or channel. */
+const TELEGRAM_TOPIC_ENV_NAMES = Object.freeze({
+  messages: 'TELEGRAM_TOPIC_MESSAGES_ID',
+  orders: 'TELEGRAM_TOPIC_ORDERS_ID',
+  newsletter: 'TELEGRAM_TOPIC_NEWSLETTER_ID',
+  social: 'TELEGRAM_TOPIC_SOCIAL_ID',
+  system: 'TELEGRAM_TOPIC_SYSTEM_ID',
+});
+
+function cleanTelegramText(value, maxLength = 3900) {
+  return String(value ?? '')
+    .normalize('NFKC')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ' ')
+    .split('\n')
+    .map(line => cleanText(line, maxLength))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+    .slice(0, maxLength);
+}
+
+export async function sendTelegramMessage(
+  env,
+  { text = '', category = 'messages', chatId = '', messageThreadId = null, replyMarkup = null } = {}
+) {
+  if (!siteNotificationsEnabled(env)) {
+    return { ok: false, skipped: true, reason: 'Site notifications are disabled.' };
+  }
+
+  const token = getEnvValue(env, 'TELEGRAM_BOT_TOKEN');
+  const configuredChatId = getEnvValue(env, 'TELEGRAM_CHAT_ID');
+  const message = cleanTelegramText(text, 3900);
+  const destinationChatId = String(chatId || configuredChatId).trim();
+  if (!hasUsableValue(token) || !hasUsableValue(destinationChatId) || !message) {
+    return { ok: false, skipped: true, reason: 'Telegram bot credentials are not configured.' };
+  }
+
+  const topicEnvName = TELEGRAM_TOPIC_ENV_NAMES[category] || TELEGRAM_TOPIC_ENV_NAMES.messages;
+  const topicId = Number.parseInt(getEnvValue(env, topicEnvName), 10);
+  const explicitThreadId = Number.parseInt(String(messageThreadId ?? ''), 10);
+  const payload = { chat_id: destinationChatId, text: message, disable_web_page_preview: true };
+  if (Number.isInteger(explicitThreadId) && explicitThreadId > 0) {
+    payload.message_thread_id = explicitThreadId;
+  } else if (!chatId && Number.isInteger(topicId) && topicId > 0) {
+    payload.message_thread_id = topicId;
+  }
+  if (replyMarkup) payload.reply_markup = replyMarkup;
+
+  return safeJsonFetch(`${TELEGRAM_API_URL}/bot${encodeURIComponent(token)}/sendMessage`, {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function answerTelegramCallbackQuery(env, { callbackQueryId = '', text = '', showAlert = false } = {}) {
+  const token = getEnvValue(env, 'TELEGRAM_BOT_TOKEN');
+  const queryId = cleanText(callbackQueryId, 128);
+  if (!hasUsableValue(token) || !queryId) {
+    return { ok: false, skipped: true, reason: 'Telegram bot credentials are not configured.' };
+  }
+
+  const payload = { callback_query_id: queryId };
+  const notice = cleanText(text, 200);
+  if (notice) payload.text = notice;
+  if (showAlert) payload.show_alert = true;
+
+  return safeJsonFetch(`${TELEGRAM_API_URL}/bot${encodeURIComponent(token)}/answerCallbackQuery`, {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function sendGmailEmail(env, { to, subject, text, replyTo = '', allowImplicitSender = false }) {
@@ -479,6 +638,86 @@ export async function sendSendPulseEmail(env, { to, subject, text, html = '', re
     if (attempt < 2) await sleep(250 * 2 ** attempt);
   };
   return lastResult || { ok: false, status: 0, body: { error: 'SendPulse request failed' } };
+}
+
+function normalizeSendPulseEventPayload(data) {
+  const payload = {};
+
+  for (const [key, value] of Object.entries(data || {})) {
+    if (!/^[a-z][a-z0-9_]{0,63}$/i.test(key) || value === undefined || value === null) continue;
+
+    if (key === 'automation_id' && Number.isFinite(Number(value))) {
+      payload[key] = Number(value);
+      continue;
+    }
+
+    const normalized = cleanText(value, 255);
+    if (normalized) payload[key] = key === 'email' ? normalized.toLowerCase() : normalized;
+  }
+
+  return payload;
+}
+
+/**
+ * Sends a server-side custom event to Automation 360 using the existing SendPulse bearer token.
+ * Event resource names come only from Cloudflare configuration, never from form input.
+ */
+export async function sendSendPulseAutomationEvent(env, { eventType = '', data = {} } = {}) {
+  const normalizedType = cleanText(eventType, 32).toLowerCase();
+  const envName = SENDPULSE_EVENT_ENV_NAMES[normalizedType];
+  if (!envName) {
+    return { ok: false, skipped: true, reason: 'Unsupported SendPulse automation event type.' };
+  }
+
+  const eventName = getEnvValue(env, envName);
+  if (!hasUsableValue(eventName)) {
+    return { ok: false, skipped: true, reason: `SendPulse event ${envName} is not configured.` };
+  }
+  if (!SENDPULSE_EVENT_NAME_RE.test(eventName)) {
+    console.error('[sendpulse] automation event configuration error', JSON.stringify({ eventType: normalizedType }));
+    return { ok: false, skipped: true, reason: `SendPulse event ${envName} has an invalid resource name.` };
+  }
+
+  const payload = normalizeSendPulseEventPayload(data);
+  if (!hasUsableValue(payload.email) && !hasUsableValue(payload.phone)) {
+    return { ok: false, skipped: true, reason: 'SendPulse automation event requires email or phone.' };
+  }
+
+  const token = await getSendPulseAccessToken(env);
+  if (!hasUsableValue(token)) {
+    return { ok: false, skipped: true, reason: 'SendPulse credentials are not configured.' };
+  }
+
+  const endpoint = `${SENDPULSE_EVENT_API_URL}/${encodeURIComponent(eventName)}`;
+  let lastResult = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const result = await safeJsonFetch(endpoint, {
+        method: 'POST',
+        headers: {
+          ...JSON_HEADERS,
+          Authorization: `Bearer ${token}`,
+          'User-Agent': 'hundesalon-nika.com/1.0 (Cloudflare Pages Function)',
+        },
+        body: JSON.stringify(payload),
+      });
+      console.info(
+        '[sendpulse] automation event',
+        JSON.stringify({ eventType: normalizedType, ok: result.ok, status: result.status, attempt: attempt + 1 })
+      );
+      if (result.ok || ![408, 429, 500, 502, 503, 504].includes(result.status)) return result;
+      lastResult = result;
+    } catch (error) {
+      lastResult = { ok: false, status: 0, body: { error: error?.message || 'network error' } };
+      console.error(
+        '[sendpulse] automation event error',
+        JSON.stringify({ eventType: normalizedType, attempt: attempt + 1, error: error?.message || 'unknown' })
+      );
+    }
+    if (attempt < 2) await sleep(250 * 2 ** attempt);
+  }
+
+  return lastResult || { ok: false, status: 0, body: { error: 'SendPulse automation event failed' } };
 }
 
 export async function upsertSendPulseContact(env, { email, name = '', phone = '', lang = '', service = '', source = '', formType = '' }) {

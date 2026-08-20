@@ -2,16 +2,17 @@
  * Poll Bing Site Scan until complete, open results, extract findings.
  * npm run bing:sitescan-results
  */
-import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './lib/browser-launch.mjs';
 import { openBingWebmasterSession, sleep } from './lib/browser-cdp.mjs';
 import { siteQuery } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.BING_MAIL_EDGE_PORT || 9224);
+const pidFile = browserPidFile('hundesalon-nika-edge-debug');
 const siteQ = siteQuery();
 const pollMs = Number(process.env.BING_SCAN_POLL_MS || 60_000);
 const maxWaitMs = Number(process.env.BING_SCAN_MAX_WAIT_MS || 45 * 60_000);
@@ -36,20 +37,6 @@ function edgePath() {
   return candidates[0] || null;
 }
 
-function stopStaleProfileEdge() {
-  if (process.platform !== 'win32') return;
-  const marker = 'hundesalon-nika-edge-debug';
-  spawnSync(
-    'pwsh',
-    [
-      '-NoProfile',
-      '-Command',
-      `Get-CimInstance Win32_Process -Filter "name='msedge.exe'" | Where-Object { $_.CommandLine -like '*${marker}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`,
-    ],
-    { encoding: 'utf8' }
-  );
-}
-
 async function ensureCdp() {
   if (await cdpReady()) return true;
 
@@ -60,9 +47,8 @@ async function ensureCdp() {
   const startUrl = `https://www.bing.com/webmasters/sitescan?siteUrl=${siteQ}`;
 
   console.log(`Starting Edge CDP on port ${port}…`);
-  stopStaleProfileEdge();
-
-  const child = spawn(
+  stopTrackedBrowser(pidFile);
+  launchTrackedBrowser(
     edge,
     [
       `--remote-debugging-port=${port}`,
@@ -71,9 +57,8 @@ async function ensureCdp() {
       '--no-default-browser-check',
       startUrl,
     ],
-    { detached: true, stdio: 'ignore' }
+    pidFile
   );
-  child.unref();
 
   for (let i = 0; i < 40; i += 1) {
     if (await cdpReady()) {

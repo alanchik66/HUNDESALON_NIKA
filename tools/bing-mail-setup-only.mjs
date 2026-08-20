@@ -1,9 +1,9 @@
 /**
  * Setup Bing Webmaster on mail.ru account (Edge port 9224).
  */
-import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './lib/browser-launch.mjs';
 import { evalPage as runEvalPage, getJson, sleep as wait, withCdpSession } from './lib/browser-cdp.mjs';
 
 const mailPort = Number(process.env.BING_MAIL_EDGE_PORT || 9224);
@@ -35,11 +35,13 @@ async function ensureMailEdge() {
     if (!candidates.length) throw new Error('Edge not found');
     const loginUrl = `https://login.live.com/oauth20_authorize.srf?client_id=0000000048060c6a&response_type=code&scope=service::bingmaster.ms.com::MBI_SSL&redirect_uri=https%3A%2F%2Fwww.bing.com%2Fwebmasters%2F`;
     const userDataDir = path.join(process.env.TEMP || '.', 'hundesalon-nika-edge-debug');
-    spawn(
+    const pidFile = browserPidFile('hundesalon-nika-edge-debug');
+    stopTrackedBrowser(pidFile);
+    launchTrackedBrowser(
       candidates[0],
       [`--remote-debugging-port=${mailPort}`, `--user-data-dir=${userDataDir}`, '--no-first-run', loginUrl],
-      { detached: true, stdio: 'ignore' }
-    ).unref();
+      pidFile
+    );
     for (let i = 0; i < 20; i++) {
       await wait(2000);
       try {

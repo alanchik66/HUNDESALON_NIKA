@@ -12,6 +12,7 @@ import {
   sendSendPulseEmail,
   sendTeamsMessage,
 } from './_lib/platform-integrations.js';
+import { buildBrandedEmail } from './_lib/email-template.js';
 
 const DEFAULT_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
 
@@ -131,15 +132,19 @@ export async function onRequest(context) {
   ]
     .filter(Boolean)
     .join('\n');
+  const messageLang = ['de', 'en', 'ru', 'uk'].includes(cleanText(meta.lang, 8)) ? cleanText(meta.lang, 8) : 'de';
 
   const sideEffects = await Promise.allSettled([
     sendSendPulseEmail(env, {
-      to:
-        getEnvValue(env, 'BOOKING_RECIPIENT_EMAIL') ||
-        getEnvValue(env, 'SALON_EMAIL') ||
-        'info@hundesalon-nika.com',
+      to: (() => {
+        const configured = getEnvValue(env, 'BOOKING_RECIPIENT_EMAIL') || getEnvValue(env, 'SALON_EMAIL');
+        return configured && configured.toLowerCase() !== 'info@hundesalon-nika.com'
+          ? configured
+          : 'booking@hundesalon-nika.com';
+      })(),
       subject: 'Online-Anzahlung bezahlt — HUNDESALON NIKA',
       text: summary,
+      html: buildBrandedEmail({ title: 'Online-Anzahlung bezahlt — HUNDESALON_NIKA', bodyText: summary, lang: messageLang }),
       from: getEnvValue(env, 'SENDPULSE_FROM', DEFAULT_FROM),
     }),
     sendTeamsMessage(env, { title: 'Stripe: Anzahlung bezahlt', text: summary }),

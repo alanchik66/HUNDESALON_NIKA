@@ -1,8 +1,8 @@
 (function () {
   const CONSENT_KEY = 'hundesalon_cookie_consent';
   const FALLBACK_GA_ID = 'G-XXXXXXXXXX';
-  const FALLBACK_ADS_ID = 'AW-16333140047';
-  const FALLBACK_ADS_SEND_TO = 'AW-16333140047/qNqJCkzYu8QcEM-I9qvE';
+  const FALLBACK_ADS_ID = 'AW-18333140047';
+  const FALLBACK_ADS_SEND_TO = 'AW-18333140047/qNqJCKzYu9QcEM-I9qVE';
 
   const isPlaceholder = value => !value || value === 'G-XXXXXXXXXX' || String(value).includes('XXXXXXXX');
   const isAdsId = value => /^AW-\d+$/.test(String(value || ''));

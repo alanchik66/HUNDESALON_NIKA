@@ -4,14 +4,17 @@ import {
   cleanText,
   getEnvList,
   getEnvValue,
+  sendSendPulseAutomationEvent,
   sendSendPulseEmail,
+  sendTelegramMessage,
   sendTeamsMessage,
   upsertSendPulseContact,
   siteNotificationsEnabled,
 } from './_lib/platform-integrations.js';
+import { buildBrandedEmail } from './_lib/email-template.js';
 
 const DEFAULT_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
-const DEFAULT_RECIPIENT = 'info@hundesalon-nika.com';
+const DEFAULT_RECIPIENT = 'support@hundesalon-nika.com';
 const DEFAULT_ADMIN_EMAILS = ['snaiper1984@gmail.com', 'ryndenko1982@gmail.com'];
 
 const COPY = {
@@ -19,6 +22,13 @@ const COPY = {
   ru: 'Спасибо. Подписка сохранена.',
   en: 'Thank you. Your subscription has been saved.',
   uk: 'Дякуємо. Підписку збережено.',
+};
+
+const NEWSLETTER_COPY = {
+  de: { subject: 'Willkommen bei HUNDESALON_NIKA', title: 'Willkommen bei HUNDESALON_NIKA', body: 'Danke für Ihre Anmeldung. Wir senden nur ausgewählte Neuigkeiten, Pflege-Tipps und Angebote.' },
+  en: { subject: 'Welcome to HUNDESALON_NIKA', title: 'Welcome to HUNDESALON_NIKA', body: 'Thank you for subscribing. We send selected news, care tips and offers.' },
+  ru: { subject: 'Добро пожаловать в HUNDESALON_NIKA', title: 'Добро пожаловать в HUNDESALON_NIKA', body: 'Спасибо за подписку. Мы отправляем только избранные новости, советы по уходу и предложения.' },
+  uk: { subject: 'Ласкаво просимо до HUNDESALON_NIKA', title: 'Ласкаво просимо до HUNDESALON_NIKA', body: 'Дякуємо за підписку. Ми надсилаємо лише вибрані новини, поради з догляду та пропозиції.' },
 };
 
 function isValidEmail(email) {
@@ -59,6 +69,7 @@ export async function onRequest(context) {
 
   const email = cleanText(body.email, 180).toLowerCase();
   const lang = cleanText(body.lang, 8) || 'de';
+  const newsletterCopy = NEWSLETTER_COPY[lang] || NEWSLETTER_COPY.de;
   const page = cleanText(body.page, 260);
   const source = cleanText(body.source || page || 'website', 260);
   const consentRaw = String(body.newsletter_consent || body.consent || '').toLowerCase();
@@ -71,6 +82,7 @@ export async function onRequest(context) {
   }
 
   const createdAt = new Date().toISOString();
+  const requestId = crypto.randomUUID();
   const supportReplyTo =
     getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') ||
     getEnvValue(env, 'SUPPORT_EMAIL') ||
@@ -88,13 +100,32 @@ export async function onRequest(context) {
 
   await sendSendPulseEmail(env, {
     to: email,
-    subject: 'HUNDESALON NIKA',
-    text: 'Danke für Ihre Anmeldung. Wir senden nur ausgewählte Neuigkeiten, Pflege-Tipps und Angebote.',
+    subject: newsletterCopy.subject,
+    text: newsletterCopy.body,
+    html: buildBrandedEmail({
+      title: newsletterCopy.title,
+      bodyText: newsletterCopy.body,
+      lang,
+    }),
     replyTo: supportReplyTo,
     from: clientEmailFrom,
   });
 
   await upsertSendPulseContact(env, { email, lang, source, formType: 'newsletter' });
+  await sendSendPulseAutomationEvent(env, {
+    eventType: 'newsletter',
+    data: {
+      email,
+      language: lang,
+      lead_source: source,
+      form_type: 'newsletter',
+      marketing_consent: 'yes',
+      source_url: page || source,
+      site_origin: originCheck.origin,
+      submitted_at: createdAt,
+      request_id: requestId,
+    },
+  });
 
   if (adminRecipients.length > 0) {
     if (siteNotificationsEnabled(env)) {
@@ -102,6 +133,11 @@ export async function onRequest(context) {
         to: adminRecipients,
         subject: '[Admin] Neue Newsletter-Anmeldung — HUNDESALON NIKA',
         text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}\nAntworten bitte über ${supportReplyTo}.`,
+        html: buildBrandedEmail({
+          title: 'Neue Newsletter-Anmeldung — HUNDESALON_NIKA',
+          bodyText: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}\nAntworten bitte über ${supportReplyTo}.`,
+          lang,
+        }),
         replyTo: supportReplyTo,
         from: getEnvValue(env, 'SENDPULSE_FROM', DEFAULT_FROM),
       });
@@ -111,6 +147,16 @@ export async function onRequest(context) {
   await sendTeamsMessage(env, {
     title: 'Neue Newsletter-Anmeldung',
     text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}`,
+  });
+
+  await sendTelegramMessage(env, {
+    category: 'newsletter',
+    text: [
+      '🐕 Новая подписка на новости HUNDESALON NIKA',
+      `E-mail: ${email}`,
+      `Язык: ${lang}`,
+      `Страница: ${page || 'unknown'}`,
+    ].join('\n'),
   });
 
   return jsonResponse({ success: true, message: COPY[lang] || COPY.de }, 200, originCheck.origin);

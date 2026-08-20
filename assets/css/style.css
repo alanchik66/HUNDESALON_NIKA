@@ -173,14 +173,82 @@
   --icon-bounce-duration: 2.85s;
   --icon-menu-bounce-duration: calc(var(--icon-bounce-duration) / 2);
 
-  /* Gem-rotation angles — updated by JS (initGemRotation) on scroll.
-       Base values match the static facet layout; JS offsets them ±28deg. */
+  /* Facet angles define the six-layer surface; the complete surface moves as
+       one compositor layer so no JavaScript writes paint-triggering values. */
   --gem-a1: 122deg;
   --gem-a2: 158deg;
   --gem-a3: 98deg;
   --gem-a4: 38deg;
   --gem-a5: 178deg;
   --gem-base: 132deg;
+  /* The complete six-facet surface lives on one fixed compositor layer. */
+  --site-surface-background:
+    linear-gradient(
+      var(--gem-a1),
+      transparent 0%,
+      transparent 22%,
+      var(--emerald-facet-d) 27%,
+      var(--emerald-facet-a) 31%,
+      var(--emerald-facet-c) 33%,
+      var(--emerald-facet-a) 36%,
+      var(--emerald-facet-d) 40%,
+      transparent 46%,
+      transparent 100%
+    ),
+    linear-gradient(
+      var(--gem-a2),
+      transparent 0%,
+      transparent 14%,
+      var(--emerald-facet-d) 18%,
+      var(--emerald-facet-b) 21%,
+      var(--emerald-facet-d) 24%,
+      transparent 28%,
+      transparent 100%
+    ),
+    linear-gradient(
+      var(--gem-a3),
+      transparent 0%,
+      transparent 61%,
+      var(--emerald-facet-e) 63%,
+      var(--emerald-facet-c) 64.5%,
+      var(--emerald-facet-e) 66%,
+      transparent 69%,
+      transparent 100%
+    ),
+    linear-gradient(
+      var(--gem-a4),
+      transparent 0%,
+      transparent 55%,
+      var(--emerald-facet-d) 59%,
+      var(--emerald-facet-e) 62%,
+      var(--emerald-facet-d) 65%,
+      transparent 69%,
+      transparent 100%
+    ),
+    linear-gradient(
+      var(--gem-a5),
+      transparent 0%,
+      transparent 74%,
+      var(--emerald-facet-d) 76%,
+      var(--emerald-facet-e) 77.5%,
+      var(--emerald-facet-d) 79%,
+      transparent 82%,
+      transparent 100%
+    ),
+    linear-gradient(
+      var(--gem-base),
+      var(--emerald-deep) 0%,
+      var(--emerald-deep) 6%,
+      var(--bg-dark) 18%,
+      var(--emerald-mid) 36%,
+      var(--emerald-core) 50%,
+      var(--emerald-vein) 54%,
+      var(--emerald-core) 59%,
+      var(--emerald-mid) 72%,
+      var(--bg-dark) 86%,
+      var(--emerald-deep) 94%,
+      var(--emerald-deep) 100%
+    );
   --site-side-padding: 32px;
   --safe-top-offset: env(safe-area-inset-top, 0px);
   --section-top-offset-base: 148px;
@@ -274,95 +342,9 @@ img {
 body {
   font-family: var(--font-body);
 
-  /* Real-stone emerald — many overlapping layers mimic the way light bounces
-       inside a polished gem. We deliberately keep the BASE almost black so the
-       coloured highlight pools really pop and read as internal reflections,
-       not as a uniform tint. Order, top → bottom in the stack:
-       (1) bright cyan-green corner sparkle  (top-right)
-       (2) deep-green core glow              (bottom-left)
-       (3) warm shine catchlight             (top-left)
-       (4) cool cyan band                    (sweeping diagonal)
-       (5) soft cool shadow pool             (centre-right)
-       (6) low warm under-glow               (bottom-centre)
-       (7) main diagonal stone gradient      (very dark → mid → very dark) */
-  background:
-        /* FACET A — primary cleavage plane */
-    linear-gradient(
-      var(--gem-a1),
-      transparent 0%,
-      transparent 22%,
-      var(--emerald-facet-d) 27%,
-      var(--emerald-facet-a) 31%,
-      var(--emerald-facet-c) 33%,
-      var(--emerald-facet-a) 36%,
-      var(--emerald-facet-d) 40%,
-      transparent 46%,
-      transparent 100%
-    ),
-    /* FACET B — secondary plane */
-    linear-gradient(
-        var(--gem-a2),
-        transparent 0%,
-        transparent 14%,
-        var(--emerald-facet-d) 18%,
-        var(--emerald-facet-b) 21%,
-        var(--emerald-facet-d) 24%,
-        transparent 28%,
-        transparent 100%
-      ),
-    /* FACET C — hair-thin edge */
-    linear-gradient(
-        var(--gem-a3),
-        transparent 0%,
-        transparent 61%,
-        var(--emerald-facet-e) 63%,
-        var(--emerald-facet-c) 64.5%,
-        var(--emerald-facet-e) 66%,
-        transparent 69%,
-        transparent 100%
-      ),
-    /* FACET D — back reflection */
-    linear-gradient(
-        var(--gem-a4),
-        transparent 0%,
-        transparent 55%,
-        var(--emerald-facet-d) 59%,
-        var(--emerald-facet-e) 62%,
-        var(--emerald-facet-d) 65%,
-        transparent 69%,
-        transparent 100%
-      ),
-    /* FACET E — micro-cleavage */
-    linear-gradient(
-        var(--gem-a5),
-        transparent 0%,
-        transparent 74%,
-        var(--emerald-facet-d) 76%,
-        var(--emerald-facet-e) 77.5%,
-        var(--emerald-facet-d) 79%,
-        transparent 82%,
-        transparent 100%
-      ),
-    /* BASE stone gradient */
-    linear-gradient(
-        var(--gem-base),
-        var(--emerald-deep) 0%,
-        var(--emerald-deep) 6%,
-        var(--bg-dark) 18%,
-        var(--emerald-mid) 36%,
-        var(--emerald-core) 50%,
-        var(--emerald-vein) 54%,
-        var(--emerald-core) 59%,
-        var(--emerald-mid) 72%,
-        var(--bg-dark) 86%,
-        var(--emerald-deep) 94%,
-        var(--emerald-deep) 100%
-      );
-  background-attachment: scroll;
+  background: var(--bg-dark);
   color: var(--gold-face);
-  transition:
-    background 0.3s,
-    color 0.3s;
+  transition: color 0.2s ease;
   line-height: 1.5;
   font-size: 18px;
   font-weight: 540;
@@ -374,10 +356,49 @@ body {
     'calt' 1;
   text-rendering: auto;
   overflow-x: hidden;
+  isolation: isolate;
 }
 
-/* Light theme keeps the original solid background — the emerald layers are
-   only intended for the dark/jewel theme. */
+/* The six gradients are painted once on this fixed layer. Only the layer's
+   transform changes, so the scene can move without repainting the viewport. */
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: -12%;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--site-surface-background);
+  transform: translate3d(-0.8%, -0.5%, 0) scale(1.025);
+  transform-origin: 50% 50%;
+  animation: emeraldFacetDrift 42s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes emeraldFacetDrift {
+  from {
+    transform: translate3d(-0.8%, -0.5%, 0) scale(1.025);
+  }
+
+  to {
+    transform: translate3d(0.8%, 0.7%, 0) scale(1.045);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    animation: none;
+    transform: none;
+  }
+}
+
+html.site-perf-lite body::before {
+  animation: none;
+  transform: none;
+}
+
+/* Light theme keeps a calm pearl surface; it no longer moves the full
+   background image on every animation frame. */
 
 body.light {
   background: var(--bg-dark);
@@ -494,6 +515,16 @@ body::-webkit-scrollbar-corner,
 }
 
 body.light {
+  --site-surface-background: linear-gradient(
+    135deg,
+    rgb(235 222 200 / 100%) 0%,
+    rgb(228 214 190 / 100%) 18%,
+    rgb(238 226 205 / 100%) 32%,
+    rgb(230 216 192 / 100%) 50%,
+    rgb(236 224 202 / 100%) 68%,
+    rgb(225 212 188 / 100%) 82%,
+    rgb(235 222 200 / 100%) 100%
+  );
   --bg-dark: #e8dece;
   --bg-light: #efe5d6;
   --text-dark: #3a3228;
@@ -611,40 +642,15 @@ body.light {
   --text-vol-gradient-filter: var(--liquid-gold-filter);
 
   color: var(--gold-face);
-  background: linear-gradient(
-    135deg,
-    rgb(235 222 200 / 100%) 0%,
-    rgb(228 214 190 / 100%) 18%,
-    rgb(238 226 205 / 100%) 32%,
-    rgb(230 216 192 / 100%) 50%,
-    rgb(236 224 202 / 100%) 68%,
-    rgb(225 212 188 / 100%) 82%,
-    rgb(235 222 200 / 100%) 100%
-  );
-  background-size: 400% 400%;
-  animation: pearlShimmer 12s ease-in-out infinite;
-}
-
-@keyframes pearlShimmer {
-  0% {
-    background-position: 0% 0%;
-  }
-  25% {
-    background-position: 100% 50%;
-  }
-  50% {
-    background-position: 50% 100%;
-  }
-  75% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 0% 0%;
-  }
+  background: var(--bg-dark);
 }
 
 body.light::before {
-  display: none;
+  background-size: 400% 400%;
+  background-position: 50% 50%;
+  animation: none;
+  transform: none;
+  will-change: auto;
 }
 
 /* ===== LIGHT THEME — PEARL GOLD TYPOGRAPHY ===== */
@@ -1693,6 +1699,59 @@ html[lang='de'] .social-home a > span {
   }
 }
 
+/* Единый направленный bounce для зелёных стрелок сайта. Стрелка движется по
+   своей оси: вниз — сверху вниз, вверх — снизу вверх, вправо — слева направо,
+   влево — справа налево. Поворот хранится в --arrow-rotate. */
+@keyframes siteArrowDirectionalBounce {
+  0%,
+  100% {
+    transform: var(--arrow-rotate, rotate(0deg)) translateY(0) scale(1);
+    filter: drop-shadow(0 2px 4px rgb(0 0 0 / 28%)) drop-shadow(0 0 6px rgb(50 255 177 / 28%)) saturate(1.08);
+    opacity: 0.92;
+  }
+
+  36% {
+    transform: var(--arrow-rotate, rotate(0deg)) translateY(4px) scale(1.08);
+    filter: drop-shadow(0 3px 5px rgb(0 0 0 / 30%)) drop-shadow(0 0 10px rgb(50 255 177 / 58%)) saturate(1.22);
+    opacity: 1;
+  }
+
+  58% {
+    transform: var(--arrow-rotate, rotate(0deg)) translateY(1px) scale(0.985);
+    filter: drop-shadow(0 2px 4px rgb(0 0 0 / 28%)) drop-shadow(0 0 7px rgb(50 255 177 / 38%)) saturate(1.12);
+    opacity: 0.96;
+  }
+
+  78% {
+    transform: var(--arrow-rotate, rotate(0deg)) translateY(2.5px) scale(1.025);
+    filter: drop-shadow(0 2px 5px rgb(0 0 0 / 28%)) drop-shadow(0 0 8px rgb(50 255 177 / 44%)) saturate(1.16);
+    opacity: 0.98;
+  }
+}
+
+@keyframes siteSelectArrowDirectionalBounce {
+  0%,
+  100% {
+    transform: translateY(-50%) var(--arrow-rotate, rotate(0deg)) translateY(0) scale(1);
+    filter: drop-shadow(0 2px 4px rgb(0 0 0 / 28%)) drop-shadow(0 0 6px rgb(50 255 177 / 28%)) saturate(1.08);
+  }
+
+  36% {
+    transform: translateY(-50%) var(--arrow-rotate, rotate(0deg)) translateY(4px) scale(1.08);
+    filter: drop-shadow(0 3px 5px rgb(0 0 0 / 30%)) drop-shadow(0 0 10px rgb(50 255 177 / 58%)) saturate(1.22);
+  }
+
+  58% {
+    transform: translateY(-50%) var(--arrow-rotate, rotate(0deg)) translateY(1px) scale(0.985);
+    filter: drop-shadow(0 2px 4px rgb(0 0 0 / 28%)) drop-shadow(0 0 7px rgb(50 255 177 / 38%)) saturate(1.12);
+  }
+
+  78% {
+    transform: translateY(-50%) var(--arrow-rotate, rotate(0deg)) translateY(2.5px) scale(1.025);
+    filter: drop-shadow(0 2px 5px rgb(0 0 0 / 28%)) drop-shadow(0 0 8px rgb(50 255 177 / 44%)) saturate(1.16);
+  }
+}
+
 /* Мягкий bounce для социальных/менюшных иконок (низкий, не пропадает при повороте) */
 @keyframes iconMenuBounce {
   0%,
@@ -2269,6 +2328,36 @@ body.light .premium-burger span {
   display: inline-flex;
 }
 
+/* Unified close control for the price and registration dialogs. */
+#price-category-modal .modal-close,
+#client-registration-modal .modal-close {
+  display: inline-grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin: 0;
+  padding: 0;
+  place-items: center;
+  border: 1px solid rgb(201 168 76 / 0.58);
+  border-radius: 999px;
+  background: rgb(5 18 15 / 0.86);
+  color: var(--accent-gold);
+  font-size: 1.55rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 18%), inset 0 1px 0 rgb(255 255 255 / 0.07);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), background 0.28s ease, box-shadow 0.28s ease;
+}
+
+#price-category-modal .modal-close:is(:hover, :focus-visible),
+#client-registration-modal .modal-close:is(:hover, :focus-visible) {
+  transform: translateY(-1px) scale(1.05);
+  background: rgb(201 168 76 / 0.16);
+  color: var(--text-cream, #ffefd1);
+  box-shadow: 0 7px 24px rgb(0 0 0 / 0.24%), 0 0 18px rgb(201 168 76 / 0.16);
+}
+
 .nav-main > :is(a, .filter-btn),
 .nav-main > .dropdown > a,
 .nav-main > .dropdown > .nav-dropdown-trigger {
@@ -2638,7 +2727,7 @@ body.light .online-order-pill:focus-visible {
   content: '';
   position: absolute;
   inset: -80%;
-  background:
+  background-image:
         /* Основные разряды — 6 ярких нитей, чуть шире для турбулентности */
     conic-gradient(
       from 0deg at 50% 50%,
@@ -3027,7 +3116,7 @@ body.light .nav-plasma::after {
 /* Светлая тема — постоянная плазма бежевая */
 
 body.light .nav-plasma--active::before {
-  background:
+  background-image:
     conic-gradient(
       from 0deg at 50% 50%,
       transparent 0deg,
@@ -3261,16 +3350,26 @@ body.light .nav-plasma-touch--pointer {
 }
 
 .nav-dropdown-chevron {
-  font-size: 9px;
-  opacity: 0.78;
-  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  display: inline-block;
+  width: 10px;
+  min-width: 10px;
+  height: 10px;
+  font-size: 0;
+  opacity: 0.88;
+  background: url('../images/icons/chevron-down.png') center / contain no-repeat;
+  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 28%)) drop-shadow(0 0 6px rgb(50 255 177 / 28%));
+  --arrow-rotate: rotate(0deg);
+  transform: var(--arrow-rotate);
+  transform-origin: 50% 50%;
+  transition: opacity 0.28s ease;
   pointer-events: none;
+  animation: siteArrowDirectionalBounce 2.35s ease-in-out infinite;
 }
 
 .dropdown:hover .nav-dropdown-chevron,
 .dropdown:focus-within .nav-dropdown-chevron,
 .dropdown.is-open .nav-dropdown-chevron {
-  transform: rotate(180deg);
+  --arrow-rotate: rotate(180deg);
   opacity: 1;
 }
 
@@ -3879,7 +3978,7 @@ body.light .theme-btn::before {
   transition:
     transform 0.44s cubic-bezier(0.22, 1, 0.36, 1),
     opacity 0.32s ease;
-  animation: iconSurfaceRefraction var(--icon-sheen-duration) ease-in-out infinite;
+  animation: siteArrowDirectionalBounce 2.35s ease-in-out infinite;
 }
 
 .header-controls .lang-dropdown-btn i:last-child::before {
@@ -6405,7 +6504,7 @@ body.scrollbar-dragging {
   --arrow-shift-x: 0px;
   transform: var(--arrow-rotate) translateX(var(--arrow-shift-x));
   will-change: transform;
-  animation: iconSurfaceRefraction var(--icon-sheen-duration) ease-in-out infinite;
+  animation: siteArrowDirectionalBounce 2.35s ease-in-out infinite;
 }
 
 .mobile-dropdown-btn.is-open::after {
@@ -7054,7 +7153,7 @@ html[lang='uk'] .hero-title {
   transition:
     transform 0.44s cubic-bezier(0.22, 1, 0.36, 1),
     opacity 0.32s ease;
-  animation: iconSurfaceRefraction var(--icon-sheen-duration) ease-in-out infinite;
+  animation: siteArrowDirectionalBounce 2.35s ease-in-out infinite;
 }
 
 /* Site-wide custom selects — glass/gold list, weather-menu arrow behavior */
@@ -7127,13 +7226,13 @@ html[lang='uk'] .hero-title {
   transition:
     transform 0.44s cubic-bezier(0.22, 1, 0.36, 1),
     opacity 0.32s ease;
-  animation: iconSurfaceRefraction var(--icon-sheen-duration) ease-in-out infinite;
+  animation: siteSelectArrowDirectionalBounce 2.35s ease-in-out infinite;
 }
 
 .site-select.is-open .site-select__arrow,
 .site-select__trigger:focus-visible .site-select__arrow {
   --arrow-rotate: rotate(0deg);
-  animation: none;
+  animation: siteSelectArrowDirectionalBounce 2.35s ease-in-out infinite;
 }
 
 .site-select__trigger:focus-visible {
@@ -7391,7 +7490,13 @@ body.light .site-select__option[aria-selected='true'] {
   font-weight: 700;
   color: #f1c960;
   text-shadow: var(--text-vol-accent);
-  animation: euroGoldBreath var(--motion-sync-breath) ease-in-out infinite;
+  animation-name: iconCoinFlip, euroGoldBreath;
+  animation-duration:
+    var(--euro-spin-duration, 5s),
+    var(--euro-sheen-duration, var(--motion-sync-breath));
+  animation-timing-function: linear, ease-in-out;
+  animation-delay: var(--euro-spin-delay, 0s), var(--euro-sheen-delay, 0s);
+  animation-iteration-count: infinite, infinite;
 }
 
 body.light .site-icon--euro,
@@ -7399,7 +7504,13 @@ body.light .site-icon-euro,
 body.light .currency-inline {
   color: #9e7c4e;
   text-shadow: var(--text-vol-accent);
-  animation: euroGoldBreath var(--motion-sync-breath) ease-in-out infinite;
+  animation-name: iconCoinFlip, euroGoldBreath;
+  animation-duration:
+    var(--euro-spin-duration, 5s),
+    var(--euro-sheen-duration, var(--motion-sync-breath));
+  animation-timing-function: linear, ease-in-out;
+  animation-delay: var(--euro-spin-delay, 0s), var(--euro-sheen-delay, 0s);
+  animation-iteration-count: infinite, infinite;
 }
 
 @keyframes euroGoldBreath {
@@ -7526,7 +7637,7 @@ body.light .currency-inline {
     opacity 0.32s ease;
   opacity: 0.82;
   position: static;
-  animation: iconSurfaceRefraction var(--icon-sheen-duration) ease-in-out infinite;
+  animation: siteArrowDirectionalBounce 2.35s ease-in-out infinite;
   border-radius: 0;
   top: auto;
   bottom: auto;
@@ -8488,6 +8599,11 @@ body.light .review-card {
 .map-native .leaflet-control-zoom a:hover {
   background: #121714f0;
   color: #fae4b2ff;
+}
+
+.map-native .leaflet-control-attribution a {
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
 }
 
 .contact-map-pin {
@@ -13623,8 +13739,7 @@ html.site-perf-lite .nav-plasma--cta::after {
 html.site-perf-lite .nav-main > :is(a, .filter-btn)::after,
 html.site-perf-lite .online-order-pill::after,
 html.site-perf-lite .btn-neon::before,
-html.site-perf-lite #mobile-nav a::before,
-html.site-perf-lite .site-icon {
+html.site-perf-lite #mobile-nav a::before {
   animation: none !important;
 }
 
@@ -13710,5 +13825,366 @@ html.site-perf-lite .social-card {
   html[lang='uk'] :is(.hero-title, .about-text > :is(h1, h2):first-child) {
     font-size: clamp(26px, 7.2vw, 32px) !important;
     letter-spacing: 0.06em;
+  }
+}
+
+/* Final override for the single price-linked promotion card. */
+.promo-card.price-promotion-card {
+  align-items: stretch;
+  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  text-align: left;
+}
+
+.promo-card.price-promotion-card p {
+  max-width: 68ch;
+}
+
+.promo-card.price-promotion-card {
+  gap: 0.75rem;
+  min-height: 0;
+  padding: 28px 36px 30px;
+}
+
+.price-promotion-card__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.price-promotion-card__badge {
+  margin-bottom: 0;
+  padding: 0.25rem 0.7rem 0.25rem 0.45rem;
+  border: 1px solid rgb(50 255 177 / 0.3);
+  background: rgb(50 255 177 / 0.08);
+}
+
+.price-promotion-card__badge img {
+  width: 1.55rem;
+  height: 1.55rem;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgb(50 255 177 / 0.45));
+}
+
+.price-promotion-card__scope {
+  min-width: 0;
+  color: rgb(255 239 209 / 0.72);
+  font-size: 0.78rem;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.price-promotion-card h3,
+.price-promotion-card p {
+  margin-top: 0;
+}
+
+.price-promotion-card__price {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgb(201 168 76 / 0.16);
+  color: rgb(255 239 209 / 0.75);
+  font-family: var(--font-ui, 'Cinzel', serif);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+}
+
+.price-promotion-card__price strong {
+  color: var(--accent-gold);
+  font-size: 1.35rem;
+  text-shadow: var(--text-vol-accent);
+  white-space: nowrap;
+}
+
+.price-promotion-card__terms {
+  color: rgb(255 239 209 / 0.68);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.price-promotion-card__cta {
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.15rem;
+}
+
+@media (max-width: 540px) {
+  .price-promotion-card__heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .price-promotion-card__scope {
+    text-align: left;
+  }
+}
+
+/* Modal type scale: every readable text node uses the same enlarged floor;
+   headings and prices keep their own larger hierarchy. */
+.modal {
+  --modal-readable-size: clamp(1.14rem, 0.35vw + 1rem, 1.24rem);
+}
+
+.modal :where(
+  p,
+  li,
+  label,
+  legend,
+  input,
+  select,
+  textarea,
+  button,
+  option,
+  td,
+  th,
+  strong,
+  small,
+  h4,
+  .step,
+  .form-status,
+  .booking-validation-message,
+  .booking-field-label,
+  .booking-check-label,
+  .booking-rules-summary,
+  .booking-summary,
+  .booking-payment-hint,
+  .booking-datetime-status,
+  .booking-datetime-choice,
+  .calendar-weekday,
+  .price-category-modal__available-services span,
+  [class*='__']:not([class*='__price'])
+) {
+  font-size: max(1em, var(--modal-readable-size)) !important;
+}
+
+.modal :where(
+  .price-category-modal__selection-title,
+  .price-category-modal__panel h3,
+  .booking-rules-summary h3,
+  .client-registration-form__fieldset legend
+) {
+  font-size: max(1.22rem, 1em) !important;
+}
+
+.modal .modal-close,
+.client-registration-modal__close {
+  font-size: 1.8rem !important;
+}
+
+@media (max-width: 720px) {
+  .modal {
+    --modal-readable-size: 1.14rem;
+  }
+}
+
+/* Price-list hero: compact guidance, a real category jump, and an animated search frame. */
+body.price-page .price-page-hero[data-price-hero] {
+  gap: clamp(0.85rem, 1.35vw, 1.35rem);
+  padding: clamp(1.15rem, 2vw, 1.85rem) clamp(1.1rem, 3vw, 3rem) clamp(1rem, 1.8vw, 1.6rem);
+  text-align: center;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__copy {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: clamp(0.55rem, 1vw, 0.85rem);
+  width: min(100%, 1140px);
+  margin-inline: auto;
+  padding: 0;
+  text-align: center;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__copy .section-kicker,
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__copy .section-title {
+  width: min(100%, 1140px);
+  margin-inline: auto;
+  text-align: center;
+  text-align-last: center;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__copy .section-kicker {
+  justify-self: center;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__copy .section-title::after {
+  margin-inline: auto;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(0.9rem, 2vw, 2rem);
+  width: min(100%, 1120px);
+  margin-inline: auto;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__intro-copy {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+  text-align: left;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__lead,
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__note {
+  width: auto;
+  margin: 0;
+  text-align: left;
+  text-align-last: left;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__categories-action {
+  flex-shrink: 0;
+  min-width: min(100%, 21rem);
+  margin-top: 0;
+  min-height: 4.5rem;
+  padding: 1rem 1.5rem;
+  gap: 1rem;
+  border-radius: var(--nav-pill-radius);
+  font-size: clamp(1.05rem, 0.4vw + 0.95rem, 1.25rem);
+  white-space: nowrap;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__categories-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35em;
+  line-height: 1;
+  transition: transform 220ms ease;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__categories-action:is(:hover, :focus-visible) .price-page-hero__categories-action-icon {
+  transform: translateX(0.2rem);
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__search {
+  width: min(100%, 1040px);
+  margin: 0 auto;
+  text-align: left;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__search-frame {
+  position: relative;
+  width: 100%;
+  padding: 1px;
+  border-radius: 26px;
+  background: linear-gradient(
+    110deg,
+    rgb(201 168 76 / 0.92),
+    rgb(61 218 166 / 0.82) 34%,
+    rgb(255 224 142 / 0.96) 55%,
+    rgb(33 143 111 / 0.9) 79%,
+    rgb(201 168 76 / 0.92)
+  );
+  background-size: 260% 260%;
+  box-shadow: 0 0 1.5rem rgb(60 218 166 / 0.14);
+  isolation: isolate;
+  animation: price-hero-search-gradient 8s ease-in-out infinite;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__search-frame::before {
+  position: absolute;
+  z-index: -1;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(
+    110deg,
+    rgb(201 168 76 / 0.9),
+    rgb(61 218 166 / 0.76) 34%,
+    rgb(255 224 142 / 0.92) 55%,
+    rgb(33 143 111 / 0.84) 79%,
+    rgb(201 168 76 / 0.9)
+  );
+  background-size: 260% 260%;
+  content: '';
+  filter: blur(10px);
+  opacity: 0.42;
+  pointer-events: none;
+  animation: price-hero-search-gradient 8s ease-in-out infinite;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__search-frame > .price-breed-search {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: clamp(0.7rem, 1.2vw, 0.9rem);
+  border-radius: 25px;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at 8% 0%, rgb(50 255 177 / 0.08), transparent 42%),
+    linear-gradient(145deg, rgb(12 34 27 / 0.98), rgb(5 17 13 / 0.98));
+  gap: 0.55rem;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__search-frame .price-breed-search__label {
+  padding-inline: 0.15rem;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-breed-search__input {
+  min-height: clamp(3.15rem, 3.8vw, 3.65rem);
+  border-color: rgb(255 239 209 / 0.12);
+  border-radius: 18px;
+}
+
+@keyframes price-hero-search-gradient {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@media (max-width: 760px) {
+  body.price-page .price-page-hero[data-price-hero] {
+    gap: 1.15rem;
+    padding: 1.35rem 0.9rem 1.25rem;
+  }
+
+  body.price-page .price-page-hero[data-price-hero] .price-page-hero__intro {
+    grid-template-columns: 1fr;
+    gap: 0.95rem;
+  }
+
+  body.price-page .price-page-hero[data-price-hero] .price-page-hero__intro-copy {
+    text-align: center;
+  }
+
+  body.price-page .price-page-hero[data-price-hero] .price-page-hero__lead,
+  body.price-page .price-page-hero[data-price-hero] .price-page-hero__note {
+    text-align: center;
+    text-align-last: center;
+  }
+
+  body.price-page .price-page-hero[data-price-hero] .price-page-hero__categories-action {
+    justify-self: center;
+    width: min(100%, 23rem);
+    min-height: 4.15rem;
+    padding: 0.9rem 1.15rem;
+    font-size: 1.05rem;
+  }
+
+  body.price-page .price-page-hero[data-price-hero] .price-page-hero__search {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.price-page .price-page-hero[data-price-hero] .price-page-hero__search-frame,
+  body.price-page .price-page-hero[data-price-hero] .price-page-hero__search-frame::before {
+    animation: none;
   }
 }

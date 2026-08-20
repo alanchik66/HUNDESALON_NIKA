@@ -81,4 +81,4 @@ try {
   console.warn(`WARN www check: ${e.message}`);
 }
 
-process.exit(failed ? 1 : 0);
+process.exitCode = failed ? 1 : 0;

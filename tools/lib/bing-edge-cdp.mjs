@@ -1,8 +1,8 @@
-import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { sleep } from './browser-cdp.mjs';
 import { siteQuery } from './bing-wmt.mjs';
+import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './browser-launch.mjs';
 
 export function edgePath() {
   const candidates = [
@@ -24,17 +24,7 @@ export async function cdpReady(port = 9224) {
 }
 
 export function stopStaleProfileEdge() {
-  if (process.platform !== 'win32') return;
-  const marker = 'hundesalon-nika-edge-debug';
-  spawnSync(
-    'pwsh',
-    [
-      '-NoProfile',
-      '-Command',
-      `Get-CimInstance Win32_Process -Filter "name='msedge.exe'" | Where-Object { $_.CommandLine -like '*${marker}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`,
-    ],
-    { encoding: 'utf8' }
-  );
+  stopTrackedBrowser(browserPidFile('hundesalon-nika-edge-debug'));
 }
 
 export async function ensureBingEdgeCdp(options = {}) {
@@ -52,7 +42,7 @@ export async function ensureBingEdgeCdp(options = {}) {
   console.log(`Starting Edge CDP on port ${port}…`);
   stopStaleProfileEdge();
 
-  const child = spawn(
+  launchTrackedBrowser(
     edge,
     [
       `--remote-debugging-port=${port}`,
@@ -61,9 +51,8 @@ export async function ensureBingEdgeCdp(options = {}) {
       '--no-default-browser-check',
       startUrl,
     ],
-    { detached: true, stdio: 'ignore' }
+    browserPidFile('hundesalon-nika-edge-debug')
   );
-  child.unref();
 
   for (let i = 0; i < 40; i += 1) {
     if (await cdpReady(port)) {

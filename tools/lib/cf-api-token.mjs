@@ -155,7 +155,9 @@ export async function auditToken(auth, zoneId) {
 }
 
 export function isZoneToken(report) {
-  return report.zoneRead && report.dnsWrite && report.cachePurge && report.pageRules;
+  // Page Rules is an optional legacy capability; DNS and cache operations are
+  // the required zone permissions for the current automation surface.
+  return report.zoneRead && report.dnsWrite && report.cachePurge;
 }
 
 /** Zone + Pages deploy — enough for deploy, purge, DNS, Page Rules. */
@@ -200,7 +202,6 @@ export async function verifyBearerToken(token, { requirePages = false } = {}) {
     const missing = [];
     if (!audit.dnsWrite) missing.push('DNS Records Edit');
     if (!audit.cachePurge) missing.push('Cache Purge');
-    if (!audit.pageRules) missing.push('Page Rules Write');
     throw new Error(`Token missing permissions: ${missing.join(', ')}`);
   }
   if (requirePages && !audit.pagesDeploy) {

@@ -1,9 +1,9 @@
 /**
  * Launch Edge with CDP and open Bing API Access page.
  */
-import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './lib/browser-launch.mjs';
 
 const port = process.env.BING_MAIL_EDGE_PORT || '9224';
 const siteQ = encodeURIComponent('https://hundesalon-nika.com/');
@@ -21,8 +21,10 @@ if (!candidates.length) {
 
 const userDataDir = path.join(process.env.TEMP || '.', 'hundesalon-nika-edge-debug');
 const edge = candidates[0];
+const pidFile = browserPidFile('hundesalon-nika-edge-debug');
 
-spawn(
+stopTrackedBrowser(pidFile);
+launchTrackedBrowser(
   edge,
   [
     `--remote-debugging-port=${port}`,
@@ -31,8 +33,8 @@ spawn(
     '--no-default-browser-check',
     startUrl,
   ],
-  { detached: true, stdio: 'ignore' }
-).unref();
+  pidFile
+);
 
 console.log(`Edge started on port ${port}`);
 console.log(startUrl);

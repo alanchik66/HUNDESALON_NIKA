@@ -7,7 +7,6 @@
     "htmlhint.vscode-htmlhint",
     "davidanson.vscode-markdownlint",
     "streetsidesoftware.code-spell-checker",
-    "github.vscode-github-actions",
     "cloudflare.cloudflare-workers-bindings-extension"
   ]
 }

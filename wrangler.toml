@@ -2,9 +2,15 @@
 # Документация: https://developers.cloudflare.com/pages/
 
 name = "hundesalon-nika"
-compatibility_date = "2026-06-01"
+compatibility_date = "2026-08-08"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
+
+# Preview deployments are intentionally non-transactional. Secrets and other
+# external-service settings stay in Cloudflare and are never committed here.
+[env.preview.vars]
+SITE_NOTIFICATIONS_ENABLED = "false"
+PAYMENTS_ONLINE_ENABLED = "false"
 
 # Для локальной разработки с Pages Functions:
 #   npm run dev:cf

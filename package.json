@@ -16,8 +16,8 @@
     "image:read": "python tools/image-reader.py",
     "format": "prettier --write assets/js/**/*.js assets/css/**/*.css ru/**/*.html de/**/*.html en/**/*.html uk/**/*.html *.html",
     "backup:full": "node tools/create-full-backup.mjs",
-    "validate": "node tools/run-npm-quiet.mjs run lint && node tools/run-npm-quiet.mjs run check:links && node tools/run-npm-quiet.mjs run check:project && node tools/run-npm-quiet.mjs run check:payments && node tools/run-npm-quiet.mjs run check:email-provider",
-    "qa:max": "npm run validate && npm run build:production",
+    "validate": "node tools/run-npm-quiet.mjs run lint && node tools/run-npm-quiet.mjs run check:links && node tools/run-npm-quiet.mjs run check:project && node tools/run-npm-quiet.mjs run check:payments && node tools/run-npm-quiet.mjs run test:unit && node tools/run-npm-quiet.mjs run check:email-provider",
+    "qa:max": "npm run validate && npm run build:production && npm run check:budgets && npm run test:browser",
     "check": "npm run validate",
     "check:links": "node tools/check-links.js",
     "price:smoke": "node tools/price-list-smoke.mjs",
@@ -27,6 +27,12 @@
     "check:project": "node tools/check-project.js",
     "check:payments": "node tools/check-payment-security.mjs",
     "check:email-provider": "node tools/check-email-provider.mjs",
+    "check:sendpulse-automation": "node --test functions/_lib/platform-integrations.test.js",
+    "check:budgets": "node tools/check-asset-budgets.mjs",
+    "test:unit": "node --test functions/_lib/http-security.test.js functions/_lib/platform-integrations.test.js functions/api/weather.test.js functions/reverse-geocode.test.js functions/upload-metadata.test.js",
+    "test:visual": "node tools/visual-regression.mjs",
+    "test:a11y": "node tools/accessibility-smoke.mjs",
+    "test:browser": "npm run test:visual && npm run test:a11y",
     "shell:strip": "node tools/strip-static-shell.mjs",
     "test:links": "npm run check:links",
     "seo:urls": "node tools/indexnow-submit.js --dry-run",
@@ -151,7 +157,7 @@
     "check:live-html": "node tools/check-live-html.mjs",
     "check:live-prays-list": "node tools/check-live-prays-list.mjs",
     "rollout:plan": "node -e \"console.log('See docs/operations.md')\"",
-    "lint:md": "markdownlint-cli2",
+    "lint:md": "markdownlint-cli2 \"ru/**/*.md\" \"de/**/*.md\" \"en/**/*.md\" \"uk/**/*.md\" \"blog/**/*.md\" \"*.md\" \"!AGENTS.md\"",
     "graphify": "graphify update .",
     "graphify:check": "graphify check-update .",
     "graphify:diagnose": "graphify diagnose multigraph --graph graphify-out/graph.json",
@@ -171,6 +177,7 @@
   "license": "UNLICENSED",
   "private": true,
   "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
     "eslint": "^10.6.0",
     "htmlhint": "^1.9.2",
     "leaflet": "^1.9.4",
@@ -204,6 +211,7 @@
   "allowScripts": {
     "esbuild@0.28.1": true,
     "workerd@1.20260617.1": true,
+    "workerd@1.20260801.1": true,
     "sharp@0.34.5": true
   }
 }

@@ -37,7 +37,6 @@
     'ru-small-growing-coat': { de: 'Komplettpflege für kleine Rassen mit ständig wachsendem Fell.', en: 'Full care for small breeds with continuously growing coats.', uk: 'Комплексний догляд для малих порід із шерстю, що постійно росте.' },
     'ru-poodles-bichons': { de: 'Sorgfältige Pflege für lockiges und voluminöses Fell.', en: 'Detailed care for curly and voluminous coats.', uk: 'Ретельний догляд за кучерявою та об’ємною шерстю.' },
     'ru-spitz': { de: 'Pflege von dichtem Unterfell, natürlichem Volumen und Form.', en: 'Care for dense undercoat, natural volume and shape.', uk: 'Догляд за щільним підшерстям, природним об’ємом і формою.' },
-    'ru-double-coat': { de: 'Komplettpflege für Rassen mit dichtem Unterfell.', en: 'Full care for breeds with dense undercoats.', uk: 'Комплексний догляд за породами з щільним підшерстям.' },
     'ru-spaniels': { de: 'Form, Volumen und sauberes Finish für Spaniels.', en: 'Shape, volume and a neat finish for spaniels.', uk: 'Форма, об’єм та акуратне оформлення шерсті спанієлів.' },
     'ru-wire-coat': { de: 'Schneiden oder Handstripping passend zur rauen Fellstruktur.', en: 'Clipping or hand stripping for wire coat texture.', uk: 'Стрижка або ручний тримінг з урахуванням структури жорсткої шерсті.' },
     'ru-short-coat': { de: 'Komplette Pflege nach Größe des kurzhaarigen Hundes.', en: 'Full care package according to the dog’s size.', uk: 'Повний комплекс догляду відповідно до розміру короткошерстого собаки.' },
@@ -125,27 +124,11 @@
       en: 'The first puppy grooming visit is designed to gently familiarise the puppy with the salon and grooming care.',
       uk: 'Перший грумінг цуценяти допомагає м’яко познайомити його із салоном і процедурами догляду.',
     },
-    important: {
-      de: 'Der Preis „ab“ hängt von Fellzustand, Länge und Dichte, Unterwolle, Verfilzungen, Verhalten und tatsächlichem Arbeitsaufwand ab.',
-      en: 'The “from” price depends on coat condition, length and density, undercoat, mats, behaviour and the actual amount of work.',
-      uk: 'Вартість «від» залежить від стану, довжини й густоти шерсті, кількості підшерстя, ковтунів, поведінки тварини та фактичного обсягу роботи.',
-    },
-    mats: {
-      de: 'Bei starker Verfilzung oder vielen Knoten kann sich der Preis wegen des zusätzlichen Arbeitsaufwands erhöhen.',
-      en: 'Severe matting or a large number of mats may increase the price because of the additional work required.',
-      uk: 'За сильної зваляності шерсті або великої кількості ковтунів вартість може бути збільшена через додатковий обсяг роботи.',
-    },
-    safety: {
-      de: 'Bei starkem Stress, Widerstand oder aggressivem Verhalten wird zusätzliche Zeit separat berechnet. Wenn die Behandlung unsicher wird, kann sie abgebrochen werden.',
-      en: 'In cases of severe stress, resistance or aggressive behaviour, additional time is charged separately. If the treatment becomes unsafe, it may be stopped.',
-      uk: 'За сильного стресу, опору або агресивної поведінки додатковий час оплачується окремо. Якщо проведення процедури стає небезпечним, її можуть припинити.',
-    },
   };
   const serviceNotesByCategory = {
     'ru-small-growing-coat': [dogServiceNotes.full, dogServiceNotes.bath],
     'ru-poodles-bichons': [dogServiceNotes.poodleFull, dogServiceNotes.bath],
     'ru-spitz': [dogServiceNotes.spitzFull],
-    'ru-double-coat': [dogServiceNotes.complexCare],
     'ru-spaniels': [dogServiceNotes.full, dogServiceNotes.bath],
     'ru-wire-coat': [dogServiceNotes.wireCoat, dogServiceNotes.trim, dogServiceNotes.bath],
     'ru-short-coat': [dogServiceNotes.shortCoat],
@@ -153,7 +136,7 @@
     'ru-cats-grooming': [otherServiceNotes.cats, otherServiceNotes.catsBath],
     'ru-small-animals': [otherServiceNotes.smallAnimals],
     'ru-additional-services': [otherServiceNotes.additional, otherServiceNotes.additionalDental, otherServiceNotes.puppy],
-    'ru-important-information': [otherServiceNotes.important, otherServiceNotes.mats, otherServiceNotes.safety],
+    'ru-important-information': [],
   };
   const apply = (lang, definitions) => {
     catalog.categoriesByLocale[lang] = definitions.map(definition => {
@@ -196,19 +179,134 @@
     small: make('ru-small-growing-coat', { de: '1. Kleine Hunde – ständig wachsendes Fell', en: '1. Small dogs — continuously growing coat', uk: '1. Маленькі собаки — шерсть, що постійно росте' }, breed(['Yorkshire Terrier', 'Biewer Yorkshire Terrier', 'Malteser', 'Shih Tzu', 'Havaneser', 'Bologneser', 'Lhasa Apso'], ['Yorkshire Terrier', 'Biewer Yorkshire Terrier', 'Maltese', 'Shih Tzu', 'Havanese', 'Bolognese', 'Lhasa Apso'], ['Йоркширський тер’єр', 'Бівер-йоркширський тер’єр', 'Мальтійська болонка — мальтезе', 'Ши-тцу', 'Гаванська болонка — гаванез', 'Болоньєз', 'Лхаса апсо']), { de: ['Komplettpflege', 'Baden + Hygienepflege'], en: ['Full grooming', 'Bath + hygiene care'], uk: ['Комплексний грумінг', 'Купання + гігієнічний догляд'] }, [p('main80'), p('bath60')]),
     poodles: make('ru-poodles-bichons', { de: '2. Pudel, Bichons und Pudeltypen', en: '2. Poodles, bichons and poodle-type breeds', uk: '2. Пуделі, бішони та пудельні породи' }, breed(['Toypudel', 'Zwergpudel', 'Kleinpudel', 'Mittelpudel', 'Großpudel', 'Bichon Frisé', 'Coton de Tuléar', 'Löwchen', 'Maltipoo'], ['Toy Poodle', 'Miniature Poodle', 'Small Poodle', 'Medium Poodle', 'Standard Poodle', 'Bichon Frise', 'Coton de Tulear', 'Löwchen', 'Maltipoo'], ['Той-пудель', 'Мініатюрний пудель', 'Малий пудель', 'Середній пудель', 'Великий пудель', 'Бішон фрізе', 'Котон де Тулеар', 'Левовий собачка', 'Мальтіпу']), { de: ['Komplettpflege', 'Baden + Hygienepflege'], en: ['Full grooming', 'Bath + hygiene care'], uk: ['Комплексний грумінг', 'Купання + гігієнічний догляд'] }, [p('main90'), p('bath70')]),
     spitz: make('ru-spitz', { de: '3. Spitze', en: '3. Spitz breeds', uk: '3. Шпіци' }, breed(['Zwergspitz / Pomeranian', 'Deutscher Spitz klein', 'Deutscher Spitz mittel', 'Deutscher Spitz groß'], ['Pomeranian / German Spitz', 'German Spitz, small', 'German Spitz, medium', 'German Spitz, large'], ['Померанський шпіц (цвергшпіц)', 'Німецький шпіц малий', 'Німецький шпіц середній', 'Німецький шпіц великий']), { de: ['Komplettpflege'], en: ['Full grooming'], uk: ['Комплексний грумінг'] }, [p('main90')]),
-    double: make('ru-double-coat', { de: '4. Doppeltes Fell', en: '4. Double coat', uk: '4. Подвійний тип шерсті' }, breed(['Shiba Inu', 'Pekingese', 'Weitere Rassen mit dichtem Unterfell'], ['Shiba Inu', 'Pekingese', 'Other dense double-coated breeds'], ['Шиба-іну', 'Пекінес', 'Інші породи з подвійною шерстю та щільним підшерстям']), { de: ['Komplettpflege'], en: ['Full care'], uk: ['Комплексний догляд'] }, [p('main90')]),
     spaniels: make('ru-spaniels', { de: '5. Spaniels', en: '5. Spaniels', uk: '5. Спанієлі' }, breed(['Englischer Cocker Spaniel', 'Amerikanischer Cocker Spaniel', 'Cavalier King Charles Spaniel', 'Russischer Spaniel'], ['English Cocker Spaniel', 'American Cocker Spaniel', 'Cavalier King Charles Spaniel', 'Russian Spaniel'], ['Англійський кокер-спанієль', 'Американський кокер-спанієль', 'Кавалер Кінг Чарльз спанієль', 'Російський спанієль']), { de: ['Komplettpflege', 'Baden + Hygienepflege'], en: ['Full grooming', 'Bath + hygiene care'], uk: ['Комплексний грумінг', 'Купання + гігієнічний догляд'] }, [p('main105'), p('bath85')]),
-    wire: make('ru-wire-coat', { de: '6. Rauhaarige Rassen', en: '6. Wire-coated breeds', uk: '6. Жорсткошерсті породи' }, breed(['West Highland White Terrier', 'Cairn Terrier', 'Jack Russell Terrier', 'Parson Russell Terrier', 'Zwergschnauzer', 'Mittelschnauzer'], ['West Highland White Terrier', 'Cairn Terrier', 'Jack Russell Terrier', 'Parson Russell Terrier', 'Miniature Schnauzer', 'Standard Schnauzer'], ['Вест-хайленд-вайт-тер’єр', 'Керн-тер’єр', 'Джек-рассел-тер’єр', 'Парсон-рассел-тер’єр', 'Цвергшнауцер', 'Міттельшнауцер']), { de: ['Schneiden', 'Trimmen / Handstripping', 'Baden + Hygienepflege'], en: ['Clipping', 'Hand stripping', 'Bath + hygiene care'], uk: ['Стрижка', 'Тримінг / Handstripping', 'Купання + гігієнічний догляд'] }, [p('main90'), p('request'), p('bath70')]),
+    wire: make('ru-wire-coat', { de: '6. Rauhaarige Rassen', en: '6. Wire-coated breeds', uk: '6. Жорсткошерсті породи' }, breed(['West Highland White Terrier', 'Cairn Terrier', 'Jack Russell Terrier', 'Parson Russell Terrier', 'Zwergschnauzer', 'Mittelschnauzer'], ['West Highland White Terrier', 'Cairn Terrier', 'Jack Russell Terrier', 'Parson Russell Terrier', 'Miniature Schnauzer', 'Standard Schnauzer'], ['Вест-хайленд-вайт-тер’єр', 'Керн-тер’єр', 'Джек-рассел-тер’єр', 'Парсон-рассел-тер’єр', 'Цвергшнауцер', 'Міттельшнауцер']), { de: ['Schneiden', 'Trimmen / Handstripping', 'Baden + Hygienepflege'], en: ['Clipping', 'Hand stripping', 'Bath + hygiene care'], uk: ['Стрижка', 'Тримінг / хендстрипінг', 'Купання + гігієнічний догляд'] }, [p('main90'), p('request'), p('bath70')]),
     short: make('ru-short-coat', { de: '7. Kurzhaarige Hunde', en: '7. Short-coated dogs', uk: '7. Короткошерсті собаки' }, breed(['Kurzhaar-Chihuahua', 'Toy-Terrier', 'Zwergpinscher', 'Pinscher', 'Französische Bulldogge', 'Mops', 'Beagle', 'Kurzhaar-Dackel', 'Dobermann', 'Dalmatiner'], ['Short-haired Chihuahua', 'Toy Terrier', 'Miniature Pinscher', 'Pinscher', 'French Bulldog', 'Pug', 'Beagle', 'Short-haired Dachshund', 'Dobermann', 'Dalmatian'], ['Чихуахуа гладкошерстий', 'Той-тер’єр', 'Мініатюрний пінчер', 'Пінчер', 'Французький бульдог', 'Мопс', 'Бігль', 'Такса гладкошерста', 'Доберман', 'Далматин']), { de: ['XS – kleine Rassen', 'S/M – kleine und mittelgroße Rassen', 'L – große Rassen'], en: ['XS — small breeds', 'S/M — small and medium breeds', 'L — large breeds'], uk: ['XS — мініатюрні породи', 'S/M — малі та середні породи', 'L — великі породи'] }, [p('main60'), p('main70'), p('main90l')]),
     large: make('ru-large-dogs', { de: '8. Große Hunde', en: '8. Large dogs', uk: '8. Великі собаки' }, breed(['Labrador Retriever', 'Golden Retriever', 'Deutscher Schäferhund', 'Belgischer Schäferhund', 'Siberian Husky', 'Akita Inu', 'Samojede', 'Bernhardiner', 'Bobtail', 'Berner Sennenhund', 'Neufundländer', 'Leonberger'], ['Labrador Retriever', 'Golden Retriever', 'German Shepherd', 'Belgian Shepherd', 'Siberian Husky', 'Akita Inu', 'Samoyed', 'Saint Bernard', 'Bobtail', 'Bernese Mountain Dog', 'Newfoundland', 'Leonberger'], ['Лабрадор-ретривер', 'Золотистий ретривер', 'Німецька вівчарка', 'Бельгійська вівчарка', 'Сибірський хаскі', 'Акіта-іну', 'Самоїд', 'Сенбернар', 'Бобтейл', 'Бернський зенненхунд', 'Ньюфаундленд', 'Леонбергер']), { de: ['Komplettpflege'], en: ['Full care'], uk: ['Комплексний догляд'] }, [p('main130')]),
     cats: make('ru-cats-grooming', { de: 'Katzen – Ausbürsten / Schneiden', en: 'Cats — brushing / clipping', uk: 'Коти — вичісування / стрижка' }, breed(['Katzen aller Rassen'], ['Cats of all breeds'], ['Коти всіх порід']), { de: ['Ausbürsten / Schneiden', 'Ausbürsten / Schneiden + Baden'], en: ['Brushing / clipping', 'Brushing / clipping + bath'], uk: ['Вичісування / стрижка', 'Вичісування / стрижка + купання'] }, [{ de: 'ab 60 €', en: 'from €60', uk: 'від 60 €' }, { de: 'ab 90 €', en: 'from €90', uk: 'від 90 €' }]),
     smallAnimals: make('ru-small-animals', { de: 'Kleintiere', en: 'Small animals', uk: 'Дрібні тварини' }, breed(['Meerschweinchen', 'Kaninchen'], ['Guinea pigs', 'Rabbits'], ['Морські свинки', 'Кролики']), { de: ['Meerschweinchen – Hygienepflege', 'Meerschweinchen – Baden + Pflege', 'Kaninchen – Ausbürsten + Hygienepflege'], en: ['Guinea pigs — hygiene care', 'Guinea pigs — bath + care', 'Rabbits — brushing + hygiene care'], uk: ['Морські свинки — гігієнічний догляд', 'Морські свинки — купання + догляд', 'Кролики — вичісування + гігієнічний догляд'] }, [p('main30'), p('main40'), p('main35')]),
     additional: make('ru-additional-services', { de: 'Zusatzleistungen', en: 'Additional services', uk: 'Додаткові послуги' }, breed(['Hunde', 'Katzen', 'Kleintiere'], ['Dogs', 'Cats', 'Small animals'], ['Собаки', 'Коти', 'Дрібні тварини']), { de: ['Krallen – kleine Tiere', 'Krallen – mittelgroße Tiere', 'Krallen – große Tiere', 'Ultraschall-Zahnpflege bis 6 kg', 'Aufbau- / Wellnessmaske', 'Ozontherapie', 'Erster Termin zur Welpengewöhnung'], en: ['Nail trim — small animals', 'Nail trim — medium animals', 'Nail trim — large animals', 'Ultrasonic teeth cleaning up to 6 kg', 'Restorative / wellness mask', 'Ozone therapy', 'First puppy grooming'], uk: ['Підрізання кігтів — малі тварини', 'Підрізання кігтів — середні тварини', 'Підрізання кігтів — великі тварини', 'Ультразвукова чистка зубів до 6 кг', 'Відновлювальна / оздоровча маска', 'Озонотерапія', 'Перший грумінг цуценяти'] }, [{ de: '7 €', en: '€7', uk: '7 €' }, { de: '10 €', en: '€10', uk: '10 €' }, { de: '12 €', en: '€12', uk: '12 €' }, p('from100'), p('from15'), p('from20'), p('main50')]),
-    important: make('ru-important-information', { de: 'Wichtige Informationen', en: 'Important information', uk: 'Важлива інформація' }, breed(['Alle Tiere'], ['All animals'], ['Усі тварини']), { de: ['Zusätzliche Zeit'], en: ['Additional time'], uk: ['Додатковий час'] }, [{ de: 'je weitere 10 Minuten separat', en: 'each additional 10 minutes charged separately', uk: 'кожні додаткові 10 хвилин оплачуються окремо' }]),
+    important: make('ru-important-information', { de: 'Wichtige Informationen', en: 'Important information', uk: 'Важлива інформація' }, breed(['Alle Tiere'], ['All animals'], ['Усі тварини']), { de: [], en: [], uk: [] }, []),
   };
 
   const definitions = Object.values(common);
   apply('de', definitions);
   apply('en', definitions);
   apply('uk', definitions);
+
+  // Финальная локализованная редакция прайса. Все названия здесь принадлежат
+  // соответствующему языку; русские подписи не используются как запасной текст.
+  const finalLocalizedDogs = {
+    'ru-small-growing-coat': {
+      title: { de: '1. Kleine Hunde – ständig wachsendes Fell', en: '1. Small dogs — continuously growing coat', uk: '1. Маленькі собаки — шерсть, що постійно росте' },
+      summary: { de: 'Komplettpflege für kleine Rassen mit ständig wachsendem Fell.', en: 'Full care for small breeds with continuously growing coats.', uk: 'Комплексний догляд для малих порід із шерстю, що постійно росте.' },
+      section: 'small', additionalServiceGroup: 'small',
+      breeds: {
+        de: ['Yorkshire Terrier', 'Biewer Yorkshire Terrier', 'Malteser', 'Shih Tzu', 'Havaneser', 'Bologneser', 'Zwetna Bolonka / Russische Farbolonka', 'Lhasa Apso', 'Pekingese', 'Japanischer Chin', 'Chinesischer Schopfhund – Powder Puff', 'Andere kleine Rassen mit vergleichbarer Fellstruktur'],
+        en: ['Yorkshire Terrier', 'Biewer Yorkshire Terrier', 'Maltese', 'Shih Tzu', 'Havanese', 'Bolognese', 'Zwetna Bolonka / Russian Colored Bolonka', 'Lhasa Apso', 'Pekingese', 'Japanese Chin', 'Chinese Crested — Powder Puff variety', 'Other small breeds with a similar coat type'],
+        uk: ['Йоркширський тер’єр', 'Бівер-йоркширський тер’єр', 'Мальтезе', 'Ши-тцу', 'Гаванез', 'Болоньєз', 'Болонка Zwetna / російська кольорова болонка', 'Лхаса апсо', 'Пекінес', 'Японський хін', 'Китайська чубата — пухова різновидність', 'Інші малі породи з аналогічним типом шерсті'],
+      },
+      labels: { de: ['Komplett-Grooming', 'Baden + Hygienepflege'], en: ['Full grooming', 'Bath + hygiene care'], uk: ['Комплексний грумінг', 'Купання + гігієнічний догляд'] },
+      prices: ['main80', 'bath60'],
+    },
+    'ru-poodles-bichons': {
+      title: { de: '2. Pudel, Bichons und Pudeltypen', en: '2. Poodles, bichons and poodle-type breeds', uk: '2. Пуделі, бішони та пудельні породи' },
+      summary: { de: 'Sorgfältige Pflege für lockiges und voluminöses Fell.', en: 'Detailed care for curly and voluminous coats.', uk: 'Ретельний догляд за кучерявою та об’ємною шерстю.' },
+      section: 'small', additionalServiceGroup: 'mixed',
+      breeds: {
+        de: ['Toypudel', 'Zwergpudel', 'Kleinpudel', 'Mittelpudel', 'Bichon Frisé', 'Coton de Tuléar', 'Löwchen', 'Maltipoo', 'Yorkipoo', 'Shih-Poo', 'Cavapoo', 'Cockapoo', 'Havapoo', 'Poochon', 'Kleine und mittelgroße Schnoodle', 'Andere Pudel- und Bichon-Mischlinge'],
+        en: ['Toy Poodle', 'Miniature Poodle', 'Small Poodle', 'Medium Poodle', 'Bichon Frise', 'Coton de Tulear', 'Löwchen', 'Maltipoo', 'Yorkipoo', 'Shih-Poo', 'Cavapoo', 'Cockapoo', 'Havapoo', 'Poochon', 'Small and medium Schnoodle', 'Other poodle and bichon mixes'],
+        uk: ['Той-пудель', 'Карликовий пудель', 'Малий пудель', 'Середній пудель', 'Бішон-фрізе', 'Котон-де-тулеар', 'Левхен', 'Мальтіпу', 'Йоркіпу', 'Ши-пу', 'Кавапу', 'Кокапу', 'Хавапу', 'Пучон', 'Невеликі та середні Schnoodle', 'Інші пудельні та бішонові метиси'],
+      },
+      labels: { de: ['Komplett-Grooming', 'Baden + Hygienepflege'], en: ['Full grooming', 'Bath + hygiene care'], uk: ['Комплексний грумінг', 'Купання + гігієнічний догляд'] },
+      prices: ['main90', 'bath70'],
+    },
+    'ru-spitz': {
+      title: { de: '3. Spitze', en: '3. Spitz breeds', uk: '3. Шпіци' },
+      summary: { de: 'Pflege von dichtem Unterfell, natürlichem Volumen und Form.', en: 'Care for dense undercoat, natural volume and shape.', uk: 'Догляд за щільним підшерстям, природним об’ємом і формою.' },
+      section: 'small', additionalServiceGroup: 'mixed',
+      breeds: {
+        de: ['Pomeranian / Zwergspitz', 'Deutscher Spitz, Zwergspitz', 'Deutscher Spitz, klein', 'Deutscher Spitz, mittel', 'Deutscher Spitz, groß', 'Wolfsspitz / Keeshond', 'Japan-Spitz', 'Finnischer Spitz'],
+        en: ['Pomeranian / German Spitz', 'German Spitz, dwarf / Zwergspitz', 'German Spitz, small', 'German Spitz, medium', 'German Spitz, large', 'Wolfspitz / Keeshond', 'Japanese Spitz', 'Finnish Spitz'],
+        uk: ['Померанський шпіц / Pomeranian', 'Німецький шпіц карликовий / Zwergspitz', 'Німецький шпіц малий', 'Німецький шпіц середній', 'Німецький шпіц великий', 'Вольфшпіц / Keeshond', 'Японський шпіц', 'Фінський шпіц'],
+      },
+      labels: { de: ['Komplett-Grooming'], en: ['Full grooming'], uk: ['Комплексний грумінг'] },
+      prices: ['main90'],
+    },
+    'ru-spaniels': {
+      title: { de: '4. Spaniels', en: '4. Spaniels', uk: '4. Спанієлі' },
+      summary: { de: 'Form, Volumen und ein sauberes Finish für Spaniels.', en: 'Shape, volume and a neat finish for spaniels.', uk: 'Форма, об’єм та акуратне оформлення шерсті спанієлів.' },
+      section: 'medium', additionalServiceGroup: 'medium',
+      breeds: {
+        de: ['Englischer Cocker Spaniel', 'Amerikanischer Cocker Spaniel', 'Cavalier King Charles Spaniel', 'King Charles Spaniel', 'Englischer Springer Spaniel', 'Welsh Springer Spaniel', 'Russischer Jagdspaniel', 'Field Spaniel', 'Clumber Spaniel', 'Sussex Spaniel', 'Andere Spaniels'],
+        en: ['English Cocker Spaniel', 'American Cocker Spaniel', 'Cavalier King Charles Spaniel', 'King Charles Spaniel', 'English Springer Spaniel', 'Welsh Springer Spaniel', 'Russian Hunting Spaniel', 'Field Spaniel', 'Clumber Spaniel', 'Sussex Spaniel', 'Other spaniels'],
+        uk: ['Англійський кокер-спанієль', 'Американський кокер-спанієль', 'Кавалер-кинг-чарльз-спанієль', 'Кінг-чарльз-спанієль', 'Англійський спрингер-спанієль', 'Вельш-спрингер-спанієль', 'Російський мисливський спанієль', 'Філд-спанієль', 'Кламбер-спанієль', 'Суссекс-спанієль', 'Інші спанієлі'],
+      },
+      labels: { de: ['Komplett-Grooming', 'Baden + Hygienepflege'], en: ['Full grooming', 'Bath + hygiene care'], uk: ['Комплексний грумінг', 'Купання + гігієнічний догляд'] },
+      prices: ['main105', 'bath85'],
+    },
+    'ru-wire-coat': {
+      title: { de: '5. Rauhaarige Rassen', en: '5. Wire-coated breeds', uk: '5. Жорсткошерсті породи' },
+      summary: { de: 'Schneiden oder Handstripping passend zur Struktur des rauen Fells.', en: 'Clipping or hand stripping according to the wire coat structure.', uk: 'Стрижка або ручний тримінг з урахуванням структури жорсткої шерсті.' },
+      section: 'medium', additionalServiceGroup: 'mixed',
+      breeds: {
+        de: ['West Highland White Terrier', 'Cairn-Terrier', 'Jack Russell Terrier – rauhaarig', 'Parson Russell Terrier – rauhaarig', 'Border Terrier', 'Norfolk Terrier', 'Norwich Terrier', 'Rauhaar-Foxterrier', 'Welsh Terrier', 'Irish Terrier', 'Airedale Terrier', 'Lakeland Terrier', 'Scottish Terrier', 'Sealyham Terrier', 'Kerry Blue Terrier', 'Irish Soft Coated Wheaten Terrier', 'Australian Terrier', 'Zwergschnauzer', 'Mittelschnauzer', 'Riesenschnauzer', 'Brüsseler Griffon', 'Belgischer Griffon', 'Brabanter / Petit Brabançon', 'Affenpinscher', 'Rauhaardackel', 'Rauhaar-Zwergdackel'],
+        en: ['West Highland White Terrier', 'Cairn Terrier', 'Jack Russell Terrier — wire-haired', 'Parson Russell Terrier — wire-haired', 'Border Terrier', 'Norfolk Terrier', 'Norwich Terrier', 'Wire Fox Terrier', 'Welsh Terrier', 'Irish Terrier', 'Airedale Terrier', 'Lakeland Terrier', 'Scottish Terrier', 'Sealyham Terrier', 'Kerry Blue Terrier', 'Irish Soft Coated Wheaten Terrier', 'Australian Terrier', 'Miniature Schnauzer', 'Standard Schnauzer', 'Giant Schnauzer', 'Brussels Griffon', 'Belgian Griffon', 'Brabançon / Petit Brabançon', 'Affenpinscher', 'Wire-haired Dachshund', 'Wire-haired Miniature Dachshund'],
+        uk: ['Вест-хайленд-вайт-тер’єр', 'Керн-тер’єр', 'Джек-рассел-тер’єр — жорсткошерстий', 'Парсон-рассел-тер’єр — жорсткошерстий', 'Бордер-тер’єр', 'Норфолк-тер’єр', 'Норвіч-тер’єр', 'Жорсткошерстий фокстер’єр', 'Вельштер’єр', 'Ірландський тер’єр', 'Ердельтер’єр', 'Лейкленд-тер’єр', 'Шотландський тер’єр', 'Сіліхем-тер’єр', 'Керрі-блю-тер’єр', 'Ірландський м’якошерстий пшеничний тер’єр', 'Австралійський тер’єр', 'Цвергшнауцер', 'Міттельшнауцер', 'Різеншнауцер', 'Брюссельський гриффон', 'Бельгійський гриффон', 'Брабансон / Petit Brabançon', 'Аффенпінчер', 'Жорсткошерста такса', 'Жорсткошерста цвергтакса'],
+      },
+      labels: { de: ['Schneiden', 'Trimmen / Handstripping', 'Baden + Hygienepflege'], en: ['Clipping', 'Hand stripping', 'Bath + hygiene care'], uk: ['Стрижка', 'Тримінг / ручний тримінг', 'Купання + гігієнічний догляд'] },
+      prices: ['main90', 'request', 'bath70'],
+    },
+    'ru-short-coat': {
+      title: { de: '6. Kurzhaarige Hunde', en: '6. Short-coated dogs', uk: '6. Короткошерсті собаки' },
+      summary: { de: 'Komplette Pflege nach der Größe des kurzhaarigen Hundes.', en: 'Full care package according to the dog’s size.', uk: 'Повний комплекс догляду відповідно до розміру короткошерстого собаки.' },
+      section: 'medium', additionalServiceGroup: 'mixed',
+      breeds: {
+        de: ['Kurzhaar-Chihuahua', 'Glatthaar-Russischer Toy', 'Prager Rattler', 'Toy-Terrier', 'Zwergpinscher', 'Französische Bulldogge', 'Mops', 'Boston Terrier', 'Englische Bulldogge', 'Beagle', 'Kurzhaar-Dackel', 'Kurzhaar-Zwergdackel', 'Italienisches Windspiel', 'Basenji', 'Whippet', 'Deutscher Pinscher', 'American Staffordshire Terrier / Amstaff', 'Staffordshire Bullterrier', 'Bullterrier', 'Miniatur-Bullterrier', 'American Pit Bull Terrier', 'American Bully', 'Shar Pei', 'Xoloitzcuintle – mittlere Größe', 'Dobermann', 'Rottweiler', 'Boxer', 'Dalmatiner', 'Weimaraner', 'Rhodesian Ridgeback', 'Cane Corso', 'American Bulldog', 'Dogo Argentino', 'Bullmastiff', 'Deutsche Dogge', 'Deutsch-Kurzhaar', 'Ungarischer Vorstehhund / Vizsla', 'English Pointer', 'Greyhound', 'Podenco Ibicenco', 'Podenco Canario', 'Xoloitzcuintle – Standardgröße'],
+        en: ['Short-haired Chihuahua', 'Russian Toy — smooth coat', 'Prague Ratter', 'Toy Terrier', 'Miniature Pinscher', 'French Bulldog', 'Pug', 'Boston Terrier', 'English Bulldog', 'Beagle', 'Short-haired Dachshund', 'Short-haired Miniature Dachshund', 'Italian Greyhound', 'Basenji', 'Whippet', 'German Pinscher', 'American Staffordshire Terrier / Amstaff', 'Staffordshire Bull Terrier', 'Bull Terrier', 'Miniature Bull Terrier', 'American Pit Bull Terrier', 'American Bully', 'Shar Pei', 'Xoloitzcuintli — medium size', 'Dobermann', 'Rottweiler', 'Boxer', 'Dalmatian', 'Weimaraner', 'Rhodesian Ridgeback', 'Cane Corso', 'American Bulldog', 'Dogo Argentino', 'Bullmastiff', 'Great Dane', 'German Shorthaired Pointer', 'Hungarian Vizsla', 'English Pointer', 'Greyhound', 'Ibizan Hound', 'Presa Canario', 'Xoloitzcuintli — standard size'],
+        uk: ['Гладкошерстий чихуахуа', 'Російський той — гладкошерстий', 'Празький крисарик', 'Той-тер’єр', 'Карликовий пінчер', 'Французький бульдог', 'Мопс', 'Бостон-тер’єр', 'Англійський бульдог', 'Бігль', 'Гладкошерста такса', 'Гладкошерста цвергтакса', 'Левретка', 'Басенджі', 'Віппет', 'Німецький пінчер', 'Американський стаффордширський тер’єр / Amstaff', 'Стаффордширський бультер’єр', 'Бультер’єр', 'Мініатюрний бультер’єр', 'Американський пітбультер’єр', 'American Bully', 'Шарпей', 'Ксолойтцкуінтлі середнього розміру', 'Доберман', 'Ротвейлер', 'Боксер', 'Далматин', 'Веймаранер', 'Родезійський риджбек', 'Кане-корсо', 'Американський бульдог', 'Аргентинський дог', 'Бульмастиф', 'Німецький дог', 'Курцхаар', 'Угорська вижла', 'Англійський пойнтер', 'Грейхаунд', 'Поденко ібісенко', 'Поденко канаріо', 'Ксолойтцкуінтлі стандартного розміру'],
+      },
+      labels: { de: ['XS', 'S', 'M', 'L'], en: ['XS', 'S', 'M', 'L'], uk: ['XS', 'S', 'M', 'L'] },
+      prices: ['main60', 'main70', 'main80', 'from100'],
+    },
+    'ru-large-dogs': {
+      title: { de: '7. Große Hunde', en: '7. Large dogs', uk: '7. Великі собаки' },
+      summary: { de: 'Komplettpflege für große Rassen mit großem Fellvolumen.', en: 'Full care for large breeds with a substantial coat volume.', uk: 'Комплексний догляд для великих порід із великим об’ємом шерсті.' },
+      section: 'large', additionalServiceGroup: 'large',
+      breeds: {
+        de: ['Labrador Retriever', 'Golden Retriever', 'Deutscher Schäferhund', 'Belgischer Schäferhund', 'Australischer Schäferhund', 'Border Collie', 'Shetland Sheepdog / Sheltie', 'Langhaar-Collie', 'Siberian Husky', 'Alaskan Malamute', 'Samojede', 'Chow-Chow', 'Akita Inu', 'Amerikanische Akita', 'Berner Sennenhund', 'Großer Schweizer Sennenhund', 'Neufundländer', 'Leonberger', 'Bernhardiner', 'Bobtail', 'Hovawart', 'Kaukasischer Owtscharka', 'Zentralasiatischer Owtscharka', 'Pyrenäenberghund', 'Komondor', 'Kuvasz', 'Bergamasker Hirtenhund', 'Briard', 'Russischer Schwarzer Terrier', 'Großpudel', 'Große Labradoodle', 'Große Goldendoodle', 'Große Bernedoodle', 'Große Australian Labradoodle', 'Andere große Rassen mit großem Fellvolumen'],
+        en: ['Labrador Retriever', 'Golden Retriever', 'German Shepherd', 'Belgian Shepherd', 'Australian Shepherd', 'Border Collie', 'Shetland Sheepdog / Sheltie', 'Rough Collie', 'Siberian Husky', 'Alaskan Malamute', 'Samoyed', 'Chow Chow', 'Akita Inu', 'American Akita', 'Bernese Mountain Dog', 'Greater Swiss Mountain Dog', 'Newfoundland', 'Leonberger', 'Saint Bernard', 'Old English Sheepdog', 'Hovawart', 'Caucasian Shepherd', 'Central Asian Shepherd', 'Great Pyrenees', 'Komondor', 'Kuvasz', 'Bergamasco Shepherd', 'Briard', 'Russian Black Terrier', 'Standard Poodle', 'Large Labradoodle', 'Large Goldendoodle', 'Large Bernedoodle', 'Large Australian Labradoodle', 'Other large breeds with a substantial coat volume'],
+        uk: ['Лабрадор-ретривер', 'Голден-ретривер', 'Німецька вівчарка', 'Бельгійська вівчарка', 'Австралійська вівчарка', 'Бордер-колі', 'Шелті', 'Довгошерстий колі', 'Сибірський хаскі', 'Аляскинський маламут', 'Самоїд', 'Чау-чау', 'Акіта-іну', 'Американська акіта', 'Бернський зенненхунд', 'Великий швейцарський зенненхунд', 'Ньюфаундленд', 'Леонбергер', 'Сенбернар', 'Бобтейл', 'Ховаварт', 'Кавказька вівчарка', 'Середньоазійська вівчарка', 'Піренейський гірський собака', 'Комондор', 'Кувас', 'Бергамська вівчарка', 'Бріар', 'Російський чорний тер’єр', 'Великий пудель', 'Великі Labradoodle', 'Великі Goldendoodle', 'Великі Bernedoodle', 'Великі Australian Labradoodle', 'Інші великі породи з великим об’ємом шерсті'],
+      },
+      labels: { de: ['Komplettpflege'], en: ['Full care'], uk: ['Комплексний догляд'] },
+      prices: ['main130'],
+    },
+  };
+
+  const finalLocalizedDogIds = Object.keys(finalLocalizedDogs);
+  ['de', 'en', 'uk'].forEach(lang => {
+    const existing = catalog.categoriesByLocale[lang] || [];
+    const finalDogs = finalLocalizedDogIds.map(id => {
+      const definition = finalLocalizedDogs[id];
+      const current = existing.find(category => category.id === id) || {};
+      const category = { ...current };
+      category.title = { [lang]: definition.title[lang] };
+      category.summary = { [lang]: definition.summary[lang] };
+      category.breeds = { [lang]: [...definition.breeds[lang]] };
+      category.priceRows = definition.prices.map((priceKey, index) => ({
+        label: { [lang]: definition.labels[lang][index] },
+        price: p(priceKey),
+      }));
+      category.notes = (serviceNotesByCategory[id] || []).map(noteText => ({ [lang]: noteText[lang] }));
+      category.pageSection = definition.section;
+      category.additionalServiceGroup = definition.additionalServiceGroup;
+      delete category.sizeGroups;
+      return category;
+    });
+
+    catalog.categoriesByLocale[lang] = [
+      ...finalDogs,
+      ...existing.filter(category => category.id && !finalLocalizedDogIds.includes(category.id)),
+    ];
+  });
 })(window);

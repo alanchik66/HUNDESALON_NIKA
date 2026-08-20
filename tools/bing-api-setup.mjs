@@ -6,6 +6,7 @@ import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './lib/browser-launch.mjs';
 import { getJson, openBingWebmasterSession } from './lib/browser-cdp.mjs';
 import { upsertDevVar } from './lib/cloudflare-auth.mjs';
 
@@ -48,8 +49,10 @@ async function ensureCdp() {
 
   const userDataDir = path.join(process.env.TEMP || '.', 'hundesalon-nika-edge-debug');
   const startUrl = `https://www.bing.com/webmasters/settings/apiaccess?siteUrl=${siteQ}`;
+  const pidFile = browserPidFile('hundesalon-nika-edge-debug');
 
-  spawn(
+  stopTrackedBrowser(pidFile);
+  launchTrackedBrowser(
     candidates[0],
     [
       `--remote-debugging-port=${port}`,
@@ -58,8 +61,8 @@ async function ensureCdp() {
       '--no-default-browser-check',
       startUrl,
     ],
-    { detached: true, stdio: 'ignore' }
-  ).unref();
+    pidFile
+  );
 
   console.log(`Starting Edge (port ${port})…`);
 

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="de" data-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#010301">
+    <meta name="color-scheme" content="dark">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="HUNDESALON_NIKA – interaktives Menü für Online-Termin, Leistungen, Kontakt und Support.">
+    <title>HUNDESALON_NIKA</title>
+    <link rel="stylesheet" href="/assets/css/telegram-menu.css?v=20260811">
+    <script type="module" src="/assets/js/telegram-menu.js?v=20260811"></script>
+  </head>
+  <body>
+    <div class="telegram-menu__ambient telegram-menu__ambient--one" aria-hidden="true"></div>
+    <div class="telegram-menu__ambient telegram-menu__ambient--two" aria-hidden="true"></div>
+
+    <main class="telegram-menu" aria-labelledby="telegram-menu-title">
+      <header class="telegram-menu__header">
+        <a class="telegram-menu__brand" href="/de/" aria-label="HUNDESALON_NIKA">
+          <span class="telegram-menu__brand-mark">
+            <img src="/assets/images/brand/logo.png" alt="">
+          </span>
+          <span class="telegram-menu__brand-copy">
+            <span class="telegram-menu__eyebrow">Leipzig · Sachsen</span>
+            <span class="telegram-menu__name">HUNDESALON_NIKA</span>
+          </span>
+        </a>
+        <button class="telegram-menu__language-trigger" type="button" data-language-trigger aria-controls="telegram-menu-languages" aria-expanded="false">
+          <span aria-hidden="true">◎</span>
+          <span data-current-language>DE</span>
+        </button>
+      </header>
+
+      <section class="telegram-menu__hero">
+        <p class="telegram-menu__eyebrow telegram-menu__eyebrow--gold" data-i18n="eyebrow">Premium-Fellpflege</p>
+        <h1 id="telegram-menu-title" data-i18n="title">Alles für Ihr Tier. Mit Liebe zum Detail.</h1>
+        <p class="telegram-menu__lead" data-i18n="lead">Wählen Sie einen Bereich – der passende Weg öffnet sich sofort.</p>
+      </section>
+
+      <section class="telegram-menu__actions" aria-label="HUNDESALON_NIKA Menü">
+        <button class="telegram-menu__action telegram-menu__action--primary" type="button" data-route="booking">
+          <span class="telegram-menu__action-icon" aria-hidden="true">✦</span>
+          <span class="telegram-menu__action-copy">
+            <span class="telegram-menu__action-title" data-i18n="bookingTitle">Online-Termin</span>
+            <span class="telegram-menu__action-description" data-i18n="bookingDescription">Wunschtermin bequem anfragen</span>
+          </span>
+          <span class="telegram-menu__action-arrow" aria-hidden="true">→</span>
+        </button>
+
+        <button class="telegram-menu__action" type="button" data-route="prices">
+          <span class="telegram-menu__action-icon" aria-hidden="true">◇</span>
+          <span class="telegram-menu__action-copy">
+            <span class="telegram-menu__action-title" data-i18n="pricesTitle">Leistungen &amp; Preise</span>
+            <span class="telegram-menu__action-description" data-i18n="pricesDescription">Passende Pflege transparent finden</span>
+          </span>
+          <span class="telegram-menu__action-arrow" aria-hidden="true">→</span>
+        </button>
+
+        <button class="telegram-menu__action" type="button" data-route="contact">
+          <span class="telegram-menu__action-icon" aria-hidden="true">⌖</span>
+          <span class="telegram-menu__action-copy">
+            <span class="telegram-menu__action-title" data-i18n="contactTitle">Adresse &amp; Zeiten</span>
+            <span class="telegram-menu__action-description" data-i18n="contactDescription">Unser Salon in Leipzig</span>
+          </span>
+          <span class="telegram-menu__action-arrow" aria-hidden="true">→</span>
+        </button>
+
+        <button class="telegram-menu__action telegram-menu__action--support" type="button" data-route="support">
+          <span class="telegram-menu__action-icon" aria-hidden="true">✦</span>
+          <span class="telegram-menu__action-copy">
+            <span class="telegram-menu__action-title" data-i18n="supportTitle">Mitarbeiter kontaktieren</span>
+            <span class="telegram-menu__action-description" data-i18n="supportDescription">Wir antworten direkt im Telegram-Chat</span>
+          </span>
+          <span class="telegram-menu__action-arrow" aria-hidden="true">→</span>
+        </button>
+      </section>
+
+      <section class="telegram-menu__promise" aria-label="HUNDESALON_NIKA">
+        <span class="telegram-menu__promise-line" aria-hidden="true"></span>
+        <p data-i18n="promise">Persönliche Beratung · Transparente Preise · Liebevolle Fellpflege</p>
+        <span class="telegram-menu__promise-line" aria-hidden="true"></span>
+      </section>
+    </main>
+
+    <section class="telegram-menu__language-sheet" id="telegram-menu-languages" aria-label="Sprache wählen" hidden>
+      <div class="telegram-menu__sheet-backdrop" data-language-close></div>
+      <div class="telegram-menu__sheet-panel" role="dialog" aria-modal="true" aria-labelledby="telegram-menu-language-title">
+        <div class="telegram-menu__sheet-heading">
+          <p class="telegram-menu__eyebrow telegram-menu__eyebrow--gold" data-i18n="languageEyebrow">Ihre Sprache</p>
+          <h2 id="telegram-menu-language-title" data-i18n="languageTitle">Wie dürfen wir Sie begrüßen?</h2>
+          <button class="telegram-menu__sheet-close" type="button" data-language-close aria-label="Close">×</button>
+        </div>
+        <div class="telegram-menu__language-grid">
+          <button type="button" data-language="de">Deutsch</button>
+          <button type="button" data-language="en">English</button>
+          <button type="button" data-language="ru">Русский</button>
+          <button type="button" data-language="uk">Українська</button>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>

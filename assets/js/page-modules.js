@@ -19,19 +19,42 @@ document.addEventListener('DOMContentLoaded', () => {
   const bookingCopyByLang = {
     ru: {
       weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
-      services: ['Полный груминг собаки', 'Экспресс-линька', 'Гигиенический уход', 'Груминг кошки', 'SPA-уход', 'Ваши предложения'],
+      services: ['Полный груминг собаки', 'Экспресс-линька', 'Гигиенический уход', 'Груминг кошки', 'СПА-уход', 'Ваши предложения'],
       fallbackService: 'Выбранная услуга',
       chooseService: 'Выберите услугу',
       chooseBreed: 'Выберите породу или категорию питомца',
       serviceStep: '1. Порода и услуга',
+      datetimeStep: '2. Дата и время привода',
+      datetimeTitle: 'Выберите дату и время привода',
       breedLabel: 'Порода или категория',
       serviceLabel: 'Подходящая услуга',
       priceLabel: 'Ориентировочная цена',
       chooseBreedFirst: 'Сначала выберите породу или категорию питомца',
       noServiceForBreed: 'Для выбранной породы пока нет доступной услуги.',
       chooseDate: 'Выберите дату',
-      chooseTime: 'Выберите время',
+      chooseTime: 'Выберите время привода',
       chooseContact: 'Заполните имя, email и телефон',
+      petRegistration: {
+        legend: 'Данные питомца для учёта записи',
+        intro: 'Данные нужны для внутреннего учёта клиента и питомца и не публикуются на сайте.',
+        name: 'Кличка питомца',
+        species: 'Вид животного',
+        breed: 'Порода',
+        age: 'Возраст или дата рождения',
+        sex: 'Пол',
+        sexChoose: 'Не указан',
+        female: 'Самка',
+        male: 'Самец',
+        tag: 'Номер жетона',
+        speciesChoose: 'Выберите вид',
+        auto: 'Определяется автоматически по выбранной породе',
+        dog: 'Собака',
+        cat: 'Кошка',
+        smallAnimal: 'Мелкое животное',
+        rabbit: 'Кролик',
+        guineaPig: 'Морская свинка',
+        other: 'Другое',
+      },
       choosePrivacy: 'Подтвердите согласие на обработку персональных данных',
       chooseAgb: 'Подтвердите ознакомление с правилами салона (AGB)',
       paymentRedirect: 'Переходим к безопасной онлайн-оплате…',
@@ -52,10 +75,16 @@ document.addEventListener('DOMContentLoaded', () => {
         breed: 'Порода',
         servicePrice: 'Цена',
         date: 'Дата',
-        time: 'Время',
+        time: 'Время привода',
         name: 'Имя',
         email: 'Email',
         phone: 'Телефон',
+        petName: 'Питомец',
+        petSpecies: 'Вид животного',
+        petBreed: 'Порода питомца',
+        petAge: 'Возраст / дата рождения',
+        petSex: 'Пол питомца',
+        petTag: 'Номер жетона',
         payment: 'Оплата',
         file: 'Файл',
         payNow: 'Онлайн-предоплата',
@@ -67,24 +96,47 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       closeModal: 'Закрыть окно',
       datetimePickDate: 'Сначала выберите дату в календаре',
-      datetimePickTime: 'Теперь выберите удобное время',
+      datetimePickTime: 'Теперь выберите удобное время привода',
       datetimeDateChosen: 'Дата выбрана',
     },
     uk: {
       weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
-      services: ['Повний грумінг собаки', 'Експрес-линька', 'Гігієнічний догляд', 'Грумінг кота', 'SPA-догляд', 'Ваші пропозиції'],
+      services: ['Повний грумінг собаки', 'Експрес-линька', 'Гігієнічний догляд', 'Грумінг кота', 'СПА-догляд', 'Ваші пропозиції'],
       fallbackService: 'Обрана послуга',
       chooseService: 'Оберіть послугу',
       chooseBreed: 'Оберіть породу або категорію улюбленця',
       serviceStep: '1. Порода та послуга',
+      datetimeStep: '2. Дата й час привезення',
+      datetimeTitle: 'Оберіть дату й час привезення',
       breedLabel: 'Порода або категорія',
       serviceLabel: 'Доступна послуга',
       priceLabel: 'Орієнтовна вартість',
       chooseBreedFirst: 'Спочатку оберіть породу або категорію улюбленця',
       noServiceForBreed: 'Для обраної породи наразі немає доступної послуги.',
       chooseDate: 'Оберіть дату',
-      chooseTime: 'Оберіть час',
+      chooseTime: 'Оберіть час привезення',
       chooseContact: 'Заповніть імʼя, email і телефон',
+      petRegistration: {
+        legend: 'Дані улюбленця для обліку запису',
+        intro: 'Дані потрібні для внутрішнього обліку клієнта й улюбленця та не публікуються на сайті.',
+        name: 'Кличка улюбленця',
+        species: 'Вид тварини',
+        breed: 'Порода',
+        age: 'Вік або дата народження',
+        sex: 'Стать',
+        sexChoose: 'Не вказано',
+        female: 'Самка',
+        male: 'Самець',
+        tag: 'Номер жетона',
+        speciesChoose: 'Оберіть вид',
+        auto: 'Визначається автоматично за обраною породою',
+        dog: 'Собака',
+        cat: 'Кіт',
+        smallAnimal: 'Дрібна тварина',
+        rabbit: 'Кролик',
+        guineaPig: 'Морська свинка',
+        other: 'Інше',
+      },
       choosePrivacy: 'Підтвердьте згоду на обробку персональних даних',
       chooseAgb: 'Підтвердьте ознайомлення з правилами салону (AGB)',
       paymentRedirect: 'Переходимо до безпечної онлайн-оплати…',
@@ -105,10 +157,16 @@ document.addEventListener('DOMContentLoaded', () => {
         breed: 'Порода',
         servicePrice: 'Вартість',
         date: 'Дата',
-        time: 'Час',
+        time: 'Час привезення',
         name: 'Імʼя',
         email: 'Email',
         phone: 'Телефон',
+        petName: 'Улюбленець',
+        petSpecies: 'Вид тварини',
+        petBreed: 'Порода улюбленця',
+        petAge: 'Вік / дата народження',
+        petSex: 'Стать улюбленця',
+        petTag: 'Номер жетона',
         payment: 'Оплата',
         file: 'Файл',
         payNow: 'Онлайн-передоплата',
@@ -120,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       closeModal: 'Закрити вікно',
       datetimePickDate: 'Спочатку оберіть дату в календарі',
-      datetimePickTime: 'Тепер оберіть зручний час',
+      datetimePickTime: 'Тепер оберіть зручний час привезення',
       datetimeDateChosen: 'Дату обрано',
     },
     en: {
@@ -130,14 +188,37 @@ document.addEventListener('DOMContentLoaded', () => {
       chooseService: 'Please select a service',
       chooseBreed: 'Choose your pet’s breed or category',
       serviceStep: '1. Breed and service',
+      datetimeStep: '2. Date and arrival time',
+      datetimeTitle: 'Choose a date and arrival time',
       breedLabel: 'Breed or category',
       serviceLabel: 'Available service',
       priceLabel: 'Estimated price',
       chooseBreedFirst: 'Choose a breed or pet category first',
       noServiceForBreed: 'No service is currently available for this breed.',
       chooseDate: 'Please select a date',
-      chooseTime: 'Please select a time',
+      chooseTime: 'Please select an arrival time',
       chooseContact: 'Please fill in name, email, and phone',
+      petRegistration: {
+        legend: 'Pet details for booking records',
+        intro: 'These details are used for the salon’s private client and pet register and are not published on the website.',
+        name: 'Pet name',
+        species: 'Animal type',
+        breed: 'Breed',
+        age: 'Age or date of birth',
+        sex: 'Sex',
+        sexChoose: 'Not specified',
+        female: 'Female',
+        male: 'Male',
+        tag: 'Tag number',
+        speciesChoose: 'Choose animal type',
+        auto: 'Detected automatically from the selected breed',
+        dog: 'Dog',
+        cat: 'Cat',
+        smallAnimal: 'Small animal',
+        rabbit: 'Rabbit',
+        guineaPig: 'Guinea pig',
+        other: 'Other',
+      },
       choosePrivacy: 'Please confirm personal data processing consent',
       chooseAgb: 'Please confirm you have read the salon rules (AGB)',
       paymentRedirect: 'Redirecting to secure online payment…',
@@ -158,10 +239,16 @@ document.addEventListener('DOMContentLoaded', () => {
         breed: 'Breed',
         servicePrice: 'Price',
         date: 'Date',
-        time: 'Time',
+        time: 'Arrival time',
         name: 'Name',
         email: 'Email',
         phone: 'Phone',
+        petName: 'Pet name',
+        petSpecies: 'Animal type',
+        petBreed: 'Pet breed',
+        petAge: 'Age / date of birth',
+        petSex: 'Pet sex',
+        petTag: 'Tag number',
         payment: 'Payment',
         file: 'File',
         payNow: 'Pay now',
@@ -173,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       closeModal: 'Close dialog',
       datetimePickDate: 'Start by choosing a date in the calendar',
-      datetimePickTime: 'Now pick a convenient time',
+      datetimePickTime: 'Now pick a convenient arrival time',
       datetimeDateChosen: 'Date selected',
     },
     de: {
@@ -183,14 +270,37 @@ document.addEventListener('DOMContentLoaded', () => {
       chooseService: 'Bitte wählen Sie eine Leistung',
       chooseBreed: 'Wählen Sie Rasse oder Tierkategorie',
       serviceStep: '1. Rasse und Leistung',
+      datetimeStep: '2. Datum und Ankunftszeit',
+      datetimeTitle: 'Datum und Ankunftszeit auswählen',
       breedLabel: 'Rasse oder Kategorie',
       serviceLabel: 'Passende Leistung',
       priceLabel: 'Richtpreis',
       chooseBreedFirst: 'Wählen Sie zuerst Rasse oder Tierkategorie',
       noServiceForBreed: 'Für diese Rasse ist derzeit keine passende Leistung verfügbar.',
       chooseDate: 'Bitte wählen Sie ein Datum',
-      chooseTime: 'Bitte wählen Sie eine Uhrzeit',
+      chooseTime: 'Bitte wählen Sie eine Ankunftszeit',
       chooseContact: 'Bitte füllen Sie Name, E-Mail und Telefon aus',
+      petRegistration: {
+        legend: 'Tierdaten für die Buchungsakte',
+        intro: 'Diese Angaben werden im geschützten Kunden- und Tierregister des Salons gespeichert und nicht auf der Website veröffentlicht.',
+        name: 'Name des Tieres',
+        species: 'Tierart',
+        breed: 'Rasse',
+        age: 'Alter oder Geburtsdatum',
+        sex: 'Geschlecht',
+        sexChoose: 'Nicht angegeben',
+        female: 'Weiblich',
+        male: 'Männlich',
+        tag: 'Markennummer',
+        speciesChoose: 'Tierart auswählen',
+        auto: 'Wird automatisch aus der gewählten Rasse erkannt',
+        dog: 'Hund',
+        cat: 'Katze',
+        smallAnimal: 'Kleines Tier',
+        rabbit: 'Kaninchen',
+        guineaPig: 'Meerschweinchen',
+        other: 'Andere',
+      },
       choosePrivacy: 'Bitte bestätigen Sie die Verarbeitung personenbezogener Daten',
       chooseAgb: 'Bitte bestätigen Sie die Salonregeln (AGB)',
       paymentRedirect: 'Weiterleitung zur sicheren Online-Zahlung…',
@@ -211,10 +321,16 @@ document.addEventListener('DOMContentLoaded', () => {
         breed: 'Rasse',
         servicePrice: 'Preis',
         date: 'Datum',
-        time: 'Uhrzeit',
+        time: 'Ankunftszeit',
         name: 'Name',
         email: 'E-Mail',
         phone: 'Telefon',
+        petName: 'Name des Tieres',
+        petSpecies: 'Tierart',
+        petBreed: 'Rasse des Tieres',
+        petAge: 'Alter / Geburtsdatum',
+        petSex: 'Geschlecht des Tieres',
+        petTag: 'Markennummer',
         payment: 'Zahlung',
         file: 'Datei',
         payNow: 'Jetzt bezahlen',
@@ -226,7 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       closeModal: 'Dialog schließen',
       datetimePickDate: 'Wählen Sie zuerst ein Datum im Kalender',
-      datetimePickTime: 'Wählen Sie nun eine passende Uhrzeit',
+      datetimePickTime: 'Wählen Sie nun eine passende Ankunftszeit',
       datetimeDateChosen: 'Datum gewählt',
     },
   };
@@ -239,6 +355,170 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   const bookingLocale = bookingLocaleByLang[pageLang] || bookingLocaleByLang.en;
   const bookingCopy = bookingCopyByLang[pageLang] || bookingCopyByLang.en;
+
+  const bookingRiskCopyByLang = {
+    ru: {
+      clientTypeLabel: 'Статус клиента',
+      clientTypePlaceholder: 'Выберите вариант',
+      clientTypeNew: 'Первое посещение / новый клиент',
+      clientTypeReturning: 'Постоянный клиент',
+      coatLabel: 'Состояние шерсти',
+      coatPlaceholder: 'Выберите состояние шерсти',
+      coatGood: 'Хорошее состояние',
+      coatSlightMats: 'Есть небольшие колтуны',
+      coatManyMats: 'Много колтунов',
+      coatSevereMatting: 'Сильное сваливание шерсти',
+      behaviourLabel: 'Поведение питомца',
+      behaviourPlaceholder: 'Выберите поведение',
+      behaviourCalm: 'Спокойный',
+      behaviourRestless: 'Беспокойный',
+      behaviourVeryRestless: 'Очень беспокойный',
+      behaviourAggressive: 'Может проявлять агрессию',
+      riskHint: 'Эти ответы помогают заложить безопасный резерв времени. Они не фиксируют окончательную цену.',
+      duration: minutes => {
+        const hours = Math.floor(minutes / 60);
+        const remainder = minutes % 60;
+        const value = hours ? `${hours} ч${remainder ? ` ${remainder} мин` : ''}` : `${remainder} мин`;
+        return `Ориентировочная длительность процедуры — ${value}.`;
+      },
+      endingHint: 'Точное время окончания зависит от состояния шерсти, поведения и фактического объёма работы.',
+      availabilityLoading: 'Проверяем безопасные окна записи…',
+      availabilityFallback: 'Показываем консервативные окна с резервом. Финальное подтверждение выполняет салон.',
+      noSafeSlots: 'На эту дату нет безопасных окон. Выберите другую дату или отправьте запрос в салон.',
+      requestNote: 'Это запрос на запись. Время привода фиксируется после проверки салоном.',
+      labels: {
+        clientType: 'Статус клиента',
+        coatCondition: 'Состояние шерсти',
+        behaviour: 'Поведение',
+        duration: 'Ориентировочная длительность',
+        buffer: 'Внутренний резерв',
+        bookingMode: 'Режим подтверждения',
+      },
+      requested: 'Запрос на подтверждение',
+      chooseField: field => `Выберите: ${field}`,
+    },
+    uk: {
+      clientTypeLabel: 'Статус клієнта',
+      clientTypePlaceholder: 'Оберіть варіант',
+      clientTypeNew: 'Перший візит / новий клієнт',
+      clientTypeReturning: 'Постійний клієнт',
+      coatLabel: 'Стан шерсті',
+      coatPlaceholder: 'Оберіть стан шерсті',
+      coatGood: 'Добрий стан',
+      coatSlightMats: 'Є невеликі ковтуни',
+      coatManyMats: 'Багато ковтунів',
+      coatSevereMatting: 'Сильне звалювання шерсті',
+      behaviourLabel: 'Поведінка улюбленця',
+      behaviourPlaceholder: 'Оберіть поведінку',
+      behaviourCalm: 'Спокійний',
+      behaviourRestless: 'Неспокійний',
+      behaviourVeryRestless: 'Дуже неспокійний',
+      behaviourAggressive: 'Може проявляти агресію',
+      riskHint: 'Ці відповіді допомагають закласти безпечний резерв часу. Вони не фіксують остаточну вартість.',
+      duration: minutes => {
+        const hours = Math.floor(minutes / 60);
+        const remainder = minutes % 60;
+        const value = hours ? `${hours} год${remainder ? ` ${remainder} хв` : ''}` : `${remainder} хв`;
+        return `Орієнтовна тривалість процедури — ${value}.`;
+      },
+      endingHint: 'Точний час завершення залежить від стану шерсті, поведінки та фактичного обсягу роботи.',
+      availabilityLoading: 'Перевіряємо безпечні вікна запису…',
+      availabilityFallback: 'Показуємо консервативні вікна з резервом. Остаточне підтвердження виконує салон.',
+      noSafeSlots: 'На цю дату немає безпечних вікон. Оберіть іншу дату або надішліть запит до салону.',
+      requestNote: 'Це запит на запис. Час привезення фіксується після перевірки салоном.',
+      labels: {
+        clientType: 'Статус клієнта',
+        coatCondition: 'Стан шерсті',
+        behaviour: 'Поведінка',
+        duration: 'Орієнтовна тривалість',
+        buffer: 'Внутрішній резерв',
+        bookingMode: 'Режим підтвердження',
+      },
+      requested: 'Запит на підтвердження',
+      chooseField: field => `Оберіть: ${field}`,
+    },
+    en: {
+      clientTypeLabel: 'Client status',
+      clientTypePlaceholder: 'Choose an option',
+      clientTypeNew: 'First visit / new client',
+      clientTypeReturning: 'Returning client',
+      coatLabel: 'Coat condition',
+      coatPlaceholder: 'Choose coat condition',
+      coatGood: 'Good condition',
+      coatSlightMats: 'A few small mats',
+      coatManyMats: 'Many mats',
+      coatSevereMatting: 'Severe matting',
+      behaviourLabel: 'Pet behaviour',
+      behaviourPlaceholder: 'Choose behaviour',
+      behaviourCalm: 'Calm',
+      behaviourRestless: 'Restless',
+      behaviourVeryRestless: 'Very restless',
+      behaviourAggressive: 'May show aggression',
+      riskHint: 'These answers help us reserve safer working time. They do not fix the final price.',
+      duration: minutes => {
+        const hours = Math.floor(minutes / 60);
+        const remainder = minutes % 60;
+        const value = hours ? `${hours}h${remainder ? ` ${remainder} min` : ''}` : `${remainder} min`;
+        return `Estimated procedure duration — ${value}.`;
+      },
+      endingHint: 'The exact finish time depends on coat condition, behaviour and the actual work required.',
+      availabilityLoading: 'Checking safe booking windows…',
+      availabilityFallback: 'Showing conservative windows with reserve time. The salon confirms the final booking.',
+      noSafeSlots: 'There are no safe windows on this date. Choose another date or send a request to the salon.',
+      requestNote: 'This is a booking request. The arrival time is confirmed after the salon reviews it.',
+      labels: {
+        clientType: 'Client status',
+        coatCondition: 'Coat condition',
+        behaviour: 'Behaviour',
+        duration: 'Estimated duration',
+        buffer: 'Internal reserve',
+        bookingMode: 'Confirmation mode',
+      },
+      requested: 'Request for confirmation',
+      chooseField: field => `Please choose: ${field}`,
+    },
+    de: {
+      clientTypeLabel: 'Kundenstatus',
+      clientTypePlaceholder: 'Option auswählen',
+      clientTypeNew: 'Erstbesuch / neuer Kunde',
+      clientTypeReturning: 'Stammkunde',
+      coatLabel: 'Fellzustand',
+      coatPlaceholder: 'Fellzustand auswählen',
+      coatGood: 'Guter Zustand',
+      coatSlightMats: 'Einige kleine Verfilzungen',
+      coatManyMats: 'Viele Verfilzungen',
+      coatSevereMatting: 'Stark verfilztes Fell',
+      behaviourLabel: 'Verhalten des Tieres',
+      behaviourPlaceholder: 'Verhalten auswählen',
+      behaviourCalm: 'Ruhig',
+      behaviourRestless: 'Unruhig',
+      behaviourVeryRestless: 'Sehr unruhig',
+      behaviourAggressive: 'Kann aggressiv reagieren',
+      riskHint: 'Diese Angaben helfen uns, sichere Reservezeit einzuplanen. Sie legen den Endpreis nicht fest.',
+      duration: minutes => {
+        const hours = Math.floor(minutes / 60);
+        const remainder = minutes % 60;
+        const value = hours ? `${hours} Std.${remainder ? ` ${remainder} Min.` : ''}` : `${remainder} Min.`;
+        return `Voraussichtliche Dauer — ${value}`;
+      },
+      endingHint: 'Die genaue Endzeit hängt von Fellzustand, Verhalten und dem tatsächlichen Arbeitsaufwand ab.',
+      availabilityLoading: 'Sichere Terminfenster werden geprüft…',
+      availabilityFallback: 'Konservative Zeitfenster mit Reserve werden angezeigt. Der Salon bestätigt den Termin endgültig.',
+      noSafeSlots: 'Für diesen Tag gibt es keine sicheren Zeitfenster. Bitte wählen Sie ein anderes Datum oder senden Sie eine Anfrage.',
+      requestNote: 'Dies ist eine Terminanfrage. Die Ankunftszeit wird nach Prüfung durch den Salon bestätigt.',
+      labels: {
+        clientType: 'Kundenstatus',
+        coatCondition: 'Fellzustand',
+        behaviour: 'Verhalten',
+        duration: 'Voraussichtliche Dauer',
+        buffer: 'Interne Reserve',
+        bookingMode: 'Bestätigungsmodus',
+      },
+      requested: 'Anfrage zur Bestätigung',
+      chooseField: field => `Bitte wählen: ${field}`,
+    },
+  };
+  const bookingRiskCopy = bookingRiskCopyByLang[pageLang] || bookingRiskCopyByLang.en;
 
   const priceConfiguratorCopyByLang = {
     ru: {
@@ -328,6 +608,13 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   const priceUiCopy = priceConfiguratorCopyByLang[pageLang] || priceConfiguratorCopyByLang.en;
   const priceCatalog = window.PriceCatalog?.build?.(pageLang) || window.PriceCatalog?.build?.('en');
+  const setCurrencyText = (element, value) => {
+    if (window.NikaCurrency?.setText) {
+      window.NikaCurrency.setText(element, value);
+      return;
+    }
+    if (element) element.textContent = value || '';
+  };
   const priceCopy = {
     ...priceUiCopy,
     services: priceCatalog?.services || [],
@@ -539,7 +826,14 @@ document.addEventListener('DOMContentLoaded', () => {
           } catch {
             /* ignore analytics errors */
           }
+          const successValues = Object.fromEntries(new FormData(form).entries());
           form.reset();
+          form.dispatchEvent(
+            new CustomEvent('sendmail:success', {
+              bubbles: true,
+              detail: { values: successValues, message: statusEl.textContent, response: result },
+            })
+          );
           try {
             window.hundesalonTrackAdsConversion?.();
           } catch {
@@ -592,10 +886,96 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         field.value = value;
       };
+      const ensureBookingPetRegistrationFields = () => {
+        if (form.dataset.bookingPetRegistration === 'true') return;
+
+        const copy = bookingCopy.petRegistration;
+        if (!copy) return;
+
+        const hasBookingCatalog = Boolean(bookingCatalog);
+        const speciesFieldMarkup = hasBookingCatalog
+          ? `
+            <label class="booking-field-label booking-field-label--auto">
+              <span>${copy.species}</span>
+              <input type="hidden" name="pet_species" data-booking-pet-species />
+              <input type="text" data-booking-pet-species-display readonly aria-readonly="true" />
+              <small class="client-registration-form__required-hint">${copy.auto}</small>
+            </label>`
+          : `
+            <label class="booking-field-label">
+              <span>${copy.species}</span>
+              <select name="pet_species" required>
+                <option value="">${copy.speciesChoose}</option>
+                <option value="dog">${copy.dog}</option>
+                <option value="cat">${copy.cat}</option>
+                <option value="small_animal">${copy.smallAnimal}</option>
+                <option value="rabbit">${copy.rabbit}</option>
+                <option value="guinea_pig">${copy.guineaPig}</option>
+                <option value="other">${copy.other}</option>
+              </select>
+            </label>`;
+        const breedFieldMarkup = hasBookingCatalog
+          ? `
+            <label class="booking-field-label booking-field-label--auto">
+              <span>${copy.breed}</span>
+              <input type="text" name="pet_breed" data-booking-pet-breed autocomplete="off" required readonly aria-readonly="true" />
+              <small class="client-registration-form__required-hint">${copy.auto}</small>
+            </label>`
+          : `
+            <label class="booking-field-label">
+              <span>${copy.breed}</span>
+              <input type="text" name="pet_breed" autocomplete="off" required />
+            </label>`;
+
+        const fieldset = document.createElement('fieldset');
+        fieldset.className = 'booking-pet-registration client-registration-form__fieldset';
+        fieldset.dataset.bookingPetRegistration = 'true';
+        fieldset.innerHTML = `
+          <legend>${copy.legend}</legend>
+          <p class="booking-pet-registration__intro">${copy.intro}</p>
+          <div class="client-registration-form__grid">
+            <label class="booking-field-label">
+              <span>${copy.name}</span>
+              <input type="text" name="pet_name" autocomplete="off" required />
+            </label>
+            ${speciesFieldMarkup}
+            ${breedFieldMarkup}
+            <label class="booking-field-label">
+              <span>${copy.age}</span>
+              <input type="text" name="pet_age" autocomplete="off" />
+            </label>
+            <label class="booking-field-label">
+              <span>${copy.sex}</span>
+              <select name="pet_sex">
+                <option value="">${copy.sexChoose}</option>
+                <option value="female">${copy.female}</option>
+                <option value="male">${copy.male}</option>
+              </select>
+            </label>
+            <label class="booking-field-label">
+              <span>${copy.tag}</span>
+              <input type="text" name="pet_tag_number" inputmode="text" maxlength="60" />
+            </label>
+          </div>
+        `;
+
+        const messageField = form.querySelector('textarea[name="message"]');
+        const messageGroup = messageField?.closest('.form-group, .client-registration-form__notes');
+        if (messageGroup) {
+          messageGroup.before(fieldset);
+        } else {
+          form.prepend(fieldset);
+        }
+
+        fieldset.querySelectorAll('select').forEach(select => window.refreshSiteSelect?.(select));
+        form.dataset.bookingPetRegistration = 'true';
+      };
       ensureHiddenField('lang', pageLang);
       ensureHiddenField('source', window.location.pathname);
       ensureHiddenField('source_form', form.id || form.getAttribute('name') || 'sendmail');
       if (form.id === 'booking-form') {
+        ensureHiddenField('client_registration_id', '');
+        ensureBookingPetRegistrationFields();
         return;
       }
 
@@ -606,7 +986,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const isFeedbackForm =
         !isBookingForm &&
         (form.closest('.complaint-form') !== null || form.querySelector('select[name="subject"]') !== null);
-      const formType = isBookingForm ? 'booking' : isFeedbackForm ? 'feedback' : 'contact';
+      const declaredFormType = form.dataset.formType || form.querySelector('input[name="form_type"]')?.value || '';
+      const formType = isBookingForm
+        ? 'booking'
+        : isFeedbackForm
+          ? 'feedback'
+          : declaredFormType === 'client_registration'
+            ? 'client_registration'
+            : 'contact';
       const messageField = form.querySelector('textarea[name="message"]');
 
       injectHiddenValue(form, 'lang', pageLang);
@@ -691,6 +1078,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!forms.length) return;
 
     forms.forEach(form => {
+      if (form.dataset.disableDraft === 'true') return;
       const messageField = form.querySelector('textarea[name="message"]');
       if (!messageField) return;
       if (form.dataset.messageDraftReady === 'true') return;
@@ -867,6 +1255,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bookingCatalog) {
       modal.querySelector('.step-indicator .step')?.replaceChildren(bookingCopy.serviceStep);
       panels[1]?.querySelector('h3')?.replaceChildren(bookingCopy.chooseBreed);
+      modal.querySelector('.step-indicator .step:nth-child(2)')?.replaceChildren(bookingCopy.datetimeStep);
+      panels[2]?.querySelector('h3')?.replaceChildren(bookingCopy.datetimeTitle);
     }
 
     const step2Panel = panels[2];
@@ -878,6 +1268,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let choiceRowEl = step2Panel?.querySelector('[data-booking-datetime-choice]');
     let monthTitleEl = step2Panel?.querySelector('[data-booking-month-title]');
     let timeHintEl = step2Panel?.querySelector('[data-booking-time-hint]');
+    let availabilityStatusEl = step2Panel?.querySelector('[data-booking-availability-status]');
     let choiceDateEl = step2Panel?.querySelector('[data-booking-choice-date]');
     let choiceTimeEl = step2Panel?.querySelector('[data-booking-choice-time]');
 
@@ -967,6 +1358,13 @@ document.addEventListener('DOMContentLoaded', () => {
       );
       timeHintEl = timeBlockEl.querySelector('[data-booking-time-hint]');
 
+      if (!availabilityStatusEl) {
+        availabilityStatusEl = document.createElement('p');
+        availabilityStatusEl.className = 'booking-availability-status';
+        availabilityStatusEl.dataset.bookingAvailabilityStatus = '';
+        availabilityStatusEl.setAttribute('aria-live', 'polite');
+      }
+
       if (!choiceRowEl) {
         choiceRowEl = document.createElement('div');
         choiceRowEl.className = 'booking-datetime-choice';
@@ -991,6 +1389,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       calendarBlockEl.appendChild(calendarContainer);
       timeBlockEl.appendChild(timeSlotsContainer);
+      timeBlockEl.appendChild(availabilityStatusEl);
 
       datetimeBody.append(datetimeStatusEl, calendarBlockEl, timeBlockEl, choiceRowEl);
 
@@ -1123,9 +1522,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepIndicator = modal.querySelector('.step-indicator');
     const modalContent = modal.querySelector('.modal-content');
     const modalButtonRows = modal.querySelectorAll('.modal-buttons');
+    const siteScrollRoot = document.querySelector('.site-scroll-root');
+    let savedSiteScrollTop = 0;
+    let wheelBlockHandler = null;
+    let touchBlockHandler = null;
+    let siteScrollRestoreHandler = null;
     const BOOKING_STEP_MOTION_MS = 420;
     let stepMotionTimer = null;
     let tiltResetTimer = null;
+
+    const keepBookingModalViewportAtTop = () => {
+      modalContent?.scrollTo?.({ top: 0, left: 0, behavior: 'auto' });
+      if (siteScrollRoot) {
+        siteScrollRoot.scrollTop = savedSiteScrollTop;
+      }
+    };
+
+    modal.addEventListener('focusin', event => {
+      if (event.target.closest('#booking-modal .calendar-day, #booking-modal .time-slot')) {
+        window.requestAnimationFrame(keepBookingModalViewportAtTop);
+      }
+    });
 
     const ensureBookingGlassLayers = () => {
       if (!modalContent || modalContent.querySelector('.booking-glass-lens')) {
@@ -1243,11 +1660,6 @@ document.addEventListener('DOMContentLoaded', () => {
       window.HundesalonNavPill?.activate?.(button);
     };
 
-    const siteScrollRoot = document.querySelector('.site-scroll-root');
-    let savedSiteScrollTop = 0;
-    let wheelBlockHandler = null;
-    let touchBlockHandler = null;
-
     const refreshDatetimeScrollState = () => {
       if (!datetimeBody) {
         return;
@@ -1257,16 +1669,27 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const lockSiteScroll = () => {
-      savedSiteScrollTop = siteScrollRoot?.scrollTop || 0;
       siteScrollRoot?.classList.add('booking-scroll-locked');
       document.documentElement.classList.add('booking-modal-open');
       document.body.classList.add('booking-modal-open');
+
+      if (siteScrollRestoreHandler && siteScrollRoot) {
+        siteScrollRoot.removeEventListener('scroll', siteScrollRestoreHandler);
+      }
+
+      siteScrollRestoreHandler = () => {
+        if (modal.classList.contains('active') && siteScrollRoot && siteScrollRoot.scrollTop !== savedSiteScrollTop) {
+          siteScrollRoot.scrollTop = savedSiteScrollTop;
+        }
+      };
+      siteScrollRoot?.addEventListener('scroll', siteScrollRestoreHandler, { passive: true });
 
       const resolveBookingWheelScrollTarget = target => {
         const candidates = [
           target.closest('#booking-modal .calendar-days-scroll'),
           target.closest('#booking-modal #time-slots-container'),
           target.closest('#booking-modal .service-list'),
+          target.closest('#booking-modal .booking-step.active'),
           target.closest('#booking-modal #booking-form'),
         ].filter(Boolean);
 
@@ -1285,11 +1708,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const maxScroll = scrollable.scrollHeight - scrollable.clientHeight;
-        const atTop = scrollable.scrollTop <= 0;
-        const atBottom = scrollable.scrollTop >= maxScroll - 1;
-        if ((atTop && event.deltaY < 0) || (atBottom && event.deltaY > 0)) {
+        if (maxScroll <= 0) {
           event.preventDefault();
+          return;
         }
+
+        const nextScrollTop = Math.max(0, Math.min(maxScroll, scrollable.scrollTop + event.deltaY));
+        scrollable.scrollTop = nextScrollTop;
+        event.preventDefault();
       };
 
       touchBlockHandler = event => {
@@ -1313,6 +1739,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const unlockSiteScroll = () => {
+      if (siteScrollRestoreHandler && siteScrollRoot) {
+        siteScrollRoot.removeEventListener('scroll', siteScrollRestoreHandler);
+        siteScrollRestoreHandler = null;
+      }
+
       siteScrollRoot?.classList.remove('booking-scroll-locked');
       if (siteScrollRoot) {
         siteScrollRoot.scrollTop = savedSiteScrollTop;
@@ -1439,10 +1870,54 @@ document.addEventListener('DOMContentLoaded', () => {
       selectedPriceOverride: '',
       selectedDate: selectedDateField.value || '',
       selectedTime: selectedTimeField.value || '',
+      clientType: '',
+      coatCondition: '',
+      behavior: '',
+      busyIntervals: [],
+      availabilityConfigured: false,
+      availabilityRequestId: 0,
       summaryConfirmed: false,
       uploadedFileUrl: uploadedFileUrlField?.value || '',
     };
     let lastFocusedElement = null;
+    const formatDuration = minutes => {
+      const safeMinutes = Math.max(0, Number(minutes) || 0);
+      const hours = Math.floor(safeMinutes / 60);
+      const remainder = safeMinutes % 60;
+      if (pageLang === 'ru') return hours ? `${hours} ч${remainder ? ` ${remainder} мин` : ''}` : `${remainder} мин`;
+      if (pageLang === 'uk') return hours ? `${hours} год${remainder ? ` ${remainder} хв` : ''}` : `${remainder} хв`;
+      if (pageLang === 'de') return hours ? `${hours} Std.${remainder ? ` ${remainder} Min.` : ''}` : `${remainder} Min.`;
+      return hours ? `${hours}h${remainder ? ` ${remainder} min` : ''}` : `${remainder} min`;
+    };
+
+    const getSelectedTiming = () => {
+      if (bookingCatalog?.getTiming) {
+        return bookingCatalog.getTiming({
+          categoryId: state.selectedCategoryId,
+          breedId: state.selectedBreedId,
+          serviceId: state.selectedServiceId,
+          clientType: state.clientType || 'new',
+          coatCondition: state.coatCondition || 'good',
+          behavior: state.behavior || 'calm',
+        });
+      }
+
+      const standardMinutes = 120;
+      const firstVisitExtraMinutes = state.clientType === 'returning' ? 0 : 60;
+      const safeBlockMinutes = standardMinutes + firstVisitExtraMinutes + 30;
+      return {
+        standardMinutes,
+        estimatedMinutes: standardMinutes + firstVisitExtraMinutes,
+        bufferMinutes: 30,
+        safeBlockMinutes,
+        firstVisitExtraMinutes,
+        coatExtraMinutes: 0,
+        behaviourExtraMinutes: 0,
+        sizeExtraMinutes: 0,
+        slotStepMinutes: 30,
+      };
+    };
+
     const formatLocalDate = date => {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -1450,13 +1925,85 @@ document.addEventListener('DOMContentLoaded', () => {
       return `${year}-${month}-${day}`;
     };
 
+    const resolveBookingPetProfile = () => {
+      const selectedBreed = bookingCatalog?.getBreed(state.selectedBreedId);
+      const selectedCategory = bookingCatalog?.getCategory?.(state.selectedCategoryId);
+      const source = [selectedCategory?.id, selectedCategory?.title, selectedBreed?.label]
+        .filter(Boolean)
+        .join(' ')
+        .toLocaleLowerCase(bookingLocale);
+      let key = 'dog';
+
+      if (/guinea|морск|морські|meerschwein/u.test(source)) {
+        key = 'guinea_pig';
+      } else if (/rabbit|крол|kaninchen/u.test(source)) {
+        key = 'rabbit';
+      } else if (/small[-\s]?animals?|мелк|дрібн|kleintier|kleine tiere/u.test(source)) {
+        key = 'small_animal';
+      } else if (/\bcats?\b|кошк|кот|кіт|кішк|katze[n]?/u.test(source)) {
+        key = 'cat';
+      } else if (/important|важн|важл|wichtig/u.test(source)) {
+        key = 'other';
+      }
+
+      const labels = {
+        dog: bookingCopy.petRegistration.dog,
+        cat: bookingCopy.petRegistration.cat,
+        small_animal: bookingCopy.petRegistration.smallAnimal,
+        rabbit: bookingCopy.petRegistration.rabbit,
+        guinea_pig: bookingCopy.petRegistration.guineaPig,
+        other: bookingCopy.petRegistration.other,
+      };
+
+      return {
+        key,
+        label: labels[key] || labels.other,
+        breedLabel: selectedBreed?.label || '',
+      };
+    };
+
+    const syncBookingPetProfile = () => {
+      if (!bookingCatalog) return;
+
+      const speciesField = form.querySelector('[data-booking-pet-species]');
+      const speciesDisplay = form.querySelector('[data-booking-pet-species-display]');
+      const breedField = form.querySelector('[data-booking-pet-breed]');
+      if (!speciesField && !speciesDisplay && !breedField) return;
+
+      const profile = resolveBookingPetProfile();
+      if (speciesField) speciesField.value = profile.key;
+      if (speciesDisplay) {
+        speciesDisplay.value = profile.label;
+        speciesDisplay.setAttribute('aria-label', `${bookingCopy.petRegistration.species}: ${profile.label}`);
+      }
+      if (breedField) {
+        breedField.value = profile.breedLabel;
+        if (profile.breedLabel) {
+          breedField.readOnly = true;
+          breedField.setAttribute('aria-readonly', 'true');
+        } else {
+          breedField.readOnly = false;
+          breedField.removeAttribute('aria-readonly');
+        }
+      }
+    };
+
     const syncHiddenFields = () => {
+      syncBookingPetProfile();
       selectedServiceField.value = state.selectedService;
       selectedDateField.value = state.selectedDate;
       selectedTimeField.value = state.selectedTime;
       injectHiddenValue(form, 'breed', state.selectedBreedId);
       injectHiddenValue(form, 'service_category', state.selectedCategoryId);
       injectHiddenValue(form, 'service_price', state.selectedPrice);
+      const timing = getSelectedTiming();
+      injectHiddenValue(form, 'booking_client_type', state.clientType);
+      injectHiddenValue(form, 'coat_condition', state.coatCondition);
+      injectHiddenValue(form, 'behavior', state.behavior);
+      injectHiddenValue(form, 'service_duration_minutes', timing.estimatedMinutes);
+      injectHiddenValue(form, 'booking_buffer_minutes', timing.bufferMinutes);
+      injectHiddenValue(form, 'booking_safe_block_minutes', timing.safeBlockMinutes);
+      injectHiddenValue(form, 'booking_confirmation_status', 'requested');
       if (uploadedFileUrlField) {
         uploadedFileUrlField.value = state.uploadedFileUrl;
       }
@@ -1683,17 +2230,44 @@ document.addEventListener('DOMContentLoaded', () => {
           : choice === 'salon_card'
             ? labels.paySalonCard
             : labels.paySalonCash;
+      const petSpeciesField = form.querySelector('[name="pet_species"]');
+      const petSpeciesDisplay = form.querySelector('[data-booking-pet-species-display]');
+      const petSpeciesValue =
+        petSpeciesDisplay?.value?.trim() ||
+        petSpeciesField?.selectedOptions?.[0]?.textContent?.trim() ||
+        petSpeciesField?.value ||
+        '';
+      const petRows = [
+        [labels.petName, form.querySelector('[name="pet_name"]')?.value?.trim()],
+        [labels.petSpecies, petSpeciesValue],
+        [labels.petBreed, form.querySelector('[name="pet_breed"]')?.value?.trim()],
+        [labels.petAge, form.querySelector('[name="pet_age"]')?.value?.trim()],
+        [labels.petSex, form.querySelector('[name="pet_sex"]')?.selectedOptions?.[0]?.textContent?.trim()],
+        [labels.petTag, form.querySelector('[name="pet_tag_number"]')?.value?.trim()],
+      ].filter(([, value]) => value);
+      const selectedOptionText = selector =>
+        serviceList.querySelector(`${selector} option:checked`)?.textContent?.trim() || '';
       const rows = [
         [labels.service, state.selectedService],
         ...(state.selectedBreedId && bookingCatalog
           ? [[labels.breed, bookingCatalog.getBreed(state.selectedBreedId)?.label || '—']]
           : []),
         ...(state.selectedPrice ? [[labels.servicePrice, state.selectedPrice]] : []),
+        ...(bookingCatalog
+          ? [
+              [bookingRiskCopy.labels.clientType, selectedOptionText('[data-booking-client-type]')],
+              [bookingRiskCopy.labels.coatCondition, selectedOptionText('[data-booking-coat-condition]')],
+              [bookingRiskCopy.labels.behaviour, selectedOptionText('[data-booking-behavior]')],
+              [bookingRiskCopy.labels.duration, formatDuration(getSelectedTiming().estimatedMinutes)],
+              [bookingRiskCopy.labels.bookingMode, bookingRiskCopy.requested],
+            ]
+          : []),
         [labels.date, state.selectedDate],
         [labels.time, state.selectedTime],
         [labels.name, nameValue],
         [labels.email, emailValue],
         [labels.phone, phoneValue],
+        ...petRows,
         [labels.payment, paymentLabel],
         [labels.file, state.uploadedFileUrl || file?.name || labels.noFile],
       ];
@@ -1706,7 +2280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const term = document.createElement('dt');
         term.textContent = label;
         const definition = document.createElement('dd');
-        definition.textContent = value || '—';
+        setCurrencyText(definition, value || '—');
         list.append(term, definition);
       }
       bookingSummary.append(heading, list);
@@ -1769,14 +2343,22 @@ document.addEventListener('DOMContentLoaded', () => {
       updateStepTabs();
       updateModalLayout(step);
 
+      if (step === 3) {
+        syncBookingPetProfile();
+      }
+
       if (step === 2) {
         renderCalendar();
         renderTimeSlots();
         updateDatetimeStepState();
+        if (state.selectedDate) {
+          loadDateAvailability(state.selectedDate);
+        }
       }
 
       window.requestAnimationFrame(() => {
         resetStepScroll(step);
+        keepBookingModalViewportAtTop();
         refreshDatetimeScrollState();
         ensureBookingScrollbars();
         refreshBookingScrollbars();
@@ -1841,14 +2423,82 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="booking-selection__price" data-booking-price aria-live="polite">
           ${bookingCopy.chooseBreedFirst}
         </div>
+        <fieldset class="booking-selection__risk" data-booking-risk>
+          <legend>${bookingRiskCopy.clientTypeLabel}</legend>
+          <label class="booking-selection__field">
+            <span>${bookingRiskCopy.clientTypeLabel}</span>
+            <select data-booking-client-type required>
+              <option value="">${bookingRiskCopy.clientTypePlaceholder}</option>
+              <option value="new">${bookingRiskCopy.clientTypeNew}</option>
+              <option value="returning">${bookingRiskCopy.clientTypeReturning}</option>
+            </select>
+          </label>
+          <label class="booking-selection__field">
+            <span>${bookingRiskCopy.coatLabel}</span>
+            <select data-booking-coat-condition required>
+              <option value="">${bookingRiskCopy.coatPlaceholder}</option>
+              <option value="good">${bookingRiskCopy.coatGood}</option>
+              <option value="slight_mats">${bookingRiskCopy.coatSlightMats}</option>
+              <option value="many_mats">${bookingRiskCopy.coatManyMats}</option>
+              <option value="severe_matting">${bookingRiskCopy.coatSevereMatting}</option>
+            </select>
+          </label>
+          <label class="booking-selection__field">
+            <span>${bookingRiskCopy.behaviourLabel}</span>
+            <select data-booking-behavior required>
+              <option value="">${bookingRiskCopy.behaviourPlaceholder}</option>
+              <option value="calm">${bookingRiskCopy.behaviourCalm}</option>
+              <option value="restless">${bookingRiskCopy.behaviourRestless}</option>
+              <option value="very_restless">${bookingRiskCopy.behaviourVeryRestless}</option>
+              <option value="aggressive">${bookingRiskCopy.behaviourAggressive}</option>
+            </select>
+          </label>
+          <p class="booking-selection__risk-hint">${bookingRiskCopy.riskHint}</p>
+        </fieldset>
+        <div class="booking-selection__timing" data-booking-timing aria-live="polite"></div>
       `;
 
       const breedSelect = selection.querySelector('[data-booking-breed]');
       const serviceSelect = selection.querySelector('[data-booking-service]');
       const priceOutput = selection.querySelector('[data-booking-price]');
+      const clientTypeSelect = selection.querySelector('[data-booking-client-type]');
+      const coatConditionSelect = selection.querySelector('[data-booking-coat-condition]');
+      const behaviorSelect = selection.querySelector('[data-booking-behavior]');
+      const timingOutput = selection.querySelector('[data-booking-timing]');
       const allBreeds = bookingCatalog.categories.flatMap(category =>
         category.breeds.map(breed => ({ ...breed, categoryTitle: category.title }))
       );
+
+      const renderTimingPreview = () => {
+        const timing = getSelectedTiming();
+        if (!state.selectedServiceId || !state.clientType || !state.coatCondition || !state.behavior) {
+          timingOutput.textContent = bookingRiskCopy.requestNote;
+          return;
+        }
+
+        timingOutput.replaceChildren();
+        const duration = document.createElement('strong');
+        duration.textContent = bookingRiskCopy.duration(timing.estimatedMinutes);
+        const ending = document.createElement('span');
+        ending.textContent = ` ${bookingRiskCopy.endingHint}`;
+        timingOutput.append(duration, ending);
+      };
+
+      const syncRiskSelection = () => {
+        state.clientType = clientTypeSelect?.value || '';
+        state.coatCondition = coatConditionSelect?.value || '';
+        state.behavior = behaviorSelect?.value || '';
+        syncHiddenFields();
+        renderTimingPreview();
+        resetSummaryConfirmation();
+        clearValidationMessage();
+        if (state.selectedDate) {
+          state.busyIntervals = [];
+          state.availabilityConfigured = false;
+          renderTimeSlots();
+          loadDateAvailability(state.selectedDate);
+        }
+      };
 
       bookingCatalog.categories.forEach(category => {
         if (!category.breeds.length) return;
@@ -1868,7 +2518,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!selectedBreed) {
           serviceSelect.replaceChildren();
           serviceSelect.disabled = true;
-          priceOutput.textContent = bookingCopy.chooseBreedFirst;
+          setCurrencyText(priceOutput, bookingCopy.chooseBreedFirst);
           state.selectedCategoryId = '';
           state.selectedBreedId = '';
           state.selectedServiceId = '';
@@ -1877,6 +2527,7 @@ document.addEventListener('DOMContentLoaded', () => {
           state.selectedServiceLabel = '';
           state.selectedPriceOverride = '';
           syncHiddenFields();
+          renderTimingPreview();
           return;
         }
 
@@ -1906,16 +2557,21 @@ document.addEventListener('DOMContentLoaded', () => {
         state.selectedService = state.selectedServiceLabel || quote.label;
         state.selectedPrice = state.selectedPriceOverride || quote.price;
         const displayedPrice = state.selectedPriceOverride || quote.price;
-        priceOutput.textContent = displayedPrice
-          ? `${bookingCopy.priceLabel}: ${displayedPrice}`
-          : bookingCopy.noServiceForBreed;
+        setCurrencyText(
+          priceOutput,
+          displayedPrice ? `${bookingCopy.priceLabel}: ${displayedPrice}` : bookingCopy.noServiceForBreed
+        );
         syncHiddenFields();
+        renderTimingPreview();
       };
 
       const initialBreed = allBreeds.some(breed => breed.id === state.selectedBreedId)
         ? state.selectedBreedId
         : allBreeds[0]?.id || '';
       breedSelect.value = initialBreed;
+      clientTypeSelect.value = state.clientType;
+      coatConditionSelect.value = state.coatCondition;
+      behaviorSelect.value = state.behavior;
       breedSelect.addEventListener('change', () => {
         state.selectedServiceId = '';
         state.selectedServiceLabel = '';
@@ -1923,6 +2579,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSelection();
         resetSummaryConfirmation();
         clearValidationMessage();
+        if (state.selectedDate) renderTimeSlots();
       });
       serviceSelect.addEventListener('change', () => {
         state.selectedServiceId = serviceSelect.value;
@@ -1931,10 +2588,56 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSelection();
         resetSummaryConfirmation();
         clearValidationMessage();
+        if (state.selectedDate) renderTimeSlots();
+      });
+      [clientTypeSelect, coatConditionSelect, behaviorSelect].forEach(select => {
+        select?.addEventListener('change', syncRiskSelection);
       });
 
       serviceList.appendChild(selection);
       updateSelection();
+    };
+
+    const setAvailabilityStatus = (message, stateName = '') => {
+      if (!availabilityStatusEl) return;
+      availabilityStatusEl.textContent = message;
+      availabilityStatusEl.dataset.state = stateName;
+      availabilityStatusEl.hidden = !message;
+    };
+
+    const loadDateAvailability = async date => {
+      if (!date) return;
+
+      const requestId = ++state.availabilityRequestId;
+      state.busyIntervals = [];
+      state.availabilityConfigured = false;
+      setAvailabilityStatus(bookingRiskCopy.availabilityLoading, 'loading');
+      renderTimeSlots();
+
+      try {
+        const response = await fetch(`/booking-availability?date=${encodeURIComponent(date)}`, {
+          headers: { Accept: 'application/json' },
+          credentials: 'same-origin',
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.success || requestId !== state.availabilityRequestId) {
+          throw new Error('Availability lookup unavailable');
+        }
+
+        state.busyIntervals = Array.isArray(result.busyIntervals) ? result.busyIntervals : [];
+        state.availabilityConfigured = Boolean(result.configured);
+        setAvailabilityStatus(
+          state.availabilityConfigured ? bookingRiskCopy.requestNote : bookingRiskCopy.availabilityFallback,
+          state.availabilityConfigured ? 'configured' : 'fallback'
+        );
+        renderTimeSlots();
+      } catch {
+        if (requestId !== state.availabilityRequestId) return;
+        state.busyIntervals = [];
+        state.availabilityConfigured = false;
+        setAvailabilityStatus(bookingRiskCopy.availabilityFallback, 'fallback');
+        renderTimeSlots();
+      }
     };
 
     const renderCalendar = () => {
@@ -2020,11 +2723,14 @@ document.addEventListener('DOMContentLoaded', () => {
             activateBookingPill(cell);
             state.selectedDate = isoDate;
             state.selectedTime = '';
+            state.busyIntervals = [];
+            state.availabilityConfigured = false;
             syncHiddenFields();
             resetSummaryConfirmation();
             clearValidationMessage();
             renderTimeSlots();
             updateDatetimeStepState();
+            loadDateAvailability(isoDate);
           });
           dayButtons.push(cell);
         }
@@ -2042,21 +2748,27 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderTimeSlots = () => {
-      const timeSlots = [
-        '09:00',
-        '10:00',
-        '11:00',
-        '12:00',
-        '13:00',
-        '14:00',
-        '15:00',
-        '16:00',
-        '17:00',
-        '18:00',
-        '19:00',
-      ];
+      const timing = getSelectedTiming();
+      const timeSlots = bookingCatalog?.getAvailableStartTimes
+        ? bookingCatalog.getAvailableStartTimes(state.selectedDate, timing, state.busyIntervals, {
+            calendarConfigured: state.availabilityConfigured,
+          })
+        : ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
       timeSlotsContainer.innerHTML = '';
       const slotButtons = [];
+
+      if (!timeSlots.length) {
+        const emptyState = document.createElement('p');
+        emptyState.className = 'booking-time-slots-empty';
+        emptyState.textContent = state.selectedDate ? bookingRiskCopy.noSafeSlots : bookingCopy.datetimePickDate;
+        timeSlotsContainer.appendChild(emptyState);
+        if (availabilityStatusEl?.dataset.state !== 'loading') {
+          setAvailabilityStatus(state.selectedDate ? bookingRiskCopy.noSafeSlots : '', state.selectedDate ? 'empty' : '');
+        }
+        updateDatetimeStepState();
+        window.requestAnimationFrame(refreshBookingScrollbars);
+        return;
+      }
 
       timeSlots.forEach((time, index) => {
         const button = document.createElement('button');
@@ -2106,10 +2818,13 @@ document.addEventListener('DOMContentLoaded', () => {
       selectedDateField.addEventListener('change', () => {
         state.selectedDate = selectedDateField.value;
         state.selectedTime = '';
+        state.busyIntervals = [];
+        state.availabilityConfigured = false;
         resetSummaryConfirmation();
         clearValidationMessage();
         renderCalendar();
         renderTimeSlots();
+        if (state.selectedDate) loadDateAvailability(state.selectedDate);
       });
 
       selectedTimeField.addEventListener('change', () => {
@@ -2170,6 +2885,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closingTimer = null;
       }
 
+      savedSiteScrollTop = siteScrollRoot?.scrollTop || 0;
       lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       state.step = 1;
       state.selectedCategoryId = preset.categoryId || '';
@@ -2187,9 +2903,9 @@ document.addEventListener('DOMContentLoaded', () => {
       syncHiddenFields();
       setStep(1);
       renderServiceList();
+      lockSiteScroll();
       modal.classList.add('active', 'is-opening');
       modal.setAttribute('aria-hidden', 'false');
-      lockSiteScroll();
 
       if (openingTimer) {
         window.clearTimeout(openingTimer);
@@ -2208,6 +2924,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sanitizeModalActionButtons();
         scanBookingNavPills(modal);
         modal.querySelector('[data-booking-breed], [data-booking-service], .service-option, input, button')?.focus();
+        keepBookingModalViewportAtTop();
       });
     };
 
@@ -2249,6 +2966,18 @@ document.addEventListener('DOMContentLoaded', () => {
           bookingCopy.chooseService,
           serviceList.querySelector('[data-booking-service], .service-option')
         );
+        return;
+      }
+
+      const riskSelection = bookingCatalog
+        ? [
+            [state.clientType, bookingRiskCopy.clientTypeLabel, '[data-booking-client-type]'],
+            [state.coatCondition, bookingRiskCopy.coatLabel, '[data-booking-coat-condition]'],
+            [state.behavior, bookingRiskCopy.behaviourLabel, '[data-booking-behavior]'],
+          ].find(([, , selector]) => !serviceList.querySelector(selector)?.value)
+        : null;
+      if (riskSelection) {
+        showValidationMessage(bookingRiskCopy.chooseField(riskSelection[1]), serviceList.querySelector(riskSelection[2]));
         return;
       }
 
@@ -2425,6 +3154,11 @@ document.addEventListener('DOMContentLoaded', () => {
         state.selectedService = '';
         state.selectedDate = '';
         state.selectedTime = '';
+        state.clientType = '';
+        state.coatCondition = '';
+        state.behavior = '';
+        state.busyIntervals = [];
+        state.availabilityConfigured = false;
         state.summaryConfirmed = false;
         state.uploadedFileUrl = '';
         syncHiddenFields();
@@ -2495,7 +3229,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderEmptyState = () => {
       resultTitle.textContent = priceCopy.labels.emptyTitle;
-      resultPrice.textContent = priceCopy.labels.emptyPrice;
+      setCurrencyText(resultPrice, priceCopy.labels.emptyPrice);
       resultDescription.textContent = '';
       resultNote.textContent = '';
       buttonWrapper.dataset.service = '';
@@ -2513,9 +3247,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!service.groups.includes(breed.group)) {
         resultTitle.textContent = priceCopy.labels.emptyTitle;
-        resultPrice.textContent = priceCopy.labels.mismatch;
+        setCurrencyText(resultPrice, priceCopy.labels.mismatch);
         resultDescription.textContent = '';
-        resultNote.textContent = service.note;
+        setCurrencyText(resultNote, service.note);
         buttonWrapper.dataset.service = '';
         bookingButton.disabled = true;
         return;
@@ -2523,9 +3257,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const quote = priceCopy.resolveQuote?.(service, breed, pageLang) || {};
       resultTitle.textContent = `${service.label}: ${breed.label}`;
-      resultPrice.textContent = quote.price || priceCopy.labels.emptyPrice;
+      setCurrencyText(resultPrice, quote.price || priceCopy.labels.emptyPrice);
       resultDescription.textContent = quote.description || service.description || '';
-      resultNote.textContent = service.note;
+      setCurrencyText(resultNote, service.note);
       buttonWrapper.dataset.service = `${service.bookingService} — ${breed.label}`;
       bookingButton.disabled = !quote.price;
     };

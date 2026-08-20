@@ -1,9 +1,9 @@
 /**
  * Edge profile for Gmail Microsoft account — remove duplicate Bing property.
  */
-import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './lib/browser-launch.mjs';
 
 const port = process.env.BING_GMAIL_EDGE_PORT || '9225';
 const loginUrl =
@@ -20,16 +20,18 @@ if (!candidates.length) {
 }
 
 const userDataDir = path.join(process.env.TEMP || '.', 'hundesalon-nika-edge-gmail');
+const pidFile = browserPidFile('hundesalon-nika-edge-gmail');
 
 console.log('Edge (Gmail profile) port', port, '— close other Edge debug on this port first');
 console.log('Sign in as: snaiper1984@gmail.com');
 console.log(loginUrl);
 
-spawn(
+stopTrackedBrowser(pidFile);
+launchTrackedBrowser(
   candidates[0],
   [`--remote-debugging-port=${port}`, `--user-data-dir=${userDataDir}`, '--no-first-run', loginUrl],
-  { detached: true, stdio: 'ignore' }
-).unref();
+  pidFile
+);
 
 console.log('\nAfter sign-in: npm run bing:gmail-remove');
 console.log('Then: npm run bing:gmail-signout');

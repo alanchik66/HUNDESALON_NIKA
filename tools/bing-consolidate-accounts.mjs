@@ -15,8 +15,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './lib/browser-launch.mjs';
 import { BING_HOME_URL, GMAIL_ACCOUNT, MAIL_ACCOUNT, SITE_HOST, SITE_URL } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -335,11 +335,13 @@ async function startEdgeProfile(profileDir, startUrl) {
   ].filter(existsSync);
   if (!candidates.length) throw new Error('Edge not found');
   const userDataDir = path.join(process.env.TEMP || '.', profileDir);
-  spawn(
+  const pidFile = browserPidFile(profileDir);
+  stopTrackedBrowser(pidFile);
+  launchTrackedBrowser(
     candidates[0],
     [`--remote-debugging-port=${port}`, `--user-data-dir=${userDataDir}`, '--no-first-run', startUrl],
-    { detached: true, stdio: 'ignore' }
-  ).unref();
+    pidFile
+  );
   for (let i = 0; i < 15; i++) {
     if (await ensureEdge()) return;
     await wait(2000);

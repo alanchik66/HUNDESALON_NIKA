@@ -2,13 +2,15 @@
  * Ensure Edge CDP is up, then run bing-finish-remaining in the same process.
  * npm run bing:finish-all
  */
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './lib/browser-launch.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = process.env.BING_MAIL_EDGE_PORT || '9224';
+const pidFile = browserPidFile('hundesalon-nika-edge-debug');
 
 async function cdpReady() {
   try {
@@ -32,21 +34,8 @@ function startEdge() {
   if (!candidates.length) throw new Error('Microsoft Edge not found.');
 
   const userDataDir = path.join(process.env.TEMP || '.', 'hundesalon-nika-edge-debug');
-  const marker = 'hundesalon-nika-edge-debug';
-
-  if (process.platform === 'win32') {
-    spawnSync(
-      'pwsh',
-      [
-        '-NoProfile',
-        '-Command',
-        `Get-CimInstance Win32_Process -Filter "name='msedge.exe'" | Where-Object { $_.CommandLine -like '*${marker}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`,
-      ],
-      { encoding: 'utf8' }
-    );
-  }
-
-  spawn(
+  stopTrackedBrowser(pidFile);
+  launchTrackedBrowser(
     candidates[0],
     [
       `--remote-debugging-port=${port}`,
@@ -55,8 +44,8 @@ function startEdge() {
       '--no-default-browser-check',
       startUrl,
     ],
-    { detached: true, stdio: 'ignore' }
-  ).unref();
+    pidFile
+  );
 }
 
 async function ensureEdge() {

@@ -54,12 +54,8 @@ ipconfig /flushdns | Out-Null
 Clear-DnsClientCache -ErrorAction SilentlyContinue
 Write-Host 'DNS cache flushed'
 
-# Kill browsers so policies apply
-Get-Process chrome, msedge -ErrorAction SilentlyContinue | Stop-Process -Force
-Start-Sleep -Seconds 2
-
 $desktop = [Environment]::GetFolderPath('Desktop')
 $batSrc = Join-Path $PSScriptRoot 'open-hundesalon-site.bat'
 Copy-Item -Path $batSrc -Destination (Join-Path $desktop 'HUNDESALON NIKA.bat') -Force
 & $batSrc
-Write-Host 'Browser relaunched'
+Write-Host 'Browsers kept open; new windows use dedicated profiles.'

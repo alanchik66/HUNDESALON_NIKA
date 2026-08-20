@@ -107,7 +107,8 @@
         iconAnchor: [15, 39],
       });
 
-      window.L.marker([lat, lng], { icon: pinIcon }).addTo(map);
+      const markerLabel = element.getAttribute('aria-label') || 'HUNDESALON NIKA';
+      window.L.marker([lat, lng], { icon: pinIcon, alt: markerLabel, title: markerLabel }).addTo(map);
 
       element.dataset.mapReady = '1';
 

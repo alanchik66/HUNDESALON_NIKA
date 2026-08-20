@@ -2,10 +2,10 @@
  * CDP helper for Cloudflare Dashboard (Chrome 9226 or Edge 9225).
  * CF_CDP_PORT — default 9226 if CF_CDP_BROWSER=chrome, else 9225.
  */
-import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { getJson, openCdpSession, sleep } from './browser-cdp.mjs';
+import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './browser-launch.mjs';
 
 const browser = (process.env.CF_CDP_BROWSER || 'edge').toLowerCase();
 const defaultPort = browser === 'chrome' ? 9226 : 9225;
@@ -38,8 +38,11 @@ export async function ensureCfCdp(startUrl = 'https://dash.cloudflare.com/profil
     return;
   } catch {
     const exe = browserExe();
+    const pidName = browser === 'chrome' ? 'hundesalon-nika-cf-chrome-debug' : 'hundesalon-nika-cf-edge-debug';
+    const pidFile = browserPidFile(pidName);
     console.log(`Starting ${browser} CDP on port ${CF_CDP_PORT}…`);
-    spawn(
+    stopTrackedBrowser(pidFile, browser === 'chrome' ? ['chrome.exe'] : ['msedge.exe']);
+    launchTrackedBrowser(
       exe,
       [
         `--remote-debugging-port=${CF_CDP_PORT}`,
@@ -48,8 +51,8 @@ export async function ensureCfCdp(startUrl = 'https://dash.cloudflare.com/profil
         '--no-default-browser-check',
         startUrl,
       ],
-      { detached: true, stdio: 'ignore' }
-    ).unref();
+      pidFile
+    );
     for (let i = 0; i < 35; i++) {
       await sleep(2000);
       try {

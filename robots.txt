@@ -7,7 +7,6 @@ Content-Signal: search=yes, ai-input=yes, ai-train=no
 Allow: /
 Disallow: /tools/
 Disallow: /functions/
-Crawl-delay: 1
 
 User-agent: GPTBot
 User-agent: ChatGPT-User
@@ -18,7 +17,6 @@ User-agent: PerplexityBot
 Allow: /
 Disallow: /tools/
 Disallow: /functions/
-Crawl-delay: 1
 
 User-agent: Googlebot
 Allow: /

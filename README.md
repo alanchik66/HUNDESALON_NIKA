@@ -269,7 +269,7 @@ npm run dev:worker
 | `GOOGLE_APPS_SCRIPT_WEBHOOK_URL` | Apps Script Web App | резервный gateway для обычного Gmail-аккаунта без Workspace |
 | `GOOGLE_GATEWAY_SECRET` | локально сгенерированный секрет | защита Google gateway endpoint |
 | `GOOGLE_CALENDAR_ID` | Google Calendar settings | создание событий бронирования |
-| `SHEET_ID` | URL Google Sheets таблицы | лог бронирований и подписчиков |
+| `SHEET_ID` | URL Google Sheets таблицы | закрытый административный учёт бронирований, регистраций клиентов/питомцев и подписчиков |
 | `DRIVE_UPLOAD_FOLDER` | URL папки Google Drive | загрузка фото питомца |
 | `GMAIL_SENDER` | Gmail/Workspace alias | опционально; указывайте только рабочий alias, иначе Gmail не отправляет клиентам письма |
 | `SENDPULSE_FROM`, `CLIENT_EMAIL_FROM` | SendPulse → Senders | основной отправитель transactional email для клиентов |
@@ -283,10 +283,13 @@ npm run dev:worker
 | `TEAMS_WEBHOOK_URL` | Teams Incoming Webhook | быстрый канал уведомлений; нужен существующий Teams channel |
 | `SENDPULSE_API_KEY` или `SENDPULSE_CLIENT_ID` + `SENDPULSE_CLIENT_SECRET` | SendPulse → API | единственный transport transactional email |
 | `SENDPULSE_ADDRESSBOOK_ID` | SendPulse → Email → Mailing lists | адресная книга для контактов и Automation 360 |
+| `SENDPULSE_BOOKING_EVENT_NAME`, `SENDPULSE_CONTACT_EVENT_NAME`, `SENDPULSE_NEWSLETTER_EVENT_NAME` | SendPulse → Automation 360 → Events Manager | серверные события форм для запуска flows; указываются resource names, не URL |
 | `SLACK_WEBHOOK_URL` | Slack app webhook | текущий fallback-канал уведомлений |
 | `GOOGLE_SHEETS_WEBHOOK_URL` | ваш backend/service gateway | fallback-запись в Google Sheets |
 | `GOOGLE_DRIVE_UPLOAD_WEBHOOK_URL` | ваш backend/service gateway | fallback-загрузка файлов в Google Drive |
 | `PAYMENT_PROVIDER_KEY` | Stripe/PayPal dashboard | TODO для будущей предоплаты |
+
+Регистрации клиента и питомца для выбранной услуги сохраняются в отдельный лист `clients` той же закрытой Google Sheets таблицы. Лист содержит выбранную услугу и ориентировочную цену, данные клиента и питомца, номер жетона, согласия и источник заявки; чтения этого листа с сайта нет. «Первый груминг щенка» является обычной услугой, а не акцией. Скрипт `tools/setup-google-platform.mjs` создаёт лист и его заголовки автоматически при настройке или повторном запуске Google-платформы.
 
 Для локальной проверки Cloudflare Functions используйте `.dev.vars` по образцу `.dev.vars.example`, затем запускайте:
 

@@ -15,6 +15,20 @@ const STAMPED_ASSETS = [
   'site-shell.js',
   'price-catalog.js',
   'newsletter.js',
+  'non-critical-loader.js',
+  'telegram-menu.css',
+  'telegram-menu.js',
+];
+
+const PRODUCTION_MINIFY_ASSETS = [
+  'assets/css/style.css',
+  'assets/css/page-modules.css',
+  'assets/js/site-shell.js',
+  'assets/js/main.js',
+  'assets/js/page-modules.js',
+  'assets/js/tooltip.js',
+  'assets/js/newsletter.js',
+  'assets/js/testimonials.js',
 ];
 
 const SKIP_RELATIVE_PATHS = new Set([
@@ -28,6 +42,7 @@ const SKIP_RELATIVE_PATHS = new Set([
 const copyEntries = [
   'index.html',
   '404.html',
+  'telegram-menu.html',
   'assets',
   'config',
   'data',
@@ -119,6 +134,21 @@ for (const entry of copyEntries) {
   copyRecursive(path.join(root, entry), path.join(dist, entry));
 }
 
+function minifyProductionAssets(directory) {
+  for (const relativePath of PRODUCTION_MINIFY_ASSETS) {
+    const target = path.join(directory, relativePath);
+    if (!fs.existsSync(target)) continue;
+    const temporaryTarget = `${target}.min`;
+    execSync(`npx esbuild "${target}" --minify --outfile="${temporaryTarget}"`, {
+      cwd: root,
+      stdio: 'ignore',
+    });
+    fs.renameSync(temporaryTarget, target);
+  }
+}
+
+minifyProductionAssets(dist);
+
 function deployAssetVersion() {
   if (process.env.DEPLOY_ASSET_VERSION?.trim()) {
     return process.env.DEPLOY_ASSET_VERSION.trim();
@@ -168,8 +198,69 @@ function stampDistAssetVersions(directory, version) {
   return htmlFiles;
 }
 
+function normalizePublicContact(directory) {
+  let htmlFiles = 0;
+
+  function walk(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath);
+        continue;
+      }
+      if (!entry.name.endsWith('.html')) continue;
+      const original = fs.readFileSync(fullPath, 'utf8');
+      const next = original.replaceAll('info@hundesalon-nika.com', 'support@hundesalon-nika.com');
+      if (next !== original) {
+        fs.writeFileSync(fullPath, next, 'utf8');
+        htmlFiles += 1;
+      }
+    }
+  }
+
+  walk(directory);
+  return htmlFiles;
+}
+
+function deferNonCriticalScripts(directory, version) {
+  let htmlFiles = 0;
+  const scriptPattern = /\s*<script\s+src="[^"]*(?:newsletter|testimonials|tooltip)\.js\?[^"\s]+"[^>]*><\/script>/g;
+
+  function walk(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath);
+        continue;
+      }
+      if (!entry.name.endsWith('.html')) continue;
+      const original = fs.readFileSync(fullPath, 'utf8');
+      if (!scriptPattern.test(original)) {
+        scriptPattern.lastIndex = 0;
+        continue;
+      }
+      scriptPattern.lastIndex = 0;
+      const relative = path.relative(directory, fullPath).replaceAll('\\', '/');
+      const prefix = relative.includes('/') ? '../' : '';
+      const loader = `\n<script src="${prefix}assets/js/non-critical-loader.js?v=${version}"></script>`;
+      const next = original.replace(scriptPattern, '').replace('</body>', `${loader}\n</body>`);
+      if (next !== original) {
+        fs.writeFileSync(fullPath, next, 'utf8');
+        htmlFiles += 1;
+      }
+    }
+  }
+
+  walk(directory);
+  return htmlFiles;
+}
+
 const assetVersion = deployAssetVersion();
 const stamped = stampDistAssetVersions(dist, assetVersion);
+const publicContactFiles = normalizePublicContact(dist);
+const deferredScriptFiles = deferNonCriticalScripts(dist, assetVersion);
 
 console.log('Production bundle created in dist/.');
 console.log(`Asset cache version: ${assetVersion} (${stamped} HTML files stamped).`);
+console.log(`Public contact normalized in ${publicContactFiles} HTML files.`);
+console.log(`Deferred non-critical scripts in ${deferredScriptFiles} HTML files.`);

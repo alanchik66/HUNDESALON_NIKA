@@ -2,9 +2,9 @@
  * Open directory registration + Google Business in Edge for citation setup.
  * npm run backlinks:open-registrations
  */
-import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './lib/browser-launch.mjs';
 import { BRAND_PROFILES, NAP } from '../config/brand-profiles.mjs';
 import { LOCAL_DIRECTORIES } from '../config/local-directories.mjs';
 
@@ -27,12 +27,14 @@ const urls = [
 
 const start = urls[0];
 const userDataDir = path.join(process.env.TEMP || '.', 'hundesalon-nika-edge-debug');
+const pidFile = browserPidFile('hundesalon-nika-edge-debug');
 
 console.log('Opening citation registration URLs in Edge (port', port, ')');
 console.log('NAP:', NAP.name, '·', NAP.street, '·', NAP.url);
 for (const url of urls) console.log(' -', url);
 
-spawn(
+stopTrackedBrowser(pidFile);
+launchTrackedBrowser(
   candidates[0],
   [
     `--remote-debugging-port=${port}`,
@@ -41,8 +43,8 @@ spawn(
     start,
     ...urls.slice(1),
   ],
-  { detached: true, stdio: 'ignore' }
-).unref();
+  pidFile
+);
 
 console.log('\nIn Google Business Profile: set website to', NAP.url);
 console.log('In each directory: use same NAP + link to', NAP.url);

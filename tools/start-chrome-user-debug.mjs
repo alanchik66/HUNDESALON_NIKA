@@ -2,30 +2,26 @@
  * Restart Chrome with remote debugging on the Default profile (logged-in session).
  * npm run cf:chrome-user-debug
  */
-import { spawn, execSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './lib/browser-launch.mjs';
 
 const port = process.env.CF_USER_CHROME_PORT || '9222';
 const chromeExe = path.join(process.env.ProgramFiles || '', 'Google/Chrome/Application/chrome.exe');
 const userDataDir = path.join(process.env.LOCALAPPDATA || '', 'Google', 'Chrome', 'User Data');
 const startUrl = 'https://dash.cloudflare.com/profile/api-tokens';
+const pidFile = browserPidFile('hundesalon-nika-chrome-user-debug');
 
 if (!existsSync(chromeExe)) {
   console.error('Chrome not found');
   process.exit(1);
 }
 
-console.log('Closing Chrome…');
-try {
-  execSync('taskkill /IM chrome.exe /F', { stdio: 'ignore' });
-} catch {
-  // not running
-}
-await new Promise(r => setTimeout(r, 2000));
+stopTrackedBrowser(pidFile, ['chrome.exe']);
 
 console.log(`Starting Chrome (port ${port}, Default profile)…`);
-spawn(
+launchTrackedBrowser(
   chromeExe,
   [
     `--remote-debugging-port=${port}`,
@@ -34,8 +30,8 @@ spawn(
     '--no-first-run',
     startUrl,
   ],
-  { detached: true, stdio: 'ignore' }
-).unref();
+  pidFile
+);
 
 console.log(startUrl);
 console.log(`\nThen: CF_CDP_PORT=${port} npm run cf:chrome-cdp-apply`);

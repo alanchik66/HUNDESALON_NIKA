@@ -19,6 +19,33 @@ const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/gmail.send',
   'https://www.googleapis.com/auth/userinfo.email',
 ];
+const CLIENT_REGISTRY_HEADERS = [
+  'created_at',
+  'request_id',
+  'lang',
+  'form_type',
+  'service',
+  'service_price',
+  'service_category',
+  'promotion_key',
+  'promotion',
+  'promotion_price',
+  'client_name',
+  'email',
+  'phone',
+  'pet_name',
+  'pet_species',
+  'pet_breed',
+  'pet_age',
+  'pet_sex',
+  'pet_tag_number',
+  'message',
+  'privacy_consent',
+  'agb_consent',
+  'source',
+  'origin',
+  'page_path',
+];
 
 function parseArgs(argv) {
   const args = {};
@@ -285,13 +312,17 @@ async function createGoogleResources(accessToken, shareEmails, prefix) {
     method: 'POST',
     body: JSON.stringify({
       properties: { title: `${prefix} Platform Log` },
-      sheets: [{ properties: { title: 'bookings' } }, { properties: { title: 'subscribers' } }],
+      sheets: [
+        { properties: { title: 'bookings' } },
+        { properties: { title: 'subscribers' } },
+        { properties: { title: 'clients' } },
+      ],
     }),
   });
 
   await googleFetch(
     accessToken,
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet.spreadsheetId}/values/bookings!A1:L1?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet.spreadsheetId}/values/bookings!A1:U1?valueInputOption=USER_ENTERED`,
     {
       method: 'PUT',
       body: JSON.stringify({
@@ -309,6 +340,15 @@ async function createGoogleResources(accessToken, shareEmails, prefix) {
             'file_url',
             'payment_status',
             'message',
+            'client_registration_id',
+            'pet_name',
+            'pet_species',
+            'pet_breed',
+            'pet_age',
+            'pet_sex',
+            'pet_tag_number',
+            'service_price',
+            'service_category',
           ],
         ],
       }),
@@ -321,6 +361,17 @@ async function createGoogleResources(accessToken, shareEmails, prefix) {
     {
       method: 'PUT',
       body: JSON.stringify({ values: [['created_at', 'email', 'lang', 'page', 'origin']] }),
+    }
+  );
+
+  await googleFetch(
+    accessToken,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet.spreadsheetId}/values/clients!A1:Y1?valueInputOption=USER_ENTERED`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({
+        values: [CLIENT_REGISTRY_HEADERS],
+      }),
     }
   );
 
@@ -382,6 +433,36 @@ async function createGoogleResources(accessToken, shareEmails, prefix) {
     googleAccountEmail: profile.email || '',
     shareResults,
   };
+}
+
+async function ensureClientRegistrySheet(accessToken, spreadsheetId) {
+  const metadata = await googleFetch(
+    accessToken,
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}?fields=sheets.properties`
+  );
+  const hasClientsSheet = (metadata.sheets || []).some(
+    sheet => sheet.properties?.title === 'clients'
+  );
+
+  if (!hasClientsSheet) {
+    await googleFetch(
+      accessToken,
+      `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}:batchUpdate`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ requests: [{ addSheet: { properties: { title: 'clients' } } }] }),
+      }
+    );
+  }
+
+  await googleFetch(
+    accessToken,
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/clients!A1:Y1?valueInputOption=USER_ENTERED`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ values: [CLIENT_REGISTRY_HEADERS] }),
+    }
+  );
 }
 
 function wranglerOAuthToken() {
@@ -566,7 +647,9 @@ async function main() {
       'sheet-id': args['sheet-id'] || process.env.SHEET_ID || readDevVarsValue('SHEET_ID'),
       'drive-folder-id':
         args['drive-folder-id'] || process.env.DRIVE_UPLOAD_FOLDER || readDevVarsValue('DRIVE_UPLOAD_FOLDER'),
-    })) || (await createGoogleResources(token.access_token, shareEmails, prefix));
+      })) || (await createGoogleResources(token.access_token, shareEmails, prefix));
+
+  await ensureClientRegistrySheet(token.access_token, resources.spreadsheetId);
 
   if (!existsSync(SECRETS_DIR)) {
     mkdirSync(SECRETS_DIR, { recursive: true });

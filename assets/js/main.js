@@ -20,7 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.classList.add('site-perf-lite');
   }
 
-  /* Heavy effects (permanent RAF, SVG filters, parallax) only when explicitly full — balanced is default. */
+  /* Keep legacy parallax/plasma effects disabled; the full emerald scene now
+     moves in CSS on its own compositor layer and needs no scroll RAF loop. */
   const sitePerfHeavy = false;
 
   const siteShell = window.SiteShell?.init?.() || {};
@@ -449,6 +450,15 @@ document.addEventListener('DOMContentLoaded', () => {
       'wheel',
       event => {
         if (event.ctrlKey || event.metaKey) return;
+        if (
+          scrollTarget === scrollRoot
+          && event.target instanceof Element
+          && event.target.closest(
+            '#price-category-modal.active .modal-content, #client-registration-modal.active .client-registration-modal__content'
+          )
+        ) {
+          return;
+        }
         if (
           event.target instanceof Element &&
           event.target.closest('input, textarea, select, [contenteditable="true"]')
@@ -1420,72 +1430,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   handleScroll();
 
-  /* ========== GEM ROTATION ON SCROLL ==========
-       Rotates the emerald facet angles as the user scrolls — mimics
-       turning a cut gemstone in the hand. Each facet has a unique
-       rotation multiplier so they move independently (natural stone feel).
-       Uses a spring/lerp so motion is smooth and has inertia. */
-  if (sitePerfHeavy) {
-  (function initGemRotation() {
-    const BASE = { a1: 122, a2: 158, a3: 98, a4: 38, a5: 178, base: 132 };
-    /* How many degrees each facet rotates per 1000px of scroll.
-           Odd multipliers keep facets desynchronised — more natural. */
-    const MULT = { a1: 18, a2: 13, a3: 22, a4: 15, a5: 9, base: 7 };
-    const MAX_OFFSET = 28; /* max ± degrees from base */
-
-    let currentOffset = 0; /* smoothed scroll-driven angle offset */
-    let targetOffset = 0;
-    let lastY = scrollRoot.scrollTop;
-    let rafId = null;
-
-    const lerp = (a, b, t) => a + (b - a) * t;
-
-    const tick = () => {
-      currentOffset = lerp(currentOffset, targetOffset, 0.06);
-
-      /* Snap to rest when close enough — avoid infinite RAF loop */
-      if (Math.abs(currentOffset - targetOffset) < 0.01) {
-        currentOffset = targetOffset;
-        rafId = null;
-        applyAngles();
-        return;
-      }
-
-      applyAngles();
-      rafId = requestAnimationFrame(tick);
-    };
-
-    const applyAngles = () => {
-      const s = document.documentElement.style;
-      s.setProperty('--gem-a1', (BASE.a1 + (currentOffset * MULT.a1) / 10).toFixed(2) + 'deg');
-      s.setProperty('--gem-a2', (BASE.a2 + (currentOffset * MULT.a2) / 10).toFixed(2) + 'deg');
-      s.setProperty('--gem-a3', (BASE.a3 - (currentOffset * MULT.a3) / 10).toFixed(2) + 'deg');
-      s.setProperty('--gem-a4', (BASE.a4 + (currentOffset * MULT.a4) / 10).toFixed(2) + 'deg');
-      s.setProperty('--gem-a5', (BASE.a5 - (currentOffset * MULT.a5) / 10).toFixed(2) + 'deg');
-      s.setProperty('--gem-base', (BASE.base + (currentOffset * MULT.base) / 10).toFixed(2) + 'deg');
-    };
-
-    scrollRoot.addEventListener(
-      'scroll',
-      () => {
-        const y = scrollRoot.scrollTop;
-        const delta = y - lastY;
-        lastY = y;
-
-        /* Accumulate direction; clamp to ±MAX_OFFSET */
-        targetOffset = Math.max(-MAX_OFFSET, Math.min(MAX_OFFSET, targetOffset + delta * 0.012));
-
-        /* Slowly drift back to 0 when user is not scrolling —
-               simulates letting go of the stone */
-        targetOffset *= 0.98;
-
-        if (!rafId) rafId = requestAnimationFrame(tick);
-      },
-      { passive: true }
-    );
-  })();
-  }
-
   /* Language dropdown is already initialized near the top of DOMContentLoaded
        (see siteShell.initLanguageDropdown?.() call after the siteShell init).
        Do not call it again here — the duplicate call was a no-op but produced
@@ -1979,6 +1923,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isFilterPill = link.classList.contains('filter-btn');
     const isOnlineOrderPill = link.classList.contains('online-order-pill');
+    const isNavPillControl = link.hasAttribute('data-nav-pill');
 
     if (isOnlineOrderPill) {
       mountActivePlasma(link, { cta: true });
@@ -1997,6 +1942,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      if (isNavPillControl) {
+        playNavPillClickFlash(link);
+        return;
+      }
+
       const href = link.getAttribute('href');
       if (!isSafeNavigationHref(href)) return;
       event.preventDefault();
@@ -2007,7 +1957,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const navPillSelector =
-    '.nav-main > a, .nav-main > .dropdown > a, .before-after-filters.nav-main > .filter-btn, #booking-modal .nav-main > .filter-btn, .select-btn-wrapper.nav-main > .filter-btn, .online-order-pill';
+    '.nav-main > a, .nav-main > .dropdown > a, .before-after-filters.nav-main > .filter-btn, #booking-modal .nav-main > .filter-btn, .select-btn-wrapper.nav-main > .filter-btn, .online-order-pill, [data-nav-pill]';
 
   document.querySelectorAll(navPillSelector).forEach(link => {
     if (link.closest('.nav-gallery-dropdown')) return;
@@ -2018,7 +1968,7 @@ document.addEventListener('DOMContentLoaded', () => {
     scan(root = document) {
       root
         .querySelectorAll(
-          '.before-after-filters.nav-main > .filter-btn, #booking-modal .nav-main > .filter-btn, .select-btn-wrapper.nav-main > .filter-btn, .online-order-pill'
+          '.before-after-filters.nav-main > .filter-btn, #booking-modal .nav-main > .filter-btn, .select-btn-wrapper.nav-main > .filter-btn, .online-order-pill, [data-nav-pill]'
         )
         .forEach(bindNavPill);
     },

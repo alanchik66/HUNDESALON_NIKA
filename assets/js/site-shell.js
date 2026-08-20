@@ -8,6 +8,93 @@
  */
 (function () {
   const SUPPORTED_LANGS = ['ru', 'uk', 'en', 'de'];
+  const EURO_ICON_MARKUP = '<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>';
+  const escapeCurrencyText = value =>
+    String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  const renderCurrencyText = value => escapeCurrencyText(value).replaceAll('€', EURO_ICON_MARKUP);
+  const setCurrencyText = (element, value) => {
+    if (!(element instanceof HTMLElement)) return;
+    element.replaceChildren();
+    String(value ?? '').split('€').forEach((part, index) => {
+      if (index > 0) {
+        const icon = document.createElement('span');
+        icon.className = 'site-icon site-icon-euro currency-inline';
+        icon.setAttribute('role', 'img');
+        icon.setAttribute('aria-label', 'euro');
+        element.appendChild(icon);
+      }
+      if (part) element.appendChild(document.createTextNode(part));
+    });
+  };
+
+  const EURO_ICON_SELECTOR = '.site-icon--euro, .site-icon-euro, .currency-inline';
+  let independentEuroMotionObserver = null;
+
+  const randomUnit = () => {
+    try {
+      if (globalThis.crypto?.getRandomValues) {
+        const buffer = new Uint32Array(1);
+        globalThis.crypto.getRandomValues(buffer);
+        return buffer[0] / 0x100000000;
+      }
+    } catch {}
+    return Math.random();
+  };
+
+  const randomBetween = (min, max) => min + (max - min) * randomUnit();
+
+  const randomizeEuroIconMotion = icon => {
+    if (!(icon instanceof HTMLElement) || icon.dataset.nikaEuroMotion === 'ready') return;
+
+    const spinDuration = randomBetween(3.8, 7.4);
+    const sheenDuration = randomBetween(2.2, 4.8);
+
+    icon.style.setProperty('--euro-spin-duration', `${spinDuration.toFixed(2)}s`);
+    icon.style.setProperty('--euro-spin-delay', `${(-randomBetween(0, spinDuration)).toFixed(2)}s`);
+    icon.style.setProperty('--euro-sheen-duration', `${sheenDuration.toFixed(2)}s`);
+    icon.style.setProperty('--euro-sheen-delay', `${(-randomBetween(0, sheenDuration)).toFixed(2)}s`);
+    icon.dataset.nikaEuroMotion = 'ready';
+  };
+
+  const randomizeIndependentEuroIcons = root => {
+    if (!root || typeof root.querySelectorAll !== 'function') return;
+
+    if (typeof root.matches === 'function' && root.matches(EURO_ICON_SELECTOR)) {
+      randomizeEuroIconMotion(root);
+    }
+    root.querySelectorAll(EURO_ICON_SELECTOR).forEach(randomizeEuroIconMotion);
+  };
+
+  const initIndependentEuroMotion = () => {
+    randomizeIndependentEuroIcons(document);
+
+    if (independentEuroMotionObserver || typeof MutationObserver === 'undefined') return;
+
+    const observationRoot = document.body || document.documentElement;
+    if (!observationRoot) return;
+
+    independentEuroMotionObserver = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+          if (node.nodeType === 1 || node.nodeType === 11) {
+            randomizeIndependentEuroIcons(node);
+          }
+        });
+      });
+    });
+    independentEuroMotionObserver.observe(observationRoot, { childList: true, subtree: true });
+  };
+
+  window.NikaCurrency = Object.freeze({
+    iconMarkup: EURO_ICON_MARKUP,
+    render: renderCurrencyText,
+    setText: setCurrencyText,
+  });
 
   const THEME_LABELS = {
     ru: {
@@ -2085,13 +2172,13 @@
   will-change: transform !important;
   transition: transform 0.44s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.32s ease !important;
   transform-origin: 50% 100% !important;
-  animation: weatherHeaderToggleArrowSheen var(--icon-sheen-duration, 2.35s) ease-in-out infinite !important;
+  animation: siteArrowDirectionalBounce 2.35s ease-in-out infinite !important;
 }
 
 .weather-header-card__toggle-icon.is-open,
 :host([data-weather-variant='header'][data-weather-expanded='true']) .weather-header-card__toggle-icon {
   --arrow-rotate: ${HEADER_WEATHER_TOGGLE_ARROW_OPEN};
-  animation: none !important;
+  animation: siteArrowDirectionalBounce 2.35s ease-in-out infinite !important;
 }
 
 .weather-header-trigger:active .weather-header-card__toggle-icon.is-open,
@@ -2109,6 +2196,33 @@
   50% {
     filter: drop-shadow(0 3px 6px rgb(0 0 0 / 22%)) contrast(1.08) brightness(1.08) saturate(1.1);
     opacity: 1;
+  }
+}
+
+@keyframes siteArrowDirectionalBounce {
+  0%,
+  100% {
+    transform: var(--arrow-rotate, rotate(0deg)) translateY(0) scale(1);
+    filter: drop-shadow(0 2px 4px rgb(0 0 0 / 28%)) drop-shadow(0 0 6px rgb(50 255 177 / 28%)) saturate(1.08);
+    opacity: 0.92;
+  }
+
+  36% {
+    transform: var(--arrow-rotate, rotate(0deg)) translateY(4px) scale(1.08);
+    filter: drop-shadow(0 3px 5px rgb(0 0 0 / 30%)) drop-shadow(0 0 10px rgb(50 255 177 / 58%)) saturate(1.22);
+    opacity: 1;
+  }
+
+  58% {
+    transform: var(--arrow-rotate, rotate(0deg)) translateY(1px) scale(0.985);
+    filter: drop-shadow(0 2px 4px rgb(0 0 0 / 28%)) drop-shadow(0 0 7px rgb(50 255 177 / 38%)) saturate(1.12);
+    opacity: 0.96;
+  }
+
+  78% {
+    transform: var(--arrow-rotate, rotate(0deg)) translateY(2.5px) scale(1.025);
+    filter: drop-shadow(0 2px 5px rgb(0 0 0 / 28%)) drop-shadow(0 0 8px rgb(50 255 177 / 44%)) saturate(1.16);
+    opacity: 0.98;
   }
 }
 
@@ -2378,8 +2492,8 @@
 }
 
 .weather-header-card__location {
-  font-size: 14px !important;
-  line-height: 17px !important;
+  font-size: 13px !important;
+  line-height: 16.64px !important;
   font-weight: 500 !important;
   letter-spacing: 0 !important;
   margin: 0 !important;
@@ -3797,7 +3911,7 @@
 
     const socialIcons = [
       ['https://wa.me/4915172450988', 'fab fa-whatsapp', 'WhatsApp'],
-      ['https://t.me/hundesalon_nika', 'fab fa-telegram', 'Telegram'],
+      ['https://t.me/hundesalon_nika_support_bot', 'fab fa-telegram', 'Telegram'],
       ['viber://chat?number=%2B4915172450988', 'fab fa-viber', 'Viber'],
       ['https://www.instagram.com/hundesalon_nika?igsh=MWthdXgyY2llMWRndw==', 'fab fa-instagram', 'Instagram'],
       ['https://www.tiktok.com/@hundesalon_nika', 'fab fa-tiktok', 'TikTok'],
@@ -13412,6 +13526,7 @@ labelEl.style.setProperty('text-align', 'right', 'important');
       localStorage.setItem('preferred_lang', context.currentLang);
     }
 
+    initIndependentEuroMotion();
     standardizePageHeader(context);
     hardenHeaderA11y();
     syncHeaderWeatherWidget(context.pageLang);

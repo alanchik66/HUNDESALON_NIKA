@@ -112,6 +112,10 @@ https://www.hundesalon-nika.com/* https://hundesalon-nika.com/:splat 301
 /en/blog/ /en/blog/blog 301
 /ru/blog/ /ru/blog/blog 301
 /uk/blog/ /uk/blog/blog 301
+/de/blog /de/blog/blog 301
+/en/blog /en/blog/blog 301
+/ru/blog /ru/blog/blog 301
+/uk/blog /uk/blog/blog 301
 /de/blog/index.html /de/blog/blog 301
 /en/blog/index.html /en/blog/blog 301
 /ru/blog/index.html /ru/blog/blog 301

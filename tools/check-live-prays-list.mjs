@@ -1,5 +1,5 @@
 /**
- * Post-deploy: verify live prays-list pages ship the price configurator bundle.
+ * Post-deploy: verify live prays-list pages ship a supported price-page bundle.
  * npm run check:live-prays-list
  */
 const ORIGIN = process.env.LIVE_ORIGIN || 'https://hundesalon-nika.com';
@@ -23,6 +23,9 @@ for (const locale of LOCALES) {
   const { response, text } = await fetchText(pageUrl);
   const mainVersion = text.match(/main\.js\?v=([^"']+)/)?.[1] || '';
   const catalogVersion = text.match(/price-catalog\.js\?v=([^"']+)/)?.[1] || '';
+  const pricePageVersion = text.match(/price-page\.js\?v=([^"']+)/)?.[1] || '';
+  const usesConfigurator = text.includes('data-price-configurator');
+  const usesCategoryCards = text.includes('data-price-page');
 
   const row = (label, ok, detail = '') => {
     const mark = ok ? '✓' : '✗';
@@ -32,21 +35,29 @@ for (const locale of LOCALES) {
 
   console.log(pageUrl);
   row('HTTP 200', response.ok, String(response.status));
-  row('price-configurator markup', text.includes('data-price-configurator'));
-  row('price-catalog.js', Boolean(catalogVersion));
+  row('supported price markup', usesConfigurator || usesCategoryCards);
+  row('price page bundle', usesCategoryCards ? Boolean(pricePageVersion) : Boolean(catalogVersion));
   row('page-modules.js', /page-modules\.js\?v=/.test(text));
 
   if (mainVersion) {
     const mainUrl = `${ORIGIN}/assets/js/main.js?v=${mainVersion}`;
     const { response: mainRes, text: mainJs } = await fetchText(mainUrl);
     row('main.js reachable', mainRes.ok, mainUrl);
-    row('site-select optgroup fix', mainJs.includes("querySelectorAll('option')"));
+    row(
+      'site-select optgroup handling',
+      mainJs.includes('OPTGROUP') && /querySelectorAll\(["']option["']\)/.test(mainJs)
+    );
     row('initSiteSelects', mainJs.includes('initSiteSelects'));
   } else {
     row('main.js version in HTML', false);
   }
 
-  if (catalogVersion) {
+  if (usesCategoryCards && pricePageVersion) {
+    const pricePageUrl = `${ORIGIN}/assets/js/price-page.js?v=${pricePageVersion}`;
+    const { response: pricePageRes, text: pricePageJs } = await fetchText(pricePageUrl);
+    row('price-page.js reachable', pricePageRes.ok);
+    row('category cards renderer', pricePageJs.includes('price-card') && pricePageJs.includes('data-price-categories'));
+  } else if (catalogVersion) {
     const catalogUrl = `${ORIGIN}/assets/js/price-catalog.js?v=${catalogVersion}`;
     const { response: catalogRes, text: catalogJs } = await fetchText(catalogUrl);
     row('price-catalog.js reachable', catalogRes.ok);

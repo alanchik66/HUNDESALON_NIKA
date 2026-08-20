@@ -3,11 +3,12 @@
  * One-shot (for Task Scheduler): npm run seo:watch
  * Long poll until Bing scan completes: npm run seo:watch:until-done
  */
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './lib/browser-launch.mjs';
 import {
   analyzeBingFindings,
   extractBingSiteScanFindings,
@@ -26,6 +27,7 @@ const gscBrowser =
 
 const statePath = path.join(root, 'temp', 'seo-search-watch-state.json');
 const reportPath = path.join(root, 'temp', 'seo-search-watch-report.json');
+const pidFile = browserPidFile('hundesalon-nika-edge-debug');
 
 function readJson(file, fallback) {
   try {
@@ -83,7 +85,8 @@ async function ensureCdp() {
   if (!edge) return false;
 
   const userDataDir = path.join(process.env.TEMP || '.', 'hundesalon-nika-edge-debug');
-  spawn(
+  stopTrackedBrowser(pidFile);
+  launchTrackedBrowser(
     edge,
     [
       `--remote-debugging-port=${port}`,
@@ -93,8 +96,8 @@ async function ensureCdp() {
       'https://www.bing.com/webmasters/sitescan?siteUrl=https%3A%2F%2Fhundesalon-nika.com%2F',
       'https://search.google.com/search-console?resource_id=sc-domain%3Ahundesalon-nika.com',
     ],
-    { detached: true, stdio: 'ignore' }
-  ).unref();
+    pidFile
+  );
 
   for (let i = 0; i < 40; i += 1) {
     if (await cdpReady()) {
@@ -255,5 +258,4 @@ main().catch(error => {
   console.error(error);
   process.exitCode = 1;
 });
-
 

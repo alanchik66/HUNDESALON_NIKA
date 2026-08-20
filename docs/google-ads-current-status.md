@@ -9,7 +9,7 @@
 
 ### 1. Отслеживание конверсий на сайте
 - **Google Ads ID:** AW-18333140047
-- **Conversion Label:** xpOSCN3rnNQcEM-I9qVE (`send_to`: `AW-18333140047/xpOSCN3rnNQcEM-I9qVE`)
+- **Conversion Label:** qNqJCKzYu9QcEM-I9qVE (`send_to`: `AW-18333140047/qNqJCKzYu9QcEM-I9qVE`)
 - **Код:** `assets/js/analytics.js` на **всех** HTML-страницах (не только index)
 - **Конфиг:** `config/env.js`
 - **Конверсия:** `hundesalonTrackConversion()` при успешной форме / бронировании

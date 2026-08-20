@@ -1,13 +1,14 @@
 /**
  * Start Edge with remote debugging for npm run bing:automate (Windows).
  */
-import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './lib/browser-launch.mjs';
 
 const port = process.env.BING_MAIL_EDGE_PORT || '9224';
 const site = encodeURIComponent('https://hundesalon-nika.com/');
 const startUrl = `https://www.bing.com/webmasters/urlinspection?siteUrl=${site}`;
+const pidFile = browserPidFile('hundesalon-nika-edge-debug');
 
 const candidates = [
   path.join(process.env['ProgramFiles'] || '', 'Microsoft/Edge/Application/msedge.exe'),
@@ -33,30 +34,11 @@ async function cdpReady() {
   }
 }
 
-function stopStaleProfileEdge() {
-  if (process.platform !== 'win32') return;
-
-  const marker = 'hundesalon-nika-edge-debug';
-  const ps = spawnSync(
-    'pwsh',
-    [
-      '-NoProfile',
-      '-Command',
-      `Get-CimInstance Win32_Process -Filter "name='msedge.exe'" | Where-Object { $_.CommandLine -like '*${marker}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`,
-    ],
-    { encoding: 'utf8' }
-  );
-  if (ps.stderr?.trim()) {
-    console.log(ps.stderr.trim());
-  }
-}
-
 console.log(`Starting Edge (port ${port})…`);
 console.log(startUrl);
 
-stopStaleProfileEdge();
-
-const child = spawn(
+stopTrackedBrowser(pidFile);
+launchTrackedBrowser(
   edge,
   [
     `--remote-debugging-port=${port}`,
@@ -65,10 +47,8 @@ const child = spawn(
     '--no-default-browser-check',
     startUrl,
   ],
-  { detached: true, stdio: 'ignore' }
+  pidFile
 );
-
-child.unref();
 
 console.log('\n1. Sign in to Microsoft if prompted');
 console.log('2. Wait for Bing Webmaster Tools to load');
@@ -83,5 +63,5 @@ for (let i = 0; i < 30; i += 1) {
   await new Promise(r => setTimeout(r, 500));
 }
 
-console.error(`\nCDP port ${port} not ready after 15s — close other Edge windows using the debug profile and rerun.`);
+console.error(`\nCDP port ${port} not ready after 15s — close other Edge windows using this debug profile and rerun.`);
 process.exit(1);

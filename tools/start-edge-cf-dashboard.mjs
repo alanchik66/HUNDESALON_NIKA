@@ -2,9 +2,10 @@
  * Edge CDP for Cloudflare Dashboard automation.
  * npm run cf:edge-dashboard
  */
-import { exec, spawn } from 'node:child_process';
+import { exec } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './lib/browser-launch.mjs';
 
 const port = process.env.CF_EDGE_PORT || '9225';
 const startUrl = 'https://dash.cloudflare.com/profile/api-tokens';
@@ -21,11 +22,13 @@ if (!candidates.length) {
 
 const edge = candidates[0];
 const userDataDir = path.join(process.env.TEMP || '.', 'hundesalon-nika-cf-edge-debug');
+const pidFile = browserPidFile('hundesalon-nika-cf-edge-debug');
 
 console.log(`Starting Edge for Cloudflare (port ${port})…`);
 console.log(startUrl);
 
-spawn(
+stopTrackedBrowser(pidFile);
+launchTrackedBrowser(
   edge,
   [
     `--remote-debugging-port=${port}`,
@@ -34,8 +37,8 @@ spawn(
     '--no-default-browser-check',
     startUrl,
   ],
-  { detached: true, stdio: 'ignore' }
-).unref();
+  pidFile
+);
 
 console.log('\n1. Sign in to Cloudflare');
 console.log('2. Run: npm run cf:edit-token-zone-rules');

@@ -55,6 +55,16 @@
 /sw.js
   Cache-Control: public, max-age=0, must-revalidate
 
+# Search-engine control files must always revalidate after a deployment
+/robots.txt
+  Cache-Control: public, max-age=0, must-revalidate
+
+/sitemap.xml
+  Cache-Control: public, max-age=0, must-revalidate
+
+/sitemap-brand.xml
+  Cache-Control: public, max-age=0, must-revalidate
+
 /browserconfig.xml
   Cache-Control: public, max-age=86400
 

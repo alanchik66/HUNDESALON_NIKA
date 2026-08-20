@@ -7,7 +7,7 @@ export const BRAND_PROFILES = {
   instagram: 'https://www.instagram.com/hundesalon_nika',
   tiktok: 'https://www.tiktok.com/@hundesalon_nika',
   youtube: 'https://www.youtube.com/@hundesalon_nika',
-  telegram: 'https://t.me/hundesalon_nika',
+  telegram: 'https://t.me/hundesalon_nika_support_bot',
   facebook: 'https://www.facebook.com/profile.php?id=61584574431839',
   whatsapp: 'https://wa.me/4915172450988',
 };
@@ -31,7 +31,7 @@ export const NAP = {
   region: 'Sachsen',
   country: 'DE',
   phone: '+49 151 72450988',
-  email: 'info@hundesalon-nika.com',
+  email: 'support@hundesalon-nika.com',
   supportEmail: 'support@hundesalon-nika.com',
-  url: 'https://hundesalon-nika.com/de/',
+  url: 'https://hundesalon-nika.com/',
 };
