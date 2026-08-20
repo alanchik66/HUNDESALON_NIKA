@@ -14014,10 +14014,10 @@ body.price-page .price-page-hero[data-price-hero] .price-page-hero__copy .sectio
 
 body.price-page .price-page-hero[data-price-hero] .price-page-hero__intro {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 21rem);
   align-items: center;
   gap: clamp(0.65rem, 1.4vw, 1.4rem);
-  width: min(100%, 1120px);
+  width: min(100%, 1040px);
   margin-inline: auto;
 }
 
@@ -14025,13 +14025,19 @@ body.price-page .price-page-hero[data-price-hero] .price-page-hero__intro-copy {
   display: grid;
   gap: 0.28rem;
   min-width: 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  hyphens: none;
   text-align: left;
 }
 
 body.price-page .price-page-hero[data-price-hero] .price-page-hero__lead,
 body.price-page .price-page-hero[data-price-hero] .price-page-hero__note {
   width: auto;
+  max-width: 100%;
   margin: 0;
+  overflow-wrap: break-word;
+  hyphens: none;
   text-align: left;
   text-align-last: left;
 }
@@ -14039,6 +14045,9 @@ body.price-page .price-page-hero[data-price-hero] .price-page-hero__note {
 body.price-page .price-page-hero[data-price-hero] .price-page-hero__categories-action {
   flex-shrink: 0;
   min-width: min(100%, 21rem);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   margin-top: 0;
   min-height: 4rem;
   padding: 0.8rem 1.25rem;
@@ -14127,7 +14136,10 @@ body.price-page .price-page-hero[data-price-hero] .price-breed-search__status:em
 }
 
 body.price-page .price-page-hero[data-price-hero] .price-page-hero__search-frame .price-breed-search__label {
+  display: block;
   padding-inline: 0.15rem;
+  text-align: center;
+  text-align-last: center;
 }
 
 body.price-page .price-page-hero[data-price-hero] .price-breed-search__input {
