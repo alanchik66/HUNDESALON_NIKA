@@ -383,7 +383,7 @@
           </div>
           <button
             type="button"
-            class="price-page-hero__categories-action btn-neon"
+            class="price-page-hero__categories-action online-order-pill"
             data-nav-pill="price-categories-action"
             data-price-categories-action
             aria-controls="price-categories"

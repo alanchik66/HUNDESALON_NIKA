@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* Keep legacy parallax/plasma effects disabled; the full emerald scene now
      moves in CSS on its own compositor layer and needs no scroll RAF loop. */
-  const sitePerfHeavy = false;
+  const sitePerfHeavy = !prefersReducedMotion;
 
   const siteShell = window.SiteShell?.init?.() || {};
   const preloaderNotice = siteShell.preloaderNotice || {
@@ -1929,6 +1929,20 @@ document.addEventListener('DOMContentLoaded', () => {
       mountActivePlasma(link, { cta: true });
     } else if (isNavPillActive(link)) {
       mountActivePlasma(link);
+    }
+
+    if (!prefersReducedMotion && (!isCoarsePointer || window.innerWidth >= 768)) {
+      link.addEventListener('mouseenter', () => {
+        if (!link.querySelector('.nav-plasma--active')) {
+          mountActivePlasma(link, { cta: isOnlineOrderPill });
+        }
+      });
+
+      link.addEventListener('mouseleave', () => {
+        if (!isNavPillActive(link) && !isOnlineOrderPill) {
+          unmountActivePlasma(link);
+        }
+      });
     }
 
     link.addEventListener('click', event => {
