@@ -15,8 +15,10 @@ import {
 import { buildBrandedEmail } from './_lib/email-template.js';
 
 const DEFAULT_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
+const ONLINE_PAYMENTS_HARD_DISABLED = true;
 
 function paymentsOnlineEnabled(env) {
+  if (ONLINE_PAYMENTS_HARD_DISABLED) return false;
   const raw = String(getEnvValue(env, 'PAYMENTS_ONLINE_ENABLED') || '').trim().toLowerCase();
   return raw === '1' || raw === 'true' || raw === 'on' || raw === 'yes';
 }

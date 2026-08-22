@@ -3,6 +3,7 @@ import {
   PET_PHOTO_MAX_BYTES,
   PET_PHOTO_MAX_MB,
   PET_PHOTO_PROXY_MAX_BYTES,
+  hasValidPetPhotoSignature,
   isAllowedPetPhotoType,
   petPhotoTooLarge,
 } from './_lib/pet-photo-upload.js';
@@ -105,6 +106,10 @@ async function handleMultipartUpload(request, env, origin) {
 
   if (!isAllowedPetPhotoType(file.type)) {
     return jsonResponse({ success: false, message: 'Only JPG and PNG files are accepted.' }, 400, origin);
+  }
+
+  if (!(await hasValidPetPhotoSignature(file))) {
+    return jsonResponse({ success: false, message: 'The uploaded file is not a valid JPG or PNG image.' }, 400, origin);
   }
 
   if (petPhotoTooLarge(file.size)) {

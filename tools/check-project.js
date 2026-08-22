@@ -304,6 +304,17 @@ const staleImagePatterns = [
   { pattern: /gallery-before-\d+\.jpg/i, label: 'legacy before-after filename' },
 ];
 
+for (const file of [
+  'functions/_lib/draft-service.js',
+  'functions/seo-generate.js',
+  'functions/_lib/ai-policy.js',
+  '.dev.vars.example',
+]) {
+  if (fs.existsSync(path.join(root, file))) {
+    assert(!/deepseek/i.test(read(file)), `${file}: removed AI fallback must not be reintroduced`);
+  }
+}
+
 const staleImageScanRoots = ['assets', 'de', 'en', 'ru', 'uk'];
 const staleImageScanFiles = ['index.html', 'sw.js', 'sitemap-brand.xml'];
 

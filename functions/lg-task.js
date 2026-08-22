@@ -8,6 +8,7 @@ import {
   enforceRateLimit,
   jsonResponse,
 } from './_lib/http-security.js';
+import { hasAiServiceAuth } from './_lib/ai-policy.js';
 
 function getRuntimeEnvs(context) {
   const candidates = [
@@ -67,6 +68,9 @@ async function forwardJson(request, pathname, body) {
     headers: {
       'Content-Type': 'application/json',
       Origin: origin,
+      ...(request.headers.get('Authorization')
+        ? { Authorization: request.headers.get('Authorization') }
+        : {}),
     },
     body: JSON.stringify(body || {}),
   });
@@ -79,22 +83,6 @@ export async function onRequest(context) {
     return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
   }
 
-  const originCheck = assertAllowedOrigin(request);
-  const secretOk = isAuthorizedBySharedSecret(request, context);
-  if (!originCheck.ok && !secretOk) {
-    return jsonResponse({ error: 'Forbidden' }, 403);
-  }
-  const responseOrigin = originCheck.ok ? originCheck.origin : '';
-
-  const rateLimited = await enforceRateLimit(request, {
-    route: 'lg-task',
-    limit: 20,
-    windowSec: 60,
-  });
-  if (rateLimited) {
-    return rateLimited;
-  }
-
   let payload;
   try {
     payload = await request.json();
@@ -104,8 +92,24 @@ export async function onRequest(context) {
 
   const task = String(payload?.task || '').trim().toLowerCase();
   if (!task) {
-    return jsonResponse({ error: 'Missing task field' }, 400, responseOrigin);
+    return jsonResponse({ error: 'Missing task field' }, 400);
   }
+
+  const originCheck = assertAllowedOrigin(request);
+  const isAiTask = task === 'message.draft' || task === 'seo.generate';
+  const secretOk = isAiTask
+    ? hasAiServiceAuth(request, context)
+    : isAuthorizedBySharedSecret(request, context);
+  if (!originCheck.ok && !secretOk) return jsonResponse({ error: 'Forbidden' }, 403);
+  if (isAiTask && !secretOk) return jsonResponse({ error: 'AI service authorization required' }, 401);
+  const responseOrigin = originCheck.ok ? originCheck.origin : '';
+
+  const rateLimited = await enforceRateLimit(request, {
+    route: 'lg-task',
+    limit: 10,
+    windowSec: 60,
+  });
+  if (rateLimited) return rateLimited;
 
   if (task === 'ping') {
     return jsonResponse({ ok: true, task: 'ping', service: 'lg-task', ts: new Date().toISOString() }, 200, responseOrigin);

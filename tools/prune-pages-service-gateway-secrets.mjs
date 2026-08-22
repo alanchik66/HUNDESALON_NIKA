@@ -1,6 +1,6 @@
 /**
- * Remove redundant service gateway Pages secrets (defaults live in functions/*.js).
- * Keeps SERVICE_GATEWAY_API_KEY and SendPulse credentials.
+ * Remove obsolete service gateway configuration from Pages.
+ * Keeps SERVICE_GATEWAY_API_KEY and SendPulse credentials; defaults live in functions/*.js.
  */
 import { spawnSync } from 'node:child_process';
 

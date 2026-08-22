@@ -31,7 +31,8 @@ const DEFAULT_BOOKING_RECIPIENT = 'booking@hundesalon-nika.com';
 const DEFAULT_SUPPORT = 'support@hundesalon-nika.com';
 const DEFAULT_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
 const DEFAULT_CLIENT_FROM = 'Hundesalon Nika <support@hundesalon-nika.com>';
-const DEFAULT_ADMIN_EMAILS = ['snaiper1984@gmail.com', 'ryndenko1982@gmail.com'];
+const DEFAULT_ADMIN_EMAILS = [];
+const ONLINE_PAYMENTS_HARD_DISABLED = true;
 const SLACK_TIMEOUT_MS = 4500;
 const CLIENT_REGISTRATION_FORM_TYPE = 'client_registration';
 const CLIENT_REGISTRATION_SHEET = 'clients';
@@ -302,6 +303,7 @@ function isInboundMailbox(email) {
 }
 
 function paymentsOnlineEnabled(env) {
+  if (ONLINE_PAYMENTS_HARD_DISABLED) return false;
   const raw = String(getEnvValue(env, 'PAYMENTS_ONLINE_ENABLED') || '').trim().toLowerCase();
   return raw === '1' || raw === 'true' || raw === 'on' || raw === 'yes';
 }

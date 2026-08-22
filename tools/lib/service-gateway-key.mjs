@@ -28,6 +28,11 @@ export async function validateInferenceKey(apiKey) {
     },
     body: JSON.stringify({
       model: 'google/gemini-2.5-flash-lite',
+      provider: {
+        only: ['google-ai-studio'],
+        allow_fallbacks: false,
+        require_parameters: true,
+      },
       messages: [{ role: 'user', content: 'OK' }],
       max_tokens: 16,
     }),

@@ -167,11 +167,11 @@ curl -X POST https://hundesalon-nika.com/message-draft \
   | head
 ```
 
-Expected response:
+Expected response without the server-side AI secret:
 
 ```json
 {
-  "error": "Service configuration is not available"
+  "error": "AI service authorization required"
 }
 ```
 
@@ -186,11 +186,11 @@ curl -X POST https://hundesalon-nika.com/seo-generate \
   | head
 ```
 
-Expected response:
+Expected response without the server-side AI secret:
 
 ```json
 {
-  "error": "Service configuration is not available"
+  "error": "AI service authorization required"
 }
 ```
 
@@ -296,7 +296,8 @@ echo "✅ Deployment complete!"
 
 These are configured in Cloudflare Pages secrets:
 
-- `SERVICE_GATEWAY_API_KEY` - service gateway authentication (required)
+- `SERVICE_GATEWAY_API_KEY` - existing Gemini gateway authentication (optional; keep only in Cloudflare secrets)
+- `AI_SERVICE_WEBHOOK_SECRET` - required server-side secret for AI route calls
 - Other service gateway vars are optional; see `docs/operations.md`
 
 > No need to set these manually in Cloud Shell — they're baked into Cloudflare.

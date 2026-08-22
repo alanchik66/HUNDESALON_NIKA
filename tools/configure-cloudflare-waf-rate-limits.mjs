@@ -32,14 +32,35 @@ const ENDPOINT_LIMITS = [
   {
     path: '/message-draft',
     description: `${RULE_PREFIX} POST /message-draft`,
-    requestsPerPeriod: 30,
+    requestsPerPeriod: 10,
     period: 60,
     mitigationTimeout: 120,
   },
   {
     path: '/seo-generate',
     description: `${RULE_PREFIX} POST /seo-generate`,
-    requestsPerPeriod: 8,
+    requestsPerPeriod: 4,
+    period: 60,
+    mitigationTimeout: 120,
+  },
+  {
+    path: '/subscribe',
+    description: `${RULE_PREFIX} POST /subscribe`,
+    requestsPerPeriod: 5,
+    period: 60,
+    mitigationTimeout: 120,
+  },
+  {
+    path: '/upload',
+    description: `${RULE_PREFIX} POST /upload`,
+    requestsPerPeriod: 4,
+    period: 60,
+    mitigationTimeout: 120,
+  },
+  {
+    path: '/payment',
+    description: `${RULE_PREFIX} POST /payment`,
+    requestsPerPeriod: 2,
     period: 60,
     mitigationTimeout: 120,
   },
@@ -96,7 +117,7 @@ function buildCombinedRulePayload() {
   return {
     description: COMBINED_RULE_DESC,
     expression:
-      '((http.request.uri.path eq "/sendmail" or http.request.uri.path eq "/message-draft" or http.request.uri.path eq "/seo-generate") and http.request.method eq "POST")',
+      '((http.request.uri.path eq "/sendmail" or http.request.uri.path eq "/message-draft" or http.request.uri.path eq "/seo-generate" or http.request.uri.path eq "/subscribe" or http.request.uri.path eq "/upload" or http.request.uri.path eq "/payment") and http.request.method eq "POST")',
     action: 'block',
     action_parameters: {
       response: {
@@ -142,7 +163,7 @@ async function createPhaseRuleset(auth, zoneId, rules) {
     method: 'POST',
     body: JSON.stringify({
       name: 'HUNDESALON NIKA API rate limits',
-      description: 'Rate limits for Pages Functions (sendmail, message-draft, seo-generate)',
+    description: 'Rate limits for Pages Functions (sendmail, subscribe, upload, payment, AI routes)',
       kind: 'zone',
       phase: PHASE,
       rules,

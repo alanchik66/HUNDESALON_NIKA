@@ -273,6 +273,8 @@ npm run dev:worker
 | `DRIVE_UPLOAD_FOLDER` | URL папки Google Drive | загрузка фото питомца |
 | `GMAIL_SENDER` | Gmail/Workspace alias | опционально; указывайте только рабочий alias, иначе Gmail не отправляет клиентам письма |
 | `SENDPULSE_FROM`, `CLIENT_EMAIL_FROM` | SendPulse → Senders | основной отправитель transactional email для клиентов |
+| `RESEND_FROM` | Resend verified domain | legacy compatibility variable; active transactional transport remains SendPulse |
+| `SERVICE_GATEWAY_API_KEY` | Existing Gemini gateway account | единственный разрешённый AI inference path; ключ хранится только как Cloudflare secret |
 | `SALON_EMAIL`, `SUPPORT_EMAIL`, `SUPPORT_REPLY_TO_EMAIL`, `CONTACT_RECIPIENT_EMAIL`, `BOOKING_RECIPIENT_EMAIL` | рабочая почта салона | получатель заявок и адрес, куда клиенты отвечают |
 | `ADMIN_NOTIFICATION_EMAILS` | Gmail администраторов | внутренние копии заявок: `snaiper1984@gmail.com,ryndenko1982@gmail.com` |
 | `GOOGLE_SHARE_EMAIL` | Google/Workspace аккаунты администраторов | доступ к созданным Calendar, Sheets и Drive; можно указывать несколько адресов через запятую |
@@ -290,6 +292,8 @@ npm run dev:worker
 | `PAYMENT_PROVIDER_KEY` | Stripe/PayPal dashboard | TODO для будущей предоплаты |
 
 Регистрации клиента и питомца для выбранной услуги сохраняются в отдельный лист `clients` той же закрытой Google Sheets таблицы. Лист содержит выбранную услугу и ориентировочную цену, данные клиента и питомца, номер жетона, согласия и источник заявки; чтения этого листа с сайта нет. «Первый груминг щенка» является обычной услугой, а не акцией. Скрипт `tools/setup-google-platform.mjs` создаёт лист и его заголовки автоматически при настройке или повторном запуске Google-платформы.
+
+Online Stripe payments are hard-disabled in the deployed code; do not add payment secrets or enable the flag without verifying the booking flow, KV idempotency binding, and a no-charge decision.
 
 Для локальной проверки Cloudflare Functions используйте `.dev.vars` по образцу `.dev.vars.example`, затем запускайте:
 
