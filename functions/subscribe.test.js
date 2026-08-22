@@ -26,12 +26,16 @@ test('reports failure when persistence and confirmation delivery are unavailable
 test('reports degraded success when confirmation delivery succeeds without sheet persistence', async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async url => {
-    assert.match(String(url), /api\.resend\.com\/emails/);
-    return Response.json({ id: 're_test' });
+    const target = String(url);
+    if (target.includes('/oauth/access_token')) {
+      return Response.json({ access_token: 'sp_test_token', expires_in: 3600 });
+    }
+    assert.match(target, /api\.sendpulse\.com\/smtp\/emails/);
+    return Response.json({ result: true });
   };
 
   try {
-    const response = await onRequest({ request: request(), env: { RESEND_API_KEY: 're_test_key' } });
+    const response = await onRequest({ request: request(), env: { SENDPULSE_API_KEY: 'sp_test_key' } });
     const body = await response.json();
     assert.equal(response.status, 200);
     assert.equal(body.success, true);
