@@ -273,7 +273,6 @@ npm run dev:worker
 | `DRIVE_UPLOAD_FOLDER` | URL папки Google Drive | загрузка фото питомца |
 | `GMAIL_SENDER` | Gmail/Workspace alias | опционально; указывайте только рабочий alias, иначе Gmail не отправляет клиентам письма |
 | `SENDPULSE_FROM`, `CLIENT_EMAIL_FROM` | SendPulse → Senders | основной отправитель transactional email для клиентов |
-| `RESEND_FROM` | Resend verified domain | legacy compatibility variable; active transactional transport remains SendPulse |
 | `SERVICE_GATEWAY_API_KEY` | Existing Gemini gateway account | единственный разрешённый AI inference path; ключ хранится только как Cloudflare secret |
 | `SALON_EMAIL`, `SUPPORT_EMAIL`, `SUPPORT_REPLY_TO_EMAIL`, `CONTACT_RECIPIENT_EMAIL`, `BOOKING_RECIPIENT_EMAIL` | рабочая почта салона | получатель заявок и адрес, куда клиенты отвечают |
 | `ADMIN_NOTIFICATION_EMAILS` | Gmail администраторов | внутренние копии заявок: `snaiper1984@gmail.com,ryndenko1982@gmail.com` |
