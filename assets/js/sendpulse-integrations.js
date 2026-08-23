@@ -48,7 +48,6 @@
     loadScript('https://static.sppopups.com/assets/loader.js', {
       'data-chats-widget-id': POPUP_WIDGET_ID,
     });
-    loadScript('https://static.sppopups.com/bundle.js.gz');
   };
 
   const runWhenIdle = () => {
