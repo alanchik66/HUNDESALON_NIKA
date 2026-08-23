@@ -289,7 +289,9 @@ function deferNonCriticalScripts(directory, version) {
 
 function injectSendPulseIntegrations(directory, version) {
   let htmlFiles = 0;
-  const scriptPattern = /\s*<script\s+src="[^"]*sendpulse-integrations\.js\?[^"\s]+"[^>]*><\/script>/g;
+  const integrationScriptPattern = /\s*<script\s+src="[^"]*sendpulse-integrations\.js\?[^"\s]+"[^>]*><\/script>/g;
+  const liveChatScriptPattern = /\s*<script\s+src="https:\/\/cdn\.pulse\.is\/livechat\/loader\.js"[^>]*><\/script>/g;
+  const popupScriptPattern = /\s*<script\s+src="https:\/\/static\.sppopups\.com\/assets\/loader\.js"[^>]*><\/script>/g;
 
   function walk(dir) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -301,15 +303,18 @@ function injectSendPulseIntegrations(directory, version) {
       if (!entry.name.endsWith('.html')) continue;
 
       const original = fs.readFileSync(fullPath, 'utf8');
-      if (scriptPattern.test(original)) {
-        scriptPattern.lastIndex = 0;
-        continue;
-      }
-      scriptPattern.lastIndex = 0;
+      const cleaned = original
+        .replace(integrationScriptPattern, '')
+        .replace(liveChatScriptPattern, '')
+        .replace(popupScriptPattern, '');
 
       const prefix = path.relative(path.dirname(fullPath), path.join(directory, 'assets/js')).replaceAll('\\', '/');
-      const loader = `\n<script src="${prefix}/sendpulse-integrations.js?v=${version}"></script>`;
-      const next = original.replace('</body>', `${loader}\n</body>`);
+      const loader = [
+        '<script src="https://cdn.pulse.is/livechat/loader.js" data-live-chat-id="6a89e797b7f95e2b6c0cf199" async></script>',
+        '<script src="https://static.sppopups.com/assets/loader.js" data-chats-widget-id="49f098e8-81bf-4efa-9842-8f2012257c7b" async></script>',
+        `<script src="${prefix}/sendpulse-integrations.js?v=${version}"></script>`,
+      ].join('\n');
+      const next = cleaned.replace('</body>', `\n${loader}\n</body>`);
       if (next !== original) {
         fs.writeFileSync(fullPath, next, 'utf8');
         htmlFiles += 1;
