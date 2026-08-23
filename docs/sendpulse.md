@@ -68,6 +68,22 @@ Telegram-клиенту можно отправлять только при св
 
 Сайт поддерживает уведомления менеджеру через Telegram Bot API. В Cloudflare Pages Production добавляются секреты `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` и переменная `SITE_NOTIFICATIONS_ENABLED=true`. Бота нужно добавить администратором в рабочий канал с правом публикации сообщений; `TELEGRAM_CHAT_ID` канала обычно имеет формат `-100...`. Токен не хранится в репозитории, логах или клиентском коде.
 
+## Виджеты сайта
+
+В production bundle автоматически подключаются:
+
+- Live chat SendPulse:
+  `<script src="https://cdn.pulse.is/livechat/loader.js" data-live-chat-id="6a89e797b7f95e2b6c0cf199" async></script>`
+- Pop-up SendPulse:
+  `<script src="https://static.sppopups.com/assets/loader.js" data-chats-widget-id="49f098e8-81bf-4efa-9842-8f2012257c7b" async></script>`
+- Дополнительный runtime попапов:
+  `<script src="https://static.sppopups.com/bundle.js.gz" async></script>`
+
+Ручной триггер для попапа:
+
+- класс кнопки/ссылки `sp_popup_69052fa6-c2c5-4ed2-adc1-0dec2f5bd3b9`;
+- тестовый hash `#show_sp_popup=69052fa6-c2c5-4ed2-adc1-0dec2f5bd3b9`.
+
 ## DNS и доставляемость #
 
 - SPF должен содержать единственную запись и включать `include:mxsspf.sendpulse.com`.

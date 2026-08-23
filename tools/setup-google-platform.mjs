@@ -10,8 +10,8 @@ const ACCOUNT_ID = '25e872aeab8cb246c69142ab07cd0fee';
 const DEFAULT_SALON_EMAIL = 'info@hundesalon-nika.com';
 const DEFAULT_SUPPORT_EMAIL = 'support@hundesalon-nika.com';
 const DEFAULT_ADMIN_EMAILS = [];
-const DEFAULT_CLIENT_EMAIL_FROM = 'Hundesalon Nika <support@hundesalon-nika.com>';
-const DEFAULT_RESOURCE_PREFIX = 'HUNDESALON NIKA';
+const DEFAULT_CLIENT_EMAIL_FROM = 'HUNDESALON_NIKA <support@hundesalon-nika.com>';
+const DEFAULT_RESOURCE_PREFIX = 'HUNDESALON_NIKA';
 const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/calendar',
   'https://www.googleapis.com/auth/drive.file',

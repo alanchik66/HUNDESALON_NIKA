@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { transformSync } from 'esbuild';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -16,6 +16,7 @@ const STAMPED_ASSETS = [
   'price-catalog.js',
   'newsletter.js',
   'non-critical-loader.js',
+  'sendpulse-integrations.js',
   'telegram-menu.css',
   'telegram-menu.js',
 ];
@@ -28,6 +29,7 @@ const PRODUCTION_MINIFY_ASSETS = [
   'assets/js/page-modules.js',
   'assets/js/tooltip.js',
   'assets/js/newsletter.js',
+  'assets/js/sendpulse-integrations.js',
   'assets/js/testimonials.js',
 ];
 
@@ -165,12 +167,15 @@ function minifyProductionAssets(directory) {
   for (const relativePath of PRODUCTION_MINIFY_ASSETS) {
     const target = path.join(directory, relativePath);
     if (!fs.existsSync(target)) continue;
-    const temporaryTarget = `${target}.min`;
-    execSync(`npx esbuild "${target}" --minify --outfile="${temporaryTarget}"`, {
-      cwd: root,
-      stdio: 'ignore',
+    const loader = path.extname(target).toLowerCase() === '.css' ? 'css' : 'js';
+    const source = fs.readFileSync(target, 'utf8');
+    const result = transformSync(source, {
+      loader,
+      minify: true,
+      legalComments: 'none',
+      sourcefile: relativePath,
     });
-    fs.renameSync(temporaryTarget, target);
+    fs.writeFileSync(target, result.code, 'utf8');
   }
 }
 
@@ -267,10 +272,43 @@ function deferNonCriticalScripts(directory, version) {
         continue;
       }
       scriptPattern.lastIndex = 0;
-      const relative = path.relative(directory, fullPath).replaceAll('\\', '/');
-      const prefix = relative.includes('/') ? '../' : '';
-      const loader = `\n<script src="${prefix}assets/js/non-critical-loader.js?v=${version}"></script>`;
+      const prefix = path.relative(path.dirname(fullPath), path.join(directory, 'assets/js')).replaceAll('\\', '/');
+      const loader = `\n<script src="${prefix}/non-critical-loader.js?v=${version}"></script>`;
       const next = original.replace(scriptPattern, '').replace('</body>', `${loader}\n</body>`);
+      if (next !== original) {
+        fs.writeFileSync(fullPath, next, 'utf8');
+        htmlFiles += 1;
+      }
+    }
+  }
+
+  walk(directory);
+  return htmlFiles;
+}
+
+function injectSendPulseIntegrations(directory, version) {
+  let htmlFiles = 0;
+  const scriptPattern = /\s*<script\s+src="[^"]*sendpulse-integrations\.js\?[^"\s]+"[^>]*><\/script>/g;
+
+  function walk(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath);
+        continue;
+      }
+      if (!entry.name.endsWith('.html')) continue;
+
+      const original = fs.readFileSync(fullPath, 'utf8');
+      if (scriptPattern.test(original)) {
+        scriptPattern.lastIndex = 0;
+        continue;
+      }
+      scriptPattern.lastIndex = 0;
+
+      const prefix = path.relative(path.dirname(fullPath), path.join(directory, 'assets/js')).replaceAll('\\', '/');
+      const loader = `\n<script src="${prefix}/sendpulse-integrations.js?v=${version}"></script>`;
+      const next = original.replace('</body>', `${loader}\n</body>`);
       if (next !== original) {
         fs.writeFileSync(fullPath, next, 'utf8');
         htmlFiles += 1;
@@ -287,8 +325,10 @@ const stamped = stampDistAssetVersions(dist, assetVersion);
 assertNoSecretArtifacts(dist);
 const publicContactFiles = normalizePublicContact(dist);
 const deferredScriptFiles = deferNonCriticalScripts(dist, assetVersion);
+const sendPulseFiles = injectSendPulseIntegrations(dist, assetVersion);
 
 console.log('Production bundle created in dist/.');
 console.log(`Asset cache version: ${assetVersion} (${stamped} HTML files stamped).`);
 console.log(`Public contact normalized in ${publicContactFiles} HTML files.`);
 console.log(`Deferred non-critical scripts in ${deferredScriptFiles} HTML files.`);
+console.log(`Injected SendPulse integrations in ${sendPulseFiles} HTML files.`);

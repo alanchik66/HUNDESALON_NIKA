@@ -586,7 +586,7 @@ async function getSendPulseAccessToken(env) {
   return token;
 }
 
-function parseMailbox(value, fallbackName = 'HUNDESALON NIKA') {
+function parseMailbox(value, fallbackName = 'HUNDESALON_NIKA') {
   const raw = String(value || '').trim();
   const match = raw.match(/^(.*?)\s*<([^>]+)>$/);
   return { name: (match?.[1] || fallbackName).trim(), email: (match?.[2] || raw).trim() };
@@ -606,7 +606,7 @@ export async function sendSendPulseEmail(env, { to, subject, text, html = '', re
   }
 
   const payload = { email: {
-    from: parseMailbox(from || getEnvValue(env, 'SENDPULSE_FROM', 'Hundesalon Nika <noreply@hundesalon-nika.com>')),
+    from: parseMailbox(from || getEnvValue(env, 'SENDPULSE_FROM', 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>')),
     to: recipients.map(email => parseMailbox(email, email)),
     subject: String(subject || '').slice(0, 998),
     text: String(text || ''),

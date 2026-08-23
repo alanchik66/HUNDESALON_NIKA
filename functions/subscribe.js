@@ -13,9 +13,9 @@ import {
 } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
 
-const DEFAULT_FROM = 'Hundesalon Nika <noreply@hundesalon-nika.com>';
+const DEFAULT_FROM = 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>';
 const DEFAULT_RECIPIENT = 'support@hundesalon-nika.com';
-const DEFAULT_ADMIN_EMAILS = ['snaiper1984@gmail.com', 'ryndenko1982@gmail.com'];
+const DEFAULT_ADMIN_EMAILS = [];
 
 const COPY = {
   de: 'Danke. Ihre Anmeldung wurde gespeichert.',
@@ -89,7 +89,7 @@ export async function onRequest(context) {
     'support@hundesalon-nika.com';
   const clientEmailFrom =
     getEnvValue(env, 'CLIENT_EMAIL_FROM') ||
-    'Hundesalon Nika <support@hundesalon-nika.com>';
+    'HUNDESALON_NIKA <support@hundesalon-nika.com>';
   const adminRecipients = uniqueEmailList(getEnvList(env, 'ADMIN_NOTIFICATION_EMAILS', DEFAULT_ADMIN_EMAILS.join(',')));
 
   await appendGoogleSheetRow(env, {
