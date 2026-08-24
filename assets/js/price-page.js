@@ -558,6 +558,7 @@
     const cardTitle = getText(category.title);
     const breedMenuId = `price-breed-menu-${category.id}`;
     const breedListId = `price-breeds-${category.id}`;
+    const cardDetailsId = `price-card-details-${category.id}`;
     const breedCount = allBreeds.length;
     const breedCountText = isAdditionalCategory
       ? { word: locale.additionalCategoryCountLabel || locale.cardCountSuffix, value: breedCount }
@@ -597,7 +598,7 @@
       : locale.servicesTitle;
 
     return `
-      <article class="price-card" data-category-id="${escapeHtml(category.id)}">
+      <article class="price-card" data-category-id="${escapeHtml(category.id)}" data-price-card-expanded="false">
         <div class="price-card__top">
           ${cardBadge}
           <h2 class="price-card__title">${escapeHtml(cardTitle)}</h2>
@@ -612,27 +613,35 @@
           <div class="price-card__price-label">${escapeHtml(cardMetaLabel)}</div>
           <div class="price-card__price">${renderCurrencyText(cardPrice)}</div>
         </div>
-        <div class="price-card__service-options${isInformationCategory ? ' price-card__service-options--information' : ''}" role="group" aria-label="${escapeHtml(serviceOptionsLabel)}">
-          ${serviceRows
-            .map((row, index) => {
-              const sourceIndex = category.priceIndexes?.[index] ?? index;
-              const label = getText(row.label);
-              const price = getText(row.price);
-              return `<button type="button" class="price-card__service-option" data-price-service-select data-price-service-index="${escapeHtml(sourceIndex)}" aria-label="${escapeHtml(`${label}${price ? ` — ${price}` : ''}`)}"><span class="price-card__service-option-label"><span>${renderCurrencyText(label)}</span></span><span class="price-card__service-option-price">${renderCurrencyText(price)}</span></button>`;
-            })
-            .join('')}
-          ${additionalServices.length ? `<button type="button" class="price-card__service-option price-card__service-option--additional" data-price-additional-select aria-label="${escapeHtml(`${additionalServicesLabel}${additionalServicesPrice ? ` — ${additionalServicesPrice}` : ''}`)}"><span class="price-card__service-option-label">${escapeHtml(additionalServicesLabel)}</span><span class="price-card__service-option-price">${renderCurrencyText(additionalServicesPrice)}</span></button>` : ''}
-          ${informationHighlights.length ? `
-            <div class="price-card__information-fill">
-              <ul class="price-card__information-highlights">
-                ${informationHighlights.map(highlight => `<li>${renderCurrencyText(highlight)}</li>`).join('')}
-              </ul>
-            </div>` : ''}
-        </div>
-        <div class="price-card__footer nav-main">
-          <button type="button" class="price-card__cta filter-btn" data-nav-pill="price-card-action" data-price-open="${escapeHtml(category.id)}">
-            ${escapeHtml(cardActionLabel)}
-          </button>
+        <button type="button" class="price-card__mobile-toggle" data-price-card-toggle aria-expanded="false" aria-controls="${escapeHtml(cardDetailsId)}" aria-label="${escapeHtml(`${locale.showCardDetailsLabel || locale.servicesTitle}: ${cardTitle}`)}">
+          <span data-price-card-toggle-label>${escapeHtml(locale.showCardDetailsLabel || locale.servicesTitle)}</span>
+          <span class="site-icon-arrow price-card__mobile-toggle-icon" aria-hidden="true"></span>
+        </button>
+        <div class="price-card__details" id="${escapeHtml(cardDetailsId)}" data-price-card-details>
+          <div class="price-card__details-inner">
+            <div class="price-card__service-options${isInformationCategory ? ' price-card__service-options--information' : ''}" role="group" aria-label="${escapeHtml(serviceOptionsLabel)}">
+              ${serviceRows
+                .map((row, index) => {
+                  const sourceIndex = category.priceIndexes?.[index] ?? index;
+                  const label = getText(row.label);
+                  const price = getText(row.price);
+                  return `<button type="button" class="price-card__service-option" data-price-service-select data-price-service-index="${escapeHtml(sourceIndex)}" aria-label="${escapeHtml(`${label}${price ? ` — ${price}` : ''}`)}"><span class="price-card__service-option-label"><span>${renderCurrencyText(label)}</span></span><span class="price-card__service-option-price">${renderCurrencyText(price)}</span></button>`;
+                })
+                .join('')}
+              ${additionalServices.length ? `<button type="button" class="price-card__service-option price-card__service-option--additional" data-price-additional-select aria-label="${escapeHtml(`${additionalServicesLabel}${additionalServicesPrice ? ` — ${additionalServicesPrice}` : ''}`)}"><span class="price-card__service-option-label">${escapeHtml(additionalServicesLabel)}</span><span class="price-card__service-option-price">${renderCurrencyText(additionalServicesPrice)}</span></button>` : ''}
+              ${informationHighlights.length ? `
+                <div class="price-card__information-fill">
+                  <ul class="price-card__information-highlights">
+                    ${informationHighlights.map(highlight => `<li>${renderCurrencyText(highlight)}</li>`).join('')}
+                  </ul>
+                </div>` : ''}
+            </div>
+            <div class="price-card__footer nav-main">
+              <button type="button" class="price-card__cta filter-btn" data-nav-pill="price-card-action" data-price-open="${escapeHtml(category.id)}">
+                ${escapeHtml(cardActionLabel)}
+              </button>
+            </div>
+          </div>
         </div>
       </article>
     `;
@@ -1525,12 +1534,7 @@
       '[data-price-breeds-toggle], [data-price-open], [data-price-service-select], [data-price-additional-select]'
     );
     if (!firstAction) return;
-    const focusFirstAction = () => firstAction.focus({ preventScroll: true });
-    if (behavior === 'smooth') {
-      window.setTimeout(focusFirstAction, 500);
-    } else {
-      focusFirstAction();
-    }
+    firstAction.focus({ preventScroll: true });
   });
   const searchInput = heroRoot.querySelector('[data-price-breed-search-input]');
   const searchClear = heroRoot.querySelector('[data-price-breed-search-clear]');
@@ -1683,6 +1687,54 @@
     cardAlignmentFrame = window.requestAnimationFrame(alignPriceCardMetaRows);
   };
 
+  const mobileCardDetailsMedia = window.matchMedia('(max-width: 720px)');
+  const setCardDetailsExpanded = (card, expanded, collapseSiblings = false) => {
+    if (!card) return;
+    if (collapseSiblings && expanded) {
+      cardsRoot.querySelectorAll('.price-card[data-price-card-expanded="true"]').forEach(otherCard => {
+        if (otherCard !== card) setCardDetailsExpanded(otherCard, false);
+      });
+    }
+
+    const toggle = card.querySelector('[data-price-card-toggle]');
+    const details = card.querySelector('[data-price-card-details]');
+    if (!toggle || !details) return;
+
+    const isMobile = mobileCardDetailsMedia.matches;
+    if (!isMobile) {
+      details.removeAttribute('inert');
+      details.removeAttribute('aria-hidden');
+      return;
+    }
+
+    const nextExpanded = expanded;
+    const title = card.querySelector('.price-card__title')?.textContent?.trim() || '';
+    const label = nextExpanded
+      ? locale.hideCardDetailsLabel || locale.servicesTitle
+      : locale.showCardDetailsLabel || locale.servicesTitle;
+
+    card.dataset.priceCardExpanded = String(nextExpanded);
+    toggle.setAttribute('aria-expanded', String(nextExpanded));
+    toggle.setAttribute('aria-label', `${label}: ${title}`);
+    const toggleLabel = toggle.querySelector('[data-price-card-toggle-label]');
+    if (toggleLabel) toggleLabel.textContent = label;
+
+    if (!nextExpanded) {
+      details.setAttribute('inert', '');
+      details.setAttribute('aria-hidden', 'true');
+    } else {
+      details.removeAttribute('inert');
+      details.removeAttribute('aria-hidden');
+    }
+  };
+
+  const syncCardDetails = () => {
+    cardsRoot.querySelectorAll('.price-card').forEach(card => {
+      const expanded = card.dataset.priceCardExpanded === 'true';
+      setCardDetailsExpanded(card, expanded);
+    });
+  };
+
   let cardsHaveRendered = false;
   const renderCards = query => {
     cardsHaveRendered = true;
@@ -1709,6 +1761,7 @@
     cardsRoot.innerHTML = visibleCategories.length
       ? sections
       : `<div class="price-breed-search__empty">${escapeHtml(locale.searchEmpty || 'Порода не найдена. Попробуйте другой запрос.')}</div>`;
+    syncCardDetails();
     if (searchStatus) {
       if (!normalizedQuery) {
         searchStatus.textContent = '';
@@ -1777,6 +1830,7 @@
     window.requestAnimationFrame(() => {
       const targetCard = Array.from(cardsRoot.querySelectorAll('[data-category-id]')).find(card => card.dataset.categoryId === match.categoryId);
       if (!targetCard) return;
+      if (mobileCardDetailsMedia.matches) setCardDetailsExpanded(targetCard, true, true);
       targetCard.dataset.selectedBreedIndex = String(match.breedIndex);
       targetCard.classList.add('price-card--search-target');
       targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1865,6 +1919,13 @@
   };
 
   cardsRoot.addEventListener('click', event => {
+    const cardDetailsToggle = event.target instanceof HTMLElement ? event.target.closest('[data-price-card-toggle]') : null;
+    if (cardDetailsToggle) {
+      const card = cardDetailsToggle.closest('.price-card');
+      const expanded = cardDetailsToggle.getAttribute('aria-expanded') === 'true';
+      setCardDetailsExpanded(card, !expanded, !expanded);
+      return;
+    }
     const additionalOption = event.target instanceof HTMLElement ? event.target.closest('[data-price-additional-select]') : null;
     if (additionalOption) {
       const card = additionalOption.closest('[data-category-id]');
@@ -1940,6 +2001,7 @@
   });
 
   window.addEventListener('resize', () => {
+    syncCardDetails();
     schedulePriceCardAlignment();
     cardsRoot.querySelectorAll('[data-price-breeds-toggle][aria-expanded="true"]').forEach(positionBreedMenu);
   });

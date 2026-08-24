@@ -2,9 +2,32 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { chromium, devices } from 'playwright';
 
-const baseUrl = process.argv[2] || 'http://127.0.0.1:5502';
+import { startStaticTestServer } from './lib/static-test-server.mjs';
+
+const externalBaseUrl = process.argv[2] || '';
+const staticServer = externalBaseUrl ? null : await startStaticTestServer();
+const baseUrl = externalBaseUrl || staticServer.baseUrl;
 const outDir = path.resolve('test-results', 'price-list-smoke');
-const locales = ['ru', 'de', 'en', 'uk'];
+const supportedLocales = ['ru', 'de', 'en', 'uk'];
+const requestedLocales = (process.env.PRICE_SMOKE_LOCALES || '')
+  .split(',')
+  .map(locale => locale.trim())
+  .filter(Boolean);
+const locales = requestedLocales.length
+  ? supportedLocales.filter(locale => requestedLocales.includes(locale))
+  : supportedLocales;
+const requestedLayout = process.env.PRICE_SMOKE_LAYOUT || '';
+const layouts = [
+  ['desktop', { width: 1440, height: 900 }, 'desktop'],
+  ['mobile', devices['iPhone 13'].viewport, 'mobile'],
+].filter(([label]) => !requestedLayout || label === requestedLayout);
+const additionalScreenshots = locales.includes('ru') && layouts.some(([label]) => label === 'desktop')
+  ? [
+      path.join(outDir, 'ru-desktop-registration.png'),
+      path.join(outDir, 'ru-desktop-registration-actions.png'),
+      path.join(outDir, 'ru-desktop-category-scrolled.png'),
+    ]
+  : [];
 
 const checks = [];
 
@@ -20,14 +43,12 @@ await mkdir(outDir, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 
 for (const locale of locales) {
-  for (const [label, viewport, screenshotSuffix] of [
-    ['desktop', { width: 1440, height: 900 }, 'desktop'],
-    ['mobile', devices['iPhone 13'].viewport, 'mobile'],
-  ]) {
+  for (const [label, viewport, screenshotSuffix] of layouts) {
     const context = await browser.newContext({
       viewport,
       isMobile: label === 'mobile',
       hasTouch: label === 'mobile',
+      serviceWorkers: 'block',
       locale: locale === 'de' ? 'de-DE' : locale === 'en' ? 'en-GB' : locale === 'uk' ? 'uk-UA' : 'ru-RU',
     });
     const page = await context.newPage();
@@ -55,8 +76,11 @@ for (const locale of locales) {
       const breedBadgeMotion = breedToggle?.querySelector('.price-card__badge-icon-motion');
       const breedBadgeIcon = breedToggle?.querySelector('.price-card__badge-icon');
       const firstCard = cards[0];
+      const firstCardDetailsToggle = firstCard?.querySelector('[data-price-card-toggle]');
+      const firstCardDetails = firstCard?.querySelector('[data-price-card-details]');
       const heroRect = hero?.getBoundingClientRect();
       const cardRect = firstCard?.getBoundingClientRect();
+      const firstThreeCardRects = cards.slice(0, 3).map(card => card.getBoundingClientRect());
       const cardButtonStyle = firstCardButton ? getComputedStyle(firstCardButton) : null;
       const cardButtonBefore = firstCardButton ? getComputedStyle(firstCardButton, '::before') : null;
       const cardButtonAfter = firstCardButton ? getComputedStyle(firstCardButton, '::after') : null;
@@ -101,6 +125,17 @@ for (const locale of locales) {
           && cardButtonAfter?.content !== 'none'
         ),
         cardFits: Boolean(heroRect && cardRect && cardRect.width > 0 && cardRect.width <= window.innerWidth + 1),
+        cardDetailsToggleDisplay: firstCardDetailsToggle ? getComputedStyle(firstCardDetailsToggle).display : '',
+        cardDetailsExpanded: firstCardDetailsToggle?.getAttribute('aria-expanded') || '',
+        cardDetailsHidden: firstCardDetails?.getAttribute('aria-hidden') || '',
+        cardDetailsInert: Boolean(firstCardDetails?.hasAttribute('inert')),
+        cardSummaryDisplay: firstCard?.querySelector('.price-card__summary')
+          ? getComputedStyle(firstCard.querySelector('.price-card__summary')).display
+          : '',
+        cardHeight: cardRect?.height || 0,
+        firstThreeCardSpan: firstThreeCardRects.length === 3
+          ? firstThreeCardRects[2].bottom - firstThreeCardRects[0].top
+          : Infinity,
         overflowX: document.documentElement.scrollWidth > window.innerWidth + 1,
         modalReady: Boolean(modal),
         calculationLocalizationReady: Boolean(
@@ -129,12 +164,114 @@ for (const locale of locales) {
         state.firstSectionMetaSpread <= 1,
         `spread=${state.firstSectionMetaSpread}`
       );
+      assert(
+        `${locale} ${label}: compact disclosure stays desktop-neutral`,
+        state.cardDetailsToggleDisplay === 'none'
+          && state.cardDetailsHidden === ''
+          && !state.cardDetailsInert
+          && state.cardSummaryDisplay !== 'none'
+      );
+    } else {
+      assert(
+        `${locale} ${label}: cards start compact and accessible`,
+        state.cardDetailsToggleDisplay !== 'none'
+          && state.cardDetailsExpanded === 'false'
+          && state.cardDetailsHidden === 'true'
+          && state.cardDetailsInert
+          && state.cardSummaryDisplay === 'none'
+      );
+      assert(
+        `${locale} ${label}: at least three compact cards fit one viewport`,
+        state.cardHeight <= 220 && state.firstThreeCardSpan <= viewport.height,
+        `height=${state.cardHeight}; span=${state.firstThreeCardSpan}; viewport=${viewport.height}`
+      );
     }
 
     assert(locale + ' ' + label + ': category navigation rendered', state.categoryActionReady);
     assert(locale + ' ' + label + ': category navigation uses site arrow system', state.categoryActionUsesSiteArrow);
     assert(locale + ' ' + label + ': breed badge arrow uses amplified site motion', state.breedBadgeArrowUsesSiteMotion);
     assert(locale + ' ' + label + ': animated search frame rendered', state.searchFrameReady);
+
+    if (label === 'mobile') {
+      const firstCard = page.locator('[data-price-categories] .price-card').first();
+      const secondCard = page.locator('[data-price-categories] .price-card').nth(1);
+      const firstDetailsToggle = firstCard.locator('[data-price-card-toggle]');
+      const secondDetailsToggle = secondCard.locator('[data-price-card-toggle]');
+
+      await firstDetailsToggle.click();
+      await page.waitForFunction(
+        () => {
+          const card = document.querySelector('[data-price-categories] .price-card');
+          const details = card?.querySelector('[data-price-card-details]');
+          return card?.dataset.priceCardExpanded === 'true'
+            && (details?.getBoundingClientRect().height || 0) > 0;
+        },
+        null,
+        { timeout: 5000 }
+      );
+      const firstExpandedState = await firstCard.evaluate(card => {
+        const details = card.querySelector('[data-price-card-details]');
+        return {
+          expanded: card.dataset.priceCardExpanded,
+          toggleExpanded: card.querySelector('[data-price-card-toggle]')?.getAttribute('aria-expanded'),
+          detailsHidden: details?.getAttribute('aria-hidden') || '',
+          detailsInert: Boolean(details?.hasAttribute('inert')),
+          detailsHeight: details?.getBoundingClientRect().height || 0,
+          serviceButtons: card.querySelectorAll('[data-price-service-select], [data-price-additional-select]').length,
+          actionVisible: Boolean(card.querySelector('[data-price-open]')?.getBoundingClientRect().height),
+        };
+      });
+      assert(
+        `${locale} ${label}: compact card reveals all actions`,
+        firstExpandedState.expanded === 'true'
+          && firstExpandedState.toggleExpanded === 'true'
+          && firstExpandedState.detailsHidden === ''
+          && !firstExpandedState.detailsInert
+          && firstExpandedState.detailsHeight > 0
+          && firstExpandedState.serviceButtons > 0
+          && firstExpandedState.actionVisible,
+        JSON.stringify(firstExpandedState)
+      );
+
+      await secondDetailsToggle.click();
+      await page.waitForFunction(
+        () => {
+          const cards = [...document.querySelectorAll('[data-price-categories] .price-card')];
+          return cards[0]?.dataset.priceCardExpanded === 'false'
+            && cards[1]?.dataset.priceCardExpanded === 'true'
+            && (cards[1]?.querySelector('[data-price-card-details]')?.getBoundingClientRect().height || 0) > 0;
+        },
+        null,
+        { timeout: 5000 }
+      );
+      const exclusiveDisclosureState = await page.evaluate(() => {
+        const cards = [...document.querySelectorAll('[data-price-categories] .price-card')];
+        const firstDetails = cards[0]?.querySelector('[data-price-card-details]');
+        return {
+          expandedCards: cards.filter(card => card.dataset.priceCardExpanded === 'true').length,
+          firstCollapsed: cards[0]?.dataset.priceCardExpanded === 'false',
+          firstHidden: firstDetails?.getAttribute('aria-hidden') === 'true',
+          firstInert: Boolean(firstDetails?.hasAttribute('inert')),
+          secondExpanded: cards[1]?.dataset.priceCardExpanded === 'true',
+        };
+      });
+      assert(
+        `${locale} ${label}: only one compact card expands`,
+        exclusiveDisclosureState.expandedCards === 1
+          && exclusiveDisclosureState.firstCollapsed
+          && exclusiveDisclosureState.firstHidden
+          && exclusiveDisclosureState.firstInert
+          && exclusiveDisclosureState.secondExpanded,
+        JSON.stringify(exclusiveDisclosureState)
+      );
+
+      await secondDetailsToggle.click();
+      await page.waitForFunction(
+        () => document.querySelectorAll('[data-price-categories] .price-card[data-price-card-expanded="true"]').length === 0,
+        null,
+        { timeout: 5000 }
+      );
+    }
 
     const euroMotionState = await page.locator('.site-icon-euro.currency-inline').first().evaluate(async icon => {
       const readMotion = () => {
@@ -287,6 +424,7 @@ for (const locale of locales) {
     const informationPreview = await informationCard.locator('.price-card__information-preview').textContent();
     const informationHighlights = await informationCard.locator('.price-card__information-highlights li').count();
     assert(`${locale} ${label}: information card preview`, Boolean(informationPreview?.trim()) && informationHighlights === 5);
+    if (label === 'mobile') await informationCard.locator('[data-price-card-toggle]').click();
     await informationCard.locator('[data-price-open]').click();
     await page.waitForSelector('#price-category-modal.active', { timeout: 15000 });
 
@@ -313,7 +451,9 @@ for (const locale of locales) {
       { timeout: 15000 }
     );
 
-    await page.locator('[data-price-categories] [data-price-open]').first().click();
+    const firstCard = page.locator('[data-price-categories] .price-card').first();
+    if (label === 'mobile') await firstCard.locator('[data-price-card-toggle]').click();
+    await firstCard.locator('[data-price-open]').click();
     await page.waitForSelector('#price-category-modal.active', { timeout: 15000 });
 
     const initialModalState = await page.evaluate(() => {
@@ -555,8 +695,23 @@ for (const locale of locales) {
       `${locale} ${label}: category booking action enabled`,
       await categoryBookingAction.getAttribute('aria-disabled') !== 'true'
     );
-    await categoryBookingAction.evaluate(action => action.click());
-    await page.waitForSelector('#client-registration-modal.active', { timeout: 15000 });
+    await categoryBookingAction.click({ timeout: 15000 });
+    try {
+      await page.waitForSelector('#client-registration-modal.active', { timeout: 30000 });
+    } catch (error) {
+      const registrationOpenDiagnostic = await page.evaluate(() => ({
+        categoryModalActive: Boolean(document.querySelector('#price-category-modal.active')),
+        registrationModalExists: Boolean(document.querySelector('#client-registration-modal')),
+        registrationModalActive: Boolean(document.querySelector('#client-registration-modal.active')),
+        bookingAriaDisabled: document.querySelector('[data-price-modal-booking]')?.getAttribute('aria-disabled') || '',
+        bookingServices: document.querySelector('[data-price-modal-booking]')?.dataset.bookingServices || '',
+        consentChecked: Boolean(document.querySelector('[data-price-modal-service-conditions-consent]')?.checked),
+      }));
+      throw new Error(
+        `${locale} ${label}: registration modal did not open: ${JSON.stringify(registrationOpenDiagnostic)}`,
+        { cause: error }
+      );
+    }
     await page.waitForTimeout(600);
 
     const registrationState = await page.evaluate(async () => {
@@ -756,19 +911,15 @@ for (const locale of locales) {
 }
 
 await browser.close();
+await staticServer?.close();
 
 console.log(
   JSON.stringify(
     {
       ok: true,
-      screenshots: locales.flatMap(locale => [
-        path.join(outDir, `${locale}-desktop.png`),
-        path.join(outDir, `${locale}-mobile.png`),
-      ]).concat(
-        path.join(outDir, 'ru-desktop-registration.png'),
-        path.join(outDir, 'ru-desktop-registration-actions.png'),
-        path.join(outDir, 'ru-desktop-category-scrolled.png')
-      ),
+      screenshots: locales.flatMap(locale => layouts.map(([, , screenshotSuffix]) =>
+        path.join(outDir, `${locale}-${screenshotSuffix}.png`)
+      )).concat(additionalScreenshots),
       checks,
     },
     null,

@@ -1,8 +1,13 @@
 import { chromium, devices } from 'playwright';
 
-const baseUrl = process.argv[2] || 'http://127.0.0.1:5505';
+import { startStaticTestServer } from './lib/static-test-server.mjs';
+
+const externalBaseUrl = process.argv[2] || '';
+const staticServer = externalBaseUrl ? null : await startStaticTestServer();
+const baseUrl = externalBaseUrl || staticServer.baseUrl;
 const url = new URL('/ru/prays-list.html?mobile-runtime-audit=1', baseUrl).toString();
 const consoleErrors = [];
+const failedResponses = [];
 
 const browser = await chromium.launch({ headless: true });
 
@@ -17,6 +22,9 @@ try {
     if (message.type() === 'error') consoleErrors.push(message.text());
   });
   page.on('pageerror', error => consoleErrors.push(`pageerror: ${error.message}`));
+  page.on('response', response => {
+    if (response.status() >= 400) failedResponses.push({ status: response.status(), url: response.url() });
+  });
 
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForSelector('.site-icon-euro', { timeout: 15000 });
@@ -51,7 +59,22 @@ try {
     };
   });
 
-  const ok = consoleErrors.length === 0
+  const localWeatherUnavailable = Boolean(
+    staticServer
+      && state.weatherGeoResolved === 'unavailable'
+      && failedResponses.length === 1
+      && failedResponses[0].status === 404
+      && new URL(failedResponses[0].url).pathname === '/api/weather'
+  );
+  const unexpectedConsoleErrors = consoleErrors.filter(message => {
+    if (!localWeatherUnavailable) return true;
+    return !message.startsWith('Failed to load resource:')
+      && !(message.startsWith('Error loading weather for location:') && message.includes('Location not found'));
+  });
+  const unexpectedFailedResponses = localWeatherUnavailable ? [] : failedResponses;
+
+  const ok = unexpectedConsoleErrors.length === 0
+    && unexpectedFailedResponses.length === 0
     && !state.error
     && state.transformChanged
     && state.timelineAdvanced
@@ -60,10 +83,18 @@ try {
     && ['true', 'unavailable'].includes(state.weatherGeoResolved)
     && state.weatherMounted === 'true';
 
-  console.log(JSON.stringify({ ok, url, consoleErrors, state }, null, 2));
+  console.log(JSON.stringify({
+    ok,
+    url,
+    consoleErrors: unexpectedConsoleErrors,
+    failedResponses: unexpectedFailedResponses,
+    expectedLocalLimitations: localWeatherUnavailable ? ['Static test server does not execute /api/weather.'] : [],
+    state,
+  }, null, 2));
   if (!ok) process.exitCode = 1;
 
   await context.close();
 } finally {
   await browser.close();
+  await staticServer?.close();
 }

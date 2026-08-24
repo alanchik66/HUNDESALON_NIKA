@@ -6,6 +6,7 @@
 - [[Daily/2026-08-24]]
 - [[Start_Here]]
 - [[01_Projects/HUNDESALON_NIKA]]
+- [[01_Projects/HUNDESALON_NIKA_Makler]]
 - [[02_Areas/Operations]]
 - [[03_Resources/Brand_Assets]]
 - [[04_Decisions/Decisions]]
@@ -19,6 +20,8 @@
 - [[Templates/decision]]
 - [[Templates/release]]
 - [[Templates/catalog-change]]
+- [[Templates/makler-listing]]
+- [[Templates/makler-conversation]]
 
 ## Intake
 - Use [[00_Inbox/Inbox]] for raw ideas and quick captures.
