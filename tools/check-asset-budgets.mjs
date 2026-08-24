@@ -3,9 +3,9 @@ import { gzipSync } from 'node:zlib';
 
 const budgets = [
   { file: 'dist/assets/css/style.css', gzip: 50_000 },
-  // The modular stylesheet is minified in production. 25.5 KB gzip covers the
-  // responsive booking and price modules while retaining a strict cap.
-  { file: 'dist/assets/css/page-modules.css', gzip: 25_500 },
+  // The modular stylesheet is minified in production. 26.5 KB gzip covers the
+  // responsive booking, price, and shared arrow-motion modules with a strict cap.
+  { file: 'dist/assets/css/page-modules.css', gzip: 26_500 },
   { file: 'dist/assets/js/site-shell.js', gzip: 75_000 },
   { file: 'dist/assets/js/main.js', gzip: 15_000 },
   { file: 'dist/assets/images/brand/hero-dog.webp', raw: 50_000 },

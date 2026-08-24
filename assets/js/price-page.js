@@ -389,7 +389,9 @@
             aria-controls="price-categories"
           >
             <span>${escapeHtml(locale.heroCategoriesAction || 'View categories')}</span>
-            <span class="price-page-hero__categories-action-icon" aria-hidden="true">→</span>
+            <span class="price-page-hero__categories-action-icon" aria-hidden="true">
+              <span class="site-icon-arrow site-icon-arrow-right"></span>
+            </span>
           </button>
         </div>
       </div>
@@ -413,6 +415,10 @@
     `;
   };
 
+  // Render the page heading before constructing the comparatively large modal and card DOM.
+  // This gives the browser a stable, meaningful first paint instead of an empty hero.
+  renderHero();
+
   const parsePriceAmount = price => {
     const normalized = String(price || '').replace(',', '.');
     if (!/(?:€|\beur\b|\b(?:ab|from|от|від)\b)/i.test(normalized)) return null;
@@ -420,12 +426,28 @@
     return match ? Number(match[1]) : null;
   };
 
+  const amountNumberLocale = {
+    de: 'de-DE',
+    en: 'en-GB',
+    ru: 'ru-RU',
+    uk: 'uk-UA',
+  }[lang] || 'en-GB';
+  const formatAmountValue = amount => new Intl.NumberFormat(amountNumberLocale, {
+    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+
   const formatFromAmount = amount => {
-    const value = Number.isInteger(amount) ? String(amount) : amount.toFixed(2).replace(/\.00$/, '');
+    const value = formatAmountValue(amount);
     if (lang === 'de') return `ab ${value} €`;
     if (lang === 'en') return `from €${value}`;
     if (lang === 'uk') return `від ${value} €`;
     return `от ${value} €`;
+  };
+
+  const formatExactAmount = amount => {
+    const value = formatAmountValue(amount);
+    return lang === 'en' ? `€${value}` : `${value} €`;
   };
 
   const primaryPrice = category => {
@@ -455,6 +477,39 @@
 
   const ADDITIONAL_CATEGORY_ID = 'ru-additional-services';
   const IMPORTANT_CATEGORY_ID = 'ru-important-information';
+  const DENTAL_SERVICE_INDEX = 3;
+  const DENTAL_MAX_WEIGHT_KG = 6;
+  const DENTAL_GROOMING_DISCOUNT_RATE = 0.3;
+  const CURRENCY_MINOR_UNITS = 100;
+  const isDentalService = service => service?.index === DENTAL_SERVICE_INDEX;
+  const roundCurrencyAmount = amount => Math.round((amount + Number.EPSILON) * CURRENCY_MINOR_UNITS) / CURRENCY_MINOR_UNITS;
+  const calculateQuoteAmounts = ({ selectedPrimaryServices, selectedAdditionalServices, dentalWeightValid }) => {
+    const selectedServices = [...selectedPrimaryServices, ...selectedAdditionalServices];
+    const amounts = selectedServices.map(service => parsePriceAmount(service.price));
+    const hasRequestPrice = amounts.some(amount => amount === null);
+    const subtotalAmount = roundCurrencyAmount(amounts.reduce((sum, amount) => sum + (amount || 0), 0));
+    const dentalService = selectedAdditionalServices.find(isDentalService);
+    const dentalBaseAmount = dentalService ? parsePriceAmount(dentalService.price) : null;
+    const dentalDiscountEligible = Boolean(
+      selectedPrimaryServices.length
+      && dentalWeightValid
+      && dentalService
+      && Number.isFinite(dentalBaseAmount)
+    );
+    const dentalDiscountAmount = dentalDiscountEligible
+      ? roundCurrencyAmount(dentalBaseAmount * DENTAL_GROOMING_DISCOUNT_RATE)
+      : 0;
+    const totalAmount = roundCurrencyAmount(subtotalAmount - dentalDiscountAmount);
+
+    return {
+      selectedServices,
+      hasRequestPrice,
+      subtotalAmount,
+      dentalBaseAmount,
+      dentalDiscountAmount,
+      totalAmount,
+    };
+  };
   const DOG_CATEGORY_IDS = new Set([
     'ru-small-growing-coat',
     'ru-poodles-bichons',
@@ -465,10 +520,10 @@
     'ru-large-dogs',
   ]);
   const additionalServiceIndexesByGroup = {
-    small: [0, 3, 4, 5, 6],
-    medium: [1, 4, 5, 6],
-    large: [2, 4, 5, 6],
-    mixed: [0, 1, 2, 4, 5, 6],
+    small: [0, 3, 4, 5],
+    medium: [1, 4, 5],
+    large: [2, 4, 5],
+    mixed: [0, 1, 2, 4, 5],
   };
 
   const getAdditionalServices = category => {
@@ -521,20 +576,13 @@
     const cardBadge = isInformationCategory
       ? `<span class="price-card__badge price-card__badge--static">${escapeHtml(locale.informationCardBadge || locale.notesTitle || 'Rules')}</span>`
       : `<div class="price-card__breed-control">
-          <button type="button" class="price-card__badge price-card__badge--button btn-neon" data-nav-pill="price-breed" data-price-breeds-toggle="${escapeHtml(breedMenuId)}" aria-expanded="false" aria-controls="${escapeHtml(breedMenuId)}" aria-label="${escapeHtml(isAdditionalCategory ? locale.additionalCategoryMenuLabel : locale.showBreedsLabel || locale.cardCountSuffix)}">
+          <button type="button" class="price-card__badge price-card__badge--button btn-neon" data-nav-pill="price-breed" data-price-breeds-toggle="${escapeHtml(breedMenuId)}" data-price-breed-sample="${escapeHtml(allBreeds[0] || '')}" aria-expanded="false" aria-controls="${escapeHtml(breedMenuId)}" aria-label="${escapeHtml(isAdditionalCategory ? locale.additionalCategoryMenuLabel : locale.showBreedsLabel || locale.cardCountSuffix)}">
             <span class="price-card__badge-count"><span class="price-card__badge-word">${escapeHtml(breedCountText.word)}:</span><span class="price-card__badge-number price-number">${escapeHtml(breedCountText.value)}</span></span>
-            <span class="price-card__badge-icon" aria-hidden="true">⌄</span>
+            <span class="price-card__badge-icon-motion" aria-hidden="true"><span class="price-card__badge-icon"></span></span>
           </button>
           <div class="price-card__breed-menu" id="${escapeHtml(breedMenuId)}" hidden>
             <p class="price-card__breed-menu-title">${escapeHtml(isAdditionalCategory ? locale.additionalCategoryMenuLabel : locale.chooseBreedLabel || locale.cardCountSuffix)}</p>
-            <ul class="price-card__breed-list" id="${escapeHtml(breedListId)}">
-              ${allBreeds
-                .map((item, index) => {
-                  const sourceIndex = category.breedIndexes?.[index] ?? index;
-                  return `<li><button type="button" class="price-card__breed-option" data-price-breed-select data-price-breed-index="${escapeHtml(sourceIndex)}">${escapeHtml(item)}</button></li>`;
-                })
-                .join('')}
-            </ul>
+            <ul class="price-card__breed-list" id="${escapeHtml(breedListId)}" data-price-breed-list></ul>
             <span class="price-card__breed-scrollbar" data-price-breed-scrollbar aria-hidden="true">
               <span class="price-card__breed-scrollbar-thumb" data-price-breed-scrollbar-thumb></span>
             </span>
@@ -581,13 +629,29 @@
               </ul>
             </div>` : ''}
         </div>
-        <div class="price-card__footer">
-          <button type="button" class="price-card__cta btn-neon" data-price-open="${escapeHtml(category.id)}">
+        <div class="price-card__footer nav-main">
+          <button type="button" class="price-card__cta filter-btn" data-nav-pill="price-card-action" data-price-open="${escapeHtml(category.id)}">
             ${escapeHtml(cardActionLabel)}
           </button>
         </div>
       </article>
     `;
+  };
+
+  const populateBreedMenu = (card, menu) => {
+    if (!card || !menu || menu.dataset.priceBreedsPopulated === 'true') return;
+    const category = categoryViews.find(item => item.id === card.dataset.categoryId);
+    const list = menu.querySelector('[data-price-breed-list]');
+    if (!category || !list) return;
+
+    const allBreeds = category.breeds?.[lang] || category.breeds?.en || [];
+    list.innerHTML = allBreeds
+      .map((item, index) => {
+        const sourceIndex = category.breedIndexes?.[index] ?? index;
+        return `<li><button type="button" class="price-card__breed-option" data-price-breed-select data-price-breed-index="${escapeHtml(sourceIndex)}">${escapeHtml(item)}</button></li>`;
+      })
+      .join('');
+    menu.dataset.priceBreedsPopulated = 'true';
   };
 
   const modalTitle = modal.querySelector('[data-price-modal-title]');
@@ -620,10 +684,16 @@
         <p class="price-category-modal__service-hint price-category-modal__service-hint--additional" data-price-modal-additional-service-hint></p>
         <div class="price-category-modal__service-options" data-price-modal-additional-service-options></div>
       </fieldset>
+      <div class="price-category-modal__dental-weight" data-price-modal-dental-weight hidden>
+        <label for="price-modal-dental-weight-input">${escapeHtml(locale.dentalWeightLabel || 'Dog weight for ultrasonic teeth cleaning (kg)')}</label>
+        <input id="price-modal-dental-weight-input" type="number" min="0.1" max="${DENTAL_MAX_WEIGHT_KG}" step="0.1" inputmode="decimal" data-price-modal-dental-weight-input aria-describedby="price-modal-dental-weight-status" disabled />
+        <p id="price-modal-dental-weight-status" data-price-modal-dental-weight-status aria-live="polite"></p>
+      </div>
       <div class="price-category-modal__calculation" aria-live="polite">
         <p class="price-category-modal__calculation-label" data-price-modal-calculation-label>${escapeHtml(locale.calculationLabel || 'Calculation')}</p>
-        <p class="price-category-modal__selection-price" data-price-modal-selected-price></p>
         <ul class="price-category-modal__breakdown" data-price-modal-breakdown></ul>
+        <p class="price-category-modal__selection-price" data-price-modal-selected-price></p>
+        <p class="price-category-modal__calculation-note" data-price-modal-calculation-note></p>
       </div>
     </div>
     <section class="price-category-modal__service-conditions" data-price-modal-service-conditions hidden>
@@ -659,12 +729,16 @@
   const modalServiceLegend = modalSelection.querySelector('[data-price-modal-service-legend]');
   const modalServiceFieldset = modalSelection.querySelector('[data-price-modal-service-fieldset]');
   const modalServiceOptions = modalSelection.querySelector('[data-price-modal-service-options]');
+  const modalDentalWeight = modalSelection.querySelector('[data-price-modal-dental-weight]');
+  const modalDentalWeightInput = modalSelection.querySelector('[data-price-modal-dental-weight-input]');
+  const modalDentalWeightStatus = modalSelection.querySelector('[data-price-modal-dental-weight-status]');
   const modalAdditionalServiceFieldset = modalSelection.querySelector('[data-price-modal-additional-service-fieldset]');
   const modalAdditionalServiceLegend = modalSelection.querySelector('[data-price-modal-additional-service-legend]');
   const modalAdditionalServiceHint = modalSelection.querySelector('[data-price-modal-additional-service-hint]');
   const modalAdditionalServiceOptions = modalSelection.querySelector('[data-price-modal-additional-service-options]');
   const modalSelectedPrice = modalSelection.querySelector('[data-price-modal-selected-price]');
   const modalBreakdown = modalSelection.querySelector('[data-price-modal-breakdown]');
+  const modalCalculationNote = modalSelection.querySelector('[data-price-modal-calculation-note]');
   const modalServiceConditions = modalSelection.querySelector('[data-price-modal-service-conditions]');
   const modalServiceConditionsKicker = modalSelection.querySelector('[data-price-modal-service-conditions-kicker]');
   const modalServiceConditionsTitle = modalSelection.querySelector('[data-price-modal-service-conditions-title]');
@@ -709,7 +783,10 @@
     if (modalServiceConditionsConsent.checked) clearServiceConditionsConsentMessage();
     if (modalBooking) {
       const hasSelectedService = Boolean(modalBooking.dataset.bookingServices);
-      modalBooking.setAttribute('aria-disabled', String(!hasSelectedService || !modalServiceConditionsConsent.checked));
+      const hasValidDentalWeight = modalBooking.dataset.bookingDentalWeightValid !== 'false';
+      modalBooking.setAttribute('aria-disabled', String(
+        !hasSelectedService || !hasValidDentalWeight || !modalServiceConditionsConsent.checked
+      ));
     }
   });
 
@@ -964,7 +1041,7 @@
     if (selectionMode === 'additional' && sourceCategoryId !== ADDITIONAL_CATEGORY_ID) {
       return getAdditionalServiceNotes(category);
     }
-    if (category.sizeGroups && sourceCategoryId !== ADDITIONAL_CATEGORY_ID) {
+    if (sourceCategoryId !== ADDITIONAL_CATEGORY_ID) {
       const notes = (category.notes || []).map(note => getText(note)).filter(Boolean);
       const priceRowCount = (category.priceRows || []).length;
       if (notes.length && notes.length === priceRowCount) {
@@ -1044,16 +1121,90 @@
     return services.filter(service => selectedIds.has(service.id));
   };
 
+  const NAIL_TRIM_SERVICE_INDEXES = new Set([0, 1, 2]);
+
+  const getDentalWeight = () => {
+    const normalized = String(modalDentalWeightInput?.value || '').replace(',', '.');
+    const value = Number.parseFloat(normalized);
+    return Number.isFinite(value) && value > 0 ? value : null;
+  };
+
+  const syncDentalEligibility = additionalServices => {
+    const dentalService = additionalServices.find(isDentalService);
+    const dentalInput = dentalService && modalAdditionalServiceOptions
+      ? Array.from(modalAdditionalServiceOptions.querySelectorAll('input[type="checkbox"]'))
+        .find(input => input.value === dentalService.id)
+      : null;
+    const dentalOption = dentalInput?.closest('.price-category-modal__service-option');
+    const dentalSelected = Boolean(dentalInput?.checked);
+    const weight = dentalSelected ? getDentalWeight() : null;
+    const eligible = dentalSelected && weight !== null && weight <= DENTAL_MAX_WEIGHT_KG;
+
+    if (modalDentalWeight) modalDentalWeight.hidden = !dentalSelected;
+    if (modalDentalWeightInput) {
+      modalDentalWeightInput.disabled = !dentalSelected;
+      modalDentalWeightInput.required = dentalSelected;
+      modalDentalWeightInput.setAttribute('aria-required', String(dentalSelected));
+      if (dentalSelected) {
+        modalDentalWeightInput.setAttribute('aria-invalid', String(!eligible));
+      } else {
+        modalDentalWeightInput.removeAttribute('aria-invalid');
+      }
+    }
+    if (modalDentalWeightStatus) {
+      modalDentalWeightStatus.textContent = !dentalSelected
+        ? ''
+        : weight === null
+          ? locale.dentalWeightRequired || ''
+          : eligible
+            ? locale.dentalWeightEligible || ''
+            : locale.dentalWeightTooHigh || '';
+      if (dentalSelected) {
+        modalDentalWeightStatus.dataset.state = weight === null ? 'required' : eligible ? 'eligible' : 'ineligible';
+      } else {
+        modalDentalWeightStatus.removeAttribute('data-state');
+      }
+    }
+
+    if (dentalInput) {
+      dentalInput.disabled = false;
+    }
+    dentalOption?.classList.remove('is-disabled');
+    dentalOption?.removeAttribute('aria-disabled');
+    return !dentalSelected || eligible;
+  };
+
+  const syncAdditionalNailTrimVisibility = (additionalServices, selectedPrimaryServices) => {
+    if (!modalAdditionalServiceOptions) return;
+    const nailsIncluded = selectedPrimaryServices.some(service => service.includesNailTrim);
+    const additionalServiceById = new Map(additionalServices.map(service => [service.id, service]));
+
+    modalAdditionalServiceOptions.querySelectorAll('label.price-category-modal__service-option').forEach(option => {
+      const input = option.querySelector('input[type="checkbox"]');
+      const service = additionalServiceById.get(input?.value);
+      if (!service) return;
+      const shouldHide = nailsIncluded && NAIL_TRIM_SERVICE_INDEXES.has(service.index);
+      option.hidden = shouldHide;
+      if (shouldHide && input.checked) input.checked = false;
+    });
+  };
+
   const updateModalQuote = (category, primaryServices, additionalServices = []) => {
     if (!bookingCatalog || !modalBreedSelect || !modalSelectedPrice || !modalBooking) return;
     const sourceCategoryId = category.sourceId || category.id;
     const selectedBreed = bookingCatalog.getBreed(modalBreedSelect.value);
     const selectedPrimaryServices = getSelectedServices(primaryServices, modalServiceOptions);
+    syncAdditionalNailTrimVisibility(additionalServices, selectedPrimaryServices);
+    const dentalWeightValid = syncDentalEligibility(additionalServices);
     const selectedAdditionalServices = getSelectedServices(additionalServices, modalAdditionalServiceOptions);
-    const selectedServices = [...selectedPrimaryServices, ...selectedAdditionalServices];
-    const amounts = selectedServices.map(service => parsePriceAmount(service.price));
-    const hasRequestPrice = amounts.some(amount => amount === null);
-    const totalAmount = amounts.reduce((sum, amount) => sum + (amount || 0), 0);
+    const {
+      selectedServices,
+      hasRequestPrice,
+      subtotalAmount,
+      dentalBaseAmount,
+      dentalDiscountAmount,
+      totalAmount,
+    } = calculateQuoteAmounts({ selectedPrimaryServices, selectedAdditionalServices, dentalWeightValid });
     const priceText = !selectedServices.length
       ? locale.chooseServiceLabel || locale.selectServicesLabel || 'Choose a service'
       : hasRequestPrice
@@ -1063,12 +1214,33 @@
           : formatFromAmount(totalAmount);
 
     if (modalSelectedPrice) {
-      modalSelectedPrice.innerHTML = `${escapeHtml(locale.selectedPriceLabel || locale.calculationLabel || 'Price')}: ${renderCurrencyText(priceText)}`;
+      const hasNumericTotal = Boolean(selectedServices.length && !hasRequestPrice);
+      const totalLabel = hasNumericTotal
+        ? locale.totalFromLabel || locale.selectedPriceLabel || 'Total from'
+        : locale.selectedPriceLabel || locale.calculationLabel || 'Price';
+      const totalValue = hasNumericTotal ? formatExactAmount(totalAmount) : priceText;
+      modalSelectedPrice.innerHTML = `<span class="price-category-modal__selection-price-label">${escapeHtml(totalLabel)}</span><strong>${renderCurrencyText(totalValue)}</strong>`;
+      modalSelectedPrice.dataset.totalAmount = hasNumericTotal ? String(totalAmount) : '';
     }
     if (modalBreakdown) {
-      modalBreakdown.innerHTML = selectedServices
-        .map(service => `<li><span>${escapeHtml(service.label)}</span><strong>${renderCurrencyText(service.price || locale.priceOnRequestLabel || locale.noPriceLabel)}</strong></li>`)
+      const serviceRows = selectedServices
+        .map(service => `<li class="price-category-modal__breakdown-service"><span>${escapeHtml(service.label)}</span><strong>${renderCurrencyText(service.price || locale.priceOnRequestLabel || locale.noPriceLabel)}</strong></li>`)
         .join('');
+      const subtotalRow = selectedServices.length > 1 && !hasRequestPrice
+        ? `<li class="price-category-modal__breakdown-subtotal" data-price-subtotal-amount="${escapeHtml(subtotalAmount)}"><span>${escapeHtml(locale.subtotalBeforeDiscountLabel || 'Subtotal before discount')}</span><strong>${renderCurrencyText(formatFromAmount(subtotalAmount))}</strong></li>`
+        : '';
+      const discountRow = dentalDiscountAmount > 0
+        ? `<li class="price-category-modal__breakdown-discount" data-price-discount-base="${escapeHtml(dentalBaseAmount)}" data-price-discount-rate="${DENTAL_GROOMING_DISCOUNT_RATE}" data-price-discount-amount="${escapeHtml(dentalDiscountAmount)}"><span><span>${escapeHtml(locale.dentalDiscountLabel || '30% dental discount')}</span><small class="price-category-modal__breakdown-formula">${renderCurrencyText(`${formatExactAmount(dentalBaseAmount)} × ${DENTAL_GROOMING_DISCOUNT_RATE * 100}% = ${formatExactAmount(dentalDiscountAmount)}`)}</small></span><strong>−${renderCurrencyText(formatExactAmount(dentalDiscountAmount))}</strong></li>`
+        : '';
+      modalBreakdown.innerHTML = `${serviceRows}${subtotalRow}${discountRow}`;
+    }
+    if (modalCalculationNote) {
+      const calculationNotes = [
+        dentalDiscountAmount > 0 ? locale.dentalDiscountTerms : '',
+        locale.calculationNote,
+      ].filter(Boolean);
+      modalCalculationNote.textContent = calculationNotes.join(' ');
+      modalCalculationNote.hidden = !calculationNotes.length;
     }
     const firstService = selectedServices[0];
     const selectionSignature = `${category.id}|${modalBreedSelect.value}|${selectedServices.map(service => service.id).join(',')}`;
@@ -1085,13 +1257,14 @@
     modalBooking.dataset.bookingServices = selectedServices.map(service => service.id).join(',');
     modalBooking.dataset.bookingServiceLabel = selectedServices.map(service => service.label).join(' + ');
     modalBooking.dataset.bookingPrice = priceText;
-    modalBooking.dataset.bookingPromotionKey = '';
-    modalBooking.dataset.bookingPromotionLabel = '';
-    modalBooking.dataset.bookingPromotionPrice = '';
+    modalBooking.dataset.bookingPromotionKey = dentalDiscountAmount > 0 ? 'ultrasonic-dental-grooming-30' : '';
+    modalBooking.dataset.bookingPromotionLabel = dentalDiscountAmount > 0 ? locale.dentalDiscountLabel || '' : '';
+    modalBooking.dataset.bookingPromotionPrice = dentalDiscountAmount > 0 ? `−${formatExactAmount(dentalDiscountAmount)}` : '';
+    modalBooking.dataset.bookingDentalWeightValid = String(dentalWeightValid);
     modalBooking.dataset.bookingPetSpecies = getPetSpecies(category, selectedBreed).key;
     updateServiceConditions(category, selectedBreed, selectedServices, priceText, selectedPrimaryServices, selectedAdditionalServices);
     const hasConsent = Boolean(modalServiceConditionsConsent?.checked);
-    modalBooking.setAttribute('aria-disabled', String(!selectedServices.length || !hasConsent));
+    modalBooking.setAttribute('aria-disabled', String(!selectedServices.length || !dentalWeightValid || !hasConsent));
     modalBooking.tabIndex = selectedServices.length ? 0 : -1;
     modalBooking.classList.toggle('is-disabled', !selectedServices.length);
   };
@@ -1110,6 +1283,7 @@
       const id = `${idPrefix}-${category.id}-${service.index}`;
       const label = document.createElement('label');
       label.className = 'price-category-modal__service-option';
+      label.dataset.serviceIndex = String(service.index);
       const isChecked = preferredServiceId ? service.id === preferredServiceId : defaultFirst && index === 0;
       label.innerHTML = `
         <input type="checkbox" id="${escapeHtml(id)}" value="${escapeHtml(service.id)}" ${isChecked ? 'checked' : ''} />
@@ -1174,6 +1348,8 @@
     const preferredServiceId = Number.isInteger(preferredServiceIndex)
       ? `${isAdditionalSelection ? ADDITIONAL_CATEGORY_ID : sourceCategoryId}:service:${preferredServiceIndex}`
       : '';
+    state.primaryServices = primaryServices;
+    state.additionalServices = additionalServices;
 
     if (modalSummary) {
       modalSummary.textContent = `${getText(category.summary)}${isAdditionalSelection ? ` — ${locale.additionalServicesLabel || ''}` : ''}`;
@@ -1238,7 +1414,14 @@
   const state = {
     activeCategory: null,
     lastFocus: null,
+    primaryServices: [],
+    additionalServices: [],
   };
+
+  modalDentalWeightInput?.addEventListener('input', () => {
+    if (!state.activeCategory) return;
+    updateModalQuote(state.activeCategory, state.primaryServices, state.additionalServices);
+  });
 
   const getCurrentRegistrationContext = () => {
     const category = state.activeCategory;
@@ -1282,6 +1465,7 @@
   const openModal = (category, preferredBreedIndex = null, preferredServiceIndex = null, selectionMode = 'primary') => {
     if (!category) return;
     registrationCompletedForSelection = false;
+    if (modalDentalWeightInput) modalDentalWeightInput.value = '';
     state.lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     state.activeCategory = category;
     const isAdditionalSelection = selectionMode === 'additional';
@@ -1314,7 +1498,6 @@
     });
   };
 
-  renderHero();
   window.HundesalonNavPill?.scan?.(heroRoot);
   const categoriesAction = heroRoot.querySelector('[data-price-categories-action]');
   categoriesAction?.addEventListener('click', () => {
@@ -1454,7 +1637,55 @@
     `;
   };
 
+  let cardAlignmentFrame = 0;
+  const alignPriceCardMetaRows = () => {
+    cardAlignmentFrame = 0;
+    const allTops = Array.from(cardsRoot.querySelectorAll('.price-card__top'));
+    allTops.forEach(top => top.style.removeProperty('min-height'));
+    if (window.matchMedia('(max-width: 720px)').matches) return;
+
+    // Measure only after the reset has reached layout, then apply all writes together.
+    cardAlignmentFrame = window.requestAnimationFrame(() => {
+      cardAlignmentFrame = 0;
+      const standaloneCardGrids = Array.from(cardsRoot.querySelectorAll('.price-size-section__cards'))
+        .filter(grid => !grid.closest('.price-size-section__category-grid'));
+      const alignmentRoots = [
+        ...standaloneCardGrids,
+        ...cardsRoot.querySelectorAll('.price-size-section__category-grid'),
+      ];
+      const updates = [];
+
+      alignmentRoots.forEach(root => {
+        const rows = new Map();
+        root.querySelectorAll('.price-card').forEach(card => {
+          const top = card.querySelector('.price-card__top');
+          const rect = card.getBoundingClientRect();
+          if (!top || rect.width <= 0 || rect.height <= 0) return;
+          const rowKey = Math.round(rect.top);
+          const row = rows.get(rowKey) || [];
+          row.push(top);
+          rows.set(rowKey, row);
+        });
+
+        rows.forEach(row => {
+          if (row.length < 2) return;
+          const maxHeight = Math.ceil(Math.max(...row.map(top => top.getBoundingClientRect().height)));
+          row.forEach(top => updates.push([top, maxHeight]));
+        });
+      });
+
+      updates.forEach(([top, height]) => top.style.setProperty('min-height', `${height}px`));
+    });
+  };
+
+  const schedulePriceCardAlignment = () => {
+    window.cancelAnimationFrame(cardAlignmentFrame);
+    cardAlignmentFrame = window.requestAnimationFrame(alignPriceCardMetaRows);
+  };
+
+  let cardsHaveRendered = false;
   const renderCards = query => {
+    cardsHaveRendered = true;
     const normalizedQuery = normalizeSearch(query);
     const isSearchActive = normalizedQuery.length >= SEARCH_MIN_CHARS;
     const matchingBreedIds = new Set(findBreedMatches(query).map(match => match.categoryId));
@@ -1492,9 +1723,22 @@
     }
     if (searchClear) searchClear.hidden = !normalizedQuery;
     window.HundesalonNavPill?.scan?.(cardsRoot);
+    schedulePriceCardAlignment();
   };
 
-  renderCards('');
+  const renderInitialCards = () => {
+    if (!cardsHaveRendered) renderCards('');
+  };
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(renderInitialCards, { timeout: 1000 });
+      } else {
+        window.setTimeout(renderInitialCards, 50);
+      }
+    });
+  });
+  document.fonts?.ready?.then(schedulePriceCardAlignment);
 
   searchInput?.addEventListener('input', event => {
     const query = event.target.value;
@@ -1666,6 +1910,7 @@
           if (otherToggle !== breedsToggle) closeBreedMenu(otherToggle);
         });
         const breedCard = breedsToggle.closest('.price-card');
+        populateBreedMenu(breedCard, breedMenu);
         breedsToggle.classList.remove('price-breed-arrow--closing');
         breedCard?.style.setProperty('transition-property', 'box-shadow, background');
         breedCard?.style.setProperty('transform', 'none');
@@ -1695,6 +1940,7 @@
   });
 
   window.addEventListener('resize', () => {
+    schedulePriceCardAlignment();
     cardsRoot.querySelectorAll('[data-price-breeds-toggle][aria-expanded="true"]').forEach(positionBreedMenu);
   });
 
@@ -1723,6 +1969,13 @@
         event.stopImmediatePropagation();
         modalServiceFieldset?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         modalServiceOptions?.querySelector('input')?.focus({ preventScroll: true });
+        return;
+      }
+      if (modalBooking.dataset.bookingDentalWeightValid === 'false') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        modalDentalWeight?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        modalDentalWeightInput?.focus({ preventScroll: true });
         return;
       }
       if (!modalServiceConditionsConsent?.checked) {

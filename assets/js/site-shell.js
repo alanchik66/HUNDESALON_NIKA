@@ -51,10 +51,10 @@
   const randomizeEuroIconMotion = icon => {
     if (!(icon instanceof HTMLElement) || icon.dataset.nikaEuroMotion === 'ready') return;
 
-    const spinDuration = randomBetween(3.8, 7.4);
+    const spinDuration = Number.parseFloat(getComputedStyle(icon).animationDuration) || 4.9;
     const sheenDuration = randomBetween(2.2, 4.8);
 
-    icon.style.setProperty('--euro-spin-duration', `${spinDuration.toFixed(2)}s`);
+    icon.style.removeProperty('--euro-spin-duration');
     icon.style.setProperty('--euro-spin-delay', `${(-randomBetween(0, spinDuration)).toFixed(2)}s`);
     icon.style.setProperty('--euro-sheen-duration', `${sheenDuration.toFixed(2)}s`);
     icon.style.setProperty('--euro-sheen-delay', `${(-randomBetween(0, sheenDuration)).toFixed(2)}s`);
@@ -4001,7 +4001,7 @@
     <div class="logo-wrapper">
       <div class="logo">
         <a href="${homeHref}">
-          <img src="${assetPrefix}/images/brand/logo.png" alt="HUNDESALON_NIKA" class="logo-img">
+          <img src="${assetPrefix}/images/brand/logo-ui.webp" alt="HUNDESALON_NIKA" class="logo-img">
         </a>
       </div>
     </div>
@@ -4052,7 +4052,7 @@
       <div class="social-bar-start">
         <div class="social-home">
           <a href="${homeHref}"${isHomeRoute ? ' class="active"' : ''} aria-label="${copy.home}" title="${copy.home}">
-            <img class="home-icon-img" src="${assetPrefix}/images/icons/home.png" alt="" aria-hidden="true">
+            <img class="home-icon-img" src="${assetPrefix}/images/icons/home.webp" alt="" aria-hidden="true" decoding="async">
             <span>${copy.home}</span>
           </a>
         </div>
@@ -4063,10 +4063,10 @@
           </button>
           <div class="social-service-picker" id="social-service-picker" hidden aria-hidden="true">
             <button class="social-service-btn" type="button" data-panel="social-spotify-panel" aria-label="Spotify">
-              <img src="${assetPrefix}/images/icons/spotify.png" alt="Spotify">
+              <img src="${assetPrefix}/images/icons/spotify.webp" alt="Spotify" loading="lazy" decoding="async">
             </button>
             <button class="social-service-btn" type="button" data-panel="social-apple-panel" aria-label="Apple Music">
-              <img src="${assetPrefix}/images/icons/apple-music.png" alt="Apple Music">
+              <img src="${assetPrefix}/images/icons/apple-music.webp" alt="Apple Music" loading="lazy" decoding="async">
             </button>
           </div>
           <div class="social-player-panel" id="social-spotify-panel" hidden aria-hidden="true">
@@ -4095,7 +4095,7 @@
       </div>
       <div class="social-icons-wrap">
         <button class="social-icons-toggle" type="button" aria-label="${copy.socials}" aria-expanded="false" aria-controls="social-icons-list">
-          <img src="${assetPrefix}/images/icons/social-links.png" alt="" aria-hidden="true" class="social-icons-toggle-img">
+          <img src="${assetPrefix}/images/icons/social-links.webp" alt="" aria-hidden="true" class="social-icons-toggle-img" loading="lazy" decoding="async">
         </button>
         <div class="social-icons" id="social-icons-list" hidden aria-hidden="true">
           ${socialBarMarkup}
@@ -13029,7 +13029,11 @@ labelEl.style.setProperty('text-align', 'right', 'important');
       const requestedLocation = parseHeaderWeatherCoordinates(host.dataset.weatherLocation)
         ? host.dataset.weatherLocation
         : '';
-      const useDeviceGeolocation = !requestedLocation;
+      // Geolocation was already requested above. If the visitor denied it (a normal
+      // mobile-browser path), let the widget use its Leipzig fallback instead of
+      // prompting a second time and logging a GeolocationPositionError.
+      const useDeviceGeolocation =
+        !requestedLocation && host.dataset.weatherGeoResolved !== 'unavailable';
 
       const widgetApi = await weatherWidget.mountWeatherWidget(host, {
         variant: 'header',

@@ -56,6 +56,7 @@ export async function onRequestPost({ request, env }) {
   const result = await sendSendPulseEmail(env, {
     to,
     from: AUTOREPLY_FROM,
+    replyTo: SUPPORT_EMAIL,
     subject: copy.subject,
     text: copy.body,
     html: buildBrandedEmail({ title: copy.subject, bodyText: copy.body, lang }),

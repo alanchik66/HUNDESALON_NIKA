@@ -166,6 +166,7 @@
         index,
         label: getText(priceRow.label, safeLang),
         price: getText(priceRow.price, safeLang),
+        includesNailTrim: Boolean(category.services?.includes('nails')),
         standardDurationMinutes: resolveStandardDuration(category.id, index),
         bufferMinutes: category.id === 'additional-services' ? 15 : BOOKING_SCHEDULE.defaultBufferMinutes,
       }));

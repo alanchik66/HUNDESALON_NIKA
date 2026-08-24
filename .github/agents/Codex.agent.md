@@ -1,8 +1,10 @@
 ---
 name: Codex
 description: Осторожный агент разработки HUNDESALON_NIKA для анализа, планирования и реализации изменений.
-model: 'GPT 5.6 Tera'
-tools: ['search/codebase', 'search/textSearch', 'search/fileSearch', 'search/usages', 'read/readFile', 'read/problems', 'edit/editFiles', 'execute/runInTerminal', 'execute/getTerminalOutput', 'execute/testFailure', 'read/terminalLastCommand', 'todo']
+model: 'GPT 5.6 Terra'
+target: vscode
+user-invocable: true
+tools: ['search/codebase', 'search/textSearch', 'search/fileSearch', 'search/usages', 'read/readFile', 'read/problems', 'edit/editFiles', 'execute/runInTerminal', 'execute/getTerminalOutput', 'execute/testFailure', 'read/terminalLastCommand', 'todo', 'copilot_sessionStoreSql']
 ---
 
 Ты — Codex-агент разработки проекта HUNDESALON_NIKA.

@@ -1,4 +1,9 @@
 {
+  "github.copilot.chat.askAgent.additionalTools": [
+    "copilot_sessionStoreSql"
+  ],
+  "github.copilot.chat.cli.customAgents.enabled": true,
+  "github.copilot.chat.localIndex.enabled": true,
   "files.eol": "\n",
   "editor.formatOnSave": true,
   "editor.formatOnPaste": true,
@@ -6,13 +11,17 @@
   "prettier.requireConfig": true,
   "eslint.format.enable": false,
   "stylelint.format.enable": false,
-  "eslint.validate": ["javascript"],
-  "stylelint.validate": ["css"],
+  "eslint.validate": [
+    "javascript"
+  ],
+  "stylelint.validate": [
+    "css"
+  ],
   "htmlhint.enable": true,
-  "chat.agent.enabled": false,
+  "chat.agent.enabled": true,
   "chat.agent.maxRequests": 25,
   "github.copilot.chat.agent.autoFix": false,
-  "chat.mcp.access": false,
+  "chat.mcp.access": "all",
   "chat.mcp.discovery.enabled": {
     "claude-desktop": false,
     "windsurf": false,
@@ -27,11 +36,12 @@
   "terminal.integrated.profiles.windows": {
     "PowerShell": {
       "source": "PowerShell",
-      "args": ["-NoProfile"]
+      "args": [
+        "-NoProfile"
+      ]
     }
   },
   "terminal.integrated.defaultProfile.windows": "PowerShell",
-  "gitlens.launchpad.indicator.enabled": false,
   "git.autofetch": true,
   "git.confirmSync": false,
   "files.autoSave": "afterDelay",
@@ -56,27 +66,11 @@
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "liveServer.settings.port": 5503,
-  "liveServer.settings.root": "/",
-  "liveServer.settings.headers": {
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
-  },
-  "liveServer.settings.ignoreFiles": [
-    ".vscode/**",
-    "**/*.scss",
-    "**/*.sass",
-    "**/*.ts",
-    "node_modules/**",
-    "venv/**",
-    ".venv/**",
-    "dist/**",
-    "test-results/**",
-    ".git/**"
-  ],
   "files.watcherExclude": {
     "**/node_modules/**": true,
     "**/dist/**": true,
     "**/build/**": true,
     "**/test-results/**": true
-  }
+  },
+  "chat.sessionSync.enabled": true
 }

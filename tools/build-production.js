@@ -309,11 +309,7 @@ function injectSendPulseIntegrations(directory, version) {
         .replace(popupScriptPattern, '');
 
       const prefix = path.relative(path.dirname(fullPath), path.join(directory, 'assets/js')).replaceAll('\\', '/');
-      const loader = [
-        '<script src="https://cdn.pulse.is/livechat/loader.js" data-live-chat-id="6a89e797b7f95e2b6c0cf199" async></script>',
-        '<script src="https://static.sppopups.com/assets/loader.js" data-chats-widget-id="49f098e8-81bf-4efa-9842-8f2012257c7b" async></script>',
-        `<script src="${prefix}/sendpulse-integrations.js?v=${version}"></script>`,
-      ].join('\n');
+      const loader = `<script src="${prefix}/sendpulse-integrations.js?v=${version}"></script>`;
       const next = cleaned.replace('</body>', `\n${loader}\n</body>`);
       if (next !== original) {
         fs.writeFileSync(fullPath, next, 'utf8');

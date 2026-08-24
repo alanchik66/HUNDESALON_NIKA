@@ -508,8 +508,8 @@
     {
       key: 'nail-trim',
       groups: ['dogs', 'cats', 'others'],
-      booking: { de: 'Krallenpflege', en: 'Nail trim', ru: 'Стрижка когтей', uk: 'Стрижка кігтів' },
-      label: { de: 'Krallen schneiden', en: 'Nail trim', ru: 'Стрижка когтей', uk: 'Стрижка кігтів' },
+      booking: { de: 'Krallenpflege', en: 'Nail trim', ru: 'Подстригание когтей', uk: 'Стрижка кігтів' },
+      label: { de: 'Krallen schneiden', en: 'Nail trim', ru: 'Подстригание когтей', uk: 'Стрижка кігтів' },
       note: {
         de: 'Kurzer Termin, oft kombiniert mit anderen Leistungen.',
         en: 'Short appointment, often combined with other services.',
@@ -577,7 +577,7 @@
       desc: {
         de: 'Krallen, Bürsten, Entfilzen und grundlegende Fellpflege.',
         en: 'Nails, brushing, dematting and basic coat care.',
-        ru: 'Стрижка когтей, вычёсывание, удаление колтунов и базовый уход.',
+        ru: 'Подстригание когтей, вычёсывание, удаление колтунов и базовый уход.',
         uk: 'Стрижка кігтів, вичісування, видалення ковтунів і базовий догляд.',
       },
     },

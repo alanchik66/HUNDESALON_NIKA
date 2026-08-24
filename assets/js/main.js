@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
       heroImage.addEventListener('error', dismissPreloaderSoon, { once: true });
       preloaderDismissTimer = window.setTimeout(dismissPreloaderSoon, 1800);
     } else {
-      preloaderDismissTimer = window.setTimeout(dismissPreloaderSoon, 600);
+      dismissPreloaderSoon();
     }
 
     window.addEventListener('load', dismissPreloaderSoon, { once: true });
@@ -1658,15 +1658,29 @@ document.addEventListener('DOMContentLoaded', () => {
     el._nextMove = 0;
   }
 
+  function positionTouchPoint(el, x = el._cx, y = el._cy, size = el._sz) {
+    const plasma = el._plasma;
+    const width = plasma?._touchWidth || 0;
+    const height = plasma?._touchHeight || 0;
+    if (width <= 0 || height <= 0) return;
+
+    const transform = `translate3d(${((x / 100) * width).toFixed(1)}px, ${((y / 100) * height).toFixed(1)}px, 0) translate(-50%, -50%) scale(${(size / 16).toFixed(3)})`;
+    if (el._touchTransform === transform) return;
+    el._touchTransform = transform;
+    el.style.transform = transform;
+  }
+
   /* ЕДИНЫЙ rAF цикл для ВСЕХ точек — максимально плавно */
   const allTouchPoints = [];
   let touchRaf = 0;
   const now = () => performance.now();
 
   function tickTouches(ts) {
+    let hasActivePoints = false;
     for (let i = 0; i < allTouchPoints.length; i++) {
       const el = allTouchPoints[i];
       if (!el._active) continue;
+      hasActivePoints = true;
 
       /* Хаотическая смена цели — непрерывно, без задержек */
       if (ts >= el._nextMove) {
@@ -1685,9 +1699,7 @@ document.addEventListener('DOMContentLoaded', () => {
       el._cy += (el._ty - el._cy) * s;
       el._sz += (el._tsz - el._sz) * 0.03;
 
-      el.style.left = el._cx.toFixed(1) + '%';
-      el.style.top = el._cy.toFixed(1) + '%';
-      el.style.width = el.style.height = el._sz.toFixed(1) + 'px';
+      positionTouchPoint(el);
 
       /* Opacity: курсорные лапки управляются CSS-классом, остальные — lerp */
       if (!el._isCursor) {
@@ -1696,7 +1708,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    touchRaf = requestAnimationFrame(tickTouches);
+    touchRaf = hasActivePoints ? requestAnimationFrame(tickTouches) : 0;
   }
 
   function startTouchLoop() {
@@ -1774,6 +1786,8 @@ document.addEventListener('DOMContentLoaded', () => {
     link.getAttribute('aria-current') === 'true';
 
   const removeTouchPoints = root => {
+    root?._touchResizeObserver?.disconnect();
+    if (root) root._touchResizeObserver = null;
     root?.querySelectorAll('.nav-plasma-touch').forEach(tp => {
       const index = allTouchPoints.indexOf(tp);
       if (index >= 0) allTouchPoints.splice(index, 1);
@@ -1791,12 +1805,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!sitePerfHeavy) return;
 
+    const syncTouchBounds = (width, height) => {
+      activePlasma._touchWidth = width;
+      activePlasma._touchHeight = height;
+      activePlasma.querySelectorAll('.nav-plasma-touch').forEach(touchPoint => positionTouchPoint(touchPoint));
+    };
+    if ('ResizeObserver' in window) {
+      activePlasma._touchResizeObserver = new ResizeObserver(entries => {
+        const rect = entries[0]?.contentRect;
+        if (rect) syncTouchBounds(rect.width, rect.height);
+      });
+      activePlasma._touchResizeObserver.observe(activePlasma);
+    }
+    window.requestAnimationFrame(() => {
+      if (!activePlasma.isConnected) return;
+      const rect = activePlasma.getBoundingClientRect();
+      syncTouchBounds(rect.width, rect.height);
+    });
+
     const wandererCount = cta ? 5 : 3;
     const cursorTipCount = cta ? 4 : 3;
     const cursorTips = [];
     for (let i = 0; i < wandererCount; i += 1) {
       const wanderer = document.createElement('span');
       wanderer.className = 'nav-plasma-touch';
+      wanderer._plasma = activePlasma;
       activePlasma.appendChild(wanderer);
       animateTouchPoint(wanderer);
       wanderer._active = true;
@@ -1812,6 +1845,7 @@ document.addEventListener('DOMContentLoaded', () => {
     for (let i = 0; i < cursorTipCount; i += 1) {
       const cursorTip = document.createElement('span');
       cursorTip.className = 'nav-plasma-touch nav-plasma-touch--pointer';
+      cursorTip._plasma = activePlasma;
       activePlasma.appendChild(cursorTip);
       animateTouchPoint(cursorTip);
       cursorTip._active = false;
@@ -1840,11 +1874,9 @@ document.addEventListener('DOMContentLoaded', () => {
         cursorTip._cy = py;
         cursorTip._tx = px;
         cursorTip._ty = py;
-        cursorTip.style.left = `${px.toFixed(1)}%`;
-        cursorTip.style.top = `${py.toFixed(1)}%`;
         const size = (1 - t * 0.4) * cursorTip._tsz;
-        cursorTip.style.width = `${size.toFixed(1)}px`;
-        cursorTip.style.height = `${size.toFixed(1)}px`;
+        cursorTip._sz = size;
+        positionTouchPoint(cursorTip, px, py, size);
       });
     };
 
