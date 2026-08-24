@@ -13,6 +13,11 @@ This vault is the working memory for the project.
 - Write outcomes first, then evidence.
 - Keep private address data out of this vault.
 
+## Stack
+- Home: [[Dashboard]]
+- Theme: Minimal with Style Settings
+- Backup: Obsidian Git to `origin/main` from `C:\PROJEKT\HUNDESALON_NIKA`
+
 ## Entry points
 - [Start Here](Start_Here.md)
 - [Index](Index.md)
