@@ -1,9 +1,19 @@
+---
+type: project
+status: active
+created: {{date}}
+tags: [project, brief]
+---
+
 # Project Brief
 
-## Goal
+## Objective
 -
 
 ## Scope
+-
+
+## Constraints
 -
 
 ## Next actions

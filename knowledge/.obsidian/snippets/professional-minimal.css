@@ -1,0 +1,228 @@
+/* Professional Minimal preset for HUNDESALON_NIKA */
+:root {
+  --font-text-theme: "Segoe UI", "Inter", sans-serif;
+  --font-interface-theme: "Segoe UI", "Inter", sans-serif;
+  --font-monospace-theme: "Cascadia Mono", "Consolas", monospace;
+  --radius-s: 10px;
+  --radius-m: 16px;
+  --radius-l: 22px;
+  --shadow-panel: 0 18px 50px rgba(0, 0, 0, 0.28);
+}
+
+.theme-dark {
+  --base-h: 222;
+  --base-s: 16%;
+  --base-l: 10%;
+
+  --bg1: #0b0f15;
+  --bg2: #101621;
+  --bg3: #161f2d;
+  --ui1: #1a2434;
+  --ui2: #223046;
+  --ui3: #31415f;
+
+  --ax1: #6f97ff;
+  --ax2: #8eb0ff;
+  --ax3: #d3e0ff;
+  --sp1: #f8fbff;
+
+  --red: #e86f77;
+  --orange: #f4a35c;
+  --yellow: #e8c15f;
+  --green: #7ac896;
+  --cyan: #67c8d9;
+  --blue: #6f97ff;
+  --purple: #9d86ff;
+  --pink: #e68bb5;
+
+  --text-normal: #dbe4f0;
+  --text-muted: #90a0b8;
+  --text-faint: #66758f;
+  --interactive-accent: var(--ax1);
+  --interactive-accent-hover: var(--ax2);
+  --background-primary: var(--bg1);
+  --background-primary-alt: var(--bg2);
+  --background-secondary: var(--bg2);
+  --background-secondary-alt: var(--bg3);
+  --background-modifier-border: rgba(111, 151, 255, 0.16);
+  --titlebar-background: var(--bg1);
+  --nav-item-background-active: rgba(111, 151, 255, 0.14);
+  --nav-item-color-active: var(--sp1);
+  --nav-item-color-hover: var(--sp1);
+  --checkbox-color: var(--ax1);
+  --link-color: var(--ax2);
+  --link-unresolved-color: var(--orange);
+  --file-line-width: 980px;
+}
+
+.workspace-split.mod-root .workspace-tab-header-container {
+  border-bottom: 1px solid rgba(111, 151, 255, 0.1);
+}
+
+.workspace-split.mod-root .workspace-tab-header.is-active .workspace-tab-header-inner {
+  background: rgba(111, 151, 255, 0.12);
+}
+
+.workspace-leaf-content {
+  background: linear-gradient(180deg, rgba(11, 15, 21, 0.98), rgba(9, 12, 18, 0.99));
+}
+
+.workspace-leaf-content .view-header {
+  border-bottom: 1px solid rgba(111, 151, 255, 0.1);
+}
+
+.dashboard-shell .markdown-preview-view,
+.dashboard-shell .markdown-source-view.mod-cm6 .cm-scroller {
+  padding-top: 0.5rem;
+}
+
+.dashboard-shell h1 {
+  margin-bottom: 0.45rem;
+  font-size: clamp(2rem, 3vw, 3rem);
+  letter-spacing: -0.03em;
+}
+
+.dashboard-shell > .callout,
+.dashboard-shell .callout {
+  border-radius: 20px;
+  border: 1px solid rgba(111, 151, 255, 0.18);
+  background: linear-gradient(180deg, rgba(17, 23, 32, 0.92), rgba(14, 19, 28, 0.96));
+  box-shadow: var(--shadow-panel);
+}
+
+.dashboard-shell .callout[data-callout='summary'] .callout-title {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dashboard-shell .dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 1rem 0 1.4rem;
+}
+
+.dashboard-shell .dashboard-card {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 96px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(111, 151, 255, 0.16);
+  background: linear-gradient(180deg, rgba(24, 33, 49, 0.98), rgba(17, 23, 32, 0.98));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.dashboard-shell .dashboard-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--card-accent, rgba(111, 151, 255, 0.6));
+}
+
+.dashboard-shell .dashboard-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(111, 151, 255, 0.42);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.3);
+}
+
+.dashboard-shell .dashboard-card__title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--sp1);
+}
+
+.dashboard-shell .dashboard-card__meta {
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.dashboard-shell .dashboard-card--blue { --card-accent: var(--blue); }
+.dashboard-shell .dashboard-card--green { --card-accent: var(--green); }
+.dashboard-shell .dashboard-card--cyan { --card-accent: var(--cyan); }
+.dashboard-shell .dashboard-card--amber { --card-accent: var(--yellow); }
+.dashboard-shell .dashboard-card--purple { --card-accent: var(--purple); }
+.dashboard-shell .dashboard-card--rose { --card-accent: var(--pink); }
+.dashboard-shell .dashboard-card--orange { --card-accent: var(--orange); }
+.dashboard-shell .dashboard-card--neutral { --card-accent: rgba(111, 151, 255, 0.35); }
+
+.dashboard-shell .task-list-item,
+.dashboard-shell .contains-task-list {
+  list-style-position: inside;
+}
+
+.dashboard-shell .block-language-dataview ul,
+.dashboard-shell .block-language-dataview ol {
+  padding-left: 1rem;
+}
+
+.dashboard-shell .block-language-dataview .contains-task-list {
+  margin-top: 0.75rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid rgba(111, 151, 255, 0.14);
+  border-radius: 18px;
+  background: rgba(17, 23, 32, 0.9);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.dashboard-shell .block-language-dataview .contains-task-list .task-list-item {
+  margin: 0.45rem 0;
+}
+
+.dashboard-shell .block-language-dataview ul > li,
+.dashboard-shell .block-language-dataview ol > li {
+  margin: 0.3rem 0;
+}
+
+.dashboard-shell .internal-link {
+  color: var(--ax2);
+}
+
+.dashboard-shell .internal-link:hover {
+  color: var(--ax3);
+}
+
+.dashboard-shell .markdown-preview-view table,
+.dashboard-shell .markdown-source-view.mod-cm6 table {
+  border-collapse: collapse;
+}
+
+.workspace-leaf-content[data-type='graph'] .view-content {
+  background:
+    radial-gradient(circle at top, rgba(111, 151, 255, 0.08), transparent 42%),
+    linear-gradient(180deg, rgba(11, 15, 21, 0.98), rgba(8, 11, 16, 0.99));
+}
+
+.workspace-leaf-content[data-type='graph'] .graph-controls {
+  backdrop-filter: blur(16px);
+}
+
+.workspace-leaf-content[data-type='graph'] canvas {
+  filter: contrast(1.04) saturate(0.92);
+}
+
+@media (max-width: 900px) {
+  .dashboard-shell .dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-shell h1 {
+    font-size: 1.7rem;
+  }
+
+  .dashboard-shell .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}

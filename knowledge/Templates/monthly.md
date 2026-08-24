@@ -1,4 +1,10 @@
-# Monthly Review — {{date}}
+---
+type: monthly
+created: {{date}}
+tags: [monthly, review]
+---
+
+# Monthly Review - {{date}}
 
 ## Outcomes
 -
@@ -10,4 +16,4 @@
 -
 
 ## Next month
--
+- [ ]

@@ -19,6 +19,21 @@ This vault is the working memory for the project.
 - Backup: Obsidian Git to `origin/main` from `C:\PROJEKT\HUNDESALON_NIKA`
 - Canonical memory: this vault is the primary project memory; keep it current during work.
 
+## Operating defaults
+- Shared config lives in `.obsidian/app.json`, `.obsidian/appearance.json`, and `.obsidian/hotkeys.json`.
+- Hotkeys:
+  - `Mod+P` command palette
+  - `Mod+O` switcher
+  - `Mod+Shift+E` reveal active file
+  - `Mod+Shift+F` global search
+  - `Mod+Alt+D` daily note
+  - `Mod+Alt+T` insert template
+  - `Mod+Alt+G` graph
+  - `Mod+Alt+B` backlinks
+  - `Mod+Alt+L` outline
+- Templates are frontmatter-first and live in `Templates/`.
+- Obsidian Git is the backup path; Obsidian Sync is not the primary backup channel.
+
 ## Entry points
 - [Start Here](Start_Here.md)
 - [Index](Index.md)

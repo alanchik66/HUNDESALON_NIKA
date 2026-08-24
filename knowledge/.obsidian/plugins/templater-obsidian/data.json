@@ -1,0 +1,35 @@
+{
+  "data_version": 2,
+  "command_timeout": 5,
+  "templates_folder": "Templates",
+  "templates_pairs": [],
+  "trigger_on_file_creation_mode": "none",
+  "auto_jump_to_cursor": true,
+  "jump_to_cursor_after_file_name": false,
+  "shell_path": "",
+  "user_scripts_folder": "",
+  "folder_templates": [
+    {
+      "folder": "01_Projects",
+      "template": "Templates/project.md"
+    },
+    {
+      "folder": "04_Decisions",
+      "template": "Templates/decision.md"
+    },
+    {
+      "folder": "06_QA",
+      "template": "Templates/qa.md"
+    },
+    {
+      "folder": "07_Release",
+      "template": "Templates/release.md"
+    }
+  ],
+  "file_templates": [],
+  "syntax_highlighting": true,
+  "syntax_highlighting_mobile": false,
+  "enabled_templates_hotkeys": [],
+  "startup_templates": [],
+  "ignore_folders_on_creation": []
+}

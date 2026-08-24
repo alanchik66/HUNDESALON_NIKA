@@ -1,12 +1,24 @@
-# Daily Note - {{date}}
+---
+type: daily
+created: {{date}}
+tags: [daily, journal]
+---
 
-## Focus
+# Daily - {{date}}
 
-## Done
+## Top priorities
+- [ ]
+- [ ]
+- [ ]
+
+## Completed
+-
 
 ## Blockers
+-
 
 ## Evidence
+-
 
 ## Next
-
+- [ ]

@@ -1,0 +1,84 @@
+{
+  "installedVersion": "1.0.0-beta1",
+  "activeCalendarSet": "Default",
+  "showGettingStartedBanner": true,
+  "hasMigratedDailyNoteSettings": false,
+  "hasMigratedWeeklyNoteSettings": false,
+  "calendarSets": [
+    {
+      "day": {
+        "enabled": true,
+        "format": "YYYY-MM-DD",
+        "folder": "Daily",
+        "openAtStartup": false,
+        "templatePath": "Templates/daily.md"
+      },
+      "week": {
+        "enabled": true,
+        "format": "gggg-[W]WW",
+        "folder": "Weekly",
+        "openAtStartup": false,
+        "templatePath": "Templates/weekly.md"
+      },
+      "month": {
+        "enabled": true,
+        "format": "YYYY-MM",
+        "folder": "Monthly",
+        "openAtStartup": false,
+        "templatePath": "Templates/monthly.md"
+      },
+      "quarter": {
+        "enabled": false,
+        "format": "",
+        "folder": "",
+        "openAtStartup": false,
+        "templatePath": ""
+      },
+      "year": {
+        "enabled": false,
+        "format": "",
+        "folder": "",
+        "openAtStartup": false,
+        "templatePath": ""
+      },
+      "id": "Default",
+      "ctime": "2026-08-24T18:07:42+02:00"
+    }
+  ],
+  "enableTimelineComplication": true,
+  "daily": {
+    "enabled": true,
+    "format": "YYYY-MM-DD",
+    "folder": "Daily",
+    "template": "Templates/daily.md",
+    "autorun": false
+  },
+  "weekly": {
+    "enabled": true,
+    "format": "gggg-[W]WW",
+    "folder": "Weekly",
+    "template": "Templates/weekly.md",
+    "autorun": false
+  },
+  "monthly": {
+    "enabled": true,
+    "format": "YYYY-MM",
+    "folder": "Monthly",
+    "template": "Templates/monthly.md",
+    "autorun": false
+  },
+  "quarterly": {
+    "enabled": false,
+    "format": "",
+    "folder": "",
+    "template": "",
+    "autorun": false
+  },
+  "yearly": {
+    "enabled": false,
+    "format": "",
+    "folder": "",
+    "template": "",
+    "autorun": false
+  }
+}

@@ -1,4 +1,10 @@
-# Weekly Review — {{date}}
+---
+type: weekly
+created: {{date}}
+tags: [weekly, review]
+---
+
+# Weekly Review - {{date}}
 
 ## Goals
 -
@@ -13,4 +19,4 @@
 -
 
 ## Next week
--
+- [ ]

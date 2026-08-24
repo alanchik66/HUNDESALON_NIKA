@@ -1,0 +1,25 @@
+{
+  "promptDelete": false,
+  "alwaysUpdateLinks": true,
+  "attachmentFolderPath": "03_Resources/Attachments",
+  "useMarkdownLinks": false,
+  "pdfExportSettings": {
+    "includeName": true,
+    "pageSize": "A4",
+    "landscape": false,
+    "margin": "1",
+    "downscalePercent": 100
+  },
+  "showLineNumber": true,
+  "showIndentGuide": true,
+  "rightToLeft": false,
+  "showInlineTitle": true,
+  "newLinkFormat": "shortest",
+  "showUnsupportedFiles": true,
+  "spellcheck": false,
+  "newFileLocation": "folder",
+  "newFileFolderPath": "00_Inbox",
+  "readableLineLength": false,
+  "propertiesInDocument": "visible",
+  "autoConvertHtml": true
+}
