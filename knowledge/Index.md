@@ -21,4 +21,4 @@
 - [[Templates/catalog-change]]
 
 ## Intake
-- Use `00_Inbox` for raw ideas and quick captures.
+- Use [[00_Inbox/Inbox]] for raw ideas and quick captures.

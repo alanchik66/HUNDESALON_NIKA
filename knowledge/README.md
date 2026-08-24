@@ -17,11 +17,13 @@ This vault is the working memory for the project.
 - Home: [[Dashboard]]
 - Theme: Minimal with Style Settings
 - Backup: Obsidian Git to `origin/main` from `C:\PROJEKT\HUNDESALON_NIKA`
+- Canonical memory: this vault is the primary project memory; keep it current during work.
 
 ## Entry points
 - [Start Here](Start_Here.md)
 - [Index](Index.md)
 - [Dashboard](Dashboard.md)
+- [Inbox](00_Inbox/Inbox.md)
 - [Project](01_Projects/HUNDESALON_NIKA.md)
 - [Operations](02_Areas/Operations.md)
 - [Brand assets](03_Resources/Brand_Assets.md)

@@ -12,9 +12,10 @@ A compact control panel for daily work, decisions, and release flow.
 ## Quick launcher
 
 ```dataviewjs
+const today = dv.date('today').toFormat('yyyy-MM-dd');
 const cards = [
-  { title: 'Today', link: 'Daily/2026-08-24', meta: 'Open the current daily note', tone: 'blue' },
-  { title: 'Vault home', link: 'README', meta: 'Stack, conventions, and entry points', tone: 'neutral' },
+  { title: 'Today', link: `Daily/${today}`, meta: 'Open the current daily note', tone: 'blue' },
+  { title: 'Vault docs', link: 'README', meta: 'Stack, conventions, and entry points', tone: 'neutral' },
   { title: 'Index', link: 'Index', meta: 'Map of the vault', tone: 'neutral' },
   { title: 'Start here', link: 'Start_Here', meta: 'Onboarding and flow', tone: 'neutral' },
   { title: 'Project hub', link: '01_Projects/HUNDESALON_NIKA', meta: 'Active project surface', tone: 'blue' },
