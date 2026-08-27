@@ -144,7 +144,7 @@
     <meta name="msapplication-config" content="/browserconfig.xml" />
     <link rel="stylesheet" href="../assets/css/cookie-consent.css?v=20260620-full-stack-upgrade" />
       <script src="../assets/js/analytics.js?v=20260721-ads-all"></script>
-    <link rel="stylesheet" href="/assets/css/social-page.css?v=20260827-social-instagram-v1" />
+    <link rel="stylesheet" href="/assets/css/social-page.css?v=20260827-social-instagram-v2" />
 </head>
   <body>
     <!-- Header and mobile nav (built by site-shell.js) -->
@@ -162,13 +162,17 @@
           <div class="social-grid">
             <div class="social-card social-card--video social-card--instagram">
               <div class="social-card__media social-card__media--instagram">
-                <iframe
-                  src="https://www.instagram.com/reel/DcA_hw5IeVI/embed"
-                  title="Instagram reel HUNDESALON_NIKA"
-                  loading="lazy"
-                  allowfullscreen
-                  referrerpolicy="strict-origin-when-cross-origin"
-                ></iframe>
+                <video
+                  class="social-card__media-video social-card__media-video--instagram"
+                  src="../assets/video/social/instagram-reel-01.mp4"
+                  poster="../assets/video/social/instagram-reel-01.jpg"
+                  aria-label="Instagram reel HUNDESALON_NIKA"
+                  autoplay
+                  muted
+                  loop
+                  playsinline
+                  preload="metadata"
+                ></video>
                 <a
                   class="social-card__media-brand"
                   href="https://www.instagram.com/hundesalon_nika/"

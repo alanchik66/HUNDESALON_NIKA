@@ -219,6 +219,14 @@
   background: rgba(1, 15, 10, 0.82);
 }
 
+.social-page .social-card__media-video {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  border: 0;
+  background: rgba(1, 15, 10, 0.82);
+}
+
 .social-page .social-card__media--instagram {
   border-color: rgba(255, 233, 168, 0.28);
   border-radius: 1.15rem;
@@ -229,12 +237,13 @@
     0 0 28px rgba(229, 184, 92, 0.12);
 }
 
-.social-page .social-card__media--instagram iframe {
+.social-page .social-card__media-video--instagram {
   position: absolute;
-  inset: -14% 0 -36% 0;
+  inset: 0;
   inline-size: 100%;
   block-size: 100%;
-  transform: none;
+  object-fit: cover;
+  object-position: center;
 }
 
 .social-page .social-card__media--instagram::before {
@@ -555,10 +564,6 @@
     padding: 0.82rem;
   }
 
-  .social-page .social-card__media--instagram iframe {
-    inset: -15.5% 0 -38% 0;
-  }
-
   .social-page .social-card__media-brand[href^="https://www.instagram.com/"] {
     top: 0.72rem;
     left: 0.72rem;
@@ -652,10 +657,6 @@
 
   .social-page .social-card--instagram {
     padding: 0.7rem;
-  }
-
-  .social-page .social-card__media--instagram iframe {
-    inset: -17.5% 0 -41% 0;
   }
 
   .social-page .social-card__media-brand[href^="https://www.instagram.com/"] {

@@ -1,6 +1,8 @@
 import { chromium } from 'playwright';
+import path from 'node:path';
+import { mkdir, writeFile } from 'node:fs/promises';
 
-const [, , reelUrl] = process.argv;
+const [, , reelUrl, outputStem] = process.argv;
 
 if (!reelUrl) {
   console.error('Usage: node tools/extract-instagram-video.mjs <reelUrl>');
@@ -75,4 +77,40 @@ for (const networkUrl of await collectNetworkMatches(reelUrl)) {
   }
 }
 
-process.stdout.write([...urls].join('\n'));
+const resolvedUrls = [...urls];
+const videoUrl = resolvedUrls.find((url) => /\.mp4(?:$|\?)/i.test(url)) ?? '';
+const posterUrl = resolvedUrls.find((url) => /\.(?:jpg|jpeg|png|webp)(?:$|\?)/i.test(url)) ?? '';
+
+if (outputStem && videoUrl) {
+  const outputDir = path.dirname(outputStem);
+  await mkdir(outputDir, { recursive: true });
+
+  const videoResponse = await fetch(videoUrl, {
+    headers: {
+      'user-agent': USER_AGENT,
+      referer: 'https://www.instagram.com/'
+    }
+  });
+  const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
+  const videoPath = `${outputStem}.mp4`;
+  await writeFile(videoPath, videoBuffer);
+
+  let posterPath = '';
+
+  if (posterUrl) {
+    const posterResponse = await fetch(posterUrl, {
+      headers: {
+        'user-agent': USER_AGENT,
+        referer: 'https://www.instagram.com/'
+      }
+    });
+    const posterBuffer = Buffer.from(await posterResponse.arrayBuffer());
+    posterPath = `${outputStem}.jpg`;
+    await writeFile(posterPath, posterBuffer);
+  }
+
+  process.stdout.write(JSON.stringify({ videoPath, posterPath, videoUrl, posterUrl }));
+  process.exit(0);
+}
+
+process.stdout.write(resolvedUrls.join('\n'));
