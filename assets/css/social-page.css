@@ -317,6 +317,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  color: #111;
   font-size: 1.48rem;
   line-height: 1;
   filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.32));

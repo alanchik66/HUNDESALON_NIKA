@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "5ade39cadc7cbd24",
+        "id": "88f3ebdb34cefacd",
         "type": "tabs",
         "children": [
           {
-            "id": "0ffba2efa06847b4",
+            "id": "11e6833b3a4cd429",
             "type": "leaf",
             "state": {
               "type": "empty",
@@ -206,8 +206,9 @@
       "obsidian-excalidraw-plugin:Создать новый чертеж": false
     }
   },
-  "active": "0ffba2efa06847b4",
+  "active": "11e6833b3a4cd429",
   "lastOpenFiles": [
+    "01_Projects/HUNDESALON_NIKA/Tasks/Без названия.md",
     "01_Projects/HUNDESALON_NIKA/Tasks/2026-08-27 - Live Templater routing example.md",
     "01_Projects/HUNDESALON_NIKA/Tasks/2026-08-27 - Live Templater routing example.md",
     "01_Projects/HUNDESALON_NIKA/Tasks/2026-08-27 - Verify Codex Obsidian workflow.md",
