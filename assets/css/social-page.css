@@ -322,6 +322,17 @@
   filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.32));
 }
 
+.social-page .social-card__media-action svg {
+  display: block;
+  inline-size: 1.62rem;
+  block-size: 1.62rem;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .social-page .social-card__media-action--liked {
   color: #ff6c88;
 }

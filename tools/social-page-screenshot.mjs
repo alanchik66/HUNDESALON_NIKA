@@ -26,6 +26,12 @@ const context = await browser.newContext(
 const page = await context.newPage();
 
 try {
+  await context.addInitScript(() => {
+    localStorage.setItem(
+      'hundesalon_cookie_consent',
+      JSON.stringify({ choice: 'accept', analytics: true, updatedAt: '2026-08-27T00:00:00.000Z' })
+    );
+  });
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForTimeout(9000);
   await page.screenshot({ path: screenshotPath, fullPage: true });

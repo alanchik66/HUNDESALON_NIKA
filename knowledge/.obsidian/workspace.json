@@ -4,21 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "f34c80502b7f814e",
+        "id": "5ade39cadc7cbd24",
         "type": "tabs",
         "children": [
           {
-            "id": "976852a393dcd05d",
+            "id": "0ffba2efa06847b4",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "01_Projects/HUNDESALON_NIKA/Tasks/2026-08-27 - Live Templater routing example.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "2026-08-27 - Live Templater routing example"
+              "title": "Новая вкладка"
             }
           }
         ]
@@ -210,7 +206,7 @@
       "obsidian-excalidraw-plugin:Создать новый чертеж": false
     }
   },
-  "active": "976852a393dcd05d",
+  "active": "0ffba2efa06847b4",
   "lastOpenFiles": [
     "01_Projects/HUNDESALON_NIKA/Tasks/2026-08-27 - Live Templater routing example.md",
     "01_Projects/HUNDESALON_NIKA/Tasks/2026-08-27 - Live Templater routing example.md",
