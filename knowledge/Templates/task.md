@@ -94,16 +94,44 @@ ${decisionLink ? `decision_note: "${decisionLink}"\n` : ""}tags: [task, routing]
 ## Objective
 ${objective || "-"}
 
+## Context
+- Current behavior:
+- Relevant files or links:
+
+## Acceptance criteria
+- [ ] Requested behavior is implemented.
+- [ ] Relevant checks pass.
+- [ ] User-visible behavior is verified when applicable.
+
+## Constraints
+- Preserve unrelated changes.
+- No commit, push, dependency, or deployment changes unless explicitly requested.
+
 ## Suggested model
 - ${suggestedModel}
 
 ## Scope
-- 
+- In scope:
+- Out of scope:
+
+## Plan
+- [ ] Inspect the smallest relevant context.
+- [ ] Implement the minimal complete change.
+- [ ] Run focused verification.
+
+## Result
+- Status:
+- Changed files:
+- User-visible change:
 
 ## Verification
-- 
+- Commands/checks:
+- Evidence:
+
+## Residual risks
+- None known.
 
 ## Notes
-- 
+-
 `;
 %>

@@ -22,6 +22,7 @@ AI-assisted search for a suitable commercial rental in Leipzig-Stötteritz and r
 
 ## Communication contract
 
+
 - Owner conversation: Russian.
 - Landlord conversation: concise, individualized German.
 - Primary objective: obtain a viewing appointment and create a calm, credible business impression.

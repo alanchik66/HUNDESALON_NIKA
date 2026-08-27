@@ -15,6 +15,7 @@
 - Evidence of live verification after deploy
 
 ## Codex workflow
+- [[Codex_Control_Center]]
 - [[Codex_Model_Routing]]
 - [[01_Projects/HUNDESALON_NIKA/Tasks/README]]
 - Keep model choice aligned with task shape.

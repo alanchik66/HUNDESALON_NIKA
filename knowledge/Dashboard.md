@@ -18,6 +18,7 @@ const cards = [
   { title: 'Vault docs', link: 'README', meta: 'Stack, conventions, and entry points', tone: 'neutral' },
   { title: 'Index', link: 'Index', meta: 'Map of the vault', tone: 'neutral' },
   { title: 'Start here', link: 'Start_Here', meta: 'Onboarding and flow', tone: 'neutral' },
+  { title: 'Control center', link: '02_Areas/Codex_Control_Center', meta: 'One entry point for Codex work', tone: 'amber' },
   { title: 'Project hub', link: '01_Projects/HUNDESALON_NIKA', meta: 'Active project surface', tone: 'blue' },
   { title: 'Task queue', link: '01_Projects/HUNDESALON_NIKA/Tasks/README', meta: 'Auto-routed task notes', tone: 'green' },
   { title: 'Operations', link: '02_Areas/Operations', meta: 'Rules and workflows', tone: 'green' },

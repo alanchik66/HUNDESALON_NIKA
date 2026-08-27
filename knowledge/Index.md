@@ -5,6 +5,7 @@
 - [[README]]
 - [[Daily/2026-08-24]]
 - [[Start_Here]]
+- [[02_Areas/Codex_Control_Center]]
 - [[01_Projects/HUNDESALON_NIKA]]
 - [[01_Projects/HUNDESALON_NIKA_Makler]]
 - [[01_Projects/HUNDESALON_NIKA/Tasks/README]]
