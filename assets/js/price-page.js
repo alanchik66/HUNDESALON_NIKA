@@ -228,7 +228,7 @@
         breedMenuScrollTarget.addEventListener('wheel', breedMenuScrollWheelHandler, { passive: false });
         breedMenuScrollTarget.addEventListener('touchmove', breedMenuScrollTouchHandler, { passive: true });
         breedMenuScrollTarget.addEventListener('scroll', breedMenuScrollIndicatorScrollHandler, { passive: true });
-        showBreedMenuScrollIndicator(breedMenuScrollTarget);
+        syncBreedMenuScrollIndicator(breedMenuScrollTarget);
       }
     }
 
@@ -286,6 +286,11 @@
       scrollRoot?.addEventListener('scroll', priceModalScrollRestoreHandler, { passive: true });
 
       priceModalWheelBlocker = event => {
+        const selectMenu = event.target instanceof Element
+          ? event.target.closest('.site-select__menu')
+          : null;
+        if (selectMenu) return;
+
         const content = event.target instanceof Element
           ? event.target.closest('#price-category-modal.active .modal-content, #client-registration-modal.active .client-registration-modal__content')
           : null;
@@ -306,6 +311,11 @@
         event.stopPropagation();
       };
       priceModalTouchBlocker = event => {
+        const selectMenu = event.target instanceof Element
+          ? event.target.closest('.site-select__menu')
+          : null;
+        if (selectMenu) return;
+
         const content = event.target instanceof Element
           ? event.target.closest('#price-category-modal.active .modal-content, #client-registration-modal.active .client-registration-modal__content')
           : null;
@@ -381,18 +391,6 @@
             <p class="price-page-hero__lead">${escapeHtml(locale.heroLead)}</p>
             <p class="price-page-hero__note">${escapeHtml(locale.heroNote)}</p>
           </div>
-          <button
-            type="button"
-            class="price-page-hero__categories-action online-order-pill"
-            data-nav-pill="price-categories-action"
-            data-price-categories-action
-            aria-controls="price-categories"
-          >
-            <span>${escapeHtml(locale.heroCategoriesAction || 'View categories')}</span>
-            <span class="price-page-hero__categories-action-icon" aria-hidden="true">
-              <span class="site-icon-arrow site-icon-arrow-right"></span>
-            </span>
-          </button>
         </div>
       </div>
       <div class="price-page-hero__search">
@@ -400,7 +398,7 @@
           <div class="price-breed-search" data-price-breed-search>
             <label class="price-breed-search__label" for="price-breed-search-input">${escapeHtml(locale.searchLabel || 'Поиск породы')}</label>
             <div class="price-breed-search__control">
-              <span class="price-breed-search__icon" aria-hidden="true">⌕</span>
+              <img class="price-breed-search__icon" src="../assets/images/icons/Lupa.png" alt="" width="64" height="64" decoding="async" aria-hidden="true" />
               <input id="price-breed-search-input" class="price-breed-search__input" type="search" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="price-breed-search-suggestions" aria-expanded="false" data-price-breed-search-input placeholder="${escapeHtml(locale.searchPlaceholder || 'Например, шпиц или пудель')}" />
               <button type="button" class="price-breed-search__clear" data-price-breed-search-clear aria-label="${escapeHtml(locale.searchClear || 'Очистить поиск')}" hidden>&times;</button>
             </div>
@@ -411,6 +409,20 @@
             <p class="price-breed-search__status" data-price-breed-search-status aria-live="polite"></p>
           </div>
         </div>
+      </div>
+      <div class="price-page-hero__actions">
+        <button
+          type="button"
+          class="price-page-hero__categories-action online-order-pill"
+          data-nav-pill="price-categories-action"
+          data-price-categories-action
+          aria-controls="price-categories"
+        >
+          <span>${escapeHtml(locale.heroCategoriesAction || 'View categories')}</span>
+          <span class="price-page-hero__categories-action-icon" aria-hidden="true">
+            <span class="site-icon-arrow site-icon-arrow-right"></span>
+          </span>
+        </button>
       </div>
     `;
   };
@@ -675,7 +687,7 @@
   const modalSelection = document.createElement('section');
   modalSelection.className = 'price-category-modal__selection';
   modalSelection.innerHTML = `
-    <div class="price-category-modal__selection-controls" data-price-modal-selection-controls>
+    <div class="price-category-modal__selection-header" data-price-modal-selection-header>
       <div class="price-category-modal__selection-head">
         <p class="price-category-modal__selection-title">${escapeHtml(locale.selectionTitle || locale.chooseBreedLabel || 'Select a breed and service')}</p>
       </div>
@@ -683,6 +695,8 @@
         <span>${escapeHtml(locale.breedSelectLabel || 'Choose breed')}</span>
         <select data-price-modal-breed></select>
       </label>
+    </div>
+    <div class="price-category-modal__selection-controls" data-price-modal-selection-controls>
       <fieldset class="price-category-modal__service-fieldset" data-price-modal-service-fieldset>
         <legend data-price-modal-service-legend>${escapeHtml(locale.selectServicesLabel || locale.serviceSelectLabel || 'Choose a service')}</legend>
         <p class="price-category-modal__service-hint" data-price-modal-service-hint></p>
@@ -733,6 +747,7 @@
   `;
   modalSummary?.closest('.price-category-modal__hero')?.insertAdjacentElement('afterend', modalSelection);
   const modalSelectionControls = modalSelection.querySelector('[data-price-modal-selection-controls]');
+  const modalSelectionHeader = modalSelection.querySelector('[data-price-modal-selection-header]');
   const modalBreedSelect = modalSelection.querySelector('[data-price-modal-breed]');
   const modalServiceHint = modalSelection.querySelector('[data-price-modal-service-hint]');
   const modalServiceLegend = modalSelection.querySelector('[data-price-modal-service-legend]');
@@ -824,10 +839,12 @@
   registrationModal.setAttribute('aria-hidden', 'true');
   registrationModal.innerHTML = `
     <div class="modal-content client-registration-modal__content">
-      <button type="button" class="modal-close client-registration-modal__close" data-client-registration-close aria-label="${escapeHtml(locale.closeLabel || 'Close')}" >&times;</button>
-      <p class="section-kicker" data-client-registration-kicker></p>
-      <h2 class="section-title" data-client-registration-title></h2>
-      <p class="client-registration-modal__lead" data-client-registration-lead></p>
+      <header class="client-registration-modal__header">
+        <button type="button" class="modal-close client-registration-modal__close" data-client-registration-close aria-label="${escapeHtml(locale.closeLabel || 'Close')}" >&times;</button>
+        <p class="section-kicker" data-client-registration-kicker></p>
+        <h2 class="section-title" data-client-registration-title></h2>
+        <p class="client-registration-modal__lead" data-client-registration-lead></p>
+      </header>
       <form class="client-registration-form" data-client-registration-form data-disable-draft="true" data-form-type="client_registration" action="/sendmail" method="POST">
         <input type="hidden" name="form_type" value="client_registration" />
         <input type="hidden" name="lang" value="${escapeHtml(lang)}" />
@@ -1076,6 +1093,7 @@
       modalServiceConditions.classList.toggle('price-category-modal__service-conditions--information', informationMode);
     }
     if (modalSelectionControls) modalSelectionControls.hidden = informationMode;
+    if (modalSelectionHeader) modalSelectionHeader.hidden = informationMode;
     if (modalServiceConditionsConsentWrap) modalServiceConditionsConsentWrap.hidden = !hasSelectedServices;
     if (modalServiceConditionsConsentLabel) modalServiceConditionsConsentLabel.textContent = conditions.consentLabel || '';
     if (modalServiceConditionsConsent) modalServiceConditionsConsent.required = hasSelectedServices;
@@ -1343,6 +1361,7 @@
         modalBreedSelect.value = preferredBreedId;
       }
     }
+    window.refreshSiteSelect?.(modalBreedSelect);
 
     const serviceIndexes = new Set(category.priceIndexes || bookingCategory.services.map(service => service.index));
     const primaryServices = isAdditionalSelection
@@ -1568,7 +1587,10 @@
   const findBreedMatches = query => {
     const normalizedQuery = normalizeSearch(query);
     if (normalizedQuery.length < SEARCH_MIN_CHARS) return [];
-    return breedSearchMatches.filter(match => match.normalizedTokens.some(token => token.startsWith(normalizedQuery)));
+    const queryTokens = normalizeBreedTokens(query);
+    return breedSearchMatches.filter(match => queryTokens.every(queryToken =>
+      match.normalizedTokens.some(token => token.startsWith(queryToken))
+    ));
   };
 
   const closeBreedSuggestions = () => {
@@ -1838,7 +1860,7 @@
       window.setTimeout(() => targetCard.classList.remove('price-card--search-target'), 2200);
     });
 
-    if (searchStatus) searchStatus.textContent = `${locale.searchSelectedLabel || 'Selected breed'}: ${match.label}`;
+    if (searchStatus) searchStatus.textContent = '';
   });
 
   document.addEventListener('click', event => {
@@ -1995,10 +2017,17 @@
     openModal(category, null, null, sourceCategoryId === IMPORTANT_CATEGORY_ID ? 'information' : 'primary');
   });
 
-  document.addEventListener('click', event => {
-    if (event.target instanceof Node && cardsRoot.contains(event.target)) return;
-    cardsRoot.querySelectorAll('[data-price-breeds-toggle][aria-expanded="true"]').forEach(closeBreedMenu);
-  });
+  const closeBreedMenusOutside = target => {
+    if (!(target instanceof Node)) return;
+    cardsRoot.querySelectorAll('[data-price-breeds-toggle][aria-expanded="true"]').forEach(openToggle => {
+      const openMenu = document.getElementById(openToggle.dataset.priceBreedsToggle || '');
+      if (openToggle.contains(target) || openMenu?.contains(target)) return;
+      closeBreedMenu(openToggle);
+    });
+  };
+
+  document.addEventListener('pointerdown', event => closeBreedMenusOutside(event.target), { capture: true });
+  document.addEventListener('click', event => closeBreedMenusOutside(event.target));
 
   window.addEventListener('resize', () => {
     syncCardDetails();

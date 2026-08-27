@@ -70,12 +70,20 @@ for (const locale of locales) {
       const modal = document.querySelector('[data-price-modal]');
       const firstCardButton = document.querySelector('[data-price-categories] [data-price-open]');
       const categoryAction = hero?.querySelector('[data-price-categories-action]');
+      const heroSearch = hero?.querySelector('.price-page-hero__search');
       const categoryActionIcon = categoryAction?.querySelector('.price-page-hero__categories-action-icon');
       const categoryActionArrow = categoryActionIcon?.querySelector('.site-icon-arrow.site-icon-arrow-right');
       const breedToggle = document.querySelector('[data-price-breeds-toggle]');
       const breedBadgeMotion = breedToggle?.querySelector('.price-card__badge-icon-motion');
       const breedBadgeIcon = breedToggle?.querySelector('.price-card__badge-icon');
       const firstCard = cards[0];
+      const currentLocale = document.documentElement.lang;
+      const additionalCard = document.querySelector('[data-category-id="ru-additional-services"]');
+      const additionalSourceCategory = window.PricePageCatalog?.categoriesByLocale?.[currentLocale]
+        ?.find(category => category.id === 'ru-additional-services');
+      const additionalSourceBreeds = additionalSourceCategory?.breeds?.[currentLocale]
+        || additionalSourceCategory?.breeds?.en
+        || [];
       const firstCardDetailsToggle = firstCard?.querySelector('[data-price-card-toggle]');
       const firstCardDetails = firstCard?.querySelector('[data-price-card-details]');
       const heroRect = hero?.getBoundingClientRect();
@@ -91,11 +99,19 @@ for (const locale of locales) {
       const firstSectionMetaTops = Array.from(
         document.querySelectorAll('[data-price-section="small"] .price-card__meta')
       ).slice(0, 3).map(meta => meta.offsetTop);
+      const firstSectionCtaBottoms = Array.from(
+        document.querySelectorAll('[data-price-section="small"] .price-card__cta')
+      ).slice(0, 3).map(button => button.getBoundingClientRect().bottom);
       return {
         heroTitle: hero?.querySelector('.section-title')?.textContent?.trim() || '',
         breedSearchReady: Boolean(hero?.querySelector('[data-price-breed-search-input]')),
         categoryActionReady: Boolean(
           hero?.querySelector('[data-price-categories-action][aria-controls="price-categories"]')
+        ),
+        searchBeforeCategoryAction: Boolean(
+          heroSearch
+          && categoryAction
+          && (heroSearch.compareDocumentPosition(categoryAction) & Node.DOCUMENT_POSITION_FOLLOWING)
         ),
         categoryActionUsesSiteArrow: Boolean(
           categoryAction?.dataset.navPillBound === '1'
@@ -113,6 +129,11 @@ for (const locale of locales) {
         searchFrameReady: Boolean(hero?.querySelector('.price-page-hero__search-frame')),
         legacyHeroFlowAbsent: !hero?.querySelector('[data-price-hero-flow], [data-price-hero-step]'),
         cardCount: cards.length,
+        additionalCardBreedCount: Number.parseInt(
+          additionalCard?.querySelector('.price-card__badge-number')?.textContent || '',
+          10
+        ) || 0,
+        additionalSourceBreedCount: additionalSourceBreeds.length,
         cardTitle: firstCard?.querySelector('.price-card__title')?.textContent?.trim() || '',
         cardSummary: firstCard?.querySelector('.price-card__summary')?.textContent?.trim() || '',
         cardButtonLabel: firstCardButton?.textContent?.trim() || '',
@@ -145,6 +166,9 @@ for (const locale of locales) {
         firstSectionMetaSpread: firstSectionMetaTops.length > 1
           ? Math.max(...firstSectionMetaTops) - Math.min(...firstSectionMetaTops)
           : 0,
+        firstSectionCtaBottomSpread: firstSectionCtaBottoms.length > 1
+          ? Math.max(...firstSectionCtaBottoms) - Math.min(...firstSectionCtaBottoms)
+          : 0,
       };
     });
 
@@ -152,6 +176,14 @@ for (const locale of locales) {
     assert(`${locale} ${label}: breed search rendered`, state.breedSearchReady);
     assert(`${locale} ${label}: extra hero flow absent`, state.legacyHeroFlowAbsent);
     assert(`${locale} ${label}: cards rendered`, state.cardCount >= 9);
+    assert(
+      `${locale} ${label}: additional services contain only dogs and cats`,
+      state.additionalCardBreedCount === 2 && state.additionalSourceBreedCount === 2,
+      JSON.stringify({
+        card: state.additionalCardBreedCount,
+        source: state.additionalSourceBreedCount,
+      })
+    );
     assert(`${locale} ${label}: card text present`, state.cardTitle.length > 0 && state.cardSummary.length > 0);
     assert(`${locale} ${label}: open button rendered`, state.cardButtonLabel.length > 0);
     assert(`${locale} ${label}: card button uses navigation effects`, state.cardButtonUsesNavigationSystem);
@@ -163,6 +195,11 @@ for (const locale of locales) {
         `${locale} ${label}: card dividers aligned`,
         state.firstSectionMetaSpread <= 1,
         `spread=${state.firstSectionMetaSpread}`
+      );
+      assert(
+        `${locale} ${label}: card action buttons share one bottom row`,
+        state.firstSectionCtaBottomSpread <= 1,
+        `spread=${state.firstSectionCtaBottomSpread}`
       );
       assert(
         `${locale} ${label}: compact disclosure stays desktop-neutral`,
@@ -188,9 +225,68 @@ for (const locale of locales) {
     }
 
     assert(locale + ' ' + label + ': category navigation rendered', state.categoryActionReady);
+    assert(locale + ' ' + label + ': breed search precedes category navigation', state.searchBeforeCategoryAction);
     assert(locale + ' ' + label + ': category navigation uses site arrow system', state.categoryActionUsesSiteArrow);
     assert(locale + ' ' + label + ': breed badge arrow uses amplified site motion', state.breedBadgeArrowUsesSiteMotion);
     assert(locale + ' ' + label + ': animated search frame rendered', state.searchFrameReady);
+
+    if (locale === 'ru' && label === 'desktop') {
+      const additionalCard = page.locator('[data-category-id="ru-additional-services"]');
+      const additionalBreedToggle = additionalCard.locator('[data-price-breeds-toggle]');
+      const additionalBreedOptions = additionalCard.locator('[data-price-breed-select]');
+      const modalBreedSelect = page.locator('[data-price-modal-breed]');
+      const modalClose = page.locator('[data-price-modal-close]');
+
+      await additionalBreedToggle.evaluate(toggle => toggle.click());
+      await page.waitForSelector(
+        '[data-category-id="ru-additional-services"] .price-card__breed-menu:not([hidden])',
+        { timeout: 5000 }
+      );
+      const additionalBreedLabels = await additionalBreedOptions.allTextContents();
+      assert(
+        'ru desktop: additional category menu has exactly two species',
+        additionalBreedLabels.length === 2,
+        JSON.stringify(additionalBreedLabels)
+      );
+
+      for (let speciesIndex = 0; speciesIndex < additionalBreedLabels.length; speciesIndex += 1) {
+        if (speciesIndex > 0) {
+          await additionalBreedToggle.evaluate(toggle => toggle.click());
+          await page.waitForSelector(
+            '[data-category-id="ru-additional-services"] .price-card__breed-menu:not([hidden])',
+            { timeout: 5000 }
+          );
+        }
+        await additionalBreedOptions.nth(speciesIndex).evaluate(option => option.click());
+        await page.waitForFunction(
+          () => {
+            const modal = document.querySelector('#price-category-modal');
+            return modal?.classList.contains('active') && modal.getAttribute('aria-hidden') === 'false';
+          },
+          null,
+          { timeout: 5000 }
+        );
+        const modalSpeciesState = await modalBreedSelect.evaluate(select => ({
+          labels: Array.from(select.options, option => option.textContent?.trim() || ''),
+          selected: select.selectedOptions[0]?.textContent?.trim() || '',
+          visibleSelected: select.closest('.site-select')?.querySelector('.site-select__value')?.textContent?.trim() || '',
+        }));
+        assert(
+          `ru desktop: additional species ${speciesIndex + 1} stays consistent in modal`,
+          modalSpeciesState.labels.length === 2
+            && modalSpeciesState.labels.every((species, index) => species === additionalBreedLabels[index])
+            && modalSpeciesState.selected === additionalBreedLabels[speciesIndex]
+            && modalSpeciesState.visibleSelected === additionalBreedLabels[speciesIndex],
+          JSON.stringify(modalSpeciesState)
+        );
+        await modalClose.evaluate(button => button.click());
+        await page.waitForFunction(
+          () => !document.querySelector('#price-category-modal')?.classList.contains('active'),
+          null,
+          { timeout: 5000 }
+        );
+      }
+    }
 
     if (label === 'mobile') {
       const firstCard = page.locator('[data-price-categories] .price-card').first();
@@ -233,6 +329,37 @@ for (const locale of locales) {
         JSON.stringify(firstExpandedState)
       );
 
+      const firstServiceButton = firstCard.locator('.price-card__service-option').first();
+      await firstServiceButton.hover();
+      await page.waitForFunction(
+        () => {
+          const button = document.querySelector(
+            '[data-price-categories] .price-card[data-price-card-expanded="true"] .price-card__service-option:hover'
+          );
+          return button && getComputedStyle(button).transform !== 'none';
+        },
+        null,
+        { timeout: 5000 }
+      );
+      const serviceHoverLayerState = await firstServiceButton.evaluate(button => {
+        const detailsInner = button.closest('.price-card__details-inner');
+        const card = button.closest('.price-card');
+        return {
+          hovered: button.matches(':hover'),
+          buttonZIndex: Number.parseInt(getComputedStyle(button).zIndex, 10) || 0,
+          detailsOverflow: detailsInner ? getComputedStyle(detailsInner).overflow : '',
+          cardZIndex: card ? Number.parseInt(getComputedStyle(card).zIndex, 10) || 0 : 0,
+        };
+      });
+      assert(
+        `${locale} ${label}: expanded service hover stays above unclipped content`,
+        serviceHoverLayerState.hovered
+          && serviceHoverLayerState.buttonZIndex >= 2
+          && serviceHoverLayerState.detailsOverflow === 'visible'
+          && serviceHoverLayerState.cardZIndex >= 2,
+        JSON.stringify(serviceHoverLayerState)
+      );
+
       await secondDetailsToggle.click();
       await page.waitForFunction(
         () => {
@@ -273,7 +400,9 @@ for (const locale of locales) {
       );
     }
 
-    const euroMotionState = await page.locator('.site-icon-euro.currency-inline').first().evaluate(async icon => {
+    const euroIcon = page.locator('.site-icon-euro.currency-inline').first();
+    await euroIcon.evaluate(icon => icon.scrollIntoView({ block: 'center' }));
+    const euroMotionState = await euroIcon.evaluate(async icon => {
       const readMotion = () => {
         const style = getComputedStyle(icon);
         return {
@@ -282,18 +411,25 @@ for (const locale of locales) {
           display: style.display,
           transform: style.transform,
           randomizedDuration: icon.style.getPropertyValue('--euro-spin-duration'),
+          animationTimes: icon.getAnimations().map(animation => Number(animation.currentTime || 0)),
         };
       };
       const before = readMotion();
-      await new Promise(resolve => setTimeout(resolve, 260));
-      const after = readMotion();
+      let after = before;
+      for (let sample = 0; sample < 8 && after.transform === before.transform; sample += 1) {
+        await new Promise(resolve => setTimeout(resolve, 90));
+        after = readMotion();
+      }
       return { before, after };
     });
     const euroMotionPasses = euroMotionState.before.animationName.includes('iconCoinSpinVertical')
       && euroMotionState.before.animationPlayState.includes('running')
       && euroMotionState.before.display === 'inline-block'
       && euroMotionState.before.randomizedDuration === ''
-      && euroMotionState.before.transform !== euroMotionState.after.transform;
+      && (
+        euroMotionState.before.transform !== euroMotionState.after.transform
+        || euroMotionState.after.animationTimes.some((time, index) => time > (euroMotionState.before.animationTimes[index] || 0))
+      );
     assert(
       `${locale} ${label}: euro icon uses the shared coin rotation`,
       euroMotionPasses,
@@ -357,6 +493,30 @@ for (const locale of locales) {
       `${locale} ${label}: breed search filters cards`,
       breedSearchAction.value.length >= 2 && breedSearchAction.suggestionsVisible && breedSearchAction.filteredCardCount > 0
     );
+    await page.locator('[data-price-breed-result]').first().click();
+    await page.waitForFunction(
+      () => document.querySelectorAll('[data-price-categories] .price-card').length > 0
+        && document.querySelector('[data-price-breed-search-suggestions]')?.hidden,
+      null,
+      { timeout: 15000 }
+    );
+    const breedSelectionState = await page.evaluate(() => {
+      const status = document.querySelector('[data-price-breed-search-status]');
+      return {
+        value: document.querySelector('[data-price-breed-search-input]')?.value?.trim() || '',
+        cardCount: document.querySelectorAll('[data-price-categories] .price-card').length,
+        statusText: status?.textContent?.trim() || '',
+        statusDisplay: status ? getComputedStyle(status).display : 'missing',
+      };
+    });
+    assert(
+      `${locale} ${label}: selected breed remains visible without redundant status row`,
+      breedSelectionState.value.length > 0
+        && breedSelectionState.cardCount > 0
+        && breedSelectionState.statusText === ''
+        && breedSelectionState.statusDisplay === 'none',
+      JSON.stringify(breedSelectionState)
+    );
     await breedSearch.fill('');
     await page.waitForSelector('[data-price-categories] .price-card', { timeout: 15000 });
 
@@ -395,10 +555,16 @@ for (const locale of locales) {
         JSON.stringify(arrowHoverState)
       );
     }
-    await categoryAction.click();
+    const categoryClickState = await categoryAction.evaluate(action => {
+      action.click();
+      return {
+        clickFlashCount: action.querySelectorAll('.nav-plasma--cta-flash').length,
+      };
+    });
     assert(
       `${locale} ${label}: category navigation click effect`,
-      await categoryAction.locator('.nav-plasma--cta-flash').count() === 1
+      categoryClickState.clickFlashCount === 1,
+      JSON.stringify(categoryClickState)
     );
     await page.waitForFunction(
       () => Boolean(document.activeElement?.closest?.('[data-price-categories]')),
@@ -466,10 +632,89 @@ for (const locale of locales) {
     });
 
     assert(`${locale} ${label}: conditions hidden before service`, initialModalState.conditionsHidden && initialModalState.consentAbsentBeforeService);
+
+    if (locale === 'ru') {
+      const modalBreedTrigger = page.locator('#price-category-modal.active [data-price-modal-breed] + .site-select__trigger');
+      await modalBreedTrigger.click();
+      await page.waitForSelector('#price-category-modal.active .site-select__menu:not([hidden])', { timeout: 5000 });
+
+      const nestedScrollBefore = await page.evaluate(() => ({
+        menu: document.querySelector('#price-category-modal.active .site-select__menu')?.scrollTop || 0,
+        modal: document.querySelector('#price-category-modal.active .modal-content')?.scrollTop || 0,
+      }));
+      const modalBreedMenuBox = await page.locator('#price-category-modal.active .site-select__menu').boundingBox();
+      if (modalBreedMenuBox) {
+        await page.mouse.move(
+          modalBreedMenuBox.x + modalBreedMenuBox.width / 2,
+          modalBreedMenuBox.y + modalBreedMenuBox.height / 2
+        );
+        await page.mouse.wheel(0, 180);
+        await page.waitForTimeout(180);
+      }
+
+      const nestedScrollAfter = await page.evaluate(() => {
+        const menu = document.querySelector('#price-category-modal.active .site-select__menu');
+        const content = document.querySelector('#price-category-modal.active .modal-content');
+        const menuRect = menu?.getBoundingClientRect();
+        const nativeSelect = document.querySelector('#price-category-modal.active [data-price-modal-breed]');
+        const target = [...(menu?.querySelectorAll('.site-select__option') || [])].find(option => {
+          const rect = option.getBoundingClientRect();
+          return option.dataset.value !== nativeSelect?.value
+            && Boolean(menuRect && rect.top >= menuRect.top && rect.bottom <= menuRect.bottom);
+        });
+        const targetRect = target?.getBoundingClientRect();
+        return {
+          menu: menu?.scrollTop || 0,
+          modal: content?.scrollTop || 0,
+          menuActive: menu?.classList.contains('site-scroll-active'),
+          target: targetRect && {
+            value: target.dataset.value || '',
+            text: target.textContent?.trim() || '',
+            x: targetRect.left + targetRect.width / 2,
+            y: targetRect.top + targetRect.height / 2,
+          },
+        };
+      });
+      assert(
+        `ru ${label}: breed select scroll stays inside its menu`,
+        nestedScrollAfter.menu > nestedScrollBefore.menu
+          && Math.abs(nestedScrollAfter.modal - nestedScrollBefore.modal) <= 1
+          && nestedScrollAfter.menuActive,
+        JSON.stringify({ before: nestedScrollBefore, after: nestedScrollAfter })
+      );
+
+      if (nestedScrollAfter.target) {
+        await page.mouse.click(nestedScrollAfter.target.x, nestedScrollAfter.target.y);
+        await page.waitForTimeout(180);
+      }
+      const nestedSelectionState = await page.evaluate(() => {
+        const select = document.querySelector('#price-category-modal.active [data-price-modal-breed]');
+        return {
+          nativeValue: select?.value || '',
+          visibleValue: select?.closest('.site-select')?.querySelector('.site-select__value')?.textContent?.trim() || '',
+          modalScroll: document.querySelector('#price-category-modal.active .modal-content')?.scrollTop || 0,
+          menuClosed: !select?.closest('.site-select')?.classList.contains('is-open'),
+        };
+      });
+      assert(
+        `ru ${label}: scrolled breed option is selected without moving modal`,
+        Boolean(
+          nestedScrollAfter.target
+          && nestedSelectionState.nativeValue === nestedScrollAfter.target.value
+          && nestedSelectionState.visibleValue === nestedScrollAfter.target.text
+          && Math.abs(nestedSelectionState.modalScroll - nestedScrollBefore.modal) <= 1
+          && nestedSelectionState.menuClosed
+        ),
+        JSON.stringify({ target: nestedScrollAfter.target, selection: nestedSelectionState })
+      );
+    }
+
     await page.locator('[data-price-modal-service-fieldset] .price-category-modal__service-option').first().click();
 
-    const modalState = await page.evaluate(() => {
-      const modal = document.querySelector('#price-category-modal');
+      const modalState = await page.evaluate(() => {
+        const modal = document.querySelector('#price-category-modal');
+        const modalHeader = modal?.querySelector('.price-category-modal__header');
+        const selectionHeader = modal?.querySelector('.price-category-modal__selection-header');
       const title = modal?.querySelector('[data-price-modal-title]')?.textContent?.trim() || '';
       const summary = modal?.querySelector('[data-price-modal-summary]')?.textContent?.trim() || '';
       const breedOptions = modal?.querySelectorAll('[data-price-modal-breed] option').length || 0;
@@ -482,8 +727,11 @@ for (const locale of locales) {
       const consent = modal?.querySelector('[data-price-modal-service-conditions-consent]');
       const booking = modal?.querySelector('[data-price-modal-booking]');
       const modalContent = modal?.querySelector('.modal-content');
-      const legacyMarkup = modal?.querySelector('[data-price-modal-breeds], [data-price-modal-services], [data-price-modal-prices], [data-price-modal-notes]');
-      return {
+        const legacyMarkup = modal?.querySelector('[data-price-modal-breeds], [data-price-modal-services], [data-price-modal-prices], [data-price-modal-notes]');
+        const serviceOptionHeights = Array.from(
+          modal?.querySelectorAll('.price-category-modal__service-option:not([hidden])') || []
+        ).map(option => option.getBoundingClientRect().height);
+        return {
         title,
         summary,
         breedOptions,
@@ -497,13 +745,37 @@ for (const locale of locales) {
         conditionsService,
         oneBookingButton: modal?.querySelectorAll('[data-price-modal-booking]').length === 1,
         bookingInConditions: Boolean(booking && conditions?.contains(booking)),
-        modalOverflowX: Boolean(modalContent && modalContent.scrollWidth > modalContent.clientWidth + 1),
-        legacyMarkup: Boolean(legacyMarkup),
-      };
+          modalOverflowX: Boolean(modalContent && modalContent.scrollWidth > modalContent.clientWidth + 1),
+          modalHeaderHeight: modalHeader?.getBoundingClientRect().height || 0,
+          modalHeaderPosition: modalHeader ? getComputedStyle(modalHeader).position : '',
+          selectionHeaderHeight: selectionHeader?.getBoundingClientRect().height || 0,
+          selectionHeaderPosition: selectionHeader ? getComputedStyle(selectionHeader).position : '',
+          serviceOptionMaxHeight: serviceOptionHeights.length ? Math.max(...serviceOptionHeights) : 0,
+          legacyMarkup: Boolean(legacyMarkup),
+        };
     });
 
-    assert(`${locale} ${label}: modal title`, modalState.title.length > 0);
-    assert(`${locale} ${label}: modal summary`, modalState.summary.length > 0);
+      assert(`${locale} ${label}: modal title`, modalState.title.length > 0);
+      assert(`${locale} ${label}: modal summary`, modalState.summary.length > 0);
+      assert(
+        `${locale} ${label}: category intro scrolls and selection uses compact sticky header`,
+        modalState.modalHeaderPosition !== 'sticky'
+          && modalState.modalHeaderHeight > 0
+          && modalState.modalHeaderHeight <= 180
+          && modalState.selectionHeaderPosition === 'sticky'
+          && modalState.selectionHeaderHeight > 0
+          && modalState.selectionHeaderHeight <= 190,
+        JSON.stringify({
+          intro: { position: modalState.modalHeaderPosition, height: modalState.modalHeaderHeight },
+          selection: { position: modalState.selectionHeaderPosition, height: modalState.selectionHeaderHeight },
+        })
+      );
+      assert(
+        `${locale} ${label}: service controls stay compact`,
+        modalState.serviceOptionMaxHeight > 0
+          && modalState.serviceOptionMaxHeight <= (label === 'mobile' ? 96 : 90),
+        `maxHeight=${modalState.serviceOptionMaxHeight}`
+      );
     assert(`${locale} ${label}: breed selector`, modalState.breedOptions > 0);
     assert(`${locale} ${label}: service selector`, modalState.serviceOptions > 0);
     assert(`${locale} ${label}: applicable additional services`, modalState.additionalServicesVisible && modalState.additionalServiceOptions > 0);
@@ -644,22 +916,53 @@ for (const locale of locales) {
         categoryContentBox.y + Math.min(180, categoryContentBox.height / 2)
       );
       await page.mouse.wheel(0, 720);
-      await page.waitForTimeout(160);
+      await page.waitForTimeout(60);
     }
     const categoryScrollState = await categoryContent.evaluate(content => {
       const root = document.querySelector('.site-scroll-root');
       const scrollbar = getComputedStyle(content, '::-webkit-scrollbar');
-      return {
+      const thumb = getComputedStyle(content, '::-webkit-scrollbar-thumb');
+        const header = content.querySelector('.price-category-modal__header');
+        const selectionHeader = content.querySelector('.price-category-modal__selection-header');
+        const close = content.querySelector('.price-category-modal__close');
+        const contentRect = content.getBoundingClientRect();
+        const headerRect = header?.getBoundingClientRect();
+        const selectionHeaderRect = selectionHeader?.getBoundingClientRect();
+        const closeRect = close?.getBoundingClientRect();
+        return {
         maxScroll: Math.max(0, content.scrollHeight - content.clientHeight),
         scrollTop: content.scrollTop,
         overflowY: getComputedStyle(content).overflowY,
+        scrollActive: content.classList.contains('site-scroll-active'),
         scrollbarDisplay: scrollbar.display,
         scrollbarWidth: scrollbar.width,
-        rootLocked: Boolean(
-          root?.classList.contains('price-modal-scroll-locked')
-          && getComputedStyle(root).overflowY === 'hidden'
-        ),
-      };
+        thumbBackground: thumb.backgroundColor,
+        thumbRadius: thumb.borderRadius,
+          rootLocked: Boolean(
+            root?.classList.contains('price-modal-scroll-locked')
+            && getComputedStyle(root).overflowY === 'hidden'
+          ),
+          headerTop: headerRect?.top || 0,
+          headerPosition: header ? getComputedStyle(header).position : '',
+          introScrolledAway: Boolean(
+            headerRect
+            && selectionHeaderRect
+            && headerRect.bottom <= selectionHeaderRect.top + 1
+          ),
+          selectionHeaderTop: selectionHeaderRect?.top || 0,
+          selectionHeaderPosition: selectionHeader ? getComputedStyle(selectionHeader).position : '',
+          selectionHeaderPinned: Boolean(
+            selectionHeaderRect
+            && selectionHeaderRect.top >= contentRect.top - 1
+            && selectionHeaderRect.top <= contentRect.top + 32
+            && selectionHeaderRect.bottom <= contentRect.bottom + 1
+          ),
+          closeVisible: Boolean(
+            closeRect
+            && closeRect.top >= contentRect.top - 1
+            && closeRect.bottom <= contentRect.bottom + 1
+          ),
+        };
     });
     const categoryScrollPasses = categoryScrollState.maxScroll < 2 || (
       categoryScrollState.scrollTop > 1 && categoryScrollState.rootLocked
@@ -670,10 +973,24 @@ for (const locale of locales) {
       categoryScrollPasses ? '' : JSON.stringify(categoryScrollState)
     );
     assert(
-      `${locale} ${label}: category modal hidden scroll rail`,
-      categoryScrollState.overflowY === 'auto'
-        && categoryScrollState.scrollbarDisplay === 'none'
-        && Number.parseFloat(categoryScrollState.scrollbarWidth || '0') === 0,
+      `${locale} ${label}: category modal scroll rail appears only while scrolling`,
+      categoryScrollState.maxScroll < 2 || (
+        categoryScrollState.overflowY === 'auto'
+        && categoryScrollState.scrollActive
+        && categoryScrollState.scrollbarDisplay === 'block'
+        && Number.parseFloat(categoryScrollState.scrollbarWidth || '0') === 8
+        && Number.parseFloat(categoryScrollState.thumbRadius || '0') >= 999
+        && categoryScrollState.thumbBackground !== 'rgba(0, 0, 0, 0)'
+      ),
+      JSON.stringify(categoryScrollState)
+    );
+    assert(
+      `${locale} ${label}: category intro collapses and breed selection stays pinned`,
+      categoryScrollState.headerPosition !== 'sticky'
+        && categoryScrollState.introScrolledAway
+        && categoryScrollState.selectionHeaderPosition === 'sticky'
+        && categoryScrollState.selectionHeaderPinned
+        && categoryScrollState.closeVisible,
       JSON.stringify(categoryScrollState)
     );
 
@@ -682,6 +999,16 @@ for (const locale of locales) {
         path: path.join(outDir, 'ru-desktop-category-scrolled.png'),
         fullPage: false,
       });
+      await page.waitForTimeout(1300);
+      const categoryScrollbarIdle = await categoryContent.evaluate(content => ({
+        active: content.classList.contains('site-scroll-active'),
+        thumbBackground: getComputedStyle(content, '::-webkit-scrollbar-thumb').backgroundColor,
+      }));
+      assert(
+        'ru desktop: category modal scroll rail fades after scrolling',
+        !categoryScrollbarIdle.active && categoryScrollbarIdle.thumbBackground === 'rgba(0, 0, 0, 0)',
+        JSON.stringify(categoryScrollbarIdle)
+      );
     }
 
     const serviceConditionsConsent = page.locator('[data-price-modal-service-conditions-consent]');
@@ -712,49 +1039,83 @@ for (const locale of locales) {
         { cause: error }
       );
     }
-    await page.waitForTimeout(600);
+      await page.waitForTimeout(600);
 
-    const registrationState = await page.evaluate(async () => {
+      const registrationHeaderBefore = await page.locator('.client-registration-modal__content').evaluate(content => (
+        content.querySelector('.client-registration-modal__header')?.getBoundingClientRect().top || 0
+      ));
+      await page.locator('.client-registration-modal__content').evaluate(content => {
+      const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
+      content.scrollTop = Math.min(maxScroll, content.scrollTop + 160);
+    });
+    await page.waitForTimeout(160);
+
+    const registrationState = await page.evaluate(() => {
       const modal = document.querySelector('#client-registration-modal');
       const content = modal?.querySelector('.client-registration-modal__content');
       const form = modal?.querySelector('[data-client-registration-form]');
       const root = document.querySelector('.site-scroll-root');
       const actions = form?.querySelector('.client-registration-form__actions');
       const scrollbar = content ? getComputedStyle(content, '::-webkit-scrollbar') : null;
-      const modalTop = content?.scrollTop || 0;
-      const modalMaxScroll = Math.max(0, (content?.scrollHeight || 0) - (content?.clientHeight || 0));
-      if (content) content.scrollTop = Math.min(modalMaxScroll, modalTop + 160);
-      return {
+      const thumb = content ? getComputedStyle(content, '::-webkit-scrollbar-thumb') : null;
+        const modalMaxScroll = Math.max(0, (content?.scrollHeight || 0) - (content?.clientHeight || 0));
+        const header = modal?.querySelector('.client-registration-modal__header');
+        const close = modal?.querySelector('.client-registration-modal__close');
+        const contentRect = content?.getBoundingClientRect();
+        const headerRect = header?.getBoundingClientRect();
+        const closeRect = close?.getBoundingClientRect();
+        return {
         modalOpen: Boolean(modal?.classList.contains('active')),
         rootLocked: root?.classList.contains('price-modal-scroll-locked')
           && document.body.classList.contains('price-modal-open')
           && getComputedStyle(root || document.body).overflowY === 'hidden',
         modalCanScroll: modalMaxScroll > 1,
-        modalScrolled: modalMaxScroll < 2 || (content?.scrollTop || 0) > modalTop,
-        scrollbarHidden: Boolean(
+        modalScrolled: modalMaxScroll < 2 || (content?.scrollTop || 0) > 0,
+        scrollbarStyled: Boolean(
           content
           && getComputedStyle(content).overflowY === 'auto'
-          && scrollbar?.display === 'none'
-          && Number.parseFloat(scrollbar?.width || '0') === 0
+          && scrollbar?.display === 'block'
+          && Number.parseFloat(scrollbar?.width || '0') === 8
+          && Number.parseFloat(thumb?.borderRadius || '0') >= 999
         ),
         matteBackdrop: getComputedStyle(modal || document.body).backdropFilter !== 'none',
         hiddenBreed: form?.querySelector('input[name="pet_breed"]')?.type === 'hidden',
         noSpeciesDuplicate: !form?.querySelector('[name="pet_species_display"]'),
         petContext: Boolean(form?.querySelector('[data-client-registration-pet-context]')?.textContent?.trim()),
-        navActions: actions?.querySelectorAll('.btn-neon[data-nav-pill="client-registration-action"]').length === 2,
-        singleColumnLayout: form ? getComputedStyle(form).gridTemplateColumns.trim().split(/\s+/).filter(column => Number.parseFloat(column) > 1).length === 1 : false,
-      };
+          navActions: actions?.querySelectorAll('.btn-neon[data-nav-pill="client-registration-action"]').length === 2,
+          singleColumnLayout: form ? getComputedStyle(form).gridTemplateColumns.trim().split(/\s+/).filter(column => Number.parseFloat(column) > 1).length === 1 : false,
+          headerTop: headerRect?.top || 0,
+          stickyHeader: Boolean(
+            header
+            && getComputedStyle(header).position === 'sticky'
+            && contentRect
+            && headerRect
+            && closeRect
+            && headerRect.top >= contentRect.top - 1
+            && closeRect.top >= contentRect.top - 1
+            && closeRect.bottom <= contentRect.bottom + 1
+          ),
+        };
     });
 
     assert(
       `${locale} ${label}: registration modal scroll isolation`,
-      registrationState.modalOpen && registrationState.rootLocked && registrationState.modalScrolled && registrationState.scrollbarHidden,
+      registrationState.modalOpen
+        && registrationState.rootLocked
+        && registrationState.modalScrolled
+        && (!registrationState.modalCanScroll || registrationState.scrollbarStyled),
       JSON.stringify(registrationState)
     );
-    assert(
-      `${locale} ${label}: registration uses selected pet`,
-      registrationState.hiddenBreed && registrationState.noSpeciesDuplicate && registrationState.petContext && registrationState.navActions && registrationState.singleColumnLayout && registrationState.matteBackdrop
-    );
+      assert(
+        `${locale} ${label}: registration uses selected pet`,
+        registrationState.hiddenBreed && registrationState.noSpeciesDuplicate && registrationState.petContext && registrationState.navActions && registrationState.singleColumnLayout && registrationState.matteBackdrop
+      );
+      assert(
+        `${locale} ${label}: registration header stays visible while modal scrolls`,
+        registrationState.stickyHeader
+          && Math.abs(registrationState.headerTop - registrationHeaderBefore) <= 1,
+        JSON.stringify({ before: registrationHeaderBefore, after: registrationState })
+      );
 
     if (locale === 'ru' && label === 'desktop') {
       await page.locator('.client-registration-modal__content').evaluate(content => {
@@ -824,6 +1185,7 @@ for (const locale of locales) {
       null,
       { timeout: 15000 }
     );
+    await page.waitForTimeout(1400);
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     const breedMenuState = await page.evaluate(scrollBefore => {
       const root = document.querySelector('.site-scroll-root');
@@ -831,15 +1193,22 @@ for (const locale of locales) {
       const openCard = menu?.closest('.price-card');
       const rect = menu?.getBoundingClientRect();
       const menuStyle = menu ? getComputedStyle(menu) : null;
+      const breedScrollbar = menu?.querySelector('[data-price-breed-scrollbar]');
+      const breedScrollbarRect = breedScrollbar?.getBoundingClientRect();
+      const breedScrollbarStyle = breedScrollbar ? getComputedStyle(breedScrollbar) : null;
+      const hasBreedOverflow = menu ? menu.scrollHeight > menu.clientHeight + 1 : false;
+      const breedLabels = [...(menu?.querySelectorAll('.price-card__breed-option') || [])]
+        .map(option => option.textContent?.trim())
+        .filter(Boolean);
       const serviceButtons = [...(openCard?.querySelectorAll('.price-card__service-option') || [])];
       const intersectingServiceButtons = serviceButtons.filter(button => {
         const buttonRect = button.getBoundingClientRect();
+        const horizontalOverlap = rect ? Math.min(buttonRect.right, rect.right) - Math.max(buttonRect.left, rect.left) : 0;
+        const verticalOverlap = rect ? Math.min(buttonRect.bottom, rect.bottom) - Math.max(buttonRect.top, rect.top) : 0;
         return Boolean(
           rect
-          && buttonRect.left < rect.right
-          && buttonRect.right > rect.left
-          && buttonRect.top < rect.bottom
-          && buttonRect.bottom > rect.top
+          && horizontalOverlap > 2
+          && verticalOverlap > 2
         );
       });
       const menuAboveServices = intersectingServiceButtons.every(button => {
@@ -849,12 +1218,44 @@ for (const locale of locales) {
         const topElement = document.elementFromPoint(x, y);
         return topElement === menu || Boolean(topElement && menu.contains(topElement));
       });
+      const overlapTopElements = intersectingServiceButtons.map(button => {
+        const buttonRect = button.getBoundingClientRect();
+        const x = Math.max(rect.left, buttonRect.left) + (Math.min(rect.right, buttonRect.right) - Math.max(rect.left, buttonRect.left)) / 2;
+        const y = Math.max(rect.top, buttonRect.top) + (Math.min(rect.bottom, buttonRect.bottom) - Math.max(rect.top, buttonRect.top)) / 2;
+        const topElement = document.elementFromPoint(x, y);
+        return {
+          text: button.textContent?.trim() || '',
+          point: { x, y },
+          buttonRect: { top: buttonRect.top, right: buttonRect.right, bottom: buttonRect.bottom, left: buttonRect.left },
+          top: topElement?.className || topElement?.tagName || '',
+          topZ: topElement ? getComputedStyle(topElement).zIndex : '',
+          menuZ: menuStyle?.zIndex || '',
+          topSectionZ: openCard?.querySelector('.price-card__top') ? getComputedStyle(openCard.querySelector('.price-card__top')).zIndex : '',
+          detailsZ: openCard?.querySelector('.price-card__details') ? getComputedStyle(openCard.querySelector('.price-card__details')).zIndex : '',
+        };
+      });
       return {
         rootStable: Math.abs((root?.scrollTop || 0) - scrollBefore) <= 2,
         rootLocked: root?.classList.contains('price-breed-menu-scroll-locked'),
         insideViewport: Boolean(rect && rect.left >= 8 && rect.right <= window.innerWidth - 8 && rect.top >= 8 && rect.bottom <= window.innerHeight - 8),
         boundedWidth: Boolean(rect && rect.width <= 681),
+        roundedMenu: Boolean(menuStyle && Number.parseFloat(menuStyle.borderRadius) >= 18),
+        scrollbarContained: !hasBreedOverflow || Boolean(
+          rect
+          && breedScrollbarRect
+          && breedScrollbarRect.top > rect.top
+          && breedScrollbarRect.right < rect.right
+          && breedScrollbarRect.bottom < rect.bottom
+        ),
+        scrollbarRounded: !hasBreedOverflow || Boolean(
+          breedScrollbarRect
+          && breedScrollbarStyle
+          && Number.parseFloat(breedScrollbarStyle.borderRadius) >= breedScrollbarRect.width / 2
+        ),
+        scrollbarIdleHidden: !hasBreedOverflow || Number.parseFloat(breedScrollbarStyle?.opacity || '1') === 0,
+        breedLabels,
         menuAboveServices,
+        overlapTopElements,
         menuOpaque: Boolean(menuStyle && !/^rgba\(/i.test(menuStyle.backgroundColor.trim())),
         scrollTop: root?.scrollTop || 0,
         scrollBefore,
@@ -866,6 +1267,10 @@ for (const locale of locales) {
       && breedMenuState.rootLocked
       && breedMenuState.insideViewport
       && breedMenuState.boundedWidth
+      && breedMenuState.roundedMenu
+      && breedMenuState.scrollbarContained
+      && breedMenuState.scrollbarRounded
+      && breedMenuState.scrollbarIdleHidden
       && breedMenuState.menuAboveServices
       && breedMenuState.menuOpaque;
     assert(
@@ -873,8 +1278,37 @@ for (const locale of locales) {
       breedMenuPasses,
       breedMenuPasses ? '' : JSON.stringify(breedMenuState)
     );
+    if (locale === 'ru') {
+      assert(
+        `${locale} ${label}: Russian Colored Bolonka label is canonical`,
+        breedMenuState.breedLabels.includes('Русская Цветная болонка')
+          && !breedMenuState.breedLabels.some(name => name.includes('/') || /Zwetna/i.test(name)),
+        JSON.stringify(breedMenuState.breedLabels)
+      );
+    }
+
+    const outsideBreedMenuTarget = page.locator('[data-price-categories] .price-size-section__heading').first();
+    await outsideBreedMenuTarget.evaluate(target => {
+      target.dispatchEvent(new PointerEvent('pointerdown', {
+        bubbles: true,
+        pointerType: 'touch',
+      }));
+    });
+    await page.waitForFunction(
+      () => !document.querySelector('.price-card__breed-menu:not([hidden])'),
+      null,
+      { timeout: 5000 }
+    );
+    assert(
+      `${locale} ${label}: touch outside closes breed menu`,
+      await breedToggle.getAttribute('aria-expanded') === 'false'
+    );
+
+    await breedToggle.evaluate(toggle => toggle.click());
+    await page.waitForSelector('.price-card__breed-menu:not([hidden])', { timeout: 15000 });
 
     await page.keyboard.press('Escape');
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     const closedBreedArrowState = await breedToggle.evaluate(toggle => {
       const motion = toggle.querySelector('.price-card__badge-icon-motion');
       const icon = toggle.querySelector('.price-card__badge-icon');

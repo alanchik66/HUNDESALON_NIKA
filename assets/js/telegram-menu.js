@@ -98,7 +98,21 @@ const LANGUAGE_LABELS = Object.freeze({
 const languageSheet = document.querySelector('#telegram-menu-languages');
 const languageTrigger = document.querySelector('[data-language-trigger]');
 const currentLanguage = document.querySelector('[data-current-language]');
+const telegramWebApp = window.Telegram?.WebApp;
 let activeLanguage = 'de';
+
+function initializeTelegramWebApp() {
+  if (!telegramWebApp) return;
+
+  telegramWebApp.ready();
+  telegramWebApp.expand();
+  try {
+    telegramWebApp.setHeaderColor('#031910');
+    telegramWebApp.setBackgroundColor('#010502');
+  } catch {
+    // Older Telegram clients keep their own WebView colors.
+  }
+}
 
 function normalizeLanguage(value) {
   const language = String(value || '').trim().toLowerCase().split('-')[0];
@@ -146,13 +160,23 @@ function openLanguageSheet() {
 
 function openRoute(route) {
   if (route === 'support') {
-    window.location.assign('https://t.me/hundesalon_nika_support_bot?start=support');
+    const supportUrl = 'https://t.me/hundesalon_nika_support_bot?start=support';
+    if (telegramWebApp?.openTelegramLink) {
+      telegramWebApp.openTelegramLink(supportUrl);
+    } else {
+      window.location.assign(supportUrl);
+    }
     return;
   }
 
   const target = ROUTES[activeLanguage][route];
   if (!target) return;
-  window.location.assign(target);
+  const targetUrl = new URL(target, window.location.origin).href;
+  if (telegramWebApp?.openLink) {
+    telegramWebApp.openLink(targetUrl);
+  } else {
+    window.location.assign(targetUrl);
+  }
 }
 
 languageTrigger.addEventListener('click', openLanguageSheet);
@@ -176,4 +200,5 @@ document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && !languageSheet.hidden) closeLanguageSheet();
 });
 
+initializeTelegramWebApp();
 setLanguage(resolveInitialLanguage(), { updateUrl: false });

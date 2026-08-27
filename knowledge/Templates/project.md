@@ -1,11 +1,11 @@
 ---
 type: project
 status: active
-created: {{date}}
+created: <% tp.date.now("YYYY-MM-DD") %>
 tags: [project, brief]
 ---
 
-# Project Brief
+# Project Brief - <% tp.file.title %>
 
 ## Objective
 -

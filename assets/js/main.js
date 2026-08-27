@@ -158,6 +158,28 @@ document.addEventListener('DOMContentLoaded', () => {
     return root;
   })();
 
+  const scrollActivityTimers = new WeakMap();
+  const scrollActivityFadeDelay = prefersReducedMotion ? 220 : 900;
+  const markScrollActivity = target => {
+    const scrollTarget = target instanceof Element ? target : target === document ? scrollRoot : null;
+    if (!scrollTarget) return;
+
+    scrollTarget.classList.add('site-scroll-active');
+    const previousTimer = scrollActivityTimers.get(scrollTarget);
+    if (previousTimer) window.clearTimeout(previousTimer);
+
+    const fadeTimer = window.setTimeout(() => {
+      scrollTarget.classList.remove('site-scroll-active');
+      scrollActivityTimers.delete(scrollTarget);
+    }, scrollActivityFadeDelay);
+    scrollActivityTimers.set(scrollTarget, fadeTimer);
+  };
+
+  document.addEventListener('scroll', event => markScrollActivity(event.target), {
+    capture: true,
+    passive: true,
+  });
+
   const heroPhoto = document.querySelector('.hero-photo');
   const aboutPhoto = document.querySelector('.about-photo:not(:empty)');
   if (heroPhoto && aboutPhoto) {
@@ -2285,10 +2307,21 @@ function enhanceSiteSelect(select) {
       closeMenu();
       return;
     }
+
+    const parentScrollHost = wrapper.closest('.modal-content, .client-registration-modal__content');
+    const parentScrollTop = parentScrollHost?.scrollTop;
+    const restoreParentScroll = () => {
+      if (parentScrollHost && typeof parentScrollTop === 'number' && parentScrollHost.scrollTop !== parentScrollTop) {
+        parentScrollHost.scrollTop = parentScrollTop;
+      }
+    };
+
     select.value = value;
     select.dispatchEvent(new Event('change', { bubbles: true }));
     syncFromNative();
     closeMenu();
+    restoreParentScroll();
+    requestAnimationFrame(restoreParentScroll);
   };
 
   trigger.addEventListener('click', () => {
@@ -2304,17 +2337,27 @@ function enhanceSiteSelect(select) {
   menu.addEventListener(
     'wheel',
     event => {
-      if (menu.scrollHeight <= menu.clientHeight) return;
-      const { scrollTop, scrollHeight, clientHeight } = menu;
-      const delta = event.deltaY;
-      const atTop = scrollTop <= 0 && delta < 0;
-      const atBottom = scrollTop + clientHeight >= scrollHeight - 1 && delta > 0;
-      if (!atTop && !atBottom) {
-        event.stopPropagation();
+      if (event.ctrlKey || event.metaKey) return;
+
+      const delta = event.deltaY * (
+        event.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? 16
+          : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? menu.clientHeight
+            : 1
+      );
+      const maxScroll = Math.max(0, menu.scrollHeight - menu.clientHeight);
+      if (maxScroll > 0 && Math.abs(delta) > 0.01) {
+        menu.scrollTop = Math.max(0, Math.min(maxScroll, menu.scrollTop + delta));
       }
+
+      event.preventDefault();
+      event.stopPropagation();
     },
-    { passive: true }
+    { passive: false }
   );
+
+  menu.addEventListener('touchmove', event => event.stopPropagation(), { passive: true });
 
   menu.addEventListener('keydown', event => {
     const options = Array.from(menu.querySelectorAll('.site-select__option'));
@@ -2370,6 +2413,7 @@ function enhanceSiteSelect(select) {
   });
 
   select.addEventListener('change', syncFromNative);
+  select.addEventListener('site-select:refresh', syncFromNative);
 
   new MutationObserver(syncFromNative).observe(select, {
     childList: true,
@@ -2389,7 +2433,7 @@ function refreshSiteSelect(select) {
     enhanceSiteSelect(select);
     return;
   }
-  select.dispatchEvent(new Event('change', { bubbles: true }));
+  select.dispatchEvent(new Event('site-select:refresh'));
 }
 
 window.initSiteSelects = initSiteSelects;

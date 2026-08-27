@@ -46,7 +46,7 @@ test('a failed support notification does not prevent the customer auto reply', a
           'Content-Type': 'application/json',
           'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
         },
-        body: JSON.stringify(telegramUpdate('/start', 'ru')),
+        body: JSON.stringify(telegramUpdate('Здравствуйте', 'ru')),
       }),
       env: {
         SITE_NOTIFICATIONS_ENABLED: 'true',
@@ -61,7 +61,8 @@ test('a failed support notification does not prevent the customer auto reply', a
     assert.equal(response.status, 200);
     assert.equal(requests.length, 2);
     assert.equal(requests[1].chat_id, '12345');
-    assert.match(requests[1].text, /Добро пожаловать в HUNDESALON_NIKA/);
+    assert.match(requests[1].text, /Спасибо за сообщение/);
+    assert.equal(requests[1].reply_markup.remove_keyboard, true);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -96,8 +97,15 @@ test('uses the client language for the initial German response', async () => {
     });
 
     assert.equal(response.status, 200);
-    assert.equal(requests.length, 2);
-    assert.match(requests[1].text, /Willkommen bei HUNDESALON_NIKA/);
+    assert.equal(requests.length, 4);
+    assert.equal(requests[0].chat_id, '12345');
+    assert.equal(requests[0].menu_button.type, 'web_app');
+    assert.equal(requests[0].menu_button.text, 'NIKA Menü');
+    assert.equal(requests[0].menu_button.web_app.url, 'https://hundesalon-nika.com/telegram-menu.html?lang=de');
+    assert.equal(requests[1].chat_id, undefined);
+    assert.equal(requests[1].menu_button.web_app.url, 'https://hundesalon-nika.com/telegram-menu.html');
+    assert.match(requests[3].text, /Willkommen bei HUNDESALON_NIKA/);
+    assert.equal(requests[3].reply_markup.remove_keyboard, true);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -140,7 +148,7 @@ test('recognizes the public /address command', async () => {
   }
 });
 
-test('localizes every visible control in the persistent initial menu', async () => {
+test('localizes the branded Web App menu button and removes the legacy keyboard', async () => {
   const originalFetch = globalThis.fetch;
 
   try {
@@ -148,22 +156,22 @@ test('localizes every visible control in the persistent initial menu', async () 
       {
         language: 'de',
         text: /Willkommen bei HUNDESALON_NIKA/,
-        buttons: ['✨ Premium-Menü öffnen', 'Online-Termin', 'Leistungen & Preise', 'Adresse & Zeiten', 'Sprache wählen', 'Mitarbeiter kontaktieren'],
+        menuButton: 'NIKA Menü',
       },
       {
         language: 'en',
         text: /Welcome to HUNDESALON_NIKA/,
-        buttons: ['✨ Open premium menu', 'Book online', 'Services & prices', 'Address & hours', 'Choose language', 'Contact support'],
+        menuButton: 'NIKA Menu',
       },
       {
         language: 'ru',
         text: /Добро пожаловать в HUNDESALON_NIKA/,
-        buttons: ['✨ Открыть премиум-меню', 'Онлайн-запись', 'Услуги и цены', 'Адрес и часы', 'Выбрать язык', 'Связаться с сотрудником'],
+        menuButton: 'Меню NIKA',
       },
       {
         language: 'uk',
         text: /Ласкаво просимо до HUNDESALON_NIKA/,
-        buttons: ['✨ Відкрити преміум-меню', 'Онлайн-запис', 'Послуги й ціни', 'Адреса й години', 'Обрати мову', 'Зв’язатися з підтримкою'],
+        menuButton: 'Меню NIKA',
       },
     ]) {
       const requests = [];
@@ -193,11 +201,15 @@ test('localizes every visible control in the persistent initial menu', async () 
       });
 
       assert.equal(response.status, 200);
-      assert.equal(requests.length, 2);
-      assert.match(requests[1].text, item.text);
-      const buttons = requests[1].reply_markup.keyboard.flat();
-      assert.deepEqual(buttons.map(button => button.text), item.buttons);
-      assert.equal(requests[1].reply_markup.is_persistent, true);
+      assert.equal(requests.length, 4);
+      assert.equal(requests[0].chat_id, '12345');
+      assert.equal(requests[0].menu_button.type, 'web_app');
+      assert.equal(requests[0].menu_button.text, item.menuButton);
+      assert.equal(requests[0].menu_button.web_app.url, `https://hundesalon-nika.com/telegram-menu.html?lang=${item.language}`);
+      assert.equal(requests[1].chat_id, undefined);
+      assert.equal(requests[1].menu_button.web_app.url, 'https://hundesalon-nika.com/telegram-menu.html');
+      assert.match(requests[3].text, item.text);
+      assert.equal(requests[3].reply_markup.remove_keyboard, true);
     }
   } finally {
     globalThis.fetch = originalFetch;
@@ -242,7 +254,7 @@ test('the support button acknowledges the callback, notifies the team, and repli
     assert.match(requests[1].payload.text, /Клиент запросил связь с сотрудником/);
     assert.equal(requests[2].payload.chat_id, '12345');
     assert.match(requests[2].payload.text, /Support-Anfrage wurde weitergeleitet/);
-    assert.equal(requests[2].payload.reply_markup.keyboard.flat().at(-1).text, 'Mitarbeiter kontaktieren');
+    assert.equal(requests[2].payload.reply_markup.remove_keyboard, true);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -253,7 +265,7 @@ test('public commands return the matching action with the same linked menu', asy
 
   try {
     for (const item of [
-      { command: '/showcase', text: /интерактивное фирменное меню/, url: 'https://hundesalon-nika.com/telegram-menu.html?lang=ru', silent: true },
+      { command: '/showcase', text: /интерактивное фирменное меню/, webAppUrl: 'https://hundesalon-nika.com/telegram-menu.html?lang=ru' },
       { command: '/booking', text: /Откройте онлайн-запись/, url: 'https://hundesalon-nika.com/ru/onlayn-bronirovanie' },
       { command: '/services', text: /Цены и услуги/, url: 'https://hundesalon-nika.com/ru/prays-list' },
       { command: '/address', text: /Адрес и часы работы/, url: 'https://hundesalon-nika.com/ru/kontakty' },
@@ -286,14 +298,16 @@ test('public commands return the matching action with the same linked menu', asy
       });
 
       assert.equal(response.status, 200);
-      assert.equal(requests.length, item.silent ? 1 : 2);
+      assert.equal(requests.length, 2);
       const clientReply = requests.at(-1).payload;
       assert.match(clientReply.text, item.text);
       const markup = clientReply.reply_markup;
-      if (item.url) {
+      if (item.webAppUrl) {
+        assert.equal(markup.inline_keyboard[0][0].web_app.url, item.webAppUrl);
+      } else if (item.url) {
         assert.equal(markup.inline_keyboard[0][0].url, item.url);
       } else {
-        assert.equal(markup.keyboard.flat().at(-1).text, 'Связаться с сотрудником');
+        assert.equal(markup.remove_keyboard, true);
       }
     }
   } finally {
@@ -301,7 +315,7 @@ test('public commands return the matching action with the same linked menu', asy
   }
 });
 
-test('the language keyboard returns a localized menu without creating support noise', async () => {
+test('language selection is handled inside the branded Web App without support noise', async () => {
   const originalFetch = globalThis.fetch;
   const requests = [];
   globalThis.fetch = async (url, options) => {
@@ -332,12 +346,11 @@ test('the language keyboard returns a localized menu without creating support no
     });
 
     assert.equal(selectorResponse.status, 200);
-    assert.equal(requests.length, 1);
-    assert.match(requests[0].payload.text, /Выберите язык общения/);
-    assert.deepEqual(
-      requests[0].payload.reply_markup.keyboard.flat().map(button => button.text),
-      ['Deutsch', 'English', 'Русский', 'Українська']
-    );
+    assert.equal(requests.length, 2);
+    assert.equal(requests[0].payload.menu_button.type, 'web_app');
+    assert.equal(requests[0].payload.menu_button.web_app.url, 'https://hundesalon-nika.com/telegram-menu.html?lang=ru');
+    assert.match(requests[1].payload.text, /нажмите на глобус/);
+    assert.equal(requests[1].payload.reply_markup.remove_keyboard, true);
 
     requests.length = 0;
     const selectionResponse = await onRequest({
@@ -353,16 +366,19 @@ test('the language keyboard returns a localized menu without creating support no
     });
 
     assert.equal(selectionResponse.status, 200);
-    assert.equal(requests.length, 1);
+    assert.equal(requests.length, 3);
     assert.equal(requests[0].payload.chat_id, '12345');
-    assert.match(requests[0].payload.text, /Willkommen bei HUNDESALON_NIKA/);
-    assert.equal(requests[0].payload.reply_markup.keyboard.flat().at(-1).text, 'Mitarbeiter kontaktieren');
+    assert.equal(requests[0].payload.menu_button.text, 'NIKA Menü');
+    assert.equal(requests[1].payload.chat_id, undefined);
+    assert.equal(requests[2].payload.chat_id, '12345');
+    assert.match(requests[2].payload.text, /Willkommen bei HUNDESALON_NIKA/);
+    assert.equal(requests[2].payload.reply_markup.remove_keyboard, true);
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
-test('a legacy inline language callback is acknowledged and opens the persistent language keyboard', async () => {
+test('a legacy inline language callback is acknowledged and routes to the branded Web App', async () => {
   const originalFetch = globalThis.fetch;
   const requests = [];
   globalThis.fetch = async (url, options) => {
@@ -391,10 +407,11 @@ test('a legacy inline language callback is acknowledged and opens the persistent
     });
 
     assert.equal(response.status, 200);
-    assert.equal(requests.length, 2);
+    assert.equal(requests.length, 3);
     assert.match(requests[0].url, /answerCallbackQuery$/);
-    assert.match(requests[1].payload.text, /Выберите язык общения/);
-    assert.equal(requests[1].payload.reply_markup.keyboard.flat().at(-1).text, 'Українська');
+    assert.match(requests[1].url, /setChatMenuButton$/);
+    assert.match(requests[2].payload.text, /нажмите на глобус/);
+    assert.equal(requests[2].payload.reply_markup.remove_keyboard, true);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -432,6 +449,113 @@ test('the previous reply-keyboard labels remain connected to the new menu', asyn
     assert.equal(requests.length, 2);
     assert.match(requests[1].text, /Откройте онлайн-запись кнопкой ниже/);
     assert.equal(requests[1].reply_markup.inline_keyboard[0][0].url, 'https://hundesalon-nika.com/ru/onlayn-bronirovanie');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('the branded reply-keyboard labels route to every matching action', async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    for (const item of [
+      {
+        label: '✨ Фирменное меню NIKA',
+        language: 'ru',
+        reply: /интерактивное фирменное меню/,
+        requestCount: 2,
+        webAppUrl: 'https://hundesalon-nika.com/telegram-menu.html?lang=ru',
+        style: 'success',
+      },
+      {
+        label: '📅 Онлайн-запись',
+        language: 'ru',
+        reply: /Откройте онлайн-запись/,
+        requestCount: 2,
+        url: 'https://hundesalon-nika.com/ru/onlayn-bronirovanie',
+        style: 'success',
+      },
+      {
+        label: '✂️ Услуги и цены',
+        language: 'ru',
+        reply: /Цены и услуги/,
+        requestCount: 2,
+        url: 'https://hundesalon-nika.com/ru/prays-list',
+        style: 'primary',
+      },
+      {
+        label: '📍 Адрес и часы',
+        language: 'ru',
+        reply: /Адрес и часы работы/,
+        requestCount: 2,
+        url: 'https://hundesalon-nika.com/ru/kontakty',
+        style: 'primary',
+      },
+      {
+        label: '🌐 Выбрать язык',
+        language: 'ru',
+        reply: /нажмите на глобус/,
+        requestCount: 2,
+        removesKeyboard: true,
+      },
+      {
+        label: '💬 Связаться с сотрудником',
+        language: 'ru',
+        reply: /Запрос передан в поддержку/,
+        requestCount: 2,
+        removesKeyboard: true,
+      },
+      {
+        label: '✨ Інтерактивне меню NIKA',
+        language: 'uk',
+        reply: /інтерактивне фірмове меню/,
+        requestCount: 2,
+        webAppUrl: 'https://hundesalon-nika.com/telegram-menu.html?lang=uk',
+        style: 'success',
+      },
+    ]) {
+      const requests = [];
+      globalThis.fetch = async (url, options) => {
+        requests.push({ url: String(url), payload: JSON.parse(options.body) });
+        return new Response(JSON.stringify({ ok: true, result: { message_id: requests.length } }), { status: 200 });
+      };
+
+      const response = await onRequest({
+        request: new Request('https://hundesalon-nika.com/telegram-webhook', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
+          },
+          body: JSON.stringify(telegramUpdate(item.label, item.language)),
+        }),
+        env: {
+          SITE_NOTIFICATIONS_ENABLED: 'true',
+          TELEGRAM_AGENT_ENABLED: 'true',
+          TELEGRAM_BOT_TOKEN: 'test-token',
+          TELEGRAM_CHAT_ID: '-100123',
+          TELEGRAM_TOPIC_MESSAGES_ID: '2',
+          TELEGRAM_WEBHOOK_SECRET: 'test-webhook-secret',
+        },
+      });
+
+      assert.equal(response.status, 200);
+      assert.equal(requests.length, item.requestCount);
+      const clientReply = requests.at(-1).payload;
+      assert.match(clientReply.text, item.reply);
+
+      if (item.webAppUrl) {
+        const actionButton = clientReply.reply_markup.inline_keyboard[0][0];
+        assert.equal(actionButton.web_app.url, item.webAppUrl);
+        assert.equal(actionButton.style, item.style);
+      } else if (item.url) {
+        const actionButton = clientReply.reply_markup.inline_keyboard[0][0];
+        assert.equal(actionButton.url, item.url);
+        assert.equal(actionButton.style, item.style);
+      } else if (item.removesKeyboard) {
+        assert.equal(clientReply.reply_markup.remove_keyboard, true);
+      }
+    }
   } finally {
     globalThis.fetch = originalFetch;
   }

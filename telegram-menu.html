@@ -8,8 +8,12 @@
     <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="HUNDESALON_NIKA – interaktives Menü für Online-Termin, Leistungen, Kontakt und Support.">
     <title>HUNDESALON_NIKA</title>
-    <link rel="stylesheet" href="/assets/css/telegram-menu.css?v=20260811">
-    <script type="module" src="/assets/js/telegram-menu.js?v=20260811"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&amp;family=Cormorant+Garamond:wght@400;500;600&amp;family=Forum&amp;display=swap">
+    <link rel="stylesheet" href="/assets/css/telegram-menu.css?v=20260826">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script type="module" src="/assets/js/telegram-menu.js?v=20260826"></script>
   </head>
   <body>
     <div class="telegram-menu__ambient telegram-menu__ambient--one" aria-hidden="true"></div>
@@ -19,7 +23,7 @@
       <header class="telegram-menu__header">
         <a class="telegram-menu__brand" href="/de/" aria-label="HUNDESALON_NIKA">
           <span class="telegram-menu__brand-mark">
-            <img src="/assets/images/brand/logo.png" alt="">
+            <img src="/assets/images/brand/logo-ui.webp" alt="">
           </span>
           <span class="telegram-menu__brand-copy">
             <span class="telegram-menu__eyebrow">Leipzig · Sachsen</span>
@@ -27,7 +31,7 @@
           </span>
         </a>
         <button class="telegram-menu__language-trigger" type="button" data-language-trigger aria-controls="telegram-menu-languages" aria-expanded="false">
-          <span aria-hidden="true">◎</span>
+          <img src="/assets/images/icons/globe-language.webp" alt="" aria-hidden="true">
           <span data-current-language>DE</span>
         </button>
       </header>
@@ -40,7 +44,9 @@
 
       <section class="telegram-menu__actions" aria-label="HUNDESALON_NIKA Menü">
         <button class="telegram-menu__action telegram-menu__action--primary" type="button" data-route="booking">
-          <span class="telegram-menu__action-icon" aria-hidden="true">✦</span>
+          <span class="telegram-menu__action-icon" aria-hidden="true">
+            <img src="/assets/images/icons/books_alt1.webp" alt="">
+          </span>
           <span class="telegram-menu__action-copy">
             <span class="telegram-menu__action-title" data-i18n="bookingTitle">Online-Termin</span>
             <span class="telegram-menu__action-description" data-i18n="bookingDescription">Wunschtermin bequem anfragen</span>
@@ -49,7 +55,9 @@
         </button>
 
         <button class="telegram-menu__action" type="button" data-route="prices">
-          <span class="telegram-menu__action-icon" aria-hidden="true">◇</span>
+          <span class="telegram-menu__action-icon" aria-hidden="true">
+            <img src="/assets/images/icons/currency-euro.webp" alt="">
+          </span>
           <span class="telegram-menu__action-copy">
             <span class="telegram-menu__action-title" data-i18n="pricesTitle">Leistungen &amp; Preise</span>
             <span class="telegram-menu__action-description" data-i18n="pricesDescription">Passende Pflege transparent finden</span>
@@ -58,7 +66,9 @@
         </button>
 
         <button class="telegram-menu__action" type="button" data-route="contact">
-          <span class="telegram-menu__action-icon" aria-hidden="true">⌖</span>
+          <span class="telegram-menu__action-icon" aria-hidden="true">
+            <img src="/assets/images/icons/locate.png" alt="">
+          </span>
           <span class="telegram-menu__action-copy">
             <span class="telegram-menu__action-title" data-i18n="contactTitle">Adresse &amp; Zeiten</span>
             <span class="telegram-menu__action-description" data-i18n="contactDescription">Unser Salon in Leipzig</span>
@@ -67,7 +77,9 @@
         </button>
 
         <button class="telegram-menu__action telegram-menu__action--support" type="button" data-route="support">
-          <span class="telegram-menu__action-icon" aria-hidden="true">✦</span>
+          <span class="telegram-menu__action-icon" aria-hidden="true">
+            <img src="/assets/images/icons/phone.webp" alt="">
+          </span>
           <span class="telegram-menu__action-copy">
             <span class="telegram-menu__action-title" data-i18n="supportTitle">Mitarbeiter kontaktieren</span>
             <span class="telegram-menu__action-description" data-i18n="supportDescription">Wir antworten direkt im Telegram-Chat</span>

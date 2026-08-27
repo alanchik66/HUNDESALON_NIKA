@@ -19,6 +19,7 @@ const cards = [
   { title: 'Index', link: 'Index', meta: 'Map of the vault', tone: 'neutral' },
   { title: 'Start here', link: 'Start_Here', meta: 'Onboarding and flow', tone: 'neutral' },
   { title: 'Project hub', link: '01_Projects/HUNDESALON_NIKA', meta: 'Active project surface', tone: 'blue' },
+  { title: 'Task queue', link: '01_Projects/HUNDESALON_NIKA/Tasks/README', meta: 'Auto-routed task notes', tone: 'green' },
   { title: 'Operations', link: '02_Areas/Operations', meta: 'Rules and workflows', tone: 'green' },
   { title: 'Brand assets', link: '03_Resources/Brand_Assets', meta: 'Approved public assets', tone: 'cyan' },
   { title: 'Decision log', link: '04_Decisions/Decisions', meta: 'Tradeoffs and outcomes', tone: 'amber' },

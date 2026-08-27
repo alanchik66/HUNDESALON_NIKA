@@ -888,17 +888,19 @@ body.light .price-configurator__result {
 
 .price-breed-search__icon {
   position: absolute;
-  left: 1rem;
-  color: var(--gold, #c9a84c);
-  font-size: 1.45rem;
-  line-height: 1;
+  z-index: 1;
+  left: clamp(0.7rem, 1.4vw, 1rem);
+  width: clamp(1.9rem, 3vw, 2.35rem);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 0.45rem rgb(255 211 99 / 0.32));
   pointer-events: none;
 }
 
 .price-breed-search__input {
   width: 100%;
   min-height: 50px;
-  padding: 0.75rem 3rem 0.75rem 2.8rem;
+  padding: 0.75rem 3rem 0.75rem clamp(3.25rem, 5.2vw, 3.75rem);
   border: 1px solid rgb(201 168 76 / 0.34);
   border-radius: 17px;
   background: rgb(0 0 0 / 0.2);
@@ -1132,6 +1134,7 @@ body.light .price-configurator__result {
 
 .price-card:hover,
 .price-card:focus-within {
+  z-index: 2;
   transform: translateY(-2px);
   border-color: rgb(201 168 76 / 0.34);
   box-shadow:
@@ -1366,10 +1369,12 @@ body.light .price-configurator__result {
 }
 
 .price-card__service-options {
+  position: relative;
   display: grid;
   align-content: start;
   gap: 0.5rem;
   min-width: 0;
+  overflow: visible;
 }
 
 .price-card__service-options--information {
@@ -1405,6 +1410,8 @@ body.light .price-configurator__result {
 }
 
 .price-card__service-option {
+  position: relative;
+  z-index: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -1426,6 +1433,7 @@ body.light .price-configurator__result {
 
 .price-card__service-option:hover,
 .price-card__service-option:focus-visible {
+  z-index: 2;
   border-color: rgb(201 168 76 / 0.42);
   background: rgb(201 168 76 / 0.1);
   outline: none;
@@ -1497,6 +1505,10 @@ body.light .price-configurator__result {
 }
 
 @media (min-width: 721px) {
+  .price-card {
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+
   .price-size-section__category,
   .price-size-section__category .price-size-section__cards,
   .price-size-section__category .price-card {
@@ -1780,6 +1792,10 @@ body.light .price-configurator__result {
     opacity: 1;
     visibility: visible;
     transition-delay: 0s;
+  }
+
+  .price-card[data-price-card-expanded='true'] .price-card__details-inner {
+    overflow: visible;
   }
 
   .price-card__information-highlights {
@@ -2810,8 +2826,10 @@ body.booking-modal-open {
 }
 
 #booking-modal .custom-scrollbar-track {
-  display: none !important;
+  display: block !important;
   z-index: 4;
+  opacity: 0 !important;
+  visibility: hidden !important;
   pointer-events: none;
 }
 
@@ -3741,9 +3759,9 @@ body.booking-modal-open {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding-right: 4px;
-  -ms-overflow-style: auto !important;
-  scrollbar-width: thin !important;
-  scrollbar-color: rgb(52 211 153 / 48%) rgb(255 255 255 / 6%) !important;
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  scrollbar-color: transparent transparent !important;
 }
 
 @keyframes booking-step-crossfade {
@@ -4310,9 +4328,9 @@ body.light #booking-modal .modal-buttons {
   overflow: auto;
   margin: 0.5rem 0 0.4rem;
   padding: 8px 10px 10px 6px;
-  -ms-overflow-style: auto !important;
-  scrollbar-width: thin !important;
-  scrollbar-color: rgb(52 211 153 / 48%) rgb(255 255 255 / 6%) !important;
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  scrollbar-color: transparent transparent !important;
 }
 
 /* Booking modal — layout on top of shared .nav-main > .filter-btn system (style.css) */
@@ -7180,9 +7198,9 @@ body.price-page .price-card__breed-option {
 body.price-page .price-card__breed-scrollbar {
   position: absolute;
   z-index: 2;
-  top: 0.72rem;
-  right: 0.42rem;
-  bottom: 0.72rem;
+  top: 0.86rem;
+  right: 0.5rem;
+  bottom: 0.86rem;
   display: block;
   width: 0.42rem;
   border: 1px solid rgb(255 229 165 / 0.14);
@@ -7219,12 +7237,9 @@ body.price-page .price-card__breed-scrollbar-thumb {
   will-change: transform;
 }
 
-body.price-page .price-breed-menu--has-overflow .price-card__breed-scrollbar {
-  opacity: 0.34;
-}
-
+body.price-page .price-breed-menu--has-overflow .price-card__breed-scrollbar,
 body.price-page .price-breed-menu--has-overflow .price-card__breed-scrollbar-thumb {
-  opacity: 0.18;
+  opacity: 0;
 }
 
 body.price-page .price-breed-menu--scrolling .price-card__breed-scrollbar {
@@ -7820,5 +7835,501 @@ body.light.price-page main[data-price-page] .price-card__promotion-button {
 
   body.price-page .price-card__price {
     font-size: 1.08rem;
+  }
+}
+
+/* Price-list density system: compact cards and scroll-safe sticky modal headers. */
+body.price-page {
+  --price-ui-gap: clamp(0.55rem, 0.8vw, 0.78rem);
+  --price-ui-pad: clamp(0.78rem, 1.25vw, 1.08rem);
+  --price-modal-pad: clamp(0.72rem, 1.35vw, 1.05rem);
+}
+
+body.price-page .price-categories-grid[data-price-categories] {
+  gap: clamp(0.85rem, 1.3vw, 1.2rem);
+}
+
+body.price-page .price-size-section,
+body.price-page .price-size-section__category {
+  gap: clamp(0.5rem, 0.75vw, 0.68rem);
+}
+
+body.price-page .price-size-section__cards,
+body.price-page .price-size-section__category-grid {
+  gap: clamp(0.65rem, 1vw, 0.9rem);
+}
+
+body.price-page main[data-price-page] .price-card {
+  gap: var(--price-ui-gap);
+  padding: var(--price-ui-pad);
+}
+
+body.price-page main[data-price-page] .price-card.price-card--breeds-open > .price-card__top {
+  z-index: 1001;
+  transform: translateZ(32px);
+}
+
+body.price-page main[data-price-page] .price-card.price-card--breeds-open > .price-card__details,
+body.price-page main[data-price-page] .price-card.price-card--breeds-open > .price-card__footer {
+  z-index: 0;
+  transform: translateZ(0);
+}
+
+body.price-page main[data-price-page] .price-card.price-card--breeds-open .price-card__breed-menu {
+  z-index: 1002;
+}
+
+body.price-page .price-card__top,
+body.price-page .price-card__details-inner,
+body.price-page .price-card__footer {
+  gap: var(--price-ui-gap);
+}
+
+body.price-page .price-card__meta {
+  gap: 0.55rem;
+  padding-top: 0.4rem;
+}
+
+body.price-page .price-card__service-options {
+  gap: 0.42rem;
+}
+
+body.price-page main[data-price-page] .price-card__service-option {
+  min-height: 46px;
+  gap: 0.55rem;
+  padding: 0.48rem 0.62rem;
+}
+
+body.price-page .price-card__breed-menu,
+body.price-page .price-breed-search__suggestions {
+  padding: 0.55rem 0.62rem;
+  border-radius: 18px;
+}
+
+body.price-page .price-card__breed-menu-title {
+  margin-bottom: 0.32rem;
+}
+
+body.price-page .price-card__breed-list {
+  gap: 0.1rem;
+  line-height: 1.3;
+}
+
+body.price-page .price-card__breed-option,
+body.price-page .price-breed-search__suggestion,
+body.price-page #price-category-modal .site-select__option {
+  min-height: 44px;
+}
+
+@media (min-width: 721px) {
+  body.price-page .price-size-section[data-price-section='small'] .price-card__top,
+  body.price-page .price-size-section[data-price-section='additional'] .price-card__top {
+    min-height: 11.25rem;
+  }
+
+  body.price-page .price-size-section[data-price-section='medium'] .price-card__top,
+  body.price-page .price-size-section[data-price-section='large'] .price-card__top {
+    min-height: 9rem;
+  }
+}
+
+body.price-page .modal#price-category-modal {
+  padding: clamp(0.35rem, 1vw, 0.75rem);
+}
+
+body.price-page #price-category-modal .modal-content {
+  --price-modal-pad: clamp(0.72rem, 1.35vw, 1.05rem);
+  max-height: calc(100dvh - clamp(0.7rem, 2vw, 1.5rem));
+  gap: var(--price-ui-gap);
+  padding: var(--price-modal-pad);
+}
+
+body.price-page #price-category-modal .price-category-modal__header {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  gap: 0.28rem;
+  margin: 0;
+  padding: 0.65rem 3.4rem 0.72rem 0.78rem;
+  border: 1px solid rgb(201 168 76 / 0.28);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 12% 0%, rgb(50 255 177 / 0.12), transparent 46%),
+    linear-gradient(145deg, rgb(15 39 29 / 0.98), rgb(4 15 11 / 0.985));
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.06);
+  -webkit-backdrop-filter: blur(18px) saturate(1.18);
+  backdrop-filter: blur(18px) saturate(1.18);
+}
+
+body.price-page #price-category-modal .price-category-modal__close-rail {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  grid-area: hero;
+  align-self: start;
+  display: flex;
+  justify-content: flex-end;
+  height: 0;
+  pointer-events: none;
+}
+
+body.price-page #price-category-modal .price-category-modal__header .section-kicker {
+  margin: 0;
+  font-size: clamp(0.72rem, 0.7vw, 0.84rem);
+  letter-spacing: 0.11em;
+  line-height: 1.2;
+}
+
+body.price-page #price-category-modal .price-category-modal__header .section-title {
+  font-size: clamp(1.42rem, 2.1vw, 2.08rem);
+  line-height: 1.08;
+}
+
+body.price-page #price-category-modal .price-category-modal__header .section-title::after {
+  width: clamp(64px, 7vw, 92px);
+  margin-top: 0.28rem;
+}
+
+body.price-page #price-category-modal .price-category-modal__summary {
+  font-size: clamp(0.92rem, 0.35vw + 0.78rem, 1.04rem);
+  line-height: 1.35;
+}
+
+body.price-page #price-category-modal .price-category-modal__close {
+  position: relative;
+  top: 0.55rem;
+  right: 0.55rem;
+  width: 2.45rem;
+  height: 2.45rem;
+  pointer-events: auto;
+}
+
+body.price-page #price-category-modal .price-category-modal__selection {
+  gap: 0.52rem;
+  margin-top: 0;
+  padding: 0.68rem;
+}
+
+body.price-page #price-category-modal .price-category-modal__selection-controls {
+  gap: 0.52rem;
+}
+
+body.price-page #price-category-modal .price-category-modal__selection-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: grid;
+  gap: 0.34rem;
+  padding: 0.58rem 3.4rem 0.62rem 0.68rem;
+  border: 1px solid rgb(201 168 76 / 0.3);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 12% 0%, rgb(50 255 177 / 0.13), transparent 46%),
+    linear-gradient(145deg, rgb(15 39 29 / 0.99), rgb(4 15 11 / 0.995));
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.07);
+  -webkit-backdrop-filter: blur(18px) saturate(1.18);
+  backdrop-filter: blur(18px) saturate(1.18);
+}
+
+body.price-page #price-category-modal .price-category-modal__selection-header[hidden] {
+  display: none !important;
+}
+
+body.price-page #price-category-modal .price-category-modal__selection-head {
+  gap: 0.12rem;
+}
+
+body.price-page #price-category-modal .price-category-modal__service-fieldset,
+body.price-page #price-category-modal .price-category-modal__dental-weight,
+body.price-page #price-category-modal .price-category-modal__calculation,
+body.price-page #price-category-modal .price-category-modal__panel,
+body.price-page #price-category-modal .price-category-modal__service-conditions {
+  gap: 0.5rem;
+  padding: 0.68rem;
+}
+
+body.price-page #price-category-modal .price-category-modal__service-options {
+  gap: 0.45rem;
+  margin-top: 0.42rem;
+}
+
+body.price-page #price-category-modal .price-category-modal__service-option {
+  min-height: 58px;
+  gap: 0.48rem;
+  padding: 0.5rem 0.58rem;
+  line-height: 1.25;
+}
+
+body.price-page #price-category-modal .price-category-modal__selection-price {
+  margin-top: 0.08rem;
+  padding-top: 0.5rem;
+}
+
+body.price-page #price-category-modal .price-category-modal__table th,
+body.price-page #price-category-modal .price-category-modal__table td {
+  padding: 0.58rem 0.65rem;
+}
+
+body.price-page #price-category-modal .price-category-modal__list,
+body.price-page #price-category-modal .price-category-modal__grid {
+  gap: 0.48rem;
+}
+
+body.price-page #price-category-modal .price-category-modal__list--breeds li {
+  padding: 0.5rem 0.62rem;
+}
+
+.client-registration-modal__content {
+  --client-modal-pad: clamp(0.78rem, 1.5vw, 1.15rem);
+  padding: var(--client-modal-pad);
+}
+
+.client-registration-modal__header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: grid;
+  gap: 0.22rem;
+  margin: calc(-1 * var(--client-modal-pad)) calc(-1 * var(--client-modal-pad)) 0.65rem;
+  padding: 0.65rem 3.4rem 0.68rem var(--client-modal-pad);
+  border-bottom: 1px solid rgb(198 153 52 / 0.3);
+  background:
+    radial-gradient(circle at 12% 0%, rgb(50 255 177 / 0.1), transparent 44%),
+    linear-gradient(145deg, rgb(10 31 24 / 0.99), rgb(4 15 11 / 0.99));
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.24);
+  -webkit-backdrop-filter: blur(18px) saturate(1.16);
+  backdrop-filter: blur(18px) saturate(1.16);
+}
+
+.client-registration-modal__header .section-kicker,
+.client-registration-modal__header .section-title,
+.client-registration-modal__header .client-registration-modal__lead {
+  position: static;
+  width: auto;
+  margin: 0;
+  transform: none;
+  text-align: left;
+}
+
+.client-registration-modal__header .section-kicker {
+  font-size: clamp(0.72rem, 0.7vw, 0.84rem);
+}
+
+.client-registration-modal__header .section-title {
+  font-size: clamp(1.35rem, 2vw, 1.95rem);
+  line-height: 1.1;
+}
+
+.client-registration-modal__header .section-title::after {
+  margin: 0.25rem 0 0;
+}
+
+.client-registration-modal__header .client-registration-modal__lead {
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.client-registration-modal__close {
+  top: 0.55rem;
+  right: 0.55rem;
+}
+
+.client-registration-selection,
+.client-registration-form__fieldset,
+.client-registration-success {
+  padding: 0.68rem;
+}
+
+.client-registration-form,
+.client-registration-form__fieldset {
+  gap: 0.65rem;
+}
+
+.client-registration-form__grid,
+.client-registration-form__actions {
+  gap: 0.55rem;
+}
+
+.client-registration-form__notes textarea {
+  min-height: 5.5rem;
+}
+
+body.price-page #booking-modal .step-indicator {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin: -0.35rem -0.35rem 0.45rem;
+  padding: 0.52rem;
+  border-bottom: 1px solid rgb(201 168 76 / 0.24);
+  background: rgb(5 18 14 / 0.96);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  backdrop-filter: blur(16px) saturate(1.15);
+}
+
+@media (max-width: 720px) {
+  body.price-page {
+    --price-ui-gap: 0.42rem;
+    --price-ui-pad: 0.58rem;
+    --price-modal-pad: 0.52rem;
+  }
+
+  body.price-page .price-categories-grid[data-price-categories] {
+    gap: 0.72rem;
+  }
+
+  body.price-page .price-size-section,
+  body.price-page .price-size-section__category {
+    gap: 0.38rem;
+  }
+
+  body.price-page .price-size-section__cards,
+  body.price-page .price-size-section__category-grid {
+    gap: 0.46rem;
+  }
+
+  body.price-page main[data-price-page] .price-card {
+    border-radius: 16px;
+  }
+
+  body.price-page .price-card__mobile-toggle,
+  body.price-page main[data-price-page] .price-card__service-option {
+    min-height: 44px;
+  }
+
+  body.price-page .price-card__summary,
+  body.price-page .price-card__information-preview,
+  body.price-page .price-card__information-highlights {
+    line-height: 1.32;
+  }
+
+  body.price-page .price-card__breed-menu,
+  body.price-page .price-breed-search__suggestions {
+    padding: 0.45rem 0.5rem;
+  }
+
+  body.price-page .price-card__breed-list {
+    font-size: 0.9rem;
+    line-height: 1.24;
+  }
+
+  body.price-page .modal#price-category-modal {
+    padding: 0.28rem;
+  }
+
+  body.price-page #price-category-modal .modal-content {
+    width: 100%;
+    max-height: calc(100dvh - 0.56rem);
+    gap: 0.42rem;
+    padding: var(--price-modal-pad);
+    border-radius: 14px;
+  }
+
+  body.price-page #price-category-modal .price-category-modal__header {
+    gap: 0.18rem;
+    padding: 0.48rem 2.95rem 0.52rem 0.58rem;
+    border-radius: 12px;
+  }
+
+  body.price-page #price-category-modal .price-category-modal__selection-header {
+    gap: 0.24rem;
+    padding: 0.46rem 2.95rem 0.5rem 0.52rem;
+    border-radius: 12px;
+  }
+
+  body.price-page #price-category-modal .price-category-modal__header .section-kicker {
+    font-size: 0.64rem;
+    letter-spacing: 0.08em;
+  }
+
+  body.price-page #price-category-modal .price-category-modal__header .section-title {
+    font-size: clamp(1.05rem, 5.2vw, 1.34rem);
+    line-height: 1.06;
+  }
+
+  body.price-page #price-category-modal .price-category-modal__header .section-title::after {
+    width: 52px;
+    margin-top: 0.18rem;
+  }
+
+  body.price-page #price-category-modal .price-category-modal__summary {
+    font-size: 0.82rem;
+    line-height: 1.26;
+  }
+
+  body.price-page #price-category-modal .price-category-modal__close {
+    top: 0.4rem;
+    right: 0.4rem;
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  body.price-page #price-category-modal .price-category-modal__selection,
+  body.price-page #price-category-modal .price-category-modal__service-fieldset,
+  body.price-page #price-category-modal .price-category-modal__dental-weight,
+  body.price-page #price-category-modal .price-category-modal__calculation,
+  body.price-page #price-category-modal .price-category-modal__panel,
+  body.price-page #price-category-modal .price-category-modal__service-conditions {
+    gap: 0.38rem;
+    padding: 0.52rem;
+  }
+
+  body.price-page #price-category-modal .price-category-modal__service-options {
+    gap: 0.36rem;
+    margin-top: 0.3rem;
+  }
+
+  body.price-page #price-category-modal .price-category-modal__service-option {
+    min-height: 50px;
+    padding: 0.42rem 0.48rem;
+    font-size: 0.9rem;
+  }
+
+  body.price-page #price-category-modal .site-select__trigger,
+  body.price-page #price-category-modal .site-select__option {
+    min-height: 44px;
+    padding-block: 0.4rem;
+  }
+
+  .client-registration-modal__content {
+    --client-modal-pad: 0.55rem;
+    width: calc(100% - 0.56rem);
+    max-height: calc(100dvh - 0.56rem);
+    border-radius: 14px;
+  }
+
+  .client-registration-modal__header {
+    gap: 0.16rem;
+    margin-bottom: 0.48rem;
+    padding: 0.48rem 2.9rem 0.52rem var(--client-modal-pad);
+  }
+
+  .client-registration-modal__header .section-title {
+    font-size: clamp(1.05rem, 5vw, 1.3rem);
+  }
+
+  .client-registration-modal__header .client-registration-modal__lead {
+    font-size: 0.82rem;
+    line-height: 1.28;
+  }
+
+  .client-registration-selection,
+  .client-registration-form__fieldset,
+  .client-registration-success {
+    padding: 0.52rem;
+  }
+
+  .client-registration-form,
+  .client-registration-form__fieldset,
+  .client-registration-form__grid {
+    gap: 0.5rem;
+  }
+
+  body.price-page #booking-modal .modal-content {
+    padding-inline: 0.65rem;
+  }
+
+  body.price-page #booking-modal .step-indicator {
+    margin-inline: -0.2rem;
+    padding: 0.42rem;
   }
 }

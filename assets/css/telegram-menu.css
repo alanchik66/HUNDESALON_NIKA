@@ -11,7 +11,10 @@
   --telegram-text: #f5f0e5;
   --telegram-muted: #c8d4c9;
   --telegram-line: rgb(238 210 142 / 25%);
-  --telegram-panel: rgb(5 15 11 / 80%);
+  --telegram-panel: rgb(3 25 16 / 80%);
+  --telegram-panel-hover: rgb(5 38 24 / 84%);
+  --telegram-font-display: 'Cinzel', 'Forum', 'Times New Roman', serif;
+  --telegram-font-copy: 'Cormorant Garamond', Georgia, serif;
   --telegram-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -32,7 +35,7 @@ body {
     radial-gradient(circle at 84% 88%, rgb(232 185 73 / 10%), transparent 23rem),
     linear-gradient(143deg, var(--telegram-ink) 0%, var(--telegram-emerald-deep) 44%, var(--telegram-emerald-core) 100%);
   color: var(--telegram-text);
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--telegram-font-copy);
 }
 
 button,
@@ -108,8 +111,10 @@ button {
   overflow: hidden;
   border: 1px solid var(--telegram-line);
   border-radius: 50%;
-  background: linear-gradient(145deg, rgb(255 241 181 / 12%), rgb(3 11 8 / 84%));
-  box-shadow: 0 0.6rem 1.5rem rgb(0 0 0 / 32%), inset 0 1px 0 rgb(255 244 208 / 25%);
+  background: rgb(3 25 16 / 80%);
+  box-shadow: 0 0.6rem 1.5rem rgb(0 0 0 / 32%), inset 0 1px 0 rgb(255 244 208 / 18%);
+  -webkit-backdrop-filter: blur(18px) saturate(1.18);
+  backdrop-filter: blur(18px) saturate(1.18);
 }
 
 .telegram-menu__brand-mark img {
@@ -127,7 +132,7 @@ button {
 .telegram-menu__eyebrow {
   margin: 0;
   color: var(--telegram-muted);
-  font-family: 'Trebuchet MS', Arial, sans-serif;
+  font-family: var(--telegram-font-display);
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -142,7 +147,7 @@ button {
 .telegram-menu__name {
   overflow: hidden;
   color: var(--telegram-text);
-  font-family: 'Times New Roman', Georgia, serif;
+  font-family: var(--telegram-font-display);
   font-size: clamp(1rem, 3.8vw, 1.35rem);
   font-weight: 700;
   letter-spacing: 0.065em;
@@ -159,14 +164,47 @@ button {
   place-items: center;
   border: 1px solid var(--telegram-line);
   border-radius: 50%;
-  background: rgb(7 22 15 / 68%);
+  background: rgb(3 25 16 / 80%);
   color: var(--telegram-gold-bright);
   cursor: pointer;
-  font-family: 'Trebuchet MS', Arial, sans-serif;
+  font-family: var(--telegram-font-display);
   font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   transition: transform 260ms var(--telegram-ease), border-color 260ms ease, background 260ms ease;
+}
+
+.telegram-menu__language-trigger {
+  position: relative;
+  width: 3.65rem;
+  height: 3.65rem;
+  overflow: visible;
+  border-color: transparent;
+  background: transparent;
+}
+
+.telegram-menu__language-trigger img {
+  width: 3.1rem;
+  height: 3.1rem;
+  object-fit: contain;
+  filter: drop-shadow(0 0.35rem 0.55rem rgb(0 0 0 / 42%)) saturate(1.05) brightness(1.04);
+  animation: telegram-menu-icon-float 4.8s ease-in-out infinite;
+}
+
+.telegram-menu__language-trigger [data-current-language] {
+  position: absolute;
+  right: -0.15rem;
+  bottom: 0.05rem;
+  min-width: 1.7rem;
+  padding: 0.22rem 0.35rem;
+  border: 1px solid rgb(244 211 124 / 42%);
+  border-radius: 999px;
+  background: rgb(3 25 16 / 88%);
+  box-shadow: 0 0.3rem 0.8rem rgb(0 0 0 / 32%);
+  font-size: 0.58rem;
+  text-align: center;
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  backdrop-filter: blur(12px) saturate(1.2);
 }
 
 .telegram-menu__language-trigger:hover,
@@ -174,13 +212,13 @@ button {
 .telegram-menu__sheet-close:hover,
 .telegram-menu__sheet-close:focus-visible {
   border-color: rgb(255 233 159 / 64%);
-  background: rgb(22 55 35 / 88%);
+  background: var(--telegram-panel-hover);
   outline: none;
   transform: translateY(-2px);
 }
 
-.telegram-menu__language-trigger span:first-child {
-  display: none;
+.telegram-menu__language-trigger:hover {
+  background: transparent;
 }
 
 .telegram-menu__hero {
@@ -201,14 +239,15 @@ button {
   line-height: 0.95;
   text-wrap: balance;
   text-shadow: 0 1px 0 rgb(255 255 255 / 22%), 0 1rem 2rem rgb(0 0 0 / 36%);
+  font-family: var(--telegram-font-display);
 }
 
 .telegram-menu__lead {
   max-width: 29rem;
   margin: 1.25rem auto 0;
   color: var(--telegram-muted);
-  font-size: clamp(1rem, 3.5vw, 1.2rem);
   line-height: 1.55;
+  font-size: clamp(1.08rem, 3.8vw, 1.3rem);
 }
 
 .telegram-menu__actions {
@@ -224,11 +263,13 @@ button {
   padding: 1rem 1.1rem;
   overflow: hidden;
   border: 1px solid var(--telegram-line);
-  border-radius: 1.35rem;
+  border-radius: 1.15rem;
   background:
-    linear-gradient(135deg, rgb(255 255 255 / 5%), transparent 42%),
-    linear-gradient(140deg, rgb(9 32 21 / 94%), var(--telegram-panel));
+    radial-gradient(circle at 18% 0%, rgb(255 255 255 / 7%), transparent 42%),
+    var(--telegram-panel);
   box-shadow: 0 1.1rem 2.4rem rgb(0 0 0 / 24%), inset 0 1px 0 rgb(255 250 218 / 8%);
+  -webkit-backdrop-filter: blur(18px) saturate(1.22);
+  backdrop-filter: blur(18px) saturate(1.22);
   color: inherit;
   cursor: pointer;
   text-align: left;
@@ -273,7 +314,7 @@ button {
   border-color: rgb(242 213 129 / 58%);
   background:
     linear-gradient(135deg, rgb(255 255 255 / 8%), transparent 46%),
-    linear-gradient(140deg, rgb(13 49 31 / 98%), rgb(5 21 13 / 94%));
+    var(--telegram-panel-hover);
   box-shadow: 0 1.45rem 3rem rgb(0 0 0 / 34%), 0 0.4rem 1.4rem rgb(198 161 91 / 13%), inset 0 1px 0 rgb(255 250 218 / 14%);
   outline: none;
   transform: translateY(-0.2rem) scale(1.006);
@@ -288,8 +329,9 @@ button {
 .telegram-menu__action--primary {
   border-color: rgb(241 211 127 / 57%);
   background:
-    radial-gradient(circle at 85% 12%, rgb(244 204 91 / 20%), transparent 33%),
-    linear-gradient(135deg, rgb(81 171 109 / 24%), rgb(10 45 28 / 95%) 48%, rgb(35 27 9 / 88%) 100%);
+    radial-gradient(circle at 85% 12%, rgb(244 204 91 / 18%), transparent 35%),
+    linear-gradient(135deg, rgb(81 171 109 / 16%), transparent 58%),
+    var(--telegram-panel);
 }
 
 .telegram-menu__action--support {
@@ -298,17 +340,27 @@ button {
 
 .telegram-menu__action-icon {
   display: grid;
-  width: 2.65rem;
-  height: 2.65rem;
-  flex: 0 0 2.65rem;
+  width: 3.2rem;
+  height: 3.2rem;
+  flex: 0 0 3.2rem;
   place-items: center;
-  border: 1px solid rgb(255 230 151 / 38%);
-  border-radius: 0.85rem;
-  background: linear-gradient(145deg, rgb(255 228 139 / 23%), rgb(117 66 9 / 25%));
-  color: var(--telegram-gold-bright);
-  font-family: Georgia, serif;
-  font-size: 1.35rem;
-  text-shadow: 0 0.3rem 0.8rem rgb(0 0 0 / 46%);
+  border: 0;
+  background: transparent;
+}
+
+.telegram-menu__action-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0.35rem 0.55rem rgb(0 0 0 / 48%)) saturate(1.05) brightness(1.03);
+  transform-origin: center;
+  transition: transform 280ms var(--telegram-ease), filter 280ms ease;
+}
+
+.telegram-menu__action:hover .telegram-menu__action-icon img,
+.telegram-menu__action:focus-visible .telegram-menu__action-icon img {
+  filter: drop-shadow(0 0.45rem 0.75rem rgb(0 0 0 / 52%)) drop-shadow(0 0 0.6rem rgb(255 206 81 / 24%)) saturate(1.08) brightness(1.08);
+  transform: translateY(-0.1rem) scale(1.07);
 }
 
 .telegram-menu__action-copy {
@@ -322,14 +374,15 @@ button {
   color: var(--telegram-text);
   font-size: clamp(1.15rem, 4.3vw, 1.42rem);
   font-weight: 700;
+  font-family: var(--telegram-font-display);
   line-height: 1.1;
 }
 
 .telegram-menu__action-description {
   overflow: hidden;
   color: var(--telegram-muted);
-  font-family: 'Trebuchet MS', Arial, sans-serif;
-  font-size: 0.78rem;
+  font-family: var(--telegram-font-copy);
+  font-size: 0.92rem;
   letter-spacing: 0.01em;
   line-height: 1.38;
   text-overflow: ellipsis;
@@ -339,7 +392,7 @@ button {
 .telegram-menu__action-arrow {
   align-self: center;
   color: var(--telegram-gold);
-  font-family: 'Trebuchet MS', Arial, sans-serif;
+  font-family: var(--telegram-font-display);
   font-size: 1.35rem;
   transition: transform 260ms var(--telegram-ease);
 }
@@ -360,7 +413,7 @@ button {
 
 .telegram-menu__promise p {
   margin: 0;
-  font-family: 'Trebuchet MS', Arial, sans-serif;
+  font-family: var(--telegram-font-display);
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -407,8 +460,10 @@ button {
   border: 1px solid rgb(255 232 162 / 25%);
   border-bottom: 0;
   border-radius: 1.7rem 1.7rem 0 0;
-  background: linear-gradient(145deg, rgb(16 49 31 / 99%), rgb(1 7 4 / 99%));
+  background: linear-gradient(145deg, rgb(8 42 26 / 88%), rgb(1 11 7 / 88%));
   box-shadow: 0 -1.6rem 5rem rgb(0 0 0 / 52%), inset 0 1px 0 rgb(255 246 215 / 13%);
+  -webkit-backdrop-filter: blur(24px) saturate(1.22);
+  backdrop-filter: blur(24px) saturate(1.22);
   animation: telegram-menu-sheet-enter 340ms var(--telegram-ease) both;
 }
 
@@ -450,7 +505,7 @@ button {
   background: rgb(255 255 255 / 4%);
   color: var(--telegram-text);
   cursor: pointer;
-  font-family: 'Trebuchet MS', Arial, sans-serif;
+  font-family: var(--telegram-font-display);
   font-size: 0.92rem;
   font-weight: 700;
   transition: transform 220ms var(--telegram-ease), background 220ms ease, border-color 220ms ease;
@@ -509,6 +564,16 @@ button {
   }
   to {
     transform: translate3d(-5rem, -5rem, 0) scale(1.1);
+  }
+}
+
+@keyframes telegram-menu-icon-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-0.16rem) rotate(1deg);
   }
 }
 

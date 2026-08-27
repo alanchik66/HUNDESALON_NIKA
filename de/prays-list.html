@@ -522,12 +522,14 @@
 
     <div id="price-category-modal" class="modal" aria-hidden="true" data-price-modal>
       <div class="modal-content price-category-modal__content">
-        <button type="button" class="modal-close price-category-modal__close" data-price-modal-close>&times;</button>
-        <div class="price-category-modal__hero">
-          <p class="section-kicker" data-price-modal-kicker></p>
-          <h2 class="section-title" data-price-modal-title></h2>
-          <p class="price-category-modal__summary" data-price-modal-summary></p>
-        </div>
+          <div class="price-category-modal__close-rail">
+            <button type="button" class="modal-close price-category-modal__close" data-price-modal-close>&times;</button>
+          </div>
+          <header class="price-category-modal__hero price-category-modal__header">
+            <p class="section-kicker" data-price-modal-kicker></p>
+            <h2 class="section-title" data-price-modal-title></h2>
+            <p class="price-category-modal__summary" data-price-modal-summary></p>
+          </header>
         <div class="price-category-modal__footer">
           <a class="btn-neon price-category-modal__booking" data-price-modal-booking href="onlayn-bronirovanie.html"></a>
         </div>

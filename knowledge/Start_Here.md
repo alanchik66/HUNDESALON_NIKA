@@ -24,7 +24,7 @@ This vault is the operating memory for HUNDESALON_NIKA.
 
 ## Daily workflow
 - Start with the current project note.
+- Create new actionable work in [[01_Projects/HUNDESALON_NIKA/Tasks/README]].
 - Add what changed and why.
 - Record verification after the fix.
 - Move finished items into the decision or release area.
-

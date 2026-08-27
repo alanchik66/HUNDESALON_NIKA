@@ -1,10 +1,20 @@
----
+<%*
+const raw = tp.file.content ?? "";
+if (raw.includes("auto_generated: true")) {
+  tR = raw;
+} else {
+  const date = tp.date.now("YYYY-MM-DD");
+  const title = tp.file.title;
+  tR = `---
 type: decision
-created: {{date}}
+status: draft
+created: ${date}
+linked_task:
+suggested_model:
 tags: [decision, log]
 ---
 
-# Decision - {{date}}
+# Decision - ${title}
 
 ## Context
 -
@@ -20,3 +30,6 @@ tags: [decision, log]
 
 ## Follow-up
 - [ ]
+`;
+}
+%>

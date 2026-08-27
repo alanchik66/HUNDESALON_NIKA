@@ -14,3 +14,8 @@
 - Desktop and mobile layout integrity
 - Evidence of live verification after deploy
 
+## Codex workflow
+- [[Codex_Model_Routing]]
+- [[01_Projects/HUNDESALON_NIKA/Tasks/README]]
+- Keep model choice aligned with task shape.
+- Mirror durable routing changes into [[04_Decisions/2026-08-27-Model_Routing_and_Obsidian_Workflow]].

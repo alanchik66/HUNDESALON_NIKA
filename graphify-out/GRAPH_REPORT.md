@@ -1,16 +1,16 @@
-# Graph Report - HUNDESALON_NIKA  (2026-08-24)
+# Graph Report - HUNDESALON_NIKA  (2026-08-25)
 
 ## Corpus Check
-- 356 files · ~548,588 words
+- 359 files · ~551,104 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 11427 nodes · 29318 edges · 411 communities (354 shown, 57 thin omitted)
-- Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 2849 edges (avg confidence: 0.59)
+- 11452 nodes · 29459 edges · 413 communities (350 shown, 63 thin omitted)
+- Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 2890 edges (avg confidence: 0.59)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d6c594cf`
+- Built from commit: `f1b36c9d`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -171,6 +171,7 @@
 - optimize-webstorm-memory.ps1
 - site-crawl-live.mjs
 - assertAllowedOrigin
+- bing-finish-manual.mjs
 - gsc-browser-automate.js
 - http-security.js
 - lg-task.js
@@ -205,7 +206,7 @@
 - Index
 - HUNDESALON_NIKA Knowledge Vault
 - Operations
-- mobile-runtime-audit.mjs
+- jn
 - 00_Inbox/README.md
 - 02_Areas/README.md
 - 03_Resources/README.md
@@ -227,7 +228,7 @@
 - git-push-all.mjs
 - image-server.mjs
 - patch-weather-search.mjs
-- price-list-smoke.mjs
+- makeNameTable
 - .push
 - restore-weather-clouds-original.mjs
 - rewrite-meta-clean.mjs
@@ -237,6 +238,7 @@
 - getBoundingClientRect
 - d
 - popperGenerator$1
+- contact-map.js
 - r
 - backlinks-pipeline.mjs
 - subscribe
@@ -293,7 +295,7 @@
 - argument
 - subscribeToVault
 - LocalStorageCache
-- k
+- HUNDESALON_NIKA Makler
 - patch-weather-resilience.mjs
 - patch-weather-stars-header.mjs
 - patch-weather-stars-layer.mjs
@@ -301,9 +303,9 @@
 - scale
 - unpatch-weather-resilience.mjs
 - composeScalar
-- isValid
+- Brand_Assets.md
 - Lexer
-- y0
+- loadLocale
 - explainQuery
 - me
 - StencilLibraryManager
@@ -312,20 +314,20 @@
 - Ee
 - app.json
 - CITATION_NAP
-- fromLine
+- InsertMDDialog
 - find
 - ue
 - parseCFFTable
 - isFullToken
 - resolveRulesAuth
-- L$1
+- Operations.md
 - .handleError
 - InsertLinkDialog
 - create_slot$1
 - ExcalidrawExtrasGateway
 - du
 - findCenterOfElement
-- .renderButtons
+- QA
 - toString
 - parsePreset
 - diagramToHTML
@@ -348,47 +350,49 @@
 - blockString
 - SelectedElementActionsMenu
 - obsidian-excalidraw-plugin/manifest.json
-- ._preBuild
+- b$4
 - initClasses
-- jn
+- e$4
 - obsidian-tasks-plugin/manifest.json
 - sn
-- Settings
+- recordList
 - Zone
 - dataview/manifest.json
 - Suggester
 - Ho
 - calendar-beta/manifest.json
 - .toMessage
-- InvalidZone
+- getElementMatrix
 - Success
 - CommandManager
 - encryptStoredAPIKey
 - obsidian-git/manifest.json
 - obsidian-style-settings/manifest.json
 - periodic-notes/manifest.json
-- tinf_uncompress
+- getSandboxedDataUrlSrcDoc
 - instance
-- loadLocale
-- InsertMDDialog
+- booking-email-router/src/index.js
+- Index
 - Minimal/manifest.json
-- defineCSSCompletionSource
+- addName
 - DataviewInlineIOApi
 - EditorHandler
-- filterAttrsToElementValues
+- UniversalInsertFileModal
 - Xo
 - ActionButton
-- addName
+- cssTextToReactStyle
 - FileAndFolderSelectorModal
-- .experimentalFileTypeDisplay
-- cC
-- onLayoutChange
+- PromisePool
+- schema
 - ConfirmationModal
 - ExcalidrawConfig
 - ExcalidrawScene
-- PromisePool
+- EmbeddalbeMDFileCustomDataSettingsComponent
 - Random
 - ScriptInstallPrompt
+- Group
+- YAMLError
+- YAMLParseError
 
 ## God Nodes (most connected - your core abstractions)
 1. `n()` - 250 edges
@@ -403,21 +407,21 @@
 10. `DateTime` - 119 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `sendSendPulseEmail()` --indirect_call--> `email()`  [INFERRED]
-  functions/_lib/platform-integrations.js → workers/booking-email-router/src/index.js
-- `buildGeminiImageEntries()` --indirect_call--> `n()`  [INFERRED]
-  knowledge/.obsidian/plugins/obsidian-excalidraw-plugin/main.js → knowledge/.obsidian/plugins/obsidian-tasks-plugin/main.js
-- `Ob()` --indirect_call--> `wb()`  [INFERRED]
-  knowledge/.obsidian/plugins/obsidian-git/main.js → knowledge/.obsidian/plugins/periodic-notes/main.js
-- `Ob()` --indirect_call--> `xb()`  [INFERRED]
-  knowledge/.obsidian/plugins/obsidian-git/main.js → knowledge/.obsidian/plugins/periodic-notes/main.js
-- `oF()` --indirect_call--> `x0()`  [INFERRED]
-  knowledge/.obsidian/plugins/obsidian-git/main.js → knowledge/.obsidian/plugins/periodic-notes/main.js
+- `initLanguageDropdown()` --indirect_call--> `ms()`  [INFERRED]
+  assets/js/site-shell.js → knowledge/.obsidian/plugins/templater-obsidian/main.js
+- `ensureLeafletScript()` --indirect_call--> `reject()`  [INFERRED]
+  assets/js/contact-map.js → knowledge/.obsidian/plugins/dataview/main.js
+- `enforceHeaderWeatherMenuPlacement()` --indirect_call--> `line()`  [INFERRED]
+  assets/js/site-shell.js → knowledge/.obsidian/plugins/obsidian-excalidraw-plugin/main.js
+- `enforceHeaderWeatherMenuPlacement()` --indirect_call--> `property()`  [INFERRED]
+  assets/js/site-shell.js → knowledge/.obsidian/plugins/obsidian-tasks-plugin/main.js
+- `syncHeaderWeatherOrbOverlay()` --indirect_call--> `overlay()`  [INFERRED]
+  assets/js/site-shell.js → knowledge/.obsidian/plugins/obsidian-excalidraw-plugin/main.js
 
 ## Import Cycles
 - None detected.
 
-## Communities (411 total, 57 thin omitted)
+## Communities (413 total, 63 thin omitted)
 
 ### Community 0 - "scripts"
 Cohesion: 0.01
@@ -436,8 +440,8 @@ Cohesion: 0.05
 Nodes (36): 1. Обновление изображений, 2. Категории, 3. Добавление новых примеров, CSS, HTML (все языковые версии), JavaScript, Lazy loading, 📱 Mobile оптимизация (+28 more)
 
 ### Community 4 - "uia/core.py"
-Cohesion: 0.11
-Nodes (24): bootstrapViaDashboard(), TEMPLATE_URL, extractTokenFromText(), loadPagesDeployCredentials(), loadTokenFile(), PAGES_PERMISSION_KEYS, PAGES_TOKEN_FILE, pagesTokenTemplateUrl() (+16 more)
+Cohesion: 0.06
+Nodes (49): port, port, port, targets, bootstrapViaDashboard(), TEMPLATE_URL, bingPort, ensureBingCdp() (+41 more)
 
 ### Community 5 - "desktop/service.py"
 Cohesion: 0.08
@@ -457,7 +461,7 @@ Nodes (13): Google, Google Apps Script gateway, HUNDESALON NIKA Full-Stack Upgra
 
 ### Community 9 - "__main__.py"
 Cohesion: 0.00
-Nodes (361): a$7(), allwaysPassedUseAttrs, anyModifierKeysPressed(), applyArabicRequireLigatures(), applyLatinLigatures(), atRules, attrHandlers, binary (+353 more)
+Nodes (363): a$7(), allwaysPassedUseAttrs, anyModifierKeysPressed(), applyArabicRequireLigatures(), applyLatinLigatures(), areValidElements(), atRules, attrHandlers (+355 more)
 
 ### Community 10 - "Desktop"
 Cohesion: 0.17
@@ -484,12 +488,12 @@ Cohesion: 0.06
 Nodes (48): env, browser, es2021, node, extends, globals, console, document (+40 more)
 
 ### Community 16 - "telegram-webhook.js"
-Cohesion: 0.12
-Nodes (49): answerTelegramCallbackQuery(), appendGoogleSheetRow(), base64Encode(), base64UrlEncode(), callGoogleAppsScriptGateway(), cleanTelegramText(), cleanText(), createDriveResumableUploadSession() (+41 more)
+Cohesion: 0.13
+Nodes (46): appendGoogleSheetRow(), base64Encode(), base64UrlEncode(), callGoogleAppsScriptGateway(), createDriveResumableUploadSession(), createGoogleCalendarEvent(), fetchWithTimeout(), FORM_HEADERS (+38 more)
 
 ### Community 17 - "extend-meta-descriptions-config.mjs"
 Cohesion: 0.01
-Nodes (247): $4(), _8(), a2(), A6(), activateCodeMirrorExtensions(), activateFeature(), activateLineAuthoring(), addEventListener() (+239 more)
+Nodes (236): $4(), _8(), a2(), A6(), activateCodeMirrorExtensions(), activateFeature(), activateLineAuthoring(), adaptTextForFakeCommit() (+228 more)
 
 ### Community 18 - "Return `InvokePattern` if it supports the pattern else None(Conditional support"
 Cohesion: 0.18
@@ -509,7 +513,7 @@ Nodes (7): 3a. Покупка, 3b. Отправка формы, Регистра
 
 ### Community 22 - "browser-cdp.mjs"
 Cohesion: 0.17
-Nodes (16): buildHeaderWeatherDistrictLabel(), fetchHeaderWeatherAstroDay(), fetchHeaderWeatherReverseGeoMeta(), getHeaderWeatherBrowserTimeZone(), getHeaderWeatherDateInTimeZone(), getHeaderWeatherLanguageFallbacks(), getHeaderWeatherLocationLabel(), isHeaderWeatherTechnicalLocationLabel() (+8 more)
+Nodes (16): buildHeaderWeatherDistrictLabel(), fetchHeaderWeatherAstroDay(), fetchHeaderWeatherReverseGeoMeta(), getHeaderWeatherBrowserTimeZone(), getHeaderWeatherDateInTimeZone(), getHeaderWeatherLanguageFallbacks(), getHeaderWeatherLocationLabel(), getHeaderWeatherLocationStatusCopy() (+8 more)
 
 ### Community 23 - "TextRange"
 Cohesion: 0.25
@@ -528,8 +532,8 @@ Cohesion: 0.25
 Nodes (6): Dependency Security, Reporting a Vulnerability, Secrets, Security Policy, Supported Surface, Security Policy Location #
 
 ### Community 27 - "site-shell.js"
-Cohesion: 0.15
-Nodes (22): applyHeaderWeatherAutoGeoLocation(), applyHeaderWeatherLocationSearchCopy(), emitHeaderWeatherEvent(), formatHeaderWeatherCityDistrictDisplayLabel(), getHeaderWeatherDistanceMeters(), getHeaderWeatherHost(), getHeaderWeatherLocationStatusCopy(), initLanguageDropdown() (+14 more)
+Cohesion: 0.14
+Nodes (19): buildLanguageUrl(), createHeaderMarkup(), extractSupportedLang(), fitHomeLabelToLogo(), getHeaderWeatherHost(), getLaunchLanguageRedirectUrl(), getLocalizedRoute(), getThemeToggleLabel() (+11 more)
 
 ### Community 28 - "rules"
 Cohesion: 0.05
@@ -537,7 +541,7 @@ Nodes (37): extends, ignoreFiles, rules, alpha-value-notation, at-rule-no-unknow
 
 ### Community 29 - "bing-sitescan.mjs"
 Cohesion: 0.01
-Nodes (255): RFC-1123, RFC-2616, RFC-2822, accurateMatrix, add_css(), add_css$1(), add_css$2(), add_css$3() (+247 more)
+Nodes (273): RFC-1123, RFC-2616, RFC-2822, instance$2$1(), A$2(), accurateMatrix, add_css(), add_css$1() (+265 more)
 
 ### Community 30 - "input.py"
 Cohesion: 0.29
@@ -549,11 +553,11 @@ Nodes (6): After every production deploy, API token for automated purge, Cloudfl
 
 ### Community 32 - "before-after.js"
 Cohesion: 0.12
-Nodes (16): beforeAfterCardBlueprints, beforeAfterCardFolder(), BeforeAfterGallery, beforeAfterItems, beforeAfterLabelsByLang, BeforeAfterSlider, buildBeforeAfterItems(), cardCategories (+8 more)
+Nodes (17): beforeAfterCardBlueprints, beforeAfterCardFolder(), BeforeAfterGallery, beforeAfterItems, beforeAfterLabelsByLang, BeforeAfterSlider, buildBeforeAfterItems(), cardCategories (+9 more)
 
 ### Community 33 - "sleep"
-Cohesion: 0.25
-Nodes (20): connect(), ensureEdge(), evaluate(), getEmailDomain(), getJson(), getTarget(), hasAllowedHost(), isEmailOnDomain() (+12 more)
+Cohesion: 0.26
+Nodes (19): ensureEdge(), evaluate(), getEmailDomain(), getJson(), getTarget(), hasAllowedHost(), isEmailOnDomain(), mailFullSetup() (+11 more)
 
 ### Community 34 - "get_claude_data_dir"
 Cohesion: 0.29
@@ -565,11 +569,11 @@ Nodes (5): Actions in Google Ads, Deploy note, Google Ads — website conversion
 
 ### Community 36 - "getEnvValue"
 Cohesion: 0.01
-Nodes (143): AC(), addPostProcessor(), addPreset(), addRow(), addRowIfNew(), allSupportedDelimiters(), areTagsShown(), AY() (+135 more)
+Nodes (167): AC(), addPostProcessor(), addPreset(), addRow(), addRowIfNew(), allLinesIdentical(), allPropertyNames(), allPropertyNamesSorted() (+159 more)
 
 ### Community 37 - "draft-service.js"
-Cohesion: 0.08
-Nodes (50): forwardJson(), getBearerToken(), getEnvVarFromContext(), getInternalOrigin(), getRuntimeEnvs(), isAuthorizedBySharedSecret(), onRequest(), AI_PROVIDER_POLICY (+42 more)
+Cohesion: 0.09
+Nodes (42): AI_PROVIDER_POLICY, constantTimeEqual(), getBearerToken(), getContextEnvVar(), hasAiServiceAuth(), parseBoundedTokens(), resolveApprovedModel(), runtimeEnvs() (+34 more)
 
 ### Community 38 - "calibrate-token-economy.mjs"
 Cohesion: 0.29
@@ -600,16 +604,16 @@ Cohesion: 0.33
 Nodes (5): Created, GBP HUNDESALON_NIKA — ryndenko1982, Notes, Profile tabs filled (2026-07-19), Verify (deferred — after firm launch)
 
 ### Community 45 - "syncHeaderWeatherUnifiedReadings"
-Cohesion: 0.12
-Nodes (29): applyHeaderWeatherConditionTypography(), applyHeaderWeatherDropdownConditionTypography(), applyHeaderWeatherDropdownReadings(), applyHeaderWeatherPreviewReadings(), buildHeaderWeatherConditionLineTexts(), buildHeaderWeatherReadingsFromMeta(), convertHeaderWeatherHpaToMmHg(), ensureHeaderWeatherCollapsedFeelsFallback() (+21 more)
+Cohesion: 0.15
+Nodes (24): applyHeaderWeatherConditionTypography(), applyHeaderWeatherDropdownConditionTypography(), applyHeaderWeatherDropdownReadings(), applyHeaderWeatherPreviewReadings(), buildHeaderWeatherConditionLineTexts(), buildHeaderWeatherReadingsFromMeta(), convertHeaderWeatherHpaToMmHg(), extractHeaderWeatherReadingsFromHost() (+16 more)
 
 ### Community 46 - "bing-finish-remaining.mjs"
-Cohesion: 0.08
-Nodes (22): out, port, report, root, siteQ, summary, out, port (+14 more)
+Cohesion: 0.05
+Nodes (39): port, report, root, siteQ, out, port, report, root (+31 more)
 
 ### Community 47 - "package.json"
-Cohesion: 0.09
-Nodes (22): allowScripts, esbuild@0.28.1, sharp@0.34.5, workerd@1.20260617.1, workerd@1.20260801.1, author, browserslist, description (+14 more)
+Cohesion: 0.07
+Nodes (27): allowScripts, esbuild@0.28.1, sharp@0.34.5, workerd@1.20260617.1, workerd@1.20260801.1, author, browserslist, description (+19 more)
 
 ### Community 48 - "RangeValuePattern"
 Cohesion: 0.53
@@ -621,15 +625,15 @@ Nodes (4): Active list, Google Ads — account negative keywords (HUNDESALON NIK
 
 ### Community 50 - "enforceHeaderWeatherMenuPlacement"
 Cohesion: 0.12
-Nodes (24): alignHeaderWeatherFeelsLikeRow(), applyHeaderWeatherFeelsLikePreview(), applyHeaderWeatherFeelsReferencePresetLayout(), buildHeaderWeatherCelsiusUnitMarkup(), enforceHeaderWeatherMenuPlacement(), ensureHeaderWeatherInfoPanel(), ensureHeaderWeatherMenuPlacementLock(), ensureHeaderWeatherMenuToggleAnchor() (+16 more)
+Nodes (26): alignHeaderWeatherFeelsLikeRow(), applyHeaderWeatherFeelsLikePreview(), applyHeaderWeatherFeelsReferencePresetLayout(), applyHeaderWeatherLocationSearchCopy(), buildHeaderWeatherCelsiusUnitMarkup(), enforceHeaderWeatherMenuPlacement(), ensureHeaderWeatherCollapsedFeelsFallback(), ensureHeaderWeatherInfoPanel() (+18 more)
 
 ### Community 51 - "syncHeaderWeatherOrbOverlay"
-Cohesion: 0.12
-Nodes (29): applyHeaderWeatherOrbAtmosphere(), applyHeaderWeatherOrbCrossfade(), applyHeaderWeatherOrbLayout(), applyHeaderWeatherTextReadability(), bindHeaderWeatherLayoutObserver(), clampHeaderWeatherValue(), createHeaderWeatherOrbOverlay(), ensureHeaderWeatherDropdownStarsBackLayer() (+21 more)
+Cohesion: 0.15
+Nodes (22): applyHeaderWeatherOrbAtmosphere(), applyHeaderWeatherOrbCrossfade(), applyHeaderWeatherOrbLayout(), applyHeaderWeatherTextReadability(), bindHeaderWeatherLayoutObserver(), clampHeaderWeatherValue(), createHeaderWeatherOrbOverlay(), enforceHeaderWeatherToggleArrow() (+14 more)
 
 ### Community 52 - "setup-google-platform.mjs"
-Cohesion: 0.13
-Nodes (28): ADC_PATH, CLIENT_REGISTRY_HEADERS, compactSecrets(), createGoogleResources(), DEFAULT_ADMIN_EMAILS, ensureClientRegistrySheet(), exchangeCode(), GOOGLE_SCOPES (+20 more)
+Cohesion: 0.15
+Nodes (26): ADC_PATH, CLIENT_REGISTRY_HEADERS, compactSecrets(), createGoogleResources(), DEFAULT_ADMIN_EMAILS, ensureClientRegistrySheet(), exchangeCode(), GOOGLE_SCOPES (+18 more)
 
 ### Community 53 - "Refer https://docs.microsoft.com/en-us/windows/win32/api/uiautomationclient/nn-u"
 Cohesion: 0.40
@@ -640,8 +644,8 @@ Cohesion: 0.40
 Nodes (5): 1. Создание конверсии "Запись на услугу", 2. Дополнительные конверсии (клик по телефону), Клик по WhatsApp:, Клик по телефону:, СРОЧНО: Настройка конверсий в Google Ads
 
 ### Community 55 - "bing-force-clean.mjs"
-Cohesion: 0.29
-Nodes (12): cleanupGmail(), evalPage(), getJson(), getPageTarget(), gmailPort, hasAllowedHost(), mailPort, navigate() (+4 more)
+Cohesion: 0.24
+Nodes (13): s2(), cleanupGmail(), evalPage(), getJson(), getPageTarget(), gmailPort, hasAllowedHost(), mailPort (+5 more)
 
 ### Community 56 - "bing-sitescan-results.mjs"
 Cohesion: 0.14
@@ -653,7 +657,7 @@ Nodes (5): Call Extensions (Звонки):, Callout Extensions (Фразы):, Lo
 
 ### Community 58 - "cf-api-token.mjs"
 Cohesion: 0.01
-Nodes (122): action_destroyer(), activeFile, allDragTargets, attr(), attr$1(), backlinksSource, binding_callbacks, binding_callbacks$1 (+114 more)
+Nodes (135): action_destroyer(), activeFile, allDragTargets, assign$1(), attr(), attr$1(), backlinksSource, binding_callbacks (+127 more)
 
 ### Community 59 - "TopLevel"
 Cohesion: 0.40
@@ -665,15 +669,15 @@ Nodes (21): @axe-core/playwright, eslint, htmlhint, leaflet, markdownlint-cli2, 
 
 ### Community 61 - "patterns.py"
 Cohesion: 0.02
-Nodes (51): bestBy(), computeOrdinal(), CsvCache, DateTime, dateTimeFromMatches(), dayOfWeek(), daysInYear(), diffRelative() (+43 more)
+Nodes (57): compareValue(), computeOrdinal(), CsvCache, DateTime, dateTimeFromMatches(), dayOfWeek(), daysInYear(), extractASCII() (+49 more)
 
 ### Community 62 - "build-moon-alpha-webm.mjs"
 Cohesion: 0.09
 Nodes (18): bitrateK, buildFallbackMp4(), buildWebm(), DURATION_META_OUT, FALLBACK_MP4_OUT, ffmpeg, LEGACY_FILES, moonDir (+10 more)
 
 ### Community 63 - "cloudflare-auth.mjs"
-Cohesion: 0.06
-Nodes (71): enableContentScan(), getContentScanStatus(), getCrawlerHintsStatus(), main(), parseArgs(), resolveAuth(), setCrawlerHints(), resolveAuth() (+63 more)
+Cohesion: 0.05
+Nodes (77): enableContentScan(), getContentScanStatus(), getCrawlerHintsStatus(), main(), parseArgs(), resolveAuth(), setCrawlerHints(), addRule() (+69 more)
 
 ### Community 64 - "server.js"
 Cohesion: 0.19
@@ -693,15 +697,15 @@ Nodes (5): 5. РАСШИРЕНИЯ ОБЪЯВЛЕНИЙ, Call Extensions (Зво
 
 ### Community 68 - "launchTrackedBrowser"
 Cohesion: 0.03
-Nodes (35): addYouTubeThumbnail(), AIModelConfigModal, AIProviderProfileModal, AIUsageModal, confirmAndCreateFolder(), createSliderWithText(), displayFontMessage(), EmbeddableSettings (+27 more)
+Nodes (41): addYouTubeThumbnail(), AIModelConfigModal, AIProviderProfileModal, AIUsageModal, cloneKnownAIProviderProfiles(), cloneModelConfigs(), confirmAndCreateFolder(), createSliderWithText() (+33 more)
 
 ### Community 69 - "_DxcamBackend"
 Cohesion: 0.40
 Nodes (5): 6. ПОСАДОЧНЫЕ СТРАНИЦЫ, Для английских запросов:, Для немецких запросов:, Для русских запросов:, Основная:
 
 ### Community 70 - "resolveHeaderWeatherLocationMeta"
-Cohesion: 0.10
-Nodes (41): applyHeaderWeatherEqualMetricSpacing(), bindHeaderWeatherScrollContainment(), buildLanguageUrl(), clearHeaderWeatherOrbCanvas(), createHeaderMarkup(), drawHeaderWeatherOrbFrame(), extractSupportedLang(), fetchHeaderWeatherSourceTimeMs() (+33 more)
+Cohesion: 0.12
+Nodes (32): applyHeaderWeatherAutoGeoLocation(), applyHeaderWeatherEqualMetricSpacing(), bindHeaderWeatherScrollContainment(), clearHeaderWeatherOrbCanvas(), drawHeaderWeatherOrbFrame(), fetchHeaderWeatherSourceTimeMs(), getHeaderWeatherDistanceMeters(), getHeaderWeatherScrollableDropdownContainer() (+24 more)
 
 ### Community 71 - "sync-service-gateway-from-devvars.mjs"
 Cohesion: 0.13
@@ -716,12 +720,12 @@ Cohesion: 0.60
 Nodes (3): Build-Job(), Format-CommandArgs(), Invoke-Ffmpeg()
 
 ### Community 75 - "bindHeaderWeatherState"
-Cohesion: 0.20
-Nodes (20): applyHeaderWeatherTransparency(), bindHeaderWeatherDropdownScrollState(), bindHeaderWeatherOutsideDismiss(), bindHeaderWeatherReadingsObserver(), bindHeaderWeatherState(), enforceHeaderWeatherToggleArrow(), enhanceHeaderWeatherCloudRenderer(), ensureHeaderWeatherToggleArrowBase() (+12 more)
+Cohesion: 0.14
+Nodes (30): applyHeaderWeatherTransparency(), bindHeaderWeatherDropdownScrollState(), bindHeaderWeatherOutsideDismiss(), bindHeaderWeatherReadingsObserver(), bindHeaderWeatherState(), emitHeaderWeatherEvent(), enhanceHeaderWeatherCloudRenderer(), ensureHeaderWeatherMenuPlacementLock() (+22 more)
 
 ### Community 76 - "_middleware.js"
-Cohesion: 0.24
-Nodes (15): appendVary(), collapseWhitespace(), COUNTRY_LANGUAGE_MAP, decodeHtml(), extractTagText(), htmlToMarkdown(), inlineText(), markdownResponse() (+7 more)
+Cohesion: 0.22
+Nodes (16): resolvePageContext(), appendVary(), collapseWhitespace(), COUNTRY_LANGUAGE_MAP, decodeHtml(), extractTagText(), htmlToMarkdown(), inlineText() (+8 more)
 
 ### Community 77 - "seo-generate.js"
 Cohesion: 0.60
@@ -732,8 +736,8 @@ Cohesion: 0.05
 Nodes (40): BRAND_PROFILES, NAP, SAME_AS, LOCAL_DIRECTORIES, q, q2, COPY, root (+32 more)
 
 ### Community 79 - "google-search-console-audit.js"
-Cohesion: 0.13
-Nodes (14): checkRedirect(), checkStatus(), fail(), failures, fetchText(), indexUrls, parseJsonLd(), report (+6 more)
+Cohesion: 0.12
+Nodes (16): line(), checkRedirect(), checkStatus(), fail(), failures, fetchText(), groupBlocksWholeSite(), indexUrls (+8 more)
 
 ### Community 80 - "test_app_tool.py"
 Cohesion: 0.50
@@ -749,11 +753,11 @@ Nodes (4): Объявление 1 (Немецкое):, Объявление 2 (�
 
 ### Community 83 - "remove_private_use_chars"
 Cohesion: 0.03
-Nodes (131): a(), a$9(), applyArabicPresentationForms(), applyStyles(), areValidElements(), around1(), attachOutsideHandlers(), b() (+123 more)
+Nodes (108): a(), a$3(), a$9(), applyArabicPresentationForms(), applyDefaultSvgTheme(), applyStyles(), around1(), attachOutsideHandlers() (+100 more)
 
 ### Community 84 - "WindowPattern"
-Cohesion: 0.33
-Nodes (6): overrides, esbuild, fast-uri, sharp, undici, ws
+Cohesion: 0.11
+Nodes (27): a0(), bP(), c3(), DP(), eR(), exec(), GS(), H5() (+19 more)
 
 ### Community 85 - "test_wait_for_tool.py"
 Cohesion: 0.50
@@ -780,19 +784,19 @@ Cohesion: 0.20
 Nodes (6): HeaderWeatherSunScene, loadTexture(), mountHeaderWeatherSunScene(), SUN_AXIAL_TILT, SUN_START_ANGLE, unmountHeaderWeatherSunScene()
 
 ### Community 91 - "configure-cloudflare-waf-rate-limits.mjs"
-Cohesion: 0.23
-Nodes (15): addRule(), buildCombinedRulePayload(), buildRulePayload(), COMBINED_RULE_LIMIT, createPhaseRuleset(), ENDPOINT_LIMITS, ensureRules(), getPhaseRuleset() (+7 more)
+Cohesion: 0.05
+Nodes (46): addTimezone(), AE(), applyEdits(), BM(), bs(), buildRelative(), C2(), deserialize() (+38 more)
 
 ### Community 92 - "bing-finish-manual.mjs"
-Cohesion: 0.19
-Nodes (9): failures, reports, routes, MIME_TYPES, resolveRequestPath(), startStaticTestServer(), outDir, results (+1 more)
+Cohesion: 0.06
+Nodes (29): filePath(), failures, reports, routes, collectStaleImageScanFiles(), failures, ignoredDirs, indexFiles (+21 more)
 
 ### Community 93 - "indexnow-submit.js"
 Cohesion: 0.13
 Nodes (11): apexList, getSitemapUrls(), isDryRun, key, keyPath, manualListPath, read(), root (+3 more)
 
 ### Community 94 - "loadDevVars"
-Cohesion: 0.06
+Cohesion: 0.07
 Nodes (28): META_DESCRIPTIONS, langs, report, root, rows, BOOST, changed, extendOne() (+20 more)
 
 ### Community 95 - "reorganize-images.mjs"
@@ -805,43 +809,43 @@ Nodes (12): buildBrandHeadBlock(), getLanguage(), indexFiles, logoObject(), norm
 
 ### Community 97 - "local-citations-automate.mjs"
 Cohesion: 0.02
-Nodes (157): ABS(), absolutize(), ADD(), addSegment(), addTerminatorSegment(), ALIGNRP(), AND(), arcToCubicCurves() (+149 more)
+Nodes (151): ABS(), absolutize(), ADD(), addSegment(), addTerminatorSegment(), ALIGNRP(), AND(), arcToCubicCurves() (+143 more)
 
 ### Community 98 - "SendPulse: архитектура HUNDESALON NIKA"
 Cohesion: 0.17
 Nodes (11): Automation 360 и CRM #, DNS и доставляемость #, Events Manager #, Mailing list и переменные #, Production checklist #, SendPulse: архитектура HUNDESALON NIKA #, Telegram-уведомления сайта, Виджеты сайта (+3 more)
 
 ### Community 99 - "Moon assets (header orb)"
-Cohesion: 0.04
-Nodes (63): port, evalPage(), withCdp(), logoUrls, port, report, siteQ, port (+55 more)
+Cohesion: 0.05
+Nodes (40): evalPage(), getEmailDomain(), isEmailOnDomain(), mailPort, siteQ, withCdp(), logoUrls, port (+32 more)
 
 ### Community 100 - "check-project.js"
-Cohesion: 0.14
-Nodes (11): collectStaleImageScanFiles(), failures, ignoredDirs, indexFiles, outdatedCityPattern, requiredFiles, root, staleImagePatterns (+3 more)
+Cohesion: 0.09
+Nodes (31): _accumulate(), _addEntry(), byte(), CE(), chunk(), eof(), fromBuffer(), fromIdx() (+23 more)
 
 ### Community 101 - "11. РЕКОМЕНДАЦИИ ПО КОНТЕНТУ"
 Cohesion: 0.50
 Nodes (4): 1. КОНВЕРСИОННОЕ ОТСЛЕЖИВАНИЕ (СНАЧАЛА САЙТ), Код отслеживания:, Отслеживание записи на услугу:, Что отслеживаем:
 
 ### Community 102 - "SECURITY.md"
-Cohesion: 0.04
-Nodes (157): g(), T(), A(), aB(), acquire(), AE(), aL(), apply() (+149 more)
+Cohesion: 0.05
+Nodes (71): T(), ai(), attributeChangedCallback(), b0(), beforeSaveSettings(), bf(), bu(), calcSigns() (+63 more)
 
 ### Community 103 - "expand-thin-pages.mjs"
-Cohesion: 0.03
-Nodes (28): arrayToMap(), deleteAppStateKeys(), errorlog(), ExcalidrawView, exportImageToFile(), getAppStateStrokeWidthEntry(), getBoundTextElementId(), _getContainerElement() (+20 more)
+Cohesion: 0.02
+Nodes (35): arrayToMap(), calculateUIModeValue(), deleteAppStateKeys(), download(), ExcalidrawView, exportImageToFile(), getBoundTextElementId(), _getContainerElement() (+27 more)
 
 ### Community 104 - "bing-professional-setup.mjs"
-Cohesion: 0.03
-Nodes (143): $3(), _addEntry(), AO(), Be(), bn(), bO(), c4(), Cb() (+135 more)
+Cohesion: 0.06
+Nodes (52): _2(), $3(), b2(), E3(), Ek(), Ew(), f3(), F4() (+44 more)
 
 ### Community 105 - "seo-generate.js"
 Cohesion: 0.04
-Nodes (143): s(), createAIChatSession(), A8(), aA(), aP(), Bb(), blame(), branchInfo() (+135 more)
+Nodes (143): s(), createAIChatSession(), addAskPassScriptToExclude(), addFileToGitignore(), addTask(), askpass(), Bb(), branchInfo() (+135 more)
 
 ### Community 106 - "discover-google-maps.mjs"
-Cohesion: 0.05
-Nodes (58): addBackOfTheNoteCard(), addFiles(), addTextWithOEmbed(), ANIMATED_IMAGE_TYPES, captureScreenshot(), carveOutImage(), carveOutPDF(), cleanBlockRef() (+50 more)
+Cohesion: 0.03
+Nodes (58): addBackOfTheNoteCard(), addTextWithOEmbed(), ANIMATED_IMAGE_TYPES, captureScreenshot(), carveOutImage(), carveOutPDF(), cloneElement(), commitElements() (+50 more)
 
 ### Community 107 - "jsonResponse"
 Cohesion: 0.50
@@ -853,23 +857,23 @@ Nodes (4): 4. ТЕКСТЫ ОБЪЯВЛЕНИЙ, Объявление 1 (Осн�
 
 ### Community 109 - "sendmail.js"
 Cohesion: 0.09
-Nodes (38): siteNotificationsEnabled(), addLocalMinutes(), ADMIN_EMAIL_COPY, BOOKING_BEHAVIOUR_EXTRA_MINUTES, BOOKING_BEHAVIOURS, BOOKING_CLIENT_TYPES, BOOKING_COAT_CONDITIONS, BOOKING_COAT_EXTRA_MINUTES (+30 more)
+Nodes (37): siteNotificationsEnabled(), addLocalMinutes(), ADMIN_EMAIL_COPY, BOOKING_BEHAVIOUR_EXTRA_MINUTES, BOOKING_BEHAVIOURS, BOOKING_CLIENT_TYPES, BOOKING_COAT_CONDITIONS, BOOKING_COAT_EXTRA_MINUTES (+29 more)
 
 ### Community 110 - "http-security.js"
 Cohesion: 0.02
-Nodes (48): e4(), "src/lib/tasks/diff-name-status.ts"(), bC(), bg(), cf(), dd(), em(), fC() (+40 more)
+Nodes (49): e4(), "src/lib/tasks/diff-name-status.ts"(), bC(), bg(), cC(), cf(), em(), fC() (+41 more)
 
 ### Community 111 - "strip-static-shell.mjs"
 Cohesion: 0.22
 Nodes (13): failures, files, findHeaderStart(), findShellEnd(), findShellStart(), isMinimalShell(), langs, listLocalizedHtmlFiles() (+5 more)
 
 ### Community 112 - "activeContext.md"
-Cohesion: 0.04
-Nodes (79): a(), A$1(), add_render_callback(), b(), BinaryOpHandler, blank_object(), c(), captureRaw() (+71 more)
+Cohesion: 0.05
+Nodes (63): a(), A$1(), b(), c(), captureRaw(), combineExtractors(), create_component(), createBinaryParser() (+55 more)
 
 ### Community 113 - "decisionLog.md"
 Cohesion: 0.03
-Nodes (66): addCommentBefore(), addMergeToJSMap(), addPairToJSMap(), ALIAS, anchorIsValid(), anchorNames(), asItemIndex(), assertCollection() (+58 more)
+Nodes (65): variable(), addCommentBefore(), addMergeToJSMap(), addPairToJSMap(), ALIAS, anchorIsValid(), anchorNames(), asItemIndex() (+57 more)
 
 ### Community 114 - "productContext.md"
 Cohesion: 0.50
@@ -885,15 +889,15 @@ Nodes (4): checks, localeCopy, locales, outDir
 
 ### Community 117 - "cloudflareApi"
 Cohesion: 0.03
-Nodes (68): addFilterToForeignObjects(), addSVGToImgSrc(), checkVersionMismatch(), cloneElement$1(), convertSVGStringToElement(), createFileAndAwaitMetacacheUpdate(), createImageDiv(), createImgElement() (+60 more)
+Nodes (69): addFilterToForeignObjects(), addSVGToImgSrc(), changeThemeOfExcalidrawMD(), checkVersionMismatch(), compress(), contains(), convertSVGStringToElement(), createFileAndAwaitMetacacheUpdate() (+61 more)
 
 ### Community 118 - "repository"
 Cohesion: 0.50
 Nodes (4): 9. БИД СТРАТЕГИЯ, Начальная стадия (первые 2 недели):, После сбора данных (через 2 недели):, Продвинутая стадия (через месяц):
 
 ### Community 119 - "bing-webmaster-complete.mjs"
-Cohesion: 0.07
-Nodes (27): port, report, root, siteQ, listPath, matchesOrigin(), port, prioritizeForBingSubmit() (+19 more)
+Cohesion: 0.18
+Nodes (10): listPath, matchesOrigin(), port, prioritizeForBingSubmit(), priorityInspect, report, root, siteQ (+2 more)
 
 ### Community 120 - "build-production.js"
 Cohesion: 0.10
@@ -905,7 +909,7 @@ Nodes (9): collectHtmlFiles(), failures, htmlRoots, ignoredDirs, resolveLocalRef
 
 ### Community 122 - "bing-robots-tester.mjs"
 Cohesion: 0.02
-Nodes (46): buildRegex(), eraForDateTime(), expandMacroTokens(), explainFromTokens(), extractIANAZone(), fixListRegex(), formatOptsToTokens(), formatRelativeTime() (+38 more)
+Nodes (48): buildRegex(), digitRegex(), eraForDateTime(), escapeToken(), expandMacroTokens(), explainFromTokens(), extractIANAZone(), fixListRegex() (+40 more)
 
 ### Community 123 - "bing-performance-setup.mjs"
 Cohesion: 0.13
@@ -924,8 +928,8 @@ Cohesion: 0.21
 Nodes (6): enhanceSiteSelect(), initSiteSelects(), positionTouchPoint(), refreshSiteSelect(), startTouchLoop(), tickTouches()
 
 ### Community 127 - "getHeaderWeatherNowMs"
-Cohesion: 0.36
-Nodes (8): buildHeaderWeatherMetaText(), formatHeaderWeatherLiveTime(), formatHeaderWeatherLiveWeekday(), getHeaderWeatherKnownWeekdayTokens(), resolveHeaderWeatherDateLocale(), rewriteHeaderWeatherTimeText(), stripHeaderWeatherWeekdayTokens(), syncHeaderWeatherLiveClock()
+Cohesion: 0.15
+Nodes (20): buildHeaderWeatherMetaText(), fetchHeaderWeatherCurrent(), formatHeaderWeatherLiveTime(), formatHeaderWeatherLiveWeekday(), getHeaderWeatherFallbackOrbKind(), getHeaderWeatherFallbackOrbProgress(), getHeaderWeatherHour(), getHeaderWeatherKnownWeekdayTokens() (+12 more)
 
 ### Community 128 - "google-gateway/package.json"
 Cohesion: 0.17
@@ -936,8 +940,8 @@ Cohesion: 0.67
 Nodes (3): 8. РАСПИСАНИЕ ПОКАЗОВ, Время показов:, Настройка:
 
 ### Community 130 - "bing-index-all-site.mjs"
-Cohesion: 0.03
-Nodes (54): alphaTo(), appendMarkdownBottomSpacer(), applyReviver(), applyToolsPanelStyle(), checkExcalidrawVersion(), checkScriptUpdates(), clearToolsPanelDynamicStyle(), Collection (+46 more)
+Cohesion: 0.10
+Nodes (17): buildInlineFields(), extractInlineFields(), extractSpecialTaskFields(), extractSubtags(), findClosing(), findSeparator(), findSpecificInlineField(), getExtension() (+9 more)
 
 ### Community 131 - "create-full-backup.mjs"
 Cohesion: 0.17
@@ -948,28 +952,28 @@ Cohesion: 0.26
 Nodes (10): clickByText(), DOWNLOADS, ensureDesktopClient(), exchangeCode(), GOOGLE_SCOPES, latestOAuthClientJson(), main(), readOAuthClient() (+2 more)
 
 ### Community 133 - "sendpulse-webhook.js"
-Cohesion: 0.20
-Nodes (17): onRequest(), jsonResponse(), hasValidPetPhotoSignature(), isAllowedPetPhotoType(), PET_PHOTO_ALLOWED_TYPES, petPhotoTooLarge(), getEventId(), getEventType() (+9 more)
+Cohesion: 0.10
+Nodes (42): onRequest(), isWithinBookingHorizon(), normalizeBusyIntervals(), normalizeDate(), onRequestGet(), forwardJson(), getBearerToken(), getEnvVarFromContext() (+34 more)
 
 ### Community 135 - "Moon assets (header orb)"
-Cohesion: 0.13
-Nodes (24): AUTO_REPLY_COPY, bookingUrl(), buildActionMarkup(), buildAutoReply(), buildClientReply(), buildLanguageMarkup(), buildMenuMarkup(), buildSupportNotification() (+16 more)
+Cohesion: 0.09
+Nodes (35): answerTelegramCallbackQuery(), cleanTelegramText(), cleanText(), getEnvList(), sendTelegramMessage(), COPY, DEFAULT_ADMIN_EMAILS, isValidEmail() (+27 more)
 
 ### Community 136 - "booking-pet-profile-smoke.mjs"
 Cohesion: 0.40
 Nodes (3): expected, locales, results
 
 ### Community 137 - "payment.js"
-Cohesion: 0.05
-Nodes (21): containsReservedMarkdownImageMarker(), deleteMarkdownImageSource(), duplicateLocalMarkdownImageElement(), getMarkdownImageCustomData(), getMarkdownImageRenderSettings(), getMarkdownImageSource(), handleMarkdownImageEditorSelection(), insertMarkdownImage() (+13 more)
+Cohesion: 0.06
+Nodes (13): containsReservedMarkdownImageMarker(), deleteMarkdownImageSource(), getMarkdownImageRenderSettings(), getMarkdownImageSource(), handleMarkdownImageEditorSelection(), MarkdownFragmentView, MarkdownImageEditorController, openMarkdownImageEditor() (+5 more)
 
 ### Community 138 - "Rect"
 Cohesion: 0.03
-Nodes (23): adjustTime(), asNumber(), clone$1(), current(), dayDiff(), diff(), Duration, durationToMillis() (+15 more)
+Nodes (30): adjustTime(), asNumber(), bestBy(), bind(), clone$1(), current(), dayDiff(), diff() (+22 more)
 
 ### Community 139 - "open-citation-registrations.mjs"
-Cohesion: 0.03
-Nodes (25): emulateKeysForLinkClick(), ensureActiveScriptSettingsObject(), errorMessage(), estimateLineBound(), ExcalidrawAutomate, getAllNestedExcalidrawFiles(), getChangedTopLevelDependencyFileIDs(), getEmbeddedFileForImageElment() (+17 more)
+Cohesion: 0.13
+Nodes (5): CalendarView, capitalize(), createConfirmationDialog(), getPeriodicity(), tryToCreatePeriodicNote()
 
 ### Community 140 - "План безопасной модульности CSS"
 Cohesion: 0.50
@@ -977,7 +981,7 @@ Nodes (3): План безопасной модульности CSS, Поряд�
 
 ### Community 141 - "open-cf-unified-token.mjs"
 Cohesion: 0.06
-Nodes (73): _advanceReadiness(), all(), _binStringToArrayBuffer(), callWhenReady(), _checkBlobSupport(), _checkBlobSupportWithoutCaching(), checkIfLocalStorageThrows(), _classCallCheck() (+65 more)
+Nodes (73): ensureLeafletScript(), _advanceReadiness(), all(), _binStringToArrayBuffer(), callWhenReady(), _checkBlobSupport(), _checkBlobSupportWithoutCaching(), checkIfLocalStorageThrows() (+65 more)
 
 ### Community 143 - "repair-service-runtime.ps1"
 Cohesion: 0.20
@@ -988,7 +992,7 @@ Cohesion: 0.18
 Nodes (10): creds, credsPath, gmail, gmailMcpRoot, { google }, keys, keysPath, mcpDir (+2 more)
 
 ### Community 156 - "SelectionPattern2"
-Cohesion: 0.19
+Cohesion: 0.18
 Nodes (14): COPY, isValidEmail(), json(), onRequestPost(), bodyToHtml(), buildBrandedEmail(), escapeHtml(), FOOTER_COPY (+6 more)
 
 ### Community 158 - "tooltip.js"
@@ -1019,29 +1023,29 @@ Nodes (8): Clear-AiAssistantCaches(), Ensure-VmOptions(), Get-DirSizeMb(), Start
 Cohesion: 0.22
 Nodes (5): failed, outPath, report, root, urls
 
-### Community 169 - "assertAllowedOrigin"
-Cohesion: 0.42
-Nodes (7): depositCents(), onRequest(), paymentsOnlineEnabled(), siteOrigin(), stripeForm(), stripeGet(), stripeKey()
+### Community 170 - "bing-finish-manual.mjs"
+Cohesion: 0.33
+Nodes (6): Active work, HUNDESALON_NIKA, Objective, Open links, Project facts, Working rules
 
 ### Community 171 - "gsc-browser-automate.js"
-Cohesion: 0.04
-Nodes (98): O(), $a(), ab(), addClassName(), addDataAttribute(), addInternalClasses(), addNamespaces(), _addQueryRenderChild() (+90 more)
+Cohesion: 0.05
+Nodes (78): dT(), $a(), ab(), addNamespaces(), _addQueryRenderChild(), addResource(), addResourceBundle(), addResources() (+70 more)
 
 ### Community 172 - "http-security.js"
-Cohesion: 0.23
-Nodes (16): isWithinBookingHorizon(), normalizeBusyIntervals(), normalizeDate(), onRequestGet(), applyApiResponseHeaders(), applyCorsResponseHeaders(), getOriginHost(), getPublicReadCorsOrigin() (+8 more)
+Cohesion: 0.12
+Nodes (15): end(), escapeRegex(), EXCALIDRAW_EXTERNAL_GET_LABEL_KEY_SET, mergeMarkdownFiles(), parse(), parse$1(), parseDocument(), parseKernTable() (+7 more)
 
 ### Community 173 - "lg-task.js"
 Cohesion: 0.03
-Nodes (59): _2(), Ac(), aF(), am(), b2(), cm(), cn(), copy() (+51 more)
+Nodes (57): Ac(), aF(), am(), append(), bO(), cm(), cn(), copy() (+49 more)
 
 ### Community 174 - "payment-webhook.js"
 Cohesion: 0.04
-Nodes (92): AI_BASE_URL_SUFFIXES, analyzeAIImage(), applyOutgoingTokenBudget(), buildGenerateAIImageResult(), buildMultipartFormBody(), buildNormalizedMessages(), concatUint8Arrays(), createSyntheticResponse() (+84 more)
+Nodes (97): AI_BASE_URL_SUFFIXES, analyzeAIImage(), applyOutgoingTokenBudget(), buildGenerateAIImageResult(), buildMultipartFormBody(), buildNormalizedMessages(), concatUint8Arrays(), createSyntheticResponse() (+89 more)
 
 ### Community 175 - "info-auto-reply/src/index.js"
-Cohesion: 0.52
-Nodes (6): decodeHeader(), decodeQuotedPrintable(), detectLanguage(), email(), fetchWithTimeout(), sendAutoReply()
+Cohesion: 0.46
+Nodes (7): hex(), decodeHeader(), decodeQuotedPrintable(), detectLanguage(), email(), fetchWithTimeout(), sendAutoReply()
 
 ### Community 176 - "manage-sendpulse-sender.mjs"
 Cohesion: 0.67
@@ -1056,8 +1060,8 @@ Cohesion: 0.25
 Nodes (4): fs, languages, path, workspaceRoot
 
 ### Community 179 - "bing-sitescan-restart.mjs"
-Cohesion: 0.06
-Nodes (45): ensureCdp(), port, report, root, siteQ, verify, cdpReady(), child (+37 more)
+Cohesion: 0.07
+Nodes (41): ensureCdp(), port, report, root, siteQ, verify, cdpReady(), child (+33 more)
 
 ### Community 181 - "Catalog Change - {{date}}"
 Cohesion: 0.29
@@ -1088,12 +1092,8 @@ Cohesion: 0.29
 Nodes (6): assets, onlyNames, results, root, shouldWrite, totals
 
 ### Community 188 - "HUNDESALON_NIKA"
-Cohesion: 0.33
-Nodes (6): Active work, HUNDESALON_NIKA, Objective, Open links, Project facts, Working rules
-
-### Community 189 - "Dashboard"
-Cohesion: 0.33
-Nodes (6): Dashboard, Open tasks, Project surface, Quick context, Recent changes, Today
+Cohesion: 0.07
+Nodes (21): asyncEvalInContext(), canonicalizeVarName(), DataviewInlineJSRenderer, DataviewInlineRenderer, DataviewJSRenderer, DataviewRefreshableRenderer, enumerateChildren(), evalInContext() (+13 more)
 
 ### Community 190 - "image-reader.py"
 Cohesion: 0.48
@@ -1117,103 +1117,95 @@ Nodes (5): Checks, Follow-up, QA Check - {{date}}, Result, What changed
 
 ### Community 195 - "start-edge-bing-debug.mjs"
 Cohesion: 0.03
-Nodes (58): aa(), additional_functions(), as(), Cc(), create_dynamic_templates(), createForm(), dc(), __destroy_into_raw() (+50 more)
+Nodes (57): aa(), ac(), additional_functions(), as(), Cc(), create_dynamic_templates(), dc(), __destroy_into_raw() (+49 more)
 
 ### Community 196 - "Code Map"
-Cohesion: 0.40
-Nodes (5): Code Map, Editing rules, Frontend data, Styling, Workers
+Cohesion: 0.12
+Nodes (14): alphaTo(), applyToolsPanelStyle(), COLOR_NAMES, darkerBy(), getAllWindowDocuments(), getHighlightColor(), getNativeColorValue(), getYouTubeStartAt() (+6 more)
 
 ### Community 197 - "Start Here"
 Cohesion: 0.33
 Nodes (5): Daily workflow, First use, Start Here, What lives here, What stays out
 
 ### Community 198 - "Brand Assets"
-Cohesion: 0.50
-Nodes (4): Approved public identity, Asset rules, Brand Assets, Suggested asset log
+Cohesion: 0.10
+Nodes (4): EventManager, getLink(), setExcalidrawView(), Taskbone
 
 ### Community 199 - "QA"
-Cohesion: 0.50
-Nodes (4): Evidence format, Minimum checks, Pass criteria, QA
+Cohesion: 0.19
+Nodes (11): deployPages(), ensureDeployCredentials(), localWrangler, pagesDeployEnv(), root, runWrangler(), runWranglerQuiet(), wranglerCommand() (+3 more)
 
 ### Community 200 - "Release"
-Cohesion: 0.50
-Nodes (4): Preflight, Release, Release steps, Rollback note
-
-### Community 201 - "Daily Note - 2026-08-24"
-Cohesion: 0.50
-Nodes (4): Daily Note - 2026-08-24, Done, Focus, Next
+Cohesion: 0.19
+Nodes (12): addExportButton(), addResetButton(), clearFilter(), destroy(), filter(), getAllChildrenIds(), me(), removeChildren() (+4 more)
 
 ### Community 202 - "generate-brand-sitemap.mjs"
 Cohesion: 0.33
 Nodes (5): brandPaths, out, root, today, urls
 
 ### Community 203 - "Index"
-Cohesion: 0.50
-Nodes (4): Current, Index, Intake, Templates
+Cohesion: 0.16
+Nodes (7): Inbox, Projects, Decision Log, Decision note format, Conversation decision — {{listing_key}}, Notes, {{title}}
 
 ### Community 204 - "HUNDESALON_NIKA Knowledge Vault"
-Cohesion: 0.29
+Cohesion: 0.33
 Nodes (6): Conventions, Entry points, HUNDESALON_NIKA Knowledge Vault, Operating defaults, Stack, Use
 
-### Community 205 - "Operations"
-Cohesion: 0.67
-Nodes (3): Coverage, Operations, Standard review items
+### Community 206 - "jn"
+Cohesion: 0.33
+Nodes (6): listRefs(), listTags(), nN(), readdirDeep(), sN(), TO()
 
 ### Community 207 - "00_Inbox/README.md"
-Cohesion: 0.04
-Nodes (88): kM(), acquire(), addItemForInstruction(), addItemsForInstructions(), addTaskGroup(), addTaskGroups(), addTitleRow(), allPropertyNames() (+80 more)
+Cohesion: 0.05
+Nodes (64): kM(), acquire(), allStatuses(), applyToStatusRegistry(), cE(), Ch(), configure(), Cx() (+56 more)
 
 ### Community 208 - "02_Areas/README.md"
-Cohesion: 0.04
-Nodes (87): a0(), add(), _addPattern(), ai(), aN(), append(), B5(), bP() (+79 more)
+Cohesion: 0.06
+Nodes (47): _0(), activate(), aP(), c4(), compile(), constructor(), contextmenu(), create() (+39 more)
 
 ### Community 209 - "03_Resources/README.md"
-Cohesion: 0.04
-Nodes (39): bufferToString(), canonicalizeVarName(), Context, DataviewApi, DataviewCalendarRenderer, defaultLinkHandler(), enumerateChildren(), executeCalendar() (+31 more)
+Cohesion: 0.03
+Nodes (31): sources, bufferToString(), Context, DataviewApi, DataviewCalendarRenderer, DataviewInlineApi, DataviewIOApi, defaultLinkHandler() (+23 more)
 
 ### Community 210 - "Monthly/README.md"
-Cohesion: 0.05
-Nodes (86): _accumulate(), addAskPassScriptToExclude(), addFileToGitignore(), addTask(), askpass(), bShouldBeEditable(), byte(), checkRequirements() (+78 more)
+Cohesion: 0.03
+Nodes (211): g(), A(), aB(), acquire(), add(), _addPattern(), AE(), aL() (+203 more)
 
 ### Community 211 - "Weekly/README.md"
-Cohesion: 0.05
-Nodes (81): ag(), aO(), apply(), b(), Bl(), $c(), cD(), Ci() (+73 more)
+Cohesion: 0.04
+Nodes (108): L(), addClassName(), addDataAttribute(), addInternalClasses(), addTooltip(), ag(), aO(), apply() (+100 more)
 
 ### Community 212 - "ToolsPanel"
-Cohesion: 0.05
-Nodes (15): calculateUIModeValue(), DropManager, getExcalidrawViews(), getYouTubeUrl(), internalDragModifierType(), isSHIFT(), isWinALTorMacOPT(), isWinCTRLorMacCMD() (+7 more)
+Cohesion: 0.07
+Nodes (12): clsx(), getAppStateStrokeWidthEntry(), getFreedrawStrokeWidthByKey(), getYouTubeUrl(), isWinALTorMacOPT(), ObsidianMenu, penIcon(), r$d() (+4 more)
 
 ### Community 213 - "y$1"
 Cohesion: 0.05
-Nodes (44): asyncTryOrPropagate(), createFixedListView(), createFixedTableView(), createFixedTaskView(), createListView(), createTableView(), createTaskView(), currentLocale() (+36 more)
+Nodes (46): asyncTryOrPropagate(), B$2(), bindAll(), chainOpt(), createFixedListView(), createFixedTableView(), createFixedTaskView(), createListView() (+38 more)
 
 ### Community 214 - "ExcalidrawData"
-Cohesion: 0.05
-Nodes (16): arrayToMap$1(), chainingSubstitutionFormat3(), effect(), EMBEDDABLE_THEME_FRONTMATTER_VALUES, EmbeddedFile, EmbeddedFilesLoader, ExcalidrawData, getEmbeddableLinkTarget() (+8 more)
+Cohesion: 0.03
+Nodes (49): addFiles(), applyReviver(), arrayToMap$1(), chainingSubstitutionFormat3(), checkExcalidrawVersion(), checkScriptUpdates(), clearToolsPanelDynamicStyle(), Collection (+41 more)
 
 ### Community 215 - "init"
 Cohesion: 0.04
-Nodes (57): add_css$1$1(), add_css$2$1(), add_css$3$1(), add_css$4$1(), add_css$5$1(), add_css$6(), add_css$7(), add_css$8() (+49 more)
+Nodes (63): add_css$1$1(), add_css$2$1(), add_css$3$1(), add_css$4$1(), add_css$5$1(), add_css$6(), add_css$7(), add_css$8() (+55 more)
 
 ### Community 216 - "parseLine"
 Cohesion: 0.05
-Nodes (76): buildExplanation(), buildFilterFunction(), buildGroupingTree(), canCreateFilterForLine(), Cj(), cleanDescription(), comparator(), createFilterOrErrorMessage() (+68 more)
+Nodes (68): buildExplanation(), buildFilterFunction(), calculate(), canCreateFilterForLine(), category(), cleanDescription(), comparator(), compareTaskSortKeys() (+60 more)
 
 ### Community 217 - ".setStyle"
-Cohesion: 0.05
-Nodes (22): AUDIO_TYPES, CODE_TYPES, contains(), CropImage, FileSuggestionModal, FloatingModal, GenericInputPrompt, getAudioElementHeight() (+14 more)
-
-### Community 218 - "ExcalidrawSidepanelView"
-Cohesion: 0.05
-Nodes (3): ExcalidrawSidepanelTab, ExcalidrawSidepanelView, handleMarkdownImageEditorSidepanelClosing()
+Cohesion: 0.22
+Nodes (8): getCaretRangeFromPoint(), getClientPoint(), isInstanceOfHTMLButtonElement(), isInstanceOfHTMLInputElement(), isInstanceOfHTMLSelectElement(), isInstanceOfHTMLTextAreaElement(), isPointOnText(), pointInRect()
 
 ### Community 219 - ".onload"
-Cohesion: 0.05
-Nodes (17): addFields(), B$2(), compareValue(), DataviewIOApi, DataviewPlugin, FullIndex, GeneralSettingsTab, inlinePlugin() (+9 more)
+Cohesion: 0.06
+Nodes (12): addFields(), BinaryOpHandler, createBinaryOps(), DataviewPlugin, FullIndex, inlinePlugin(), isDataviewDisabled(), ListItem$1 (+4 more)
 
 ### Community 220 - "ExcalidrawPlugin"
-Cohesion: 0.04
-Nodes (9): copyLinkToSelectedElementToClipboard(), emulateCTRLClickForLinks(), ExcalidrawPlugin, executeCommandLinkWithConfirmation(), hoverEvent(), initExcalidrawAutomate(), initializeMarkdownPostProcessor(), JSON_parse() (+1 more)
+Cohesion: 0.03
+Nodes (18): around(), dedupe(), emulateCTRLClickForLinks(), ExcalidrawPlugin, fileShouldDefaultAsExcalidraw(), foldExcalidrawSection(), getCJKDataURLs(), hoverEvent() (+10 more)
 
 ### Community 221 - "add-newsletter-labels.mjs"
 Cohesion: 0.40
@@ -1243,13 +1235,13 @@ Nodes (4): __dirname, PORT, ROOT, server
 Cohesion: 0.40
 Nodes (4): copyReplacements, service, servicePath, widgetFiles
 
-### Community 228 - "price-list-smoke.mjs"
-Cohesion: 0.40
-Nodes (3): checks, locales, outDir
+### Community 228 - "makeNameTable"
+Cohesion: 0.25
+Nodes (8): addStringToPool(), findSubArray(), getEncoding(), getLanguageCode(), makeNameRecord(), makeNameTable(), parseNameTable(), reverseDict()
 
 ### Community 229 - ".push"
 Cohesion: 0.05
-Nodes (64): lineMarkerChange(), xl(), AD(), Bj(), bO(), booleanAnd(), booleanNot(), booleanOr() (+56 more)
+Nodes (62): AD(), beginTaskList(), Bj(), bO(), booleanAnd(), booleanNot(), booleanOr(), booleanXor() (+54 more)
 
 ### Community 230 - "restore-weather-clouds-original.mjs"
 Cohesion: 0.40
@@ -1265,31 +1257,35 @@ Nodes (3): args, env, npmCmd
 
 ### Community 233 - "get"
 Cohesion: 0.06
-Nodes (67): assign(), av(), cancelledDate(), checkAndReturnWithFollowingPattern(), checkAndReturnWithoutFollowingPattern(), ck(), clone(), createdDate() (+59 more)
+Nodes (67): add(), assign(), av(), bx(), cancelledDate(), checkAndReturnWithFollowingPattern(), checkAndReturnWithoutFollowingPattern(), ck() (+59 more)
 
 ### Community 235 - "weather-widget-smoke.mjs"
 Cohesion: 0.40
 Nodes (4): consoleErrors, failedRequests, host, sunScene404
 
 ### Community 236 - "getBoundingClientRect"
-Cohesion: 0.06
-Nodes (64): arrow(), computeAutoPlacement(), computeOffsets(), computeStyles(), detectOverflow(), distanceAndSkiddingToXY(), effect$2(), expandToHashMap() (+56 more)
+Cohesion: 0.07
+Nodes (58): arrow(), computeAutoPlacement(), computeOffsets(), computeStyles(), detectOverflow(), distanceAndSkiddingToXY(), effect$2(), expandToHashMap() (+50 more)
 
 ### Community 237 - "d"
 Cohesion: 0.09
-Nodes (65): da(), sa(), ve(), Ye(), Mt(), ae(), ao(), ar() (+57 more)
+Nodes (68): da(), sa(), ve(), Ye(), Mt(), ae(), ao(), ar() (+60 more)
 
 ### Community 238 - "popperGenerator$1"
-Cohesion: 0.07
-Nodes (63): applyStyles(), applyStyles$2(), areValidElements$1(), arrow$2(), computeAutoPlacement$1(), computeOffsets$1(), computeStyles$2(), contains$1() (+55 more)
+Cohesion: 0.08
+Nodes (59): areValidElements$1(), arrow$2(), computeAutoPlacement$1(), computeOffsets$1(), computeStyles$2(), contains$1(), debounce$1(), detectOverflow$1() (+51 more)
+
+### Community 239 - "contact-map.js"
+Cohesion: 0.36
+Nodes (8): c$8(), d$1(), f$1(), h$2(), i$8(), p$1(), s$8(), u$6()
 
 ### Community 240 - "r"
 Cohesion: 0.06
-Nodes (63): _0(), a_(), aC(), aw(), b2(), bS(), c(), Ci() (+55 more)
+Nodes (65): _0(), a_(), aC(), aw(), b2(), bS(), c(), Ci() (+57 more)
 
 ### Community 242 - "subscribe"
-Cohesion: 0.05
-Nodes (44): Calendar, CalendarSettingsTab, component_subscribe(), component_subscribe$1(), createEventDispatcher(), createSelectedFileStore(), createSettingsStore(), createSourcesStore() (+36 more)
+Cohesion: 0.06
+Nodes (41): CalendarSettingsTab, component_subscribe(), component_subscribe$1(), createEventDispatcher(), createSelectedFileStore(), createSettingsStore(), createSourcesStore(), custom_event() (+33 more)
 
 ### Community 244 - "check-all.mjs"
 Cohesion: 0.67
@@ -1316,88 +1312,88 @@ Cohesion: 0.50
 Nodes (3): replacements, s, widgetFiles
 
 ### Community 252 - "init$1"
-Cohesion: 0.05
-Nodes (50): add_css(), add_css$1(), add_css$2(), add_css$3(), add_css$4(), add_css$5(), append$1(), blank_object$1() (+42 more)
+Cohesion: 0.04
+Nodes (60): add_css(), add_css$1(), add_css$2(), add_css$3(), add_css$4(), add_css$5(), append$1(), bind$1() (+52 more)
 
 ### Community 253 - "obsidian-style-settings/main.js"
 Cohesion: 0.05
-Nodes (36): addExportButton(), addResetButton(), bc(), bl(), Cl(), clearFilter(), Cu(), dn() (+28 more)
+Nodes (35): a(), Aa(), addSettingChild(), bc(), bl(), Cl(), Cu(), Dl() (+27 more)
 
 ### Community 254 - "popperGenerator"
 Cohesion: 0.08
-Nodes (57): areValidElements(), Arrow, computeAutoPlacement(), computeOffsets(), computeStyles(), contains(), detectOverflow(), effect() (+49 more)
+Nodes (55): areValidElements(), Arrow, computeAutoPlacement(), computeOffsets(), computeStyles(), contains(), detectOverflow(), effect() (+47 more)
 
 ### Community 255 - "RenderObsidianView"
-Cohesion: 0.05
-Nodes (15): CanvasNodeFactory, createLeaf(), CustomEmbeddable(), editorInsertText(), EventManager, ExcalidrawLoading, getContainerForDocument(), getExcalidraAndMarkdowViewsForFile() (+7 more)
+Cohesion: 0.06
+Nodes (19): CANVAS_VIEWTYPES, CanvasNodeFactory, createLeaf(), CustomEmbeddable(), ExcalidrawLoading, EXTENDED_EVENT_TYPES, getContainerForDocument(), getExcalidrawViews() (+11 more)
 
 ### Community 256 - "join"
-Cohesion: 0.05
-Nodes (35): CalendarView, capitalize(), create_default_slot$1$1(), create_fragment$3$1(), createConfirmationDialog(), createDailyNote(), createMonthlyNote(), createPeriodicNote() (+27 more)
+Cohesion: 0.07
+Nodes (31): create_default_slot$1$1(), create_fragment$3$1(), createDailyNote(), createMonthlyNote(), createPeriodicNote(), createWeeklyNote(), effect$1$1(), ensureFolderExists() (+23 more)
 
 ### Community 257 - "rgb2css"
 Cohesion: 0.05
 Nodes (44): Color, compand(), css2rgb(), gammaAdjustSRGB(), getLabWhitePoint(), hcl2rgb(), hsl2css(), hsl2rgb() (+36 more)
 
 ### Community 258 - "add"
-Cohesion: 0.05
-Nodes (53): $1(), add(), addAllTaskGroups(), addBacklinks(), addChildren(), addDefaultStatusTypes(), addEditButton(), addEmptyLine() (+45 more)
+Cohesion: 0.04
+Nodes (64): lineMarkerChange(), xl(), $1(), addAllTaskGroups(), addChildren(), addEditButton(), addEmptyLine(), addFlatTaskList() (+56 more)
 
 ### Community 259 - "DataviewInlineApi"
-Cohesion: 0.05
-Nodes (10): asyncEvalInContext(), DataviewInlineApi, DataviewInlineJSRenderer, DataviewInlineRenderer, DataviewJSRenderer, DataviewRefreshableRenderer, evalInContext(), renderCompactMarkdown() (+2 more)
+Cohesion: 0.36
+Nodes (8): tinf_build_tree(), tinf_decode_symbol(), tinf_decode_trees(), tinf_getbit(), tinf_inflate_block_data(), tinf_inflate_uncompressed_block(), tinf_read_bits(), tinf_uncompress()
 
 ### Community 260 - "setup"
 Cohesion: 0.09
-Nodes (46): add_template_hotkey(), append_template_to_active_file(), create_new_note_from_template(), create_running_config(), de(), desktopShouldHighlight(), disable_highlighter(), dr() (+38 more)
+Nodes (41): append_template_to_active_file(), create_new_note_from_template(), create_running_config(), desktopShouldHighlight(), disable_highlighter(), dr(), Ea(), enable_highlighter() (+33 more)
 
 ### Community 261 - "pages-proxy.js"
 Cohesion: 0.83
 Nodes (3): fetch(), PUBLIC_HOSTS, publicUrlFromPages()
 
 ### Community 262 - "e"
-Cohesion: 0.05
-Nodes (44): ar(), e(), e6(), Ei(), Ek(), f3(), g6(), get_effect_pending() (+36 more)
+Cohesion: 0.03
+Nodes (115): A8(), aA(), aN(), ar(), B5(), bS(), Bv(), c6() (+107 more)
 
 ### Community 263 - "assign"
-Cohesion: 0.05
-Nodes (42): assign(), bind(), bind$1(), create_catch_block(), create_default_slot(), create_default_slot$2(), create_default_slot$4(), create_each_block_1() (+34 more)
+Cohesion: 0.06
+Nodes (32): assign(), bind(), create_default_slot$2(), create_default_slot$4(), create_each_block_1$3(), create_each_block_3(), create_else_block(), create_fragment$2$1() (+24 more)
 
 ### Community 268 - "t"
 Cohesion: 0.08
-Nodes (47): create_static_templates(), fileCreationGroup(), fileTemplatesGroup(), folderTemplatesGroup(), generate_clipboard(), generate_create_new(), generate_creation_date(), generate_cursor() (+39 more)
+Nodes (48): add_template_hotkey(), create_static_templates(), Et(), fileCreationGroup(), fileTemplatesGroup(), folderTemplatesGroup(), generate_clipboard(), generate_create_new() (+40 more)
 
 ### Community 269 - "join"
 Cohesion: 0.06
-Nodes (45): a4(), adaptTextForFakeCommit(), ak(), applyLineGroupping(), applyPatch(), applyRematchMatching(), c5(), calcSigns() (+37 more)
+Nodes (42): a4(), addToPath(), applyPatch(), buildValues(), c5(), createFilter(), createPatch(), diffWithOptionsObj() (+34 more)
 
 ### Community 271 - "moment"
 Cohesion: 0.05
-Nodes (46): addTimezone(), AE(), applyEdits(), ax(), BM(), bs(), buildRelative(), C2() (+38 more)
+Nodes (47): addDefaultStatusTypes(), addItemForInstruction(), addItemsForInstructions(), addTaskGroup(), addTaskGroups(), addTitleRow(), ax(), clearStatuses() (+39 more)
 
 ### Community 274 - ".getFiles"
-Cohesion: 0.08
-Nodes (6): getListOfTemplateFiles(), InsertImageDialog, OpenFileDialog, ScriptEngine, stripYamlFrontmatter(), VaultPathSuggest
+Cohesion: 0.09
+Nodes (5): getListOfTemplateFiles(), OpenFileDialog, ScriptEngine, stripYamlFrontmatter(), VaultPathSuggest
 
 ### Community 275 - ".parse"
-Cohesion: 0.07
-Nodes (26): bN(), Bq(), CL(), fU(), GA(), gI(), HM(), Ij() (+18 more)
+Cohesion: 0.06
+Nodes (34): adjustRelativeLinksInDescription(), bN(), Bq(), CL(), fU(), GA(), getRemoveGlobalFilter(), gI() (+26 more)
 
 ### Community 276 - "handleDrop"
 Cohesion: 0.07
 Nodes (38): alertToScreenReader(), armWindowScroller(), decrementActiveDropZoneCount(), disarmWindowScroller(), dispatchConsiderEvent(), dispatchFinalizeEvent(), dndzone(), dndzone$1() (+30 more)
 
 ### Community 279 - "ObsidianMenu"
-Cohesion: 0.07
-Nodes (23): applyDefaultSvgTheme(), BLOCKED_SVG_TAGS, clsx(), createTreeWalker(), cssTextToReactStyle(), domNodeToReact(), getFreedrawStrokeWidthByKey(), getIconAsJSX() (+15 more)
+Cohesion: 0.25
+Nodes (7): BLOCKED_SVG_TAGS, getIconAsJSX(), isInstanceOfSVGSVGElement(), isUnsafeAttribute(), sanitizeSvgElement(), sanitizeSvgFromString(), sanitizeSvgTree()
 
 ### Community 280 - "wrapValue"
-Cohesion: 0.07
-Nodes (21): extractISOOffset(), extractRFC2822(), FixedOffsetZone, formatOffset(), isBoolean(), isDate(), isDuration(), isFunction() (+13 more)
+Cohesion: 0.08
+Nodes (19): extractISOOffset(), extractRFC2822(), FixedOffsetZone, formatOffset(), isBoolean(), isDate(), isDuration(), isFunction() (+11 more)
 
 ### Community 281 - "M"
 Cohesion: 0.12
-Nodes (8): destroy(), ie(), M, Ot(), p(), S(), V(), xe()
+Nodes (11): c(), f(), ie(), M, Ot(), p(), rc(), S() (+3 more)
 
 ### Community 282 - "InlineLinkSuggester"
 Cohesion: 0.11
@@ -1405,107 +1401,103 @@ Nodes (4): getLinkSuggestionsFiltered(), InlineLinkSuggester, renderHeadingSugge
 
 ### Community 283 - "constructor"
 Cohesion: 0.06
-Nodes (37): WS(), a2(), ax(), close(), constructor(), e2(), eC(), getSelectedItem() (+29 more)
+Nodes (41): WS(), a2(), ax(), cleanup(), close(), constructor(), $destroy(), e2() (+33 more)
 
 ### Community 295 - "display"
-Cohesion: 0.07
-Nodes (37): addOneSettingsBlock(), addStatus(), append(), bulkAddStatusCollection(), bW(), createFromImportedValue(), deleteAllCustomStatuses(), deleteStatus() (+29 more)
+Cohesion: 0.10
+Nodes (26): addEdgeIfNotToInternal(), bySymbol(), bySymbolOrCreate(), copyStatusWithNewName(), createNextOccurrence(), createUnknownStatus(), findUnknownStatuses(), getLogger() (+18 more)
 
 ### Community 296 - "argument"
-Cohesion: 0.06
-Nodes (35): argument(), average(), buildPath(), computeCheckSum(), EXCALIDRAW_EXTERNAL_GET_LABEL_KEY_SET, fail(), fontToSfntTable(), getContours() (+27 more)
+Cohesion: 0.05
+Nodes (47): addGlyphNames(), addGlyphNamesAll(), addGlyphNamesToUnicodeMap(), argument(), average(), buildPath(), computeCheckSum(), defineDependentProperty() (+39 more)
 
 ### Community 297 - "subscribeToVault"
 Cohesion: 0.08
-Nodes (34): addCopyButton(), addSearchBox(), addToolbar(), applySearchBoxFilterAndRerender(), beginRender(), Dl(), extractDateFromPath(), filterResults() (+26 more)
+Nodes (34): addCopyButton(), addSearchBox(), addToolbar(), applySearchBoxFilterAndRerender(), beginRender(), Dl(), explainDebugSettings(), explainError() (+26 more)
 
 ### Community 298 - "LocalStorageCache"
-Cohesion: 0.08
-Nodes (9): flush(), IndexMap, LocalStorageCache, make_dirty(), outro_and_destroy_block(), schedule_update(), set_current_component(), transition_out() (+1 more)
+Cohesion: 0.10
+Nodes (6): IndexMap, LocalStorageCache, outro_and_destroy_block(), transition_in(), transition_out(), ValueCaseInsensitiveIndexMap
 
-### Community 299 - "k"
-Cohesion: 0.09
-Nodes (32): a$3(), addStringToPool(), b$4(), c$3(), e$3(), f$2(), findSubArray(), getEncoding() (+24 more)
+### Community 299 - "HUNDESALON_NIKA Makler"
+Cohesion: 0.29
+Nodes (7): Communication contract, Hard search gates, HUNDESALON_NIKA Makler, Model and cost routing, Operational source of truth, Purpose, Related
 
 ### Community 304 - "scale"
 Cohesion: 0.08
-Nodes (32): a$c(), alpha(), alphaBy(), analyze(), b$5(), bezier(), binom_row(), chroma() (+24 more)
+Nodes (36): a$c(), alpha(), alphaBy(), analyze(), b$5(), bezier(), binom_row(), chroma() (+28 more)
 
 ### Community 307 - "composeScalar"
-Cohesion: 0.08
-Nodes (26): composeAlias(), composeCollection(), composeDoc(), composeEmptyNode(), composeNode(), Composer, composeScalar(), doubleQuotedValue() (+18 more)
+Cohesion: 0.11
+Nodes (21): composeAlias(), composeCollection(), composeDoc(), composeEmptyNode(), composeNode(), Composer, composeScalar(), doubleQuotedValue() (+13 more)
 
-### Community 308 - "isValid"
-Cohesion: 0.08
-Nodes (32): allDateFields(), calculate(), compareTaskSortKeys(), compareTaskSortKeysIfEitherIsNull(), compareTaskSortKeysIfOptionalMoment(), Db(), er(), evaluate() (+24 more)
+### Community 308 - "Brand_Assets.md"
+Cohesion: 0.29
+Nodes (5): Approved public identity, Asset rules, Brand Assets, Suggested asset log, Resources
 
 ### Community 309 - "Lexer"
-Cohesion: 0.26
-Nodes (3): isEmpty(), isNotAnchorChar(), Lexer
+Cohesion: 0.22
+Nodes (5): editorInsertText(), isEmpty(), isNotAnchorChar(), Lexer, peek()
 
-### Community 310 - "y0"
-Cohesion: 0.08
-Nodes (29): _0(), activate(), b0(), capture(), deactivate(), decrement(), e0(), eN() (+21 more)
+### Community 310 - "loadLocale"
+Cohesion: 0.38
+Nodes (6): isApplePlatform(), labelALT(), labelCTRL(), labelMETA(), labelSHIFT(), loadLocale()
 
 ### Community 311 - "explainQuery"
-Cohesion: 0.08
-Nodes (29): allLinesIdentical(), applyFilter(), applyQueryToTasks(), applyTaskLimit(), by(), createNormalSorter(), defaultSorters(), explainDebugSettings() (+21 more)
+Cohesion: 0.05
+Nodes (53): addBacklinks(), allSupportedDelimiters(), append(), Bb(), Cj(), createListItem(), createStatementsFromExpandedPlaceholders(), D1() (+45 more)
 
 ### Community 312 - "me"
-Cohesion: 0.13
-Nodes (29): Ad(), Ae(), Bd(), cS(), eo(), fd(), ft(), he() (+21 more)
+Cohesion: 0.15
+Nodes (23): Ad(), Ae(), Bd(), dd(), eo(), fd(), ft(), he() (+15 more)
 
 ### Community 313 - "StencilLibraryManager"
 Cohesion: 0.22
 Nodes (3): getLibraryItems(), normalizeLibraryFileName(), StencilLibraryManager
 
 ### Community 314 - ".onClose"
-Cohesion: 0.08
-Nodes (4): CommandLinkOptInPrompt, ImportSVGDialog, InsertCommandDialog, VersionMismatchPrompt
+Cohesion: 0.06
+Nodes (6): CommandLinkOptInPrompt, ImportSVGDialog, InsertCommandDialog, InsertImageDialog, StencilLibraryMigrationPrompt, VersionMismatchPrompt
 
 ### Community 315 - "lD"
-Cohesion: 0.12
-Nodes (24): deleteSection(), Es(), getSubsections(), gO(), gx(), Hx(), I1(), iD() (+16 more)
+Cohesion: 0.11
+Nodes (23): cD(), eD(), gO(), gx(), Hx(), I1(), iD(), j1() (+15 more)
 
 ### Community 316 - "Ee"
-Cohesion: 0.17
-Nodes (24): At(), Bi(), c(), Cr(), dc(), Ee(), Er(), Fc() (+16 more)
+Cohesion: 0.20
+Nodes (21): At(), Bi(), Cr(), dc(), Ee(), Er(), Fc(), ft() (+13 more)
 
 ### Community 317 - "app.json"
 Cohesion: 0.09
 Nodes (22): alwaysUpdateLinks, attachmentFolderPath, autoConvertHtml, newFileFolderPath, newFileLocation, newLinkFormat, pdfExportSettings, downscalePercent (+14 more)
 
-### Community 328 - "fromLine"
-Cohesion: 0.12
-Nodes (22): addEdgeIfNotToInternal(), bySymbol(), bySymbolOrCreate(), canApplyFallback(), copyStatusWithNewName(), createUnknownStatus(), CU(), equals() (+14 more)
-
 ### Community 329 - "find"
-Cohesion: 0.11
-Nodes (22): cm(), find(), getActiveConfig(), getActiveGranularities(), getActiveId(), getActiveSet(), getDatePrefixedNotes(), getDateSuggestions() (+14 more)
+Cohesion: 0.10
+Nodes (23): cm(), find(), findAdjacent(), getActiveConfig(), getActiveGranularities(), getActiveId(), getActiveSet(), getDatePrefixedNotes() (+15 more)
 
 ### Community 331 - "ue"
-Cohesion: 0.13
-Nodes (21): ac(), bi(), cu(), get_all_functions_documentation(), get_app_functions_documentation(), Hs(), ic(), Ks() (+13 more)
+Cohesion: 0.43
+Nodes (7): bi(), cu(), Hs(), lu(), ue(), uu(), Yn()
 
 ### Community 332 - "parseCFFTable"
 Cohesion: 0.14
 Nodes (21): calcCFFSubroutineBias(), entriesToObject(), gatherCFFTopDicts(), getByte(), getBytes(), getCffIndexObject(), getCFFString(), getOffset() (+13 more)
 
-### Community 337 - "L$1"
-Cohesion: 0.15
-Nodes (19): A$2(), C$1(), children(), d$1(), F$2(), G$1(), g$2(), H$1() (+11 more)
+### Community 337 - "Operations.md"
+Cohesion: 0.33
+Nodes (4): Areas, Coverage, Operations, Standard review items
 
 ### Community 338 - ".handleError"
-Cohesion: 0.18
+Cohesion: 0.21
 Nodes (3): ErrorHandler, PackageManager, updateExcalidrawLib()
 
 ### Community 341 - "create_slot$1"
-Cohesion: 0.11
-Nodes (16): assign$1(), create_default_slot_1(), create_default_slot$3(), create_else_block$1(), create_fragment$6(), create_fragment$9(), create_fragment$9$1(), create_if_block$4() (+8 more)
+Cohesion: 0.33
+Nodes (5): Code Map, Editing rules, Frontend data, Styling, Workers
 
 ### Community 342 - "ExcalidrawExtrasGateway"
-Cohesion: 0.17
-Nodes (4): ExcalidrawExtrasGateway, printPdf(), readLocalFileBinary(), tex2dataURL()
+Cohesion: 0.18
+Nodes (3): ExcalidrawExtrasGateway, printPdf(), tex2dataURL()
 
 ### Community 343 - "du"
 Cohesion: 0.15
@@ -1513,27 +1505,31 @@ Nodes (19): bu(), du(), gu(), Ht(), hu(), Je(), Ki(), lu() (+11 more)
 
 ### Community 344 - "findCenterOfElement"
 Cohesion: 0.14
-Nodes (18): animateDraggedToFinalPosition(), cacheShadowRect(), calcDistance(), calcDistanceBetweenCenters(), calcInnerDistancesBetweenPointAndSidesOfElement(), copyStylesFromTo(), createDraggedElementFrom(), findCenter() (+10 more)
+Nodes (20): animateDraggedToFinalPosition(), cacheShadowRect(), calcDistance(), calcDistanceBetweenCenters(), calcInnerDistancesBetweenPointAndSidesOfElement(), copyStylesFromTo(), createDraggedElementFrom(), findCenter() (+12 more)
+
+### Community 345 - "QA"
+Cohesion: 0.40
+Nodes (4): Evidence format, Minimum checks, Pass criteria, QA
 
 ### Community 346 - "toString"
-Cohesion: 0.14
-Nodes (18): asMarkdown(), canSaveEdits(), eU(), Fl(), getMarkdownFileInfo(), getSuggestions(), grabSuggestions(), LC() (+10 more)
+Cohesion: 0.40
+Nodes (4): Preflight, Release, Release steps, Rollback note
 
 ### Community 347 - "parsePreset"
-Cohesion: 0.14
-Nodes (18): Bb(), createStatementsFromExpandedPlaceholders(), dh(), dw(), eW(), expandPlaceholders(), ff(), H1() (+10 more)
+Cohesion: 0.40
+Nodes (4): Daily Note - 2026-08-24, Done, Focus, Next
 
 ### Community 348 - "diagramToHTML"
-Cohesion: 0.14
-Nodes (14): diagramToHTML(), errorHTML(), extractDiagramHTML(), getDataURL(), getDiagramToHTMLFinishReason(), getFontDataURL(), getFontDataURL$1(), getJsonErrorMessage() (+6 more)
+Cohesion: 0.22
+Nodes (9): diagramToHTML(), extractDiagramHTML(), getDiagramToHTMLFinishReason(), isDiagramToHTMLDebugEnabled(), isMaxTokenFinishReason(), logDiagramToHTMLDebug(), shouldRetryDiagramToHTML(), stringifyDiagramDebugValue() (+1 more)
 
 ### Community 349 - "resolve"
-Cohesion: 0.13
-Nodes (17): app(), af(), ef(), getCalendarSets(), getItems(), initialize(), Le(), lm() (+9 more)
+Cohesion: 0.16
+Nodes (14): app(), ef(), getCalendarSets(), getItems(), initialize(), Le(), lm(), Qo() (+6 more)
 
 ### Community 350 - "Re"
-Cohesion: 0.16
-Nodes (10): constructor(), F(), fc(), getItems(), loadUserScripts(), P(), Re(), __wrap() (+2 more)
+Cohesion: 0.08
+Nodes (26): af(), loadSettings(), of(), constructor(), createForm(), display(), enterCallback(), F() (+18 more)
 
 ### Community 351 - "getDateFromFilename"
 Cohesion: 0.19
@@ -1544,24 +1540,24 @@ Cohesion: 0.16
 Nodes (16): applySubstitution(), arabicPresentationForms(), arabicRequiredLigatures(), arabicSentenceEndCheck(), arabicSentenceStartCheck(), arabicWordEndCheck(), arabicWordStartCheck(), getContextParams() (+8 more)
 
 ### Community 353 - "openPeriodicNote"
-Cohesion: 0.17
-Nodes (16): Ag(), Bi(), bm(), configureCommands(), configureRibbonIcons(), findAdjacent(), findInCache(), isPeriodic() (+8 more)
+Cohesion: 0.19
+Nodes (15): Ag(), Bi(), bm(), configureCommands(), configureRibbonIcons(), findInCache(), isPeriodic(), Kx() (+7 more)
 
 ### Community 354 - "parseBuffer"
-Cohesion: 0.18
-Nodes (15): addGlyphNames(), addGlyphNamesAll(), addGlyphNamesToUnicodeMap(), getTag(), getULong(), getUShort(), loadSync(), nodeBufferToArrayBuffer() (+7 more)
+Cohesion: 0.05
+Nodes (20): appendMarkdownBottomSpacer(), AUDIO_TYPES, CODE_TYPES, FileSuggestionModal, FloatingModal, GenericInputPrompt, getAudioElementHeight(), getBoundingClientRect() (+12 more)
 
 ### Community 355 - "gl"
-Cohesion: 0.22
-Nodes (12): ea(), f(), gl(), ke(), oe(), Pt(), Q(), qe() (+4 more)
+Cohesion: 0.24
+Nodes (12): ea(), ec(), gl(), ke(), oe(), Pt(), Q(), qe() (+4 more)
 
 ### Community 356 - "iS"
-Cohesion: 0.19
-Nodes (15): br(), Ce(), de(), DS(), Dt(), hd(), iS(), lS() (+7 more)
+Cohesion: 0.13
+Nodes (23): br(), Ce(), cS(), de(), DS(), Dt(), hd(), HS() (+15 more)
 
 ### Community 357 - "mc"
-Cohesion: 0.22
-Nodes (15): Si(), closing_tag(), dt(), En(), global_var(), hc(), ht(), ke() (+7 more)
+Cohesion: 0.23
+Nodes (14): Si(), closing_tag(), En(), global_var(), hc(), ht(), ke(), mc() (+6 more)
 
 ### Community 358 - "templater-obsidian/manifest.json"
 Cohesion: 0.13
@@ -1572,20 +1568,20 @@ Cohesion: 0.16
 Nodes (11): action_destroyer$1(), add_render_callback$1(), check_outros$1(), destroy_component$1(), is_empty$1(), is_function$1(), mount_component$1(), run$1() (+3 more)
 
 ### Community 361 - ".patchTemplaterGetActiveViewOfType"
-Cohesion: 0.27
-Nodes (5): around(), dedupe(), fileShouldDefaultAsExcalidraw(), foldExcalidrawSection(), MonkeyPatchManager
+Cohesion: 0.40
+Nodes (4): Dashboard, Open work, Quick launcher, Recent changes
 
 ### Community 362 - "setupDragAndDrop"
-Cohesion: 0.24
-Nodes (12): calculateDropPosition(), clearDropIndicator(), clearDropIndicators(), createAddNewPresetButton(), getTargetIndex(), renderPresetItem(), renderPresetsSettings(), savePresetsSettings() (+4 more)
+Cohesion: 0.06
+Nodes (42): addOneSettingsBlock(), addStatus(), bulkAddStatusCollection(), bW(), calculateDropPosition(), clearDropIndicator(), clearDropIndicators(), createAddNewPresetButton() (+34 more)
 
 ### Community 363 - "j"
 Cohesion: 0.18
 Nodes (12): $b(), be(), Bn(), connectedCallback(), ea(), Eg(), hg(), Io() (+4 more)
 
 ### Community 364 - "getCJKDataURLs"
-Cohesion: 0.18
-Nodes (8): blobToBase64(), deliberateFetch(), fetchFontAsDataURI(), getCJKDataURLs(), getFileFromURL(), matchesCJKRange(), promiseTry(), replaceBlobWithBase64()
+Cohesion: 0.04
+Nodes (49): b(), blobToBase64(), cleanBlockRef(), cleanSectionHeading(), CSSCodeEditor, deliberateFetch(), effect(), EmbeddedFile (+41 more)
 
 ### Community 365 - "blockString"
 Cohesion: 0.42
@@ -1595,25 +1591,29 @@ Nodes (11): blockString(), consumeMoreIndentedLines(), containsDocumentMarker(),
 Cohesion: 0.18
 Nodes (10): author, authorUrl, description, fundingUrl, helpUrl, id, isDesktopOnly, minAppVersion (+2 more)
 
-### Community 368 - "._preBuild"
-Cohesion: 0.18
-Nodes (10): a(), Aa(), addSettingChild(), Dl(), hl(), Ni(), Rl(), vu() (+2 more)
+### Community 368 - "b$4"
+Cohesion: 0.50
+Nodes (5): b$4(), h$3(), l$4(), o$a(), v$1()
 
 ### Community 369 - "initClasses"
 Cohesion: 0.31
 Nodes (11): cleanup(), clearSection(), clearSetting(), getSetting(), initClasses(), removeClasses(), save(), setConfig() (+3 more)
 
-### Community 370 - "jn"
-Cohesion: 0.24
-Nodes (11): connectedCallback(), $destroy(), disconnectedCallback(), HU(), jn(), Jy(), Ls(), Sn() (+3 more)
+### Community 370 - "e$4"
+Cohesion: 0.50
+Nodes (5): c$4(), e$4(), o$4(), r$4(), s$4()
 
 ### Community 371 - "obsidian-tasks-plugin/manifest.json"
 Cohesion: 0.18
 Nodes (10): author, authorUrl, description, fundingUrl, helpUrl, id, isDesktopOnly, minAppVersion (+2 more)
 
 ### Community 372 - "sn"
-Cohesion: 0.22
-Nodes (10): an(), hn(), sn(), _n(), Ba(), commitControlValue(), getControlValue(), isLocalSettingsKey() (+2 more)
+Cohesion: 0.21
+Nodes (12): an(), hn(), sn(), _n(), Ba(), commitControlValue(), Fa(), getControlValue() (+4 more)
+
+### Community 373 - "recordList"
+Cohesion: 0.60
+Nodes (5): Coverage(), FeatureList(), recordList(), ScriptList(), ushortList()
 
 ### Community 375 - "dataview/manifest.json"
 Cohesion: 0.20
@@ -1631,9 +1631,13 @@ Nodes (8): author, authorUrl, description, id, isDesktopOnly, minAppVersion, nam
 Cohesion: 0.22
 Nodes (4): Invalid, InvalidDateTimeError, InvalidDurationError, InvalidIntervalError
 
+### Community 380 - "getElementMatrix"
+Cohesion: 0.60
+Nodes (5): create$1(), getElementMatrix(), getTransformMatrix(), multiply$1(), svgTransformToCSSTransform()
+
 ### Community 383 - "encryptStoredAPIKey"
-Cohesion: 0.28
-Nodes (9): decodeBase64(), decodeObfuscatedAPIKeyPayload(), encodeBase64(), encryptPersistedAPIKeys(), encryptProviderProfiles(), encryptStoredAPIKey(), isEncryptedStoredAPIKey(), isObfuscatedAPIKey() (+1 more)
+Cohesion: 0.32
+Nodes (8): decodeBase64(), decodeObfuscatedAPIKeyPayload(), encryptPersistedAPIKeys(), encryptProviderProfiles(), encryptStoredAPIKey(), isEncryptedStoredAPIKey(), isObfuscatedAPIKey(), xorWithSecret()
 
 ### Community 384 - "obsidian-git/manifest.json"
 Cohesion: 0.22
@@ -1647,65 +1651,57 @@ Nodes (8): author, authorUrl, description, id, isDesktopOnly, minAppVersion, nam
 Cohesion: 0.22
 Nodes (8): author, authorUrl, description, id, isDesktopOnly, minAppVersion, name, version
 
-### Community 387 - "tinf_uncompress"
-Cohesion: 0.36
-Nodes (8): tinf_build_tree(), tinf_decode_symbol(), tinf_decode_trees(), tinf_getbit(), tinf_inflate_block_data(), tinf_inflate_uncompressed_block(), tinf_read_bits(), tinf_uncompress()
+### Community 387 - "getSandboxedDataUrlSrcDoc"
+Cohesion: 0.40
+Nodes (4): decodeDataUrlToHtml(), getSandboxedDataUrlSrcDoc(), injectDefensiveCsp(), renderWebView()
 
 ### Community 388 - "instance"
-Cohesion: 0.52
-Nodes (3): instance$2$1(), Calendar, instance()
+Cohesion: 0.50
+Nodes (5): filterAttrsToElementValues(), getGroupAttrs(), getNum(), presAttrs(), presAttrsToElementValues()
 
-### Community 389 - "loadLocale"
-Cohesion: 0.38
-Nodes (6): isApplePlatform(), labelALT(), labelCTRL(), labelMETA(), labelSHIFT(), loadLocale()
+### Community 389 - "booking-email-router/src/index.js"
+Cohesion: 0.60
+Nodes (3): destination(), email(), getDestinations()
+
+### Community 390 - "Index"
+Cohesion: 0.50
+Nodes (4): Current, Index, Intake, Templates
 
 ### Community 391 - "Minimal/manifest.json"
 Cohesion: 0.29
 Nodes (6): author, authorUrl, fundingUrl, minAppVersion, name, version
 
-### Community 392 - "defineCSSCompletionSource"
-Cohesion: 0.33
-Nodes (6): variable(), astTop(), defineCSSCompletionSource(), isVarArg(), variableNames(), VariablesByNode
-
-### Community 395 - "filterAttrsToElementValues"
-Cohesion: 0.50
-Nodes (5): filterAttrsToElementValues(), getGroupAttrs(), getNum(), presAttrs(), presAttrsToElementValues()
+### Community 392 - "addName"
+Cohesion: 0.67
+Nodes (4): addName(), makeFvarAxis(), makeFvarInstance(), makeFvarTable()
 
 ### Community 396 - "Xo"
 Cohesion: 0.50
 Nodes (5): Ko(), xg(), Xo(), yg(), zn()
 
-### Community 398 - "addName"
-Cohesion: 0.67
-Nodes (4): addName(), makeFvarAxis(), makeFvarInstance(), makeFvarTable()
-
-### Community 401 - "cC"
-Cohesion: 0.50
-Nodes (4): cC(), im(), lC(), sC()
-
-### Community 402 - "onLayoutChange"
-Cohesion: 0.50
-Nodes (4): cleanup(), $destroy(), onLayoutChange(), unload()
+### Community 398 - "cssTextToReactStyle"
+Cohesion: 1.00
+Nodes (3): cssTextToReactStyle(), domNodeToReact(), toReactAttributeName()
 
 ## Knowledge Gaps
-- **1677 isolated node(s):** `promptDelete`, `alwaysUpdateLinks`, `attachmentFolderPath`, `useMarkdownLinks`, `includeName` (+1672 more)
+- **1691 isolated node(s):** `browser`, `es2021`, `node`, `eslint:recommended`, `ecmaVersion` (+1686 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **57 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **63 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `s()` connect `seo-generate.js` to `bing-index-all-site.mjs`, `add`, `setup`, `e`, `open-citation-registrations.mjs`, `t`, `join`, `moment`, `extend-meta-descriptions-config.mjs`, `.parse`, `ObsidianMenu`, `bing-sitescan.mjs`, `getEnvValue`, `display`, `argument`, `subscribeToVault`, `k`, `gsc-browser-automate.js`, `lg-task.js`, `y0`, `me`, `lD`, `patterns.py`, `fromLine`, `ue`, `00_Inbox/README.md`, `02_Areas/README.md`, `03_Resources/README.md`, `Monthly/README.md`, `remove_private_use_chars`, `Weekly/README.md`, `findCenterOfElement`, `.setStyle`, `parseLine`, `parsePreset`, `diagramToHTML`, `toString`, `resolve`, `local-citations-automate.mjs`, `openPeriodicNote`, `.push`, `SECURITY.md`, `expand-thin-pages.mjs`, `bing-professional-setup.mjs`, `.patchTemplaterGetActiveViewOfType`, `discover-google-maps.mjs`, `setupDragAndDrop`, `getBoundingClientRect`, `get`, `http-security.js`, `j`, `activeContext.md`, `decisionLog.md`, `r`, `d`, `cloudflareApi`, `bing-robots-tester.mjs`?**
-  _High betweenness centrality (0.140) - this node is a cross-community bridge._
-- **Why does `n()` connect `seo-generate.js` to `bing-index-all-site.mjs`, `add`, `setup`, `e`, `__main__.py`, `payment.js`, `t`, `join`, `moment`, `.experimentalFileTypeDisplay`, `extend-meta-descriptions-config.mjs`, `.getFiles`, `.parse`, `ObsidianMenu`, `constructor`, `getEnvValue`, `k`, `gsc-browser-automate.js`, `lg-task.js`, `payment-webhook.js`, `composeScalar`, `isValid`, `y0`, `lD`, `start-edge-bing-debug.mjs`, `launchTrackedBrowser`, `ue`, `00_Inbox/README.md`, `02_Areas/README.md`, `L$1`, `Monthly/README.md`, `remove_private_use_chars`, `ToolsPanel`, `Weekly/README.md`, `ExcalidrawData`, `ExcalidrawSidepanelView`, `diagramToHTML`, `ExcalidrawPlugin`, `resolve`, `Re`, `iS`, `.push`, `SECURITY.md`, `expand-thin-pages.mjs`, `bing-professional-setup.mjs`, `get`, `discover-google-maps.mjs`, `j`, `getBoundingClientRect`, `http-security.js`, `activeContext.md`, `decisionLog.md`, `initClasses`, `jn`, `sn`, `cloudflareApi`, `r`, `Ho`, `obsidian-style-settings/main.js`, `RenderObsidianView`?**
-  _High betweenness centrality (0.103) - this node is a cross-community bridge._
-- **Why does `copyStylesFromTo()` connect `findCenterOfElement` to `seo-generate.js`, `cf-api-token.mjs`?**
-  _High betweenness centrality (0.031) - this node is a cross-community bridge._
+- **Why does `s()` connect `seo-generate.js` to `add`, `setup`, `mc`, `e`, `Rect`, `t`, `join`, `moment`, `extend-meta-descriptions-config.mjs`, `.parse`, `bing-sitescan.mjs`, `getEnvValue`, `display`, `argument`, `gsc-browser-automate.js`, `lg-task.js`, `explainQuery`, `me`, `lD`, `start-edge-bing-debug.mjs`, `find`, `jn`, `00_Inbox/README.md`, `02_Areas/README.md`, `03_Resources/README.md`, `Monthly/README.md`, `remove_private_use_chars`, `ToolsPanel`, `WindowPattern`, `Weekly/README.md`, `findCenterOfElement`, `parseLine`, `configure-cloudflare-waf-rate-limits.mjs`, `ExcalidrawPlugin`, `resolve`, `local-citations-automate.mjs`, `.push`, `SECURITY.md`, `expand-thin-pages.mjs`, `bing-professional-setup.mjs`, `get`, `discover-google-maps.mjs`, `setupDragAndDrop`, `getBoundingClientRect`, `j`, `http-security.js`, `contact-map.js`, `activeContext.md`, `decisionLog.md`, `r`, `sn`, `bing-robots-tester.mjs`?**
+  _High betweenness centrality (0.159) - this node is a cross-community bridge._
+- **Why does `n()` connect `seo-generate.js` to `setup`, `e`, `__main__.py`, `payment.js`, `t`, `join`, `cssTextToReactStyle`, `moment`, `extend-meta-descriptions-config.mjs`, `.getFiles`, `.parse`, `constructor`, `bing-sitescan.mjs`, `getEnvValue`, `gsc-browser-automate.js`, `lg-task.js`, `payment-webhook.js`, `composeScalar`, `lD`, `start-edge-bing-debug.mjs`, `launchTrackedBrowser`, `Brand Assets`, `jn`, `00_Inbox/README.md`, `02_Areas/README.md`, `Monthly/README.md`, `remove_private_use_chars`, `ToolsPanel`, `WindowPattern`, `ExcalidrawData`, `Weekly/README.md`, `parseLine`, `ExcalidrawSidepanelView`, `configure-cloudflare-waf-rate-limits.mjs`, `ExcalidrawPlugin`, `Re`, `iS`, `.push`, `SECURITY.md`, `expand-thin-pages.mjs`, `bing-professional-setup.mjs`, `get`, `discover-google-maps.mjs`, `j`, `getBoundingClientRect`, `mc`, `http-security.js`, `activeContext.md`, `decisionLog.md`, `initClasses`, `r`, `sn`, `cloudflareApi`, `Ho`, `obsidian-style-settings/main.js`?**
+  _High betweenness centrality (0.118) - this node is a cross-community bridge._
+- **Why does `reject()` connect `open-cf-unified-token.mjs` to `server.js`, `uia/core.py`, `bing-force-clean.mjs`, `bing-finish-manual.mjs`, `bing-sitescan.mjs`?**
+  _High betweenness centrality (0.075) - this node is a cross-community bridge._
 - **Are the 242 inferred relationships involving `n()` (e.g. with `b()` and `d$1()`) actually correct?**
   _`n()` has 242 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 217 inferred relationships involving `s()` (e.g. with `copyStylesFromTo()` and `dataview/main.js`) actually correct?**
   _`s()` has 217 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 134 inferred relationships involving `e()` (e.g. with `a()` and `a$9()`) actually correct?**
   _`e()` has 134 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `promptDelete`, `alwaysUpdateLinks`, `attachmentFolderPath` to the rest of the system?**
-  _1677 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **What connects `browser`, `es2021`, `node` to the rest of the system?**
+  _1691 weakly-connected nodes found - possible documentation gaps or missing edges._

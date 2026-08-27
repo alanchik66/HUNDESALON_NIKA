@@ -1,11 +1,11 @@
 ---
 type: release
 status: draft
-created: {{date}}
+created: <% tp.date.now("YYYY-MM-DD") %>
 tags: [release, deployment]
 ---
 
-# Release - {{date}}
+# Release - <% tp.file.title %>
 
 ## Scope
 -

@@ -1,11 +1,11 @@
 ---
 type: qa
 status: open
-created: {{date}}
+created: <% tp.date.now("YYYY-MM-DD") %>
 tags: [qa, checklist]
 ---
 
-# QA Check - {{date}}
+# QA Check - <% tp.file.title %>
 
 ## What changed
 -

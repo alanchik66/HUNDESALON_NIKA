@@ -18,9 +18,9 @@ Single source of truth for product, content, QA, and release knowledge.
 - Code facts: link exact files and line numbers.
 - Decisions: record in `04_Decisions`.
 - QA evidence: keep screenshots or concise pass/fail notes.
+- Task queue: [[01_Projects/HUNDESALON_NIKA/Tasks/README]]
 
 ## Working rules
 - Record the reason before the fix when something breaks.
 - Record the exact verification that proves the fix.
 - Keep locale-specific content separate per language.
-

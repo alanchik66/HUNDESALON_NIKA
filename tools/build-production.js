@@ -302,6 +302,9 @@ function injectSendPulseIntegrations(directory, version) {
       }
       if (!entry.name.endsWith('.html')) continue;
 
+      const relativePath = path.relative(directory, fullPath).replaceAll('\\', '/');
+      if (relativePath === 'telegram-menu.html') continue;
+
       const original = fs.readFileSync(fullPath, 'utf8');
       const cleaned = original
         .replace(integrationScriptPattern, '')
