@@ -1,5 +1,17 @@
 <%*
-const title = tp.file.title;
+const initialTitle = tp.file.title;
+const untitledPattern = /^(Untitled|Без названия)( \\d+)?$/i;
+const suggestedTitle = untitledPattern.test(initialTitle) ? "" : initialTitle;
+const enteredTitle = await tp.system.prompt("Task title", suggestedTitle);
+const title = (enteredTitle || suggestedTitle).trim();
+
+if (!title || untitledPattern.test(title)) {
+  throw new Error("Task title is required");
+}
+
+if (title !== initialTitle) {
+  await tp.file.rename(title);
+}
 const created = tp.date.now("YYYY-MM-DD");
 const createdStamp = tp.date.now("YYYY-MM-DD_HHmmss");
 const kindLabels = [
