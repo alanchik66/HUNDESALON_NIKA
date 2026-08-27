@@ -1,6 +1,6 @@
 ---
 type: task
-status: open
+status: done
 created: 2026-08-27
 kind: live_coding
 urgency: medium
@@ -23,7 +23,7 @@ Confirm the live workflow from task intake to model choice, documentation, and v
 - [x] This note opens correctly in Obsidian.
 - [x] The suggested model is visible and matches the task type.
 - [x] The Control Center checklist leads to the Task Queue.
-- [ ] Creating another note in this folder starts the task template automatically.
+- [x] Creating another note in this folder starts the task template automatically.
 
 ## Constraints
 - Preserve existing vault content and project files.
@@ -41,19 +41,19 @@ Confirm the live workflow from task intake to model choice, documentation, and v
 - [ ] Open [[02_Areas/Codex_Control_Center]].
 - [ ] Follow the `Start here` checklist to this task.
 - [ ] Review this note in reading mode.
-- [ ] Create a temporary new task note and confirm that Templater prompts appear.
+- [x] Create a temporary new task note and confirm that Templater prompts appear.
 
 ## Result
-- Status: ready for live verification.
+- Status: verified and complete.
 - Changed files: Control Center, task template, and this example task.
 - User-visible change: one guided entry point and one filled working example.
 
 ## Verification
-- Commands/checks: Markdown structure and Templater configuration inspected locally; live Obsidian navigation checked.
-- Evidence: `Control Center -> Task Queue -> this task` opened successfully; Dataview listed this task; properties displayed `gpt-5.3-codex-spark`.
+- Commands/checks: Markdown structure and Templater configuration inspected locally; live Obsidian creation and navigation checked.
+- Evidence: `Control Center -> Task Queue -> this task` opened successfully; Dataview listed this task; properties displayed `gpt-5.3-codex-spark`; a new task was created through the live Templater prompts and routed successfully.
 
 ## Residual risks
-- The Templater creation prompts still require a separate live smoke test when the next real task note is created.
+- None known for the tested local workflow.
 
 ## Notes
 - This is a safe test task. Mark it `done` after the live smoke test succeeds.
