@@ -905,6 +905,9 @@ for (const locale of locales) {
 
     await page.waitForTimeout(240);
     const categoryContent = page.locator('#price-category-modal.active .modal-content');
+    await page.evaluate(() => {
+      window.__priceSmokeCategoryScrollActivity = null;
+    });
     const categoryMaxScroll = await categoryContent.evaluate(content => {
       content.scrollTop = 0;
       return Math.max(0, content.scrollHeight - content.clientHeight);
@@ -916,12 +919,30 @@ for (const locale of locales) {
         categoryContentBox.y + Math.min(180, categoryContentBox.height / 2)
       );
       await page.mouse.wheel(0, 720);
-      await page.waitForTimeout(60);
+      await page.waitForFunction(
+        () => {
+          const content = document.querySelector('#price-category-modal.active .modal-content');
+          if (!content?.classList.contains('site-scroll-active')) return false;
+          const scrollbar = getComputedStyle(content, '::-webkit-scrollbar');
+          const thumb = getComputedStyle(content, '::-webkit-scrollbar-thumb');
+          window.__priceSmokeCategoryScrollActivity = {
+            scrollActive: true,
+            scrollbarDisplay: scrollbar.display,
+            scrollbarWidth: scrollbar.width,
+            thumbBackground: thumb.backgroundColor,
+            thumbRadius: thumb.borderRadius,
+          };
+          return true;
+        },
+        null,
+        { timeout: 1000 }
+      );
     }
     const categoryScrollState = await categoryContent.evaluate(content => {
       const root = document.querySelector('.site-scroll-root');
       const scrollbar = getComputedStyle(content, '::-webkit-scrollbar');
       const thumb = getComputedStyle(content, '::-webkit-scrollbar-thumb');
+        const observedScrollActivity = window.__priceSmokeCategoryScrollActivity;
         const header = content.querySelector('.price-category-modal__header');
         const selectionHeader = content.querySelector('.price-category-modal__selection-header');
         const close = content.querySelector('.price-category-modal__close');
@@ -938,6 +959,7 @@ for (const locale of locales) {
         scrollbarWidth: scrollbar.width,
         thumbBackground: thumb.backgroundColor,
         thumbRadius: thumb.borderRadius,
+          observedScrollActivity,
           rootLocked: Boolean(
             root?.classList.contains('price-modal-scroll-locked')
             && getComputedStyle(root).overflowY === 'hidden'
@@ -976,11 +998,11 @@ for (const locale of locales) {
       `${locale} ${label}: category modal scroll rail appears only while scrolling`,
       categoryScrollState.maxScroll < 2 || (
         categoryScrollState.overflowY === 'auto'
-        && categoryScrollState.scrollActive
-        && categoryScrollState.scrollbarDisplay === 'block'
-        && Number.parseFloat(categoryScrollState.scrollbarWidth || '0') === 8
-        && Number.parseFloat(categoryScrollState.thumbRadius || '0') >= 999
-        && categoryScrollState.thumbBackground !== 'rgba(0, 0, 0, 0)'
+        && categoryScrollState.observedScrollActivity?.scrollActive
+        && categoryScrollState.observedScrollActivity.scrollbarDisplay === 'block'
+        && Number.parseFloat(categoryScrollState.observedScrollActivity.scrollbarWidth || '0') === 8
+        && Number.parseFloat(categoryScrollState.observedScrollActivity.thumbRadius || '0') >= 999
+        && categoryScrollState.observedScrollActivity.thumbBackground !== 'rgba(0, 0, 0, 0)'
       ),
       JSON.stringify(categoryScrollState)
     );

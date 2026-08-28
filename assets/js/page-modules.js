@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     de: {
       weekdays: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
-      services: ['Komplett-Grooming Hund', 'Express-Fellwechsel', 'Hygienepflege', 'Katzenpflege', 'SPA-Pflege', 'Ihre Vorschläge'],
+      services: ['Komplettpflege Hund', 'Express-Fellwechsel', 'Hygienepflege', 'Katzenpflege', 'SPA-Pflege', 'Ihre Vorschläge'],
       fallbackService: 'Ausgewählte Leistung',
       chooseService: 'Bitte wählen Sie eine Leistung',
       chooseBreed: 'Wählen Sie Rasse oder Tierkategorie',

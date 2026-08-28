@@ -14,16 +14,16 @@ const COPY = {
   documents: {
     de: {
       leadExtra:
-        'Gute Vorbereitung macht den Besuch ruhiger — für Sie und Ihr Tier. Auf dieser Seite finden Sie die wichtigsten Unterlagen und Hinweise vor dem Grooming-Termin in Leipzig.',
+        'Gute Vorbereitung macht den Besuch ruhiger — für Sie und Ihr Tier. Auf dieser Seite finden Sie die wichtigsten Unterlagen und Hinweise vor dem Pflegetermin in Leipzig.',
       h2: 'Was Sie hier finden',
       items: [
         'Checklisten zur Vorbereitung von Hund oder Katze auf den Salonbesuch',
         'Hinweise zu Impfungen, Parasitenschutz und Gesundheitszustand vor dem Termin',
-        'Links zu Drive-Dokumenten und Formularen, die wir vor dem Grooming nutzen',
+        'Links zu Drive-Dokumenten und Formularen, die wir vor der Pflege nutzen',
         'Praktische Tipps für Anreise, Wartezeit und Abholung in Leipzig',
       ],
       body: `HUNDESALON NIKA arbeitet nach Termin. Bitte bringen Sie aktuelle Angaben zu Fellzustand, Besonderheiten und gewünschter Leistung mit. So können wir Haarschnitt, Baden und Pflege ohne unnötigen Stress planen. Adresse: ${NAP.street}, ${NAP.postalCode} ${NAP.locality}.`,
-      more: 'Wenn Ihr Tier ängstlich ist, schreiben Sie uns vorab — wir planen mehr Zeit und ruhige Abläufe. Für Express-Entwollung, Hygiene oder einen kompletten Grooming-Tag finden Sie Details unter Leistungen und Preise. Die Dokumente auf dieser Seite ergänzen das Gespräch im Salon, ersetzen aber keine individuelle Beratung vor Ort.',
+      more: 'Wenn Ihr Tier ängstlich ist, schreiben Sie uns vorab — wir planen mehr Zeit und ruhige Abläufe. Für Express-Entwollung, Hygiene oder einen umfassenden Pflegetermin finden Sie Details unter Leistungen und Preise. Die Dokumente auf dieser Seite ergänzen das Gespräch im Salon, ersetzen aber keine individuelle Beratung vor Ort.',
       cta: 'Jetzt Termin buchen',
       ctaHref: 'onlayn-bronirovanie.html',
       secondary: 'Leistungen ansehen',
@@ -84,7 +84,7 @@ const COPY = {
   'do-i-posle': {
     de: {
       intro:
-        'Vorher-Nachher zeigt, wie Fell, Form und Pflege nach dem Grooming wirken. Bei HUNDESALON NIKA in Leipzig dokumentieren wir echte Salon-Ergebnisse — Haarschnitt, Baden und Entwollung — damit Sie den Unterschied klar sehen.',
+        'Vorher-Nachher zeigt, wie Fell, Form und Pflege nach der professionellen Fellpflege wirken. Bei HUNDESALON NIKA in Leipzig dokumentieren wir echte Salon-Ergebnisse — Haarschnitt, Baden und Entwollung — damit Sie den Unterschied klar sehen.',
       h2: 'Warum Vorher & Nachher hilft',
       items: [
         'Sie erkennen den Stil und die Sorgfalt unseres Teams vor dem Termin',
@@ -155,7 +155,7 @@ const COPY = {
       items: [
         'Haarschnitte und Fellpflege für unterschiedliche Rassen und Felltypen',
         'Hygiene und Form — von Alltagspflege bis ausdrucksstarkem Finish',
-        'Atmosphäre eines modernen Grooming-Salons in Sachsen',
+        'Atmosphäre eines modernen Hundesalons in Sachsen',
       ],
       body: 'Bilder ersetzen keine Beratung: für die passende Leistung und Länge sprechen wir vor dem Termin. Vorher-Nachher-Vergleiche finden Sie auf der Transformationsseite; Termine buchen Sie online.',
       more: 'Wir pflegen Hunde und Katzen mit Fokus auf Hygiene, Komfort und ein sauberes Finish. Die Galerie wird laufend ergänzt und spiegelt reale Arbeit im Salon wider — inklusive unterschiedlicher Felltypen und Stile, die Kunden in Leipzig häufig wünschen.',

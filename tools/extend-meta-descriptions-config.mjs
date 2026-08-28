@@ -14,7 +14,7 @@ const MAX = 170;
 const SUFFIX = {
   de: [
     ' Termin online oder telefonisch bei HUNDESALON NIKA in Leipzig.',
-    ' Professionelle Grooming-Pflege in Leipzig-Sachsen — jetzt Termin sichern.',
+    ' Professionelle Fellpflege in Leipzig-Sachsen — jetzt Termin sichern.',
     ' Hundesalon in Leipzig — ruhige Betreuung für Hund und Katze.',
   ],
   en: [
@@ -53,7 +53,7 @@ const TAIL = {
 };
 
 const BOOST = {
-  de: [' HUNDESALON NIKA — Grooming-Salon in Leipzig.', ' Für Hunde und Katzen in Leipzig-Sachsen.'],
+  de: [' HUNDESALON NIKA — Hundesalon in Leipzig.', ' Für Hunde und Katzen in Leipzig-Sachsen.'],
   en: [' HUNDESALON NIKA grooming salon in Leipzig.', ' For dogs and cats in Leipzig, Saxony.'],
   ru: [' Салон HUNDESALON NIKA в Лейпциге.', ' Для собак и кошек в Лейпциге, Саксония.'],
   uk: [' Салон HUNDESALON NIKA у Лейпцигу.', ' Для собак і котів у Лейпцигу, Саксонія.'],

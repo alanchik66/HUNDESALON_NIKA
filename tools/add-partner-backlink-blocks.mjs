@@ -15,7 +15,7 @@ const COPY = {
     lead: 'Tierärzte, Hundeschulen, Zoohandlungen und lokale Unternehmen: ein Link von Ihrer Website auf unseren Salon stärkt die Sichtbarkeit und hilft Tierbesitzern in Leipzig, uns zu finden.',
     urlLabel: 'Empfohlene URL',
     anchorLabel: 'Ankertext',
-    anchor: 'HUNDESALON NIKA — Hundesalon & Grooming in Leipzig',
+    anchor: 'HUNDESALON NIKA — Hundesalon & Fellpflege in Leipzig',
     snippetLabel: 'HTML zum Kopieren',
     profiles: 'Offizielle Profile & NAP',
   },

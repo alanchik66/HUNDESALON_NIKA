@@ -19,6 +19,14 @@ SENDPULSE_BOOKING_EVENT_NAME=
 SENDPULSE_CONTACT_EVENT_NAME=
 SENDPULSE_NEWSLETTER_EVENT_NAME=
 
+# SendPulse AI Agent File Search. OPENAI_API_KEY stays local/secret.
+# The vector-store ID is optional when the exact store name is unique.
+OPENAI_API_KEY=
+SENDPULSE_AI_VECTOR_STORE_ID=
+SENDPULSE_AI_VECTOR_STORE_NAME=HUNDESAL_NIKA Website Knowledge
+# Optional one-time comma-separated file IDs to detach after the first indexed sync.
+SENDPULSE_AI_LEGACY_FILE_IDS=
+
 # Full-stack platform integrations. Keep production values in Cloudflare Pages secrets only.
 GA_MEASUREMENT_ID=
 # Public Google Ads tag IDs (also in config/env.js). Not secrets.

@@ -310,7 +310,7 @@
       key: 'cat-full',
       groups: ['cats', 'others'],
       booking: { de: 'Katzenpflege', en: 'Cat grooming', ru: 'Груминг кошки', uk: 'Грумінг кота' },
-      label: { de: 'Komplett-Grooming Katze mit Baden', en: 'Full cat groom with bath', ru: 'Полный груминг кошки с купанием', uk: 'Повний грумінг кота з купанням' },
+      label: { de: 'Komplettpflege Katze mit Baden', en: 'Full cat groom with bath', ru: 'Полный груминг кошки с купанием', uk: 'Повний грумінг кота з купанням' },
       note: {
         de: 'Für Maine Coons und große Katzen kann ein Zuschlag von +15 € anfallen.',
         en: 'A surcharge of +15 € may apply for Maine Coons and large cats.',
@@ -431,8 +431,8 @@
     {
       key: 'full-groom',
       groups: ['dogs', 'others'],
-      booking: { de: 'Komplett-Grooming Hund', en: 'Full dog grooming', ru: 'Полный груминг собаки', uk: 'Повний грумінг собаки' },
-      label: { de: 'Komplett-Grooming Hund', en: 'Full dog grooming', ru: 'Полный груминг собаки', uk: 'Повний грумінг собаки' },
+      booking: { de: 'Komplettpflege Hund', en: 'Full dog grooming', ru: 'Полный груминг собаки', uk: 'Повний грумінг собаки' },
+      label: { de: 'Komplettpflege Hund', en: 'Full dog grooming', ru: 'Полный груминг собаки', uk: 'Повний грумінг собаки' },
       note: {
         de: 'Der Endpreis hängt von Fellzustand, Verfilzungen, Verhalten und Zeitaufwand ab.',
         en: 'Final price depends on coat condition, mats, behaviour and time required.',
@@ -485,7 +485,7 @@
       booking: { de: 'Hygienepflege', en: 'Hygiene care', ru: 'Гигиенический уход', uk: 'Гігієнічний догляд' },
       label: { de: 'Hygienepflege', en: 'Hygiene care', ru: 'Гигиенический уход', uk: 'Гігієнічний догляд' },
       note: {
-        de: 'Ideal als pflegender Zwischentermin zwischen Komplett-Groomings.',
+        de: 'Ideal als pflegender Zwischentermin zwischen zwei Komplettpflege-Terminen.',
         en: 'Maintenance care between full grooming appointments.',
         ru: 'Поддерживающий уход между полноценными грумингами.',
         uk: 'Підтримувальний догляд між повноцінними грумінгами.',

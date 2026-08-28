@@ -11,13 +11,13 @@ const MAX = 168;
 
 const META = {
   'index.html': {
-    de: 'Professioneller Hundesalon in Leipzig: Grooming für Hunde und Katzen, Haarschnitt, Baden, Fellpflege, Express-Entwollung und Online-Buchung bei HUNDESALON NIKA.',
+    de: 'Professioneller Hundesalon in Leipzig: Hundepflege und Katzenpflege, Haarschnitt, Baden, Fellpflege, Express-Entwollung und einfache Online-Buchung bei HUNDESALON NIKA.',
     en: 'Premium dog and cat grooming in Leipzig: haircuts, bathing, coat care, express deshedding and easy online booking at HUNDESALON NIKA — calm salon care.',
     ru: 'Профессиональный груминг собак и кошек в Лейпциге: стрижка, купание, уход за шерстью, экспресс-линька и удобная онлайн-запись в салоне HUNDESALON NIKA.',
     uk: 'Професійний грумінг собак і котів у Лейпцигу: стрижка, купання, догляд за шерстю, експрес-линька та зручний онлайн-запис у салоні HUNDESALON NIKA.',
   },
   'o-nas.html': {
-    de: 'Lernen Sie HUNDESALON NIKA kennen: erfahrenes Grooming-Team in Leipzig mit Liebe zu Hunden und Katzen, transparenten Abläufen und ruhiger Betreuung im Salon.',
+    de: 'Lernen Sie HUNDESALON NIKA kennen: ein erfahrenes Pflegeteam in Leipzig mit Liebe zu Hunden und Katzen, transparenten Abläufen und ruhiger Betreuung im Salon vor Ort.',
     en: 'Meet HUNDESALON NIKA: an experienced grooming team in Leipzig with genuine care for dogs and cats, clear processes and a calm, stress-free salon visit.',
     ru: 'Познакомьтесь с HUNDESALON NIKA: опытная команда грумеров в Лейпциге с любовью к собакам и кошкам, прозрачным сервисом и спокойной атмосферой салона.',
     uk: 'Познайомтесь з HUNDESALON NIKA: досвідчена команда грумерів у Лейпцигу з любов’ю до собак і котів, прозорим сервісом і спокійною атмосферою салону.',
@@ -41,55 +41,55 @@ const META = {
     uk: 'Фотогалерея HUNDESALON NIKA у Лейпцигу: реальні результати до й після, охайні стрижки та щасливі улюбленці з буднів нашого грумінг-салону.',
   },
   'prays-list.html': {
-    de: 'Aktuelle Preisliste von HUNDESALON NIKA in Leipzig: transparente Grooming-Preise für Hunde und Katzen — Haarschnitt, Baden, Trimming und Zusatzleistungen.',
+    de: 'Aktuelle Preisliste von HUNDESALON NIKA in Leipzig: transparente Pflegepreise für Hunde und Katzen — Haarschnitt, Baden, Trimming und Zusatzleistungen.',
     en: 'HUNDESALON NIKA price list in Leipzig: transparent grooming prices for dogs and cats — haircuts, bathing, trimming, coat care and salon extras.',
     ru: 'Прайс-лист HUNDESALON NIKA в Лейпциге: прозрачные цены на груминг для собак и кошек — стрижка, купание, тримминг, уход и дополнительные услуги.',
     uk: 'Прайс-лист HUNDESALON NIKA у Лейпцигу: прозорі ціни на грумінг для собак і котів — стрижка, купання, тримінг, догляд та додаткові послуги.',
   },
   'onlayn-bronirovanie.html': {
-    de: 'Online-Terminbuchung bei HUNDESALON NIKA in Leipzig: Grooming für Hund und Katze reservieren — wenige Klicks, klare Leistungswahl und ruhige Betreuung.',
+    de: 'Online-Terminbuchung bei HUNDESALON NIKA in Leipzig: Hundepflege und Katzenpflege mit wenigen Klicks, klarer Auswahl und ruhiger Betreuung reservieren. Jetzt buchen.',
     en: 'Book grooming online at HUNDESALON NIKA in Leipzig: reserve dog or cat appointments in a few clicks with clear service choices and calm salon care.',
     ru: 'Онлайн-запись в HUNDESALON NIKA в Лейпциге: забронируйте груминг для собаки или кошки за пару кликов с понятным выбором услуг и спокойной заботой.',
     uk: 'Онлайн-запис у HUNDESALON NIKA у Лейпцигу: забронюйте грумінг для собаки чи кота за кілька кліків із зрозумілим вибором послуг і спокійною турботою.',
   },
   'reyting.html': {
-    de: 'Kundenbewertungen zu HUNDESALON NIKA in Leipzig: echte Erfahrungen zu Grooming, Haarschnitt und Pflege — Transparenz, Vertrauen und zufriedene Tiere.',
+    de: 'Kundenbewertungen zu HUNDESALON NIKA in Leipzig: echte Erfahrungen mit Haarschnitt und Fellpflege — Transparenz, Vertrauen und zufriedene Tiere aus Leipzig und Sachsen.',
     en: 'Customer reviews of HUNDESALON NIKA in Leipzig: real experiences with grooming, haircuts and coat care — transparency, trust and happy pets.',
     ru: 'Отзывы клиентов о HUNDESALON NIKA в Лейпциге: реальный опыт груминга, стрижек и ухода — прозрачность, доверие и довольные собаки и кошки.',
     uk: 'Відгуки клієнтів про HUNDESALON NIKA у Лейпцигу: реальний досвід грумінгу, стрижок і догляду — прозорість, довіра та задоволені собаки й коти.',
   },
   'do-i-posle.html': {
-    de: 'Vorher-Nachher bei HUNDESALON NIKA in Leipzig: sehen Sie Transformationen nach Grooming, Haarschnitt und Fellpflege — Qualität, die man am Tier erkennt.',
+    de: 'Vorher-Nachher bei HUNDESALON NIKA in Leipzig: sehen Sie Transformationen nach Haarschnitt, Baden und Fellpflege — Qualität, die man am Tier erkennt.',
     en: 'Before and after at HUNDESALON NIKA in Leipzig: see real transformations after grooming, haircuts and coat care — quality you can see on every pet.',
     ru: 'Фото до и после в HUNDESALON NIKA в Лейпциге: реальные изменения после груминга, стрижки и ухода за шерстью — качество, видное на каждом питомце.',
     uk: 'Фото до й після в HUNDESALON NIKA у Лейпцигу: реальні зміни після грумінгу, стрижки й догляду за шерстю — якість, яку видно на кожному улюбленці.',
   },
   'vvedenie.html': {
-    de: 'Willkommen bei HUNDESALON NIKA in Leipzig: Einführung in unseren Salon, unser Grooming-Konzept und die liebevolle Betreuung von Hunden und Katzen.',
+    de: 'Willkommen bei HUNDESALON NIKA in Leipzig: Einführung in unseren Salon, unser Pflegekonzept und die liebevolle Betreuung von Hunden und Katzen — jetzt online buchen.',
     en: 'Welcome to HUNDESALON NIKA in Leipzig: an introduction to our salon, grooming philosophy and caring approach to dogs and cats across Saxony.',
     ru: 'Добро пожаловать в HUNDESALON NIKA в Лейпциге: введение в наш салон, подход к грумингу и заботливое отношение к собакам и кошкам в Саксонии.',
     uk: 'Ласкаво просимо до HUNDESALON NIKA у Лейпцигу: вступ до нашого салону, підхід до грумінгу та дбайливе ставлення до собак і котів у Саксонії.',
   },
   'partnerstvo.html': {
-    de: 'Partnerschaften mit HUNDESALON NIKA in Leipzig: Kooperationen für Tierärzte, Hundeschulen, Pet-Shops und lokale Unternehmen rund um Pflege und Grooming.',
+    de: 'Partnerschaften mit HUNDESALON NIKA in Leipzig: Kooperationen mit Tierärzten, Hundeschulen, Fachgeschäften und Unternehmen für Tierwohl und professionelle Fellpflege.',
     en: 'Partner with HUNDESALON NIKA in Leipzig: collaborations for vets, dog schools, pet shops and local businesses around dog care and professional grooming.',
     ru: 'Партнёрство с HUNDESALON NIKA в Лейпциге: сотрудничество для ветклиник, кинологов, зоомагазинов и локального бизнеса в сфере ухода и груминга.',
     uk: 'Партнерство з HUNDESALON NIKA у Лейпцигу: співпраця для ветклінік, кінологів, зоомагазинів і локального бізнесу в сфері догляду та грумінгу.',
   },
   'social.html': {
-    de: 'Folgen Sie HUNDESALON NIKA in Leipzig auf Instagram, Telegram, TikTok und weiteren Kanälen: Grooming-Einblicke, Pflegetipps und Salon-Neuigkeiten.',
+    de: 'Folgen Sie HUNDESALON NIKA in Leipzig auf Instagram, Telegram, TikTok und anderen Kanälen: Einblicke in die Hundepflege, Pflegetipps und Salon-Neuigkeiten — jetzt buchen.',
     en: 'Follow HUNDESALON NIKA in Leipzig on Instagram, Telegram, TikTok and more: grooming insights, care tips and news from our dog and cat salon.',
     ru: 'Подписывайтесь на HUNDESALON NIKA в Лейпциге в Instagram, Telegram, TikTok и других сетях: закулисье груминга, советы по уходу и новости салона.',
     uk: 'Підписуйтесь на HUNDESALON NIKA у Лейпцигу в Instagram, Telegram, TikTok та інших мережах: закулісся грумінгу, поради з догляду та новини салону.',
   },
   'documents.html': {
-    de: 'Unterlagen von HUNDESALON NIKA in Leipzig: Checklisten, Drive-Dokumente und Hinweise zur Vorbereitung auf den Grooming-Termin für Hund und Katze.',
+    de: 'Unterlagen von HUNDESALON NIKA in Leipzig: Checklisten, Drive-Dokumente und Hinweise zur Vorbereitung auf den Pflegetermin für Hund und Katze — jetzt online ansehen.',
     en: 'Documents from HUNDESALON NIKA in Leipzig: checklists, Drive files and practical notes to prepare your dog or cat for a calm grooming appointment.',
     ru: 'Документы HUNDESALON NIKA в Лейпциге: чек-листы, файлы Google Drive и подсказки для подготовки собаки или кошки к спокойному визиту на груминг.',
     uk: 'Документи HUNDESALON NIKA у Лейпцигу: чек-листи, файли Google Drive і підказки для підготовки собаки чи кота до спокійного візиту на грумінг.',
   },
   'impressum.html': {
-    de: 'Impressum von HUNDESALON NIKA in Leipzig: Anbieterkennzeichnung gemäß § 5 TMG, Kontakt, Verantwortlicher und rechtliche Angaben zum Grooming-Salon.',
+    de: 'Impressum von HUNDESALON NIKA in Leipzig: Anbieterkennzeichnung gemäß § 5 TMG, Kontakt, Verantwortlicher und rechtliche Angaben zum Hundesalon — jetzt online lesen.',
     en: 'Legal notice (Impressum) of HUNDESALON NIKA in Leipzig: provider information pursuant to § 5 TMG, contact details and legal salon information.',
     ru: 'Импрессум HUNDESALON NIKA в Лейпциге: сведения о поставщике по § 5 TMG, контакты, ответственное лицо и юридическая информация о груминг-салоне.',
     uk: 'Імпресум HUNDESALON NIKA у Лейпцигу: відомості про постачальника згідно з § 5 TMG, контакти, відповідальна особа та юридична інформація про салон.',
@@ -107,7 +107,7 @@ const META = {
     uk: 'Салон для собак у Лейпцигу — HUNDESALON NIKA: догляд за шерстю, гігієна, купання, стрижка та онлайн-запис для собак і котів у спокійній атмосфері.',
   },
   'blog/blog.html': {
-    de: 'Grooming-Blog von HUNDESALON NIKA in Leipzig: Fellpflege-Tipps, Haarschnitt-Trends und praxisnahe Artikel für Hunde- und Katzenbesitzer in Sachsen.',
+    de: 'Pflegeblog von HUNDESALON NIKA in Leipzig: Fellpflege-Tipps, Haarschnitt-Trends und praxisnahe Artikel für Hunde- und Katzenbesitzer in Sachsen — jetzt online lesen.',
     en: 'HUNDESALON NIKA blog in Leipzig: grooming tips, haircut trends and practical articles for dog and cat owners across Saxony and Germany.',
     ru: 'Блог HUNDESALON NIKA в Лейпциге: советы по уходу за шерстью, тренды стрижек и практичные статьи для владельцев собак и кошек в Саксонии.',
     uk: 'Блог HUNDESALON NIKA у Лейпцигу: поради з догляду за шерстю, тренди стрижок і практичні статті для власників собак і котів у Саксонії.',
@@ -119,7 +119,7 @@ const META = {
     uk: 'Навіщо експрес-линька в HUNDESALON NIKA у Лейпцигу: менше шерсті вдома, більше комфорту для собак і котів і помітно легша шерсть після догляду.',
   },
   'blog/kak-podgotovit-sobaku.html': {
-    de: 'So bereiten Sie Hund oder Katze auf den Grooming-Termin bei HUNDESALON NIKA vor: Checkliste, ruhige Anreise und Tipps für einen stressfreien Besuch.',
+    de: 'So bereiten Sie Hund oder Katze auf den Pflegetermin bei HUNDESALON NIKA vor: Checkliste, ruhige Anreise und Tipps für einen stressfreien Besuch.',
     en: 'How to prepare your dog or cat for grooming at HUNDESALON NIKA in Leipzig: checklist, calm arrival and tips for a stress-free salon visit.',
     ru: 'Как подготовить собаку или кошку к грумингу в HUNDESALON NIKA в Лейпциге: чек-лист, спокойный приезд и советы для безстрессового визита в салон.',
     uk: 'Як підготувати собаку чи кота до грумінгу в HUNDESALON NIKA у Лейпцигу: чек-лист, спокійний приїзд і поради для безстресового візиту в салон.',

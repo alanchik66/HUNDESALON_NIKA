@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { transformSync } from 'esbuild';
 
@@ -187,11 +188,33 @@ function deployAssetVersion() {
     return process.env.DEPLOY_ASSET_VERSION.trim();
   }
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const assetNames = new Set(STAMPED_ASSETS);
+  const files = [];
+
+  function collect(current) {
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const fullPath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        collect(fullPath);
+      } else if (entry.isFile() && assetNames.has(entry.name)) {
+        files.push(fullPath);
+      }
+    }
+  }
+
+  collect(path.join(dist, 'assets'));
+  const contentHash = createHash('sha256');
+  for (const file of files.sort()) {
+    contentHash.update(path.relative(dist, file).replaceAll('\\', '/'));
+    contentHash.update(fs.readFileSync(file));
+  }
+  const digest = contentHash.digest('hex').slice(0, 8);
+
   try {
     const hash = execSync('git rev-parse --short HEAD', { cwd: root, encoding: 'utf8' }).trim();
-    return `${date}-prod-${hash}`;
+    return `${date}-prod-${hash}-${digest}`;
   } catch {
-    return `${date}-prod-build`;
+    return `${date}-prod-${digest}`;
   }
 }
 

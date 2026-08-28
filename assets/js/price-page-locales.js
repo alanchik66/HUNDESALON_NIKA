@@ -48,12 +48,12 @@
   };
   const dogServiceNotes = {
     full: {
-      de: 'Komplett-Grooming umfasst Beratung, Ausbürsten, professionelles Waschen und Trocknen, Schneiden und Formen des Fells, hygienische Pflege, Augen-, Ohren- und Krallenpflege sowie das abschließende Finish des Hundes.',
+      de: 'Komplettpflege umfasst Beratung, Ausbürsten, professionelles Waschen und Trocknen, Schneiden und Formen des Fells, hygienische Pflege, Augen-, Ohren- und Krallenpflege sowie das abschließende Finish des Hundes.',
       en: 'Full grooming includes a consultation, brushing, professional washing and drying, clipping and coat styling, hygiene care, eye, ear and nail care, and the dog’s final finish.',
       uk: 'Повний грумінг включає консультацію, розчісування, професійне миття та сушіння, стрижку й оформлення шерсті, гігієнічний догляд, догляд за очима, вухами та кігтями і фінальне оформлення собаки.',
     },
     poodleFull: {
-      de: 'Bei Pudeln und Bichons umfasst das Komplett-Grooming Beratung, Ausbürsten, professionelles Waschen, Konditionierung und Trocknen, Schneiden und Formen des Fells, hygienische Pflege, Augen-, Ohren- und Krallenpflege sowie das abschließende Finish des Hundes.',
+      de: 'Bei Pudeln und Bichons umfasst die Komplettpflege Beratung, Ausbürsten, professionelles Waschen, Konditionierung und Trocknen, Schneiden und Formen des Fells, hygienische Pflege, Augen-, Ohren- und Krallenpflege sowie das abschließende Finish des Hundes.',
       en: 'For poodles and bichons, full grooming includes a consultation, brushing, professional washing, conditioning and drying, clipping and coat styling, hygiene care, eye, ear and nail care, and the dog’s final finish.',
       uk: 'Для пуделів і бішонів повний грумінг включає консультацію, розчісування, професійне миття, кондиціонування та сушіння, стрижку й оформлення шерсті, гігієнічний догляд, догляд за очима, вухами та кігтями і фінальне оформлення собаки.',
     },
@@ -206,7 +206,7 @@
         en: ['Yorkshire Terrier', 'Biewer Yorkshire Terrier', 'Maltese', 'Shih Tzu', 'Havanese', 'Bolognese', 'Zwetna Bolonka / Russian Colored Bolonka', 'Lhasa Apso', 'Pekingese', 'Japanese Chin', 'Chinese Crested — Powder Puff variety', 'Other small breeds with a similar coat type'],
         uk: ['Йоркширський тер’єр', 'Бівер-йоркширський тер’єр', 'Мальтезе', 'Ши-тцу', 'Гаванез', 'Болоньєз', 'Болонка Zwetna / російська кольорова болонка', 'Лхаса апсо', 'Пекінес', 'Японський хін', 'Китайська чубата — пухова різновидність', 'Інші малі породи з аналогічним типом шерсті'],
       },
-      labels: { de: ['Komplett-Grooming', 'Baden + Hygienepflege', 'Welpen-Eingewöhnung'], en: ['Full grooming', 'Bath + hygiene care', 'First puppy grooming'], uk: ['Комплексний грумінг', 'Купання + гігієнічний догляд', 'Перший грумінг цуценяти'] },
+      labels: { de: ['Komplettpflege', 'Baden + Hygienepflege', 'Welpen-Eingewöhnung'], en: ['Full grooming', 'Bath + hygiene care', 'First puppy grooming'], uk: ['Комплексний грумінг', 'Купання + гігієнічний догляд', 'Перший грумінг цуценяти'] },
       prices: ['main80', 'bath60', 'main50'],
     },
     'ru-poodles-bichons': {
@@ -218,7 +218,7 @@
         en: ['Toy Poodle', 'Miniature Poodle', 'Small Poodle', 'Medium Poodle', 'Bichon Frise', 'Coton de Tulear', 'Löwchen', 'Maltipoo', 'Yorkipoo', 'Shih-Poo', 'Cavapoo', 'Cockapoo', 'Havapoo', 'Poochon', 'Small and medium Schnoodle', 'Other poodle and bichon mixes'],
         uk: ['Той-пудель', 'Карликовий пудель', 'Малий пудель', 'Середній пудель', 'Бішон-фрізе', 'Котон-де-тулеар', 'Левхен', 'Мальтіпу', 'Йоркіпу', 'Ши-пу', 'Кавапу', 'Кокапу', 'Хавапу', 'Пучон', 'Невеликі та середні Schnoodle', 'Інші пудельні та бішонові метиси'],
       },
-      labels: { de: ['Komplett-Grooming', 'Baden + Hygienepflege'], en: ['Full grooming', 'Bath + hygiene care'], uk: ['Комплексний грумінг', 'Купання + гігієнічний догляд'] },
+      labels: { de: ['Komplettpflege', 'Baden + Hygienepflege'], en: ['Full grooming', 'Bath + hygiene care'], uk: ['Комплексний грумінг', 'Купання + гігієнічний догляд'] },
       prices: ['main90', 'bath70'],
     },
     'ru-spitz': {
@@ -230,7 +230,7 @@
         en: ['Pomeranian / German Spitz', 'German Spitz, dwarf / Zwergspitz', 'German Spitz, small', 'German Spitz, medium', 'German Spitz, large', 'Wolfspitz / Keeshond', 'Japanese Spitz', 'Finnish Spitz'],
         uk: ['Померанський шпіц / Pomeranian', 'Німецький шпіц карликовий / Zwergspitz', 'Німецький шпіц малий', 'Німецький шпіц середній', 'Німецький шпіц великий', 'Вольфшпіц / Keeshond', 'Японський шпіц', 'Фінський шпіц'],
       },
-      labels: { de: ['Komplett-Grooming'], en: ['Full grooming'], uk: ['Комплексний грумінг'] },
+      labels: { de: ['Komplettpflege'], en: ['Full grooming'], uk: ['Комплексний грумінг'] },
       prices: ['main90'],
     },
     'ru-spaniels': {
@@ -242,7 +242,7 @@
         en: ['English Cocker Spaniel', 'American Cocker Spaniel', 'Cavalier King Charles Spaniel', 'King Charles Spaniel', 'English Springer Spaniel', 'Welsh Springer Spaniel', 'Russian Hunting Spaniel', 'Field Spaniel', 'Clumber Spaniel', 'Sussex Spaniel', 'Other spaniels'],
         uk: ['Англійський кокер-спанієль', 'Американський кокер-спанієль', 'Кавалер-кинг-чарльз-спанієль', 'Кінг-чарльз-спанієль', 'Англійський спрингер-спанієль', 'Вельш-спрингер-спанієль', 'Російський мисливський спанієль', 'Філд-спанієль', 'Кламбер-спанієль', 'Суссекс-спанієль', 'Інші спанієлі'],
       },
-      labels: { de: ['Komplett-Grooming', 'Baden + Hygienepflege'], en: ['Full grooming', 'Bath + hygiene care'], uk: ['Комплексний грумінг', 'Купання + гігієнічний догляд'] },
+      labels: { de: ['Komplettpflege', 'Baden + Hygienepflege'], en: ['Full grooming', 'Bath + hygiene care'], uk: ['Комплексний грумінг', 'Купання + гігієнічний догляд'] },
       prices: ['main105', 'bath85'],
     },
     'ru-wire-coat': {
