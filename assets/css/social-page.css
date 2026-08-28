@@ -17,12 +17,12 @@
   > a,
 .social-page :is(.social-links, .social-grid, .social-cards, .social-network-grid, .social-list)
   > li > a,
-.social-page a[href^="https://www.facebook.com/"],
-.social-page a[href^="https://www.instagram.com/"],
-.social-page a[href^="https://www.tiktok.com/"],
-.social-page a[href^="https://www.youtube.com/"],
-.social-page a[href^="https://t.me/"],
-.social-page a[href^="viber://"] {
+.social-page a[href^="https://www.facebook.com/"]:not(.social-card__media-brand),
+.social-page a[href^="https://www.instagram.com/"]:not(.social-card__media-brand),
+.social-page a[href^="https://www.tiktok.com/"]:not(.social-card__media-brand),
+.social-page a[href^="https://www.youtube.com/"]:not(.social-card__media-brand),
+.social-page a[href^="https://t.me/"]:not(.social-card__media-brand),
+.social-page a[href^="viber://"]:not(.social-card__media-brand) {
   position: relative;
   isolation: isolate;
   display: flex !important;
@@ -48,12 +48,12 @@
   > a::before,
 .social-page :is(.social-links, .social-grid, .social-cards, .social-network-grid, .social-list)
   > li > a::before,
-.social-page a[href^="https://www.facebook.com/"]::before,
-.social-page a[href^="https://www.instagram.com/"]::before,
-.social-page a[href^="https://www.tiktok.com/"]::before,
-.social-page a[href^="https://www.youtube.com/"]::before,
-.social-page a[href^="https://t.me/"]::before,
-.social-page a[href^="viber://"]::before {
+.social-page a[href^="https://www.facebook.com/"]:not(.social-card__media-brand)::before,
+.social-page a[href^="https://www.instagram.com/"]:not(.social-card__media-brand)::before,
+.social-page a[href^="https://www.tiktok.com/"]:not(.social-card__media-brand)::before,
+.social-page a[href^="https://www.youtube.com/"]:not(.social-card__media-brand)::before,
+.social-page a[href^="https://t.me/"]:not(.social-card__media-brand)::before,
+.social-page a[href^="viber://"]:not(.social-card__media-brand)::before {
   position: absolute;
   z-index: -2;
   inset: 18% 25%;
@@ -70,12 +70,12 @@
   > a::after,
 .social-page :is(.social-links, .social-grid, .social-cards, .social-network-grid, .social-list)
   > li > a::after,
-.social-page a[href^="https://www.facebook.com/"]::after,
-.social-page a[href^="https://www.instagram.com/"]::after,
-.social-page a[href^="https://www.tiktok.com/"]::after,
-.social-page a[href^="https://www.youtube.com/"]::after,
-.social-page a[href^="https://t.me/"]::after,
-.social-page a[href^="viber://"]::after {
+.social-page a[href^="https://www.facebook.com/"]:not(.social-card__media-brand)::after,
+.social-page a[href^="https://www.instagram.com/"]:not(.social-card__media-brand)::after,
+.social-page a[href^="https://www.tiktok.com/"]:not(.social-card__media-brand)::after,
+.social-page a[href^="https://www.youtube.com/"]:not(.social-card__media-brand)::after,
+.social-page a[href^="https://t.me/"]:not(.social-card__media-brand)::after,
+.social-page a[href^="viber://"]:not(.social-card__media-brand)::after {
   position: absolute;
   z-index: -1;
   inset: 0;
@@ -89,12 +89,12 @@
   > a:hover,
 .social-page :is(.social-links, .social-grid, .social-cards, .social-network-grid, .social-list)
   > li > a:hover,
-.social-page a[href^="https://www.facebook.com/"]:hover,
-.social-page a[href^="https://www.instagram.com/"]:hover,
-.social-page a[href^="https://www.tiktok.com/"]:hover,
-.social-page a[href^="https://www.youtube.com/"]:hover,
-.social-page a[href^="https://t.me/"]:hover,
-.social-page a[href^="viber://"]:hover {
+.social-page a[href^="https://www.facebook.com/"]:not(.social-card__media-brand):hover,
+.social-page a[href^="https://www.instagram.com/"]:not(.social-card__media-brand):hover,
+.social-page a[href^="https://www.tiktok.com/"]:not(.social-card__media-brand):hover,
+.social-page a[href^="https://www.youtube.com/"]:not(.social-card__media-brand):hover,
+.social-page a[href^="https://t.me/"]:not(.social-card__media-brand):hover,
+.social-page a[href^="viber://"]:not(.social-card__media-brand):hover {
   border-color: rgba(255, 233, 168, 0.82);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.32), 0 0 26px rgba(229, 184, 92, 0.2);
   transform: translateY(-5px);
@@ -102,12 +102,12 @@
 
 .social-page :is(.social-links, .social-grid, .social-cards, .social-network-grid, .social-list)
   :is(i, svg, img, .social-icon, [class*="icon"]),
-.social-page a[href^="https://www.facebook.com/"] :is(i, svg, img, .social-icon, [class*="icon"]),
-.social-page a[href^="https://www.instagram.com/"] :is(i, svg, img, .social-icon, [class*="icon"]),
-.social-page a[href^="https://www.tiktok.com/"] :is(i, svg, img, .social-icon, [class*="icon"]),
-.social-page a[href^="https://www.youtube.com/"] :is(i, svg, img, .social-icon, [class*="icon"]),
-.social-page a[href^="https://t.me/"] :is(i, svg, img, .social-icon, [class*="icon"]),
-.social-page a[href^="viber://"] :is(i, svg, img, .social-icon, [class*="icon"]) {
+.social-page a[href^="https://www.facebook.com/"]:not(.social-card__media-brand) :is(i, svg, img, .social-icon, [class*="icon"]),
+.social-page a[href^="https://www.instagram.com/"]:not(.social-card__media-brand) :is(i, svg, img, .social-icon, [class*="icon"]),
+.social-page a[href^="https://www.tiktok.com/"]:not(.social-card__media-brand) :is(i, svg, img, .social-icon, [class*="icon"]),
+.social-page a[href^="https://www.youtube.com/"]:not(.social-card__media-brand) :is(i, svg, img, .social-icon, [class*="icon"]),
+.social-page a[href^="https://t.me/"]:not(.social-card__media-brand) :is(i, svg, img, .social-icon, [class*="icon"]),
+.social-page a[href^="viber://"]:not(.social-card__media-brand) :is(i, svg, img, .social-icon, [class*="icon"]) {
   color: var(--social-gold-bright);
   filter: drop-shadow(0 0 6px rgba(255, 213, 105, 0.72)) drop-shadow(0 0 16px rgba(229, 184, 92, 0.38));
   animation: social-icon-float 3.2s ease-in-out infinite, social-icon-aura 2.9s ease-in-out infinite;
@@ -116,13 +116,13 @@
 
 .social-page :is(.social-links, .social-grid, .social-cards, .social-network-grid, .social-list)
   > :nth-child(2) :is(i, svg, img, .social-icon, [class*="icon"]),
-.social-page a[href^="https://www.instagram.com/"] :is(i, svg, img, .social-icon, [class*="icon"]) {
+.social-page a[href^="https://www.instagram.com/"]:not(.social-card__media-brand) :is(i, svg, img, .social-icon, [class*="icon"]) {
   animation-delay: -0.8s;
 }
 
 .social-page :is(.social-links, .social-grid, .social-cards, .social-network-grid, .social-list)
   > :nth-child(3) :is(i, svg, img, .social-icon, [class*="icon"]),
-.social-page a[href^="viber://"] :is(i, svg, img, .social-icon, [class*="icon"]) {
+.social-page a[href^="viber://"]:not(.social-card__media-brand) :is(i, svg, img, .social-icon, [class*="icon"]) {
   animation-delay: -1.5s;
 }
 
@@ -193,7 +193,14 @@
 }
 
 .social-page .social-card--instagram {
-  padding: 0.95rem;
+  justify-self: center;
+  position: relative;
+  display: block;
+  inline-size: min(100%, 19.5rem);
+  aspect-ratio: 9 / 16;
+  padding: 0;
+  --social-video-content-top: 0%;
+  --social-video-content-bottom: 0%;
 }
 
 .social-page .social-card__media {
@@ -228,13 +235,15 @@
 }
 
 .social-page .social-card__media--instagram {
+  inline-size: 100%;
+  block-size: 100%;
   border-color: rgba(255, 233, 168, 0.28);
-  border-radius: 1.15rem;
+  border: 0;
+  border-radius: inherit;
   background: #020303;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 240, 190, 0.05),
-    0 18px 34px rgba(0, 0, 0, 0.3),
-    0 0 28px rgba(229, 184, 92, 0.12);
+  aspect-ratio: auto;
+  box-shadow: none;
+  cursor: pointer;
 }
 
 .social-page .social-card__media-video--instagram {
@@ -242,8 +251,15 @@
   inset: 0;
   inline-size: 100%;
   block-size: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
+  background: #020303;
+  transform: none;
+}
+
+.social-page .social-card__media--instagram:focus-visible {
+  outline: 1px solid rgba(255, 233, 168, 0.88);
+  outline-offset: -1px;
 }
 
 .social-page .social-card__media--instagram::before {
@@ -251,82 +267,169 @@
   inset: 0;
   z-index: 1;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.72) 11%, rgba(0, 0, 0, 0.18) 24%, rgba(0, 0, 0, 0) 34%),
-    linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.18) 16%, rgba(0, 0, 0, 0) 30%);
+    linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.03) 10%, rgba(0, 0, 0, 0) 18%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.34) 0%, rgba(0, 0, 0, 0.14) 10%, rgba(0, 0, 0, 0) 22%);
   content: "";
   pointer-events: none;
 }
 
-.social-page .social-card__media-brand[href^="https://www.instagram.com/"] {
+.social-page .social-card.social-card--instagram > .social-card__media-brand {
   position: absolute;
-  top: 0.85rem;
-  left: 0.85rem;
-  z-index: 2;
-  display: grid !important;
-  place-items: center;
+  top: calc(var(--social-video-content-top) + 1rem);
+  right: auto;
+  bottom: auto;
+  left: 1rem;
+  z-index: 5;
+  display: block !important;
+  flex: none !important;
   inline-size: 3.2rem;
   block-size: 3.2rem;
   min-height: 0 !important;
   padding: 0 !important;
   gap: 0 !important;
-  overflow: hidden !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border: 1px solid rgba(255, 233, 168, 0.2);
-  border-radius: 1rem;
-  background: rgba(3, 16, 11, 0.5);
-  box-shadow:
-    0 10px 24px rgba(0, 0, 0, 0.28),
-    0 0 22px rgba(229, 184, 92, 0.18);
-  backdrop-filter: blur(10px);
+  overflow: visible !important;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  background-image: url('/assets/images/icons/instagram.png?v=20260827-instagram-brand-v1');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  box-shadow: none;
+  backdrop-filter: none;
   text-decoration: none;
+  transform-origin: center;
+  animation: social-brand-float 3.4s ease-in-out infinite, social-brand-glow 4.2s ease-in-out infinite;
+  transition: top 180ms ease;
 }
 
-.social-page .social-card__media-brand[href^="https://www.instagram.com/"] img {
+.social-page .social-card.social-card--instagram > .social-card__media-brand:hover {
+  transform: scale(1.08);
+}
+
+.social-page .social-card.social-card--instagram > .social-card__media-brand img {
   display: block;
   inline-size: 100%;
   block-size: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 0 10px rgba(255, 215, 120, 0.28));
+  filter:
+    drop-shadow(0 0 8px rgba(255, 215, 120, 0.34))
+    drop-shadow(0 0 18px rgba(229, 184, 92, 0.28));
+  pointer-events: none;
+}
+
+.social-page .social-card__media-sound-toggle {
+  position: absolute;
+  top: calc(var(--social-video-content-top) + 1rem);
+  right: 1rem;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.85rem;
+  block-size: 2.85rem;
+  padding: 0;
+  border: 1px solid rgba(255, 233, 168, 0.34);
+  border-radius: 999px;
+  background: linear-gradient(145deg, rgba(7, 44, 31, 0.72), rgba(2, 18, 13, 0.84));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 190, 0.1),
+    0 8px 22px rgba(0, 0, 0, 0.28),
+    0 0 18px rgba(229, 184, 92, 0.16);
+  color: var(--social-gold-bright);
+  cursor: pointer;
+  transition:
+    top 180ms ease,
+    transform 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    background 220ms ease;
+}
+
+.social-page .social-card__media-sound-toggle:hover,
+.social-page .social-card__media-sound-toggle:focus-visible {
+  border-color: rgba(255, 233, 168, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 190, 0.14),
+    0 12px 28px rgba(0, 0, 0, 0.32),
+    0 0 24px rgba(229, 184, 92, 0.24);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.social-page .social-card__media-sound-toggle svg {
+  inline-size: 1.3rem;
+  block-size: 1.3rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.social-page .social-card__media-sound-wave,
+.social-page .social-card__media-sound-mute {
+  transition: opacity 180ms ease;
+}
+
+.social-page .social-card__media-sound-toggle[data-muted='true'] .social-card__media-sound-wave {
+  opacity: 0;
+}
+
+.social-page .social-card__media-sound-toggle[data-muted='true'] .social-card__media-sound-mute {
+  opacity: 1;
+}
+
+.social-page .social-card__media-sound-toggle[data-muted='false'] {
+  border-color: rgba(255, 233, 168, 0.72);
+  background: linear-gradient(145deg, rgba(10, 56, 39, 0.8), rgba(3, 22, 15, 0.92));
+}
+
+.social-page .social-card__media-sound-toggle[data-muted='false'] .social-card__media-sound-wave {
+  opacity: 1;
+}
+
+.social-page .social-card__media-sound-toggle[data-muted='false'] .social-card__media-sound-mute {
+  opacity: 0;
 }
 
 .social-page .social-card__media-actions {
   position: absolute;
   right: 0;
-  bottom: 0;
+  bottom: var(--social-video-content-bottom);
   left: 0;
-  z-index: 2;
+  z-index: 3;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  min-height: 6.1rem;
-  padding: 3rem 1.05rem 0.8rem;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.18) 14%, rgba(255, 255, 255, 0.94) 42%, #fff 100%);
-  color: #111;
+  align-items: center;
+  justify-content: center;
+  gap: 1.08rem;
+  min-height: 0;
+  padding: 1.55rem 1.05rem 0.95rem;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(3, 14, 10, 0.1) 40%, rgba(3, 14, 10, 0.36) 100%);
+  color: var(--social-gold-bright);
   pointer-events: none;
+  transition: bottom 180ms ease;
 }
 
 .social-page .social-card__media-actions-left {
-  display: inline-flex;
-  align-items: center;
-  gap: 1.05rem;
+  display: contents;
 }
 
 .social-page .social-card__media-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #111;
-  font-size: 1.48rem;
+  color: inherit;
+  font-size: 1.42rem;
   line-height: 1;
-  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.32));
+  filter:
+    drop-shadow(0 0 8px rgba(255, 221, 150, 0.34))
+    drop-shadow(0 4px 14px rgba(0, 0, 0, 0.24));
 }
 
 .social-page .social-card__media-action svg {
   display: block;
-  inline-size: 1.62rem;
-  block-size: 1.62rem;
+  inline-size: 1.52rem;
+  block-size: 1.52rem;
   stroke: currentColor;
   fill: none;
   stroke-width: 1.9;
@@ -381,12 +484,12 @@
 .social-page .social-card:nth-child(7) .social-icon { animation-delay: -0.55s; }
 .social-page .social-card:nth-child(8) .social-icon { animation-delay: -1.35s; }
 
-.social-page .social-card > a[href^="https://www.facebook.com/"],
-.social-page .social-card > a[href^="https://www.instagram.com/"],
-.social-page .social-card > a[href^="https://www.tiktok.com/"],
-.social-page .social-card > a[href^="https://www.youtube.com/"],
-.social-page .social-card > a[href^="https://t.me/"],
-.social-page .social-card > a[href^="viber://"] {
+.social-page .social-card > a[href^="https://www.facebook.com/"]:not(.social-card__media-brand),
+.social-page .social-card > a[href^="https://www.instagram.com/"]:not(.social-card__media-brand),
+.social-page .social-card > a[href^="https://www.tiktok.com/"]:not(.social-card__media-brand),
+.social-page .social-card > a[href^="https://www.youtube.com/"]:not(.social-card__media-brand),
+.social-page .social-card > a[href^="https://t.me/"]:not(.social-card__media-brand),
+.social-page .social-card > a[href^="viber://"]:not(.social-card__media-brand) {
   display: inline-flex !important;
   min-height: 0;
   padding: 0.35rem 0.65rem;
@@ -397,27 +500,27 @@
   color: var(--social-gold-bright);
 }
 
-.social-page .social-card > a[href^="https://www.facebook.com/"]::before,
-.social-page .social-card > a[href^="https://www.instagram.com/"]::before,
-.social-page .social-card > a[href^="https://www.tiktok.com/"]::before,
-.social-page .social-card > a[href^="https://www.youtube.com/"]::before,
-.social-page .social-card > a[href^="https://t.me/"]::before,
-.social-page .social-card > a[href^="viber://"]::before,
-.social-page .social-card > a[href^="https://www.facebook.com/"]::after,
-.social-page .social-card > a[href^="https://www.instagram.com/"]::after,
-.social-page .social-card > a[href^="https://www.tiktok.com/"]::after,
-.social-page .social-card > a[href^="https://www.youtube.com/"]::after,
-.social-page .social-card > a[href^="https://t.me/"]::after,
-.social-page .social-card > a[href^="viber://"]::after {
+.social-page .social-card > a[href^="https://www.facebook.com/"]:not(.social-card__media-brand)::before,
+.social-page .social-card > a[href^="https://www.instagram.com/"]:not(.social-card__media-brand)::before,
+.social-page .social-card > a[href^="https://www.tiktok.com/"]:not(.social-card__media-brand)::before,
+.social-page .social-card > a[href^="https://www.youtube.com/"]:not(.social-card__media-brand)::before,
+.social-page .social-card > a[href^="https://t.me/"]:not(.social-card__media-brand)::before,
+.social-page .social-card > a[href^="viber://"]:not(.social-card__media-brand)::before,
+.social-page .social-card > a[href^="https://www.facebook.com/"]:not(.social-card__media-brand)::after,
+.social-page .social-card > a[href^="https://www.instagram.com/"]:not(.social-card__media-brand)::after,
+.social-page .social-card > a[href^="https://www.tiktok.com/"]:not(.social-card__media-brand)::after,
+.social-page .social-card > a[href^="https://www.youtube.com/"]:not(.social-card__media-brand)::after,
+.social-page .social-card > a[href^="https://t.me/"]:not(.social-card__media-brand)::after,
+.social-page .social-card > a[href^="viber://"]:not(.social-card__media-brand)::after {
   display: none;
 }
 
-.social-page .social-card > a[href^="https://www.facebook.com/"]:hover,
-.social-page .social-card > a[href^="https://www.instagram.com/"]:hover,
-.social-page .social-card > a[href^="https://www.tiktok.com/"]:hover,
-.social-page .social-card > a[href^="https://www.youtube.com/"]:hover,
-.social-page .social-card > a[href^="https://t.me/"]:hover,
-.social-page .social-card > a[href^="viber://"]:hover {
+.social-page .social-card > a[href^="https://www.facebook.com/"]:not(.social-card__media-brand):hover,
+.social-page .social-card > a[href^="https://www.instagram.com/"]:not(.social-card__media-brand):hover,
+.social-page .social-card > a[href^="https://www.tiktok.com/"]:not(.social-card__media-brand):hover,
+.social-page .social-card > a[href^="https://www.youtube.com/"]:not(.social-card__media-brand):hover,
+.social-page .social-card > a[href^="https://t.me/"]:not(.social-card__media-brand):hover,
+.social-page .social-card > a[href^="viber://"]:not(.social-card__media-brand):hover {
   box-shadow: 0 0 18px rgba(229, 184, 92, 0.2);
   transform: translateY(-2px);
 }
@@ -448,11 +551,141 @@
   76% { transform: translateX(130%); }
 }
 
+@keyframes social-brand-float {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, 3px, 0) scale(1.04); }
+}
+
+@keyframes social-brand-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 0 rgba(255, 228, 150, 0));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px rgba(255, 228, 150, 0.38));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .social-page :is(a, i, svg, img, .social-icon, [class*="icon"]) {
     animation: none !important;
     transition: none !important;
   }
+}
+
+body.social-reel-modal-open {
+  overflow: hidden;
+}
+
+.social-reel-modal[hidden] {
+  display: none !important;
+}
+
+.social-reel-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.social-reel-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.76);
+  backdrop-filter: blur(16px);
+}
+
+.social-reel-modal__dialog {
+  position: relative;
+  z-index: 1;
+  inline-size: min(100%, 24rem);
+  max-block-size: calc(100svh - 2rem);
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  border: 1px solid rgba(255, 233, 168, 0.32);
+  border-radius: 1.4rem;
+  background: #020303;
+  box-shadow:
+    0 22px 46px rgba(0, 0, 0, 0.42),
+    0 0 34px rgba(229, 184, 92, 0.16);
+}
+
+.social-reel-modal__dialog:focus {
+  outline: none;
+}
+
+.social-reel-modal__video {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  background: #020303;
+  object-fit: contain;
+}
+
+.social-reel-modal__brand,
+.social-reel-modal__close {
+  position: absolute;
+  z-index: 3;
+}
+
+.social-reel-modal__brand {
+  top: 1rem;
+  left: 1rem;
+  display: block;
+  inline-size: 3.2rem;
+  block-size: 3.2rem;
+  text-decoration: none;
+}
+
+.social-reel-modal__brand img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 10px rgba(255, 215, 120, 0.34))
+    drop-shadow(0 0 20px rgba(229, 184, 92, 0.28));
+}
+
+.social-reel-modal__close {
+  top: 1rem;
+  right: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.9rem;
+  block-size: 2.9rem;
+  border: 1px solid rgba(255, 233, 168, 0.34);
+  border-radius: 999px;
+  background: linear-gradient(145deg, rgba(7, 44, 31, 0.72), rgba(2, 18, 13, 0.84));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 190, 0.1),
+    0 8px 22px rgba(0, 0, 0, 0.28);
+  color: var(--social-gold-bright);
+  font-size: 1.9rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.social-reel-modal__close:hover,
+.social-reel-modal__close:focus-visible,
+.social-reel-modal__brand:hover,
+.social-reel-modal__brand:focus-visible {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.social-reel-modal__close:hover,
+.social-reel-modal__close:focus-visible {
+  border-color: rgba(255, 233, 168, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 190, 0.14),
+    0 12px 28px rgba(0, 0, 0, 0.32),
+    0 0 24px rgba(229, 184, 92, 0.24);
 }
 
 @media (max-width: 560px) {
@@ -558,7 +791,7 @@
     overflow-wrap: anywhere;
   }
 
-  .social-page .social-card > a[href] {
+  .social-page .social-card > a[href]:not(.social-card__media-brand) {
     width: 100%;
     min-height: 0;
     justify-content: center;
@@ -573,24 +806,31 @@
   }
 
   .social-page .social-card--instagram {
-    padding: 0.82rem;
+    inline-size: min(100%, 18.75rem);
+    padding: 0;
   }
 
-  .social-page .social-card__media-brand[href^="https://www.instagram.com/"] {
-    top: 0.72rem;
-    left: 0.72rem;
+  .social-page .social-card.social-card--instagram > .social-card__media-brand {
+    top: calc(var(--social-video-content-top) + 0.9rem);
+    left: 0.9rem;
     inline-size: 2.9rem;
     block-size: 2.9rem;
-    border-radius: 0.9rem;
+  }
+
+  .social-page .social-card__media-sound-toggle {
+    top: calc(var(--social-video-content-top) + 0.9rem);
+    right: 0.9rem;
+    inline-size: 2.65rem;
+    block-size: 2.65rem;
   }
 
   .social-page .social-card__media-actions {
-    min-height: 5.6rem;
-    padding: 2.8rem 0.88rem 0.72rem;
+    gap: 0.95rem;
+    padding: 1.3rem 0.88rem 0.82rem;
   }
 
   .social-page .social-card__media-action {
-    font-size: 1.34rem;
+    font-size: 1.28rem;
   }
 
   .social-page .news-card,
@@ -668,28 +908,59 @@
   }
 
   .social-page .social-card--instagram {
-    padding: 0.7rem;
+    inline-size: min(100%, 18rem);
+    padding: 0;
   }
 
-  .social-page .social-card__media-brand[href^="https://www.instagram.com/"] {
-    top: 0.65rem;
-    left: 0.65rem;
+  .social-page .social-card.social-card--instagram > .social-card__media-brand {
+    top: calc(var(--social-video-content-top) + 0.82rem);
+    left: 0.82rem;
     inline-size: 2.55rem;
     block-size: 2.55rem;
-    border-radius: 0.82rem;
+  }
+
+  .social-page .social-card__media-sound-toggle {
+    top: calc(var(--social-video-content-top) + 0.82rem);
+    right: 0.82rem;
+    inline-size: 2.4rem;
+    block-size: 2.4rem;
   }
 
   .social-page .social-card__media-actions {
-    min-height: 5rem;
-    padding: 2.45rem 0.75rem 0.62rem;
-  }
-
-  .social-page .social-card__media-actions-left {
     gap: 0.82rem;
+    padding: 1.1rem 0.75rem 0.74rem;
   }
 
   .social-page .social-card__media-action {
-    font-size: 1.18rem;
+    font-size: 1.14rem;
+  }
+
+  .social-reel-modal {
+    padding: 0.75rem;
+  }
+
+  .social-reel-modal__dialog {
+    inline-size: min(100%, 21rem);
+    max-block-size: calc(100svh - 1.5rem);
+    border-radius: 1.2rem;
+  }
+
+  .social-reel-modal__brand,
+  .social-reel-modal__close {
+    top: 0.82rem;
+  }
+
+  .social-reel-modal__brand {
+    left: 0.82rem;
+    inline-size: 2.55rem;
+    block-size: 2.55rem;
+  }
+
+  .social-reel-modal__close {
+    right: 0.82rem;
+    inline-size: 2.45rem;
+    block-size: 2.45rem;
+    font-size: 1.6rem;
   }
 
   .social-page .social-card h3 {
@@ -702,7 +973,7 @@
     line-height: 1.45;
   }
 
-  .social-page .social-card > a[href],
+  .social-page .social-card > a[href]:not(.social-card__media-brand),
   .social-page .btn-read {
     padding: 0.82rem 0.9rem;
     font-size: 0.9rem;
