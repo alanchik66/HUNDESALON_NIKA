@@ -1027,11 +1027,12 @@
       if (event.key !== 'Escape') return;
       const main = root.querySelector('main.root');
       if (main?.classList.contains('hundesalon-chat-expanded')) {
-        main.classList.remove('hundesalon-chat-expanded');
-        const copy = getLiveChatCopy();
         const action = root.querySelector('[data-action="expand"]');
-        const label = action?.querySelector('.hundesalon-chat-action-label');
-        if (label) label.textContent = copy.expand;
+        if (action) {
+          setLiveChatExpanded(root, action, getLiveChatCopy());
+        } else {
+          main.classList.remove('hundesalon-chat-expanded');
+        }
       }
       closeLiveChatPopovers(root);
     });

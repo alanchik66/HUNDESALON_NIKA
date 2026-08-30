@@ -229,18 +229,20 @@ function createLiveChatHeaderHarness(locale) {
     document: {
       createElement: createChatTestElement,
       createElementNS: (_namespace, tag) => createChatTestElement(tag),
+      addEventListener() {},
     },
     getPageLanguage: () => locale,
     downloadLiveChatTranscript() {},
     resetLiveChatConversation() {},
   });
-  const { enhance, copy } = vm.runInContext(
+  const { enhance, copy, installEvents } = vm.runInContext(
     [
       section('  const LIVE_CHAT_BRAND_LOGO_URL =', '  const LIVE_CHAT_THEME_CSS ='),
       section('  const getLiveChatCopy =', '  const setLiveChatStatus ='),
       section('  const closeLiveChatPopovers =', '  const insertLiveChatText ='),
       section('  const setLiveChatExpanded =', '  const startLiveChatVoiceInput ='),
-      '({ enhance: enhanceLiveChatHeader, copy: getLiveChatCopy() });',
+      section('  const installLiveChatRootEvents =', '  const enhanceLiveChatDom ='),
+      '({ enhance: enhanceLiveChatHeader, copy: getLiveChatCopy(), installEvents: installLiveChatRootEvents });',
     ].join('\n'),
     context,
     { filename: 'sendpulse-integrations.js:header' }
@@ -271,7 +273,16 @@ function createLiveChatHeaderHarness(locale) {
     });
   });
   enhance(root);
-  return { root, main, header, heading, copy, closeStates, enhance: () => enhance(root) };
+  return {
+    root,
+    main,
+    header,
+    heading,
+    copy,
+    closeStates,
+    enhance: () => enhance(root),
+    installEvents: () => installEvents(root),
+  };
 }
 
 for (const [locale, label] of Object.entries({
@@ -325,6 +336,34 @@ test('SendPulse header enhancement is idempotent for observer callbacks and clic
   }
   harness.root.querySelector('.hundesalon-chat-minimize').click();
   assert.deepEqual(harness.closeStates, [{ expanded: false, menuHidden: true, emojiHidden: true }]);
+});
+
+test('SendPulse Escape resets expanded labels and popovers without closing the native chat', () => {
+  const harness = createLiveChatHeaderHarness('en');
+  harness.installEvents();
+  const expand = harness.root.querySelector('[data-action="expand"]');
+  const toggle = harness.root.querySelector('.hundesalon-chat-actions-toggle');
+  const menu = harness.root.querySelector('.hundesalon-chat-actions-menu');
+  const emojiPicker = harness.root.querySelector('.hundesalon-chat-emoji-picker');
+  const emojiToggle = harness.root.querySelector('.hundesalon-chat-emoji-toggle');
+  expand.click();
+  toggle.click();
+  emojiPicker.hidden = false;
+  emojiToggle.setAttribute('aria-expanded', 'true');
+  assert.equal(harness.main.classList.contains('hundesalon-chat-expanded'), true);
+  assert.equal(expand.getAttribute('aria-label'), harness.copy.collapse);
+  assert.equal(menu.hidden, false);
+
+  harness.root.listeners.get('keydown')[0]({ key: 'Escape' });
+
+  assert.equal(harness.main.classList.contains('hundesalon-chat-expanded'), false);
+  assert.equal(expand.querySelector('.hundesalon-chat-action-label').textContent, harness.copy.expand);
+  assert.equal(menu.hidden, true);
+  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+  assert.equal(emojiPicker.hidden, true);
+  assert.equal(emojiToggle.getAttribute('aria-expanded'), 'false');
+  assert.deepEqual(harness.closeStates, []);
+  assert.equal(expand.getAttribute('aria-label'), harness.copy.expand);
 });
 
 test('vector-store sync is a no-op when the matching indexed version exists', async () => {
