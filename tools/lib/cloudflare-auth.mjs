@@ -196,17 +196,17 @@ export function resolvePurgeAuth() {
   );
 }
 
+function isDevVarAssignment(row, key) {
+  const separatorIndex = row.indexOf('=');
+  return separatorIndex !== -1 && row.slice(0, separatorIndex).trim() === key;
+}
+
 export function removeDevVar(key, filePath = path.join(REPO_ROOT, '.dev.vars')) {
-  if (!existsSync(filePath)) return;
-  const lines = readFileSync(filePath, 'utf8').split(/\r?\n/);
-  const next = lines.filter(
-    row =>
-      !row
-        .replace(/^\uFEFF/, '')
-        .trim()
-        .startsWith(`${key}=`)
-  );
-  writeFileSync(filePath, `${next.join('\n').replace(/\n+$/, '')}\n`, 'utf8');
+  if (existsSync(filePath)) {
+    const lines = readFileSync(filePath, 'utf8').split(/\r?\n/);
+    const next = lines.filter(row => !isDevVarAssignment(row, key));
+    writeFileSync(filePath, `${next.join('\n').replace(/\n+$/, '')}\n`, 'utf8');
+  }
   delete process.env[key];
 }
 
@@ -218,14 +218,15 @@ export function upsertDevVar(key, value, filePath = path.join(REPO_ROOT, '.dev.v
   }
 
   let found = false;
-  const next = lines.map(row => {
-    const trimmed = row.replace(/^\uFEFF/, '').trim();
-    if (trimmed.startsWith(`${key}=`)) {
+  const next = [];
+  for (const row of lines) {
+    if (isDevVarAssignment(row, key)) {
+      if (!found) next.push(line);
       found = true;
-      return line;
+    } else {
+      next.push(row);
     }
-    return row;
-  });
+  }
 
   if (!found) {
     if (next.length && next[next.length - 1] !== '') next.push('');

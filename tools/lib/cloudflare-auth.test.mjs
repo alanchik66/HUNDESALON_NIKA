@@ -4,7 +4,13 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { getWranglerConfigPath, loadWranglerOAuth, refreshWranglerOAuth } from './cloudflare-auth.mjs';
+import {
+  getWranglerConfigPath,
+  loadWranglerOAuth,
+  refreshWranglerOAuth,
+  removeDevVar,
+  upsertDevVar,
+} from './cloudflare-auth.mjs';
 
 function useWranglerFixture(t, expirationTime = Date.now() - 60_000) {
   const directory = mkdtempSync(path.join(tmpdir(), 'nika-cloudflare-auth-test-'));
@@ -86,4 +92,75 @@ test('does not overwrite the Wrangler fixture when OAuth refresh fails', async t
 
   assert.equal(fetchMock.mock.callCount(), 1);
   assert.equal(readFileSync(configPath, 'utf8'), original);
+});
+
+function useDevVarsFixture(t, content) {
+  const directory = mkdtempSync(path.join(tmpdir(), 'nika-dev-vars-test-'));
+  const filePath = path.join(directory, '.dev.vars');
+  const key = 'NIKA_AUTH_TEST_KEY';
+  const previousValue = process.env[key];
+
+  t.after(() => {
+    if (previousValue === undefined) delete process.env[key];
+    else process.env[key] = previousValue;
+    if (existsSync(filePath)) unlinkSync(filePath);
+    rmdirSync(directory);
+  });
+
+  writeFileSync(filePath, content, 'utf8');
+  return { filePath, key };
+}
+
+test('upserts one dev variable without leaving spaced or duplicate assignments', t => {
+  const { filePath, key } = useDevVarsFixture(
+    t,
+    '\uFEFF  NIKA_AUTH_TEST_KEY = stale\r\n' +
+      '# NIKA_AUTH_TEST_KEY=comment\r\n' +
+      'NIKA_AUTH_TEST_KEY_EXTRA=unchanged\r\n' +
+      'NIKA_AUTH_TEST_KEY=duplicate\r\n' +
+      'NIKA_AUTH_TEST_KEY\r\n'
+  );
+
+  upsertDevVar(key, 'replacement', filePath);
+
+  assert.equal(
+    readFileSync(filePath, 'utf8'),
+    'NIKA_AUTH_TEST_KEY=replacement\n' +
+      '# NIKA_AUTH_TEST_KEY=comment\n' +
+      'NIKA_AUTH_TEST_KEY_EXTRA=unchanged\n' +
+      'NIKA_AUTH_TEST_KEY\n'
+  );
+  assert.equal(process.env[key], 'replacement');
+});
+
+test('removes every matching dev variable while preserving comments and other keys', t => {
+  const { filePath, key } = useDevVarsFixture(
+    t,
+    '\uFEFF  NIKA_AUTH_TEST_KEY = stale\r\n' +
+      '# NIKA_AUTH_TEST_KEY=comment\r\n' +
+      'NIKA_AUTH_TEST_KEY_EXTRA=unchanged\r\n' +
+      '\tNIKA_AUTH_TEST_KEY\t=duplicate\r\n' +
+      'NIKA_AUTH_TEST_KEY=current\r\n' +
+      'NIKA_AUTH_TEST_KEY\r\n'
+  );
+  process.env[key] = 'current';
+
+  removeDevVar(key, filePath);
+
+  assert.equal(
+    readFileSync(filePath, 'utf8'),
+    '# NIKA_AUTH_TEST_KEY=comment\nNIKA_AUTH_TEST_KEY_EXTRA=unchanged\nNIKA_AUTH_TEST_KEY\n'
+  );
+  assert.equal(process.env[key], undefined);
+});
+
+test('removes a process-only dev variable even when its file is absent', t => {
+  const { filePath, key } = useDevVarsFixture(t, '');
+  unlinkSync(filePath);
+  process.env[key] = 'stale';
+
+  removeDevVar(key, filePath);
+
+  assert.equal(process.env[key], undefined);
+  assert.equal(existsSync(filePath), false);
 });

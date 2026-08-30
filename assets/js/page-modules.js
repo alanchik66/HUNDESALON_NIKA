@@ -692,7 +692,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
 
-  const SENDMAIL_ENDPOINT_TIMEOUT_MS = 4500;
+  const LOCAL_SENDMAIL_PROBE_TIMEOUT_MS = 4500;
 
   const isPrivateLanHost = hostname =>
     /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(String(hostname || '').trim());
@@ -819,20 +819,25 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       for (const endpoint of getSendmailEndpoints()) {
         let response;
-        const controller = new window.AbortController();
-        const timeoutId = window.setTimeout(() => controller.abort(), SENDMAIL_ENDPOINT_TIMEOUT_MS);
+        // A delivery may already be committed while Pages finishes notifications.
+        // Only the local static-server probe may use a short deadline.
+        const isLocalStaticProbe = endpoint === '/sendmail' && Boolean(getLocalCloudflareSendmailUrl());
+        const controller = isLocalStaticProbe ? new window.AbortController() : null;
+        const timeoutId = controller
+          ? window.setTimeout(() => controller.abort(), LOCAL_SENDMAIL_PROBE_TIMEOUT_MS)
+          : null;
 
         try {
           response = await fetch(endpoint, {
             method: 'POST',
             body: new FormData(form),
             headers: { Accept: 'application/json' },
-            signal: controller.signal,
+            ...(controller ? { signal: controller.signal } : {}),
           });
         } catch (error) {
           lastResult = { success: false, status: 0, error };
           shouldShowLocalFunctionHint = Boolean(getLocalCloudflareSendmailUrl());
-          continue;
+          break;
         } finally {
           window.clearTimeout(timeoutId);
         }
@@ -868,6 +873,7 @@ document.addEventListener('DOMContentLoaded', () => {
           shouldShowLocalFunctionHint = Boolean(getLocalCloudflareSendmailUrl());
           continue;
         }
+        break;
       }
     } catch {
       lastResult = { success: false };
@@ -3017,8 +3023,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    let bookingSubmissionPending = false;
+
     form.addEventListener('submit', async event => {
       event.preventDefault();
+      if (bookingSubmissionPending) return;
       clearValidationMessage();
       syncHiddenFields();
 
@@ -3099,41 +3108,49 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const uploadedOk = await ensureBookingFileUploaded();
-      if (!uploadedOk) {
-        setStep(3);
-        return;
-      }
-
-      const paymentChoice = getPaymentChoice();
       const submitBtn = form.querySelector('[type="submit"]');
+      const wasSubmitDisabled = submitBtn?.disabled ?? false;
+      bookingSubmissionPending = true;
+      if (submitBtn) submitBtn.disabled = true;
 
-      if (paymentChoice === 'online') {
-        showValidationMessage(bookingCopy.paymentUnavailable, submitBtn);
-        return;
-      }
-
-      const sent = await submitSendmailForm(form, submitBtn);
-      if (sent) {
-        modal.classList.add('booking-modal-sent');
-        try {
-          window.hundesalonTrackConversion?.({ currency: 'EUR' });
-        } catch {
-          /* ignore */
+      try {
+        const uploadedOk = await ensureBookingFileUploaded();
+        if (!uploadedOk) {
+          setStep(3);
+          return;
         }
-        state.selectedService = '';
-        state.selectedDate = '';
-        state.selectedTime = '';
-        state.clientType = '';
-        state.coatCondition = '';
-        state.behavior = '';
-        state.busyIntervals = [];
-        state.availabilityConfigured = false;
-        state.summaryConfirmed = false;
-        state.uploadedFileUrl = '';
-        syncHiddenFields();
-        resetSummaryConfirmation();
-        renderFilePreview();
+
+        const paymentChoice = getPaymentChoice();
+        if (paymentChoice === 'online') {
+          showValidationMessage(bookingCopy.paymentUnavailable, submitBtn);
+          return;
+        }
+
+        const sent = await submitSendmailForm(form, submitBtn);
+        if (sent) {
+          modal.classList.add('booking-modal-sent');
+          try {
+            window.hundesalonTrackConversion?.({ currency: 'EUR' });
+          } catch {
+            /* ignore */
+          }
+          state.selectedService = '';
+          state.selectedDate = '';
+          state.selectedTime = '';
+          state.clientType = '';
+          state.coatCondition = '';
+          state.behavior = '';
+          state.busyIntervals = [];
+          state.availabilityConfigured = false;
+          state.summaryConfirmed = false;
+          state.uploadedFileUrl = '';
+          syncHiddenFields();
+          resetSummaryConfirmation();
+          renderFilePreview();
+        }
+      } finally {
+        bookingSubmissionPending = false;
+        if (submitBtn) submitBtn.disabled = wasSubmitDisabled;
       }
     });
 

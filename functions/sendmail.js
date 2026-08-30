@@ -679,7 +679,10 @@ export async function onRequest(ctx) {
       fields = Object.fromEntries(fd.entries());
     }
   } catch {
-    return jsonResponse({ success: false, message: 'Invalid request body' }, 400);
+    return jsonResponse({ success: false, message: 'Invalid request body' }, 400, origin);
+  }
+  if (!fields || typeof fields !== 'object' || Array.isArray(fields)) {
+    return jsonResponse({ success: false, message: 'Invalid request body' }, 400, origin);
   }
 
   /* ── Extract and sanitize fields ───────────────────────────── */
@@ -1204,10 +1207,12 @@ export async function onRequest(ctx) {
       }),
       category: formType === 'booking' ? 'orders' : 'messages',
     });
-    const integrationResults = [...(await runBookingIntegrations()), ...(await runClientRegistrationIntegration())];
-    const integrationDelivered = integrationResults.some(result => result?.ok === true);
+    const bookingResults = await runBookingIntegrations();
+    const registrationResults = await runClientRegistrationIntegration();
+    const registrationDelivered = registrationResults.some(result => result?.ok === true);
+    const integrationDelivered = registrationDelivered || bookingResults.some(result => result?.ok === true);
     const requiredDeliveryCompleted = clientRecordRequired
-      ? integrationDelivered
+      ? registrationDelivered
       : slackDelivered || telegramDelivered.ok || integrationDelivered;
     if (requiredDeliveryCompleted) {
       console.warn('[sendmail] Delivered via fallback because SendPulse is not configured');

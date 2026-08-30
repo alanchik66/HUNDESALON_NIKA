@@ -93,6 +93,9 @@ export async function onRequest(context) {
   const body = contentType.includes('application/json')
     ? await request.json().catch(() => ({}))
     : Object.fromEntries((await request.formData().catch(() => new FormData())).entries());
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return jsonResponse({ success: false, message: 'Invalid request body' }, 400, originCheck.origin);
+  }
 
   const email = cleanText(body.email, 180).toLowerCase();
   const lang = cleanText(body.lang, 8) || 'de';

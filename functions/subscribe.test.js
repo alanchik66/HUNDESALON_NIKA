@@ -17,6 +17,65 @@ function request() {
   });
 }
 
+for (const body of ['null', '[]', '"text"', '42', 'true', '{']) {
+  test(`rejects invalid JSON body ${body} with CORS and no integrations`, async () => {
+    const originalFetch = globalThis.fetch;
+    let calls = 0;
+    globalThis.fetch = async () => {
+      calls += 1;
+      throw new Error('Integrations must not run for invalid request bodies.');
+    };
+
+    try {
+      const response = await onRequest({
+        request: new Request(`${origin}/subscribe`, {
+          method: 'POST',
+          headers: { Origin: origin, 'Content-Type': 'application/json' },
+          body,
+        }),
+        env: {},
+      });
+      assert.equal(response.status, 400);
+      assert.equal(response.headers.get('Access-Control-Allow-Origin'), origin);
+      assert.equal((await response.json()).error, 'Request failed');
+      assert.equal(calls, 0);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+}
+
+for (const encoding of ['urlencoded', 'multipart']) {
+  test(`accepts a valid ${encoding} subscription form`, async () => {
+    const body = encoding === 'multipart' ? new FormData() : new URLSearchParams();
+    body.append('email', 'customer@example.com');
+    body.append('newsletter_consent', 'yes');
+    body.append('lang', 'en');
+    const originalFetch = globalThis.fetch;
+    let calls = 0;
+    globalThis.fetch = async url => {
+      calls += 1;
+      assert.equal(String(url), 'https://gateway.example/sheets');
+      return Response.json({ success: true });
+    };
+
+    try {
+      const response = await onRequest({
+        request: new Request(`${origin}/subscribe`, { method: 'POST', headers: { Origin: origin }, body }),
+        env: { GOOGLE_SHEETS_WEBHOOK_URL: 'https://gateway.example/sheets' },
+      });
+      const result = await response.json();
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get('Access-Control-Allow-Origin'), origin);
+      assert.equal(result.success, true);
+      assert.equal(result.degraded, true);
+      assert.equal(calls, 1);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+}
+
 test('reports failure when persistence and confirmation delivery are unavailable', async () => {
   const response = await onRequest({ request: request(), env: {} });
   assert.equal(response.status, 503);
