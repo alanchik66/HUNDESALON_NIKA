@@ -81,42 +81,55 @@
     }),
     ru: Object.freeze({
       quickActions: '\u0411\u044b\u0441\u0442\u0440\u044b\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f',
-      minimize: '\u041c\u0438\u043d\u0438\u043c\u0438\u0437\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0447\u0430\u0442',
-      expand: '\u0420\u0430\u0437\u0432\u0435\u0440\u043d\u0443\u0442\u044c \u043f\u0440\u043e\u0441\u043c\u043e\u0442\u0440',
+      minimize:
+        '\u041c\u0438\u043d\u0438\u043c\u0438\u0437\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0447\u0430\u0442',
+      expand:
+        '\u0420\u0430\u0437\u0432\u0435\u0440\u043d\u0443\u0442\u044c \u043f\u0440\u043e\u0441\u043c\u043e\u0442\u0440',
       collapse: '\u041e\u0431\u044b\u0447\u043d\u044b\u0439 \u0432\u0438\u0434',
-      download: '\u0421\u043a\u0430\u0447\u0430\u0442\u044c \u0442\u0440\u0430\u043d\u0441\u043a\u0440\u0438\u043f\u0442',
+      download:
+        '\u0421\u043a\u0430\u0447\u0430\u0442\u044c \u0442\u0440\u0430\u043d\u0441\u043a\u0440\u0438\u043f\u0442',
       newConversation: '\u041d\u043e\u0432\u044b\u0439 \u0440\u0430\u0437\u0433\u043e\u0432\u043e\u0440',
       newConversationConfirm:
         '\u041d\u043e\u0432\u044b\u0439 \u0440\u0430\u0437\u0433\u043e\u0432\u043e\u0440 \u043e\u0442\u043a\u043b\u044e\u0447\u0438\u0442 \u044d\u0442\u043e\u0442 \u0431\u0440\u0430\u0443\u0437\u0435\u0440 \u043e\u0442 \u0442\u0435\u043a\u0443\u0449\u0435\u0439 \u0438\u0441\u0442\u043e\u0440\u0438\u0438. \u041f\u0440\u0435\u0436\u043d\u044f\u044f \u0438\u0441\u0442\u043e\u0440\u0438\u044f \u043e\u0441\u0442\u0430\u043d\u0435\u0442\u0441\u044f \u0432 HUNDESALON_NIKA. \u041f\u0440\u043e\u0434\u043e\u043b\u0436\u0438\u0442\u044c?',
       salon: 'HUNDESALON_NIKA',
       visitor: '\u041a\u043b\u0438\u0435\u043d\u0442',
-      noMessages: '\u0412 \u0447\u0430\u0442\u0435 \u0435\u0449\u0451 \u043d\u0435\u0442 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0439 \u0434\u043b\u044f \u0441\u043a\u0430\u0447\u0438\u0432\u0430\u043d\u0438\u044f.',
-      transcriptReady: '\u0422\u0440\u0430\u043d\u0441\u043a\u0440\u0438\u043f\u0442 \u0441\u043a\u0430\u0447\u0430\u043d.',
+      noMessages:
+        '\u0412 \u0447\u0430\u0442\u0435 \u0435\u0449\u0451 \u043d\u0435\u0442 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0439 \u0434\u043b\u044f \u0441\u043a\u0430\u0447\u0438\u0432\u0430\u043d\u0438\u044f.',
+      transcriptReady:
+        '\u0422\u0440\u0430\u043d\u0441\u043a\u0440\u0438\u043f\u0442 \u0441\u043a\u0430\u0447\u0430\u043d.',
       emoji: '\u0412\u0441\u0442\u0430\u0432\u0438\u0442\u044c emoji',
       voice: '\u0413\u043e\u043b\u043e\u0441\u043e\u0432\u043e\u0439 \u0432\u0432\u043e\u0434',
-      voiceUnsupported: '\u0413\u043e\u043b\u043e\u0441\u043e\u0432\u043e\u0439 \u0432\u0432\u043e\u0434 \u043d\u0435 \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044f \u044d\u0442\u0438\u043c \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u043e\u043c.',
+      voiceUnsupported:
+        '\u0413\u043e\u043b\u043e\u0441\u043e\u0432\u043e\u0439 \u0432\u0432\u043e\u0434 \u043d\u0435 \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044f \u044d\u0442\u0438\u043c \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u043e\u043c.',
       listening: '\u0421\u043b\u0443\u0448\u0430\u044e ...',
-      voiceError: '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u0433\u043e\u043b\u043e\u0441\u043e\u0432\u043e\u0439 \u0432\u0432\u043e\u0434.',
+      voiceError:
+        '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u0433\u043e\u043b\u043e\u0441\u043e\u0432\u043e\u0439 \u0432\u0432\u043e\u0434.',
       attach: '\u041f\u0440\u0438\u043a\u0440\u0435\u043f\u0438\u0442\u044c \u0444\u0430\u0439\u043b',
     }),
     uk: Object.freeze({
       quickActions: '\u0428\u0432\u0438\u0434\u043a\u0456 \u0434\u0456\u0457',
       minimize: '\u0417\u0433\u043e\u0440\u043d\u0443\u0442\u0438 \u0447\u0430\u0442',
-      expand: '\u0420\u043e\u0437\u0433\u043e\u0440\u043d\u0443\u0442\u0438 \u043f\u0435\u0440\u0435\u0433\u043b\u044f\u0434',
+      expand:
+        '\u0420\u043e\u0437\u0433\u043e\u0440\u043d\u0443\u0442\u0438 \u043f\u0435\u0440\u0435\u0433\u043b\u044f\u0434',
       collapse: '\u0417\u0432\u0438\u0447\u0430\u0439\u043d\u0438\u0439 \u0432\u0438\u0433\u043b\u044f\u0434',
-      download: '\u0417\u0430\u0432\u0430\u043d\u0442\u0430\u0436\u0438\u0442\u0438 \u0442\u0440\u0430\u043d\u0441\u043a\u0440\u0438\u043f\u0442',
+      download:
+        '\u0417\u0430\u0432\u0430\u043d\u0442\u0430\u0436\u0438\u0442\u0438 \u0442\u0440\u0430\u043d\u0441\u043a\u0440\u0438\u043f\u0442',
       newConversation: '\u041d\u043e\u0432\u0430 \u0440\u043e\u0437\u043c\u043e\u0432\u0430',
       newConversationConfirm:
         '\u041d\u043e\u0432\u0430 \u0440\u043e\u0437\u043c\u043e\u0432\u0430 \u0432\u0456\u0434\u2019\u0454\u0434\u043d\u0430\u0454 \u0446\u0435\u0439 \u0431\u0440\u0430\u0443\u0437\u0435\u0440 \u0432\u0456\u0434 \u043f\u043e\u0442\u043e\u0447\u043d\u043e\u0457 \u0456\u0441\u0442\u043e\u0440\u0456\u0457. \u041f\u043e\u043f\u0435\u0440\u0435\u0434\u043d\u044f \u0456\u0441\u0442\u043e\u0440\u0456\u044f \u0437\u0430\u043b\u0438\u0448\u0438\u0442\u044c\u0441\u044f \u0432 HUNDESALON_NIKA. \u041f\u0440\u043e\u0434\u043e\u0432\u0436\u0438\u0442\u0438?',
       salon: 'HUNDESALON_NIKA',
       visitor: '\u041a\u043b\u0456\u0454\u043d\u0442',
-      noMessages: '\u0423 \u0447\u0430\u0442\u0456 \u0449\u0435 \u043d\u0435\u043c\u0430\u0454 \u043f\u043e\u0432\u0456\u0434\u043e\u043c\u043b\u0435\u043d\u044c \u0434\u043b\u044f \u0437\u0430\u0432\u0430\u043d\u0442\u0430\u0436\u0435\u043d\u043d\u044f.',
-      transcriptReady: '\u0422\u0440\u0430\u043d\u0441\u043a\u0440\u0438\u043f\u0442 \u0437\u0430\u0432\u0430\u043d\u0442\u0430\u0436\u0435\u043d\u043e.',
+      noMessages:
+        '\u0423 \u0447\u0430\u0442\u0456 \u0449\u0435 \u043d\u0435\u043c\u0430\u0454 \u043f\u043e\u0432\u0456\u0434\u043e\u043c\u043b\u0435\u043d\u044c \u0434\u043b\u044f \u0437\u0430\u0432\u0430\u043d\u0442\u0430\u0436\u0435\u043d\u043d\u044f.',
+      transcriptReady:
+        '\u0422\u0440\u0430\u043d\u0441\u043a\u0440\u0438\u043f\u0442 \u0437\u0430\u0432\u0430\u043d\u0442\u0430\u0436\u0435\u043d\u043e.',
       emoji: '\u0412\u0441\u0442\u0430\u0432\u0438\u0442\u0438 emoji',
       voice: '\u0413\u043e\u043b\u043e\u0441\u043e\u0432\u0435 \u0432\u0432\u0435\u0434\u0435\u043d\u043d\u044f',
-      voiceUnsupported: '\u0413\u043e\u043b\u043e\u0441\u043e\u0432\u0435 \u0432\u0432\u0435\u0434\u0435\u043d\u043d\u044f \u043d\u0435 \u043f\u0456\u0434\u0442\u0440\u0438\u043c\u0443\u0454\u0442\u044c\u0441\u044f \u0446\u0438\u043c \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u043e\u043c.',
+      voiceUnsupported:
+        '\u0413\u043e\u043b\u043e\u0441\u043e\u0432\u0435 \u0432\u0432\u0435\u0434\u0435\u043d\u043d\u044f \u043d\u0435 \u043f\u0456\u0434\u0442\u0440\u0438\u043c\u0443\u0454\u0442\u044c\u0441\u044f \u0446\u0438\u043c \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u043e\u043c.',
       listening: '\u0421\u043b\u0443\u0445\u0430\u044e ...',
-      voiceError: '\u041d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044f \u0437\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u0438 \u0433\u043e\u043b\u043e\u0441\u043e\u0432\u0435 \u0432\u0432\u0435\u0434\u0435\u043d\u043d\u044f.',
+      voiceError:
+        '\u041d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044f \u0437\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u0438 \u0433\u043e\u043b\u043e\u0441\u043e\u0432\u0435 \u0432\u0432\u0435\u0434\u0435\u043d\u043d\u044f.',
       attach: '\u041f\u0440\u0438\u043a\u0440\u0456\u043f\u0438\u0442\u0438 \u0444\u0430\u0439\u043b',
     }),
   });
@@ -165,7 +178,7 @@
       min-height: 3.6rem !important;
       align-items: center !important;
       justify-content: center !important;
-      padding: 0 3rem !important;
+      padding: 0 6.5rem 0 3rem !important;
       box-sizing: border-box !important;
     }
 
@@ -209,6 +222,14 @@
       right: 0.65rem !important;
       display: flex !important;
       align-items: center !important;
+      gap: 0.25rem !important;
+    }
+
+    .hundesalon-chat-actions > .hundesalon-chat-icon-button {
+      width: 2.75rem !important;
+      height: 2.75rem !important;
+      min-width: 44px !important;
+      min-height: 44px !important;
     }
 
     .hundesalon-chat-icon-button {
@@ -550,7 +571,6 @@
       }
 
       .widget-wrapper .widget-header-content-body {
-        padding-right: 2.8rem !important;
         padding-left: 2.8rem !important;
       }
 
@@ -746,7 +766,11 @@
     const messages = [...root.querySelectorAll('.widget-chat-message')];
     const rows = messages.flatMap(message => {
       const content = [...message.querySelectorAll('.widget-content-message')]
-        .map(node => String(node.innerText || node.textContent || '').replace(/\s+/g, ' ').trim())
+        .map(node =>
+          String(node.innerText || node.textContent || '')
+            .replace(/\s+/g, ' ')
+            .trim()
+        )
         .filter(Boolean)
         .join(' ');
       if (!content) return [];
@@ -755,14 +779,7 @@
       return [`${time ? `[${time}] ` : ''}${author}: ${content}`];
     });
     if (!rows.length) return '';
-    return [
-      LIVE_CHAT_BRAND_NAME,
-      window.location.href,
-      new Date().toLocaleString(),
-      '',
-      ...rows,
-      '',
-    ].join('\n');
+    return [LIVE_CHAT_BRAND_NAME, window.location.href, new Date().toLocaleString(), '', ...rows, ''].join('\n');
   };
 
   const downloadLiveChatTranscript = (root, copy, statusNode) => {
@@ -813,7 +830,9 @@
     if (!header || !heading) return;
 
     const copy = getLiveChatCopy();
-    heading.textContent = LIVE_CHAT_BRAND_NAME;
+    if (heading.textContent !== LIVE_CHAT_BRAND_NAME) {
+      heading.textContent = LIVE_CHAT_BRAND_NAME;
+    }
 
     if (!header.querySelector('.hundesalon-chat-brand-logo')) {
       const logo = document.createElement('img');
@@ -837,8 +856,8 @@
     const menu = document.createElement('div');
     const title = document.createElement('p');
     const status = document.createElement('p');
-    const minimize = createLiveChatMenuAction({
-      action: 'minimize',
+    const minimize = createLiveChatIconButton({
+      className: 'hundesalon-chat-minimize',
       icon: 'minimize',
       label: copy.minimize,
     });
@@ -875,6 +894,9 @@
       toggleLiveChatPopover(menu, toggle);
     });
     minimize.addEventListener('click', () => {
+      if (root.querySelector('main.root')?.classList.contains('hundesalon-chat-expanded')) {
+        setLiveChatExpanded(root, expand, copy);
+      }
       closeLiveChatPopovers(root);
       root.querySelector('.button-close-widget')?.click();
     });
@@ -887,8 +909,8 @@
     });
     newConversation.addEventListener('click', () => resetLiveChatConversation(copy));
 
-    menu.append(title, minimize, expand, download, newConversation, status);
-    actions.append(toggle, menu);
+    menu.append(title, expand, download, newConversation, status);
+    actions.append(toggle, minimize, menu);
     header.appendChild(actions);
   };
 
@@ -995,7 +1017,9 @@
     if (root.__hundesalonLiveChatEventsInstalled) return;
     root.__hundesalonLiveChatEventsInstalled = true;
     root.addEventListener('click', event => {
-      if (!event.target.closest('.hundesalon-chat-actions, .hundesalon-chat-emoji-picker, .hundesalon-chat-emoji-toggle')) {
+      if (
+        !event.target.closest('.hundesalon-chat-actions, .hundesalon-chat-emoji-picker, .hundesalon-chat-emoji-toggle')
+      ) {
         closeLiveChatPopovers(root);
       }
     });

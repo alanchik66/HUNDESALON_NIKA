@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
 
 import { buildKnowledgeDocument, extractPublicText, normalizeSourceText } from './generate-sendpulse-ai-knowledge.mjs';
 import { buildAiChatKnowledgeIndex, renderAiChatKnowledgeModule } from './generate-ai-chat-index.mjs';
@@ -130,6 +131,200 @@ test('SendPulse live chat keeps native uploads and adds accessible brand control
   assert.match(source, /\.widget-upload-button input\[type="file"\]/);
   assert.match(source, /setAttribute\('aria-label', copy\.attach\)/);
   assert.match(source, /document\.addEventListener\('pointerdown'/);
+});
+
+// A small tree for exercising the real header helpers without loading the provider.
+function createChatTestElement(tagName) {
+  const element = {
+    tagName,
+    children: [],
+    parentNode: null,
+    className: '',
+    dataset: {},
+    hidden: false,
+    textWrites: 0,
+    attributes: new Map(),
+    listeners: new Map(),
+    append(...nodes) {
+      for (const node of nodes) {
+        node.parentNode = this;
+        this.children.push(node);
+      }
+    },
+    appendChild(node) {
+      this.append(node);
+      return node;
+    },
+    insertBefore(node, reference) {
+      node.parentNode = this;
+      this.children.splice(this.children.indexOf(reference), 0, node);
+    },
+    setAttribute(name, value) {
+      this.attributes.set(name, String(value));
+    },
+    getAttribute(name) {
+      return this.attributes.get(name) ?? null;
+    },
+    addEventListener(type, listener) {
+      this.listeners.set(type, [...(this.listeners.get(type) || []), listener]);
+    },
+    click() {
+      for (const listener of this.listeners.get('click') || []) listener({ stopPropagation() {} });
+    },
+    focus() {},
+    getRootNode() {
+      return this.parentNode?.getRootNode() || this;
+    },
+    querySelector(selector) {
+      return this.querySelectorAll(selector)[0] || null;
+    },
+    querySelectorAll(selector) {
+      const matches = node => {
+        if (selector.startsWith('.')) return node.classList.contains(selector.slice(1));
+        if (selector === 'main.root') return node.tagName === 'main' && node.classList.contains('root');
+        const action = selector.match(/^\[data-action="([^"]+)"\]$/);
+        return action ? node.dataset.action === action[1] : node.tagName === selector;
+      };
+      return this.children.flatMap(node => [...(matches(node) ? [node] : []), ...node.querySelectorAll(selector)]);
+    },
+  };
+  element.classList = {
+    contains: name => element.className.split(/\s+/).includes(name),
+    add: name => {
+      if (!element.classList.contains(name)) element.className = `${element.className} ${name}`.trim();
+    },
+    remove: name => {
+      element.className = element.className
+        .split(/\s+/)
+        .filter(value => value !== name)
+        .join(' ');
+    },
+    toggle: name => {
+      const added = !element.classList.contains(name);
+      element.classList[added ? 'add' : 'remove'](name);
+      return added;
+    },
+  };
+  let text = '';
+  Object.defineProperty(element, 'textContent', {
+    get: () => text,
+    set: value => {
+      text = String(value);
+      element.textWrites += 1;
+      element.children = [];
+    },
+  });
+  return element;
+}
+
+function createLiveChatHeaderHarness(locale) {
+  const source = readFileSync(path.join(ROOT, 'assets/js/sendpulse-integrations.js'), 'utf8');
+  const section = (startMarker, endMarker) => {
+    const start = source.indexOf(startMarker);
+    const end = source.indexOf(endMarker, start);
+    assert.ok(start >= 0 && end > start, `Missing live-chat section: ${startMarker}`);
+    return source.slice(start, end);
+  };
+  const context = vm.createContext({
+    document: {
+      createElement: createChatTestElement,
+      createElementNS: (_namespace, tag) => createChatTestElement(tag),
+    },
+    getPageLanguage: () => locale,
+    downloadLiveChatTranscript() {},
+    resetLiveChatConversation() {},
+  });
+  const { enhance, copy } = vm.runInContext(
+    [
+      section('  const LIVE_CHAT_BRAND_LOGO_URL =', '  const LIVE_CHAT_THEME_CSS ='),
+      section('  const getLiveChatCopy =', '  const setLiveChatStatus ='),
+      section('  const closeLiveChatPopovers =', '  const insertLiveChatText ='),
+      section('  const setLiveChatExpanded =', '  const startLiveChatVoiceInput ='),
+      '({ enhance: enhanceLiveChatHeader, copy: getLiveChatCopy() });',
+    ].join('\n'),
+    context,
+    { filename: 'sendpulse-integrations.js:header' }
+  );
+  const root = createChatTestElement('root');
+  const main = createChatTestElement('main');
+  main.className = 'root';
+  const header = createChatTestElement('div');
+  header.className = 'widget-header-content-body';
+  const heading = createChatTestElement('h5');
+  heading.textContent = 'Provider title';
+  header.append(heading);
+  const nativeClose = createChatTestElement('div');
+  nativeClose.className = 'button-close-widget';
+  nativeClose.hidden = true;
+  const emojiPicker = createChatTestElement('div');
+  emojiPicker.className = 'hundesalon-chat-emoji-picker';
+  const emojiToggle = createChatTestElement('button');
+  emojiToggle.className = 'hundesalon-chat-emoji-toggle';
+  main.append(header, nativeClose, emojiPicker, emojiToggle);
+  root.append(main);
+  const closeStates = [];
+  nativeClose.addEventListener('click', () => {
+    closeStates.push({
+      expanded: main.classList.contains('hundesalon-chat-expanded'),
+      menuHidden: root.querySelector('.hundesalon-chat-actions-menu').hidden,
+      emojiHidden: emojiPicker.hidden,
+    });
+  });
+  enhance(root);
+  return { root, main, header, heading, copy, closeStates, enhance: () => enhance(root) };
+}
+
+for (const [locale, label] of Object.entries({
+  de: 'Chat minimieren',
+  en: 'Minimize chat',
+  ru: 'Минимизировать чат',
+  uk: 'Згорнути чат',
+})) {
+  test(`SendPulse ${locale}: visible minimize closes natively once after resetting expanded state`, () => {
+    const { root, main, copy, closeStates } = createLiveChatHeaderHarness(locale);
+    const actions = root.querySelector('.hundesalon-chat-actions');
+    const menu = root.querySelector('.hundesalon-chat-actions-menu');
+    const minimize = root.querySelector('.hundesalon-chat-minimize');
+    const expand = root.querySelector('[data-action="expand"]');
+    const toggle = root.querySelector('.hundesalon-chat-actions-toggle');
+    assert.equal(minimize.tagName, 'button');
+    assert.equal(minimize.type, 'button');
+    assert.equal(minimize.parentNode, actions);
+    assert.equal(minimize.hidden, false);
+    assert.equal(menu.hidden, true);
+    assert.equal(menu.querySelector('.hundesalon-chat-minimize'), null);
+    assert.equal(root.querySelector('[data-action="minimize"]'), null);
+    assert.equal(minimize.getAttribute('role'), null);
+    assert.equal(minimize.getAttribute('aria-label'), label);
+    assert.equal(minimize.title, label);
+    assert.equal(minimize.querySelector('svg').getAttribute('aria-hidden'), 'true');
+
+    expand.click();
+    assert.equal(main.classList.contains('hundesalon-chat-expanded'), true);
+    toggle.click();
+    assert.equal(menu.hidden, false);
+    root.querySelector('.hundesalon-chat-emoji-picker').hidden = false;
+    root.querySelector('.hundesalon-chat-emoji-toggle').setAttribute('aria-expanded', 'true');
+    minimize.click();
+    assert.deepEqual(closeStates, [{ expanded: false, menuHidden: true, emojiHidden: true }]);
+    assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+    assert.equal(root.querySelector('.hundesalon-chat-emoji-toggle').getAttribute('aria-expanded'), 'false');
+    assert.equal(expand.querySelector('.hundesalon-chat-action-label').textContent, copy.expand);
+    assert.equal(expand.getAttribute('aria-label'), copy.expand);
+  });
+}
+
+test('SendPulse header enhancement is idempotent for observer callbacks and click handlers', () => {
+  const harness = createLiveChatHeaderHarness('en');
+  const headingWrites = harness.heading.textWrites;
+  for (let index = 0; index < 5; index += 1) harness.enhance();
+  assert.equal(harness.heading.textContent, 'HUNDESALON_NIKA');
+  assert.equal(harness.heading.textWrites, headingWrites);
+  for (const className of ['hundesalon-chat-brand-logo', 'hundesalon-chat-actions', 'hundesalon-chat-minimize']) {
+    assert.equal(harness.root.querySelectorAll(`.${className}`).length, 1);
+  }
+  harness.root.querySelector('.hundesalon-chat-minimize').click();
+  assert.deepEqual(harness.closeStates, [{ expanded: false, menuHidden: true, emojiHidden: true }]);
 });
 
 test('vector-store sync is a no-op when the matching indexed version exists', async () => {
