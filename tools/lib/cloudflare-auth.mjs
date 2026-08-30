@@ -133,7 +133,7 @@ export async function refreshWranglerOAuth(stored) {
   const body = new URLSearchParams({
     grant_type: 'refresh_token',
     refresh_token: stored.refresh_token,
-    client_id: '54d11594-84e4-41aa-b438-e81b8f53c41e',
+    client_id: '54d11594-84e4-41aa-b438-e81b8fa78ee7',
   });
 
   const response = await fetch('https://dash.cloudflare.com/oauth2/token', {
@@ -158,9 +158,7 @@ export async function refreshWranglerOAuth(stored) {
 
 export async function cloudflareApi(tokenOrHeaders, pathname, init = {}) {
   const authHeaders =
-    typeof tokenOrHeaders === 'string'
-      ? { Authorization: `Bearer ${tokenOrHeaders}` }
-      : tokenOrHeaders;
+    typeof tokenOrHeaders === 'string' ? { Authorization: `Bearer ${tokenOrHeaders}` } : tokenOrHeaders;
 
   const response = await fetch(`https://api.cloudflare.com/client/v4${pathname}`, {
     ...init,
@@ -201,7 +199,13 @@ export function resolvePurgeAuth() {
 export function removeDevVar(key, filePath = path.join(REPO_ROOT, '.dev.vars')) {
   if (!existsSync(filePath)) return;
   const lines = readFileSync(filePath, 'utf8').split(/\r?\n/);
-  const next = lines.filter(row => !row.replace(/^\uFEFF/, '').trim().startsWith(`${key}=`));
+  const next = lines.filter(
+    row =>
+      !row
+        .replace(/^\uFEFF/, '')
+        .trim()
+        .startsWith(`${key}=`)
+  );
   writeFileSync(filePath, `${next.join('\n').replace(/\n+$/, '')}\n`, 'utf8');
   delete process.env[key];
 }

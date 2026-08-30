@@ -34,7 +34,7 @@
     "knowledge:sync": "node tools/sync-sendpulse-ai-knowledge.mjs",
     "knowledge:sync:optional": "node tools/sync-sendpulse-ai-knowledge.mjs --optional",
     "check:budgets": "node tools/check-asset-budgets.mjs",
-    "test:unit": "node --test \"functions/**/*.test.js\" \"workers/**/*.test.js\" tools/price-page-ru-data.test.mjs",
+    "test:unit": "node --test \"functions/**/*.test.js\" \"workers/**/*.test.js\" tools/price-page-ru-data.test.mjs tools/lib/cloudflare-auth.test.mjs",
     "test:visual": "node tools/visual-regression.mjs",
     "test:a11y": "node tools/accessibility-smoke.mjs",
     "test:browser": "npm run test:visual && npm run test:a11y",
