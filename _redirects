@@ -1,8 +1,8 @@
 # Cloudflare Pages — правила редиректов
 # https://developers.cloudflare.com/pages/configuration/redirects/
 
-# Канонический хост: www → apex
-https://www.hundesalon-nika.com/* https://hundesalon-nika.com/:splat 301
+# Канонический хост www → apex настраивается на уровне зоны Cloudflare.
+# Pages _redirects принимает только пути, а не абсолютные исходные URL.
 
 # Обратная совместимость: старый URL sendmail.php → новый /sendmail
 /sendmail.php /sendmail 308
@@ -21,7 +21,6 @@ https://www.hundesalon-nika.com/* https://hundesalon-nika.com/:splat 301
 /ua /uk/ 301
 /ua/ /uk/ 301
 /ua/index.html /uk/ 301
-/ua/* /uk/:splat 301
 
 # Legacy English slugs (GSC 404 → soft-404 homepage). Map to canonical filenames.
 /de/price-list.html /de/prays-list 301
@@ -193,3 +192,6 @@ https://www.hundesalon-nika.com/* https://hundesalon-nika.com/:splat 301
 /assets/images/icon-pak/Gotovie%20iconki%20dlya%20saita/spotify.png /assets/images/icons/spotify.png 301
 /assets/images/icon-pak/Gotovie%20iconki%20dlya%20saita/sunrise.png /assets/images/icons/sunrise.png 301
 /assets/images/icon-pak/Gotovie%20iconki%20dlya%20saita/tiktok.png /assets/images/icons/tiktok.png 301
+
+# Динамические правила всегда должны идти после статических.
+/ua/* /uk/:splat 301

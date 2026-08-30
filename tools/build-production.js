@@ -9,19 +9,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
 const MAX_PAGES_FILE_BYTES = 24 * 1024 * 1024;
 
-const STAMPED_ASSETS = [
-  'style.css',
-  'page-modules.css',
-  'main.js',
-  'page-modules.js',
-  'site-shell.js',
-  'price-catalog.js',
-  'newsletter.js',
-  'non-critical-loader.js',
-  'sendpulse-integrations.js',
-  'telegram-menu.css',
-  'telegram-menu.js',
-];
+const VERSIONED_ASSET_EXTENSIONS = new Set(['.css', '.js']);
+const LOCAL_ASSET_REFERENCE =
+  /((?:src|href)=["'](?:\/|(?:\.\.?\/)*)assets\/(?:css|js)\/[^"'?]+\.(?:css|js))(?:\?[^"']*)?(["'])/gi;
 
 const PRODUCTION_MINIFY_ASSETS = [
   'assets/css/style.css',
@@ -32,6 +22,8 @@ const PRODUCTION_MINIFY_ASSETS = [
   'assets/js/tooltip.js',
   'assets/js/newsletter.js',
   'assets/js/sendpulse-integrations.js',
+  'assets/css/ai-chat.css',
+  'assets/js/ai-chat.js',
   'assets/js/testimonials.js',
 ];
 
@@ -188,7 +180,6 @@ function deployAssetVersion() {
     return process.env.DEPLOY_ASSET_VERSION.trim();
   }
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const assetNames = new Set(STAMPED_ASSETS);
   const files = [];
 
   function collect(current) {
@@ -196,7 +187,7 @@ function deployAssetVersion() {
       const fullPath = path.join(current, entry.name);
       if (entry.isDirectory()) {
         collect(fullPath);
-      } else if (entry.isFile() && assetNames.has(entry.name)) {
+      } else if (entry.isFile() && VERSIONED_ASSET_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
         files.push(fullPath);
       }
     }
@@ -231,16 +222,9 @@ function stampDistAssetVersions(directory, version) {
       if (!entry.name.endsWith('.html')) continue;
 
       const original = fs.readFileSync(fullPath, 'utf8');
-      let next = original;
-      for (const asset of STAMPED_ASSETS) {
-        const pattern = new RegExp(`(${asset.replace('.', '\\.')})\\?v=[^"'\\s>]+`, 'g');
-        next = next.replace(pattern, `$1?v=${version}`);
-      }
+      let next = original.replace(LOCAL_ASSET_REFERENCE, `$1?v=${version}$2`);
       // CSP blocks inline onload handlers, leaving deferred stylesheets stuck at media="print".
-      next = next.replace(
-        /\s+media="print"\s+onload="this\.media\s*=\s*'all'"/g,
-        ''
-      );
+      next = next.replace(/\s+media="print"\s+onload="this\.media\s*=\s*'all'"/g, '');
       if (next !== original) {
         fs.writeFileSync(fullPath, next, 'utf8');
         htmlFiles += 1;
@@ -252,6 +236,34 @@ function stampDistAssetVersions(directory, version) {
   fs.mkdirSync(path.join(directory, 'config'), { recursive: true });
   fs.writeFileSync(path.join(directory, 'config', 'deploy-asset-version.txt'), `${version}\n`, 'utf8');
   return htmlFiles;
+}
+
+function assertLocalAssetVersions(directory, version) {
+  const invalid = [];
+
+  function walk(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath);
+        continue;
+      }
+      if (!entry.name.endsWith('.html')) continue;
+
+      const html = fs.readFileSync(fullPath, 'utf8');
+      const pattern = new RegExp(LOCAL_ASSET_REFERENCE.source, LOCAL_ASSET_REFERENCE.flags);
+      for (const match of html.matchAll(pattern)) {
+        if (!match[0].includes(`?v=${version}`)) {
+          invalid.push(`${path.relative(directory, fullPath).replaceAll('\\', '/')}: ${match[0]}`);
+        }
+      }
+    }
+  }
+
+  walk(directory);
+  if (invalid.length > 0) {
+    throw new Error(`Unversioned local JS/CSS references in production build:\n${invalid.join('\n')}`);
+  }
 }
 
 function normalizePublicContact(directory) {
@@ -313,6 +325,8 @@ function deferNonCriticalScripts(directory, version) {
 function injectSendPulseIntegrations(directory, version) {
   let htmlFiles = 0;
   const integrationScriptPattern = /\s*<script\s+src="[^"]*sendpulse-integrations\.js\?[^"\s]+"[^>]*><\/script>/g;
+  const aiChatScriptPattern = /\s*<script\s+src="[^"]*ai-chat\.js\?[^"\s]+"[^>]*><\/script>/g;
+  const aiChatStylePattern = /\s*<link\s+[^>]*href="[^"]*ai-chat\.css\?[^"\s]+"[^>]*>/g;
   const liveChatScriptPattern = /\s*<script\s+src="https:\/\/cdn\.pulse\.is\/livechat\/loader\.js"[^>]*><\/script>/g;
   const popupScriptPattern = /\s*<script\s+src="https:\/\/static\.sppopups\.com\/assets\/loader\.js"[^>]*><\/script>/g;
 
@@ -331,12 +345,23 @@ function injectSendPulseIntegrations(directory, version) {
       const original = fs.readFileSync(fullPath, 'utf8');
       const cleaned = original
         .replace(integrationScriptPattern, '')
+        .replace(aiChatScriptPattern, '')
+        .replace(aiChatStylePattern, '')
         .replace(liveChatScriptPattern, '')
         .replace(popupScriptPattern, '');
 
-      const prefix = path.relative(path.dirname(fullPath), path.join(directory, 'assets/js')).replaceAll('\\', '/');
-      const loader = `<script src="${prefix}/sendpulse-integrations.js?v=${version}"></script>`;
-      const next = cleaned.replace('</body>', `\n${loader}\n</body>`);
+      const scriptPrefix = path
+        .relative(path.dirname(fullPath), path.join(directory, 'assets/js'))
+        .replaceAll('\\', '/');
+      const stylePrefix = path
+        .relative(path.dirname(fullPath), path.join(directory, 'assets/css'))
+        .replaceAll('\\', '/');
+      const stylesheet = `<link rel="stylesheet" href="${stylePrefix}/ai-chat.css?v=${version}">`;
+      const loaders = [
+        `<script src="${scriptPrefix}/sendpulse-integrations.js?v=${version}"></script>`,
+        `<script src="${scriptPrefix}/ai-chat.js?v=${version}"></script>`,
+      ].join('\n');
+      const next = cleaned.replace('</head>', `${stylesheet}\n</head>`).replace('</body>', `\n${loaders}\n</body>`);
       if (next !== original) {
         fs.writeFileSync(fullPath, next, 'utf8');
         htmlFiles += 1;
@@ -354,6 +379,7 @@ assertNoSecretArtifacts(dist);
 const publicContactFiles = normalizePublicContact(dist);
 const deferredScriptFiles = deferNonCriticalScripts(dist, assetVersion);
 const sendPulseFiles = injectSendPulseIntegrations(dist, assetVersion);
+assertLocalAssetVersions(dist, assetVersion);
 
 console.log('Production bundle created in dist/.');
 console.log(`Asset cache version: ${assetVersion} (${stamped} HTML files stamped).`);

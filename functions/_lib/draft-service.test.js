@@ -24,6 +24,51 @@ function context(body, env = {}) {
   };
 }
 
+function publicContext(body) {
+  return {
+    request: new Request(`${origin}/message-draft`, {
+      method: 'POST',
+      headers: {
+        Origin: origin,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    }),
+    env: {},
+  };
+}
+
+test('serves the browser draft helper without exposing AI authorization', async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    throw new Error('Public fixed-template drafts must not call an upstream AI service.');
+  };
+
+  try {
+    const response = await handleMessageDraft(
+      publicContext({
+        draft: {
+          language: 'de',
+          formType: 'booking',
+          name: 'Nika',
+          service: 'Komplettpflege',
+          existingMessage: 'Termin am Freitag',
+        },
+      })
+    );
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.fallback, true);
+    assert.equal(body.reason, 'PUBLIC_FIXED_TEMPLATE');
+    assert.match(body.choices[0].message.content, /Nika/);
+    assert.equal(calls, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('rejects caller-selected providers before any upstream call', async () => {
   const originalFetch = globalThis.fetch;
   let calls = 0;

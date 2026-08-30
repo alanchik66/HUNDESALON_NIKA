@@ -215,43 +215,13 @@ export async function getGoogleOAuthAccessToken(env) {
   return token;
 }
 
-export async function getMicrosoftGraphToken(env) {
-  const directToken = getEnvValue(env, 'MS_GRAPH_ACCESS_TOKEN');
-  if (hasUsableValue(directToken)) {
-    return directToken;
-  }
-
-  const tenantId = getEnvValue(env, 'MS_TENANT_ID');
-  const clientId = getEnvValue(env, 'MS_CLIENT_ID');
-  const clientSecret = getEnvValue(env, 'MS_CLIENT_SECRET');
-  if (!hasUsableValue(tenantId) || !hasUsableValue(clientId) || !hasUsableValue(clientSecret)) {
-    return '';
-  }
-
-  const tokenResponse = await safeJsonFetch(
-    `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/oauth2/v2.0/token`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        scope: 'https://graph.microsoft.com/.default',
-        grant_type: 'client_credentials',
-      }),
-    }
-  );
-
-  return tokenResponse.ok && hasUsableValue(tokenResponse.body?.access_token) ? tokenResponse.body.access_token : '';
-}
-
 export async function callGoogleAppsScriptGateway(env, action, payload) {
   const webhook = getEnvValue(env, 'GOOGLE_APPS_SCRIPT_WEBHOOK_URL');
   if (!hasUsableValue(webhook)) {
     return { ok: false, skipped: true, reason: 'Google Apps Script gateway is not configured.' };
   }
 
-  return safeJsonFetch(webhook, {
+  const result = await safeJsonFetch(webhook, {
     method: 'POST',
     headers: JSON_HEADERS,
     body: JSON.stringify({
@@ -260,6 +230,11 @@ export async function callGoogleAppsScriptGateway(env, action, payload) {
       ...payload,
     }),
   });
+
+  return {
+    ...result,
+    ok: result.ok && result.body?.success !== false,
+  };
 }
 
 export async function appendGoogleSheetRow(env, { spreadsheetId, sheetName = 'bookings', values }) {
@@ -301,7 +276,10 @@ export async function appendGoogleSheetRow(env, { spreadsheetId, sheetName = 'bo
   );
 }
 
-export async function createGoogleCalendarEvent(env, { calendarId, summary, description, startDateTime, endDateTime, status = 'tentative' }) {
+export async function createGoogleCalendarEvent(
+  env,
+  { calendarId, summary, description, startDateTime, endDateTime, status = 'tentative' }
+) {
   const appsScriptResult = await callGoogleAppsScriptGateway(env, 'calendar', {
     calendarId,
     summary,
@@ -408,10 +386,6 @@ export async function getGoogleCalendarBusyIntervals(env, { calendarId, timeMin,
   };
 }
 
-export async function sendTeamsMessage(env, payload) {
-  return { ok: false, skipped: true, reason: 'Microsoft Teams integration is disabled.' };
-}
-
 /** Sends a plain-text notification to a Telegram chat or channel. */
 const TELEGRAM_TOPIC_ENV_NAMES = Object.freeze({
   messages: 'TELEGRAM_TOPIC_MESSAGES_ID',
@@ -487,82 +461,6 @@ export async function answerTelegramCallbackQuery(env, { callbackQueryId = '', t
   });
 }
 
-export async function sendGmailEmail(env, { to, subject, text, replyTo = '', allowImplicitSender = false }) {
-  const sender = getEnvValue(env, 'GMAIL_SENDER');
-  if (!hasUsableValue(sender) && !allowImplicitSender) {
-    return { ok: false, skipped: true, reason: 'Gmail sender is not explicitly configured.' };
-  }
-
-  const serviceAccountSubject = getEnvValue(env, 'GOOGLE_SERVICE_ACCOUNT_SUBJECT');
-  const token =
-    (hasUsableValue(serviceAccountSubject)
-      ? await getGoogleAccessToken(env, ['https://www.googleapis.com/auth/gmail.send'], serviceAccountSubject)
-      : '') || (await getGoogleOAuthAccessToken(env));
-  if (!hasUsableValue(token) || !hasUsableValue(to)) {
-    return { ok: false, skipped: true, reason: 'Gmail credentials are not configured.' };
-  }
-
-  const message = [
-    hasUsableValue(sender) ? `From: ${sender}` : null,
-    `To: ${to}`,
-    hasUsableValue(replyTo) ? `Reply-To: ${replyTo}` : null,
-    `Subject: ${subject}`,
-    'Content-Type: text/plain; charset=UTF-8',
-    '',
-    text,
-  ]
-    .filter(line => line !== null)
-    .join('\r\n');
-  const bytes = new TextEncoder().encode(message);
-  let binary = '';
-  for (let index = 0; index < bytes.length; index += 0x8000) {
-    const chunk = bytes.subarray(index, index + 0x8000);
-    binary += String.fromCharCode(...chunk);
-  }
-  const raw = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-
-  return safeJsonFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-    method: 'POST',
-    headers: {
-      ...JSON_HEADERS,
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ raw }),
-  });
-}
-
-export async function sendOutlookEmail(env, { to, subject, text }) {
-  const token = await getMicrosoftGraphToken(env);
-  if (!hasUsableValue(token) || !hasUsableValue(to)) {
-    return { ok: false, skipped: true, reason: 'Outlook credentials are not configured.' };
-  }
-
-  const hasDirectToken = hasUsableValue(getEnvValue(env, 'MS_GRAPH_ACCESS_TOKEN'));
-  const sender = getEnvValue(env, 'OUTLOOK_SENDER');
-  if (!hasDirectToken && !hasUsableValue(sender)) {
-    return { ok: false, skipped: true, reason: 'Outlook sender mailbox is not configured.' };
-  }
-  const endpoint = hasDirectToken
-    ? 'https://graph.microsoft.com/v1.0/me/sendMail'
-    : `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(sender)}/sendMail`;
-
-  return safeJsonFetch(endpoint, {
-    method: 'POST',
-    headers: {
-      ...JSON_HEADERS,
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      message: {
-        subject,
-        body: { contentType: 'Text', content: text },
-        toRecipients: [{ emailAddress: { address: to } }],
-      },
-      saveToSentItems: true,
-    }),
-  });
-}
-
 async function getSendPulseAccessToken(env) {
   const apiKey = getEnvValue(env, 'SENDPULSE_API_KEY');
   if (hasUsableValue(apiKey)) return apiKey;
@@ -605,13 +503,16 @@ export async function sendSendPulseEmail(env, { to, subject, text, html = '', re
     return { ok: false, skipped: true, reason: 'SendPulse credentials are not configured.' };
   }
 
-  const payload = { email: {
-    from: parseMailbox(from || getEnvValue(env, 'SENDPULSE_FROM', 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>')),
-    to: recipients.map(email => parseMailbox(email, email)),
-    subject: String(subject || '').slice(0, 998),
-    text: String(text || ''),
-    html: String(html || '').trim() || undefined,
-  }};
+  const htmlContent = String(html || '').trim();
+  const payload = {
+    email: {
+      from: parseMailbox(from || getEnvValue(env, 'SENDPULSE_FROM', 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>')),
+      to: recipients.map(email => parseMailbox(email, email)),
+      subject: String(subject || '').slice(0, 998),
+      text: String(text || ''),
+      html: htmlContent ? base64Encode(htmlContent) : undefined,
+    },
+  };
   if (hasUsableValue(replyTo)) {
     payload.email.reply_to = parseMailbox(replyTo, 'HUNDESALON NIKA');
   }
@@ -628,15 +529,22 @@ export async function sendSendPulseEmail(env, { to, subject, text, html = '', re
         },
         body: JSON.stringify(payload),
       });
-      console.info('[sendpulse] email delivery', JSON.stringify({ ok: result.ok, status: result.status, attempt: attempt + 1 }));
+      result.ok = result.ok && result.body?.result === true;
+      console.info(
+        '[sendpulse] email delivery',
+        JSON.stringify({ ok: result.ok, status: result.status, attempt: attempt + 1 })
+      );
       if (result.ok || ![408, 429, 500, 502, 503, 504].includes(result.status)) return result;
       lastResult = result;
     } catch (error) {
       lastResult = { ok: false, status: 0, body: { error: error?.message || 'network error' } };
-      console.error('[sendpulse] email delivery error', JSON.stringify({ attempt: attempt + 1, error: error?.message || 'unknown' }));
+      console.error(
+        '[sendpulse] email delivery error',
+        JSON.stringify({ attempt: attempt + 1, error: error?.message || 'unknown' })
+      );
     }
     if (attempt < 2) await sleep(250 * 2 ** attempt);
-  };
+  }
   return lastResult || { ok: false, status: 0, body: { error: 'SendPulse request failed' } };
 }
 
@@ -720,7 +628,10 @@ export async function sendSendPulseAutomationEvent(env, { eventType = '', data =
   return lastResult || { ok: false, status: 0, body: { error: 'SendPulse automation event failed' } };
 }
 
-export async function upsertSendPulseContact(env, { email, name = '', phone = '', lang = '', service = '', source = '', formType = '' }) {
+export async function upsertSendPulseContact(
+  env,
+  { email, name = '', phone = '', lang = '', service = '', source = '', formType = '' }
+) {
   const addressBookId = getEnvValue(env, 'SENDPULSE_ADDRESSBOOK_ID');
   const token = await getSendPulseAccessToken(env);
   if (!hasUsableValue(addressBookId) || !hasUsableValue(token) || !hasUsableValue(email)) {
@@ -734,7 +645,9 @@ export async function upsertSendPulseContact(env, { email, name = '', phone = ''
     ['service_type', service],
     ['lead_source', source],
     ['form_type', formType],
-  ].filter(([, value]) => hasUsableValue(value)).map(([variableName, value]) => ({ name: variableName, value: String(value) }));
+  ]
+    .filter(([, value]) => hasUsableValue(value))
+    .map(([variableName, value]) => ({ name: variableName, value: String(value) }));
 
   return safeJsonFetch(`${SENDPULSE_API_URL}/addressbooks/${encodeURIComponent(addressBookId)}/emails`, {
     method: 'POST',
@@ -743,52 +656,7 @@ export async function upsertSendPulseContact(env, { email, name = '', phone = ''
   });
 }
 
-
-const APPS_SCRIPT_MAX_BYTES = 35 * 1024 * 1024;
-
-export async function createDriveResumableUploadSession(env, { fileName, mimeType, fileSize, metadata = {} }) {
-  const token =
-    (await getGoogleAccessToken(env, ['https://www.googleapis.com/auth/drive.file'])) ||
-    (await getGoogleOAuthAccessToken(env));
-  const folderId = getEnvValue(env, 'DRIVE_UPLOAD_FOLDER');
-  if (!hasUsableValue(token) || !hasUsableValue(folderId)) {
-    return { ok: false, skipped: true, reason: 'Google Drive credentials are not configured.' };
-  }
-
-  const safeName = String(fileName || 'pet-photo').replace(/[^\w.-]+/g, '-').slice(-90);
-  const uniqueName = `${Date.now()}-${crypto.randomUUID()}-${safeName}`;
-  const meta = {
-    name: uniqueName,
-    parents: [folderId],
-    description: JSON.stringify(metadata),
-  };
-
-  const response = await fetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json; charset=UTF-8',
-        'X-Upload-Content-Type': mimeType || 'application/octet-stream',
-        'X-Upload-Content-Length': String(fileSize),
-      },
-      body: JSON.stringify(meta),
-    }
-  );
-
-  if (!response.ok) {
-    const bodyText = await response.text().catch(() => '');
-    return { ok: false, status: response.status, body: bodyText };
-  }
-
-  const uploadUrl = response.headers.get('Location');
-  if (!uploadUrl) {
-    return { ok: false, reason: 'Missing resumable upload URL.' };
-  }
-
-  return { ok: true, uploadUrl, fileName: uniqueName };
-}
+const APPS_SCRIPT_MAX_BYTES = 15 * 1024 * 1024;
 
 export async function uploadFileToDrive(env, { file, fileName, metadata = {} }) {
   const appsScriptWebhook = getEnvValue(env, 'GOOGLE_APPS_SCRIPT_WEBHOOK_URL');

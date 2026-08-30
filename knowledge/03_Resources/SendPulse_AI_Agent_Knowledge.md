@@ -1,6 +1,6 @@
 # HUNDESALON_NIKA Website Knowledge for the SendPulse AI Agent #
 
-Generated source fingerprint: sha256:c9ecbe469a0f6fc458fea783c2c1ad4313054c0f1f6b95bb79698ac27870bd82
+Generated source fingerprint: sha256:1b26a37b5e39aed266cc8ecab8744dbb8e92b1af0be57ec832d348fa311c9499
 
 This document is the factual knowledge base for the customer-facing SendPulse live-chat AI agent. It covers the public HUNDESALON_NIKA website in German, English, Russian, and Ukrainian.
 
@@ -890,7 +890,6 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - ab 55 €
 - Beliebte Einstiegsseiten
 - Hundepflege in Leipzig Hundefriseur Leipzig Hundesalon Leipzig Preisliste Online-Buchung
-- Aktuelle Aktion
 - Kundenbewertungen
 - "Toller Salon! Mein Hund sieht nach dem Schnitt wie aus einem Magazin aus."
 - — Anna K.
@@ -954,7 +953,7 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Uhrzeit
 - Zurück
 - Ihre Kontaktdaten
-- Foto des Tieres (JPG/PNG bis 150 MB) Datei auswählen Keine Datei ausgewählt
+- Foto des Tieres (JPG/PNG bis 15 MB) Datei auswählen Keine Datei ausgewählt
 - Zahlungsart
 - Im Salon bar bezahlen
 - Im Salon mit Karte bezahlen (EC/Kreditkarte)
@@ -1137,7 +1136,6 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - from € 55
 - Popular landing pages
 - Dog grooming in Leipzig Dog groomer Leipzig Dog salon Leipzig Price list Online booking
-- Current special offer
 - Client reviews
 - "Excellent salon! My dog looks ready for a magazine cover after grooming."
 - — Anna K.
@@ -1201,7 +1199,7 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Time
 - Back
 - Your contact details
-- Pet photo (JPG/PNG up to 150 MB) Choose file No file chosen
+- Pet photo (JPG/PNG up to 15 MB) Choose file No file chosen
 - Payment method
 - Pay cash at the salon
 - Pay by card at the salon
@@ -1384,7 +1382,6 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - от 55 €
 - Популярные страницы
 - Груминг собак в Лейпциге Наши услуги Прайс-лист Онлайн-запись
-- Актуальная акция
 - Отзывы клиентов
 - "Чудесный салон! Моя собака после стрижки выглядит как с обложки."
 - — Анна К.
@@ -1448,7 +1445,7 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Время
 - Назад
 - Ваши контактные данные
-- Фото питомца (JPG/PNG до 150 МБ) Выбрать файл Файл не выбран
+- Фото питомца (JPG/PNG до 15 МБ) Выбрать файл Файл не выбран
 - Способ оплаты
 - Оплата наличными в салоне
 - Оплата картой в салоне
@@ -1631,7 +1628,6 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - від 55 €
 - Популярні сторінки
 - Грумінг собак у Лейпцигу Hundefriseur Leipzig Грумінг-салон у Лейпцигу Прайс-лист Онлайн-запис
-- Актуальна акція
 - Відгуки клієнтів
 - "Чудовий салон! Моя собака після стрижки виглядає як з обкладинки."
 - — Анна К.
@@ -1695,7 +1691,7 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Час
 - Назад
 - Ваші контактні дані
-- Фото улюбленця (JPG/PNG до 150 МБ) Обрати файл Файл не обрано
+- Фото улюбленця (JPG/PNG до 15 МБ) Обрати файл Файл не обрано
 - Спосіб оплати
 - Оплата готівкою в салоні
 - Оплата карткою в салоні

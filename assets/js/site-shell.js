@@ -8,7 +8,8 @@
  */
 (function () {
   const SUPPORTED_LANGS = ['ru', 'uk', 'en', 'de'];
-  const EURO_ICON_MARKUP = '<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>';
+  const EURO_ICON_MARKUP =
+    '<span class="site-icon site-icon-euro currency-inline" role="img" aria-label="euro"></span>';
   const escapeCurrencyText = value =>
     String(value ?? '')
       .replaceAll('&', '&amp;')
@@ -20,16 +21,18 @@
   const setCurrencyText = (element, value) => {
     if (!(element instanceof HTMLElement)) return;
     element.replaceChildren();
-    String(value ?? '').split('€').forEach((part, index) => {
-      if (index > 0) {
-        const icon = document.createElement('span');
-        icon.className = 'site-icon site-icon-euro currency-inline';
-        icon.setAttribute('role', 'img');
-        icon.setAttribute('aria-label', 'euro');
-        element.appendChild(icon);
-      }
-      if (part) element.appendChild(document.createTextNode(part));
-    });
+    String(value ?? '')
+      .split('€')
+      .forEach((part, index) => {
+        if (index > 0) {
+          const icon = document.createElement('span');
+          icon.className = 'site-icon site-icon-euro currency-inline';
+          icon.setAttribute('role', 'img');
+          icon.setAttribute('aria-label', 'euro');
+          element.appendChild(icon);
+        }
+        if (part) element.appendChild(document.createTextNode(part));
+      });
   };
 
   const EURO_ICON_SELECTOR = '.site-icon--euro, .site-icon-euro, .currency-inline';
@@ -156,7 +159,6 @@
       socials: 'НАШИ СОЦИАЛЬНЫЕ СЕТИ',
       rating: 'РЕЙТИНГ',
       partner: 'ПАРТНЕРСКОЕ ПРЕДЛОЖЕНИЕ',
-      promotions: 'АКЦИИ',
       documents: 'ДОКУМЕНТЫ',
       localSeo: 'ГРУМИНГ В ЛЕЙПЦИГЕ',
       selectLanguage: 'Выбрать язык',
@@ -178,7 +180,6 @@
       socials: 'СОЦІАЛЬНІ МЕРЕЖІ',
       rating: 'РЕЙТИНГ І ВІДГУКИ',
       partner: 'ПАРТНЕРСЬКА ПРОПОЗИЦІЯ',
-      promotions: 'АКЦІЇ',
       documents: 'ДОКУМЕНТИ',
       localSeo: 'ГРУМІНГ У ЛЕЙПЦИГУ',
       selectLanguage: 'Обрати мову',
@@ -200,7 +201,6 @@
       socials: 'SOZIALE MEDIEN',
       rating: 'BEWERTUNGEN',
       partner: 'PARTNERSCHAFT',
-      promotions: 'ANGEBOTE',
       documents: 'DOKUMENTE',
       localSeo: 'HUNDEFRISEUR LEIPZIG',
       selectLanguage: 'Sprache wählen',
@@ -222,7 +222,6 @@
       socials: 'SOCIAL MEDIA',
       rating: 'RATING',
       partner: 'PARTNERSHIP OFFER',
-      promotions: 'PROMOTIONS',
       documents: 'DOCUMENTS',
       localSeo: 'DOG GROOMING LEIPZIG',
       selectLanguage: 'Select language',
@@ -3629,8 +3628,7 @@
   const HEADER_WEATHER_GEOCODE_ENDPOINT = 'https://geocoding-api.open-meteo.com/v1/search';
   const HEADER_WEATHER_CURRENT_ENDPOINT = resolveHeaderWeatherPublicEndpoint('/api/weather');
   const HEADER_WEATHER_ASTRO_ENDPOINT = 'https://api.sunrise-sunset.org/json';
-  const HEADER_WEATHER_REVERSE_GEOCODE_PROXY_ENDPOINT =
-    resolveHeaderWeatherPublicEndpoint('/reverse-geocode');
+  const HEADER_WEATHER_REVERSE_GEOCODE_PROXY_ENDPOINT = resolveHeaderWeatherPublicEndpoint('/reverse-geocode');
   const HEADER_WEATHER_ASTRO_REFRESH_INTERVAL = 60000;
   const HEADER_WEATHER_WIDGET_REFRESH_INTERVAL = 5 * 60 * 1000;
   const HEADER_WEATHER_GEO_REFRESH_INTERVAL = 60 * 1000;
@@ -3717,12 +3715,11 @@
       let targetUrl = url;
       try {
         const resolvedUrl = new URL(String(url), window.location.origin);
-        if (
-          resolvedUrl.origin === window.location.origin &&
-          HEADER_WEATHER_LOCAL_API_PATHS.has(resolvedUrl.pathname)
-        ) {
-          targetUrl = new URL(`${resolvedUrl.pathname}${resolvedUrl.search}`, HEADER_WEATHER_PUBLIC_API_ORIGIN)
-            .toString();
+        if (resolvedUrl.origin === window.location.origin && HEADER_WEATHER_LOCAL_API_PATHS.has(resolvedUrl.pathname)) {
+          targetUrl = new URL(
+            `${resolvedUrl.pathname}${resolvedUrl.search}`,
+            HEADER_WEATHER_PUBLIC_API_ORIGIN
+          ).toString();
         }
       } catch {}
 
@@ -4013,6 +4010,7 @@
     <div class="header-weather-shell">
       <div
         class="header-weather-widget"
+        role="group"
         data-weather-widget="true"
         data-widget-src="${weatherWidgetPrefix}/weather-widget.iife.js?v=${WEATHER_WIDGET_ASSET_VERSION}"
         data-weather-locale="${context.pageLang}"
@@ -4109,12 +4107,6 @@
   <div class="mobile-nav-group mobile-nav-group--primary">
     ${primaryLinks}
   </div>
-  <a href="${pathPrefix}index.html#promotions" class="promo-burger-btn">
-    <span class="promo-btn-inner">
-      <img src="${assetPrefix}/images/icons/clash-royale.png" class="promo-btn-icon" alt="" aria-hidden="true">
-      <span class="promo-btn-label">${copy.promotions}</span>
-    </span>
-  </a>
   <div class="menu-separator" aria-hidden="true"><span>${context.menuSections.more}</span></div>
   <div class="mobile-nav-group mobile-nav-group--secondary">
     ${secondaryLinks}
@@ -4313,8 +4305,7 @@
     const latitudeDelta = ((Number(second.latitude) - Number(first.latitude)) * Math.PI) / 180;
     const longitudeDelta = ((Number(second.longitude) - Number(first.longitude)) * Math.PI) / 180;
     const haversine =
-      Math.sin(latitudeDelta / 2) ** 2 +
-      Math.cos(latitude1) * Math.cos(latitude2) * Math.sin(longitudeDelta / 2) ** 2;
+      Math.sin(latitudeDelta / 2) ** 2 + Math.cos(latitude1) * Math.cos(latitude2) * Math.sin(longitudeDelta / 2) ** 2;
     return 6371000 * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
   }
 
@@ -4361,10 +4352,7 @@
           bestCandidate = candidate;
         }
 
-        if (
-          Number.isFinite(candidate.accuracy) &&
-          candidate.accuracy <= HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS
-        ) {
+        if (Number.isFinite(candidate.accuracy) && candidate.accuracy <= HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS) {
           finish();
         }
       };
@@ -4423,25 +4411,19 @@
     const distanceMeters = getHeaderWeatherDistanceMeters(previous, coords);
     const previousAccuracy = Number(host.dataset.weatherGeoAccuracy);
     const nextAccuracy = Number(coords.accuracy);
-    const previousAccuracyValue =
-      Number.isFinite(previousAccuracy) && previousAccuracy >= 0 ? previousAccuracy : null;
+    const previousAccuracyValue = Number.isFinite(previousAccuracy) && previousAccuracy >= 0 ? previousAccuracy : null;
     const nextAccuracyValue = Number.isFinite(nextAccuracy) && nextAccuracy >= 0 ? nextAccuracy : null;
     const uncertainty = Math.max(
       previousAccuracyValue ?? HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS,
       nextAccuracyValue ?? HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS
     );
-    const movementThreshold = Math.max(
-      HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS,
-      Math.min(50, uncertainty * 0.5)
-    );
+    const movementThreshold = Math.max(HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS, Math.min(50, uncertainty * 0.5));
     const reachedTarget =
       nextAccuracyValue !== null &&
       nextAccuracyValue <= HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS &&
       (previousAccuracyValue === null || previousAccuracyValue > HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS);
     const materiallyMoreAccurate =
-      nextAccuracyValue !== null &&
-      previousAccuracyValue !== null &&
-      nextAccuracyValue <= previousAccuracyValue * 0.65;
+      nextAccuracyValue !== null && previousAccuracyValue !== null && nextAccuracyValue <= previousAccuracyValue * 0.65;
 
     return {
       changed: distanceMeters >= movementThreshold || reachedTarget || materiallyMoreAccurate,
@@ -4483,8 +4465,7 @@
       const accuracy = Number(coords.accuracy);
       if (Number.isFinite(accuracy) && accuracy >= 0) {
         host.dataset.weatherGeoAccuracy = accuracy.toFixed(1);
-        host.dataset.weatherGeoTargetMet =
-          accuracy <= HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS ? 'true' : 'false';
+        host.dataset.weatherGeoTargetMet = accuracy <= HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS ? 'true' : 'false';
       }
 
       if (!decision.changed) {
@@ -4591,7 +4572,9 @@
     }
 
     return Object.values(HEADER_WEATHER_LOCATION_STATUS_BY_LANG).some(copy =>
-      Object.values(copy).some(label => normalizeHeaderWeatherLocationKey(label) === normalizeHeaderWeatherLocationKey(normalized))
+      Object.values(copy).some(
+        label => normalizeHeaderWeatherLocationKey(label) === normalizeHeaderWeatherLocationKey(normalized)
+      )
     );
   }
 
@@ -6909,9 +6892,7 @@
           value: coordinateValue,
           expiresAt:
             Date.now() +
-            (coordinateValue.areaResolved
-              ? HEADER_WEATHER_LOCATION_CACHE_TTL
-              : HEADER_WEATHER_LOCATION_RETRY_TTL),
+            (coordinateValue.areaResolved ? HEADER_WEATHER_LOCATION_CACHE_TTL : HEADER_WEATHER_LOCATION_RETRY_TTL),
         });
 
         return coordinateValue;
@@ -7440,7 +7421,9 @@
     }
 
     if (locationMeta.areaResolved !== false && locationMeta.label) {
-      const accessibleLocationLabel = String(locationMeta.label).replace(/[\u200B\u00A0]/g, ' ').trim();
+      const accessibleLocationLabel = String(locationMeta.label)
+        .replace(/[\u200B\u00A0]/g, ' ')
+        .trim();
       host.dataset.weatherResolvedLocationLabel = accessibleLocationLabel;
       host.dataset.weatherAreaState = 'resolved';
       restoreHeaderWeatherAreaLocationLabel(host);
@@ -7475,16 +7458,14 @@
     }
 
     const displayLocationLabel = formatHeaderWeatherCityDistrictDisplayLabel(accessibleLocationLabel);
-    root
-      .querySelectorAll('.weather-header-card__location, .weather-location-selector__city')
-      .forEach(node => {
-        if (displayLocationLabel && displayLocationLabel !== node.textContent?.trim()) {
-          node.textContent = displayLocationLabel;
-        }
-        node.setAttribute('title', accessibleLocationLabel);
-        node.setAttribute('aria-label', accessibleLocationLabel);
-        delete node.dataset.weatherLocationState;
-      });
+    root.querySelectorAll('.weather-header-card__location, .weather-location-selector__city').forEach(node => {
+      if (displayLocationLabel && displayLocationLabel !== node.textContent?.trim()) {
+        node.textContent = displayLocationLabel;
+      }
+      node.setAttribute('title', accessibleLocationLabel);
+      node.setAttribute('aria-label', accessibleLocationLabel);
+      delete node.dataset.weatherLocationState;
+    });
   }
 
   function syncHeaderWeatherPublicLocationLabel(host) {
@@ -7501,21 +7482,19 @@
     const state = host.dataset.weatherAreaState === 'unavailable' ? 'unavailable' : 'resolving';
     const statusText = getHeaderWeatherLocationStatusCopy(host, state);
     const hasDeviceCoordinates = Boolean(parseHeaderWeatherCoordinates(host.dataset.weatherLocation));
-    root
-      .querySelectorAll('.weather-header-card__location, .weather-location-selector__city')
-      .forEach(node => {
-        const currentText = node.textContent?.trim() || '';
-        if (!hasDeviceCoordinates && !isHeaderWeatherTechnicalLocationLabel(currentText)) {
-          return;
-        }
-        if (currentText !== statusText) {
-          node.textContent = statusText;
-        }
-        node.dataset.weatherLocationState = state;
-        node.setAttribute('title', statusText);
-        node.setAttribute('aria-label', statusText);
-        node.setAttribute('aria-live', 'polite');
-      });
+    root.querySelectorAll('.weather-header-card__location, .weather-location-selector__city').forEach(node => {
+      const currentText = node.textContent?.trim() || '';
+      if (!hasDeviceCoordinates && !isHeaderWeatherTechnicalLocationLabel(currentText)) {
+        return;
+      }
+      if (currentText !== statusText) {
+        node.textContent = statusText;
+      }
+      node.dataset.weatherLocationState = state;
+      node.setAttribute('title', statusText);
+      node.setAttribute('aria-label', statusText);
+      node.setAttribute('aria-live', 'polite');
+    });
   }
 
   function scheduleHeaderWeatherAreaLocationLabelRestore(host) {
@@ -7555,10 +7534,7 @@
       sources.push({ label: normalizedLabel, url: normalizedUrl });
     };
 
-    addSource(
-      currentMeta.providerLabel ? `Weather: ${currentMeta.providerLabel}` : '',
-      currentMeta.attributionUrl
-    );
+    addSource(currentMeta.providerLabel ? `Weather: ${currentMeta.providerLabel}` : '', currentMeta.attributionUrl);
     addSource(
       currentMeta.forecastProviderLabel ? `Forecast: ${currentMeta.forecastProviderLabel}` : '',
       currentMeta.forecastAttributionUrl
@@ -7622,9 +7598,7 @@
           overlay.style.removeProperty('--orb-cloud-highlight-alpha');
         }
         const coreOpacity =
-          cloudMode === 'clear'
-            ? 1
-            : clampHeaderWeatherValue(Number(atmosphere.coreOpacity) || 1, 0.86, 1);
+          cloudMode === 'clear' ? 1 : clampHeaderWeatherValue(Number(atmosphere.coreOpacity) || 1, 0.86, 1);
         overlay.style.setProperty('--orb-core-opacity', coreOpacity.toFixed(3));
       } else {
         overlay.classList.remove('has-cloud-veil');
@@ -8748,10 +8722,10 @@
     }
 
     if (chipsNode instanceof HTMLElement) {
-       chipsNode.style.setProperty('display', 'flex', 'important');
-       chipsNode.style.setProperty('align-self', 'end', 'important');
-       chipsNode.style.setProperty('align-items', 'flex-end', 'important');
-       chipsNode.style.setProperty('justify-content', 'flex-end', 'important');
+      chipsNode.style.setProperty('display', 'flex', 'important');
+      chipsNode.style.setProperty('align-self', 'end', 'important');
+      chipsNode.style.setProperty('align-items', 'flex-end', 'important');
+      chipsNode.style.setProperty('justify-content', 'flex-end', 'important');
       chipsNode.style.setProperty('line-height', '1', 'important');
       chipsNode.style.setProperty('font-size', 'inherit', 'important');
       chipsNode.style.setProperty('margin-top', '0', 'important');
@@ -8901,7 +8875,7 @@
       if (!(titleBlockNode instanceof HTMLElement)) {
         feelsLikeChip.style.setProperty('margin-left', '0', 'important');
         labelEl.style.setProperty('transform', 'none', 'important');
-labelEl.style.setProperty('text-align', 'right', 'important');
+        labelEl.style.setProperty('text-align', 'right', 'important');
         return;
       }
 
@@ -11794,7 +11768,6 @@ labelEl.style.setProperty('text-align', 'right', 'important');
 
   // (Removed unused optional fallback renderer `startHeaderWeatherOrbTextureRender`)
 
-
   async function mountHeaderWeatherSunScene(overlay, assetConfig) {
     const canvas = overlay?.querySelector('canvas');
     const video = overlay?.querySelector('video');
@@ -12218,10 +12191,8 @@ labelEl.style.setProperty('text-align', 'right', 'important');
       const widgetBasePath = getHeaderWeatherWidgetBasePath(host);
       const assetsModuleBase = getHeaderWeatherAssetsBasePath(host);
       const geoState = {
-        latitude:
-          getHeaderWeatherFiniteNumber(astroData?.locationMeta?.latitude) ?? deviceCoordinates.latitude,
-        longitude:
-          getHeaderWeatherFiniteNumber(astroData?.locationMeta?.longitude) ?? deviceCoordinates.longitude,
+        latitude: getHeaderWeatherFiniteNumber(astroData?.locationMeta?.latitude) ?? deviceCoordinates.latitude,
+        longitude: getHeaderWeatherFiniteNumber(astroData?.locationMeta?.longitude) ?? deviceCoordinates.longitude,
         timeMs: getHeaderWeatherNowMs(),
       };
       const moonVideoSources = widgetBasePath
@@ -13032,8 +13003,7 @@ labelEl.style.setProperty('text-align', 'right', 'important');
       // Geolocation was already requested above. If the visitor denied it (a normal
       // mobile-browser path), let the widget use its Leipzig fallback instead of
       // prompting a second time and logging a GeolocationPositionError.
-      const useDeviceGeolocation =
-        !requestedLocation && host.dataset.weatherGeoResolved !== 'unavailable';
+      const useDeviceGeolocation = !requestedLocation && host.dataset.weatherGeoResolved !== 'unavailable';
 
       const widgetApi = await weatherWidget.mountWeatherWidget(host, {
         variant: 'header',

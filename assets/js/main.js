@@ -1452,11 +1452,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   handleScroll();
 
-  /* Language dropdown is already initialized near the top of DOMContentLoaded
-       (see siteShell.initLanguageDropdown?.() call after the siteShell init).
-       Do not call it again here — the duplicate call was a no-op but produced
-       noisy console logs. */
-
   /* ========== SCROLL REVEAL ========== */
   const revealElements = Array.from(document.querySelectorAll('.reveal'));
 

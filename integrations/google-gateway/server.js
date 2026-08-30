@@ -3,8 +3,7 @@ import Busboy from 'busboy';
 
 const PORT = Number(process.env.PORT || 8080);
 const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8' };
-const TOKEN_URL =
-  'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token';
+const TOKEN_URL = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token';
 const SCOPES = [
   'https://www.googleapis.com/auth/calendar',
   'https://www.googleapis.com/auth/spreadsheets',
@@ -27,8 +26,7 @@ function getSecret() {
 function requireSecret(req, res) {
   const configured = getSecret();
   const provided =
-    req.headers['x-hundesalon-gateway-secret'] ||
-    String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+    req.headers['x-hundesalon-gateway-secret'] || String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
 
   if (!configured || provided !== configured) {
     respond(res, 403, { success: false, message: 'Forbidden' });
@@ -48,7 +46,7 @@ async function readMultipart(req) {
   return new Promise((resolve, reject) => {
     const fields = {};
     let file = null;
-    const busboy = Busboy({ headers: req.headers, limits: { fileSize: 150 * 1024 * 1024, files: 1 } });
+    const busboy = Busboy({ headers: req.headers, limits: { fileSize: 15 * 1024 * 1024, files: 1 } });
 
     busboy.on('field', (name, value) => {
       fields[name] = value;
@@ -57,7 +55,7 @@ async function readMultipart(req) {
     busboy.on('file', (name, stream, info) => {
       const chunks = [];
       stream.on('data', chunk => chunks.push(chunk));
-      stream.on('limit', () => reject(new Error('File is larger than 150 MB.')));
+      stream.on('limit', () => reject(new Error('File is larger than 15 MB.')));
       stream.on('end', () => {
         file = {
           fieldName: name,
@@ -121,7 +119,8 @@ function firestoreValue(value) {
   if (value instanceof Date) return { timestampValue: value.toISOString() };
   if (Array.isArray(value)) return { arrayValue: { values: value.map(firestoreValue) } };
   if (typeof value === 'boolean') return { booleanValue: value };
-  if (typeof value === 'number' && Number.isFinite(value)) return Number.isInteger(value) ? { integerValue: value } : { doubleValue: value };
+  if (typeof value === 'number' && Number.isFinite(value))
+    return Number.isInteger(value) ? { integerValue: value } : { doubleValue: value };
   if (typeof value === 'object') {
     return {
       mapValue: {
@@ -186,22 +185,6 @@ async function uploadStorageObject(file, metadata = {}) {
   };
 }
 
-async function shareDriveFile(fileId, emailAddress) {
-  if (!emailAddress) return;
-  await googleJson(
-    `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}/permissions?sendNotificationEmail=false`,
-    {
-      method: 'POST',
-      body: {
-        type: 'user',
-        role: 'writer',
-        emailAddress,
-      },
-      scopes: ['https://www.googleapis.com/auth/drive'],
-    }
-  );
-}
-
 async function createSetup(ownerEmail) {
   const calendar = await googleJson('https://www.googleapis.com/calendar/v3/calendars', {
     method: 'POST',
@@ -210,14 +193,11 @@ async function createSetup(ownerEmail) {
   });
 
   if (ownerEmail) {
-    await googleJson(
-      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.id)}/acl`,
-      {
-        method: 'POST',
-        body: { role: 'owner', scope: { type: 'user', value: ownerEmail } },
-        scopes: ['https://www.googleapis.com/auth/calendar'],
-      }
-    );
+    await googleJson(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.id)}/acl`, {
+      method: 'POST',
+      body: { role: 'owner', scope: { type: 'user', value: ownerEmail } },
+      scopes: ['https://www.googleapis.com/auth/calendar'],
+    });
   }
 
   await writeFirestoreDocument('platform_setup', {
@@ -275,6 +255,22 @@ async function createCalendarEvent(payload) {
       end: { dateTime: payload.endDateTime, timeZone: 'Europe/Berlin' },
     },
     scopes: ['https://www.googleapis.com/auth/calendar'],
+  });
+}
+
+async function getCalendarBusyIntervals(payload) {
+  const calendarId = payload.calendarId || process.env.GOOGLE_CALENDAR_ID;
+  if (!calendarId) throw new Error('Missing calendarId.');
+  if (!payload.timeMin || !payload.timeMax) throw new Error('Missing free/busy time range.');
+
+  return googleJson('https://www.googleapis.com/calendar/v3/freeBusy', {
+    method: 'POST',
+    body: {
+      timeMin: payload.timeMin,
+      timeMax: payload.timeMax,
+      items: [{ id: calendarId }],
+    },
+    scopes: ['https://www.googleapis.com/auth/calendar.freebusy'],
   });
 }
 
@@ -338,7 +334,12 @@ async function handle(req, res) {
       return;
     }
     if (req.method === 'POST' && url.pathname === '/calendar') {
-      respond(res, 200, await createCalendarEvent(await readJson(req)));
+      const payload = await readJson(req);
+      const result =
+        payload.action === 'calendar_freebusy'
+          ? await getCalendarBusyIntervals(payload)
+          : await createCalendarEvent(payload);
+      respond(res, 200, result);
       return;
     }
     if (req.method === 'POST' && url.pathname === '/drive') {

@@ -20,7 +20,6 @@ import {
   sendSendPulseAutomationEvent,
   sendSendPulseEmail,
   sendTelegramMessage,
-  sendTeamsMessage,
   upsertSendPulseContact,
   siteNotificationsEnabled,
 } from './_lib/platform-integrations.js';
@@ -149,12 +148,14 @@ const COPY = {
   },
   en: {
     success: 'Message sent! We will get back to you soon.',
-    registrationSuccess: 'The details were saved in the salon’s protected register. You can now choose a date and time.',
+    registrationSuccess:
+      'The details were saved in the salon’s protected register. You can now choose a date and time.',
     error: 'Failed to send. Please contact us by phone.',
   },
   de: {
     success: 'Ihre Nachricht wurde gesendet! Wir melden uns in Kürze.',
-    registrationSuccess: 'Die Daten wurden im geschützten Salonregister gespeichert. Jetzt können Sie Datum und Uhrzeit auswählen.',
+    registrationSuccess:
+      'Die Daten wurden im geschützten Salonregister gespeichert. Jetzt können Sie Datum und Uhrzeit auswählen.',
     error: 'Senden fehlgeschlagen. Bitte kontaktieren Sie uns telefonisch.',
   },
 };
@@ -163,22 +164,106 @@ const EMAIL_COPY = {
   de: {
     bookingSubject: 'Ihre Buchungsanfrage bei HUNDESALON_NIKA',
     bookingThanks: 'Vielen Dank für Ihre Buchungsanfrage.',
-    field: { form: 'Formular', direction: 'Thema', language: 'Sprache', name: 'Name', email: 'E-Mail', replyInstruction: 'Für eine Antwort verwenden Sie bitte die Antwortfunktion dieser E-Mail.', phone: 'Telefon', service: 'Leistung', date: 'Datum', time: 'Uhrzeit', file: 'Datei', payment: 'Zahlung', message: 'Nachricht', promotion: 'Aktion', petName: 'Name des Tieres', petSpecies: 'Tierart', petBreed: 'Rasse', petAge: 'Alter/Geburtsdatum', petSex: 'Geschlecht', petTag: 'Marken-/Anhängernummer' },
+    field: {
+      form: 'Formular',
+      direction: 'Thema',
+      language: 'Sprache',
+      name: 'Name',
+      email: 'E-Mail',
+      replyInstruction: 'Für eine Antwort verwenden Sie bitte die Antwortfunktion dieser E-Mail.',
+      phone: 'Telefon',
+      service: 'Leistung',
+      date: 'Datum',
+      time: 'Uhrzeit',
+      file: 'Datei',
+      payment: 'Zahlung',
+      message: 'Nachricht',
+      promotion: 'Aktion',
+      petName: 'Name des Tieres',
+      petSpecies: 'Tierart',
+      petBreed: 'Rasse',
+      petAge: 'Alter/Geburtsdatum',
+      petSex: 'Geschlecht',
+      petTag: 'Marken-/Anhängernummer',
+    },
   },
   en: {
     bookingSubject: 'Your booking request at HUNDESALON_NIKA',
     bookingThanks: 'Thank you for your booking request.',
-    field: { form: 'Form', direction: 'Topic', language: 'Language', name: 'Name', email: 'Email', replyInstruction: 'To reply, please use the Reply function of this email.', phone: 'Phone', service: 'Service', date: 'Date', time: 'Time', file: 'File', payment: 'Payment', message: 'Message', promotion: 'Offer', petName: 'Pet name', petSpecies: 'Pet type', petBreed: 'Breed', petAge: 'Age/date of birth', petSex: 'Sex', petTag: 'Tag/token number' },
+    field: {
+      form: 'Form',
+      direction: 'Topic',
+      language: 'Language',
+      name: 'Name',
+      email: 'Email',
+      replyInstruction: 'To reply, please use the Reply function of this email.',
+      phone: 'Phone',
+      service: 'Service',
+      date: 'Date',
+      time: 'Time',
+      file: 'File',
+      payment: 'Payment',
+      message: 'Message',
+      promotion: 'Offer',
+      petName: 'Pet name',
+      petSpecies: 'Pet type',
+      petBreed: 'Breed',
+      petAge: 'Age/date of birth',
+      petSex: 'Sex',
+      petTag: 'Tag/token number',
+    },
   },
   ru: {
     bookingSubject: 'Ваша заявка на запись в HUNDESALON_NIKA',
     bookingThanks: 'Спасибо за вашу заявку на запись.',
-    field: { form: 'Форма', direction: 'Тема', language: 'Язык', name: 'Имя', email: 'Электронная почта', replyInstruction: 'Для ответа клиенту используйте кнопку «Ответить» в этом письме.', phone: 'Телефон', service: 'Услуга', date: 'Дата', time: 'Время', file: 'Файл', payment: 'Оплата', message: 'Сообщение', promotion: 'Акция', petName: 'Имя питомца', petSpecies: 'Вид животного', petBreed: 'Порода', petAge: 'Возраст/дата рождения', petSex: 'Пол', petTag: 'Номер жетона/адресника' },
+    field: {
+      form: 'Форма',
+      direction: 'Тема',
+      language: 'Язык',
+      name: 'Имя',
+      email: 'Электронная почта',
+      replyInstruction: 'Для ответа клиенту используйте кнопку «Ответить» в этом письме.',
+      phone: 'Телефон',
+      service: 'Услуга',
+      date: 'Дата',
+      time: 'Время',
+      file: 'Файл',
+      payment: 'Оплата',
+      message: 'Сообщение',
+      promotion: 'Акция',
+      petName: 'Имя питомца',
+      petSpecies: 'Вид животного',
+      petBreed: 'Порода',
+      petAge: 'Возраст/дата рождения',
+      petSex: 'Пол',
+      petTag: 'Номер жетона/адресника',
+    },
   },
   uk: {
     bookingSubject: 'Ваша заявка на запис у HUNDESALON_NIKA',
     bookingThanks: 'Дякуємо за вашу заявку на запис.',
-    field: { form: 'Форма', direction: 'Тема', language: 'Мова', name: 'Ім’я', email: 'Електронна пошта', replyInstruction: 'Для відповіді клієнту використовуйте кнопку «Відповісти» в цьому листі.', phone: 'Телефон', service: 'Послуга', date: 'Дата', time: 'Час', file: 'Файл', payment: 'Оплата', message: 'Повідомлення', promotion: 'Акція', petName: 'Ім’я тварини', petSpecies: 'Вид тварини', petBreed: 'Порода', petAge: 'Вік/дата народження', petSex: 'Стать', petTag: 'Номер жетона/адресника' },
+    field: {
+      form: 'Форма',
+      direction: 'Тема',
+      language: 'Мова',
+      name: 'Ім’я',
+      email: 'Електронна пошта',
+      replyInstruction: 'Для відповіді клієнту використовуйте кнопку «Відповісти» в цьому листі.',
+      phone: 'Телефон',
+      service: 'Послуга',
+      date: 'Дата',
+      time: 'Час',
+      file: 'Файл',
+      payment: 'Оплата',
+      message: 'Повідомлення',
+      promotion: 'Акція',
+      petName: 'Ім’я тварини',
+      petSpecies: 'Вид тварини',
+      petBreed: 'Порода',
+      petAge: 'Вік/дата народження',
+      petSex: 'Стать',
+      petTag: 'Номер жетона/адресника',
+    },
   },
 };
 
@@ -254,20 +339,60 @@ const BOOKING_META_COPY = {
 
 const BOOKING_VALUE_COPY = {
   de: {
-    coat: { good: 'Guter Zustand', slight_mats: 'Einige kleine Verfilzungen', many_mats: 'Viele Verfilzungen', severe_matting: 'Stark verfilztes Fell' },
-    behaviour: { calm: 'Ruhig', restless: 'Unruhig', very_restless: 'Sehr unruhig', aggressive: 'Kann aggressiv reagieren' },
+    coat: {
+      good: 'Guter Zustand',
+      slight_mats: 'Einige kleine Verfilzungen',
+      many_mats: 'Viele Verfilzungen',
+      severe_matting: 'Stark verfilztes Fell',
+    },
+    behaviour: {
+      calm: 'Ruhig',
+      restless: 'Unruhig',
+      very_restless: 'Sehr unruhig',
+      aggressive: 'Kann aggressiv reagieren',
+    },
   },
   en: {
-    coat: { good: 'Good condition', slight_mats: 'A few small mats', many_mats: 'Many mats', severe_matting: 'Severe matting' },
-    behaviour: { calm: 'Calm', restless: 'Restless', very_restless: 'Very restless', aggressive: 'May show aggression' },
+    coat: {
+      good: 'Good condition',
+      slight_mats: 'A few small mats',
+      many_mats: 'Many mats',
+      severe_matting: 'Severe matting',
+    },
+    behaviour: {
+      calm: 'Calm',
+      restless: 'Restless',
+      very_restless: 'Very restless',
+      aggressive: 'May show aggression',
+    },
   },
   ru: {
-    coat: { good: 'Хорошее состояние', slight_mats: 'Есть небольшие колтуны', many_mats: 'Много колтунов', severe_matting: 'Сильное сваливание шерсти' },
-    behaviour: { calm: 'Спокойный', restless: 'Беспокойный', very_restless: 'Очень беспокойный', aggressive: 'Может проявлять агрессию' },
+    coat: {
+      good: 'Хорошее состояние',
+      slight_mats: 'Есть небольшие колтуны',
+      many_mats: 'Много колтунов',
+      severe_matting: 'Сильное сваливание шерсти',
+    },
+    behaviour: {
+      calm: 'Спокойный',
+      restless: 'Беспокойный',
+      very_restless: 'Очень беспокойный',
+      aggressive: 'Может проявлять агрессию',
+    },
   },
   uk: {
-    coat: { good: 'Добрий стан', slight_mats: 'Є невеликі ковтуни', many_mats: 'Багато ковтунів', severe_matting: 'Сильне звалювання шерсті' },
-    behaviour: { calm: 'Спокійний', restless: 'Неспокійний', very_restless: 'Дуже неспокійний', aggressive: 'Може проявляти агресію' },
+    coat: {
+      good: 'Добрий стан',
+      slight_mats: 'Є невеликі ковтуни',
+      many_mats: 'Багато ковтунів',
+      severe_matting: 'Сильне звалювання шерсті',
+    },
+    behaviour: {
+      calm: 'Спокійний',
+      restless: 'Неспокійний',
+      very_restless: 'Дуже неспокійний',
+      aggressive: 'Може проявляти агресію',
+    },
   },
 };
 
@@ -289,6 +414,14 @@ function sanitizeLimit(val, maxLength) {
   return sanitize(val).slice(0, maxLength);
 }
 
+function hasExplicitConsent(value) {
+  return ['1', 'true', 'on', 'yes'].includes(
+    String(value ?? '')
+      .trim()
+      .toLowerCase()
+  );
+}
+
 /**
  * Basic email format validation.
  * @param {string} email
@@ -304,7 +437,9 @@ function isInboundMailbox(email) {
 
 function paymentsOnlineEnabled(env) {
   if (ONLINE_PAYMENTS_HARD_DISABLED) return false;
-  const raw = String(getEnvValue(env, 'PAYMENTS_ONLINE_ENABLED') || '').trim().toLowerCase();
+  const raw = String(getEnvValue(env, 'PAYMENTS_ONLINE_ENABLED') || '')
+    .trim()
+    .toLowerCase();
   return raw === '1' || raw === 'true' || raw === 'on' || raw === 'yes';
 }
 
@@ -320,7 +455,9 @@ async function verifyStripeBookingSession(env, sessionId, booking) {
 
   const expectedAmount = Number(getEnvValue(env, 'STRIPE_DEPOSIT_AMOUNT_CENTS') || 2000);
   const metadata = session.metadata || {};
-  const sessionEmail = sanitize(metadata.email || session.customer_details?.email || session.customer_email).toLowerCase();
+  const sessionEmail = sanitize(
+    metadata.email || session.customer_details?.email || session.customer_email
+  ).toLowerCase();
   return (
     Number.isFinite(expectedAmount) &&
     session.amount_total === Math.round(expectedAmount) &&
@@ -342,9 +479,7 @@ function getSalonRecipient(env, formType) {
     return DEFAULT_BOOKING_RECIPIENT;
   }
   if (isInboundMailbox(contactRecipient)) return contactRecipient;
-  return isInboundMailbox(fallbackRecipient)
-    ? fallbackRecipient
-    : DEFAULT_RECIPIENT;
+  return isInboundMailbox(fallbackRecipient) ? fallbackRecipient : DEFAULT_RECIPIENT;
 }
 
 function uniqueEmailList(items) {
@@ -363,8 +498,7 @@ function getAdminEmails(env) {
 }
 
 function getSupportReplyTo(env, fallback = DEFAULT_SUPPORT) {
-  const supportEmail =
-    getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') || getEnvValue(env, 'SUPPORT_EMAIL') || fallback;
+  const supportEmail = getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') || getEnvValue(env, 'SUPPORT_EMAIL') || fallback;
   return isValidEmail(supportEmail) ? supportEmail : fallback;
 }
 
@@ -599,10 +733,9 @@ export async function onRequest(ctx) {
   const clientRegistrationId = sanitizeLimit(fields.client_registration_id, 120);
   const clientRecordRequired =
     formType === CLIENT_REGISTRATION_FORM_TYPE || (formType === 'booking' && !clientRegistrationId);
-  const paymentNow =
-    sanitizeLimit(fields.payment_now || fields.pay_now, 10) === 'on' || paymentChoice === 'online';
-  const privacyConsent = sanitizeLimit(fields.privacy_consent, 20);
-  const agbConsent = sanitizeLimit(fields.agb_consent, 20);
+  const paymentNow = sanitizeLimit(fields.payment_now || fields.pay_now, 10) === 'on' || paymentChoice === 'online';
+  const privacyConsent = hasExplicitConsent(fields.privacy_consent);
+  const agbConsent = hasExplicitConsent(fields.agb_consent);
   const canonicalService = service;
 
   let stripePaymentVerified = false;
@@ -684,30 +817,30 @@ export async function onRequest(ctx) {
   const safeBlockEndDateTime = formType === 'booking' ? addLocalMinutes(date, time, safeBlockMinutes) : '';
   const clientTypeLabel = clientType === 'returning' ? bookingMetaCopy.returningClient : bookingMetaCopy.newClient;
 
-  const registrationSummary = formType === CLIENT_REGISTRATION_FORM_TYPE
-    ? [
-        `Service: ${canonicalService}`,
-        servicePrice ? `Estimated price: ${servicePrice}` : null,
-        serviceCategory ? `Category: ${serviceCategory}` : null,
-        `Pet name: ${petName}`,
-        `Pet type: ${petSpecies}`,
-        `Breed: ${petBreed}`,
-        petAge ? `Age/date of birth: ${petAge}` : null,
-        petSex ? `Sex: ${petSex}` : null,
-        petTagNumber ? `Tag/token number: ${petTagNumber}` : 'Tag/token number: not provided',
-        message ? `Additional notes: ${message}` : null,
-      ]
-        .filter(Boolean)
-        .join('\n')
-    : '';
+  const registrationSummary =
+    formType === CLIENT_REGISTRATION_FORM_TYPE
+      ? [
+          `Service: ${canonicalService}`,
+          servicePrice ? `Estimated price: ${servicePrice}` : null,
+          serviceCategory ? `Category: ${serviceCategory}` : null,
+          `Pet name: ${petName}`,
+          `Pet type: ${petSpecies}`,
+          `Breed: ${petBreed}`,
+          petAge ? `Age/date of birth: ${petAge}` : null,
+          petSex ? `Sex: ${petSex}` : null,
+          petTagNumber ? `Tag/token number: ${petTagNumber}` : 'Tag/token number: not provided',
+          message ? `Additional notes: ${message}` : null,
+        ]
+          .filter(Boolean)
+          .join('\n')
+      : '';
   const resolvedMessage =
-    registrationSummary || message || (formType === 'booking' ? `Booking request: ${service} on ${date} at ${time}` : '');
+    registrationSummary ||
+    message ||
+    (formType === 'booking' ? `Booking request: ${service} on ${date} at ${time}` : '');
   const submittedAt = new Date().toISOString();
-  const automationEventType = formType === 'booking'
-    ? 'booking'
-    : formType === CLIENT_REGISTRATION_FORM_TYPE
-      ? 'client_registration'
-      : 'contact';
+  const automationEventType =
+    formType === 'booking' ? 'booking' : formType === CLIENT_REGISTRATION_FORM_TYPE ? 'client_registration' : 'contact';
   const automationEventData = {
     email,
     phone,
@@ -783,16 +916,60 @@ export async function onRequest(ctx) {
 
   /* ── Build email ───────────────────────────────────────────── */
   const subjects = {
-    de: { booking: 'Neue Buchungsanfrage — HUNDESALON_NIKA', client_registration: 'Neue Kunden- und Tierregistrierung — HUNDESALON_NIKA', feedback: 'Bewertung von der Website — HUNDESALON_NIKA', contact: 'Neue Kontaktanfrage — HUNDESALON_NIKA' },
-    en: { booking: 'New booking request — HUNDESALON_NIKA', client_registration: 'New client and pet registration — HUNDESALON_NIKA', feedback: 'Website feedback — HUNDESALON_NIKA', contact: 'New contact request — HUNDESALON_NIKA' },
-    ru: { booking: 'Новая заявка на запись — HUNDESALON_NIKA', client_registration: 'Новая регистрация клиента и питомца — HUNDESALON_NIKA', feedback: 'Отзыв с сайта — HUNDESALON_NIKA', contact: 'Новое обращение с сайта — HUNDESALON_NIKA' },
-    uk: { booking: 'Нова заявка на запис — HUNDESALON_NIKA', client_registration: 'Нова реєстрація клієнта і тварини — HUNDESALON_NIKA', feedback: 'Відгук із сайту — HUNDESALON_NIKA', contact: 'Нове звернення із сайту — HUNDESALON_NIKA' },
+    de: {
+      booking: 'Neue Buchungsanfrage — HUNDESALON_NIKA',
+      client_registration: 'Neue Kunden- und Tierregistrierung — HUNDESALON_NIKA',
+      feedback: 'Bewertung von der Website — HUNDESALON_NIKA',
+      contact: 'Neue Kontaktanfrage — HUNDESALON_NIKA',
+    },
+    en: {
+      booking: 'New booking request — HUNDESALON_NIKA',
+      client_registration: 'New client and pet registration — HUNDESALON_NIKA',
+      feedback: 'Website feedback — HUNDESALON_NIKA',
+      contact: 'New contact request — HUNDESALON_NIKA',
+    },
+    ru: {
+      booking: 'Новая заявка на запись — HUNDESALON_NIKA',
+      client_registration: 'Новая регистрация клиента и питомца — HUNDESALON_NIKA',
+      feedback: 'Отзыв с сайта — HUNDESALON_NIKA',
+      contact: 'Новое обращение с сайта — HUNDESALON_NIKA',
+    },
+    uk: {
+      booking: 'Нова заявка на запис — HUNDESALON_NIKA',
+      client_registration: 'Нова реєстрація клієнта і тварини — HUNDESALON_NIKA',
+      feedback: 'Відгук із сайту — HUNDESALON_NIKA',
+      contact: 'Нове звернення із сайту — HUNDESALON_NIKA',
+    },
   };
   const inquiryLabelsByLang = {
-    de: { booking: 'Termin vereinbaren', grooming: 'Frage zu Grooming', feedback: 'Feedback', partnership: 'Partnerschaft', general: 'Allgemeine Frage' },
-    en: { booking: 'Book an appointment', grooming: 'Grooming question', feedback: 'Feedback', partnership: 'Partnership', general: 'General question' },
-    ru: { booking: 'Запись на услугу', grooming: 'Вопрос о груминге', feedback: 'Отзыв и обратная связь', partnership: 'Партнёрство', general: 'Общий вопрос' },
-    uk: { booking: 'Запис на послугу', grooming: 'Питання про грумінг', feedback: 'Відгук', partnership: 'Партнерство', general: 'Загальне питання' },
+    de: {
+      booking: 'Termin vereinbaren',
+      grooming: 'Frage zu Grooming',
+      feedback: 'Feedback',
+      partnership: 'Partnerschaft',
+      general: 'Allgemeine Frage',
+    },
+    en: {
+      booking: 'Book an appointment',
+      grooming: 'Grooming question',
+      feedback: 'Feedback',
+      partnership: 'Partnership',
+      general: 'General question',
+    },
+    ru: {
+      booking: 'Запись на услугу',
+      grooming: 'Вопрос о груминге',
+      feedback: 'Отзыв и обратная связь',
+      partnership: 'Партнёрство',
+      general: 'Общий вопрос',
+    },
+    uk: {
+      booking: 'Запис на послугу',
+      grooming: 'Питання про грумінг',
+      feedback: 'Відгук',
+      partnership: 'Партнерство',
+      general: 'Загальне питання',
+    },
   };
   const inquiryLabel = inquiryLabelsByLang[lang]?.[inquiryType] || '';
   const subject = `${subjects[lang]?.[formType] ?? subjects.de[formType] ?? subjects.de.contact}${inquiryLabel ? ` — ${inquiryLabel}` : ''}`;
@@ -908,11 +1085,6 @@ export async function onRequest(ctx) {
           safeBlockMinutes,
         ],
       }),
-      sendTeamsMessage(env, {
-        title: 'Neue Buchung HUNDESALON NIKA',
-        text: bookingSummary,
-        html: bookingSummary.replaceAll('\n', '<br>'),
-      }),
       sendSendPulseEmail(env, {
         to: email,
         subject: emailCopy.bookingSubject,
@@ -974,10 +1146,12 @@ export async function onRequest(ctx) {
       });
       return [result];
     } catch (error) {
-      console.error(JSON.stringify({
-        message: 'client registration sheet write failed',
-        error: error instanceof Error ? error.message : String(error),
-      }));
+      console.error(
+        JSON.stringify({
+          message: 'client registration sheet write failed',
+          error: error instanceof Error ? error.message : String(error),
+        })
+      );
       return [{ ok: false, error: 'client registration sheet write failed' }];
     }
   };
@@ -991,12 +1165,7 @@ export async function onRequest(ctx) {
     }
 
     const adminCopy = ADMIN_EMAIL_COPY[lang] || ADMIN_EMAIL_COPY.de;
-    const adminText = [
-      adminCopy.intro,
-      adminCopy.reply,
-      '',
-      textBody,
-    ].join('\n');
+    const adminText = [adminCopy.intro, adminCopy.reply, '', textBody].join('\n');
 
     return sendSendPulseEmail(env, {
       to: adminRecipients,
@@ -1017,7 +1186,14 @@ export async function onRequest(ctx) {
     const slackDelivered = await sendSlackNotification(env, slackLeadPayload);
     const telegramDelivered = await sendTelegramMessage(env, {
       text: buildTelegramNotification({
-        formType, lang, name, email, phone, service: canonicalService, date, time,
+        formType,
+        lang,
+        name,
+        email,
+        phone,
+        service: canonicalService,
+        date,
+        time,
         paymentStatus,
         promotion: '',
         petName,
@@ -1028,21 +1204,22 @@ export async function onRequest(ctx) {
       }),
       category: formType === 'booking' ? 'orders' : 'messages',
     });
-    const integrationResults = [
-      ...(await runBookingIntegrations()),
-      ...(await runClientRegistrationIntegration()),
-    ];
+    const integrationResults = [...(await runBookingIntegrations()), ...(await runClientRegistrationIntegration())];
     const integrationDelivered = integrationResults.some(result => result?.ok === true);
     const requiredDeliveryCompleted = clientRecordRequired
       ? integrationDelivered
       : slackDelivered || telegramDelivered.ok || integrationDelivered;
     if (requiredDeliveryCompleted) {
       console.warn('[sendmail] Delivered via fallback because SendPulse is not configured');
-      return jsonResponse({
-        success: true,
-        message: formType === CLIENT_REGISTRATION_FORM_TYPE ? copy.registrationSuccess : copy.success,
-        ...(formType === CLIENT_REGISTRATION_FORM_TYPE ? { registration_id: automationEventData.request_id } : {}),
-      }, 200, origin);
+      return jsonResponse(
+        {
+          success: true,
+          message: formType === CLIENT_REGISTRATION_FORM_TYPE ? copy.registrationSuccess : copy.success,
+          ...(formType === CLIENT_REGISTRATION_FORM_TYPE ? { registration_id: automationEventData.request_id } : {}),
+        },
+        200,
+        origin
+      );
     }
     return jsonResponse({ success: false, message: copy.error }, 503, origin);
   }
@@ -1094,7 +1271,14 @@ export async function onRequest(ctx) {
       sendSlackNotification(env, slackLeadPayload),
       sendTelegramMessage(env, {
         text: buildTelegramNotification({
-          formType, lang, name, email, phone, service: canonicalService, date, time,
+          formType,
+          lang,
+          name,
+          email,
+          phone,
+          service: canonicalService,
+          date,
+          time,
           paymentStatus,
           promotion: '',
           petName,
@@ -1108,11 +1292,15 @@ export async function onRequest(ctx) {
       runBookingIntegrations(),
       sendAdminNotification(),
     ]);
-    return jsonResponse({
-      success: true,
-      message: formType === CLIENT_REGISTRATION_FORM_TYPE ? copy.registrationSuccess : copy.success,
-      ...(formType === CLIENT_REGISTRATION_FORM_TYPE ? { registration_id: automationEventData.request_id } : {}),
-    }, 200, origin);
+    return jsonResponse(
+      {
+        success: true,
+        message: formType === CLIENT_REGISTRATION_FORM_TYPE ? copy.registrationSuccess : copy.success,
+        ...(formType === CLIENT_REGISTRATION_FORM_TYPE ? { registration_id: automationEventData.request_id } : {}),
+      },
+      200,
+      origin
+    );
   }
 
   const errBody = JSON.stringify(sendPulseRes.body || {});

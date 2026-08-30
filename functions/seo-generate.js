@@ -13,19 +13,13 @@
  *   SERVICE_GATEWAY_SEO_MAX_TOKENS
  */
 
-import {
-  sanitizeOrigin,
-  assertAllowedOrigin,
-  enforceRateLimit,
-  jsonResponse,
-} from './_lib/http-security.js';
+import { sanitizeOrigin, assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http-security.js';
 import {
   AI_PROVIDER_POLICY,
   APPROVED_AI_MODEL,
   DEFAULT_SEO_MAX_TOKENS,
   hasAiServiceAuth,
   MAX_SEO_MAX_TOKENS,
-  parseBoundedTokens,
   resolveApprovedModel,
 } from './_lib/ai-policy.js';
 
@@ -273,7 +267,8 @@ export async function onRequest(context) {
     return rateLimited;
   }
 
-  const apiKey = getEnvVarFromContext(context, 'SERVICE_GATEWAY_API_KEY') || getEnvVarFromContext(context, legacyEnvName('API_KEY'));
+  const apiKey =
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_API_KEY') || getEnvVarFromContext(context, legacyEnvName('API_KEY'));
   if (!apiKey) {
     return jsonResponse({ error: 'Content service is not configured' }, 503, origin);
   }
@@ -335,7 +330,8 @@ export async function onRequest(context) {
     messages: [
       {
         role: 'system',
-        content: 'You are an expert multilingual SEO copywriter for a premium pet grooming salon website. Output valid JSON only.',
+        content:
+          'You are an expert multilingual SEO copywriter for a premium pet grooming salon website. Output valid JSON only.',
       },
       {
         role: 'user',

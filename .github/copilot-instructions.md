@@ -7,6 +7,11 @@
 - Runtime integrations target Cloudflare Pages/Workers.
 - Preserve existing behavior and keep diffs small.
 
+## Update command ##
+
+- When the user says `обновляй`, study the supplied VS Code release notes, select safe useful features, activate available workspace settings, and report what was enabled and checked.
+- After completing a substantive change or verification, use `/rubber-duck` when the command is available; if it is unavailable, report that limitation instead of simulating an automatic review.
+
 ## Before editing ##
 
 - Read the relevant source and nearby configuration first.

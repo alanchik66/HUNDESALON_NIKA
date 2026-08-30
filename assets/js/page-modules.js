@@ -10,8 +10,7 @@
  * ================================================================
  */
 document.addEventListener('DOMContentLoaded', () => {
-  const PET_PHOTO_MAX_BYTES = 150 * 1024 * 1024;
-  const PET_PHOTO_PROXY_MAX_BYTES = 90 * 1024 * 1024;
+  const PET_PHOTO_MAX_BYTES = 15 * 1024 * 1024;
   const PET_PHOTO_ALLOWED_TYPES = ['image/jpeg', 'image/png'];
   const pageLang = (document.documentElement.lang || 'ru').toLowerCase().slice(0, 2);
   const scrollRoot = document.querySelector('.site-scroll-root');
@@ -19,7 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const bookingCopyByLang = {
     ru: {
       weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
-      services: ['Полный груминг собаки', 'Экспресс-линька', 'Гигиенический уход', 'Груминг кошки', 'СПА-уход', 'Ваши предложения'],
+      services: [
+        'Полный груминг собаки',
+        'Экспресс-линька',
+        'Гигиенический уход',
+        'Груминг кошки',
+        'СПА-уход',
+        'Ваши предложения',
+      ],
       fallbackService: 'Выбранная услуга',
       chooseService: 'Выберите услугу',
       chooseBreed: 'Выберите породу или категорию питомца',
@@ -58,12 +64,11 @@ document.addEventListener('DOMContentLoaded', () => {
       choosePrivacy: 'Подтвердите согласие на обработку персональных данных',
       chooseAgb: 'Подтвердите ознакомление с правилами салона (AGB)',
       paymentRedirect: 'Переходим к безопасной онлайн-оплате…',
-      paymentUnavailable:
-        'Онлайн-оплата пока отключена. Выберите оплату в салоне (наличные или карта).',
+      paymentUnavailable: 'Онлайн-оплата пока отключена. Выберите оплату в салоне (наличные или карта).',
       paymentSuccess: 'Онлайн-предоплата получена. Запись отправлена в салон.',
       dateInPast: 'Выберите будущую дату',
       fileType: 'Можно загрузить только JPG или PNG',
-      fileSize: 'Файл должен быть не больше 150 МБ',
+      fileSize: 'Файл должен быть не больше 15 МБ',
       fileUploadFailed: 'Не удалось загрузить фото. Попробуйте ещё раз или отправьте запись без файла.',
       chooseFile: 'Выбрать файл',
       noFileChosen: 'Файл не выбран',
@@ -101,7 +106,14 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     uk: {
       weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
-      services: ['Повний грумінг собаки', 'Експрес-линька', 'Гігієнічний догляд', 'Грумінг кота', 'СПА-догляд', 'Ваші пропозиції'],
+      services: [
+        'Повний грумінг собаки',
+        'Експрес-линька',
+        'Гігієнічний догляд',
+        'Грумінг кота',
+        'СПА-догляд',
+        'Ваші пропозиції',
+      ],
       fallbackService: 'Обрана послуга',
       chooseService: 'Оберіть послугу',
       chooseBreed: 'Оберіть породу або категорію улюбленця',
@@ -140,12 +152,11 @@ document.addEventListener('DOMContentLoaded', () => {
       choosePrivacy: 'Підтвердьте згоду на обробку персональних даних',
       chooseAgb: 'Підтвердьте ознайомлення з правилами салону (AGB)',
       paymentRedirect: 'Переходимо до безпечної онлайн-оплати…',
-      paymentUnavailable:
-        'Онлайн-оплата поки вимкнена. Оберіть оплату в салоні (готівка або картка).',
+      paymentUnavailable: 'Онлайн-оплата поки вимкнена. Оберіть оплату в салоні (готівка або картка).',
       paymentSuccess: 'Онлайн-передоплату отримано. Запис надіслано в салон.',
       dateInPast: 'Оберіть майбутню дату',
       fileType: 'Можна завантажити лише JPG або PNG',
-      fileSize: 'Файл має бути не більше 150 МБ',
+      fileSize: 'Файл має бути не більше 15 МБ',
       fileUploadFailed: 'Не вдалося завантажити фото. Спробуйте ще раз або надішліть запис без файлу.',
       chooseFile: 'Обрати файл',
       noFileChosen: 'Файл не обрано',
@@ -183,7 +194,14 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     en: {
       weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      services: ['Full dog grooming', 'Express deshedding', 'Hygiene care', 'Cat grooming', 'SPA care', 'Your suggestions'],
+      services: [
+        'Full dog grooming',
+        'Express deshedding',
+        'Hygiene care',
+        'Cat grooming',
+        'SPA care',
+        'Your suggestions',
+      ],
       fallbackService: 'Selected service',
       chooseService: 'Please select a service',
       chooseBreed: 'Choose your pet’s breed or category',
@@ -200,7 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
       chooseContact: 'Please fill in name, email, and phone',
       petRegistration: {
         legend: 'Pet details for booking records',
-        intro: 'These details are used for the salon’s private client and pet register and are not published on the website.',
+        intro:
+          'These details are used for the salon’s private client and pet register and are not published on the website.',
         name: 'Pet name',
         species: 'Animal type',
         breed: 'Breed',
@@ -222,12 +241,11 @@ document.addEventListener('DOMContentLoaded', () => {
       choosePrivacy: 'Please confirm personal data processing consent',
       chooseAgb: 'Please confirm you have read the salon rules (AGB)',
       paymentRedirect: 'Redirecting to secure online payment…',
-      paymentUnavailable:
-        'Online payment is turned off for now. Please choose salon payment (cash or card).',
+      paymentUnavailable: 'Online payment is turned off for now. Please choose salon payment (cash or card).',
       paymentSuccess: 'Online deposit received. Your booking was sent to the salon.',
       dateInPast: 'Please choose a future date',
       fileType: 'Only JPG or PNG files are allowed',
-      fileSize: 'File size must be up to 150 MB',
+      fileSize: 'File size must be up to 15 MB',
       fileUploadFailed: 'Photo upload failed. Try again or submit the booking without a file.',
       chooseFile: 'Choose file',
       noFileChosen: 'No file chosen',
@@ -265,7 +283,14 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     de: {
       weekdays: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
-      services: ['Komplettpflege Hund', 'Express-Fellwechsel', 'Hygienepflege', 'Katzenpflege', 'SPA-Pflege', 'Ihre Vorschläge'],
+      services: [
+        'Komplettpflege Hund',
+        'Express-Fellwechsel',
+        'Hygienepflege',
+        'Katzenpflege',
+        'SPA-Pflege',
+        'Ihre Vorschläge',
+      ],
       fallbackService: 'Ausgewählte Leistung',
       chooseService: 'Bitte wählen Sie eine Leistung',
       chooseBreed: 'Wählen Sie Rasse oder Tierkategorie',
@@ -282,7 +307,8 @@ document.addEventListener('DOMContentLoaded', () => {
       chooseContact: 'Bitte füllen Sie Name, E-Mail und Telefon aus',
       petRegistration: {
         legend: 'Tierdaten für die Buchungsakte',
-        intro: 'Diese Angaben werden im geschützten Kunden- und Tierregister des Salons gespeichert und nicht auf der Website veröffentlicht.',
+        intro:
+          'Diese Angaben werden im geschützten Kunden- und Tierregister des Salons gespeichert und nicht auf der Website veröffentlicht.',
         name: 'Name des Tieres',
         species: 'Tierart',
         breed: 'Rasse',
@@ -304,12 +330,11 @@ document.addEventListener('DOMContentLoaded', () => {
       choosePrivacy: 'Bitte bestätigen Sie die Verarbeitung personenbezogener Daten',
       chooseAgb: 'Bitte bestätigen Sie die Salonregeln (AGB)',
       paymentRedirect: 'Weiterleitung zur sicheren Online-Zahlung…',
-      paymentUnavailable:
-        'Online-Zahlung ist derzeit deaktiviert. Bitte Zahlung im Salon wählen (bar oder Karte).',
+      paymentUnavailable: 'Online-Zahlung ist derzeit deaktiviert. Bitte Zahlung im Salon wählen (bar oder Karte).',
       paymentSuccess: 'Online-Anzahlung erhalten. Die Buchung wurde an den Salon gesendet.',
       dateInPast: 'Bitte wählen Sie ein zukünftiges Datum',
       fileType: 'Nur JPG- oder PNG-Dateien sind erlaubt',
-      fileSize: 'Die Datei darf maximal 150 MB groß sein',
+      fileSize: 'Die Datei darf maximal 15 MB groß sein',
       fileUploadFailed: 'Foto-Upload fehlgeschlagen. Bitte erneut versuchen oder ohne Datei buchen.',
       chooseFile: 'Datei auswählen',
       noFileChosen: 'Keine Datei ausgewählt',
@@ -503,8 +528,10 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       endingHint: 'Die genaue Endzeit hängt von Fellzustand, Verhalten und dem tatsächlichen Arbeitsaufwand ab.',
       availabilityLoading: 'Sichere Terminfenster werden geprüft…',
-      availabilityFallback: 'Konservative Zeitfenster mit Reserve werden angezeigt. Der Salon bestätigt den Termin endgültig.',
-      noSafeSlots: 'Für diesen Tag gibt es keine sicheren Zeitfenster. Bitte wählen Sie ein anderes Datum oder senden Sie eine Anfrage.',
+      availabilityFallback:
+        'Konservative Zeitfenster mit Reserve werden angezeigt. Der Salon bestätigt den Termin endgültig.',
+      noSafeSlots:
+        'Für diesen Tag gibt es keine sicheren Zeitfenster. Bitte wählen Sie ein anderes Datum oder senden Sie eine Anfrage.',
       requestNote: 'Dies ist eine Terminanfrage. Die Ankunftszeit wird nach Prüfung durch den Salon bestätigt.',
       labels: {
         clientType: 'Kundenstatus',
@@ -524,8 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ru: {
       kicker: 'Прайс-консультант',
       title: 'Подберите услугу, породу и ориентировочную стоимость',
-      lead:
-        'Выберите формат ухода и породу или категорию питомца. Система покажет ориентировочную цену и краткое описание процедуры.',
+      lead: 'Выберите формат ухода и породу или категорию питомца. Система покажет ориентировочную цену и краткое описание процедуры.',
       labels: {
         service: 'Услуга',
         option: 'Порода или категория',
@@ -545,8 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
     uk: {
       kicker: 'Прайс-консультант',
       title: 'Підберіть послугу, породу та орієнтовну вартість',
-      lead:
-        'Оберіть формат догляду та породу або категорію улюбленця. Система покаже орієнтовну ціну й короткий опис процедури.',
+      lead: 'Оберіть формат догляду та породу або категорію улюбленця. Система покаже орієнтовну ціну й короткий опис процедури.',
       labels: {
         service: 'Послуга',
         option: 'Порода або категорія',
@@ -566,8 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
     en: {
       kicker: 'Price assistant',
       title: 'Choose a service, breed and estimated price',
-      lead:
-        'Select the care format and your pet’s breed or category. The page will show an estimated price and a short description of the treatment.',
+      lead: 'Select the care format and your pet’s breed or category. The page will show an estimated price and a short description of the treatment.',
       labels: {
         service: 'Service',
         option: 'Breed or category',
@@ -587,8 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
     de: {
       kicker: 'Preisberater',
       title: 'Leistung, Rasse und Richtpreis auswählen',
-      lead:
-        'Wählen Sie die Pflegeart sowie Rasse oder Kategorie Ihres Tieres. Danach sehen Sie einen Richtpreis und eine kurze Leistungsbeschreibung.',
+      lead: 'Wählen Sie die Pflegeart sowie Rasse oder Kategorie Ihres Tieres. Danach sehen Sie einen Richtpreis und eine kurze Leistungsbeschreibung.',
       labels: {
         service: 'Leistung',
         option: 'Rasse oder Kategorie',
@@ -624,7 +647,6 @@ document.addEventListener('DOMContentLoaded', () => {
     resolveQuote: priceCatalog?.resolveQuote,
   };
   const bookingCatalog = window.PriceBookingCatalog?.build?.(pageLang) || null;
-
 
   const injectHiddenValue = (form, name, value) => {
     let field = form.querySelector(`input[name="${name}"]`);
@@ -1116,27 +1138,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
           const payload = await requestMessageDraft({
-            temperature: 0.45,
-            max_tokens: 260,
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You write polite, concise salon customer messages in the requested language. Keep tone warm and practical. No markdown.',
-              },
-              {
-                role: 'user',
-                content: [
-                  `Language: ${pageLang}`,
-                  `Form type: ${formType}`,
-                  `Customer name: ${name || 'not provided'}`,
-                  `Service: ${service || 'not provided'}`,
-                  `Existing message: ${existingText || 'empty'}`,
-                  'Task: create a clear customer message draft for HUNDESALON NIKA contact form.',
-                  'Output: plain text only, 70-120 words, with specific request details and preferred contact follow-up.',
-                ].join('\n'),
-              },
-            ],
+            draft: {
+              language: pageLang,
+              formType,
+              name,
+              service,
+              existingMessage: existingText,
+            },
           });
 
           const draftText = normalizeDraftMessage(payload?.choices?.[0]?.message?.content);
@@ -1221,8 +1229,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const bookingFileName = modal.querySelector('[data-booking-file-name]');
     const privacyInput = modal.querySelector('input[name="privacy_consent"]');
     const agbInput = modal.querySelector('input[name="agb_consent"]');
-    const getPaymentChoice = () =>
-      modal.querySelector('input[name="payment_choice"]:checked')?.value || 'salon_cash';
+    const getPaymentChoice = () => modal.querySelector('input[name="payment_choice"]:checked')?.value || 'salon_cash';
     const uploadedFileUrlField = modal.querySelector('input[name="uploaded_file_url"]');
     const bookingSummary = modal.querySelector('[data-booking-summary]');
     const bookingFilePreview = modal.querySelector('[data-booking-file-preview]');
@@ -1886,7 +1893,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const remainder = safeMinutes % 60;
       if (pageLang === 'ru') return hours ? `${hours} ч${remainder ? ` ${remainder} мин` : ''}` : `${remainder} мин`;
       if (pageLang === 'uk') return hours ? `${hours} год${remainder ? ` ${remainder} хв` : ''}` : `${remainder} хв`;
-      if (pageLang === 'de') return hours ? `${hours} Std.${remainder ? ` ${remainder} Min.` : ''}` : `${remainder} Min.`;
+      if (pageLang === 'de')
+        return hours ? `${hours} Std.${remainder ? ` ${remainder} Min.` : ''}` : `${remainder} Min.`;
       return hours ? `${hours}h${remainder ? ` ${remainder} min` : ''}` : `${remainder} min`;
     };
 
@@ -2127,61 +2135,19 @@ document.addEventListener('DOMContentLoaded', () => {
         time: state.selectedTime,
       };
 
-      if (file.size <= PET_PHOTO_PROXY_MAX_BYTES) {
-        const uploadData = new FormData();
-        uploadData.append('file', file);
-        uploadData.append('lang', metadata.lang);
-        uploadData.append('service', metadata.service);
-        uploadData.append('date', metadata.date);
-        uploadData.append('time', metadata.time);
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      uploadData.append('lang', metadata.lang);
+      uploadData.append('service', metadata.service);
+      uploadData.append('date', metadata.date);
+      uploadData.append('time', metadata.time);
 
-        const response = await fetch('/upload', {
-          method: 'POST',
-          body: uploadData,
-          headers: { Accept: 'application/json' },
-        });
-        return response.json().catch(() => ({}));
-      }
-
-      const sessionResponse = await fetch('/upload', {
+      const response = await fetch('/upload', {
         method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          intent: 'session',
-          fileName: file.name,
-          mimeType: file.type,
-          size: file.size,
-          ...metadata,
-        }),
+        body: uploadData,
+        headers: { Accept: 'application/json' },
       });
-      const session = await sessionResponse.json().catch(() => ({}));
-      if (!sessionResponse.ok || !session.success) {
-        return session;
-      }
-      if (session.configured === false) {
-        return session;
-      }
-      if (!session.uploadUrl) {
-        return { success: false };
-      }
-
-      const uploadResponse = await fetch(session.uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': file.type },
-        body: file,
-      });
-      if (!uploadResponse.ok) {
-        return { success: false };
-      }
-
-      const driveFile = await uploadResponse.json().catch(() => ({}));
-      const fileId = driveFile?.id || '';
-      const fileUrl =
-        driveFile?.webViewLink || (fileId ? `https://drive.google.com/file/d/${fileId}/view` : '');
-      return { success: true, fileUrl, fileId };
+      return response.json().catch(() => ({}));
     };
 
     const ensureBookingFileUploaded = async () => {
@@ -2225,11 +2191,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const file = bookingFileInput?.files?.[0];
       const choice = getPaymentChoice();
       const paymentLabel =
-        choice === 'online'
-          ? labels.payOnline
-          : choice === 'salon_card'
-            ? labels.paySalonCard
-            : labels.paySalonCash;
+        choice === 'online' ? labels.payOnline : choice === 'salon_card' ? labels.paySalonCard : labels.paySalonCash;
       const petSpeciesField = form.querySelector('[name="pet_species"]');
       const petSpeciesDisplay = form.querySelector('[data-booking-pet-species-display]');
       const petSpeciesValue =
@@ -2763,7 +2725,10 @@ document.addEventListener('DOMContentLoaded', () => {
         emptyState.textContent = state.selectedDate ? bookingRiskCopy.noSafeSlots : bookingCopy.datetimePickDate;
         timeSlotsContainer.appendChild(emptyState);
         if (availabilityStatusEl?.dataset.state !== 'loading') {
-          setAvailabilityStatus(state.selectedDate ? bookingRiskCopy.noSafeSlots : '', state.selectedDate ? 'empty' : '');
+          setAvailabilityStatus(
+            state.selectedDate ? bookingRiskCopy.noSafeSlots : '',
+            state.selectedDate ? 'empty' : ''
+          );
         }
         updateDatetimeStepState();
         window.requestAnimationFrame(refreshBookingScrollbars);
@@ -2865,7 +2830,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const resolveBookingPreset = trigger => ({
-      serviceName: trigger.dataset.bookingServiceLabel || (trigger.id === 'open-booking-btn' ? '' : resolveServiceFromTrigger(trigger)),
+      serviceName:
+        trigger.dataset.bookingServiceLabel ||
+        (trigger.id === 'open-booking-btn' ? '' : resolveServiceFromTrigger(trigger)),
       categoryId: trigger.dataset.bookingCategory || '',
       breedId: trigger.dataset.bookingBreed || '',
       serviceId: trigger.dataset.bookingService || '',
@@ -2977,7 +2944,10 @@ document.addEventListener('DOMContentLoaded', () => {
           ].find(([, , selector]) => !serviceList.querySelector(selector)?.value)
         : null;
       if (riskSelection) {
-        showValidationMessage(bookingRiskCopy.chooseField(riskSelection[1]), serviceList.querySelector(riskSelection[2]));
+        showValidationMessage(
+          bookingRiskCopy.chooseField(riskSelection[1]),
+          serviceList.querySelector(riskSelection[2])
+        );
         return;
       }
 

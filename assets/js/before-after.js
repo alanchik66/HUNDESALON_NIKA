@@ -34,6 +34,9 @@ class BeforeAfterSlider {
       afterImage: options.afterImage || '',
       beforeLabel: options.beforeLabel || 'BEFORE',
       afterLabel: options.afterLabel || 'AFTER',
+      beforeAlt: options.beforeAlt || options.beforeLabel || 'Before grooming',
+      afterAlt: options.afterAlt || options.afterLabel || 'After grooming',
+      sliderLabel: options.sliderLabel || 'Before and after comparison',
       badge: options.badge || '',
       eagerImages: Boolean(options.eagerImages),
       ...options,
@@ -53,19 +56,19 @@ class BeforeAfterSlider {
       <div class="before-after-wrapper">
         <img
           src="${escapeHtml(this.options.beforeImage)}"
-          alt="Before"
+          alt="${escapeHtml(this.options.beforeAlt)}"
           class="before-after-image before-after-before"
           loading="${imageLoading}"
           decoding="async"
         >
         <img
           src="${escapeHtml(this.options.afterImage)}"
-          alt="After"
+          alt="${escapeHtml(this.options.afterAlt)}"
           class="before-after-image before-after-after"
           loading="${imageLoading}"
           decoding="async"
         >
-        <div class="before-after-slider" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-label="Before and after comparison"></div>
+        <div class="before-after-slider" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-label="${escapeHtml(this.options.sliderLabel)}"></div>
         <div class="before-after-label before-after-label-before">${escapeHtml(this.options.beforeLabel)}</div>
         <div class="before-after-label before-after-label-after">${escapeHtml(this.options.afterLabel)}</div>
         ${this.options.badge ? `<div class="before-after-badge">${escapeHtml(this.options.badge)}</div>` : ''}
@@ -90,6 +93,24 @@ class BeforeAfterSlider {
     window.addEventListener('pointermove', e => this.drag(e), { signal });
     window.addEventListener('pointerup', e => this.stopDrag(e), { signal });
     window.addEventListener('pointercancel', e => this.stopDrag(e), { signal });
+
+    this.slider.addEventListener(
+      'keydown',
+      event => {
+        const positions = {
+          ArrowLeft: this.sliderPosition - 5,
+          ArrowDown: this.sliderPosition - 5,
+          ArrowRight: this.sliderPosition + 5,
+          ArrowUp: this.sliderPosition + 5,
+          Home: 0,
+          End: 100,
+        };
+        if (!Object.hasOwn(positions, event.key)) return;
+        event.preventDefault();
+        this.updateSliderPosition(positions[event.key]);
+      },
+      { signal }
+    );
 
     this.wrapper.addEventListener(
       'click',
@@ -146,10 +167,11 @@ class BeforeAfterSlider {
   }
 
   updateSliderPosition(percentage) {
-    this.sliderPosition = percentage;
-    this.slider.style.left = `${percentage}%`;
-    this.slider.setAttribute('aria-valuenow', String(Math.round(percentage)));
-    this.afterImage.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+    const nextPosition = Math.max(0, Math.min(100, Number(percentage) || 0));
+    this.sliderPosition = nextPosition;
+    this.slider.style.left = `${nextPosition}%`;
+    this.slider.setAttribute('aria-valuenow', String(Math.round(nextPosition)));
+    this.afterImage.style.clipPath = `inset(0 ${100 - nextPosition}% 0 0)`;
   }
 
   destroy() {
@@ -270,6 +292,8 @@ class BeforeAfterGallery {
       <div class="before-after-card" data-category="${escapeHtml(item.category)}">
         <div class="before-after-container" data-before="${escapeHtml(item.beforeImage)}" data-after="${escapeHtml(item.afterImage)}"
              data-before-label="${escapeHtml(item.beforeLabel)}" data-after-label="${escapeHtml(item.afterLabel)}"
+             data-before-alt="${escapeHtml(item.beforeAlt)}" data-after-alt="${escapeHtml(item.afterAlt)}"
+             data-slider-label="${escapeHtml(item.sliderLabel)}"
              data-badge="${escapeHtml(item.badge || '')}">
         </div>
         <div class="before-after-card-info">
@@ -297,6 +321,9 @@ class BeforeAfterGallery {
         afterImage: container.dataset.after,
         beforeLabel: container.dataset.beforeLabel,
         afterLabel: container.dataset.afterLabel,
+        beforeAlt: container.dataset.beforeAlt,
+        afterAlt: container.dataset.afterAlt,
+        sliderLabel: container.dataset.sliderLabel,
         badge: container.dataset.badge,
         eagerImages: index < 3,
       });
@@ -312,10 +339,10 @@ const galleryBeforeImage = index => `${GALLERY_IMAGE_BASE}${beforeAfterCardFolde
 const galleryAfterImage = index => `${GALLERY_IMAGE_BASE}${beforeAfterCardFolder(index)}/after.jpg`;
 
 const beforeAfterLabelsByLang = {
-  de: { before: 'VORHER', after: 'NACHHER' },
-  en: { before: 'BEFORE', after: 'AFTER' },
-  ru: { before: 'ДО', after: 'ПОСЛЕ' },
-  uk: { before: 'ДО', after: 'ПІСЛЯ' },
+  de: { before: 'VORHER', after: 'NACHHER', comparison: 'Vorher-Nachher-Vergleich' },
+  en: { before: 'BEFORE', after: 'AFTER', comparison: 'Before and after comparison' },
+  ru: { before: 'ДО', after: 'ПОСЛЕ', comparison: 'Сравнение до и после' },
+  uk: { before: 'ДО', after: 'ПІСЛЯ', comparison: 'Порівняння до і після' },
 };
 
 const categoryBadgeByLang = {
@@ -325,17 +352,7 @@ const categoryBadgeByLang = {
   uk: { dogs: 'СОБАКИ', cats: 'КОТИ', salon: 'САЛОН' },
 };
 
-const cardCategories = [
-  'dogs',
-  'dogs',
-  'dogs',
-  'salon',
-  'salon',
-  'salon',
-  'cats',
-  'cats',
-  'cats',
-];
+const cardCategories = ['dogs', 'dogs', 'dogs', 'salon', 'salon', 'salon', 'cats', 'cats', 'cats'];
 
 const galleryCardTitle = (lang, index) => {
   const copy = {
@@ -347,13 +364,12 @@ const galleryCardTitle = (lang, index) => {
   return copy[lang] || copy.de;
 };
 
-const galleryCardDescription = (lang, index) => {
-  const folder = beforeAfterCardFolder(index);
+const galleryCardDescription = lang => {
   const copy = {
-    de: `Vorher/Nachher — ${folder}/before.jpg`,
-    en: `Before/after — ${folder}/before.jpg`,
-    ru: `До и после — ${folder}/before.jpg`,
-    uk: `До і після — ${folder}/before.jpg`,
+    de: 'Sichtbarer Vergleich vor und nach der Pflege.',
+    en: 'A visible comparison before and after grooming.',
+    ru: 'Наглядное сравнение до и после ухода.',
+    uk: 'Наочне порівняння до і після догляду.',
   };
   return copy[lang] || copy.de;
 };
@@ -368,16 +384,22 @@ const beforeAfterCardBlueprints = Array.from({ length: GALLERY_CARD_COUNT }, (_,
 const buildBeforeAfterItems = lang => {
   const labels = beforeAfterLabelsByLang[lang] || beforeAfterLabelsByLang.de;
 
-  return beforeAfterCardBlueprints.map(card => ({
-    beforeImage: galleryBeforeImage(card.gallery),
-    afterImage: galleryAfterImage(card.gallery),
-    beforeLabel: labels.before,
-    afterLabel: labels.after,
-    badge: categoryBadgeByLang[lang]?.[card.category] || categoryBadgeByLang.de[card.category],
-    category: card.category,
-    title: galleryCardTitle(lang, card.gallery),
-    description: galleryCardDescription(lang, card.gallery),
-  }));
+  return beforeAfterCardBlueprints.map(card => {
+    const title = galleryCardTitle(lang, card.gallery);
+    return {
+      beforeImage: galleryBeforeImage(card.gallery),
+      afterImage: galleryAfterImage(card.gallery),
+      beforeLabel: labels.before,
+      afterLabel: labels.after,
+      beforeAlt: `${title} — ${labels.before}`,
+      afterAlt: `${title} — ${labels.after}`,
+      sliderLabel: labels.comparison,
+      badge: categoryBadgeByLang[lang]?.[card.category] || categoryBadgeByLang.de[card.category],
+      category: card.category,
+      title,
+      description: galleryCardDescription(lang),
+    };
+  });
 };
 
 const beforeAfterItems = {

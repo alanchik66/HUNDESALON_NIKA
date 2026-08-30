@@ -7,14 +7,12 @@ import {
   sendSendPulseAutomationEvent,
   sendSendPulseEmail,
   sendTelegramMessage,
-  sendTeamsMessage,
   upsertSendPulseContact,
   siteNotificationsEnabled,
 } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
 
 const DEFAULT_FROM = 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>';
-const DEFAULT_RECIPIENT = 'support@hundesalon-nika.com';
 const DEFAULT_ADMIN_EMAILS = [];
 
 const COPY = {
@@ -25,10 +23,26 @@ const COPY = {
 };
 
 const NEWSLETTER_COPY = {
-  de: { subject: 'Willkommen bei HUNDESALON_NIKA', title: 'Willkommen bei HUNDESALON_NIKA', body: 'Danke für Ihre Anmeldung. Wir senden nur ausgewählte Neuigkeiten, Pflege-Tipps und Angebote.' },
-  en: { subject: 'Welcome to HUNDESALON_NIKA', title: 'Welcome to HUNDESALON_NIKA', body: 'Thank you for subscribing. We send selected news, care tips and offers.' },
-  ru: { subject: 'Добро пожаловать в HUNDESALON_NIKA', title: 'Добро пожаловать в HUNDESALON_NIKA', body: 'Спасибо за подписку. Мы отправляем только избранные новости, советы по уходу и предложения.' },
-  uk: { subject: 'Ласкаво просимо до HUNDESALON_NIKA', title: 'Ласкаво просимо до HUNDESALON_NIKA', body: 'Дякуємо за підписку. Ми надсилаємо лише вибрані новини, поради з догляду та пропозиції.' },
+  de: {
+    subject: 'Willkommen bei HUNDESALON_NIKA',
+    title: 'Willkommen bei HUNDESALON_NIKA',
+    body: 'Danke für Ihre Anmeldung. Wir senden nur ausgewählte Neuigkeiten, Pflege-Tipps und Angebote.',
+  },
+  en: {
+    subject: 'Welcome to HUNDESALON_NIKA',
+    title: 'Welcome to HUNDESALON_NIKA',
+    body: 'Thank you for subscribing. We send selected news, care tips and offers.',
+  },
+  ru: {
+    subject: 'Добро пожаловать в HUNDESALON_NIKA',
+    title: 'Добро пожаловать в HUNDESALON_NIKA',
+    body: 'Спасибо за подписку. Мы отправляем только избранные новости, советы по уходу и предложения.',
+  },
+  uk: {
+    subject: 'Ласкаво просимо до HUNDESALON_NIKA',
+    title: 'Ласкаво просимо до HUNDESALON_NIKA',
+    body: 'Дякуємо за підписку. Ми надсилаємо лише вибрані новини, поради з догляду та пропозиції.',
+  },
 };
 
 function isValidEmail(email) {
@@ -38,12 +52,21 @@ function isValidEmail(email) {
 function uniqueEmailList(items) {
   const seen = new Set();
   return items
-    .map((item) => cleanText(item, 180).toLowerCase())
-    .filter((item) => {
+    .map(item => cleanText(item, 180).toLowerCase())
+    .filter(item => {
       if (!isValidEmail(item) || seen.has(item)) return false;
       seen.add(item);
       return true;
     });
+}
+
+async function runIntegration(label, operation) {
+  try {
+    return await operation();
+  } catch (error) {
+    console.error(`[newsletter] ${label} failed`, JSON.stringify({ error: error?.name || 'Error' }));
+    return { ok: false };
+  }
 }
 
 export async function onRequest(context) {
@@ -59,7 +82,11 @@ export async function onRequest(context) {
 
   const rateLimited = await enforceRateLimit(request, { route: 'subscribe', limit: 10, windowSec: 60 });
   if (rateLimited) {
-    return jsonResponse({ success: false, message: 'Too many requests. Please try again later.' }, 429, originCheck.origin);
+    return jsonResponse(
+      { success: false, message: 'Too many requests. Please try again later.' },
+      429,
+      originCheck.origin
+    );
   }
 
   const contentType = request.headers.get('Content-Type') || '';
@@ -84,80 +111,94 @@ export async function onRequest(context) {
   const createdAt = new Date().toISOString();
   const requestId = crypto.randomUUID();
   const supportReplyTo =
-    getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') ||
-    getEnvValue(env, 'SUPPORT_EMAIL') ||
-    'support@hundesalon-nika.com';
-  const clientEmailFrom =
-    getEnvValue(env, 'CLIENT_EMAIL_FROM') ||
-    'HUNDESALON_NIKA <support@hundesalon-nika.com>';
+    getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') || getEnvValue(env, 'SUPPORT_EMAIL') || 'support@hundesalon-nika.com';
+  const clientEmailFrom = getEnvValue(env, 'CLIENT_EMAIL_FROM') || 'HUNDESALON_NIKA <support@hundesalon-nika.com>';
   const adminRecipients = uniqueEmailList(getEnvList(env, 'ADMIN_NOTIFICATION_EMAILS', DEFAULT_ADMIN_EMAILS.join(',')));
 
-  await appendGoogleSheetRow(env, {
-    spreadsheetId: getEnvValue(env, 'SHEET_ID'),
-    sheetName: 'subscribers',
-    values: [createdAt, email, lang, page, originCheck.origin, 'consent:yes'],
-  });
+  const sheetResult = await runIntegration('sheet persistence', () =>
+    appendGoogleSheetRow(env, {
+      spreadsheetId: getEnvValue(env, 'SHEET_ID'),
+      sheetName: 'subscribers',
+      values: [createdAt, email, lang, page, originCheck.origin, 'consent:yes'],
+    })
+  );
 
-  await sendSendPulseEmail(env, {
-    to: email,
-    subject: newsletterCopy.subject,
-    text: newsletterCopy.body,
-    html: buildBrandedEmail({
-      title: newsletterCopy.title,
-      bodyText: newsletterCopy.body,
-      lang,
-    }),
-    replyTo: supportReplyTo,
-    from: clientEmailFrom,
-  });
+  const confirmationResult = await runIntegration('confirmation email', () =>
+    sendSendPulseEmail(env, {
+      to: email,
+      subject: newsletterCopy.subject,
+      text: newsletterCopy.body,
+      html: buildBrandedEmail({
+        title: newsletterCopy.title,
+        bodyText: newsletterCopy.body,
+        lang,
+      }),
+      replyTo: supportReplyTo,
+      from: clientEmailFrom,
+    })
+  );
 
-  await upsertSendPulseContact(env, { email, lang, source, formType: 'newsletter' });
-  await sendSendPulseAutomationEvent(env, {
-    eventType: 'newsletter',
-    data: {
-      email,
-      language: lang,
-      lead_source: source,
-      form_type: 'newsletter',
-      marketing_consent: 'yes',
-      source_url: page || source,
-      site_origin: originCheck.origin,
-      submitted_at: createdAt,
-      request_id: requestId,
-    },
-  });
+  const contactResult = await runIntegration('SendPulse contact persistence', () =>
+    upsertSendPulseContact(env, { email, lang, source, formType: 'newsletter' })
+  );
+  await runIntegration('SendPulse automation event', () =>
+    sendSendPulseAutomationEvent(env, {
+      eventType: 'newsletter',
+      data: {
+        email,
+        language: lang,
+        lead_source: source,
+        form_type: 'newsletter',
+        marketing_consent: 'yes',
+        source_url: page || source,
+        site_origin: originCheck.origin,
+        submitted_at: createdAt,
+        request_id: requestId,
+      },
+    })
+  );
+
+  const persisted = [sheetResult, contactResult].some(result => result?.ok);
+  const confirmed = Boolean(confirmationResult?.ok);
+  if (!persisted) {
+    return jsonResponse({ success: false }, 503, originCheck.origin);
+  }
+  const degraded = !confirmed;
 
   if (adminRecipients.length > 0) {
     if (siteNotificationsEnabled(env)) {
-      await sendSendPulseEmail(env, {
-        to: adminRecipients,
-        subject: '[Admin] Neue Newsletter-Anmeldung — HUNDESALON NIKA',
-        text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}\nAntworten bitte über ${supportReplyTo}.`,
-        html: buildBrandedEmail({
-          title: 'Neue Newsletter-Anmeldung — HUNDESALON_NIKA',
-          bodyText: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}\nAntworten bitte über ${supportReplyTo}.`,
-          lang,
-        }),
-        replyTo: supportReplyTo,
-        from: getEnvValue(env, 'SENDPULSE_FROM', DEFAULT_FROM),
-      });
+      await runIntegration('admin email', () =>
+        sendSendPulseEmail(env, {
+          to: adminRecipients,
+          subject: '[Admin] Neue Newsletter-Anmeldung — HUNDESALON NIKA',
+          text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}\nAntworten bitte über ${supportReplyTo}.`,
+          html: buildBrandedEmail({
+            title: 'Neue Newsletter-Anmeldung — HUNDESALON_NIKA',
+            bodyText: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}\nAntworten bitte über ${supportReplyTo}.`,
+            lang,
+          }),
+          replyTo: supportReplyTo,
+          from: getEnvValue(env, 'SENDPULSE_FROM', DEFAULT_FROM),
+        })
+      );
     }
   }
 
-  await sendTeamsMessage(env, {
-    title: 'Neue Newsletter-Anmeldung',
-    text: `Neue Newsletter-Anmeldung: ${email}\nSprache: ${lang}\nSeite: ${page || 'unknown'}`,
-  });
+  await runIntegration('Telegram notification', () =>
+    sendTelegramMessage(env, {
+      category: 'newsletter',
+      text: [
+        '🐕 Новая подписка на новости HUNDESALON NIKA',
+        `E-mail: ${email}`,
+        `Язык: ${lang}`,
+        `Страница: ${page || 'unknown'}`,
+      ].join('\n'),
+    })
+  );
 
-  await sendTelegramMessage(env, {
-    category: 'newsletter',
-    text: [
-      '🐕 Новая подписка на новости HUNDESALON NIKA',
-      `E-mail: ${email}`,
-      `Язык: ${lang}`,
-      `Страница: ${page || 'unknown'}`,
-    ].join('\n'),
-  });
-
-  return jsonResponse({ success: true, message: COPY[lang] || COPY.de }, 200, originCheck.origin);
+  return jsonResponse(
+    { success: true, message: COPY[lang] || COPY.de, ...(degraded ? { degraded: true } : {}) },
+    200,
+    originCheck.origin
+  );
 }

@@ -144,7 +144,7 @@
     <meta name="msapplication-config" content="/browserconfig.xml" />
     <link rel="stylesheet" href="../assets/css/cookie-consent.css?v=20260620-full-stack-upgrade" />
       <script src="../assets/js/analytics.js?v=20260721-ads-all"></script>
-    <link rel="stylesheet" href="/assets/css/social-page.css?v=20260827-social-instagram-v10" />
+    <link rel="stylesheet" href="/assets/css/social-page.css?v=20260829-social-content-crop-v13" />
 </head>
   <body>
     <!-- Header and mobile nav (built by site-shell.js) -->
@@ -410,7 +410,40 @@
           <img src="/assets/images/icons/instagram.png?v=20260827-instagram-brand-v1" alt="" />
         </a>
         <button type="button" class="social-reel-modal__close" data-social-reel-close aria-label="Закрити відео">&times;</button>
-        <video class="social-reel-modal__video" data-social-reel-modal-video controls playsinline loop preload="metadata"></video>
+        <button
+          type="button"
+          class="social-reel-modal__navigation social-reel-modal__navigation--previous"
+          data-social-reel-previous
+          aria-label="Попереднє відео"
+          aria-controls="social-reel-modal-video"
+          aria-keyshortcuts="ArrowLeft"
+          disabled
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+        </button>
+        <button
+          type="button"
+          class="social-reel-modal__navigation social-reel-modal__navigation--next"
+          data-social-reel-next
+          aria-label="Наступне відео"
+          aria-controls="social-reel-modal-video"
+          aria-keyshortcuts="ArrowRight"
+          disabled
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+        </button>
+        <output class="social-reel-modal__counter" data-social-reel-counter data-counter-label="Відео {current} з {total}" aria-live="polite">
+          1 / 1
+        </output>
+        <video
+          id="social-reel-modal-video"
+          class="social-reel-modal__video"
+          data-social-reel-modal-video
+          controls
+          playsinline
+          loop
+          preload="metadata"
+        ></video>
       </div>
     </div>
 
@@ -520,7 +553,7 @@
     <script src="../assets/js/site-shell.js?v=20260801-location-single-line-v14"></script>
     <script src="../assets/js/main.js?v=20260720-prod-v2"></script>
     <script src="../assets/js/page-modules.js?v=20260720-prod-v2"></script>
-    <script src="../assets/js/social-page.js?v=20260827-social-reels-v5"></script>
+    <script src="../assets/js/social-page.js?v=20260829-social-content-crop-v10"></script>
     <script src="../assets/js/tooltip.js?v=20260330-0001"></script>
     <script src="../assets/js/cookie-consent.js?v=20260620-full-stack-upgrade"></script>
     <script src="../assets/js/newsletter.js?v=20260720-prod-v2"></script>

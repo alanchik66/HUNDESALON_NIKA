@@ -9,6 +9,46 @@ const COUNTRY_LANGUAGE_MAP = new Map([
 
 const MARKDOWN_PAGE_PATH = /^\/(?:index\.html)?$|^\/(?:de|en|ru|uk)\/(?:index\.html)?$/;
 
+const FUNCTION_SECURITY_HEADERS = Object.freeze({
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'self'",
+    "script-src 'self' https://telegram.org https://www.googletagmanager.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://pagead2.googlesyndication.com https://www.clarity.ms https://cdn.pulse.is https://static.sppopups.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "img-src 'self' data: blob: https:",
+    "connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.sunrise-sunset.org https://nominatim.openstreetmap.org https://worldtimeapi.org https://timeapi.io https://server.arcgisonline.com https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://pagead2.googlesyndication.com https://www.google.com https://google.com https://*.clarity.ms https://cdn.pulse.is https://lc.pulse.is wss://lc.pulse.is https://cb-wpayload.pulse.is https://geoip.sendpulse.com https://api.sppopups.com https://static-data.sppopups.com https://geo.sppopups.com",
+    'frame-src https://open.spotify.com https://embed.music.apple.com',
+    "worker-src 'self' blob:",
+    "form-action 'self'",
+    'upgrade-insecure-requests',
+  ].join('; '),
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Resource-Policy': 'same-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self), payment=(), usb=()',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+  'X-Content-Type-Options': 'nosniff',
+  'X-DNS-Prefetch-Control': 'on',
+  'X-Frame-Options': 'SAMEORIGIN',
+  'X-XSS-Protection': '1; mode=block',
+});
+
+function withSecurityHeaders(response) {
+  const headers = new Headers(response.headers);
+  for (const [name, value] of Object.entries(FUNCTION_SECURITY_HEADERS)) {
+    if (!headers.has(name)) headers.set(name, value);
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 function pickLanguage(acceptLanguage = '', country = '') {
   const candidates = String(acceptLanguage || '')
     .split(',')
@@ -114,18 +154,6 @@ function decodeHtml(value) {
   }
 
   return output;
-}
-
-function inlineText(fragment) {
-  return collapseWhitespace(decodeHtml(stripTags(String(fragment || ''))));
-}
-
-function absoluteUrl(href, sourceUrl) {
-  try {
-    return new URL(href, sourceUrl).toString();
-  } catch {
-    return href;
-  }
 }
 
 function stripTags(html) {
@@ -255,7 +283,7 @@ export async function onRequest(context) {
 
   if (url.hostname.startsWith('www.') && url.pathname === '/robots.txt') {
     const apexHost = url.hostname.slice(4);
-    return redirectResponse(`https://${apexHost}/robots.txt`, 301);
+    return withSecurityHeaders(redirectResponse(`https://${apexHost}/robots.txt`, 301));
   }
 
   if (
@@ -263,7 +291,7 @@ export async function onRequest(context) {
     wantsMarkdown(context.request) &&
     MARKDOWN_PAGE_PATH.test(url.pathname)
   ) {
-    return markdownResponse(context, url);
+    return withSecurityHeaders(await markdownResponse(context, url));
   }
 
   if (
@@ -274,8 +302,8 @@ export async function onRequest(context) {
     const lang = pickLanguage(context.request.headers.get('Accept-Language'), context.request.cf?.country);
     const target = new URL(`/${lang}/`, url.origin);
     target.search = url.search;
-    return redirectResponse(target.toString(), 302);
+    return withSecurityHeaders(redirectResponse(target.toString(), 302));
   }
 
-  return context.next();
+  return withSecurityHeaders(await context.next());
 }

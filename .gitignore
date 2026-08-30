@@ -39,6 +39,7 @@ exports/
 .ai/
 test-results/
 .temp/
+.codex-tmp/
 *.tmp
 *.temp
 *.log
@@ -69,7 +70,6 @@ coverage/
 .idea/
 *.sublime-project
 *.sublime-workspace
-.vscode/tasks.json
 .vscode/launch.json
 .history/
 
@@ -144,7 +144,6 @@ graphify-out/cost.json
 graphify-out/cache/
 graphify-out/graph.json
 graphify-out/graph.html
-graphify-out/GRAPH_REPORT.md
 graphify-out/.graphify_analysis.json
 graphify-out/.graphify_labels.json
 graphify-out/.graphify_labels.json.sig
@@ -188,11 +187,8 @@ docs/KILO_*.md
 tmp_moon_review/
 tmp_*.png
 .playwright-cli/
-.playwright-mcp/
-.anima/
 output/
 output-*.png
-booking-*-browser.png
 
 # Локальные одноразовые скрипты (не для репозитория)
 tools/_test-*.mjs

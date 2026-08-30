@@ -50,5 +50,83 @@
         "url": "/uk/blog/preimushchestva-ekspress-linki.html"
       }
     }
+  },
+  {
+    "slug": "plokhaya-strizhka",
+    "date": "2024-04-18",
+    "languages": {
+      "de": {
+        "title": "Schlechter Haarschnitt? So vermeiden Sie ihn",
+        "description": "Schlechten Hundeschnitt vermeiden: worauf Tierbesitzer achten sollten und wie HUNDESALON NIKA in Leipzig Qualität, Beratung und ruhige Abläufe sicherstellt.",
+        "url": "/de/blog/plokhaya-strizhka.html"
+      },
+      "en": {
+        "title": "Bad Haircut? How to Avoid It",
+        "description": "Avoid a bad dog haircut: what owners should look for and how HUNDESALON NIKA in Leipzig ensures quality through consultation and calm grooming.",
+        "url": "/en/blog/plokhaya-strizhka.html"
+      },
+      "ru": {
+        "title": "Плохая стрижка? Как этого избежать",
+        "description": "Как избежать плохой стрижки: на что обратить внимание и как HUNDESALON NIKA в Лейпциге обеспечивает качество, консультацию и спокойный груминг.",
+        "url": "/ru/blog/plokhaya-strizhka.html"
+      },
+      "uk": {
+        "title": "Невдала стрижка? Як її уникнути",
+        "description": "Як уникнути поганої стрижки: на що звернути увагу і як HUNDESALON NIKA у Лейпцигу забезпечує якість, консультацію та спокійний процес грумінгу.",
+        "url": "/uk/blog/plokhaya-strizhka.html"
+      }
+    }
+  },
+  {
+    "slug": "strizhka-koshek",
+    "date": "2024-04-22",
+    "languages": {
+      "de": {
+        "title": "Katzenpflege: JA oder NEIN?",
+        "description": "Katzenpflege bei HUNDESALON NIKA in Leipzig: wann ein Schnitt sinnvoll ist, wie wir Katzen schonend betreuen und welche Alternativen zur Schur es gibt.",
+        "url": "/de/blog/strizhka-koshek.html"
+      },
+      "en": {
+        "title": "Cat Grooming: YES or NO?",
+        "description": "Cat grooming at HUNDESALON NIKA in Leipzig: when a haircut makes sense, how we handle cats gently and what alternatives to a full shave are available.",
+        "url": "/en/blog/strizhka-koshek.html"
+      },
+      "ru": {
+        "title": "Стрижка кошек: ДА или НЕТ?",
+        "description": "Стрижка кошек в HUNDESALON NIKA в Лейпциге: когда она нужна, как мы бережно работаем с кошками и какие альтернативы полной стрижке есть в салоне.",
+        "url": "/ru/blog/strizhka-koshek.html"
+      },
+      "uk": {
+        "title": "Стрижка котів: ТАК чи НІ?",
+        "description": "Стрижка котів у HUNDESALON NIKA у Лейпцигу: коли вона потрібна, як ми дбайливо працюємо з котами та які альтернативи повній стрижці є в салоні.",
+        "url": "/uk/blog/strizhka-koshek.html"
+      }
+    }
+  },
+  {
+    "slug": "zashchita-ot-parazitov",
+    "date": "2025-05-28",
+    "languages": {
+      "de": {
+        "title": "Parasitenschutz",
+        "description": "Parasitenschutz für Hunde und Katzen: praktische Tipps von HUNDESALON NIKA in Leipzig zu Vorsorge, Fellhygiene und sicherer Pflege im Alltag.",
+        "url": "/de/blog/zashchita-ot-parazitov.html"
+      },
+      "en": {
+        "title": "Parasite Protection",
+        "description": "Parasite protection for dogs and cats: practical tips from HUNDESALON NIKA in Leipzig on prevention, coat hygiene and safe everyday pet care.",
+        "url": "/en/blog/zashchita-ot-parazitov.html"
+      },
+      "ru": {
+        "title": "Защита от паразитов",
+        "description": "Защита собак и кошек от паразитов: практические советы HUNDESALON NIKA в Лейпциге по профилактике, гигиене шерсти и безопасному уходу дома.",
+        "url": "/ru/blog/zashchita-ot-parazitov.html"
+      },
+      "uk": {
+        "title": "Захист від паразитів",
+        "description": "Захист від паразитів у собак і котів: практичні поради HUNDESALON NIKA у Лейпцигу про профілактику, гігієну шерсті та безпечний догляд удома.",
+        "url": "/uk/blog/zashchita-ot-parazitov.html"
+      }
+    }
   }
 ]

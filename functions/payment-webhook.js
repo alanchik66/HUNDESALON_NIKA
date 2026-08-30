@@ -10,7 +10,6 @@ import {
   getEnvValue,
   hasUsableValue,
   sendSendPulseEmail,
-  sendTeamsMessage,
 } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
 
@@ -19,7 +18,9 @@ const ONLINE_PAYMENTS_HARD_DISABLED = true;
 
 function paymentsOnlineEnabled(env) {
   if (ONLINE_PAYMENTS_HARD_DISABLED) return false;
-  const raw = String(getEnvValue(env, 'PAYMENTS_ONLINE_ENABLED') || '').trim().toLowerCase();
+  const raw = String(getEnvValue(env, 'PAYMENTS_ONLINE_ENABLED') || '')
+    .trim()
+    .toLowerCase();
   return raw === '1' || raw === 'true' || raw === 'on' || raw === 'yes';
 }
 
@@ -146,10 +147,13 @@ export async function onRequest(context) {
       })(),
       subject: 'Online-Anzahlung bezahlt — HUNDESALON NIKA',
       text: summary,
-      html: buildBrandedEmail({ title: 'Online-Anzahlung bezahlt — HUNDESALON_NIKA', bodyText: summary, lang: messageLang }),
+      html: buildBrandedEmail({
+        title: 'Online-Anzahlung bezahlt — HUNDESALON_NIKA',
+        bodyText: summary,
+        lang: messageLang,
+      }),
       from: getEnvValue(env, 'SENDPULSE_FROM', DEFAULT_FROM),
     }),
-    sendTeamsMessage(env, { title: 'Stripe: Anzahlung bezahlt', text: summary }),
     appendGoogleSheetRow(env, {
       spreadsheetId: getEnvValue(env, 'SHEET_ID'),
       sheetName: 'payments',
@@ -173,9 +177,7 @@ export async function onRequest(context) {
   // Integration helpers return { ok:false } instead of throwing. Checking only
   // Promise rejection would mark the event completed when every channel failed
   // or was skipped — salon never notified, Stripe never retries.
-  const delivered = sideEffects.some(
-    result => result.status === 'fulfilled' && result.value?.ok === true
-  );
+  const delivered = sideEffects.some(result => result.status === 'fulfilled' && result.value?.ok === true);
   if (!delivered) {
     await reservation.store.delete?.(reservation.key);
     return jsonResponse({ success: false, message: 'Payment notifications failed' }, 502);

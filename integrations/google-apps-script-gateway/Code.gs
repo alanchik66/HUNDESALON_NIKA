@@ -1,14 +1,87 @@
 const PROPS = PropertiesService.getScriptProperties();
 
+const SHEET_HEADERS = {
+  bookings: [
+    'created_at',
+    'lang',
+    'form_type',
+    'name',
+    'email',
+    'phone',
+    'service',
+    'date',
+    'time',
+    'file_url',
+    'payment_status',
+    'message',
+    'client_registration_id',
+    'pet_name',
+    'pet_species',
+    'pet_breed',
+    'pet_age',
+    'pet_sex',
+    'pet_tag_number',
+    'service_price',
+    'service_category',
+    'booking_status',
+    'client_type',
+    'coat_condition',
+    'behaviour',
+    'estimated_duration_minutes',
+    'booking_buffer_minutes',
+    'safe_block_minutes',
+  ],
+  subscribers: ['created_at', 'email', 'lang', 'page', 'origin', 'consent'],
+  clients: [
+    'submitted_at',
+    'request_id',
+    'lang',
+    'form_type',
+    'service',
+    'service_price',
+    'service_category',
+    'promotion_key',
+    'date',
+    'time',
+    'name',
+    'email',
+    'phone',
+    'pet_name',
+    'pet_species',
+    'pet_breed',
+    'pet_age',
+    'pet_sex',
+    'pet_tag_number',
+    'message',
+    'privacy_consent',
+    'agb_consent',
+    'source',
+    'origin',
+    'path',
+  ],
+  payments: [
+    'created_at',
+    'session_id',
+    'payment_status',
+    'amount_total',
+    'currency',
+    'lang',
+    'name',
+    'email',
+    'phone',
+    'service',
+    'date',
+    'time',
+  ],
+};
+
 function setGatewaySecret(secret) {
   PROPS.setProperty('GATEWAY_SECRET', String(secret || '').trim());
   return { success: true };
 }
 
 function jsonResponse(payload) {
-  return ContentService
-    .createTextOutput(JSON.stringify(payload))
-    .setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify(payload)).setMimeType(ContentService.MimeType.JSON);
 }
 
 function requireSecret(payload) {
@@ -19,6 +92,20 @@ function requireSecret(payload) {
   }
 }
 
+function ensureSheetHeaders(sheet, name) {
+  const headers = SHEET_HEADERS[name] || [];
+  if (!headers.length) return sheet;
+
+  const range = sheet.getRange(1, 1, 1, headers.length);
+  const existing = sheet.getLastRow() > 0 ? range.getValues()[0] : [];
+  const merged = headers.map((header, index) => String(existing[index] || '').trim() || header);
+  const needsUpdate =
+    existing.length === 0 || merged.some((value, index) => value !== String(existing[index] || '').trim());
+
+  if (needsUpdate) range.setValues([merged]);
+  return sheet;
+}
+
 function getOrCreateSheet(name) {
   const sheetId = PROPS.getProperty('SHEET_ID');
   const spreadsheet = sheetId
@@ -27,26 +114,11 @@ function getOrCreateSheet(name) {
 
   if (!sheetId) {
     PROPS.setProperty('SHEET_ID', spreadsheet.getId());
-    const first = spreadsheet.getSheets()[0];
-    first.setName('bookings');
-    first.appendRow([
-      'created_at',
-      'lang',
-      'form_type',
-      'name',
-      'email',
-      'phone',
-      'service',
-      'date',
-      'time',
-      'file_url',
-      'payment_status',
-      'message',
-    ]);
-    spreadsheet.insertSheet('subscribers').appendRow(['created_at', 'email', 'lang', 'page', 'origin']);
+    spreadsheet.getSheets()[0].setName('bookings');
   }
 
-  return spreadsheet.getSheetByName(name) || spreadsheet.insertSheet(name);
+  const sheet = spreadsheet.getSheetByName(name) || spreadsheet.insertSheet(name);
+  return ensureSheetHeaders(sheet, name);
 }
 
 function getOrCreateCalendar() {
@@ -72,6 +144,7 @@ function getOrCreateFolder() {
 function setup() {
   const calendar = getOrCreateCalendar();
   const sheet = getOrCreateSheet('bookings').getParent();
+  Object.keys(SHEET_HEADERS).forEach(name => getOrCreateSheet(name));
   const folder = getOrCreateFolder();
 
   return {
@@ -84,18 +157,22 @@ function setup() {
 }
 
 function appendSheet(payload) {
-  const sheet = payload.spreadsheetId
-    ? SpreadsheetApp.openById(payload.spreadsheetId).getSheetByName(payload.sheetName || 'bookings')
-    : getOrCreateSheet(payload.sheetName || 'bookings');
+  const sheetName = payload.sheetName || 'bookings';
+  let sheet;
+  if (payload.spreadsheetId) {
+    const spreadsheet = SpreadsheetApp.openById(payload.spreadsheetId);
+    sheet = spreadsheet.getSheetByName(sheetName) || spreadsheet.insertSheet(sheetName);
+    ensureSheetHeaders(sheet, sheetName);
+  } else {
+    sheet = getOrCreateSheet(sheetName);
+  }
 
   sheet.appendRow(payload.values || []);
   return { success: true, updatedRange: sheet.getName() };
 }
 
 function createCalendarEvent(payload) {
-  const calendar = payload.calendarId
-    ? CalendarApp.getCalendarById(payload.calendarId)
-    : getOrCreateCalendar();
+  const calendar = payload.calendarId ? CalendarApp.getCalendarById(payload.calendarId) : getOrCreateCalendar();
 
   const event = calendar.createEvent(
     payload.summary || 'HUNDESALON NIKA Booking',
@@ -111,10 +188,31 @@ function createCalendarEvent(payload) {
   };
 }
 
+function getCalendarBusyIntervals(payload) {
+  const calendar = payload.calendarId ? CalendarApp.getCalendarById(payload.calendarId) : getOrCreateCalendar();
+  if (!calendar) throw new Error('Calendar not found');
+
+  const timeMin = new Date(payload.timeMin);
+  const timeMax = new Date(payload.timeMax);
+  if (!Number.isFinite(timeMin.getTime()) || !Number.isFinite(timeMax.getTime()) || timeMin >= timeMax) {
+    throw new Error('Invalid free/busy time range');
+  }
+
+  const busyIntervals = calendar.getEvents(timeMin, timeMax).map(event => ({
+    start: event.getStartTime().toISOString(),
+    end: event.getEndTime().toISOString(),
+  }));
+  return { success: true, busyIntervals: busyIntervals };
+}
+
 function uploadDriveFile(payload) {
   const folder = getOrCreateFolder();
   const bytes = Utilities.base64Decode(payload.fileBase64 || '');
-  const blob = Utilities.newBlob(bytes, payload.mimeType || 'application/octet-stream', payload.fileName || 'upload.bin');
+  const blob = Utilities.newBlob(
+    bytes,
+    payload.mimeType || 'application/octet-stream',
+    payload.fileName || 'upload.bin'
+  );
   const file = folder.createFile(blob);
   file.setDescription(JSON.stringify(payload.metadata || {}));
 
@@ -134,6 +232,7 @@ function doPost(e) {
     if (payload.action === 'setup') return jsonResponse(setup(payload));
     if (payload.action === 'sheets') return jsonResponse(appendSheet(payload));
     if (payload.action === 'calendar') return jsonResponse(createCalendarEvent(payload));
+    if (payload.action === 'calendar_freebusy') return jsonResponse(getCalendarBusyIntervals(payload));
     if (payload.action === 'drive') return jsonResponse(uploadDriveFile(payload));
 
     return jsonResponse({ success: false, message: 'Unknown action' });

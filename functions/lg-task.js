@@ -3,11 +3,7 @@
  * Lightweight webhook bridge for dashboard-driven service tasks.
  */
 
-import {
-  assertAllowedOrigin,
-  enforceRateLimit,
-  jsonResponse,
-} from './_lib/http-security.js';
+import { assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http-security.js';
 import { hasAiServiceAuth } from './_lib/ai-policy.js';
 
 function getRuntimeEnvs(context) {
@@ -68,9 +64,7 @@ async function forwardJson(request, pathname, body) {
     headers: {
       'Content-Type': 'application/json',
       Origin: origin,
-      ...(request.headers.get('Authorization')
-        ? { Authorization: request.headers.get('Authorization') }
-        : {}),
+      ...(request.headers.get('Authorization') ? { Authorization: request.headers.get('Authorization') } : {}),
     },
     body: JSON.stringify(body || {}),
   });
@@ -83,6 +77,9 @@ export async function onRequest(context) {
     return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
   }
 
+  const originCheck = assertAllowedOrigin(request);
+  const responseOrigin = originCheck.ok ? originCheck.origin : '';
+
   let payload;
   try {
     payload = await request.json();
@@ -90,20 +87,17 @@ export async function onRequest(context) {
     return jsonResponse({ error: 'Invalid JSON body' }, 400, responseOrigin);
   }
 
-  const task = String(payload?.task || '').trim().toLowerCase();
+  const task = String(payload?.task || '')
+    .trim()
+    .toLowerCase();
   if (!task) {
     return jsonResponse({ error: 'Missing task field' }, 400);
   }
 
-  const originCheck = assertAllowedOrigin(request);
   const isAiTask = task === 'message.draft' || task === 'seo.generate';
-  const secretOk = isAiTask
-    ? hasAiServiceAuth(request, context)
-    : isAuthorizedBySharedSecret(request, context);
+  const secretOk = isAiTask ? hasAiServiceAuth(request, context) : isAuthorizedBySharedSecret(request, context);
   if (!originCheck.ok && !secretOk) return jsonResponse({ error: 'Forbidden' }, 403);
   if (isAiTask && !secretOk) return jsonResponse({ error: 'AI service authorization required' }, 401);
-  const responseOrigin = originCheck.ok ? originCheck.origin : '';
-
   const rateLimited = await enforceRateLimit(request, {
     route: 'lg-task',
     limit: 10,
@@ -112,7 +106,11 @@ export async function onRequest(context) {
   if (rateLimited) return rateLimited;
 
   if (task === 'ping') {
-    return jsonResponse({ ok: true, task: 'ping', service: 'lg-task', ts: new Date().toISOString() }, 200, responseOrigin);
+    return jsonResponse(
+      { ok: true, task: 'ping', service: 'lg-task', ts: new Date().toISOString() },
+      200,
+      responseOrigin
+    );
   }
 
   if (task === 'message.draft') {

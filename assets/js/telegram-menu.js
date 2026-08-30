@@ -106,6 +106,8 @@ function initializeTelegramWebApp() {
 
   telegramWebApp.ready();
   telegramWebApp.expand();
+  if (typeof telegramWebApp.isVersionAtLeast !== 'function' || !telegramWebApp.isVersionAtLeast('6.1')) return;
+
   try {
     telegramWebApp.setHeaderColor('#031910');
     telegramWebApp.setBackgroundColor('#010502');

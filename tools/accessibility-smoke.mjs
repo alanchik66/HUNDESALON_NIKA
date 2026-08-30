@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import AxeBuilder from '@axe-core/playwright';
 import { chromium } from 'playwright';
 
@@ -18,6 +19,9 @@ try {
     const page = await context.newPage();
     await page.goto(`${server.baseUrl}${route}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
+    const weatherHostRole = await page.locator('.header-weather-widget').getAttribute('role');
+    assert.equal(weatherHostRole, 'group', `${route}: the named weather widget must expose a group role`);
+
     const cookieAccept = page.locator('[data-cookie-choice="accept"]');
     if (await cookieAccept.count()) await cookieAccept.first().click();
 
@@ -27,12 +31,11 @@ try {
       await page.waitForSelector('#price-category-modal.active', { timeout: 15000 });
     }
 
-    const analysis = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-      .analyze();
+    const analysis = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
     const blocking = analysis.violations.filter(item => item.impact === 'critical' || item.impact === 'serious');
     reports.push({
       route,
+      weatherHostRole,
       blocking: blocking.map(item => ({
         id: item.id,
         impact: item.impact,

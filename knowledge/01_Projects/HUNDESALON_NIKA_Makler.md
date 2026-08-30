@@ -14,8 +14,8 @@ AI-assisted search for a suitable commercial rental in Leipzig-Stötteritz and r
 
 ## Hard search gates
 
-- Complete monthly rent: at most 800 EUR.
-- Effective usable area: at most 70 m².
+- Complete monthly rent: at most 900 EUR.
+- Effective usable area: at most 85 m².
 - Unknown complete rent or area: never shortlist automatically.
 - Geography: Stötteritz first, then explicitly accepted neighbouring districts and postal codes.
 - Suitability must cover water and wastewater feasibility, WC, ventilation, noise tolerance, commercial use permission, visibility, access and parking.
@@ -24,6 +24,7 @@ AI-assisted search for a suitable commercial rental in Leipzig-Stötteritz and r
 
 
 - Owner conversation: Russian.
+- Owner commands may arrive as free Russian text or voice transcripts; intent handling should prefer robust interpretation and clarification over rigid command failure.
 - Landlord conversation: concise, individualized German.
 - Primary objective: obtain a viewing appointment and create a calm, credible business impression.
 - Each landlord draft is about 60-110 German words, uses one verified property-specific detail and one credible landlord-relevant benefit, and ends with a direct low-friction viewing question.
@@ -53,5 +54,6 @@ AI-assisted search for a suitable commercial rental in Leipzig-Stötteritz and r
 ## Related
 
 - [[HUNDESALON_NIKA]]
+- [[HUNDESALON_NIKA_Makler_Legal_Snapshot_2026-08-28]]
 - [[../../Templates/makler-listing]]
 - [[../../Templates/makler-conversation]]

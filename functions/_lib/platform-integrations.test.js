@@ -1,7 +1,158 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { answerTelegramCallbackQuery, sendSendPulseAutomationEvent, sendTelegramMessage } from './platform-integrations.js';
+import {
+  answerTelegramCallbackQuery,
+  callGoogleAppsScriptGateway,
+  getGoogleCalendarBusyIntervals,
+  sendSendPulseAutomationEvent,
+  sendSendPulseEmail,
+  sendTelegramMessage,
+} from './platform-integrations.js';
+
+test('SendPulse email encodes UTF-8 HTML and preserves sender and Reply-To', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalInfo = console.info;
+  let payload = null;
+  const html = '<p>Grüße — Дякуємо</p>';
+  globalThis.fetch = async (_url, options) => {
+    payload = JSON.parse(options.body);
+    return Response.json({ result: true, id: 'email-test-id' });
+  };
+  console.info = () => {};
+
+  try {
+    const result = await sendSendPulseEmail(
+      { SENDPULSE_API_KEY: 'unit-test-token' },
+      {
+        to: 'customer@example.com',
+        from: 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>',
+        replyTo: 'support@hundesalon-nika.com',
+        subject: 'Test',
+        text: 'Grüße — Дякуємо',
+        html,
+      }
+    );
+    assert.equal(result.ok, true);
+    assert.equal(result.body.id, 'email-test-id');
+    assert.equal(Buffer.from(payload.email.html, 'base64').toString('utf8'), html);
+    assert.equal(payload.email.text, 'Grüße — Дякуємо');
+    assert.equal(payload.email.to.length, 1);
+    assert.equal(payload.email.from.email, 'noreply@hundesalon-nika.com');
+    assert.equal(payload.email.reply_to.email, 'support@hundesalon-nika.com');
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.info = originalInfo;
+  }
+});
+
+test('SendPulse text-only email does not add an HTML part', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalInfo = console.info;
+  let payload = null;
+  globalThis.fetch = async (_url, options) => {
+    payload = JSON.parse(options.body);
+    return Response.json({ result: true });
+  };
+  console.info = () => {};
+
+  try {
+    const result = await sendSendPulseEmail(
+      { SENDPULSE_API_KEY: 'unit-test-token' },
+      { to: 'customer@example.com', subject: 'Test', text: 'Hello' }
+    );
+    assert.equal(result.ok, true);
+    assert.equal(Object.hasOwn(payload.email, 'html'), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.info = originalInfo;
+  }
+});
+
+for (const [name, body] of [
+  ['explicit rejection', { result: false, errors: { email: 'invalid recipient' } }],
+  ['missing result', { id: 'not-an-acknowledgement' }],
+  ['non-boolean result', { result: 'true' }],
+]) {
+  test(`SendPulse HTTP 200 is a failure for ${name}`, async () => {
+    const originalFetch = globalThis.fetch;
+    const originalInfo = console.info;
+    let calls = 0;
+    globalThis.fetch = async () => {
+      calls += 1;
+      return Response.json(body);
+    };
+    console.info = () => {};
+
+    try {
+      const result = await sendSendPulseEmail(
+        { SENDPULSE_API_KEY: 'unit-test-token' },
+        { to: 'customer@example.com', subject: 'Test', text: 'Hello' }
+      );
+      assert.equal(result.ok, false);
+      assert.equal(result.status, 200);
+      assert.deepEqual(result.body, body);
+      assert.equal(calls, 1);
+    } finally {
+      globalThis.fetch = originalFetch;
+      console.info = originalInfo;
+    }
+  });
+}
+
+test('Apps Script HTTP 200 errors remain integration failures', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => Response.json({ success: false, error: 'Invalid secret' });
+
+  try {
+    const result = await callGoogleAppsScriptGateway(
+      {
+        GOOGLE_APPS_SCRIPT_WEBHOOK_URL: 'https://script.google.com/macros/s/test/exec',
+        GOOGLE_GATEWAY_SECRET: 'unit-test-secret',
+      },
+      'sheets',
+      { values: ['test'] }
+    );
+
+    assert.equal(result.status, 200);
+    assert.equal(result.ok, false);
+    assert.equal(result.body.success, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('reads busy intervals through the configured Apps Script gateway', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (_url, options) => {
+    const payload = JSON.parse(options.body);
+    assert.equal(payload.action, 'calendar_freebusy');
+    return Response.json({
+      success: true,
+      busyIntervals: [{ start: '2026-09-01T10:00:00.000Z', end: '2026-09-01T11:00:00.000Z' }],
+    });
+  };
+
+  try {
+    const result = await getGoogleCalendarBusyIntervals(
+      {
+        GOOGLE_APPS_SCRIPT_WEBHOOK_URL: 'https://script.google.com/macros/s/test/exec',
+        GOOGLE_GATEWAY_SECRET: 'unit-test-secret',
+      },
+      {
+        calendarId: 'calendar@example.com',
+        timeMin: '2026-09-01T00:00:00.000Z',
+        timeMax: '2026-09-02T00:00:00.000Z',
+      }
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.configured, true);
+    assert.equal(result.busyIntervals.length, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
 
 test('Telegram notification skips when site notifications are disabled', async () => {
   const result = await sendTelegramMessage(

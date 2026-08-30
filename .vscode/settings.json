@@ -30,6 +30,8 @@
   },
   "chat.mcp.apps.enabled": true,
   "chat.stickyScroll.enabled": true,
+  "chat.experimental.stickyScroll.enabled": true,
+  "chat.agentSessions.showExternal": true,
   "workbench.browser.autoReloadOnFileChange": true,
   "workbench.editor.showTabs": "multiple",
   "terminal.integrated.resizeDimensionsOverlay.enabled": false,

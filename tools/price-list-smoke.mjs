@@ -496,7 +496,11 @@ for (const locale of locales) {
     await page.locator('[data-price-breed-result]').first().click();
     await page.waitForFunction(
       () => document.querySelectorAll('[data-price-categories] .price-card').length > 0
-        && document.querySelector('[data-price-breed-search-suggestions]')?.hidden,
+        && document.querySelector('[data-price-breed-search-suggestions]')?.hidden
+        // Selection focuses the target service on the next animation frame.
+        // Wait for it before fill('') can compete for the same focus.
+        && document.activeElement?.matches('[data-price-service-select]')
+        && document.activeElement.closest('[data-category-id]')?.hasAttribute('data-selected-breed-index'),
       null,
       { timeout: 15000 }
     );

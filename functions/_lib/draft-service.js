@@ -3,7 +3,13 @@
  * Secure proxy for contact-form draft completions.
  */
 
-import { sanitizeOrigin, assertAllowedOrigin, enforceRateLimit, isLocalDevOrigin, jsonResponse } from './http-security.js';
+import {
+  sanitizeOrigin,
+  assertAllowedOrigin,
+  enforceRateLimit,
+  isLocalDevOrigin,
+  jsonResponse,
+} from './http-security.js';
 import {
   AI_PROVIDER_POLICY,
   APPROVED_AI_MODEL,
@@ -227,6 +233,44 @@ function buildLocalDraftResponse(payload, reason) {
   };
 }
 
+function cleanPublicDraftField(value, maxLength) {
+  return String(value ?? '')
+    .normalize('NFKC')
+    .replace(/[\u0000-\u001F\u007F]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLength);
+}
+
+function buildPublicDraftPayload(payload) {
+  const draft = payload?.draft;
+  if (!draft || typeof draft !== 'object' || Array.isArray(draft)) return null;
+
+  const language = normalizeDraftLanguage(cleanPublicDraftField(draft.language, 8));
+  const requestedFormType = cleanPublicDraftField(draft.formType, 40).toLowerCase();
+  const formType = ['booking', 'contact', 'feedback', 'client_registration'].includes(requestedFormType)
+    ? requestedFormType
+    : 'contact';
+  const name = cleanPublicDraftField(draft.name, 160);
+  const service = cleanPublicDraftField(draft.service, 240);
+  const existingMessage = cleanPublicDraftField(draft.existingMessage, 2000);
+
+  return {
+    messages: [
+      {
+        role: 'user',
+        content: [
+          `Language: ${language}`,
+          `Form type: ${formType}`,
+          `Customer name: ${name || 'not provided'}`,
+          `Service: ${service || 'not provided'}`,
+          `Existing message: ${existingMessage || 'empty'}`,
+        ].join('\n'),
+      },
+    ],
+  };
+}
+
 function validatePayload(payload) {
   if (!payload || typeof payload !== 'object') return 'Body must be an object';
   if (!Array.isArray(payload.messages) || payload.messages.length < 1) return 'Body must include messages[]';
@@ -238,9 +282,7 @@ function validatePayload(payload) {
   if (payload.provider !== undefined) return 'Provider selection is managed by the service';
 
   const hasInvalidMessage = payload.messages.some(
-    message =>
-      !['system', 'user', 'assistant'].includes(message?.role) ||
-      typeof message?.content !== 'string'
+    message => !['system', 'user', 'assistant'].includes(message?.role) || typeof message?.content !== 'string'
   );
   if (hasInvalidMessage) return 'Messages must use supported roles and text content';
 
@@ -249,7 +291,8 @@ function validatePayload(payload) {
     return content.length > MAX_DRAFT_MESSAGE_CONTENT_LENGTH;
   });
 
-  if (hasOversizedMessage) return `Message content too large. Max ${MAX_DRAFT_MESSAGE_CONTENT_LENGTH} chars per message.`;
+  if (hasOversizedMessage)
+    return `Message content too large. Max ${MAX_DRAFT_MESSAGE_CONTENT_LENGTH} chars per message.`;
 
   return '';
 }
@@ -267,10 +310,6 @@ export async function handleMessageDraft(context) {
   }
   const { origin } = originCheck;
 
-  if (!hasAiServiceAuth(request, context)) {
-    return jsonResponse({ error: 'AI service authorization required' }, 401, origin);
-  }
-
   const rateLimited = await enforceRateLimit(request, {
     route: 'message-draft',
     limit: 10,
@@ -280,9 +319,6 @@ export async function handleMessageDraft(context) {
     return rateLimited;
   }
 
-  let apiKey =
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_API_KEY') || getEnvVarFromContext(context, legacyEnvName('API_KEY'));
-
   let payload;
   try {
     payload = await request.json();
@@ -290,8 +326,20 @@ export async function handleMessageDraft(context) {
     return jsonResponse({ error: 'Invalid JSON body' }, 400, origin);
   }
 
+  const publicDraftPayload = buildPublicDraftPayload(payload);
+  if (publicDraftPayload) {
+    return jsonResponse(buildLocalDraftResponse(publicDraftPayload, 'PUBLIC_FIXED_TEMPLATE'), 200, origin);
+  }
+
+  if (!hasAiServiceAuth(request, context)) {
+    return jsonResponse({ error: 'AI service authorization required' }, 401, origin);
+  }
+
   const payloadError = validatePayload(payload);
   if (payloadError) return jsonResponse({ error: payloadError }, 400, origin);
+
+  const apiKey =
+    getEnvVarFromContext(context, 'SERVICE_GATEWAY_API_KEY') || getEnvVarFromContext(context, legacyEnvName('API_KEY'));
 
   if (!apiKey) {
     if (isLocalRequest(origin)) {

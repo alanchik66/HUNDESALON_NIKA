@@ -4,11 +4,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import {
-  buildKnowledgeDocument,
-  extractPublicText,
-  normalizeSourceText,
-} from './generate-sendpulse-ai-knowledge.mjs';
+import { buildKnowledgeDocument, extractPublicText, normalizeSourceText } from './generate-sendpulse-ai-knowledge.mjs';
+import { buildAiChatKnowledgeIndex, renderAiChatKnowledgeModule } from './generate-ai-chat-index.mjs';
 import { syncKnowledge } from './sync-sendpulse-ai-knowledge.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -49,7 +46,7 @@ test('knowledge generator refreshes the stored source fingerprint', () => {
   const knowledgePath = path.join(ROOT, 'knowledge/03_Resources/SendPulse_AI_Agent_Knowledge.md');
   const staleTemplate = readFileSync(knowledgePath, 'utf8').replace(
     /^Generated source fingerprint:.*$/m,
-    `Generated source fingerprint: sha256:${'0'.repeat(64)}`,
+    `Generated source fingerprint: sha256:${'0'.repeat(64)}`
   );
   const { content, fingerprint } = buildKnowledgeDocument({ template: staleTemplate });
   assert.match(content, new RegExp(`^Generated source fingerprint: sha256:${fingerprint}$`, 'm'));
@@ -76,6 +73,43 @@ test('German customer-facing content avoids English grooming terminology', () =>
   }
 });
 
+test('AI chat index is deterministic and contains localized exact-price sections', () => {
+  const knowledge = readFileSync(path.join(ROOT, 'knowledge/03_Resources/SendPulse_AI_Agent_Knowledge.md'), 'utf8');
+  const first = renderAiChatKnowledgeModule(knowledge);
+  const second = renderAiChatKnowledgeModule(knowledge);
+  const index = buildAiChatKnowledgeIndex(knowledge);
+
+  assert.equal(first.content, second.content);
+  assert.equal(first.index.length, index.length);
+  assert.ok(index.length > 100);
+  for (const locale of ['de', 'en', 'ru', 'uk']) {
+    assert.ok(
+      index.some(entry => entry.locale === locale),
+      `missing ${locale} knowledge chunks`
+    );
+  }
+  const germanPoodle = index.find(entry => entry.locale === 'de' && /Zwergpudel/.test(entry.text));
+  assert.ok(germanPoodle);
+  assert.match(germanPoodle.text, /Komplettpflege — ab 90 €/);
+  assert.doesNotMatch(germanPoodle.text, /groom(?:ing|er)/i);
+});
+
+test('custom AI chat keeps the human SendPulse widget as a working fallback', () => {
+  const aiSource = readFileSync(path.join(ROOT, 'assets/js/ai-chat.js'), 'utf8');
+  const sendPulseSource = readFileSync(path.join(ROOT, 'assets/js/sendpulse-integrations.js'), 'utf8');
+  const buildSource = readFileSync(path.join(ROOT, 'tools/build-production.js'), 'utf8');
+
+  assert.match(aiSource, /fetch\('\/api\/ai-chat'/);
+  assert.match(aiSource, /function openHumanChat\(\)/);
+  assert.match(aiSource, /\.widget-fab, \.button-open-widget/);
+  assert.match(aiSource, /attempts >= 60/);
+  assert.match(aiSource, /handoffTimer/);
+  assert.match(aiSource, /SpeechRecognition\s*=\s*window\.SpeechRecognition/);
+  assert.match(sendPulseSource, /data-hundesalon-ai-ready/);
+  assert.match(buildSource, /ai-chat\.css/);
+  assert.match(buildSource, /ai-chat\.js/);
+});
+
 test('mobile SendPulse welcome toast does not block page interactions', () => {
   const source = readFileSync(path.join(ROOT, 'assets/js/sendpulse-integrations.js'), 'utf8');
   assert.match(
@@ -84,20 +118,36 @@ test('mobile SendPulse welcome toast does not block page interactions', () => {
   );
 });
 
+test('SendPulse live chat keeps native uploads and adds accessible brand controls', () => {
+  const source = readFileSync(path.join(ROOT, 'assets/js/sendpulse-integrations.js'), 'utf8');
+  assert.match(source, /LIVE_CHAT_BRAND_LOGO_URL\s*=\s*'\/assets\/images\/brand\/logo\.png'/);
+  assert.match(source, /\.widget-chat-message-owner::before[\s\S]*?logo\.png/);
+  assert.match(source, /data-action="expand"|action:\s*'expand'/);
+  assert.match(source, /action:\s*'download'/);
+  assert.match(source, /action:\s*'new-conversation'/);
+  assert.match(source, /window\.localStorage\.removeItem\('spSubscriberId'\)/);
+  assert.match(source, /window\.SpeechRecognition\s*\|\|\s*window\.webkitSpeechRecognition/);
+  assert.match(source, /\.widget-upload-button input\[type="file"\]/);
+  assert.match(source, /setAttribute\('aria-label', copy\.attach\)/);
+  assert.match(source, /document\.addEventListener\('pointerdown'/);
+});
+
 test('vector-store sync is a no-op when the matching indexed version exists', async () => {
   const content = 'current knowledge';
   const calls = [];
   const fetchImpl = async (url, init = {}) => {
     calls.push({ url, method: init.method || 'GET' });
     return jsonResponse({
-      data: [{
-        id: 'file_current',
-        status: 'completed',
-        attributes: {
-          managed_by: 'hundesalon_nika_knowledge_sync_v1',
-          sha256: 'cd350fe5c7f3fb158547dbe5b7f652548b6555bd55e69594cb500afda94385d3',
+      data: [
+        {
+          id: 'file_current',
+          status: 'completed',
+          attributes: {
+            managed_by: 'hundesalon_nika_knowledge_sync_v1',
+            sha256: 'cd350fe5c7f3fb158547dbe5b7f652548b6555bd55e69594cb500afda94385d3',
+          },
         },
-      }],
+      ],
       has_more: false,
     });
   };
@@ -116,11 +166,13 @@ test('vector-store sync indexes a new version before detaching an explicitly all
     calls.push(`${method} ${pathname}`);
     if (method === 'GET' && pathname === '/v1/vector_stores/vs_test/files') {
       return jsonResponse({
-        data: [{
-          id: 'file_old',
-          status: 'completed',
-          attributes: {},
-        }],
+        data: [
+          {
+            id: 'file_old',
+            status: 'completed',
+            attributes: {},
+          },
+        ],
         has_more: false,
       });
     }
@@ -147,5 +199,8 @@ test('vector-store sync indexes a new version before detaching an explicitly all
   });
   assert.equal(result.uploaded, true);
   assert.equal(result.detachedStaleFiles, 1);
-  assert.ok(calls.indexOf('GET /v1/vector_stores/vs_test/files/file_new') < calls.indexOf('DELETE /v1/vector_stores/vs_test/files/file_old'));
+  assert.ok(
+    calls.indexOf('GET /v1/vector_stores/vs_test/files/file_new') <
+      calls.indexOf('DELETE /v1/vector_stores/vs_test/files/file_old')
+  );
 });

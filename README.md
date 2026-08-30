@@ -1,4 +1,4 @@
-# 🐕 HUNDESALON NIKA - Профессиональный груминг-салон #
+# 🐕 HUNDESALON NIKA - Профессиональный груминг-салон
 
 > Многоязычный сайт салона груминга для собак и кошек в Лейпциге
 
@@ -6,7 +6,7 @@
 [![VS Code](https://img.shields.io/badge/VS%20Code-configured-blue.svg)](https://code.visualstudio.com/)
 [![Languages](https://img.shields.io/badge/languages-4-green.svg)](#-языки)
 
-## 🌟 Особенности ##
+## 🌟 Особенности
 
 - **4 языковые версии**: 🇷🇺 Русский | 🇩🇪 Немецкий | 🇬🇧 Английский | 🇺🇦 Украинский
 - **3D Виджет погоды**: Интерактивная погода Лейпцига
@@ -15,7 +15,7 @@
 - **Мобильная версия**: Адаптивная верстка
 - **Высокая производительность**: Сжатие, кэширование, CDN-ready
 
-## 📁 Структура проекта ##
+## 📁 Структура проекта
 
 ```text
 HUNDESALON_NIKA/
@@ -52,9 +52,9 @@ HUNDESALON_NIKA/
 └── 📖 docs/                   # Документация
 ```
 
-## 🚀 Быстрый старт ##
+## 🚀 Быстрый старт
 
-### 1. Установка расширений VS Code ###
+### 1. Установка расширений VS Code
 
 Откройте проект в VS Code и установите рекомендуемые расширения:
 
@@ -62,7 +62,7 @@ HUNDESALON_NIKA/
 Ctrl+Shift+P → "Extensions: Show Recommended Extensions"
 ```
 
-### 2. Запуск локального сервера ###
+### 2. Запуск локального сервера
 
 ```bash
 # Локальный просмотр
@@ -72,7 +72,7 @@ npm run dev
 npm run dev:cf
 ```
 
-### 3. Проверка кода ###
+### 3. Проверка кода
 
 ```bash
 # Полная проверка
@@ -84,9 +84,9 @@ npm run format      # Форматирование
 npm run validate    # Валидация
 ```
 
-## 🛠️ Разработка ##
+## 🛠️ Разработка
 
-### Команды разработки ###
+### Команды разработки
 
 ```bash
 npm start          # Запуск локального сервера
@@ -97,17 +97,18 @@ npm run validate   # Валидация всего проекта
 npm run build      # Сборка для продакшена
 ```
 
-### VS Code задачи ###
+### VS Code задачи
 
-- **Ctrl+Shift+P** → "Tasks: Run Task":
-    - `Полная проверка проекта` - комплексная валидация
-    - `Сборка для продакшена` - готовая версия в `dist/`
-    - `Валидация HTML всех языков`
-    - `Валидация CSS`
-    - `Валидация JavaScript`
-    - `Форматирование всех файлов`
+**Ctrl+Shift+P** → "Tasks: Run Task":
 
-### Горячие клавиши ###
+- `Полная проверка проекта` - комплексная валидация
+- `Сборка для продакшена` - готовая версия в `dist/`
+- `Валидация HTML всех языков`
+- `Валидация CSS`
+- `Валидация JavaScript`
+- `Форматирование всех файлов`
+
+### Горячие клавиши
 
 - **Ctrl+Shift+P** - Палитра команд
 - **F5** - Запуск отладки
@@ -116,61 +117,19 @@ npm run build      # Сборка для продакшена
 - **Ctrl+Shift+E** - Проводник
 - **Ctrl+Shift+X** - Расширения
 
-## 🌙 Moon asset pipeline ##
+## 🌙 Moon asset pipeline
 
-Папка ассетов: `3d-weather-codrops-main/dist-widget/assets/Moon`.
-
-Исходники:
-
-- `mission_2160p1.mp4`
-- `mission_1080p30.mp4`
-
-Ручной шаг в After Effects:
-
-1. Импортировать оба MP4 через **Файл → Импорт → Файл…**.
-2. Для каждого видео создать композицию из видеоряда.
-3. Удалить фон через **Keylight (1.2)**, **Luma Key** или **Roto Brush**, затем проверить шахматку прозрачности.
-4. Экспортировать QuickTime MOV с альфой:
-   - Codec: `Apple ProRes 4444` или `Animation`
-   - Channels: `RGB + Alpha`
-   - Depth: `Millions of Colors+`
-   - Color: `Straight (Unmatted)`
-5. Сохранить в папку Moon:
-   - `mission_2160p1_alpha.mov`
-   - `mission_1080p30_alpha.mov`
-
-Автоматическая конвертация:
+Канонический генератор создаёт актуальные WebM, fallback MP4 и metadata из локального master-видео:
 
 ```bash
-powershell -ExecutionPolicy Bypass -File .\scripts\convert_to_webm.ps1
+npm run moon:build-alpha
 ```
 
-Или через VS Code: **Tasks: Run Task** → `Moon: Convert MOV -> WebM+MP4`.
+Исходник остаётся локальным и не попадает в deploy. Параметры, выходные файлы и требования к `ffmpeg` описаны в [`docs/moon-asset-pipeline.md`](docs/moon-asset-pipeline.md).
 
-Проверка:
+## 📦 Деплой на продакшен
 
-```bash
-powershell -ExecutionPolicy Bypass -File .\scripts\verify_outputs.ps1
-```
-
-Или через VS Code: **Tasks: Run Task** → `Moon: Verify Alpha Outputs`.
-
-Ожидаемые выходы:
-
-- `mission_2160p1_alpha.mov`
-- `mission_2160p1_alpha_2160.webm`
-- `mission_2160p1_alpha_fallback_1080.mp4`
-- `mission_1080p30_alpha.mov`
-- `mission_1080p30_alpha_1080.webm`
-- `mission_1080p30_alpha_fallback_1080.mp4`
-
-Для WebM нужен `ffmpeg` с `--enable-libvpx`.
-
-Полный регламент после мержа, чеклист ревью и требования к PR: [`docs/moon-asset-pipeline.md`](docs/moon-asset-pipeline.md).
-
-## 📦 Деплой на продакшен ##
-
-### 1. Подготовка к деплою ###
+### 1. Подготовка к деплою
 
 ```bash
 # Сборка продакшен-версии
@@ -180,7 +139,7 @@ npm run build
 Ctrl+Shift+P → "Tasks: Run Task" → "Сборка для продакшена"
 ```
 
-### 2. Деплой в Cloudflare Pages ###
+### 2. Деплой в Cloudflare Pages
 
 Для автоматизации всего процесса (линтинг, коммит, пуш и деплой) используйте единый скрипт:
 
@@ -208,7 +167,7 @@ npm run deploy:worker
 npm run dev:worker
 ```
 
-### 3. Настройка домена ###
+### 3. Настройка домена
 
 - Настройте DNS на хостинг
 - Включите SSL-сертификат
@@ -216,16 +175,16 @@ npm run dev:worker
 
 > 📖 Подробная инструкция: [DEPLOY_GUIDE.md](DEPLOY_GUIDE.md)
 
-## 🌍 Языки ##
+## 🌍 Языки
 
-| Язык | Код | Папка | Статус |
-| ------ | ----- | ------- | -------- |
-| Русский | `ru` | `/ru/` | ✅ Готов |
-| Немецкий | `de` | `/de/` | ✅ Готов |
+| Язык       | Код  | Папка  | Статус   |
+| ---------- | ---- | ------ | -------- |
+| Русский    | `ru` | `/ru/` | ✅ Готов |
+| Немецкий   | `de` | `/de/` | ✅ Готов |
 | Английский | `en` | `/en/` | ✅ Готов |
 | Украинский | `uk` | `/uk/` | ✅ Готов |
 
-## 🎨 Технологии ##
+## 🎨 Технологии
 
 - **HTML5** - семантическая разметка
 - **CSS3** - адаптивная верстка, flexbox, grid
@@ -234,16 +193,16 @@ npm run dev:worker
 - **Three.js** - 3D виджет погоды
 - **Cloudflare Pages** - хостинг и CDN
 
-## 📋 Линтинг и форматирование ##
+## 📋 Линтинг и форматирование
 
-### Конфигурация инструментов ###
+### Конфигурация инструментов
 
 - **HTMLHint** - валидация HTML ([.htmlhintrc](.htmlhintrc))
 - **ESLint** - проверка JavaScript ([eslint.config.js](eslint.config.js))
 - **Stylelint** - проверка CSS ([.stylelintrc.json](.stylelintrc.json))
 - **Prettier** - форматирование ([.prettierrc](.prettierrc))
 
-### Настройки линтинга ###
+### Настройки линтинга
 
 ```json
 {
@@ -253,42 +212,43 @@ npm run dev:worker
 }
 ```
 
-## 🔧 Конфигурация ##
+## 🔧 Конфигурация
 
-### Переменные окружения для новых модулей ###
+### Переменные окружения для новых модулей
 
-Публичные placeholder-значения лежат в [`config/env.js`](config/env.js). Для реального деплоя секреты и рабочие ID задаются только в Cloudflare Pages → Settings → Environment variables.
+Только публичные идентификаторы Analytics, Google Ads и Microsoft Clarity лежат в [`config/env.js`](config/env.js). Серверные настройки и секреты задаются в Cloudflare Pages или в соответствующем Worker и не должны попадать в клиентский JavaScript.
 
-| Переменная | Где взять | Для чего нужна |
-| ------------ | ----------- | ---------------- |
-| `GA_MEASUREMENT_ID` | Google Analytics → Admin → Data streams | аналитика после cookie-согласия |
-| `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | Google Cloud IAM service account | стабильный серверный доступ к Calendar, Sheets, Drive |
-| `GOOGLE_SERVICE_ACCOUNT_SUBJECT` | Google Workspace Admin | опционально для Gmail domain-wide delegation |
-| `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REFRESH_TOKEN` | Google Auth Platform → OAuth client → Desktop app | основной путь для обычного Gmail-аккаунта: Calendar, Sheets, Drive и Gmail через refresh token |
-| `GOOGLE_OAUTH_ACCESS_TOKEN` | Google Cloud OAuth / service gateway | временный fallback для ручной проверки Google API |
-| `GOOGLE_APPS_SCRIPT_WEBHOOK_URL` | Apps Script Web App | резервный gateway для обычного Gmail-аккаунта без Workspace |
-| `GOOGLE_GATEWAY_SECRET` | локально сгенерированный секрет | защита Google gateway endpoint |
-| `GOOGLE_CALENDAR_ID` | Google Calendar settings | создание событий бронирования |
-| `SHEET_ID` | URL Google Sheets таблицы | закрытый административный учёт бронирований, регистраций клиентов/питомцев и подписчиков |
-| `DRIVE_UPLOAD_FOLDER` | URL папки Google Drive | загрузка фото питомца |
-| `GMAIL_SENDER` | Gmail/Workspace alias | опционально; указывайте только рабочий alias, иначе Gmail не отправляет клиентам письма |
-| `SENDPULSE_FROM`, `CLIENT_EMAIL_FROM` | SendPulse → Senders | основной отправитель transactional email для клиентов |
-| `SERVICE_GATEWAY_API_KEY` | Existing Gemini gateway account | единственный разрешённый AI inference path; ключ хранится только как Cloudflare secret |
-| `SALON_EMAIL`, `SUPPORT_EMAIL`, `SUPPORT_REPLY_TO_EMAIL`, `CONTACT_RECIPIENT_EMAIL`, `BOOKING_RECIPIENT_EMAIL` | рабочая почта салона | получатель заявок и адрес, куда клиенты отвечают |
-| `ADMIN_NOTIFICATION_EMAILS` | Gmail администраторов | внутренние копии заявок: `snaiper1984@gmail.com,ryndenko1982@gmail.com` |
-| `GOOGLE_SHARE_EMAIL` | Google/Workspace аккаунты администраторов | доступ к созданным Calendar, Sheets и Drive; можно указывать несколько адресов через запятую |
-| `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET` | Microsoft Entra App Registration | постоянный серверный вход в Microsoft Graph |
-| `MS_GRAPH_ACCESS_TOKEN` | Microsoft Entra / Graph OAuth | временный fallback для Outlook Email и Teams через Graph |
-| `OUTLOOK_SENDER` | Microsoft 365 mailbox | опциональный отправитель для Graph `/users/{sender}/sendMail`; нужен лицензированный mailbox |
-| `TEAM_ID`, `TEAM_CHANNEL_ID` | Microsoft Teams / Graph | уведомления команды |
-| `TEAMS_WEBHOOK_URL` | Teams Incoming Webhook | быстрый канал уведомлений; нужен существующий Teams channel |
-| `SENDPULSE_API_KEY` или `SENDPULSE_CLIENT_ID` + `SENDPULSE_CLIENT_SECRET` | SendPulse → API | единственный transport transactional email |
-| `SENDPULSE_ADDRESSBOOK_ID` | SendPulse → Email → Mailing lists | адресная книга для контактов и Automation 360 |
-| `SENDPULSE_BOOKING_EVENT_NAME`, `SENDPULSE_CONTACT_EVENT_NAME`, `SENDPULSE_NEWSLETTER_EVENT_NAME` | SendPulse → Automation 360 → Events Manager | серверные события форм для запуска flows; указываются resource names, не URL |
-| `SLACK_WEBHOOK_URL` | Slack app webhook | текущий fallback-канал уведомлений |
-| `GOOGLE_SHEETS_WEBHOOK_URL` | ваш backend/service gateway | fallback-запись в Google Sheets |
-| `GOOGLE_DRIVE_UPLOAD_WEBHOOK_URL` | ваш backend/service gateway | fallback-загрузка файлов в Google Drive |
-| `PAYMENT_PROVIDER_KEY` | Stripe/PayPal dashboard | TODO для будущей предоплаты |
+| Переменная                                                                                                     | Где взять                                             | Для чего нужна                                                                               |
+| -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `GA_MEASUREMENT_ID`                                                                                            | Google Analytics → Admin → Data streams               | аналитика после cookie-согласия                                                              |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`                                           | Google Cloud IAM service account                      | стабильный серверный доступ к Calendar, Sheets, Drive                                        |
+| `GOOGLE_SERVICE_ACCOUNT_SUBJECT`                                                                               | Google Workspace Admin                                | опциональная domain-wide delegation для Google API                                           |
+| `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REFRESH_TOKEN`                           | Google Auth Platform → OAuth client → Desktop app     | основной путь для обычного Google-аккаунта: Calendar, Sheets и Drive через refresh token     |
+| `GOOGLE_OAUTH_ACCESS_TOKEN`                                                                                    | Google Cloud OAuth / service gateway                  | временный fallback для ручной проверки Google API                                            |
+| `GOOGLE_APPS_SCRIPT_WEBHOOK_URL`                                                                               | Apps Script Web App                                   | резервный gateway для обычного Gmail-аккаунта без Workspace                                  |
+| `GOOGLE_GATEWAY_SECRET`                                                                                        | локально сгенерированный секрет                       | защита Google gateway endpoint                                                               |
+| `GOOGLE_CALENDAR_ID`                                                                                           | Google Calendar settings                              | создание событий бронирования                                                                |
+| `SHEET_ID`                                                                                                     | URL Google Sheets таблицы                             | закрытый административный учёт бронирований, регистраций клиентов/питомцев и подписчиков     |
+| `DRIVE_UPLOAD_FOLDER`                                                                                          | URL папки Google Drive                                | загрузка фото питомца                                                                        |
+| `SENDPULSE_FROM`, `CLIENT_EMAIL_FROM`                                                                          | SendPulse → Senders                                   | основной отправитель transactional email для клиентов                                        |
+| `SERVICE_GATEWAY_API_KEY`                                                                                      | Existing Gemini gateway account                       | единственный разрешённый AI inference path; ключ хранится только как Cloudflare secret       |
+| `SALON_EMAIL`, `SUPPORT_EMAIL`, `SUPPORT_REPLY_TO_EMAIL`, `CONTACT_RECIPIENT_EMAIL`, `BOOKING_RECIPIENT_EMAIL` | рабочая почта салона                                  | получатель заявок и адрес, куда клиенты отвечают                                             |
+| `ADMIN_NOTIFICATION_EMAILS`                                                                                    | утверждённые адреса администраторов                   | внутренние копии заявок; список через запятую хранится только в secrets/закрытой настройке   |
+| `GOOGLE_SHARE_EMAIL`                                                                                           | Google/Workspace аккаунты администраторов             | доступ к созданным Calendar, Sheets и Drive; можно указывать несколько адресов через запятую |
+| `SENDPULSE_API_KEY` или `SENDPULSE_CLIENT_ID` + `SENDPULSE_CLIENT_SECRET`                                      | SendPulse → API                                       | единственный transport transactional email                                                   |
+| `SENDPULSE_ADDRESSBOOK_ID`                                                                                     | SendPulse → Email → Mailing lists                     | адресная книга для контактов и Automation 360                                                |
+| `SENDPULSE_BOOKING_EVENT_NAME`, `SENDPULSE_CONTACT_EVENT_NAME`, `SENDPULSE_NEWSLETTER_EVENT_NAME`              | SendPulse → Automation 360 → Events Manager           | серверные события форм для запуска flows; указываются resource names, не URL                 |
+| `SLACK_WEBHOOK_URL`                                                                                            | Slack app webhook                                     | текущий fallback-канал уведомлений                                                           |
+| `INFO_FORWARD_DESTINATION`                                                                                     | verified destination, secret Worker `info-auto-reply` | один конечный ящик для пересылки оригиналов при использовании info Worker                    |
+| `INFO_AUTOREPLY_SECRET`                                                                                        | одинаковый secret в info Worker и Pages Production    | авторизация автоответа; значение не хранится в исходниках                                    |
+| `BOOKING_FORWARD_DESTINATIONS`                                                                                 | secret Worker `booking-email-router`                  | ровно два уникальных verified-получателя через запятую                                       |
+| `GOOGLE_SHEETS_WEBHOOK_URL`                                                                                    | ваш backend/service gateway                           | fallback-запись в Google Sheets                                                              |
+| `GOOGLE_DRIVE_UPLOAD_WEBHOOK_URL`                                                                              | ваш backend/service gateway                           | fallback-загрузка файлов в Google Drive                                                      |
+| `PAYMENT_PROVIDER_KEY`                                                                                         | Stripe/PayPal dashboard                               | TODO для будущей предоплаты                                                                  |
+
+Проверенное состояние входящей почты на 30.08.2026: `info@hundesalon-nika.com` пересылается напрямую в существующий подтверждённый ящик. Worker `info-auto-reply` подготовлен, но не подключён к активному правилу: его деплой сам по себе не включает автоответы. Переключение правила требует отдельного согласования. `INFO_FORWARD_DESTINATION` должен указывать на конечный verified-ящик, а не возвращать письмо в `info@`.
+
+В info Worker сначала пересылается оригинал; сбой или отсутствие секрета автоответа не отклоняет уже пересланное письмо. Автоответ использует Pages → SendPulse, поэтому binding `SEND_EMAIL` этому Worker не нужен. Результаты live-проверок и ограничения зафиксированы в [`knowledge/06_QA.md`](knowledge/06_QA.md).
 
 Регистрации клиента и питомца для выбранной услуги сохраняются в отдельный лист `clients` той же закрытой Google Sheets таблицы. Лист содержит выбранную услугу и ориентировочную цену, данные клиента и питомца, номер жетона, согласия и источник заявки; чтения этого листа с сайта нет. «Первый груминг щенка» является обычной услугой, а не акцией. Скрипт `tools/setup-google-platform.mjs` создаёт лист и его заголовки автоматически при настройке или повторном запуске Google-платформы.
 
@@ -300,15 +260,15 @@ Online Stripe payments are hard-disabled in the deployed code; do not add paymen
 npm run dev:cf
 ```
 
-Для первичной настройки Google OAuth после скачивания Desktop app JSON из Google Auth Platform:
+Для первичной настройки Google OAuth после скачивания Desktop app JSON из Google Auth Platform задайте локально `GOOGLE_SHARE_EMAIL` утверждёнными Google/Workspace адресами администраторов через запятую:
 
 ```bash
-npm run google:setup-platform -- --salon-email info@hundesalon-nika.com --share-email snaiper1984@gmail.com,ryndenko1982@gmail.com
+npm run google:setup-platform -- --salon-email info@hundesalon-nika.com --share-email "${GOOGLE_SHARE_EMAIL:?Set approved Google/Workspace recipients}"
 ```
 
-Скрипт создаёт Calendar, Sheet и Drive-папку, шарит их на оба админ-адреса, ставит Cloudflare secrets для Production/Preview и не выводит OAuth secrets в консоль.
+Скрипт создаёт Calendar, Sheet и Drive-папку, предоставляет доступ указанным Google/Workspace аккаунтам, ставит Cloudflare secrets для Production/Preview и не выводит OAuth secrets в консоль.
 
-### VS Code настройки ###
+### VS Code настройки
 
 Полная конфигурация в [`.vscode/settings.json`](.vscode/settings.json):
 
@@ -319,19 +279,19 @@ npm run google:setup-platform -- --salon-email info@hundesalon-nika.com --share-
 - ✅ Интеграция с Git
 - ✅ Оптимизация производительности
 
-### Рекомендуемые расширения ###
+### Рекомендуемые расширения
 
 25 профессиональных расширений в [`.vscode/extensions.json`](.vscode/extensions.json)
 
-## 🐛 Отладка ##
+## 🐛 Отладка
 
-### Запуск отладки ###
+### Запуск отладки
 
 1. **F5** - запуск отладки
 2. **Ctrl+Shift+D** - панель отладки
 3. **F10/F11** - пошаговое выполнение
 
-### Логи и ошибки ###
+### Логи и ошибки
 
 ```bash
 # Проверка консоли браузера
@@ -344,9 +304,9 @@ Ctrl+Shift+M → Problems
 Ctrl+` → Terminal
 ```
 
-## 📊 Производительность ##
+## 📊 Производительность
 
-### Оптимизации ###
+### Оптимизации
 
 - ✅ **Gzip сжатие** - уменьшение размера файлов на 70%
 - ✅ **Кэширование браузера** - изображения 1 год, CSS/JS 1 неделя
@@ -354,7 +314,7 @@ Ctrl+` → Terminal
 - ✅ **Оптимизация изображений** - проверка размеров
 - ✅ **CDN готовность** - статические ресурсы
 
-### Мониторинг ###
+### Мониторинг
 
 ```bash
 # Анализ производительности
@@ -367,9 +327,9 @@ npm run test:links
 npm run analyze:bundle
 ```
 
-## 🔒 Безопасность ##
+## 🔒 Безопасность
 
-### Заголовки безопасности ###
+### Заголовки безопасности
 
 - **X-Content-Type-Options**: nosniff
 - **X-Frame-Options**: SAMEORIGIN
@@ -377,13 +337,13 @@ npm run analyze:bundle
 - **Content-Security-Policy**: настроен для виджета
 - **HTTPS**: принудительное перенаправление
 
-### PHP безопасность ###
+### PHP безопасность
 
 - Отключены опасные функции
 - Безопасные сессии
 - Валидация входных данных
 
-## 📞 Контакты и поддержка ##
+## 📞 Контакты и поддержка
 
 HUNDESALON NIKA
 
@@ -393,7 +353,7 @@ HUNDESALON NIKA
 
 ---
 
-## 📄 Лицензия ##
+## 📄 Лицензия
 
 © 2024 HUNDESALON NIKA. Все права защищены.
 

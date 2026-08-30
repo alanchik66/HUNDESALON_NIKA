@@ -23,6 +23,19 @@
       return map[char];
     });
 
+  const resolveDocumentUrl = value => {
+    const raw = String(value || '').trim();
+    if (!raw || /(?:ВАШ_|YOUR_|GOOGLE_DRIVE_FOLDER_ID)/i.test(raw)) return '';
+
+    try {
+      const url = new URL(raw, window.location.origin);
+      const isSameOrigin = url.origin === window.location.origin;
+      return url.protocol === 'https:' || isSameOrigin ? url.href : '';
+    } catch {
+      return '';
+    }
+  };
+
   const init = async () => {
     const container = document.querySelector('[data-documents-list]');
     if (!container) {
@@ -34,7 +47,12 @@
     try {
       const response = await fetch('/data/documents.json', { headers: { Accept: 'application/json' } });
       const items = response.ok ? await response.json() : [];
-      const localized = Array.isArray(items) ? items.filter(item => item.language === lang) : [];
+      const localized = Array.isArray(items)
+        ? items
+            .filter(item => item?.language === lang)
+            .map(item => ({ ...item, url: resolveDocumentUrl(item.url) }))
+            .filter(item => item.url)
+        : [];
       container.innerHTML = localized.length
         ? localized
             .map(

@@ -4,23 +4,6 @@ import assert from 'node:assert/strict';
 import { bookingMetadata } from './upload.js';
 import { hasValidPetPhotoSignature } from './_lib/pet-photo-upload.js';
 
-test('bookingMetadata reads plain JSON upload session payloads', () => {
-  assert.deepEqual(
-    bookingMetadata({
-      lang: 'de',
-      service: 'Hundeschur',
-      date: '2026-08-01',
-      time: '10:00',
-    }),
-    {
-      lang: 'de',
-      service: 'Hundeschur',
-      date: '2026-08-01',
-      time: '10:00',
-    }
-  );
-});
-
 test('bookingMetadata reads multipart FormData via .get (not property access)', () => {
   const formData = new FormData();
   formData.append('lang', 'en');

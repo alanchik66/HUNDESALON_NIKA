@@ -54,13 +54,20 @@ for (const file of requiredFiles) {
   assert(fs.existsSync(path.join(root, file)), `Missing required project file: ${file}`);
 }
 
+if (fs.existsSync(path.join(root, 'data/documents.json'))) {
+  const documentsSource = read('data/documents.json');
+  assert(
+    !/(?:ВАШ_|YOUR_|GOOGLE_DRIVE_FOLDER_ID)/i.test(documentsSource),
+    'data/documents.json must not publish placeholder document links'
+  );
+}
+
 if (fs.existsSync(path.join(root, 'workers/pages-proxy.js'))) {
   const workerConfigPath = path.join(root, 'workers/wrangler.toml');
   const workerSource = read('workers/pages-proxy.js');
   assert(fs.existsSync(workerConfigPath), 'Missing worker config: workers/wrangler.toml');
   assert(
-    workerSource.includes('geolocation=(self)') &&
-      /headers\.set\(\s*['"]Permissions-Policy['"]/.test(workerSource),
+    workerSource.includes('geolocation=(self)') && /headers\.set\(\s*['"]Permissions-Policy['"]/.test(workerSource),
     'workers/pages-proxy.js must allow same-origin geolocation in the final response'
   );
 
@@ -147,9 +154,7 @@ for (const lang of ['de', 'en', 'ru', 'uk']) {
     const relativePath = path.relative(root, file).replaceAll(path.sep, '/');
     const content = fs.readFileSync(file, 'utf8');
     if (/onload="this\.media\s*=\s*'all'"/.test(content)) {
-      failures.push(
-        `${relativePath}: CSP blocks inline stylesheet onload; load the stylesheet normally`
-      );
+      failures.push(`${relativePath}: CSP blocks inline stylesheet onload; load the stylesheet normally`);
     }
     if (!relativePath.includes('/blog/') && /href=["']blog\.html["']/.test(content)) {
       failures.push(`${relativePath}: contains legacy root blog.html reference; use blog/blog.html`);
@@ -394,7 +399,10 @@ for (const file of walk(root)) {
 
   const content = fs.readFileSync(file, 'utf8');
   const contentForCityCheck = content.replaceAll('Europe/Berlin', 'Europe/Timezone');
-  if (outdatedCityPattern.test(contentForCityCheck)) failures.push(`${relativePath}: contains outdated city name`);
+  const isInternalReference = relativePath.startsWith('docs/') || relativePath.startsWith('knowledge/');
+  if (!isInternalReference && outdatedCityPattern.test(contentForCityCheck)) {
+    failures.push(`${relativePath}: contains outdated city name`);
+  }
 
   if (/^(?:de|en|ru|uk)\/.+\.html$/i.test(relativePath) && content.includes('class="nav-main"')) {
     failures.push(

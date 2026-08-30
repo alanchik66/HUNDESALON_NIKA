@@ -298,7 +298,7 @@ These are configured in Cloudflare Pages secrets:
 
 - `SERVICE_GATEWAY_API_KEY` - existing Gemini gateway authentication (optional; keep only in Cloudflare secrets)
 - `AI_SERVICE_WEBHOOK_SECRET` - required server-side secret for AI route calls
-- Other service gateway vars are optional; see `docs/operations.md`
+- Other service gateway variables are optional; use [`.dev.vars.example`](../.dev.vars.example) as the canonical list.
 
 > No need to set these manually in Cloud Shell — they're baked into Cloudflare.
 
@@ -310,7 +310,7 @@ If you encounter any issues:
 
 1. Check the error message carefully
 2. Run `npm run validate` to catch configuration issues
-3. Review [docs/operations.md](../docs/operations.md)
+3. Review [staging-and-e2e.md](staging-and-e2e.md)
 4. Run `npm run check:prod` after deployment
 
 ---
