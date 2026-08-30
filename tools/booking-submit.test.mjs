@@ -29,6 +29,8 @@ const createHarness = ({ upload = async () => true, send = async () => false } =
   const button = { disabled: false, textContent: 'Confirm booking', dataset: { originalText: 'Book now' } };
   const fields = { name: { value: 'Test' }, email: { value: 'qa@example.test' }, phone: { value: '+490000000' } };
   const calls = { upload: 0, send: 0, summary: 0 };
+  const validation = { message: '', hidden: true, step: null, focusTarget: null };
+  const bookingFileInput = {};
   const state = {
     selectedService: 'Grooming',
     selectedDate: '2030-01-02',
@@ -46,10 +48,14 @@ const createHarness = ({ upload = async () => true, send = async () => false } =
     },
   };
   const noop = () => {};
+  const clearValidationMessage = () => {
+    validation.message = '';
+    validation.hidden = true;
+  };
   const context = vm.createContext({
     form,
     state,
-    clearValidationMessage: noop,
+    clearValidationMessage,
     syncHiddenFields: noop,
     isFutureDate: () => true,
     validateBookingFile: () => true,
@@ -72,9 +78,17 @@ const createHarness = ({ upload = async () => true, send = async () => false } =
         button.textContent = originalText;
       }
     },
-    setStep: noop,
-    showValidationMessage: noop,
-    bookingCopy: { summaryConfirm: 'Confirm booking' },
+    setStep: step => {
+      validation.step = step;
+      clearValidationMessage();
+    },
+    showValidationMessage: (message, focusTarget) => {
+      validation.message = message;
+      validation.hidden = false;
+      validation.focusTarget = focusTarget;
+    },
+    bookingFileInput,
+    bookingCopy: { summaryConfirm: 'Confirm booking', fileUploadFailed: 'Photo upload failed. Please try again.' },
     bookingSummary: { focus: noop },
     renderBookingSummary: () => {
       calls.summary += 1;
@@ -87,7 +101,7 @@ const createHarness = ({ upload = async () => true, send = async () => false } =
     renderFilePreview: noop,
   });
   vm.runInContext(handlerSource, context, { filename: 'page-modules.js:booking-submit' });
-  return { button, calls, state, submit: () => handler({ preventDefault: noop }) };
+  return { button, calls, state, validation, bookingFileInput, submit: () => handler({ preventDefault: noop }) };
 };
 
 test('booking ignores repeat submission while the photo upload is pending', async () => {
@@ -130,6 +144,29 @@ test('an unsuccessful photo upload releases the booking lock for retry', async (
   assert.equal(harness.button.disabled, false);
   assert.equal(harness.calls.send, 0);
   await harness.submit();
+  assert.equal(harness.calls.upload, 2);
+  assert.equal(harness.calls.send, 1);
+});
+
+test('a failed photo upload leaves its error visible after returning to the file step', async () => {
+  const retry = deferred();
+  let attempt = 0;
+  const harness = createHarness({ upload: async () => (++attempt === 1 ? false : retry.promise) });
+
+  await harness.submit();
+  assert.equal(harness.validation.step, 3);
+  assert.equal(harness.validation.hidden, false);
+  assert.equal(harness.validation.message, 'Photo upload failed. Please try again.');
+  assert.equal(harness.validation.focusTarget, harness.bookingFileInput);
+  assert.equal(harness.button.disabled, false);
+  assert.equal(harness.calls.send, 0);
+
+  const pendingRetry = harness.submit();
+  assert.equal(harness.validation.hidden, true);
+  assert.equal(harness.validation.message, '');
+  assert.equal(harness.button.disabled, true);
+  retry.resolve(true);
+  await pendingRetry;
   assert.equal(harness.calls.upload, 2);
   assert.equal(harness.calls.send, 1);
 });

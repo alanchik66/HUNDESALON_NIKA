@@ -2180,10 +2180,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           return true;
         }
-        showValidationMessage(bookingCopy.fileUploadFailed, bookingFileInput);
         return false;
       } catch {
-        showValidationMessage(bookingCopy.fileUploadFailed, bookingFileInput);
         return false;
       }
     };
@@ -3117,6 +3115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const uploadedOk = await ensureBookingFileUploaded();
         if (!uploadedOk) {
           setStep(3);
+          showValidationMessage(bookingCopy.fileUploadFailed, bookingFileInput);
           return;
         }
 
