@@ -44,6 +44,7 @@ const browser = await chromium.launch({ headless: true });
 
 for (const locale of locales) {
   for (const [label, viewport, screenshotSuffix] of layouts) {
+    console.log(`[price-smoke] Checking ${locale} ${label}`);
     const context = await browser.newContext({
       viewport,
       isMobile: label === 'mobile',
@@ -1211,7 +1212,19 @@ for (const locale of locales) {
       null,
       { timeout: 15000 }
     );
-    await page.waitForTimeout(1400);
+    // Opening can trigger a delayed scroll event while fonts/layout settle.
+    // Wait for the actual fade-out instead of racing its 900ms idle timer.
+    await page.waitForFunction(
+      () => {
+        const menu = document.querySelector('.price-card__breed-menu:not([hidden])');
+        if (!menu) return false;
+        const track = menu.querySelector('[data-price-breed-scrollbar]');
+        return menu.scrollHeight <= menu.clientHeight + 1
+          || Boolean(track && Number.parseFloat(getComputedStyle(track).opacity) === 0);
+      },
+      null,
+      { timeout: 5000 }
+    );
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     const breedMenuState = await page.evaluate(scrollBefore => {
       const root = document.querySelector('.site-scroll-root');
