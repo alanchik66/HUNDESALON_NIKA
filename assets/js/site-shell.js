@@ -3797,6 +3797,10 @@
   }
 
   function getLaunchLanguageRedirectUrl(context) {
+    if (document.body?.dataset?.noLaunchRedirect === 'true') {
+      return null;
+    }
+
     if (context.currentLang) {
       return null;
     }

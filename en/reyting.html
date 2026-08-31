@@ -59,6 +59,7 @@
       rel="stylesheet"
       href="../assets/css/page-modules.css?v=20260720-prod-v2"
     />
+    <link rel="stylesheet" href="../assets/css/reviews-page.css?v=20260830-review-funnel-v1" />
     <noscript>
       <link
         rel="stylesheet"
@@ -148,53 +149,229 @@
     <link rel="stylesheet" href="../assets/css/cookie-consent.css?v=20260620-full-stack-upgrade" />
       <script src="../assets/js/analytics.js?v=20260721-ads-all"></script>
   </head>
-  <body>
+  <body class="reviews-page">
     <!-- Header and mobile nav (built by site-shell.js) -->
     <header class="header"></header>
     <div id="mobile-nav-overlay" hidden aria-hidden="true"></div>
     <nav id="mobile-nav" aria-hidden="true"></nav>
 
-    <section class="section reveal">
-      <div class="container rating-section">
-        <h1 class="section-title">Ratings & Reviews</h1>
-        <p>
-          We value your opinion! Our independent quality committee reviews all submissions and guarantees a fair
-          outcome. You may leave a review, compliment or complaint anonymously. Every submission will be thoroughly examined
-          and you will be notified of the result.
-        </p>
-        <div class="rating-stars">★★★★★</div>
-        <a
-          href="https://www.google.com/maps/search/?api=1&query=HUNDESALON+NIKA%2C+Walter-Markov-Ring+1%2C+04288+Leipzig"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="btn-google"
-        >
-          <i class="fab fa-google"></i>
-          Review us on Google Maps
-        <p class="review-website-cta" data-review-website-cta>
-          Rate us on Google Maps — feel free to mention our website in your review:
-          <a href="https://hundesalon-nika.com/en/">https://hundesalon-nika.com/en/</a>
-        </p>
-</a>
-
-        <div class="complaint-form">
-          <h3>Feedback form — complaints or praise</h3>
-          <form action="/sendmail" method="POST">
-            <input type="hidden" name="form_type" value="feedback" />
-            <input type="hidden" name="lang" value="en" />
-            <input type="text" name="name" placeholder="Your name (anonymous allowed)" />
-            <input type="email" name="email" placeholder="Email for a reply" />
-            <select name="subject" aria-label="Feedback type" title="Feedback type">
-              <option value="complaint">Complaint</option>
-              <option value="praise">Praise</option>
-              <option value="suggestion">Suggestion</option>
-            </select>
-            <textarea name="message" rows="5" placeholder="Detailed description of the situation" required></textarea>
-            <button type="submit" class="btn-neon">Submit</button>
-          </form>
+    <main class="reviews-shell" data-review-page data-review-google-url="https://www.google.com/maps/search/?api=1&query=HUNDESALON+NIKA%2C+Walter-Markov-Ring+1%2C+04288+Leipzig">
+      <section class="reviews-hero section reveal">
+        <div class="reviews-hero__grid">
+          <div class="reviews-card reviews-hero__copy">
+            <p class="section-kicker">Reviews and Google</p>
+            <h1 class="section-title">Leave a review via QR</h1>
+            <p class="reviews-hero__lead">
+              Scan the code, choose stars and leave a comment. Your feedback is sent to the salon.
+              Whatever your rating, you can also leave a public review on Google.
+            </p>
+            <ol class="reviews-hero__steps">
+              <li>Scan the QR code in the salon.</li>
+              <li>Select 1 to 5 stars.</li>
+              <li>Describe your experience and send the form.</li>
+            </ol>
+            <div class="reviews-hero__actions">
+              <a
+                class="btn-google reviews-link"
+                href="https://www.google.com/maps/search/?api=1&query=HUNDESALON+NIKA%2C+Walter-Markov-Ring+1%2C+04288+Leipzig"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <i class="fab fa-google"></i>
+                Open Google Maps
+              </a>
+              <a class="reviews-link--secondary" href="social.html">Socials and messengers</a>
+            </div>
+          </div>
+          <figure class="reviews-qr-card">
+            <p class="reviews-qr-card__badge">Scan</p>
+            <img
+              class="reviews-qr-card__image"
+              src="../assets/images/reviews/review-qr-en.png"
+              alt="QR code for the HUNDESALON_NIKA reviews page"
+              width="600"
+              height="600"
+              loading="eager"
+              decoding="async"
+            />
+            <figcaption class="reviews-qr-card__caption">
+              Open the page on your phone and leave a review in under a minute.
+            </figcaption>
+            <p class="reviews-qr-card__hint">
+              You can repeat the public Google review after sending the private feedback.
+            </p>
+          </figure>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <section class="reviews-section section reveal">
+        <div class="reviews-form__grid">
+          <div class="reviews-card reviews-form-copy">
+            <p class="section-kicker">Website and Google</p>
+            <h2 class="section-title">Rate your visit and describe the experience</h2>
+            <p class="reviews-form__lead">
+              The website sends your rating and comment directly to the salon without publishing them automatically.
+              The Google button is available for every rating; you submit your public review there separately.
+            </p>
+          </div>
+          <div class="complaint-form reviews-form" data-disable-draft="true">
+            <h3 class="reviews-form__title">Review form</h3>
+            <p class="reviews-form__lead">
+              Choose stars, add a comment and submit. We receive the review right away.
+            </p>
+            <form id="review-form" action="/sendmail" method="POST" data-review-form data-disable-draft="true">
+              <input type="hidden" name="form_type" value="feedback" />
+              <input type="hidden" name="lang" value="en" />
+              <input type="hidden" name="inquiry_type" value="public_review" />
+              <input type="hidden" name="review_channel" value="website" />
+              <fieldset class="review-rating">
+                <legend class="review-rating__legend">How many stars do you give?</legend>
+                <div class="review-rating__stars" role="radiogroup" aria-label="How many stars do you give?">
+                  <input class="review-rating__input" id="review-rating-5-en" type="radio" name="review_rating" value="5" required aria-label="5 out of 5" />
+                  <label class="review-rating__label" for="review-rating-5-en" aria-hidden="true">★</label>
+                  <input class="review-rating__input" id="review-rating-4-en" type="radio" name="review_rating" value="4" aria-label="4 out of 5" />
+                  <label class="review-rating__label" for="review-rating-4-en" aria-hidden="true">★</label>
+                  <input class="review-rating__input" id="review-rating-3-en" type="radio" name="review_rating" value="3" aria-label="3 out of 5" />
+                  <label class="review-rating__label" for="review-rating-3-en" aria-hidden="true">★</label>
+                  <input class="review-rating__input" id="review-rating-2-en" type="radio" name="review_rating" value="2" aria-label="2 out of 5" />
+                  <label class="review-rating__label" for="review-rating-2-en" aria-hidden="true">★</label>
+                  <input class="review-rating__input" id="review-rating-1-en" type="radio" name="review_rating" value="1" aria-label="1 out of 5" />
+                  <label class="review-rating__label" for="review-rating-1-en" aria-hidden="true">★</label>
+                </div>
+                <p class="review-rating__summary" data-review-rating-summary>0 / 5</p>
+              </fieldset>
+              <label>
+                <span>Name</span>
+                <input type="text" name="name" placeholder="Your name" autocomplete="name" required />
+              </label>
+              <label>
+                <span>Email for a reply</span>
+                <input type="email" name="email" placeholder="Your email" autocomplete="email" required />
+              </label>
+              <label>
+                <span>Comment</span>
+                <textarea
+                  name="message"
+                  rows="5"
+                  placeholder="What did you like and what could we improve?"
+                  required
+                ></textarea>
+              </label>
+              <button type="submit" class="btn-neon">Send review</button>
+            </form>
+            <div class="reviews-followup" data-review-followup hidden>
+              <article class="reviews-followup__panel" data-review-followup-public hidden>
+                <p class="reviews-followup__kicker">Public step</p>
+                <h3 class="reviews-followup__title">Thank you for your feedback</h3>
+                <p class="reviews-followup__text">
+                  If you would like to share your experience publicly, leave a review on Google Maps.
+                </p>
+                <div class="reviews-followup__actions">
+                  <a
+                    class="btn-google reviews-link"
+                    data-review-google-link
+                    href="https://www.google.com/maps/search/?api=1&query=HUNDESALON+NIKA%2C+Walter-Markov-Ring+1%2C+04288+Leipzig"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <i class="fab fa-google"></i>
+                    Go to Google
+                  </a>
+                </div>
+              </article>
+              <article class="reviews-followup__panel" data-review-followup-private hidden>
+                <p class="reviews-followup__kicker">Personal reply</p>
+                <h3 class="reviews-followup__title">Thank you for writing to us directly</h3>
+                <p class="reviews-followup__text">
+                  If you would like a reply, include your email in the form or use our contact page.
+                </p>
+                <div class="reviews-followup__actions">
+                  <a class="reviews-link--secondary" href="kontakty.html">Open contacts</a>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="reviews-section section reveal">
+        <div class="reviews-channel-grid">
+          <article class="review-channel-card">
+            <div class="review-channel-card__icon"><i class="fab fa-google"></i></div>
+            <div class="review-channel-card__meta">
+              <h3 class="review-channel-card__title">Google Maps</h3>
+              <p class="review-channel-card__text">
+                Public reviews that strengthen trust in search and on the map.
+              </p>
+            </div>
+            <a
+              class="review-channel-card__link"
+              data-review-google-link
+              href="https://www.google.com/maps/search/?api=1&query=HUNDESALON+NIKA%2C+Walter-Markov-Ring+1%2C+04288+Leipzig"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open Google
+            </a>
+          </article>
+          <article class="review-channel-card">
+            <div class="review-channel-card__icon"><i class="fab fa-facebook-f"></i></div>
+            <div class="review-channel-card__meta">
+              <h3 class="review-channel-card__title">Facebook</h3>
+              <p class="review-channel-card__text">
+                Public recommendations and an additional trust source that also helps Bing.
+              </p>
+            </div>
+            <a
+              class="review-channel-card__link"
+              href="https://www.facebook.com/share/17SVsvkZEo/?mibextid=wwXIfr"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open Facebook
+            </a>
+          </article>
+          <article class="review-channel-card">
+            <div class="review-channel-card__icon"><i class="fas fa-signal"></i></div>
+            <div class="review-channel-card__meta">
+              <h3 class="review-channel-card__title">Socials</h3>
+              <p class="review-channel-card__text">
+                Instagram, Telegram, WhatsApp and Viber for quick contact and direct replies.
+              </p>
+            </div>
+            <a class="review-channel-card__link" href="social.html">Open socials</a>
+          </article>
+          <article class="review-channel-card">
+            <div class="review-channel-card__icon"><i class="fas fa-star"></i></div>
+            <div class="review-channel-card__meta">
+              <h3 class="review-channel-card__title">Website</h3>
+              <p class="review-channel-card__text">
+                Internal review with comment that we see immediately after submission.
+              </p>
+            </div>
+            <a class="review-channel-card__link" href="#review-form">Leave a website review</a>
+          </article>
+        </div>
+      </section>
+
+      <section class="reviews-section section reveal">
+        <div class="reviews-note">
+          <p class="section-kicker">Google, Bing and visibility</p>
+          <h2 class="reviews-note__title">How we collect and use reviews</h2>
+          <ul class="reviews-note__list">
+            <li>Reviews on the website reach the salon immediately and help us respond quickly.</li>
+            <li>The public Google rating grows only from reviews submitted in Google Business Profile.</li>
+            <li>
+              Bing does not pull reviews directly from Google, so Bing depends on its own public sources and a Bing Places profile.
+            </li>
+          </ul>
+          <p class="reviews-note__text">
+            The Google button is available to everyone, whatever their rating. If you need a reply, include your email
+            or contact us directly.
+          </p>
+        </div>
+      </section>
+    </main>
 
     <!-- ══════════════════ Site Footer ════════════════════════════════════ -->
 
@@ -302,6 +479,7 @@
     <script src="../assets/js/site-shell.js?v=20260801-location-single-line-v14"></script>
     <script src="../assets/js/main.js?v=20260720-prod-v2"></script>
     <script src="../assets/js/page-modules.js?v=20260720-prod-v2"></script>
+    <script src="../assets/js/reviews-page.js?v=20260830-review-funnel-v1"></script>
     <script src="../assets/js/tooltip.js?v=20260330-0001"></script>
     <script src="../assets/js/cookie-consent.js?v=20260620-full-stack-upgrade"></script>
     <script src="../assets/js/newsletter.js?v=20260720-prod-v2"></script>

@@ -58,6 +58,37 @@ test('knowledge retrieval matches inflected Russian and Ukrainian breed names', 
   assert.match(ukrainian, /Комплексний грумінг — від 90 €/i);
 });
 
+for (const { locale, questions, patterns } of [
+  {
+    locale: 'ru',
+    questions: ['Что входит в первый груминг щенка?', 'Щенку 3 месяца. Его будут купать и сушить?', 'Щенок боится фена. Что вы будете делать?', 'Можно ли на первый груминг щенку 5 месяцев?', 'Первый груминг щенка лабрадора — сколько стоит?'],
+    patterns: [/до 4 месяцев/, /Если щенок спокоен/, /полностью расчесать/, /искупать/, /подсушить/, /в его темпе/, /от 50 €/],
+  },
+  {
+    locale: 'de',
+    questions: ['Was gehört zur Welpen-Eingewöhnung?', 'Mein Welpe hat Angst vor dem Föhn. Wird er gebadet?'],
+    patterns: [/bis 4 Monate/, /Wenn der Welpe ruhig/, /vollständig bürsten/, /baden/, /antrocknen/, /in seinem Tempo/, /ab 50 €/],
+  },
+  {
+    locale: 'en',
+    questions: ['What is included in first puppy grooming?', 'My puppy is afraid of the dryer. Will you bathe him?'],
+    patterns: [/up to 4 months/, /If the puppy stays calm/, /brush the whole coat/, /full bath/, /gently dry/, /at their pace/, /from €50/],
+  },
+  {
+    locale: 'uk',
+    questions: ['Що входить у перший грумінг цуценяти?', 'Цуценя боїться фена. Чи будете його купати?'],
+    patterns: [/до 4 місяців/, /Якщо цуценя спокійне/, /повністю розчесати/, /викупати/, /підсушити/, /в його темпі/, /від 50 €/],
+  },
+]) {
+  test(`${locale}: puppy questions retrieve the age, conditional care and canonical starting price together`, () => {
+    for (const question of questions) {
+      const reference = selectAiChatKnowledge(question, locale);
+      for (const pattern of patterns) assert.match(reference, pattern, question);
+      assert.doesNotMatch(reference, /It can include light brushing, careful bathing and drying, nails/);
+    }
+  });
+}
+
 test('German post-processing removes forbidden English care terminology', () => {
   assert.equal(
     normalizeGermanCareTerms('Unser Groomer empfiehlt Grooming.', 'de'),
@@ -167,6 +198,11 @@ test('OpenAI request uses bounded context and returns the model answer', async (
     assert.equal(upstreamPayload.model, 'gpt-5.6-luna');
     assert.equal(upstreamPayload.store, false);
     assert.equal(upstreamPayload.reasoning.effort, 'low');
+    assert.equal(upstreamPayload.text.verbosity, 'low');
+    assert.match(upstreamPayload.instructions, /Default to 1-3 short sentences, at most 60 words/);
+    assert.match(upstreamPayload.instructions, /Give more detail only when the customer explicitly asks/);
+    assert.match(upstreamPayload.instructions, /Preserve essential conditions such as age limits, conditional care/);
+    assert.match(upstreamPayload.instructions, /never reproduce entire reference blocks or the full knowledge document/);
     assert.ok(upstreamPayload.instructions.length < 12_500);
     assert.ok(upstreamPayload.input.length < 10_000);
     assert.doesNotMatch(upstreamPayload.instructions, /test-key/);
@@ -191,6 +227,35 @@ test('invalid locale and oversized messages are rejected', async () => {
     });
     assert.equal(oversized.status, 400);
   } finally {
+    restoreCache();
+  }
+});
+
+test('puppy request sends the approved care conditions to the answer model without a live API call', async () => {
+  const restoreCache = installCacheStub();
+  const originalFetch = globalThis.fetch;
+  let instructions;
+  globalThis.fetch = async (_url, init) => {
+    instructions = JSON.parse(init.body).instructions;
+    return new Response(JSON.stringify({ output_text: 'Первый визит — для щенков до 4 месяцев, от 50 €.' }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  try {
+    const response = await onRequest({
+      request: createRequest(requestBody({ locale: 'ru', message: 'Что входит в первый груминг щенка?', pagePath: '/ru/prays-list.html' })),
+      env: { OPENAI_API_KEY: 'test-key' },
+    });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).available, true);
+    for (const pattern of [/до 4 месяцев/, /Если щенок спокоен/, /полностью расчесать/, /искупать/, /подсушить/, /в его темпе/, /от 50 €/]) {
+      assert.match(instructions, pattern);
+    }
+    assert.ok(instructions.length < 12_500);
+    assert.doesNotMatch(instructions, /It can include light brushing, careful bathing and drying, nails/);
+  } finally {
+    globalThis.fetch = originalFetch;
     restoreCache();
   }
 });

@@ -39,6 +39,7 @@ const copyEntries = [
   'index.html',
   '404.html',
   'telegram-menu.html',
+  'reviews.html',
   'assets',
   'config',
   'data',

@@ -1068,6 +1068,10 @@
       return getAdditionalServiceNotes(category);
     }
     if (sourceCategoryId !== ADDITIONAL_CATEGORY_ID) {
+      if (selectedServices.every(service => service.key === 'puppy-intro')) {
+        const puppyService = global.PriceCatalog?.build?.(lang)?.services.find(service => service.key === 'puppy-intro');
+        if (puppyService) return [puppyService.note, puppyService.description].filter(Boolean);
+      }
       const notes = (category.notes || []).map(note => getText(note)).filter(Boolean);
       const priceRowCount = (category.priceRows || []).length;
       if (notes.length && notes.length === priceRowCount) {

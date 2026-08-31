@@ -122,11 +122,10 @@
         'Китайская хохлатая — пуховая разновидность',
         'Другие небольшие породы с аналогичным типом шерсти',
       ],
-      services: [...full, 'grooming', 'puppyIntro'],
+      services: [...full, 'grooming'],
       priceRows: [
         row('Комплексный груминг', 'от 80 €'),
         row('Купание + гигиенический уход', 'от 60 €'),
-        row('Первый груминг щенка', 'от 50 €'),
       ],
       notes: [
         note(
@@ -396,8 +395,11 @@
       title: ru(definition.title),
       summary: ru(definition.summary),
       breeds: { ru: [...definition.breeds] },
-      services: definition.services,
-      priceRows: definition.priceRows,
+      services: [...definition.services, 'puppyIntro'],
+      priceRows: [
+        ...definition.priceRows,
+        { key: 'puppy-intro', ...row('Первый груминг щенка', 'от 50 €') },
+      ],
       notes: definition.notes.map(value => note(value.ru)),
     };
     category.pageSection = definition.pageSection;

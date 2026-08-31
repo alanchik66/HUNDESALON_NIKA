@@ -50,6 +50,7 @@
       rel="stylesheet"
       href="../assets/css/page-modules.css?v=20260720-prod-v2"
     />
+    <link rel="stylesheet" href="../assets/css/reviews-page.css?v=20260830-review-funnel-v1" />
     <noscript>
       <link
         rel="stylesheet"
@@ -139,52 +140,229 @@
     <link rel="stylesheet" href="../assets/css/cookie-consent.css?v=20260620-full-stack-upgrade" />
       <script src="../assets/js/analytics.js?v=20260721-ads-all"></script>
   </head>
-  <body>
+  <body class="reviews-page">
     <!-- Header and mobile nav (built by site-shell.js) -->
     <header class="header"></header>
     <div id="mobile-nav-overlay" hidden aria-hidden="true"></div>
     <nav id="mobile-nav" aria-hidden="true"></nav>
 
-    <section class="section reveal">
-      <div class="container rating-section">
-        <h1 class="section-title">Рейтинг та відгуки</h1>
-        <p>
-          Ми цінуємо вашу думку! Наша незалежна комісія з якості розглядає всі звернення та гарантує справедливе
-          рішення. Ви можете залишити відгук, подяку або скаргу анонімно. Кожне звернення буде ретельно перевірено, а
-          про результат ми повідомимо вам.
-        </p>
-        <div class="rating-stars">★★★★★</div>
-        <a
-          href="https://www.google.com/maps/search/?api=1&query=HUNDESALON+NIKA%2C+Walter-Markov-Ring+1%2C+04288+Leipzig"
-          target="_blank"
-          class="btn-google"
-        >
-          <i class="fab fa-google"></i>
-          Подякувати на Google Maps
-        <p class="review-website-cta" data-review-website-cta>
-          Залиште відгук у Google Maps — у тексті можна вказати наш сайт:
-          <a href="https://hundesalon-nika.com/uk/">https://hundesalon-nika.com/uk/</a>
-        </p>
-</a>
-
-        <div class="complaint-form">
-          <h3>Форма для подання скарги або подяки</h3>
-          <form action="/sendmail" method="POST">
-            <input type="hidden" name="form_type" value="feedback" />
-            <input type="hidden" name="lang" value="uk" />
-            <input type="text" name="name" placeholder="Ваше ім'я (можна анонімно)" />
-            <input type="email" name="email" placeholder="Email для відповіді" />
-            <select name="subject">
-              <option value="complaint">Скарга</option>
-              <option value="praise">Подяка</option>
-              <option value="suggestion">Пропозиція</option>
-            </select>
-            <textarea name="message" rows="5" placeholder="Докладний опис ситуації" required></textarea>
-            <button type="submit" class="btn-neon">Надіслати</button>
-          </form>
+    <main class="reviews-shell" data-review-page data-review-google-url="https://www.google.com/maps/search/?api=1&query=HUNDESALON+NIKA%2C+Walter-Markov-Ring+1%2C+04288+Leipzig">
+      <section class="reviews-hero section reveal">
+        <div class="reviews-hero__grid">
+          <div class="reviews-card reviews-hero__copy">
+            <p class="section-kicker">Відгуки та Google</p>
+            <h1 class="section-title">Залиште відгук за QR-кодом</h1>
+            <p class="reviews-hero__lead">
+              Скануйте код, поставте зірки та залиште коментар. Відгук надсилається в салон.
+              Незалежно від оцінки ви також можете залишити публічний відгук у Google.
+            </p>
+            <ol class="reviews-hero__steps">
+              <li>Скануйте QR-код у салоні.</li>
+              <li>Оберіть оцінку від 1 до 5 зірок.</li>
+              <li>Опишіть враження та надішліть форму.</li>
+            </ol>
+            <div class="reviews-hero__actions">
+              <a
+                class="btn-google reviews-link"
+                href="https://www.google.com/maps/search/?api=1&query=HUNDESALON+NIKA%2C+Walter-Markov-Ring+1%2C+04288+Leipzig"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <i class="fab fa-google"></i>
+                Відкрити Google Maps
+              </a>
+              <a class="reviews-link--secondary" href="social.html">Соцмережі та месенджери</a>
+            </div>
+          </div>
+          <figure class="reviews-qr-card">
+            <p class="reviews-qr-card__badge">Скануйте</p>
+            <img
+              class="reviews-qr-card__image"
+              src="../assets/images/reviews/review-qr-uk.png"
+              alt="QR-код для сторінки відгуків HUNDESALON_NIKA"
+              width="600"
+              height="600"
+              loading="eager"
+              decoding="async"
+            />
+            <figcaption class="reviews-qr-card__caption">
+              Відкрийте сторінку на телефоні та залиште відгук за хвилину.
+            </figcaption>
+            <p class="reviews-qr-card__hint">
+              Публічний Google-відгук можна повторити після внутрішнього надсилання.
+            </p>
+          </figure>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <section class="reviews-section section reveal">
+        <div class="reviews-form__grid">
+          <div class="reviews-card reviews-form-copy">
+            <p class="section-kicker">Сайт і Google</p>
+            <h2 class="section-title">Оцініть візит і опишіть враження</h2>
+            <p class="reviews-form__lead">
+              На сайті ви надсилаєте оцінку й коментар безпосередньо в салон. Вони не публікуються автоматично.
+              Кнопка Google доступна за будь-якої оцінки — публічний відгук ви надсилаєте окремо.
+            </p>
+          </div>
+          <div class="complaint-form reviews-form" data-disable-draft="true">
+            <h3 class="reviews-form__title">Форма відгуку</h3>
+            <p class="reviews-form__lead">
+              Поставте зірки, залиште коментар і натисніть надсилання. Ми отримаємо відгук одразу.
+            </p>
+            <form id="review-form" action="/sendmail" method="POST" data-review-form data-disable-draft="true">
+              <input type="hidden" name="form_type" value="feedback" />
+              <input type="hidden" name="lang" value="uk" />
+              <input type="hidden" name="inquiry_type" value="public_review" />
+              <input type="hidden" name="review_channel" value="website" />
+              <fieldset class="review-rating">
+                <legend class="review-rating__legend">Скільки зірок ви ставите?</legend>
+                <div class="review-rating__stars" role="radiogroup" aria-label="Скільки зірок ви ставите?">
+                  <input class="review-rating__input" id="review-rating-5-uk" type="radio" name="review_rating" value="5" required aria-label="5 з 5" />
+                  <label class="review-rating__label" for="review-rating-5-uk" aria-hidden="true">★</label>
+                  <input class="review-rating__input" id="review-rating-4-uk" type="radio" name="review_rating" value="4" aria-label="4 з 5" />
+                  <label class="review-rating__label" for="review-rating-4-uk" aria-hidden="true">★</label>
+                  <input class="review-rating__input" id="review-rating-3-uk" type="radio" name="review_rating" value="3" aria-label="3 з 5" />
+                  <label class="review-rating__label" for="review-rating-3-uk" aria-hidden="true">★</label>
+                  <input class="review-rating__input" id="review-rating-2-uk" type="radio" name="review_rating" value="2" aria-label="2 з 5" />
+                  <label class="review-rating__label" for="review-rating-2-uk" aria-hidden="true">★</label>
+                  <input class="review-rating__input" id="review-rating-1-uk" type="radio" name="review_rating" value="1" aria-label="1 з 5" />
+                  <label class="review-rating__label" for="review-rating-1-uk" aria-hidden="true">★</label>
+                </div>
+                <p class="review-rating__summary" data-review-rating-summary>0 / 5</p>
+              </fieldset>
+              <label>
+                <span>Ім'я</span>
+                <input type="text" name="name" placeholder="Ваше ім'я" autocomplete="name" required />
+              </label>
+              <label>
+                <span>Email для відповіді</span>
+                <input type="email" name="email" placeholder="Ваш email" autocomplete="email" required />
+              </label>
+              <label>
+                <span>Коментар</span>
+                <textarea
+                  name="message"
+                  rows="5"
+                  placeholder="Що сподобалося і що можна покращити?"
+                  required
+                ></textarea>
+              </label>
+              <button type="submit" class="btn-neon">Надіслати відгук</button>
+            </form>
+            <div class="reviews-followup" data-review-followup hidden>
+              <article class="reviews-followup__panel" data-review-followup-public hidden>
+                <p class="reviews-followup__kicker">Публічний крок</p>
+                <h3 class="reviews-followup__title">Дякуємо за ваш відгук</h3>
+                <p class="reviews-followup__text">
+                  Якщо хочете поділитися своїм досвідом публічно, залиште відгук у Google Maps.
+                </p>
+                <div class="reviews-followup__actions">
+                  <a
+                    class="btn-google reviews-link"
+                    data-review-google-link
+                    href="https://www.google.com/maps/search/?api=1&query=HUNDESALON+NIKA%2C+Walter-Markov-Ring+1%2C+04288+Leipzig"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <i class="fab fa-google"></i>
+                    Перейти в Google
+                  </a>
+                </div>
+              </article>
+              <article class="reviews-followup__panel" data-review-followup-private hidden>
+                <p class="reviews-followup__kicker">Особиста відповідь</p>
+                <h3 class="reviews-followup__title">Дякуємо, що написали нам напряму</h3>
+                <p class="reviews-followup__text">
+                  Якщо вам потрібна відповідь, вкажіть email у формі або скористайтеся сторінкою контактів.
+                </p>
+                <div class="reviews-followup__actions">
+                  <a class="reviews-link--secondary" href="kontakty.html">Відкрити контакти</a>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="reviews-section section reveal">
+        <div class="reviews-channel-grid">
+          <article class="review-channel-card">
+            <div class="review-channel-card__icon"><i class="fab fa-google"></i></div>
+            <div class="review-channel-card__meta">
+              <h3 class="review-channel-card__title">Google Maps</h3>
+              <p class="review-channel-card__text">
+                Публічні відгуки, які зміцнюють довіру в пошуку та на карті.
+              </p>
+            </div>
+            <a
+              class="review-channel-card__link"
+              data-review-google-link
+              href="https://www.google.com/maps/search/?api=1&query=HUNDESALON+NIKA%2C+Walter-Markov-Ring+1%2C+04288+Leipzig"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Відкрити Google
+            </a>
+          </article>
+          <article class="review-channel-card">
+            <div class="review-channel-card__icon"><i class="fab fa-facebook-f"></i></div>
+            <div class="review-channel-card__meta">
+              <h3 class="review-channel-card__title">Facebook</h3>
+              <p class="review-channel-card__text">
+                Публічні рекомендації та ще одне джерело довіри, корисне для Bing.
+              </p>
+            </div>
+            <a
+              class="review-channel-card__link"
+              href="https://www.facebook.com/share/17SVsvkZEo/?mibextid=wwXIfr"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Відкрити Facebook
+            </a>
+          </article>
+          <article class="review-channel-card">
+            <div class="review-channel-card__icon"><i class="fas fa-signal"></i></div>
+            <div class="review-channel-card__meta">
+              <h3 class="review-channel-card__title">Соцмережі</h3>
+              <p class="review-channel-card__text">
+                Instagram, Telegram, WhatsApp і Viber для швидкого контакту та особистої відповіді.
+              </p>
+            </div>
+            <a class="review-channel-card__link" href="social.html">Відкрити соцмережі</a>
+          </article>
+          <article class="review-channel-card">
+            <div class="review-channel-card__icon"><i class="fas fa-star"></i></div>
+            <div class="review-channel-card__meta">
+              <h3 class="review-channel-card__title">Сайт</h3>
+              <p class="review-channel-card__text">
+                Внутрішня оцінка з коментарем, яку ми бачимо одразу після надсилання.
+              </p>
+            </div>
+            <a class="review-channel-card__link" href="#review-form">Залишити відгук на сайті</a>
+          </article>
+        </div>
+      </section>
+
+      <section class="reviews-section section reveal">
+        <div class="reviews-note">
+          <p class="section-kicker">Google, Bing і видимість</p>
+          <h2 class="reviews-note__title">Як ми збираємо та використовуємо відгуки</h2>
+          <ul class="reviews-note__list">
+            <li>Відгуки на сайті одразу надходять у салон і допомагають швидко реагувати.</li>
+            <li>Публічний рейтинг Google зростає лише через відгуки в Google Business Profile.</li>
+            <li>
+              Bing не підтягує відгуки напряму з Google, тому для Bing важливі власні публічні джерела та профіль Bing Places.
+            </li>
+          </ul>
+          <p class="reviews-note__text">
+            Кнопка Google доступна всім, незалежно від оцінки. Якщо потрібна відповідь, залиште email
+            або зв'яжіться з нами безпосередньо.
+          </p>
+        </div>
+      </section>
+    </main>
 
     <!-- ══════════════════ Підвал сайту (Footer) ══════════════════════════ -->
 
@@ -292,6 +470,7 @@
     <script src="../assets/js/site-shell.js?v=20260801-location-single-line-v14"></script>
     <script src="../assets/js/main.js?v=20260720-prod-v2"></script>
     <script src="../assets/js/page-modules.js?v=20260720-prod-v2"></script>
+    <script src="../assets/js/reviews-page.js?v=20260830-review-funnel-v1"></script>
     <script src="../assets/js/tooltip.js?v=20260330-0001"></script>
     <script src="../assets/js/cookie-consent.js?v=20260620-full-stack-upgrade"></script>
     <script src="../assets/js/newsletter.js?v=20260720-prod-v2"></script>

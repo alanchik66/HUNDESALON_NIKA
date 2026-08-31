@@ -18,6 +18,7 @@ const PRICE_SOURCE_PATHS = [
   'assets/js/price-page-data.js',
   'assets/js/price-page-ru-data.js',
   'assets/js/price-page-locales.js',
+  'assets/js/price-catalog.js',
 ];
 
 const PUBLIC_PAGE_PATHS = [
@@ -72,7 +73,11 @@ function loadPriceCatalog() {
   if (!catalog?.categoriesByLocale) {
     throw new Error('PricePageCatalog.categoriesByLocale was not initialized.');
   }
-  return catalog;
+  const serviceCatalog = sandbox.window.PriceCatalog;
+  if (typeof serviceCatalog?.build !== 'function') {
+    throw new Error('PriceCatalog.build was not initialized.');
+  }
+  return { catalog, serviceCatalog };
 }
 
 function localize(value, locale) {
@@ -93,7 +98,38 @@ function chunks(items, size = 14) {
   return result;
 }
 
-function formatPriceCatalog(catalog) {
+function formatServiceDetails(categories, serviceCatalog, locale) {
+  // Import only descriptions linked by a stable key from the current price page.
+  // The older catalog also contains legacy prices and unlisted service variants:
+  // these must not become new offers or override the current category prices.
+  const publishedServices = new Map();
+  for (const category of categories) {
+    for (const priceRow of category.priceRows || []) {
+      if (!priceRow.key) continue;
+      if (!publishedServices.has(priceRow.key)) publishedServices.set(priceRow.key, []);
+      publishedServices.get(priceRow.key).push({ category, priceRow });
+    }
+  }
+
+  const services = serviceCatalog.build(locale).services;
+  const lines = [];
+  for (const [key, offers] of publishedServices) {
+    const service = services.find(item => item.key === key);
+    if (!service?.note || !service.description) {
+      throw new Error(`Missing canonical service details for ${locale}:${key}.`);
+    }
+    const label = localize(offers[0].priceRow.label, locale);
+    lines.push('', `#### ${label} — service details ####`);
+    lines.push('- These service-specific details take priority over general category care lists. Do not add procedures from other packages.');
+    lines.push(`- Note: ${service.note}`, `- Description: ${service.description}`);
+    for (const { category, priceRow } of offers) {
+      lines.push(`- Price: ${label} — ${localize(priceRow.price, locale)}; Category: ${localize(category.title, locale)}`);
+    }
+  }
+  return lines;
+}
+
+function formatPriceCatalog(catalog, serviceCatalog) {
   const lines = [
     'This section is generated from the same JavaScript catalog used by the live price page. Do not edit it manually.',
     '',
@@ -138,6 +174,7 @@ function formatPriceCatalog(catalog) {
         if (text) lines.push(`- Note: ${text}`);
       }
     }
+    lines.push(...formatServiceDetails(categories, serviceCatalog, locale));
   }
 
   return lines.join('\n');
@@ -271,7 +308,7 @@ export function buildKnowledgeDocument({ template = read(KNOWLEDGE_RELATIVE_PATH
       .filter(relativePath => existsSync(path.join(ROOT, relativePath))),
   ];
   const fingerprint = sourceDigest(sourcePaths);
-  const catalog = loadPriceCatalog();
+  const { catalog, serviceCatalog } = loadPriceCatalog();
 
   let document = normalizeSourceText(template);
   const fingerprintLine = `Generated source fingerprint: sha256:${fingerprint}`;
@@ -286,7 +323,7 @@ export function buildKnowledgeDocument({ template = read(KNOWLEDGE_RELATIVE_PATH
     document,
     '## 6. Canonical published price list ##',
     '## 7.',
-    formatPriceCatalog(catalog),
+    formatPriceCatalog(catalog, serviceCatalog),
   );
   document = replaceSection(
     document,

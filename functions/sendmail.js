@@ -60,6 +60,8 @@ const BOOKING_BEHAVIOUR_EXTRA_MINUTES = Object.freeze({
   aggressive: 60,
 });
 
+const REVIEW_CHANNELS = new Set(['website', 'google', 'facebook', 'instagram', 'telegram', 'whatsapp', 'viber', 'bing']);
+
 const clampBookingMinutes = (value, fallback, min, max) => {
   const parsed = Number.parseInt(String(value || ''), 10);
   if (!Number.isFinite(parsed)) return fallback;
@@ -134,6 +136,12 @@ const addLocalMinutes = (date, time, minutes) => {
   return `${base.toISOString().slice(0, 10)}T${base.toISOString().slice(11, 16)}:00`;
 };
 
+const clampReviewRating = value => {
+  const parsed = Number.parseInt(String(value || ''), 10);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.min(5, Math.max(1, parsed));
+};
+
 /** Строки для ответа на разных языках */
 const COPY = {
   ru: {
@@ -185,6 +193,8 @@ const EMAIL_COPY = {
       petAge: 'Alter/Geburtsdatum',
       petSex: 'Geschlecht',
       petTag: 'Marken-/Anhängernummer',
+      reviewRating: 'Bewertung',
+      reviewChannel: 'Bewertungskanal',
     },
   },
   en: {
@@ -211,6 +221,8 @@ const EMAIL_COPY = {
       petAge: 'Age/date of birth',
       petSex: 'Sex',
       petTag: 'Tag/token number',
+      reviewRating: 'Review rating',
+      reviewChannel: 'Review channel',
     },
   },
   ru: {
@@ -237,6 +249,8 @@ const EMAIL_COPY = {
       petAge: 'Возраст/дата рождения',
       petSex: 'Пол',
       petTag: 'Номер жетона/адресника',
+      reviewRating: 'Оценка',
+      reviewChannel: 'Канал отзыва',
     },
   },
   uk: {
@@ -263,6 +277,8 @@ const EMAIL_COPY = {
       petAge: 'Вік/дата народження',
       petSex: 'Стать',
       petTag: 'Номер жетона/адресника',
+      reviewRating: 'Оцінка',
+      reviewChannel: 'Канал відгуку',
     },
   },
 };
@@ -733,6 +749,9 @@ export async function onRequest(ctx) {
   const petAge = sanitizeLimit(fields.pet_age, 80);
   const petSex = sanitizeLimit(fields.pet_sex, 40);
   const petTagNumber = sanitizeLimit(fields.pet_tag_number, 60);
+  const reviewRating = clampReviewRating(fields.review_rating);
+  const rawReviewChannel = sanitizeLimit(fields.review_channel, 40).toLowerCase();
+  const reviewChannel = REVIEW_CHANNELS.has(rawReviewChannel) ? rawReviewChannel : '';
   const clientRegistrationId = sanitizeLimit(fields.client_registration_id, 120);
   const clientRecordRequired =
     formType === CLIENT_REGISTRATION_FORM_TYPE || (formType === 'booking' && !clientRegistrationId);
@@ -837,8 +856,19 @@ export async function onRequest(ctx) {
           .filter(Boolean)
           .join('\n')
       : '';
+  const reviewSummary =
+    formType === 'feedback' && reviewRating
+      ? [
+          `${emailCopy.field.reviewRating}: ${reviewRating}/5`,
+          reviewChannel ? `${emailCopy.field.reviewChannel}: ${reviewChannel}` : null,
+          message ? `${emailCopy.field.message}: ${message}` : null,
+        ]
+          .filter(Boolean)
+          .join('\n')
+      : '';
   const resolvedMessage =
     registrationSummary ||
+    reviewSummary ||
     message ||
     (formType === 'booking' ? `Booking request: ${service} on ${date} at ${time}` : '');
   const submittedAt = new Date().toISOString();
@@ -877,6 +907,9 @@ export async function onRequest(ctx) {
     pet_age: petAge,
     pet_sex: petSex,
     pet_tag_number: petTagNumber,
+    review_rating: formType === 'feedback' ? String(reviewRating || '') : '',
+    review_channel: formType === 'feedback' ? reviewChannel : '',
+    review_comment: formType === 'feedback' ? message : '',
     message: resolvedMessage,
     source_url: source,
     page_path: requestUrl.pathname,
@@ -949,6 +982,7 @@ export async function onRequest(ctx) {
       booking: 'Termin vereinbaren',
       grooming: 'Frage zu Grooming',
       feedback: 'Feedback',
+      public_review: 'Öffentliche Bewertung',
       partnership: 'Partnerschaft',
       general: 'Allgemeine Frage',
     },
@@ -956,6 +990,7 @@ export async function onRequest(ctx) {
       booking: 'Book an appointment',
       grooming: 'Grooming question',
       feedback: 'Feedback',
+      public_review: 'Public review',
       partnership: 'Partnership',
       general: 'General question',
     },
@@ -963,6 +998,7 @@ export async function onRequest(ctx) {
       booking: 'Запись на услугу',
       grooming: 'Вопрос о груминге',
       feedback: 'Отзыв и обратная связь',
+      public_review: 'Публичный отзыв',
       partnership: 'Партнёрство',
       general: 'Общий вопрос',
     },
@@ -970,6 +1006,7 @@ export async function onRequest(ctx) {
       booking: 'Запис на послугу',
       grooming: 'Питання про грумінг',
       feedback: 'Відгук',
+      public_review: 'Публічний відгук',
       partnership: 'Партнерство',
       general: 'Загальне питання',
     },

@@ -1,6 +1,6 @@
 # HUNDESALON_NIKA Website Knowledge for the SendPulse AI Agent #
 
-Generated source fingerprint: sha256:1b26a37b5e39aed266cc8ecab8744dbb8e92b1af0be57ec832d348fa311c9499
+Generated source fingerprint: sha256:73f9aba23b93b386793448705cdb6f6858dc4545a71848df3997e993a99818c6
 
 This document is the factual knowledge base for the customer-facing SendPulse live-chat AI agent. It covers the public HUNDESALON_NIKA website in German, English, Russian, and Ukrainian.
 
@@ -19,7 +19,9 @@ Mandatory behavior:
 - The most recent message language has priority over the page language and earlier messages.
 - In German replies, never use the English terms `Grooming` or `Groomer`. Use the professional German term that fits the context: `Hundepflege`, `Fellpflege`, `Komplettpflege`, `Hundefriseur` or `Pflegefachkraft`.
 - If another language is used, politely offer German, English, Russian, or Ukrainian.
-- Be concise, warm, professional, factual, and practical.
+- Answer only the customer's actual question in 1-3 short sentences, at most 60 words by default. Use clear everyday words; lead with the answer, without introductions, repetition or unsolicited lists of rules.
+- Give more detail only when explicitly requested and only on that topic. Preserve relevant age limits, conditional care and starting-price qualifiers even in short answers.
+- This knowledge document is internal reference material. Never reproduce the full document or entire reference blocks in a customer reply.
 - Ask no more than one focused clarification at a time.
 - Never invent a price, appointment, available time, discount, opening date, policy, medical claim, or service.
 - Never say that a booking is confirmed. Website submissions are booking requests until the salon explicitly confirms them.
@@ -93,7 +95,7 @@ Depending on package, it can include professional washing and drying, brushing, 
 
 ### Puppy introduction ###
 
-The first puppy grooming is a gentle introduction to the salon and workstation. It can include light brushing, careful bathing and drying, nails, eye and ear care, hygiene, and light coat shaping.
+Use the localized first puppy visit details in section 6 for the age limit, conditional care and current starting price. Do not infer its procedures from adult grooming packages or general category care lists. If a procedure is not listed for this service, ask a salon specialist instead of promising it.
 
 ### Express deshedding and coat-change care ###
 
@@ -143,25 +145,28 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Summary: Sorgfältige Pflege für lockiges und voluminöses Fell.
 - Breeds 1: Toypudel, Zwergpudel, Kleinpudel, Mittelpudel, Bichon Frisé, Coton de Tuléar, Löwchen, Maltipoo, Yorkipoo, Shih-Poo, Cavapoo, Cockapoo, Havapoo, Poochon
 - Breeds 2: Kleine und mittelgroße Schnoodle, Andere Pudel- und Bichon-Mischlinge
-- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Konditionierung, Schneiden und Formen
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Konditionierung, Schneiden und Formen, Welpen-Eingewöhnung
 - Price: Komplettpflege — ab 90 €
 - Price: Baden + Hygienepflege — ab 70 €
+- Price: Welpen-Eingewöhnung — ab 50 €
 - Note: Bei Pudeln und Bichons umfasst die Komplettpflege Beratung, Ausbürsten, professionelles Waschen, Konditionierung und Trocknen, Schneiden und Formen des Fells, hygienische Pflege, Augen-, Ohren- und Krallenpflege sowie das abschließende Finish des Hundes.
 - Note: Baden und Hygienepflege umfassen professionelles Waschen und Trocknen, Ausbürsten, Krallenpflege, Ohrenreinigung sowie den hygienischen Schnitt an Pfoten, Fang, im Leistenbereich und unter der Rute.
 
 #### 3. Spitze ####
 - Summary: Pflege von dichtem Unterfell, natürlichem Volumen und Form.
 - Breeds: Pomeranian / Zwergspitz, Deutscher Spitz, Zwergspitz, Deutscher Spitz, klein, Deutscher Spitz, mittel, Deutscher Spitz, groß, Wolfsspitz / Keeshond, Japan-Spitz, Finnischer Spitz
-- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Unterwolle entfernen, Fellpflege, Schneiden und Formen
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Unterwolle entfernen, Fellpflege, Schneiden und Formen, Welpen-Eingewöhnung
 - Price: Komplettpflege — ab 90 €
+- Price: Welpen-Eingewöhnung — ab 50 €
 - Note: Bei Spitzrassen umfasst die Komplettpflege Baden, professionelles Trocknen, gründliches Ausbürsten der Unterwolle, Fellpflege und Formgebung sowie Augen-, Ohren-, Krallen- und Hygienepflege.
 
 #### 4. Spaniels ####
 - Summary: Form, Volumen und ein sauberes Finish für Spaniels.
 - Breeds: Englischer Cocker Spaniel, Amerikanischer Cocker Spaniel, Cavalier King Charles Spaniel, King Charles Spaniel, Englischer Springer Spaniel, Welsh Springer Spaniel, Russischer Jagdspaniel, Field Spaniel, Clumber Spaniel, Sussex Spaniel, Andere Spaniels
-- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Schneiden und Formen
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Schneiden und Formen, Welpen-Eingewöhnung
 - Price: Komplettpflege — ab 105 €
 - Price: Baden + Hygienepflege — ab 85 €
+- Price: Welpen-Eingewöhnung — ab 50 €
 - Note: Komplettpflege umfasst Beratung, Ausbürsten, professionelles Waschen und Trocknen, Schneiden und Formen des Fells, hygienische Pflege, Augen-, Ohren- und Krallenpflege sowie das abschließende Finish des Hundes.
 - Note: Baden und Hygienepflege umfassen professionelles Waschen und Trocknen, Ausbürsten, Krallenpflege, Ohrenreinigung sowie den hygienischen Schnitt an Pfoten, Fang, im Leistenbereich und unter der Rute.
 
@@ -169,10 +174,11 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Summary: Schneiden oder Handstripping passend zur Struktur des rauen Fells.
 - Breeds 1: West Highland White Terrier, Cairn-Terrier, Jack Russell Terrier – rauhaarig, Parson Russell Terrier – rauhaarig, Border Terrier, Norfolk Terrier, Norwich Terrier, Rauhaar-Foxterrier, Welsh Terrier, Irish Terrier, Airedale Terrier, Lakeland Terrier, Scottish Terrier, Sealyham Terrier
 - Breeds 2: Kerry Blue Terrier, Irish Soft Coated Wheaten Terrier, Australian Terrier, Zwergschnauzer, Mittelschnauzer, Riesenschnauzer, Brüsseler Griffon, Belgischer Griffon, Brabanter / Petit Brabançon, Affenpinscher, Rauhaardackel, Rauhaar-Zwergdackel
-- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Schneiden und Formen, Trimmen / Handtrimmen
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Schneiden und Formen, Trimmen / Handtrimmen, Welpen-Eingewöhnung
 - Price: Schneiden — ab 90 €
 - Price: Trimmen / Handstripping — auf Anfrage
 - Price: Baden + Hygienepflege — ab 70 €
+- Price: Welpen-Eingewöhnung — ab 50 €
 - Note: Schneiden und Formen umfassen Beratung, professionelles Waschen und Trocknen, Fellpflege, hygienische Pflege sowie Augen-, Ohren- und Krallenpflege.
 - Note: Handstripping wird auf Anfrage und abhängig von Fellstruktur und Fellzustand angeboten.
 - Note: Baden und Hygienepflege umfassen professionelles Waschen und Trocknen, Ausbürsten, Krallenpflege, Ohrenreinigung sowie den hygienischen Schnitt an Pfoten, Fang, im Leistenbereich und unter der Rute.
@@ -182,11 +188,12 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Breeds 1: Kurzhaar-Chihuahua, Glatthaar-Russischer Toy, Prager Rattler, Toy-Terrier, Zwergpinscher, Französische Bulldogge, Mops, Boston Terrier, Englische Bulldogge, Beagle, Kurzhaar-Dackel, Kurzhaar-Zwergdackel, Italienisches Windspiel, Basenji
 - Breeds 2: Whippet, Deutscher Pinscher, American Staffordshire Terrier / Amstaff, Staffordshire Bullterrier, Bullterrier, Miniatur-Bullterrier, American Pit Bull Terrier, American Bully, Shar Pei, Xoloitzcuintle – mittlere Größe, Dobermann, Rottweiler, Boxer, Dalmatiner
 - Breeds 3: Weimaraner, Rhodesian Ridgeback, Cane Corso, American Bulldog, Dogo Argentino, Bullmastiff, Deutsche Dogge, Deutsch-Kurzhaar, Ungarischer Vorstehhund / Vizsla, English Pointer, Greyhound, Podenco Ibicenco, Podenco Canario, Xoloitzcuintle – Standardgröße
-- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Fellpflege
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Fellpflege, Welpen-Eingewöhnung
 - Price: XS — ab 60 €
 - Price: S — ab 70 €
 - Price: M — ab 80 €
 - Price: L — ab 100 €
+- Price: Welpen-Eingewöhnung — ab 50 €
 - Note: Die Komplettpflege umfasst Baden, professionelles Trocknen, Hygienepflege, Augen- und Ohrenpflege, Krallenschneiden, Ausbürsten und Fellpflege.
 
 #### 7. Große Hunde ####
@@ -194,8 +201,9 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Breeds 1: Labrador Retriever, Golden Retriever, Deutscher Schäferhund, Belgischer Schäferhund, Australischer Schäferhund, Border Collie, Shetland Sheepdog / Sheltie, Langhaar-Collie, Siberian Husky, Alaskan Malamute, Samojede, Chow-Chow, Akita Inu, Amerikanische Akita
 - Breeds 2: Berner Sennenhund, Großer Schweizer Sennenhund, Neufundländer, Leonberger, Bernhardiner, Bobtail, Hovawart, Kaukasischer Owtscharka, Zentralasiatischer Owtscharka, Pyrenäenberghund, Komondor, Kuvasz, Bergamasker Hirtenhund, Briard
 - Breeds 3: Russischer Schwarzer Terrier, Großpudel, Große Labradoodle, Große Goldendoodle, Große Bernedoodle, Große Australian Labradoodle, Andere große Rassen mit großem Fellvolumen
-- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Unterwolle entfernen, Fellpflege
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Unterwolle entfernen, Fellpflege, Welpen-Eingewöhnung
 - Price: Komplettpflege — ab 130 €
+- Price: Welpen-Eingewöhnung — ab 50 €
 - Note: Die Komplettpflege umfasst Waschen, professionelles Trocknen, gründliches Ausbürsten, Fellpflege sowie Augen-, Ohren-, Krallen- und Hygienepflege.
 
 #### Katzen – Ausbürsten / Schneiden ####
@@ -234,6 +242,18 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Summary: Der Preis „ab“ hängt vom tatsächlichen Arbeitsaufwand ab.
 - Breeds: Alle Tiere
 
+#### Welpen-Eingewöhnung — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Sanfter Einstieg in die Fellpflege für Welpen bis 4 Monate.
+- Description: Kennenlernen der Pflegeperson, behutsame Gewöhnung an den Pflegetisch, die Bürste und das Föhngeräusch sowie leichte Pflege. Wenn der Welpe ruhig bleibt und die Schritte zulässt, können wir ihn auch vollständig bürsten, baden und sanft antrocknen. Ist er sehr lebhaft oder noch nicht bereit, konzentrieren wir uns auf die Eingewöhnung und gehen in seinem Tempo vor. Entscheidend ist, dass er sich sicher fühlt; nicht alle Pflegeschritte müssen beim ersten Besuch stattfinden.
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: 1. Kleine Hunde – ständig wachsendes Fell
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: 2. Pudel, Bichons und Pudeltypen
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: 3. Spitze
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: 4. Spaniels
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: 5. Rauhaarige Rassen
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: 6. Kurzhaarige Hunde
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: 7. Große Hunde
+
 ### EN — published catalog ###
 
 #### 1. Small dogs — continuously growing coat ####
@@ -251,25 +271,28 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Summary: Detailed care for curly and voluminous coats.
 - Breeds 1: Toy Poodle, Miniature Poodle, Small Poodle, Medium Poodle, Bichon Frise, Coton de Tulear, Löwchen, Maltipoo, Yorkipoo, Shih-Poo, Cavapoo, Cockapoo, Havapoo, Poochon
 - Breeds 2: Small and medium Schnoodle, Other poodle and bichon mixes
-- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Conditioning, Clipping and styling
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Conditioning, Clipping and styling, Puppy introduction grooming
 - Price: Full grooming — from €90
 - Price: Bath + hygiene care — from €70
+- Price: First puppy grooming — from €50
 - Note: For poodles and bichons, full grooming includes a consultation, brushing, professional washing, conditioning and drying, clipping and coat styling, hygiene care, eye, ear and nail care, and the dog’s final finish.
 - Note: Bath and hygiene care include professional washing and drying, brushing, nail care, ear cleaning, and a hygiene trim of the paws, muzzle, groin area, and under-tail area.
 
 #### 3. Spitz breeds ####
 - Summary: Care for dense undercoat, natural volume and shape.
 - Breeds: Pomeranian / German Spitz, German Spitz, dwarf / Zwergspitz, German Spitz, small, German Spitz, medium, German Spitz, large, Wolfspitz / Keeshond, Japanese Spitz, Finnish Spitz
-- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Undercoat removal, Coat care, Clipping and styling
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Undercoat removal, Coat care, Clipping and styling, Puppy introduction grooming
 - Price: Full grooming — from €90
+- Price: First puppy grooming — from €50
 - Note: For Spitz breeds, full grooming includes bathing, professional drying, thorough undercoat brushing, coat care and shape finishing, plus eye, ear, nail and hygiene care.
 
 #### 4. Spaniels ####
 - Summary: Shape, volume and a neat finish for spaniels.
 - Breeds: English Cocker Spaniel, American Cocker Spaniel, Cavalier King Charles Spaniel, King Charles Spaniel, English Springer Spaniel, Welsh Springer Spaniel, Russian Hunting Spaniel, Field Spaniel, Clumber Spaniel, Sussex Spaniel, Other spaniels
-- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Clipping and styling
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Clipping and styling, Puppy introduction grooming
 - Price: Full grooming — from €105
 - Price: Bath + hygiene care — from €85
+- Price: First puppy grooming — from €50
 - Note: Full grooming includes a consultation, brushing, professional washing and drying, clipping and coat styling, hygiene care, eye, ear and nail care, and the dog’s final finish.
 - Note: Bath and hygiene care include professional washing and drying, brushing, nail care, ear cleaning, and a hygiene trim of the paws, muzzle, groin area, and under-tail area.
 
@@ -277,10 +300,11 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Summary: Clipping or hand stripping according to the wire coat structure.
 - Breeds 1: West Highland White Terrier, Cairn Terrier, Jack Russell Terrier — wire-haired, Parson Russell Terrier — wire-haired, Border Terrier, Norfolk Terrier, Norwich Terrier, Wire Fox Terrier, Welsh Terrier, Irish Terrier, Airedale Terrier, Lakeland Terrier, Scottish Terrier, Sealyham Terrier
 - Breeds 2: Kerry Blue Terrier, Irish Soft Coated Wheaten Terrier, Australian Terrier, Miniature Schnauzer, Standard Schnauzer, Giant Schnauzer, Brussels Griffon, Belgian Griffon, Brabançon / Petit Brabançon, Affenpinscher, Wire-haired Dachshund, Wire-haired Miniature Dachshund
-- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Clipping and styling, Hand stripping
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Clipping and styling, Hand stripping, Puppy introduction grooming
 - Price: Clipping — from €90
 - Price: Hand stripping — on request
 - Price: Bath + hygiene care — from €70
+- Price: First puppy grooming — from €50
 - Note: Clipping and styling include a consultation, professional washing and drying, coat shaping, hygiene care, and eye, ear and nail care.
 - Note: Hand stripping is available on request and depends on coat structure and condition.
 - Note: Bath and hygiene care include professional washing and drying, brushing, nail care, ear cleaning, and a hygiene trim of the paws, muzzle, groin area, and under-tail area.
@@ -290,11 +314,12 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Breeds 1: Short-haired Chihuahua, Russian Toy — smooth coat, Prague Ratter, Toy Terrier, Miniature Pinscher, French Bulldog, Pug, Boston Terrier, English Bulldog, Beagle, Short-haired Dachshund, Short-haired Miniature Dachshund, Italian Greyhound, Basenji
 - Breeds 2: Whippet, German Pinscher, American Staffordshire Terrier / Amstaff, Staffordshire Bull Terrier, Bull Terrier, Miniature Bull Terrier, American Pit Bull Terrier, American Bully, Shar Pei, Xoloitzcuintli — medium size, Dobermann, Rottweiler, Boxer, Dalmatian
 - Breeds 3: Weimaraner, Rhodesian Ridgeback, Cane Corso, American Bulldog, Dogo Argentino, Bullmastiff, Great Dane, German Shorthaired Pointer, Hungarian Vizsla, English Pointer, Greyhound, Ibizan Hound, Presa Canario, Xoloitzcuintli — standard size
-- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Coat care
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Coat care, Puppy introduction grooming
 - Price: XS — from €60
 - Price: S — from €70
 - Price: M — from €80
 - Price: L — from €100
+- Price: First puppy grooming — from €50
 - Note: Full care includes bathing, professional drying, hygiene care, eye and ear care, nail trimming, brushing, and coat care.
 
 #### 7. Large dogs ####
@@ -302,8 +327,9 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Breeds 1: Labrador Retriever, Golden Retriever, German Shepherd, Belgian Shepherd, Australian Shepherd, Border Collie, Shetland Sheepdog / Sheltie, Rough Collie, Siberian Husky, Alaskan Malamute, Samoyed, Chow Chow, Akita Inu, American Akita
 - Breeds 2: Bernese Mountain Dog, Greater Swiss Mountain Dog, Newfoundland, Leonberger, Saint Bernard, Old English Sheepdog, Hovawart, Caucasian Shepherd, Central Asian Shepherd, Great Pyrenees, Komondor, Kuvasz, Bergamasco Shepherd, Briard
 - Breeds 3: Russian Black Terrier, Standard Poodle, Large Labradoodle, Large Goldendoodle, Large Bernedoodle, Large Australian Labradoodle, Other large breeds with a substantial coat volume
-- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Undercoat removal, Coat care
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Undercoat removal, Coat care, Puppy introduction grooming
 - Price: Full care — from €130
+- Price: First puppy grooming — from €50
 - Note: Full care includes washing, professional drying, thorough brushing, coat care, and eye, ear, nail and hygiene care.
 
 #### Cats — brushing / clipping ####
@@ -342,6 +368,18 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Summary: Prices are “from” and depend on the actual amount of work.
 - Breeds: All animals
 
+#### First puppy grooming — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: A gentle introduction to grooming for puppies up to 4 months old.
+- Description: Meeting the groomer, gently getting used to the grooming table, brush and sound of the dryer, and light care. If the puppy stays calm and allows it, we can also brush the whole coat, give a full bath and gently dry the coat. If the puppy is very lively or not yet ready, we focus on familiarisation and go at their pace. The priority is helping the puppy feel safe, rather than completing every grooming step on the first visit.
+- Price: First puppy grooming — from €50; Category: 1. Small dogs — continuously growing coat
+- Price: First puppy grooming — from €50; Category: 2. Poodles, bichons and poodle-type breeds
+- Price: First puppy grooming — from €50; Category: 3. Spitz breeds
+- Price: First puppy grooming — from €50; Category: 4. Spaniels
+- Price: First puppy grooming — from €50; Category: 5. Wire-coated breeds
+- Price: First puppy grooming — from €50; Category: 6. Short-coated dogs
+- Price: First puppy grooming — from €50; Category: 7. Large dogs
+
 ### RU — published catalog ###
 
 #### 1. Маленькие собаки — постоянно растущая шерсть ####
@@ -358,25 +396,28 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Summary: Тщательный уход за кудрявой и объёмной шерстью.
 - Breeds 1: Той-пудель, Карликовый пудель, Малый пудель, Средний пудель, Бишон-фризе, Котон-де-тулеар, Лёвхен, Мальтипу, Йоркипу, Ши-пу, Кавапу, Кокапу, Хавапу, Пучон
 - Breeds 2: Небольшие и средние Schnoodle, Другие пудельные и бишоновые метисы
-- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Кондиционирование, Стрижка и оформление
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Кондиционирование, Стрижка и оформление, Знакомство щенка с грумингом
 - Price: Комплексный груминг — от 90 €
 - Price: Купание + гигиенический уход — от 70 €
+- Price: Первый груминг щенка — от 50 €
 - Note: Полный груминг для пуделей и бишонов включает консультацию, расчёсывание, профессиональное мытьё, кондиционирование и сушку, стрижку и оформление шерсти, гигиеническую обработку, уход за ушами и когтями и финальное оформление собаки.
 - Note: Услуга «Купание + гигиенический уход» включает профессиональное мытьё и сушку, расчёсывание, обработку когтей, очистку ушей, гигиеническую стрижку лап, морды, паховой зоны и зоны под хвостом.
 
 #### 3. Шпицы ####
 - Summary: Работа с плотным подшёрстком, естественным объёмом и формой.
 - Breeds: Померанский шпиц / Pomeranian, Немецкий шпиц карликовый / Zwergspitz, Немецкий шпиц малый, Немецкий шпиц средний, Немецкий шпиц большой, Вольфшпиц / Keeshond, Японский шпиц, Финский шпиц
-- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Удаление подшерстка, Уход за шерстью, Стрижка и оформление
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Удаление подшерстка, Уход за шерстью, Стрижка и оформление, Знакомство щенка с грумингом
 - Price: Комплексный груминг — от 90 €
+- Price: Первый груминг щенка — от 50 €
 - Note: Комплексный груминг для шпицев включает купание, профессиональную сушку, тщательное вычёсывание подшёрстка, уход за шерстью и оформление формы, а также уход за ушами и когтями и гигиенический уход.
 
 #### 4. Спаниели ####
 - Summary: Форма, объём и аккуратное оформление шерсти спаниелей.
 - Breeds: Английский кокер-спаниель, Американский кокер-спаниель, Кавалер-кинг-чарльз-спаниель, Кинг-чарльз-спаниель, Английский спрингер-спаниель, Вельш-спрингер-спаниель, Русский охотничий спаниель, Филд-спаниель, Кламбер-спаниель, Суссекс-спаниель, Другие спаниели
-- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Стрижка и оформление
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Стрижка и оформление, Знакомство щенка с грумингом
 - Price: Комплексный груминг — от 105 €
 - Price: Купание + гигиенический уход — от 85 €
+- Price: Первый груминг щенка — от 50 €
 - Note: Полный груминг включает консультацию, расчёсывание, профессиональное мытьё и сушку, стрижку и оформление шерсти, гигиеническую обработку, уход за ушами и когтями и финальное оформление собаки.
 - Note: Услуга «Купание + гигиенический уход» включает профессиональное мытьё и сушку, расчёсывание, обработку когтей, очистку ушей, гигиеническую стрижку лап, морды, паховой зоны и зоны под хвостом.
 
@@ -384,10 +425,11 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Summary: Стрижка или ручной тримминг с учётом структуры жёсткой шерсти.
 - Breeds 1: Вест-хайленд-уайт-терьер, Керн-терьер, Джек-рассел-терьер — жесткошёрстный, Парсон-рассел-терьер — жесткошёрстный, Бордер-терьер, Норфолк-терьер, Норвич-терьер, Фокстерьер жесткошёрстный, Вельштерьер, Ирландский терьер, Эрдельтерьер, Лейкленд-терьер, Шотландский терьер, Силихем-терьер
 - Breeds 2: Керри-блю-терьер, Ирландский мягкошерстный пшеничный терьер, Австралийский терьер, Цвергшнауцер, Миттельшнауцер, Ризеншнауцер, Брюссельский гриффон, Бельгийский гриффон, Брабансон / Petit Brabançon, Аффенпинчер, Такса жесткошёрстная, Цвергтакса жесткошёрстная
-- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Стрижка и оформление, Тримминг / ручной тримминг
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Стрижка и оформление, Тримминг / ручной тримминг, Знакомство щенка с грумингом
 - Price: Стрижка — от 90 €
 - Price: Тримминг / Handstripping — по запросу
 - Price: Купание + гигиенический уход — от 70 €
+- Price: Первый груминг щенка — от 50 €
 - Note: Стрижка и оформление включают консультацию, профессиональное мытьё и сушку, оформление шерсти, гигиеническую обработку, уход за ушами и когтями и финальное оформление собаки.
 - Note: Тримминг / Handstripping выполняется по запросу с учётом структуры и состояния шерсти.
 - Note: Услуга «Купание + гигиенический уход» включает профессиональное мытьё и сушку, расчёсывание, обработку когтей, очистку ушей, гигиеническую стрижку лап, морды, паховой зоны и зоны под хвостом.
@@ -397,11 +439,12 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Breeds 1: Чихуахуа короткошёрстный, Русский той гладкошёрстный, Пражский крысарик, Той-терьер, Карликовый пинчер, Французский бульдог, Мопс, Бостон-терьер, Английский бульдог, Бигль, Такса короткошёрстная, Цвергтакса короткошёрстная, Левретка, Басенджи
 - Breeds 2: Уиппет, Немецкий пинчер, Американский стаффордширский терьер / Amstaff, Стаффордширский бультерьер, Бультерьер, Миниатюрный бультерьер, Американский питбультерьер, American Bully, Шарпей, Ксолоитцкуинтли среднего размера, Доберман, Ротвейлер, Боксёр, Далматин
 - Breeds 3: Веймаранер, Родезийский риджбек, Кане-корсо, Американский бульдог, Аргентинский дог, Бульмастиф, Немецкий дог, Курцхаар, Венгерская выжла, Английский пойнтер, Грейхаунд, Поденко ибиценко, Поденко канарио, Ксолоитцкуинтли стандартного размера
-- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Уход за шерстью
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Уход за шерстью, Знакомство щенка с грумингом
 - Price: XS — от 60 €
 - Price: S — от 70 €
 - Price: M — от 80 €
 - Price: L — от 100 €
+- Price: Первый груминг щенка — от 50 €
 - Note: Полный комплекс ухода включает купание, профессиональную сушку, вычёсывание, уход за шерстью, уход за глазами и ушами, обработку когтей и гигиенический уход.
 - Note: Размерная группа и ориентировочная стоимость определяются по выбранной породе; точная цена подтверждается после оценки питомца и объёма работы.
 
@@ -410,8 +453,9 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Breeds 1: Лабрадор-ретривер, Голден-ретривер, Немецкая овчарка, Бельгийская овчарка, Австралийская овчарка, Бордер-колли, Шелти, Колли длинношёрстный, Сибирский хаски, Аляскинский маламут, Самоед, Чау-чау, Акита-ину, Американская акита
 - Breeds 2: Бернский зенненхунд, Большой швейцарский зенненхунд, Ньюфаундленд, Леонбергер, Сенбернар, Бобтейл, Ховаварт, Кавказская овчарка, Среднеазиатская овчарка, Пиренейская горная собака, Комондор, Кувас, Бергамская овчарка, Бриар
 - Breeds 3: Русский чёрный терьер, Большой пудель, Крупные Labradoodle, Крупные Goldendoodle, Крупные Bernedoodle, Крупные Australian Labradoodle, Другие крупные породы с большим объёмом шерсти
-- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Удаление подшерстка, Уход за шерстью
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Удаление подшерстка, Уход за шерстью, Знакомство щенка с грумингом
 - Price: Комплексный уход — от 130 €
+- Price: Первый груминг щенка — от 50 €
 - Note: В комплекс входят мойка, профессиональная сушка, тщательное вычёсывание, уход за шерстью, уход за глазами и ушами, обработка когтей и гигиенический уход.
 
 #### Кошки — вычёсывание / стрижка ####
@@ -449,6 +493,18 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Summary: Стоимость указана «от» и зависит от фактического объёма работы.
 - Breeds: Все животные
 
+#### Первый груминг щенка — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Бережное знакомство с грумингом для щенков до 4 месяцев.
+- Description: Знакомство с мастером, постепенное привыкание к груминг-столу, расчёске и звуку фена, лёгкий уход. Если щенок спокоен и позволяет проводить процедуры, можем полностью расчесать его, искупать и бережно подсушить. Если он слишком активен или пока не готов, сосредоточимся на знакомстве и будем двигаться в его темпе. Главная задача — помочь щенку почувствовать себя в безопасности, а не выполнить все процедуры за первый визит.
+- Price: Первый груминг щенка — от 50 €; Category: 1. Маленькие собаки — постоянно растущая шерсть
+- Price: Первый груминг щенка — от 50 €; Category: 2. Пудели, бишоны и пудельные породы
+- Price: Первый груминг щенка — от 50 €; Category: 3. Шпицы
+- Price: Первый груминг щенка — от 50 €; Category: 4. Спаниели
+- Price: Первый груминг щенка — от 50 €; Category: 5. Жёсткошёрстные породы
+- Price: Первый груминг щенка — от 50 €; Category: 6. Короткошёрстные собаки
+- Price: Первый груминг щенка — от 50 €; Category: 7. Крупные собаки
+
 ### UK — published catalog ###
 
 #### 1. Маленькі собаки — шерсть, що постійно росте ####
@@ -466,25 +522,28 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Summary: Ретельний догляд за кучерявою та об’ємною шерстю.
 - Breeds 1: Той-пудель, Карликовий пудель, Малий пудель, Середній пудель, Бішон-фрізе, Котон-де-тулеар, Левхен, Мальтіпу, Йоркіпу, Ши-пу, Кавапу, Кокапу, Хавапу, Пучон
 - Breeds 2: Невеликі та середні Schnoodle, Інші пудельні та бішонові метиси
-- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Кондиціонування, Стрижка та оформлення
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Кондиціонування, Стрижка та оформлення, Знайомство цуценяти з грумінгом
 - Price: Комплексний грумінг — від 90 €
 - Price: Купання + гігієнічний догляд — від 70 €
+- Price: Перший грумінг цуценяти — від 50 €
 - Note: Для пуделів і бішонів повний грумінг включає консультацію, розчісування, професійне миття, кондиціонування та сушіння, стрижку й оформлення шерсті, гігієнічний догляд, догляд за очима, вухами та кігтями і фінальне оформлення собаки.
 - Note: Купання та гігієнічний догляд включають професійне миття й сушіння, розчісування, обробку кігтів, очищення вух, гігієнічну стрижку лап, морди, пахової зони та зони під хвостом.
 
 #### 3. Шпіци ####
 - Summary: Догляд за щільним підшерстям, природним об’ємом і формою.
 - Breeds: Померанський шпіц / Pomeranian, Німецький шпіц карликовий / Zwergspitz, Німецький шпіц малий, Німецький шпіц середній, Німецький шпіц великий, Вольфшпіц / Keeshond, Японський шпіц, Фінський шпіц
-- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Видалення підшерстя, Догляд за шерстю, Стрижка та оформлення
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Видалення підшерстя, Догляд за шерстю, Стрижка та оформлення, Знайомство цуценяти з грумінгом
 - Price: Комплексний грумінг — від 90 €
+- Price: Перший грумінг цуценяти — від 50 €
 - Note: Для шпіців комплексний грумінг включає купання, професійне сушіння, ретельне вичісування підшерстя, догляд за шерстю та оформлення форми, а також догляд за очима, вухами, кігтями і гігієнічний догляд.
 
 #### 4. Спанієлі ####
 - Summary: Форма, об’єм та акуратне оформлення шерсті спанієлів.
 - Breeds: Англійський кокер-спанієль, Американський кокер-спанієль, Кавалер-кинг-чарльз-спанієль, Кінг-чарльз-спанієль, Англійський спрингер-спанієль, Вельш-спрингер-спанієль, Російський мисливський спанієль, Філд-спанієль, Кламбер-спанієль, Суссекс-спанієль, Інші спанієлі
-- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Стрижка та оформлення
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Стрижка та оформлення, Знайомство цуценяти з грумінгом
 - Price: Комплексний грумінг — від 105 €
 - Price: Купання + гігієнічний догляд — від 85 €
+- Price: Перший грумінг цуценяти — від 50 €
 - Note: Повний грумінг включає консультацію, розчісування, професійне миття та сушіння, стрижку й оформлення шерсті, гігієнічний догляд, догляд за очима, вухами та кігтями і фінальне оформлення собаки.
 - Note: Купання та гігієнічний догляд включають професійне миття й сушіння, розчісування, обробку кігтів, очищення вух, гігієнічну стрижку лап, морди, пахової зони та зони під хвостом.
 
@@ -492,10 +551,11 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Summary: Стрижка або ручний тримінг з урахуванням структури жорсткої шерсті.
 - Breeds 1: Вест-хайленд-вайт-тер’єр, Керн-тер’єр, Джек-рассел-тер’єр — жорсткошерстий, Парсон-рассел-тер’єр — жорсткошерстий, Бордер-тер’єр, Норфолк-тер’єр, Норвіч-тер’єр, Жорсткошерстий фокстер’єр, Вельштер’єр, Ірландський тер’єр, Ердельтер’єр, Лейкленд-тер’єр, Шотландський тер’єр, Сіліхем-тер’єр
 - Breeds 2: Керрі-блю-тер’єр, Ірландський м’якошерстий пшеничний тер’єр, Австралійський тер’єр, Цвергшнауцер, Міттельшнауцер, Різеншнауцер, Брюссельський гриффон, Бельгійський гриффон, Брабансон / Petit Brabançon, Аффенпінчер, Жорсткошерста такса, Жорсткошерста цвергтакса
-- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Стрижка та оформлення, Тримінг / ручний тримінг
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Стрижка та оформлення, Тримінг / ручний тримінг, Знайомство цуценяти з грумінгом
 - Price: Стрижка — від 90 €
 - Price: Тримінг / ручний тримінг — за запитом
 - Price: Купання + гігієнічний догляд — від 70 €
+- Price: Перший грумінг цуценяти — від 50 €
 - Note: Стрижка та оформлення включають консультацію, професійне миття й сушіння, догляд та оформлення шерсті, гігієнічний догляд, догляд за очима, вухами та кігтями.
 - Note: Ручний тримінг виконується за запитом з урахуванням структури та стану шерсті.
 - Note: Купання та гігієнічний догляд включають професійне миття й сушіння, розчісування, обробку кігтів, очищення вух, гігієнічну стрижку лап, морди, пахової зони та зони під хвостом.
@@ -505,11 +565,12 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Breeds 1: Гладкошерстий чихуахуа, Російський той — гладкошерстий, Празький крисарик, Той-тер’єр, Карликовий пінчер, Французький бульдог, Мопс, Бостон-тер’єр, Англійський бульдог, Бігль, Гладкошерста такса, Гладкошерста цвергтакса, Левретка, Басенджі
 - Breeds 2: Віппет, Німецький пінчер, Американський стаффордширський тер’єр / Amstaff, Стаффордширський бультер’єр, Бультер’єр, Мініатюрний бультер’єр, Американський пітбультер’єр, American Bully, Шарпей, Ксолойтцкуінтлі середнього розміру, Доберман, Ротвейлер, Боксер, Далматин
 - Breeds 3: Веймаранер, Родезійський риджбек, Кане-корсо, Американський бульдог, Аргентинський дог, Бульмастиф, Німецький дог, Курцхаар, Угорська вижла, Англійський пойнтер, Грейхаунд, Поденко ібісенко, Поденко канаріо, Ксолойтцкуінтлі стандартного розміру
-- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Догляд за шерстю
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Догляд за шерстю, Знайомство цуценяти з грумінгом
 - Price: XS — від 60 €
 - Price: S — від 70 €
 - Price: M — від 80 €
 - Price: L — від 100 €
+- Price: Перший грумінг цуценяти — від 50 €
 - Note: Повний догляд включає купання, професійне сушіння, гігієнічний догляд, догляд за очима й вухами, обробку кігтів, вичісування та догляд за шерстю.
 
 #### 7. Великі собаки ####
@@ -517,8 +578,9 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Breeds 1: Лабрадор-ретривер, Голден-ретривер, Німецька вівчарка, Бельгійська вівчарка, Австралійська вівчарка, Бордер-колі, Шелті, Довгошерстий колі, Сибірський хаскі, Аляскинський маламут, Самоїд, Чау-чау, Акіта-іну, Американська акіта
 - Breeds 2: Бернський зенненхунд, Великий швейцарський зенненхунд, Ньюфаундленд, Леонбергер, Сенбернар, Бобтейл, Ховаварт, Кавказька вівчарка, Середньоазійська вівчарка, Піренейський гірський собака, Комондор, Кувас, Бергамська вівчарка, Бріар
 - Breeds 3: Російський чорний тер’єр, Великий пудель, Великі Labradoodle, Великі Goldendoodle, Великі Bernedoodle, Великі Australian Labradoodle, Інші великі породи з великим об’ємом шерсті
-- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Видалення підшерстя, Догляд за шерстю
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Видалення підшерстя, Догляд за шерстю, Знайомство цуценяти з грумінгом
 - Price: Комплексний догляд — від 130 €
+- Price: Перший грумінг цуценяти — від 50 €
 - Note: Повний догляд включає миття, професійне сушіння, ретельне вичісування, догляд за шерстю, очі, вуха, кігті та гігієнічний догляд.
 
 #### Коти — вичісування / стрижка ####
@@ -556,6 +618,18 @@ This detailed catalog is the only authoritative website price source. Generic ov
 #### Важлива інформація ####
 - Summary: Вартість вказана «від» і залежить від фактичного обсягу роботи.
 - Breeds: Усі тварини
+
+#### Перший грумінг цуценяти — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Дбайливе знайомство з грумінгом для цуценят до 4 місяців.
+- Description: Знайомство з майстром, поступове звикання до грумінг-столу, гребінця та звуку фена, легкий догляд. Якщо цуценя спокійне й дозволяє проводити процедури, можемо повністю розчесати його, викупати та дбайливо підсушити. Якщо воно надто активне або ще не готове, зосередимося на знайомстві й рухатимемося в його темпі. Головне — допомогти цуценяті почуватися в безпеці, а не виконати всі процедури за перший візит.
+- Price: Перший грумінг цуценяти — від 50 €; Category: 1. Маленькі собаки — шерсть, що постійно росте
+- Price: Перший грумінг цуценяти — від 50 €; Category: 2. Пуделі, бішони та пудельні породи
+- Price: Перший грумінг цуценяти — від 50 €; Category: 3. Шпіци
+- Price: Перший грумінг цуценяти — від 50 €; Category: 4. Спанієлі
+- Price: Перший грумінг цуценяти — від 50 €; Category: 5. Жорсткошерсті породи
+- Price: Перший грумінг цуценяти — від 50 €; Category: 6. Короткошерсті собаки
+- Price: Перший грумінг цуценяти — від 50 €; Category: 7. Великі собаки
 
 ## 7. Booking process and payment ##
 
@@ -994,15 +1068,52 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 
 ### DE — reyting.html ###
 - URL: https://hundesalon-nika.com/de/reyting.html
-- Bewertungen & Rezensionen
-- Ihre Meinung ist uns wichtig! Unser unabhängiger Qualitätsausschuss bearbeitet alle Eingaben und garantiert eine faire Lösung. Sie können eine Bewertung, ein Lob oder eine Beschwerde anonym einreichen. Jede Eingabe wird sorgfältig geprüft und Ihnen wird das Ergebnis mitgeteilt.
-- ★★★★★
-- Auf Google Maps bewerten Bewerten Sie uns auf Google Maps — erwähnen Sie gern auch unsere Website: https://hundesalon-nika.com/de/
-- Feedback-Formular – Beschwerden oder Lob
-- Beschwerde
-- Lob
-- Vorschlag
-- Senden
+- Bewertungen und Google
+- Bewertung per QR-Code abgeben
+- Scannen, Sterne wählen und einen Kommentar hinterlassen. Ihr Feedback wird an den Salon gesendet. Unabhängig von der Sternezahl können Sie auch eine öffentliche Google-Bewertung abgeben.
+- QR-Code im Salon scannen.
+- 1 bis 5 Sterne auswählen.
+- Erfahrung beschreiben und absenden.
+- Google Maps öffnen Soziale Netzwerke und Messenger
+- Scannen
+- Die Seite am Telefon öffnen und in weniger als einer Minute bewerten. Den öffentlichen Google-Eintrag können Sie nach der internen Absendung separat öffnen.
+- Website und Google
+- Besuch bewerten und Erfahrung beschreiben
+- Auf der Website senden Sie Sterne und Kommentar direkt an den Salon. Sie werden nicht automatisch veröffentlicht. Die Google-Schaltfläche steht bei jeder Bewertung zur Verfügung; dort veröffentlichen Sie Ihre Bewertung separat.
+- Bewertungsformular
+- Sterne wählen, Kommentar hinterlassen und absenden. Wir erhalten die Bewertung sofort.
+- Wie viele Sterne geben Sie?
+- 0 / 5
+- Name
+- E-Mail für Rückmeldung
+- Kommentar
+- Bewertung senden
+- Öffentlicher Schritt
+- Danke für Ihr Feedback
+- Wenn Sie Ihre Erfahrung öffentlich teilen möchten, können Sie eine Bewertung in Google Maps abgeben.
+- Zu Google wechseln
+- Persönliche Rückmeldung
+- Danke für Ihre direkte Nachricht
+- Für eine Antwort geben Sie bitte Ihre E-Mail-Adresse im Formular an oder nutzen Sie unsere Kontaktseite.
+- Kontakte öffnen
+- Google Maps
+- Öffentliche Bewertungen, die Vertrauen in Suche und Karte stärken.
+- Google öffnen
+- Facebook
+- Öffentliche Empfehlungen und eine zusätzliche Vertrauensquelle für Bing.
+- Facebook öffnen
+- Soziale Netzwerke
+- Instagram, Telegram, WhatsApp und Viber für schnellen Kontakt und direkte Rückmeldung.
+- Soziale Netzwerke öffnen
+- Website
+- Interne Bewertung mit Kommentar, die wir sofort nach dem Absenden sehen.
+- Bewertung auf der Website abgeben
+- Google, Bing und Sichtbarkeit
+- Wie wir Bewertungen erfassen und nutzen
+- Bewertungen auf der Website kommen sofort im Salon an und helfen uns, schnell zu reagieren.
+- Der öffentliche Google-Ruf wächst nur durch Bewertungen im Google Business Profile.
+- Bing zieht Bewertungen nicht direkt aus Google; für Bing zählen eigene öffentliche Quellen und ein Bing-Places-Profil.
+- Die Google-Schaltfläche steht allen unabhängig von der Sternezahl zur Verfügung. Für eine Antwort geben Sie bitte Ihre E-Mail-Adresse an oder kontaktieren Sie uns direkt.
 
 ### DE — partnerstvo.html ###
 - URL: https://hundesalon-nika.com/de/partnerstvo.html
@@ -1240,15 +1351,52 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 
 ### EN — reyting.html ###
 - URL: https://hundesalon-nika.com/en/reyting.html
-- Ratings & Reviews
-- We value your opinion! Our independent quality committee reviews all submissions and guarantees a fair outcome. You may leave a review, compliment or complaint anonymously. Every submission will be thoroughly examined and you will be notified of the result.
-- ★★★★★
-- Review us on Google Maps Rate us on Google Maps — feel free to mention our website in your review: https://hundesalon-nika.com/en/
-- Feedback form — complaints or praise
-- Complaint
-- Praise
-- Suggestion
-- Submit
+- Reviews and Google
+- Leave a review via QR
+- Scan the code, choose stars and leave a comment. Your feedback is sent to the salon. Whatever your rating, you can also leave a public review on Google.
+- Scan the QR code in the salon.
+- Select 1 to 5 stars.
+- Describe your experience and send the form.
+- Open Google Maps Socials and messengers
+- Scan
+- Open the page on your phone and leave a review in under a minute. You can repeat the public Google review after sending the private feedback.
+- Website and Google
+- Rate your visit and describe the experience
+- The website sends your rating and comment directly to the salon without publishing them automatically. The Google button is available for every rating; you submit your public review there separately.
+- Review form
+- Choose stars, add a comment and submit. We receive the review right away.
+- How many stars do you give?
+- 0 / 5
+- Name
+- Email for a reply
+- Comment
+- Send review
+- Public step
+- Thank you for your feedback
+- If you would like to share your experience publicly, leave a review on Google Maps.
+- Go to Google
+- Personal reply
+- Thank you for writing to us directly
+- If you would like a reply, include your email in the form or use our contact page.
+- Open contacts
+- Google Maps
+- Public reviews that strengthen trust in search and on the map.
+- Open Google
+- Facebook
+- Public recommendations and an additional trust source that also helps Bing.
+- Open Facebook
+- Socials
+- Instagram, Telegram, WhatsApp and Viber for quick contact and direct replies.
+- Open socials
+- Website
+- Internal review with comment that we see immediately after submission.
+- Leave a website review
+- Google, Bing and visibility
+- How we collect and use reviews
+- Reviews on the website reach the salon immediately and help us respond quickly.
+- The public Google rating grows only from reviews submitted in Google Business Profile.
+- Bing does not pull reviews directly from Google, so Bing depends on its own public sources and a Bing Places profile.
+- The Google button is available to everyone, whatever their rating. If you need a reply, include your email or contact us directly.
 
 ### EN — partnerstvo.html ###
 - URL: https://hundesalon-nika.com/en/partnerstvo.html
@@ -1486,15 +1634,52 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 
 ### RU — reyting.html ###
 - URL: https://hundesalon-nika.com/ru/reyting.html
-- Рейтинг и отзывы
-- Мы ценим ваше мнение! Наша независимая комиссия по качеству рассматривает все обращения и гарантирует справедливое решение. Вы можете оставить отзыв, похвалу или жалобу анонимно. Каждое обращение будет тщательно проверено, а результат сообщён вам.
-- ★★★★★
-- Оставить отзыв в Google Maps Оставьте отзыв в Google Maps — в тексте можно указать наш сайт: https://hundesalon-nika.com/ru/
-- Форма для подачи жалобы или благодарности
-- Жалоба
-- Благодарность
-- Предложение
-- Отправить
+- Отзывы и рейтинг
+- Оставьте отзыв по QR-коду
+- Сканируйте код, поставьте звёзды и оставьте комментарий. Отзыв отправляется в салон. Независимо от оценки вы также можете оставить публичный отзыв в Google.
+- Отсканируйте QR-код в салоне.
+- Выберите оценку от 1 до 5 звёзд.
+- Опишите впечатление и отправьте форму.
+- Открыть Google Maps Соцсети и мессенджеры
+- Сканируйте
+- Откройте страницу на телефоне и оставьте отзыв за минуту. Публичный отзыв можно повторить в Google после внутренней отправки.
+- Сайт и Google
+- Оцените визит и опишите впечатление
+- На сайте вы отправляете оценку и комментарий напрямую в салон. Они не публикуются автоматически. Кнопка Google доступна при любой оценке — публичный отзыв вы отправляете отдельно.
+- Форма отзыва
+- Поставьте звёзды, оставьте комментарий и нажмите отправку. Мы получим отзыв сразу же.
+- Сколько звёзд вы ставите?
+- 0 / 5
+- Имя
+- Email для ответа
+- Комментарий
+- Отправить отзыв
+- Публичный шаг
+- Спасибо за ваш отзыв
+- Если хотите поделиться своим опытом публично, оставьте отзыв в Google Maps.
+- Перейти в Google
+- Личный ответ
+- Спасибо, что написали нам напрямую
+- Если вам нужен ответ, укажите email в форме или свяжитесь с нами через страницу контактов.
+- Открыть контакты
+- Google Maps
+- Публичный рейтинг, который влияет на доверие в поиске и на карте.
+- Открыть Google
+- Facebook
+- Публичные рекомендации и ещё один источник доверия, полезный для Bing.
+- Открыть Facebook
+- Соцсети
+- Instagram, Telegram, WhatsApp и Viber для быстрого ответа и личной связи.
+- Открыть соцсети
+- Сайт
+- Внутренняя оценка с комментариями, которую мы видим сразу после отправки.
+- Оставить отзыв на сайте
+- Google, Bing и видимость
+- Как мы собираем и используем отзывы
+- Отзывы на сайте приходят в салон сразу и помогают быстро реагировать на обратную связь.
+- Публичный Google-рейтинг растёт только от отзывов, отправленных в Google Business Profile.
+- Bing не подтягивает отзывы напрямую из Google, поэтому для Bing важны собственные публичные источники и профиль Bing Places.
+- Кнопка Google доступна всем, независимо от оценки. Если нужна помощь, оставьте email для ответа или свяжитесь с нами напрямую.
 
 ### RU — partnerstvo.html ###
 - URL: https://hundesalon-nika.com/ru/partnerstvo.html
@@ -1732,15 +1917,52 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 
 ### UK — reyting.html ###
 - URL: https://hundesalon-nika.com/uk/reyting.html
-- Рейтинг та відгуки
-- Ми цінуємо вашу думку! Наша незалежна комісія з якості розглядає всі звернення та гарантує справедливе рішення. Ви можете залишити відгук, подяку або скаргу анонімно. Кожне звернення буде ретельно перевірено, а про результат ми повідомимо вам.
-- ★★★★★
-- Подякувати на Google Maps Залиште відгук у Google Maps — у тексті можна вказати наш сайт: https://hundesalon-nika.com/uk/
-- Форма для подання скарги або подяки
-- Скарга
-- Подяка
-- Пропозиція
-- Надіслати
+- Відгуки та Google
+- Залиште відгук за QR-кодом
+- Скануйте код, поставте зірки та залиште коментар. Відгук надсилається в салон. Незалежно від оцінки ви також можете залишити публічний відгук у Google.
+- Скануйте QR-код у салоні.
+- Оберіть оцінку від 1 до 5 зірок.
+- Опишіть враження та надішліть форму.
+- Відкрити Google Maps Соцмережі та месенджери
+- Скануйте
+- Відкрийте сторінку на телефоні та залиште відгук за хвилину. Публічний Google-відгук можна повторити після внутрішнього надсилання.
+- Сайт і Google
+- Оцініть візит і опишіть враження
+- На сайті ви надсилаєте оцінку й коментар безпосередньо в салон. Вони не публікуються автоматично. Кнопка Google доступна за будь-якої оцінки — публічний відгук ви надсилаєте окремо.
+- Форма відгуку
+- Поставте зірки, залиште коментар і натисніть надсилання. Ми отримаємо відгук одразу.
+- Скільки зірок ви ставите?
+- 0 / 5
+- Ім'я
+- Email для відповіді
+- Коментар
+- Надіслати відгук
+- Публічний крок
+- Дякуємо за ваш відгук
+- Якщо хочете поділитися своїм досвідом публічно, залиште відгук у Google Maps.
+- Перейти в Google
+- Особиста відповідь
+- Дякуємо, що написали нам напряму
+- Якщо вам потрібна відповідь, вкажіть email у формі або скористайтеся сторінкою контактів.
+- Відкрити контакти
+- Google Maps
+- Публічні відгуки, які зміцнюють довіру в пошуку та на карті.
+- Відкрити Google
+- Facebook
+- Публічні рекомендації та ще одне джерело довіри, корисне для Bing.
+- Відкрити Facebook
+- Соцмережі
+- Instagram, Telegram, WhatsApp і Viber для швидкого контакту та особистої відповіді.
+- Відкрити соцмережі
+- Сайт
+- Внутрішня оцінка з коментарем, яку ми бачимо одразу після надсилання.
+- Залишити відгук на сайті
+- Google, Bing і видимість
+- Як ми збираємо та використовуємо відгуки
+- Відгуки на сайті одразу надходять у салон і допомагають швидко реагувати.
+- Публічний рейтинг Google зростає лише через відгуки в Google Business Profile.
+- Bing не підтягує відгуки напряму з Google, тому для Bing важливі власні публічні джерела та профіль Bing Places.
+- Кнопка Google доступна всім, незалежно від оцінки. Якщо потрібна відповідь, залиште email або зв'яжіться з нами безпосередньо.
 
 ### UK — partnerstvo.html ###
 - URL: https://hundesalon-nika.com/uk/partnerstvo.html

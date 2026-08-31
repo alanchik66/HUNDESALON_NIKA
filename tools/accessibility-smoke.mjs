@@ -4,7 +4,14 @@ import { chromium } from 'playwright';
 
 import { startStaticTestServer } from './lib/static-test-server.mjs';
 
-const routes = ['/de/', '/ru/prays-list.html', '/en/onlayn-bronirovanie.html', '/uk/kontakty.html'];
+const routes = [
+  '/de/',
+  '/ru/prays-list.html',
+  '/en/onlayn-bronirovanie.html',
+  '/uk/kontakty.html',
+  '/reviews.html',
+  ...['de', 'en', 'ru', 'uk'].map(locale => `/${locale}/reyting.html`),
+];
 const reports = [];
 const server = await startStaticTestServer();
 const browser = await chromium.launch({ headless: true });
@@ -19,8 +26,13 @@ try {
     const page = await context.newPage();
     await page.goto(`${server.baseUrl}${route}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-    const weatherHostRole = await page.locator('.header-weather-widget').getAttribute('role');
-    assert.equal(weatherHostRole, 'group', `${route}: the named weather widget must expose a group role`);
+    // The universal QR chooser has no locale, so site-shell intentionally omits its localized header.
+    const weatherHostRole = route === '/reviews.html'
+      ? null
+      : await page.locator('.header-weather-widget').getAttribute('role');
+    if (route !== '/reviews.html') {
+      assert.equal(weatherHostRole, 'group', `${route}: the named weather widget must expose a group role`);
+    }
 
     const cookieAccept = page.locator('[data-cookie-choice="accept"]');
     if (await cookieAccept.count()) await cookieAccept.first().click();

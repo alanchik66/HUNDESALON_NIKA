@@ -55,6 +55,38 @@ test('knowledge generator refreshes the stored source fingerprint', () => {
   assert.equal(content.match(/^Generated source fingerprint:/gm)?.length, 1);
 });
 
+test('bot knowledge uses the same published service details as the price modal in every locale', () => {
+  const { content, sourcePaths } = buildKnowledgeDocument();
+  assert.ok(sourcePaths.includes('assets/js/price-catalog.js'));
+  const context = vm.createContext({ window: {} });
+  for (const relativePath of sourcePaths.filter(value => value.startsWith('assets/js/'))) {
+    vm.runInContext(readFileSync(path.join(ROOT, relativePath), 'utf8'), context, { filename: relativePath });
+  }
+  const index = buildAiChatKnowledgeIndex(content);
+  for (const locale of ['de', 'en', 'ru', 'uk']) {
+    const puppy = context.window.PriceCatalog.build(locale).services.find(service => service.key === 'puppy-intro');
+    const entries = index.filter(entry => entry.locale === locale && entry.title.endsWith('— service details'));
+    const publishedKeys = new Set(context.window.PricePageCatalog.categoriesByLocale[locale]
+      .flatMap(category => category.priceRows || []).map(row => row.key).filter(Boolean));
+    assert.equal(entries.length, publishedKeys.size);
+    const puppyEntry = entries.find(entry => entry.text.includes(puppy.note));
+    assert.ok(puppyEntry);
+    assert.ok(puppyEntry.text.includes(puppy.description));
+    assert.equal((puppyEntry.text.match(/^- Price:/gm) || []).length, 7);
+    assert.doesNotMatch(puppyEntry.text, /\+15 €|light coat shaping|nails, eye and ear care/i);
+  }
+  assert.doesNotMatch(content, /It can include light brushing, careful bathing and drying, nails/);
+  assert.doesNotMatch(content, /Für Maine Coons und große Katzen kann ein Zuschlag von \+15 €/);
+});
+
+test('checked-in bot knowledge and retrieval index stay synchronized with website sources', () => {
+  const stored = normalizeSourceText(readFileSync(path.join(ROOT, 'knowledge/03_Resources/SendPulse_AI_Agent_Knowledge.md'), 'utf8'));
+  const { content } = buildKnowledgeDocument();
+  assert.ok(stored === content, 'Bot knowledge is stale. Run npm run knowledge:build.');
+  const module = normalizeSourceText(readFileSync(path.join(ROOT, 'functions/_generated/ai-chat-knowledge.js'), 'utf8'));
+  assert.ok(module === renderAiChatKnowledgeModule(content).content, 'Bot retrieval index is stale. Run npm run knowledge:build.');
+});
+
 test('knowledge source normalization is stable across platforms', () => {
   assert.equal(normalizeSourceText('\uFEFFalpha\r\nbeta\rgamma\n'), 'alpha\nbeta\ngamma\n');
 });

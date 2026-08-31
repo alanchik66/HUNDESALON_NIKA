@@ -206,8 +206,8 @@
         en: ['Yorkshire Terrier', 'Biewer Yorkshire Terrier', 'Maltese', 'Shih Tzu', 'Havanese', 'Bolognese', 'Zwetna Bolonka / Russian Colored Bolonka', 'Lhasa Apso', 'Pekingese', 'Japanese Chin', 'Chinese Crested — Powder Puff variety', 'Other small breeds with a similar coat type'],
         uk: ['Йоркширський тер’єр', 'Бівер-йоркширський тер’єр', 'Мальтезе', 'Ши-тцу', 'Гаванез', 'Болоньєз', 'Болонка Zwetna / російська кольорова болонка', 'Лхаса апсо', 'Пекінес', 'Японський хін', 'Китайська чубата — пухова різновидність', 'Інші малі породи з аналогічним типом шерсті'],
       },
-      labels: { de: ['Komplettpflege', 'Baden + Hygienepflege', 'Welpen-Eingewöhnung'], en: ['Full grooming', 'Bath + hygiene care', 'First puppy grooming'], uk: ['Комплексний грумінг', 'Купання + гігієнічний догляд', 'Перший грумінг цуценяти'] },
-      prices: ['main80', 'bath60', 'main50'],
+      labels: { de: ['Komplettpflege', 'Baden + Hygienepflege'], en: ['Full grooming', 'Bath + hygiene care'], uk: ['Комплексний грумінг', 'Купання + гігієнічний догляд'] },
+      prices: ['main80', 'bath60'],
     },
     'ru-poodles-bichons': {
       title: { de: '2. Pudel, Bichons und Pudeltypen', en: '2. Poodles, bichons and poodle-type breeds', uk: '2. Пуделі, бішони та пудельні породи' },
@@ -284,6 +284,11 @@
   };
 
   const finalLocalizedDogIds = Object.keys(finalLocalizedDogs);
+  const puppyGroomingLabels = {
+    de: 'Welpen-Eingewöhnung',
+    en: 'First puppy grooming',
+    uk: 'Перший грумінг цуценяти',
+  };
   ['de', 'en', 'uk'].forEach(lang => {
     const existing = catalog.categoriesByLocale[lang] || [];
     const finalDogs = finalLocalizedDogIds.map(id => {
@@ -297,6 +302,11 @@
         label: { [lang]: definition.labels[lang][index] },
         price: p(priceKey),
       }));
+      category.priceRows.push({
+        key: 'puppy-intro',
+        label: { [lang]: puppyGroomingLabels[lang] },
+        price: p('main50'),
+      });
       category.notes = (serviceNotesByCategory[id] || []).map(noteText => ({ [lang]: noteText[lang] }));
       category.pageSection = definition.section;
       category.additionalServiceGroup = definition.additionalServiceGroup;

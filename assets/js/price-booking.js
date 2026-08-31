@@ -165,6 +165,7 @@
         categoryId: category.id,
         index,
         label: getText(priceRow.label, safeLang),
+        key: priceRow.key || '',
         price: getText(priceRow.price, safeLang),
         includesNailTrim: Boolean(category.services?.includes('nails')),
         standardDurationMinutes: resolveStandardDuration(category.id, index),
@@ -192,8 +193,8 @@
 
       if (category.id === 'ru-short-coat' && breedId) {
         const breed = getBreed(breedId);
-        const service = category.services[getShortCoatPriceIndex(breed?.index ?? 0)];
-        return service ? [service] : category.services;
+        const priceIndex = getShortCoatPriceIndex(breed?.index ?? 0);
+        return category.services.filter(service => service.index === priceIndex || service.key === 'puppy-intro');
       }
 
       return category.services;

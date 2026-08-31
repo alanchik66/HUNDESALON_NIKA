@@ -30,6 +30,25 @@ function registrationRequest(consents = {}, fields = {}) {
   });
 }
 
+function reviewRequest(fields = {}) {
+  return new Request(`${origin}/sendmail`, {
+    method: 'POST',
+    headers: { Origin: origin, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      form_type: 'feedback',
+      lang: 'ru',
+      name: 'Test Reviewer',
+      email: 'reviewer@example.com',
+      message: 'Очень спокойный и аккуратный сервис.',
+      inquiry_type: 'public_review',
+      review_rating: 5,
+      review_channel: 'website',
+      source: '/ru/reyting',
+      ...fields,
+    }),
+  });
+}
+
 test('rejects false-like consent values without running integrations', async () => {
   const originalFetch = globalThis.fetch;
   let calls = 0;
@@ -182,6 +201,36 @@ test('accepts explicit consent and persists the registration', async () => {
     assert.equal(response.status, 200);
     assert.equal(body.success, true);
     assert.match(body.registration_id, /^[0-9a-f-]{36}$/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('accepts review feedback with rating metadata', async () => {
+  const originalFetch = globalThis.fetch;
+  const payloads = [];
+  globalThis.fetch = async (_url, options) => {
+    if (options?.body) {
+      payloads.push(JSON.parse(options.body));
+    }
+    return Response.json({ success: true, result: true });
+  };
+
+  try {
+    const response = await onRequest({
+      request: reviewRequest(),
+      env: {
+        SENDPULSE_API_KEY: 'unit-test-key',
+        SENDPULSE_CONTACT_EVENT_NAME: 'contact-review-test',
+      },
+    });
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.success, true);
+    assert.ok(payloads.some(payload => JSON.stringify(payload).includes('5/5')));
+    assert.ok(payloads.some(payload => payload.inquiry_type === 'public_review'));
+    assert.ok(payloads.some(payload => payload.review_rating === '5'));
+    assert.ok(payloads.some(payload => payload.review_channel === 'website'));
   } finally {
     globalThis.fetch = originalFetch;
   }
