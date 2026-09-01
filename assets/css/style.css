@@ -72,12 +72,8 @@
     #d49a24 100%
   );
   --liquid-gold-edge: 0.38px rgb(255 244 202 / 88%);
-  --liquid-gold-filter: drop-shadow(0 -0.75px 0 rgb(255 253 241 / 92%))
-    drop-shadow(0 1px 0 rgb(157 100 13 / 78%)) drop-shadow(0 2px 1px rgb(97 58 6 / 52%))
-    drop-shadow(0 5px 8px rgb(0 0 0 / 34%)) drop-shadow(0 0 7px rgb(241 183 47 / 14%));
-  --liquid-gold-text-shadow:
-    0 -1px 0 rgb(255 249 218 / 58%), 0 1px 0 rgb(157 100 13 / 72%), 0 2px 2px rgb(62 35 3 / 38%),
-    0 4px 7px rgb(0 0 0 / 25%);
+  --liquid-gold-filter: none;
+  --liquid-gold-text-shadow: none;
   --hero-white-gold:
     radial-gradient(
       ellipse at 30% 8%,
@@ -101,10 +97,7 @@
       #302c28 100%
     );
   --hero-white-gold-edge: 0.65px rgb(255 255 255 / 96%);
-  --hero-white-gold-filter: drop-shadow(0 -1px 0 rgb(255 255 255 / 100%))
-    drop-shadow(1px 0 0 rgb(228 223 214 / 82%)) drop-shadow(0 1px 0 rgb(135 127 116 / 100%))
-    drop-shadow(0 2px 0 rgb(91 84 76 / 96%)) drop-shadow(0 3px 0 rgb(62 57 52 / 90%))
-    drop-shadow(0 5px 2px rgb(35 32 29 / 84%)) drop-shadow(0 10px 12px rgb(0 0 0 / 68%));
+  --hero-white-gold-filter: none;
   --gold-foil: var(--liquid-gold);
   --gold-face: #efc866;
   --gold-face-soft: #e4bd63;
@@ -263,20 +256,20 @@
   --hero-glow-width: min(100%, clamp(520px, 42vw, 660px));
 
   /* Legacy component hooks now all resolve to the same gold relief. */
-  --text-vol-rim: 0 -1px 0 rgb(255 249 218 / 58%);
-  --text-vol-l1: 0 1px 0 rgb(157 100 13 / 72%);
-  --text-vol-l2: 0 2px 2px rgb(62 35 3 / 38%);
-  --text-vol-l3: 0 3px 4px rgb(0 0 0 / 28%);
-  --text-vol-underglow: 0 5px 8px rgb(0 0 0 / 25%);
+  --text-vol-rim: none;
+  --text-vol-l1: none;
+  --text-vol-l2: none;
+  --text-vol-l3: none;
+  --text-vol-underglow: none;
   --text-vol-l4: var(--text-vol-underglow);
-  --text-vol-body: var(--liquid-gold-text-shadow);
-  --text-vol-heading: var(--liquid-gold-text-shadow);
-  --text-vol-heading-display: var(--liquid-gold-text-shadow);
-  --text-vol-display: var(--liquid-gold-text-shadow);
-  --text-vol-pill: var(--liquid-gold-text-shadow);
-  --text-vol-pill-hover: var(--liquid-gold-text-shadow);
-  --text-vol-pill-active: var(--liquid-gold-text-shadow);
-  --text-vol-accent: var(--liquid-gold-text-shadow);
+  --text-vol-body: none;
+  --text-vol-heading: none;
+  --text-vol-heading-display: none;
+  --text-vol-display: none;
+  --text-vol-pill: none;
+  --text-vol-pill-hover: none;
+  --text-vol-pill-active: none;
+  --text-vol-accent: none;
   --text-vol-stroke-display: var(--liquid-gold-edge);
   --gold-material-filter: var(--liquid-gold-filter);
   --text-vol-gradient-filter: var(--liquid-gold-filter);
@@ -352,7 +345,9 @@ body {
     'kern' 1,
     'liga' 1,
     'calt' 1;
-  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
   overflow-x: hidden;
   isolation: isolate;
 }
@@ -578,12 +573,8 @@ body.light {
     #b97d18 100%
   );
   --liquid-gold-edge: 0.45px rgb(108 68 8 / 72%);
-  --liquid-gold-filter: drop-shadow(0 -0.75px 0 rgb(255 255 242 / 88%))
-    drop-shadow(0 1px 0 rgb(138 87 12 / 66%)) drop-shadow(0 2px 1px rgb(80 48 5 / 38%))
-    drop-shadow(0 4px 6px rgb(72 49 19 / 22%)) drop-shadow(0 0 5px rgb(174 116 19 / 12%));
-  --liquid-gold-text-shadow:
-    0 -1px 0 rgb(255 255 245 / 74%), 0 1px 0 rgb(133 84 13 / 62%), 0 2px 1px rgb(95 60 10 / 30%),
-    0 3px 5px rgb(90 66 31 / 18%);
+  --liquid-gold-filter: none;
+  --liquid-gold-text-shadow: none;
   --hero-white-gold:
     radial-gradient(
       ellipse at 30% 8%,
@@ -607,10 +598,7 @@ body.light {
       #3e3933 100%
     );
   --hero-white-gold-edge: 0.65px rgb(70 65 59 / 86%);
-  --hero-white-gold-filter: drop-shadow(0 -1px 0 rgb(255 255 255 / 100%))
-    drop-shadow(1px 0 0 rgb(217 210 199 / 76%)) drop-shadow(0 1px 0 rgb(111 103 92 / 92%))
-    drop-shadow(0 2px 0 rgb(77 71 63 / 82%)) drop-shadow(0 4px 1px rgb(49 45 40 / 66%))
-    drop-shadow(0 8px 8px rgb(69 59 48 / 34%));
+  --hero-white-gold-filter: none;
   --gold-foil: var(--liquid-gold);
   --gold-face: #5f3504;
   --gold-face-soft: #573003;
@@ -645,20 +633,20 @@ body.light {
   --text-pearl-muted: #5c4a34;
   --text-pearl-gold: #8d692d;
   --text-pearl-gold-deep: #6e5528;
-  --text-vol-rim: 0 -1px 0 rgb(255 255 245 / 74%);
-  --text-vol-l1: 0 1px 0 rgb(133 84 13 / 62%);
-  --text-vol-l2: 0 2px 1px rgb(95 60 10 / 30%);
-  --text-vol-l3: 0 3px 4px rgb(90 66 31 / 18%);
-  --text-vol-underglow: 0 4px 6px rgb(90 66 31 / 18%);
+  --text-vol-rim: none;
+  --text-vol-l1: none;
+  --text-vol-l2: none;
+  --text-vol-l3: none;
+  --text-vol-underglow: none;
   --text-vol-l4: var(--text-vol-underglow);
-  --text-vol-body: var(--liquid-gold-text-shadow);
-  --text-vol-heading: var(--liquid-gold-text-shadow);
-  --text-vol-heading-display: var(--liquid-gold-text-shadow);
-  --text-vol-display: var(--liquid-gold-text-shadow);
-  --text-vol-pill: var(--liquid-gold-text-shadow);
-  --text-vol-pill-hover: var(--liquid-gold-text-shadow);
-  --text-vol-pill-active: var(--liquid-gold-text-shadow);
-  --text-vol-accent: var(--liquid-gold-text-shadow);
+  --text-vol-body: none;
+  --text-vol-heading: none;
+  --text-vol-heading-display: none;
+  --text-vol-display: none;
+  --text-vol-pill: none;
+  --text-vol-pill-hover: none;
+  --text-vol-pill-active: none;
+  --text-vol-accent: none;
   --text-vol-stroke-display: var(--liquid-gold-edge);
   --gold-material-filter: var(--liquid-gold-filter);
   --text-vol-gradient-filter: var(--liquid-gold-filter);
@@ -751,6 +739,113 @@ h6 {
   filter: var(--liquid-gold-filter);
 }
 
+.site-scroll-root :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .section-title,
+  .hero-title,
+  .accent-center,
+  .accent-text,
+  .accent-gold,
+  .meta-accent,
+  .booking-container .booking-title,
+  .header-online-btn__label,
+  .cookie-consent__body strong,
+  .cookie-consent__btn,
+  .hn-ai-brand strong,
+  .telegram-menu__hero h1,
+  .telegram-menu__action-title,
+  .telegram-menu__action-description,
+  .hero-subtitle,
+  .about-text p,
+  .review-author,
+  .content-article h1,
+  .content-article p,
+  .menu-separator span,
+  .promo-badge,
+  .gallery-item figcaption,
+  .footer-title,
+  .price
+) {
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+.site-scroll-root :is(
+  [class*='title'],
+  [class*='subtitle'],
+  [class*='label'],
+  [class*='text'],
+  [class*='description'],
+  [class*='heading'],
+  [class*='caption'],
+  [class*='name'],
+  .nika-tooltip,
+  .social-music-item-label,
+  .map-actions-label,
+  .btn-map,
+  .before-after-card-info
+) {
+  text-shadow: none !important;
+  filter: none !important;
+  -webkit-text-stroke: 0 !important;
+  paint-order: normal !important;
+}
+
+.site-scroll-root :is(
+  .dropdown-menu,
+  .dropdown-menu a,
+  .lang-dropdown-menu,
+  .lang-dropdown-menu li,
+  .lang-dropdown-menu a,
+  .flag,
+  .btn-neon,
+  .social-link,
+  .mobile-dropdown-btn,
+  #mobile-nav a,
+  .menu-separator span
+) {
+  filter: none !important;
+  text-shadow: none !important;
+}
+
+.top-row,
+.social-home a,
+.social-home a span {
+  filter: none !important;
+  text-shadow: none !important;
+}
+
+.site-scroll-root :where(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .section-title,
+  .hero-title,
+  .accent-center,
+  .accent-text,
+  .meta-accent,
+  .accent-gold,
+  .booking-container .booking-title,
+  .header-online-btn__label,
+  .cookie-consent__body strong,
+  .cookie-consent__btn,
+  .hn-ai-brand strong,
+  .telegram-menu__hero h1,
+  .telegram-menu__action-title,
+  .telegram-menu__action-description
+) {
+  -webkit-text-stroke: 0 !important;
+  paint-order: normal !important;
+}
+
 .type-script {
   font-family: var(--font-script);
   font-style: normal;
@@ -813,6 +908,36 @@ h1:not(.hero-title),
   letter-spacing: 0.01em;
   color: var(--gold-face-soft);
   text-shadow: var(--text-vol-body);
+}
+
+.site-scroll-root
+  :where(
+    p,
+    li,
+    dd,
+    dt,
+    blockquote,
+    figcaption,
+    label,
+    th,
+    td,
+    caption,
+    .about-text p,
+    .booking-lead,
+    .review-text,
+    .hero-subtitle,
+    .content-article p,
+    .info-card p,
+    .service-card p,
+    .promo-card p,
+    .review-card p,
+    .social-card p,
+    .footer-col p,
+    .footer-col li,
+    #mobile-nav a,
+    .mobile-dropdown-btn
+  ) {
+  text-shadow: none !important;
 }
 
 #mobile-nav a,
@@ -882,15 +1007,20 @@ b {
 @media (prefers-reduced-motion: reduce) {
   :root,
   body.light {
-    --text-vol-body: var(--liquid-gold-text-shadow);
-    --text-vol-heading: var(--liquid-gold-text-shadow);
-    --text-vol-display: var(--liquid-gold-text-shadow);
-    --text-vol-pill: var(--liquid-gold-text-shadow);
-    --text-vol-pill-hover: var(--liquid-gold-text-shadow);
-    --text-vol-pill-active: var(--liquid-gold-text-shadow);
-    --text-vol-accent: var(--liquid-gold-text-shadow);
-    --gold-material-filter: var(--liquid-gold-filter);
-    --text-vol-gradient-filter: var(--liquid-gold-filter);
+    --text-vol-body: none;
+    --text-vol-heading: none;
+    --text-vol-display: none;
+    --text-vol-pill: none;
+    --text-vol-pill-hover: none;
+    --text-vol-pill-active: none;
+    --text-vol-accent: none;
+    --text-vol-rim: none;
+    --text-vol-l1: none;
+    --text-vol-l2: none;
+    --text-vol-l3: none;
+    --text-vol-underglow: none;
+    --gold-material-filter: none;
+    --text-vol-gradient-filter: none;
   }
 
   .hero-title {
@@ -3762,7 +3892,7 @@ body.light .dropdown-menu a {
       rgb(200 175 120 / 1%) 24%,
       rgb(200 175 120 / 0%) 52%
     );
-  text-shadow: 0 1px 0 rgb(255 255 250 / 44%);
+  text-shadow: none;
 }
 
 body.light .dropdown-menu a:hover {
@@ -4326,7 +4456,7 @@ body.lang-tv-kinescope .header-controls .language-dropdown.closing::after {
     ),
     rgb(6 24 19 / 80%);
   box-shadow: inset 0 1px 0 rgb(237 247 241 / 8%);
-  text-shadow: 0 1px 0 rgb(0 0 0 / 30%);
+  text-shadow: none;
 }
 
 .header-controls .lang-dropdown-menu li:hover {
@@ -5059,7 +5189,7 @@ body.light .header-controls .lang-dropdown-menu li:hover .flag {
   color: #ffecc2f0;
   white-space: normal;
   text-align: center;
-  text-shadow: 0 1px 0 rgb(14 11 8 / 42%);
+  text-shadow: none;
 }
 
 .social-music-item:hover .social-music-item-icon,
@@ -5120,7 +5250,7 @@ body.light .social-music-item:focus-visible {
 
 body.light .social-music-item-label {
   color: #5c4722f0;
-  text-shadow: 0 1px 0 rgb(255 255 255 / 42%);
+  text-shadow: none;
 }
 
 body.light .social-music-item-icon {
@@ -6989,6 +7119,7 @@ body.light .menu-separator::after {
   line-height: 1.08;
   letter-spacing: 0.1em;
   text-align: center;
+  text-rendering: geometricPrecision;
   text-shadow: none;
   background-size: 100% 100%;
   animation: none;
@@ -7032,6 +7163,8 @@ html[lang='uk'] .hero-title {
   text-justify: inter-word;
   -webkit-hyphens: auto;
   hyphens: auto;
+  text-shadow: none;
+  text-rendering: geometricPrecision;
 }
 
 .hero-subtitle .type-script {
@@ -7046,7 +7179,9 @@ html[lang='uk'] .hero-title {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  filter: var(--liquid-gold-filter);
+  filter: none;
+  text-shadow: none;
+  text-rendering: geometricPrecision;
 }
 
 .btn-neon {
@@ -8609,7 +8744,7 @@ body.light .review-card {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  text-shadow: 0 1px 0 rgb(12 8 3 / 36%);
+  text-shadow: none;
 }
 
 .btn-map {
@@ -8762,7 +8897,7 @@ body.light .review-card {
   color: #fff2dbd6;
   transition: var(--transition-smooth);
   letter-spacing: 0.05em;
-  text-shadow: 0 0 0.65em rgb(214 169 82 / 8%);
+  text-shadow: none;
 }
 
 .footer-nav a:hover {
@@ -9907,7 +10042,7 @@ body:not(.hide-header) .top-row {
   line-height: 1.34;
   letter-spacing: 0.018em;
   color: #f4f0e6f5;
-  text-shadow: 0 1px 4px rgb(0 0 0 / 44%);
+  text-shadow: none;
 
   /* жидкое стекло: почти полностью прозрачный фон + сильный blur */
   background:
@@ -10055,7 +10190,7 @@ body:not(.hide-header) .top-row {
 
 body.light .nika-tooltip {
   color: #232947f5;
-  text-shadow: 0 1px 2px rgb(255 255 255 / 42%);
+  text-shadow: none;
   background: linear-gradient(
     160deg,
     rgb(250 251 255 / 86%) 0%,
@@ -13579,39 +13714,39 @@ html.site-perf-balanced body.light {
 }
 
 html.site-perf-balanced {
-  --text-vol-body: var(--text-vol-l1), var(--text-vol-l2);
-  --text-vol-heading: var(--text-vol-rim), var(--text-vol-l1), var(--text-vol-l2);
-  --text-vol-display:
-    var(--text-vol-rim), var(--text-vol-l1), var(--text-vol-l2), var(--text-vol-l3);
-  --text-vol-pill: var(--text-vol-l1);
-  --text-vol-pill-hover: var(--text-vol-l1), var(--text-vol-l2);
-  --text-vol-pill-active: var(--text-vol-l1), var(--text-vol-l2);
-  --text-vol-accent: var(--text-vol-l1), var(--text-vol-l2);
+  --text-vol-body: none;
+  --text-vol-heading: none;
+  --text-vol-display: none;
+  --text-vol-pill: none;
+  --text-vol-pill-hover: none;
+  --text-vol-pill-active: none;
+  --text-vol-accent: none;
+  --text-vol-rim: none;
+  --text-vol-l1: none;
+  --text-vol-l2: none;
+  --text-vol-l3: none;
+  --text-vol-underglow: none;
 }
 
 html.site-perf-balanced h1:not(.hero-title),
 html.site-perf-balanced .section-title {
-  --gold-material-filter: drop-shadow(0 1px 0 rgb(100 72 40 / 52%))
-    drop-shadow(0 4px 12px rgb(4 28 18 / 30%)) drop-shadow(0 0 14px rgb(48 160 105 / 10%));
+  --gold-material-filter: none;
   animation-duration: 22s;
 }
 
 html.site-perf-balanced body.light h1:not(.hero-title),
 html.site-perf-balanced body.light .section-title {
-  --gold-material-filter: drop-shadow(0 1px 0 rgb(95 72 42 / 34%))
-    drop-shadow(0 4px 10px rgb(8 40 28 / 16%)) drop-shadow(0 0 12px rgb(40 135 90 / 8%));
+  --gold-material-filter: none;
 }
 
 html.site-perf-balanced .hero-title {
-  --gold-material-filter: drop-shadow(0 1px 0 rgb(100 72 40 / 56%))
-    drop-shadow(0 4px 12px rgb(4 28 18 / 32%)) drop-shadow(0 0 16px rgb(48 160 105 / 12%));
+  --gold-material-filter: none;
   will-change: auto;
   animation: none;
 }
 
 html.site-perf-balanced body.light .hero-title {
-  --gold-material-filter: drop-shadow(0 1px 0 rgb(95 72 42 / 36%))
-    drop-shadow(0 4px 10px rgb(8 40 28 / 18%)) drop-shadow(0 0 14px rgb(40 135 90 / 10%));
+  --gold-material-filter: none;
 }
 
 html.site-perf-balanced h2,
@@ -13645,18 +13780,23 @@ html.site-perf-lite body.light {
 }
 
 html.site-perf-lite {
-  --text-vol-body: var(--text-vol-l1), var(--text-vol-l2);
-  --text-vol-heading: var(--text-vol-rim), var(--text-vol-l1), var(--text-vol-l2);
-  --text-vol-display: var(--text-vol-rim), var(--text-vol-l1), var(--text-vol-l2);
-  --text-vol-pill: var(--text-vol-l1);
-  --text-vol-pill-hover: var(--text-vol-l1), var(--text-vol-l2);
-  --text-vol-pill-active: var(--text-vol-l1), var(--text-vol-l2);
-  --text-vol-accent: var(--text-vol-l1), var(--text-vol-l2);
-  --text-vol-gradient-filter: drop-shadow(0 1px 0 rgb(0 0 0 / 46%));
+  --text-vol-body: none;
+  --text-vol-heading: none;
+  --text-vol-display: none;
+  --text-vol-pill: none;
+  --text-vol-pill-hover: none;
+  --text-vol-pill-active: none;
+  --text-vol-accent: none;
+  --text-vol-rim: none;
+  --text-vol-l1: none;
+  --text-vol-l2: none;
+  --text-vol-l3: none;
+  --text-vol-underglow: none;
+  --text-vol-gradient-filter: none;
 }
 
 html.site-perf-lite body.light {
-  --text-vol-gradient-filter: drop-shadow(0 1px 0 rgb(95 72 42 / 30%));
+  --text-vol-gradient-filter: none;
 }
 
 html.site-perf-lite h1:not(.hero-title),
@@ -13684,8 +13824,7 @@ html.site-perf-lite h5,
 html.site-perf-lite h6,
 html.site-perf-lite .hero-title,
 html.site-perf-lite .section-title {
-  --gold-material-filter: drop-shadow(0 1px 0 rgb(100 72 40 / 44%))
-    drop-shadow(0 4px 10px rgb(4 28 18 / 26%));
+  --gold-material-filter: none;
 }
 
 html.site-perf-lite body.light h1,
@@ -13696,8 +13835,7 @@ html.site-perf-lite body.light h5,
 html.site-perf-lite body.light h6,
 html.site-perf-lite body.light .hero-title,
 html.site-perf-lite body.light .section-title {
-  --gold-material-filter: drop-shadow(0 1px 0 rgb(95 72 42 / 30%))
-    drop-shadow(0 4px 10px rgb(8 40 28 / 14%));
+  --gold-material-filter: none;
 }
 
 html.site-perf-lite .service-card,
@@ -13952,6 +14090,8 @@ body.price-page .price-page-hero[data-price-hero] .price-page-hero__note {
   hyphens: none;
   text-align: left;
   text-align-last: left;
+  text-shadow: none;
+  text-rendering: geometricPrecision;
 }
 
 body.price-page .price-page-hero[data-price-hero] .price-page-hero__categories-action {

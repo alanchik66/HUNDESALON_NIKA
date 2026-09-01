@@ -2557,11 +2557,11 @@ body.booking-modal-open {
   --booking-emerald-glow-strong: rgb(94 240 184 / 42%);
   --booking-emerald-glow-soft: rgb(52 211 153 / 24%);
   --booking-emerald-glow-aura: rgb(46 175 100 / 14%);
-  --booking-vol-l1: var(--text-vol-l1);
-  --booking-vol-l2: var(--text-vol-l2);
-  --booking-vol-l3: var(--text-vol-l3);
-  --booking-vol-soft-l3: var(--text-vol-l2);
-  --booking-vol-hover-l3: 0 0 14px rgb(94 240 184 / 28%);
+  --booking-vol-l1: none;
+  --booking-vol-l2: none;
+  --booking-vol-l3: none;
+  --booking-vol-soft-l3: none;
+  --booking-vol-hover-l3: none;
 }
 
 .modal {
@@ -4522,9 +4522,7 @@ body.light #booking-modal .modal-buttons {
     0 4px 24px rgb(0 0 0 / 8%),
     0 0 20px rgb(72 232 168 / 32%),
     0 0 40px rgb(46 201 138 / 16%);
-  text-shadow:
-    0 1px 0 rgb(14 10 4 / 36%),
-    0 0 16px rgb(72 232 168 / 28%);
+  text-shadow: none;
 }
 
 #booking-modal .service-list.nav-main > .filter-btn:hover,
@@ -5557,7 +5555,7 @@ body .btn-read:hover .site-icon-arrow-right {
   background: transparent;
   z-index: 15;
   color: white;
-  text-shadow: 0 2px 5px rgb(0 0 0 / 88%);
+  text-shadow: none;
   pointer-events: none;
 }
 

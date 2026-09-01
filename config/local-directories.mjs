@@ -26,13 +26,6 @@ export const LOCAL_DIRECTORIES = [
     registerUrl: 'https://www.meinestadt.de/unternehmen/b2b',
     match: /hundesalon|nika|grooming/i,
   },
-  {
-    id: '11880',
-    name: '11880.com',
-    searchUrl: `https://www.11880.com/suche/hundesalon-leipzig`,
-    registerUrl: 'https://firma-eintragen-kostenlos.11880.com/',
-    match: /hundesalon|nika|hundepflege/i,
-  },
 ];
 
 export const CITATION_NAP = NAP;

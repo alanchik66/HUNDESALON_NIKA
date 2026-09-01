@@ -4,11 +4,15 @@ const LANGUAGE_SAMPLE_MAX_BYTES = 256 * 1024;
 const SALON_DOMAIN = 'hundesalon-nika.com';
 const EMAIL_ADDRESS_RE = /^[^\s@<>,;:"]+@[^\s@<>,;:"]+\.[^\s@<>,;:"]{2,}$/;
 
-function getForwardDestination(env) {
-  const value = String(env.INFO_FORWARD_DESTINATION || '')
-    .trim()
-    .toLowerCase();
-  return EMAIL_ADDRESS_RE.test(value) && value !== `info@${SALON_DOMAIN}` ? value : '';
+function getForwardDestinations(env) {
+  return [
+    ...new Set(
+      String(env.INFO_FORWARD_DESTINATION || '')
+        .split(/[;,]/)
+        .map(value => value.trim().toLowerCase())
+        .filter(value => EMAIL_ADDRESS_RE.test(value) && value !== `info@${SALON_DOMAIN}`)
+    ),
+  ];
 }
 
 function shouldSuppressAutoReply(message) {
@@ -124,13 +128,13 @@ async function sendAutoReply(env, to, lang) {
 export default {
   async email(message, env) {
     const sender = String(message.from || '').trim();
-    const destination = getForwardDestination(env);
-    if (!destination) {
+    const destinations = getForwardDestinations(env);
+    if (!destinations.length) {
       console.error('[info-auto-reply] INFO_FORWARD_DESTINATION is not configured.');
       message.setReject('Routing configuration error.');
       return;
     }
-    await message.forward(destination);
+    await Promise.all(destinations.map(destination => message.forward(destination)));
     if (shouldSuppressAutoReply(message)) return;
 
     let rawText = '';
@@ -153,4 +157,4 @@ export default {
   },
 };
 
-export { getForwardDestination };
+export { getForwardDestinations };

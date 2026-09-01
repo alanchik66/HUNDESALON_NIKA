@@ -183,7 +183,7 @@
   letter-spacing: 0.055em;
   line-height: 1.2;
   text-overflow: ellipsis;
-  text-shadow: 0 2px 12px rgba(226, 186, 94, 0.22);
+  text-shadow: none;
   white-space: nowrap;
 }
 

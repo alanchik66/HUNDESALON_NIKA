@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import worker, { getForwardDestination } from './src/index.js';
+import worker, { getForwardDestinations } from './src/index.js';
 
 function createMessage(overrides = {}) {
   const actions = [];
@@ -22,11 +22,16 @@ function createMessage(overrides = {}) {
   };
 }
 
-test('normalizes one verified forwarding destination', () => {
-  assert.equal(getForwardDestination({ INFO_FORWARD_DESTINATION: ' Team@Example.com ' }), 'team@example.com');
-  assert.equal(getForwardDestination({ INFO_FORWARD_DESTINATION: 'invalid' }), '');
-  assert.equal(getForwardDestination({ INFO_FORWARD_DESTINATION: ' Info@Hundesalon-Nika.com ' }), '');
-  assert.equal(getForwardDestination({ INFO_FORWARD_DESTINATION: '<team@example.com>' }), '');
+test('normalizes, validates and deduplicates forwarding destinations', () => {
+  assert.deepEqual(
+    getForwardDestinations({
+      INFO_FORWARD_DESTINATION: ' Team@Example.com; owner@example.com,team@example.com ',
+    }),
+    ['team@example.com', 'owner@example.com']
+  );
+  assert.deepEqual(getForwardDestinations({ INFO_FORWARD_DESTINATION: 'invalid' }), []);
+  assert.deepEqual(getForwardDestinations({ INFO_FORWARD_DESTINATION: ' Info@Hundesalon-Nika.com ' }), []);
+  assert.deepEqual(getForwardDestinations({ INFO_FORWARD_DESTINATION: '<team@example.com>' }), []);
 });
 
 test('rejects a misconfigured route before consuming the message', async () => {
@@ -57,6 +62,17 @@ test('forwards the original before sending the auto reply', async () => {
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test('forwards the original to every configured destination', async () => {
+  const message = createMessage({ from: 'no-reply@example.com' });
+  await worker.email(message, {
+    INFO_FORWARD_DESTINATION: 'team@example.com,owner@example.com',
+  });
+  assert.deepEqual(message.actions, [
+    ['forward', 'team@example.com'],
+    ['forward', 'owner@example.com'],
+  ]);
 });
 
 test('keeps a forwarded message accepted when the optional auto reply fails', async () => {
