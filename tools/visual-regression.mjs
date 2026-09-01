@@ -35,6 +35,9 @@ try {
     });
     const page = await context.newPage();
     await page.goto(`${server.baseUrl}/de/prays-list.html`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.addStyleTag({ url: `${server.baseUrl}/assets/css/ai-chat.css` });
+    await page.addScriptTag({ url: `${server.baseUrl}/assets/js/ai-chat.js` });
+    await page.waitForSelector('#hundesalon-ai-chat', { state: 'visible', timeout: 15000 });
     await page.locator('body').evaluate((body, light) => body.classList.toggle('light', light), scenario.light);
     await page.waitForSelector('.header .online-order-pill .nav-plasma--active', { timeout: 15000 });
 
@@ -76,6 +79,7 @@ try {
       const nav = document.querySelector('#mobile-nav');
       const overlay = document.querySelector('#mobile-nav-overlay');
       const cookieConsent = document.querySelector('.cookie-consent');
+      const aiChat = document.querySelector('#hundesalon-ai-chat');
       const rect = nav?.getBoundingClientRect();
       const links = nav
         ? [...nav.querySelectorAll(':scope > .mobile-nav-group > a[href]')].filter(link => {
@@ -103,6 +107,8 @@ try {
         overlayActive: Boolean(overlay?.classList.contains('active') && !overlay.hidden),
         bodyLocked: document.body.classList.contains('nav-open'),
         cookieSuppressed: !cookieConsent || getComputedStyle(cookieConsent).display === 'none',
+        aiChatMounted: Boolean(aiChat),
+        aiChatSuppressed: !aiChat || getComputedStyle(aiChat).display === 'none',
         visibleLinks: links.length,
         hitTestedLinks,
       };
@@ -135,6 +141,11 @@ try {
       drawerState.cookieSuppressed,
       JSON.stringify(drawerState)
     );
+    assert(
+      `${scenario.name}: drawer suppresses the AI assistant layer`,
+      drawerState.aiChatMounted && drawerState.aiChatSuppressed,
+      JSON.stringify(drawerState)
+    );
     assert(`${scenario.name}: drawer links are visible`, drawerState.visibleLinks >= 4, JSON.stringify(drawerState));
     assert(
       `${scenario.name}: drawer links receive pointer hit tests`,
@@ -150,15 +161,20 @@ try {
     await page.waitForFunction(() => !document.querySelector('#mobile-nav')?.classList.contains('active'));
     const outsideCloseState = await page.evaluate(() => {
       const cookieConsent = document.querySelector('.cookie-consent');
+      const aiChat = document.querySelector('#hundesalon-ai-chat');
       return {
         closed: document.querySelector('#mobile-nav')?.getAttribute('aria-hidden') === 'true',
         bodyUnlocked: !document.body.classList.contains('nav-open'),
         cookieRestored: !cookieConsent || getComputedStyle(cookieConsent).display !== 'none',
+        aiChatRestored: !aiChat || getComputedStyle(aiChat).display !== 'none',
       };
     });
     assert(
       `${scenario.name}: outside pointer closes the drawer`,
-      outsideCloseState.closed && outsideCloseState.bodyUnlocked && outsideCloseState.cookieRestored,
+      outsideCloseState.closed &&
+        outsideCloseState.bodyUnlocked &&
+        outsideCloseState.cookieRestored &&
+        outsideCloseState.aiChatRestored,
       JSON.stringify(outsideCloseState)
     );
 
