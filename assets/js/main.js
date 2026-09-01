@@ -705,10 +705,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setMenuState = (isOpen, { restoreFocus = true } = {}) => {
-      if (isOpen && !isAtMenuOpenTop()) {
-        return;
-      }
-
       syncMobileNavLayout();
 
       burger.classList.toggle('active', isOpen);
@@ -888,35 +884,8 @@ document.addEventListener('DOMContentLoaded', () => {
       closeMenu({ restoreFocus: false });
     };
 
-    mobileNav.addEventListener('click', handleMobileNavLinkActivation, true);
-
-    // Дополнительный fallback для мобильных браузеров: закрываем меню на pointer/touch
-    // даже если click-событие у ссылки не дошло до контейнера.
-    const handleMobileNavPointerActivation = event => {
-      if (!isMenuOpen()) return;
-      const target = resolveEventElementTarget(event);
-      if (!target) return;
-      const link = target.closest('#mobile-nav a[href], #mobileNav a[href]');
-      if (!link) return;
-
-      // iOS can drop anchor navigation when the menu is closed in capture phase
-      // before the synthetic click/default link action is executed.
-      if (event.type === 'touchend' || event.type === 'pointerup') {
-        window.setTimeout(() => {
-          if (!isMenuOpen()) return;
-          setGalleryMenuState(false);
-          closeMenu({ restoreFocus: false });
-        }, 0);
-        return;
-      }
-
-      setGalleryMenuState(false);
-      closeMenu({ restoreFocus: false });
-    };
-
-    document.addEventListener('pointerup', handleMobileNavPointerActivation, true);
-    document.addEventListener('touchend', handleMobileNavPointerActivation, { capture: true, passive: true });
-    document.addEventListener('click', handleMobileNavPointerActivation, true);
+    // Let the browser complete the native anchor action before closing the drawer.
+    mobileNav.addEventListener('click', handleMobileNavLinkActivation);
     window.addEventListener('pageshow', normalizeNavLockState, { passive: true });
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {

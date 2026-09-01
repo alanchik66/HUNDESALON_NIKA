@@ -506,7 +506,7 @@ export async function sendSendPulseEmail(env, { to, subject, text, html = '', re
   const htmlContent = String(html || '').trim();
   const payload = {
     email: {
-      from: parseMailbox(from || getEnvValue(env, 'SENDPULSE_FROM', 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>')),
+      from: parseMailbox(from || getEnvValue(env, 'SENDPULSE_FROM', 'HUNDESALON_NIKA <info@hundesalon-nika.com>')),
       to: recipients.map(email => parseMailbox(email, email)),
       subject: String(subject || '').slice(0, 998),
       text: String(text || ''),

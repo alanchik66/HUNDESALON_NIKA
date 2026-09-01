@@ -89,6 +89,23 @@
 
   const categoryViews = createCategoryViews();
 
+  const syncSelectedBreedServices = (card, category, breedIndex) => {
+    const sourceCategoryId = category?.sourceId || category?.id;
+    if (!card || sourceCategoryId !== 'ru-short-coat' || !Number.isInteger(breedIndex)) return;
+    const bookingCategory = bookingCatalog?.getCategory(sourceCategoryId);
+    const serviceIndex = bookingCategory?.breeds.find(breed => breed.index === breedIndex)?.serviceIndex;
+    if (!Number.isInteger(serviceIndex)) return;
+
+    card.querySelectorAll('[data-price-service-select]').forEach(button => {
+      const buttonServiceIndex = Number(button.dataset.priceServiceIndex);
+      if (buttonServiceIndex >= 0 && buttonServiceIndex <= 3) {
+        const hidden = buttonServiceIndex !== serviceIndex;
+        button.hidden = hidden;
+        button.classList.toggle('price-card__service-option--breed-hidden', hidden);
+      }
+    });
+  };
+
   const ensurePageShell = () => {
     if (root.querySelector('[data-price-categories]') && root.querySelector('[data-price-hero]')) {
       return root;
@@ -543,6 +560,9 @@
     const sourceCategoryId = category.sourceId || category.id;
     const services = bookingCatalog.getServices(ADDITIONAL_CATEGORY_ID);
     if (sourceCategoryId === ADDITIONAL_CATEGORY_ID) return services;
+    if (sourceCategoryId === 'ru-small-animals') {
+      return services.filter(service => service.index === 0);
+    }
     if (!DOG_CATEGORY_IDS.has(sourceCategoryId)) return [];
     const serviceGroup = category.additionalServiceGroup || category.groupKey;
     const allowedIndexes = additionalServiceIndexesByGroup[serviceGroup] || [];
@@ -550,6 +570,7 @@
   };
 
   const getAdditionalServiceNotes = category => {
+    if ((category?.sourceId || category?.id) === 'ru-small-animals') return [];
     const notes = [locale.additionalServicesGeneralNote];
     const groupNote = locale[`additionalServices${category?.groupKey ? `${category.groupKey[0].toUpperCase()}${category.groupKey.slice(1)}` : ''}Note`];
     if (groupNote) notes.unshift(groupNote);
@@ -1340,11 +1361,10 @@
     const bookingCategory = bookingCatalog.getCategory(sourceCategoryId);
     if (!bookingCategory) return;
     const isAdditionalSelection = selectionMode === 'additional';
-    const shortCoatBreedStarts = [0, 5, 16, 24];
     const resolvedPreferredBreedIndex = Number.isInteger(preferredBreedIndex)
       ? preferredBreedIndex
       : sourceCategoryId === 'ru-short-coat' && Number.isInteger(preferredServiceIndex)
-        ? shortCoatBreedStarts[preferredServiceIndex] ?? 0
+        ? bookingCategory.breeds.find(breed => breed.serviceIndex === preferredServiceIndex)?.index ?? 0
         : null;
 
     if (modalBreedSelect.dataset.categoryId !== category.id) {
@@ -1573,6 +1593,61 @@
     .trim();
 
   const normalizeBreedTokens = value => normalizeSearch(value).split(/[\s/–—-]+/u).filter(Boolean);
+  const breedSearchCollator = new Intl.Collator(lang, { sensitivity: 'base', numeric: true });
+  const getMaxFuzzyDistance = token => {
+    if (token.length >= 9) return 2;
+    if (token.length >= 4) return 1;
+    return 0;
+  };
+  const getEditDistance = (left, right, maxDistance) => {
+    if (left === right) return 0;
+    if (Math.abs(left.length - right.length) > maxDistance) return maxDistance + 1;
+
+    let previousPrevious = null;
+    let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+    for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+      const current = [leftIndex];
+      for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+        const substitutionCost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
+        let distance = Math.min(
+          current[rightIndex - 1] + 1,
+          previous[rightIndex] + 1,
+          previous[rightIndex - 1] + substitutionCost
+        );
+        if (
+          previousPrevious
+          && leftIndex > 1
+          && rightIndex > 1
+          && left[leftIndex - 1] === right[rightIndex - 2]
+          && left[leftIndex - 2] === right[rightIndex - 1]
+        ) {
+          distance = Math.min(distance, previousPrevious[rightIndex - 2] + 1);
+        }
+        current[rightIndex] = distance;
+      }
+      previousPrevious = previous;
+      previous = current;
+    }
+    return previous[right.length];
+  };
+  const getBreedTokenScore = (candidateToken, queryToken) => {
+    if (candidateToken.startsWith(queryToken)) return 0;
+    const maxDistance = getMaxFuzzyDistance(queryToken);
+    if (!maxDistance) return Number.POSITIVE_INFINITY;
+
+    let distance = getEditDistance(queryToken, candidateToken, maxDistance);
+    if (candidateToken.length > queryToken.length) {
+      distance = Math.min(
+        distance,
+        getEditDistance(queryToken, candidateToken.slice(0, queryToken.length), maxDistance)
+      );
+    }
+    return distance <= maxDistance ? 10 + distance : Number.POSITIVE_INFINITY;
+  };
+  const getBreedSearchTokens = label => {
+    const aliases = locale.breedSearchAliases?.[label] || [];
+    return [...new Set([label, ...aliases].flatMap(normalizeBreedTokens))];
+  };
 
   const breedSearchMatches = categoryViews
     .filter(category => (category.sourceId || category.id) !== IMPORTANT_CATEGORY_ID)
@@ -1580,7 +1655,7 @@
     (category.breeds?.[lang] || category.breeds?.en || []).map((label, index) => ({
       id: `${category.id}:${category.breedIndexes?.[index] ?? index}`,
       label,
-      normalizedTokens: normalizeBreedTokens(label),
+      normalizedTokens: getBreedSearchTokens(label),
       categoryId: category.id,
       breedIndex: category.breedIndexes?.[index] ?? index,
       categoryLabel: getText(category.title),
@@ -1592,9 +1667,23 @@
     const normalizedQuery = normalizeSearch(query);
     if (normalizedQuery.length < SEARCH_MIN_CHARS) return [];
     const queryTokens = normalizeBreedTokens(query);
-    return breedSearchMatches.filter(match => queryTokens.every(queryToken =>
-      match.normalizedTokens.some(token => token.startsWith(queryToken))
-    ));
+    return breedSearchMatches
+      .map(match => ({
+        match,
+        score: queryTokens.reduce((total, queryToken) => {
+          const tokenScore = Math.min(
+            ...match.normalizedTokens.map(token => getBreedTokenScore(token, queryToken))
+          );
+          return total + tokenScore;
+        }, 0),
+      }))
+      .filter(result => Number.isFinite(result.score))
+      .sort((left, right) =>
+        left.score - right.score
+        || breedSearchCollator.compare(left.match.label, right.match.label)
+        || left.match.id.localeCompare(right.match.id)
+      )
+      .map(result => result.match);
   };
 
   const closeBreedSuggestions = () => {
@@ -1856,11 +1945,13 @@
     window.requestAnimationFrame(() => {
       const targetCard = Array.from(cardsRoot.querySelectorAll('[data-category-id]')).find(card => card.dataset.categoryId === match.categoryId);
       if (!targetCard) return;
+      const targetCategory = categoryViews.find(category => category.id === match.categoryId);
       if (mobileCardDetailsMedia.matches) setCardDetailsExpanded(targetCard, true, true);
       targetCard.dataset.selectedBreedIndex = String(match.breedIndex);
+      syncSelectedBreedServices(targetCard, targetCategory, match.breedIndex);
       targetCard.classList.add('price-card--search-target');
       targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      targetCard.querySelector('[data-price-service-select]')?.focus({ preventScroll: true });
+      targetCard.querySelector('[data-price-service-select]:not([hidden])')?.focus({ preventScroll: true });
       window.setTimeout(() => targetCard.classList.remove('price-card--search-target'), 2200);
     });
 
@@ -1982,6 +2073,7 @@
       const toggle = card?.querySelector('[data-price-breeds-toggle]');
       if (toggle) closeBreedMenu(toggle);
       if (card && Number.isInteger(breedIndex)) card.dataset.selectedBreedIndex = String(breedIndex);
+      syncSelectedBreedServices(card, category, breedIndex);
       if (category && Number.isInteger(breedIndex)) openModal(category, breedIndex);
       return;
     }
@@ -2018,7 +2110,14 @@
     if (!trigger) return;
     const category = categoryViews.find(item => item.id === trigger.dataset.priceOpen);
     const sourceCategoryId = category?.sourceId || category?.id;
-    openModal(category, null, null, sourceCategoryId === IMPORTANT_CATEGORY_ID ? 'information' : 'primary');
+    const card = trigger.closest('[data-category-id]');
+    const selectedBreedIndex = Number(card?.dataset.selectedBreedIndex);
+    openModal(
+      category,
+      Number.isInteger(selectedBreedIndex) ? selectedBreedIndex : null,
+      null,
+      sourceCategoryId === IMPORTANT_CATEGORY_ID ? 'information' : 'primary'
+    );
   });
 
   const closeBreedMenusOutside = target => {

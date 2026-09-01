@@ -1,32 +1,30 @@
+#!/usr/bin/env node
 /**
- * One-shot Bing URL API setup: launch Edge CDP → fetch API key → test submit.
+ * Bing URL API setup: ensure Edge CDP, read or explicitly generate the key,
+ * then verify a real batch submission.
  */
-console.log('Bing URL API setup…');
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './lib/browser-launch.mjs';
-import { getJson, openBingWebmasterSession } from './lib/browser-cdp.mjs';
-import { upsertDevVar } from './lib/cloudflare-auth.mjs';
+import { getJson } from './lib/browser-cdp.mjs';
+import { SITE_URL, siteQuery } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.BING_MAIL_EDGE_PORT || process.env.BING_EDGE_PORT || 9224);
-const siteQ = encodeURIComponent('https://hundesalon-nika.com/');
-const mailAccount = 'snaiper1984@mail.ru';
-const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+const allowGenerate = process.argv.includes('--generate');
 
-function extractKey(payload) {
-  if (!payload) return '';
-  if (typeof payload === 'string') {
-    const match = payload.match(UUID_RE);
-    return match ? match[0] : '';
-  }
-  for (const value of Object.values(payload)) {
-    const found = extractKey(value);
-    if (found) return found;
-  }
-  return '';
+function runNode(script, args = []) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [path.join(root, 'tools', script), ...args], {
+      cwd: root,
+      stdio: 'inherit',
+      env: process.env,
+    });
+    child.on('error', reject);
+    child.on('close', code => resolve(code ?? 1));
+  });
 }
 
 async function ensureCdp() {
@@ -34,22 +32,18 @@ async function ensureCdp() {
     await getJson(`http://127.0.0.1:${port}/json/version`);
     return true;
   } catch {
-    // continue
+    // Launch a dedicated Edge profile below.
   }
 
   const candidates = [
     path.join(process.env.ProgramFiles || '', 'Microsoft/Edge/Application/msedge.exe'),
     path.join(process.env['ProgramFiles(x86)'] || '', 'Microsoft/Edge/Application/msedge.exe'),
   ].filter(existsSync);
-
-  if (!candidates.length) {
-    console.error('Microsoft Edge not found.');
-    process.exit(1);
-  }
+  if (!candidates.length) return false;
 
   const userDataDir = path.join(process.env.TEMP || '.', 'hundesalon-nika-edge-debug');
-  const startUrl = `https://www.bing.com/webmasters/settings/apiaccess?siteUrl=${siteQ}`;
   const pidFile = browserPidFile('hundesalon-nika-edge-debug');
+  const startUrl = `https://www.bing.com/webmasters/home?siteUrl=${siteQuery(SITE_URL)}`;
 
   stopTrackedBrowser(pidFile);
   launchTrackedBrowser(
@@ -64,121 +58,42 @@ async function ensureCdp() {
     pidFile
   );
 
-  console.log(`Starting Edge (port ${port})…`);
-
-  for (let i = 0; i < 24; i += 1) {
+  for (let attempt = 0; attempt < 24; attempt += 1) {
     try {
       await getJson(`http://127.0.0.1:${port}/json/version`);
       return true;
     } catch {
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
-
   return false;
 }
 
-if (!(await ensureCdp())) {
-  console.error(`Edge CDP not ready on port ${port}.`);
-  console.error('Run manually: npm run bing:edge → sign in as mail.ru → npm run bing:fetch-api-key');
-  process.exit(1);
-}
-
-async function readAccount(session) {
-  return session.eval(`
-    const body = document.body?.innerText || '';
-    const emails = [...new Set([...body.matchAll(/[\\w.+-]+@[\\w.-]+\\.[a-z]{2,}/gi)].map(m => m[0].toLowerCase()))];
-    const needsLogin = /sign in|войти|anmelden|login/i.test(body) && !/sign out|выйти|abmelden/i.test(body);
-    return { emails, isMail: emails.some(e => e.includes('mail.ru')), needsLogin, url: location.href };
-  `);
-}
-
-const report = { at: new Date().toISOString(), steps: {} };
-const session = await openBingWebmasterSession({ port, siteQ, waitMs: 8000, reloadAttempts: 2 });
-
-try {
-  await session.nav('home');
-  report.steps.account = await readAccount(session);
-
-  if (!report.steps.account?.isMail) {
-    console.log(`Waiting for ${mailAccount} sign-in in Edge (up to 90s)…`);
-    console.log('If prompted: npm run bing:prefill-mail → enter password → continue here.');
-    for (let i = 0; i < 18; i += 1) {
-      await new Promise(r => setTimeout(r, 5000));
-      await session.nav('home');
-      report.steps.account = await readAccount(session);
-      if (report.steps.account?.isMail) break;
-    }
+async function main() {
+  console.log('Bing URL API setup...');
+  if (!(await ensureCdp())) {
+    throw new Error(`Edge CDP is not ready on port ${port}. Run: npm run bing:edge`);
   }
 
-  if (!report.steps.account?.isMail) {
-    console.error(`Sign in to Bing Webmaster as ${mailAccount} in Edge, then rerun: npm run bing:api:setup`);
-    console.error('Quick path: npm run bing:edge → npm run bing:prefill-mail → password → npm run bing:api:setup');
-    process.exit(2);
+  if (!allowGenerate) {
+    console.log('Credential creation is disabled. Existing keys can still be read.');
+    console.log('To create a missing key after approval, add: -- --generate');
   }
 
-  await session.nav('settings/apiaccess');
-
-  report.steps.apiPage = await session.eval(`
-    clickMatch('accept|принять|agree|соглас');
-    await sleep(1200);
-    clickMatch('terms|условия|conditions');
-    await sleep(800);
-    let generate = clickMatch('generate api key|создать ключ api|generate key|сгенерировать ключ|new api key|создать api');
-    if (!generate) generate = clickMatch('generate|создать|сгенерировать');
-    await sleep(2500);
-    clickMatch('copy|копировать|скопировать');
-    await sleep(600);
-
-    const candidates = [];
-    for (const el of document.querySelectorAll('input, textarea, code, pre, [data-copy], [data-clipboard-text]')) {
-      const value = el.value || el.textContent || el.getAttribute('data-clipboard-text') || el.getAttribute('data-copy') || '';
-      const trimmed = (value || '').trim();
-      if (trimmed.length >= 32) candidates.push(trimmed);
-    }
-
-    const body = document.body?.innerText || '';
-    const bodyMatch = body.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
-
-    return {
-      generateClicked: generate,
-      candidates: [...new Set(candidates)].slice(0, 8),
-      bodyMatch: bodyMatch ? bodyMatch[0] : '',
-      url: location.href,
-      sample: body.slice(0, 900),
-    };
-  `);
-
-  const apiKey = extractKey(report.steps.apiPage?.candidates) || report.steps.apiPage?.bodyMatch || '';
-
-  if (!apiKey) {
-    const out = path.join(root, 'temp', 'bing-api-setup-report.json');
-    mkdirSync(path.dirname(out), { recursive: true });
-    writeFileSync(out, `${JSON.stringify(report, null, 2)}\n`);
-    console.error('Could not read API key from Bing Webmaster.');
-    console.error('Open: https://www.bing.com/webmasters/settings/apiaccess');
-    console.error(`Report: ${path.relative(root, out)}`);
-    console.error('Paste key manually: npm run bing:set-api-key');
-    process.exit(3);
+  const fetchCode = await runNode('bing-fetch-api-key.mjs', allowGenerate ? ['--generate'] : []);
+  if (fetchCode !== 0) {
+    throw new Error(`Bing API key setup failed with exit code ${fetchCode}.`);
   }
 
-  upsertDevVar('BING_WEBMASTER_API_KEY', apiKey);
-  report.saved = true;
-  report.keyHint = `${apiKey.slice(0, 8)}…${apiKey.slice(-4)}`;
-  console.log(`Saved BING_WEBMASTER_API_KEY (${report.keyHint}).`);
-} finally {
-  session.close();
+  const verifyCode = await runNode('bing-url-submit.mjs');
+  if (verifyCode !== 0) {
+    throw new Error(`Bing URL API verification failed with exit code ${verifyCode}.`);
+  }
+
+  console.log('Bing URL API setup and live verification completed.');
 }
 
-const verify = spawn(process.execPath, [path.join(root, 'tools', 'bing-url-submit.mjs')], {
-  cwd: root,
-  stdio: 'inherit',
-  env: process.env,
-});
-
-verify.on('close', code => {
-  const out = path.join(root, 'temp', 'bing-api-setup-report.json');
-  mkdirSync(path.dirname(out), { recursive: true });
-  writeFileSync(out, `${JSON.stringify(report, null, 2)}\n`);
-  process.exit(code || 0);
+main().catch(error => {
+  console.error(error.message);
+  process.exitCode = 1;
 });

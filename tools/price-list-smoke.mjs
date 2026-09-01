@@ -475,6 +475,58 @@ for (const locale of locales) {
     const breedSearchFocus = await page.evaluate(() => document.activeElement?.matches('[data-price-breed-search-input]') || false);
     assert(`${locale} ${label}: breed search focus`, breedSearchFocus);
 
+    const breedAlphabetState = await page.evaluate(currentLocale => {
+      const dogCategoryIds = new Set([
+        'ru-small-growing-coat',
+        'ru-poodles-bichons',
+        'ru-spitz',
+        'ru-spaniels',
+        'ru-wire-coat',
+        'ru-short-coat',
+        'ru-large-dogs',
+      ]);
+      const collator = new Intl.Collator(currentLocale, { sensitivity: 'base', numeric: true });
+      return (window.PricePageCatalog?.categoriesByLocale?.[currentLocale] || [])
+        .filter(category => dogCategoryIds.has(category.id))
+        .flatMap(category => {
+          const names = category.breeds?.[currentLocale] || [];
+          const sorted = [...names].sort((left, right) => collator.compare(left, right));
+          return names.every((name, index) => name === sorted[index]) ? [] : [category.id];
+        });
+    }, locale);
+    assert(
+      `${locale} ${label}: every dog category uses the locale alphabet`,
+      breedAlphabetState.length === 0,
+      JSON.stringify(breedAlphabetState)
+    );
+
+    if (locale === 'ru' && label === 'desktop') {
+      const typoCases = [
+        { query: 'Командор', expected: 'Комондор', categoryId: 'ru-large-dogs' },
+        { query: 'Коммандор', expected: 'Комондор', categoryId: 'ru-large-dogs' },
+        { query: 'Ирланский валкодав', expected: 'Ирландский волкодав', categoryId: 'ru-wire-coat' },
+      ];
+      for (const typoCase of typoCases) {
+        await breedSearch.fill(typoCase.query);
+        const typoState = await page.evaluate(expected => {
+          const results = Array.from(document.querySelectorAll('[data-price-breed-result]')).map(button => ({
+            name: button.querySelector('.price-breed-search__suggestion-name')?.textContent?.trim() || '',
+            categoryId: button.dataset.priceBreedResultCategory || '',
+          }));
+          return {
+            match: results.find(result => result.name === expected.name) || null,
+            results,
+            filteredCardCount: document.querySelectorAll('[data-price-categories] .price-card').length,
+          };
+        }, { name: typoCase.expected });
+        assert(
+          `ru desktop: typo «${typoCase.query}» resolves to «${typoCase.expected}»`,
+          typoState.match?.categoryId === typoCase.categoryId && typoState.filteredCardCount === 1,
+          JSON.stringify(typoState)
+        );
+      }
+    }
+
     const breedQuery = await page.evaluate(() => {
       const breedOption = document.querySelector('[data-price-breed-select]');
       const breedToggle = document.querySelector('[data-price-breeds-toggle]');

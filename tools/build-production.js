@@ -279,7 +279,7 @@ function normalizePublicContact(directory) {
       }
       if (!entry.name.endsWith('.html')) continue;
       const original = fs.readFileSync(fullPath, 'utf8');
-      const next = original.replaceAll('info@hundesalon-nika.com', 'support@hundesalon-nika.com');
+      const next = original.replaceAll('support@hundesalon-nika.com', 'info@hundesalon-nika.com');
       if (next !== original) {
         fs.writeFileSync(fullPath, next, 'utf8');
         htmlFiles += 1;

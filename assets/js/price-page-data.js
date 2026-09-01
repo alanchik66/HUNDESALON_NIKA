@@ -354,6 +354,10 @@
       searchSelectedLabel: 'Выбрана порода',
       searchResultSingular: 'категория найдена',
       searchResultPlural: 'категорий найдено',
+      breedSearchAliases: {
+        'Ирландский волкодав': ['Ирландский вольфхаунд'],
+        'Комондор': ['Командор', 'Коммандор'],
+      },
       breedSelectLabel: 'Выберите породу',
       serviceSelectLabel: 'Выберите услугу',
       selectedPriceLabel: 'Ориентировочная цена',
@@ -510,6 +514,10 @@
       searchSelectedLabel: 'Обрана порода',
       searchResultSingular: 'категорію знайдено',
       searchResultPlural: 'категорій знайдено',
+      breedSearchAliases: {
+        'Ірландський вовкодав': ['Ірландський вольфгаунд'],
+        'Комондор': ['Командор', 'Коммандор'],
+      },
       breedSelectLabel: 'Оберіть породу',
       serviceSelectLabel: 'Оберіть послугу',
       selectedPriceLabel: 'Орієнтовна вартість',

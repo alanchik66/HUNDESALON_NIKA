@@ -8,9 +8,9 @@ import { spawn } from 'node:child_process';
 const PROJECT_NAME = 'hundesalon-nika';
 const ACCOUNT_ID = '25e872aeab8cb246c69142ab07cd0fee';
 const DEFAULT_SALON_EMAIL = 'info@hundesalon-nika.com';
-const DEFAULT_SUPPORT_EMAIL = 'support@hundesalon-nika.com';
+const DEFAULT_SUPPORT_EMAIL = DEFAULT_SALON_EMAIL;
 const DEFAULT_ADMIN_EMAILS = [];
-const DEFAULT_CLIENT_EMAIL_FROM = 'HUNDESALON_NIKA <support@hundesalon-nika.com>';
+const DEFAULT_CLIENT_EMAIL_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const DEFAULT_RESOURCE_PREFIX = 'HUNDESALON_NIKA';
 const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/calendar',

@@ -1431,6 +1431,10 @@ body.light .price-configurator__result {
   transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
 }
 
+.price-card__service-option.price-card__service-option--breed-hidden {
+  display: none;
+}
+
 .price-card__service-option:hover,
 .price-card__service-option:focus-visible {
   z-index: 2;

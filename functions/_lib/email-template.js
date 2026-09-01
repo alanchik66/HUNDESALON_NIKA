@@ -22,8 +22,8 @@ export const MASTER_EMAIL_TEMPLATE = Object.freeze({
       replyTo: 'info@hundesalon-nika.com',
     }),
     automated: Object.freeze({
-      from: 'noreply@hundesalon-nika.com',
-      replyTo: 'support@hundesalon-nika.com',
+      from: 'info@hundesalon-nika.com',
+      replyTo: 'info@hundesalon-nika.com',
     }),
   }),
 });

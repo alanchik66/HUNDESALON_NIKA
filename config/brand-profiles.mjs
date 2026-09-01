@@ -31,7 +31,7 @@ export const NAP = {
   region: 'Sachsen',
   country: 'DE',
   phone: '+49 151 72450988',
-  email: 'support@hundesalon-nika.com',
-  supportEmail: 'support@hundesalon-nika.com',
+  email: 'info@hundesalon-nika.com',
+  supportEmail: 'info@hundesalon-nika.com',
   url: 'https://hundesalon-nika.com/',
 };

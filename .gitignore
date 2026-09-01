@@ -82,6 +82,7 @@ coverage/
 config.local.js
 secrets.*
 .dev.vars
+.bing-url-api-state.json
 .dev.vars.*
 !.dev.vars.example
 *.key

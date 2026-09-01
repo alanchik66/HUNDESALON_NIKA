@@ -1,24 +1,24 @@
 import { getEnvValue, sendSendPulseEmail } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
 
-const AUTOREPLY_FROM = 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>';
-const SUPPORT_EMAIL = 'support@hundesalon-nika.com';
+const AUTOREPLY_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
+const REPLY_TO_EMAIL = 'info@hundesalon-nika.com';
 const COPY = {
   de: {
     subject: 'Automatische Information | HUNDESALON_NIKA',
-    body: 'Dies ist eine automatische Informationsnachricht von HUNDESALON_NIKA.\n\nBitte antworten Sie nicht auf diese Adresse.\n\nFür eine persönliche Antwort schreiben Sie bitte an support@hundesalon-nika.com.\n\nSalonadresse: Walter-Markov-Ring 1 · 04288 Leipzig',
+    body: 'Dies ist eine automatische Informationsnachricht von HUNDESALON_NIKA.\n\nSie können direkt auf diese Nachricht antworten. Ihre Antwort geht an info@hundesalon-nika.com.\n\nSalonadresse: Walter-Markov-Ring 1 · 04288 Leipzig',
   },
   en: {
     subject: 'Automatic information | HUNDESALON_NIKA',
-    body: 'This is an automatic information message from HUNDESALON_NIKA.\n\nPlease do not reply to this address.\n\nFor a personal reply, please contact support@hundesalon-nika.com.\n\nSalon address: Walter-Markov-Ring 1 · 04288 Leipzig',
+    body: 'This is an automatic information message from HUNDESALON_NIKA.\n\nYou can reply directly to this message. Your reply will go to info@hundesalon-nika.com.\n\nSalon address: Walter-Markov-Ring 1 · 04288 Leipzig',
   },
   ru: {
     subject: 'Автоматическая информация | HUNDESALON_NIKA',
-    body: 'Это автоматическое информационное сообщение от HUNDESALON_NIKA.\n\nПожалуйста, не отвечайте на этот адрес.\n\nДля личного ответа напишите на support@hundesalon-nika.com.\n\nАдрес салона: Walter-Markov-Ring 1 · 04288 Leipzig',
+    body: 'Это автоматическое информационное сообщение от HUNDESALON_NIKA.\n\nВы можете ответить прямо на это письмо. Ответ поступит на info@hundesalon-nika.com.\n\nАдрес салона: Walter-Markov-Ring 1 · 04288 Leipzig',
   },
   uk: {
     subject: 'Автоматична інформація | HUNDESALON_NIKA',
-    body: 'Це автоматичне інформаційне повідомлення від HUNDESALON_NIKA.\n\nБудь ласка, не відповідайте на цю адресу.\n\nДля особистої відповіді напишіть на support@hundesalon-nika.com.\n\nАдреса салону: Walter-Markov-Ring 1 · 04288 Leipzig',
+    body: 'Це автоматичне інформаційне повідомлення від HUNDESALON_NIKA.\n\nВи можете відповісти безпосередньо на цей лист. Відповідь надійде на info@hundesalon-nika.com.\n\nАдреса салону: Walter-Markov-Ring 1 · 04288 Leipzig',
   },
 };
 
@@ -56,7 +56,7 @@ export async function onRequestPost({ request, env }) {
   const result = await sendSendPulseEmail(env, {
     to,
     from: AUTOREPLY_FROM,
-    replyTo: SUPPORT_EMAIL,
+    replyTo: REPLY_TO_EMAIL,
     subject: copy.subject,
     text: copy.body,
     html: buildBrandedEmail({ title: copy.subject, bodyText: copy.body, lang }),
@@ -66,5 +66,5 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: false, error: 'Email delivery failed' }, 502);
   }
 
-  return json({ ok: true, recipient: to.replace(/(^.).*(@.*$)/, '$1***$2'), support: SUPPORT_EMAIL });
+  return json({ ok: true, recipient: to.replace(/(^.).*(@.*$)/, '$1***$2'), replyTo: REPLY_TO_EMAIL });
 }

@@ -25,11 +25,11 @@ import {
 } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
 
-const DEFAULT_RECIPIENT = 'support@hundesalon-nika.com';
-const DEFAULT_BOOKING_RECIPIENT = 'booking@hundesalon-nika.com';
-const DEFAULT_SUPPORT = 'support@hundesalon-nika.com';
-const DEFAULT_FROM = 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>';
-const DEFAULT_CLIENT_FROM = 'HUNDESALON_NIKA <support@hundesalon-nika.com>';
+const DEFAULT_RECIPIENT = 'info@hundesalon-nika.com';
+const DEFAULT_BOOKING_RECIPIENT = 'info@hundesalon-nika.com';
+const DEFAULT_SUPPORT = 'info@hundesalon-nika.com';
+const DEFAULT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
+const DEFAULT_CLIENT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const DEFAULT_ADMIN_EMAILS = [];
 const ONLINE_PAYMENTS_HARD_DISABLED = true;
 const SLACK_TIMEOUT_MS = 4500;
@@ -514,8 +514,8 @@ function getAdminEmails(env) {
 }
 
 function getSupportReplyTo(env, fallback = DEFAULT_SUPPORT) {
-  const supportEmail = getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') || getEnvValue(env, 'SUPPORT_EMAIL') || fallback;
-  return isValidEmail(supportEmail) ? supportEmail : fallback;
+  const replyTo = getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') || getEnvValue(env, 'SALON_EMAIL') || fallback;
+  return isValidEmail(replyTo) ? replyTo : fallback;
 }
 
 function getClientEmailFrom(env, fallback = DEFAULT_CLIENT_FROM) {

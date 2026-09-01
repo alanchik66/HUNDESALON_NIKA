@@ -13,7 +13,7 @@ import {
 } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
 
-const DEFAULT_FROM = 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>';
+const DEFAULT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const ONLINE_PAYMENTS_HARD_DISABLED = true;
 
 function paymentsOnlineEnabled(env) {

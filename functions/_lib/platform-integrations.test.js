@@ -26,8 +26,8 @@ test('SendPulse email encodes UTF-8 HTML and preserves sender and Reply-To', asy
       { SENDPULSE_API_KEY: 'unit-test-token' },
       {
         to: 'customer@example.com',
-        from: 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>',
-        replyTo: 'support@hundesalon-nika.com',
+        from: 'HUNDESALON_NIKA <info@hundesalon-nika.com>',
+        replyTo: 'info@hundesalon-nika.com',
         subject: 'Test',
         text: 'Grüße — Дякуємо',
         html,
@@ -38,8 +38,8 @@ test('SendPulse email encodes UTF-8 HTML and preserves sender and Reply-To', asy
     assert.equal(Buffer.from(payload.email.html, 'base64').toString('utf8'), html);
     assert.equal(payload.email.text, 'Grüße — Дякуємо');
     assert.equal(payload.email.to.length, 1);
-    assert.equal(payload.email.from.email, 'noreply@hundesalon-nika.com');
-    assert.equal(payload.email.reply_to.email, 'support@hundesalon-nika.com');
+    assert.equal(payload.email.from.email, 'info@hundesalon-nika.com');
+    assert.equal(payload.email.reply_to.email, 'info@hundesalon-nika.com');
   } finally {
     globalThis.fetch = originalFetch;
     console.info = originalInfo;

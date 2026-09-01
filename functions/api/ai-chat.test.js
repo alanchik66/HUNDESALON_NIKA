@@ -46,6 +46,15 @@ test('knowledge retrieval selects the exact German breed and price context', () 
   assert.match(reference, /Zwergpudel/i);
   assert.match(reference, /Komplettpflege/i);
   assert.match(reference, /€|EUR/);
+  assert.ok(reference.length <= 8_000);
+});
+
+test('Russian dental retrieval uses the canonical price and excludes the obsolete overview price', () => {
+  const reference = selectAiChatKnowledge('Сколько стоит чистка зубов собаке до 6 кг?', 'ru');
+  assert.match(reference, /Ультразвуковая чистка зубов без наркоза \(до 6 кг\).*от 100 €/s);
+  assert.match(reference, /скидка 30%/i);
+  assert.match(reference, /не заменяет ветеринарное стоматологическое лечение/i);
+  assert.doesNotMatch(reference, /от 55 €/i);
 });
 
 test('knowledge retrieval matches inflected Russian and Ukrainian breed names', () => {
@@ -56,6 +65,50 @@ test('knowledge retrieval matches inflected Russian and Ukrainian breed names', 
   const ukrainian = selectAiChatKnowledge('Повторіть ціну догляду за карликовим пуделем.', 'uk');
   assert.match(ukrainian, /Карликовий пудель/i);
   assert.match(ukrainian, /Комплексний грумінг — від 90 €/i);
+});
+
+test('knowledge retrieval resolves the common Komondor misspelling to the official large-dog category', () => {
+  for (const query of [
+    'К какой категории относится порода командор?',
+    'Найдите коммандора.',
+    'Где находится порода коммандор?',
+  ]) {
+    const reference = selectAiChatKnowledge(query, 'ru');
+    assert.match(reference, /Командор → Комондор/);
+    assert.match(reference, /7\. Крупные собаки/);
+    assert.match(reference, /Комплексный уход — от 130 €/);
+  }
+});
+
+test('knowledge retrieval resolves Irish Wolfhound spelling errors to the wire-coat category', () => {
+  const reference = selectAiChatKnowledge('Где ирланский валкодав?', 'ru');
+
+  assert.match(reference, /Ирландский волкодав/);
+  assert.match(reference, /5\. Жёсткошёрстные породы/);
+  assert.match(reference, /Стрижка — от 90 €/);
+});
+
+test('animal-care retrieval selects species-specific safety guidance', () => {
+  const guineaPig = selectAiChatKnowledge('Как безопасно подстричь когти морской свинке?', 'ru');
+  assert.match(guineaPig, /Подстригают только свободную часть когтя/i);
+  assert.match(guineaPig, /сосудисто-нервный пучок/i);
+
+  const rabbit = selectAiChatKnowledge('Можно ли полностью купать кролика?', 'ru');
+  assert.match(rabbit, /Стандартный уход не включает купание/i);
+  assert.match(rabbit, /Полная ванна, погружение/i);
+
+  const cat = selectAiChatKnowledge('Кошка тяжело дышит во время вычёсывания.', 'ru');
+  assert.match(cat, /тяжёлом дыхании/i);
+  assert.match(cat, /ветеринар/i);
+});
+
+test('small-animal nail price retrieval prioritizes the standalone service', () => {
+  const reference = selectAiChatKnowledge('Можно ли подстричь когти морской свинке и сколько это стоит?', 'ru');
+  const firstBlock = reference.split('\n\n---\n\n')[0];
+
+  assert.match(firstBlock, /Дополнительные услуги/i);
+  assert.match(firstBlock, /Подстригание когтей — маленькие животные — 7 €/i);
+  assert.match(reference, /Подстригают только свободную часть когтя/i);
 });
 
 for (const { locale, questions, patterns } of [
@@ -203,9 +256,36 @@ test('OpenAI request uses bounded context and returns the model answer', async (
     assert.match(upstreamPayload.instructions, /Give more detail only when the customer explicitly asks/);
     assert.match(upstreamPayload.instructions, /Preserve essential conditions such as age limits, conditional care/);
     assert.match(upstreamPayload.instructions, /never reproduce entire reference blocks or the full knowledge document/);
+    assert.match(upstreamPayload.instructions, /Ultrasonic teeth cleaning.*от 100 €/s);
+    assert.match(upstreamPayload.instructions, /obsolete teeth-cleaning price от 55 €/);
     assert.ok(upstreamPayload.instructions.length < 12_500);
     assert.ok(upstreamPayload.input.length < 10_000);
     assert.doesNotMatch(upstreamPayload.instructions, /test-key/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreCache();
+  }
+});
+
+test('Russian price answers receive the mandatory final-price disclosure', async () => {
+  const restoreCache = installCacheStub();
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () =>
+    new Response(JSON.stringify({ output_text: 'Подстригание когтей стоит 7 евро; маска — от 15 €.' }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  try {
+    const response = await onRequest({
+      request: createRequest(requestBody({ locale: 'ru', message: 'Сколько стоит подстригание когтей?', pagePath: '/ru/prays-list.html' })),
+      env: { OPENAI_API_KEY: 'test-key' },
+    });
+    const payload = await response.json();
+    assert.match(payload.answer, /от 7 €/);
+    assert.match(payload.answer, /от 15 €/);
+    assert.doesNotMatch(payload.answer, /стоит\s+7\s*(?:€|евро)/i);
+    assert.doesNotMatch(payload.answer, /от\s+от/i);
+    assert.match(payload.answer, /Точную стоимость мастер оценит и согласует с вами до начала процедуры/);
   } finally {
     globalThis.fetch = originalFetch;
     restoreCache();

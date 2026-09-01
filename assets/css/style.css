@@ -6772,7 +6772,6 @@ body.scrollbar-dragging {
   max-height: 0;
   overflow: hidden;
   transition:
-    max-height 0.38s cubic-bezier(0.22, 1, 0.36, 1),
     opacity 0.28s ease,
     transform 0.28s ease,
     border-color 0.28s ease;
@@ -6788,7 +6787,7 @@ body.scrollbar-dragging {
 }
 
 .mobile-dropdown-menu.open {
-  max-height: 220px;
+  max-height: none;
   opacity: 1;
   transform: translateY(0);
   border-color: #c6a15b1f;
@@ -14195,5 +14194,51 @@ body.price-page .price-page-hero[data-price-hero] .price-breed-search__input {
       var(--icon-coin-duration), var(--euro-sheen-duration, var(--motion-sync-breath)) !important;
     animation-iteration-count: infinite, infinite !important;
     animation-play-state: running, running !important;
+  }
+}
+
+/* =========================================================
+   MOBILE NAV OVERRIDE: left-side drawer on every viewport
+   ========================================================= */
+body.nav-open .cookie-consent {
+  display: none;
+}
+
+#mobile-nav {
+  --mobile-nav-drawer-width: min(420px, 88vw);
+  top: 0 !important;
+  right: auto !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: var(--mobile-nav-drawer-width) !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  padding-top: max(18px, calc(env(safe-area-inset-top) + var(--mobile-nav-content-offset) + 8px)) !important;
+  padding-right: max(16px, env(safe-area-inset-right)) !important;
+  padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  border: 1px solid rgb(198 161 91 / 24%) !important;
+  border-left: 0 !important;
+  border-radius: 0 28px 28px 0 !important;
+  transform: translate3d(-105%, 0, 0) !important;
+  transform-origin: left center !important;
+  box-shadow:
+    18px 0 44px rgb(0 0 0 / 34%),
+    0 0 0 1px rgb(255 244 216 / 4%),
+    inset -1px 0 0 rgb(255 244 216 / 8%) !important;
+  transition:
+    opacity 0.3s ease,
+    visibility 0s linear 0.48s,
+    transform 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.48s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+#mobile-nav.active {
+  transform: translate3d(0, 0, 0) !important;
+}
+
+@media (width <= 640px) {
+  #mobile-nav {
+    --mobile-nav-drawer-width: min(360px, 88vw);
+    border-radius: 0 24px 24px 0 !important;
   }
 }

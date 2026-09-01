@@ -12,7 +12,7 @@ import {
 } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
 
-const DEFAULT_FROM = 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>';
+const DEFAULT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const DEFAULT_ADMIN_EMAILS = [];
 
 const COPY = {
@@ -114,8 +114,8 @@ export async function onRequest(context) {
   const createdAt = new Date().toISOString();
   const requestId = crypto.randomUUID();
   const supportReplyTo =
-    getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') || getEnvValue(env, 'SUPPORT_EMAIL') || 'support@hundesalon-nika.com';
-  const clientEmailFrom = getEnvValue(env, 'CLIENT_EMAIL_FROM') || 'HUNDESALON_NIKA <support@hundesalon-nika.com>';
+    getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') || getEnvValue(env, 'SALON_EMAIL') || 'info@hundesalon-nika.com';
+  const clientEmailFrom = getEnvValue(env, 'CLIENT_EMAIL_FROM') || 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
   const adminRecipients = uniqueEmailList(getEnvList(env, 'ADMIN_NOTIFICATION_EMAILS', DEFAULT_ADMIN_EMAILS.join(',')));
 
   const sheetResult = await runIntegration('sheet persistence', () =>

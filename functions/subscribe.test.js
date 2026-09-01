@@ -154,7 +154,8 @@ test('reports degraded success when persistence succeeds without confirmation de
 
 test('reports full success when confirmation delivery and persistence both succeed', async () => {
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = async url => {
+  let emailPayload;
+  globalThis.fetch = async (url, options) => {
     const target = String(url);
     if (target.includes('/oauth/access_token')) {
       return Response.json({ access_token: 'sp_test_token', expires_in: 3600 });
@@ -163,6 +164,7 @@ test('reports full success when confirmation delivery and persistence both succe
       return Response.json({ result: true });
     }
     if (/api\.sendpulse\.com\/(smtp\/emails|addressbooks\/123\/emails)/.test(target)) {
+      if (target.includes('/smtp/emails')) emailPayload = JSON.parse(options.body);
       return Response.json({ result: true });
     }
     throw new Error(`Unexpected request: ${target}`);
@@ -181,6 +183,8 @@ test('reports full success when confirmation delivery and persistence both succe
     assert.equal(response.status, 200);
     assert.equal(body.success, true);
     assert.equal(body.degraded, undefined);
+    assert.equal(emailPayload.email.from.email, 'info@hundesalon-nika.com');
+    assert.equal(emailPayload.email.reply_to.email, 'info@hundesalon-nika.com');
   } finally {
     globalThis.fetch = originalFetch;
   }

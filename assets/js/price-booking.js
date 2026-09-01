@@ -154,11 +154,13 @@
   const build = lang => {
     const safeLang = ['de', 'en', 'ru', 'uk'].includes(lang) ? lang : 'en';
     const categories = getSourceCategories(safeLang).map(category => {
-      const breeds = (category.breeds?.[safeLang] || category.breeds?.en || []).map((label, index) => ({
+      const breedServiceIndexes = category.breedServiceIndexes || [];
+      const breeds = (category.breeds?.[safeLang] || []).map((label, index) => ({
         id: `${category.id}:breed:${index}`,
         categoryId: category.id,
         index,
         label,
+        serviceIndex: Number.isInteger(breedServiceIndexes[index]) ? breedServiceIndexes[index] : null,
       }));
       const services = (category.priceRows || []).map((priceRow, index) => ({
         id: `${category.id}:service:${index}`,
@@ -193,7 +195,9 @@
 
       if (category.id === 'ru-short-coat' && breedId) {
         const breed = getBreed(breedId);
-        const priceIndex = getShortCoatPriceIndex(breed?.index ?? 0);
+        const priceIndex = Number.isInteger(breed?.serviceIndex)
+          ? breed.serviceIndex
+          : getShortCoatPriceIndex(breed?.index ?? 0);
         return category.services.filter(service => service.index === priceIndex || service.key === 'puppy-intro');
       }
 

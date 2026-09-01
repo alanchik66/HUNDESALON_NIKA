@@ -231,6 +231,9 @@ test('accepts review feedback with rating metadata', async () => {
     assert.ok(payloads.some(payload => payload.inquiry_type === 'public_review'));
     assert.ok(payloads.some(payload => payload.review_rating === '5'));
     assert.ok(payloads.some(payload => payload.review_channel === 'website'));
+    const emailPayload = payloads.find(payload => payload.email?.from);
+    assert.equal(emailPayload.email.from.email, 'info@hundesalon-nika.com');
+    assert.equal(emailPayload.email.reply_to.email, 'reviewer@example.com');
   } finally {
     globalThis.fetch = originalFetch;
   }

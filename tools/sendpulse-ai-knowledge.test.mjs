@@ -38,7 +38,17 @@ test('knowledge generator includes canonical prices and all supported locales', 
   assert.match(content, /Full grooming — from €80/);
   assert.match(content, /Комплексный груминг — от 80 €/);
   assert.match(content, /Комплексний грумінг — від 80 €/);
+  assert.match(content, /Search aliases .*: Командор → Комондор/);
+  assert.match(content, /Коммандор → Комондор/);
+  assert.match(content, /Ирландский вольфхаунд → Ирландский волкодав/);
   assert.match(content, /SENDPULSE_AUTO_SITE_START/);
+  assert.match(content, /SENDPULSE_AUTO_ANIMAL_START/);
+  assert.match(content, /Verified animal grooming reference/);
+  assert.match(content, /Guinea pigs/);
+  assert.match(content, /Rabbits/);
+  assert.ok(sourcePaths.includes('assets/js/fci-dog-breeds-data.js'));
+  assert.ok(sourcePaths.includes('assets/js/price-page-fci-breeds.js'));
+  assert.ok(sourcePaths.includes('knowledge/03_Resources/Animal_Grooming_Reference.md'));
   const germanCatalog = content.split('### DE — published catalog ###')[1].split('### EN — published catalog ###')[0];
   assert.doesNotMatch(germanCatalog, /groom(?:ing|er)/i);
 });

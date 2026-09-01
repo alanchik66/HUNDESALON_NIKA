@@ -69,7 +69,7 @@ test('master email standard includes every active business alias and strict send
     replyTo: 'info@hundesalon-nika.com',
   });
   assert.deepEqual(MASTER_EMAIL_TEMPLATE.senderRules.automated, {
-    from: 'noreply@hundesalon-nika.com',
-    replyTo: 'support@hundesalon-nika.com',
+    from: 'info@hundesalon-nika.com',
+    replyTo: 'info@hundesalon-nika.com',
   });
 });
