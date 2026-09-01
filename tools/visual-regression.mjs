@@ -38,6 +38,14 @@ try {
     await page.addStyleTag({ url: `${server.baseUrl}/assets/css/ai-chat.css` });
     await page.addScriptTag({ url: `${server.baseUrl}/assets/js/ai-chat.js` });
     await page.waitForSelector('#hundesalon-ai-chat', { state: 'visible', timeout: 15000 });
+    await page.evaluate(() => {
+      if (document.querySelector('sp-live-chat')) return;
+      const sendPulseChat = document.createElement('sp-live-chat');
+      sendPulseChat.dataset.visualRegressionFixture = 'true';
+      sendPulseChat.style.cssText =
+        'position:fixed;right:0;bottom:0;z-index:2147483646;display:block;width:12rem;height:8rem;';
+      document.body.append(sendPulseChat);
+    });
     await page.locator('body').evaluate((body, light) => body.classList.toggle('light', light), scenario.light);
     await page.waitForSelector('.header .online-order-pill .nav-plasma--active', { timeout: 15000 });
 
@@ -80,6 +88,7 @@ try {
       const overlay = document.querySelector('#mobile-nav-overlay');
       const cookieConsent = document.querySelector('.cookie-consent');
       const aiChat = document.querySelector('#hundesalon-ai-chat');
+      const sendPulseChat = document.querySelector('sp-live-chat');
       const rect = nav?.getBoundingClientRect();
       const links = nav
         ? [...nav.querySelectorAll(':scope > .mobile-nav-group > a[href]')].filter(link => {
@@ -109,6 +118,8 @@ try {
         cookieSuppressed: !cookieConsent || getComputedStyle(cookieConsent).display === 'none',
         aiChatMounted: Boolean(aiChat),
         aiChatSuppressed: !aiChat || getComputedStyle(aiChat).display === 'none',
+        sendPulseChatMounted: Boolean(sendPulseChat),
+        sendPulseChatSuppressed: !sendPulseChat || getComputedStyle(sendPulseChat).display === 'none',
         visibleLinks: links.length,
         hitTestedLinks,
       };
@@ -146,6 +157,11 @@ try {
       drawerState.aiChatMounted && drawerState.aiChatSuppressed,
       JSON.stringify(drawerState)
     );
+    assert(
+      `${scenario.name}: drawer suppresses the SendPulse live-chat layer`,
+      drawerState.sendPulseChatMounted && drawerState.sendPulseChatSuppressed,
+      JSON.stringify(drawerState)
+    );
     assert(`${scenario.name}: drawer links are visible`, drawerState.visibleLinks >= 4, JSON.stringify(drawerState));
     assert(
       `${scenario.name}: drawer links receive pointer hit tests`,
@@ -162,11 +178,13 @@ try {
     const outsideCloseState = await page.evaluate(() => {
       const cookieConsent = document.querySelector('.cookie-consent');
       const aiChat = document.querySelector('#hundesalon-ai-chat');
+      const sendPulseChat = document.querySelector('sp-live-chat');
       return {
         closed: document.querySelector('#mobile-nav')?.getAttribute('aria-hidden') === 'true',
         bodyUnlocked: !document.body.classList.contains('nav-open'),
         cookieRestored: !cookieConsent || getComputedStyle(cookieConsent).display !== 'none',
         aiChatRestored: !aiChat || getComputedStyle(aiChat).display !== 'none',
+        sendPulseChatRestored: !sendPulseChat || getComputedStyle(sendPulseChat).display !== 'none',
       };
     });
     assert(
@@ -174,7 +192,8 @@ try {
       outsideCloseState.closed &&
         outsideCloseState.bodyUnlocked &&
         outsideCloseState.cookieRestored &&
-        outsideCloseState.aiChatRestored,
+        outsideCloseState.aiChatRestored &&
+        outsideCloseState.sendPulseChatRestored,
       JSON.stringify(outsideCloseState)
     );
 

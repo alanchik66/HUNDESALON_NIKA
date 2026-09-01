@@ -14204,7 +14204,8 @@ body.nav-open .cookie-consent {
   display: none;
 }
 
-body.nav-open #hundesalon-ai-chat {
+body.nav-open #hundesalon-ai-chat,
+body.nav-open sp-live-chat {
   display: none !important;
 }
 
