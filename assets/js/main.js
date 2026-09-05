@@ -1713,12 +1713,25 @@ document.addEventListener('DOMContentLoaded', () => {
     startTouchLoop();
   };
 
+  // Smooth random targets keep each filament independent without abrupt jumps.
+  const plasmaNoise = (time, seed) => {
+    const step = Math.floor(time);
+    const fraction = time - step;
+    const blend = fraction * fraction * (3 - 2 * fraction);
+    const sample = value => {
+      const random = Math.sin(value * 127.1 + seed * 311.7) * 43758.5453;
+      return (random - Math.floor(random)) * 2 - 1;
+    };
+    return sample(step) * (1 - blend) + sample(step + 1) * blend;
+  };
+
   const drawPlasmaGlobe = (globe, ts) => {
     if (ts - globe.frame < 32) return;
     globe.frame = ts;
-    const t = ts / 1000 + globe.phase;
+    const t = ts / 2000 + globe.phase;
     globe.paths.forEach((path, index) => {
-      const angle = index * Math.PI * 2 / globe.paths.length + t * 0.16 + Math.sin(t * 0.6 + index) * 0.3;
+      const seed = globe.phase + index * 17;
+      const angle = index * Math.PI * 2 / globe.paths.length + plasmaNoise(t * 0.6, seed) * 1.2;
       const attracted = globe.pointer && index < 4;
       const end = attracted ? globe.pointer : [50 + 53 * Math.cos(angle), 50 + 53 * Math.sin(angle)];
       const dx = end[0] - 50;
@@ -1727,8 +1740,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const points = Array.from({ length: 9 }, (_, step) => {
         const fraction = step / 8;
         const wave = Math.sin(Math.PI * fraction) * (
-          Math.sin(t * 2.1 + fraction * 9 + index * 2) * 4 +
-          Math.sin(t * 3.7 - fraction * 13 + index) * 2
+          plasmaNoise(t * 2.1 + fraction * 9, seed + 1) * 4 +
+          plasmaNoise(t * 3.7 - fraction * 13, seed + 2) * 2
         );
         return [50 + dx * fraction - dy / length * wave, 50 + dy * fraction + dx / length * wave];
       });
@@ -1741,11 +1754,11 @@ document.addEventListener('DOMContentLoaded', () => {
       d += ` T${end[0].toFixed(2)} ${end[1].toFixed(2)}`;
       if (!attracted && index % 2 === 0) {
         const fork = points[5];
-        const spread = Math.sin(t * 0.9 + index) * 7;
+        const spread = plasmaNoise(t * 0.9, seed + 3) * 7;
         d += ` M${fork[0].toFixed(2)} ${fork[1].toFixed(2)} Q${(points[6][0] - dy / length * spread).toFixed(2)} ${(points[6][1] + dx / length * spread).toFixed(2)} ${(end[0] - dy / length * spread).toFixed(2)} ${(end[1] + dx / length * spread).toFixed(2)}`;
       }
       path.setAttribute('d', d);
-      path.style.opacity = String(attracted ? 0.95 : 0.5 + Math.sin(t * 1.8 + index) * 0.14);
+      path.style.opacity = String(attracted ? 0.95 : 0.5 + plasmaNoise(t * 1.8, seed + 4) * 0.14);
     });
   };
 
@@ -2058,27 +2071,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (isOnlineOrderPill) {
       mountActivePlasma(link, { cta: true });
-    } else if (isNavPillActive(link) || link.hasAttribute('data-price-section-action')) {
+    } else if (isNavPillActive(link)) {
       mountActivePlasma(link);
     }
 
     if (!prefersReducedMotion && (!isCoarsePointer || window.innerWidth >= 768)) {
       link.addEventListener('mouseenter', event => {
+        if (link.hasAttribute('data-price-section-action') && !isNavPillActive(link)) return;
         if (!link.querySelector('.nav-plasma--active')) {
           mountActivePlasma(link, { cta: isOnlineOrderPill, pointerEvent: event });
         }
       });
 
       link.addEventListener('mouseleave', () => {
-        if (!isNavPillActive(link) && !isOnlineOrderPill && !link.hasAttribute('data-price-section-action')) {
+        if (!isNavPillActive(link) && !isOnlineOrderPill) {
           unmountActivePlasma(link);
         }
       });
     }
 
-    link.addEventListener('focus', () => mountActivePlasma(link, { cta: isOnlineOrderPill }));
+    link.addEventListener('focus', () => {
+      if (link.hasAttribute('data-price-section-action') && !isNavPillActive(link)) return;
+      mountActivePlasma(link, { cta: isOnlineOrderPill });
+    });
     link.addEventListener('blur', () => {
-      if (!isNavPillActive(link) && !isOnlineOrderPill && !link.matches(':hover') && !link.hasAttribute('data-price-section-action')) {
+      if (!isNavPillActive(link) && !isOnlineOrderPill && !link.matches(':hover')) {
         unmountActivePlasma(link);
       }
     });
@@ -2130,7 +2147,6 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     deactivate(link) {
       if (!link) return;
-      if (link.hasAttribute('data-price-section-action')) return;
       unmountActivePlasma(link);
     },
   };
