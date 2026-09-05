@@ -40,7 +40,7 @@ export function loadAnimalPhotoCatalog() {
       let kind = null;
       if (category.id === 'ru-cats-grooming') kind = 'cat';
       else if (category.id === 'ru-small-animals') kind = 'small-animal';
-      else if (/^ru-(?:long|short|double)-coat(?:-|$)/.test(category.id)) kind = 'dog';
+      else if (category.animalType === 'dog') kind = 'dog';
       if (!kind) return;
       records.push({
         categoryId: category.id,

@@ -64,11 +64,11 @@
 
   const SHORT_SERVICE_INDEX = new Map([
     [12, 1], [13, 0], [44, 3], [64, 1], [71, 1], [116, 3], [197, 3],
-    [199, 1], [225, 3], [248, 2], [249, 3], [259, 0], [260, 3], [264, 3],
+    [199, 2], [225, 3], [248, 2], [249, 3], [259, 0], [260, 3], [264, 3],
     [273, 2], [287, 2], [293, 2], [296, 2], [315, 3], [338, 3], [340, 3],
     [341, 1], [346, 3], [348, 2], [351, 2], [353, 3], [356, 1], [360, 1],
     [134, 2], [179, 2], [187, 2], [369, 2], [370, 1], [371, 1], [374, 3],
-    [377, 1],
+    [299, 2], [377, 1],
   ]);
 
   const BASE_BREED_TRANSFORMS = [
@@ -164,7 +164,7 @@
     variant(148, 'rabbit-long', CATEGORY.small, { de: 'Langhaar-Kaninchendackel', en: 'Long-haired Rabbit Dachshund', ru: 'Кроличья такса длинношёрстная', uk: 'Кроляча такса довгошерста' }),
     variant(148, 'rabbit-wire', CATEGORY.wire, { de: 'Rauhaar-Kaninchendackel', en: 'Wire-haired Rabbit Dachshund', ru: 'Кроличья такса жёсткошёрстная', uk: 'Кроляча такса жорсткошерста' }),
     variant(192, 'rough', CATEGORY.wire, { de: 'Kromfohrländer – Rauhaar', en: 'Kromfohrländer — rough-haired', ru: 'Кромфорлендер — жёсткошёрстный', uk: 'Кромфорлендер — жорсткошерстий' }),
-    variant(192, 'smooth', CATEGORY.short, { de: 'Kromfohrländer – Glatthaar', en: 'Kromfohrländer — smooth-haired', ru: 'Кромфорлендер — гладкошёрстный', uk: 'Кромфорлендер — гладкошерстий' }, 1),
+    variant(192, 'smooth', CATEGORY.short, { de: 'Kromfohrländer – Glatthaar', en: 'Kromfohrländer — smooth-haired', ru: 'Кромфорлендер — гладкошёрстный', uk: 'Кромфорлендер — гладкошерстий' }, 2),
     variant(218, 'long', CATEGORY.small, { de: 'Langhaar-Chihuahua', en: 'Long-haired Chihuahua', ru: 'Чихуахуа длинношёрстный', uk: 'Чихуахуа довгошерстий' }),
     variant(223, 'smooth', CATEGORY.short, { de: 'Holländischer Schäferhund – Kurzhaar', en: 'Dutch Shepherd Dog — short-haired', ru: 'Голландская овчарка — короткошёрстная', uk: 'Нідерландська вівчарка — короткошерста' }, 2),
     variant(223, 'long', CATEGORY.large, { de: 'Holländischer Schäferhund – Langhaar', en: 'Dutch Shepherd Dog — long-haired', ru: 'Голландская овчарка — длинношёрстная', uk: 'Нідерландська вівчарка — довгошерста' }),

@@ -64,9 +64,9 @@
   };
 
   const sectionGroups = [
-    { key: 'small', sourceKeys: ['small'] },
-    { key: 'medium', sourceKeys: ['medium'] },
-    { key: 'large', sourceKeys: ['large'] },
+    { key: 'small', sourceKeys: ['small'], grid: 'four' },
+    { key: 'medium', sourceKeys: ['medium'], grid: 'four' },
+    { key: 'large', sourceKeys: ['large'], grid: 'four' },
     {
       key: 'cats-animals',
       sourceKeys: ['cats', 'smallAnimals'],
@@ -98,6 +98,7 @@
       anyCoat: 'Alle Felltypen',
       long: 'Langhaar',
       short: 'Kurzhaar',
+      wire: 'Rauhaar',
       double: 'Doppelfell',
       results: 'Gefunden',
       reset: 'Alles zurücksetzen',
@@ -118,6 +119,7 @@
       anyCoat: 'Any coat',
       long: 'Long-haired',
       short: 'Short-haired',
+      wire: 'Wire-haired',
       double: 'Double coat',
       results: 'Found',
       reset: 'Reset all',
@@ -138,6 +140,7 @@
       anyCoat: 'Любой тип',
       long: 'Длинношёрстные',
       short: 'Короткошёрстные',
+      wire: 'Жёсткошёрстные',
       double: 'Двойная шерсть',
       results: 'Найдено',
       reset: 'Сбросить всё',
@@ -158,6 +161,7 @@
       anyCoat: 'Будь-який тип',
       long: 'Довгошерсті',
       short: 'Короткошерсті',
+      wire: 'Жорсткошерсті',
       double: 'Подвійна шерсть',
       results: 'Знайдено',
       reset: 'Скинути все',
@@ -734,8 +738,9 @@
                 <select class="price-breed-search__filter-select" data-price-search-filter="coat" aria-controls="price-categories price-breed-search-suggestions">
                   ${renderSearchFilterOptions([
                     ['all', searchFilterCopy.anyCoat],
-                    ['long', searchFilterCopy.long],
                     ['short', searchFilterCopy.short],
+                    ['wire', searchFilterCopy.wire],
+                    ['long', searchFilterCopy.long],
                     ['double', searchFilterCopy.double],
                   ])}
                 </select>
@@ -897,11 +902,14 @@
     if (!bookingCatalog || !category) return [];
     const sourceCategoryId = category.sourceId || category.id;
     const services = bookingCatalog.getServices(ADDITIONAL_CATEGORY_ID);
+    const breedCategory = bookingCatalog.getCategory(selectedBreed?.categoryId || sourceCategoryId);
+    const breedSourceId = breedCategory?.source.breedSourceCategoryIds?.[selectedBreed?.index]
+      || selectedBreed?.categoryId || sourceCategoryId;
+    const supportsTrimming = breedSourceId === 'ru-wire-coat' || breedCategory?.source.coatType === 'wire';
     if (sourceCategoryId === ADDITIONAL_CATEGORY_ID) {
-      const selectedBreedCategoryId = selectedBreed?.categoryId || null;
       return services.filter(service => {
         if (service.key !== 'trimming') return true;
-        return selectedBreedCategoryId === 'ru-wire-coat';
+        return supportsTrimming;
       });
     }
     if (sourceCategoryId === 'ru-small-animals') {
@@ -910,10 +918,9 @@
     if (!DOG_CATEGORY_IDS.has(sourceCategoryId)) return [];
     const serviceGroup = category.additionalServiceGroup || category.groupKey;
     const allowedIndexes = additionalServiceIndexesByGroup[serviceGroup] || [];
-    const selectedBreedCategoryId = selectedBreed?.categoryId || null;
     return services.filter(service => {
+      if (service.key === 'trimming') return supportsTrimming;
       if (!allowedIndexes.includes(service.index)) return false;
-      if (service.key === 'trimming') return selectedBreedCategoryId === 'ru-wire-coat';
       return true;
     });
   };
@@ -1838,9 +1845,7 @@
       : bookingCatalog
         .getServices(sourceCategoryId, modalBreedSelect.value)
         .filter(service => serviceIndexes.has(service.index));
-    const selectedBreed = isAdditionalSelection
-      ? null
-      : bookingCatalog.getBreed(modalBreedSelect.value);
+    const selectedBreed = bookingCatalog.getBreed(modalBreedSelect.value);
     const additionalServices = isAdditionalSelection || sourceCategoryId !== ADDITIONAL_CATEGORY_ID
       ? getAdditionalServices(category, selectedBreed)
       : [];
@@ -2235,10 +2240,12 @@
   };
 
   let cardAlignmentFrame = 0;
-  const alignPriceCardMetaRows = () => {
+  const alignPriceCardRows = () => {
     cardAlignmentFrame = 0;
     const allTops = Array.from(cardsRoot.querySelectorAll('.price-card__top'));
     allTops.forEach(top => top.style.removeProperty('min-height'));
+    cardsRoot.querySelectorAll('[data-price-section-grid="four"] .price-card__service-option')
+      .forEach(service => service.style.removeProperty('min-height'));
     if (window.matchMedia('(max-width: 720px)').matches) return;
 
     // Measure only after the reset has reached layout, then apply all writes together.
@@ -2253,31 +2260,46 @@
       const updates = [];
 
       alignmentRoots.forEach(root => {
+        const isDogGrid = Boolean(root.closest('[data-price-section-grid="four"]'));
         const rows = new Map();
         root.querySelectorAll('.price-card').forEach(card => {
           const top = card.querySelector('.price-card__top');
           const rect = card.getBoundingClientRect();
           if (!top || rect.width <= 0 || rect.height <= 0) return;
-          const rowKey = Math.round(rect.top);
+          // Hover and entrance transforms must not split a logical grid row.
+          const rowKey = isDogGrid ? card.offsetTop : Math.round(rect.top);
           const row = rows.get(rowKey) || [];
-          row.push(top);
+          row.push({ top, card });
           rows.set(rowKey, row);
         });
 
         rows.forEach(row => {
           if (row.length < 2) return;
-          const maxHeight = Math.ceil(Math.max(...row.map(top => top.getBoundingClientRect().height)));
-          row.forEach(top => updates.push([top, maxHeight]));
+          const maxHeight = Math.ceil(Math.max(...row.map(({ top }) => isDogGrid ? top.offsetHeight : top.getBoundingClientRect().height)));
+          row.forEach(({ top }) => updates.push([top, maxHeight]));
+          if (!isDogGrid) return;
+
+          // Keep matching dog services level when a longer label or price wraps.
+          const serviceRows = row.map(({ card }) => Array.from(card.querySelectorAll('.price-card__service-option')));
+          const serviceCount = serviceRows[0].length;
+          if (!serviceRows.every(services => services.length === serviceCount)) return;
+          for (let index = 0; index < serviceCount; index += 1) {
+            const services = serviceRows.map(items => items[index]);
+            const heights = services.map(service => service.offsetHeight);
+            if (heights.some(height => height <= 0)) continue;
+            const serviceHeight = Math.ceil(Math.max(...heights));
+            services.forEach(service => updates.push([service, serviceHeight]));
+          }
         });
       });
 
-      updates.forEach(([top, height]) => top.style.setProperty('min-height', `${height}px`));
+      updates.forEach(([element, height]) => element.style.setProperty('min-height', `${height}px`));
     });
   };
 
   const schedulePriceCardAlignment = () => {
     window.cancelAnimationFrame(cardAlignmentFrame);
-    cardAlignmentFrame = window.requestAnimationFrame(alignPriceCardMetaRows);
+    cardAlignmentFrame = window.requestAnimationFrame(alignPriceCardRows);
   };
 
   const mobileCardDetailsMedia = window.matchMedia('(max-width: 720px)');

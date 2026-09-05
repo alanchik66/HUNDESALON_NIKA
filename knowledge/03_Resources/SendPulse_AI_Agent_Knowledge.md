@@ -1,6 +1,6 @@
 # HUNDESALON_NIKA Website Knowledge for the SendPulse AI Agent #
 
-Generated source fingerprint: sha256:7b6618151aa937c95058c5bc3753d77f8049673413ee258c310fda5a955b72c3
+Generated source fingerprint: sha256:30aa9d7146ebe04277b3cc707535d2e0a8df098b16b4d167e18db3bbf6784f99
 
 This document is the factual knowledge base for the customer-facing SendPulse live-chat AI agent. It covers the public HUNDESALON_NIKA website in German, English, Russian, and Ukrainian.
 
@@ -254,10 +254,10 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Krallenschneiden — kleine Rassen — 7 €
 - Price: Krallenschneiden — mittelgroße Rassen — 10 €
 - Price: Krallenschneiden — große Rassen — 12 €
-- Price: Trimmen — auf Anfrage
 - Price: Ultraschall-Zahnpflege bis 6 kg — ab 100 €
 - Price: Aufbau- / Wellnessmaske — ab 15 €
 - Price: Ozontherapie — ab 20 €
+- Price: Trimmen — auf Anfrage
 - Note: Zu den Zusatzleistungen gehören Krallenschneiden nach Größe, Trimmen für rauhaarige Rassen, Ultraschall-Zahnpflege ohne Narkose bis 6 kg, Aufbau-/Wellnessmaske, Ozontherapie und der erste Termin zur Welpengewöhnung.
 - Note: Bei gemeinsamer Buchung mit der Pflege gibt es auf die Ultraschall-Zahnpflege 30 % Rabatt; sie ersetzt keine tierärztliche Zahnbehandlung.
 - Note: Der erste Termin zur Welpengewöhnung dient der sanften Gewöhnung an Salon und Pflege.
@@ -277,6 +277,12 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Welpen-Eingewöhnung — ab 50 €; Category: 5. Rauhaarige Rassen
 - Price: Welpen-Eingewöhnung — ab 50 €; Category: 6. Kurzhaarige Hunde
 - Price: Welpen-Eingewöhnung — ab 50 €; Category: 7. Große Hunde
+
+#### Trimmen — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Für rauhaarige Rassen nach Fellstruktur und Aufwand.
+- Description: Rassegerechtes Trimmen per Hand oder Maschine.
+- Price: Trimmen — auf Anfrage; Category: Zusatzleistungen
 
 ### EN — published catalog ###
 
@@ -404,10 +410,10 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Nail trimming — small breeds — €7
 - Price: Nail trimming — medium breeds — €10
 - Price: Nail trimming — large breeds — €12
-- Price: Trimming — on request
 - Price: Ultrasonic teeth cleaning up to 6 kg — from €100
 - Price: Restorative / wellness mask — from €15
 - Price: Ozone therapy — from €20
+- Price: Trimming — on request
 - Note: Additional services include nail trimming by size, trimming for wire-coated breeds, ultrasonic teeth cleaning without anaesthesia up to 6 kg, a restorative or wellness mask, ozone therapy and first puppy grooming.
 - Note: When booked together with grooming, ultrasonic teeth cleaning receives a 30% discount; it does not replace veterinary dental treatment.
 - Note: The first puppy grooming visit is designed to gently familiarise the puppy with the salon and grooming care.
@@ -427,6 +433,12 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: First puppy grooming — from €50; Category: 5. Wire-coated breeds
 - Price: First puppy grooming — from €50; Category: 6. Short-coated dogs
 - Price: First puppy grooming — from €50; Category: 7. Large dogs
+
+#### Trimming — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: For wire-coated breeds based on coat structure and workload.
+- Description: Breed-appropriate hand or clipper stripping.
+- Price: Trimming — on request; Category: Additional services
 
 ### RU — published catalog ###
 
@@ -713,10 +725,10 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Підстригання кігтів — малі породи — 7 €
 - Price: Підстригання кігтів — середні породи — 10 €
 - Price: Підстригання кігтів — великі породи — 12 €
-- Price: Тримінг — за запитом
 - Price: Ультразвукова чистка зубів до 6 кг — від 100 €
 - Price: Відновлювальна / оздоровча маска — від 15 €
 - Price: Озонотерапія — від 20 €
+- Price: Тримінг — за запитом
 - Note: До додаткових послуг належать підрізання кігтів відповідно до розміру, тримінг для жорсткошерстих порід, ультразвукова чистка зубів без наркозу до 6 кг, відновлювальна або оздоровча маска, озонотерапія та перший грумінг цуценяти.
 - Note: При одночасному бронюванні з грумінгом на ультразвукову чистку зубів діє знижка 30%; процедура не замінює ветеринарне стоматологічне лікування.
 - Note: Перший грумінг цуценяти допомагає м’яко познайомити його із салоном і процедурами догляду.
@@ -736,6 +748,12 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Перший грумінг цуценяти — від 50 €; Category: 5. Жорсткошерсті породи
 - Price: Перший грумінг цуценяти — від 50 €; Category: 6. Короткошерсті собаки
 - Price: Перший грумінг цуценяти — від 50 €; Category: 7. Великі собаки
+
+#### Тримінг — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Для жорсткошерстих порід з урахуванням структури шерсті та обсягу роботи.
+- Description: Породний триммінг вручну або машинкою.
+- Price: Тримінг — за запитом; Category: Додаткові послуги
 
 ## 7. Booking process and payment ##
 

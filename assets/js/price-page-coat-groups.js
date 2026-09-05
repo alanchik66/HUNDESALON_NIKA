@@ -6,59 +6,70 @@
 
   const sourceIds = new Set(Object.values(global.FciDogBreedIntegration.categories));
   const sizes = ['small', 'medium', 'large'];
-  const coats = ['long', 'short', 'double'];
+  const coats = ['short', 'wire', 'long', 'double'];
   const copy = {
     ru: {
       long: 'Длинношёрстные породы',
       short: 'Короткошёрстные породы',
+      wire: 'Жёсткошёрстные породы',
       double: 'Породы с двойным типом шерсти',
-      longSummary: 'Уход за длинной, кудрявой и жёсткой шерстью с учётом особенностей породы.',
+      longSummary: 'Уход за длинной и кудрявой шерстью с учётом особенностей породы.',
       shortSummary: 'Купание, уход за короткой шерстью и кожей, гигиенические процедуры.',
+      wireSummary: 'Уход за жёсткой шерстью с учётом породы; тримминг доступен по запросу.',
       doubleSummary: 'Уход за остевой шерстью и подшёрстком с учётом структуры шерсти.',
       care: 'Комплексный уход',
     },
     de: {
       long: 'Langhaarige Rassen',
       short: 'Kurzhaarige Rassen',
+      wire: 'Rauhaarige Rassen',
       double: 'Rassen mit Doppelfell',
-      longSummary: 'Pflege von langem, lockigem und rauem Fell passend zur jeweiligen Rasse.',
+      longSummary: 'Pflege von langem und lockigem Fell passend zur jeweiligen Rasse.',
       shortSummary: 'Baden, Pflege von kurzem Fell und Haut sowie Hygienepflege.',
+      wireSummary: 'Rassegerechte Pflege von rauem Fell; Trimmen ist auf Anfrage verfügbar.',
       doubleSummary: 'Pflege von Deckhaar und Unterwolle passend zur Fellstruktur.',
       care: 'Komplettpflege',
     },
     en: {
       long: 'Long-haired breeds',
       short: 'Short-haired breeds',
+      wire: 'Wire-haired breeds',
       double: 'Double-coated breeds',
-      longSummary: 'Care for long, curly and rough coats, tailored to the breed.',
+      longSummary: 'Care for long and curly coats, tailored to the breed.',
       shortSummary: 'Bathing, short coat and skin care, and hygiene care.',
+      wireSummary: 'Breed-appropriate care for wire coats; hand stripping is available on request.',
       doubleSummary: 'Care for the outer coat and undercoat, tailored to the coat structure.',
       care: 'Full care',
     },
     uk: {
       long: 'Довгошерсті породи',
       short: 'Короткошерсті породи',
+      wire: 'Жорсткошерсті породи',
       double: 'Породи з подвійним типом шерсті',
-      longSummary: 'Догляд за довгою, кучерявою та жорсткою шерстю з урахуванням породи.',
+      longSummary: 'Догляд за довгою та кучерявою шерстю з урахуванням породи.',
       shortSummary: 'Купання, догляд за короткою шерстю та шкірою, гігієнічні процедури.',
+      wireSummary: 'Догляд за жорсткою шерстю з урахуванням породи; тримінг доступний за запитом.',
       doubleSummary: 'Догляд за остьовою шерстю та підшерстям з урахуванням структури шерсті.',
       care: 'Комплексний догляд',
     },
   };
 
   // Category membership is shared by all locales via stable breed keys, never translated names.
-  // Double coats take precedence over hair length; wire coats without undercoat stay in long care.
+  // Wire coats have their own care category, whether or not they have undercoat.
+  // Other double coats take precedence over hair length. The curly Pumi stays double;
+  // FCI 168 (Dandie Dinmont) and 294 (Otterhound) explicitly describe coats as "not wiry".
   // FCI references: /Nomenclature/Standards/{097g05,215g09,208g09,094g05,165g07}-en.pdf.
-  const shortDoubleFci = new Set([15, 44, 64, 163, 223, 240, 254, 287, 293, 296, 315, 321, 351, 360]);
+  // Non-wire exceptions: /Nomenclature/Standards/{056g01,168g03,294g06}-en.pdf.
+  const shortDoubleFci = new Set([15, 44, 64, 163, 192, 223, 240, 254, 287, 293, 296, 315, 321, 351, 360]);
   const shortDoubleBase = new Set([6, 9, 25]); // Pug, Beagle, Rottweiler.
   const smallDoubleFci = new Set([75, 148, 209, 218, 231]);
   const smallDoubleBase = new Set([3, 6, 7, 8, 10]);
   const poodleDoubleFci = new Set([298, 301]);
-  const wireSingleFci = new Set([89, 94, 165, 198]);
+  const nonWireDoubleFci = new Set([56, 168, 294]);
   const largeSingleFci = new Set([93, 99, 105, 110, 124, 228, 269, 372]);
   const mediumLargeFci = new Set([38, 39, 46, 47, 55, 87, 93, 138, 141, 221, 238, 251, 277, 312, 313, 364, 367]);
   const largeWireFci = new Set([15, 89, 98, 107, 160, 164, 165, 191, 216, 223, 232, 239, 245, 282, 294, 320]);
-  const smallWireFci = new Set([67, 103, 148, 168, 302, 308]);
+  const smallWireFci = new Set([67, 103, 148, 168, 308]);
   const smallWireBase = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22]);
   const largeSpanielFci = new Set([2, 6, 106, 108, 114, 117, 118, 120, 175, 224, 330]);
 
@@ -81,7 +92,7 @@
       coat = [0, 1, 4, 5].includes(base) || [104, 222].includes(fci) ? 'double' : 'long';
       size = [2, 3].includes(base) ? 'small' : largeSpanielFci.has(fci) || base === 8 ? 'large' : 'medium';
     } else if (category.id === 'ru-wire-coat') {
-      coat = wireSingleFci.has(fci) ? 'long' : 'double';
+      coat = nonWireDoubleFci.has(fci) ? 'double' : 'wire';
       size = smallWireBase.has(base) || smallWireFci.has(fci) ? 'small'
         : [10, 17].includes(base) || largeWireFci.has(fci) ? 'large' : 'medium';
       if (fci === 94) size = key.includes('small-') ? 'small' : key.includes('large-') ? 'large' : 'medium';

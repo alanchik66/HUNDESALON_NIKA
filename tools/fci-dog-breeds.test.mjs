@@ -17,7 +17,7 @@ const DOG_CATEGORY_IDS = [
   'ru-large-dogs',
 ];
 const EXPECTED_CATEGORY_COUNTS = [22, 21, 29, 26, 65, 173, 99];
-const EXPECTED_COAT_CATEGORY_COUNTS = [24, 35, 47, 16, 60, 75, 27, 61, 90];
+const EXPECTED_COAT_CATEGORY_COUNTS = [32, 24, 23, 23, 62, 19, 14, 60, 61, 19, 24, 74];
 const EXPECTED_IRISH_WOLFHOUND = {
   de: 'Irischer Wolfshund',
   en: 'Irish Wolfhound',
@@ -203,7 +203,9 @@ test('coat and size varieties are assigned to their professional service categor
   assert.equal(findVariant(103, 'rough').categoryId, 'ru-wire-coat');
   assert.equal(findVariant(103, 'coarse-smooth').serviceIndex, 1);
   assert.equal(findVariant(192, 'rough').categoryId, 'ru-wire-coat');
-  assert.equal(findVariant(192, 'smooth').serviceIndex, 1);
+  assert.equal(findVariant(192, 'smooth').serviceIndex, 2);
+  assert.equal(findVariant(199, 'breed').serviceIndex, 2);
+  assert.equal(findVariant(299, 'breed').serviceIndex, 2);
   assert.equal(findVariant(234, 'miniature-hairless').serviceIndex, 1);
   assert.equal(findVariant(234, 'miniature-coated').serviceIndex, 1);
   assert.equal(findVariant(234, 'medium-coated').serviceIndex, 2);
@@ -330,7 +332,8 @@ test('coat groups preserve every breed and its quote without public size codes',
     }
     for (const section of ['small', 'medium', 'large']) {
       const categories = catalog.categories.filter(category => category.source.pageSection === section);
-      assert.deepEqual(clone(categories.map(category => category.source.coatType)), ['long', 'short', 'double']);
+      assert.deepEqual(clone(categories.map(category => category.source.coatType)),
+        ['short', 'wire', 'long', 'double']);
       for (const category of categories) {
         assert.ok(category.breeds.length);
         assert.ok(category.services.some(service => service.key === 'full-care'));
@@ -344,7 +347,7 @@ test('coat groups preserve every breed and its quote without public size codes',
         }
       }
     }
-    assert.equal(catalog.categories.filter(category => category.source.animalType === 'dog').length, 9);
+    assert.equal(catalog.categories.filter(category => category.source.animalType === 'dog').length, 12);
     for (const oldId of DOG_CATEGORY_IDS) assert.equal(catalog.getCategory(oldId), null);
   }
 });
@@ -360,12 +363,38 @@ test('all locales use identical coat memberships and preserve specialist service
   assert.equal(expected.get('ru-poodles-bichons:base:4'), 'ru-double-coat-small');
   assert.equal(expected.get('ru-spitz:base:0'), 'ru-double-coat-small');
   assert.equal(expected.get('ru-large-dogs:base:0'), 'ru-double-coat-large');
-  assert.equal(expected.get('fci:94:small-wire'), 'ru-long-coat-small');
+  assert.equal(expected.get('fci:94:small-wire'), 'ru-wire-coat-small');
+  assert.equal(expected.get('fci:94:medium-wire'), 'ru-wire-coat-medium');
+  assert.equal(expected.get('fci:94:large-wire'), 'ru-wire-coat-large');
   assert.equal(expected.get('fci:94:small-smooth'), 'ru-short-coat-small');
+  assert.equal(expected.get('fci:192:smooth'), 'ru-double-coat-medium');
+  assert.equal(expected.get('fci:199:breed'), 'ru-short-coat-medium');
+  assert.equal(expected.get('fci:299:breed'), 'ru-short-coat-medium');
+  assert.equal(expected.get('fci:302:breed'), 'ru-wire-coat-medium');
+  assert.equal(expected.get('fci:168:breed'), 'ru-double-coat-small');
+  assert.equal(expected.get('fci:56:breed'), 'ru-double-coat-medium');
+  assert.equal(expected.get('fci:294:breed'), 'ru-double-coat-large');
   const catalog = window.PriceBookingCatalog.build('ru');
   const westie = catalog.breeds.find(breed => breed.label === 'Вест-хайленд-уайт-терьер');
   const bichon = catalog.breeds.find(breed => breed.label === 'Бишон-фризе');
-  assert.equal(westie.categoryId, bichon.categoryId);
+  assert.equal(westie.categoryId, 'ru-wire-coat-small');
+  assert.equal(bichon.categoryId, 'ru-double-coat-small');
   assert.ok(catalog.getServices(catalog.getCategory('ru-additional-services').id).some(service => service.key === 'trimming'));
   assert.ok(catalog.getServices(westie.categoryId, westie.id).every(service => service.key !== 'trimming'));
+});
+
+test('localized additional services keep the shared service indexes and trimming identity', () => {
+  const window = runSources([...BASE_SOURCES, ...FCI_SOURCES, 'assets/js/price-page-coat-groups.js', 'assets/js/price-booking.js']);
+  const trimmingLabels = { de: 'Trimmen', en: 'Trimming', ru: 'Тримминг', uk: 'Тримінг' };
+  for (const lang of LOCALES) {
+    const services = window.PriceBookingCatalog.build(lang).getServices('ru-additional-services');
+    assert.deepEqual(clone(services.map(service => {
+      const amount = service.price.match(/\d+/u);
+      return amount ? Number(amount[0]) : null;
+    })), [7, 10, 12, 100, 15, 20, null], `${lang}: additional service tariff indexes drifted`);
+    const trimming = services.filter(service => service.key === 'trimming');
+    assert.equal(trimming.length, 1, `${lang}: trimming must have a stable service key`);
+    assert.equal(trimming[0].index, 6, `${lang}: trimming service index drifted`);
+    assert.equal(trimming[0].label, trimmingLabels[lang]);
+  }
 });

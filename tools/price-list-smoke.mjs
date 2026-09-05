@@ -1,4 +1,4 @@
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { chromium, devices } from 'playwright';
 
@@ -23,8 +23,10 @@ const locales = requestedLocales.length
   ? supportedLocales.filter(locale => requestedLocales.includes(locale))
   : supportedLocales;
 const requestedLayout = process.env.PRICE_SMOKE_LAYOUT || '';
+const geometryOnly = process.env.PRICE_SMOKE_GEOMETRY_ONLY === '1';
+const desktopWidth = Number.parseInt(process.env.PRICE_SMOKE_DESKTOP_WIDTH || '1440', 10);
 const layouts = [
-  ['desktop', { width: 1440, height: 900 }, 'desktop'],
+  ['desktop', { width: desktopWidth, height: 900 }, 'desktop'],
   ['mobile', devices['iPhone 13'].viewport, 'mobile'],
 ].filter(([label]) => !requestedLayout || label === requestedLayout);
 const additionalScreenshots = locales.includes('ru') && layouts.some(([label]) => label === 'desktop')
@@ -37,6 +39,10 @@ const additionalScreenshots = locales.includes('ru') && layouts.some(([label]) =
 const searchFilterScreenshots = locales.includes('ru')
   ? layouts.map(([, , screenshotSuffix]) => path.join(outDir, `ru-${screenshotSuffix}-search-filters.png`))
   : [];
+const tabletScreenshots = layouts.some(([label]) => label === 'desktop')
+  ? locales.map(locale => path.join(outDir, `${locale}-tablet-grid.png`))
+  : [];
+const geometryScreenshots = [];
 
 const checks = [];
 
@@ -145,6 +151,7 @@ for (const locale of locales) {
       JSON.stringify(photoManifestState)
     );
     await page.locator('[data-price-categories]').scrollIntoViewIfNeeded();
+    await page.evaluate(() => document.fonts.ready);
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 
     const state = await page.evaluate(() => {
@@ -159,6 +166,8 @@ for (const locale of locales) {
       const breedBadgeMotion = breedToggle?.querySelector('.price-card__badge-icon-motion');
       const breedBadgeIcon = breedToggle?.querySelector('.price-card__badge-icon');
       const firstCard = cards[0];
+      const pageContainer = hero?.closest('.container.page-offset-top');
+      const firstDogGrid = document.querySelector('[data-price-section="small"] .price-size-section__cards');
       const currentLocale = document.documentElement.lang;
       const additionalCard = document.querySelector('[data-category-id="ru-additional-services"]');
       const additionalSourceCategory = window.PricePageCatalog?.categoriesByLocale?.[currentLocale]
@@ -179,10 +188,10 @@ for (const locale of locales) {
       const rootStyle = getComputedStyle(document.documentElement);
       const firstSectionMetaTops = Array.from(
         document.querySelectorAll('[data-price-section="small"] .price-card__meta')
-      ).slice(0, 3).map(meta => meta.offsetTop);
+      ).slice(0, 4).map(meta => meta.offsetTop);
       const firstSectionCtaBottoms = Array.from(
         document.querySelectorAll('[data-price-section="small"] .price-card__cta')
-      ).slice(0, 3).map(button => button.getBoundingClientRect().bottom);
+      ).slice(0, 4).map(button => button.getBoundingClientRect().bottom);
       return {
         heroTitle: hero?.querySelector('.section-title')?.textContent?.trim() || '',
         breedSearchReady: Boolean(hero?.querySelector('[data-price-breed-search-input]')),
@@ -261,6 +270,16 @@ for (const locale of locales) {
           ? firstThreeCardRects[2].bottom - firstThreeCardRects[0].top
           : Infinity,
         overflowX: document.documentElement.scrollWidth > window.innerWidth + 1,
+        pageFrame: {
+          containerTag: pageContainer?.tagName || '',
+          containerWidth: pageContainer?.getBoundingClientRect().width || 0,
+          dogGridWidth: firstDogGrid?.getBoundingClientRect().width || 0,
+          widthLimit: Math.min(window.innerWidth, 1720),
+          cardEdgesFit: cards.every(card => {
+            const rect = card.getBoundingClientRect();
+            return rect.left >= -1 && rect.right <= window.innerWidth + 1;
+          }),
+        },
         modalReady: Boolean(modal),
         calculationLocalizationReady: Boolean(
           window.PricePageCatalog?.locales?.[document.documentElement.lang]?.subtotalBeforeDiscountLabel
@@ -275,7 +294,7 @@ for (const locale of locales) {
       };
     });
 
-    const dogTileDomState = await page.evaluate(layoutLabel => {
+    const readDogTileDomState = layoutLabel => {
       const currentLocale = document.documentElement.lang;
       const categories = window.PricePageCatalog?.categoriesByLocale?.[currentLocale] || [];
       const categoriesById = new Map(categories.map(category => [category.id, category]));
@@ -306,7 +325,7 @@ for (const locale of locales) {
             serviceKeysCorrect: JSON.stringify(serviceKeys) === JSON.stringify(expectedServiceKeys),
           };
         });
-      const expectedGridGap = layoutLabel === 'mobile' ? 7.36 : 14.4;
+      const minimumGridGap = layoutLabel === 'mobile' ? 16 : 24;
       const sizeSections = ['small', 'medium', 'large'].map(sectionKey => {
         const section = document.querySelector(`[data-price-section="${sectionKey}"]`);
         const grid = section?.querySelector('.price-size-section__cards');
@@ -314,31 +333,62 @@ for (const locale of locales) {
         const rects = cards.map(card => card.getBoundingClientRect());
         const gridStyle = grid ? getComputedStyle(grid) : null;
         const gridGap = Number.parseFloat(layoutLabel === 'mobile' ? gridStyle?.rowGap : gridStyle?.columnGap);
-        const actualGaps = rects.slice(1).map((rect, index) => layoutLabel === 'mobile'
-          ? rect.top - rects[index].bottom
-          : rect.left - rects[index].right);
+        const rowGap = Number.parseFloat(gridStyle?.rowGap);
+        const rows = [];
+        for (const rect of rects) {
+          const row = rows.find(items => Math.abs(items[0].top - rect.top) <= 1);
+          if (row) row.push(rect);
+          else rows.push([rect]);
+        }
+        const horizontalGaps = rows.flatMap(row => row.slice(1).map((rect, index) => rect.left - row[index].right));
+        const verticalGaps = rows.slice(1).map((row, index) => row[0].top - Math.max(...rows[index].map(rect => rect.bottom)));
+        const expectedCardCount = 4;
+        const expectedRowLengths = layoutLabel === 'mobile'
+          ? Array(expectedCardCount).fill(1)
+          : layoutLabel === 'tablet' ? [2, 2] : [4];
         const widths = rects.map(rect => rect.width);
-        const tops = rects.map(rect => rect.top);
         const coatTypes = cards.map(card => categoriesById.get(card.dataset.categoryId)?.coatType || '');
+        const serviceRects = cards.map(card => Array.from(card.querySelectorAll('[data-price-service-select], [data-price-additional-select]'))
+          .map(service => service.getBoundingClientRect()));
+        const serviceAlignment = rows.map(row => [0, 1, 2, 3].map(index => {
+          const matchingServices = row.map(rect => serviceRects[rects.indexOf(rect)][index]);
+          const tops = matchingServices.map(service => service?.top ?? Infinity);
+          const heights = matchingServices.map(service => service?.height ?? Infinity);
+          return {
+            index,
+            topSpread: Math.max(...tops) - Math.min(...tops),
+            heightSpread: Math.max(...heights) - Math.min(...heights),
+          };
+        }));
         return {
           sectionKey,
           cardIds: cards.map(card => card.dataset.categoryId),
           coatTypes,
           gridGap,
-          actualGaps,
+          rowGap,
+          rowLengths: rows.map(row => row.length),
+          horizontalGaps,
+          verticalGaps,
+          serviceAlignment,
+          serviceMinHeights: cards.map(card => Array.from(card.querySelectorAll('[data-price-service-select], [data-price-additional-select]'))
+            .map(service => ({ inline: service.style.minHeight, computed: getComputedStyle(service).minHeight }))),
+          serviceRowsAligned: serviceAlignment.every(row => row.every(service => service.topSpread <= 1 && service.heightSpread <= 1)),
+          serviceRowsReset: cards.every(card => Array.from(card.querySelectorAll('[data-price-service-select], [data-price-additional-select]'))
+            .every(service => !service.style.minHeight)),
           widthSpread: widths.length ? Math.max(...widths) - Math.min(...widths) : Infinity,
-          topSpread: tops.length ? Math.max(...tops) - Math.min(...tops) : Infinity,
-          geometryCorrect: cards.length === 3
+          geometryCorrect: cards.length === expectedCardCount
+            && JSON.stringify(rows.map(row => row.length)) === JSON.stringify(expectedRowLengths)
             && Number.isFinite(gridGap)
-            && Math.abs(gridGap - expectedGridGap) <= 0.25
-            && actualGaps.length === 2
-            && actualGaps.every(gap => Math.abs(gap - gridGap) <= 1)
-            && (layoutLabel === 'mobile' || Math.max(...tops) - Math.min(...tops) <= 1)
+            && gridGap >= minimumGridGap - 0.25
+            && horizontalGaps.every(gap => Math.abs(gap - gridGap) <= 1)
+            && verticalGaps.every(gap => Math.abs(gap - rowGap) <= 1)
+            && rows.every(row => row.every((rect, column) => Math.abs(rect.left - rects[column].left) <= 1))
             && Math.max(...widths) - Math.min(...widths) <= 1,
         };
       });
       return { dogTiles, sizeSections };
-    }, label);
+    };
+    const dogTileDomState = await page.evaluate(readDogTileDomState, label);
 
     assert(`${locale} ${label}: hero rendered`, state.heroTitle.length > 0);
     assert(`${locale} ${label}: breed search rendered`, state.breedSearchReady);
@@ -353,7 +403,7 @@ for (const locale of locales) {
       JSON.stringify(state.searchFilterState)
     );
     assert(`${locale} ${label}: extra hero flow absent`, state.legacyHeroFlowAbsent);
-    assert(`${locale} ${label}: cards rendered`, state.cardCount >= 9);
+    assert(`${locale} ${label}: cards rendered`, state.cardCount >= 12);
     assert(
       `${locale} ${label}: additional services contain only dogs and cats`,
       state.additionalCardBreedCount === 2 && state.additionalSourceBreedCount === 2,
@@ -366,11 +416,19 @@ for (const locale of locales) {
     assert(`${locale} ${label}: open button rendered`, state.cardButtonLabel.length > 0);
     assert(`${locale} ${label}: card button uses navigation effects`, state.cardButtonUsesNavigationSystem);
     assert(`${locale} ${label}: no horizontal overflow`, !state.overflowX);
+    assert(
+      `${locale} ${label}: localized page wrappers give the dog grid the full available width`,
+      state.pageFrame.containerWidth >= state.pageFrame.widthLimit - 80
+        && state.pageFrame.containerWidth <= state.pageFrame.widthLimit + 1
+        && state.pageFrame.dogGridWidth >= state.pageFrame.widthLimit - 150
+        && state.pageFrame.cardEdgesFit,
+      JSON.stringify(state.pageFrame)
+    );
     assert(`${locale} ${label}: modal exists`, state.modalReady);
     assert(`${locale} ${label}: calculation localization exists`, state.calculationLocalizationReady);
     assert(
       `${locale} ${label}: every dog tile keeps the required service and CTA order`,
-      dogTileDomState.dogTiles.length === 9
+      dogTileDomState.dogTiles.length === 12
         && dogTileDomState.dogTiles.every(tile =>
           tile.serviceKeysCorrect
           && tile.primaryRowCount === 3
@@ -381,19 +439,55 @@ for (const locale of locales) {
       JSON.stringify(dogTileDomState.dogTiles)
     );
     assert(
-      `${locale} ${label}: each dog size keeps exactly three coat tiles`,
+      `${locale} ${label}: every dog size shows four ordered coat tiles`,
       dogTileDomState.sizeSections.every(section =>
-        section.cardIds.length === 3
-        && JSON.stringify(section.coatTypes) === JSON.stringify(['long', 'short', 'double'])
+        JSON.stringify(section.coatTypes) === JSON.stringify(['short', 'wire', 'long', 'double'])
       ),
       JSON.stringify(dogTileDomState.sizeSections)
     );
     assert(
-      `${locale} ${label}: dog tile gaps and grid geometry stay unchanged`,
+      `${locale} ${label}: dog tiles keep equal widths and responsive columns with wider desktop gaps`,
       dogTileDomState.sizeSections.every(section => section.geometryCorrect),
       JSON.stringify(dogTileDomState.sizeSections)
     );
+    assert(
+      `${locale} ${label}: matching service rows align across every dog tile row`,
+      dogTileDomState.sizeSections.every(section => section.serviceRowsAligned),
+      JSON.stringify(dogTileDomState.sizeSections.map(({ sectionKey, serviceAlignment, serviceMinHeights }) => ({ sectionKey, serviceAlignment, serviceMinHeights })))
+    );
     if (label === 'desktop') {
+      for (const target of [
+        { label: 'tablet', width: 900, layout: 'tablet', section: 'small' },
+        { label: 'narrow-desktop', width: 1200, layout: 'desktop', section: 'large' },
+        { label: 'mobile-resize', width: devices['iPhone 13'].viewport.width, layout: 'mobile', section: 'small' },
+        { label: 'desktop-resize', width: viewport.width, layout: 'desktop', section: 'large' },
+      ]) {
+        if (target.label === 'narrow-desktop') {
+          await page.locator('[data-category-id="ru-wire-coat-large"]').hover();
+        }
+        await page.setViewportSize({ width: target.width, height: 1024 });
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        if (target.label === 'narrow-desktop') {
+          await page.mouse.move(0, 0);
+          await page.waitForTimeout(500);
+        }
+        const resizedGridState = await page.evaluate(readDogTileDomState, target.layout);
+        assert(
+          `${locale} ${target.label}: dog columns and matching service rows adapt after resize`,
+          resizedGridState.dogTiles.length === 12
+            && resizedGridState.sizeSections.every(section => section.geometryCorrect && section.serviceRowsAligned
+              && (target.layout !== 'mobile' || section.serviceRowsReset)),
+          JSON.stringify(resizedGridState.sizeSections)
+        );
+        const screenshotPath = path.join(outDir, `${locale}-${target.label}-grid.png`);
+        await page.locator(`[data-price-section="${target.section}"]`).screenshot({
+          path: screenshotPath,
+          animations: 'disabled',
+        });
+        geometryScreenshots.push(screenshotPath);
+      }
+      await page.setViewportSize(viewport);
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       assert(
         `${locale} ${label}: card dividers aligned`,
         state.firstSectionMetaSpread <= 1,
@@ -425,6 +519,14 @@ for (const locale of locales) {
         state.cardHeight <= 220 && state.firstThreeCardSpan <= viewport.height,
         `height=${state.cardHeight}; span=${state.firstThreeCardSpan}; viewport=${viewport.height}`
       );
+    }
+
+    if (geometryOnly) {
+      const screenshotPath = path.join(outDir, `${locale}-${label}-geometry.png`);
+      await page.locator('[data-price-section="small"]').screenshot({ path: screenshotPath, animations: 'disabled' });
+      geometryScreenshots.push(screenshotPath);
+      await context.close();
+      continue;
     }
 
     assert(locale + ' ' + label + ': category navigation rendered', state.categoryActionReady);
@@ -703,6 +805,69 @@ for (const locale of locales) {
       );
     }
     await animalFilter.selectOption('dog');
+    await sizeFilter.selectOption('small');
+    await coatFilter.selectOption('wire');
+    const wireFilterState = await page.evaluate(() => ({
+      cardIds: Array.from(document.querySelectorAll('[data-price-categories] [data-category-id]'))
+        .map(card => card.dataset.categoryId),
+      values: Array.from(document.querySelectorAll('[data-price-search-filter]')).map(select => select.value),
+      resultCount: document.querySelector('[data-price-search-result-count]')?.textContent?.trim() || '',
+    }));
+    assert(
+      `${locale} ${label}: wire coat filter isolates the small wire-haired category`,
+      JSON.stringify(wireFilterState.cardIds) === JSON.stringify(['ru-wire-coat-small'])
+        && JSON.stringify(wireFilterState.values) === JSON.stringify(['dog', 'small', 'wire'])
+        && /[1-9]\d*/u.test(wireFilterState.resultCount),
+      JSON.stringify(wireFilterState)
+    );
+    for (const size of ['medium', 'large']) {
+      await sizeFilter.selectOption(size);
+      const cardIds = await page.locator('[data-price-categories] [data-category-id]')
+        .evaluateAll(cards => cards.map(card => card.dataset.categoryId));
+      assert(
+        `${locale} ${label}: wire coat filter isolates the ${size} wire-haired category`,
+        JSON.stringify(cardIds) === JSON.stringify([`ru-wire-coat-${size}`]),
+        JSON.stringify(cardIds)
+      );
+    }
+    await sizeFilter.selectOption('small');
+    for (const coat of ['wire', 'short']) {
+      await coatFilter.selectOption(coat);
+      const categoryId = `ru-${coat}-coat-small`;
+      const breedIndex = await page.evaluate(({ currentLocale, categoryId, coat }) => {
+        const category = window.PricePageCatalog.categoriesByLocale[currentLocale]
+          .find(item => item.id === categoryId);
+        return category.breedKeys.indexOf(`fci:94:small-${coat === 'wire' ? 'wire' : 'smooth'}`);
+      }, { currentLocale: locale, categoryId, coat });
+      assert(`${locale} ${label}: small ${coat} Podengo variant exists`, breedIndex >= 0);
+      const coatCard = page.locator(`[data-category-id="${categoryId}"]`);
+      await coatCard.locator('[data-price-breeds-toggle]').evaluate(button => button.click());
+      await coatCard.locator(`[data-price-breed-index="${breedIndex}"]`).evaluate(button => button.click());
+      for (const mode of ['primary', 'additional']) {
+        if (mode === 'additional') {
+          await coatCard.locator('[data-price-additional-select]').evaluate(button => button.click());
+        }
+        await page.waitForFunction(() => document.querySelector('#price-category-modal')?.classList.contains('active'));
+        const trimmingState = await page.evaluate(currentLocale => {
+          const index = window.PricePageCatalog.categoriesByLocale[currentLocale]
+            .find(category => category.id === 'ru-additional-services').priceRows.findIndex(row => row.key === 'trimming');
+          const fieldset = document.querySelector('[data-price-modal-additional-service-fieldset]');
+          return {
+            selectedBreedId: document.querySelector('[data-price-modal-breed]')?.value || '',
+            trimmingVisible: Boolean(fieldset && !fieldset.hidden
+              && fieldset.querySelector(`[data-service-index="${index}"] input[type="checkbox"]`)),
+          };
+        }, locale);
+        assert(
+          `${locale} ${label}: ${mode} ${coat} breed has applicable trimming services`,
+          trimmingState.selectedBreedId === `${categoryId}:breed:${breedIndex}`
+            && trimmingState.trimmingVisible === (coat === 'wire'),
+          JSON.stringify(trimmingState)
+        );
+        await page.locator('[data-price-modal-close]').evaluate(button => button.click());
+        await page.waitForFunction(() => !document.querySelector('#price-category-modal')?.classList.contains('active'));
+      }
+    }
     await sizeFilter.selectOption('medium');
     await coatFilter.selectOption('short');
     await page.waitForFunction(
@@ -806,8 +971,8 @@ for (const locale of locales) {
       };
     }, locale);
     assert(
-      `${locale} ${label}: all nine dog categories use the locale alphabet`,
-      breedAlphabetState.categoryCount === 9 && breedAlphabetState.unsortedCategoryIds.length === 0,
+      `${locale} ${label}: all twelve dog categories use the locale alphabet`,
+      breedAlphabetState.categoryCount === 12 && breedAlphabetState.unsortedCategoryIds.length === 0,
       JSON.stringify(breedAlphabetState)
     );
 
@@ -815,7 +980,7 @@ for (const locale of locales) {
       const typoCases = [
         { query: 'Командор', expected: 'Комондор', categoryId: 'ru-double-coat-large' },
         { query: 'Коммандор', expected: 'Комондор', categoryId: 'ru-double-coat-large' },
-        { query: 'Ирланский валкодав', expected: 'Ирландский волкодав', categoryId: 'ru-double-coat-large' },
+        { query: 'Ирланский валкодав', expected: 'Ирландский волкодав', categoryId: 'ru-wire-coat-large' },
       ];
       for (const typoCase of typoCases) {
         await breedSearch.fill(typoCase.query);
@@ -1872,13 +2037,19 @@ for (const locale of locales) {
 await browser.close();
 await staticServer?.close();
 
+await writeFile(
+  path.join(outDir, `${geometryOnly ? 'geometry-' : ''}summary-${locales.join('-')}-${layouts.map(([label]) => label).join('-')}${desktopWidth !== 1440 ? `-${desktopWidth}` : ''}.json`),
+  JSON.stringify({ ok: true, checksCount: checks.length, geometryOnly, desktopWidth, locales, layouts: layouts.map(([label]) => label), tabletGridChecked: tabletScreenshots.length > 0 }, null, 2)
+);
+
 console.log(
   JSON.stringify(
     {
       ok: true,
-      screenshots: locales.flatMap(locale => layouts.map(([, , screenshotSuffix]) =>
+      checksCount: checks.length,
+      screenshots: geometryOnly ? geometryScreenshots : locales.flatMap(locale => layouts.map(([, , screenshotSuffix]) =>
         path.join(outDir, `${locale}-${screenshotSuffix}.png`)
-      )).concat(additionalScreenshots, searchFilterScreenshots),
+      )).concat(additionalScreenshots, searchFilterScreenshots, geometryScreenshots),
       checks,
     },
     null,
