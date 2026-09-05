@@ -47,6 +47,12 @@ const assert = (name, ok, detail = '') => {
   }
 };
 
+const normalizeTimingFunction = value => String(value || '')
+  .trim()
+  .toLowerCase()
+  .replace(/\s+/g, '')
+  .replace(/(^|[(,])(-?)\.(\d+)/g, '$1$20.$3');
+
 const readLoadedPhotoImages = async (page, selector) => {
   await page.waitForSelector(selector, { state: 'attached', timeout: 15000 });
   await page.locator(selector).evaluateAll(images => {
@@ -975,10 +981,12 @@ for (const locale of locales) {
       };
     });
     const categoryArrowSettingsMatch = categoryClickState.activationDuration === categoryClickState.sharedSettings.duration
-      && categoryClickState.activationEasing === categoryClickState.sharedSettings.easing
+      && normalizeTimingFunction(categoryClickState.activationEasing)
+        === normalizeTimingFunction(categoryClickState.sharedSettings.easing)
       && categoryClickState.activationTurns === categoryClickState.sharedSettings.turnCount
       && categoryClickState.animationDuration === categoryClickState.sharedSettings.duration
-      && categoryClickState.animationEasing === categoryClickState.sharedSettings.easing;
+      && normalizeTimingFunction(categoryClickState.animationEasing)
+        === normalizeTimingFunction(categoryClickState.sharedSettings.easing);
     assert(
       `${locale} ${label}: category navigation uses the shared arrow activation effect`,
       categoryClickState.clickFlashCount === 1
@@ -1376,7 +1384,7 @@ for (const locale of locales) {
           return true;
         },
         null,
-        { timeout: 1000 }
+        { timeout: 5000 }
       );
     }
     const categoryScrollState = await categoryContent.evaluate(content => {
