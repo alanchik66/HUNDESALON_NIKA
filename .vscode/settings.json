@@ -74,5 +74,15 @@
     "**/build/**": true,
     "**/test-results/**": true
   },
-  "chat.sessionSync.enabled": true
+  "chat.sessionSync.enabled": true,
+  "chat.notifyWindowOnConfirmation": "windowNotFocused",
+  "chat.notifyWindowOnResponseReceived": "windowNotFocused",
+  "chat.agentMerge.enabled": true,
+  "chat.agentHost.copilotAgent.multiRootEnabled": true,
+  "chat.agentHost.claudeAgent.multiRootEnabled": true,
+  "workbench.experimental.modernUI": true,
+  "window.density.layout": "compact",
+  "chat.agentSessions.preferredDarkBackgroundImage": "Codicons",
+  "chat.agentSessions.preferredLightBackgroundImage": "Codicons",
+  "chat.agentSessions.backgroundImageLayout": "Repeat"
 }
