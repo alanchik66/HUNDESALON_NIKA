@@ -1658,15 +1658,118 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ЕДИНЫЙ rAF цикл для ВСЕХ точек — максимально плавно */
   const allTouchPoints = [];
+  const plasmaGlobes = new Set();
   let touchRaf = 0;
   const now = () => performance.now();
 
+  const mountPlasmaGlobe = (link, layer) => {
+    layer.classList.add('nav-plasma--globe');
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 100 100');
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.setAttribute('aria-hidden', 'true');
+    const paths = Array.from({ length: 9 }, () => {
+      const path = document.createElementNS(svg.namespaceURI, 'path');
+      svg.appendChild(path);
+      return path;
+    });
+    const core = document.createElementNS(svg.namespaceURI, 'circle');
+    core.setAttribute('cx', '50');
+    core.setAttribute('cy', '50');
+    core.setAttribute('r', '2');
+    core.classList.add('nav-plasma-core');
+    svg.appendChild(core);
+    const contact = document.createElementNS(svg.namespaceURI, 'circle');
+    contact.setAttribute('r', '2.5');
+    contact.classList.add('nav-plasma-contact');
+    svg.appendChild(contact);
+    layer.appendChild(svg);
+    const globe = { paths, visible: false, pointer: null, frame: 0, phase: Math.random() * 10 };
+    plasmaGlobes.add(globe);
+    const observer = new IntersectionObserver(entries => {
+      globe.visible = entries[0].isIntersecting;
+      if (globe.visible) startTouchLoop();
+    });
+    observer.observe(link);
+    const signal = layer._pointerEvents.signal;
+    link.addEventListener('pointermove', event => {
+      const rect = link.getBoundingClientRect();
+      globe.pointer = [
+        Math.max(0, Math.min(100, (event.clientX - rect.left) / rect.width * 100)),
+        Math.max(0, Math.min(100, (event.clientY - rect.top) / rect.height * 100)),
+      ];
+      contact.setAttribute('cx', globe.pointer[0].toFixed(2));
+      contact.setAttribute('cy', globe.pointer[1].toFixed(2));
+      layer.classList.add('is-attracted');
+    }, { signal });
+    link.addEventListener('pointerleave', () => {
+      globe.pointer = null;
+      layer.classList.remove('is-attracted');
+    }, { signal });
+    layer._disposeGlobe = () => {
+      observer.disconnect();
+      plasmaGlobes.delete(globe);
+    };
+    startTouchLoop();
+  };
+
+  const drawPlasmaGlobe = (globe, ts) => {
+    if (ts - globe.frame < 32) return;
+    globe.frame = ts;
+    const t = ts / 1000 + globe.phase;
+    globe.paths.forEach((path, index) => {
+      const angle = index * Math.PI * 2 / globe.paths.length + t * 0.16 + Math.sin(t * 0.6 + index) * 0.3;
+      const attracted = globe.pointer && index < 4;
+      const end = attracted ? globe.pointer : [50 + 53 * Math.cos(angle), 50 + 53 * Math.sin(angle)];
+      const dx = end[0] - 50;
+      const dy = end[1] - 50;
+      const length = Math.hypot(dx, dy) || 1;
+      const points = Array.from({ length: 9 }, (_, step) => {
+        const fraction = step / 8;
+        const wave = Math.sin(Math.PI * fraction) * (
+          Math.sin(t * 2.1 + fraction * 9 + index * 2) * 4 +
+          Math.sin(t * 3.7 - fraction * 13 + index) * 2
+        );
+        return [50 + dx * fraction - dy / length * wave, 50 + dy * fraction + dx / length * wave];
+      });
+      let d = 'M50 50';
+      for (let i = 1; i < points.length - 1; i++) {
+        const point = points[i];
+        const next = points[i + 1];
+        d += ` Q${point[0].toFixed(2)} ${point[1].toFixed(2)} ${((point[0] + next[0]) / 2).toFixed(2)} ${((point[1] + next[1]) / 2).toFixed(2)}`;
+      }
+      d += ` T${end[0].toFixed(2)} ${end[1].toFixed(2)}`;
+      if (!attracted && index % 2 === 0) {
+        const fork = points[5];
+        const spread = Math.sin(t * 0.9 + index) * 7;
+        d += ` M${fork[0].toFixed(2)} ${fork[1].toFixed(2)} Q${(points[6][0] - dy / length * spread).toFixed(2)} ${(points[6][1] + dx / length * spread).toFixed(2)} ${(end[0] - dy / length * spread).toFixed(2)} ${(end[1] + dx / length * spread).toFixed(2)}`;
+      }
+      path.setAttribute('d', d);
+      path.style.opacity = String(attracted ? 0.95 : 0.5 + Math.sin(t * 1.8 + index) * 0.14);
+    });
+  };
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) startTouchLoop();
+  });
+
   function tickTouches(ts) {
+    if (document.hidden) {
+      touchRaf = 0;
+      return;
+    }
     let hasActivePoints = false;
+    plasmaGlobes.forEach(globe => {
+      if (!globe.visible) return;
+      hasActivePoints = true;
+      drawPlasmaGlobe(globe, ts);
+    });
     for (let i = 0; i < allTouchPoints.length; i++) {
       const el = allTouchPoints[i];
       if (!el._active) continue;
       hasActivePoints = true;
+      // Pointer contacts stay attached to the pointer instead of wandering away.
+      if (el._isCursor) continue;
 
       /* Хаотическая смена цели — непрерывно, без задержек */
       if (ts >= el._nextMove) {
@@ -1786,10 +1889,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (link.querySelector('.nav-plasma--active')) return;
 
     const activePlasma = document.createElement('span');
+    const pointerEvents = new window.AbortController();
+    activePlasma._pointerEvents = pointerEvents;
     activePlasma.className = cta ? 'nav-plasma--active nav-plasma--cta' : 'nav-plasma--active';
     link.appendChild(activePlasma);
 
     if (!sitePerfHeavy) return;
+    if (link.hasAttribute('data-price-section-action')) {
+      mountPlasmaGlobe(link, activePlasma);
+      return;
+    }
 
     const syncTouchBounds = (width, height) => {
       activePlasma._touchWidth = width;
@@ -1873,7 +1982,7 @@ document.addEventListener('DOMContentLoaded', () => {
       activePlasma.style.setProperty('--plasma-y', dy.toFixed(1));
     };
 
-    link.addEventListener('mouseenter', event => {
+    const enterPlasma = event => {
       cursorTips.forEach(cursorTip => {
         cursorTip._active = false;
         cursorTip.classList.remove('active');
@@ -1892,7 +2001,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const my = ((event.clientY - rect.top) / rect.height) * 100;
       positionCursorTips(mx, my);
       moveRaysToward(mx, my);
-    });
+    };
+    link.addEventListener('mouseenter', enterPlasma, { signal: pointerEvents.signal });
 
     link.addEventListener('mousemove', event => {
       const rect = link.getBoundingClientRect();
@@ -1900,7 +2010,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const my = Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100));
       positionCursorTips(mx, my);
       moveRaysToward(mx, my);
-    });
+    }, { signal: pointerEvents.signal });
 
     link.addEventListener('mouseleave', () => {
       activeCursorTips.forEach(cursorTip => {
@@ -1912,12 +2022,15 @@ document.addEventListener('DOMContentLoaded', () => {
       activeCursorTips = [];
       activePlasma.style.setProperty('--plasma-x', '0');
       activePlasma.style.setProperty('--plasma-y', '0');
-    });
+    }, { signal: pointerEvents.signal });
+    if (options.pointerEvent) enterPlasma(options.pointerEvent);
   };
 
   const unmountActivePlasma = link => {
     const activePlasma = link.querySelector('.nav-plasma--active');
     if (!activePlasma) return;
+    activePlasma._pointerEvents?.abort();
+    activePlasma._disposeGlobe?.();
     removeTouchPoints(activePlasma);
     activePlasma.remove();
   };
@@ -1945,23 +2058,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (isOnlineOrderPill) {
       mountActivePlasma(link, { cta: true });
-    } else if (isNavPillActive(link)) {
+    } else if (isNavPillActive(link) || link.hasAttribute('data-price-section-action')) {
       mountActivePlasma(link);
     }
 
     if (!prefersReducedMotion && (!isCoarsePointer || window.innerWidth >= 768)) {
-      link.addEventListener('mouseenter', () => {
+      link.addEventListener('mouseenter', event => {
         if (!link.querySelector('.nav-plasma--active')) {
-          mountActivePlasma(link, { cta: isOnlineOrderPill });
+          mountActivePlasma(link, { cta: isOnlineOrderPill, pointerEvent: event });
         }
       });
 
       link.addEventListener('mouseleave', () => {
-        if (!isNavPillActive(link) && !isOnlineOrderPill) {
+        if (!isNavPillActive(link) && !isOnlineOrderPill && !link.hasAttribute('data-price-section-action')) {
           unmountActivePlasma(link);
         }
       });
     }
+
+    link.addEventListener('focus', () => mountActivePlasma(link, { cta: isOnlineOrderPill }));
+    link.addEventListener('blur', () => {
+      if (!isNavPillActive(link) && !isOnlineOrderPill && !link.matches(':hover') && !link.hasAttribute('data-price-section-action')) {
+        unmountActivePlasma(link);
+      }
+    });
 
     link.addEventListener('click', event => {
       if (isFilterPill) {
@@ -2010,6 +2130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     deactivate(link) {
       if (!link) return;
+      if (link.hasAttribute('data-price-section-action')) return;
       unmountActivePlasma(link);
     },
   };

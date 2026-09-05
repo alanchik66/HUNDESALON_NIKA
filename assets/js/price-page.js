@@ -758,11 +758,11 @@
           </div>
         </div>
       </div>
-      <nav class="price-page-hero__actions" aria-label="${escapeHtml(locale.heroCategoriesAction || 'View categories')}">
+      <nav class="price-page-hero__actions nav-main" aria-label="${escapeHtml(locale.heroCategoriesAction || 'View categories')}">
         ${categoryNavigationKeys.map(sectionKey => `
           <button
             type="button"
-            class="price-page-hero__categories-action online-order-pill"
+            class="price-page-hero__categories-action filter-btn"
             data-nav-pill="price-categories-action"
             data-price-categories-action
             data-price-section-action="${escapeHtml(sectionKey)}"
@@ -2439,6 +2439,17 @@
     window.requestAnimationFrame(() => {
       const target = cardsRoot.querySelector(`[data-price-section-target="${sectionKey}"]`);
       if (!target) return;
+      categoriesActions.forEach(button => {
+        const selected = button === action;
+        button.classList.toggle('active', selected);
+        if (selected) {
+          button.setAttribute('aria-current', 'true');
+          window.HundesalonNavPill?.activate(button);
+        } else {
+          button.removeAttribute('aria-current');
+          window.HundesalonNavPill?.deactivate(button);
+        }
+      });
       const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
       const behavior = reducedMotion ? 'auto' : 'smooth';
       const scrollRoot = document.querySelector('.site-scroll-root');
