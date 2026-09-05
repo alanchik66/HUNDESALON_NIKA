@@ -2014,6 +2014,128 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
 
+  const siteArrowActivationAnimations = new WeakMap();
+  const parseSiteArrowDuration = value => {
+    const normalized = String(value || '').trim().toLowerCase();
+    const amount = Number.parseFloat(normalized);
+    if (!Number.isFinite(amount)) return 1800;
+    return normalized.endsWith('ms') ? amount : normalized.endsWith('s') ? amount * 1000 : amount;
+  };
+  const getSiteArrowActivationSettings = () => {
+    const rootStyle = getComputedStyle(document.documentElement);
+    const duration = parseSiteArrowDuration(rootStyle.getPropertyValue('--site-arrow-activation-duration'));
+    const easing = rootStyle.getPropertyValue('--site-arrow-activation-easing').trim()
+      || 'cubic-bezier(0.65, 0.05, 0.15, 1)';
+    const configuredTurns = Number.parseFloat(
+      rootStyle.getPropertyValue('--site-arrow-activation-turn-count')
+    );
+    const turnCount = Number.isFinite(configuredTurns) && configuredTurns > 0 ? configuredTurns : 3;
+    return { duration, easing, turnCount, spinDegrees: turnCount * 360 };
+  };
+  const finishBreedArrowClose = (control, arrow) => {
+    if (!control.classList.contains('price-breed-arrow--closing')) return;
+    arrow.dispatchEvent(new window.AnimationEvent('animationend', { animationName: 'priceBreedArrowClose' }));
+  };
+  const playSiteArrowActivation = (control, state = {}) => {
+    if (prefersReducedMotion || !control) return;
+    const settings = getSiteArrowActivationSettings();
+    const isBreedToggle = control.matches('[data-price-breeds-toggle]');
+    const arrows = control.querySelectorAll(
+      isBreedToggle
+        ? '.price-card__badge-icon'
+        : '.site-icon-arrow, .site-select__arrow, .nav-dropdown-chevron, .lang-dropdown-btn > i:last-child, .btn-read i.fa-arrow-right'
+    );
+    arrows.forEach(arrow => {
+      const previous = siteArrowActivationAnimations.get(arrow);
+      previous?.animation.cancel();
+      if (previous?.isBreedClose) finishBreedArrowClose(previous.control, arrow);
+
+      const isBreedOpen = isBreedToggle && state.expanded === true;
+      const isBreedClose = isBreedToggle && state.expanded === false;
+      const keyframes = isBreedOpen
+        ? [{ transform: 'rotate(90deg)' }, { transform: `rotate(${90 + settings.spinDegrees + 180}deg)` }]
+        : isBreedClose
+          ? [{ transform: 'rotate(-90deg)' }, { transform: `rotate(${-90 - settings.spinDegrees - 180}deg)` }]
+          : [{ rotate: '0deg' }, { rotate: `${settings.spinDegrees}deg` }];
+      const animation = arrow.animate(keyframes, {
+        duration: settings.duration,
+        easing: settings.easing,
+      });
+      const record = { animation, control, isBreedClose };
+      siteArrowActivationAnimations.set(arrow, record);
+      control.dataset.siteArrowActivationKind = isBreedOpen ? 'open' : isBreedClose ? 'close' : 'spin';
+      control.dataset.siteArrowActivationDuration = String(settings.duration);
+      control.dataset.siteArrowActivationEasing = settings.easing;
+      control.dataset.siteArrowActivationTurns = String(settings.turnCount);
+      animation.addEventListener('finish', () => {
+        if (isBreedClose) finishBreedArrowClose(control, arrow);
+        if (siteArrowActivationAnimations.get(arrow) === record) siteArrowActivationAnimations.delete(arrow);
+      }, { once: true });
+      animation.addEventListener('cancel', () => {
+        if (siteArrowActivationAnimations.get(arrow) === record) siteArrowActivationAnimations.delete(arrow);
+      }, { once: true });
+    });
+
+    if (control.matches('.mobile-dropdown-btn')) {
+      try {
+        const previous = siteArrowActivationAnimations.get(control);
+        previous?.animation.cancel();
+        const animation = control.animate(
+          [{ rotate: '0deg' }, { rotate: `${settings.spinDegrees}deg` }],
+          {
+            duration: settings.duration,
+            easing: settings.easing,
+            pseudoElement: '::after',
+          }
+        );
+        const record = { animation, control, isBreedClose: false };
+        siteArrowActivationAnimations.set(control, record);
+        const release = () => {
+          if (siteArrowActivationAnimations.get(control) === record) {
+            siteArrowActivationAnimations.delete(control);
+          }
+        };
+        animation.addEventListener('finish', release, { once: true });
+        animation.addEventListener('cancel', release, { once: true });
+      } catch {
+        // The continuous shared bounce remains available when pseudo-element WAAPI is unsupported.
+      }
+    }
+  };
+
+  document.addEventListener('click', event => {
+    const control = event.target instanceof Element
+      ? event.target.closest('button, a, [role="button"], .mobile-dropdown-btn')
+      : null;
+    if (!control) return;
+    const isBreedToggle = control.matches('[data-price-breeds-toggle]');
+    const hasArrow = control.matches('.mobile-dropdown-btn') || control.querySelector(
+      '.site-icon-arrow, .site-select__arrow, .nav-dropdown-chevron, .lang-dropdown-btn > i:last-child, .btn-read i.fa-arrow-right'
+    );
+    if (hasArrow && !isBreedToggle) playSiteArrowActivation(control);
+  }, { capture: true });
+
+  const breedArrowStateObserver = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      const control = mutation.target instanceof Element ? mutation.target : null;
+      if (!control?.matches('[data-price-breeds-toggle]')) return;
+      const expanded = control.getAttribute('aria-expanded') === 'true';
+      if (expanded === (mutation.oldValue === 'true')) return;
+      playSiteArrowActivation(control, { expanded });
+    });
+  });
+  breedArrowStateObserver.observe(document.body, {
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['aria-expanded'],
+    attributeOldValue: true,
+  });
+
+  window.HundesalonSiteArrow = {
+    play: playSiteArrowActivation,
+    getSettings: getSiteArrowActivationSettings,
+  };
+
   /* ========== SOCIAL ICONS — ENTRANCE ANIMATION ON PAGE LOAD ========== */
   requestAnimationFrame(() => {
     const allSocialLinks = document.querySelectorAll(

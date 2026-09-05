@@ -163,6 +163,7 @@
   --site-arrow-bounce-settle-negative: -2px;
   --site-arrow-bounce-return: 4.5px;
   --site-arrow-bounce-return-negative: -4.5px;
+  --site-arrow-activation-duration: 1800ms;
 
   /* Facet angles define the six-layer surface; the complete surface moves as
        one compositor layer so no JavaScript writes paint-triggering values. */
@@ -14097,7 +14098,7 @@ body.price-page .price-page-hero[data-price-hero] .price-page-hero__note {
 body.price-page .price-page-hero[data-price-hero] .price-page-hero__categories-action {
   flex-shrink: 0;
   min-width: 0;
-  width: min(100%, 21rem);
+  width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   margin-top: 0;
@@ -14106,7 +14107,9 @@ body.price-page .price-page-hero[data-price-hero] .price-page-hero__categories-a
   gap: 0.8rem;
   border-radius: var(--nav-pill-radius);
   font-size: clamp(1rem, 0.35vw + 0.9rem, 1.15rem);
-  white-space: nowrap;
+  line-height: 1.15;
+  white-space: normal;
+  text-wrap: balance;
 }
 
 body.price-page .price-page-hero[data-price-hero] .price-page-hero__categories-action-icon {
@@ -14134,14 +14137,25 @@ body.price-page
 }
 
 body.price-page .price-page-hero[data-price-hero] .price-page-hero__search {
+  position: relative;
+  z-index: 1;
   width: min(100%, 1040px);
   margin: 0 auto;
   text-align: left;
 }
 
+body.price-page .price-page-hero[data-price-hero]:has(.site-select.is-open) {
+  overflow: visible;
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-page-hero__search:has(.site-select.is-open) {
+  z-index: 2;
+}
+
 body.price-page .price-page-hero[data-price-hero] .price-page-hero__actions {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(0.38rem, 0.75vw, 0.7rem);
   width: min(100%, 1040px);
   margin: 0 auto;
 }
@@ -14309,7 +14323,7 @@ body.price-page .price-page-hero[data-price-hero] .price-breed-search__input {
 
   body.price-page .price-page-hero[data-price-hero] .price-page-hero__categories-action {
     justify-self: center;
-    width: min(100%, 20rem);
+    width: 100%;
     min-height: 3rem;
     padding: 0.58rem 0.8rem;
     gap: 0.55rem;
@@ -14318,6 +14332,14 @@ body.price-page .price-page-hero[data-price-hero] .price-breed-search__input {
 
   body.price-page .price-page-hero[data-price-hero] .price-page-hero__search {
     width: 100%;
+  }
+
+  body.price-page .price-page-hero[data-price-hero] .price-page-hero__actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body.price-page .price-page-hero[data-price-hero] .price-page-hero__categories-action:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 }
 

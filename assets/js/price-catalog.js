@@ -461,17 +461,17 @@
       },
     },
     {
-      key: 'handstrip',
+      key: 'trimming',
       groups: ['dogs'],
-      booking: { de: 'Trimmen / Handstripping', en: 'Hand stripping', ru: 'Тримминг / хендстриппинг', uk: 'Тримінг / хендстрипінг' },
-      label: { de: 'Trimmen / Handstripping', en: 'Hand stripping', ru: 'Тримминг / хендстриппинг', uk: 'Тримінг / хендстрипінг' },
+      booking: { de: 'Zusatzleistung', en: 'Extra service', ru: 'Дополнительная услуга', uk: 'Додаткова послуга' },
+      label: { de: 'Trimmen', en: 'Trimming', ru: 'Тримминг', uk: 'Тримінг' },
       note: {
         de: 'Für rauhaarige Rassen nach Fellstruktur und Aufwand.',
         en: 'For wire-coated breeds based on coat structure and workload.',
         ru: 'Для жестошёрстных пород с учётом структуры шерсти и объёма работы.',
         uk: 'Для жорсткошерстих порід з урахуванням структури шерсті та обсягу роботи.',
       },
-      prices: { medium: 'ab 95 €', large: 'ab 110 €', default: 'ab 95 €' },
+      prices: { default: 'auf Anfrage' },
       desc: {
         de: 'Rassegerechtes Trimmen per Hand oder Maschine.',
         en: 'Breed-appropriate hand or clipper stripping.',

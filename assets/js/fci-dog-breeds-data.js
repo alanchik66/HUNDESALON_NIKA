@@ -4551,7 +4551,7 @@
           "en": "BOHEMIAN SHEPHERD DOG",
           "de": "BÖHMISCHER SCHÄFERHUND",
           "ru": "Богемская овчарка",
-          "uk": "Богемська Вівчарка &ndash; Чоцький Пес"
+          "uk": "Богемська Вівчарка – Чоцький Пес"
         },
         "section": 1,
         "status": "provisional",

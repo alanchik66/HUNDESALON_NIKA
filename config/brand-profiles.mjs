@@ -8,7 +8,7 @@ export const BRAND_PROFILES = {
   tiktok: 'https://www.tiktok.com/@hundesalon_nika',
   youtube: 'https://www.youtube.com/@hundesalon_nika',
   telegram: 'https://t.me/hundesalon_nika_support_bot',
-  facebook: 'https://www.facebook.com/profile.php?id=61584574431839',
+  facebook: 'https://www.facebook.com/hundesalonnika/',
   whatsapp: 'https://wa.me/4915172450988',
 };
 

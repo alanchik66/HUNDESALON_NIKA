@@ -15,6 +15,13 @@
     large: 'ru-large-dogs',
   });
   const LOCALES = ['de', 'en', 'ru', 'uk'];
+  const EXCLUDED_BASE_BREED_KEYS = new Set([
+    'ru-poodles-bichons:base:3', // Duplicate of the official FCI Medium Poodle size.
+    'ru-short-coat:base:3', // Ambiguous "Toy Terrier" duplicated by explicit Russian/English Toy breeds.
+  ]);
+  const BASE_BREED_NAME_OVERRIDES = new Map([
+    ['ru-poodles-bichons:base:2', { en: 'Medium Poodle' }],
+  ]);
 
   // These FCI standards are already represented by a breed or an explicit
   // coat/size variety in the established salon catalog.
@@ -82,7 +89,7 @@
       from: CATEGORY.wire,
       to: CATEGORY.short,
       serviceIndex: 0,
-      currentNames: { de: 'Brabanter / Petit Brabançon', en: 'Brabançon / Petit Brabançon', ru: 'Брабансон / Petit Brabançon', uk: 'Брабансон / Petit Brabançon' },
+      currentNames: { de: 'Brabanter Griffon', en: 'Petit Brabançon', ru: 'Пти брабансон', uk: 'Малий брабанський грифон — пті брабансон' },
       names: { de: 'Brabanter Griffon', en: 'Petit Brabançon', ru: 'Пти брабансон', uk: 'Малий брабанський грифон — пті брабансон' },
     },
     {
@@ -288,6 +295,7 @@
       .map((name, index) => ({
         name,
         fciNumber: fciNumbers[index] ?? null,
+        breedKey: category.breedKeys[index],
         serviceIndex: serviceIndexes?.[index] ?? null,
         originalIndex: index,
       }))
@@ -295,7 +303,28 @@
 
     category.breeds[lang] = sorted.map(item => item.name);
     category.breedFciNumbers = sorted.map(item => item.fciNumber);
+    category.breedKeys = sorted.map(item => item.breedKey);
     if (serviceIndexes) category.breedServiceIndexes = sorted.map(item => item.serviceIndex);
+  }
+
+  function cleanBaseBreeds(category, lang) {
+    const serviceIndexes = category.id === CATEGORY.short ? category.breedServiceIndexes : null;
+    const retained = category.breeds[lang]
+      .map((name, index) => {
+        const breedKey = category.breedKeys[index];
+        return {
+          name: BASE_BREED_NAME_OVERRIDES.get(breedKey)?.[lang] || name,
+          fciNumber: category.breedFciNumbers[index],
+          breedKey,
+          serviceIndex: serviceIndexes?.[index] ?? null,
+        };
+      })
+      .filter(item => !EXCLUDED_BASE_BREED_KEYS.has(item.breedKey));
+
+    category.breeds[lang] = retained.map(item => item.name);
+    category.breedFciNumbers = retained.map(item => item.fciNumber);
+    category.breedKeys = retained.map(item => item.breedKey);
+    if (serviceIndexes) category.breedServiceIndexes = retained.map(item => item.serviceIndex);
   }
 
   function applyBaseBreedTransforms(byId, lang) {
@@ -372,14 +401,17 @@
     for (const [categoryId, categoryEntries] of additions) {
       const category = byId.get(categoryId);
       if (!category?.breeds?.[lang]) throw new Error(`Missing ${lang} breed list for ${categoryId}`);
-      const knownNames = new Set(category.breeds[lang].map(normalizeName));
       category.breedFciNumbers = Array(category.breeds[lang].length).fill(null);
+      category.breedKeys = category.breeds[lang].map((_, index) => `${categoryId}:base:${index}`);
+      cleanBaseBreeds(category, lang);
+      const knownNames = new Set(category.breeds[lang].map(normalizeName));
       categoryEntries.sort((left, right) => collator.compare(left.names[lang], right.names[lang]));
       for (const entry of categoryEntries) {
         const name = entry.names[lang];
         if (knownNames.has(normalizeName(name))) continue;
         category.breeds[lang].push(name);
         category.breedFciNumbers.push(entry.fciNumber);
+        category.breedKeys.push(`fci:${entry.fciNumber}:${entry.key}`);
         if (categoryId === CATEGORY.short) category.breedServiceIndexes.push(entry.serviceIndex);
         knownNames.add(normalizeName(name));
       }

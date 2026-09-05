@@ -160,6 +160,7 @@
         categoryId: category.id,
         index,
         label,
+        metadata: category.breedMetadata?.[safeLang]?.[index] || category.breedMetadata?.[index] || null,
         serviceIndex: Number.isInteger(breedServiceIndexes[index]) ? breedServiceIndexes[index] : null,
       }));
       const services = (category.priceRows || []).map((priceRow, index) => ({
@@ -201,7 +202,21 @@
         return category.services.filter(service => service.index === priceIndex || service.key === 'puppy-intro');
       }
 
-      return category.services;
+      const breed = getBreed(breedId);
+      if (category.source.breedServiceRows && breedId) {
+        if (breed?.categoryId !== categoryId) return [];
+        const rows = category.source.breedServiceRows[breed.index];
+        return category.services.filter(service => rows?.[service.index]).map(service => ({
+          ...service,
+          label: getText(rows[service.index].label, safeLang),
+          price: getText(rows[service.index].price, safeLang),
+        }));
+      }
+      const prices = breed?.categoryId === categoryId ? category.source.breedServicePrices?.[breed.index] : null;
+      return prices ? category.services.map(service => ({
+        ...service,
+        price: prices[service.index] ? getText(prices[service.index], safeLang) : service.price,
+      })) : category.services;
     };
 
     const resolveQuote = (categoryId, breedId, serviceId) => {

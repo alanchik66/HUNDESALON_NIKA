@@ -138,7 +138,7 @@ const SOCIAL_LINKS = [
   ['Telegram', 'https://t.me/hundesalon_nika_support_bot', 'telegram.png'],
   ['Viber', 'viber://chat?number=%2B4915172450988', 'viber.png'],
   ['Telefon', 'tel:+4915172450988', 'phone.png'],
-  ['Facebook', 'https://www.facebook.com/share/17SVsvkZEo/?mibextid=wwXIfr', 'facebook.png'],
+  ['Facebook', 'https://www.facebook.com/hundesalonnika/', 'facebook.png'],
   ['E-Mail', 'mailto:info@hundesalon-nika.com', 'mail.png'],
 ];
 

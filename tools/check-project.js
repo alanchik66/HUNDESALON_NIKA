@@ -22,7 +22,7 @@ const requiredFiles = [
 ];
 
 const indexFiles = ['index.html', 'de/index.html', 'en/index.html', 'ru/index.html', 'uk/index.html'];
-const ignoredDirs = new Set(['.git', 'node_modules', 'dist', 'temp', 'tmp', 'test-results', '.wrangler']);
+const ignoredDirs = new Set(['.git', 'node_modules', 'dist', 'temp', 'tmp', 'test-results', '.wrangler', 'Python']);
 const failures = [];
 
 function read(relativePath) {

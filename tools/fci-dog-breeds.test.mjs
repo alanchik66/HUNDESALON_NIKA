@@ -16,7 +16,8 @@ const DOG_CATEGORY_IDS = [
   'ru-short-coat',
   'ru-large-dogs',
 ];
-const EXPECTED_CATEGORY_COUNTS = [23, 23, 29, 27, 65, 174, 100];
+const EXPECTED_CATEGORY_COUNTS = [22, 21, 29, 26, 65, 173, 99];
+const EXPECTED_COAT_CATEGORY_COUNTS = [24, 35, 47, 16, 60, 75, 27, 61, 90];
 const EXPECTED_IRISH_WOLFHOUND = {
   de: 'Irischer Wolfshund',
   en: 'Irish Wolfhound',
@@ -104,7 +105,7 @@ test('all locales expose the same categorized catalog without duplicates or pric
 
     assert.deepEqual(clone(after.map(category => category.id)), DOG_CATEGORY_IDS);
     assert.deepEqual(clone(after.map(category => category.breeds[locale].length)), EXPECTED_CATEGORY_COUNTS);
-    assert.equal(after.reduce((sum, category) => sum + category.breeds[locale].length, 0), 441);
+    assert.equal(after.reduce((sum, category) => sum + category.breeds[locale].length, 0), 435);
 
     for (let index = 0; index < after.length; index += 1) {
       const original = before[index];
@@ -121,6 +122,31 @@ test('all locales expose the same categorized catalog without duplicates or pric
       assert.deepEqual(clone(expanded.priceRows), original.priceRows, `${locale}:${expanded.id} prices changed`);
       assert.deepEqual(clone(expanded.services), original.services, `${locale}:${expanded.id} services changed`);
       assert.equal(expanded.breedFciNumbers.length, names.length, `${locale}:${expanded.id} FCI index drift`);
+    }
+  }
+});
+
+test('dog breed labels are localized and contain no generic or mixed-language placeholders', () => {
+  const window = runSources([...BASE_SOURCES, ...FCI_SOURCES]);
+  const forbiddenScripts = {
+    de: /\p{Script=Cyrillic}/u,
+    en: /\p{Script=Cyrillic}/u,
+    ru: /[A-Za-zÄÖÜäöüßẞ]/u,
+    uk: /[A-Za-zÄÖÜäöüßẞ]/u,
+  };
+  const genericLabel = /Другие|Other|Andere|Інші/iu;
+
+  for (const locale of LOCALES) {
+    const categories = window.PricePageCatalog.categoriesByLocale[locale]
+      .filter(category => DOG_CATEGORY_IDS.includes(category.id));
+
+    for (const category of categories) {
+      for (const name of category.breeds[locale]) {
+        assert.doesNotMatch(name, genericLabel, `${locale}:${category.id} generic breed label`);
+        assert.doesNotMatch(name, /\//u, `${locale}:${category.id} mixed alias`);
+        assert.doesNotMatch(name, forbiddenScripts[locale], `${locale}:${category.id} foreign script`);
+        assert.doesNotMatch(name, /&[a-z]+;/iu, `${locale}:${category.id} encoded HTML entity`);
+      }
     }
   }
 });
@@ -143,13 +169,13 @@ test('Irish Wolfhound has one localized name and remains in the wire-coat catego
   }
 });
 
-test('every short-coat breed resolves to one exact XS, S, M, or L service', () => {
+test('every short-coat breed resolves to one exact size price bucket', () => {
   const window = runSources([...BASE_SOURCES, ...FCI_SOURCES, 'assets/js/price-booking.js']);
 
   for (const locale of LOCALES) {
     const catalog = window.PriceBookingCatalog.build(locale);
     const category = catalog.getCategory('ru-short-coat');
-    assert.equal(category.breeds.length, 174);
+    assert.equal(category.breeds.length, 173);
     assert.equal(category.source.breedServiceIndexes.length, category.breeds.length);
 
     for (const breed of category.breeds) {
@@ -160,7 +186,7 @@ test('every short-coat breed resolves to one exact XS, S, M, or L service', () =
       assert.equal(services.length, 2, `${locale}:${breed.label} must expose size care plus puppy care`);
       assert.equal(sizeServices.length, 1, `${locale}:${breed.label} must expose one size service`);
       assert.equal(sizeServices[0].index, breed.serviceIndex, `${locale}:${breed.label} wrong service index`);
-      assert.equal(sizeServices[0].label, ['XS', 'S', 'M', 'L'][breed.serviceIndex]);
+      assert.equal(sizeServices[0].label, category.services[breed.serviceIndex].label);
     }
   }
 });
@@ -245,6 +271,7 @@ test('all localized price pages load FCI data before booking and UI code', () =>
     'price-page-locales.js',
     'fci-dog-breeds-data.js',
     'price-page-fci-breeds.js',
+    'price-page-coat-groups.js',
     'price-booking.js',
     'price-page.js',
   ];
@@ -255,4 +282,90 @@ test('all localized price pages load FCI data before booking and UI code', () =>
     assert.ok(positions.every(position => position >= 0), `${locale}: missing FCI integration script`);
     assert.deepEqual(positions, [...positions].sort((left, right) => left - right), `${locale}: invalid script order`);
   }
+});
+
+test('coat groups preserve every breed and its quote without public size codes', () => {
+  const serviceOrder = ['puppy-intro', 'full-care', 'bath-hygiene', 'handstripping'];
+  const before = runSources([...BASE_SOURCES, ...FCI_SOURCES, 'assets/js/price-booking.js']);
+  const after = runSources([...BASE_SOURCES, ...FCI_SOURCES, 'assets/js/price-page-coat-groups.js', 'assets/js/price-booking.js']);
+  const referenceCatalog = after.PriceBookingCatalog.build('ru');
+  const expectedCounts = referenceCatalog.categories.map(category => category.breeds.length);
+  assert.deepEqual(
+    clone(referenceCatalog.categories
+      .filter(category => category.source.animalType === 'dog')
+      .map(category => category.breeds.length)),
+    EXPECTED_COAT_CATEGORY_COUNTS
+  );
+  for (const lang of LOCALES) {
+    const oldCatalog = before.PriceBookingCatalog.build(lang);
+    const catalog = after.PriceBookingCatalog.build(lang);
+    assert.equal(catalog.getCategory('ru-short-coat'), null);
+    assert.deepEqual(clone(catalog.categories.map(category => category.breeds.length)), clone(expectedCounts), `${lang}: grouping parity`);
+    const oldNames = oldCatalog.breeds.map(breed => breed.label).sort();
+    assert.deepEqual(clone(catalog.breeds.map(breed => breed.label).sort()), clone(oldNames));
+    const oldByName = new Map(oldCatalog.breeds.map(breed => [breed.label, breed]));
+    for (const category of catalog.categories) {
+      for (const row of category.services) assert.doesNotMatch(row.label, /\b(?:XS|S|M|L)\b/);
+      if (category.source.animalType === 'dog') {
+        const categoryServiceKeys = category.services.map(service => service.key);
+        assert.deepEqual(clone(categoryServiceKeys), serviceOrder.filter(key => categoryServiceKeys.includes(key)), `${lang}:${category.id}: invalid service order`);
+      }
+      for (const breed of category.breeds) {
+        const previous = oldByName.get(breed.label);
+        const expected = oldCatalog.getServices(previous.categoryId, previous.id).map(service => [service.label, service.price]);
+        const actual = catalog.getServices(category.id, breed.id).map(service => [service.label, service.price]);
+        if (category.source.animalType === 'dog') {
+          const breedServiceKeys = catalog.getServices(category.id, breed.id).map(service => service.key);
+          assert.deepEqual(clone(breedServiceKeys), serviceOrder.filter(key => breedServiceKeys.includes(key)), `${lang}:${breed.label}: invalid service order`);
+        }
+        for (const service of expected) assert.ok(actual.some(item => item[0] === service[0] && item[1] === service[1]), `${lang}:${breed.label}: changed quote`);
+        if (previous.categoryId === 'ru-short-coat') {
+          const fullCare = catalog.getServices(category.id, breed.id).find(service => service.key === 'full-care');
+          assert.equal(fullCare?.price, expected[0][1], `${lang}:${breed.label}: missing full care`);
+          assert.equal(actual.length, expected.length + 1, `${lang}:${breed.label}: invalid short-coat services`);
+        } else {
+          assert.equal(actual.length, expected.length, `${lang}:${breed.label}: invalid service count`);
+        }
+      }
+    }
+    for (const section of ['small', 'medium', 'large']) {
+      const categories = catalog.categories.filter(category => category.source.pageSection === section);
+      assert.deepEqual(clone(categories.map(category => category.source.coatType)), ['long', 'short', 'double']);
+      for (const category of categories) {
+        assert.ok(category.breeds.length);
+        assert.ok(category.services.some(service => service.key === 'full-care'));
+        assert.ok(category.services.some(service => service.key === 'bath-hygiene'));
+        assert.ok(category.services.some(service => service.key === 'puppy-intro'));
+        for (const breed of category.breeds) {
+          assert.ok(catalog.getServices(category.id, breed.id).some(service => service.key === 'full-care'));
+          assert.ok(catalog.getServices(category.id, breed.id).some(service => service.key === 'bath-hygiene'));
+          const keys = category.source.breedKeys;
+          assert.equal(new Set(keys).size, keys.length);
+        }
+      }
+    }
+    assert.equal(catalog.categories.filter(category => category.source.animalType === 'dog').length, 9);
+    for (const oldId of DOG_CATEGORY_IDS) assert.equal(catalog.getCategory(oldId), null);
+  }
+});
+
+test('all locales use identical coat memberships and preserve specialist services', () => {
+  const window = runSources([...BASE_SOURCES, ...FCI_SOURCES, 'assets/js/price-page-coat-groups.js', 'assets/js/price-booking.js']);
+  const membership = lang => new Map(window.PricePageCatalog.categoriesByLocale[lang].filter(category => category.animalType === 'dog')
+    .flatMap(category => category.breedKeys.map(key => [key, category.id])));
+  const expected = membership('ru');
+  assert.equal(expected.size, 435);
+  for (const lang of LOCALES) assert.deepEqual([...membership(lang)].sort(), [...expected].sort());
+  assert.equal(expected.get('ru-poodles-bichons:base:0'), 'ru-long-coat-small');
+  assert.equal(expected.get('ru-poodles-bichons:base:4'), 'ru-double-coat-small');
+  assert.equal(expected.get('ru-spitz:base:0'), 'ru-double-coat-small');
+  assert.equal(expected.get('ru-large-dogs:base:0'), 'ru-double-coat-large');
+  assert.equal(expected.get('fci:94:small-wire'), 'ru-long-coat-small');
+  assert.equal(expected.get('fci:94:small-smooth'), 'ru-short-coat-small');
+  const catalog = window.PriceBookingCatalog.build('ru');
+  const westie = catalog.breeds.find(breed => breed.label === 'Вест-хайленд-уайт-терьер');
+  const bichon = catalog.breeds.find(breed => breed.label === 'Бишон-фризе');
+  assert.equal(westie.categoryId, bichon.categoryId);
+  assert.ok(catalog.getServices(catalog.getCategory('ru-additional-services').id).some(service => service.key === 'trimming'));
+  assert.ok(catalog.getServices(westie.categoryId, westie.id).every(service => service.key !== 'trimming'));
 });

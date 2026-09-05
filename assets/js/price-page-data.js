@@ -90,6 +90,10 @@
       priceOnRequestLabel: 'Preis auf Anfrage',
       calculationNote:
         'Der genaue Preis wird nach Einschätzung des Fellzustands und des tatsächlichen Arbeitsaufwands bestätigt.',
+      breedWeightLabel: 'Erwachsenengewicht',
+      breedCoatLabel: 'Felltyp',
+      breedSizeLabel: 'Größe',
+      breedSurchargeLabel: 'Zuschlag für große oder besonders fellreiche Katzen',
       serviceConditions: {
         title: 'Bedingungen und Details der gewählten Leistung',
         lead: 'Hier finden Sie die Regeln für die Buchung, den Richtpreis und den Ablauf für die gewählte Rasse und Leistung.',
@@ -248,6 +252,10 @@
       totalFromLabel: 'Total from',
       priceOnRequestLabel: 'Price on request',
       calculationNote: 'The exact price is confirmed after assessing coat condition and the actual amount of work.',
+      breedWeightLabel: 'Adult weight',
+      breedCoatLabel: 'Coat type',
+      breedSizeLabel: 'Size',
+      breedSurchargeLabel: 'Large or high-volume cat breed surcharge',
       serviceConditions: {
         title: 'Terms and details of the selected service',
         lead: 'This panel shows the booking rules, estimated price and process for the selected breed and service.',
@@ -409,6 +417,10 @@
       totalFromLabel: 'Итого от',
       priceOnRequestLabel: 'Цена по запросу',
       calculationNote: 'Точная стоимость подтверждается после оценки состояния шерсти и фактического объёма работы.',
+      breedWeightLabel: 'Вес взрослой особи',
+      breedCoatLabel: 'Тип шерсти',
+      breedSizeLabel: 'Размер',
+      breedSurchargeLabel: 'Доплата за крупную или особо объёмную шерсть кошки',
       serviceConditions: {
         title: 'Условия и детали выбранной услуги',
         lead: 'Здесь собраны правила записи, ориентировочная цена и порядок работы именно для выбранной породы и услуги.',
@@ -569,6 +581,10 @@
       totalFromLabel: 'Разом від',
       priceOnRequestLabel: 'Вартість за запитом',
       calculationNote: 'Точна вартість підтверджується після оцінки стану шерсті та фактичного обсягу роботи.',
+      breedWeightLabel: 'Вага дорослої тварини',
+      breedCoatLabel: 'Тип шерсті',
+      breedSizeLabel: 'Розмір',
+      breedSurchargeLabel: 'Доплата за велику або особливо об’ємну шерсть кота',
       serviceConditions: {
         title: 'Умови та деталі обраної послуги',
         lead: 'Тут зібрано правила запису, орієнтовну вартість і порядок роботи саме для обраної породи та послуги.',
@@ -648,7 +664,7 @@
     silhouette: t('Silhouette formen', 'Silhouette shaping', 'Оформлення силуету', 'Оформлення силуету'),
     spa: t('SPA', 'SPA', 'СПА', 'СПА'),
     deshedding: t('Express-Fellwechsel', 'Express deshedding', 'Экспресс-линька', 'Експрес-линька'),
-    trim: t('Trimmen / Handtrimmen', 'Hand stripping', 'Тримминг / ручной тримминг', 'Тримінг / ручний тримінг'),
+    trim: t('Trimmen', 'Trimming', 'Тримминг', 'Тримінг'),
     nails: t('Krallen schneiden', 'Nail trim', 'Подстригание когтей', 'Підрізання кігтів'),
     ears: t('Ohren reinigen', 'Ear cleaning', 'Чистка ушей', 'Чистка вух'),
     earHair: t('Ohrenhaare entfernen', 'Removing ear hair', 'Удаление волос из ушей', 'Видалення волосся з вух'),
@@ -922,81 +938,6 @@
       ],
     },
     {
-      id: 'handstrip-breeds',
-      title: t('Trimmbare Rassen', 'Hand-stripped breeds', 'Тримингуемые породы', 'Тримінгуємі породи'),
-      summary: t(
-        'Rauhaarige Rassen, die handgetrimmt oder kombiniert gepflegt werden.',
-        'Wire-coated breeds that need hand stripping or combined trimming.',
-        'Жесткошерстные породы, которым нужен ручной или комбинированный тримминг.',
-        'Жорсткошерсті породи, яким потрібен ручний або комбінований тримінг.'
-      ),
-      breeds: {
-        de: [
-          'Zwergschnauzer',
-          'Mittelschnauzer',
-          'Riesenschnauzer',
-          'West Highland White Terrier',
-          'Jack Russell Terrier (rauhaar)',
-          'Foxterrier',
-          'Border Terrier',
-          'Norwich Terrier',
-          'Norfolk Terrier',
-        ],
-        en: [
-          'Miniature Schnauzer',
-          'Standard Schnauzer',
-          'Giant Schnauzer',
-          'West Highland White Terrier',
-          'Wire-haired Jack Russell Terrier',
-          'Fox Terrier',
-          'Border Terrier',
-          'Norwich Terrier',
-          'Norfolk Terrier',
-        ],
-        ru: [
-          'Цвергшнауцер',
-          'Миттельшнауцер',
-          'Ризеншнауцер',
-          'Вест-хайленд-уайт-терьер',
-          'Джек-рассел (жесткошёрстный)',
-          'Фокстерьер',
-          'Бордер-терьер',
-          'Норвич-терьер',
-          'Норфолк-терьер',
-        ],
-        uk: [
-          'Цвергшнауцер',
-          'Міттельшнауцер',
-          'Різеншнауцер',
-          'Вест-хайленд-уайт-тер’єр',
-          'Джек-рассел (жорсткошерстий)',
-          'Фокстер’єр',
-          'Бордер-тер’єр',
-          'Норвіч-тер’єр',
-          'Норфолк-тер’єр',
-        ],
-      },
-      services: ['trim', 'bath', 'dry', 'brushing', 'silhouetteFinish'],
-      priceRows: [
-        {
-          label: t('Mittelgroße Rassen', 'Medium-sized breeds', 'Породы среднего размера', 'Породи середнього розміру'),
-          price: t('от 95 €', 'from 95 €', 'от 95 €', 'від 95 €'),
-        },
-        {
-          label: t('Große Rassen', 'Large breeds', 'Крупные породы', 'Великі породи'),
-          price: t('от 110 €', 'from 110 €', 'от 110 €', 'від 110 €'),
-        },
-      ],
-      notes: [
-        t(
-          'Итоговая стоимость зависит от структуры шерсти, ее зрелости и объема ручной работы.',
-          'Final price depends on coat structure, coat maturity and the amount of hand work.',
-          'Підсумкова вартість залежить від структури шерсті, зрілості шерсті й обсягу ручної роботи.',
-          'Підсумкова вартість залежить від структури шерсті, зрілості шерсті й обсягу ручної роботи.'
-        ),
-      ],
-    },
-    {
       id: 'spaniels',
       title: t('Spaniel-Rassen', 'Spaniels', 'Спаниели', 'Спанієлі'),
       summary: t(
@@ -1201,7 +1142,7 @@
         ru: ['Дополнительные услуги по необходимости'],
         uk: ['Додаткові послуги за потреби'],
       },
-      services: ['nails', 'ears', 'earHair', 'paws', 'dematting', 'spa', 'ozone', 'mask', 'teeth'],
+      services: ['nails', 'ears', 'earHair', 'paws', 'dematting', 'trim', 'spa', 'ozone', 'mask', 'teeth'],
       priceRows: [
         {
           label: t('Krallen schneiden', 'Nail trim', 'Подстригание когтей', 'Підрізання кігтів'),
@@ -1222,6 +1163,11 @@
         {
           label: t('Entfilzen', 'Dematting', 'Распутывание колтунов', 'Розплутування ковтунів'),
           price: t('1 € / мин', '1 € / min', '1 € / мин', '1 € / хв'),
+        },
+        {
+          key: 'trimming',
+          label: t('Trimmen', 'Trimming', 'Тримминг', 'Тримінг'),
+          price: t('по запросу', 'on request', 'по запросу', 'за запитом'),
         },
         { label: t('SPA', 'SPA', 'СПА', 'СПА'), price: t('от 15 €', 'from 15 €', 'от 15 €', 'від 15 €') },
         {
