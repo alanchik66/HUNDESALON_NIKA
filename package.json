@@ -195,9 +195,10 @@
   "overrides": {
     "esbuild": "^0.28.1",
     "fast-uri": "3.1.6",
+    "js-yaml": "4.3.2",
     "undici": "7.29.0",
     "ws": "^8.20.1",
-    "sharp": "^0.35.3"
+    "sharp": "0.35.4"
   },
   "engines": {
     "node": ">=24.16.0 <27",
@@ -218,6 +219,6 @@
     "esbuild@0.28.1": true,
     "workerd@1.20260617.1": true,
     "workerd@1.20260801.1": true,
-    "sharp@0.34.5": true
+    "sharp@0.35.4": true
   }
 }

@@ -3,7 +3,7 @@
  * Env: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
  * Binding: PAYMENT_EVENTS (KV; required when online payments are enabled)
  */
-import { jsonResponse } from './_lib/http-security.js';
+import { jsonResponse, timingSafeEqualStrings } from './_lib/http-security.js';
 import {
   appendGoogleSheetRow,
   cleanText,
@@ -36,13 +36,6 @@ async function hmacSha256Hex(secret, payload) {
   return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function timingSafeEqual(a, b) {
-  if (a.length !== b.length) return false;
-  let out = 0;
-  for (let i = 0; i < a.length; i += 1) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return out === 0;
-}
-
 async function verifyStripeSignature(rawBody, header, secret) {
   if (!header || !secret) return false;
   let timestamp = '';
@@ -58,7 +51,8 @@ async function verifyStripeSignature(rawBody, header, secret) {
   if (!Number.isFinite(age) || age > 300) return false;
   const signed = `${timestamp}.${rawBody}`;
   const expected = await hmacSha256Hex(secret, signed);
-  return signatures.some(sig => timingSafeEqual(sig, expected));
+  const matches = await Promise.all(signatures.map(signature => timingSafeEqualStrings(signature, expected)));
+  return matches.some(Boolean);
 }
 
 async function reservePaymentEvent(env, eventId) {

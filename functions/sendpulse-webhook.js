@@ -6,19 +6,10 @@
  * SendPulse URL: /sendpulse-webhook?token=<same-secret>
  */
 
-import { enforceRateLimit, jsonResponse } from './_lib/http-security.js';
+import { enforceRateLimit, jsonResponse, timingSafeEqualStrings } from './_lib/http-security.js';
 import { getEnvValue } from './_lib/platform-integrations.js';
 
 const MAX_BODY_BYTES = 512 * 1024;
-
-function timingSafeEqual(left, right) {
-  if (!left || !right || left.length !== right.length) return false;
-  let result = 0;
-  for (let index = 0; index < left.length; index += 1) {
-    result |= left.charCodeAt(index) ^ right.charCodeAt(index);
-  }
-  return result === 0;
-}
 
 function getWebhookToken(request) {
   const headerToken = String(request.headers.get('X-SendPulse-Webhook-Secret') || '').trim();
@@ -50,7 +41,7 @@ export async function onRequest(context) {
     return jsonResponse({ error: 'Webhook is not configured' }, 503);
   }
 
-  if (!timingSafeEqual(getWebhookToken(request), secret)) {
+  if (!(await timingSafeEqualStrings(getWebhookToken(request), secret))) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
 

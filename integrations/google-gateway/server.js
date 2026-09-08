@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import Busboy from 'busboy';
 
 const PORT = Number(process.env.PORT || 8080);
@@ -11,6 +12,7 @@ const SCOPES = [
 ];
 const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT || 'hundesalon-nika-shell-2026';
 const STORAGE_BUCKET = process.env.STORAGE_BUCKET || 'hundesalon-nika-shell-uploads';
+const MAX_JSON_BODY_BYTES = 64 * 1024;
 
 const tokenCache = new Map();
 
@@ -23,12 +25,29 @@ function getSecret() {
   return String(process.env.GATEWAY_SHARED_SECRET || '').trim();
 }
 
+function secretsMatch(left, right) {
+  const leftDigest = createHash('sha256')
+    .update(String(left ?? ''), 'utf8')
+    .digest();
+  const rightDigest = createHash('sha256')
+    .update(String(right ?? ''), 'utf8')
+    .digest();
+  return timingSafeEqual(leftDigest, rightDigest);
+}
+
+function publicHttpError(statusCode, publicMessage) {
+  const error = new Error(publicMessage);
+  error.statusCode = statusCode;
+  error.publicMessage = publicMessage;
+  return error;
+}
+
 function requireSecret(req, res) {
   const configured = getSecret();
   const provided =
     req.headers['x-hundesalon-gateway-secret'] || String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
 
-  if (!configured || provided !== configured) {
+  if (!configured || !secretsMatch(provided, configured)) {
     respond(res, 403, { success: false, message: 'Forbidden' });
     return false;
   }
@@ -37,9 +56,20 @@ function requireSecret(req, res) {
 
 async function readJson(req) {
   const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
+  let totalBytes = 0;
+  for await (const chunk of req) {
+    totalBytes += chunk.length;
+    if (totalBytes > MAX_JSON_BODY_BYTES) {
+      throw publicHttpError(413, 'Payload too large');
+    }
+    chunks.push(chunk);
+  }
   if (!chunks.length) return {};
-  return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  } catch {
+    throw publicHttpError(400, 'Invalid JSON');
+  }
 }
 
 async function readMultipart(req) {
@@ -109,7 +139,9 @@ async function googleJson(url, { method = 'GET', body = null, scopes = SCOPES } 
     data = { raw: text };
   }
   if (!response.ok) {
-    throw new Error(`${method} ${url} failed: ${response.status} ${JSON.stringify(data).slice(0, 600)}`);
+    const error = new Error(`Google API request failed with status ${response.status}`);
+    error.statusCode = 502;
+    throw error;
   }
   return data;
 }
@@ -173,7 +205,9 @@ async function uploadStorageObject(file, metadata = {}) {
   );
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(`Cloud Storage upload failed: ${response.status} ${JSON.stringify(data).slice(0, 600)}`);
+    const error = new Error(`Cloud Storage upload failed with status ${response.status}`);
+    error.statusCode = 502;
+    throw error;
   }
   return {
     success: true,
@@ -311,7 +345,11 @@ async function uploadDriveFile(req) {
     }
   );
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(`Drive upload failed: ${response.status} ${JSON.stringify(data).slice(0, 600)}`);
+  if (!response.ok) {
+    const error = new Error(`Drive upload failed with status ${response.status}`);
+    error.statusCode = 502;
+    throw error;
+  }
   return data;
 }
 
@@ -349,14 +387,15 @@ async function handle(req, res) {
 
     respond(res, 404, { success: false, message: 'Not found' });
   } catch (error) {
-    console.error(error);
-    respond(res, 502, { success: false, message: error.message || 'Gateway failed' });
+    const status = Number(error?.statusCode || 502);
+    console.error(JSON.stringify({ event: 'gateway_request_failed', status, error: error?.name || 'Error' }));
+    respond(res, status, { success: false, message: error?.publicMessage || 'Gateway request failed' });
   }
 }
 
 createServer((req, res) => {
   handle(req, res).catch(error => {
-    console.error(error);
+    console.error(JSON.stringify({ event: 'gateway_unhandled_error', error: error?.name || 'Error' }));
     respond(res, 500, { success: false, message: 'Internal error' });
   });
 }).listen(PORT, () => {

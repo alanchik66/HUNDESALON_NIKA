@@ -25,11 +25,11 @@ test('allows only the existing Gemini model and fixed Google provider policy', (
   });
 });
 
-test('requires the server-side AI service secret', () => {
+test('requires the server-side AI service secret', async () => {
   const context = { env: { AI_SERVICE_WEBHOOK_SECRET: 'secret-value' } };
-  assert.equal(hasAiServiceAuth(request(''), context), false);
-  assert.equal(hasAiServiceAuth(request('Bearer wrong'), context), false);
-  assert.equal(hasAiServiceAuth(request('Bearer secret-value'), context), true);
+  assert.equal(await hasAiServiceAuth(request(''), context), false);
+  assert.equal(await hasAiServiceAuth(request('Bearer wrong'), context), false);
+  assert.equal(await hasAiServiceAuth(request('Bearer secret-value'), context), true);
 });
 
 test('bounds output tokens conservatively', () => {

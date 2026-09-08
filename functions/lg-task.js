@@ -3,8 +3,17 @@
  * Lightweight webhook bridge for dashboard-driven service tasks.
  */
 
-import { assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http-security.js';
+import {
+  assertAllowedOrigin,
+  enforceRateLimit,
+  isRequestBodyTooLarge,
+  jsonResponse,
+  readJsonBody,
+  timingSafeEqualStrings,
+} from './_lib/http-security.js';
 import { hasAiServiceAuth } from './_lib/ai-policy.js';
+
+const MAX_REQUEST_BODY_BYTES = 64 * 1024;
 
 function getRuntimeEnvs(context) {
   const candidates = [
@@ -41,10 +50,10 @@ function getBearerToken(request) {
   return match?.[1]?.trim() || '';
 }
 
-function isAuthorizedBySharedSecret(request, context) {
+async function isAuthorizedBySharedSecret(request, context) {
   const secret = getEnvVarFromContext(context, 'LG_TASK_WEBHOOK_SECRET');
   if (!secret) return false;
-  return getBearerToken(request) === secret;
+  return timingSafeEqualStrings(getBearerToken(request), secret);
 }
 
 function getInternalOrigin(request) {
@@ -82,8 +91,11 @@ export async function onRequest(context) {
 
   let payload;
   try {
-    payload = await request.json();
-  } catch {
+    payload = await readJsonBody(request, MAX_REQUEST_BODY_BYTES);
+  } catch (error) {
+    if (isRequestBodyTooLarge(error)) {
+      return jsonResponse({ error: 'Payload too large' }, 413, responseOrigin);
+    }
     return jsonResponse({ error: 'Invalid JSON body' }, 400, responseOrigin);
   }
 
@@ -95,7 +107,9 @@ export async function onRequest(context) {
   }
 
   const isAiTask = task === 'message.draft' || task === 'seo.generate';
-  const secretOk = isAiTask ? hasAiServiceAuth(request, context) : isAuthorizedBySharedSecret(request, context);
+  const secretOk = isAiTask
+    ? await hasAiServiceAuth(request, context)
+    : await isAuthorizedBySharedSecret(request, context);
   if (!originCheck.ok && !secretOk) return jsonResponse({ error: 'Forbidden' }, 403);
   if (isAiTask && !secretOk) return jsonResponse({ error: 'AI service authorization required' }, 401);
   const rateLimited = await enforceRateLimit(request, {

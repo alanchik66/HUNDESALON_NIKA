@@ -10,7 +10,14 @@
  *      SENDPULSE_API_KEY либо SENDPULSE_CLIENT_ID и SENDPULSE_CLIENT_SECRET.
  */
 
-import { assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http-security.js';
+import {
+  assertAllowedOrigin,
+  enforceRateLimit,
+  isRequestBodyTooLarge,
+  jsonResponse,
+  readFormDataBody,
+  readJsonBody,
+} from './_lib/http-security.js';
 import {
   appendGoogleSheetRow,
   createGoogleCalendarEvent,
@@ -28,6 +35,7 @@ import { buildBrandedEmail } from './_lib/email-template.js';
 const DEFAULT_RECIPIENT = 'info@hundesalon-nika.com';
 const DEFAULT_BOOKING_RECIPIENT = 'info@hundesalon-nika.com';
 const DEFAULT_SUPPORT = 'info@hundesalon-nika.com';
+const MAX_REQUEST_BODY_BYTES = 64 * 1024;
 const DEFAULT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const DEFAULT_CLIENT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const DEFAULT_ADMIN_EMAILS = [];
@@ -60,7 +68,16 @@ const BOOKING_BEHAVIOUR_EXTRA_MINUTES = Object.freeze({
   aggressive: 60,
 });
 
-const REVIEW_CHANNELS = new Set(['website', 'google', 'facebook', 'instagram', 'telegram', 'whatsapp', 'viber', 'bing']);
+const REVIEW_CHANNELS = new Set([
+  'website',
+  'google',
+  'facebook',
+  'instagram',
+  'telegram',
+  'whatsapp',
+  'viber',
+  'bing',
+]);
 
 const clampBookingMinutes = (value, fallback, min, max) => {
   const parsed = Number.parseInt(String(value || ''), 10);
@@ -689,12 +706,15 @@ export async function onRequest(ctx) {
   try {
     const ct = request.headers.get('Content-Type') ?? '';
     if (ct.includes('application/json')) {
-      fields = await request.json();
+      fields = await readJsonBody(request, MAX_REQUEST_BODY_BYTES);
     } else {
-      const fd = await request.formData();
+      const fd = await readFormDataBody(request, MAX_REQUEST_BODY_BYTES);
       fields = Object.fromEntries(fd.entries());
     }
-  } catch {
+  } catch (error) {
+    if (isRequestBodyTooLarge(error)) {
+      return jsonResponse({ success: false, message: 'Payload too large' }, 413, origin);
+    }
     return jsonResponse({ success: false, message: 'Invalid request body' }, 400, origin);
   }
   if (!fields || typeof fields !== 'object' || Array.isArray(fields)) {
@@ -1277,7 +1297,9 @@ export async function onRequest(ctx) {
       html: buildBrandedEmail({ title: subject, bodyText: textBody, lang }),
     });
   } catch (err) {
-    console.error('[sendmail] Network error:', err);
+    console.error(
+      JSON.stringify({ event: 'sendmail_network_error', error: String(err?.name || 'Error').slice(0, 80) })
+    );
     await sendSlackNotification(
       env,
       buildSlackPayload({
@@ -1345,8 +1367,7 @@ export async function onRequest(ctx) {
     );
   }
 
-  const errBody = JSON.stringify(sendPulseRes.body || {});
-  console.error('[sendmail] SendPulse error', sendPulseRes.status, errBody);
+  console.error(JSON.stringify({ event: 'sendmail_provider_error', status: Number(sendPulseRes.status || 0) }));
   await sendSlackNotification(
     env,
     buildSlackPayload({
@@ -1359,7 +1380,7 @@ export async function onRequest(ctx) {
       service: canonicalService,
       date,
       time,
-      message: `SendPulse error ${sendPulseRes.status}: ${errBody.slice(0, 600) || 'no details'}`,
+      message: `SendPulse delivery failed with status ${sendPulseRes.status}.`,
       origin,
       pagePath: requestUrl.pathname,
     })

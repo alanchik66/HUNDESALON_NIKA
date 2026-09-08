@@ -6,6 +6,8 @@ const LOCAL_DEV_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 /** Browser origins for the public site (apex + www). */
 const TRUSTED_SITE_ORIGINS = new Set(['https://hundesalon-nika.com', 'https://www.hundesalon-nika.com']);
+const TEXT_ENCODER = new TextEncoder();
+const REQUEST_BODY_TOO_LARGE_CODE = 'REQUEST_BODY_TOO_LARGE';
 
 function parseUrl(value) {
   try {
@@ -115,6 +117,92 @@ export function assertAllowedOrigin(request) {
   return { ok: true, origin, host };
 }
 
+/**
+ * Compare arbitrary secret strings without leaking their original length.
+ * Values are hashed to fixed-size digests before Cloudflare's timing-safe
+ * comparison. The fixed-size fallback keeps local Node.js tests portable.
+ */
+export async function timingSafeEqualStrings(left, right) {
+  const [leftDigest, rightDigest] = await Promise.all([
+    crypto.subtle.digest('SHA-256', TEXT_ENCODER.encode(String(left ?? ''))),
+    crypto.subtle.digest('SHA-256', TEXT_ENCODER.encode(String(right ?? ''))),
+  ]);
+
+  if (typeof crypto.subtle.timingSafeEqual === 'function') {
+    return crypto.subtle.timingSafeEqual(leftDigest, rightDigest);
+  }
+
+  const leftBytes = new Uint8Array(leftDigest);
+  const rightBytes = new Uint8Array(rightDigest);
+  let difference = 0;
+  for (let index = 0; index < leftBytes.length; index += 1) {
+    difference |= leftBytes[index] ^ rightBytes[index];
+  }
+  return difference === 0;
+}
+
+function bodyTooLargeError() {
+  const error = new Error(REQUEST_BODY_TOO_LARGE_CODE);
+  error.code = REQUEST_BODY_TOO_LARGE_CODE;
+  return error;
+}
+
+export function isRequestBodyTooLarge(error) {
+  return error?.code === REQUEST_BODY_TOO_LARGE_CODE;
+}
+
+async function readBoundedBodyBytes(request, maxBytes) {
+  if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0) {
+    throw new TypeError('maxBytes must be a positive safe integer');
+  }
+
+  const declaredLength = Number(request.headers.get('Content-Length') || 0);
+  if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
+    throw bodyTooLargeError();
+  }
+
+  if (!request.body) return new Uint8Array();
+
+  const reader = request.body.getReader();
+  const chunks = [];
+  let totalBytes = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = value instanceof Uint8Array ? value : new Uint8Array(value);
+    totalBytes += chunk.byteLength;
+    if (totalBytes > maxBytes) {
+      await reader.cancel().catch(() => {});
+      throw bodyTooLargeError();
+    }
+    chunks.push(chunk);
+  }
+
+  const body = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
+}
+
+export async function readJsonBody(request, maxBytes) {
+  const body = await readBoundedBodyBytes(request, maxBytes);
+  if (!body.byteLength) return {};
+  return JSON.parse(new TextDecoder().decode(body));
+}
+
+export async function readFormDataBody(request, maxBytes) {
+  const body = await readBoundedBodyBytes(request, maxBytes);
+  const replay = new Request(request.url, {
+    method: 'POST',
+    headers: request.headers,
+    body,
+  });
+  return replay.formData();
+}
+
 function getClientIp(request) {
   return (
     request.headers.get('CF-Connecting-IP') ||
@@ -124,7 +212,9 @@ function getClientIp(request) {
 }
 
 /**
- * Edge rate limit via Cache API (per IP + route + time bucket).
+ * Best-effort edge rate limit via the data-center-local Cache API.
+ * Costly public endpoints must also have an authoritative Cloudflare WAF rate
+ * limiting rule; this helper remains a defense-in-depth application guard.
  * @returns {Promise<Response|null>} 429 response or null when allowed
  */
 export async function enforceRateLimit(request, { route, limit, windowSec = 60 }) {
@@ -185,11 +275,14 @@ export function applyApiResponseHeaders(response, origin) {
   const headers = new Headers(response.headers);
   headers.set('X-Content-Type-Options', 'nosniff');
   headers.set('Cache-Control', 'no-store');
-  return applyCorsResponseHeaders(new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  }), origin);
+  return applyCorsResponseHeaders(
+    new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    }),
+    origin
+  );
 }
 
 function sanitizeApiPayload(value) {

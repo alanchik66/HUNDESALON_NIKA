@@ -13,7 +13,14 @@
  *   SERVICE_GATEWAY_SEO_MAX_TOKENS
  */
 
-import { sanitizeOrigin, assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http-security.js';
+import {
+  sanitizeOrigin,
+  assertAllowedOrigin,
+  enforceRateLimit,
+  isRequestBodyTooLarge,
+  jsonResponse,
+  readJsonBody,
+} from './_lib/http-security.js';
 import { fetchAiResponse } from './_lib/ai-upstream.js';
 import {
   AI_PROVIDER_POLICY,
@@ -28,6 +35,7 @@ const LEGACY_SERVICE_PREFIX = ['OPEN', 'ROUTER'].join('');
 const DEFAULT_SERVICE_GATEWAY_URL = ['https://', 'open', 'router.ai', '/api/v1/chat/completions'].join('');
 const LOCALES = ['de', 'en', 'ru', 'uk'];
 const SEO_LOCALE_FIELDS = ['title', 'description', 'h1', 'shortBlock'];
+const MAX_REQUEST_BODY_BYTES = 16 * 1024;
 
 function legacyEnvName(suffix) {
   return `${LEGACY_SERVICE_PREFIX}_${suffix}`;
@@ -255,7 +263,7 @@ export async function onRequest(context) {
   }
   const { origin } = originCheck;
 
-  if (!hasAiServiceAuth(request, context)) {
+  if (!(await hasAiServiceAuth(request, context))) {
     return jsonResponse({ error: 'AI service authorization required' }, 401, origin);
   }
 
@@ -276,9 +284,12 @@ export async function onRequest(context) {
 
   let input;
   try {
-    input = await request.json();
-  } catch {
-    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+    input = await readJsonBody(request, MAX_REQUEST_BODY_BYTES);
+  } catch (error) {
+    if (isRequestBodyTooLarge(error)) {
+      return jsonResponse({ error: 'Payload too large' }, 413, origin);
+    }
+    return jsonResponse({ error: 'Invalid JSON body' }, 400, origin);
   }
 
   if (!input || typeof input !== 'object') {

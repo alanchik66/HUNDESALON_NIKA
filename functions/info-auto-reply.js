@@ -1,8 +1,10 @@
 import { getEnvValue, sendSendPulseEmail } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
+import { timingSafeEqualStrings } from './_lib/http-security.js';
 
 const AUTOREPLY_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const REPLY_TO_EMAIL = 'info@hundesalon-nika.com';
+const MAX_BODY_BYTES = 8 * 1024;
 const COPY = {
   de: {
     subject: 'Automatische Information | HUNDESALON_NIKA',
@@ -37,17 +39,32 @@ export async function onRequestPost({ request, env }) {
   const configuredSecret = getEnvValue(env, 'INFO_AUTOREPLY_SECRET');
   const authorization = request.headers.get('Authorization') || '';
   if (!configuredSecret) return json({ ok: false, error: 'Relay is not configured' }, 503);
-  if (authorization !== `Bearer ${configuredSecret}`) return json({ ok: false, error: 'Unauthorized' }, 401);
+  if (!(await timingSafeEqualStrings(authorization, `Bearer ${configuredSecret}`))) {
+    return json({ ok: false, error: 'Unauthorized' }, 401);
+  }
+
+  const contentLength = Number(request.headers.get('Content-Length') || 0);
+  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+    return json({ ok: false, error: 'Payload too large' }, 413);
+  }
 
   let payload;
   try {
-    payload = await request.json();
+    const rawBody = await request.text();
+    if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_BYTES) {
+      return json({ ok: false, error: 'Payload too large' }, 413);
+    }
+    payload = JSON.parse(rawBody);
   } catch {
     return json({ ok: false, error: 'Invalid JSON' }, 400);
   }
 
-  const to = String(payload?.to || '').trim().toLowerCase();
-  const lang = String(payload?.lang || 'en').trim().toLowerCase();
+  const to = String(payload?.to || '')
+    .trim()
+    .toLowerCase();
+  const lang = String(payload?.lang || 'en')
+    .trim()
+    .toLowerCase();
   const copy = COPY[lang] || COPY.en;
   if (!isValidEmail(to) || to === 'info@hundesalon-nika.com') {
     return json({ ok: false, error: 'Invalid recipient' }, 400);
@@ -62,7 +79,7 @@ export async function onRequestPost({ request, env }) {
     html: buildBrandedEmail({ title: copy.subject, bodyText: copy.body, lang }),
   });
   if (!result.ok) {
-    console.error('[info-auto-reply] SendPulse error', result.status, JSON.stringify(result.body || {}));
+    console.error(JSON.stringify({ event: 'info_auto_reply_sendpulse_error', status: Number(result.status || 0) }));
     return json({ ok: false, error: 'Email delivery failed' }, 502);
   }
 

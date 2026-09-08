@@ -8,7 +8,9 @@ import {
   assertAllowedOrigin,
   enforceRateLimit,
   isLocalDevOrigin,
+  isRequestBodyTooLarge,
   jsonResponse,
+  readJsonBody,
 } from './http-security.js';
 import {
   AI_PROVIDER_POLICY,
@@ -27,6 +29,7 @@ import { fetchAiResponse } from './ai-upstream.js';
 const LEGACY_SERVICE_PREFIX = ['OPEN', 'ROUTER'].join('');
 const DEFAULT_SERVICE_GATEWAY_URL = ['https://', 'open', 'router.ai', '/api/v1/chat/completions'].join('');
 const DEFAULT_SITE_NAME = 'HUNDESALON NIKA';
+const MAX_REQUEST_BODY_BYTES = 64 * 1024;
 
 function legacyEnvName(suffix) {
   return `${LEGACY_SERVICE_PREFIX}_${suffix}`;
@@ -322,8 +325,11 @@ export async function handleMessageDraft(context) {
 
   let payload;
   try {
-    payload = await request.json();
-  } catch {
+    payload = await readJsonBody(request, MAX_REQUEST_BODY_BYTES);
+  } catch (error) {
+    if (isRequestBodyTooLarge(error)) {
+      return jsonResponse({ error: 'Payload too large' }, 413, origin);
+    }
     return jsonResponse({ error: 'Invalid JSON body' }, 400, origin);
   }
 
@@ -332,7 +338,7 @@ export async function handleMessageDraft(context) {
     return jsonResponse(buildLocalDraftResponse(publicDraftPayload, 'PUBLIC_FIXED_TEMPLATE'), 200, origin);
   }
 
-  if (!hasAiServiceAuth(request, context)) {
+  if (!(await hasAiServiceAuth(request, context))) {
     return jsonResponse({ error: 'AI service authorization required' }, 401, origin);
   }
 

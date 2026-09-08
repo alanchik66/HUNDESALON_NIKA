@@ -6,9 +6,11 @@ import {
   safeJsonFetch,
   sendTelegramMessage,
 } from './_lib/platform-integrations.js';
+import { isRequestBodyTooLarge, readJsonBody, timingSafeEqualStrings } from './_lib/http-security.js';
 
 const SITE_ORIGIN = 'https://hundesalon-nika.com';
 const TELEGRAM_API_URL = 'https://api.telegram.org';
+const MAX_REQUEST_BODY_BYTES = 1024 * 1024;
 const MENU_COPY = Object.freeze({
   de: {
     showcase: '✨ NIKA Premium-Menü',
@@ -288,18 +290,6 @@ function extractClientId(message) {
   return match?.[1] || '';
 }
 
-function secretsMatch(expected, received) {
-  const encoder = new TextEncoder();
-  const expectedBytes = encoder.encode(expected);
-  const receivedBytes = encoder.encode(received);
-  const maxLength = Math.max(expectedBytes.length, receivedBytes.length);
-  let difference = expectedBytes.length ^ receivedBytes.length;
-  for (let index = 0; index < maxLength; index += 1) {
-    difference |= (expectedBytes[index] || 0) ^ (receivedBytes[index] || 0);
-  }
-  return difference === 0;
-}
-
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -314,11 +304,16 @@ export async function onRequest({ request, env }) {
 
   const expectedSecret = getEnvValue(env, 'TELEGRAM_WEBHOOK_SECRET');
   const receivedSecret = String(request.headers.get('X-Telegram-Bot-Api-Secret-Token') || '').trim();
-  if (!hasUsableValue(expectedSecret) || !secretsMatch(expectedSecret, receivedSecret)) {
+  if (!hasUsableValue(expectedSecret) || !(await timingSafeEqualStrings(expectedSecret, receivedSecret))) {
     return json({ ok: false }, 401);
   }
 
-  const update = await request.json().catch(() => null);
+  let update;
+  try {
+    update = await readJsonBody(request, MAX_REQUEST_BODY_BYTES);
+  } catch (error) {
+    return json({ ok: false }, isRequestBodyTooLarge(error) ? 413 : 400);
+  }
   const callbackQuery = update?.callback_query;
   const message = callbackQuery?.message || update?.message;
   const sender = callbackQuery?.from || message?.from || {};

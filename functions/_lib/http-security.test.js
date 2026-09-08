@@ -6,7 +6,11 @@ import {
   getPublicReadCorsOrigin,
   isAllowedOrigin,
   isLocalDevOrigin,
+  isRequestBodyTooLarge,
   jsonResponse,
+  readFormDataBody,
+  readJsonBody,
+  timingSafeEqualStrings,
 } from './http-security.js';
 
 test('allows exact same-origin requests', () => {
@@ -74,4 +78,33 @@ test('adds local CORS without replacing cache policy or existing Vary values', (
 test('preserves customer-facing text that is not a stack trace', async () => {
   const response = jsonResponse({ message: 'Please pay at the salon (cash or card).' });
   assert.deepEqual(await response.json(), { message: 'Please pay at the salon (cash or card).' });
+});
+
+test('compares secrets after normalizing them to fixed-size digests', async () => {
+  assert.equal(await timingSafeEqualStrings('same-secret', 'same-secret'), true);
+  assert.equal(await timingSafeEqualStrings('same-secret', 'different-secret'), false);
+  assert.equal(await timingSafeEqualStrings('short', 'a-much-longer-secret'), false);
+});
+
+test('parses JSON only within the configured byte limit', async () => {
+  const request = new Request('https://hundesalon-nika.com/test', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ok: true }),
+  });
+  assert.deepEqual(await readJsonBody(request, 32), { ok: true });
+
+  const oversized = new Request('https://hundesalon-nika.com/test', {
+    method: 'POST',
+    body: '123456789',
+  });
+  await assert.rejects(() => readJsonBody(oversized, 8), isRequestBodyTooLarge);
+});
+
+test('parses form data only within the configured byte limit', async () => {
+  const form = new FormData();
+  form.set('email', 'test@example.com');
+  const request = new Request('https://hundesalon-nika.com/test', { method: 'POST', body: form });
+  const parsed = await readFormDataBody(request, 1024);
+  assert.equal(parsed.get('email'), 'test@example.com');
 });
