@@ -4,17 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "88f3ebdb34cefacd",
+        "id": "51fe110fc4235de7",
         "type": "tabs",
         "children": [
           {
-            "id": "11e6833b3a4cd429",
+            "id": "5cf63bf9a3cb0358",
             "type": "leaf",
             "state": {
-              "type": "graph",
+              "type": "empty",
               "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Граф"
+              "icon": "lucide-file",
+              "title": "Новая вкладка"
             }
           }
         ]
@@ -101,7 +101,7 @@
                 "showSearch": false,
                 "searchQuery": "",
                 "backlinkCollapsed": false,
-                "unlinkedCollapsed": true
+                "unlinkedCollapsed": false
               },
               "icon": "links-coming-in",
               "title": "Обратные ссылки"
@@ -183,13 +183,11 @@
               "title": "Source Control"
             }
           }
-        ],
-        "currentTab": 4
+        ]
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 591.8999633789062
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -206,8 +204,11 @@
       "obsidian-excalidraw-plugin:Создать новый чертеж": false
     }
   },
-  "active": "11e6833b3a4cd429",
+  "active": "958f840926f06134",
   "lastOpenFiles": [
+    "Без названия.canvas",
+    "07_Release.md",
+    "03_Resources/Animal_Grooming_Reference.md",
     "01_Projects/HUNDESALON_NIKA/Tasks/2026-08-27 - Live Templater routing example.md",
     "01_Projects/HUNDESALON_NIKA/Tasks/2026-08-27 - Live Templater routing example.md",
     "01_Projects/HUNDESALON_NIKA/Tasks/2026-08-27 - Live Templater routing example.md",
@@ -215,7 +216,6 @@
     "01_Projects/HUNDESALON_NIKA/Tasks/README.md",
     "02_Areas/Codex_Control_Center.md",
     "01_Projects/HUNDESALON_NIKA_Makler.md",
-    "07_Release.md",
     "05_Code_Map.md",
     "01_Projects/HUNDESALON_NIKA.md",
     "Dashboard.md",
