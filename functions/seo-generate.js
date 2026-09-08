@@ -14,6 +14,7 @@
  */
 
 import { sanitizeOrigin, assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http-security.js';
+import { fetchAiResponse } from './_lib/ai-upstream.js';
 import {
   AI_PROVIDER_POLICY,
   APPROVED_AI_MODEL,
@@ -341,7 +342,7 @@ export async function onRequest(context) {
   };
 
   const callServiceGateway = body => {
-    return fetch(serviceGatewayUrl, {
+    return fetchAiResponse(serviceGatewayUrl, {
       method: 'POST',
       headers: upstreamHeaders,
       body: JSON.stringify(body),
@@ -357,23 +358,24 @@ export async function onRequest(context) {
     const modelCandidate = modelCandidates[index];
     const hasNextCandidate = index < modelCandidates.length - 1;
     let upstream;
+    let upstreamText;
     try {
-      upstream = await callServiceGateway({ ...basePayload, model: modelCandidate });
-    } catch (error) {
+      ({ response: upstream, text: upstreamText } = await callServiceGateway({
+        ...basePayload,
+        model: modelCandidate,
+      }));
+    } catch {
       lastFailure = {
         error: 'Failed to reach content service',
-        details: String(error?.message || error),
         modelUsed: modelCandidate,
       };
       continue;
     }
 
-    const upstreamText = await upstream.text();
     if (!upstream.ok) {
       lastFailure = {
         error: 'Content service request failed',
         status: upstream.status,
-        details: upstreamText,
         modelUsed: modelCandidate,
       };
 
@@ -381,7 +383,7 @@ export async function onRequest(context) {
         continue;
       }
 
-      return jsonResponse(lastFailure, upstream.status);
+      return jsonResponse(lastFailure, 502, origin);
     }
 
     const parsedUpstream = parseJsonMaybe(upstreamText);
@@ -392,7 +394,6 @@ export async function onRequest(context) {
       lastFailure = {
         error: 'Model output is not valid for required SEO schema',
         modelUsed: modelCandidate,
-        raw: rawContent || null,
       };
       continue;
     }

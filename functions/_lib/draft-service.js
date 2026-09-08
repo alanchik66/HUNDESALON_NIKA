@@ -22,6 +22,7 @@ import {
   parseBoundedTokens,
   resolveApprovedModel,
 } from './ai-policy.js';
+import { fetchAiResponse } from './ai-upstream.js';
 
 const LEGACY_SERVICE_PREFIX = ['OPEN', 'ROUTER'].join('');
 const DEFAULT_SERVICE_GATEWAY_URL = ['https://', 'open', 'router.ai', '/api/v1/chat/completions'].join('');
@@ -390,24 +391,20 @@ export async function handleMessageDraft(context) {
   if (title) upstreamHeaders[['X-Open', 'Router-Title'].join('')] = title;
 
   const callDraftService = body =>
-    fetch(serviceGatewayUrl, {
+    fetchAiResponse(serviceGatewayUrl, {
       method: 'POST',
       headers: upstreamHeaders,
       body: JSON.stringify(body),
     });
 
   let upstream;
+  let text;
   try {
-    upstream = await callDraftService(requestPayload);
-  } catch (error) {
-    return jsonResponse(
-      { error: 'Failed to reach draft service', details: String(error?.message || error) },
-      502,
-      origin
-    );
+    ({ response: upstream, text } = await callDraftService(requestPayload));
+  } catch {
+    return jsonResponse({ error: 'Failed to reach draft service' }, 502, origin);
   }
 
-  const text = await upstream.text();
   if (!upstream.ok) return jsonResponse({ error: 'Draft service request failed' }, 502, origin);
   return new Response(text, {
     status: 200,

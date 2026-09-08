@@ -7,6 +7,32 @@ globalThis.caches = {
   default: { match: async () => null, put: async () => {} },
 };
 
+for (const stage of ['network', 'body']) {
+  test(`draft hides sensitive ${stage} errors`, async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => {
+      if (stage === 'network') throw new Error('private-provider-key');
+      return {
+        text: async () => {
+          throw new Error('private-provider-key');
+        },
+      };
+    };
+    try {
+      const response = await handleMessageDraft(
+        context(
+          { messages: [{ role: 'user', content: 'hello' }] },
+          { AI_SERVICE_WEBHOOK_SECRET: 'secret-value', SERVICE_GATEWAY_API_KEY: 'key' }
+        )
+      );
+      assert.equal(response.status, 502);
+      assert.doesNotMatch(await response.text(), /private-provider-key/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+}
+
 const origin = 'https://hundesalon-nika.com';
 
 function context(body, env = {}) {

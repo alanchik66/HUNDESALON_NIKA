@@ -1,5 +1,6 @@
 import { AI_CHAT_KNOWLEDGE, AI_CHAT_KNOWLEDGE_FINGERPRINT } from '../_generated/ai-chat-knowledge.js';
 import { assertAllowedOrigin, enforceRateLimit, jsonResponse } from '../_lib/http-security.js';
+import { fetchAiResponse } from '../_lib/ai-upstream.js';
 
 const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses';
 const DEFAULT_MODEL = 'gpt-5.6-luna';
@@ -14,7 +15,8 @@ const RUSSIAN_PRICE_DISCLOSURE =
   'Точную стоимость мастер оценит и согласует с вами до начала процедуры в зависимости от состояния шерсти, объёма работы и поведения питомца.';
 const PRICE_INTENT_PATTERN = /(?:preis|kosten|price|cost|цен|стоим|стоит|сколько|ціна|вартіст|кошту)/iu;
 const NAIL_INTENT_PATTERN = /(?:krall|nail|claw|когт|кігт|подстр|підріз)/iu;
-const ADDITIONAL_SERVICES_PATTERN = /(?:zusatzleistungen|additional services|дополнительные услуги|додаткові послуги)/iu;
+const ADDITIONAL_SERVICES_PATTERN =
+  /(?:zusatzleistungen|additional services|дополнительные услуги|додаткові послуги)/iu;
 
 const STOP_WORDS = new Set([
   'aber',
@@ -282,11 +284,11 @@ function getEditDistance(left, right, maxDistance) {
         previous[rightIndex - 1] + substitutionCost
       );
       if (
-        previousPrevious
-        && leftIndex > 1
-        && rightIndex > 1
-        && left[leftIndex - 1] === right[rightIndex - 2]
-        && left[leftIndex - 2] === right[rightIndex - 1]
+        previousPrevious &&
+        leftIndex > 1 &&
+        rightIndex > 1 &&
+        left[leftIndex - 1] === right[rightIndex - 2] &&
+        left[leftIndex - 2] === right[rightIndex - 1]
       ) {
         distance = Math.min(distance, previousPrevious[rightIndex - 2] + 1);
       }
@@ -505,30 +507,23 @@ function requestsHumanHandoff(message, locale) {
 }
 
 async function callOpenAi({ apiKey, model, payload, reference }) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 25_000);
-  try {
-    return await fetch(OPENAI_RESPONSES_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        instructions: `${BASE_INSTRUCTIONS}\n\nVERIFIED WEBSITE KNOWLEDGE:\n${reference}`,
-        input: buildConversationInput(payload),
-        max_output_tokens: 500,
-        reasoning: { effort: 'low', context: 'current_turn' },
-        text: { verbosity: 'low' },
-        safety_identifier: await buildSafetyIdentifier(payload.sessionId),
-        store: false,
-      }),
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeout);
-  }
+  return fetchAiResponse(OPENAI_RESPONSES_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model,
+      instructions: `${BASE_INSTRUCTIONS}\n\nVERIFIED WEBSITE KNOWLEDGE:\n${reference}`,
+      input: buildConversationInput(payload),
+      max_output_tokens: 500,
+      reasoning: { effort: 'low', context: 'current_turn' },
+      text: { verbosity: 'low' },
+      safety_identifier: await buildSafetyIdentifier(payload.sessionId),
+      store: false,
+    }),
+  });
 }
 
 export async function onRequest(context) {
@@ -565,13 +560,13 @@ export async function onRequest(context) {
   const model = getEnv(context, 'OPENAI_CHAT_MODEL') || DEFAULT_MODEL;
 
   try {
-    const upstream = await callOpenAi({ apiKey, model, payload, reference });
+    const { response: upstream, text: responseText } = await callOpenAi({ apiKey, model, payload, reference });
     if (!upstream.ok) {
       console.error(JSON.stringify({ event: 'ai_chat_upstream_error', status: upstream.status }));
       return jsonResponse({ answer: copy.unavailable, handoff: true, available: false }, 200, originCheck.origin);
     }
 
-    const result = await upstream.json();
+    const result = JSON.parse(responseText);
     const answer = ensureRussianPriceDisclosure(
       normalizeAiAnswer(extractResponseText(result), payload.locale),
       payload.locale,
