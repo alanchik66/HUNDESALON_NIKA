@@ -9,6 +9,28 @@ import { loadAnimalPhotoCatalog } from './lib/animal-photo-catalog.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifestPath = path.join(root, 'assets', 'js', 'animal-breed-photo-data.js');
+const expectedSmallAnimalSources = new Map([
+  ['guinea-pig:short:0', 'File:An_orange_American_guinea_pig.jpg'],
+  ['guinea-pig:short:1', 'File:Cavia_porcellus-Licorice.jpg'],
+  ['guinea-pig:short:2', 'File:2006_TN_State_Fair-_Guinea_Pig.jpg'],
+  ['guinea-pig:short:3', 'File:%D0%9C%D0%BE%D1%80%D1%81%D0%BA%D0%B8%D0%B5_%D1%81%D0%B2%D0%B8%D0%BD%D0%BA%D0%B8_%D0%9C%D0%BE%D1%80%D1%81%D1%8C%D0%BA%D1%96_%D1%81%D0%B2%D0%B8%D0%BD%D0%BA%D0%B8_Cavia_porcellus.jpg'],
+  ['guinea-pig:short:4', 'File:Bennyboycavy.png'],
+  ['guinea-pig:long:0', 'File:A_peruvian_with_hair_wraps.jpg'],
+  ['guinea-pig:long:1', 'File:Black-haired_Sheltie_guinea_pig.jpg'],
+  ['guinea-pig:long:2', 'File:Coronet_cavia.JPG'],
+  ['guinea-pig:long:3', 'File:Texel_guinea_pig.jpg'],
+  ['guinea-pig:long:4', 'File:Alpaka_Cavia.jpg'],
+  ['rabbit:short:0', 'File:Netherland_Dwarf_Bunny-Strider.JPG'],
+  ['rabbit:short:1', 'File:American_Grand_Champion_Dutch_Rabbit.jpg'],
+  ['rabbit:short:2', 'File:Fast_Track,_Lilac_Mini_Rex.jpg'],
+  ['rabbit:short:3', 'File:Castorex.jpg'],
+  ['rabbit:short:4', 'File:Holland_lop_rabbit.jpg'],
+  ['rabbit:long:0', 'File:Little_Bunny_LuLu.jpg'],
+  ['rabbit:long:1', 'File:FrenchAngora.jpg'],
+  ['rabbit:long:2', 'File:Brown_%26_White_Lion_Head_Rabbit.JPG'],
+  ['rabbit:long:3', 'File:JerseyWoolySide.jpg'],
+  ['rabbit:long:4', 'File:Rabbit_american_fuzzy_lop_buck_white.jpg'],
+]);
 
 const loadManifest = () => {
   const context = vm.createContext({ window: {} });
@@ -62,8 +84,8 @@ test('animal photo manifest covers every stable catalog record and lookup', () =
 
     const categoryIndex = `${record.categoryId}:${record.sourceIndex}`;
     assert.equal(manifest.keyByCategoryIndex[categoryIndex], record.key);
-    if (record.kind === 'dog') {
-      assert.match(record.breedKey || '', /\S/u, `missing dog breedKey for ${record.key}`);
+    if (record.kind === 'dog' || record.kind === 'small-animal') {
+      assert.match(record.breedKey || '', /\S/u, `missing breedKey for ${record.key}`);
       assert.equal(manifest.keyByBreedKey[record.breedKey], record.key);
     }
     if (record.kind === 'cat') {
@@ -85,6 +107,21 @@ test('every catalog record has a unique photo source and local asset', () => {
     .filter(filename => filename.endsWith('.webp'))
     .sort();
   assert.deepEqual(directoryAssets, referencedAssets);
+});
+
+test('every small-animal breed has its own verified photo and lookup', () => {
+  const manifest = loadManifest();
+  const entries = Object.values(manifest.entriesByKey).filter(entry => entry.kind === 'small-animal');
+  assert.equal(entries.length, 20);
+  assert.equal(new Set(entries.map(entry => entry.breedKey)).size, 20);
+  assert.equal(new Set(entries.map(entry => entry.localAsset)).size, 20);
+  assert.equal(new Set(entries.map(entry => entry.sourceUrl)).size, 20);
+  assert.ok(entries.every(entry => entry.exactness === 'exact' || entry.exactness === 'exact-search-match'));
+  for (const entry of entries) {
+    const expectedSource = expectedSmallAnimalSources.get(entry.breedKey);
+    assert.ok(expectedSource, `unexpected small-animal breedKey ${entry.breedKey}`);
+    assert.ok(entry.sourceUrl.endsWith(expectedSource), `wrong breed source for ${entry.breedKey}`);
+  }
 });
 
 test('optimized animal photos retain their complete aspect ratio inside the size budget', async () => {

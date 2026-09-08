@@ -2102,7 +2102,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     link.addEventListener('click', event => {
       if (isFilterPill) {
-        playNavPillClickFlash(link);
+        playNavPillClickFlash(link, { cta: link.hasAttribute('data-price-section-action') });
         return;
       }
 

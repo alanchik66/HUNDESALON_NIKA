@@ -164,6 +164,11 @@
         additional: 'Zusatzleistungen',
         important: 'Wichtige Informationen',
       },
+      sizeGroupWeightRanges: {
+        small: 'Gewicht: bis 10 kg',
+        medium: 'Gewicht: 10–25 kg',
+        large: 'Gewicht: über 25 kg',
+      },
     },
     en: {
       heroKicker: 'Price list',
@@ -325,6 +330,11 @@
         smallAnimals: 'Small animals',
         additional: 'Additional services',
         important: 'Important information',
+      },
+      sizeGroupWeightRanges: {
+        small: 'Weight: up to 10 kg',
+        medium: 'Weight: 10–25 kg',
+        large: 'Weight: over 25 kg',
       },
     },
     ru: {
@@ -490,6 +500,11 @@
         additional: 'Дополнительные услуги',
         important: 'Важная информация',
       },
+      sizeGroupWeightRanges: {
+        small: 'Вес: до 10 кг',
+        medium: 'Вес: 10–25 кг',
+        large: 'Вес: более 25 кг',
+      },
     },
     uk: {
       heroKicker: 'Прайс-лист',
@@ -653,6 +668,11 @@
         smallAnimals: 'Дрібні тварини',
         additional: 'Додаткові послуги',
         important: 'Важлива інформація',
+      },
+      sizeGroupWeightRanges: {
+        small: 'Вага: до 10 кг',
+        medium: 'Вага: 10–25 кг',
+        large: 'Вага: понад 25 кг',
       },
     },
   };

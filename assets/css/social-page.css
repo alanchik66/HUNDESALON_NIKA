@@ -133,7 +133,276 @@
 
 .social-page .social-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+}
+
+.social-page .social-card.social-card--reel-carousel {
+  padding: 0;
+  gap: 0;
+  width: min(100%, 19.5rem);
+  justify-self: center;
+  align-self: start;
+  aspect-ratio: auto;
+  overflow: visible;
+  min-width: 0;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.social-page .social-card.social-card--reel-carousel::before,
+.social-page .social-card.social-card--reel-carousel::after {
+  content: none;
+}
+
+.social-reel-frame {
+  display: block;
+  width: 100%;
+  height: 34rem;
+  aspect-ratio: auto;
+  min-height: 0;
+  flex: none;
+  border: 0;
+  border-radius: 1.25rem;
+  background: transparent !important;
+  overflow: hidden;
+}
+
+.social-reel-mask {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  background: #031810;
+}
+
+.social-reel-mask--top {
+  top: 0;
+  height: 3.4rem;
+  border-radius: 1.25rem 1.25rem 0 0;
+}
+
+.social-reel-mask--tiktok {
+  height: 3.65rem;
+  overflow: hidden;
+  pointer-events: auto;
+  background: transparent;
+}
+
+.social-reel-mask--tiktok::before,
+.social-reel-mask--tiktok::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  content: "";
+  background: rgb(3 24 16 / 8%);
+  backdrop-filter: blur(1.35rem) brightness(0.42) saturate(0.65);
+  -webkit-backdrop-filter: blur(1.35rem) brightness(0.42) saturate(0.65);
+}
+
+.social-reel-mask--tiktok::before {
+  left: 0;
+  width: 74%;
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 78%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0%, #000 78%, transparent 100%);
+}
+
+.social-reel-mask--tiktok::after {
+  right: 0;
+  width: 4.5rem;
+  -webkit-mask-image: linear-gradient(270deg, #000 0%, #000 66%, transparent 100%);
+  mask-image: linear-gradient(270deg, #000 0%, #000 66%, transparent 100%);
+}
+
+.social-reel-mask--bottom {
+  bottom: 0;
+  height: 9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  border-radius: 0 0 1.25rem 1.25rem;
+  pointer-events: auto;
+}
+
+.social-reel-mask--bottom button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border: 0;
+  background: transparent;
+  color: #ffe9a8;
+  font-size: 1.85rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.social-reel-video {
+  object-fit: contain;
+  background: #000;
+}
+
+.social-video-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: -3.25rem;
+  padding-bottom: 1rem;
+  position: relative;
+  z-index: 2;
+}
+
+.social-video-actions button {
+  border: 0;
+  background: transparent;
+  color: #fff4cf;
+  font-size: 1.8rem;
+  line-height: 1;
+  text-shadow: 0 1px 4px #000;
+  cursor: pointer;
+}
+
+.social-video-actions button.is-liked { color: #f06a78; }
+
+.social-video-comment {
+  width: calc(100% - 2rem);
+  margin: 0 1rem 0.75rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--social-border);
+  border-radius: 999px;
+  color: #fff4cf;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.social-reel-controls {
+  position: absolute;
+  z-index: 2;
+  top: 4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0;
+  color: #fff;
+  text-shadow: 0 1px 3px #000, 0 0 5px #000;
+  touch-action: pan-y;
+}
+
+.social-reel-controls output {
+  min-width: 3.5rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.social-page .social-card.social-card--reel-carousel > a.social-reel-original[href] {
+  display: block;
+  padding: 0.25rem 0.5rem;
+  margin: 0;
+  font-size: 0.8rem;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: #fff4cf;
+  text-shadow: none;
+  text-align: center;
+  animation: none;
+}
+
+.social-page .social-card.social-card--youtube {
+  grid-column: 1 / -1;
+  padding: 0;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.social-page .social-card--youtube .social-youtube-preview {
+  display: grid;
+  place-items: center;
+  min-height: 15rem;
+  width: 100%;
+  background: radial-gradient(ellipse, #29634780, #071e18 70%);
+}
+
+.social-youtube-preview img {
+  width: 6rem;
+  height: 6rem;
+  object-fit: contain;
+}
+
+.social-youtube-notice {
+  padding: 0 1rem;
+}
+
+@media (max-width: 700px) {
+  .social-page .social-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.social-reel-controls button {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  color: var(--social-gold-bright);
+  background: transparent;
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+.social-reel-controls button:focus-visible {
+  outline: 2px solid var(--social-gold-bright);
+  outline-offset: 2px;
+}
+
+.social-page .social-card--contact .social-contact-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 12rem;
+  width: 100%;
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+.social-page .social-contact-link img {
+  width: 5rem;
+  height: 5rem;
+  object-fit: contain;
+}
+
+.social-page .social-card--banner {
+  grid-column: 1 / -1;
+  background: radial-gradient(ellipse at 80% 40%, #29634780, transparent 65%), #071e18;
+}
+
+.social-page .social-card--banner .social-contact-link {
+  flex-direction: row;
+  gap: clamp(1rem, 4vw, 4rem);
+  text-align: left;
+}
+
+.social-page .social-card--banner strong {
+  display: block;
+  margin-bottom: 0.8rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 3vw, 2.5rem);
+  color: var(--social-gold-bright);
+}
+
+.social-page .social-card--banner .social-contact-link > span > span {
+  display: block;
+  line-height: 1.5;
+}
+
+.social-contact-link:focus-visible {
+  outline: 2px solid var(--social-gold-bright);
+  outline-offset: -4px;
 }
 
 .social-page .social-card {
@@ -197,7 +466,7 @@
   position: relative;
   display: block;
   inline-size: min(100%, 19.5rem);
-  aspect-ratio: var(--social-video-content-aspect, 9 / 16);
+  aspect-ratio: var(--social-grid-reel-aspect, 9 / 16);
   padding: 0;
   --social-video-content-top: 0%;
   --social-video-content-bottom: 0%;
@@ -294,7 +563,7 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  background-image: url('/assets/images/icons/instagram.png?v=20260827-instagram-brand-v1');
+  background-image: none;
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;

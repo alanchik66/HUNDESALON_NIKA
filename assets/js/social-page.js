@@ -26,6 +26,167 @@
   const SWIPE_MIN_DISTANCE = 48;
   const SWIPE_AXIS_RATIO = 1.2;
 
+  // Share the existing reel controls and layout across all network cards.
+  const reelTemplate = document.querySelector('.social-card--instagram');
+  if (reelTemplate) {
+    const networkOrder = ['instagram', 'tiktok', 'facebook', 'whatsapp', 'telegram', 'viber', 'youtube'];
+    const networkCards = new Map([['instagram', reelTemplate]]);
+    document.querySelectorAll('.social-grid .social-card').forEach(card => {
+      if (card === reelTemplate) return;
+      const title = card.querySelector('h3')?.textContent.trim();
+      const destination = card.querySelector('a[href]');
+      if (!title || !destination) return;
+      if (destination.getAttribute('href').startsWith('mailto:')) {
+        card.remove();
+        return;
+      }
+      const icon = title.toLowerCase();
+      if (icon === 'youtube') {
+        card.classList.add('social-card--youtube');
+        const notice = document.createElement('p');
+        notice.className = 'social-youtube-notice';
+        notice.textContent = ({
+          ru: 'Пока нет доступных видео. Открыть наш YouTube-канал.',
+          uk: 'Поки немає доступних відео. Відкрити наш YouTube-канал.',
+          de: 'Noch keine verfügbaren Videos. Unseren YouTube-Kanal öffnen.',
+          en: 'No videos available yet. Visit our YouTube channel.',
+        })[document.documentElement.lang.slice(0, 2)] || 'No videos available yet. Visit our YouTube channel.';
+        const preview = destination.cloneNode(false);
+        preview.className = 'social-youtube-preview';
+        preview.setAttribute('aria-label', 'YouTube — HUNDESALON_NIKA');
+        const logo = document.createElement('img');
+        logo.src = '/assets/images/icons/youtube.png';
+        logo.alt = 'YouTube';
+        preview.appendChild(logo);
+        card.replaceChildren(preview, notice, destination);
+      }
+      if (['whatsapp', 'telegram', 'viber'].includes(icon)) {
+        const link = destination.cloneNode(false);
+        link.className = 'social-contact-link';
+        link.setAttribute('aria-label', `${title} HUNDESALON_NIKA`);
+        const image = document.createElement('img');
+        image.src = `/assets/images/icons/${icon}.png`;
+        image.alt = '';
+        link.appendChild(image);
+        const label = document.createElement('span');
+        label.textContent = title;
+        link.appendChild(label);
+        card.replaceChildren(link);
+        card.classList.add('social-card--contact');
+      }
+      networkCards.set(icon, card);
+    });
+    const grid = reelTemplate.closest('.social-grid');
+    networkOrder.forEach(network => {
+      const card = networkCards.get(network);
+      if (card) grid.appendChild(card);
+    });
+  }
+
+  const networkReels = {
+    instagram: ['Dc84c7QoQgF', 'Dcnzb9Io1vy', 'Dcnyb_tKcPJ', 'DcA_hw5IeVI', 'Db-dof2ouXT', 'Db-cyrpImZZ', 'DbVRxvooNo2', 'DbVOzA4ohes', 'DZ75d1koAKx', 'DZ7ysW0I9bE', 'DZPs54RIjp6', 'DZPqwnBoshi', 'DZPafT1osAN', 'DZNhz4gIMFF', 'DZMiq1KocyI', 'DZK_JwNoR8U', 'DZJ-mYOIAGR', 'DZHh012oUDs'],
+    tiktok: ['7679448492682661153', '7679414436393667873', '7673454588619525408', '7673451996900265248', '7667520898852719904', '7667519736111975712', '7654632698404687137', '7648270612749667617', '7648268335271988512', '7648226446262996257', '7647955742078586145', '7647810676236307744', '7647586063191493920', '7647448125166210337', '7647093881367973152', '7645584322979777824', '7645330576022457632', '7645223763830770976', '7644803714078756128', '7644625287887686945', '7644453382165450017', '7644098845483257121', '7643525193813478688', '7643387210317827360'],
+    facebook: ['4707718502794989', '908401655242933', '1786217192410832', '1743793083484797', '1622146542613507', '1038550702305459', '1384106527192555', '1749692789559570', '2041332996503274', '1412116040940620', '1016152731354279', '2356222184868096', '1323768095826802', '1488074069730042', '984314621136293', '1333573998727280', '997775212662724', '1341887474486555', '1251971057149401', '1420706640092610'],
+  };
+  const language = document.documentElement.lang.slice(0, 2);
+  const navigationCopy = {
+    ru: ['Предыдущее видео', 'Следующее видео', 'Открыть оригинал'],
+    uk: ['Попереднє відео', 'Наступне відео', 'Відкрити оригінал'],
+    de: ['Vorheriges Video', 'Nächstes Video', 'Original öffnen'],
+    en: ['Previous video', 'Next video', 'Open original'],
+  }[language] || ['Previous video', 'Next video', 'Open original'];
+  document.querySelectorAll('.social-grid .social-card').forEach(card => {
+    const network = card === reelTemplate ? 'instagram' : card.querySelector('h3')?.textContent.trim().toLowerCase();
+    const reels = networkReels[network];
+    if (!reels) return;
+    card.className = 'social-card social-card--reel-carousel';
+    card.dataset.socialNetwork = network;
+    const frame = document.createElement('iframe');
+    frame.className = 'social-reel-frame';
+    frame.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture';
+    frame.allowFullscreen = true;
+    frame.loading = 'lazy';
+    frame.scrolling = 'no';
+    const controls = document.createElement('div');
+    controls.className = 'social-reel-controls';
+    const previous = document.createElement('button');
+    const next = document.createElement('button');
+    const counter = document.createElement('output');
+    previous.type = next.type = 'button';
+    previous.textContent = '‹';
+    next.textContent = '›';
+    previous.setAttribute('aria-label', navigationCopy[0]);
+    next.setAttribute('aria-label', navigationCopy[1]);
+    counter.setAttribute('aria-live', 'polite');
+    const original = document.createElement('a');
+    original.className = 'social-reel-original';
+    original.target = '_blank';
+    original.rel = 'noopener noreferrer';
+    original.textContent = `${network[0].toUpperCase()}${network.slice(1)} · ${navigationCopy[2]}`;
+    let index = 0;
+    const show = direction => {
+      index = (index + direction + reels.length) % reels.length;
+      const id = reels[index];
+      const url = network === 'instagram' ? `https://www.instagram.com/reel/${id}/`
+        : network === 'facebook' ? `https://www.facebook.com/reel/${id}/`
+          : `https://www.tiktok.com/@hundesalon_nika/video/${id}`;
+      frame.src = network === 'instagram' ? `${url}embed/`
+        : network === 'facebook' ? `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=360`
+          : `https://www.tiktok.com/player/v1/${id}?autoplay=0&rel=0`;
+      frame.title = `${network} — ${index + 1} / ${reels.length}`;
+      counter.textContent = `${index + 1} / ${reels.length}`;
+      original.href = url;
+    };
+    previous.addEventListener('click', () => show(-1));
+    next.addEventListener('click', () => show(1));
+    let start = null;
+    controls.addEventListener('pointerdown', event => { start = event.clientX; });
+    controls.addEventListener('pointerup', event => {
+       if (start !== null && Math.abs(event.clientX - start) > SWIPE_MIN_DISTANCE) show(event.clientX < start ? 1 : -1);
+      start = null;
+    });
+    controls.addEventListener('pointercancel', () => { start = null; });
+    controls.append(previous, counter, next);
+    card.replaceChildren(frame, controls, original);
+    show(0);
+    if (network === 'instagram') {
+      const topMask = document.createElement('span');
+      const bottomMask = document.createElement('div');
+      topMask.className = 'social-reel-mask social-reel-mask--top';
+      bottomMask.className = 'social-reel-mask social-reel-mask--bottom';
+      topMask.setAttribute('aria-hidden', 'true');
+      const actionCopy = {
+        ru: ['Нравится', 'Комментарий', 'Поделиться'],
+        uk: ['Подобається', 'Коментар', 'Поділитися'],
+        de: ['Gefällt mir', 'Kommentieren', 'Teilen'],
+        en: ['Like', 'Comment', 'Share'],
+      }[language] || ['Like', 'Comment', 'Share'];
+      ['♡', '◌', '↗'].forEach((icon, actionIndex) => {
+        const action = document.createElement('button');
+        action.type = 'button';
+        action.textContent = icon;
+        action.setAttribute('aria-label', actionCopy[actionIndex]);
+        action.addEventListener('click', async () => {
+          if (actionIndex < 2) {
+            window.open(original.href, '_blank', 'noopener,noreferrer');
+            return;
+          }
+          try {
+            if (navigator.share) await navigator.share({ title: frame.title, url: original.href });
+            else await navigator.clipboard.writeText(original.href);
+          } catch { /* The user can cancel the native share dialog. */ }
+        });
+        bottomMask.append(action);
+      });
+      card.append(topMask, bottomMask);
+    } else if (network === 'tiktok') {
+      const topMask = document.createElement('span');
+      topMask.className = 'social-reel-mask social-reel-mask--top social-reel-mask--tiktok';
+      topMask.setAttribute('aria-hidden', 'true');
+      card.append(topMask);
+    }
+  });
+
   const tileVideos = Array.from(document.querySelectorAll(TILE_VIDEO_SELECTOR));
   const modal = document.querySelector(MODAL_SELECTOR);
   const modalDialog = modal?.querySelector('.social-reel-modal__dialog') ?? null;
@@ -139,6 +300,9 @@
       const totalInset = Math.min(80, safeTopInset + safeBottomInset);
       const contentHeightRatio = Math.max(0.2, 1 - totalInset / 100);
       const contentAspect = video.videoWidth / (video.videoHeight * contentHeightRatio);
+      if (card === reelTemplate) {
+        card.closest('.social-grid')?.style.setProperty('--social-grid-reel-aspect', String(contentAspect));
+      }
       const contentPosition = totalInset > 0 ? (safeTopInset / totalInset) * 100 : 50;
 
       card.style.setProperty(VIDEO_CONTENT_ASPECT_PROPERTY, contentAspect.toFixed(6));

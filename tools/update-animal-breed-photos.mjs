@@ -78,6 +78,27 @@ const titleAliases = new Map([
 ]);
 
 const manualFileTitles = new Map([
+  ['greenland dog', 'Greenland Dog.jpg'],
+  ['small-animal:guinea-pig:short:0', 'An orange American guinea pig.jpg'],
+  ['small-animal:guinea-pig:short:1', 'Cavia porcellus-Licorice.jpg'],
+  ['small-animal:guinea-pig:short:2', '2006 TN State Fair- Guinea Pig.jpg'],
+  ['small-animal:guinea-pig:short:3', 'Морские свинки Морські свинки Cavia porcellus.jpg'],
+  ['small-animal:guinea-pig:short:4', 'Bennyboycavy.png'],
+  ['small-animal:guinea-pig:long:0', 'A peruvian with hair wraps.jpg'],
+  ['small-animal:guinea-pig:long:1', 'Black-haired Sheltie guinea pig.jpg'],
+  ['small-animal:guinea-pig:long:2', 'Coronet cavia.JPG'],
+  ['small-animal:guinea-pig:long:3', 'Texel guinea pig.jpg'],
+  ['small-animal:guinea-pig:long:4', 'Alpaka Cavia.jpg'],
+  ['small-animal:rabbit:short:0', 'Netherland Dwarf Bunny-Strider.JPG'],
+  ['small-animal:rabbit:short:1', 'American Grand Champion Dutch Rabbit.jpg'],
+  ['small-animal:rabbit:short:2', 'Fast Track, Lilac Mini Rex.jpg'],
+  ['small-animal:rabbit:short:3', 'Castorex.jpg'],
+  ['small-animal:rabbit:short:4', 'Holland lop rabbit.jpg'],
+  ['small-animal:rabbit:long:0', 'Little Bunny LuLu.jpg'],
+  ['small-animal:rabbit:long:1', 'FrenchAngora.jpg'],
+  ['small-animal:rabbit:long:2', 'Brown & White Lion Head Rabbit.JPG'],
+  ['small-animal:rabbit:long:3', 'JerseyWoolySide.jpg'],
+  ['small-animal:rabbit:long:4', 'Rabbit american fuzzy lop buck white.jpg'],
   ['colombian fino hound standard smooth haired', 'Sabueso fino colombiano.jpg'],
   ['colombian fino hound standard rough haired', 'Kolumbianajo4.jpg'],
   ['colombian fino hound large smooth haired', 'Kolumbianajo1.jpg'],
@@ -723,14 +744,14 @@ let candidates = preparedRecords.map(record => {
   const page = wikipediaPages.get(record.resolvedTitle);
   const breedPage = page && isBreedPage(page, record.kind) ? page : null;
   const normalizedName = normalizeAnimalPhotoKey(record.name);
-  const manualFileTitle = manualFileTitles.get(normalizedName) || null;
+  const manualFileTitle = manualFileTitles.get(record.key) || manualFileTitles.get(normalizedName) || null;
   const fileTitle = manualFileTitle || breedPage?.pageimage || fciImages.get(record.fciNumber) || null;
   return {
     ...record,
     articleTitle: breedPage?.title || null,
     fileTitle,
     selectionExactness: manualFileTitle
-      ? manualExactness.get(normalizedName)
+      ? manualExactness.get(record.key) || manualExactness.get(normalizedName)
         || (verifiedManualSearchMatches.has(normalizedName) ? 'exact-search-match' : 'exact')
       : null,
     sourceMethod: manualFileTitle ? 'manual-commons' : breedPage?.pageimage ? 'wikipedia-page' : fileTitle ? 'wikidata-fci' : null,

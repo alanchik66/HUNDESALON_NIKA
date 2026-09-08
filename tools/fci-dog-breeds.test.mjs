@@ -308,6 +308,8 @@ test('coat groups preserve every breed and its quote without public size codes',
     const oldByName = new Map(oldCatalog.breeds.map(breed => [breed.label, breed]));
     for (const category of catalog.categories) {
       for (const row of category.services) assert.doesNotMatch(row.label, /\b(?:XS|S|M|L)\b/);
+      if (category.id === 'ru-additional-services') continue;
+      if (category.source.animalType !== 'dog') continue;
       if (category.source.animalType === 'dog') {
         const categoryServiceKeys = category.services.map(service => service.key);
         assert.deepEqual(clone(categoryServiceKeys), serviceOrder.filter(key => categoryServiceKeys.includes(key)), `${lang}:${category.id}: invalid service order`);

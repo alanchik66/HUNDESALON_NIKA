@@ -319,7 +319,9 @@ for (const key of [...catalogByKey.keys()].sort()) {
     sourceUrl: String(photo.sourceUrl || '').replace(/^http:/i, 'https:'),
   };
   entriesByKey[key] = entry;
-  if (record.kind === 'dog') addUniqueLookup(keyByBreedKey, record.breedKey, key, 'breedKey');
+  if (record.kind === 'dog' || record.kind === 'small-animal') {
+    addUniqueLookup(keyByBreedKey, record.breedKey, key, 'breedKey');
+  }
   if (record.kind === 'cat') addUniqueLookup(keyByMetadataId, record.metadataId, key, 'metadataId');
   addUniqueLookup(keyByCategoryIndex, `${record.categoryId}:${record.sourceIndex}`, key, 'category index');
 }

@@ -13,6 +13,7 @@ const catalogSources = [
   'assets/js/price-page-coat-groups.js',
   'assets/js/cat-breeds-data.js',
   'assets/js/price-page-cat-breeds.js',
+  'assets/js/price-page-animal-groups.js',
 ];
 
 export const normalizeAnimalPhotoKey = value => String(value || '')
@@ -38,8 +39,8 @@ export function loadAnimalPhotoCatalog() {
       const metadata = category.breedMetadata?.en?.[index] || null;
       const fciNumber = category.breedFciNumbers?.[index] || null;
       let kind = null;
-      if (category.id === 'ru-cats-grooming') kind = 'cat';
-      else if (category.id === 'ru-small-animals') kind = 'small-animal';
+      if (category.id === 'ru-cats-grooming' || category.animalType === 'cat') kind = 'cat';
+      else if (category.id === 'ru-small-animals' || category.animalType === 'smallAnimal') kind = 'small-animal';
       else if (category.animalType === 'dog') kind = 'dog';
       if (!kind) return;
       records.push({
@@ -58,7 +59,9 @@ export function loadAnimalPhotoCatalog() {
 
   const uniqueRecords = new Map();
   for (const record of records) {
-    const key = `${record.kind}:${record.normalizedName}:${record.fciNumber || ''}`;
+    const key = record.kind === 'small-animal' && record.breedKey
+      ? `small-animal:${record.breedKey}`
+      : `${record.kind}:${record.normalizedName}:${record.fciNumber || ''}`;
     if (!uniqueRecords.has(key)) uniqueRecords.set(key, { ...record, key });
   }
 

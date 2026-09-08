@@ -8051,7 +8051,27 @@ body.price-page .price-size-section__category {
 }
 
 body.price-page .price-size-section__heading {
+  flex-wrap: wrap;
+  gap: clamp(0.7rem, 1.2vw, 1.2rem);
   padding-block: clamp(2.25rem, 3.5vw, 3.5rem);
+}
+
+body.price-page .price-size-section__weight {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.3rem;
+  padding: 0.42rem 0.9rem;
+  border: 1px solid rgb(220 177 78 / 0.48);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgb(7 44 33 / 0.86), rgb(3 20 16 / 0.92));
+  box-shadow: inset 0 0 18px rgb(80 217 151 / 0.08), 0 0 18px rgb(220 177 78 / 0.08);
+  color: rgb(255 232 178 / 0.9);
+  font-family: var(--font-body, serif);
+  font-size: clamp(0.92rem, 0.5vw + 0.72rem, 1.08rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.035em;
+  white-space: nowrap;
 }
 
 body.price-page .price-size-section--cards-only {
@@ -8067,6 +8087,62 @@ body.price-page .price-size-section[data-price-section-grid='four'] .price-size-
   grid-template-columns: repeat(var(--price-dog-columns), minmax(0, 1fr));
 }
 
+body.price-page .price-small-animal-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1.5rem, 2.2vw, 2.5rem);
+  align-items: stretch;
+  min-width: 0;
+}
+
+body.price-page .price-small-animal-group {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: clamp(1rem, 1.5vw, 1.4rem);
+  min-width: 0;
+}
+
+body.price-page .price-small-animal-group__heading {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 3.5rem;
+  padding: 0.55rem 1rem 0.8rem;
+  text-align: center;
+}
+
+body.price-page .price-small-animal-group__heading::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: min(11rem, 48%);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(201 168 76 / 0.72), transparent);
+  box-shadow: 0 0 12px rgb(201 168 76 / 0.24);
+}
+
+body.price-page .price-small-animal-group__title {
+  margin: 0;
+  color: var(--accent-gold);
+  font-family: var(--font-ui, 'Cinzel', serif);
+  font-size: clamp(1.35rem, 1.8vw, 1.8rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-shadow: var(--text-vol-accent);
+  text-wrap: balance;
+}
+
+body.price-page .price-small-animal-group .price-size-section__cards {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: stretch;
+}
+
+body.price-page .price-small-animal-group .price-card {
+  height: 100%;
+}
+
 body.price-page .price-size-section__category-grid {
   row-gap: 0;
 }
@@ -8074,6 +8150,10 @@ body.price-page .price-size-section__category-grid {
 @media (max-width: 1199px) {
   body.price-page {
     --price-dog-columns: 2;
+  }
+
+  body.price-page .price-small-animal-groups {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -8146,7 +8226,9 @@ body.price-page #price-category-modal .site-select__option {
   }
 
   body.price-page .price-size-section[data-price-section='medium'] .price-card__top,
-  body.price-page .price-size-section[data-price-section='large'] .price-card__top {
+  body.price-page .price-size-section[data-price-section='large'] .price-card__top,
+  body.price-page .price-size-section[data-price-section='cats'] .price-card__top,
+  body.price-page .price-size-section[data-price-section='smallAnimals'] .price-card__top {
     min-height: 9rem;
   }
 }
@@ -8168,15 +8250,13 @@ body.price-page #price-category-modal .price-category-modal__header {
   isolation: isolate;
   gap: 0.28rem;
   margin: 0;
-  padding: 0.65rem 3.4rem 0.72rem 0.78rem;
-  border: 1px solid rgb(201 168 76 / 0.28);
-  border-radius: 14px;
-  background:
-    radial-gradient(circle at 12% 0%, rgb(50 255 177 / 0.12), transparent 46%),
-    linear-gradient(145deg, rgb(15 39 29 / 0.98), rgb(4 15 11 / 0.985));
-  box-shadow: 0 10px 24px rgb(0 0 0 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.06);
-  -webkit-backdrop-filter: blur(18px) saturate(1.18);
-  backdrop-filter: blur(18px) saturate(1.18);
+  padding: 0.08rem 3.4rem 0.42rem 0.1rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 body.price-page #price-category-modal .price-category-modal__close-rail {
@@ -8226,6 +8306,17 @@ body.price-page #price-category-modal .price-category-modal__selection {
   gap: 0.52rem;
   margin-top: 0;
   padding: 0.68rem;
+  border-color: rgb(201 168 76 / 0.3);
+  background:
+    radial-gradient(circle at 12% 0%, rgb(50 255 177 / 0.13), transparent 46%),
+    linear-gradient(145deg, rgb(15 39 29 / 0.99), rgb(4 15 11 / 0.995));
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.07);
+  -webkit-backdrop-filter: blur(18px) saturate(1.18);
+  backdrop-filter: blur(18px) saturate(1.18);
+}
+
+body.price-page #price-category-modal .price-category-modal__selection > .price-category-modal__header {
+  grid-area: auto;
 }
 
 body.price-page #price-category-modal .price-category-modal__selection-controls {
@@ -8238,15 +8329,25 @@ body.price-page #price-category-modal .price-category-modal__selection-header {
   z-index: 60;
   display: grid;
   gap: 0.34rem;
-  padding: 0.58rem 3.4rem 0.62rem 0.68rem;
-  border: 1px solid rgb(201 168 76 / 0.3);
-  border-radius: 14px;
-  background:
-    radial-gradient(circle at 12% 0%, rgb(50 255 177 / 0.13), transparent 46%),
-    linear-gradient(145deg, rgb(15 39 29 / 0.99), rgb(4 15 11 / 0.995));
-  box-shadow: 0 10px 24px rgb(0 0 0 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.07);
-  -webkit-backdrop-filter: blur(18px) saturate(1.18);
-  backdrop-filter: blur(18px) saturate(1.18);
+  padding: 0.22rem 2.72rem 0.2rem 0.1rem;
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(145deg, rgb(12 37 27 / 0.98), rgb(4 15 11 / 0.98));
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+body.price-page #price-category-modal .price-category-modal__selection-header.has-breed-photo {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: auto auto;
+  column-gap: clamp(0.75rem, 1.4vw, 1.25rem);
+}
+
+body.price-page #price-category-modal .price-category-modal__selection-header > .price-category-modal__breed-photo {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: stretch;
 }
 
 body.price-page #price-category-modal .price-category-modal__selection-header[hidden] {
@@ -8406,6 +8507,23 @@ body.price-page #booking-modal .step-indicator {
     gap: 1rem;
   }
 
+  body.price-page .price-small-animal-groups {
+    gap: 1.5rem;
+  }
+
+  body.price-page .price-small-animal-group {
+    gap: 0.85rem;
+  }
+
+  body.price-page .price-small-animal-group__heading {
+    min-height: 3rem;
+    padding-block: 0.4rem 0.7rem;
+  }
+
+  body.price-page .price-small-animal-group .price-size-section__cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   body.price-page main[data-price-page] .price-card {
     border-radius: 16px;
   }
@@ -8445,14 +8563,14 @@ body.price-page #booking-modal .step-indicator {
 
   body.price-page #price-category-modal .price-category-modal__header {
     gap: 0.18rem;
-    padding: 0.48rem 2.95rem 0.52rem 0.58rem;
-    border-radius: 12px;
+    padding: 0.06rem 2.95rem 0.32rem 0.02rem;
+    border-radius: 0;
   }
 
   body.price-page #price-category-modal .price-category-modal__selection-header {
     gap: 0.24rem;
-    padding: 0.46rem 2.95rem 0.5rem 0.52rem;
-    border-radius: 12px;
+    padding: 0.18rem 2.95rem 0.22rem 0.02rem;
+    border-radius: 0;
   }
 
   body.price-page #price-category-modal .price-category-modal__header .section-kicker {
@@ -8634,6 +8752,31 @@ body.price-page .price-card__breed-option-credit {
   overflow-wrap: anywhere;
 }
 
+body.price-page .price-card__breed-menu--categories .price-card__breed-list {
+  gap: 0.42rem;
+}
+
+body.price-page .price-card__breed-menu--categories .price-card__breed-option {
+  min-height: 5.1rem;
+  grid-template-columns: 6.25rem minmax(0, 1fr);
+  gap: 0.78rem;
+  padding: 0.42rem;
+  border: 1px solid rgb(201 168 76 / 0.14);
+  background: linear-gradient(135deg, rgb(50 255 177 / 0.045), rgb(201 168 76 / 0.055));
+}
+
+body.price-page .price-card__breed-menu--categories .price-card__breed-option-media {
+  width: 6.25rem;
+  border-radius: 12px;
+}
+
+body.price-page .price-card__breed-menu--categories .price-card__breed-option-name {
+  color: var(--accent-gold);
+  font-weight: 650;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
 body.price-page .price-breed-search__suggestion {
   grid-template-columns: 3.75rem minmax(0, 1fr);
   align-items: center;
@@ -8647,14 +8790,14 @@ body.price-page .price-breed-search__suggestion-media {
 
 body.price-page .price-category-modal__breed-photo {
   display: grid;
-  grid-template-columns: minmax(8rem, 13rem) minmax(0, 1fr);
-  align-items: center;
-  gap: 0.85rem;
+  grid-template-columns: minmax(7.5rem, 30%) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0.68rem;
   margin: 0;
-  padding: 0.62rem;
-  border: 1px solid rgb(201 168 76 / 0.24);
-  border-radius: 14px;
-  background: rgb(255 255 255 / 0.035);
+  padding: 0.18rem;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
 }
 
 body.price-page .price-category-modal__breed-photo[hidden] {
@@ -8663,22 +8806,32 @@ body.price-page .price-category-modal__breed-photo[hidden] {
 
 body.price-page .price-category-modal__breed-photo-media {
   width: 100%;
-  aspect-ratio: 4 / 3;
+  height: 100%;
+  min-height: 0;
+  aspect-ratio: auto;
 }
 
 body.price-page .price-category-modal__breed-photo figcaption {
   display: grid;
+  align-content: center;
   min-width: 0;
   gap: 0.24rem;
   color: rgb(255 239 209 / 0.66);
-  font-size: 0.76rem;
+  font-size: clamp(13px, 0.72vw, 15px) !important;
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
 
+body.price-page .price-category-modal__breed-photo figcaption > * {
+  min-width: 0;
+  max-width: 100%;
+  font-size: inherit !important;
+  white-space: nowrap;
+}
+
 body.price-page .price-category-modal__breed-photo strong {
   color: var(--accent-gold);
-  font-size: 1rem;
+  font-size: inherit !important;
 }
 
 body.price-page .price-category-modal__breed-photo a {
@@ -8697,9 +8850,64 @@ body.price-page .price-category-modal__breed-photo a {
     width: 3.5rem;
   }
 
+  body.price-page .price-card__breed-menu--categories .price-card__breed-option {
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+  }
+
+  body.price-page .price-card__breed-menu--categories .price-card__breed-option-media {
+    width: 4.5rem;
+  }
+
+  body.price-page #price-category-modal .price-category-modal__selection-header.has-breed-photo {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+  }
+
+  body.price-page #price-category-modal .price-category-modal__selection-header > .price-category-modal__breed-photo {
+    position: absolute;
+    top: 0.46rem;
+    right: 0.48rem;
+    display: block;
+    width: 4.75rem;
+  }
+
   body.price-page .price-category-modal__breed-photo {
-    grid-template-columns: 6.5rem minmax(0, 1fr);
-    gap: 0.58rem;
-    padding: 0.5rem;
+    padding: 0;
+  }
+
+  body.price-page #price-category-modal .price-category-modal__selection-head {
+    padding-right: 5.1rem;
+  }
+
+  body.price-page .price-category-modal__breed-photo-media {
+    width: 4.75rem;
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+
+  body.price-page .price-category-modal__breed-photo figcaption {
+    display: block;
+    margin-top: 0.12rem;
+    font-size: 0.5rem !important;
+    line-height: 1.18;
+    text-align: center;
+  }
+
+  body.price-page .price-category-modal__breed-photo strong,
+  body.price-page .price-category-modal__breed-photo figcaption > span {
+    display: none;
+  }
+
+  body.price-page .price-category-modal__breed-photo figcaption > a {
+    display: block;
+    overflow: hidden;
+    font-size: 0 !important;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  body.price-page .price-category-modal__breed-photo figcaption > a::after {
+    content: attr(data-compact-label);
+    font-size: 0.62rem;
   }
 }

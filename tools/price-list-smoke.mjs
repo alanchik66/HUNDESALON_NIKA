@@ -15,6 +15,12 @@ const expectedSearchFilterCopy = {
   ru: ['Вид животного', 'Размер собаки', 'Тип шерсти', 'Найдено', 'Сбросить всё'],
   uk: ['Вид тварини', 'Розмір собаки', 'Тип шерсті', 'Знайдено', 'Скинути все'],
 };
+const expectedWeightRangeCopy = {
+  de: ['Gewicht: bis 10 kg', 'Gewicht: 10–25 kg', 'Gewicht: über 25 kg'],
+  en: ['Weight: up to 10 kg', 'Weight: 10–25 kg', 'Weight: over 25 kg'],
+  ru: ['Вес: до 10 кг', 'Вес: 10–25 кг', 'Вес: более 25 кг'],
+  uk: ['Вага: до 10 кг', 'Вага: 10–25 кг', 'Вага: понад 25 кг'],
+};
 const requestedLocales = (process.env.PRICE_SMOKE_LOCALES || '')
   .split(',')
   .map(locale => locale.trim())
@@ -328,6 +334,9 @@ for (const locale of locales) {
       const minimumGridGap = layoutLabel === 'mobile' ? 16 : 24;
       const sizeSections = ['small', 'medium', 'large'].map(sectionKey => {
         const section = document.querySelector(`[data-price-section="${sectionKey}"]`);
+        const heading = section?.querySelector('.price-size-section__heading');
+        const title = heading?.querySelector('.price-size-section__title');
+        const weight = heading?.querySelector('.price-size-section__weight');
         const grid = section?.querySelector('.price-size-section__cards');
         const cards = Array.from(grid?.children || []).filter(child => child.matches('.price-card'));
         const rects = cards.map(card => card.getBoundingClientRect());
@@ -362,6 +371,10 @@ for (const locale of locales) {
         }));
         return {
           sectionKey,
+          weightText: weight?.textContent?.trim() || '',
+          weightFits: Boolean(weight && weight.scrollWidth <= weight.clientWidth && weight.scrollHeight <= weight.clientHeight),
+          headingFits: Boolean(heading && heading.scrollWidth <= heading.clientWidth),
+          weightBesideTitle: Boolean(title && weight && Math.abs(title.getBoundingClientRect().top - weight.getBoundingClientRect().top) <= 12),
           cardIds: cards.map(card => card.dataset.categoryId),
           coatTypes,
           gridGap,
@@ -405,8 +418,8 @@ for (const locale of locales) {
     assert(`${locale} ${label}: extra hero flow absent`, state.legacyHeroFlowAbsent);
     assert(`${locale} ${label}: cards rendered`, state.cardCount >= 12);
     assert(
-      `${locale} ${label}: additional services contain only dogs and cats`,
-      state.additionalCardBreedCount === 2 && state.additionalSourceBreedCount === 2,
+      `${locale} ${label}: additional services expose four animal categories`,
+      state.additionalCardBreedCount === 4 && state.additionalSourceBreedCount === 4,
       JSON.stringify({
         card: state.additionalCardBreedCount,
         source: state.additionalSourceBreedCount,
@@ -444,6 +457,14 @@ for (const locale of locales) {
         JSON.stringify(section.coatTypes) === JSON.stringify(['short', 'wire', 'long', 'double'])
       ),
       JSON.stringify(dogTileDomState.sizeSections)
+    );
+    assert(
+      `${locale} ${label}: dog size headings show localized weight ranges without clipping`,
+      JSON.stringify(dogTileDomState.sizeSections.map(section => section.weightText))
+        === JSON.stringify(expectedWeightRangeCopy[locale])
+        && dogTileDomState.sizeSections.every(section => section.weightFits && section.headingFits)
+        && (label !== 'desktop' || dogTileDomState.sizeSections.every(section => section.weightBesideTitle)),
+      JSON.stringify(dogTileDomState.sizeSections.map(({ sectionKey, weightText, weightFits, headingFits, weightBesideTitle }) => ({ sectionKey, weightText, weightFits, headingFits, weightBesideTitle })))
     );
     assert(
       `${locale} ${label}: dog tiles keep equal widths and responsive columns with wider desktop gaps`,
@@ -545,12 +566,15 @@ for (const locale of locales) {
       await additionalBreedToggle.evaluate(toggle => toggle.click());
       await page.waitForSelector(
         '[data-category-id="ru-additional-services"] .price-card__breed-menu:not([hidden])',
-        { timeout: 5000 }
+        { timeout: 10000 }
       );
-      const additionalBreedLabels = await additionalBreedOptions.allTextContents();
+      const additionalBreedLabels = await additionalBreedOptions
+        .locator('.price-card__breed-option-name')
+        .allTextContents();
       assert(
-        'ru desktop: additional category menu has exactly two species',
-        additionalBreedLabels.length === 2,
+        'ru desktop: additional category menu has four correctly named animal categories',
+        JSON.stringify(additionalBreedLabels.map(item => item.trim()))
+          === JSON.stringify(['Собаки', 'Кошки', 'Морские свинки', 'Кролики']),
         JSON.stringify(additionalBreedLabels)
       );
 
@@ -578,10 +602,10 @@ for (const locale of locales) {
         }));
         assert(
           `ru desktop: additional species ${speciesIndex + 1} stays consistent in modal`,
-          modalSpeciesState.labels.length === 2
-            && modalSpeciesState.labels.every((species, index) => species === additionalBreedLabels[index])
-            && modalSpeciesState.selected === additionalBreedLabels[speciesIndex]
-            && modalSpeciesState.visibleSelected === additionalBreedLabels[speciesIndex],
+          modalSpeciesState.labels.length === 4
+            && modalSpeciesState.labels.every((species, index) => species === additionalBreedLabels[index].trim())
+            && modalSpeciesState.selected === additionalBreedLabels[speciesIndex].trim()
+            && modalSpeciesState.visibleSelected === additionalBreedLabels[speciesIndex].trim(),
           JSON.stringify(modalSpeciesState)
         );
         await modalClose.evaluate(button => button.click());
@@ -784,21 +808,21 @@ for (const locale of locales) {
     const coatFilter = page.locator('[data-price-search-filter="coat"]');
     const searchReset = page.locator('[data-price-search-reset]');
     for (const animalCase of [
-      { value: 'cat', categoryId: 'ru-cats-grooming' },
-      { value: 'smallAnimals', categoryId: 'ru-small-animals' },
+      { value: 'cat', categoryIds: ['ru-cat-short-coat', 'ru-cat-special-coat', 'ru-cat-long-coat', 'ru-cat-double-coat'] },
+      { value: 'smallAnimals', categoryIds: ['ru-guinea-pig-short-coat', 'ru-guinea-pig-long-coat', 'ru-rabbit-short-coat', 'ru-rabbit-long-coat'] },
     ]) {
       await animalFilter.selectOption(animalCase.value);
-      const animalFilterState = await page.evaluate(expectedCategoryId => ({
+      const animalFilterState = await page.evaluate(expectedCategoryIds => ({
         cardIds: Array.from(document.querySelectorAll('[data-price-categories] [data-category-id]'))
           .map(card => card.dataset.categoryId),
         dogRefinementsDisabled: Array.from(document.querySelectorAll('[data-price-search-filter="size"], [data-price-search-filter="coat"]'))
           .every(select => select.disabled && select.value === 'all'),
         resultCount: document.querySelector('[data-price-search-result-count]')?.textContent?.trim() || '',
-        expectedCategoryId,
-      }), animalCase.categoryId);
+        expectedCategoryIds,
+      }), animalCase.categoryIds);
       assert(
-        `${locale} ${label}: ${animalCase.value} filter isolates its animal category`,
-        JSON.stringify(animalFilterState.cardIds) === JSON.stringify([animalCase.categoryId])
+        `${locale} ${label}: ${animalCase.value} filter isolates its four animal categories`,
+        JSON.stringify(animalFilterState.cardIds) === JSON.stringify(animalCase.categoryIds)
           && animalFilterState.dogRefinementsDisabled
           && /[1-9]\d*/u.test(animalFilterState.resultCount),
         JSON.stringify(animalFilterState)
@@ -1221,10 +1245,68 @@ for (const locale of locales) {
     );
     const modalBreedPhotoBinding = await page.evaluate(() => {
       const modal = document.querySelector('#price-category-modal.active');
+      const unifiedTile = modal?.querySelector('.price-category-modal__selection');
+      const categoryHeader = modal?.querySelector('.price-category-modal__header');
+      const selectionHeader = modal?.querySelector('[data-price-modal-selection-header]');
+      const photo = modal?.querySelector('[data-price-modal-breed-photo]');
       const selectedBreed = modal?.querySelector('[data-price-modal-breed]')?.selectedOptions?.[0]?.textContent?.trim() || '';
       const photoName = modal?.querySelector('[data-price-modal-breed-photo-name]')?.textContent?.trim() || '';
       const photoAlt = modal?.querySelector('[data-price-modal-breed-photo-image]')?.alt?.trim() || '';
-      return { selectedBreed, photoName, photoAlt };
+      const selectionField = modal?.querySelector('.price-category-modal__selection-field');
+      const photoMedia = photo?.querySelector('.price-category-modal__breed-photo-media');
+      const photoCaption = photo?.querySelector('figcaption');
+      const headerRect = selectionHeader?.getBoundingClientRect();
+      const photoRect = photo?.getBoundingClientRect();
+      const selectionFieldRect = selectionField?.getBoundingClientRect();
+      const photoMediaRect = photoMedia?.getBoundingClientRect();
+      const photoCaptionRect = photoCaption?.getBoundingClientRect();
+      const visibleCaptionItems = Array.from(photoCaption?.children || []).filter((item) => {
+        const style = getComputedStyle(item);
+        return !item.hidden && style.display !== 'none' && style.visibility !== 'hidden';
+      });
+      return {
+        selectedBreed,
+        photoName,
+        photoAlt,
+        photoInsideSelectionHeader: photo?.parentElement === selectionHeader,
+        categoryHeaderInsideUnifiedTile: categoryHeader?.parentElement === unifiedTile,
+        selectionHeaderInsideUnifiedTile: selectionHeader?.parentElement === unifiedTile,
+        categoryHeaderPrecedesSelectionHeader: categoryHeader?.nextElementSibling === selectionHeader,
+        unifiedTileHasSingleFrame: Boolean(unifiedTile && categoryHeader && selectionHeader
+          && parseFloat(getComputedStyle(unifiedTile).borderTopWidth) > 0
+          && parseFloat(getComputedStyle(categoryHeader).borderTopWidth) === 0
+          && parseFloat(getComputedStyle(selectionHeader).borderTopWidth) === 0),
+        headerHeight: headerRect?.height || 0,
+        photoContained: Boolean(headerRect && photoRect
+          && photoRect.left >= headerRect.left
+          && photoRect.right <= headerRect.right
+          && photoRect.top >= headerRect.top
+          && photoRect.bottom <= headerRect.bottom),
+        noSelectionOverflow: Boolean(selectionHeader
+          && selectionHeader.scrollWidth <= selectionHeader.clientWidth
+          && selectionHeader.scrollHeight <= selectionHeader.clientHeight),
+        viewportWidth: window.innerWidth,
+        headerClass: selectionHeader?.className || '',
+        headerColumns: selectionHeader ? getComputedStyle(selectionHeader).gridTemplateColumns : '',
+        photoColumns: photo ? getComputedStyle(photo).gridTemplateColumns : '',
+        photoSize: photoRect ? [photoRect.width, photoRect.height] : [],
+        equalMainColumns: Boolean(selectionFieldRect && photoRect
+          && Math.abs(selectionFieldRect.width - photoRect.width) <= 1),
+        photoMatchesCaptionHeight: Boolean(photoMediaRect && photoCaptionRect
+          && Math.abs(photoMediaRect.height - photoCaptionRect.height) <= 1),
+        captionFitsSingleLine: visibleCaptionItems.every((item) => {
+          const style = getComputedStyle(item);
+          const itemRect = item.getBoundingClientRect();
+          return style.whiteSpace === 'nowrap'
+            && (!photoCaptionRect || itemRect.width <= photoCaptionRect.width + 1)
+            && item.scrollWidth <= item.clientWidth + 1
+            && item.scrollHeight <= item.clientHeight + 1;
+        }),
+        captionItems: visibleCaptionItems.map((item) => {
+          const itemRect = item.getBoundingClientRect();
+          return { text: item.textContent?.trim() || '', width: itemRect.width, available: photoCaptionRect?.width || 0 };
+        }),
+      };
     });
     assert(
       `${locale} ${label}: modal breed selection uses a loaded local contain photo`,
@@ -1234,6 +1316,27 @@ for (const locale of locales) {
         && modalBreedPhotoBinding.photoName === modalBreedPhotoBinding.selectedBreed
         && modalBreedPhotoBinding.photoAlt === modalBreedPhotoBinding.selectedBreed,
       JSON.stringify({ photos: modalBreedPhotos, binding: modalBreedPhotoBinding })
+    );
+    assert(
+      `${locale} ${label}: breed photo and source stay inside the compact selection block`,
+      modalBreedPhotoBinding.photoInsideSelectionHeader
+        && modalBreedPhotoBinding.categoryHeaderInsideUnifiedTile
+        && modalBreedPhotoBinding.selectionHeaderInsideUnifiedTile
+        && modalBreedPhotoBinding.categoryHeaderPrecedesSelectionHeader
+        && modalBreedPhotoBinding.unifiedTileHasSingleFrame
+        && modalBreedPhotoBinding.photoContained
+        && modalBreedPhotoBinding.noSelectionOverflow
+        && modalBreedPhotoBinding.headerHeight <= (label === 'mobile' ? 220 : 190),
+      JSON.stringify(modalBreedPhotoBinding)
+    );
+    assert(
+      `${locale} ${label}: desktop breed preview is balanced 50/50 without wrapped attribution`,
+      label === 'mobile' || (
+        modalBreedPhotoBinding.equalMainColumns
+          && modalBreedPhotoBinding.photoMatchesCaptionHeight
+          && modalBreedPhotoBinding.captionFitsSingleLine
+      ),
+      JSON.stringify(modalBreedPhotoBinding)
     );
 
     const initialModalState = await page.evaluate(() => {
@@ -1378,7 +1481,7 @@ for (const locale of locales) {
           && modalState.modalHeaderHeight <= 180
           && modalState.selectionHeaderPosition === 'sticky'
           && modalState.selectionHeaderHeight > 0
-          && modalState.selectionHeaderHeight <= 190,
+          && modalState.selectionHeaderHeight <= (label === 'mobile' ? 220 : 190),
         JSON.stringify({
           intro: { position: modalState.modalHeaderPosition, height: modalState.modalHeaderHeight },
           selection: { position: modalState.selectionHeaderPosition, height: modalState.selectionHeaderHeight },

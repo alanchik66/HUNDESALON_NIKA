@@ -22,6 +22,8 @@
       source: 'Quelle: Wikimedia-Projekte',
       generated: 'Illustration nach Rassestandard',
       viewSource: 'Bildquelle und Lizenz',
+      sourceShort: 'Quelle',
+      creditLabel: 'Foto',
     },
     en: {
       loading: 'Loading photo',
@@ -29,6 +31,8 @@
       source: 'Source: Wikimedia projects',
       generated: 'Illustration based on the breed standard',
       viewSource: 'Photo source and licence',
+      sourceShort: 'Source',
+      creditLabel: 'Photo',
     },
     ru: {
       loading: 'Загружаем фотографию',
@@ -36,6 +40,8 @@
       source: 'Источник: проекты Wikimedia',
       generated: 'Иллюстрация по стандарту породы',
       viewSource: 'Источник и лицензия фото',
+      sourceShort: 'Источник',
+      creditLabel: 'Фото',
     },
     uk: {
       loading: 'Завантажуємо фотографію',
@@ -43,6 +49,8 @@
       source: 'Джерело: проєкти Wikimedia',
       generated: 'Ілюстрація за стандартом породи',
       viewSource: 'Джерело та ліцензія фото',
+      sourceShort: 'Джерело',
+      creditLabel: 'Фото',
     },
   }[lang];
   const escapeHtml = value =>
@@ -67,11 +75,8 @@
     { key: 'small', sourceKeys: ['small'], grid: 'four' },
     { key: 'medium', sourceKeys: ['medium'], grid: 'four' },
     { key: 'large', sourceKeys: ['large'], grid: 'four' },
-    {
-      key: 'cats-animals',
-      sourceKeys: ['cats', 'smallAnimals'],
-      layout: 'category-row',
-    },
+    { key: 'cats', sourceKeys: ['cats'], grid: 'four' },
+    { key: 'smallAnimals', sourceKeys: ['smallAnimals'], layout: 'small-animal-species' },
     {
       key: 'additional',
       sourceKeys: ['additional', 'important'],
@@ -166,6 +171,12 @@
       results: 'Знайдено',
       reset: 'Скинути все',
     },
+  })[lang];
+  const smallAnimalSpeciesLabels = ({
+    de: { 'guinea-pig': 'Meerschweinchen', rabbit: 'Kaninchen' },
+    en: { 'guinea-pig': 'Guinea pigs', rabbit: 'Rabbits' },
+    ru: { 'guinea-pig': 'Морские свинки', rabbit: 'Кролики' },
+    uk: { 'guinea-pig': 'Морські свинки', rabbit: 'Кролики' },
   })[lang];
   const renderSearchFilterOptions = options => options
     .map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`)
@@ -838,6 +849,12 @@
   };
 
   const ADDITIONAL_CATEGORY_ID = 'ru-additional-services';
+  const ADDITIONAL_CATEGORY_PHOTO_KEYS = Object.freeze([
+    'dog:labrador retriever:',
+    'cat:british shorthair:',
+    'small-animal:guinea-pig:short:0',
+    'small-animal:rabbit:short:4',
+  ]);
   const IMPORTANT_CATEGORY_ID = 'ru-important-information';
   const DENTAL_SERVICE_INDEX = 3;
   const DENTAL_MAX_WEIGHT_KG = 6;
@@ -912,7 +929,7 @@
         return supportsTrimming;
       });
     }
-    if (sourceCategoryId === 'ru-small-animals') {
+    if (category.animalType === 'smallAnimal' || sourceCategoryId === 'ru-small-animals') {
       return services.filter(service => service.index === 0);
     }
     if (!DOG_CATEGORY_IDS.has(sourceCategoryId)) return [];
@@ -926,7 +943,7 @@
   };
 
   const getAdditionalServiceNotes = category => {
-    if ((category?.sourceId || category?.id) === 'ru-small-animals') return [];
+    if (category?.animalType === 'smallAnimal' || (category?.sourceId || category?.id) === 'ru-small-animals') return [];
     const notes = [locale.additionalServicesGeneralNote];
     const groupNote = locale[`additionalServices${category?.groupKey ? `${category.groupKey[0].toUpperCase()}${category.groupKey.slice(1)}` : ''}Note`];
     if (groupNote) notes.unshift(groupNote);
@@ -970,7 +987,7 @@
             <span class="price-card__badge-count"><span class="price-card__badge-word">${escapeHtml(breedCountText.word)}:</span><span class="price-card__badge-number price-number">${escapeHtml(breedCountText.value)}</span></span>
             <span class="price-card__badge-icon-motion" aria-hidden="true"><span class="price-card__badge-icon"></span></span>
           </button>
-          <div class="price-card__breed-menu" id="${escapeHtml(breedMenuId)}" hidden>
+          <div class="price-card__breed-menu${isAdditionalCategory ? ' price-card__breed-menu--categories' : ''}" id="${escapeHtml(breedMenuId)}" hidden>
             <p class="price-card__breed-menu-title">${escapeHtml(isAdditionalCategory ? locale.additionalCategoryMenuLabel : locale.chooseBreedLabel || locale.cardCountSuffix)}</p>
             <ul class="price-card__breed-list" id="${escapeHtml(breedListId)}" data-price-breed-list></ul>
             <span class="price-card__breed-scrollbar" data-price-breed-scrollbar aria-hidden="true">
@@ -1043,13 +1060,22 @@
     if (!category || !list) return;
 
     const allBreeds = category.breeds?.[lang] || category.breeds?.en || [];
+    const isAdditionalCategory = (category.sourceId || category.id) === ADDITIONAL_CATEGORY_ID;
     list.innerHTML = allBreeds
       .map((item, index) => {
         const sourceIndex = category.breedIndexes?.[index] ?? index;
         const photoSubject = getBreedPhotoSubject(category, item, index, sourceIndex);
-        const photo = getAnimalPhotoEntry(photoSubject?.photoKey);
-        const photoAttributes = photoSubject
-          ? ` data-price-breed-photo-title="${escapeHtml(photoSubject.title)}" data-price-breed-photo-language="${escapeHtml(photoSubject.language)}" data-price-breed-photo-kind="${escapeHtml(photoSubject.kind)}" data-price-breed-photo-fci="${escapeHtml(photoSubject.fciNumber || '')}" data-price-breed-photo-key="${escapeHtml(photoSubject.photoKey || '')}"`
+        const photoKey = isAdditionalCategory ? ADDITIONAL_CATEGORY_PHOTO_KEYS[sourceIndex] : photoSubject?.photoKey;
+        const photo = getAnimalPhotoEntry(photoKey);
+        const displayedPhotoSubject = photoSubject || (photoKey ? {
+          title: item,
+          language: lang,
+          kind: 'category',
+          fciNumber: '',
+          photoKey,
+        } : null);
+        const photoAttributes = displayedPhotoSubject
+          ? ` data-price-breed-photo-title="${escapeHtml(displayedPhotoSubject.title)}" data-price-breed-photo-language="${escapeHtml(displayedPhotoSubject.language)}" data-price-breed-photo-kind="${escapeHtml(displayedPhotoSubject.kind)}" data-price-breed-photo-fci="${escapeHtml(displayedPhotoSubject.fciNumber || '')}" data-price-breed-photo-key="${escapeHtml(displayedPhotoSubject.photoKey || '')}"`
           : '';
         const credit = getPhotoAttribution(photo);
         return `<li><button type="button" class="price-card__breed-option" data-price-breed-select data-price-breed-index="${escapeHtml(sourceIndex)}" data-price-breed-label="${escapeHtml(item)}" aria-label="${escapeHtml(item)}"${photoAttributes}>${renderAnimalPhotoThumbnail(photo, 'price-card__breed-option-media')}<span class="price-card__breed-option-copy"><span class="price-card__breed-option-name">${escapeHtml(item)}</span>${credit ? `<span class="price-card__breed-option-credit">${escapeHtml(credit)}</span>` : ''}</span></button></li>`;
@@ -1078,17 +1104,17 @@
         <span>${escapeHtml(locale.breedSelectLabel || 'Choose breed')}</span>
         <select data-price-modal-breed></select>
       </label>
+      <figure class="price-category-modal__breed-photo" data-price-modal-breed-photo hidden>
+        <span class="price-category-modal__breed-photo-media">
+          <img data-price-modal-breed-photo-image alt="" width="720" height="540" decoding="async" />
+        </span>
+        <figcaption class="price-category-modal__breed-photo-caption">
+          <strong data-price-modal-breed-photo-name></strong>
+          <span data-price-modal-breed-photo-credit></span>
+          <a data-price-modal-breed-photo-source data-compact-label="${escapeHtml(breedPhotoCopy.sourceShort)}" target="_blank" rel="noopener noreferrer">${escapeHtml(breedPhotoCopy.viewSource)}</a>
+        </figcaption>
+      </figure>
     </div>
-    <figure class="price-category-modal__breed-photo" data-price-modal-breed-photo hidden>
-      <span class="price-category-modal__breed-photo-media">
-        <img data-price-modal-breed-photo-image alt="" width="720" height="540" decoding="async" />
-      </span>
-      <figcaption class="price-category-modal__breed-photo-caption">
-        <strong data-price-modal-breed-photo-name></strong>
-        <span data-price-modal-breed-photo-credit></span>
-        <a data-price-modal-breed-photo-source target="_blank" rel="noopener noreferrer">${escapeHtml(breedPhotoCopy.viewSource)}</a>
-      </figcaption>
-    </figure>
     <div class="price-category-modal__selection-controls" data-price-modal-selection-controls>
       <fieldset class="price-category-modal__service-fieldset" data-price-modal-service-fieldset>
         <legend data-price-modal-service-legend>${escapeHtml(locale.selectServicesLabel || locale.serviceSelectLabel || 'Choose a service')}</legend>
@@ -1138,7 +1164,9 @@
       <div data-price-modal-service-conditions-booking-slot></div>
     </section>
   `;
-  modalSummary?.closest('.price-category-modal__hero')?.insertAdjacentElement('afterend', modalSelection);
+  const modalHero = modalSummary?.closest('.price-category-modal__hero');
+  modalHero?.insertAdjacentElement('afterend', modalSelection);
+  if (modalHero) modalSelection.prepend(modalHero);
   const modalSelectionControls = modalSelection.querySelector('[data-price-modal-selection-controls]');
   const modalSelectionHeader = modalSelection.querySelector('[data-price-modal-selection-header]');
   const modalBreedSelect = modalSelection.querySelector('[data-price-modal-breed]');
@@ -1444,12 +1472,12 @@
 
   const getPetSpecies = (category, selectedBreed) => {
     const sourceCategoryId = category?.sourceId || category?.id;
-    let key = 'dog';
+    let key = category?.animalType || 'dog';
     if (sourceCategoryId === 'ru-cats-grooming') key = 'cat';
     else if (sourceCategoryId === 'ru-small-animals') key = 'smallAnimal';
     else if (sourceCategoryId === 'ru-important-information') key = 'other';
     else if (sourceCategoryId === ADDITIONAL_CATEGORY_ID) {
-      key = selectedBreed?.index === 1 ? 'cat' : selectedBreed?.index === 2 ? 'smallAnimal' : 'dog';
+      key = selectedBreed?.index === 1 ? 'cat' : selectedBreed?.index >= 2 ? 'smallAnimal' : 'dog';
     }
     const registration = locale.registration || {};
     return {
@@ -1461,6 +1489,7 @@
   const catCoatLabels = {
     long: { de: 'Langhaar', en: 'Long-haired', ru: 'Длинная шерсть', uk: 'Довга шерсть' },
     short: { de: 'Kurzhaar', en: 'Short-haired', ru: 'Короткая шерсть', uk: 'Коротка шерсть' },
+    special: { de: 'Rex / Drahthaar / haarlos', en: 'Rex / wire-haired / hairless', ru: 'Рексовая / жёсткая / бесшёрстная', uk: 'Рексова / жорстка / безшерста' },
     double: { de: 'Doppeltes Fell', en: 'Double coat', ru: 'Двойной тип шерсти', uk: 'Подвійний тип шерсті' },
   };
   const animalSizeLabels = {
@@ -1666,7 +1695,9 @@
       selectedPrimaryServices,
       selectedAdditionalServices,
       dentalWeightValid,
-      breedSurcharge: sourceCategoryId === 'ru-cats-grooming' ? Number(selectedBreed?.metadata?.surcharge) || 0 : 0,
+      breedSurcharge: category.animalType === 'cat' || sourceCategoryId === 'ru-cats-grooming'
+        ? Number(selectedBreed?.metadata?.surcharge) || 0
+        : 0,
     });
     const priceText = !selectedServices.length
       ? locale.chooseServiceLabel || locale.selectServicesLabel || 'Choose a service'
@@ -1776,13 +1807,17 @@
     const photo = getAnimalPhotoEntry(selectedOption?.dataset.priceBreedPhotoKey || '');
     if (!selectedOption || !photo) {
       modalBreedPhoto.hidden = true;
+      modalSelectionHeader?.classList.remove('has-breed-photo');
       modalBreedPhotoImage.removeAttribute('src');
       return;
     }
 
     const breedName = selectedOption.textContent?.trim() || '';
     modalBreedPhotoName.textContent = breedName;
-    modalBreedPhotoCredit.textContent = getPhotoAttribution(photo);
+    const attribution = getPhotoAttribution(photo);
+    modalBreedPhotoCredit.textContent = photo.generated
+      ? attribution
+      : `${breedPhotoCopy.creditLabel}: ${attribution}`;
     modalBreedPhotoImage.alt = breedName;
     modalBreedPhotoImage.src = photo.src;
 
@@ -1794,10 +1829,12 @@
       else modalBreedPhotoSource.removeAttribute('href');
     }
     modalBreedPhoto.hidden = false;
+    modalSelectionHeader?.classList.add('has-breed-photo');
   };
 
   modalBreedPhotoImage?.addEventListener('error', () => {
     modalBreedPhoto.hidden = true;
+    modalSelectionHeader?.classList.remove('has-breed-photo');
     modalBreedPhotoImage.removeAttribute('src');
   });
 
@@ -2199,6 +2236,34 @@
 
   const renderSection = (sectionKey, views, options = {}) => {
     const title = locale.sizeGroupTitles?.[sectionKey] || locale.servicesTitle;
+    const weightRange = locale.sizeGroupWeightRanges?.[sectionKey] || '';
+    if (options.layout === 'small-animal-species') {
+      const speciesSections = ['guinea-pig', 'rabbit']
+        .map(species => {
+          const speciesViews = views.filter(category => category.species === species);
+          if (!speciesViews.length) return '';
+          return `
+            <section class="price-small-animal-group" data-small-animal-species="${escapeHtml(species)}" aria-labelledby="price-small-animal-${escapeHtml(species)}-title">
+              <div class="price-small-animal-group__heading">
+                <h3 class="price-small-animal-group__title" id="price-small-animal-${escapeHtml(species)}-title">${escapeHtml(smallAnimalSpeciesLabels[species])}</h3>
+              </div>
+              <div class="price-size-section__cards">
+                ${speciesViews.map(renderCard).join('')}
+              </div>
+            </section>`;
+        })
+        .join('');
+      return `
+        <section class="price-size-section price-size-section--small-animals" id="price-section-${escapeHtml(sectionKey)}" data-price-section="${escapeHtml(sectionKey)}" data-price-section-target="${escapeHtml(sectionKey)}">
+          <div class="price-size-section__heading">
+            <h2 class="price-size-section__title">${escapeHtml(title)}</h2>
+          </div>
+          <div class="price-small-animal-groups">
+            ${speciesSections}
+          </div>
+        </section>
+      `;
+    }
     if (options.layout === 'category-row') {
       const categorySections = (options.sourceKeys || [])
         .map(categoryKey => {
@@ -2231,6 +2296,7 @@
         ${options.showHeading === false ? '' : `
           <div class="price-size-section__heading">
             <h2 class="price-size-section__title">${escapeHtml(title)}</h2>
+            ${weightRange ? `<span class="price-size-section__weight">${escapeHtml(weightRange)}</span>` : ''}
           </div>`}
         <div class="price-size-section__cards">
           ${views.map(renderCard).join('')}

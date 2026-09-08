@@ -15,6 +15,14 @@ const baseSources = [
 const catSources = [
   'assets/js/cat-breeds-data.js',
   'assets/js/price-page-cat-breeds.js',
+  'assets/js/price-page-animal-groups.js',
+];
+const expectedCatCategoryIds = ['ru-cat-short-coat', 'ru-cat-special-coat', 'ru-cat-long-coat', 'ru-cat-double-coat'];
+const expectedSmallAnimalCategoryIds = [
+  'ru-guinea-pig-short-coat',
+  'ru-guinea-pig-long-coat',
+  'ru-rabbit-short-coat',
+  'ru-rabbit-long-coat',
 ];
 
 const runSources = sourcePaths => {
@@ -67,21 +75,26 @@ test('cat registry contains unique localized weighted coat profiles', () => {
   }
 });
 
-test('cat integration keeps one existing category with localized breeds and hygiene services', () => {
+test('cat integration exposes four localized coat groups without losing or duplicating breeds', () => {
   const window = runSources([...baseSources, ...catSources]);
 
   for (const locale of locales) {
-    const category = window.PricePageCatalog.categoriesByLocale[locale].find(item => item.id === 'ru-cats-grooming');
-    assert.ok(category, `missing cat category for ${locale}`);
-    assert.equal(category.breeds[locale].length, 87);
-    assert.equal(category.breedMetadata[locale].length, 87);
-    assert.equal(category.breedPhotoTitles[locale].length, 87);
-    assert.equal(category.services.includes('hygiene'), true);
-    assert.equal(new Set(category.breeds[locale].map(normalizeName)).size, 87);
-    assert.ok(category.breeds[locale].every(label => !/all breeds|всіх порід|всех пород/i.test(label)));
+    const categories = expectedCatCategoryIds.map(id =>
+      window.PricePageCatalog.categoriesByLocale[locale].find(item => item.id === id)
+    );
+    assert.ok(categories.every(Boolean), `missing grouped cat category for ${locale}`);
+    const breeds = categories.flatMap(category => category.breeds[locale]);
+    const metadata = categories.flatMap(category => category.breedMetadata[locale]);
+    assert.equal(breeds.length, 87);
+    assert.equal(metadata.length, 87);
+    assert.equal(new Set(breeds.map(normalizeName)).size, 87);
+    assert.equal(new Set(metadata.map(item => item.id)).size, 87);
+    assert.ok(categories.every(category => category.services.includes('hygiene')));
+    assert.ok(breeds.every(label => !/all breeds|всіх порід|всех пород/i.test(label)));
   }
 
-  const russianCategory = window.PricePageCatalog.categoriesByLocale.ru.find(item => item.id === 'ru-cats-grooming');
+  const russianCategories = window.PricePageCatalog.categoriesByLocale.ru;
+  const russianCategory = russianCategories.find(item => item.id === 'ru-cat-double-coat');
   assert.deepEqual(JSON.parse(JSON.stringify(russianCategory.breedMetadata.ru.find(item => item.id === 'maine-coon'))), {
     id: 'maine-coon',
     sourceCode: 'MCO',
@@ -92,19 +105,38 @@ test('cat integration keeps one existing category with localized breeds and hygi
     surcharge: 15,
     photoTitle: 'Maine Coon cat',
   });
+  const specialCategory = russianCategories.find(item => item.id === 'ru-cat-special-coat');
+  assert.ok(specialCategory.breedMetadata.ru.some(item => item.id === 'american-wirehair'));
+  assert.ok(specialCategory.breedMetadata.ru.some(item => item.id === 'sphynx'));
+  assert.ok(specialCategory.breedMetadata.ru.some(item => item.id === 'selkirk-rex-longhair'));
 });
 
-test('booking catalog exposes cat metadata, hygiene labels, and the single large-breed surcharge', () => {
+test('small animals are split into four localized care groups with species-correct prices', () => {
+  const window = runSources([...baseSources, ...catSources]);
+  for (const locale of locales) {
+    const categories = expectedSmallAnimalCategoryIds.map(id =>
+      window.PricePageCatalog.categoriesByLocale[locale].find(item => item.id === id)
+    );
+    assert.ok(categories.every(Boolean), `missing small-animal care group for ${locale}`);
+    assert.ok(categories.every(category => category.breeds[locale].length === 5));
+    assert.ok(categories.slice(0, 2).every(category => category.priceRows.length === 2));
+    assert.ok(categories.slice(2).every(category => category.priceRows.length === 1));
+    assert.ok(categories.slice(0, 2).every(category => category.priceRows[0].price[locale].includes('30')));
+    assert.ok(categories.slice(2).every(category => category.priceRows[0].price[locale].includes('35')));
+  }
+});
+
+test('booking catalog exposes grouped cat metadata, hygiene labels, and the single large-breed surcharge', () => {
   const window = runSources([...baseSources, ...catSources, 'assets/js/price-booking.js']);
   const catalog = window.PriceBookingCatalog.build('ru');
-  const category = catalog.getCategory('ru-cats-grooming');
-  const maineCoon = category.breeds.find(breed => breed.metadata?.id === 'maine-coon');
-  const ordinaryCat = category.breeds.find(breed => breed.metadata?.id === 'abyssinian');
+  const categories = expectedCatCategoryIds.map(id => catalog.getCategory(id));
+  const maineCoon = categories.flatMap(category => category.breeds).find(breed => breed.metadata?.id === 'maine-coon');
+  const ordinaryCat = categories.flatMap(category => category.breeds).find(breed => breed.metadata?.id === 'abyssinian');
 
-  assert.equal(category.breeds.length, 87);
-  assert.equal(category.services.length, 2);
-  assert.match(category.services[0].label, /гигиенический уход/u);
-  assert.match(category.services[1].label, /гигиенический уход/u);
+  assert.equal(categories.reduce((sum, category) => sum + category.breeds.length, 0), 87);
+  assert.ok(categories.every(category => category.services.length === 2));
+  assert.match(categories[0].services[0].label, /гигиенический уход/u);
+  assert.match(categories[0].services[1].label, /гигиенический уход/u);
   assert.equal(maineCoon.metadata.surcharge, 15);
   assert.equal(ordinaryCat.metadata.surcharge, 0);
 });
@@ -117,6 +149,8 @@ test('all localized price pages load cat registry before booking and page logic'
       'price-page-fci-breeds.js',
       'cat-breeds-data.js',
       'price-page-cat-breeds.js',
+      'animal-breed-photo-data.js',
+      'price-page-animal-groups.js',
       'price-booking.js',
       'price-page.js',
     ].map(script => html.indexOf(script));

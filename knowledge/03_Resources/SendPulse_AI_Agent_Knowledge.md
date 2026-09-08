@@ -1,6 +1,6 @@
 # HUNDESALON_NIKA Website Knowledge for the SendPulse AI Agent #
 
-Generated source fingerprint: sha256:30aa9d7146ebe04277b3cc707535d2e0a8df098b16b4d167e18db3bbf6784f99
+Generated source fingerprint: sha256:a432e45d7973020ba80c38fd8858f4c8f92a55fdd458aff4980cf6ae88daae74
 
 This document is the factual knowledge base for the customer-facing SendPulse live-chat AI agent. It covers the public HUNDESALON_NIKA website in German, English, Russian, and Ukrainian.
 
@@ -249,7 +249,7 @@ This detailed catalog is the only authoritative website price source. Generic ov
 
 #### Zusatzleistungen ####
 - Summary: Zusatzpflege, die zur Hauptleistung ergänzt werden kann.
-- Breeds: Hunde, Katzen
+- Breeds: Hunde, Katzen, Meerschweinchen, Kaninchen
 - Included/listed care: Krallen schneiden, Ultraschall-Zahnreinigung ohne Narkose, Aufbau-Maske, Ozontherapie
 - Price: Krallenschneiden — kleine Rassen — 7 €
 - Price: Krallenschneiden — mittelgroße Rassen — 10 €
@@ -405,7 +405,7 @@ This detailed catalog is the only authoritative website price source. Generic ov
 
 #### Additional services ####
 - Summary: Additional care that can be added to the main service.
-- Breeds: Dogs, Cats
+- Breeds: Dogs, Cats, Guinea pigs, Rabbits
 - Included/listed care: Nail trim, Ultrasonic teeth cleaning without anesthesia, Restorative mask, Ozone therapy
 - Price: Nail trimming — small breeds — €7
 - Price: Nail trimming — medium breeds — €10
@@ -564,7 +564,7 @@ This detailed catalog is the only authoritative website price source. Generic ov
 
 #### Дополнительные услуги ####
 - Summary: Дополнительный уход, который можно добавить к основной процедуре.
-- Breeds: Собаки, Кошки
+- Breeds: Собаки, Кошки, Морские свинки, Кролики
 - Included/listed care: Подстригание когтей, Ультразвуковая чистка зубов без наркоза, Восстанавливающая маска, Озонотерапия
 - Price: Подстригание когтей — маленькие породы — 7 €
 - Price: Подстригание когтей — средние породы — 10 €
@@ -720,7 +720,7 @@ This detailed catalog is the only authoritative website price source. Generic ov
 
 #### Додаткові послуги ####
 - Summary: Додатковий догляд, який можна додати до основної процедури.
-- Breeds: Собаки, Коти
+- Breeds: Собаки, Коти, Морські свинки, Кролики
 - Included/listed care: Підрізання кігтів, Ультразвукове чищення зубів без наркозу, Відновлювальна маска, Озонотерапія
 - Price: Підстригання кігтів — малі породи — 7 €
 - Price: Підстригання кігтів — середні породи — 10 €
