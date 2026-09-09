@@ -51,6 +51,21 @@ const ENDPOINT_LIMITS = [
     mitigationTimeout: 120,
   },
   {
+    path: '/api/ai-chat-upload',
+    description: `${RULE_PREFIX} POST /api/ai-chat-upload`,
+    requestsPerPeriod: 4,
+    period: 60,
+    mitigationTimeout: 600,
+  },
+  {
+    path: '/api/ai-chat-gifs',
+    method: 'GET',
+    description: `${RULE_PREFIX} GET /api/ai-chat-gifs`,
+    requestsPerPeriod: 30,
+    period: 60,
+    mitigationTimeout: 60,
+  },
+  {
     path: '/lg-task',
     description: `${RULE_PREFIX} POST /lg-task`,
     requestsPerPeriod: 10,
@@ -80,8 +95,9 @@ const ENDPOINT_LIMITS = [
   },
 ];
 
-const COMBINED_RULE_DESC = `${RULE_PREFIX} POST protected API endpoints`;
-const LEGACY_COMBINED_RULE_PATTERN = /^HUNDESALON: POST protected API endpoints(?: \(\d+ req\/\d+s\))?$/;
+const COMBINED_RULE_DESC = `${RULE_PREFIX} protected API endpoints`;
+const LEGACY_COMBINED_RULE_PATTERN =
+  /^HUNDESALON: (?:POST )?protected API endpoints(?: \(\d+ req\/\d+s\))?$/;
 const COMBINED_RULE_LIMIT = {
   requestsPerPeriod: 2,
   period: 10,
@@ -106,10 +122,10 @@ async function resolveAuth() {
   return { Authorization: `Bearer ${token}` };
 }
 
-function buildRulePayload({ path, description, requestsPerPeriod, period, mitigationTimeout }) {
+function buildRulePayload({ path, method = 'POST', description, requestsPerPeriod, period, mitigationTimeout }) {
   return {
     description,
-    expression: `(http.request.uri.path eq "${path}" and http.request.method eq "POST")`,
+    expression: `(http.request.uri.path eq "${path}" and http.request.method eq "${method}")`,
     action: 'block',
     action_parameters: {
       response: {
@@ -132,7 +148,7 @@ function buildCombinedRulePayload() {
   return {
     description: COMBINED_RULE_DESC,
     expression:
-      '((http.request.uri.path eq "/sendmail" or http.request.uri.path eq "/message-draft" or http.request.uri.path eq "/seo-generate" or http.request.uri.path eq "/api/ai-chat" or http.request.uri.path eq "/lg-task" or http.request.uri.path eq "/subscribe" or http.request.uri.path eq "/upload" or http.request.uri.path eq "/payment") and http.request.method eq "POST")',
+      '(((http.request.uri.path eq "/sendmail" or http.request.uri.path eq "/message-draft" or http.request.uri.path eq "/seo-generate" or http.request.uri.path eq "/api/ai-chat" or http.request.uri.path eq "/api/ai-chat-upload" or http.request.uri.path eq "/lg-task" or http.request.uri.path eq "/subscribe" or http.request.uri.path eq "/upload" or http.request.uri.path eq "/payment") and http.request.method eq "POST") or (http.request.uri.path eq "/api/ai-chat-gifs" and http.request.method eq "GET"))',
     action: 'block',
     action_parameters: {
       response: {

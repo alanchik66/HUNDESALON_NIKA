@@ -147,7 +147,8 @@ test('custom AI chat keeps the human SendPulse widget as a working fallback', ()
   assert.match(aiSource, /\.widget-fab, \.button-open-widget/);
   assert.match(aiSource, /attempts >= 60/);
   assert.match(aiSource, /handoffTimer/);
-  assert.match(aiSource, /SpeechRecognition\s*=\s*window\.SpeechRecognition/);
+  assert.match(aiSource, /new window\.MediaRecorder/);
+  assert.match(aiSource, /navigator\.mediaDevices\?\.getUserMedia/);
   assert.match(sendPulseSource, /data-hundesalon-ai-ready/);
   assert.match(buildSource, /ai-chat\.css/);
   assert.match(buildSource, /ai-chat\.js/);

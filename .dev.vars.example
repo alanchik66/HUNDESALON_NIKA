@@ -42,6 +42,7 @@ GOOGLE_SERVICE_ACCOUNT_SUBJECT=
 GOOGLE_CALENDAR_ID=primary
 SHEET_ID=
 DRIVE_UPLOAD_FOLDER=
+GIPHY_API_KEY=
 GMAIL_SENDER=
 # System / admin copies (not public). Client-facing mail uses CLIENT_EMAIL_FROM.
 # Public NAP for Search / Ads / site imprint — customers write here; forms land here.

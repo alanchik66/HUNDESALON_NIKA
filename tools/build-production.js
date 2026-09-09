@@ -23,6 +23,7 @@ const PRODUCTION_MINIFY_ASSETS = [
   'assets/js/newsletter.js',
   'assets/js/sendpulse-integrations.js',
   'assets/css/ai-chat.css',
+  'assets/css/noto-color-emoji.css',
   'assets/js/ai-chat.js',
   'assets/js/testimonials.js',
 ];
@@ -357,7 +358,10 @@ function injectSendPulseIntegrations(directory, version) {
       const stylePrefix = path
         .relative(path.dirname(fullPath), path.join(directory, 'assets/css'))
         .replaceAll('\\', '/');
-      const stylesheet = `<link rel="stylesheet" href="${stylePrefix}/ai-chat.css?v=${version}">`;
+      const stylesheet = [
+        `<link rel="stylesheet" href="${stylePrefix}/noto-color-emoji.css?v=${version}">`,
+        `<link rel="stylesheet" href="${stylePrefix}/ai-chat.css?v=${version}">`,
+      ].join('\n');
       const loaders = [
         `<script src="${scriptPrefix}/sendpulse-integrations.js?v=${version}"></script>`,
         `<script src="${scriptPrefix}/ai-chat.js?v=${version}"></script>`,

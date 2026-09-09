@@ -145,6 +145,10 @@
       display: none !important;
     }
 
+    :host([data-hundesalon-ai-ready='true']) {
+      pointer-events: none !important;
+    }
+
     .widget-wrapper .widget {
       overflow: hidden !important;
       border: 1px solid rgba(var(--hundesalon-chat-gold), 0.38) !important;

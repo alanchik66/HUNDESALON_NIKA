@@ -179,12 +179,16 @@ try {
       const cookieConsent = document.querySelector('.cookie-consent');
       const aiChat = document.querySelector('#hundesalon-ai-chat');
       const sendPulseChat = document.querySelector('sp-live-chat');
+      const aiChatVisible = !aiChat || getComputedStyle(aiChat).display !== 'none';
+      const sendPulseOwnedByAiChat =
+        sendPulseChat?.getAttribute('data-hundesalon-ai-ready') === 'true' && aiChatVisible;
       return {
         closed: document.querySelector('#mobile-nav')?.getAttribute('aria-hidden') === 'true',
         bodyUnlocked: !document.body.classList.contains('nav-open'),
         cookieRestored: !cookieConsent || getComputedStyle(cookieConsent).display !== 'none',
-        aiChatRestored: !aiChat || getComputedStyle(aiChat).display !== 'none',
-        sendPulseChatRestored: !sendPulseChat || getComputedStyle(sendPulseChat).display !== 'none',
+        aiChatRestored: aiChatVisible,
+        sendPulseChatRestored:
+          !sendPulseChat || getComputedStyle(sendPulseChat).display !== 'none' || sendPulseOwnedByAiChat,
       };
     });
     assert(

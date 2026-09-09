@@ -7,7 +7,7 @@
 const PAGES_ORIGIN = 'hundesalon-nika.pages.dev';
 const PUBLIC_HOSTS = new Set(['hundesalon-nika.com', 'www.hundesalon-nika.com']);
 const PERMISSIONS_POLICY =
-  'camera=(), microphone=(), geolocation=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()';
+  'camera=(), microphone=(self), geolocation=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()';
 
 function publicUrlFromPages(location, requestUrl) {
   if (!location) return location;
