@@ -64,6 +64,9 @@ MS_GRAPH_ACCESS_TOKEN=
 MS_TENANT_ID=
 MS_CLIENT_ID=
 MS_CLIENT_SECRET=
+# AI-chat storage in OneDrive. Standard Microsoft Graph file APIs have no separate API charge.
+MS_REFRESH_TOKEN=
+ONEDRIVE_UPLOAD_FOLDER=
 OUTLOOK_SENDER=
 TEAM_ID=
 TEAM_CHANNEL_ID=

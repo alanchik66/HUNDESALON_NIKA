@@ -391,12 +391,13 @@
     );
   }
 
-  function uploadChunk({ uploadUrl, blob, start, total, mimeType, onProgress, registerRequest }) {
+  function uploadChunk({ uploadUrl, uploadSignature, blob, start, total, mimeType, onProgress, registerRequest }) {
     return new Promise((resolve, reject) => {
       const xhr = new window.XMLHttpRequest();
       registerRequest(xhr);
       xhr.open('POST', `${UPLOAD_ENDPOINT}?action=chunk`);
       xhr.setRequestHeader('X-Upload-Url', uploadUrl);
+      xhr.setRequestHeader('X-Upload-Signature', uploadSignature);
       xhr.setRequestHeader('Content-Type', mimeType);
       xhr.setRequestHeader('Content-Range', `bytes ${start}-${start + blob.size - 1}/${total}`);
       xhr.upload.addEventListener('progress', event => {
@@ -441,6 +442,7 @@
       recordedFile: null,
       gifRequest: null,
       gifSearchTimer: null,
+      transcriptTimer: null,
     };
 
     const root = document.createElement('section');
@@ -859,7 +861,8 @@
         const session = await sessionResponse.json().catch(() => ({}));
         if (!sessionResponse.ok || !session?.uploadUrl) throw new Error(session?.message || 'UPLOAD_SESSION_FAILED');
 
-        const chunkSize = Math.max(256 * 1024, Number(session.chunkSize) || 8 * 1024 * 1024);
+        if (!session.uploadSignature) throw new Error('UPLOAD_SESSION_INVALID');
+        const chunkSize = Math.max(320 * 1024, Number(session.chunkSize) || 10 * 1024 * 1024);
         let completedFile = null;
         for (let start = 0; start < file.size; start += chunkSize) {
           if (uploadState.cancelled) throw new window.DOMException('Upload cancelled', 'AbortError');
@@ -869,6 +872,7 @@
             try {
               completedFile = await uploadChunk({
                 uploadUrl: session.uploadUrl,
+                uploadSignature: session.uploadSignature,
                 blob: chunk,
                 start,
                 total: file.size,
@@ -1050,6 +1054,23 @@
       });
     }
 
+    function scheduleTranscriptSync() {
+      window.clearTimeout(state.transcriptTimer);
+      state.transcriptTimer = window.setTimeout(() => {
+        fetch(UPLOAD_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'transcript',
+            sessionId: state.sessionId,
+            locale,
+            pagePath: location.pathname,
+            messages: state.messages,
+          }),
+        }).catch(() => {});
+      }, 750);
+    }
+
     function addMessage(role, content, { handoff = false, persist = true, media = null, attachment = null } = {}) {
       const row = document.createElement('article');
       row.className = `hn-ai-message is-${role}`;
@@ -1126,6 +1147,7 @@
         });
         state.messages = state.messages.slice(-MAX_STORED_MESSAGES);
         writeStoredMessages(locale, state.messages);
+        scheduleTranscriptSync();
       }
       scrollToLatest();
     }
@@ -1273,6 +1295,7 @@
       if (!window.confirm(copy.newConversationConfirm)) return;
       state.messages = [];
       writeStoredMessages(locale, []);
+      scheduleTranscriptSync();
       messages.querySelectorAll('.hn-ai-message').forEach(node => node.remove());
       closePopovers();
       textarea.focus();

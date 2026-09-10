@@ -5,19 +5,23 @@ import {
   jsonResponse,
   readJsonBody,
 } from '../_lib/http-security.js';
+import { cleanText, sendTelegramMessage } from '../_lib/platform-integrations.js';
 import {
-  cleanText,
-  getGoogleAccessToken,
-  getGoogleOAuthAccessToken,
-  sendTelegramMessage,
-} from '../_lib/platform-integrations.js';
+  createOneDriveUploadSession,
+  ensureOneDriveSessionFolder,
+  getOneDriveAccessToken,
+  getOneDriveItem,
+  isOneDriveConfigured,
+  saveOneDriveTranscript,
+  signOneDriveUploadUrl,
+  verifyOneDriveUploadUrl,
+} from '../_lib/onedrive.js';
 
 export const AI_CHAT_UPLOAD_MAX_BYTES = 150 * 1024 * 1024;
-export const AI_CHAT_UPLOAD_CHUNK_MAX_BYTES = 8 * 1024 * 1024;
-const JSON_BODY_MAX_BYTES = 16 * 1024;
-const DRIVE_SCOPE = ['https://www.googleapis.com/auth/drive.file'];
-const DRIVE_UPLOAD_URL =
-  'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,name,size,mimeType,webViewLink,parents';
+export const AI_CHAT_UPLOAD_CHUNK_MAX_BYTES = 10 * 1024 * 1024;
+const JSON_BODY_MAX_BYTES = 96 * 1024;
+const TRANSCRIPT_MESSAGE_LIMIT = 24;
+const TRANSCRIPT_CONTENT_LIMIT = 4000;
 
 function normalizedFile(input) {
   const size = Number(input?.size);
@@ -28,7 +32,6 @@ function normalizedFile(input) {
     ? rawType
     : 'application/octet-stream';
   const kind = input?.kind === 'voice' ? 'voice' : 'file';
-
   return {
     valid: Number.isSafeInteger(size) && size > 0 && size <= AI_CHAT_UPLOAD_MAX_BYTES,
     fileName,
@@ -38,16 +41,20 @@ function normalizedFile(input) {
   };
 }
 
-async function driveToken(env) {
-  return (await getGoogleAccessToken(env, DRIVE_SCOPE)) || (await getGoogleOAuthAccessToken(env));
-}
-
 function unconfigured(origin) {
   return jsonResponse(
-    { success: false, configured: false, message: 'Secure file storage is not configured.' },
+    { success: false, configured: false, message: 'Secure OneDrive storage is not configured.' },
     503,
     origin
   );
+}
+
+async function sessionContext(env, sessionId) {
+  if (!isOneDriveConfigured(env)) return null;
+  const token = await getOneDriveAccessToken(env);
+  if (!token) return null;
+  const folder = await ensureOneDriveSessionFolder(env, token, sessionId);
+  return folder?.id ? { token, folder } : null;
 }
 
 async function startUpload(env, payload, origin) {
@@ -55,43 +62,24 @@ async function startUpload(env, payload, origin) {
   if (!file.valid) {
     return jsonResponse({ success: false, message: 'File must be between 1 byte and 150 MB.' }, 400, origin);
   }
-
-  const folderId = cleanText(env?.DRIVE_UPLOAD_FOLDER, 160);
-  const token = await driveToken(env);
-  if (!folderId || !token) return unconfigured(origin);
-
-  const locale = cleanText(payload?.locale, 8);
-  const sessionId = cleanText(payload?.sessionId, 80);
-  const pagePath = cleanText(payload?.pagePath, 240);
-  const metadata = {
-    name: `${Date.now()}-${crypto.randomUUID()}-${file.fileName}`,
-    parents: [folderId],
-    description: JSON.stringify({ source: 'ai-chat', kind: file.kind, locale, sessionId, pagePath }),
-  };
-  const response = await fetch(DRIVE_UPLOAD_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json; charset=UTF-8',
-      'X-Upload-Content-Length': String(file.size),
-      'X-Upload-Content-Type': file.mimeType,
-    },
-    body: JSON.stringify(metadata),
-  });
-  const uploadUrl = response.headers.get('location') || '';
-  if (!response.ok || !uploadUrl.startsWith('https://www.googleapis.com/upload/')) {
-    console.error('[ai-chat-upload] Drive session failed', JSON.stringify({ status: response.status }));
-    return jsonResponse({ success: false, message: 'Could not start the secure upload.' }, 502, origin);
+  const session = await sessionContext(env, payload?.sessionId);
+  if (!session) return unconfigured(origin);
+  const storedName = `${Date.now()}-${crypto.randomUUID()}-${file.fileName}`;
+  const upload = await createOneDriveUploadSession(env, session.token, session.folder.id, storedName);
+  if (!upload?.uploadUrl) {
+    return jsonResponse({ success: false, message: 'Could not start the secure OneDrive upload.' }, 502, origin);
   }
-
+  const uploadSignature = await signOneDriveUploadUrl(env, upload.uploadUrl);
+  if (!uploadSignature) return unconfigured(origin);
   return jsonResponse(
     {
       success: true,
-      uploadUrl,
+      uploadUrl: upload.uploadUrl,
+      uploadSignature,
       fileName: file.fileName,
       size: file.size,
       mimeType: file.mimeType,
-      chunkSize: 8 * 1024 * 1024,
+      chunkSize: AI_CHAT_UPLOAD_CHUNK_MAX_BYTES,
     },
     200,
     origin
@@ -99,55 +87,44 @@ async function startUpload(env, payload, origin) {
 }
 
 async function completeUpload(env, payload, origin) {
-  const fileId = cleanText(payload?.fileId, 160);
-  if (!/^[\w-]{10,160}$/.test(fileId)) {
+  const fileId = cleanText(payload?.fileId, 220);
+  if (!/^[\w!.-]{10,220}$/.test(fileId)) {
     return jsonResponse({ success: false, message: 'Invalid uploaded file identifier.' }, 400, origin);
   }
-
-  const folderId = cleanText(env?.DRIVE_UPLOAD_FOLDER, 160);
-  const token = await driveToken(env);
-  if (!folderId || !token) return unconfigured(origin);
-
-  const response = await fetch(
-    `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=id,name,size,mimeType,webViewLink,parents`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  if (!response.ok) {
-    return jsonResponse({ success: false, message: 'Uploaded file verification failed.' }, 502, origin);
-  }
-
-  const driveFile = await response.json();
-  const size = Number(driveFile?.size);
+  const session = await sessionContext(env, payload?.sessionId);
+  if (!session) return unconfigured(origin);
+  const item = await getOneDriveItem(session.token, fileId);
+  const size = Number(item?.size);
   if (
-    driveFile?.id !== fileId ||
-    !Array.isArray(driveFile?.parents) ||
-    !driveFile.parents.includes(folderId) ||
+    item?.id !== fileId ||
+    item?.parentReference?.id !== session.folder.id ||
+    !item?.file ||
     !Number.isSafeInteger(size) ||
     size < 1 ||
     size > AI_CHAT_UPLOAD_MAX_BYTES
   ) {
-    return jsonResponse({ success: false, message: 'Uploaded file did not pass verification.' }, 400, origin);
+    return jsonResponse({ success: false, message: 'Uploaded OneDrive file did not pass verification.' }, 400, origin);
   }
-
   const kind = payload?.kind === 'voice' ? 'Голосовое сообщение' : 'Файл';
-  const link = cleanText(driveFile.webViewLink, 800) || `https://drive.google.com/file/d/${fileId}/view`;
+  const link = cleanText(item.webUrl, 1000);
   const notification = await sendTelegramMessage(env, {
     category: 'messages',
     text: [
       `📎 ${kind} из AI-чата сайта`,
-      `Имя: ${cleanText(driveFile.name, 220)}`,
+      `Имя: ${cleanText(item.name, 220)}`,
       `Размер: ${(size / 1024 / 1024).toFixed(2)} МБ`,
-      `Тип: ${cleanText(driveFile.mimeType, 140) || 'application/octet-stream'}`,
+      `Тип: ${cleanText(item.file?.mimeType, 140) || 'application/octet-stream'}`,
       `Язык: ${cleanText(payload?.locale, 8) || '—'}`,
+      'Хранилище: OneDrive',
       link,
     ].join('\n'),
   });
-
   return jsonResponse(
     {
       success: true,
       fileId,
       fileUrl: link,
+      storage: 'onedrive',
       notified: Boolean(notification?.ok),
       notificationSkipped: Boolean(notification?.skipped),
     },
@@ -156,34 +133,62 @@ async function completeUpload(env, payload, origin) {
   );
 }
 
-function validatedDriveUploadUrl(value) {
-  try {
-    const url = new URL(value);
-    return url.protocol === 'https:' &&
-      url.hostname === 'www.googleapis.com' &&
-      url.pathname === '/upload/drive/v3/files' &&
-      url.searchParams.get('upload_id')
-      ? url.href
-      : '';
-  } catch {
-    return '';
-  }
+function normalizedTranscript(payload) {
+  const messages = Array.isArray(payload?.messages) ? payload.messages.slice(-TRANSCRIPT_MESSAGE_LIMIT) : [];
+  return {
+    source: 'hundesalon-ai-chat',
+    sessionId: cleanText(payload?.sessionId, 80),
+    locale: cleanText(payload?.locale, 8),
+    pagePath: cleanText(payload?.pagePath, 240),
+    updatedAt: new Date().toISOString(),
+    messages: messages
+      .map(message => ({
+        role: message?.role === 'assistant' ? 'assistant' : 'user',
+        content: cleanText(message?.content, TRANSCRIPT_CONTENT_LIMIT),
+        attachment:
+          message?.attachment && typeof message.attachment === 'object'
+            ? {
+                name: cleanText(message.attachment.name, 180),
+                size: Number(message.attachment.size) || 0,
+                mimeType: cleanText(message.attachment.mimeType, 120),
+                kind: message.attachment.kind === 'voice' ? 'voice' : 'file',
+                delivered: message.attachment.delivered === true,
+              }
+            : null,
+      }))
+      .filter(message => message.content || message.attachment?.name),
+  };
 }
 
-async function proxyUploadChunk(request, origin) {
-  const uploadUrl = validatedDriveUploadUrl(request.headers.get('X-Upload-Url'));
+async function storeTranscript(env, payload, origin) {
+  const transcript = normalizedTranscript(payload);
+  if (!transcript.sessionId || !transcript.messages.length) {
+    return jsonResponse({ success: false, message: 'Transcript is empty.' }, 400, origin);
+  }
+  const session = await sessionContext(env, transcript.sessionId);
+  if (!session) return unconfigured(origin);
+  const item = await saveOneDriveTranscript(session.token, session.folder.id, transcript.sessionId, transcript);
+  if (!item?.id) {
+    return jsonResponse({ success: false, message: 'Could not store the OneDrive transcript.' }, 502, origin);
+  }
+  return jsonResponse({ success: true, storage: 'onedrive', transcriptId: item.id }, 200, origin);
+}
+
+async function proxyUploadChunk(request, env, origin) {
+  const uploadUrl = cleanText(request.headers.get('X-Upload-Url'), 4096);
+  const signature = cleanText(request.headers.get('X-Upload-Signature'), 128);
   const contentRange = cleanText(request.headers.get('Content-Range'), 100);
   const match = contentRange.match(/^bytes (\d+)-(\d+)\/(\d+)$/);
   const contentLength = Number(request.headers.get('Content-Length'));
-  if (!uploadUrl || !match) {
+  if (!(await verifyOneDriveUploadUrl(env, uploadUrl, signature)) || !match) {
     return jsonResponse({ success: false, message: 'Invalid upload chunk.' }, 400, origin);
   }
-
   const [, rawStart, rawEnd, rawTotal] = match;
   const start = Number(rawStart);
   const end = Number(rawEnd);
   const total = Number(rawTotal);
   const chunkBytes = end - start + 1;
+  const finalChunk = end === total - 1;
   if (
     !Number.isSafeInteger(start) ||
     !Number.isSafeInteger(end) ||
@@ -194,55 +199,40 @@ async function proxyUploadChunk(request, origin) {
     total > AI_CHAT_UPLOAD_MAX_BYTES ||
     end >= total ||
     chunkBytes > AI_CHAT_UPLOAD_CHUNK_MAX_BYTES ||
+    (!finalChunk && chunkBytes % (320 * 1024) !== 0) ||
     (Number.isFinite(contentLength) && contentLength !== chunkBytes)
   ) {
     return jsonResponse({ success: false, message: 'Upload chunk did not pass validation.' }, 400, origin);
   }
-
   const response = await fetch(uploadUrl, {
     method: 'PUT',
     headers: {
-      'Content-Type': cleanText(request.headers.get('Content-Type'), 120) || 'application/octet-stream',
+      'Content-Type': 'application/octet-stream',
       'Content-Range': contentRange,
       'Content-Length': String(chunkBytes),
     },
     body: request.body,
   });
-
-  if (response.status === 308) {
-    return jsonResponse({ success: true, complete: false }, 200, origin);
-  }
+  if (response.status === 202) return jsonResponse({ success: true, complete: false }, 200, origin);
   if (response.status === 200 || response.status === 201) {
     const file = await response.json().catch(() => ({}));
     if (file?.id) return jsonResponse({ success: true, complete: true, file }, 200, origin);
   }
-
-  console.error('[ai-chat-upload] Drive chunk failed', JSON.stringify({ status: response.status }));
-  return jsonResponse({ success: false, message: 'Could not upload the file chunk.' }, 502, origin);
+  console.error('[ai-chat-upload] OneDrive chunk failed', JSON.stringify({ status: response.status }));
+  return jsonResponse({ success: false, message: 'Could not upload the OneDrive file chunk.' }, 502, origin);
 }
 
-export async function onRequest(context) {
-  const { request, env } = context;
+export async function onRequest({ request, env }) {
   if (request.method !== 'POST') {
     return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
   }
-
   const originCheck = assertAllowedOrigin(request);
   if (!originCheck.ok) return jsonResponse({ success: false, message: 'Forbidden' }, 403);
-
-  const urlAction = new URL(request.url).searchParams.get('action');
-  if (urlAction === 'chunk') {
-    const rateLimited = await enforceRateLimit(request, {
-      route: 'ai-chat-upload-chunk',
-      limit: 240,
-      windowSec: 600,
-    });
-    if (rateLimited) {
-      return jsonResponse({ success: false, message: 'Too many uploads. Please try again later.' }, 429, originCheck.origin);
-    }
-    return proxyUploadChunk(request, originCheck.origin);
+  if (new URL(request.url).searchParams.get('action') === 'chunk') {
+    const limited = await enforceRateLimit(request, { route: 'ai-chat-upload-chunk', limit: 240, windowSec: 600 });
+    if (limited) return limited;
+    return proxyUploadChunk(request, env, originCheck.origin);
   }
-
   let payload;
   try {
     payload = await readJsonBody(request, JSON_BODY_MAX_BYTES);
@@ -253,22 +243,17 @@ export async function onRequest(context) {
       originCheck.origin
     );
   }
-
-  const action = payload?.action === 'complete' ? 'complete' : payload?.action === 'start' ? 'start' : '';
+  const action = ['start', 'complete', 'transcript'].includes(payload?.action) ? payload.action : '';
   if (!action) return jsonResponse({ success: false, message: 'Unknown upload action.' }, 400, originCheck.origin);
-
-  if (action === 'start') {
-    const rateLimited = await enforceRateLimit(request, {
-      route: 'ai-chat-upload-start',
-      limit: 6,
+  if (action === 'start' || action === 'transcript') {
+    const limited = await enforceRateLimit(request, {
+      route: `ai-chat-upload-${action}`,
+      limit: action === 'start' ? 6 : 40,
       windowSec: 600,
     });
-    if (rateLimited) {
-      return jsonResponse({ success: false, message: 'Too many uploads. Please try again later.' }, 429, originCheck.origin);
-    }
+    if (limited) return limited;
   }
-
-  return action === 'start'
-    ? startUpload(env, payload, originCheck.origin)
-    : completeUpload(env, payload, originCheck.origin);
+  if (action === 'start') return startUpload(env, payload, originCheck.origin);
+  if (action === 'transcript') return storeTranscript(env, payload, originCheck.origin);
+  return completeUpload(env, payload, originCheck.origin);
 }

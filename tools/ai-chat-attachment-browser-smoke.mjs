@@ -28,8 +28,9 @@ async function installUploadMock(page, state) {
       assert.equal(route.request().method(), 'POST');
       assert.equal(
         route.request().headers()['x-upload-url'],
-        'https://www.googleapis.com/upload/drive/v3/files?upload_id=qa-session'
+        'https://qa.up.1drv.com/upload/session'
       );
+      assert.equal(route.request().headers()['x-upload-signature'], 'qa-signature');
       assert.match(route.request().headers()['content-range'] || '', /^bytes 0-\d+\/\d+$/);
       state.puts += 1;
       await route.fulfill({
@@ -56,17 +57,22 @@ async function installUploadMock(page, state) {
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          uploadUrl: 'https://www.googleapis.com/upload/drive/v3/files?upload_id=qa-session',
+          uploadUrl: 'https://qa.up.1drv.com/upload/session',
+          uploadSignature: 'qa-signature',
           mimeType: payload.mimeType,
-          chunkSize: 8 * 1024 * 1024,
+          chunkSize: 10 * 1024 * 1024,
         }),
       });
+      return;
+    }
+    if (payload.action === 'transcript') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true }) });
       return;
     }
     assert.equal(payload.action, 'complete');
     assert.equal(payload.fileId, 'qa-file-id-12345');
     state.completes += 1;
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true }) });
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, notified: true }) });
   });
 
 }
@@ -100,7 +106,10 @@ async function testUpload(page, locale, state) {
   });
 
   await status.getByText(completedCopy[locale], { exact: true }).waitFor();
-  assert.equal(await transfer.isVisible(), true);
+  assert.equal(await transfer.isVisible(), false);
+  const attachmentBubble = chat.locator('.hn-ai-bubble-attachment').last();
+  assert.equal(await attachmentBubble.isVisible(), true);
+  assert.match(await attachmentBubble.innerText(), /paperclip-qa\.txt/);
   assert.equal(await attach.isEnabled(), true);
   assert.equal(await input.inputValue(), '');
 

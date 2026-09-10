@@ -20,10 +20,19 @@ test('AI chat uses MediaRecorder and direct resumable upload UI', async () => {
   assert.match(source, /new window\.MediaRecorder/);
   assert.match(source, /Content-Range/);
   assert.match(source, /UPLOAD_ENDPOINT\}\?action=chunk/);
+  assert.match(source, /X-Upload-Signature/);
+  assert.match(source, /10 \* 1024 \* 1024/);
   assert.doesNotMatch(source, /xhr\.open\('PUT', uploadUrl\)/);
   assert.match(source, /150 \* 1024 \* 1024/);
   assert.match(source, /if \(!open && state\.recorder\) stopVoiceRecording\(true\)/);
   assert.doesNotMatch(source, /SpeechRecognition/);
+});
+
+test('AI chat synchronizes persisted messages to the private server transcript', async () => {
+  const source = await readFile(path.join(root, 'assets/js/ai-chat.js'), 'utf8');
+  assert.match(source, /action: 'transcript'/);
+  assert.match(source, /messages: state\.messages/);
+  assert.match(source, /scheduleTranscriptSync\(\)/);
 });
 
 test('completed uploads become persistent chat messages with an explicit delivery state', async () => {
