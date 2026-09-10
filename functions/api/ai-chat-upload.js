@@ -204,14 +204,17 @@ async function proxyUploadChunk(request, env, origin) {
   ) {
     return jsonResponse({ success: false, message: 'Upload chunk did not pass validation.' }, 400, origin);
   }
+  const chunk = await request.arrayBuffer();
+  if (chunk.byteLength !== chunkBytes) {
+    return jsonResponse({ success: false, message: 'Upload chunk did not pass validation.' }, 400, origin);
+  }
   const response = await fetch(uploadUrl, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/octet-stream',
       'Content-Range': contentRange,
-      'Content-Length': String(chunkBytes),
     },
-    body: request.body,
+    body: chunk,
   });
   if (response.status === 202) return jsonResponse({ success: true, complete: false }, 200, origin);
   if (response.status === 200 || response.status === 201) {
