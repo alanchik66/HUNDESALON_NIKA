@@ -106,7 +106,11 @@ export function isOneDriveUploadUrl(value) {
     const host = url.hostname.toLowerCase();
     return (
       url.protocol === 'https:' &&
-      (host.endsWith('.up.1drv.com') || host.endsWith('.up.1drvusercontent.com') || host.endsWith('.sharepoint.com'))
+      (host.endsWith('.up.1drv.com') ||
+        host.endsWith('.up.1drvusercontent.com') ||
+        host.endsWith('.sharepoint.com') ||
+        host === 'my.microsoftpersonalcontent.com' ||
+        host.endsWith('.microsoftpersonalcontent.com'))
     );
   } catch {
     return false;

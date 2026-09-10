@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { signOneDriveUploadUrl } from '../_lib/onedrive.js';
+import { isOneDriveUploadUrl, signOneDriveUploadUrl } from '../_lib/onedrive.js';
 import { AI_CHAT_UPLOAD_CHUNK_MAX_BYTES, AI_CHAT_UPLOAD_MAX_BYTES, onRequest } from './ai-chat-upload.js';
 
 globalThis.caches = { default: { match: async () => null, put: async () => {} } };
@@ -11,7 +11,14 @@ const env = {
   MS_TENANT_ID: 'consumers', MS_CLIENT_ID: 'client-id', MS_CLIENT_SECRET: 'test-secret',
   MS_REFRESH_TOKEN: 'refresh-token', ONEDRIVE_UPLOAD_FOLDER: 'root-folder',
 };
-const uploadUrl = 'https://example.up.1drv.com/up/test-session';
+const uploadUrl = 'https://my.microsoftpersonalcontent.com/personal/test/uploadSession';
+
+test('accepts Microsoft personal upload hosts without allowing lookalike domains', () => {
+  assert.equal(isOneDriveUploadUrl(uploadUrl), true);
+  assert.equal(isOneDriveUploadUrl('https://region.microsoftpersonalcontent.com/uploadSession'), true);
+  assert.equal(isOneDriveUploadUrl('https://my.microsoftpersonalcontent.com.evil.example/uploadSession'), false);
+  assert.equal(isOneDriveUploadUrl('http://my.microsoftpersonalcontent.com/uploadSession'), false);
+});
 
 function request(body, ip = crypto.randomUUID()) {
   return new Request(`${origin}/api/ai-chat-upload`, {
