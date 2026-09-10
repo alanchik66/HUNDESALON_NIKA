@@ -63,6 +63,7 @@
       unavailable: 'Der Assistent ist gerade nicht erreichbar. Bitte nutzen Sie die persönliche Beratung.',
       rateLimited:
         'Zu viele Anfragen in kurzer Zeit. Bitte warten Sie eine Minute oder nutzen Sie die persönliche Beratung.',
+      rateLimitedRetry: seconds => `Anfragelimit erreicht. Automatischer neuer Versuch in ${seconds} Sekunden ...`,
       empty: 'Bitte geben Sie eine Frage ein.',
       tooLong: `Bitte kürzen Sie die Nachricht auf höchstens ${MAX_MESSAGE_LENGTH} Zeichen.`,
       privacy: 'Datenschutz',
@@ -114,6 +115,7 @@
       typing: 'The assistant is checking the website information ...',
       unavailable: 'The assistant is currently unavailable. Please use personal support.',
       rateLimited: 'Too many requests in a short time. Please wait one minute or use personal support.',
+      rateLimitedRetry: seconds => `Request limit reached. Retrying automatically in ${seconds} seconds ...`,
       empty: 'Please enter a question.',
       tooLong: `Please shorten the message to ${MAX_MESSAGE_LENGTH} characters or fewer.`,
       privacy: 'Privacy',
@@ -165,6 +167,7 @@
       typing: 'Ассистент проверяет информацию сайта ...',
       unavailable: 'Ассистент сейчас недоступен. Используйте личную консультацию.',
       rateLimited: 'Слишком много запросов за короткое время. Подождите минуту или откройте личную консультацию.',
+      rateLimitedRetry: seconds => `Достигнут лимит запросов. Повторю автоматически через ${seconds} сек. ...`,
       empty: 'Введите вопрос.',
       tooLong: `Сократите сообщение до ${MAX_MESSAGE_LENGTH} знаков.`,
       privacy: 'Конфиденциальность',
@@ -216,6 +219,7 @@
       typing: 'Асистент перевіряє інформацію сайту ...',
       unavailable: 'Асистент зараз недоступний. Скористайтеся особистою консультацією.',
       rateLimited: 'Забагато запитів за короткий час. Зачекайте хвилину або відкрийте особисту консультацію.',
+      rateLimitedRetry: seconds => `Досягнуто ліміт запитів. Повторю автоматично через ${seconds} с ...`,
       empty: 'Введіть запитання.',
       tooLong: `Скоротіть повідомлення до ${MAX_MESSAGE_LENGTH} символів.`,
       privacy: 'Конфіденційність',
@@ -1224,6 +1228,17 @@
       textarea.style.height = `${Math.min(textarea.scrollHeight, 128)}px`;
     }
 
+    function retryAfterMilliseconds(response) {
+      const value = response.headers.get('Retry-After');
+      const seconds = Number.parseInt(value || '', 10);
+      if (Number.isFinite(seconds) && seconds > 0) return Math.min(seconds, 60) * 1000;
+      if (value) {
+        const retryAt = Date.parse(value);
+        if (Number.isFinite(retryAt)) return Math.min(Math.max(retryAt - Date.now(), 1000), 60_000);
+      }
+      return 10_000;
+    }
+
     async function submitMessage() {
       if (state.busy) return;
       const content = textarea.value.trim();
@@ -1244,7 +1259,7 @@
       setStatus('');
 
       try {
-        const response = await fetch('/api/ai-chat', {
+        const request = {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1254,7 +1269,15 @@
             pagePath: location.pathname,
             sessionId: state.sessionId,
           }),
-        });
+        };
+        let response = await fetch('/api/ai-chat', request);
+        if (response.status === 429) {
+          const waitMilliseconds = retryAfterMilliseconds(response);
+          setStatus(copy.rateLimitedRetry(Math.ceil(waitMilliseconds / 1000)), 0);
+          await new Promise(resolve => setTimeout(resolve, waitMilliseconds));
+          setStatus('');
+          response = await fetch('/api/ai-chat', request);
+        }
         if (response.status === 429) {
           addMessage('assistant', copy.rateLimited, { handoff: true });
           return;

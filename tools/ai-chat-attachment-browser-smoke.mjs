@@ -23,6 +23,23 @@ const failedCopy = {
 };
 
 async function installUploadMock(page, state) {
+  await page.route('**/api/ai-chat', async route => {
+    state.chatRequests += 1;
+    if (state.chatRequests === 1) {
+      await route.fulfill({
+        status: 429,
+        headers: { 'Retry-After': '1' },
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Too many requests' }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ answer: `rate-limit-retry-ok-${state.locale}`, available: true, handoff: false }),
+    });
+  });
   await page.route('**/api/ai-chat-upload*', async route => {
     if (new URL(route.request().url()).pathname.endsWith('/ai-chat-upload-chunk')) {
       assert.equal(route.request().method(), 'POST');
@@ -122,6 +139,12 @@ async function testUpload(page, locale, state) {
   await status.getByText(failedCopy[locale], { exact: true }).waitFor();
   assert.equal(await attach.isEnabled(), true);
   assert.equal(await input.inputValue(), '');
+
+  const textarea = chat.locator('textarea');
+  await textarea.fill(`rate limit QA ${locale}`);
+  await chat.locator('.hn-ai-send').click();
+  await chat.getByText(`rate-limit-retry-ok-${locale}`, { exact: true }).waitFor({ timeout: 5_000 });
+  assert.equal(state.chatRequests, 2);
 }
 
 const browser = await chromium.launch({ headless: true });
@@ -130,7 +153,7 @@ try {
     for (const locale of locales) {
       const context = await browser.newContext(viewport.options);
       const page = await context.newPage();
-      const state = { starts: 0, puts: 0, completes: 0, failNextStart: false };
+      const state = { locale, starts: 0, puts: 0, completes: 0, chatRequests: 0, failNextStart: false };
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
       await installUploadMock(page, state);
