@@ -174,7 +174,7 @@ async function storeTranscript(env, payload, origin) {
   return jsonResponse({ success: true, storage: 'onedrive', transcriptId: item.id }, 200, origin);
 }
 
-async function proxyUploadChunk(request, env, origin) {
+export async function proxyUploadChunk(request, env, origin) {
   const uploadUrl = cleanText(request.headers.get('X-Upload-Url'), 4096);
   const signature = cleanText(request.headers.get('X-Upload-Signature'), 128);
   const contentRange = cleanText(request.headers.get('Content-Range'), 100);
@@ -229,6 +229,15 @@ async function proxyUploadChunk(request, env, origin) {
   }
   console.error('[ai-chat-upload] OneDrive chunk failed', JSON.stringify({ status: response.status }));
   return jsonResponse({ success: false, message: 'Could not upload the OneDrive file chunk.' }, 502, origin);
+}
+
+export async function onRequestChunk({ request, env }) {
+  if (request.method !== 'POST') {
+    return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
+  }
+  const originCheck = assertAllowedOrigin(request);
+  if (!originCheck.ok) return jsonResponse({ success: false, message: 'Forbidden' }, 403);
+  return proxyUploadChunk(request, env, originCheck.origin);
 }
 
 export async function onRequest({ request, env }) {

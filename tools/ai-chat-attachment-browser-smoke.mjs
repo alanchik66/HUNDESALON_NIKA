@@ -24,7 +24,7 @@ const failedCopy = {
 
 async function installUploadMock(page, state) {
   await page.route('**/api/ai-chat-upload*', async route => {
-    if (new URL(route.request().url()).searchParams.get('action') === 'chunk') {
+    if (new URL(route.request().url()).pathname.endsWith('/ai-chat-upload-chunk')) {
       assert.equal(route.request().method(), 'POST');
       assert.equal(
         route.request().headers()['x-upload-url'],

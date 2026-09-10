@@ -395,7 +395,7 @@
     return new Promise((resolve, reject) => {
       const xhr = new window.XMLHttpRequest();
       registerRequest(xhr);
-      xhr.open('POST', `${UPLOAD_ENDPOINT}?action=chunk`);
+      xhr.open('POST', '/api/ai-chat-upload-chunk');
       xhr.setRequestHeader('X-Upload-Url', uploadUrl);
       xhr.setRequestHeader('X-Upload-Signature', uploadSignature);
       xhr.setRequestHeader('Content-Type', mimeType);
