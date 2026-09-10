@@ -183,6 +183,12 @@ async function proxyUploadChunk(request, env, origin) {
   if (!(await verifyOneDriveUploadUrl(env, uploadUrl, signature)) || !match) {
     return jsonResponse({ success: false, message: 'Invalid upload chunk.' }, 400, origin);
   }
+  const limited = await enforceRateLimit(request, {
+    route: `ai-chat-upload-chunk-${signature.slice(0, 16)}`,
+    limit: 24,
+    windowSec: 600,
+  });
+  if (limited) return limited;
   const [, rawStart, rawEnd, rawTotal] = match;
   const start = Number(rawStart);
   const end = Number(rawEnd);
@@ -232,8 +238,6 @@ export async function onRequest({ request, env }) {
   const originCheck = assertAllowedOrigin(request);
   if (!originCheck.ok) return jsonResponse({ success: false, message: 'Forbidden' }, 403);
   if (new URL(request.url).searchParams.get('action') === 'chunk') {
-    const limited = await enforceRateLimit(request, { route: 'ai-chat-upload-chunk', limit: 240, windowSec: 600 });
-    if (limited) return limited;
     return proxyUploadChunk(request, env, originCheck.origin);
   }
   let payload;
