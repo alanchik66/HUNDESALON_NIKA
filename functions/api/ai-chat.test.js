@@ -102,6 +102,24 @@ test('animal-care retrieval selects species-specific safety guidance', () => {
   assert.match(cat, /ветеринар/i);
 });
 
+test('grooming retrieval supplies the limited-service, own-shampoo and chat-media rules', () => {
+  const limitedService = selectAiChatKnowledge(
+    'У шпица понос после смены корма. Нужно только подстричь уши и шерсть вокруг попы без купания.',
+    'ru'
+  );
+  assert.match(limitedService, /не должен автоматически переводить запрос в пакет/i);
+  assert.match(limitedService, /понос после смены корма/i);
+  assert.match(limitedService, /частичная гигиеническая коррекция/i);
+
+  const ownShampoo = selectAiChatKnowledge(
+    'Можно принести свой лечебный шампунь и отправить вам фото инструкции?',
+    'ru'
+  );
+  assert.match(ownShampoo, /можете принести свой шампунь/i);
+  assert.match(ownShampoo, /фото, короткое видео, голосовое сообщение/i);
+  assert.match(ownShampoo, /не просит один и тот же материал повторно/i);
+});
+
 test('small-animal nail price retrieval prioritizes the standalone service', () => {
   const reference = selectAiChatKnowledge('Можно ли подстричь когти морской свинке и сколько это стоит?', 'ru');
   const firstBlock = reference.split('\n\n---\n\n')[0];
@@ -255,6 +273,11 @@ test('OpenAI request uses bounded context and returns the model answer', async (
     assert.match(upstreamPayload.instructions, /Default to 1-3 short sentences, at most 60 words/);
     assert.match(upstreamPayload.instructions, /Give more detail only when the customer explicitly asks/);
     assert.match(upstreamPayload.instructions, /Preserve essential conditions such as age limits, conditional care/);
+    assert.match(upstreamPayload.instructions, /First accept the constraint, then ask at most one safety-relevant question/);
+    assert.match(upstreamPayload.instructions, /Never automatically replace a request for local trimming/);
+    assert.match(upstreamPayload.instructions, /isolated report of loose stool after a food change is not by itself a reason/);
+    assert.match(upstreamPayload.instructions, /If the customer wants to bring their own shampoo, accept this politely/);
+    assert.match(upstreamPayload.instructions, /photo, short video, voice message\/audio or document directly in this chat/);
     assert.match(upstreamPayload.instructions, /never reproduce entire reference blocks or the full knowledge document/);
     assert.match(upstreamPayload.instructions, /Ultrasonic teeth cleaning.*от 100 €/s);
     assert.match(upstreamPayload.instructions, /obsolete teeth-cleaning price от 55 €/);
