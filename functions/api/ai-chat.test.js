@@ -277,6 +277,7 @@ test('OpenAI request uses bounded context and returns the model answer', async (
     assert.match(upstreamPayload.instructions, /Never automatically replace a request for local trimming/);
     assert.match(upstreamPayload.instructions, /isolated report of loose stool after a food change is not by itself a reason/);
     assert.match(upstreamPayload.instructions, /If the customer wants to bring their own shampoo, accept this politely/);
+    assert.match(upstreamPayload.instructions, /For every grooming-service recommendation or safety clarification/);
     assert.match(upstreamPayload.instructions, /photo, short video, voice message\/audio or document directly in this chat/);
     assert.match(upstreamPayload.instructions, /never reproduce entire reference blocks or the full knowledge document/);
     assert.match(upstreamPayload.instructions, /Ultrasonic teeth cleaning.*от 100 €/s);
