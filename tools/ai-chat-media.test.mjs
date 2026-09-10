@@ -19,6 +19,8 @@ test('AI chat uses MediaRecorder and direct resumable upload UI', async () => {
   const source = await readFile(path.join(root, 'assets/js/ai-chat.js'), 'utf8');
   assert.match(source, /new window\.MediaRecorder/);
   assert.match(source, /Content-Range/);
+  assert.match(source, /UPLOAD_ENDPOINT\}\?action=chunk/);
+  assert.doesNotMatch(source, /xhr\.open\('PUT', uploadUrl\)/);
   assert.match(source, /150 \* 1024 \* 1024/);
   assert.match(source, /if \(!open && state\.recorder\) stopVoiceRecording\(true\)/);
   assert.doesNotMatch(source, /SpeechRecognition/);

@@ -13,6 +13,7 @@ import {
 } from '../_lib/platform-integrations.js';
 
 export const AI_CHAT_UPLOAD_MAX_BYTES = 150 * 1024 * 1024;
+export const AI_CHAT_UPLOAD_CHUNK_MAX_BYTES = 8 * 1024 * 1024;
 const JSON_BODY_MAX_BYTES = 16 * 1024;
 const DRIVE_SCOPE = ['https://www.googleapis.com/auth/drive.file'];
 const DRIVE_UPLOAD_URL =
@@ -155,6 +156,71 @@ async function completeUpload(env, payload, origin) {
   );
 }
 
+function validatedDriveUploadUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' &&
+      url.hostname === 'www.googleapis.com' &&
+      url.pathname === '/upload/drive/v3/files' &&
+      url.searchParams.get('upload_id')
+      ? url.href
+      : '';
+  } catch {
+    return '';
+  }
+}
+
+async function proxyUploadChunk(request, origin) {
+  const uploadUrl = validatedDriveUploadUrl(request.headers.get('X-Upload-Url'));
+  const contentRange = cleanText(request.headers.get('Content-Range'), 100);
+  const match = contentRange.match(/^bytes (\d+)-(\d+)\/(\d+)$/);
+  const contentLength = Number(request.headers.get('Content-Length'));
+  if (!uploadUrl || !match) {
+    return jsonResponse({ success: false, message: 'Invalid upload chunk.' }, 400, origin);
+  }
+
+  const [, rawStart, rawEnd, rawTotal] = match;
+  const start = Number(rawStart);
+  const end = Number(rawEnd);
+  const total = Number(rawTotal);
+  const chunkBytes = end - start + 1;
+  if (
+    !Number.isSafeInteger(start) ||
+    !Number.isSafeInteger(end) ||
+    !Number.isSafeInteger(total) ||
+    start < 0 ||
+    end < start ||
+    total < 1 ||
+    total > AI_CHAT_UPLOAD_MAX_BYTES ||
+    end >= total ||
+    chunkBytes > AI_CHAT_UPLOAD_CHUNK_MAX_BYTES ||
+    (Number.isFinite(contentLength) && contentLength !== chunkBytes)
+  ) {
+    return jsonResponse({ success: false, message: 'Upload chunk did not pass validation.' }, 400, origin);
+  }
+
+  const response = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': cleanText(request.headers.get('Content-Type'), 120) || 'application/octet-stream',
+      'Content-Range': contentRange,
+      'Content-Length': String(chunkBytes),
+    },
+    body: request.body,
+  });
+
+  if (response.status === 308) {
+    return jsonResponse({ success: true, complete: false }, 200, origin);
+  }
+  if (response.status === 200 || response.status === 201) {
+    const file = await response.json().catch(() => ({}));
+    if (file?.id) return jsonResponse({ success: true, complete: true, file }, 200, origin);
+  }
+
+  console.error('[ai-chat-upload] Drive chunk failed', JSON.stringify({ status: response.status }));
+  return jsonResponse({ success: false, message: 'Could not upload the file chunk.' }, 502, origin);
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   if (request.method !== 'POST') {
@@ -163,6 +229,19 @@ export async function onRequest(context) {
 
   const originCheck = assertAllowedOrigin(request);
   if (!originCheck.ok) return jsonResponse({ success: false, message: 'Forbidden' }, 403);
+
+  const urlAction = new URL(request.url).searchParams.get('action');
+  if (urlAction === 'chunk') {
+    const rateLimited = await enforceRateLimit(request, {
+      route: 'ai-chat-upload-chunk',
+      limit: 240,
+      windowSec: 600,
+    });
+    if (rateLimited) {
+      return jsonResponse({ success: false, message: 'Too many uploads. Please try again later.' }, 429, originCheck.origin);
+    }
+    return proxyUploadChunk(request, originCheck.origin);
+  }
 
   let payload;
   try {

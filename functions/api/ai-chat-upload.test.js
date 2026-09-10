@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { AI_CHAT_UPLOAD_MAX_BYTES, onRequest } from './ai-chat-upload.js';
+import { AI_CHAT_UPLOAD_CHUNK_MAX_BYTES, AI_CHAT_UPLOAD_MAX_BYTES, onRequest } from './ai-chat-upload.js';
 
 globalThis.caches = { default: { match: async () => null, put: async () => {} } };
 
@@ -77,6 +77,76 @@ test('verifies the Drive folder before accepting completion', async () => {
       env,
     });
     assert.equal(response.status, 400);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('proxies a validated upload chunk to Drive without browser CORS', async () => {
+  const originalFetch = globalThis.fetch;
+  const bytes = new Uint8Array([1, 2, 3, 4]);
+  globalThis.fetch = async (url, options) => {
+    assert.equal(String(url), 'https://www.googleapis.com/upload/drive/v3/files?upload_id=test-session');
+    assert.equal(options.method, 'PUT');
+    assert.equal(options.headers['Content-Range'], 'bytes 0-3/4');
+    assert.equal(options.headers['Content-Length'], '4');
+    assert.deepEqual(new Uint8Array(await new Response(options.body).arrayBuffer()), bytes);
+    return Response.json({ id: 'file-1234567890' });
+  };
+  try {
+    const response = await onRequest({
+      request: new Request(`${origin}/api/ai-chat-upload?action=chunk`, {
+        method: 'POST',
+        headers: {
+          Origin: origin,
+          'CF-Connecting-IP': crypto.randomUUID(),
+          'Content-Type': 'application/octet-stream',
+          'Content-Range': 'bytes 0-3/4',
+          'Content-Length': '4',
+          'X-Upload-Url': 'https://www.googleapis.com/upload/drive/v3/files?upload_id=test-session',
+        },
+        body: bytes,
+      }),
+      env,
+    });
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      success: true,
+      complete: true,
+      file: { id: 'file-1234567890' },
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('rejects unsafe chunk destinations and oversized chunks', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => assert.fail('Unsafe chunk must not be proxied');
+  try {
+    for (const [uploadUrl, range] of [
+      ['https://example.com/upload?upload_id=test', 'bytes 0-3/4'],
+      [
+        'https://www.googleapis.com/upload/drive/v3/files?upload_id=test-session',
+        `bytes 0-${AI_CHAT_UPLOAD_CHUNK_MAX_BYTES}/${AI_CHAT_UPLOAD_CHUNK_MAX_BYTES + 1}`,
+      ],
+    ]) {
+      const response = await onRequest({
+        request: new Request(`${origin}/api/ai-chat-upload?action=chunk`, {
+          method: 'POST',
+          headers: {
+            Origin: origin,
+            'CF-Connecting-IP': crypto.randomUUID(),
+            'Content-Type': 'application/octet-stream',
+            'Content-Range': range,
+            'X-Upload-Url': uploadUrl,
+          },
+          body: new Uint8Array([1]),
+        }),
+        env,
+      });
+      assert.equal(response.status, 400);
+    }
   } finally {
     globalThis.fetch = originalFetch;
   }

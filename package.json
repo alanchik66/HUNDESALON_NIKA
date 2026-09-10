@@ -44,6 +44,7 @@
     "test:visual": "node tools/visual-regression.mjs",
     "test:a11y": "node tools/accessibility-smoke.mjs",
     "test:browser": "npm run test:visual && npm run test:a11y",
+    "test:ai-chat-upload-browser": "node tools/ai-chat-attachment-browser-smoke.mjs",
     "shell:strip": "node tools/strip-static-shell.mjs",
     "test:links": "npm run check:links",
     "seo:urls": "node tools/indexnow-submit.js --dry-run",

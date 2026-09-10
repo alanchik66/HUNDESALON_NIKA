@@ -391,20 +391,20 @@
     return new Promise((resolve, reject) => {
       const xhr = new window.XMLHttpRequest();
       registerRequest(xhr);
-      xhr.open('PUT', uploadUrl);
+      xhr.open('POST', `${UPLOAD_ENDPOINT}?action=chunk`);
+      xhr.setRequestHeader('X-Upload-Url', uploadUrl);
       xhr.setRequestHeader('Content-Type', mimeType);
       xhr.setRequestHeader('Content-Range', `bytes ${start}-${start + blob.size - 1}/${total}`);
       xhr.upload.addEventListener('progress', event => {
         if (event.lengthComputable) onProgress(start + event.loaded, total);
       });
       xhr.addEventListener('load', () => {
-        if (xhr.status === 308) {
-          resolve(null);
-          return;
-        }
-        if (xhr.status === 200 || xhr.status === 201) {
+        if (xhr.status === 200) {
           try {
-            resolve(JSON.parse(xhr.responseText || '{}'));
+            const payload = JSON.parse(xhr.responseText || '{}');
+            if (payload?.success && payload?.complete === false) resolve(null);
+            else if (payload?.success && payload?.file?.id) resolve(payload.file);
+            else reject(new Error('UPLOAD_RESPONSE_INVALID'));
           } catch {
             reject(new Error('UPLOAD_RESPONSE_INVALID'));
           }

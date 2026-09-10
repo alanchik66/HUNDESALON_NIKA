@@ -4,7 +4,7 @@ if (!process.argv.includes(confirmation)) {
 }
 
 const baseUrl = new URL(
-  process.argv.find(argument => /^https:\/\//.test(argument)) || 'https://hundesalon-nika.com'
+  process.argv.find(argument => /^https?:\/\//.test(argument)) || 'https://hundesalon-nika.com'
 );
 const endpoint = new URL('/api/ai-chat-upload', baseUrl);
 const timestamp = new Date().toISOString();
