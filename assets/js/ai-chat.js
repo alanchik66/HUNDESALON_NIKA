@@ -32,6 +32,7 @@
       fileTooLarge: 'Die Datei darf höchstens 150 MB groß sein.',
       uploadPreparing: 'Sicherer Upload wird vorbereitet ...',
       uploadComplete: 'Datei wurde sicher übermittelt.',
+      uploadStored: 'Die Datei wurde gespeichert, aber die Benachrichtigung des Teams konnte nicht bestätigt werden.',
       uploadFailed: 'Die Datei konnte nicht gesendet werden. Bitte versuchen Sie es erneut.',
       uploadCancel: 'Upload abbrechen',
       emoji: 'Emoji einfügen',
@@ -83,6 +84,7 @@
       fileTooLarge: 'The file must not exceed 150 MB.',
       uploadPreparing: 'Preparing secure upload ...',
       uploadComplete: 'The file was sent securely.',
+      uploadStored: 'The file was saved, but team notification could not be confirmed.',
       uploadFailed: 'The file could not be sent. Please try again.',
       uploadCancel: 'Cancel upload',
       emoji: 'Insert emoji',
@@ -133,6 +135,7 @@
       fileTooLarge: 'Размер файла не должен превышать 150 МБ.',
       uploadPreparing: 'Подготавливаю безопасную загрузку ...',
       uploadComplete: 'Файл безопасно отправлен сотруднику.',
+      uploadStored: 'Файл сохранён, но уведомление сотрудника не подтверждено.',
       uploadFailed: 'Не удалось отправить файл. Повторите попытку.',
       uploadCancel: 'Отменить загрузку',
       emoji: 'Вставить emoji',
@@ -183,6 +186,7 @@
       fileTooLarge: 'Розмір файлу не повинен перевищувати 150 МБ.',
       uploadPreparing: 'Готую безпечне завантаження ...',
       uploadComplete: 'Файл безпечно надіслано співробітнику.',
+      uploadStored: 'Файл збережено, але сповіщення співробітника не підтверджено.',
       uploadFailed: 'Не вдалося надіслати файл. Спробуйте ще раз.',
       uploadCancel: 'Скасувати завантаження',
       emoji: 'Вставити emoji',
@@ -891,12 +895,22 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'complete', fileId: completedFile.id, kind, locale, sessionId: state.sessionId }),
         });
-        if (!completeResponse.ok) throw new Error('UPLOAD_VERIFICATION_FAILED');
-        updateTransfer(file, 100, copy.uploadComplete);
-        setStatus(copy.uploadComplete);
-        setTimeout(() => {
-          if (state.activeUpload === uploadState) transfer.hidden = true;
-        }, 3200);
+        const completion = await completeResponse.json().catch(() => ({}));
+        if (!completeResponse.ok || !completion?.success) throw new Error('UPLOAD_VERIFICATION_FAILED');
+        const delivered = completion.notified === true;
+        const deliveryMessage = delivered ? copy.uploadComplete : copy.uploadStored;
+        updateTransfer(file, 100, deliveryMessage);
+        addMessage('user', file.name, {
+          attachment: {
+            name: file.name,
+            size: file.size,
+            mimeType: file.type || 'application/octet-stream',
+            kind,
+            delivered,
+          },
+        });
+        transfer.hidden = true;
+        setStatus(deliveryMessage);
       } catch (error) {
         if (error?.name !== 'AbortError' && !uploadState.cancelled) {
           updateTransfer(file, 0, copy.uploadFailed);
@@ -1036,7 +1050,7 @@
       });
     }
 
-    function addMessage(role, content, { handoff = false, persist = true, media = null } = {}) {
+    function addMessage(role, content, { handoff = false, persist = true, media = null, attachment = null } = {}) {
       const row = document.createElement('article');
       row.className = `hn-ai-message is-${role}`;
       const avatar = document.createElement(role === 'assistant' ? 'img' : 'span');
@@ -1052,7 +1066,31 @@
       const bubble = document.createElement('div');
       bubble.className = 'hn-ai-bubble';
       const safeMedia = normalizeGif(media);
-      if (safeMedia) {
+      const safeAttachment =
+        attachment && typeof attachment === 'object'
+          ? {
+              name: String(attachment.name || content || '').slice(0, 180),
+              size: Number.isSafeInteger(Number(attachment.size)) ? Number(attachment.size) : 0,
+              mimeType: String(attachment.mimeType || 'application/octet-stream').slice(0, 120),
+              kind: attachment.kind === 'voice' ? 'voice' : 'file',
+              delivered: attachment.delivered === true,
+            }
+          : null;
+      if (safeAttachment?.name) {
+        bubble.classList.add('hn-ai-bubble-attachment');
+        const attachmentIcon = icon(safeAttachment.kind === 'voice' ? 'voice' : 'attach');
+        attachmentIcon.classList.add('hn-ai-message-attachment-icon');
+        const details = document.createElement('span');
+        details.className = 'hn-ai-message-attachment-details';
+        const name = document.createElement('strong');
+        name.textContent = safeAttachment.name;
+        const meta = document.createElement('span');
+        meta.textContent = `${safeAttachment.size ? formatBytes(safeAttachment.size, locale) : safeAttachment.mimeType} · ${
+          safeAttachment.delivered ? copy.uploadComplete : copy.uploadStored
+        }`;
+        details.append(name, meta);
+        bubble.append(attachmentIcon, details);
+      } else if (safeMedia) {
         const image = document.createElement('img');
         image.className = 'hn-ai-message-gif';
         image.src = safeMedia.url;
@@ -1080,14 +1118,21 @@
       row.append(avatar, bubble);
       messages.appendChild(row);
       if (persist) {
-        state.messages.push({ role, content, ...(safeMedia ? { media: safeMedia } : {}) });
+        state.messages.push({
+          role,
+          content,
+          ...(safeMedia ? { media: safeMedia } : {}),
+          ...(safeAttachment?.name ? { attachment: safeAttachment } : {}),
+        });
         state.messages = state.messages.slice(-MAX_STORED_MESSAGES);
         writeStoredMessages(locale, state.messages);
       }
       scrollToLatest();
     }
 
-    for (const item of state.messages) addMessage(item.role, item.content, { persist: false, media: item.media });
+    for (const item of state.messages) {
+      addMessage(item.role, item.content, { persist: false, media: item.media, attachment: item.attachment });
+    }
 
     function setBusy(busy) {
       state.busy = busy;

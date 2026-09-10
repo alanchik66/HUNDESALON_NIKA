@@ -26,6 +26,14 @@ test('AI chat uses MediaRecorder and direct resumable upload UI', async () => {
   assert.doesNotMatch(source, /SpeechRecognition/);
 });
 
+test('completed uploads become persistent chat messages with an explicit delivery state', async () => {
+  const source = await readFile(path.join(root, 'assets/js/ai-chat.js'), 'utf8');
+  assert.match(source, /const delivered = completion\.notified === true/);
+  assert.match(source, /addMessage\('user', file\.name, \{/);
+  assert.match(source, /safeAttachment\.delivered \? copy\.uploadComplete : copy\.uploadStored/);
+  assert.match(source, /attachment: item\.attachment/);
+});
+
 test('AI chat includes a localized and attributed GIF picker', async () => {
   const source = await readFile(path.join(root, 'assets/js/ai-chat.js'), 'utf8');
   const endpoint = await readFile(path.join(root, 'functions/api/ai-chat-gifs.js'), 'utf8');

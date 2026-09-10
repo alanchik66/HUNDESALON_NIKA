@@ -397,6 +397,39 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   background: linear-gradient(145deg, rgba(8, 111, 77, 0.9), rgba(3, 76, 53, 0.92));
 }
 
+.hn-ai-bubble-attachment {
+  display: flex;
+  min-width: min(18rem, 72vw);
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.hn-ai-message-attachment-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: 0 0 auto;
+}
+
+.hn-ai-message-attachment-details {
+  display: grid;
+  min-width: 0;
+  gap: 0.18rem;
+}
+
+.hn-ai-message-attachment-details strong,
+.hn-ai-message-attachment-details span {
+  overflow-wrap: anywhere;
+}
+
+.hn-ai-message-attachment-details strong {
+  font-size: 0.82rem;
+}
+
+.hn-ai-message-attachment-details span {
+  opacity: 0.78;
+  font-size: 0.68rem;
+}
+
 .hn-ai-bubble a {
   color: var(--hn-ai-gold-pale);
   text-decoration-color: rgba(226, 186, 94, 0.56);

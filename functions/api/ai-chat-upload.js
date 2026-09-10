@@ -257,13 +257,15 @@ export async function onRequest(context) {
   const action = payload?.action === 'complete' ? 'complete' : payload?.action === 'start' ? 'start' : '';
   if (!action) return jsonResponse({ success: false, message: 'Unknown upload action.' }, 400, originCheck.origin);
 
-  const rateLimited = await enforceRateLimit(request, {
-    route: `ai-chat-upload-${action}`,
-    limit: action === 'start' ? 6 : 12,
-    windowSec: 600,
-  });
-  if (rateLimited) {
-    return jsonResponse({ success: false, message: 'Too many uploads. Please try again later.' }, 429, originCheck.origin);
+  if (action === 'start') {
+    const rateLimited = await enforceRateLimit(request, {
+      route: 'ai-chat-upload-start',
+      limit: 6,
+      windowSec: 600,
+    });
+    if (rateLimited) {
+      return jsonResponse({ success: false, message: 'Too many uploads. Please try again later.' }, 429, originCheck.origin);
+    }
   }
 
   return action === 'start'

@@ -82,6 +82,33 @@ test('verifies the Drive folder before accepting completion', async () => {
   }
 });
 
+test('does not rate-limit completion after an accepted file upload', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () =>
+    Response.json({
+      id: 'file-1234567890',
+      name: 'delivery-check.txt',
+      size: '2048',
+      mimeType: 'text/plain',
+      webViewLink: 'https://drive.google.com/file/d/file-1234567890/view',
+      parents: ['folder-123'],
+    });
+  try {
+    for (let attempt = 0; attempt < 13; attempt += 1) {
+      const response = await onRequest({
+        request: request({ action: 'complete', fileId: 'file-1234567890', kind: 'file' }, 'same-client'),
+        env,
+      });
+      assert.equal(response.status, 200);
+      const body = await response.json();
+      assert.equal(body.success, true);
+      assert.equal(body.fileId, 'file-1234567890');
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('proxies a validated upload chunk to Drive without browser CORS', async () => {
   const originalFetch = globalThis.fetch;
   const bytes = new Uint8Array([1, 2, 3, 4]);
