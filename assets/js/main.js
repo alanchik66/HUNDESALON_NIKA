@@ -1885,7 +1885,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const isNavPillActive = link =>
     link.classList.contains('active') ||
     link.getAttribute('aria-current') === 'page' ||
-    link.getAttribute('aria-current') === 'true';
+    link.getAttribute('aria-current') === 'true' ||
+    link.getAttribute('aria-pressed') === 'true';
 
   const removeTouchPoints = root => {
     root?._touchResizeObserver?.disconnect();

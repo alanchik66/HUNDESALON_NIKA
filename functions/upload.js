@@ -1,14 +1,25 @@
-import { assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http-security.js';
+import { assertAllowedOrigin, enforceRateLimit, jsonResponse, readFormDataBody } from './_lib/http-security.js';
 import {
   PET_PHOTO_MAX_BYTES,
   PET_PHOTO_MAX_MB,
-  hasValidPetPhotoSignature,
+  detectPetPhotoMimeType,
   isAllowedPetPhotoType,
   petPhotoTooLarge,
 } from './_lib/pet-photo-upload.js';
-import { cleanText, uploadFileToDrive } from './_lib/platform-integrations.js';
+import {
+  ensureOneDriveSessionFolder,
+  getOneDriveAccessToken,
+  getOneDriveItemByContentIdentity,
+  isOneDriveConfigured,
+  oneDriveContentIdentity,
+  oneDriveContentFileName,
+  signOneDriveFileReference,
+  uploadSmallFileToOneDrive,
+} from './_lib/onedrive.js';
+import { cleanText } from './_lib/platform-integrations.js';
 
 const MULTIPART_OVERHEAD_BYTES = 1024 * 1024;
+const UPLOAD_SESSION_RE = /^[a-zA-Z0-9_-]{16,64}$/;
 
 /** Read a field from multipart FormData (FormData has no property access). */
 function readUploadField(fields, key) {
@@ -24,25 +35,29 @@ export function bookingMetadata(fields) {
   };
 }
 
-function driveNotConfiguredResponse(origin) {
+function oneDriveNotConfiguredResponse(origin) {
   return jsonResponse(
     {
-      success: true,
+      success: false,
       configured: false,
       fileUrl: '',
-      message: 'Drive upload is not configured yet. Booking can continue without a file link.',
+      message: 'Secure OneDrive storage is not configured. Remove the photo or try again later.',
     },
-    200,
+    503,
     origin
   );
+}
+
+function bytesToHex(value) {
+  return Array.from(new Uint8Array(value), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 async function handleMultipartUpload(request, env, origin) {
   let formData;
   try {
-    formData = await request.formData();
+    formData = await readFormDataBody(request, PET_PHOTO_MAX_BYTES + MULTIPART_OVERHEAD_BYTES);
   } catch {
-    return jsonResponse({ success: false, message: 'Invalid upload body' }, 400, origin);
+    return jsonResponse({ success: false, message: 'Invalid or oversized upload body' }, 400, origin);
   }
 
   const file = formData.get('file');
@@ -58,31 +73,94 @@ async function handleMultipartUpload(request, env, origin) {
     return jsonResponse({ success: false, message: `File is larger than ${PET_PHOTO_MAX_MB} MB.` }, 400, origin);
   }
 
-  if (!(await hasValidPetPhotoSignature(file))) {
+  const detectedMimeType = await detectPetPhotoMimeType(file);
+  if (!detectedMimeType) {
     return jsonResponse({ success: false, message: 'The uploaded file is not a valid JPG or PNG image.' }, 400, origin);
   }
 
-  const safeName = file.name.replace(/[^\w.-]+/g, '-').slice(-90);
-  const uniqueName = `${Date.now()}-${crypto.randomUUID()}-${safeName}`;
-  const uploadResult = await uploadFileToDrive(env, {
-    file,
-    fileName: uniqueName,
-    metadata: bookingMetadata(formData),
-  });
+  const uploadSessionId = cleanText(readUploadField(formData, 'upload_session_id'), 80);
+  if (!UPLOAD_SESSION_RE.test(uploadSessionId)) {
+    return jsonResponse({ success: false, message: 'Invalid booking upload session.' }, 400, origin);
+  }
+  if (!isOneDriveConfigured(env)) return oneDriveNotConfiguredResponse(origin);
 
-  if (uploadResult.ok && uploadResult.body?.webViewLink) {
+  const token = await getOneDriveAccessToken(env);
+  if (!token) return oneDriveNotConfiguredResponse(origin);
+  const folder = await ensureOneDriveSessionFolder(env, token, `booking-${uploadSessionId}`);
+  if (!folder?.id) {
+    return jsonResponse({ success: false, message: 'Could not prepare secure OneDrive storage.' }, 502, origin);
+  }
+
+  const contentSha256 = bytesToHex(await crypto.subtle.digest('SHA-256', await file.arrayBuffer()));
+  const contentIdentity = await oneDriveContentIdentity({
+    scope: 'booking',
+    sessionId: uploadSessionId,
+    contentSha256,
+  });
+  const storedName = await oneDriveContentFileName({
+    scope: 'booking',
+    sessionId: uploadSessionId,
+    contentSha256,
+    fileName: file.name,
+    mimeType: detectedMimeType,
+  });
+  if (!contentIdentity || !storedName) {
+    return jsonResponse({ success: false, message: 'Invalid booking upload identity.' }, 400, origin);
+  }
+  const existing = await getOneDriveItemByContentIdentity(token, folder.id, contentIdentity, storedName);
+  if (!existing.ok) {
+    return jsonResponse({ success: false, message: 'Could not verify secure OneDrive storage.' }, 502, origin);
+  }
+  if (existing.item) {
+    if (!existing.item.file || Number(existing.item.size) !== file.size) {
+      return jsonResponse({ success: false, message: 'OneDrive upload conflict.' }, 409, origin);
+    }
+    const fileUrl = cleanText(existing.item.webUrl, 1000);
+    const fileProof = await signOneDriveFileReference(env, {
+      fileId: existing.item.id,
+      fileUrl,
+      sessionId: uploadSessionId,
+    });
+    if (!fileUrl || !fileProof) return jsonResponse({ success: false, message: 'OneDrive file proof failed.' }, 502, origin);
     return jsonResponse(
-      { success: true, fileUrl: uploadResult.body.webViewLink, fileId: uploadResult.body.id || null },
+      {
+        success: true,
+        fileUrl,
+        fileId: existing.item.id || null,
+        fileProof,
+        storage: 'onedrive',
+        deduplicated: true,
+      },
       200,
       origin
     );
   }
 
-  if (uploadResult.skipped) {
-    return driveNotConfiguredResponse(origin);
+  const uploaded = await uploadSmallFileToOneDrive(token, folder.id, storedName, file, detectedMimeType);
+  const item = uploaded.item;
+  if (!uploaded.ok || !item?.id || !item?.file || Number(item.size) !== file.size) {
+    return jsonResponse({ success: false, message: 'OneDrive upload failed.' }, 502, origin);
   }
-
-  return jsonResponse({ success: false, message: 'Drive upload failed.' }, 502, origin);
+  const fileUrl = cleanText(item.webUrl, 1000);
+  const fileProof = await signOneDriveFileReference(env, {
+    fileId: item.id,
+    fileUrl,
+    sessionId: uploadSessionId,
+  });
+  if (!fileUrl || !fileProof) return jsonResponse({ success: false, message: 'OneDrive file proof failed.' }, 502, origin);
+  return jsonResponse(
+    {
+      success: true,
+      fileUrl,
+      fileId: item.id,
+      fileProof,
+      storage: 'onedrive',
+      deduplicated: false,
+      metadata: bookingMetadata(formData),
+    },
+    200,
+    origin
+  );
 }
 
 export async function onRequest(context) {

@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
 if (!process.argv.includes('--confirm-live')) {
-  throw new Error('This check creates a real Drive file and may send a Telegram notification. Pass --confirm-live.');
+  throw new Error('This check creates a real OneDrive file and may send a Telegram notification. Pass --confirm-live.');
 }
 
 const baseUrl = new URL(process.argv.find(argument => /^https?:\/\//.test(argument)) || 'https://hundesalon-nika.com');
+const fixture = await readFile(new URL('../assets/images/brand/search-logo-clear-512.png', import.meta.url));
 const browser = await chromium.launch({ headless: true });
 const events = [];
 
@@ -34,7 +36,7 @@ try {
   await input.setInputFiles({
     name: `ai-chat-live-browser-qa-${Date.now()}.png`,
     mimeType: 'image/png',
-    buffer: Buffer.alloc(2_200_000, 0x51),
+    buffer: fixture,
   });
 
   const status = chat.locator('.hn-ai-status');
@@ -47,6 +49,7 @@ try {
   const result = await status.textContent();
   console.log(JSON.stringify({ baseUrl: baseUrl.origin, result, events }, null, 2));
   assert.equal(result, 'Файл безопасно отправлен сотруднику.');
+  assert.equal(events.some(event => /googleapis\.com\/upload/.test(event.url)), false);
   await context.close();
 } finally {
   await browser.close();

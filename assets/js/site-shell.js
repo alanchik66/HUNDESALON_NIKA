@@ -4241,6 +4241,20 @@
       .replace(/\s+/g, ' ');
   }
 
+  function hasValidHeaderWeatherCoordinates(latitudeValue, longitudeValue) {
+    const latitude = Number(latitudeValue);
+    const longitude = Number(longitudeValue);
+    return (
+      Number.isFinite(latitude) &&
+      Number.isFinite(longitude) &&
+      latitude >= -90 &&
+      latitude <= 90 &&
+      longitude >= -180 &&
+      longitude <= 180 &&
+      !(latitude === 0 && longitude === 0)
+    );
+  }
+
   function parseHeaderWeatherCoordinates(value) {
     const normalizedValue = String(value || '')
       .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
@@ -4253,7 +4267,7 @@
 
     const latitude = Number(match[1]);
     const longitude = Number(match[2]);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    if (!hasValidHeaderWeatherCoordinates(latitude, longitude)) {
       return null;
     }
 
@@ -4270,7 +4284,7 @@
     const accuracy = Number(headerWeatherGeoCache.accuracy);
     const updatedAt = Number(headerWeatherGeoCache.updatedAt);
     const expiresAt = Number(headerWeatherGeoCache.expiresAt);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !Number.isFinite(expiresAt)) {
+    if (!hasValidHeaderWeatherCoordinates(latitude, longitude) || !Number.isFinite(expiresAt)) {
       headerWeatherGeoCache = null;
       return null;
     }
@@ -4339,7 +4353,7 @@
         const latitude = Number(position?.coords?.latitude);
         const longitude = Number(position?.coords?.longitude);
         const accuracy = Number(position?.coords?.accuracy);
-        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        if (!hasValidHeaderWeatherCoordinates(latitude, longitude)) {
           return;
         }
 
@@ -4705,7 +4719,7 @@
   }
 
   async function fetchHeaderWeatherReverseGeoMeta(latitude, longitude) {
-    if (headerWeatherReverseGeoProxyUnavailable) {
+    if (headerWeatherReverseGeoProxyUnavailable || !hasValidHeaderWeatherCoordinates(latitude, longitude)) {
       return null;
     }
 

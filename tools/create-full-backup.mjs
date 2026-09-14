@@ -3,7 +3,7 @@
  * Full project backup: single uncompressed POSIX tar archive.
  * Usage: node tools/create-full-backup.mjs
  */
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -33,9 +33,12 @@ const excludes = [
 fs.mkdirSync(backupDir, { recursive: true });
 
 const excludeArgs = excludes.flatMap(item => ['--exclude', item]);
-execSync('tar', ['-cf', archivePath, ...excludeArgs, projectName], { cwd: parentDir, stdio: 'inherit' });
+execFileSync('tar', ['-cf', archivePath, ...excludeArgs, projectName], { cwd: parentDir, stdio: 'inherit' });
 
-const listing = execSync('tar', ['-tf', archivePath], { encoding: 'utf8' });
+const listing = execFileSync('tar', ['-tf', archivePath], {
+  encoding: 'utf8',
+  maxBuffer: 64 * 1024 * 1024,
+});
 const entryCount = listing.trim().split('\n').filter(Boolean).length;
 const sizeBytes = fs.statSync(archivePath).size;
 

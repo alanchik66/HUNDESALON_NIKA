@@ -14,6 +14,7 @@ test('reverse geocoding validates coordinate ranges', () => {
   assert.deepEqual(parseReverseCoordinates('51.313317', '12.45543'), COORDINATES);
   assert.equal(parseReverseCoordinates('', '12.45543'), null);
   assert.equal(parseReverseCoordinates('51.313317', '181'), null);
+  assert.equal(parseReverseCoordinates('0', '0'), null);
 });
 
 test('public location labels mask a precise address with its district', () => {
@@ -35,7 +36,7 @@ test('public location labels mask a precise address with its district', () => {
       city: 'Leipzig',
       city_district: 'Sudost',
       hamlet: 'Zuckelhausen',
-      road: 'Walter-Markov-Ring',
+      road: 'Untere Eichstädtstraße',
       house_number: '1',
     }),
     'Leipzig - Zuckelhausen'

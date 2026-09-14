@@ -208,14 +208,14 @@ for (const file of indexFiles) {
   const html = read(file);
   assert(html.includes('Leipzig'), `${file}: missing Leipzig geo signal`);
   assert(html.includes('"addressLocality": "Leipzig"'), `${file}: JSON-LD addressLocality must be Leipzig`);
-  assert(html.includes('"streetAddress": "Walter-Markov-Ring 1"'), `${file}: JSON-LD streetAddress is missing`);
-  assert(html.includes('"postalCode": "04288"'), `${file}: JSON-LD postalCode is missing`);
+  assert(html.includes('"streetAddress": "Untere Eichstädtstraße 38"'), `${file}: JSON-LD streetAddress is missing`);
+  assert(html.includes('"postalCode": "04299"'), `${file}: JSON-LD postalCode is missing`);
   assert(
     html.includes('/favicon.ico') || html.includes('/assets/images/favicon/favicon.ico'),
     `${file}: missing favicon.ico link`
   );
   assert(html.includes('/site.webmanifest'), `${file}: missing web manifest link`);
-  assert(html.includes('search-logo-clear-512.png'), `${file}: missing transparent search logo structured signal`);
+  assert(html.includes('logo-from-card-crown-512.png'), `${file}: missing opaque search logo structured signal`);
 
   for (const match of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
     try {

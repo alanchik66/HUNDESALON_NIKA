@@ -4,9 +4,23 @@ import {
   getEnvValue,
   hasUsableValue,
   safeJsonFetch,
+  sendSendPulseEmail,
   sendTelegramMessage,
 } from './_lib/platform-integrations.js';
+import { buildBrandedEmail } from './_lib/email-template.js';
+import { confirmGoogleBooking } from './_lib/booking-calendar.js';
 import { isRequestBodyTooLarge, readJsonBody, timingSafeEqualStrings } from './_lib/http-security.js';
+import {
+  formatChatCustomer,
+  getChatSessionForTelegramReply,
+  getChatSessionForTelegramTopic,
+  hasTelegramDelivery,
+  isTelegramPersonalTopic,
+  recordChatLearningExample,
+  recordChatMessage,
+  registerTelegramDelivery,
+  setChatSessionMode,
+} from './_lib/chat-crm.js';
 
 const SITE_ORIGIN = 'https://hundesalon-nika.com';
 const TELEGRAM_API_URL = 'https://api.telegram.org';
@@ -68,7 +82,9 @@ const SITE_PATHS = Object.freeze({
 const CALLBACK_ACTIONS = Object.freeze({
   support: 'support',
   language: 'language',
+  bookingConfirm: 'booking_confirm',
 });
+const BOOKING_REQUEST_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const LANGUAGE_OPTIONS = Object.freeze([
   ['de', 'Deutsch'],
@@ -171,6 +187,10 @@ function buildActionMarkup(intent, language, resolvedBookingUrl) {
 
 function parseCallbackAction(data) {
   const value = String(data || '').trim();
+  const bookingConfirmation = value.match(/^booking_confirm:([0-9a-f-]{36})$/i);
+  if (bookingConfirmation && BOOKING_REQUEST_ID_RE.test(bookingConfirmation[1])) {
+    return { intent: CALLBACK_ACTIONS.bookingConfirm, requestId: bookingConfirmation[1].toLowerCase() };
+  }
   if (value === CALLBACK_ACTIONS.support) return { intent: 'support', language: '' };
   if (value === CALLBACK_ACTIONS.language) return { intent: 'language', language: '' };
 
@@ -179,6 +199,129 @@ function parseCallbackAction(data) {
   if (action === CALLBACK_ACTIONS.support && supportedLanguage) return { intent: 'support', language: supportedLanguage };
   if (action === CALLBACK_ACTIONS.language && supportedLanguage) return { intent: 'menu', language: supportedLanguage };
   return null;
+}
+
+async function isTelegramBookingAdministrator(env, message, sender) {
+  const configuredChatId = getEnvValue(env, 'TELEGRAM_CHAT_ID');
+  const chatId = String(message?.chat?.id ?? '');
+  const userId = String(sender?.id ?? '');
+  if (!configuredChatId || chatId !== configuredChatId || !userId || sender?.is_bot) return false;
+  if (message?.chat?.type === 'private' && chatId === userId) return true;
+
+  const token = getEnvValue(env, 'TELEGRAM_BOT_TOKEN');
+  if (!token) return false;
+  const membership = await safeJsonFetch(`${TELEGRAM_API_URL}/bot${encodeURIComponent(token)}/getChatMember`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    body: JSON.stringify({ chat_id: chatId, user_id: Number(userId) }),
+  });
+  return membership.ok && ['creator', 'administrator'].includes(membership.body?.result?.status);
+}
+
+async function clearBookingConfirmationButton(env, callbackQuery, message) {
+  const token = getEnvValue(env, 'TELEGRAM_BOT_TOKEN');
+  if (!token) return false;
+  const payload = callbackQuery?.inline_message_id
+    ? { inline_message_id: callbackQuery.inline_message_id, reply_markup: { inline_keyboard: [] } }
+    : {
+        chat_id: String(message?.chat?.id ?? ''),
+        message_id: message?.message_id,
+        reply_markup: { inline_keyboard: [] },
+      };
+  if ((!payload.chat_id || !payload.message_id) && !payload.inline_message_id) return false;
+  const result = await safeJsonFetch(`${TELEGRAM_API_URL}/bot${encodeURIComponent(token)}/editMessageReplyMarkup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    body: JSON.stringify(payload),
+  });
+  return result.ok && result.body?.ok !== false;
+}
+
+async function handleBookingConfirmation(env, callbackQuery, callbackAction, message, sender) {
+  let authorized = false;
+  try {
+    authorized = await isTelegramBookingAdministrator(env, message, sender);
+  } catch {
+    console.error('[telegram] booking administrator verification failed');
+  }
+  if (!authorized) {
+    await answerTelegramCallbackQuery(env, {
+      callbackQueryId: callbackQuery.id,
+      text: 'Подтверждать запись может только администратор чата.',
+      showAlert: true,
+    });
+    return json({ ok: true, confirmed: false, skipped: true });
+  }
+
+  await answerTelegramCallbackQuery(env, {
+    callbackQueryId: callbackQuery.id,
+    text: 'Проверяю запись…',
+  });
+
+  let result;
+  try {
+    result = await confirmGoogleBooking(env, callbackAction.requestId);
+  } catch {
+    console.error('[telegram] booking confirmation request failed');
+    result = { ok: false, reason: 'confirmation_pending', partial: true };
+  }
+  if (!result.ok) {
+    const partial = result.partial || ['confirmation_pending', 'calendar_cleanup_failed'].includes(result.reason);
+    let notification;
+    try {
+      notification = await sendTelegramMessage(env, {
+        chatId: String(message.chat.id),
+        messageThreadId: message.message_thread_id,
+        text:
+          result.reason === 'slot_conflict'
+            ? '⚠️ Запись не подтверждена: это время уже занято в Google Calendar.'
+            : partial
+              ? '⚠️ Подтверждение не завершено: событие могло быть создано. Не создавайте новую заявку — повторите эту же кнопку позже.'
+              : '⚠️ Не удалось подтвердить запись. Google Calendar не был изменён; повторите позже.',
+      });
+    } catch {
+      notification = null;
+    }
+    if (!notification?.ok || notification.body?.ok === false) {
+      console.error('[telegram] booking confirmation failure notification was not delivered');
+      return json({ ok: false, confirmed: false, retryable: true }, 502);
+    }
+    return json({ ok: true, confirmed: false });
+  }
+
+  const booking = result.booking || {};
+  const statusText = result.deduplicated ? 'Запись уже была подтверждена ранее.' : 'Запись подтверждена.';
+  let notification;
+  try {
+    notification = await sendTelegramMessage(env, {
+      chatId: String(message.chat.id),
+      messageThreadId: message.message_thread_id,
+      text: [
+        `✅ ${statusText}`,
+        booking.date && booking.time ? `${booking.date}, ${booking.time}` : '',
+        booking.service || '',
+        booking.name || '',
+        booking.petName ? `Питомец: ${booking.petName}${booking.petBreed ? ` (${booking.petBreed})` : ''}` : '',
+        'Событие сохранено в Google Calendar без дубликата.',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    });
+  } catch {
+    notification = null;
+  }
+  if (!notification?.ok || notification.body?.ok === false) {
+    console.error('[telegram] booking confirmation result was not delivered');
+    return json({ ok: false, confirmed: true, retryable: true }, 502);
+  }
+  let buttonCleared = false;
+  try {
+    buttonCleared = await clearBookingConfirmationButton(env, callbackQuery, message);
+  } catch {
+    buttonCleared = false;
+  }
+  if (!buttonCleared) console.error('[telegram] booking confirmation button was not cleared');
+  return json({ ok: true, confirmed: true, deduplicated: result.deduplicated === true });
 }
 
 function resolveIntent(text) {
@@ -326,6 +469,9 @@ export async function onRequest({ request, env }) {
     }
     return json({ ok: true, skipped: true });
   }
+  if (callbackQuery && callbackAction?.intent === CALLBACK_ACTIONS.bookingConfirm) {
+    return handleBookingConfirmation(env, callbackQuery, callbackAction, message, sender);
+  }
   const text = callbackAction?.intent || cleanText(message?.text || message?.caption, 2200);
   if (!message || !text || sender.is_bot) {
     return json({ ok: true, skipped: true });
@@ -351,6 +497,92 @@ export async function onRequest({ request, env }) {
 
   const configuredChatId = getEnvValue(env, 'TELEGRAM_CHAT_ID');
   if (message.chat?.type !== 'private') {
+    const isPersonalTopic =
+      String(message.chat?.id) === configuredChatId
+        ? await isTelegramPersonalTopic(env, message.message_thread_id)
+        : false;
+    let websiteSession =
+      String(message.chat?.id) === configuredChatId
+        ? await getChatSessionForTelegramReply(env, message.chat?.id, message.reply_to_message?.message_id)
+        : null;
+    if (!websiteSession && isPersonalTopic) {
+      websiteSession = await getChatSessionForTelegramTopic(env, message.chat?.id, message.message_thread_id);
+    }
+    if (websiteSession) {
+      const handoffActivated = await setChatSessionMode(env, websiteSession.session_id, 'human');
+      const stored = await recordChatMessage(env, websiteSession, {
+        direction: 'outbound',
+        channel: 'telegram',
+        kind: 'text',
+        body: text,
+        replyToMessageId: websiteSession.source_message_id,
+      });
+      if (stored.inserted) {
+        await recordChatLearningExample(
+          env,
+          websiteSession,
+          websiteSession.source_message_id,
+          text
+        ).catch(() => false);
+        await registerTelegramDelivery(
+          env,
+          websiteSession,
+          {
+            body: {
+              result: {
+                message_id: message.message_id,
+                message_thread_id: message.message_thread_id,
+                chat: { id: message.chat?.id },
+              },
+            },
+          },
+          websiteSession.source_message_id
+        ).catch(() => false);
+      }
+      const emailText = `${text}\n\nЭто сообщение также доступно в чате на сайте HUNDESALON_NIKA.`;
+      const emailDelivery = stored.inserted
+        ? await sendSendPulseEmail(env, {
+            to: websiteSession.email,
+            subject: 'Ответ HUNDESALON_NIKA на ваше обращение',
+            text: emailText,
+            html: buildBrandedEmail({
+              title: 'Ответ HUNDESALON_NIKA на ваше обращение',
+              bodyText: emailText,
+              lang: websiteSession.locale,
+            }),
+            replyTo: getEnvValue(env, 'SENDPULSE_REPLY_TO', 'info@hundesalon-nika.com'),
+          }).catch(() => ({ ok: false }))
+        : { ok: true, skipped: true };
+      let handoffNotification = { ok: true, skipped: true };
+      if (handoffActivated) {
+        handoffNotification = await sendTelegramMessage(env, {
+          category: 'personal',
+          text: `🟢 Диалог принят сотрудником\n${formatChatCustomer(websiteSession)}\n\nAI-ассистент приостановлен. Следующие сообщения клиента поступят в эту ветку. Отвечайте на эту карточку, чтобы продолжить диалог на сайте.`,
+        }).catch(() => ({ ok: false }));
+        if (handoffNotification?.ok) {
+          await registerTelegramDelivery(env, websiteSession, handoffNotification, websiteSession.source_message_id).catch(() => false);
+        }
+      }
+      return json({
+        ok: true,
+        relayed: true,
+        destination: 'website_chat',
+        mode: 'human',
+        movedToPersonal: handoffActivated && handoffNotification?.ok === true,
+        emailDelivered: emailDelivery?.ok === true,
+      });
+    }
+    if (isPersonalTopic) {
+      return json({ ok: true, skipped: true, destination: 'website_chat', reason: 'website_session_not_found' });
+    }
+    const repliedWebsiteMessage = await hasTelegramDelivery(
+      env,
+      message.chat?.id,
+      message.reply_to_message?.message_id
+    );
+    if (repliedWebsiteMessage) {
+      return json({ ok: true, skipped: true, destination: 'website_chat', reason: 'website_session_not_found' });
+    }
     const clientId = extractClientId(message);
     if (clientId && String(message.chat?.id) === configuredChatId) {
       await sendTelegramMessage(env, { chatId: clientId, text });

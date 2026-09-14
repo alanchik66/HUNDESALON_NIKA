@@ -4,17 +4,10 @@
  * Generates multilingual SEO payload and returns strict JSON.
  *
  * Required env vars:
- *   SERVICE_GATEWAY_API_KEY
- *
- * Recommended env vars:
- *   SERVICE_GATEWAY_SITE_URL
- *   SERVICE_GATEWAY_SITE_NAME
- *   SERVICE_GATEWAY_SEO_MODEL
- *   SERVICE_GATEWAY_SEO_MAX_TOKENS
+ *   OPENAI_API_KEY
  */
 
 import {
-  sanitizeOrigin,
   assertAllowedOrigin,
   enforceRateLimit,
   isRequestBodyTooLarge,
@@ -22,24 +15,12 @@ import {
   readJsonBody,
 } from './_lib/http-security.js';
 import { fetchAiResponse } from './_lib/ai-upstream.js';
-import {
-  AI_PROVIDER_POLICY,
-  APPROVED_AI_MODEL,
-  DEFAULT_SEO_MAX_TOKENS,
-  hasAiServiceAuth,
-  MAX_SEO_MAX_TOKENS,
-  resolveApprovedModel,
-} from './_lib/ai-policy.js';
+import { APPROVED_AI_MODEL, DEFAULT_SEO_MAX_TOKENS, hasAiServiceAuth, MAX_SEO_MAX_TOKENS } from './_lib/ai-policy.js';
 
-const LEGACY_SERVICE_PREFIX = ['OPEN', 'ROUTER'].join('');
-const DEFAULT_SERVICE_GATEWAY_URL = ['https://', 'open', 'router.ai', '/api/v1/chat/completions'].join('');
+const OPENAI_CHAT_COMPLETIONS_URL = 'https://api.openai.com/v1/chat/completions';
 const LOCALES = ['de', 'en', 'ru', 'uk'];
 const SEO_LOCALE_FIELDS = ['title', 'description', 'h1', 'shortBlock'];
 const MAX_REQUEST_BODY_BYTES = 16 * 1024;
-
-function legacyEnvName(suffix) {
-  return `${LEGACY_SERVICE_PREFIX}_${suffix}`;
-}
 
 function getEnvVar(env, key) {
   if (!env || typeof env !== 'object') return '';
@@ -276,8 +257,7 @@ export async function onRequest(context) {
     return rateLimited;
   }
 
-  const apiKey =
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_API_KEY') || getEnvVarFromContext(context, legacyEnvName('API_KEY'));
+  const apiKey = getEnvVarFromContext(context, 'OPENAI_API_KEY');
   if (!apiKey) {
     return jsonResponse({ error: 'Content service is not configured' }, 503, origin);
   }
@@ -299,46 +279,20 @@ export async function onRequest(context) {
     return jsonResponse({ error: 'Input is too large' }, 413, origin);
   }
 
-  const referer =
-    sanitizeOrigin(
-      getEnvVarFromContext(context, 'SERVICE_GATEWAY_SITE_URL') ||
-        getEnvVarFromContext(context, legacyEnvName('SITE_URL'))
-    ) || sanitizeOrigin(origin);
-  const title = String(
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_SITE_NAME') ||
-      getEnvVarFromContext(context, legacyEnvName('SITE_NAME')) ||
-      'HUNDESALON NIKA'
-  ).trim();
-  const configuredModel = String(
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_SEO_MODEL') ||
-      getEnvVarFromContext(context, legacyEnvName('SEO_MODEL')) ||
-      APPROVED_AI_MODEL
-  ).trim();
-  const model = resolveApprovedModel(configuredModel);
-  if (!model) {
-    return jsonResponse({ error: 'AI model configuration rejected' }, 503, origin);
-  }
+  const model = APPROVED_AI_MODEL;
   const maxTokens = parseBoundedInteger(
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_SEO_MAX_TOKENS') ||
-      getEnvVarFromContext(context, legacyEnvName('SEO_MAX_TOKENS')),
+    getEnvVarFromContext(context, 'OPENAI_SEO_MAX_TOKENS'),
     DEFAULT_SEO_MAX_TOKENS,
     360,
     MAX_SEO_MAX_TOKENS
   );
-  const serviceGatewayUrl = DEFAULT_SERVICE_GATEWAY_URL;
-
   const upstreamHeaders = {
     Authorization: `Bearer ${apiKey}`,
     'Content-Type': 'application/json',
   };
 
-  if (referer) upstreamHeaders['HTTP-Referer'] = referer;
-  if (title) upstreamHeaders[['X-Open', 'Router-Title'].join('')] = title;
-
   const basePayload = {
-    temperature: 0.25,
-    max_tokens: maxTokens,
-    provider: AI_PROVIDER_POLICY,
+    max_completion_tokens: maxTokens,
     messages: [
       {
         role: 'system',
@@ -352,8 +306,8 @@ export async function onRequest(context) {
     ],
   };
 
-  const callServiceGateway = body => {
-    return fetchAiResponse(serviceGatewayUrl, {
+  const callOpenAi = body => {
+    return fetchAiResponse(OPENAI_CHAT_COMPLETIONS_URL, {
       method: 'POST',
       headers: upstreamHeaders,
       body: JSON.stringify(body),
@@ -371,7 +325,7 @@ export async function onRequest(context) {
     let upstream;
     let upstreamText;
     try {
-      ({ response: upstream, text: upstreamText } = await callServiceGateway({
+      ({ response: upstream, text: upstreamText } = await callOpenAi({
         ...basePayload,
         model: modelCandidate,
       }));

@@ -16,7 +16,7 @@ function context(authorized = true) {
       },
       body: JSON.stringify({ topic: 'Dog grooming' }),
     }),
-    env: { AI_SERVICE_WEBHOOK_SECRET: 'test-auth', SERVICE_GATEWAY_API_KEY: 'test-provider-key' },
+    env: { AI_SERVICE_WEBHOOK_SECRET: 'test-auth', OPENAI_API_KEY: 'test-provider-key' },
   };
 }
 

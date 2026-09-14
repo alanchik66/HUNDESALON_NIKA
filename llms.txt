@@ -29,9 +29,9 @@
 ## Official profiles (citation)
 
 - Website: https://hundesalon-nika.com/
-- Google Maps: https://www.google.com/maps/search/?api=1&query=HUNDESALON_NIKA%2C+Walter-Markov-Ring+1%2C+04288+Leipzig
+- Google Maps: https://www.google.com/maps/search/?api=1&query=HUNDESALON_NIKA%2C+Untere+Eichst%C3%A4dtstra%C3%9Fe+38%2C+04299+Leipzig
 - Instagram: https://www.instagram.com/hundesalon_nika
-- Facebook: https://www.facebook.com/profile.php?id=61584574431839
+- Facebook: https://www.facebook.com/hundesalonnika/
 - YouTube: https://www.youtube.com/@hundesalon_nika
 - TikTok: https://www.tiktok.com/@hundesalon_nika
 - Telegram: https://t.me/hundesalon_nika_support_bot
@@ -39,6 +39,6 @@
 ## Citation (NAP)
 
 - HUNDESALON_NIKA
-- Walter-Markov-Ring 1, 04288 Leipzig, Sachsen, DE
+- Untere Eichstädtstraße 38, 04299 Leipzig, Sachsen, DE
 - Phone: +49 151 72450988
 - Email: info@hundesalon-nika.com

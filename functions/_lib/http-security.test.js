@@ -10,6 +10,7 @@ import {
   jsonResponse,
   readFormDataBody,
   readJsonBody,
+  readTextBody,
   timingSafeEqualStrings,
 } from './http-security.js';
 
@@ -99,6 +100,20 @@ test('parses JSON only within the configured byte limit', async () => {
     body: '123456789',
   });
   await assert.rejects(() => readJsonBody(oversized, 8), isRequestBodyTooLarge);
+});
+
+test('parses raw text only within the configured byte limit', async () => {
+  const request = new Request('https://hundesalon-nika.com/webhook', {
+    method: 'POST',
+    body: '{"event":"checkout.session.completed"}',
+  });
+  assert.equal(await readTextBody(request, 128), '{"event":"checkout.session.completed"}');
+
+  const oversized = new Request('https://hundesalon-nika.com/webhook', {
+    method: 'POST',
+    body: '123456789',
+  });
+  await assert.rejects(() => readTextBody(oversized, 8), isRequestBodyTooLarge);
 });
 
 test('parses form data only within the configured byte limit', async () => {

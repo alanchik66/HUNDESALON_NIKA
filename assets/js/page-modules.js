@@ -828,9 +828,11 @@ document.addEventListener('DOMContentLoaded', () => {
           : null;
 
         try {
+          const requestData = new FormData(form);
+          requestData.delete('pet_photo');
           response = await fetch(endpoint, {
             method: 'POST',
-            body: new FormData(form),
+            body: requestData,
             headers: { Accept: 'application/json' },
             ...(controller ? { signal: controller.signal } : {}),
           });
@@ -853,7 +855,9 @@ document.addEventListener('DOMContentLoaded', () => {
           } catch {
             /* ignore analytics errors */
           }
-          const successValues = Object.fromEntries(new FormData(form).entries());
+          const successData = new FormData(form);
+          successData.delete('pet_photo');
+          const successValues = Object.fromEntries(successData.entries());
           form.reset();
           form.dispatchEvent(
             new CustomEvent('sendmail:success', {
@@ -1217,6 +1221,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const initBookingModal = () => {
     const modal = document.getElementById('booking-modal');
     if (!modal) return;
+    const createUploadSessionId = () => {
+      if (typeof window.crypto?.randomUUID === 'function') return window.crypto.randomUUID();
+      const randomPart = Array.from({ length: 4 }, () => Math.random().toString(36).slice(2)).join('');
+      return `upload-${Date.now().toString(36)}-${randomPart}`.slice(0, 64);
+    };
 
     if (modal.closest('.site-scroll-root')) {
       document.body.appendChild(modal);
@@ -1891,6 +1900,9 @@ document.addEventListener('DOMContentLoaded', () => {
       availabilityRequestId: 0,
       summaryConfirmed: false,
       uploadedFileUrl: uploadedFileUrlField?.value || '',
+      uploadedFileId: '',
+      uploadedFileProof: '',
+      uploadSessionId: createUploadSessionId(),
     };
     let lastFocusedElement = null;
     const formatDuration = minutes => {
@@ -2021,6 +2033,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (uploadedFileUrlField) {
         uploadedFileUrlField.value = state.uploadedFileUrl;
       }
+      injectHiddenValue(form, 'uploaded_file_id', state.uploadedFileId);
+      injectHiddenValue(form, 'uploaded_file_proof', state.uploadedFileProof);
+      injectHiddenValue(form, 'upload_session_id', state.uploadSessionId);
     };
 
     const resetSummaryConfirmation = () => {
@@ -2066,15 +2081,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!['http:', 'https:'].includes(parsed.protocol)) {
           return '';
         }
-        // Same-origin upload proxy
-        if (parsed.origin === window.location.origin && parsed.pathname.startsWith('/uploads/')) {
-          return parsed.toString();
-        }
-        // Google Drive webViewLink from /upload (functions/upload.js)
+        // Only a Microsoft OneDrive web link returned by /upload is accepted.
         const host = parsed.hostname.replace(/^www\./, '');
         if (
-          (host === 'drive.google.com' || host === 'docs.google.com') &&
-          (parsed.pathname.includes('/file/') || parsed.pathname.includes('/open') || parsed.searchParams.has('id'))
+          host === '1drv.ms' ||
+          host === 'onedrive.live.com' ||
+          host.endsWith('.sharepoint.com') ||
+          host.endsWith('.microsoftpersonalcontent.com')
         ) {
           return parsed.toString();
         }
@@ -2147,6 +2160,7 @@ document.addEventListener('DOMContentLoaded', () => {
       uploadData.append('service', metadata.service);
       uploadData.append('date', metadata.date);
       uploadData.append('time', metadata.time);
+      uploadData.append('upload_session_id', state.uploadSessionId);
 
       const response = await fetch('/upload', {
         method: 'POST',
@@ -2165,12 +2179,12 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const result = await uploadPetPhotoFile(file);
         const safeFileUrl = normalizeUploadedFileUrl(result.fileUrl);
-        // Drive not configured: allow booking without link (server returns success + empty fileUrl)
-        if (result.success && result.configured === false && !result.fileUrl) {
-          return true;
-        }
-        if (result.success && safeFileUrl) {
+        const safeFileId = String(result.fileId || '').slice(0, 220);
+        const safeFileProof = String(result.fileProof || '').slice(0, 128);
+        if (result.success && safeFileUrl && safeFileId && safeFileProof) {
           state.uploadedFileUrl = safeFileUrl;
+          state.uploadedFileId = safeFileId;
+          state.uploadedFileProof = safeFileProof;
           syncHiddenFields();
           if (bookingFilePreview) {
             bookingFilePreview.hidden = false;
@@ -2810,6 +2824,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       bookingFileInput?.addEventListener('change', () => {
         state.uploadedFileUrl = '';
+        state.uploadedFileId = '';
+        state.uploadedFileProof = '';
         syncHiddenFields();
         resetSummaryConfirmation();
         clearValidationMessage();
@@ -3143,6 +3159,9 @@ document.addEventListener('DOMContentLoaded', () => {
           state.availabilityConfigured = false;
           state.summaryConfirmed = false;
           state.uploadedFileUrl = '';
+          state.uploadedFileId = '';
+          state.uploadedFileProof = '';
+          state.uploadSessionId = createUploadSessionId();
           syncHiddenFields();
           resetSummaryConfirmation();
           renderFilePreview();

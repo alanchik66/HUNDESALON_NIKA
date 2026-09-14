@@ -4,6 +4,7 @@ const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const SENDPULSE_API_URL = 'https://api.sendpulse.com';
 const SENDPULSE_EVENT_API_URL = 'https://events.sendpulse.com/events/name';
 const TELEGRAM_API_URL = 'https://api.telegram.org';
+export const TELEGRAM_FILE_MAX_BYTES = 50 * 1024 * 1024;
 const SENDPULSE_EVENT_ENV_NAMES = Object.freeze({
   booking: 'SENDPULSE_BOOKING_EVENT_NAME',
   contact: 'SENDPULSE_CONTACT_EVENT_NAME',
@@ -262,7 +263,7 @@ export async function appendGoogleSheetRow(env, { spreadsheetId, sheetName = 'bo
     return { ok: false, skipped: true, reason: 'Google Sheets credentials are not configured.' };
   }
 
-  const range = encodeURIComponent(`${sheetName}!A:Z`);
+  const range = encodeURIComponent(`${sheetName}!A:AZ`);
   return safeJsonFetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${range}:append?valueInputOption=USER_ENTERED`,
     {
@@ -389,6 +390,7 @@ export async function getGoogleCalendarBusyIntervals(env, { calendarId, timeMin,
 /** Sends a plain-text notification to a Telegram chat or channel. */
 const TELEGRAM_TOPIC_ENV_NAMES = Object.freeze({
   messages: 'TELEGRAM_TOPIC_MESSAGES_ID',
+  personal: 'TELEGRAM_TOPIC_PERSONAL_ID',
   orders: 'TELEGRAM_TOPIC_ORDERS_ID',
   newsletter: 'TELEGRAM_TOPIC_NEWSLETTER_ID',
   social: 'TELEGRAM_TOPIC_SOCIAL_ID',
@@ -408,6 +410,21 @@ function cleanTelegramText(value, maxLength = 3900) {
     .slice(0, maxLength);
 }
 
+async function resolveTelegramTopicId(env, category, configuredTopicId) {
+  const db = env?.CHAT_DB;
+  if (!db || typeof db.prepare !== 'function') return configuredTopicId;
+  try {
+    const row = await db
+      .prepare('SELECT message_thread_id FROM chat_telegram_topics WHERE category = ? LIMIT 1')
+      .bind(category)
+      .first();
+    const override = Number.parseInt(String(row?.message_thread_id ?? ''), 10);
+    return Number.isInteger(override) && override > 0 ? override : configuredTopicId;
+  } catch {
+    return configuredTopicId;
+  }
+}
+
 export async function sendTelegramMessage(
   env,
   { text = '', category = 'messages', chatId = '', messageThreadId = null, replyMarkup = null } = {}
@@ -425,8 +442,12 @@ export async function sendTelegramMessage(
   }
 
   const topicEnvName = TELEGRAM_TOPIC_ENV_NAMES[category] || TELEGRAM_TOPIC_ENV_NAMES.messages;
-  const topicId = Number.parseInt(getEnvValue(env, topicEnvName), 10);
+  const configuredTopicId = Number.parseInt(getEnvValue(env, topicEnvName), 10);
   const explicitThreadId = Number.parseInt(String(messageThreadId ?? ''), 10);
+  const topicId =
+    !chatId && !(Number.isInteger(explicitThreadId) && explicitThreadId > 0)
+      ? await resolveTelegramTopicId(env, category, configuredTopicId)
+      : configuredTopicId;
   const payload = { chat_id: destinationChatId, text: message, disable_web_page_preview: true };
   if (Number.isInteger(explicitThreadId) && explicitThreadId > 0) {
     payload.message_thread_id = explicitThreadId;
@@ -439,6 +460,131 @@ export async function sendTelegramMessage(
     method: 'POST',
     headers: JSON_HEADERS,
     body: JSON.stringify(payload),
+  });
+}
+
+function telegramMultipartBody({ fields, fileBody, fileName, mimeType, boundary }) {
+  const encoder = new TextEncoder();
+  const fieldParts = Object.entries(fields)
+    .filter(([, value]) => String(value ?? '').trim())
+    .map(
+      ([name, value]) =>
+        `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${String(value)}\r\n`
+    )
+    .join('');
+  const safeName = cleanText(fileName, 180).replace(/[\\/:*?"<>|]/g, '-') || 'attachment';
+  const asciiName = safeName.replace(/[^\x20-\x7E]/g, '_');
+  const prefix = encoder.encode(
+    `${fieldParts}--${boundary}\r\nContent-Disposition: form-data; name="document"; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(safeName)}\r\nContent-Type: ${mimeType}\r\n\r\n`
+  );
+  const suffix = encoder.encode(`\r\n--${boundary}--\r\n`);
+  const reader = fileBody.getReader();
+  let phase = 0;
+  return new ReadableStream({
+    async pull(controller) {
+      if (phase === 0) {
+        phase = 1;
+        controller.enqueue(prefix);
+        return;
+      }
+      if (phase === 1) {
+        const chunk = await reader.read();
+        if (!chunk.done) {
+          controller.enqueue(chunk.value);
+          return;
+        }
+        phase = 2;
+      }
+      controller.enqueue(suffix);
+      controller.close();
+      phase = 3;
+    },
+    cancel(reason) {
+      return reader.cancel(reason);
+    },
+  });
+}
+
+/** Streams an original file from a short-lived HTTPS URL into Telegram without recompression. */
+export async function sendTelegramDocument(
+  env,
+  {
+    documentUrl = '',
+    fileName = '',
+    fileSize = 0,
+    mimeType = '',
+    caption = '',
+    category = 'messages',
+    chatId = '',
+    messageThreadId = null,
+  } = {}
+) {
+  if (!siteNotificationsEnabled(env)) {
+    return { ok: false, skipped: true, reason: 'Site notifications are disabled.' };
+  }
+
+  const token = getEnvValue(env, 'TELEGRAM_BOT_TOKEN');
+  const configuredChatId = getEnvValue(env, 'TELEGRAM_CHAT_ID');
+  const destinationChatId = String(chatId || configuredChatId).trim();
+  let downloadUrl = '';
+  try {
+    const parsed = new URL(String(documentUrl || '').trim());
+    if (parsed.protocol === 'https:' && !parsed.username && !parsed.password) downloadUrl = parsed.toString();
+  } catch {
+    downloadUrl = '';
+  }
+  const size = Number(fileSize);
+  const missing = [
+    !hasUsableValue(token) && 'bot_token',
+    !hasUsableValue(destinationChatId) && 'chat_id',
+    !downloadUrl && 'download_url',
+    (!Number.isSafeInteger(size) || size < 1 || size > TELEGRAM_FILE_MAX_BYTES) && 'file_size',
+  ].filter(Boolean);
+  if (missing.length) {
+    return { ok: false, skipped: true, reason: `Telegram file delivery prerequisites: ${missing.join(', ')}.` };
+  }
+
+  const topicEnvName = TELEGRAM_TOPIC_ENV_NAMES[category] || TELEGRAM_TOPIC_ENV_NAMES.messages;
+  const configuredTopicId = Number.parseInt(getEnvValue(env, topicEnvName), 10);
+  const explicitThreadId = Number.parseInt(String(messageThreadId ?? ''), 10);
+  const topicId =
+    !chatId && !(Number.isInteger(explicitThreadId) && explicitThreadId > 0)
+      ? await resolveTelegramTopicId(env, category, configuredTopicId)
+      : configuredTopicId;
+  const fields = { chat_id: destinationChatId };
+  const message = cleanTelegramText(caption, 1000);
+  if (message) fields.caption = message;
+  if (Number.isInteger(explicitThreadId) && explicitThreadId > 0) {
+    fields.message_thread_id = explicitThreadId;
+  } else if (!chatId && Number.isInteger(topicId) && topicId > 0) {
+    fields.message_thread_id = topicId;
+  }
+
+  const source = await fetchWithTimeout(downloadUrl, {}, 15000);
+  const rawSourceLength = source.headers.get('Content-Length');
+  const sourceLength = rawSourceLength ? Number(rawSourceLength) : Number.NaN;
+  if (!source.ok || !source.body || (Number.isFinite(sourceLength) && sourceLength !== size)) {
+    if (source.body) await source.body.cancel().catch(() => {});
+    return { ok: false, status: source.status, reason: 'OneDrive file download failed.' };
+  }
+  const safeMimeType = cleanText(mimeType || source.headers.get('Content-Type'), 120).split(';', 1)[0];
+  const boundary = `----hundesalon-${crypto.randomUUID()}`;
+  const body = telegramMultipartBody({
+    fields,
+    fileBody: source.body,
+    fileName,
+    mimeType: /^[\w!#$&^_.+-]+\/[\w!#$&^_.+-]+$/.test(safeMimeType)
+      ? safeMimeType
+      : 'application/octet-stream',
+    boundary,
+  });
+
+  return safeJsonFetch(`${TELEGRAM_API_URL}/bot${encodeURIComponent(token)}/sendDocument`, {
+    method: 'POST',
+    headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+    body,
+    duplex: 'half',
+    timeoutMs: 60000,
   });
 }
 
@@ -654,92 +800,4 @@ export async function upsertSendPulseContact(
     headers: { ...JSON_HEADERS, Authorization: `Bearer ${token}` },
     body: JSON.stringify({ emails: [{ email: String(email).trim().toLowerCase(), variables }] }),
   });
-}
-
-const APPS_SCRIPT_MAX_BYTES = 15 * 1024 * 1024;
-
-export async function uploadFileToDrive(env, { file, fileName, metadata = {} }) {
-  const appsScriptWebhook = getEnvValue(env, 'GOOGLE_APPS_SCRIPT_WEBHOOK_URL');
-  if (hasUsableValue(appsScriptWebhook) && file.size <= APPS_SCRIPT_MAX_BYTES) {
-    const fileBytes = new Uint8Array(await file.arrayBuffer());
-    const appsScriptResult = await callGoogleAppsScriptGateway(env, 'drive', {
-      fileName,
-      mimeType: file.type || 'application/octet-stream',
-      fileBase64: base64Encode(fileBytes),
-      metadata,
-    });
-
-    if (appsScriptResult.ok && appsScriptResult.body?.fileUrl) {
-      return {
-        ...appsScriptResult,
-        body: {
-          ...appsScriptResult.body,
-          id: appsScriptResult.body.fileId || appsScriptResult.body.id,
-          webViewLink: appsScriptResult.body.fileUrl,
-        },
-      };
-    }
-    return appsScriptResult;
-  }
-
-  const webhook = getEnvValue(env, 'GOOGLE_DRIVE_UPLOAD_WEBHOOK_URL');
-  if (hasUsableValue(webhook)) {
-    const formData = new FormData();
-    formData.append('file', file, fileName);
-    formData.append('metadata', JSON.stringify(metadata));
-    return safeJsonFetch(webhook, {
-      method: 'POST',
-      headers: { 'X-Hundesalon-Gateway-Secret': getEnvValue(env, 'GOOGLE_GATEWAY_SECRET') },
-      body: formData,
-    });
-  }
-
-  const token =
-    (await getGoogleAccessToken(env, ['https://www.googleapis.com/auth/drive.file'])) ||
-    (await getGoogleOAuthAccessToken(env));
-  const folderId = getEnvValue(env, 'DRIVE_UPLOAD_FOLDER');
-  if (!hasUsableValue(token) || !hasUsableValue(folderId)) {
-    return { ok: false, skipped: true, reason: 'Google Drive credentials are not configured.' };
-  }
-
-  const boundary = `hundesalon_${crypto.randomUUID()}`;
-  const fileBytes = await file.arrayBuffer();
-  const encoder = new TextEncoder();
-  const meta = {
-    name: fileName,
-    parents: [folderId],
-    description: JSON.stringify(metadata),
-  };
-  const head = encoder.encode(
-    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: ${file.type || 'application/octet-stream'}\r\n\r\n`
-  );
-  const tail = encoder.encode(`\r\n--${boundary}--`);
-  const body = new Uint8Array(head.byteLength + fileBytes.byteLength + tail.byteLength);
-  body.set(head, 0);
-  body.set(new Uint8Array(fileBytes), head.byteLength);
-  body.set(tail, head.byteLength + fileBytes.byteLength);
-
-  const upload = await safeJsonFetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': `multipart/related; boundary=${boundary}`,
-      },
-      body,
-    }
-  );
-
-  if (upload.ok && upload.body?.id) {
-    return {
-      ...upload,
-      body: {
-        ...upload.body,
-        webViewLink: upload.body.webViewLink || `https://drive.google.com/file/d/${upload.body.id}/view`,
-      },
-    };
-  }
-
-  return upload;
 }

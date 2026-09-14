@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const domain = 'https://hundesalon-nika.com';
-const brandIconVersion = '20260520-brand-bing';
-const searchLogo = `${domain}/assets/images/brand/search-logo-clear-512.png?v=${brandIconVersion}`;
+const brandIconVersion = '20260910-brand-card';
+const searchLogo = `${domain}/assets/images/ads/work/logo-from-card-crown-512.png?v=${brandIconVersion}`;
 const socialPreview = `${domain}/assets/images/brand/social-preview-1200x630.png`;
 
 const skipDirs = new Set(['.git', 'node_modules', 'dist', 'temp', 'tmp', 'test-results', '.wrangler']);

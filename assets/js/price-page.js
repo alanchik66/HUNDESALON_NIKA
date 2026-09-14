@@ -717,7 +717,7 @@
           <div class="price-breed-search" data-price-breed-search>
             <label class="price-breed-search__label" for="price-breed-search-input">${escapeHtml(locale.searchLabel || 'Поиск породы')}</label>
             <div class="price-breed-search__control">
-              <img class="price-breed-search__icon" src="../assets/images/icons/Lupa.png" alt="" width="64" height="64" decoding="async" aria-hidden="true" />
+              <img class="price-breed-search__icon" src="../assets/images/icons/search.png" alt="" width="64" height="64" decoding="async" aria-hidden="true" />
               <input id="price-breed-search-input" class="price-breed-search__input" type="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" aria-controls="price-breed-search-suggestions" aria-expanded="false" data-price-breed-search-input placeholder="${escapeHtml(locale.searchPlaceholder || 'Например, шпиц или пудель')}" />
               <button type="button" class="price-breed-search__clear" data-price-breed-search-clear aria-label="${escapeHtml(locale.searchClear || 'Очистить поиск')}" hidden>&times;</button>
             </div>
@@ -2033,6 +2033,7 @@
     modal.classList.remove('is-closing');
     modal.classList.add('active');
     modal.setAttribute('aria-hidden', 'false');
+    if (modalContent) modalContent.scrollTop = 0;
     setPriceModalScrollLock(true);
 
     window.requestAnimationFrame(() => {

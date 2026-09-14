@@ -6,6 +6,7 @@
     "stylelint.vscode-stylelint",
     "htmlhint.vscode-htmlhint",
     "davidanson.vscode-markdownlint",
+    "github.vscode-pull-request-github",
     "cloudflare.cloudflare-workers-bindings-extension"
   ]
 }

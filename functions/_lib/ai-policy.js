@@ -2,8 +2,8 @@
 
 import { timingSafeEqualStrings } from './http-security.js';
 
-export const APPROVED_AI_MODEL = 'google/gemini-2.5-flash-lite';
-export const APPROVED_AI_PROVIDER = 'google-ai-studio';
+export const APPROVED_AI_MODEL = 'gpt-5.6-luna';
+export const APPROVED_AI_PROVIDER = 'openai';
 export const AI_PROVIDER_POLICY = Object.freeze({
   only: [APPROVED_AI_PROVIDER],
   allow_fallbacks: false,

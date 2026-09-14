@@ -20,7 +20,6 @@ import {
 } from './_lib/http-security.js';
 import {
   appendGoogleSheetRow,
-  createGoogleCalendarEvent,
   getEnvList,
   getEnvValue,
   hasUsableValue,
@@ -31,6 +30,8 @@ import {
   siteNotificationsEnabled,
 } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
+import { buildBookingConfirmationUrl } from './_lib/booking-confirmation.js';
+import { verifyOneDriveFileReference } from './_lib/onedrive.js';
 
 const DEFAULT_RECIPIENT = 'info@hundesalon-nika.com';
 const DEFAULT_BOOKING_RECIPIENT = 'info@hundesalon-nika.com';
@@ -47,6 +48,33 @@ const REGISTRATION_PET_SPECIES = new Set(['dog', 'cat', 'small_animal', 'rabbit'
 const BOOKING_CLIENT_TYPES = new Set(['new', 'returning']);
 const BOOKING_COAT_CONDITIONS = new Set(['good', 'slight_mats', 'many_mats', 'severe_matting']);
 const BOOKING_BEHAVIOURS = new Set(['calm', 'restless', 'very_restless', 'aggressive']);
+
+const normalizeOneDriveFileUrl = value => {
+  const raw = sanitizeLimit(value, 1000);
+  if (!raw) return '';
+  try {
+    const url = new URL(raw);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    if (
+      url.protocol !== 'https:' ||
+      url.username ||
+      url.password ||
+      !(
+        host === '1drv.ms' ||
+        host === 'onedrive.live.com' ||
+        host.endsWith('.sharepoint.com') ||
+        host === 'my.microsoftpersonalcontent.com' ||
+        host.endsWith('.microsoftpersonalcontent.com')
+      )
+    ) {
+      return '';
+    }
+    url.hash = '';
+    return url.toString();
+  } catch {
+    return '';
+  }
+};
 const BOOKING_SCHEDULE = Object.freeze({
   workdayStartMinutes: 9 * 60,
   workdayEndMinutes: 18 * 60,
@@ -757,7 +785,24 @@ export async function onRequest(ctx) {
     (BOOKING_BEHAVIOUR_EXTRA_MINUTES[behaviour] || 0);
   const safeEstimatedDurationMinutes = Math.max(estimatedDurationMinutes, 15 + minimumRiskDuration);
   const safeBlockMinutes = Math.max(requestedSafeBlockMinutes, safeEstimatedDurationMinutes + bookingBufferMinutes);
-  const uploadedFileUrl = sanitizeLimit(fields.uploaded_file_url || fields.file_url, 500);
+  const rawUploadedFileUrl = sanitizeLimit(fields.uploaded_file_url || fields.file_url, 1000);
+  const uploadedFileUrl = normalizeOneDriveFileUrl(rawUploadedFileUrl);
+  const uploadedFileId = sanitizeLimit(fields.uploaded_file_id, 220);
+  const uploadedFileProof = sanitizeLimit(fields.uploaded_file_proof, 128);
+  const uploadSessionId = sanitizeLimit(fields.upload_session_id, 80);
+  const fileReferenceValid = rawUploadedFileUrl
+    ? await verifyOneDriveFileReference(
+        env,
+        { fileId: uploadedFileId, fileUrl: uploadedFileUrl, sessionId: uploadSessionId },
+        uploadedFileProof
+      )
+    : !uploadedFileId && !uploadedFileProof;
+  if (
+    (rawUploadedFileUrl || uploadedFileId || uploadedFileProof) &&
+    (!uploadedFileUrl || formType !== 'booking' || !fileReferenceValid)
+  ) {
+    return jsonResponse({ success: false, message: 'Invalid OneDrive file reference.' }, 400, origin);
+  }
   const source = sanitizeLimit(fields.source || fields.page || request.headers.get('Referer') || 'website', 500);
   const inquiryType = sanitizeLimit(fields.inquiry_type, 40);
   const paymentChoice = sanitizeLimit(fields.payment_choice || fields.payment_method || '', 40);
@@ -937,6 +982,18 @@ export async function onRequest(ctx) {
     submitted_at: submittedAt,
     request_id: crypto.randomUUID(),
   };
+  const bookingConfirmationMarkup =
+    formType === 'booking'
+      ? {
+          inline_keyboard: [
+            [{ text: '✅ Подтвердить запись в Google Calendar', callback_data: `booking_confirm:${automationEventData.request_id}` }],
+          ],
+        }
+      : null;
+  const bookingConfirmationUrl =
+    formType === 'booking'
+      ? await buildBookingConfirmationUrl(env, origin, automationEventData.request_id)
+      : '';
 
   const slackLeadPayload = buildSlackPayload({
     level: 'info',
@@ -1051,6 +1108,12 @@ export async function onRequest(ctx) {
     formType === 'booking' ? `${bookingMetaCopy.buffer}: ${bookingBufferMinutes} min` : null,
     formType === 'booking' ? `${bookingMetaCopy.safeBlock}: ${safeBlockEndDateTime}` : null,
     formType === 'booking' ? `${bookingMetaCopy.confirmation}: ${bookingStatus}` : null,
+    formType === 'booking' ? `Request ID: ${automationEventData.request_id}` : null,
+    formType === 'booking' && bookingConfirmationUrl
+      ? `Подтвердить запись в Google Calendar: ${bookingConfirmationUrl}`
+      : formType === 'booking'
+        ? 'Подтверждение: нажмите кнопку в служебном Telegram-уведомлении.'
+        : null,
     uploadedFileUrl ? `${emailCopy.field.file}: ${uploadedFileUrl}` : null,
     formType === 'booking' ? `${emailCopy.field.payment}: ${paymentStatus}` : null,
     petName ? `${emailCopy.field.petName}: ${petName}` : null,
@@ -1066,52 +1129,12 @@ export async function onRequest(ctx) {
 
   const textBody = bodyLines.join('\n');
 
-  const runBookingIntegrations = async () => {
-    if (formType !== 'booking') {
-      return [];
-    }
-
+  const persistBookingRequest = async () => {
+    if (formType !== 'booking') return { ok: true, skipped: true };
     const startDateTime = `${date}T${time}:00`;
     const endDateTime = safeBlockEndDateTime;
-    const bookingSummary = [
-      `${emailCopy.field.name}: ${name}`,
-      `${emailCopy.field.email}: ${email}`,
-      phone ? `${emailCopy.field.phone}: ${phone}` : null,
-      `${emailCopy.field.service}: ${service}`,
-      `${emailCopy.field.date}: ${date}`,
-      `${emailCopy.field.time}: ${time}`,
-      `${bookingMetaCopy.clientType}: ${clientTypeLabel}`,
-      `${bookingMetaCopy.coatCondition}: ${bookingValueCopy.coat[coatCondition]}`,
-      `${bookingMetaCopy.behaviour}: ${bookingValueCopy.behaviour[behaviour]}`,
-      `${bookingMetaCopy.estimatedDuration}: ${safeEstimatedDurationMinutes} min`,
-      `${bookingMetaCopy.buffer}: ${bookingBufferMinutes} min`,
-      `${bookingMetaCopy.safeBlock}: ${safeBlockEndDateTime}`,
-      `${bookingMetaCopy.confirmation}: ${bookingStatus}`,
-      `${emailCopy.field.payment}: ${paymentStatus}`,
-      uploadedFileUrl ? `${emailCopy.field.file}: ${uploadedFileUrl}` : null,
-      `${emailCopy.field.petName}: ${petName}`,
-      `${emailCopy.field.petSpecies}: ${petSpecies}`,
-      `${emailCopy.field.petBreed}: ${petBreed}`,
-      petAge ? `${emailCopy.field.petAge}: ${petAge}` : null,
-      petSex ? `${emailCopy.field.petSex}: ${petSex}` : null,
-      petTagNumber ? `${emailCopy.field.petTag}: ${petTagNumber}` : null,
-      '',
-      `${emailCopy.field.message}:`,
-      resolvedMessage,
-    ]
-      .filter(Boolean)
-      .join('\n');
-
-    const results = await Promise.allSettled([
-      createGoogleCalendarEvent(env, {
-        calendarId: getEnvValue(env, 'GOOGLE_CALENDAR_ID', 'primary'),
-        summary: `HUNDESALON NIKA: ${service} — ${name}`,
-        description: bookingSummary,
-        startDateTime,
-        endDateTime,
-        status: 'tentative',
-      }),
-      appendGoogleSheetRow(env, {
+    try {
+      return await appendGoogleSheetRow(env, {
         spreadsheetId: getEnvValue(env, 'SHEET_ID'),
         sheetName: 'bookings',
         values: [
@@ -1143,8 +1166,56 @@ export async function onRequest(ctx) {
           safeEstimatedDurationMinutes,
           bookingBufferMinutes,
           safeBlockMinutes,
+          automationEventData.request_id,
+          'pending',
+          '',
+          '',
+          startDateTime,
+          endDateTime,
         ],
-      }),
+      });
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          message: 'booking sheet write failed',
+          error: error instanceof Error ? error.message : String(error),
+        })
+      );
+      return { ok: false, error: 'booking sheet write failed' };
+    }
+  };
+
+  const runBookingFollowups = async () => {
+    if (formType !== 'booking') return [];
+    const bookingSummary = [
+      `${emailCopy.field.name}: ${name}`,
+      `${emailCopy.field.email}: ${email}`,
+      phone ? `${emailCopy.field.phone}: ${phone}` : null,
+      `${emailCopy.field.service}: ${service}`,
+      `${emailCopy.field.date}: ${date}`,
+      `${emailCopy.field.time}: ${time}`,
+      `${bookingMetaCopy.clientType}: ${clientTypeLabel}`,
+      `${bookingMetaCopy.coatCondition}: ${bookingValueCopy.coat[coatCondition]}`,
+      `${bookingMetaCopy.behaviour}: ${bookingValueCopy.behaviour[behaviour]}`,
+      `${bookingMetaCopy.estimatedDuration}: ${safeEstimatedDurationMinutes} min`,
+      `${bookingMetaCopy.buffer}: ${bookingBufferMinutes} min`,
+      `${bookingMetaCopy.safeBlock}: ${safeBlockEndDateTime}`,
+      `${bookingMetaCopy.confirmation}: ${bookingStatus}`,
+      `${emailCopy.field.payment}: ${paymentStatus}`,
+      uploadedFileUrl ? `${emailCopy.field.file}: ${uploadedFileUrl}` : null,
+      `${emailCopy.field.petName}: ${petName}`,
+      `${emailCopy.field.petSpecies}: ${petSpecies}`,
+      `${emailCopy.field.petBreed}: ${petBreed}`,
+      petAge ? `${emailCopy.field.petAge}: ${petAge}` : null,
+      petSex ? `${emailCopy.field.petSex}: ${petSex}` : null,
+      petTagNumber ? `${emailCopy.field.petTag}: ${petTagNumber}` : null,
+      '',
+      `${emailCopy.field.message}:`,
+      resolvedMessage,
+    ]
+      .filter(Boolean)
+      .join('\n');
+    const results = await Promise.allSettled([
       sendSendPulseEmail(env, {
         to: email,
         subject: emailCopy.bookingSubject,
@@ -1241,6 +1312,18 @@ export async function onRequest(ctx) {
   const hasSendPulseCredentials =
     Boolean(getEnvValue(env, 'SENDPULSE_API_KEY')) ||
     Boolean(getEnvValue(env, 'SENDPULSE_CLIENT_ID') && getEnvValue(env, 'SENDPULSE_CLIENT_SECRET'));
+  const bookingPersistence = await persistBookingRequest();
+  if (formType === 'booking' && bookingPersistence?.ok !== true) {
+    console.error(JSON.stringify({ message: 'booking was not stored in the admin register' }));
+    return jsonResponse({ success: false, message: copy.error }, 503, origin);
+  }
+  const registrationResults = await runClientRegistrationIntegration();
+  const registrationDelivered = registrationResults.some(result => result?.ok === true);
+  if (clientRecordRequired && !registrationDelivered) {
+    console.error(JSON.stringify({ message: 'client registration was not stored in the admin register' }));
+    return jsonResponse({ success: false, message: copy.error }, 503, origin);
+  }
+
   if (!hasSendPulseCredentials) {
     console.error('[sendmail] SendPulse credentials not configured');
     const slackDelivered = await sendSlackNotification(env, slackLeadPayload);
@@ -1263,11 +1346,11 @@ export async function onRequest(ctx) {
         pagePath: requestUrl.pathname,
       }),
       category: formType === 'booking' ? 'orders' : 'messages',
+      replyMarkup: bookingConfirmationMarkup,
     });
-    const bookingResults = await runBookingIntegrations();
-    const registrationResults = await runClientRegistrationIntegration();
-    const registrationDelivered = registrationResults.some(result => result?.ok === true);
-    const integrationDelivered = registrationDelivered || bookingResults.some(result => result?.ok === true);
+    const bookingResults = await runBookingFollowups();
+    const integrationDelivered =
+      registrationDelivered || formType === 'booking' || bookingResults.some(result => result?.ok === true);
     const requiredDeliveryCompleted = clientRecordRequired
       ? registrationDelivered
       : slackDelivered || telegramDelivered.ok || integrationDelivered;
@@ -1321,12 +1404,6 @@ export async function onRequest(ctx) {
   }
 
   if (sendPulseRes.ok) {
-    const registrationResults = await runClientRegistrationIntegration();
-    if (clientRecordRequired && !registrationResults.some(result => result?.ok === true)) {
-      console.error(JSON.stringify({ message: 'client registration was not stored in the admin register' }));
-      return jsonResponse({ success: false, message: copy.error }, 503, origin);
-    }
-
     await Promise.allSettled([
       sendSendPulseAutomationEvent(env, {
         eventType: automationEventType,
@@ -1352,8 +1429,9 @@ export async function onRequest(ctx) {
           pagePath: requestUrl.pathname,
         }),
         category: formType === 'booking' ? 'orders' : 'messages',
+        replyMarkup: bookingConfirmationMarkup,
       }),
-      runBookingIntegrations(),
+      runBookingFollowups(),
       sendAdminNotification(),
     ]);
     return jsonResponse(

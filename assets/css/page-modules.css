@@ -261,6 +261,98 @@ body.price-page .price-breed-photo__source {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
+/* Services overview: wide, compact cards with calm editorial typography. */
+body.services-page .services > .container {
+  width: min(100%, 1640px);
+  max-width: none;
+}
+
+body.services-page .services-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  align-items: stretch;
+  gap: clamp(30px, 2.4vw, 46px);
+}
+
+body.services-page .service-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  height: 100%;
+  min-height: 0;
+  padding: clamp(20px, 1.55vw, 26px);
+  overflow: clip;
+  transform: translate3d(0, 0, 0);
+  transition:
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 320ms ease,
+    box-shadow 320ms ease,
+    background-color 320ms ease;
+}
+
+body.services-page .service-card h3 {
+  margin-bottom: 10px;
+  font-size: clamp(20px, 1.3vw, 25px);
+  line-height: 1.3;
+  letter-spacing: 0.045em;
+  text-wrap: balance;
+  hyphens: none;
+  overflow-wrap: normal;
+}
+
+body.services-page .service-card p {
+  margin-bottom: 12px;
+  font-size: clamp(15px, 0.95vw, 18px);
+  line-height: 1.48;
+  letter-spacing: 0.012em;
+  text-align: start;
+  text-wrap: pretty;
+  hyphens: none;
+  overflow-wrap: normal;
+}
+
+body.services-page .service-card .price {
+  margin-top: 0;
+  font-size: clamp(17px, 1.15vw, 21px);
+  line-height: 1.25;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body.services-page .service-card:hover {
+    z-index: 2;
+    border-color: rgb(221 183 95 / 58%);
+    transform: translate3d(0, -9px, 0) scale(1.012);
+    box-shadow:
+      0 26px 54px rgb(0 0 0 / 38%),
+      0 0 0 1px rgb(214 174 82 / 18%),
+      0 0 30px rgb(214 174 82 / 26%),
+      0 0 54px rgb(33 211 143 / 18%);
+  }
+}
+
+@media (width <= 1180px) {
+  body.services-page .services-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (width <= 640px) {
+  body.services-page .services-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  body.services-page .service-card {
+    padding: 20px 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.services-page .service-card {
+    transition: none;
+  }
+}
+
 .cta-pill-link {
   display: flex;
   align-items: center;
@@ -337,11 +429,13 @@ body.price-page .price-breed-photo__source {
 }
 
 .booking-container .booking-title {
+  max-width: 100%;
   margin: 0;
   color: var(--accent-gold);
   font-size: clamp(1.9rem, 3.2vw, 2.45rem);
   line-height: 1.18;
   letter-spacing: 0.1em;
+  overflow-wrap: anywhere;
   text-wrap: balance;
   font-weight: 400;
 }
@@ -518,8 +612,10 @@ body.light .direct-booking-btn:focus-visible {
   }
 
   .booking-container .booking-title {
-    font-size: clamp(1.45rem, 7.2vw, 1.85rem);
+    font-size: clamp(1.35rem, 6.4vw, 1.7rem);
     line-height: 1.24;
+    letter-spacing: clamp(0.035em, 0.7vw, 0.07em);
+    text-wrap: pretty;
   }
 
   .booking-lead {
@@ -2336,12 +2432,22 @@ body.light .price-configurator__result {
 }
 
 .price-category-modal__service-fieldset legend {
-  padding: 0 0.35rem;
+  float: left;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 0.38rem;
+  padding: 0;
   color: var(--accent-gold);
   font-family: var(--font-ui, 'Cinzel', serif);
   font-size: 0.9rem;
+  line-height: 1.35;
   letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
   text-transform: uppercase;
+}
+
+.price-category-modal__service-fieldset legend + * {
+  clear: both;
 }
 
 .price-category-modal__service-hint,
@@ -2424,7 +2530,7 @@ body.light .price-configurator__result {
 
 .price-category-modal__service-option input:checked + .price-category-modal__service-option-check {
   border-color: transparent;
-  background: transparent url('../images/icons/appdrawer_alt6.png') center / 100% no-repeat;
+  background: transparent url('../images/icons/app-drawer.png') center / 100% no-repeat;
   box-shadow: none;
 }
 
@@ -4185,7 +4291,7 @@ body.booking-modal-open {
 
 .booking-check-label input:checked {
   border-color: transparent;
-  background-image: url('../images/icons/appdrawer_alt6.png');
+  background-image: url('../images/icons/app-drawer.png');
   box-shadow: none;
 }
 
@@ -6246,7 +6352,7 @@ body.light .before-after-slider::before {
 
 .price-category-modal__service-conditions-consent-label input:checked {
   border-color: transparent;
-  background-image: url('../images/icons/appdrawer_alt6.png');
+  background-image: url('../images/icons/app-drawer.png');
   box-shadow: none;
 }
 
@@ -8303,9 +8409,11 @@ body.price-page #price-category-modal .price-category-modal__close {
 }
 
 body.price-page #price-category-modal .price-category-modal__selection {
+  --price-selection-pad: 0.68rem;
+
   gap: 0.52rem;
   margin-top: 0;
-  padding: 0.68rem;
+  padding: var(--price-selection-pad);
   border-color: rgb(201 168 76 / 0.3);
   background:
     radial-gradient(circle at 12% 0%, rgb(50 255 177 / 0.13), transparent 46%),
@@ -8329,13 +8437,19 @@ body.price-page #price-category-modal .price-category-modal__selection-header {
   z-index: 60;
   display: grid;
   gap: 0.34rem;
-  padding: 0.22rem 2.72rem 0.2rem 0.1rem;
+  min-width: 0;
+  margin-inline: calc(-1 * var(--price-selection-pad));
+  padding: 0.72rem 3.2rem 0.68rem 0.82rem;
   border: 0;
-  border-radius: 0;
+  border-radius: calc(var(--card-radius) - 1px) calc(var(--card-radius) - 1px) 12px 12px;
   background: linear-gradient(145deg, rgb(12 37 27 / 0.98), rgb(4 15 11 / 0.98));
-  box-shadow: none;
+  box-shadow:
+    0 12px 26px rgb(0 0 0 / 0.28),
+    inset 0 0 0 1px rgb(201 168 76 / 0.24),
+    inset 0 1px 0 rgb(255 255 255 / 0.07);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+  transform: translateZ(0);
 }
 
 body.price-page #price-category-modal .price-category-modal__selection-header.has-breed-photo {
@@ -8569,8 +8683,7 @@ body.price-page #booking-modal .step-indicator {
 
   body.price-page #price-category-modal .price-category-modal__selection-header {
     gap: 0.24rem;
-    padding: 0.18rem 2.95rem 0.22rem 0.02rem;
-    border-radius: 0;
+    padding: 0.62rem 3.15rem 0.58rem 0.72rem;
   }
 
   body.price-page #price-category-modal .price-category-modal__header .section-kicker {
@@ -8607,7 +8720,11 @@ body.price-page #booking-modal .step-indicator {
   body.price-page #price-category-modal .price-category-modal__panel,
   body.price-page #price-category-modal .price-category-modal__service-conditions {
     gap: 0.38rem;
-    padding: 0.52rem;
+    padding: var(--price-selection-pad, 0.52rem);
+  }
+
+  body.price-page #price-category-modal .price-category-modal__selection {
+    --price-selection-pad: 0.52rem;
   }
 
   body.price-page #price-category-modal .price-category-modal__service-options {
@@ -8865,10 +8982,10 @@ body.price-page .price-category-modal__breed-photo a {
 
   body.price-page #price-category-modal .price-category-modal__selection-header > .price-category-modal__breed-photo {
     position: absolute;
-    top: 0.46rem;
-    right: 0.48rem;
+    top: 0.5rem;
+    right: 3.25rem;
     display: block;
-    width: 4.75rem;
+    width: 4.4rem;
   }
 
   body.price-page .price-category-modal__breed-photo {
@@ -8876,11 +8993,11 @@ body.price-page .price-category-modal__breed-photo a {
   }
 
   body.price-page #price-category-modal .price-category-modal__selection-head {
-    padding-right: 5.1rem;
+    padding-right: 8rem;
   }
 
   body.price-page .price-category-modal__breed-photo-media {
-    width: 4.75rem;
+    width: 4.4rem;
     height: auto;
     aspect-ratio: 4 / 3;
   }

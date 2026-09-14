@@ -1,6 +1,6 @@
 # HUNDESALON_NIKA Website Knowledge for the SendPulse AI Agent #
 
-Generated source fingerprint: sha256:1524bcf2e4f67cc0f8bef5ef9671a9eebd80aef68c352b087024d54a3248c7ba
+Generated source fingerprint: sha256:0c362991f20f20192c4f5d7fc4d7fb8b99e00eaa6454582578d35bb0ef46db7b
 
 This document is the factual knowledge base for the customer-facing SendPulse live-chat AI agent. It covers the public HUNDESALON_NIKA website in German, English, Russian, and Ukrainian.
 
@@ -39,7 +39,7 @@ Mandatory behavior:
 - Brand: HUNDESALON_NIKA
 - Business type: professional pet-grooming salon
 - City: Leipzig, Sachsen, Germany
-- Public address: Walter-Markov-Ring 1, 04288 Leipzig, Sachsen, Deutschland
+- Public address: Untere Eichstädtstraße 38, 04299 Leipzig, Sachsen, Deutschland
 - Phone and WhatsApp: +49 151 72450988
 - General public email: info@hundesalon-nika.com
 - Customer replies: info@hundesalon-nika.com
@@ -59,7 +59,7 @@ Public channels:
 - TikTok: https://www.tiktok.com/@hundesalon_nika
 - YouTube: https://www.youtube.com/@hundesalon_nika
 - Facebook: https://www.facebook.com/profile.php?id=61584574431839
-- Google Maps search: https://www.google.com/maps/search/?api=1&query=HUNDESALON_NIKA%2C+Walter-Markov-Ring+1%2C+04288+Leipzig
+- Google Maps search: https://www.google.com/maps/search/?api=1&query=HUNDESALON_NIKA%2C+Untere+Eichst%C3%A4dtstra%C3%9Fe+38%2C+04299+Leipzig
 
 ## 3. Website routes in all four languages ##
 
@@ -808,7 +808,7 @@ This section is generated from the current public salon rules (`agb.html`). When
 ### DE — de/agb.html ###
 - URL: https://hundesalon-nika.com/de/agb.html
 - Allgemeine Geschäftsbedingungen (AGB)
-- HUNDESALON NIKA · Anna Ryndenko · Walter-Markov-Ring 1, 04288 Leipzig · +49 151 72450988 · info@hundesalon-nika.com
+- HUNDESALON NIKA · Anna Ryndenko · Untere Eichstädtstraße 38, 04299 Leipzig · +49 151 72450988 · info@hundesalon-nika.com
 - Stand: 19.07.2026
 - Fürsorge. Sicherheit. Professionelle Pflege. Die Sicherheit von Tier, Halter und Pflegefachkraft hat bei NIKA höchste Priorität.
 - 1. Geltungsbereich
@@ -858,7 +858,7 @@ This section is generated from the current public salon rules (`agb.html`). When
 ### EN — en/agb.html ###
 - URL: https://hundesalon-nika.com/en/agb.html
 - Terms & Conditions (AGB)
-- HUNDESALON NIKA · Anna Ryndenko · Walter-Markov-Ring 1, 04288 Leipzig · +49 151 72450988 · info@hundesalon-nika.com
+- HUNDESALON NIKA · Anna Ryndenko · Untere Eichstädtstraße 38, 04299 Leipzig · +49 151 72450988 · info@hundesalon-nika.com
 - Updated: 19.07.2026
 - Care. Safety. Professional grooming. The safety of the animal, the owner and the groomer is NIKA’s top priority.
 - 1. Scope
@@ -908,7 +908,7 @@ This section is generated from the current public salon rules (`agb.html`). When
 ### RU — ru/agb.html ###
 - URL: https://hundesalon-nika.com/ru/agb.html
 - Общие условия оказания услуг (AGB)
-- HUNDESALON NIKA · Anna Ryndenko · Walter-Markov-Ring 1, 04288 Leipzig · +49 151 72450988 · info@hundesalon-nika.com
+- HUNDESALON NIKA · Anna Ryndenko · Untere Eichstädtstraße 38, 04299 Leipzig · +49 151 72450988 · info@hundesalon-nika.com
 - Актуально: 19.07.2026
 - Забота. Безопасность. Профессиональный уход. Безопасность животного, владельца и мастера — главный приоритет салона NIKA.
 - 1. Сфера действия
@@ -958,7 +958,7 @@ This section is generated from the current public salon rules (`agb.html`). When
 ### UK — uk/agb.html ###
 - URL: https://hundesalon-nika.com/uk/agb.html
 - Загальні умови надання послуг (AGB)
-- HUNDESALON NIKA · Anna Ryndenko · Walter-Markov-Ring 1, 04288 Leipzig · +49 151 72450988 · info@hundesalon-nika.com
+- HUNDESALON NIKA · Anna Ryndenko · Untere Eichstädtstraße 38, 04299 Leipzig · +49 151 72450988 · info@hundesalon-nika.com
 - Дата актуалізації: 19.07.2026
 - Турбота. Безпека. Професійний догляд. Безпека тварини, власника та майстра — головний пріоритет салону NIKA.
 - 1. Сфера дії
@@ -1125,6 +1125,9 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - URL: https://hundesalon-nika.com/de/nashi-uslugi.html
 - Unsere Leistungen
 - Professionelle Pflege für Hunde, Katzen und kleine Heimtiere. Die aktuellen Preise finden Sie in der Preisliste .
+- Erster Welpen-Haarschnitt — 50 €!!!
+- Sanfte Eingewöhnung für Welpen bis 4 Monate an die Pflegeperson und die wichtigsten Abläufe. Der Umfang richtet sich nach der Bereitschaft des Welpen.
+- 50 €
 - Komplettpflege für Hunde
 - Beratung, Krallen, Augen, Ohren, Baden, Föhnen, Auskämmen, Schnitt und Fellgestaltung.
 - ab 60 €
@@ -1186,11 +1189,11 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Inhaberin: HUNDESALON_NIKA
 - Telefon: +49 151 72450988
 - E-Mail: info@hundesalon-nika.com
-- Adresse: Walter-Markov-Ring 1, 04288 Leipzig, Sachsen, Deutschland
+- Adresse: Untere Eichstädtstraße 38, 04299 Leipzig, Sachsen, Deutschland
 - Öffnungszeiten: Mo–Fr, 9:00–21:00 Uhr · Sa–So geschlossen
 - In Telegram schreiben Alle Netzwerke
 - Schnellaktionen
-- Route in Google Maps öffnen Anrufen
+- Mit dem Auto ÖPNV Zu Fuß Fahrrad Schreiben
 - Offizielle Profile & Zitation
 - Verlinken Sie HUNDESALON NIKA mit unserer Haupt-URL und verifizierten Profilen:
 - https://hundesalon-nika.com/de/
@@ -1274,11 +1277,11 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Ankertext: HUNDESALON NIKA — Hundesalon & Fellpflege in Leipzig
 - HTML zum Kopieren:
 - <a href="https://hundesalon-nika.com/de/">HUNDESALON NIKA — Hundesalon & Fellpflege in Leipzig</a> Offizielle Profile & NAP · Google Maps
-- HUNDESALON NIKA · Walter-Markov-Ring 1, 04288 Leipzig · +49 151 72450988
+- HUNDESALON NIKA · Untere Eichstädtstraße 38, 04299 Leipzig · +49 151 72450988
 - Kontakt für Partner
 - Telefon: +49 151 72450988
 - E-Mail: info@hundesalon-nika.com
-- Adresse: Walter-Markov-Ring 1, 04288 Leipzig, Sachsen, Deutschland
+- Adresse: Untere Eichstädtstraße 38, 04299 Leipzig, Sachsen, Deutschland
 
 ### DE — documents.html ###
 - URL: https://hundesalon-nika.com/de/documents.html
@@ -1290,7 +1293,7 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Hinweise zu Impfungen, Parasitenschutz und Gesundheitszustand vor dem Termin
 - Links zu Drive-Dokumenten und Formularen, die wir vor der Pflege nutzen
 - Praktische Tipps für Anreise, Wartezeit und Abholung in Leipzig
-- HUNDESALON NIKA arbeitet nach Terminvereinbarung. Bitte bringen Sie aktuelle Angaben zu Fellzustand, Besonderheiten und gewünschter Leistung mit. So können wir Haarschnitt, Baden und Pflege ohne unnötigen Stress planen. Adresse: Walter-Markov-Ring 1, 04288 Leipzig.
+- HUNDESALON NIKA arbeitet nach Terminvereinbarung. Bitte bringen Sie aktuelle Angaben zu Fellzustand, Besonderheiten und gewünschter Leistung mit. So können wir Haarschnitt, Baden und Pflege ohne unnötigen Stress planen. Adresse: Untere Eichstädtstraße 38, 04299 Leipzig.
 - Wenn Ihr Tier ängstlich ist, schreiben Sie uns vorab — wir planen mehr Zeit und ruhige Abläufe. Details zur Express-Entwollung, Hygienepflege oder zu einem umfassenden Pflegetermin finden Sie unter Leistungen und Preise. Die Dokumente auf dieser Seite ergänzen das Gespräch im Salon, ersetzen aber keine individuelle Beratung vor Ort.
 - Jetzt Termin buchen Leistungen ansehen
 
@@ -1407,6 +1410,9 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - URL: https://hundesalon-nika.com/en/nashi-uslugi.html
 - Our Services
 - Professional care for dogs, cats and small pets. Current prices are on the price list .
+- First puppy haircut — €50!!!
+- A gentle introduction for puppies up to 4 months old to the groomer and essential care. The scope depends on the puppy's readiness.
+- €50
 - Full dog grooming
 - Consultation, nails, eyes, ears, bath, dry, brush, haircut and styling.
 - from 60 €
@@ -1468,11 +1474,11 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Owner: HUNDESALON_NIKA
 - Phone: +49 151 72450988
 - Email: info@hundesalon-nika.com
-- Address: Walter-Markov-Ring 1, 04288 Leipzig, Saxony, Germany
+- Address: Untere Eichstädtstraße 38, 04299 Leipzig, Saxony, Germany
 - Opening hours: Mon–Fri, 9:00–21:00 · Sat–Sun closed
 - Message us on Telegram All socials
 - Quick actions
-- Get directions in Google Maps Call us
+- By car Public transport Walking Cycling Write to us
 - Official profiles & citation
 - Link to HUNDESALON NIKA using our canonical URL and verified profiles:
 - https://hundesalon-nika.com/en/
@@ -1556,11 +1562,11 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Anchor text: HUNDESALON NIKA — dog grooming salon in Leipzig
 - HTML to copy:
 - <a href="https://hundesalon-nika.com/en/">HUNDESALON NIKA — dog grooming salon in Leipzig</a> Official profiles & NAP · Google Maps
-- HUNDESALON NIKA · Walter-Markov-Ring 1, 04288 Leipzig · +49 151 72450988
+- HUNDESALON NIKA · Untere Eichstädtstraße 38, 04299 Leipzig · +49 151 72450988
 - Partner contacts
 - Phone: +49 151 72450988
 - Email: info@hundesalon-nika.com
-- Address: Walter-Markov-Ring 1, 04288 Leipzig, Saxony, Germany
+- Address: Untere Eichstädtstraße 38, 04299 Leipzig, Saxony, Germany
 
 ### EN — documents.html ###
 - URL: https://hundesalon-nika.com/en/documents.html
@@ -1572,7 +1578,7 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Notes on vaccinations, parasite protection and health before the appointment
 - Links to Drive documents and forms we use before grooming
 - Practical tips for arrival, waiting and pickup in Leipzig
-- HUNDESALON NIKA works by appointment. Please tell us about your pet’s coat condition and special needs, as well as the service you want, so we can plan the haircut, bath and care without unnecessary stress. Address: Walter-Markov-Ring 1, 04288 Leipzig.
+- HUNDESALON NIKA works by appointment. Please tell us about your pet’s coat condition and special needs, as well as the service you want, so we can plan the haircut, bath and care without unnecessary stress. Address: Untere Eichstädtstraße 38, 04299 Leipzig.
 - If your pet is anxious, message us beforehand — we schedule extra time and calmer handling. For express deshedding, hygiene care or a full grooming appointment, see our services and prices. These documents support the salon conversation; they do not replace an in-person consultation.
 - Book an appointment View services
 
@@ -1689,6 +1695,9 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - URL: https://hundesalon-nika.com/ru/nashi-uslugi.html
 - Наши услуги
 - Профессиональный уход за собаками, кошками и декоративными животными. Актуальные цены — в прайс-листе .
+- Первая стрижка щенка — 50 €!!!
+- Бережное знакомство щенка до 4 месяцев с мастером и основными процедурами. Объём ухода зависит от готовности щенка.
+- 50 €
 - Полный груминг собак
 - Комплексный уход: консультация, когти, глаза, уши, купание, сушка, вычёсывание, стрижка и оформление шерсти.
 - от 60 €
@@ -1750,11 +1759,11 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Владелец: HUNDESALON_NIKA
 - Телефон: +49 151 72450988
 - Email: info@hundesalon-nika.com
-- Адрес: Walter-Markov-Ring 1, 04288 Лейпциг, Саксония, Германия
+- Адрес: Untere Eichstädtstraße 38, 04299 Лейпциг, Саксония, Германия
 - Часы работы: Пн–Пт, 9:00 – 21:00 · Сб–Вс выходной
 - Написать в Telegram Все соцсети
 - Быстрые действия
-- Построить маршрут в Google Maps Позвонить
+- На автомобиле Транспорт Пешком Велосипед Написать
 - Официальные профили и цитирование
 - Ссылайтесь на HUNDESALON NIKA через основной URL и подтверждённые профили:
 - https://hundesalon-nika.com/ru/
@@ -1838,11 +1847,11 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Текст ссылки: HUNDESALON NIKA — груминг-салон в Лейпциге
 - HTML для копирования:
 - <a href="https://hundesalon-nika.com/ru/">HUNDESALON NIKA — груминг-салон в Лейпциге</a> Официальные профили и NAP · Google Maps
-- HUNDESALON NIKA · Walter-Markov-Ring 1, 04288 Leipzig · +49 151 72450988
+- HUNDESALON NIKA · Untere Eichstädtstraße 38, 04299 Leipzig · +49 151 72450988
 - Контакты для партнёров
 - Телефон: +49 151 72450988
 - Email: info@hundesalon-nika.com
-- Адрес: Walter-Markov-Ring 1, 04288 Leipzig, Sachsen, Deutschland
+- Адрес: Untere Eichstädtstraße 38, 04299 Leipzig, Sachsen, Deutschland
 
 ### RU — documents.html ###
 - URL: https://hundesalon-nika.com/ru/documents.html
@@ -1854,7 +1863,7 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Заметки о прививках, защите от паразитов и самочувствии перед процедурой
 - Ссылки на документы Drive и формы, которые мы используем перед грумингом
 - Практические советы по приезду, ожиданию и получению питомца после процедуры в Лейпциге
-- HUNDESALON NIKA работает по предварительной записи. Сообщите о состоянии шерсти, особенностях питомца и желаемой услуге — так мы спокойно спланируем стрижку, купание и уход. Адрес: Walter-Markov-Ring 1, 04288 Leipzig.
+- HUNDESALON NIKA работает по предварительной записи. Сообщите о состоянии шерсти, особенностях питомца и желаемой услуге — так мы спокойно спланируем стрижку, купание и уход. Адрес: Untere Eichstädtstraße 38, 04299 Leipzig.
 - Если питомец тревожный, напишите заранее — заложим больше времени и спокойный темп. Экспресс-линька, гигиенический уход и полный груминг описаны на страницах услуг и прайс-листа. Документы на странице дополняют разговор в салоне, но не заменяют очную консультацию.
 - Записаться онлайн Смотреть услуги
 
@@ -1971,6 +1980,9 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - URL: https://hundesalon-nika.com/uk/nashi-uslugi.html
 - Наші послуги
 - Професійний догляд за собаками, котами та декоративними тваринами. Актуальні ціни — у прайс-листі .
+- Перша стрижка цуценяти — 50 €!!!
+- Дбайливе знайомство цуценяти до 4 місяців із майстром та основними процедурами. Обсяг догляду залежить від готовності цуценяти.
+- 50 €
 - Повний грумінг собак
 - Комплексний догляд: консультація, кігті, очі, вуха, купання, сушіння, вичісування, стрижка й оформлення шерсті.
 - від 60 €
@@ -2032,11 +2044,11 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Власник: HUNDESALON_NIKA
 - Телефон: +49 151 72450988
 - Email: info@hundesalon-nika.com
-- Адреса: Walter-Markov-Ring 1, 04288 Лейпциг, Саксонія, Німеччина
+- Адреса: Untere Eichstädtstraße 38, 04299 Лейпциг, Саксонія, Німеччина
 - Години роботи: Пн–Пт, 9:00 – 21:00 · Сб–Нд вихідний
 - Написати в Telegram Усі соцмережі
 - Швидкі дії
-- Прокласти маршрут у Google Maps Подзвонити
+- Автомобілем Транспортом Пішки Велосипедом Написати
 - Офіційні профілі та цитування
 - Посилання на HUNDESALON NIKA через основну URL та перевірені профілі:
 - https://hundesalon-nika.com/uk/
@@ -2120,11 +2132,11 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Текст посилання: HUNDESALON NIKA — грумінг-салон у Лейпцигу
 - HTML для копіювання:
 - <a href="https://hundesalon-nika.com/uk/">HUNDESALON NIKA — грумінг-салон у Лейпцигу</a> Офіційні профілі та NAP · Google Maps
-- HUNDESALON NIKA · Walter-Markov-Ring 1, 04288 Leipzig · +49 151 72450988
+- HUNDESALON NIKA · Untere Eichstädtstraße 38, 04299 Leipzig · +49 151 72450988
 - Контакти для партнерів
 - Телефон: +49 151 72450988
 - Email: info@hundesalon-nika.com
-- Адреса: Walter-Markov-Ring 1, 04288 Лейпциг, Саксонія, Німеччина
+- Адреса: Untere Eichstädtstraße 38, 04299 Лейпциг, Саксонія, Німеччина
 
 ### UK — documents.html ###
 - URL: https://hundesalon-nika.com/uk/documents.html
@@ -2136,7 +2148,7 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Нотатки про щеплення, захист від паразитів і самопочуття перед процедурою
 - Посилання на документи в Google Drive і форми, які ми використовуємо перед грумінгом
 - Практичні поради щодо приїзду, очікування та забирання улюбленця в Лейпцигу
-- HUNDESALON NIKA працює за попереднім записом. Повідомте стан шерсті, особливості та бажану послугу — так ми спокійно сплануємо стрижку, купання й догляд. Адреса: Walter-Markov-Ring 1, 04288 Leipzig.
+- HUNDESALON NIKA працює за попереднім записом. Повідомте стан шерсті, особливості та бажану послугу — так ми спокійно сплануємо стрижку, купання й догляд. Адреса: Untere Eichstädtstraße 38, 04299 Leipzig.
 - Якщо улюбленець тривожний, напишіть заздалегідь — закладемо більше часу й спокійний темп. Експрес-линька, гігієна чи повний день грумінгу описані в послугах і прайсі. Документи на сторінці доповнюють розмову в салоні, але не замінюють очну консультацію.
 - Записатися онлайн Дивитися послуги
 

@@ -3,7 +3,12 @@
  * Env: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
  * Binding: PAYMENT_EVENTS (KV; required when online payments are enabled)
  */
-import { jsonResponse, timingSafeEqualStrings } from './_lib/http-security.js';
+import {
+  isRequestBodyTooLarge,
+  jsonResponse,
+  readTextBody,
+  timingSafeEqualStrings,
+} from './_lib/http-security.js';
 import {
   appendGoogleSheetRow,
   cleanText,
@@ -15,6 +20,7 @@ import { buildBrandedEmail } from './_lib/email-template.js';
 
 const DEFAULT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const ONLINE_PAYMENTS_HARD_DISABLED = true;
+const MAX_WEBHOOK_BODY_BYTES = 512 * 1024;
 
 function paymentsOnlineEnabled(env) {
   if (ONLINE_PAYMENTS_HARD_DISABLED) return false;
@@ -73,7 +79,18 @@ export async function onRequest(context) {
   }
 
   const webhookSecret = getEnvValue(env, 'STRIPE_WEBHOOK_SECRET');
-  const rawBody = await request.text();
+  let rawBody;
+  try {
+    rawBody = await readTextBody(request, MAX_WEBHOOK_BODY_BYTES);
+  } catch (error) {
+    return jsonResponse(
+      {
+        success: false,
+        message: isRequestBodyTooLarge(error) ? 'Payload too large' : 'Invalid request body',
+      },
+      isRequestBodyTooLarge(error) ? 413 : 400
+    );
+  }
   const signature = request.headers.get('Stripe-Signature') || '';
 
   if (!hasUsableValue(webhookSecret)) {

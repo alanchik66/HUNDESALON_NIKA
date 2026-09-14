@@ -94,11 +94,12 @@ const createHarness = ({ upload = async () => true, send = async () => false } =
       calls.summary += 1;
     },
     modal: { classList: { add: noop } },
-    window: { requestAnimationFrame: callback => callback() },
+    window: { crypto, requestAnimationFrame: callback => callback() },
     resetSummaryConfirmation: () => {
       button.textContent = button.dataset.originalText;
     },
     renderFilePreview: noop,
+    createUploadSessionId: () => 'test-upload-session-id',
   });
   vm.runInContext(handlerSource, context, { filename: 'page-modules.js:booking-submit' });
   return { button, calls, state, validation, bookingFileInput, submit: () => handler({ preventDefault: noop }) };
@@ -267,8 +268,20 @@ const createSendmailHarness = ({ localStatic = false, request }) => {
     getLocalCloudflareSendmailUrl: () => fallbackUrl,
     getLocalCloudflarePageUrl: () => (fallbackUrl ? 'http://127.0.0.1:8788/en/kontakty.html' : ''),
     FormData: class {
+      constructor() {
+        this.values = new Map([
+          ['name', 'Test'],
+          ['pet_photo', { name: 'pet.jpg', size: 4, type: 'image/jpeg' }],
+        ]);
+      }
+      delete(name) {
+        this.values.delete(name);
+      }
       entries() {
-        return [][Symbol.iterator]();
+        return this.values.entries();
+      }
+      has(name) {
+        return this.values.has(name);
       }
     },
     CustomEvent: class {},
@@ -296,6 +309,14 @@ test('production send waits for its delayed HTTP result without the local probe 
   assert.equal(await sending, true);
   assert.equal(harness.statuses.at(-1).textContent, 'Success');
   assert.equal(harness.button.disabled, false);
+});
+
+test('sendmail receives booking fields but never receives the uploaded photo bytes', async () => {
+  const harness = createSendmailHarness({ request: async () => jsonResponse(200, { success: true }) });
+  assert.equal(await harness.submit(), true);
+  const body = harness.requests[0].options.body;
+  assert.equal(body.has('name'), true);
+  assert.equal(body.has('pet_photo'), false);
 });
 
 for (const status of [404, 405]) {

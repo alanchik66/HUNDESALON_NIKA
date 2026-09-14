@@ -296,9 +296,9 @@ echo "✅ Deployment complete!"
 
 These are configured in Cloudflare Pages secrets:
 
-- `SERVICE_GATEWAY_API_KEY` - existing Gemini gateway authentication (optional; keep only in Cloudflare secrets)
+- `OPENAI_API_KEY` - единственный AI provider secret для чата, внутренних draft/SEO-инструментов и явного определения породы
 - `AI_SERVICE_WEBHOOK_SECRET` - required server-side secret for AI route calls
-- Other service gateway variables are optional; use [`.dev.vars.example`](../.dev.vars.example) as the canonical list.
+- `CHAT_DB` - D1 binding to `nika-db` for customer registration, chat history and Telegram reply routing
 
 > No need to set these manually in Cloud Shell — they're baked into Cloudflare.
 

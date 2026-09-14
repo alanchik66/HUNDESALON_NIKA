@@ -1,11 +1,12 @@
 # Copy to .dev.vars for local Cloudflare Pages dev (npm run dev:cf).
 # Never commit .dev.vars. For production, use Cloudflare Pages secrets.
+GOOGLE_MAPS_BROWSER_KEY=
 
-# Existing Gemini chat integration only; runtime calls require AI_SERVICE_WEBHOOK_SECRET.
-SERVICE_GATEWAY_API_KEY=
+# Internal draft/SEO tools require server-to-server authorization.
 AI_SERVICE_WEBHOOK_SECRET=
-# The only accepted model is google/gemini-2.5-flash-lite; this is a bounded token override.
-SERVICE_GATEWAY_MAX_TOKENS=320
+# The single approved runtime model is fixed in server code.
+OPENAI_DRAFT_MAX_TOKENS=320
+OPENAI_SEO_MAX_TOKENS=720
 # Bing Webmaster → Settings → API Access (optional; IndexNow works without it)
 BING_WEBMASTER_API_KEY=
 # SendPulse server-side credentials. Use either a static API key or OAuth client credentials.
@@ -19,7 +20,9 @@ SENDPULSE_BOOKING_EVENT_NAME=
 SENDPULSE_CONTACT_EVENT_NAME=
 SENDPULSE_NEWSLETTER_EVENT_NAME=
 
-# SendPulse AI Agent File Search. OPENAI_API_KEY stays local/secret.
+# Website AI chat, explicit breed recognition, and optional SendPulse File Search tooling.
+# OPENAI_API_KEY stays server-side. Chat files stay in OneDrive; only the latest image is sent
+# to the approved model when the customer explicitly asks to identify a breed.
 # The vector-store ID is optional when the exact store name is unique.
 OPENAI_API_KEY=
 SENDPULSE_AI_VECTOR_STORE_ID=
@@ -41,7 +44,6 @@ GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=
 GOOGLE_SERVICE_ACCOUNT_SUBJECT=
 GOOGLE_CALENDAR_ID=primary
 SHEET_ID=
-DRIVE_UPLOAD_FOLDER=
 GIPHY_API_KEY=
 GMAIL_SENDER=
 # System / admin copies (not public). Client-facing mail uses CLIENT_EMAIL_FROM.
@@ -56,7 +58,6 @@ CLIENT_EMAIL_FROM=HUNDESALON_NIKA <info@hundesalon-nika.com>
 ADMIN_NOTIFICATION_EMAILS=
 GOOGLE_SHARE_EMAIL=
 GOOGLE_SHEETS_WEBHOOK_URL=
-GOOGLE_DRIVE_UPLOAD_WEBHOOK_URL=
 GOOGLE_CALENDAR_WEBHOOK_URL=
 GOOGLE_APPS_SCRIPT_WEBHOOK_URL=
 GOOGLE_GATEWAY_SECRET=
@@ -64,7 +65,8 @@ MS_GRAPH_ACCESS_TOKEN=
 MS_TENANT_ID=
 MS_CLIENT_ID=
 MS_CLIENT_SECRET=
-# AI-chat storage in OneDrive. Standard Microsoft Graph file APIs have no separate API charge.
+# Booking photos, AI-chat attachments and AI-chat transcripts are stored only in OneDrive.
+# Standard Microsoft Graph file APIs have no separate API charge.
 MS_REFRESH_TOKEN=
 ONEDRIVE_UPLOAD_FOLDER=
 OUTLOOK_SENDER=
@@ -77,9 +79,13 @@ SITE_NOTIFICATIONS_ENABLED=false
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
 TELEGRAM_WEBHOOK_SECRET=
+# Optional dedicated HMAC secret for the staff-only booking confirmation link.
+# If empty, the server reuses TELEGRAM_WEBHOOK_SECRET with domain-separated signing.
+BOOKING_CONFIRM_SECRET=
 TELEGRAM_AGENT_ENABLED=true
 TELEGRAM_BOOKING_URL=https://hundesalon-nika.com/de/onlayn-bronirovanie
 TELEGRAM_TOPIC_MESSAGES_ID=
+TELEGRAM_TOPIC_PERSONAL_ID=
 TELEGRAM_TOPIC_ORDERS_ID=
 TELEGRAM_TOPIC_NEWSLETTER_ID=
 TELEGRAM_TOPIC_SOCIAL_ID=

@@ -14,12 +14,12 @@ const request = authorization =>
     headers: { Authorization: authorization || '' },
   });
 
-test('allows only the existing Gemini model and fixed Google provider policy', () => {
+test('allows only the approved OpenAI model and fixed provider policy', () => {
   assert.equal(resolveApprovedModel(APPROVED_AI_MODEL), APPROVED_AI_MODEL);
   assert.equal(resolveApprovedModel(''), APPROVED_AI_MODEL);
   assert.equal(resolveApprovedModel('other/model'), '');
   assert.deepEqual(AI_PROVIDER_POLICY, {
-    only: ['google-ai-studio'],
+    only: ['openai'],
     allow_fallbacks: false,
     require_parameters: true,
   });

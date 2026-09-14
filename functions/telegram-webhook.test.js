@@ -29,6 +29,311 @@ function telegramCallback(data = 'support', languageCode = 'de') {
   };
 }
 
+function bookingConfirmationCallback(requestId, { senderId = 12345, chatId = -100123 } = {}) {
+  return {
+    callback_query: {
+      id: 'booking-callback-123',
+      data: `booking_confirm:${requestId}`,
+      from: { id: senderId, first_name: 'Admin', language_code: 'ru' },
+      message: {
+        message_id: 50,
+        message_thread_id: 9,
+        chat: { id: chatId, type: 'supergroup' },
+        text: 'Новая заявка на запись',
+      },
+    },
+  };
+}
+
+function websiteChatAdminReply(
+  text = 'Добрый день, я подключаюсь к диалогу.',
+  { messageId = 72, threadId = 42, repliedMessageId = 71, repliedText = '💬 Сообщение из AI-чата сайта' } = {}
+) {
+  return {
+    message: {
+      message_id: messageId,
+      message_thread_id: threadId,
+      chat: { id: -100123, type: 'supergroup' },
+      from: { id: 555, first_name: 'Admin' },
+      text,
+      ...(repliedMessageId
+        ? { reply_to_message: { message_id: repliedMessageId, text: repliedText } }
+        : {}),
+    },
+  };
+}
+
+function websiteChatDatabase({ conversationMode = 'ai', hasDelivery = true, sessionAvailable = hasDelivery } = {}) {
+  const sqlCalls = [];
+  const boundCalls = [];
+  return {
+    sqlCalls,
+    boundCalls,
+    prepare(sql) {
+      sqlCalls.push(sql);
+      return {
+        bind(...values) {
+          boundCalls.push({ sql, values });
+          return this;
+        },
+        async first() {
+          if (sql.includes('FROM chat_telegram_topics')) {
+            return { message_thread_id: 197 };
+          }
+          if (sql.includes('SELECT 1 AS found FROM chat_telegram_deliveries')) {
+            return hasDelivery ? { found: 1 } : null;
+          }
+          if (sql.includes('FROM chat_telegram_deliveries')) {
+            if (!sessionAvailable) return null;
+            return {
+              session_id: '12345678-1234-4234-8234-123456789012',
+              customer_id: '00000000-0000-4000-8000-000000000001',
+              source_message_id: '87654321-4321-4234-8234-123456789012',
+              conversation_mode: conversationMode,
+              first_name: 'Test',
+              last_name: 'Customer',
+              email: 'test@example.com',
+              phone: '',
+              locale: 'ru',
+            };
+          }
+          if (sql.includes('SELECT body FROM chat_messages')) {
+            return { body: 'Сколько стоит комплексный уход за пуделем?' };
+          }
+          return null;
+        },
+        async run() {
+          if (sql.includes('UPDATE chat_sessions SET conversation_mode')) {
+            return { meta: { changes: conversationMode === 'human' ? 0 : 1 } };
+          }
+          return { meta: { changes: 1 } };
+        },
+      };
+    },
+  };
+}
+
+test('first administrator reply pauses AI and creates a continuation card in the personal topic', async () => {
+  const originalFetch = globalThis.fetch;
+  const telegramPayloads = [];
+  let emailPayload = null;
+  const database = websiteChatDatabase();
+  globalThis.fetch = async (url, options) => {
+    if (String(url).includes('/smtp/emails')) {
+      emailPayload = JSON.parse(options.body);
+      return Response.json({ result: true });
+    }
+    assert.match(String(url), /api\.telegram\.org/);
+    telegramPayloads.push(JSON.parse(options.body));
+    return new Response(JSON.stringify({ ok: true, result: { message_id: 73, chat: { id: -100123 } } }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  try {
+    const response = await onRequest({
+      request: new Request('https://hundesalon-nika.com/telegram-webhook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
+        },
+        body: JSON.stringify(websiteChatAdminReply()),
+      }),
+      env: {
+        CHAT_DB: database,
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        SENDPULSE_API_KEY: 'unit-test-token',
+        TELEGRAM_BOT_TOKEN: 'test-token',
+        TELEGRAM_CHAT_ID: '-100123',
+        TELEGRAM_TOPIC_MESSAGES_ID: '42',
+        TELEGRAM_TOPIC_PERSONAL_ID: '197',
+        TELEGRAM_WEBHOOK_SECRET: 'test-webhook-secret',
+      },
+    });
+    const payload = await response.json();
+
+    assert.equal(payload.relayed, true);
+    assert.equal(payload.mode, 'human');
+    assert.equal(payload.movedToPersonal, true);
+    assert.equal(telegramPayloads.length, 1);
+    assert.equal(telegramPayloads[0].message_thread_id, 197);
+    assert.match(telegramPayloads[0].text, /Диалог принят сотрудником/);
+    assert.match(telegramPayloads[0].text, /AI-ассистент приостановлен/);
+    assert.ok(emailPayload);
+    const emailHtml = Buffer.from(emailPayload.email.html, 'base64').toString('utf8');
+    assert.match(emailHtml, /assets\/images\/brand\/logo\.png/);
+    assert.match(emailHtml, /Добрый день, я подключаюсь к диалогу\./);
+    assert.match(emailHtml, /<html lang="ru"/);
+    assert.ok(database.sqlCalls.some(sql => sql.includes("SET conversation_mode = ?")));
+    assert.ok(database.boundCalls.some(
+      call => call.sql.includes('INSERT OR REPLACE INTO chat_telegram_deliveries') && call.values[1] === 72
+    ));
+    assert.ok(database.boundCalls.some(
+      call => call.sql.includes('INSERT OR IGNORE INTO chat_learning_examples') &&
+        call.values[2] === 'Сколько стоит комплексный уход за пуделем?'
+    ));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('administrator replies from the personal topic are delivered to the existing website chat', async () => {
+  const database = websiteChatDatabase({ conversationMode: 'human' });
+  const response = await onRequest({
+    request: new Request('https://hundesalon-nika.com/telegram-webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
+      },
+      body: JSON.stringify(websiteChatAdminReply('Ваш ответ из личной ветки.', {
+        messageId: 74,
+        threadId: 197,
+        repliedMessageId: 73,
+      })),
+    }),
+    env: {
+      CHAT_DB: database,
+      SITE_NOTIFICATIONS_ENABLED: 'true',
+      TELEGRAM_CHAT_ID: '-100123',
+      TELEGRAM_TOPIC_PERSONAL_ID: '197',
+      TELEGRAM_WEBHOOK_SECRET: 'test-webhook-secret',
+    },
+  });
+  const payload = await response.json();
+
+  assert.equal(payload.relayed, true);
+  assert.equal(payload.destination, 'website_chat');
+  assert.equal(payload.mode, 'human');
+  assert.equal(payload.movedToPersonal, false);
+  assert.ok(database.boundCalls.some(
+    call => call.sql.includes('INSERT OR REPLACE INTO chat_telegram_deliveries') && call.values[1] === 74
+  ));
+});
+
+test('a plain administrator message in the personal topic is delivered to the latest website chat', async () => {
+  const database = websiteChatDatabase({ conversationMode: 'human' });
+  const response = await onRequest({
+    request: new Request('https://hundesalon-nika.com/telegram-webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
+      },
+      body: JSON.stringify(websiteChatAdminReply('Ответ без специальной функции Telegram.', {
+        messageId: 75,
+        threadId: 197,
+        repliedMessageId: null,
+      })),
+    }),
+    env: {
+      CHAT_DB: database,
+      SITE_NOTIFICATIONS_ENABLED: 'true',
+      TELEGRAM_CHAT_ID: '-100123',
+      TELEGRAM_TOPIC_PERSONAL_ID: '77',
+      TELEGRAM_WEBHOOK_SECRET: 'test-webhook-secret',
+    },
+  });
+  const payload = await response.json();
+
+  assert.equal(payload.relayed, true);
+  assert.equal(payload.destination, 'website_chat');
+  assert.equal(payload.mode, 'human');
+  assert.ok(database.boundCalls.some(
+    call => call.sql.includes('d.message_thread_id = ?') && call.values[1] === 197
+  ));
+  assert.ok(database.boundCalls.some(
+    call => call.sql.includes('INSERT OR REPLACE INTO chat_telegram_deliveries') && call.values[1] === 75 && call.values[2] === 197
+  ));
+});
+
+test('the personal website topic never falls back to a Telegram client direct message', async () => {
+  const originalFetch = globalThis.fetch;
+  const requests = [];
+  globalThis.fetch = async (url, options) => {
+    requests.push({ url, options });
+    return Response.json({ ok: true });
+  };
+
+  try {
+    const database = websiteChatDatabase({ conversationMode: 'human', hasDelivery: false });
+    const response = await onRequest({
+      request: new Request('https://hundesalon-nika.com/telegram-webhook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
+        },
+        body: JSON.stringify(websiteChatAdminReply('Не отправлять в Telegram клиента.', {
+          messageId: 76,
+          threadId: 197,
+          repliedMessageId: 70,
+          repliedText: 'Клиент Telegram ID: 12345',
+        })),
+      }),
+      env: {
+        CHAT_DB: database,
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        TELEGRAM_CHAT_ID: '-100123',
+        TELEGRAM_TOPIC_PERSONAL_ID: '197',
+        TELEGRAM_WEBHOOK_SECRET: 'test-webhook-secret',
+      },
+    });
+    const payload = await response.json();
+
+    assert.equal(payload.skipped, true);
+    assert.equal(payload.destination, 'website_chat');
+    assert.equal(payload.reason, 'website_session_not_found');
+    assert.equal(requests.length, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('a reply to a known website card never falls back to a Telegram direct message', async () => {
+  const originalFetch = globalThis.fetch;
+  const requests = [];
+  globalThis.fetch = async (url, options) => {
+    requests.push({ url, options });
+    return Response.json({ ok: true });
+  };
+
+  try {
+    const database = websiteChatDatabase({ hasDelivery: true, sessionAvailable: false });
+    const response = await onRequest({
+      request: new Request('https://hundesalon-nika.com/telegram-webhook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
+        },
+        body: JSON.stringify(websiteChatAdminReply('Ответ предназначен только для сайта.', {
+          messageId: 77,
+          threadId: 42,
+          repliedMessageId: 71,
+          repliedText: 'Клиент Telegram ID: 12345',
+        })),
+      }),
+      env: {
+        CHAT_DB: database,
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        TELEGRAM_CHAT_ID: '-100123',
+        TELEGRAM_TOPIC_PERSONAL_ID: '197',
+        TELEGRAM_WEBHOOK_SECRET: 'test-webhook-secret',
+      },
+    });
+    const payload = await response.json();
+
+    assert.equal(payload.skipped, true);
+    assert.equal(payload.destination, 'website_chat');
+    assert.equal(payload.reason, 'website_session_not_found');
+    assert.equal(requests.length, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('a failed support notification does not prevent the customer auto reply', async () => {
   const originalFetch = globalThis.fetch;
   const requests = [];
@@ -586,6 +891,192 @@ test('an unavailable auto reply makes Telegram retry the update', async () => {
     });
 
     assert.equal(response.status, 502);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('a Telegram chat administrator confirms one booking in Google Calendar', async () => {
+  const originalFetch = globalThis.fetch;
+  const requestId = '12345678-1234-4123-8123-123456789abc';
+  const eventId = `booking${requestId.replace(/-/g, '')}`;
+  const row = Array(34).fill('');
+  Object.assign(row, {
+    3: 'Test Customer', 6: 'Komplettpflege', 7: '2030-01-02', 8: '10:00', 13: 'Nika', 15: 'Pudel',
+    28: requestId, 29: 'pending', 32: '2030-01-02T10:00:00', 33: '2030-01-02T12:00:00',
+  });
+  const calendarEvent = {
+    id: eventId,
+    status: 'confirmed',
+    created: '2030-01-01T00:00:00Z',
+    start: { dateTime: '2030-01-02T10:00:00+01:00' },
+    end: { dateTime: '2030-01-02T12:00:00+01:00' },
+    extendedProperties: { private: { bookingRequestId: requestId } },
+  };
+  const calls = [];
+  globalThis.fetch = async (url, options = {}) => {
+    const target = String(url);
+    calls.push({ target, options });
+    if (target.endsWith('/getChatMember')) return Response.json({ ok: true, result: { status: 'administrator' } });
+    if (target.includes('/values/bookings!A1%3AAH')) return Response.json({ values: [[], row] });
+    if (target.endsWith(`/events/${eventId}`)) return Response.json({}, { status: 404 });
+    if (target.endsWith('/calendar/v3/freeBusy')) {
+      return Response.json({ calendars: { 'calendar@example.com': { busy: [] } } });
+    }
+    if (target.endsWith('/events') && options.method === 'POST') return Response.json(calendarEvent);
+    if (target.includes('/events?')) return Response.json({ items: [calendarEvent] });
+    if (target.includes('/values/bookings!AD2%3AAF2')) return Response.json({ updatedRange: 'bookings!AD2:AF2' });
+    if (
+      target.endsWith('/answerCallbackQuery') ||
+      target.endsWith('/sendMessage') ||
+      target.endsWith('/editMessageReplyMarkup')
+    ) {
+      return Response.json({ ok: true, result: { message_id: 51 } });
+    }
+    throw new Error(`Unexpected fetch: ${target}`);
+  };
+
+  try {
+    const response = await onRequest({
+      request: new Request('https://hundesalon-nika.com/telegram-webhook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
+        },
+        body: JSON.stringify(bookingConfirmationCallback(requestId)),
+      }),
+      env: {
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        TELEGRAM_BOT_TOKEN: 'test-token',
+        TELEGRAM_CHAT_ID: '-100123',
+        TELEGRAM_WEBHOOK_SECRET: 'test-webhook-secret',
+        GOOGLE_OAUTH_ACCESS_TOKEN: 'access-token',
+        GOOGLE_CALENDAR_ID: 'calendar@example.com',
+        SHEET_ID: 'sheet-id',
+      },
+    });
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.confirmed, true);
+    assert.equal(calls.filter(call => call.target.endsWith('/events')).length, 1);
+    assert.equal(calls.some(call => call.target.includes('/values/bookings!AD2%3AAF2')), true);
+    assert.equal(calls.some(call => call.target.endsWith('/answerCallbackQuery')), true);
+    assert.equal(calls.some(call => call.target.endsWith('/sendMessage')), true);
+    assert.equal(calls.some(call => call.target.endsWith('/editMessageReplyMarkup')), true);
+    assert.equal(
+      calls.findIndex(call => call.target.endsWith('/answerCallbackQuery')) <
+        calls.findIndex(call => call.target.includes('/values/bookings!A1%3AAH')),
+      true
+    );
+    assert.equal(
+      calls.findIndex(call => call.target.endsWith('/sendMessage')) <
+        calls.findIndex(call => call.target.endsWith('/editMessageReplyMarkup')),
+      true
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('keeps the booking button and returns a retryable response when the final Telegram status is not delivered', async () => {
+  const originalFetch = globalThis.fetch;
+  const requestId = '12345678-1234-4123-8123-123456789abc';
+  const eventId = `booking${requestId.replace(/-/g, '')}`;
+  const row = Array(34).fill('');
+  Object.assign(row, {
+    3: 'Test Customer',
+    6: 'Komplettpflege',
+    7: '2030-01-02',
+    8: '10:00',
+    28: requestId,
+    29: 'confirmed',
+    31: eventId,
+  });
+  const calls = [];
+  globalThis.fetch = async (url, options = {}) => {
+    const target = String(url);
+    calls.push({ target, options });
+    if (target.endsWith('/getChatMember')) return Response.json({ ok: true, result: { status: 'administrator' } });
+    if (target.endsWith('/answerCallbackQuery')) return Response.json({ ok: true });
+    if (target.includes('/values/bookings!A1%3AAH')) return Response.json({ values: [[], row] });
+    if (target.endsWith('/sendMessage')) return Response.json({ ok: false }, { status: 502 });
+    throw new Error(`Unexpected fetch: ${target}`);
+  };
+
+  try {
+    const response = await onRequest({
+      request: new Request('https://hundesalon-nika.com/telegram-webhook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
+        },
+        body: JSON.stringify(bookingConfirmationCallback(requestId)),
+      }),
+      env: {
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        TELEGRAM_BOT_TOKEN: 'test-token',
+        TELEGRAM_CHAT_ID: '-100123',
+        TELEGRAM_WEBHOOK_SECRET: 'test-webhook-secret',
+        GOOGLE_OAUTH_ACCESS_TOKEN: 'access-token',
+        GOOGLE_CALENDAR_ID: 'calendar@example.com',
+        SHEET_ID: 'sheet-id',
+      },
+    });
+    const body = await response.json();
+
+    assert.equal(response.status, 502);
+    assert.equal(body.retryable, true);
+    assert.equal(body.confirmed, true);
+    assert.equal(calls.some(call => call.target.endsWith('/editMessageReplyMarkup')), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('a non-administrator cannot confirm a booking from the Telegram button', async () => {
+  const originalFetch = globalThis.fetch;
+  const requestId = '12345678-1234-4123-8123-123456789abc';
+  const calls = [];
+  globalThis.fetch = async (url, options = {}) => {
+    const target = String(url);
+    calls.push({ target, options });
+    if (target.endsWith('/getChatMember')) return Response.json({ ok: true, result: { status: 'member' } });
+    if (target.endsWith('/answerCallbackQuery')) return Response.json({ ok: true });
+    throw new Error(`Unexpected fetch: ${target}`);
+  };
+
+  try {
+    const response = await onRequest({
+      request: new Request('https://hundesalon-nika.com/telegram-webhook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
+        },
+        body: JSON.stringify(bookingConfirmationCallback(requestId)),
+      }),
+      env: {
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        TELEGRAM_BOT_TOKEN: 'test-token',
+        TELEGRAM_CHAT_ID: '-100123',
+        TELEGRAM_WEBHOOK_SECRET: 'test-webhook-secret',
+        GOOGLE_OAUTH_ACCESS_TOKEN: 'access-token',
+        GOOGLE_CALENDAR_ID: 'calendar@example.com',
+        SHEET_ID: 'sheet-id',
+      },
+    });
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.confirmed, false);
+    assert.equal(body.skipped, true);
+    assert.equal(calls.some(call => call.target.includes('googleapis.com/calendar')), false);
+    assert.equal(calls.some(call => call.target.includes('sheets.googleapis.com')), false);
+    const acknowledgement = JSON.parse(calls.find(call => call.target.endsWith('/answerCallbackQuery')).options.body);
+    assert.equal(acknowledgement.show_alert, true);
   } finally {
     globalThis.fetch = originalFetch;
   }

@@ -1,5 +1,5 @@
 /**
- * Sync sameAs + LocalBusiness description from config/brand-profiles.mjs into index pages.
+ * Sync sameAs, NAP, and LocalBusiness description from config/brand-profiles.mjs into index pages.
  * npm run brand:profiles
  */
 import fs from 'node:fs';
@@ -46,6 +46,16 @@ function updateJsonLd(html, lang) {
         if (node['@type'] === 'LocalBusiness') {
           node.description = businessDesc[lang] || businessDesc.de;
           node.url = `https://hundesalon-nika.com/${lang}/`;
+          node.telephone = NAP.phone;
+          node.email = NAP.email;
+          node.address = {
+            '@type': 'PostalAddress',
+            streetAddress: NAP.street,
+            addressLocality: NAP.locality,
+            addressRegion: NAP.region,
+            postalCode: NAP.postalCode,
+            addressCountry: NAP.country,
+          };
         }
       }
       const indent = match.match(/^(\s*)<script/)?.[1] ?? '    ';

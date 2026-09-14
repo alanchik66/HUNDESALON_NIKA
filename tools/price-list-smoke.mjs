@@ -1238,6 +1238,8 @@ for (const locale of locales) {
     if (label === 'mobile') await firstCard.locator('[data-price-card-toggle]').click();
     await firstCard.locator('[data-price-open]').click();
     await page.waitForSelector('#price-category-modal.active', { timeout: 15000 });
+    const initialModalScrollTop = await page.locator('#price-category-modal .modal-content').evaluate(content => content.scrollTop);
+    assert(`${locale} ${label}: category modal opens at the top`, initialModalScrollTop <= 1, String(initialModalScrollTop));
 
     const modalBreedPhotos = await readLoadedPhotoImages(
       page,
@@ -1255,11 +1257,13 @@ for (const locale of locales) {
       const selectionField = modal?.querySelector('.price-category-modal__selection-field');
       const photoMedia = photo?.querySelector('.price-category-modal__breed-photo-media');
       const photoCaption = photo?.querySelector('figcaption');
+      const close = modal?.querySelector('[data-price-modal-close]');
       const headerRect = selectionHeader?.getBoundingClientRect();
       const photoRect = photo?.getBoundingClientRect();
       const selectionFieldRect = selectionField?.getBoundingClientRect();
       const photoMediaRect = photoMedia?.getBoundingClientRect();
       const photoCaptionRect = photoCaption?.getBoundingClientRect();
+      const closeRect = close?.getBoundingClientRect();
       const visibleCaptionItems = Array.from(photoCaption?.children || []).filter((item) => {
         const style = getComputedStyle(item);
         return !item.hidden && style.display !== 'none' && style.visibility !== 'hidden';
@@ -1282,6 +1286,9 @@ for (const locale of locales) {
           && photoRect.right <= headerRect.right
           && photoRect.top >= headerRect.top
           && photoRect.bottom <= headerRect.bottom),
+        photoAvoidsClose: Boolean(photoRect && closeRect
+          && (photoRect.right <= closeRect.left || photoRect.left >= closeRect.right
+            || photoRect.bottom <= closeRect.top || photoRect.top >= closeRect.bottom)),
         noSelectionOverflow: Boolean(selectionHeader
           && selectionHeader.scrollWidth <= selectionHeader.clientWidth
           && selectionHeader.scrollHeight <= selectionHeader.clientHeight),
@@ -1325,6 +1332,7 @@ for (const locale of locales) {
         && modalBreedPhotoBinding.categoryHeaderPrecedesSelectionHeader
         && modalBreedPhotoBinding.unifiedTileHasSingleFrame
         && modalBreedPhotoBinding.photoContained
+        && modalBreedPhotoBinding.photoAvoidsClose
         && modalBreedPhotoBinding.noSelectionOverflow
         && modalBreedPhotoBinding.headerHeight <= (label === 'mobile' ? 220 : 190),
       JSON.stringify(modalBreedPhotoBinding)
@@ -1432,6 +1440,7 @@ for (const locale of locales) {
         const modal = document.querySelector('#price-category-modal');
         const modalHeader = modal?.querySelector('.price-category-modal__header');
         const selectionHeader = modal?.querySelector('.price-category-modal__selection-header');
+        const selectionHeaderStyle = selectionHeader ? getComputedStyle(selectionHeader) : null;
       const title = modal?.querySelector('[data-price-modal-title]')?.textContent?.trim() || '';
       const summary = modal?.querySelector('[data-price-modal-summary]')?.textContent?.trim() || '';
       const breedOptions = modal?.querySelectorAll('[data-price-modal-breed] option').length || 0;
@@ -1448,6 +1457,27 @@ for (const locale of locales) {
         const serviceOptionHeights = Array.from(
           modal?.querySelectorAll('.price-category-modal__service-option:not([hidden])') || []
         ).map(option => option.getBoundingClientRect().height);
+        const serviceLegendStates = Array.from(
+          modal?.querySelectorAll('.price-category-modal__service-fieldset:not([hidden])') || []
+        ).map((fieldset) => {
+          const legend = fieldset.querySelector('legend');
+          const fieldsetRect = fieldset.getBoundingClientRect();
+          const legendRect = legend?.getBoundingClientRect();
+          const legendStyle = legend ? getComputedStyle(legend) : null;
+          return {
+            text: legend?.textContent?.trim() || '',
+            float: legendStyle?.float || '',
+            contained: Boolean(legendRect
+              && legendRect.left >= fieldsetRect.left + 1
+              && legendRect.right <= fieldsetRect.right - 1
+              && legendRect.top >= fieldsetRect.top + 1
+              && legendRect.bottom <= fieldsetRect.bottom - 1),
+            noOverflow: Boolean(legend
+              && legend.scrollWidth <= legend.clientWidth + 1
+              && legendRect
+              && legendRect.width <= fieldsetRect.width - 2),
+          };
+        });
         return {
         title,
         summary,
@@ -1467,7 +1497,10 @@ for (const locale of locales) {
           modalHeaderPosition: modalHeader ? getComputedStyle(modalHeader).position : '',
           selectionHeaderHeight: selectionHeader?.getBoundingClientRect().height || 0,
           selectionHeaderPosition: selectionHeader ? getComputedStyle(selectionHeader).position : '',
+          selectionHeaderRadius: Number.parseFloat(selectionHeaderStyle?.borderTopLeftRadius || '0'),
+          selectionHeaderPaddingLeft: Number.parseFloat(selectionHeaderStyle?.paddingLeft || '0'),
           serviceOptionMaxHeight: serviceOptionHeights.length ? Math.max(...serviceOptionHeights) : 0,
+          serviceLegendStates,
           legacyMarkup: Boolean(legacyMarkup),
         };
     });
@@ -1479,9 +1512,11 @@ for (const locale of locales) {
         modalState.modalHeaderPosition !== 'sticky'
           && modalState.modalHeaderHeight > 0
           && modalState.modalHeaderHeight <= 180
-          && modalState.selectionHeaderPosition === 'sticky'
-          && modalState.selectionHeaderHeight > 0
-          && modalState.selectionHeaderHeight <= (label === 'mobile' ? 220 : 190),
+           && modalState.selectionHeaderPosition === 'sticky'
+           && modalState.selectionHeaderHeight > 0
+           && modalState.selectionHeaderHeight <= (label === 'mobile' ? 220 : 190)
+           && modalState.selectionHeaderRadius >= 10
+           && modalState.selectionHeaderPaddingLeft >= 10,
         JSON.stringify({
           intro: { position: modalState.modalHeaderPosition, height: modalState.modalHeaderHeight },
           selection: { position: modalState.selectionHeaderPosition, height: modalState.selectionHeaderHeight },
@@ -1492,6 +1527,15 @@ for (const locale of locales) {
         modalState.serviceOptionMaxHeight > 0
           && modalState.serviceOptionMaxHeight <= (label === 'mobile' ? 96 : 90),
         `maxHeight=${modalState.serviceOptionMaxHeight}`
+      );
+      assert(
+        `${locale} ${label}: service headings stay inside their frames`,
+        modalState.serviceLegendStates.length > 0
+          && modalState.serviceLegendStates.every(state => state.text.length > 0
+            && state.float === 'left'
+            && state.contained
+            && state.noOverflow),
+        JSON.stringify(modalState.serviceLegendStates)
       );
     assert(`${locale} ${label}: breed selector`, modalState.breedOptions > 0);
     assert(`${locale} ${label}: service selector`, modalState.serviceOptions > 0);

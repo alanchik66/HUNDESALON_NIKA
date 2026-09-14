@@ -6,6 +6,12 @@ compatibility_date = "2026-08-08"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
 
+[[d1_databases]]
+binding = "CHAT_DB"
+database_name = "nika-db"
+database_id = "b95aa18e-fca6-408b-91f9-8e262b6acf41"
+preview_database_id = "b95aa18e-fca6-408b-91f9-8e262b6acf41"
+
 # Preview deployments are intentionally non-transactional. Secrets and other
 # external-service settings stay in Cloudflare and are never committed here.
 [env.preview.vars]

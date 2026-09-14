@@ -94,6 +94,8 @@ secrets.*
 *.backup
 *.bak
 *.sql
+!migrations/
+!migrations/*.sql
 *.dump
 backup/
 archives/
@@ -192,6 +194,7 @@ tmp_*.png
 .playwright-cli/
 output/
 output-*.png
+work/
 
 # Локальные одноразовые скрипты (не для репозитория)
 tools/_test-*.mjs

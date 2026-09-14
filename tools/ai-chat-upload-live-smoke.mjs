@@ -1,6 +1,8 @@
+import { createHash } from 'node:crypto';
+
 const confirmation = '--confirm-live';
 if (!process.argv.includes(confirmation)) {
-  throw new Error(`This check creates a real Drive file and Telegram notification. Pass ${confirmation} to continue.`);
+  throw new Error(`This check creates a real OneDrive file and Telegram notification. Pass ${confirmation} to continue.`);
 }
 
 const baseUrl = new URL(
@@ -9,8 +11,10 @@ const baseUrl = new URL(
 const endpoint = new URL('/api/ai-chat-upload', baseUrl);
 const timestamp = new Date().toISOString();
 const content = new TextEncoder().encode(
-  `HUNDESALON_NIKA AI chat upload QA\nCreated: ${timestamp}\nPurpose: Drive and Telegram delivery verification.\n`
+  `HUNDESALON_NIKA AI chat upload QA\nCreated: ${timestamp}\nPurpose: OneDrive and Telegram delivery verification.\n`
 );
+const contentSha256 = createHash('sha256').update(content).digest('hex');
+const sessionId = 'production-live-smoke';
 
 async function post(payload) {
   const response = await fetch(endpoint, {
@@ -48,32 +52,53 @@ const started = await post({
   mimeType: 'text/plain',
   kind: 'file',
   locale: 'ru',
-  sessionId: 'production-live-smoke',
+  sessionId,
   pagePath: '/ru/',
+  contentSha256,
 });
 
-const uploaded = await fetch(started.uploadUrl, {
-  method: 'PUT',
+if (!started.uploadUrl || !started.uploadSignature) {
+  throw new Error('OneDrive upload session was not returned by the server.');
+}
+
+const uploaded = await fetch(new URL('/api/ai-chat-upload-chunk', baseUrl), {
+  method: 'POST',
   headers: {
     'Content-Length': String(content.byteLength),
-    'Content-Type': 'text/plain',
+    'Content-Type': 'application/octet-stream',
+    'Content-Range': `bytes 0-${content.byteLength - 1}/${content.byteLength}`,
+    'X-Upload-Url': started.uploadUrl,
+    'X-Upload-Signature': started.uploadSignature,
+    Origin: baseUrl.origin,
   },
   body: content,
 });
-const driveFile = await uploaded.json().catch(() => ({}));
-if (!uploaded.ok || !driveFile.id) {
-  throw new Error(`Google Drive upload failed with HTTP ${uploaded.status}.`);
+const uploadResult = await uploaded.json().catch(() => ({}));
+const oneDriveFile = uploadResult.file || {};
+if (!uploaded.ok || uploadResult.complete !== true || !oneDriveFile.id) {
+  throw new Error(`OneDrive upload failed with HTTP ${uploaded.status}.`);
 }
 
-const completed = await post({
+const completionPayload = {
   action: 'complete',
-  fileId: driveFile.id,
+  fileId: oneDriveFile.id,
+  fileName,
+  size: content.byteLength,
+  mimeType: 'text/plain',
   kind: 'file',
   locale: 'ru',
-});
+  sessionId,
+  contentSha256,
+};
+const completed = await post(completionPayload);
 
-if (!completed.notified || completed.notificationSkipped) {
-  throw new Error('Drive accepted the file, but Telegram delivery was not confirmed by the server.');
+if (!completed.notified || completed.notificationSkipped || completed.telegramFileAttached !== true) {
+  throw new Error('OneDrive accepted the file, but the original Telegram attachment was not confirmed by the server.');
+}
+
+const replayed = await post(completionPayload);
+if (replayed.completionClaimed !== false || replayed.notificationSkipped !== true || replayed.deduplicated !== true) {
+  throw new Error('A repeated completion was not suppressed by the deduplication receipt.');
 }
 
 console.log(
@@ -83,8 +108,10 @@ console.log(
       endpoint: endpoint.origin,
       fileName,
       bytes: content.byteLength,
-      driveVerified: true,
+      oneDriveVerified: completed.storage === 'onedrive',
       telegramNotified: true,
+      telegramOriginalAttached: true,
+      duplicateReplaySuppressed: true,
     },
     null,
     2

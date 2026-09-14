@@ -4,9 +4,9 @@
 
 - Cookie-consent на DE/RU/EN/UK с сохранением выбора в `localStorage`.
 - Google Analytics через `config/env.js`, запуск только после согласия.
-- Расширенная booking-форма: дата, время, список услуг, JPG/PNG до 5 MB, GDPR, предоплата, резюме перед отправкой.
+- Расширенная booking-форма: дата, время, список услуг, JPG/PNG до 15 MB, GDPR, предоплата, резюме перед отправкой.
 - Cloudflare Functions: `/sendmail`, `/upload`, `/payment`, `/subscribe`, `/blog`.
-- Google/Outlook/Teams/Drive/Sheets/Calendar hooks через env-переменные.
+- Google Calendar/Sheets, Microsoft OneDrive/Outlook/Teams hooks через env-переменные.
 - Отзывы из `data/testimonials.json` и локальные фото в `assets/images/testimonials/`.
 - Документы из `data/documents.json`.
 - Локальные SEO-страницы и новая статья про экспресс-линьку.
@@ -26,7 +26,6 @@
 - `GOOGLE_SERVICE_ACCOUNT_SUBJECT`
 - `GOOGLE_CALENDAR_ID`
 - `SHEET_ID`
-- `DRIVE_UPLOAD_FOLDER`
 - `GMAIL_SENDER`
 - `SENDPULSE_FROM`
 - `CLIENT_EMAIL_FROM`
@@ -41,6 +40,10 @@
 - `MS_CLIENT_ID`
 - `MS_CLIENT_SECRET`
 - `MS_GRAPH_ACCESS_TOKEN`
+- `MS_REFRESH_TOKEN`
+- `ONEDRIVE_UPLOAD_FOLDER`
+- `BOOKING_CONFIRM_SECRET` (опционально; отдельная подпись служебной ссылки подтверждения)
+- `OPENAI_API_KEY` (только серверная текстовая обработка AI-чата; вложения не передаются)
 - `OUTLOOK_SENDER`
 - `TEAM_ID`
 - `TEAM_CHANNEL_ID`
@@ -49,7 +52,6 @@
 - `SENDPULSE_ADDRESSBOOK_ID`
 - `SLACK_WEBHOOK_URL`
 - `GOOGLE_SHEETS_WEBHOOK_URL`
-- `GOOGLE_DRIVE_UPLOAD_WEBHOOK_URL`
 - `PAYMENT_PROVIDER_KEY`
 
 Локальный пример лежит в `.dev.vars.example`. Реальные значения нельзя сгенерировать из репозитория: владелец аккаунтов должен войти в Google Cloud, Microsoft Entra/Teams, SendPulse и Cloudflare, создать ключи/токены и вставить их как Cloudflare Pages secrets. Файл `.dev.vars` остаётся только локальным и не коммитится.
@@ -64,15 +66,16 @@
 ## Google
 
 1. Создайте проект в Google Cloud.
-2. Включите Gmail API, Calendar API, Sheets API и Drive API.
+2. Включите Calendar API и Sheets API. Drive API нужен только для выдачи доступа к созданной таблице, а не для хранения медиафайлов.
 3. Если Google Cloud включает `iam.disableServiceAccountKeyCreation`, не отключайте защиту ради сайта. Основной путь для обычного `@gmail.com` — OAuth Desktop client и refresh token:
    - Google Auth Platform → Clients → Create client → Desktop app.
-   - Авторизуйте scopes `calendar`, `drive.file`, `spreadsheets`, `gmail.send`.
+   - Авторизуйте scopes `calendar`, `spreadsheets`, `userinfo.email`; `drive.file` нужен только если мастер должен выдать доступ к таблице другим администраторам.
    - Сохраните `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REFRESH_TOKEN` только как Cloudflare secrets.
    - Автоматический путь в репозитории: скачайте Desktop app JSON и запустите `npm run google:setup-platform -- --salon-email info@hundesalon-nika.com --share-email snaiper1984@gmail.com,ryndenko1982@gmail.com`.
 4. Для Google Workspace или проектов без запрета ключей можно использовать service account: сохраните `GOOGLE_SERVICE_ACCOUNT_EMAIL` и `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` в Cloudflare secrets.
-5. Apps Script gateway из `integrations/google-apps-script-gateway/` оставлен как резервный вариант. Он выполняется от имени владельца Google-аккаунта, создаёт Calendar/Sheets/Drive и принимает защищённые webhook-запросы от Cloudflare.
-6. Gmail API через service account работает только в Google Workspace с domain-wide delegation. Email клиентов отправляется через SendPulse; Gmail OAuth используется только для Calendar/Sheets/Drive.
+5. Apps Script gateway из `integrations/google-apps-script-gateway/` оставлен как резервный вариант. Он выполняется от имени владельца Google-аккаунта, создаёт Calendar/Sheets и принимает защищённые webhook-запросы от Cloudflare. Загрузка медиа через него отключена.
+6. Gmail API через service account работает только в Google Workspace с domain-wide delegation. Email клиентов отправляется через SendPulse; Google OAuth используется для Calendar/Sheets и, при необходимости, выдачи доступа к таблице.
+7. Заявка сначала записывается в лист `bookings` со статусом `pending`. Google Calendar не получает событие автоматически. Администратор подтверждает запись кнопкой в служебном Telegram-чате либо служебной ссылкой из письма с отдельным нажатием на странице подтверждения. Простое открытие/сканирование ссылки календарь не меняет. Сервер создаёт приватное событие с детерминированным ID и обновляет строку таблицы; повторное подтверждение безопасно и не создаёт дубль.
 
 ## Google Apps Script gateway
 
@@ -85,23 +88,22 @@
    - `GOOGLE_GATEWAY_SECRET`
    - `GOOGLE_CALENDAR_ID`
    - `SHEET_ID`
-   - `DRIVE_UPLOAD_FOLDER`
 
 ## Рабочая почта и доступы
 
 - `CONTACT_RECIPIENT_EMAIL` / `BOOKING_RECIPIENT_EMAIL` / `SALON_EMAIL` — куда приходят заявки с сайта и публичный NAP: `info@hundesalon-nika.com` (Search / Ads).
 - `SUPPORT_EMAIL` / `SUPPORT_REPLY_TO_EMAIL` / `CLIENT_EMAIL_FROM` — рабочий адрес для исходящих и ответов: `support@hundesalon-nika.com` (From / Reply-To к клиенту).
 - `ADMIN_NOTIFICATION_EMAILS` — внутренние копии заявок для администраторов: `snaiper1984@gmail.com,ryndenko1982@gmail.com`.
-- `GOOGLE_SHARE_EMAIL` — кому выдать доступ к Google Calendar/Sheets/Drive. Можно указать несколько Google-аккаунтов через запятую.
+- `GOOGLE_SHARE_EMAIL` — кому выдать доступ к Google Calendar/Sheets. Можно указать несколько Google-аккаунтов через запятую.
 - `GMAIL_SENDER` должен быть только рабочим Gmail/Workspace alias. Если он пустой, код не отправляет клиентские письма через Gmail, чтобы клиент не видел личный Gmail владельца OAuth.
 
-## Microsoft Teams и Outlook
+## Microsoft OneDrive, Teams и Outlook
 
-1. Создайте app registration в Microsoft Entra.
-2. Выдайте Microsoft Graph application permission `Mail.Send` и подтвердите admin consent.
-3. Создайте client secret и сохраните `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET`.
-4. Укажите `OUTLOOK_SENDER` только если в tenant есть лицензированный Microsoft 365 mailbox. Без mailbox Cloudflare Function пропускает Outlook и не ломает заявку.
-5. Для Teams используйте `TEAMS_WEBHOOK_URL` как основной и самый стабильный канал уведомлений. Нужен существующий Teams channel с включённым incoming webhook.
+1. Создайте app registration в Microsoft Entra и разрешите делегированный Microsoft Graph scope `Files.ReadWrite`.
+2. Сохраните `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_REFRESH_TOKEN` и идентификатор закрытой папки `ONEDRIVE_UPLOAD_FOLDER` только как Cloudflare secrets. `MS_CLIENT_SECRET` нужен лишь для confidential client; текущий delegated flow допускает работу без него.
+3. OneDrive является единственным хранилищем фото из формы, файлов/медиа AI-чата и расшифровок. В Google Drive эти байты не отправляются.
+4. Для Outlook отдельно выдайте Microsoft Graph application permission `Mail.Send` и подтвердите admin consent; `OUTLOOK_SENDER` указывайте только при наличии лицензированного Microsoft 365 mailbox.
+5. Для Teams используйте `TEAMS_WEBHOOK_URL` как основной канал уведомлений. Нужен существующий Teams channel с включённым incoming webhook.
 6. `MS_GRAPH_ACCESS_TOKEN`, `TEAM_ID`, `TEAM_CHANNEL_ID` оставлены как fallback для ручной/делегированной Graph-настройки.
 
 ## Текущий продакшен-канал email

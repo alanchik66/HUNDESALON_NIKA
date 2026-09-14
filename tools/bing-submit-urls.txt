@@ -6,6 +6,7 @@ https://www.hundesalon-nika.com/de/
 https://www.hundesalon-nika.com/en/
 https://www.hundesalon-nika.com/ru/
 https://www.hundesalon-nika.com/uk/
+https://hundesalon-nika.com/assets/images/ads/work/logo-from-card-crown-512.png
 https://hundesalon-nika.com/assets/images/brand/logo.png
 https://hundesalon-nika.com/assets/images/brand/search-logo-512.png
 https://hundesalon-nika.com/assets/images/brand/search-logo-clear-512.png
@@ -111,6 +112,7 @@ https://hundesalon-nika.com/uk/prays-list
 https://hundesalon-nika.com/uk/reyting
 https://hundesalon-nika.com/uk/social
 https://hundesalon-nika.com/uk/vvedenie
+https://www.hundesalon-nika.com/assets/images/ads/work/logo-from-card-crown-512.png
 https://www.hundesalon-nika.com/assets/images/brand/logo.png
 https://www.hundesalon-nika.com/assets/images/brand/search-logo-512.png
 https://www.hundesalon-nika.com/assets/images/brand/search-logo-clear-512.png

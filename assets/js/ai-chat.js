@@ -9,9 +9,15 @@
   const MAX_FILE_BYTES = 150 * 1024 * 1024;
   const MAX_VOICE_DURATION_MS = 10 * 60 * 1000;
   const UPLOAD_ENDPOINT = '/api/ai-chat-upload';
+  const SESSION_ENDPOINT = '/api/ai-chat-session';
+  const REGISTRATION_KEY = 'hundesalonAiChatIdentity:v1';
+  const MODE_KEY = 'hundesalonAiChatMode:v1';
   const GIF_ENDPOINT = '/api/ai-chat-gifs';
   const EMOJI_DATA_URL = '/assets/data/emoji-17.0.json';
   const EMOJI_RECENTS_KEY = 'hundesalonAiChatEmojiRecents:v1';
+  const TEXT_SIZE_KEY = 'hundesalonAiChatTextSize:v1';
+  const TEXT_SIZE_ADJUSTMENTS = ['-0.08rem', '0rem', '0.12rem', '0.22rem'];
+  const DEFAULT_TEXT_SIZE_LEVEL = 1;
   const SUPPORTED_LOCALES = new Set(['de', 'en', 'ru', 'uk']);
   const BRAND_LOGO = '/assets/images/brand/logo.png';
   const SITE_ORIGIN = 'https://hundesalon-nika.com';
@@ -25,13 +31,18 @@
       placeholder: 'Ihre Frage an HUNDESALON_NIKA ...',
       send: 'Nachricht senden',
       personalSupport: 'Persönliche Beratung',
-      personalSupportOpening: 'Persönliche Beratung wird geöffnet ...',
-      personalSupportUnavailable: 'Der Live-Chat wird noch geladen. Bitte versuchen Sie es gleich erneut.',
+      personalSupportActive: 'Persönliche Beratung ist aktiv. Ihre Nachrichten und Dateien gehen direkt an unser Team.',
+      personalSupportSent: 'Nachricht wurde an unser Team gesendet.',
+      personalSupportSubtitle: 'Persönliche Beratung mit unserem Team',
+      personalSupportPlaceholder: 'Ihre Nachricht an unser Team ...',
+      aiSupport: 'Zum KI-Assistenten',
+      aiSupportActive: 'Der KI-Assistent ist wieder aktiv.',
       attach: 'Datei an einen Mitarbeiter senden',
       attachHint: 'Alle Dateiformate bis 150 MB werden sicher an unser Team gesendet.',
       fileTooLarge: 'Die Datei darf höchstens 150 MB groß sein.',
       uploadPreparing: 'Sicherer Upload wird vorbereitet ...',
       uploadComplete: 'Datei wurde sicher übermittelt.',
+      uploadDuplicate: 'Diese Datei wurde bereits empfangen. Es wurde keine zweite Kopie erstellt.',
       uploadStored: 'Die Datei wurde gespeichert, aber die Benachrichtigung des Teams konnte nicht bestätigt werden.',
       uploadFailed: 'Die Datei konnte nicht gesendet werden. Bitte versuchen Sie es erneut.',
       uploadCancel: 'Upload abbrechen',
@@ -54,11 +65,13 @@
       voiceSend: 'Sprachnachricht senden',
       menu: 'Schnellaktionen',
       minimize: 'Chat minimieren',
+      decreaseFont: 'Schrift verkleinern',
+      increaseFont: 'Schrift vergrößern',
       expand: 'Ansicht vergrößern',
       collapse: 'Normale Ansicht',
       download: 'Chatverlauf herunterladen',
-      newConversation: 'Neues Gespräch',
-      newConversationConfirm: 'Aktuellen Verlauf in diesem Browser löschen und ein neues Gespräch beginnen?',
+      clearChat: 'Chat leeren',
+      clearChatConfirm: 'Diesen Chatverlauf löschen und ein neues Gespräch beginnen?',
       typing: 'Der Assistent prüft die Website-Informationen ...',
       unavailable: 'Der Assistent ist gerade nicht erreichbar. Bitte nutzen Sie die persönliche Beratung.',
       rateLimited:
@@ -68,7 +81,16 @@
       tooLong: `Bitte kürzen Sie die Nachricht auf höchstens ${MAX_MESSAGE_LENGTH} Zeichen.`,
       privacy: 'Datenschutz',
       transcriptTitle: 'HUNDESALON_NIKA Gespräch',
-      close: 'Schließen',
+      closeChat: 'Chat schließen',
+      registrationTitle: 'Vor dem ersten Gespräch registrieren',
+      registrationIntro: 'So kann unser Team Ihre Anfrage eindeutig zuordnen und persönlich antworten.',
+      firstName: 'Vorname',
+      lastName: 'Nachname',
+      email: 'E-Mail-Adresse',
+      phone: 'Telefon (freiwillig)',
+      consent: 'Ich stimme der Verarbeitung meiner Angaben zur Bearbeitung dieser Anfrage zu.',
+      register: 'Sicher weiter zum Chat',
+      registrationError: 'Bitte prüfen Sie Ihre Angaben und versuchen Sie es erneut.',
     }),
     en: Object.freeze({
       assistant: 'AI pet-care assistant',
@@ -78,13 +100,18 @@
       placeholder: 'Ask HUNDESALON_NIKA ...',
       send: 'Send message',
       personalSupport: 'Personal support',
-      personalSupportOpening: 'Opening personal support ...',
-      personalSupportUnavailable: 'The live chat is still loading. Please try again in a moment.',
+      personalSupportActive: 'Personal support is active. Your messages and files go directly to our team.',
+      personalSupportSent: 'Your message was sent to our team.',
+      personalSupportSubtitle: 'Personal support with our team',
+      personalSupportPlaceholder: 'Your message to our team ...',
+      aiSupport: 'Switch to AI assistant',
+      aiSupportActive: 'The AI assistant is active again.',
       attach: 'Send a file to a team member',
       attachHint: 'All file formats up to 150 MB are sent securely to our team.',
       fileTooLarge: 'The file must not exceed 150 MB.',
       uploadPreparing: 'Preparing secure upload ...',
       uploadComplete: 'The file was sent securely.',
+      uploadDuplicate: 'This file was already received. No second copy was created.',
       uploadStored: 'The file was saved, but team notification could not be confirmed.',
       uploadFailed: 'The file could not be sent. Please try again.',
       uploadCancel: 'Cancel upload',
@@ -107,11 +134,13 @@
       voiceSend: 'Send voice message',
       menu: 'Quick actions',
       minimize: 'Minimize chat',
+      decreaseFont: 'Decrease text size',
+      increaseFont: 'Increase text size',
       expand: 'Expand view',
       collapse: 'Normal view',
       download: 'Download transcript',
-      newConversation: 'New conversation',
-      newConversationConfirm: 'Clear the current history in this browser and start a new conversation?',
+      clearChat: 'Clear chat',
+      clearChatConfirm: 'Clear this chat history and start a new conversation?',
       typing: 'The assistant is checking the website information ...',
       unavailable: 'The assistant is currently unavailable. Please use personal support.',
       rateLimited: 'Too many requests in a short time. Please wait one minute or use personal support.',
@@ -120,7 +149,16 @@
       tooLong: `Please shorten the message to ${MAX_MESSAGE_LENGTH} characters or fewer.`,
       privacy: 'Privacy',
       transcriptTitle: 'HUNDESALON_NIKA conversation',
-      close: 'Close',
+      closeChat: 'Close chat',
+      registrationTitle: 'Register before your first conversation',
+      registrationIntro: 'This lets our team match your enquiry and reply to you personally.',
+      firstName: 'First name',
+      lastName: 'Last name',
+      email: 'Email address',
+      phone: 'Phone (optional)',
+      consent: 'I agree that my details may be processed to handle this enquiry.',
+      register: 'Continue securely to chat',
+      registrationError: 'Please check your details and try again.',
     }),
     ru: Object.freeze({
       assistant: 'AI-ассистент по уходу за питомцами',
@@ -130,13 +168,18 @@
       placeholder: 'Ваш вопрос HUNDESALON_NIKA ...',
       send: 'Отправить сообщение',
       personalSupport: 'Личная консультация',
-      personalSupportOpening: 'Открываю личную консультацию ...',
-      personalSupportUnavailable: 'Live-chat ещё загружается. Повторите попытку через несколько секунд.',
+      personalSupportActive: 'Личная консультация включена. Сообщения и файлы поступают напрямую нашей команде.',
+      personalSupportSent: 'Сообщение отправлено нашей команде.',
+      personalSupportSubtitle: 'Личная консультация с нашей командой',
+      personalSupportPlaceholder: 'Ваше сообщение нашей команде ...',
+      aiSupport: 'Перейти к AI-ассистенту',
+      aiSupportActive: 'AI-ассистент снова включён.',
       attach: 'Отправить файл сотруднику',
       attachHint: 'Все форматы файлов до 150 МБ безопасно отправляются нашей команде.',
       fileTooLarge: 'Размер файла не должен превышать 150 МБ.',
       uploadPreparing: 'Подготавливаю безопасную загрузку ...',
       uploadComplete: 'Файл безопасно отправлен сотруднику.',
+      uploadDuplicate: 'Этот файл уже был получен. Вторая копия не создана.',
       uploadStored: 'Файл сохранён, но уведомление сотрудника не подтверждено.',
       uploadFailed: 'Не удалось отправить файл. Повторите попытку.',
       uploadCancel: 'Отменить загрузку',
@@ -159,11 +202,13 @@
       voiceSend: 'Отправить голосовое сообщение',
       menu: 'Быстрые действия',
       minimize: 'Свернуть чат',
+      decreaseFont: 'Уменьшить шрифт',
+      increaseFont: 'Увеличить шрифт',
       expand: 'Развернуть просмотр',
       collapse: 'Обычный вид',
       download: 'Скачать транскрипт',
-      newConversation: 'Новый разговор',
-      newConversationConfirm: 'Очистить текущую историю в этом браузере и начать новый разговор?',
+      clearChat: 'Очистить чат',
+      clearChatConfirm: 'Очистить историю этого чата и начать новый разговор?',
       typing: 'Ассистент проверяет информацию сайта ...',
       unavailable: 'Ассистент сейчас недоступен. Используйте личную консультацию.',
       rateLimited: 'Слишком много запросов за короткое время. Подождите минуту или откройте личную консультацию.',
@@ -172,7 +217,16 @@
       tooLong: `Сократите сообщение до ${MAX_MESSAGE_LENGTH} знаков.`,
       privacy: 'Конфиденциальность',
       transcriptTitle: 'Диалог HUNDESALON_NIKA',
-      close: 'Закрыть',
+      closeChat: 'Закрыть чат',
+      registrationTitle: 'Регистрация перед первым обращением',
+      registrationIntro: 'Так сотрудник увидит, кто обращается, и сможет ответить вам лично.',
+      firstName: 'Имя',
+      lastName: 'Фамилия',
+      email: 'Электронная почта',
+      phone: 'Телефон (по желанию)',
+      consent: 'Я согласен(на) на обработку данных для ответа на это обращение.',
+      register: 'Безопасно перейти к чату',
+      registrationError: 'Проверьте введённые данные и повторите попытку.',
     }),
     uk: Object.freeze({
       assistant: 'AI-асистент з догляду за улюбленцями',
@@ -182,13 +236,18 @@
       placeholder: 'Ваше запитання HUNDESALON_NIKA ...',
       send: 'Надіслати повідомлення',
       personalSupport: 'Особиста консультація',
-      personalSupportOpening: 'Відкриваю особисту консультацію ...',
-      personalSupportUnavailable: 'Live-chat ще завантажується. Спробуйте ще раз за кілька секунд.',
+      personalSupportActive: 'Особисту консультацію ввімкнено. Повідомлення та файли надходять безпосередньо нашій команді.',
+      personalSupportSent: 'Повідомлення надіслано нашій команді.',
+      personalSupportSubtitle: 'Особиста консультація з нашою командою',
+      personalSupportPlaceholder: 'Ваше повідомлення нашій команді ...',
+      aiSupport: 'Перейти до AI-асистента',
+      aiSupportActive: 'AI-асистента знову ввімкнено.',
       attach: 'Надіслати файл співробітнику',
       attachHint: 'Усі формати файлів до 150 МБ безпечно надсилаються нашій команді.',
       fileTooLarge: 'Розмір файлу не повинен перевищувати 150 МБ.',
       uploadPreparing: 'Готую безпечне завантаження ...',
       uploadComplete: 'Файл безпечно надіслано співробітнику.',
+      uploadDuplicate: 'Цей файл уже було отримано. Другу копію не створено.',
       uploadStored: 'Файл збережено, але сповіщення співробітника не підтверджено.',
       uploadFailed: 'Не вдалося надіслати файл. Спробуйте ще раз.',
       uploadCancel: 'Скасувати завантаження',
@@ -211,11 +270,13 @@
       voiceSend: 'Надіслати голосове повідомлення',
       menu: 'Швидкі дії',
       minimize: 'Згорнути чат',
+      decreaseFont: 'Зменшити шрифт',
+      increaseFont: 'Збільшити шрифт',
       expand: 'Розгорнути перегляд',
       collapse: 'Звичайний вигляд',
       download: 'Завантажити транскрипт',
-      newConversation: 'Нова розмова',
-      newConversationConfirm: 'Очистити поточну історію в цьому браузері та почати нову розмову?',
+      clearChat: 'Очистити чат',
+      clearChatConfirm: 'Очистити історію цього чату та почати нову розмову?',
       typing: 'Асистент перевіряє інформацію сайту ...',
       unavailable: 'Асистент зараз недоступний. Скористайтеся особистою консультацією.',
       rateLimited: 'Забагато запитів за короткий час. Зачекайте хвилину або відкрийте особисту консультацію.',
@@ -224,7 +285,16 @@
       tooLong: `Скоротіть повідомлення до ${MAX_MESSAGE_LENGTH} символів.`,
       privacy: 'Конфіденційність',
       transcriptTitle: 'Діалог HUNDESALON_NIKA',
-      close: 'Закрити',
+      closeChat: 'Закрити чат',
+      registrationTitle: 'Реєстрація перед першим зверненням',
+      registrationIntro: 'Так співробітник бачитиме, хто звертається, і зможе відповісти особисто.',
+      firstName: 'Ім’я',
+      lastName: 'Прізвище',
+      email: 'Електронна пошта',
+      phone: 'Телефон (необов’язково)',
+      consent: 'Я погоджуюся на обробку даних для відповіді на це звернення.',
+      register: 'Безпечно перейти до чату',
+      registrationError: 'Перевірте введені дані та повторіть спробу.',
     }),
   });
 
@@ -266,6 +336,19 @@
     return SUPPORTED_LOCALES.has(candidate) ? candidate : 'de';
   }
 
+  function readTextSizeLevel() {
+    try {
+      const storedLevel = localStorage.getItem(TEXT_SIZE_KEY);
+      if (storedLevel === null) return DEFAULT_TEXT_SIZE_LEVEL;
+      const level = Number(storedLevel);
+      return Number.isInteger(level) && level >= 0 && level < TEXT_SIZE_ADJUSTMENTS.length
+        ? level
+        : DEFAULT_TEXT_SIZE_LEVEL;
+    } catch {
+      return DEFAULT_TEXT_SIZE_LEVEL;
+    }
+  }
+
   function icon(name) {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -292,16 +375,111 @@
     return node;
   }
 
-  function safeSessionId() {
+  function sessionStorageKey(locale) {
+    return `${SESSION_KEY}:${locale}`;
+  }
+
+  function createSessionId(locale) {
+    const created = window.crypto.randomUUID();
     try {
-      const stored = localStorage.getItem(SESSION_KEY);
+      sessionStorage.setItem(sessionStorageKey(locale), created);
+    } catch {
+      // The in-memory ID still keeps this page isolated when storage is unavailable.
+    }
+    return created;
+  }
+
+  function safeSessionId(locale) {
+    try {
+      const stored = sessionStorage.getItem(sessionStorageKey(locale));
       if (/^[a-z0-9-]{16,64}$/i.test(stored || '')) return stored;
-      const created = window.crypto.randomUUID();
-      localStorage.setItem(SESSION_KEY, created);
-      return created;
+      return createSessionId(locale);
     } catch {
       return window.crypto.randomUUID();
     }
+  }
+
+  function readIdentity() {
+    try {
+      const value = JSON.parse(localStorage.getItem(REGISTRATION_KEY) || 'null');
+      if (
+        /^[a-f0-9-]{36}$/i.test(value?.sessionId || '') &&
+        /^[a-f0-9-]{64,160}$/i.test(value?.sessionToken || '')
+      ) {
+        return { sessionId: value.sessionId, sessionToken: value.sessionToken };
+      }
+    } catch {
+      /* registration is shown when the saved identity is unavailable */
+    }
+    return null;
+  }
+
+  function saveIdentity(identity) {
+    try {
+      localStorage.setItem(
+        REGISTRATION_KEY,
+        JSON.stringify({ sessionId: identity.sessionId, sessionToken: identity.sessionToken })
+      );
+    } catch {
+      // The active page can keep using the in-memory identity when storage is unavailable.
+    }
+  }
+
+  function replyCursorKey(sessionId) {
+    return `${REGISTRATION_KEY}:reply:${sessionId}`;
+  }
+
+  function readReplyCursor(sessionId) {
+    try {
+      const value = Number(localStorage.getItem(replyCursorKey(sessionId)) || 0);
+      return Number.isSafeInteger(value) && value >= 0 ? value : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  function saveReplyCursor(sessionId, sequence) {
+    try {
+      localStorage.setItem(replyCursorKey(sessionId), String(sequence));
+    } catch {
+      // Reply polling still works in memory for the active page.
+    }
+  }
+
+  function transcriptRevisionKey(locale, sessionId) {
+    return `${STORAGE_PREFIX}:revision:${locale}:${sessionId}`;
+  }
+
+  function readTranscriptRevision(locale, sessionId) {
+    try {
+      const revision = Number(sessionStorage.getItem(transcriptRevisionKey(locale, sessionId)) || 0);
+      return Number.isSafeInteger(revision) && revision >= 0 ? revision : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  function writeTranscriptRevision(locale, sessionId, revision) {
+    try {
+      sessionStorage.setItem(transcriptRevisionKey(locale, sessionId), String(revision));
+    } catch {
+      /* keep the in-memory revision when storage is unavailable */
+    }
+  }
+
+  function normalizeStoredAttachment(input) {
+    if (!input || typeof input !== 'object') return null;
+    const name = String(input.name || '').trim().slice(0, 180);
+    const size = Number(input.size);
+    const mimeType = String(input.mimeType || '').trim().slice(0, 120);
+    if (!name || !Number.isSafeInteger(size) || size < 0) return null;
+    return {
+      name,
+      size,
+      mimeType,
+      kind: input.kind === 'voice' ? 'voice' : 'file',
+      delivered: input.delivered === true,
+    };
   }
 
   function readStoredMessages(locale) {
@@ -312,7 +490,10 @@
         const role = item?.role === 'assistant' ? 'assistant' : item?.role === 'user' ? 'user' : '';
         const content = typeof item?.content === 'string' ? item.content.trim().slice(0, 4000) : '';
         const media = normalizeGif(item?.media);
-        return role && content ? [{ role, content, ...(media ? { media } : {}) }] : [];
+        const attachment = normalizeStoredAttachment(item?.attachment);
+        return role && (content || attachment)
+          ? [{ role, content, ...(media ? { media } : {}), ...(attachment ? { attachment } : {}) }]
+          : [];
       });
     } catch {
       return [];
@@ -381,6 +562,11 @@
     return new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(bytes / 1024 / 1024) + ' MB';
   }
 
+  async function sha256Hex(file) {
+    const digest = await window.crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+    return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
   function formatDuration(milliseconds) {
     const seconds = Math.max(0, Math.floor(milliseconds / 1000));
     return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
@@ -419,7 +605,9 @@
           }
           return;
         }
-        reject(new Error(`UPLOAD_CHUNK_FAILED_${xhr.status}`));
+        const error = new Error(`UPLOAD_CHUNK_FAILED_${xhr.status}`);
+        error.status = xhr.status;
+        reject(error);
       });
       xhr.addEventListener('error', () => reject(new Error('UPLOAD_NETWORK_ERROR')));
       xhr.addEventListener('abort', () => reject(new window.DOMException('Upload cancelled', 'AbortError')));
@@ -432,12 +620,28 @@
 
     const locale = pageLocale();
     const copy = COPY[locale];
+    const identity = readIdentity();
+    const sessionId = identity?.sessionId || safeSessionId(locale);
+    const storedMessages = readStoredMessages(locale);
+    let storedMode = 'ai';
+    try {
+      storedMode = localStorage.getItem(MODE_KEY) === 'human' ? 'human' : 'ai';
+    } catch {
+      // Keep the default mode when browser storage is unavailable.
+    }
+    const storedRevision = Math.max(readTranscriptRevision(locale, sessionId), storedMessages.length ? 1 : 0);
     const state = {
       busy: false,
       expanded: false,
-      handoffTimer: null,
-      messages: readStoredMessages(locale),
-      sessionId: safeSessionId(),
+      mode: storedMode,
+      messages: storedMessages,
+      sessionId,
+      sessionToken: identity?.sessionToken || '',
+      replySequence: identity ? readReplyCursor(identity.sessionId) : 0,
+      replyPollPending: false,
+      modeChangePending: false,
+      modeRevision: 0,
+      textSizeLevel: readTextSizeLevel(),
       emojiGroups: null,
       activeEmojiGroup: '',
       activeUpload: null,
@@ -447,12 +651,17 @@
       gifRequest: null,
       gifSearchTimer: null,
       transcriptTimer: null,
+      transcriptSyncPromise: Promise.resolve(),
+      transcriptRevision: storedRevision,
+      viewportFrame: 0,
     };
+    if (storedRevision) writeTranscriptRevision(locale, sessionId, storedRevision);
 
     const root = document.createElement('section');
     root.id = CHAT_ID;
     root.className = 'hn-ai-chat';
     root.dataset.open = 'false';
+    root.dataset.mode = state.mode;
     root.setAttribute('aria-label', 'HUNDESALON_NIKA AI');
 
     const launcher = button({ className: 'hn-ai-launcher', label: copy.launcher });
@@ -495,11 +704,24 @@
     headerActions.className = 'hn-ai-header-actions';
     const menuToggle = button({ className: 'hn-ai-icon-button', label: copy.menu, iconName: 'menu' });
     menuToggle.setAttribute('aria-expanded', 'false');
+    menuToggle.setAttribute('aria-controls', 'hn-ai-menu');
+    menuToggle.setAttribute('aria-haspopup', 'menu');
+    const decreaseFont = button({
+      className: 'hn-ai-icon-button hn-ai-font-button',
+      label: copy.decreaseFont,
+      text: '−',
+    });
+    const increaseFont = button({
+      className: 'hn-ai-icon-button hn-ai-font-button',
+      label: copy.increaseFont,
+      text: '+',
+    });
     const minimize = button({ className: 'hn-ai-icon-button', label: copy.minimize, iconName: 'minimize' });
-    headerActions.append(menuToggle, minimize);
+    headerActions.append(menuToggle, decreaseFont, increaseFont, minimize);
     header.append(brand, headerActions);
 
     const menu = document.createElement('div');
+    menu.id = 'hn-ai-menu';
     menu.className = 'hn-ai-menu';
     menu.hidden = true;
     menu.setAttribute('role', 'menu');
@@ -519,17 +741,70 @@
     });
     const reset = button({
       className: 'hn-ai-menu-action',
-      label: copy.newConversation,
-      iconName: 'newConversation',
-      text: copy.newConversation,
+      label: copy.clearChat,
+      iconName: 'trash',
+      text: copy.clearChat,
     });
     const closeMenu = button({
       className: 'hn-ai-menu-action',
-      label: copy.minimize,
-      iconName: 'minimize',
-      text: copy.minimize,
+      label: copy.closeChat,
+      iconName: 'close',
+      text: copy.closeChat,
     });
-    menu.append(menuTitle, closeMenu, expand, download, reset);
+    const menuActions = [closeMenu, expand, download, reset];
+    menuActions.forEach(action => action.setAttribute('role', 'menuitem'));
+    menu.append(menuTitle, ...menuActions);
+
+    const registration = document.createElement('section');
+    registration.className = 'hn-ai-registration';
+    registration.hidden = Boolean(state.sessionToken);
+    const registrationTitle = document.createElement('h3');
+    registrationTitle.textContent = copy.registrationTitle;
+    const registrationIntro = document.createElement('p');
+    registrationIntro.textContent = copy.registrationIntro;
+    const registrationForm = document.createElement('form');
+    registrationForm.className = 'hn-ai-registration-form';
+    const registrationField = (labelText, type, autocomplete, required = true) => {
+      const label = document.createElement('label');
+      const labelValue = document.createElement('span');
+      const field = document.createElement('input');
+      labelValue.textContent = labelText;
+      field.type = type;
+      field.autocomplete = autocomplete;
+      field.required = required;
+      field.maxLength = type === 'email' ? 254 : type === 'tel' ? 40 : 80;
+      label.append(labelValue, field);
+      return { label, field };
+    };
+    const firstName = registrationField(copy.firstName, 'text', 'given-name');
+    const lastName = registrationField(copy.lastName, 'text', 'family-name');
+    const email = registrationField(copy.email, 'email', 'email');
+    const phone = registrationField(copy.phone, 'tel', 'tel', false);
+    const consentLabel = document.createElement('label');
+    consentLabel.className = 'hn-ai-registration-consent';
+    const consent = document.createElement('input');
+    consent.type = 'checkbox';
+    consent.required = true;
+    const consentText = document.createElement('span');
+    consentText.textContent = copy.consent;
+    consentLabel.append(consent, consentText);
+    const registrationSubmit = document.createElement('button');
+    registrationSubmit.type = 'submit';
+    registrationSubmit.className = 'hn-ai-registration-submit';
+    registrationSubmit.textContent = copy.register;
+    const registrationError = document.createElement('p');
+    registrationError.className = 'hn-ai-registration-error';
+    registrationError.setAttribute('role', 'alert');
+    registrationForm.append(
+      firstName.label,
+      lastName.label,
+      email.label,
+      phone.label,
+      consentLabel,
+      registrationSubmit,
+      registrationError
+    );
+    registration.append(registrationTitle, registrationIntro, registrationForm);
 
     const messages = document.createElement('div');
     messages.className = 'hn-ai-messages';
@@ -539,8 +814,12 @@
 
     const welcome = document.createElement('div');
     welcome.className = 'hn-ai-welcome';
-    const welcomeMark = document.createElement('span');
-    welcomeMark.textContent = 'AI';
+    const welcomeMark = document.createElement('img');
+    welcomeMark.src = BRAND_LOGO;
+    welcomeMark.alt = '';
+    welcomeMark.width = 32;
+    welcomeMark.height = 32;
+    welcomeMark.decoding = 'async';
     const welcomeText = document.createElement('p');
     welcomeText.textContent = copy.welcome;
     welcome.append(welcomeMark, welcomeText);
@@ -557,6 +836,7 @@
 
     const composer = document.createElement('form');
     composer.className = 'hn-ai-composer';
+    composer.hidden = !state.sessionToken;
     const inputWrap = document.createElement('div');
     inputWrap.className = 'hn-ai-input-wrap';
     const textarea = document.createElement('textarea');
@@ -591,6 +871,25 @@
       text: copy.personalSupport,
     });
     composerBar.append(tools, support);
+
+    function updateConversationMode(mode, { announce = true } = {}) {
+      state.mode = mode === 'human' ? 'human' : 'ai';
+      root.dataset.mode = state.mode;
+      const human = state.mode === 'human';
+      subtitle.textContent = human ? copy.personalSupportSubtitle : copy.assistant;
+      textarea.placeholder = human ? copy.personalSupportPlaceholder : copy.placeholder;
+      textarea.setAttribute('aria-label', textarea.placeholder);
+      const supportLabel = human ? copy.aiSupport : copy.personalSupport;
+      support.querySelector('span').textContent = supportLabel;
+      support.setAttribute('aria-label', supportLabel);
+      support.title = supportLabel;
+      try {
+        localStorage.setItem(MODE_KEY, state.mode);
+      } catch {
+        // The in-memory mode still works for this page.
+      }
+      if (announce) setStatus(human ? copy.personalSupportActive : copy.aiSupportActive);
+    }
 
     const emojiPicker = document.createElement('section');
     emojiPicker.className = 'hn-ai-emoji-picker';
@@ -680,9 +979,27 @@
     privacy.textContent = copy.privacy;
     composer.append(inputWrap, composerBar, fileInput, emojiPicker, gifPicker, transfer, recorderPanel, status, privacy);
 
-    panel.append(header, menu, messages, typing, composer);
+    panel.append(header, menu, registration, messages, typing, composer);
     root.append(panel, launcher);
     document.body.appendChild(root);
+
+    function syncChatViewport() {
+      window.cancelAnimationFrame(state.viewportFrame);
+      state.viewportFrame = window.requestAnimationFrame(() => {
+        const viewport = window.visualViewport;
+        const viewportHeight = Math.max(1, Math.round(viewport?.height || window.innerHeight));
+        const viewportWidth = Math.max(1, Math.round(viewport?.width || window.innerWidth));
+        root.style.setProperty('--hn-ai-viewport-height', `${viewportHeight}px`);
+        root.style.setProperty('--hn-ai-viewport-width', `${viewportWidth}px`);
+        root.style.setProperty('--hn-ai-viewport-top', `${Math.max(0, Math.round(viewport?.offsetTop || 0))}px`);
+        root.style.setProperty('--hn-ai-viewport-left', `${Math.max(0, Math.round(viewport?.offsetLeft || 0))}px`);
+        root.style.setProperty(
+          '--hn-ai-viewport-bottom',
+          `${Math.max(0, Math.round(window.innerHeight - viewportHeight - (viewport?.offsetTop || 0)))}px`
+        );
+        if (root.dataset.open === 'true' && root.contains(document.activeElement)) scrollToLatest();
+      });
+    }
 
     function setStatus(message, timeout = 4200) {
       clearTimeout(status.__clearTimer);
@@ -691,6 +1008,105 @@
         status.__clearTimer = setTimeout(() => {
           status.textContent = '';
         }, timeout);
+      }
+    }
+
+    function applyRegisteredIdentity(result, profile = null) {
+      state.sessionId = result.sessionId;
+      state.sessionToken = result.sessionToken;
+      state.replySequence = readReplyCursor(result.sessionId);
+      saveIdentity(result);
+      registration.hidden = true;
+      composer.hidden = false;
+      if (profile) {
+        window.oSpP = {
+          ...(window.oSpP && typeof window.oSpP === 'object' ? window.oSpP : {}),
+          customer_name: `${profile.firstName} ${profile.lastName}`.trim(),
+          email: profile.email,
+          phone: profile.phone || '',
+          chat_session_id: result.sessionId,
+        };
+      }
+      textarea.focus({ preventScroll: true });
+    }
+
+    function requireRegistration() {
+      state.sessionToken = '';
+      try {
+        localStorage.removeItem(REGISTRATION_KEY);
+      } catch {
+        // The in-memory session is already invalidated for this page.
+      }
+      registration.hidden = false;
+      composer.hidden = true;
+      registrationError.textContent = copy.registrationError;
+      requestAnimationFrame(() => firstName.field.focus({ preventScroll: true }));
+    }
+
+    async function pollStaffReplies() {
+      if (!state.sessionToken || document.hidden || state.replyPollPending) return;
+      const modeRevision = state.modeRevision;
+      state.replyPollPending = true;
+      try {
+        const response = await fetch(SESSION_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'poll',
+            sessionId: state.sessionId,
+            sessionToken: state.sessionToken,
+            afterSequence: state.replySequence,
+          }),
+        });
+        if (response.status === 401) {
+          requireRegistration();
+          return;
+        }
+        if (!response.ok) return;
+        const result = await response.json();
+        if (modeRevision === state.modeRevision && result?.mode === 'human' && state.mode !== 'human') {
+          updateConversationMode('human');
+        }
+        for (const reply of Array.isArray(result?.replies) ? result.replies : []) {
+          if (typeof reply?.body === 'string' && reply.body.trim()) addMessage('assistant', reply.body.trim());
+          state.replySequence = Math.max(state.replySequence, Number(reply?.sequence) || 0);
+        }
+        saveReplyCursor(state.sessionId, state.replySequence);
+      } catch {
+        /* the next poll retries transient failures */
+      } finally {
+        state.replyPollPending = false;
+      }
+    }
+
+    async function registerCustomer() {
+      registrationError.textContent = '';
+      registrationSubmit.disabled = true;
+      try {
+        const profile = {
+          firstName: firstName.field.value.trim(),
+          lastName: lastName.field.value.trim(),
+          email: email.field.value.trim(),
+          phone: phone.field.value.trim(),
+        };
+        const response = await fetch(SESSION_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'register',
+            ...profile,
+            locale,
+            pagePath: location.pathname,
+            privacyConsent: consent.checked,
+          }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result?.success) throw new Error('REGISTRATION_FAILED');
+        applyRegisteredIdentity(result, profile);
+      } catch {
+        registrationError.textContent = copy.registrationError;
+      } finally {
+        registrationSubmit.disabled = false;
       }
     }
 
@@ -834,36 +1250,110 @@
     }
 
     async function sendFile(file, kind = 'file') {
-      if (!(file instanceof window.File) || state.activeUpload) return;
+      if (!(file instanceof window.File) || state.activeUpload || !state.sessionToken) return;
       if (file.size < 1 || file.size > MAX_FILE_BYTES) {
         setStatus(copy.fileTooLarge);
         return;
       }
 
       const uploadState = { cancelled: false, xhr: null };
+      const uploadSessionId = state.sessionId;
+      const clientMessageId = window.crypto.randomUUID();
       state.activeUpload = uploadState;
       attach.disabled = true;
       voice.disabled = true;
       updateTransfer(file, 0, copy.uploadPreparing);
       setStatus(copy.attachHint, 0);
 
-      try {
-        const sessionResponse = await fetch(UPLOAD_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'start',
-            fileName: file.name,
+      let contentSha256 = '';
+      const completeStoredFile = async (fileId, reused) => {
+        let completion = null;
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          try {
+            const response = await fetch(UPLOAD_ENDPOINT, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'complete',
+                fileId,
+                fileName: file.name,
+                size: file.size,
+                mimeType: file.type || 'application/octet-stream',
+                kind,
+                locale,
+                sessionId: uploadSessionId,
+                sessionToken: state.sessionToken,
+                clientMessageId,
+                contentSha256,
+                mode: state.mode,
+              }),
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result?.success) throw new Error('UPLOAD_VERIFICATION_FAILED');
+            completion = result;
+            if (!result.retryable || attempt > 0) break;
+          } catch (error) {
+            if (uploadState.cancelled) throw error;
+            if (attempt > 0) {
+              if (completion) break;
+              throw error;
+            }
+          }
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        if (!completion) throw new Error('UPLOAD_VERIFICATION_FAILED');
+        if (reused && completion.completionClaimed === false) {
+          updateTransfer(file, 100, copy.uploadDuplicate);
+          setStatus(copy.uploadDuplicate);
+          transfer.hidden = true;
+          return;
+        }
+
+        const delivered = completion.notified === true;
+        const deliveryMessage = delivered ? copy.uploadComplete : copy.uploadStored;
+        updateTransfer(file, 100, deliveryMessage);
+        addMessage('user', file.name, {
+          attachment: {
+            name: file.name,
             size: file.size,
             mimeType: file.type || 'application/octet-stream',
             kind,
-            locale,
-            pagePath: location.pathname,
-            sessionId: state.sessionId,
-          }),
+            delivered,
+          },
+        });
+        transfer.hidden = true;
+        setStatus(deliveryMessage);
+      };
+      try {
+        contentSha256 = await sha256Hex(file);
+        if (uploadState.cancelled) throw new window.DOMException('Upload cancelled', 'AbortError');
+        const startPayload = {
+          action: 'start',
+          fileName: file.name,
+          size: file.size,
+          mimeType: file.type || 'application/octet-stream',
+          kind,
+          locale,
+          pagePath: location.pathname,
+          sessionId: uploadSessionId,
+          sessionToken: state.sessionToken,
+          clientMessageId,
+          contentSha256,
+          mode: state.mode,
+        };
+        const sessionResponse = await fetch(UPLOAD_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(startPayload),
         });
         const session = await sessionResponse.json().catch(() => ({}));
-        if (!sessionResponse.ok || !session?.uploadUrl) throw new Error(session?.message || 'UPLOAD_SESSION_FAILED');
+        if (!sessionResponse.ok || !session?.success) throw new Error(session?.message || 'UPLOAD_SESSION_FAILED');
+        if (session.deduplicated === true) {
+          if (!session.fileId) throw new Error('UPLOAD_SESSION_INVALID');
+          await completeStoredFile(session.fileId, true);
+          return;
+        }
+        if (!session.uploadUrl) throw new Error(session?.message || 'UPLOAD_SESSION_FAILED');
 
         if (!session.uploadSignature) throw new Error('UPLOAD_SESSION_INVALID');
         const chunkSize = Math.max(320 * 1024, Number(session.chunkSize) || 10 * 1024 * 1024);
@@ -891,6 +1381,7 @@
             } catch (error) {
               lastError = error;
               if (error?.name === 'AbortError' || uploadState.cancelled) throw error;
+              if (error?.status === 409) throw error;
               if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 500 * 2 ** attempt));
             }
           }
@@ -898,28 +1389,36 @@
         }
         if (!completedFile?.id) throw new Error('UPLOAD_DID_NOT_COMPLETE');
 
-        const completeResponse = await fetch(UPLOAD_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'complete', fileId: completedFile.id, kind, locale, sessionId: state.sessionId }),
-        });
-        const completion = await completeResponse.json().catch(() => ({}));
-        if (!completeResponse.ok || !completion?.success) throw new Error('UPLOAD_VERIFICATION_FAILED');
-        const delivered = completion.notified === true;
-        const deliveryMessage = delivered ? copy.uploadComplete : copy.uploadStored;
-        updateTransfer(file, 100, deliveryMessage);
-        addMessage('user', file.name, {
-          attachment: {
-            name: file.name,
-            size: file.size,
-            mimeType: file.type || 'application/octet-stream',
-            kind,
-            delivered,
-          },
-        });
-        transfer.hidden = true;
-        setStatus(deliveryMessage);
+        await completeStoredFile(completedFile.id, false);
       } catch (error) {
+        if (error?.status === 409 && !uploadState.cancelled) {
+          try {
+            const reconciliationResponse = await fetch(UPLOAD_ENDPOINT, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'start',
+                fileName: file.name,
+                size: file.size,
+                mimeType: file.type || 'application/octet-stream',
+                kind,
+                locale,
+                pagePath: location.pathname,
+                sessionId: uploadSessionId,
+                sessionToken: state.sessionToken,
+                clientMessageId,
+                contentSha256,
+              }),
+            });
+            const reconciliation = await reconciliationResponse.json().catch(() => ({}));
+            if (reconciliationResponse.ok && reconciliation?.deduplicated === true && reconciliation.fileId) {
+              await completeStoredFile(reconciliation.fileId, true);
+              return;
+            }
+          } catch {
+            /* fall through to the normal upload error */
+          }
+        }
         if (error?.name !== 'AbortError' && !uploadState.cancelled) {
           updateTransfer(file, 0, copy.uploadFailed);
           setStatus(copy.uploadFailed);
@@ -1022,9 +1521,20 @@
       }
     }
 
+    const menuBackgroundSections = [registration, messages, typing, composer];
+
+    function setMenuOpen(open, { focus = false } = {}) {
+      menu.hidden = !open;
+      menuToggle.setAttribute('aria-expanded', String(open));
+      panel.classList.toggle('has-open-menu', open);
+      menuBackgroundSections.forEach(section => {
+        section.toggleAttribute('inert', open);
+      });
+      if (open && focus) requestAnimationFrame(() => closeMenu.focus({ preventScroll: true }));
+    }
+
     function closePopovers() {
-      menu.hidden = true;
-      menuToggle.setAttribute('aria-expanded', 'false');
+      setMenuOpen(false);
       emojiPicker.hidden = true;
       emojiToggle.setAttribute('aria-expanded', 'false');
       gifPicker.hidden = true;
@@ -1038,7 +1548,10 @@
       closePopovers();
       if (open) {
         markNativeChatReady();
-        requestAnimationFrame(() => textarea.focus({ preventScroll: true }));
+        syncChatViewport();
+        requestAnimationFrame(() =>
+          (state.sessionToken ? textarea : firstName.field).focus({ preventScroll: true })
+        );
       }
     }
 
@@ -1052,26 +1565,73 @@
       closePopovers();
     }
 
+    function setTextSizeLevel(level) {
+      const normalized = Math.max(0, Math.min(TEXT_SIZE_ADJUSTMENTS.length - 1, Number(level) || 0));
+      state.textSizeLevel = normalized;
+      root.dataset.textSize = String(normalized);
+      root.style.setProperty('--hn-ai-font-adjust', TEXT_SIZE_ADJUSTMENTS[normalized]);
+      decreaseFont.disabled = normalized === 0;
+      increaseFont.disabled = normalized === TEXT_SIZE_ADJUSTMENTS.length - 1;
+      try {
+        localStorage.setItem(TEXT_SIZE_KEY, String(normalized));
+      } catch {
+        // The selected size remains active for the current page.
+      }
+    }
+
     function scrollToLatest() {
       requestAnimationFrame(() => {
         messages.scrollTop = messages.scrollHeight;
       });
     }
 
+    function transcriptPayload(sessionId, transcriptMessages, revision) {
+      return {
+        action: 'transcript',
+        sessionId,
+        sessionToken: state.sessionToken,
+        revision,
+        locale,
+        pagePath: location.pathname,
+        messages: transcriptMessages,
+      };
+    }
+
+    async function syncTranscript(payload, { keepalive = true, retries = 2 } = {}) {
+      for (let attempt = 0; attempt <= retries; attempt += 1) {
+        try {
+          const response = await fetch(UPLOAD_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive,
+          });
+          if (response.ok) return true;
+          if (response.status < 500 && response.status !== 429) return false;
+        } catch {
+          /* retry transient network failures below */
+        }
+        if (attempt < retries) await new Promise(resolve => setTimeout(resolve, 500 * 3 ** attempt));
+      }
+      return false;
+    }
+
+    function queueTranscriptSync(sessionId, transcriptMessages, revision) {
+      if (!state.sessionToken) return;
+      const payload = transcriptPayload(sessionId, transcriptMessages, revision);
+      state.transcriptSyncPromise = state.transcriptSyncPromise
+        .catch(() => {})
+        .then(async () => {
+          if (!(await syncTranscript(payload))) console.error('[ai-chat] transcript sync failed');
+        })
+        .catch(() => {});
+    }
+
     function scheduleTranscriptSync() {
+      if (!state.sessionToken) return;
       window.clearTimeout(state.transcriptTimer);
       state.transcriptTimer = window.setTimeout(() => {
-        fetch(UPLOAD_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'transcript',
-            sessionId: state.sessionId,
-            locale,
-            pagePath: location.pathname,
-            messages: state.messages,
-          }),
-        }).catch(() => {});
+        queueTranscriptSync(state.sessionId, state.messages.slice(), state.transcriptRevision);
       }, 750);
     }
 
@@ -1151,6 +1711,8 @@
         });
         state.messages = state.messages.slice(-MAX_STORED_MESSAGES);
         writeStoredMessages(locale, state.messages);
+        state.transcriptRevision += 1;
+        writeTranscriptRevision(locale, state.sessionId, state.transcriptRevision);
         scheduleTranscriptSync();
       }
       scrollToLatest();
@@ -1159,12 +1721,21 @@
     for (const item of state.messages) {
       addMessage(item.role, item.content, { persist: false, media: item.media, attachment: item.attachment });
     }
+    if (state.messages.length) queueTranscriptSync(state.sessionId, state.messages.slice(), state.transcriptRevision);
+    window.addEventListener('pagehide', () => {
+      window.clearTimeout(state.transcriptTimer);
+      if (!state.messages.length) return;
+      void syncTranscript(transcriptPayload(state.sessionId, state.messages.slice(), state.transcriptRevision), {
+        keepalive: true,
+        retries: 0,
+      });
+    });
 
-    function setBusy(busy) {
+    function setBusy(busy, showTyping = true) {
       state.busy = busy;
       textarea.disabled = busy;
       send.disabled = busy;
-      typing.hidden = !busy;
+      typing.hidden = !busy || !showTyping;
       if (busy) scrollToLatest();
     }
 
@@ -1177,50 +1748,48 @@
       return Boolean(host.shadowRoot);
     }
 
-    function clickNativeChat() {
-      const host = document.querySelector('sp-live-chat');
-      const nativeRoot = host?.shadowRoot;
-      if (!nativeRoot) return false;
-      host.removeAttribute('data-hundesalon-ai-ready');
-      host.style.removeProperty('display');
-      host.style.setProperty('pointer-events', 'auto', 'important');
-      const openButton = nativeRoot.querySelector('.widget-fab, .button-open-widget');
-      if (!openButton) {
-        return Boolean(nativeRoot.querySelector('.widget-wrapper .widget'));
-      }
-      openButton.click();
-      return true;
-    }
-
-    function openHumanChat() {
-      if (state.handoffTimer) {
-        clearInterval(state.handoffTimer);
-        state.handoffTimer = null;
-      }
-      setStatus(copy.personalSupportOpening, 0);
-      if (clickNativeChat()) {
-        setOpen(false);
-        setStatus('');
+    async function openHumanChat() {
+      if (!state.sessionToken) {
+        updateConversationMode('human', { announce: false });
+        requireRegistration();
         return;
       }
-
-      let attempts = 0;
-      state.handoffTimer = setInterval(() => {
-        attempts += 1;
-        if (clickNativeChat()) {
-          clearInterval(state.handoffTimer);
-          state.handoffTimer = null;
-          setOpen(false);
-          setStatus('');
+      if (state.modeChangePending) return;
+      const previousMode = state.mode;
+      const requestedMode = previousMode === 'human' ? 'ai' : 'human';
+      state.modeChangePending = true;
+      state.modeRevision += 1;
+      support.disabled = true;
+      updateConversationMode(requestedMode, { announce: false });
+      closePopovers();
+      try {
+        const response = await fetch(SESSION_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'set-mode',
+            mode: requestedMode,
+            sessionId: state.sessionId,
+            sessionToken: state.sessionToken,
+          }),
+        });
+        if (response.status === 401) {
+          requireRegistration();
           return;
         }
-        if (attempts >= 60) {
-          clearInterval(state.handoffTimer);
-          state.handoffTimer = null;
-          setOpen(true);
-          setStatus(copy.personalSupportUnavailable);
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result?.success || result?.mode !== requestedMode) {
+          throw new Error('CHAT_MODE_UPDATE_FAILED');
         }
-      }, 500);
+        updateConversationMode(requestedMode);
+      } catch {
+        updateConversationMode(previousMode, { announce: false });
+        setStatus(copy.unavailable);
+      } finally {
+        state.modeChangePending = false;
+        support.disabled = false;
+        textarea.focus({ preventScroll: true });
+      }
     }
 
     function autoGrow() {
@@ -1241,6 +1810,10 @@
 
     async function submitMessage() {
       if (state.busy) return;
+      if (!state.sessionToken) {
+        requireRegistration();
+        return;
+      }
       const content = textarea.value.trim();
       if (!content) {
         setStatus(copy.empty);
@@ -1252,10 +1825,12 @@
       }
 
       const history = state.messages.slice(-8).map(({ role, content }) => ({ role, content }));
+      const clientMessageId = window.crypto.randomUUID();
       textarea.value = '';
       autoGrow();
       addMessage('user', content);
-      setBusy(true);
+      const humanMode = state.mode === 'human';
+      setBusy(true, !humanMode);
       setStatus('');
 
       try {
@@ -1268,6 +1843,9 @@
             history,
             pagePath: location.pathname,
             sessionId: state.sessionId,
+            sessionToken: state.sessionToken,
+            clientMessageId,
+            mode: state.mode,
           }),
         };
         let response = await fetch('/api/ai-chat', request);
@@ -1282,13 +1860,25 @@
           addMessage('assistant', copy.rateLimited, { handoff: true });
           return;
         }
+        if (response.status === 401) {
+          requireRegistration();
+          return;
+        }
         if (!response.ok) throw new Error('AI_CHAT_REQUEST_FAILED');
         const result = await response.json();
-        const answer =
-          typeof result?.answer === 'string' && result.answer.trim() ? result.answer.trim() : copy.unavailable;
-        addMessage('assistant', answer, { handoff: Boolean(result?.handoff || result?.available === false) });
+        const personalMode = humanMode || result?.mode === 'human';
+        if (personalMode && state.mode !== 'human') updateConversationMode('human', { announce: false });
+        if (personalMode && result?.waitingForStaff === true) {
+          setStatus(copy.personalSupportSent);
+          void pollStaffReplies();
+        } else {
+          const answer =
+            typeof result?.answer === 'string' && result.answer.trim() ? result.answer.trim() : copy.unavailable;
+          addMessage('assistant', answer, { handoff: Boolean(result?.handoff || result?.available === false) });
+        }
       } catch {
-        addMessage('assistant', copy.unavailable, { handoff: true });
+        if (humanMode) setStatus(copy.unavailable);
+        else addMessage('assistant', copy.unavailable, { handoff: true });
       } finally {
         setBusy(false);
         textarea.focus({ preventScroll: true });
@@ -1313,32 +1903,63 @@
       closePopovers();
     }
 
-    function resetConversation() {
+    async function clearChat() {
       // eslint-disable-next-line no-alert
-      if (!window.confirm(copy.newConversationConfirm)) return;
+      if (!window.confirm(copy.clearChatConfirm)) return;
+      window.clearTimeout(state.transcriptTimer);
+      if (state.messages.length) {
+        queueTranscriptSync(state.sessionId, state.messages.slice(), state.transcriptRevision);
+      }
+      try {
+        const response = await fetch(SESSION_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'renew',
+            sessionId: state.sessionId,
+            sessionToken: state.sessionToken,
+            pagePath: location.pathname,
+          }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result?.success) throw new Error('SESSION_RENEW_FAILED');
+        applyRegisteredIdentity(result);
+      } catch {
+        requireRegistration();
+      }
+      state.transcriptRevision = 0;
       state.messages = [];
+      updateConversationMode('ai', { announce: false });
       writeStoredMessages(locale, []);
-      scheduleTranscriptSync();
       messages.querySelectorAll('.hn-ai-message').forEach(node => node.remove());
       closePopovers();
       textarea.focus();
     }
 
+    setTextSizeLevel(state.textSizeLevel);
     launcher.addEventListener('click', () => setOpen(root.dataset.open !== 'true'));
+    registrationForm.addEventListener('submit', event => {
+      event.preventDefault();
+      void registerCustomer();
+    });
     minimize.addEventListener('click', () => setOpen(false));
+    decreaseFont.addEventListener('click', () => setTextSizeLevel(state.textSizeLevel - 1));
+    increaseFont.addEventListener('click', () => setTextSizeLevel(state.textSizeLevel + 1));
     closeMenu.addEventListener('click', () => setOpen(false));
     menuToggle.addEventListener('click', event => {
       event.stopPropagation();
       const willOpen = menu.hidden;
       closePopovers();
-      menu.hidden = !willOpen;
-      menuToggle.setAttribute('aria-expanded', String(willOpen));
+      setMenuOpen(willOpen, { focus: willOpen });
     });
     expand.addEventListener('click', () => setExpanded(!state.expanded));
     download.addEventListener('click', downloadTranscript);
-    reset.addEventListener('click', resetConversation);
-    support.addEventListener('click', openHumanChat);
-    attach.addEventListener('click', () => fileInput.click());
+    reset.addEventListener('click', () => void clearChat());
+    support.addEventListener('click', () => void openHumanChat());
+    attach.addEventListener('click', () => {
+      if (!state.sessionToken) requireRegistration();
+      else fileInput.click();
+    });
     fileInput.addEventListener('change', () => {
       const [file] = fileInput.files || [];
       if (file) void sendFile(file, 'file');
@@ -1407,10 +2028,17 @@
         closePopovers();
       }
     });
+    const visualViewport = window.visualViewport;
+    window.addEventListener('resize', syncChatViewport, { passive: true });
+    visualViewport?.addEventListener('resize', syncChatViewport, { passive: true });
+    visualViewport?.addEventListener('scroll', syncChatViewport, { passive: true });
+    root.addEventListener('focusin', syncChatViewport);
     document.addEventListener('keydown', event => {
       if (event.key !== 'Escape' || root.dataset.open !== 'true') return;
       if (!menu.hidden || !emojiPicker.hidden || !gifPicker.hidden) {
+        const restoreMenuFocus = !menu.hidden;
         closePopovers();
+        if (restoreMenuFocus) menuToggle.focus({ preventScroll: true });
         return;
       }
       if (state.expanded) {
@@ -1421,6 +2049,10 @@
       launcher.focus();
     });
     window.addEventListener('pagehide', () => {
+      window.cancelAnimationFrame(state.viewportFrame);
+      window.removeEventListener('resize', syncChatViewport);
+      visualViewport?.removeEventListener('resize', syncChatViewport);
+      visualViewport?.removeEventListener('scroll', syncChatViewport);
       cancelUpload();
       stopVoiceRecording(true);
       resetRecorderPanel();
@@ -1428,7 +2060,13 @@
       state.gifRequest?.abort();
     });
 
+    const replyPollTimer = window.setInterval(() => void pollStaffReplies(), 5000);
+    if (state.sessionToken) void pollStaffReplies();
+    window.addEventListener('pagehide', () => window.clearInterval(replyPollTimer), { once: true });
+
     launcher.setAttribute('aria-expanded', 'false');
+    syncChatViewport();
+    updateConversationMode(state.mode, { announce: false });
     markNativeChatReady();
     const nativeObserver = new MutationObserver(() => {
       if (markNativeChatReady()) nativeObserver.disconnect();

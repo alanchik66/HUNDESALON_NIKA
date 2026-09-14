@@ -7,6 +7,7 @@ import {
   getGoogleCalendarBusyIntervals,
   sendSendPulseAutomationEvent,
   sendSendPulseEmail,
+  sendTelegramDocument,
   sendTelegramMessage,
 } from './platform-integrations.js';
 
@@ -188,6 +189,132 @@ test('Telegram notification posts plain text without logging credentials', async
     assert.equal(result.ok, true);
     assert.match(request.url, /api\.telegram\.org\/bot/);
     assert.equal(JSON.parse(request.options.body).text, 'New request');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Telegram personal-support notification uses its dedicated forum topic', async () => {
+  const originalFetch = globalThis.fetch;
+  let request = null;
+  globalThis.fetch = async (url, options) => {
+    request = { url: String(url), options };
+    return Response.json({ ok: true, result: { message_id: 2 } });
+  };
+
+  try {
+    const result = await sendTelegramMessage(
+      {
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        TELEGRAM_BOT_TOKEN: 'unit-test-token',
+        TELEGRAM_CHAT_ID: '-100123',
+        TELEGRAM_TOPIC_MESSAGES_ID: '42',
+        TELEGRAM_TOPIC_PERSONAL_ID: '77',
+      },
+      { category: 'personal', text: 'Личная консультация' }
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(JSON.parse(request.options.body).message_thread_id, 77);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Telegram personal-support notification prefers the current D1 forum topic', async () => {
+  const originalFetch = globalThis.fetch;
+  let request = null;
+  globalThis.fetch = async (url, options) => {
+    request = { url: String(url), options };
+    return Response.json({ ok: true, result: { message_id: 3 } });
+  };
+
+  try {
+    const result = await sendTelegramMessage(
+      {
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        TELEGRAM_BOT_TOKEN: 'unit-test-token',
+        TELEGRAM_CHAT_ID: '-100123',
+        TELEGRAM_TOPIC_PERSONAL_ID: '77',
+        CHAT_DB: {
+          prepare() {
+            return {
+              bind() {
+                return { first: async () => ({ message_thread_id: 197 }) };
+              },
+            };
+          },
+        },
+      },
+      { category: 'personal', text: 'Личная консультация' }
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(JSON.parse(request.options.body).message_thread_id, 197);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Telegram document notification sends a short-lived HTTPS file URL to the configured topic', async () => {
+  const originalFetch = globalThis.fetch;
+  let request = null;
+  globalThis.fetch = async (url, options) => {
+    if (String(url) === 'https://public.dm.files.1drv.com/temporary-file') {
+      return new Response('original bytes', {
+        headers: { 'Content-Type': 'image/png', 'Content-Length': '14' },
+      });
+    }
+    request = { url: String(url), options };
+    return Response.json({ ok: true, result: { message_id: 3, document: { file_id: 'telegram-file' } } });
+  };
+
+  try {
+    const result = await sendTelegramDocument(
+      {
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        TELEGRAM_BOT_TOKEN: 'unit-test-token',
+        TELEGRAM_CHAT_ID: '-100123',
+        TELEGRAM_TOPIC_MESSAGES_ID: '42',
+      },
+      {
+        documentUrl: 'https://public.dm.files.1drv.com/temporary-file',
+        fileName: 'фото питомца.png',
+        fileSize: 14,
+        mimeType: 'image/png',
+        caption: 'Оригинал из OneDrive',
+      }
+    );
+
+    assert.equal(result.ok, true);
+    assert.match(request.url, /api\.telegram\.org\/bot.*\/sendDocument$/);
+    assert.match(request.options.headers['Content-Type'], /^multipart\/form-data; boundary=/);
+    const payload = await new Response(request.options.body).text();
+    assert.match(payload, /name="chat_id"\r\n\r\n-100123/);
+    assert.match(payload, /name="caption"\r\n\r\nОригинал из OneDrive/);
+    assert.match(payload, /name="message_thread_id"\r\n\r\n42/);
+    assert.match(payload, /filename\*=UTF-8''%D1%84%D0%BE%D1%82%D0%BE%20%D0%BF%D0%B8%D1%82%D0%BE%D0%BC%D1%86%D0%B0\.png/);
+    assert.match(payload, /Content-Type: image\/png/);
+    assert.match(payload, /original bytes/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Telegram document notification rejects a non-HTTPS file URL', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => assert.fail('Telegram must not be contacted');
+  try {
+    const result = await sendTelegramDocument(
+      {
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        TELEGRAM_BOT_TOKEN: 'unit-test-token',
+        TELEGRAM_CHAT_ID: '-100123',
+      },
+      { documentUrl: 'http://example.test/file.png', caption: 'unsafe' }
+    );
+    assert.equal(result.ok, false);
+    assert.equal(result.skipped, true);
   } finally {
     globalThis.fetch = originalFetch;
   }

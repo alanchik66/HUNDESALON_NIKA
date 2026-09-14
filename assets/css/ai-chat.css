@@ -3,6 +3,12 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   pointer-events: none !important;
 }
 
+/* The SendPulse Chats Popup is a second launcher, not the human-chat transport. */
+sp-popups {
+  display: none !important;
+  pointer-events: none !important;
+}
+
 .hn-ai-chat {
   --hn-ai-emerald: #034c35;
   --hn-ai-emerald-deep: #001b13;
@@ -11,12 +17,23 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   --hn-ai-gold-pale: #ffefc4;
   --hn-ai-ink: #fff8e7;
   --hn-ai-muted: rgba(255, 248, 231, 0.68);
+  --hn-ai-font-display: var(--font-display, 'Cinzel', 'Forum', 'Cormorant Garamond', 'Times New Roman', serif);
+  --hn-ai-font-adjust: 0rem;
+  --hn-ai-window-opacity: 0.4;
+  --hn-ai-viewport-height: 100dvh;
+  --hn-ai-viewport-bottom: 0px;
+  --hn-ai-viewport-left: 0px;
+  --hn-ai-viewport-top: 0px;
+  --hn-ai-viewport-width: 100vw;
   position: fixed;
   right: max(1.15rem, env(safe-area-inset-right));
-  bottom: max(1.15rem, env(safe-area-inset-bottom));
+  bottom: calc(max(1.15rem, env(safe-area-inset-bottom)) + var(--hn-ai-viewport-bottom));
   z-index: 2147482500;
   color: var(--hn-ai-ink);
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--hn-ai-font-display);
+  font-kerning: normal;
+  text-rendering: geometricprecision;
+  -webkit-font-smoothing: antialiased;
 }
 
 .hn-ai-chat,
@@ -95,9 +112,7 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   color: #fff8e7;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.42);
   font:
-    700 0.62rem/1 Cinzel,
-    Georgia,
-    serif;
+    700 0.62rem/1 var(--hn-ai-font-display);
   letter-spacing: 0.06em;
 }
 
@@ -107,15 +122,19 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   bottom: 5.35rem;
   display: grid;
   width: min(25rem, calc(100vw - 2rem));
-  height: min(42rem, calc(100dvh - 7.5rem));
-  min-height: 31rem;
+  height: min(42rem, calc(var(--hn-ai-viewport-height) - 7.5rem));
+  min-height: min(31rem, calc(var(--hn-ai-viewport-height) - 7.5rem));
   overflow: hidden;
   grid-template-rows: auto minmax(0, 1fr) auto auto;
   border: 1px solid rgba(226, 186, 94, 0.48);
   border-radius: 1.45rem;
   background:
-    radial-gradient(circle at 12% -10%, rgba(15, 142, 98, 0.38), transparent 42%),
-    linear-gradient(155deg, rgba(2, 61, 43, 0.97), rgba(0, 23, 16, 0.98));
+    radial-gradient(circle at 12% -10%, rgba(15, 142, 98, 0.1), transparent 42%),
+    linear-gradient(
+      155deg,
+      rgba(2, 61, 43, var(--hn-ai-window-opacity)),
+      rgba(0, 23, 16, var(--hn-ai-window-opacity))
+    );
   box-shadow:
     0 30px 80px rgba(0, 0, 0, 0.58),
     0 0 38px rgba(11, 120, 85, 0.24),
@@ -127,6 +146,7 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   transition:
     opacity 180ms ease,
     transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  -webkit-backdrop-filter: blur(22px) saturate(1.18);
   backdrop-filter: blur(22px) saturate(1.18);
 }
 
@@ -142,6 +162,211 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   transform: scale(0.82);
 }
 
+.hn-ai-registration {
+  position: absolute;
+  inset: 4.55rem 0 0;
+  z-index: 20;
+  padding: 1.15rem;
+  overflow-y: auto;
+  background: radial-gradient(circle at 12% 0%, rgba(15, 142, 98, 0.08), transparent 38%);
+}
+
+.hn-ai-registration:not([hidden]) ~ .hn-ai-messages,
+.hn-ai-registration:not([hidden]) ~ .hn-ai-typing {
+  visibility: hidden;
+}
+
+.hn-ai-registration h3 {
+  margin: 0;
+  background: var(--liquid-gold, linear-gradient(90deg, #c69f4c, #fff0bd, #c69f4c));
+  background-size: var(--title-gradient-size, 100% 100%);
+  background-clip: text;
+  color: transparent;
+  font: 400 1.08rem/1.25 var(--hn-ai-font-display);
+  font-size: calc(1.08rem + var(--hn-ai-font-adjust));
+  letter-spacing: 0.1em;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 0;
+  paint-order: normal;
+  filter: none;
+  text-shadow: none;
+}
+
+.hn-ai-registration > p {
+  margin: 0.55rem 0 0.95rem;
+  color: rgba(255, 248, 231, 0.78);
+  font-size: calc(0.96rem + var(--hn-ai-font-adjust));
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.hn-ai-registration :where(p, label, button, input),
+.hn-ai-header :where(strong, span, button),
+.hn-ai-messages :where(p, strong, span, a, button),
+.hn-ai-composer :where(textarea, p, a, button) {
+  font-family: var(--hn-ai-font-display);
+  -webkit-text-stroke: 0;
+  paint-order: normal;
+  filter: none;
+  text-shadow: none;
+}
+
+.hn-ai-registration-form {
+  display: grid;
+  gap: 0.72rem;
+}
+
+.hn-ai-registration-form > label:not(.hn-ai-registration-consent) {
+  display: grid;
+  color: rgba(255, 248, 231, 0.86);
+  font-size: calc(0.82rem + var(--hn-ai-font-adjust));
+  font-weight: 400;
+  gap: 0.28rem;
+}
+
+.hn-ai-registration-form input:not([type='checkbox']) {
+  width: 100%;
+  min-height: 2.65rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(226, 186, 94, 0.38);
+  border-radius: 0.72rem;
+  outline: none;
+  background: rgba(0, 18, 12, 0.62);
+  color: #fff8e7;
+  font: 400 1rem/1.25 var(--hn-ai-font-display);
+  font-size: calc(1rem + var(--hn-ai-font-adjust));
+}
+
+.hn-ai-registration-form input:not([type='checkbox']):focus-visible {
+  border-color: var(--hn-ai-gold-pale);
+  box-shadow: 0 0 0 3px rgba(226, 186, 94, 0.16);
+}
+
+.hn-ai-registration-consent {
+  display: grid;
+  align-items: start;
+  color: rgba(255, 248, 231, 0.78);
+  font-size: calc(0.78rem + var(--hn-ai-font-adjust));
+  font-weight: 400;
+  grid-template-columns: 1.05rem 1fr;
+  line-height: 1.3;
+  gap: 0.5rem;
+}
+
+.hn-ai-registration-consent input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0.08rem 0 0;
+  accent-color: var(--hn-ai-gold);
+}
+
+.hn-ai-registration-submit {
+  position: relative;
+  display: inline-flex;
+  min-height: 2.8rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.72rem 1rem;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid rgba(255, 239, 196, 0.46);
+  border-radius: var(--nav-pill-radius, 1rem);
+  outline: none;
+  background:
+    linear-gradient(180deg, rgba(226, 190, 116, 0.11) 0%, rgba(226, 190, 116, 0.04) 100%),
+    rgba(255, 255, 255, 0.08);
+  color: #fff0c8;
+  cursor: pointer;
+  box-shadow:
+    0 6px 28px rgba(0, 0, 0, 0.14),
+    0 0 22px rgba(226, 190, 116, 0.1),
+    0 0 44px rgba(226, 190, 116, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  font: 500 0.84rem/1.2 var(--hn-ai-font-display);
+  font-size: calc(0.84rem + var(--hn-ai-font-adjust));
+  letter-spacing: 0.1em;
+  text-transform: none;
+  text-shadow: none;
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.32s ease,
+    background 0.32s ease,
+    border-color 0.32s ease,
+    box-shadow 0.32s ease;
+  animation:
+    navPillBreathActive 5.25s ease-in-out infinite,
+    onlineOrderAura 5.6s ease-in-out infinite;
+  backdrop-filter: blur(44px) saturate(1.9) brightness(0.9);
+  will-change: transform, box-shadow;
+}
+
+.hn-ai-registration-submit::before {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 30% 0%, rgba(255, 255, 255, 0.16) 0%, transparent 62%);
+  content: '';
+  opacity: 0.28;
+  pointer-events: none;
+  animation: navLiquidMatteBreath 5.7s ease-in-out infinite;
+}
+
+.hn-ai-registration-submit::after {
+  position: absolute;
+  top: -30%;
+  bottom: -30%;
+  left: -30%;
+  width: 50%;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.04) 30%,
+    rgba(255, 244, 210, 0.14) 50%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  content: '';
+  opacity: 0.14;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  animation: navLiquidRefraction 10.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.hn-ai-registration-submit:hover,
+.hn-ai-registration-submit:focus-visible {
+  border-color: rgba(255, 239, 196, 0.68);
+  background:
+    linear-gradient(180deg, rgba(226, 190, 116, 0.16) 0%, rgba(226, 190, 116, 0.07) 100%),
+    rgba(255, 255, 255, 0.12);
+  color: #fff6d8;
+  box-shadow:
+    0 10px 34px rgba(0, 0, 0, 0.18),
+    0 0 30px rgba(226, 190, 116, 0.16),
+    0 0 56px rgba(226, 190, 116, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px) scale(1.028);
+}
+
+.hn-ai-registration-submit:active:not(:disabled) {
+  transform: translateY(0) scale(0.99);
+  animation: navClickFlash 0.25s ease-out;
+}
+
+.hn-ai-registration-submit:disabled {
+  cursor: wait;
+  opacity: 0.62;
+  transform: none;
+}
+
+.hn-ai-registration-error {
+  min-height: 1.1rem;
+  margin: 0;
+  color: #ffd1ca;
+  font-size: calc(0.8rem + var(--hn-ai-font-adjust));
+  line-height: 1.3;
+}
+
 .hn-ai-header {
   position: relative;
   z-index: 5;
@@ -151,7 +376,11 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   padding: 0.62rem 0.62rem 0.62rem 0.72rem;
   grid-template-columns: minmax(0, 1fr) auto;
   border-bottom: 1px solid rgba(226, 186, 94, 0.28);
-  background: linear-gradient(105deg, rgba(0, 38, 27, 0.98), rgba(8, 104, 73, 0.94));
+  background: linear-gradient(
+    105deg,
+    rgba(0, 38, 27, 0.08),
+    rgba(8, 104, 73, 0.08)
+  );
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
 }
 
@@ -181,13 +410,21 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
 
 .hn-ai-brand strong {
   overflow: hidden;
-  color: var(--hn-ai-gold-pale);
-  font-family: Cinzel, Forum, Georgia, serif;
+  background: var(--liquid-gold, linear-gradient(90deg, #c69f4c, #fff0bd, #c69f4c));
+  background-size: var(--title-gradient-size, 100% 100%);
+  background-clip: text;
+  color: transparent;
+  font-family: var(--hn-ai-font-display);
   font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.055em;
+  font-weight: 400;
+  letter-spacing: 0.1em;
   line-height: 1.2;
   text-overflow: ellipsis;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 0;
+  paint-order: normal;
+  filter: none;
   text-shadow: none;
   white-space: nowrap;
 }
@@ -195,9 +432,9 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
 .hn-ai-brand span {
   overflow: hidden;
   color: rgba(255, 248, 231, 0.68);
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--hn-ai-font-display);
   font-size: 0.76rem;
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: 0.02em;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -229,6 +466,16 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   background: rgba(255, 255, 255, 0.055);
 }
 
+.hn-ai-font-button {
+  width: 1.8rem;
+  font: 700 1.1rem/1 Arial, sans-serif;
+}
+
+.hn-ai-font-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
 .hn-ai-icon-button:hover,
 .hn-ai-icon-button:focus-visible,
 .hn-ai-tool:hover,
@@ -252,16 +499,24 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   position: absolute;
   top: 4.1rem;
   right: 0.55rem;
-  z-index: 10;
+  z-index: 30;
   display: grid;
   width: min(18rem, calc(100% - 1.1rem));
   padding: 0.55rem;
   border: 1px solid rgba(226, 186, 94, 0.35);
   border-radius: 1rem;
-  background: rgba(0, 30, 21, 0.98);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.52);
+  background:
+    linear-gradient(155deg, rgba(2, 61, 43, 0.24), rgba(0, 23, 16, 0.12)),
+    rgba(0, 30, 21, 0.7);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.38);
   gap: 0.08rem;
-  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(26px) saturate(1.08);
+  backdrop-filter: blur(26px) saturate(1.08);
+}
+
+.hn-ai-panel.has-open-menu :is(.hn-ai-registration, .hn-ai-messages, .hn-ai-typing, .hn-ai-composer) {
+  opacity: 0.1;
+  filter: blur(4px);
 }
 
 .hn-ai-menu > p {
@@ -269,9 +524,8 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   padding: 0.42rem 0.55rem 0.5rem;
   color: rgba(255, 239, 196, 0.62);
   font:
-    600 0.68rem/1.2 Cinzel,
-    Georgia,
-    serif;
+    500 0.68rem/1.2 var(--hn-ai-font-display);
+  font-size: calc(0.68rem + var(--hn-ai-font-adjust));
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
@@ -288,9 +542,8 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   color: rgba(255, 248, 231, 0.9);
   cursor: pointer;
   font:
-    600 0.88rem/1.25 'Cormorant Garamond',
-    Georgia,
-    serif;
+    400 0.88rem/1.25 var(--hn-ai-font-display);
+  font-size: calc(0.88rem + var(--hn-ai-font-adjust));
   gap: 0.52rem;
   text-align: left;
 }
@@ -320,26 +573,23 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   gap: 0.62rem;
 }
 
-.hn-ai-welcome > span {
+.hn-ai-welcome > img {
   display: grid;
   width: 2rem;
   height: 2rem;
+  padding: 0.08rem;
   place-items: center;
   border: 1px solid rgba(226, 186, 94, 0.5);
   border-radius: 50%;
   background: rgba(11, 120, 85, 0.28);
-  color: var(--hn-ai-gold-pale);
-  font:
-    700 0.62rem/1 Cinzel,
-    Georgia,
-    serif;
+  object-fit: contain;
 }
 
 .hn-ai-welcome p {
   margin: 0;
   color: rgba(255, 248, 231, 0.78);
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: calc(0.9rem + var(--hn-ai-font-adjust));
+  font-weight: 400;
   line-height: 1.42;
 }
 
@@ -366,9 +616,7 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   background: rgba(0, 25, 18, 0.86);
   color: rgba(255, 248, 231, 0.78);
   font:
-    700 0.58rem/1 'Cormorant Garamond',
-    Georgia,
-    serif;
+    700 0.58rem/1 var(--hn-ai-font-display);
   object-fit: contain;
 }
 
@@ -385,8 +633,8 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   background: rgba(255, 255, 255, 0.075);
   color: rgba(255, 251, 240, 0.94);
   overflow-wrap: anywhere;
-  font-size: 0.93rem;
-  font-weight: 600;
+  font-size: calc(0.93rem + var(--hn-ai-font-adjust));
+  font-weight: 400;
   line-height: 1.46;
   white-space: pre-wrap;
 }
@@ -422,12 +670,12 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
 }
 
 .hn-ai-message-attachment-details strong {
-  font-size: 0.82rem;
+  font-size: calc(0.82rem + var(--hn-ai-font-adjust));
 }
 
 .hn-ai-message-attachment-details span {
   opacity: 0.78;
-  font-size: 0.68rem;
+  font-size: calc(0.68rem + var(--hn-ai-font-adjust));
 }
 
 .hn-ai-bubble a {
@@ -449,9 +697,8 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   color: var(--hn-ai-gold-pale);
   cursor: pointer;
   font:
-    700 0.84rem/1.2 'Cormorant Garamond',
-    Georgia,
-    serif;
+    600 0.84rem/1.2 var(--hn-ai-font-display);
+  font-size: calc(0.84rem + var(--hn-ai-font-adjust));
   gap: 0.44rem;
 }
 
@@ -489,7 +736,7 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   position: relative;
   padding: 0.65rem 0.72rem 0.58rem;
   border-top: 1px solid rgba(226, 186, 94, 0.2);
-  background: rgba(0, 24, 17, 0.82);
+  background: rgba(0, 24, 17, 0.08);
   box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.16);
 }
 
@@ -523,9 +770,8 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   color: var(--hn-ai-ink);
   caret-color: var(--hn-ai-gold);
   font:
-    600 0.94rem/1.35 'Cormorant Garamond',
-    Georgia,
-    serif;
+    500 0.94rem/1.35 var(--hn-ai-font-display);
+  font-size: calc(0.94rem + var(--hn-ai-font-adjust));
   outline: 0;
 }
 
@@ -603,9 +849,8 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   color: rgba(255, 239, 196, 0.92);
   cursor: pointer;
   font:
-    700 0.76rem/1.15 'Cormorant Garamond',
-    Georgia,
-    serif;
+    600 0.76rem/1.15 var(--hn-ai-font-display);
+  font-size: calc(0.76rem + var(--hn-ai-font-adjust));
   gap: 0.36rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -657,7 +902,8 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   border-radius: 0.72rem;
   background: rgba(255, 255, 255, 0.07);
   color: var(--hn-ai-ink);
-  font: 600 0.86rem/1.2 'Cormorant Garamond', Georgia, serif;
+  font: 500 0.86rem/1.2 var(--hn-ai-font-display);
+  font-size: calc(0.86rem + var(--hn-ai-font-adjust));
   outline: none;
 }
 
@@ -709,7 +955,7 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
 .hn-ai-gif-attribution {
   margin: 0;
   color: var(--hn-ai-muted);
-  font-size: 0.72rem;
+  font-size: calc(0.72rem + var(--hn-ai-font-adjust));
   text-align: center;
 }
 
@@ -735,7 +981,7 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   margin-top: 0.28rem;
   overflow: hidden;
   color: var(--hn-ai-muted);
-  font-size: 0.68rem;
+  font-size: calc(0.68rem + var(--hn-ai-font-adjust));
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -807,7 +1053,7 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
 .hn-ai-emoji-loading {
   margin: 0;
   color: var(--hn-ai-muted);
-  font-size: 0.78rem;
+  font-size: calc(0.78rem + var(--hn-ai-font-adjust));
   text-align: center;
 }
 
@@ -842,7 +1088,7 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
 
 .hn-ai-transfer > span:not(.hn-ai-transfer-track) {
   color: var(--hn-ai-muted);
-  font-size: 0.68rem;
+  font-size: calc(0.68rem + var(--hn-ai-font-adjust));
 }
 
 .hn-ai-transfer-track {
@@ -896,12 +1142,13 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
 .hn-ai-recorder > strong {
   color: var(--hn-ai-gold-pale);
   font: 700 0.78rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: calc(0.78rem + var(--hn-ai-font-adjust));
 }
 
 .hn-ai-recorder > span:not(.hn-ai-recorder-pulse) {
   overflow: hidden;
   color: var(--hn-ai-muted);
-  font-size: 0.72rem;
+  font-size: calc(0.72rem + var(--hn-ai-font-adjust));
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -927,9 +1174,8 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   margin: 0;
   color: rgba(255, 239, 196, 0.68);
   font:
-    600 0.68rem/1.25 'Cormorant Garamond',
-    Georgia,
-    serif;
+    500 0.68rem/1.25 var(--hn-ai-font-display);
+  font-size: calc(0.68rem + var(--hn-ai-font-adjust));
   text-align: center;
 }
 
@@ -938,7 +1184,7 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   width: fit-content;
   margin: 0.12rem auto 0;
   color: rgba(255, 248, 231, 0.48);
-  font-size: 0.64rem;
+  font-size: calc(0.64rem + var(--hn-ai-font-adjust));
   line-height: 1.2;
   text-decoration-color: rgba(226, 186, 94, 0.32);
   text-underline-offset: 0.14em;
@@ -957,13 +1203,26 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
 
 .hn-ai-chat.is-expanded {
   position: fixed;
-  inset: 0;
+  top: var(--hn-ai-viewport-top);
+  right: auto;
+  bottom: auto;
+  left: var(--hn-ai-viewport-left);
   display: grid;
-  width: 100vw;
-  height: 100dvh;
+  width: var(--hn-ai-viewport-width);
+  height: var(--hn-ai-viewport-height);
   place-items: center;
-  background: rgba(0, 13, 9, 0.82);
+  background: rgba(0, 13, 9, 0.12);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
+}
+
+@supports (-webkit-touch-callout: none) {
+  .hn-ai-panel {
+    --hn-ai-window-opacity: 0.72;
+
+    -webkit-backdrop-filter: blur(28px) saturate(1.16);
+    backdrop-filter: blur(28px) saturate(1.16);
+  }
 }
 
 .hn-ai-chat.is-expanded .hn-ai-panel {
@@ -971,7 +1230,7 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   right: auto;
   bottom: auto;
   width: min(46rem, calc(100vw - 2rem));
-  height: min(48rem, calc(100dvh - 2rem));
+  height: min(48rem, calc(var(--hn-ai-viewport-height) - 2rem));
 }
 
 @keyframes hn-ai-launcher-pulse {
@@ -1023,10 +1282,19 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
 
   .hn-ai-panel {
     position: fixed;
-    inset: max(0.55rem, env(safe-area-inset-top)) max(0.55rem, env(safe-area-inset-right))
-      max(0.55rem, env(safe-area-inset-bottom)) max(0.55rem, env(safe-area-inset-left));
-    width: auto;
-    height: auto;
+    top: calc(var(--hn-ai-viewport-top) + max(0.55rem, env(safe-area-inset-top)));
+    right: auto;
+    bottom: auto;
+    left: calc(var(--hn-ai-viewport-left) + max(0.55rem, env(safe-area-inset-left)));
+    width: calc(
+      var(--hn-ai-viewport-width) - max(0.55rem, env(safe-area-inset-left)) -
+        max(0.55rem, env(safe-area-inset-right))
+    );
+    height: calc(
+      var(--hn-ai-viewport-height) - max(0.55rem, env(safe-area-inset-top)) -
+        max(0.55rem, env(safe-area-inset-bottom))
+    );
+    max-height: var(--hn-ai-viewport-height);
     min-height: 0;
     border-radius: 1.2rem;
     transform-origin: right bottom;
@@ -1062,11 +1330,33 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
     height: 2rem;
   }
 
+  .hn-ai-font-button {
+    width: 1.65rem;
+  }
+
   .hn-ai-menu {
-    top: 3.95rem;
-    right: 0.45rem;
-    left: 0.45rem;
+    top: 4.2rem;
+    right: 0;
+    left: 0;
     width: auto;
+    max-height: calc(var(--hn-ai-viewport-height) - 5.1rem);
+    align-content: start;
+    padding: 0.7rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border: 1px solid rgba(226, 186, 94, 0.3);
+    border-radius: 0 0 1rem 1rem;
+    background:
+      linear-gradient(155deg, rgba(2, 61, 43, 0.24), rgba(0, 23, 16, 0.12)),
+      rgba(0, 30, 21, 0.7);
+    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.34);
+    overscroll-behavior: contain;
+    -webkit-backdrop-filter: blur(26px) saturate(1.08);
+    backdrop-filter: blur(26px) saturate(1.08);
+  }
+
+  .hn-ai-menu-action {
+    min-height: 3rem;
   }
 
   .hn-ai-messages {
@@ -1075,7 +1365,7 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   }
 
   .hn-ai-bubble {
-    font-size: 0.9rem;
+    font-size: calc(0.9rem + var(--hn-ai-font-adjust));
   }
 
   .hn-ai-composer {
@@ -1084,11 +1374,19 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
     padding-left: 0.58rem;
   }
 
-  .hn-ai-emoji-picker {
+  .hn-ai-input-wrap textarea,
+  .hn-ai-registration-form input:not([type='checkbox']),
+  .hn-ai-emoji-search,
+  .hn-ai-gif-search {
+    font-size: max(1rem, calc(0.94rem + var(--hn-ai-font-adjust)));
+  }
+
+  .hn-ai-emoji-picker,
+  .hn-ai-gif-picker {
     right: 0.58rem;
     left: 0.58rem;
     width: auto;
-    max-height: min(20rem, calc(100dvh - 8rem));
+    max-height: min(20rem, calc(var(--hn-ai-viewport-height) - 8rem));
   }
 
   .hn-ai-emoji-grid {
@@ -1098,21 +1396,26 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
   .hn-ai-support {
     padding-right: 0.48rem;
     padding-left: 0.48rem;
-    font-size: 0.7rem;
+    font-size: calc(0.7rem + var(--hn-ai-font-adjust));
   }
 
   .hn-ai-chat.is-expanded .hn-ai-panel {
     position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100dvh;
+    top: var(--hn-ai-viewport-top);
+    right: auto;
+    bottom: auto;
+    left: var(--hn-ai-viewport-left);
+    width: var(--hn-ai-viewport-width);
+    height: var(--hn-ai-viewport-height);
+    max-height: var(--hn-ai-viewport-height);
     border-radius: 0;
   }
 }
 
 @media (max-height: 600px) and (min-width: 561px) {
   .hn-ai-panel {
-    height: calc(100dvh - 2rem);
+    height: calc(var(--hn-ai-viewport-height) - 2rem);
+    max-height: var(--hn-ai-viewport-height);
     min-height: 0;
     bottom: 0;
   }
@@ -1120,6 +1423,9 @@ sp-live-chat[data-hundesalon-ai-ready='true'] {
 
 @media (prefers-reduced-motion: reduce) {
   .hn-ai-launcher::before,
+  .hn-ai-registration-submit,
+  .hn-ai-registration-submit::before,
+  .hn-ai-registration-submit::after,
   .hn-ai-typing > span,
   .hn-ai-tool.is-listening,
   .hn-ai-recorder-pulse {

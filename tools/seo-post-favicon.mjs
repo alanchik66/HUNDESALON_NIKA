@@ -24,8 +24,7 @@ function runNpm(script, { optional = false } = {}) {
 }
 
 const probes = [
-  'https://hundesalon-nika.com/favicon.ico?v=20260520-brand-bing',
-  'https://hundesalon-nika.com/assets/images/favicon/favicon-48x48.png?v=20260520-brand-bing',
+  'https://hundesalon-nika.com/assets/images/ads/work/logo-from-card-crown-512.png?v=20260910-brand-card',
   'https://hundesalon-nika.com/de/',
 ];
 

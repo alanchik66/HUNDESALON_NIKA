@@ -193,6 +193,11 @@ export async function readJsonBody(request, maxBytes) {
   return JSON.parse(new TextDecoder().decode(body));
 }
 
+export async function readTextBody(request, maxBytes) {
+  const body = await readBoundedBodyBytes(request, maxBytes);
+  return new TextDecoder().decode(body);
+}
+
 export async function readFormDataBody(request, maxBytes) {
   const body = await readBoundedBodyBytes(request, maxBytes);
   const replay = new Request(request.url, {

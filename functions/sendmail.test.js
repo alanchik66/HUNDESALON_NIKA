@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { onRequest } from './sendmail.js';
+import { signOneDriveFileReference } from './_lib/onedrive.js';
 
 globalThis.caches = {
   default: { match: async () => null, put: async () => {} },
@@ -61,6 +62,121 @@ test('rejects false-like consent values without running integrations', async () 
     const response = await onRequest({
       request: registrationRequest({ privacy: 'false', agb: 'no' }),
       env: {},
+    });
+    assert.equal(response.status, 400);
+    assert.equal(calls, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('rejects a forged booking attachment before running integrations', async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    throw new Error('Integrations must not run for forged file references.');
+  };
+
+  try {
+    const response = await onRequest({
+      request: registrationRequest(
+        { privacy: 'yes', agb: 'yes' },
+        {
+          form_type: 'booking',
+          date: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+          time: '10:00',
+          uploaded_file_url: 'https://evil.example/pet.jpg',
+          uploaded_file_id: 'forged-item',
+          uploaded_file_proof: 'forged-proof',
+          upload_session_id: 'booking-session-1234567890',
+        }
+      ),
+      env: {},
+    });
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).error, 'Request failed');
+    assert.equal(calls, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('accepts an exact signed OneDrive booking attachment reference', async () => {
+  const originalFetch = globalThis.fetch;
+  const proofEnv = {
+    MS_CLIENT_ID: 'client-id',
+    MS_REFRESH_TOKEN: 'reference-signing-secret',
+    GOOGLE_APPS_SCRIPT_WEBHOOK_URL: 'https://gateway.example/test',
+  };
+  const reference = {
+    fileId: 'onedrive-item-123456',
+    fileUrl: 'https://1drv.ms/u/signed-booking-photo',
+    sessionId: 'booking-session-1234567890',
+  };
+  const proof = await signOneDriveFileReference(proofEnv, reference);
+  globalThis.fetch = async (_url, options) => {
+    const payload = JSON.parse(options.body);
+    assert.equal(payload.action, 'sheets');
+    assert.equal(payload.sheetName, 'bookings');
+    assert.equal(payload.values[9], reference.fileUrl);
+    return Response.json({ success: true });
+  };
+
+  try {
+    const response = await onRequest({
+      request: registrationRequest(
+        { privacy: 'yes', agb: 'yes' },
+        {
+          form_type: 'booking',
+          date: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+          time: '10:00',
+          client_registration_id: 'existing',
+          uploaded_file_url: reference.fileUrl,
+          uploaded_file_id: reference.fileId,
+          uploaded_file_proof: proof,
+          upload_session_id: reference.sessionId,
+        }
+      ),
+      env: proofEnv,
+    });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).success, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('rejects a tampered allowed-domain OneDrive reference with an otherwise valid proof', async () => {
+  const originalFetch = globalThis.fetch;
+  const proofEnv = { MS_CLIENT_ID: 'client-id', MS_REFRESH_TOKEN: 'reference-signing-secret' };
+  const reference = {
+    fileId: 'onedrive-item-123456',
+    fileUrl: 'https://1drv.ms/u/signed-booking-photo',
+    sessionId: 'booking-session-1234567890',
+  };
+  const proof = await signOneDriveFileReference(proofEnv, reference);
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    throw new Error('Integrations must not run for tampered OneDrive references.');
+  };
+
+  try {
+    const response = await onRequest({
+      request: registrationRequest(
+        { privacy: 'yes', agb: 'yes' },
+        {
+          form_type: 'booking',
+          date: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+          time: '10:00',
+          uploaded_file_url: 'https://1drv.ms/u/tampered-booking-photo',
+          uploaded_file_id: reference.fileId,
+          uploaded_file_proof: proof,
+          upload_session_id: reference.sessionId,
+        }
+      ),
+      env: proofEnv,
     });
     assert.equal(response.status, 400);
     assert.equal(calls, 0);
@@ -131,14 +247,30 @@ for (const encoding of ['urlencoded', 'multipart']) {
 }
 
 for (const scenario of [
-  { name: 'calendar success cannot replace required client persistence', succeeds: 'calendar', status: 503 },
-  { name: 'booking row success cannot replace required client persistence', succeeds: 'bookings', status: 503 },
-  { name: 'successful required client persistence is accepted', succeeds: 'clients', status: 200 },
   {
-    name: 'existing registration does not require another client row',
-    succeeds: 'calendar',
+    name: 'booking row success cannot replace required client persistence',
+    succeeds: ['bookings'],
+    status: 503,
+    expectedCalls: ['bookings', 'clients'],
+  },
+  {
+    name: 'client persistence cannot replace a failed booking row',
+    succeeds: ['clients'],
+    status: 503,
+    expectedCalls: ['bookings'],
+  },
+  {
+    name: 'booking and required client rows are both persisted before success',
+    succeeds: ['bookings', 'clients'],
+    status: 200,
+    expectedCalls: ['bookings', 'clients'],
+  },
+  {
+    name: 'existing registration accepts a persisted pending booking row',
+    succeeds: ['bookings'],
     status: 200,
     id: 'existing',
+    expectedCalls: ['bookings'],
   },
 ]) {
   test(`booking fallback: ${scenario.name}`, async () => {
@@ -149,7 +281,15 @@ for (const scenario of [
       const payload = JSON.parse(options.body);
       const operation = payload.action === 'sheets' ? payload.sheetName : payload.action;
       calls.push(operation);
-      return Response.json({ success: operation === scenario.succeeds });
+      if (operation === 'bookings') {
+        assert.match(payload.values[28], /^[0-9a-f-]{36}$/i);
+        assert.equal(payload.values[29], 'pending');
+        assert.equal(payload.values[30], '');
+        assert.equal(payload.values[31], '');
+        assert.match(payload.values[32], /^\d{4}-\d{2}-\d{2}T10:00:00$/);
+        assert.match(payload.values[33], /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00$/);
+      }
+      return Response.json({ success: scenario.succeeds.includes(operation) });
     };
 
     try {
@@ -173,7 +313,7 @@ for (const scenario of [
       const body = await response.json();
       if (scenario.status === 200) assert.equal(body.success, true);
       else assert.equal(body.error, 'Internal server error');
-      assert.deepEqual(calls, scenario.id ? ['calendar', 'bookings'] : ['calendar', 'bookings', 'clients']);
+      assert.deepEqual(calls, scenario.expectedCalls);
     } finally {
       globalThis.fetch = originalFetch;
     }

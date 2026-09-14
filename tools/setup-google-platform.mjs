@@ -16,7 +16,6 @@ const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/calendar',
   'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/spreadsheets',
-  'https://www.googleapis.com/auth/gmail.send',
   'https://www.googleapis.com/auth/userinfo.email',
 ];
 const CLIENT_REGISTRY_HEADERS = [
@@ -322,7 +321,7 @@ async function createGoogleResources(accessToken, shareEmails, prefix) {
 
   await googleFetch(
     accessToken,
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet.spreadsheetId}/values/bookings!A1:U1?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet.spreadsheetId}/values/bookings!A1:AH1?valueInputOption=USER_ENTERED`,
     {
       method: 'PUT',
       body: JSON.stringify({
@@ -349,6 +348,19 @@ async function createGoogleResources(accessToken, shareEmails, prefix) {
             'pet_tag_number',
             'service_price',
             'service_category',
+            'booking_status',
+            'client_type',
+            'coat_condition',
+            'behaviour',
+            'estimated_duration_minutes',
+            'booking_buffer_minutes',
+            'safe_block_minutes',
+            'request_id',
+            'calendar_status',
+            'calendar_confirmed_at',
+            'calendar_event_id',
+            'calendar_start',
+            'calendar_end',
           ],
         ],
       }),
@@ -375,38 +387,21 @@ async function createGoogleResources(accessToken, shareEmails, prefix) {
     }
   );
 
-  const folder = await googleFetch(
-    accessToken,
-    'https://www.googleapis.com/drive/v3/files?fields=id,name,webViewLink',
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        name: `${prefix} Uploads`,
-        mimeType: 'application/vnd.google-apps.folder',
-      }),
-    }
-  );
-
   const shareResults = [];
   for (const shareEmail of shareEmails) {
     if (shareEmail) {
-      for (const item of [
-        { type: 'drive', id: folder.id, label: 'drive folder' },
-        { type: 'drive', id: spreadsheet.spreadsheetId, label: 'spreadsheet' },
-      ]) {
-        try {
-          await googleFetch(
-            accessToken,
-            `https://www.googleapis.com/drive/v3/files/${item.id}/permissions?sendNotificationEmail=true`,
-            {
-              method: 'POST',
-              body: JSON.stringify({ role: 'writer', type: 'user', emailAddress: shareEmail }),
-            }
-          );
-          shareResults.push(`${item.label}: shared with ${shareEmail}`);
-        } catch (error) {
-          shareResults.push(`${item.label}: share failed for ${shareEmail}`);
-        }
+      try {
+        await googleFetch(
+          accessToken,
+          `https://www.googleapis.com/drive/v3/files/${spreadsheet.spreadsheetId}/permissions?sendNotificationEmail=true`,
+          {
+            method: 'POST',
+            body: JSON.stringify({ role: 'writer', type: 'user', emailAddress: shareEmail }),
+          }
+        );
+        shareResults.push(`spreadsheet: shared with ${shareEmail}`);
+      } catch (error) {
+        shareResults.push(`spreadsheet: share failed for ${shareEmail}`);
       }
 
       try {
@@ -428,8 +423,6 @@ async function createGoogleResources(accessToken, shareEmails, prefix) {
   return {
     calendarId: calendar.id,
     spreadsheetId: spreadsheet.spreadsheetId,
-    driveFolderId: folder.id,
-    driveFolderUrl: folder.webViewLink || `https://drive.google.com/drive/folders/${folder.id}`,
     googleAccountEmail: profile.email || '',
     shareResults,
   };
@@ -566,15 +559,12 @@ async function updateCloudflareSecrets(vars) {
 async function readExistingGoogleResources(accessToken, args) {
   const calendarId = String(args['calendar-id'] || process.env.GOOGLE_CALENDAR_ID || '').trim();
   const spreadsheetId = String(args['sheet-id'] || process.env.SHEET_ID || '').trim();
-  const driveFolderId = String(args['drive-folder-id'] || process.env.DRIVE_UPLOAD_FOLDER || '').trim();
-  if (!calendarId || !spreadsheetId || !driveFolderId) return null;
+  if (!calendarId || !spreadsheetId) return null;
 
   const profile = await googleFetch(accessToken, 'https://www.googleapis.com/oauth2/v2/userinfo');
   return {
     calendarId,
     spreadsheetId,
-    driveFolderId,
-    driveFolderUrl: `https://drive.google.com/drive/folders/${driveFolderId}`,
     googleAccountEmail: profile.email || '',
     shareResults: ['existing Google resources reused'],
   };
@@ -645,8 +635,6 @@ async function main() {
         readDevVarsValue('GOOGLE_CALENDAR_ID') ||
         DEFAULT_CALENDAR_ID,
       'sheet-id': args['sheet-id'] || process.env.SHEET_ID || readDevVarsValue('SHEET_ID'),
-      'drive-folder-id':
-        args['drive-folder-id'] || process.env.DRIVE_UPLOAD_FOLDER || readDevVarsValue('DRIVE_UPLOAD_FOLDER'),
       })) || (await createGoogleResources(token.access_token, shareEmails, prefix));
 
   await ensureClientRegistrySheet(token.access_token, resources.spreadsheetId);
@@ -676,7 +664,6 @@ async function main() {
     GOOGLE_OAUTH_REFRESH_TOKEN: token.refresh_token,
     GOOGLE_CALENDAR_ID: resources.calendarId,
     SHEET_ID: resources.spreadsheetId,
-    DRIVE_UPLOAD_FOLDER: resources.driveFolderId,
     GMAIL_SENDER: gmailSender,
     SALON_EMAIL: salonEmail,
     CONTACT_RECIPIENT_EMAIL: salonEmail,

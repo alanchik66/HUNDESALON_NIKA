@@ -137,16 +137,17 @@ test('AI chat index is deterministic and contains localized exact-price sections
   assert.doesNotMatch(germanPoodle.text, /groom(?:ing|er)/i);
 });
 
-test('custom AI chat keeps the human SendPulse widget as a working fallback', () => {
+test('custom chat keeps personal support inside the branded conversation', () => {
   const aiSource = readFileSync(path.join(ROOT, 'assets/js/ai-chat.js'), 'utf8');
   const sendPulseSource = readFileSync(path.join(ROOT, 'assets/js/sendpulse-integrations.js'), 'utf8');
   const buildSource = readFileSync(path.join(ROOT, 'tools/build-production.js'), 'utf8');
 
   assert.match(aiSource, /fetch\('\/api\/ai-chat'/);
   assert.match(aiSource, /function openHumanChat\(\)/);
-  assert.match(aiSource, /\.widget-fab, \.button-open-widget/);
-  assert.match(aiSource, /attempts >= 60/);
-  assert.match(aiSource, /handoffTimer/);
+  assert.match(aiSource, /mode: state\.mode/);
+  assert.match(aiSource, /waitingForStaff/);
+  assert.doesNotMatch(aiSource, /\.widget-fab, \.button-open-widget/);
+  assert.doesNotMatch(aiSource, /handoffTimer/);
   assert.match(aiSource, /new window\.MediaRecorder/);
   assert.match(aiSource, /navigator\.mediaDevices\?\.getUserMedia/);
   assert.match(sendPulseSource, /data-hundesalon-ai-ready/);

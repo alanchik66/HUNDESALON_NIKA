@@ -20,7 +20,7 @@ const assets = [
   ['assets/images/icons/sunrise.png', 'assets/images/icons/sunrise.webp', 256],
   ['assets/images/icons/social-links.png', 'assets/images/icons/social-links.webp', 256],
   ['assets/images/icons/phone.png', 'assets/images/icons/phone.webp', 256],
-  ['assets/images/icons/books_alt1.png', 'assets/images/icons/books_alt1.webp', 256],
+  ['assets/images/icons/books.png', 'assets/images/icons/books.webp', 256],
   ['assets/images/icons/telegram.png', 'assets/images/icons/telegram.webp', 256],
   ['assets/images/icons/mail.png', 'assets/images/icons/mail.webp', 256],
   ['assets/images/icons/home.png', 'assets/images/icons/home.webp', 192],
