@@ -4,6 +4,7 @@ import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { transformSync } from 'esbuild';
+import { isProductionSourceOnlyPath } from './lib/production-assets.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -65,6 +66,30 @@ const copyEntries = [
   'BingSiteAuth.xml',
 ];
 
+function readIgnoredProductionPaths() {
+  try {
+    const output = execSync(
+      'git ls-files --others -i --exclude-standard -z -- assets 3d-weather-codrops-main/dist-widget',
+      {
+        cwd: root,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      }
+    );
+    return new Set(
+      output
+        .toString('utf8')
+        .split('\0')
+        .filter(Boolean)
+        .map(relativePath => relativePath.replaceAll('\\', '/'))
+    );
+  } catch (error) {
+    throw new Error(`Unable to resolve Git-ignored production inputs: ${error.message}`);
+  }
+}
+
+const ignoredProductionPaths = readIgnoredProductionPaths();
+const skippedProductionPaths = new Set();
+
 function copyRecursive(source, target) {
   if (!fs.existsSync(source)) return;
 
@@ -78,7 +103,12 @@ function copyRecursive(source, target) {
   }
 
   const relativeSource = path.relative(root, source).replaceAll('\\', '/');
-  if (SKIP_RELATIVE_PATHS.has(relativeSource)) {
+  if (
+    SKIP_RELATIVE_PATHS.has(relativeSource) ||
+    ignoredProductionPaths.has(relativeSource) ||
+    isProductionSourceOnlyPath(relativeSource)
+  ) {
+    skippedProductionPaths.add(relativeSource);
     return;
   }
 
@@ -157,6 +187,10 @@ emptyDirectory(dist);
 
 for (const entry of copyEntries) {
   copyRecursive(path.join(root, entry), path.join(dist, entry));
+}
+
+if (skippedProductionPaths.size > 0) {
+  console.log(`Skipped ${skippedProductionPaths.size} local/source-only production asset(s).`);
 }
 
 function minifyProductionAssets(directory) {
