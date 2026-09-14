@@ -1,16 +1,16 @@
 # Graph Report - HUNDESALON_NIKA  (2026-09-14)
 
 ## Corpus Check
-- 421 files · ~519,642 words
+- 422 files · ~519,791 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3881 nodes · 6384 edges · 324 communities (251 shown, 36 thin omitted)
+- 3882 nodes · 6388 edges · 328 communities (255 shown, 36 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 25 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `3e85a189`
+- Built from commit: `6250f5fe`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -26,20 +26,20 @@
 - enforceHeaderWeatherMenuPlacement
 - Google Ads — полная настройка аккаунта HUNDESALON NIKA
 - Git: один main, GitHub (GitLab mirror removed), Cloudflare
-- bing-wmt.mjs
+- sendmail.js
 - api/ai-chat.js
 - initAiChat
-- bing-url-submit.mjs
+- loadDevVars
 - rules
-- telegram-webhook.js
+- cleanText
 - cloudflare-auth.mjs
 - sleep
 - Что уже сделано в этой сессии
-- cleanText
+- ai-chat-upload.js
 - HUNDESALON NIKA Full-Stack Upgrade Guide
 - resolveHeaderWeatherLocationMeta
-- bing-sitescan.mjs
-- prune-pages-service-gateway-secrets.mjs
+- bing-wmt.mjs
+- bing-mail-setup-only.mjs
 - bing-consolidate-accounts.mjs
 - configure-cloudflare-waf-rate-limits.mjs
 - mountHeaderWeatherWidget
@@ -48,6 +48,7 @@
 - НАСТРОЙКА КАМПАНИИ (Пошагово)
 - Slack для HUNDESALON NIKA: полная настройка
 - before-after.js
+- chat-crm.js
 - Инструкция по настройке Google Ads интерфейса для HUNDESALON NIKA
 - Google Ads — website conversions (2026-07-21)
 - check-project.js
@@ -73,11 +74,14 @@
 - bing-sitescan-results.mjs
 - Полное руководство по настройке Google Ads для HUNDESALON NIKA
 - extend-meta-descriptions-config.mjs
+- seo-generate.js
 - devDependencies
 - HUNDESALON NIKA — Copilot instructions #
 - build-moon-alpha-webm.mjs
+- reverse-geocode.js
 - server.js
 - Security Policy
+- upload.js
 - Google Ads — ручная донастройка кампании HUNDESALON_NIKA
 - Cloudflare caching for hundesalon-nika.com
 - Code of Conduct
@@ -89,6 +93,7 @@
 - bindHeaderWeatherState
 - _middleware.js
 - booking-calendar.js
+- bing-url-submit.mjs
 - google-search-console-audit.js
 - cf-api-token.mjs
 - overrides
@@ -106,7 +111,7 @@
 - lengthen-meta-descriptions.mjs
 - reorganize-images.mjs
 - update-brand-search-seo.js
-- manage-sendpulse-sender.mjs
+- bing-sitescan.mjs
 - SendPulse: архитектура HUNDESALON NIKA
 - booking-submit.test.mjs
 - bing-webmaster-automate.mjs
@@ -118,7 +123,7 @@
 - Шаг 6: Расширения объявлений
 - Шаг 2: Общие настройки
 - ПРОБЛЕМЫ И РЕШЕНИЯ
-- sendmail.js
+- subscribe.js
 - 3. КЛЮЧЕВЫЕ СЛОВА
 - strip-static-shell.mjs
 - 5. РАСШИРЕНИЯ ОБЪЯВЛЕНИЙ
@@ -133,6 +138,7 @@
 - check-links.js
 - Progress
 - weather.js
+- enforceRateLimit
 - main.js
 - syncHeaderWeatherLiveClock
 - google-gateway/package.json
@@ -152,11 +158,12 @@
 - repair-service-runtime.ps1
 - gmail-cleanup-actions-failures.mjs
 - РЕКОМЕНДАЦИИ ПО OПТИМИЗАЦИИ
+- bing-robots-tester.mjs
 - optimize-hero-image.py
 - 10. АНАЛИТИКА И ОПТИМИЗАЦИЯ
 - UK — published catalog ###
 - 4. Универсальный протокол обращения и стресса
-- email-template.js
+- payment-webhook.js
 - reviews-page.test.mjs
 - tooltip.js
 - codex.instructions.md
@@ -225,7 +232,6 @@
 - generate-ai-chat-emoji-data.mjs
 - weather-widget-smoke.mjs
 - ai-chat-media.test.mjs
-- deploy-pages.mjs
 - 🌐 vibe-audit livecheck: домены HUNDESALON_NIKA
 - frontend-regressions.test.mjs
 - sync-noto-color-emoji.mjs
@@ -247,7 +253,6 @@
 - 6. Кошки
 - 7. Морские свинки
 - 8. Кролики
-- pages-proxy.js
 - 4. Универсальный протокол обращения и стресса
 - 9. Единая матрица красных флагов
 - sw.js
@@ -255,7 +260,7 @@
 - check-live-html.mjs
 - ai-chat-attachment-live-browser-smoke.mjs
 - sync-brand-profiles.mjs
-- configure-cloudflare-cache-features.mjs
+- deploy-pages.mjs
 - open-bing-webmaster.mjs
 - http-security.js
 - revert-clouds-only.mjs
@@ -268,7 +273,6 @@
 - maps-config.js
 - local-citations-automate.mjs
 - expand-thin-pages.mjs
-- bing-robots-tester.mjs
 - env.js
 - check-cf-current-user.cjs
 - check-cf-role-detail.cjs
@@ -324,13 +328,13 @@
   tools/bing-finish-remaining.mjs → tools/lib/browser-cdp.mjs
 - `probeUrl()` --calls--> `sleep()`  [EXTRACTED]
   tools/local-citations-automate.mjs → tools/lib/browser-cdp.mjs
-- `onRequest()` --calls--> `hasAiServiceAuth()`  [EXTRACTED]
-  functions/lg-task.js → functions/_lib/ai-policy.js
+- `fetch()` --calls--> `isProductionSourceOnlyPath()`  [EXTRACTED]
+  workers/pages-proxy.js → tools/lib/production-assets.mjs
 
 ## Import Cycles
 - None detected.
 
-## Communities (324 total, 36 thin omitted)
+## Communities (328 total, 36 thin omitted)
 
 ### Community 0 - "scripts"
 Cohesion: 0.01
@@ -376,45 +380,45 @@ Nodes (21): 1. Asset group — видео, 2. Asset group — изображен
 Cohesion: 0.17
 Nodes (11): CI secrets, Cloudflare после push в GitHub, Git: один main, GitHub (GitLab mirror removed), Cloudflare, GitHub Actions, GitLab CI, Remotes (не трогать без нужды), Ежедневный цикл, Источник правды (+3 more)
 
-### Community 11 - "bing-wmt.mjs"
-Cohesion: 0.06
-Nodes (37): allowGenerate, main(), port, root, runNode(), listPath, matchesOrigin(), port (+29 more)
+### Community 11 - "sendmail.js"
+Cohesion: 0.08
+Nodes (37): verifyOneDriveFileReference(), addLocalMinutes(), ADMIN_EMAIL_COPY, BOOKING_BEHAVIOUR_EXTRA_MINUTES, BOOKING_BEHAVIOURS, BOOKING_CLIENT_TYPES, BOOKING_COAT_CONDITIONS, BOOKING_COAT_EXTRA_MINUTES (+29 more)
 
 ### Community 12 - "api/ai-chat.js"
 Cohesion: 0.10
-Nodes (33): buildConversationInput(), buildSafetyIdentifier(), callOpenAi(), CONCEPT_GROUPS, detectCustomerLocale(), ensureRussianPriceDisclosure(), extractResponseText(), FALLBACK_COPY (+25 more)
+Nodes (32): buildConversationInput(), buildSafetyIdentifier(), callOpenAi(), CONCEPT_GROUPS, detectCustomerLocale(), ensureRussianPriceDisclosure(), extractResponseText(), FALLBACK_COPY (+24 more)
 
 ### Community 13 - "initAiChat"
 Cohesion: 0.07
 Nodes (64): appendSafeAnswer(), button(), createSessionId(), formatBytes(), formatDuration(), icon(), initAiChat(), addMessage() (+56 more)
 
-### Community 14 - "bing-url-submit.mjs"
-Cohesion: 0.18
-Nodes (16): bingUrlListDigest(), classifyBingApiFailure(), defaultListPath, defaultStatePath, filterBingSubmissionUrls(), main(), planBingUrlSubmission(), readState() (+8 more)
+### Community 14 - "loadDevVars"
+Cohesion: 0.14
+Nodes (16): getBingApiKey(), hasBingApiKey(), loadDevVars(), getAccessToken(), getArg(), listSenders(), main(), sendPulseRequest() (+8 more)
 
 ### Community 15 - "rules"
 Cohesion: 0.06
 Nodes (48): env, browser, es2021, node, extends, globals, console, document (+40 more)
 
-### Community 16 - "telegram-webhook.js"
-Cohesion: 0.07
-Nodes (47): onRequest(), authenticateChatSession(), createSession(), database(), getChatSessionForTelegramReply(), getChatSessionForTelegramTopic(), getLatestBreedImage(), hasTelegramDelivery() (+39 more)
+### Community 16 - "cleanText"
+Cohesion: 0.11
+Nodes (26): formatChatCustomer(), recordChatMessage(), registerTelegramDelivery(), cleanText(), AUTO_REPLY_COPY, buildActionMarkup(), buildAutoReply(), buildClientReply() (+18 more)
 
 ### Community 17 - "cloudflare-auth.mjs"
-Cohesion: 0.12
-Nodes (17): clearLegacyPagesTokenAlias(), isDevVarAssignment(), loadDevVars(), persistWranglerOAuth(), removeDevVar(), resolvePurgeAuth(), upsertDevVar(), upsertTomlQuotedField() (+9 more)
+Cohesion: 0.13
+Nodes (14): clearLegacyPagesTokenAlias(), isDevVarAssignment(), persistWranglerOAuth(), removeDevVar(), REPO_ROOT, resolvePurgeAuth(), upsertDevVar(), upsertTomlQuotedField() (+6 more)
 
 ### Community 18 - "sleep"
-Cohesion: 0.04
-Nodes (58): port, evalPage(), getEmailDomain(), isEmailOnDomain(), mailPort, siteQ, withCdp(), logoUrls (+50 more)
+Cohesion: 0.07
+Nodes (37): port, port, port, targets, bingPort, ensureBingCdp(), main(), report (+29 more)
 
 ### Community 19 - "Что уже сделано в этой сессии"
 Cohesion: 0.13
 Nodes (14): 1. Подтверждение личности рекламодателя (критично), 2. Способ оплаты (критично), 3. Не включать кампании до пунктов 1–2, DE RSA (Search) — копипаст, Google Ads — полный аудит HUNDESALON NIKA, PMax `HUNDESALON_NIKA` (campaignId `24051075076`), Search-черновик `SEARCH_Hundesalon_Leipzig`, Аккаунт (+6 more)
 
-### Community 20 - "cleanText"
-Cohesion: 0.09
-Nodes (63): breedImageUrl(), AI_CHAT_UPLOAD_CHUNK_MAX_BYTES, AI_CHAT_UPLOAD_MAX_BYTES, completeUpload(), normalizedFile(), normalizedTranscript(), onRequest(), onRequestChunk() (+55 more)
+### Community 20 - "ai-chat-upload.js"
+Cohesion: 0.11
+Nodes (44): breedImageUrl(), AI_CHAT_UPLOAD_CHUNK_MAX_BYTES, AI_CHAT_UPLOAD_MAX_BYTES, completeUpload(), normalizedFile(), normalizedTranscript(), onRequest(), onRequestChunk() (+36 more)
 
 ### Community 21 - "HUNDESALON NIKA Full-Stack Upgrade Guide"
 Cohesion: 0.14
@@ -424,13 +428,13 @@ Nodes (13): Google, Google Apps Script gateway, HUNDESALON NIKA Full-Stack Upgra
 Cohesion: 0.17
 Nodes (16): buildHeaderWeatherDistrictLabel(), fetchHeaderWeatherAstroDay(), fetchHeaderWeatherReverseGeoMeta(), getHeaderWeatherBrowserTimeZone(), getHeaderWeatherDateInTimeZone(), getHeaderWeatherLanguageFallbacks(), getHeaderWeatherLocationLabel(), getHeaderWeatherLocationStatusCopy() (+8 more)
 
-### Community 23 - "bing-sitescan.mjs"
-Cohesion: 0.16
-Nodes (22): main(), port, reportPath, root, main(), cdpReady(), edgePath(), ensureBingEdgeCdp() (+14 more)
+### Community 23 - "bing-wmt.mjs"
+Cohesion: 0.07
+Nodes (33): listPath, matchesOrigin(), port, prioritizeForBingSubmit(), priorityInspect, report, root, siteQ (+25 more)
 
-### Community 24 - "prune-pages-service-gateway-secrets.mjs"
-Cohesion: 0.50
-Nodes (3): env, REMOVE, wrangler
+### Community 24 - "bing-mail-setup-only.mjs"
+Cohesion: 0.08
+Nodes (26): evalPage(), getEmailDomain(), isEmailOnDomain(), mailPort, siteQ, withCdp(), logoUrls, port (+18 more)
 
 ### Community 25 - "bing-consolidate-accounts.mjs"
 Cohesion: 0.25
@@ -464,6 +468,10 @@ Nodes (11): 1) Создать Slack App и webhook (Incoming Webhooks), 2) По�
 Cohesion: 0.12
 Nodes (16): beforeAfterCardBlueprints, beforeAfterCardFolder(), BeforeAfterGallery, beforeAfterItems, beforeAfterLabelsByLang, BeforeAfterSlider, buildBeforeAfterItems(), cardCategories (+8 more)
 
+### Community 33 - "chat-crm.js"
+Cohesion: 0.15
+Nodes (24): onRequest(), authenticateChatSession(), createSession(), database(), findReplyForMessage(), getChatSessionForTelegramReply(), getChatSessionForTelegramTopic(), getLatestBreedImage() (+16 more)
+
 ### Community 34 - "Инструкция по настройке Google Ads интерфейса для HUNDESALON NIKA"
 Cohesion: 0.18
 Nodes (10): GDPR и приватность:, Google Ads политика:, БЕЗОПАСНОСТЬ И ПРАВИЛА, День 1 (Запуск):, День 2 (Анализ):, День 3 (Оптимизация):, ЗАПУСК И ПЕРВЫЕ 3 ДНЯ, Инструкция по настройке Google Ads интерфейса для HUNDESALON NIKA (+2 more)
@@ -477,8 +485,8 @@ Cohesion: 0.14
 Nodes (11): collectStaleImageScanFiles(), failures, ignoredDirs, indexFiles, outdatedCityPattern, requiredFiles, root, staleImagePatterns (+3 more)
 
 ### Community 37 - "draft-service.js"
-Cohesion: 0.07
-Nodes (44): AI_PROVIDER_POLICY, AI_SERVICE_SECRET_ENV, APPROVED_AI_MODEL, APPROVED_AI_PROVIDER, DEFAULT_DRAFT_MAX_TOKENS, DEFAULT_SEO_MAX_TOKENS, getBearerToken(), getContextEnvVar() (+36 more)
+Cohesion: 0.12
+Nodes (26): AI_PROVIDER_POLICY, AI_SERVICE_SECRET_ENV, APPROVED_AI_MODEL, APPROVED_AI_PROVIDER, DEFAULT_DRAFT_MAX_TOKENS, getBearerToken(), getContextEnvVar(), hasAiServiceAuth() (+18 more)
 
 ### Community 38 - "SMART Audit Report (2026-05-14)"
 Cohesion: 0.18
@@ -502,7 +510,7 @@ Nodes (5): candidates, findings, forbidden, root, roots
 
 ### Community 43 - "seo-search-watch.mjs"
 Cohesion: 0.11
-Nodes (27): analyzeBingFindings(), analyzeGscIndexing(), KEY_URLS, readGscIndexing(), GSC_ACCOUNT, GSC_PROPERTY, GSC_SECTIONS, gscUrl() (+19 more)
+Nodes (28): analyzeBingFindings(), extractBingSiteScanFindings(), analyzeGscIndexing(), KEY_URLS, readGscIndexing(), GSC_ACCOUNT, GSC_PROPERTY, GSC_SECTIONS (+20 more)
 
 ### Community 44 - "5. Core services ##"
 Cohesion: 0.17
@@ -564,6 +572,10 @@ Nodes (7): 13. ЗАПУСК КАМПАНИИ, 8. РАСПИСАНИЕ ПОКАЗ
 Cohesion: 0.17
 Nodes (11): BOOST, changed, extendOne(), isLegal(), LEGAL_SUFFIX, next, outPath, root (+3 more)
 
+### Community 59 - "seo-generate.js"
+Cohesion: 0.17
+Nodes (18): DEFAULT_SEO_MAX_TOKENS, MAX_SEO_MAX_TOKENS, fetchAiResponse(), assertLocalePayload(), buildPrompt(), buildSnippets(), escapeHtml(), getEnvVar() (+10 more)
+
 ### Community 60 - "devDependencies"
 Cohesion: 0.10
 Nodes (21): @axe-core/playwright, eslint, htmlhint, leaflet, markdownlint-cli2, devDependencies, @axe-core/playwright, eslint (+13 more)
@@ -576,6 +588,10 @@ Nodes (7): Before editing ##, Handoff ##, HUNDESALON NIKA — Copilot instructio
 Cohesion: 0.09
 Nodes (18): bitrateK, buildFallbackMp4(), buildWebm(), DURATION_META_OUT, FALLBACK_MP4_OUT, ffmpeg, LEGACY_FILES, moonDir (+10 more)
 
+### Community 63 - "reverse-geocode.js"
+Cohesion: 0.22
+Nodes (21): applyApiResponseHeaders(), applyCorsResponseHeaders(), apiResponse(), buildDisplayName(), buildDistrictLabel(), fetchJson(), fetchNominatimReverse(), fetchPhotonReverse() (+13 more)
+
 ### Community 64 - "server.js"
 Cohesion: 0.21
 Nodes (19): appendSheetRow(), createCalendarEvent(), createSetup(), firestoreValue(), getCalendarBusyIntervals(), getGoogleToken(), getSecret(), googleJson() (+11 more)
@@ -583,6 +599,10 @@ Nodes (19): appendSheetRow(), createCalendarEvent(), createSetup(), firestoreVal
 ### Community 65 - "Security Policy"
 Cohesion: 0.25
 Nodes (6): Dependency Security, Reporting a Vulnerability, Secrets, Security Policy, Supported Surface, Security Policy Location
+
+### Community 66 - "upload.js"
+Cohesion: 0.20
+Nodes (17): signOneDriveFileReference(), uploadSmallFileToOneDrive(), detectPetPhotoMimeType(), hasValidPetPhotoSignature(), isAllowedPetPhotoType(), PET_PHOTO_ALLOWED_TYPES, PET_PHOTO_MAX_BYTES, PET_PHOTO_MAX_MB (+9 more)
 
 ### Community 67 - "Google Ads — ручная донастройка кампании HUNDESALON_NIKA"
 Cohesion: 0.29
@@ -628,13 +648,17 @@ Nodes (16): appendVary(), collapseWhitespace(), COUNTRY_LANGUAGE_MAP, decodeHtml
 Cohesion: 0.17
 Nodes (18): berlinLocalToUtc(), berlinOffsetMilliseconds(), BOOKING_COLUMN, bookingJsonFetch(), bookingResult(), bookingValue(), confirmGoogleBooking(), deleteCalendarEvent() (+10 more)
 
+### Community 78 - "bing-url-submit.mjs"
+Cohesion: 0.26
+Nodes (13): bingUrlListDigest(), classifyBingApiFailure(), defaultListPath, defaultStatePath, filterBingSubmissionUrls(), main(), planBingUrlSubmission(), readState() (+5 more)
+
 ### Community 79 - "google-search-console-audit.js"
 Cohesion: 0.13
 Nodes (14): checkRedirect(), checkStatus(), fail(), failures, fetchText(), indexUrls, parseJsonLd(), report (+6 more)
 
 ### Community 80 - "cf-api-token.mjs"
-Cohesion: 0.16
-Nodes (27): candidates, main(), main(), auditPagesDeploy(), auditToken(), GROUP_IDS, isDeployToken(), isFullToken (+19 more)
+Cohesion: 0.10
+Nodes (37): candidates, main(), main(), auditPagesDeploy(), auditToken(), GROUP_IDS, isDeployToken(), isFullToken (+29 more)
 
 ### Community 81 - "overrides"
 Cohesion: 0.25
@@ -696,9 +720,9 @@ Nodes (12): brandDir, ensureDir(), heroDir, iconRenameMap, ignoreDirs, imagesRoo
 Cohesion: 0.19
 Nodes (12): buildBrandHeadBlock(), getLanguage(), indexFiles, logoObject(), normalizeBrandHead(), normalizeJsonLd(), organizationObject(), root (+4 more)
 
-### Community 97 - "manage-sendpulse-sender.mjs"
-Cohesion: 0.67
-Nodes (5): getAccessToken(), getArg(), listSenders(), main(), sendPulseRequest()
+### Community 97 - "bing-sitescan.mjs"
+Cohesion: 0.32
+Nodes (11): main(), clickScanMenuItem(), confirmDialog(), deleteBingSiteScan(), findScanRow(), openScanRowMenu(), readBingSiteScanStatus(), restartBingSiteScan() (+3 more)
 
 ### Community 98 - "SendPulse: архитектура HUNDESALON NIKA"
 Cohesion: 0.12
@@ -744,9 +768,9 @@ Nodes (5): Аудитории:, Местоположение:, Сеть:, Шаг
 Cohesion: 0.40
 Nodes (5): Высокий CPC:, Нет конверсий:, Нет показов:, Низкий CTR:, ПРОБЛЕМЫ И РЕШЕНИЯ
 
-### Community 109 - "sendmail.js"
-Cohesion: 0.08
-Nodes (37): verifyOneDriveFileReference(), addLocalMinutes(), ADMIN_EMAIL_COPY, BOOKING_BEHAVIOUR_EXTRA_MINUTES, BOOKING_BEHAVIOURS, BOOKING_CLIENT_TYPES, BOOKING_COAT_CONDITIONS, BOOKING_COAT_EXTRA_MINUTES (+29 more)
+### Community 109 - "subscribe.js"
+Cohesion: 0.27
+Nodes (9): readFormDataBody(), getEnvList(), COPY, DEFAULT_ADMIN_EMAILS, isValidEmail(), NEWSLETTER_COPY, onRequest(), runIntegration() (+1 more)
 
 ### Community 110 - "3. КЛЮЧЕВЫЕ СЛОВА"
 Cohesion: 0.40
@@ -789,8 +813,8 @@ Cohesion: 0.15
 Nodes (12): Commercial-rental checklist for fast but safe decisions, Downloadable reference material, EU: privacy and AI layer, Further literature noted by IHK Leipzig, Germany: broker regulation, Germany: commercial lease baseline, Germany: outreach and direct marketing limits, HUNDESALON_NIKA Makler Legal Snapshot (+4 more)
 
 ### Community 120 - "build-production.js"
-Cohesion: 0.06
-Nodes (36): assertLocalAssetVersions(), walk(), assertNoSecretArtifacts(), walk(), assetVersion, copyEntries, copyRecursive(), deferNonCriticalScripts() (+28 more)
+Cohesion: 0.05
+Nodes (39): assertLocalAssetVersions(), walk(), assertNoSecretArtifacts(), walk(), assetVersion, copyEntries, copyRecursive(), deferNonCriticalScripts() (+31 more)
 
 ### Community 121 - "check-links.js"
 Cohesion: 0.18
@@ -801,8 +825,12 @@ Cohesion: 0.40
 Nodes (4): Completed, Current, Next, Progress
 
 ### Community 123 - "weather.js"
-Cohesion: 0.08
-Nodes (59): apiResponse(), buildMetForecastDays(), buildWeatherPayload(), calculateApparentTemperature(), celsiusToFahrenheit(), conditionSeverity(), currentMetaToWeatherApi(), fetchBrightSkyCurrent() (+51 more)
+Cohesion: 0.13
+Nodes (38): apiResponse(), buildMetForecastDays(), buildWeatherPayload(), calculateApparentTemperature(), celsiusToFahrenheit(), conditionSeverity(), currentMetaToWeatherApi(), fetchBrightSkyCurrent() (+30 more)
+
+### Community 125 - "enforceRateLimit"
+Cohesion: 0.31
+Nodes (7): ALLOWED_LOCALES, cleanQuery(), normalizedItem(), onRequestGet(), safeGiphyUrl(), enforceRateLimit(), getClientIp()
 
 ### Community 126 - "main.js"
 Cohesion: 0.21
@@ -841,8 +869,8 @@ Cohesion: 0.60
 Nodes (3): Invoke-NpmScript(), Write-Ok(), Write-Step()
 
 ### Community 135 - "platform-integrations.js"
-Cohesion: 0.09
-Nodes (55): isWithinBookingHorizon(), normalizeBusyIntervals(), normalizeDate(), onRequestGet(), answerTelegramCallbackQuery(), appendGoogleSheetRow(), base64Encode(), base64UrlEncode() (+47 more)
+Cohesion: 0.13
+Nodes (43): isWithinBookingHorizon(), normalizeBusyIntervals(), normalizeDate(), onRequestGet(), answerTelegramCallbackQuery(), appendGoogleSheetRow(), base64Encode(), base64UrlEncode() (+35 more)
 
 ### Community 136 - "booking-pet-profile-smoke.mjs"
 Cohesion: 0.40
@@ -880,6 +908,10 @@ Nodes (10): creds, credsPath, gmail, gmailMcpRoot, { google }, keys, keysPath, m
 Cohesion: 0.50
 Nodes (4): РЕКОМЕНДАЦИИ ПО OПТИМИЗАЦИИ, Снижение CPC:, Увеличение конверсий:, Улучшение Quality Score:
 
+### Community 150 - "bing-robots-tester.mjs"
+Cohesion: 0.29
+Nodes (6): out, port, report, root, siteQ, testLabel
+
 ### Community 152 - "10. АНАЛИТИКА И ОПТИМИЗАЦИЯ"
 Cohesion: 0.50
 Nodes (4): 10. АНАЛИТИКА И ОПТИМИЗАЦИЯ, Ежемесячные оптимизации:, Еженедельные проверки:, Ключевые метрики:
@@ -892,9 +924,9 @@ Nodes (14): 1. Довгошерсті породи ####, 2. Пуделі, біш
 Cohesion: 0.50
 Nodes (4): 4.1. Рабочая среда, 4.2. Чтение поведения, 4.3. Обязательное прекращение, 4. Универсальный протокол обращения и стресса
 
-### Community 156 - "email-template.js"
-Cohesion: 0.18
-Nodes (14): COPY, isValidEmail(), json(), onRequestPost(), bodyToHtml(), buildBrandedEmail(), escapeHtml(), FOOTER_COPY (+6 more)
+### Community 156 - "payment-webhook.js"
+Cohesion: 0.11
+Nodes (25): COPY, isValidEmail(), json(), onRequestPost(), bodyToHtml(), buildBrandedEmail(), escapeHtml(), FOOTER_COPY (+17 more)
 
 ### Community 158 - "tooltip.js"
 Cohesion: 0.47
@@ -969,8 +1001,8 @@ Cohesion: 0.25
 Nodes (4): fs, languages, path, workspaceRoot
 
 ### Community 179 - "stopTrackedBrowser"
-Cohesion: 0.06
-Nodes (42): ensureCdp(), cdpReady(), child, ensureEdge(), pidFile, root, startEdge(), candidates (+34 more)
+Cohesion: 0.07
+Nodes (45): allowGenerate, ensureCdp(), main(), port, root, runNode(), cdpReady(), child (+37 more)
 
 ### Community 181 - "Catalog Change - {{date}}"
 Cohesion: 0.29
@@ -1045,8 +1077,8 @@ Cohesion: 0.50
 Nodes (4): Codex workflow, Coverage, Operations, Standard review items
 
 ### Community 201 - "cf-pages-token.mjs"
-Cohesion: 0.12
-Nodes (21): unifiedTokenProfileTemplateUrl(), unifiedTokenTemplateUrl(), DEFAULT_PAGES_PROJECT, extractTokenFromText(), loadPagesDeployCredentials(), loadTokenFile(), PAGES_PERMISSION_KEYS, PAGES_TOKEN_FILE (+13 more)
+Cohesion: 0.16
+Nodes (19): bootstrapViaDashboard(), TEMPLATE_URL, DEFAULT_PAGES_PROJECT, extractTokenFromText(), loadPagesDeployCredentials(), loadTokenFile(), PAGES_PERMISSION_KEYS, PAGES_TOKEN_FILE (+11 more)
 
 ### Community 202 - "generate-brand-sitemap.mjs"
 Cohesion: 0.33
@@ -1144,10 +1176,6 @@ Nodes (4): groups, OUTPUT, payload, ROOT
 Cohesion: 0.40
 Nodes (4): consoleErrors, failedRequests, host, sunScene404
 
-### Community 237 - "deploy-pages.mjs"
-Cohesion: 0.36
-Nodes (9): deployPages(), ensureDeployCredentials(), localWrangler, pagesDeployEnv(), root, runWrangler(), runWranglerQuiet(), wranglerCommand() (+1 more)
-
 ### Community 238 - "🌐 vibe-audit livecheck: домены HUNDESALON_NIKA"
 Cohesion: 0.29
 Nodes (6): https://hundesalon-nika.com, https://www.hundesalon-nika.com, 🌐 vibe-audit livecheck: домены HUNDESALON_NIKA, 🔵 Домен www: заголовок server раскрывает стек cloudflare, Итог, 🔵 Основной домен: заголовок server раскрывает стек cloudflare
@@ -1208,10 +1236,6 @@ Nodes (5): 7.1. Шерсть и уход, 7.2. Обращение и стрес�
 Cohesion: 0.40
 Nodes (5): 8.1. Шерсть и уход, 8.2. Обращение и защита позвоночника, 8.3. Когти, уши, кожа, глаза и задняя зона, 8.4. Красные флаги и противопоказания для кроликов, 8. Кролики
 
-### Community 261 - "pages-proxy.js"
-Cohesion: 0.67
-Nodes (3): fetch(), PUBLIC_HOSTS, publicUrlFromPages()
-
 ### Community 262 - "4. Универсальный протокол обращения и стресса"
 Cohesion: 0.50
 Nodes (4): 4.1. Рабочая среда, 4.2. Чтение поведения, 4.3. Обязательное прекращение, 4. Универсальный протокол обращения и стресса
@@ -1224,13 +1248,13 @@ Nodes (4): 9.1. Немедленно прекратить процедуру и 
 Cohesion: 0.22
 Nodes (7): SAME_AS, businessDesc, indexFiles, pickSameAsHost(), report, root, updateLlmsTxt()
 
-### Community 269 - "configure-cloudflare-cache-features.mjs"
-Cohesion: 0.18
-Nodes (18): enableContentScan(), getContentScanStatus(), getCrawlerHintsStatus(), main(), parseArgs(), resolveAuth(), setCrawlerHints(), resolveAuth() (+10 more)
+### Community 269 - "deploy-pages.mjs"
+Cohesion: 0.12
+Nodes (27): enableContentScan(), getContentScanStatus(), getCrawlerHintsStatus(), main(), parseArgs(), resolveAuth(), setCrawlerHints(), resolveAuth() (+19 more)
 
 ### Community 271 - "http-security.js"
-Cohesion: 0.08
-Nodes (49): ALLOWED_LOCALES, cleanQuery(), normalizedItem(), onRequestGet(), safeGiphyUrl(), forwardJson(), getBearerToken(), getEnvVarFromContext() (+41 more)
+Cohesion: 0.13
+Nodes (30): forwardJson(), getBearerToken(), getEnvVarFromContext(), getInternalOrigin(), getRuntimeEnvs(), isAuthorizedBySharedSecret(), onRequest(), assertAllowedOrigin() (+22 more)
 
 ### Community 274 - "allowScripts"
 Cohesion: 0.40
@@ -1251,10 +1275,6 @@ Nodes (13): CITATION_NAP, LOCAL_DIRECTORIES, q, q2, out, port, probeUrl(), repor
 ### Community 281 - "expand-thin-pages.mjs"
 Cohesion: 0.29
 Nodes (5): block(), COPY, jobs, root, upsert()
-
-### Community 282 - "bing-robots-tester.mjs"
-Cohesion: 0.29
-Nodes (6): out, port, report, root, siteQ, testLabel
 
 ### Community 284 - "env.js"
 Cohesion: 0.33
@@ -1338,17 +1358,17 @@ Nodes (5): Codex Model Routing, Obsidian workflow, Operating rule, Purpose, Rout
 
 ## Knowledge Gaps
 - **1802 isolated node(s):** `browser`, `es2021`, `node`, `eslint:recommended`, `ecmaVersion` (+1797 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2086 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2087 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **36 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `sleep()` connect `sleep` to `local-citations-automate.mjs`, `bing-webmaster-automate.mjs`, `cf-pages-token.mjs`, `bing-wmt.mjs`, `seo-search-watch.mjs`, `google-oauth-console-bootstrap.mjs`, `stopTrackedBrowser`, `bing-sitescan.mjs`, `bing-sitescan-results.mjs`?**
+- **Why does `sleep()` connect `sleep` to `bing-sitescan.mjs`, `local-citations-automate.mjs`, `bing-webmaster-automate.mjs`, `cf-pages-token.mjs`, `seo-search-watch.mjs`, `google-oauth-console-bootstrap.mjs`, `stopTrackedBrowser`, `bing-wmt.mjs`, `bing-mail-setup-only.mjs`, `bing-sitescan-results.mjs`?**
   _High betweenness centrality (0.015) - this node is a cross-community bridge._
-- **Why does `hasBingApiKey()` connect `bing-url-submit.mjs` to `bing-wmt.mjs`, `bing-fetch-api-key.mjs`, `platform-integrations.js`?**
+- **Why does `hasBingApiKey()` connect `loadDevVars` to `bing-fetch-api-key.mjs`, `bing-wmt.mjs`?**
   _High betweenness centrality (0.010) - this node is a cross-community bridge._
-- **Why does `loadDevVars()` connect `cloudflare-auth.mjs` to `manage-sendpulse-sender.mjs`, `platform-integrations.js`, `generate-sendpulse-ai-knowledge.mjs`, `cf-pages-token.mjs`, `configure-cloudflare-cache-features.mjs`, `bing-url-submit.mjs`, `cf-api-token.mjs`, `cloudflareApi`, `configure-cloudflare-waf-rate-limits.mjs`?**
+- **Why does `loadDevVars()` connect `loadDevVars` to `generate-sendpulse-ai-knowledge.mjs`, `cf-pages-token.mjs`, `deploy-pages.mjs`, `cf-api-token.mjs`, `cloudflare-auth.mjs`, `cloudflareApi`, `configure-cloudflare-waf-rate-limits.mjs`?**
   _High betweenness centrality (0.009) - this node is a cross-community bridge._
 - **What connects `browser`, `es2021`, `node` to the rest of the system?**
   _1802 weakly-connected nodes found - possible documentation gaps or missing edges._
