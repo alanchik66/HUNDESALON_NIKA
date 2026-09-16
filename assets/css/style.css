@@ -14554,10 +14554,10 @@ body.price-page .price-page-hero[data-price-hero] .price-page-hero__categories-a
   box-sizing: border-box;
   margin-top: 0;
   min-height: 4rem;
-  padding: 0.8rem 1.25rem;
-  gap: 0.8rem;
+  padding: 0.72rem 0.8rem;
+  gap: 0.5rem;
   border-radius: var(--nav-pill-radius);
-  font-size: clamp(1rem, 0.35vw + 0.9rem, 1.15rem);
+  font-size: clamp(0.88rem, 0.3vw + 0.82rem, 1.05rem);
   line-height: 1.15;
   white-space: normal;
   text-wrap: balance;
@@ -14608,9 +14608,9 @@ body.price-page .price-page-hero[data-price-hero] .price-page-hero__actions {
   grid-column: auto;
   place-self: auto;
   align-items: stretch;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: clamp(0.38rem, 0.75vw, 0.7rem);
-  width: min(100%, 1040px);
+  width: min(100%, 1280px);
   margin: 0 auto;
 }
 

@@ -1,6 +1,6 @@
 # HUNDESALON_NIKA Website Knowledge for the SendPulse AI Agent #
 
-Generated source fingerprint: sha256:0c362991f20f20192c4f5d7fc4d7fb8b99e00eaa6454582578d35bb0ef46db7b
+Generated source fingerprint: sha256:44931dabcc9353d9ddf533e0cb2f2b6f531e2ad126fbb391cecce8c535819f5f
 
 This document is the factual knowledge base for the customer-facing SendPulse live-chat AI agent. It covers the public HUNDESALON_NIKA website in German, English, Russian, and Ukrainian.
 
@@ -268,13 +268,17 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Summary: Zusatzpflege, die zur Hauptleistung ergänzt werden kann.
 - Breeds: Hunde, Katzen, Meerschweinchen, Kaninchen
 - Included/listed care: Krallen schneiden, Ultraschall-Zahnreinigung ohne Narkose, Aufbau-Maske, Ozontherapie
-- Price: Krallenschneiden — kleine Rassen — 7 €
-- Price: Krallenschneiden — mittelgroße Rassen — 10 €
-- Price: Krallenschneiden — große Rassen — 12 €
+- Price: Krallenschneiden — kleine Rassen — 10 €
+- Price: Krallenschneiden — mittelgroße Rassen — 12 €
+- Price: Krallenschneiden — große Rassen — 15 €
+- Price: Krallenschneiden — sehr große Rassen — 18 €
 - Price: Ultraschall-Zahnpflege bis 6 kg — ab 100 €
-- Price: Aufbau- / Wellnessmaske — ab 15 €
-- Price: Ozontherapie — ab 20 €
-- Price: Trimmen — auf Anfrage
+- Price: Aufbau- / Wellnessmaske — ab 20 €
+- Price: Ozontherapie — ab 25 €
+- Price: Trimmen — kleine Rassen — ab 75 €
+- Price: Trimmen — mittelgroße Rassen — ab 90 €
+- Price: Trimmen — große Rassen — ab 110 €
+- Price: Trimmen — sehr große Rassen — ab 140 €
 - Note: Zu den Zusatzleistungen gehören Krallenschneiden nach Größe, Trimmen für rauhaarige Rassen, Ultraschall-Zahnpflege ohne Narkose bis 6 kg, Aufbau-/Wellnessmaske, Ozontherapie und der erste Termin zur Welpengewöhnung.
 - Note: Bei gemeinsamer Buchung mit der Pflege gibt es auf die Ultraschall-Zahnpflege 30 % Rabatt; sie ersetzt keine tierärztliche Zahnbehandlung.
 - Note: Der erste Termin zur Welpengewöhnung dient der sanften Gewöhnung an Salon und Pflege.
@@ -295,11 +299,14 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Welpen-Eingewöhnung — ab 50 €; Category: 6. Kurzhaarige Hunde
 - Price: Welpen-Eingewöhnung — ab 50 €; Category: 7. Große Hunde
 
-#### Trimmen — service details ####
+#### Trimmen — kleine Rassen — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: Für rauhaarige Rassen nach Fellstruktur und Aufwand.
 - Description: Rassegerechtes Trimmen per Hand oder Maschine.
-- Price: Trimmen — auf Anfrage; Category: Zusatzleistungen
+- Price: Trimmen — kleine Rassen — ab 75 €; Category: Zusatzleistungen
+- Price: Trimmen — kleine Rassen — ab 90 €; Category: Zusatzleistungen
+- Price: Trimmen — kleine Rassen — ab 110 €; Category: Zusatzleistungen
+- Price: Trimmen — kleine Rassen — ab 140 €; Category: Zusatzleistungen
 
 ### EN — published catalog ###
 
@@ -424,13 +431,17 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Summary: Additional care that can be added to the main service.
 - Breeds: Dogs, Cats, Guinea pigs, Rabbits
 - Included/listed care: Nail trim, Ultrasonic teeth cleaning without anesthesia, Restorative mask, Ozone therapy
-- Price: Nail trimming — small breeds — €7
-- Price: Nail trimming — medium breeds — €10
-- Price: Nail trimming — large breeds — €12
+- Price: Nail trimming — small breeds — €10
+- Price: Nail trimming — medium breeds — €12
+- Price: Nail trimming — large breeds — €15
+- Price: Nail trimming — giant breeds — €18
 - Price: Ultrasonic teeth cleaning up to 6 kg — from €100
-- Price: Restorative / wellness mask — from €15
-- Price: Ozone therapy — from €20
-- Price: Trimming — on request
+- Price: Restorative / wellness mask — from €20
+- Price: Ozone therapy — from €25
+- Price: Hand stripping — small breeds — from €75
+- Price: Hand stripping — medium breeds — from €90
+- Price: Hand stripping — large breeds — from €110
+- Price: Hand stripping — giant breeds — from €140
 - Note: Additional services include nail trimming by size, trimming for wire-coated breeds, ultrasonic teeth cleaning without anaesthesia up to 6 kg, a restorative or wellness mask, ozone therapy and first puppy grooming.
 - Note: When booked together with grooming, ultrasonic teeth cleaning receives a 30% discount; it does not replace veterinary dental treatment.
 - Note: The first puppy grooming visit is designed to gently familiarise the puppy with the salon and grooming care.
@@ -451,11 +462,14 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: First puppy grooming — from €50; Category: 6. Short-coated dogs
 - Price: First puppy grooming — from €50; Category: 7. Large dogs
 
-#### Trimming — service details ####
+#### Hand stripping — small breeds — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: For wire-coated breeds based on coat structure and workload.
 - Description: Breed-appropriate hand or clipper stripping.
-- Price: Trimming — on request; Category: Additional services
+- Price: Hand stripping — small breeds — from €75; Category: Additional services
+- Price: Hand stripping — small breeds — from €90; Category: Additional services
+- Price: Hand stripping — small breeds — from €110; Category: Additional services
+- Price: Hand stripping — small breeds — from €140; Category: Additional services
 
 ### RU — published catalog ###
 
@@ -583,13 +597,17 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Summary: Дополнительный уход, который можно добавить к основной процедуре.
 - Breeds: Собаки, Кошки, Морские свинки, Кролики
 - Included/listed care: Подстригание когтей, Ультразвуковая чистка зубов без наркоза, Восстанавливающая маска, Озонотерапия
-- Price: Подстригание когтей — маленькие породы — 7 €
-- Price: Подстригание когтей — средние породы — 10 €
-- Price: Подстригание когтей — большие породы — 12 €
+- Price: Подстригание когтей — маленькие породы — 10 €
+- Price: Подстригание когтей — средние породы — 12 €
+- Price: Подстригание когтей — большие породы — 15 €
+- Price: Подстригание когтей — гигантские породы — 18 €
 - Price: Ультразвуковая чистка зубов без наркоза (до 6 кг) — от 100 €
-- Price: Восстанавливающая / оздоровительная маска — от 15 €
-- Price: Озонотерапия — от 20 €
-- Price: Тримминг — по запросу
+- Price: Восстанавливающая / оздоровительная маска — от 20 €
+- Price: Озонотерапия — от 25 €
+- Price: Тримминг — маленькие породы — от 75 €
+- Price: Тримминг — средние породы — от 90 €
+- Price: Тримминг — большие породы — от 110 €
+- Price: Тримминг — гигантские породы — от 140 €
 - Note: При совмещении ультразвуковой чистки зубов с грумингом — скидка 30%. Процедура не заменяет ветеринарное стоматологическое лечение.
 
 #### Важная информация ####
@@ -608,11 +626,14 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Первый груминг щенка — от 50 €; Category: 6. Короткошёрстные собаки
 - Price: Первый груминг щенка — от 50 €; Category: 7. Крупные собаки
 
-#### Тримминг — service details ####
+#### Тримминг — маленькие породы — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: Для жестошёрстных пород с учётом структуры шерсти и объёма работы.
 - Description: Породный тримминг вручную или машинкой.
-- Price: Тримминг — по запросу; Category: Дополнительные услуги
+- Price: Тримминг — маленькие породы — от 75 €; Category: Дополнительные услуги
+- Price: Тримминг — маленькие породы — от 90 €; Category: Дополнительные услуги
+- Price: Тримминг — маленькие породы — от 110 €; Category: Дополнительные услуги
+- Price: Тримминг — маленькие породы — от 140 €; Category: Дополнительные услуги
 
 ### UK — published catalog ###
 
@@ -739,13 +760,17 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Summary: Додатковий догляд, який можна додати до основної процедури.
 - Breeds: Собаки, Коти, Морські свинки, Кролики
 - Included/listed care: Підрізання кігтів, Ультразвукове чищення зубів без наркозу, Відновлювальна маска, Озонотерапія
-- Price: Підстригання кігтів — малі породи — 7 €
-- Price: Підстригання кігтів — середні породи — 10 €
-- Price: Підстригання кігтів — великі породи — 12 €
+- Price: Підстригання кігтів — малі породи — 10 €
+- Price: Підстригання кігтів — середні породи — 12 €
+- Price: Підстригання кігтів — великі породи — 15 €
+- Price: Підстригання кігтів — гігантські породи — 18 €
 - Price: Ультразвукова чистка зубів до 6 кг — від 100 €
-- Price: Відновлювальна / оздоровча маска — від 15 €
-- Price: Озонотерапія — від 20 €
-- Price: Тримінг — за запитом
+- Price: Відновлювальна / оздоровча маска — від 20 €
+- Price: Озонотерапія — від 25 €
+- Price: Тримінг — малі породи — від 75 €
+- Price: Тримінг — середні породи — від 90 €
+- Price: Тримінг — великі породи — від 110 €
+- Price: Тримінг — гігантські породи — від 140 €
 - Note: До додаткових послуг належать підрізання кігтів відповідно до розміру, тримінг для жорсткошерстих порід, ультразвукова чистка зубів без наркозу до 6 кг, відновлювальна або оздоровча маска, озонотерапія та перший грумінг цуценяти.
 - Note: При одночасному бронюванні з грумінгом на ультразвукову чистку зубів діє знижка 30%; процедура не замінює ветеринарне стоматологічне лікування.
 - Note: Перший грумінг цуценяти допомагає м’яко познайомити його із салоном і процедурами догляду.
@@ -766,11 +791,14 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Перший грумінг цуценяти — від 50 €; Category: 6. Короткошерсті собаки
 - Price: Перший грумінг цуценяти — від 50 €; Category: 7. Великі собаки
 
-#### Тримінг — service details ####
+#### Тримінг — малі породи — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: Для жорсткошерстих порід з урахуванням структури шерсті та обсягу роботи.
 - Description: Породний триммінг вручну або машинкою.
-- Price: Тримінг — за запитом; Category: Додаткові послуги
+- Price: Тримінг — малі породи — від 75 €; Category: Додаткові послуги
+- Price: Тримінг — малі породи — від 90 €; Category: Додаткові послуги
+- Price: Тримінг — малі породи — від 110 €; Category: Додаткові послуги
+- Price: Тримінг — малі породи — від 140 €; Category: Додаткові послуги
 
 ## 7. Booking process and payment ##
 

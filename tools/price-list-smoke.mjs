@@ -16,10 +16,10 @@ const expectedSearchFilterCopy = {
   uk: ['Вид тварини', 'Розмір собаки', 'Тип шерсті', 'Знайдено', 'Скинути все'],
 };
 const expectedWeightRangeCopy = {
-  de: ['Gewicht: bis 10 kg', 'Gewicht: 10–25 kg', 'Gewicht: über 25 kg'],
-  en: ['Weight: up to 10 kg', 'Weight: 10–25 kg', 'Weight: over 25 kg'],
-  ru: ['Вес: до 10 кг', 'Вес: 10–25 кг', 'Вес: более 25 кг'],
-  uk: ['Вага: до 10 кг', 'Вага: 10–25 кг', 'Вага: понад 25 кг'],
+  de: ['Gewicht: bis 6 kg', 'Gewicht: 6–15 kg', 'Gewicht: 15–30 kg', 'Gewicht: ab 30 kg'],
+  en: ['Weight: up to 6 kg', 'Weight: 6–15 kg', 'Weight: 15–30 kg', 'Weight: 30 kg and over'],
+  ru: ['Вес: до 6 кг', 'Вес: 6–15 кг', 'Вес: 15–30 кг', 'Вес: от 30 кг'],
+  uk: ['Вага: до 6 кг', 'Вага: 6–15 кг', 'Вага: 15–30 кг', 'Вага: від 30 кг'],
 };
 const requestedLocales = (process.env.PRICE_SMOKE_LOCALES || '')
   .split(',')
@@ -210,8 +210,8 @@ for (const locale of locales) {
           resetLabel: hero?.querySelector('[data-price-search-reset]')?.textContent?.trim() || '',
           resetHidden: Boolean(hero?.querySelector('[data-price-search-reset]')?.hidden),
         },
-        categoryActionReady: categoryActions.length === 5
-          && categoryActions.map(action => action.dataset.priceSectionAction).join(',') === 'small,medium,large,cats,smallAnimals'
+        categoryActionReady: categoryActions.length === 6
+          && categoryActions.map(action => action.dataset.priceSectionAction).join(',') === 'small,medium,large,giant,cats,smallAnimals'
           && categoryActions.every(action => {
             const controlId = action.getAttribute('aria-controls');
             const expectedLabel = window.PricePageCatalog?.locales?.[currentLocale]?.sizeGroupTitles?.[action.dataset.priceSectionAction];
@@ -222,6 +222,11 @@ for (const locale of locales) {
               && action.dataset.navPillBound === '1'
             );
           }),
+        categoryActionRowCount: new Set(categoryActions.map(action => Math.round(action.getBoundingClientRect().top))).size,
+        categoryActionsFit: categoryActions.every(action => {
+          const rect = action.getBoundingClientRect();
+          return rect.width > 0 && rect.left >= -1 && rect.right <= window.innerWidth + 1;
+        }),
         searchBeforeCategoryAction: Boolean(
           heroSearch
           && categoryAction
@@ -332,7 +337,7 @@ for (const locale of locales) {
           };
         });
       const minimumGridGap = layoutLabel === 'mobile' ? 16 : 24;
-      const sizeSections = ['small', 'medium', 'large'].map(sectionKey => {
+      const sizeSections = ['small', 'medium', 'large', 'giant'].map(sectionKey => {
         const section = document.querySelector(`[data-price-section="${sectionKey}"]`);
         const heading = section?.querySelector('.price-size-section__heading');
         const title = heading?.querySelector('.price-size-section__title');
@@ -406,6 +411,11 @@ for (const locale of locales) {
     assert(`${locale} ${label}: hero rendered`, state.heroTitle.length > 0);
     assert(`${locale} ${label}: breed search rendered`, state.breedSearchReady);
     assert(
+      `${locale} ${label}: category navigation fits the intended rows`,
+      state.categoryActionsFit && state.categoryActionRowCount === (label === 'desktop' ? 1 : 2),
+      JSON.stringify({ rows: state.categoryActionRowCount, fits: state.categoryActionsFit })
+    );
+    assert(
       `${locale} ${label}: localized search filters and result counter rendered`,
       JSON.stringify(state.searchFilterState.labels) === JSON.stringify(expectedSearchFilterCopy[locale].slice(0, 3))
         && JSON.stringify(state.searchFilterState.values) === JSON.stringify(['all', 'all', 'all'])
@@ -416,7 +426,7 @@ for (const locale of locales) {
       JSON.stringify(state.searchFilterState)
     );
     assert(`${locale} ${label}: extra hero flow absent`, state.legacyHeroFlowAbsent);
-    assert(`${locale} ${label}: cards rendered`, state.cardCount >= 12);
+    assert(`${locale} ${label}: cards rendered`, state.cardCount >= 16);
     assert(
       `${locale} ${label}: additional services expose four animal categories`,
       state.additionalCardBreedCount === 4 && state.additionalSourceBreedCount === 4,
@@ -441,7 +451,7 @@ for (const locale of locales) {
     assert(`${locale} ${label}: calculation localization exists`, state.calculationLocalizationReady);
     assert(
       `${locale} ${label}: every dog tile keeps the required service and CTA order`,
-      dogTileDomState.dogTiles.length === 12
+      dogTileDomState.dogTiles.length === 16
         && dogTileDomState.dogTiles.every(tile =>
           tile.serviceKeysCorrect
           && tile.primaryRowCount === 3
@@ -488,6 +498,17 @@ for (const locale of locales) {
         }
         await page.setViewportSize({ width: target.width, height: 1024 });
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        for (const section of await page.locator('[data-price-section="small"], [data-price-section="medium"], [data-price-section="large"], [data-price-section="giant"]').all()) {
+          await section.scrollIntoViewIfNeeded();
+        }
+        await page.locator('[data-price-section] .price-card').evaluateAll(cards => {
+          cards.forEach(card => {
+            card.getAnimations().forEach(animation => animation.cancel());
+            card.style.opacity = '1';
+            card.style.transform = 'none';
+            card.style.transition = 'none';
+          });
+        });
         if (target.label === 'narrow-desktop') {
           await page.mouse.move(0, 0);
           await page.waitForTimeout(500);
@@ -495,7 +516,7 @@ for (const locale of locales) {
         const resizedGridState = await page.evaluate(readDogTileDomState, target.layout);
         assert(
           `${locale} ${target.label}: dog columns and matching service rows adapt after resize`,
-          resizedGridState.dogTiles.length === 12
+          resizedGridState.dogTiles.length === 16
             && resizedGridState.sizeSections.every(section => section.geometryCorrect && section.serviceRowsAligned
               && (target.layout !== 'mobile' || section.serviceRowsReset)),
           JSON.stringify(resizedGridState.sizeSections)
@@ -995,16 +1016,16 @@ for (const locale of locales) {
       };
     }, locale);
     assert(
-      `${locale} ${label}: all twelve dog categories use the locale alphabet`,
-      breedAlphabetState.categoryCount === 12 && breedAlphabetState.unsortedCategoryIds.length === 0,
+      `${locale} ${label}: all sixteen dog categories use the locale alphabet`,
+      breedAlphabetState.categoryCount === 16 && breedAlphabetState.unsortedCategoryIds.length === 0,
       JSON.stringify(breedAlphabetState)
     );
 
     if (locale === 'ru' && label === 'desktop') {
       const typoCases = [
-        { query: 'Командор', expected: 'Комондор', categoryId: 'ru-double-coat-large' },
-        { query: 'Коммандор', expected: 'Комондор', categoryId: 'ru-double-coat-large' },
-        { query: 'Ирланский валкодав', expected: 'Ирландский волкодав', categoryId: 'ru-wire-coat-large' },
+        { query: 'Командор', expected: 'Комондор', categoryId: 'ru-double-coat-giant' },
+        { query: 'Коммандор', expected: 'Комондор', categoryId: 'ru-double-coat-giant' },
+        { query: 'Ирланский валкодав', expected: 'Ирландский волкодав', categoryId: 'ru-wire-coat-giant' },
       ];
       for (const typoCase of typoCases) {
         await breedSearch.fill(typoCase.query);
@@ -1185,7 +1206,7 @@ for (const locale of locales) {
         && categoryArrowSettingsMatch,
       JSON.stringify(categoryClickState)
     );
-    for (const sectionKey of ['small', 'medium', 'large', 'cats', 'smallAnimals']) {
+    for (const sectionKey of ['small', 'medium', 'large', 'giant', 'cats', 'smallAnimals']) {
       if (sectionKey !== 'small') await page.locator(`[data-price-section-action="${sectionKey}"]`).click();
       await page.waitForFunction(
         key => document.activeElement?.closest?.(`[data-price-section-target="${key}"]`),
@@ -1551,7 +1572,7 @@ for (const locale of locales) {
       const primaryServices = page.locator('[data-price-modal-service-options] input[type="checkbox"]');
       const dentalWeightControl = page.locator('[data-price-modal-dental-weight]');
       const dentalWeight = page.locator('[data-price-modal-dental-weight-input]');
-      const dentalService = page.locator('[data-price-modal-additional-service-options] [data-service-index="3"] input');
+      const dentalService = page.locator('[data-price-modal-additional-service-options] [data-service-index="4"] input');
 
       assert('ru desktop: three primary grooming services available', await primaryServices.count() >= 3);
       for (let index = 0; index < 3; index += 1) {
@@ -1568,7 +1589,7 @@ for (const locale of locales) {
         inputEnabled: !document.querySelector('[data-price-modal-dental-weight-input]')?.disabled,
         inputRequired: Boolean(document.querySelector('[data-price-modal-dental-weight-input]')?.required),
         status: document.querySelector('[data-price-modal-dental-weight-status]')?.dataset.state || '',
-        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="3"] input')?.checked),
+        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="4"] input')?.checked),
         bookingDisabled: document.querySelector('[data-price-modal-booking]')?.getAttribute('aria-disabled') === 'true',
         totalAmount: document.querySelector('[data-price-modal-selected-price]')?.dataset.totalAmount || '',
         hasDiscount: Boolean(document.querySelector('.price-category-modal__breakdown-discount')),
@@ -1589,7 +1610,7 @@ for (const locale of locales) {
       await dentalWeight.fill('6.1');
       const dentalTooHeavyState = await page.evaluate(() => ({
         status: document.querySelector('[data-price-modal-dental-weight-status]')?.dataset.state || '',
-        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="3"] input')?.checked),
+        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="4"] input')?.checked),
         bookingDisabled: document.querySelector('[data-price-modal-booking]')?.getAttribute('aria-disabled') === 'true',
         totalAmount: document.querySelector('[data-price-modal-selected-price]')?.dataset.totalAmount || '',
         hasDiscount: Boolean(document.querySelector('.price-category-modal__breakdown-discount')),
@@ -1607,7 +1628,7 @@ for (const locale of locales) {
       await dentalWeight.fill('5.5');
       const dentalCalculation = await page.evaluate(() => ({
         status: document.querySelector('[data-price-modal-dental-weight-status]')?.dataset.state || '',
-        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="3"] input')?.checked),
+        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="4"] input')?.checked),
         total: document.querySelector('[data-price-modal-selected-price]')?.textContent?.trim() || '',
         totalAmount: Number(document.querySelector('[data-price-modal-selected-price]')?.dataset.totalAmount || NaN),
         subtotalAmount: Number(document.querySelector('.price-category-modal__breakdown-subtotal')?.dataset.priceSubtotalAmount || NaN),
@@ -1990,12 +2011,12 @@ for (const locale of locales) {
       { timeout: 15000 }
     );
     // Opening can trigger a delayed scroll event while fonts/layout settle.
-    // Wait for the actual fade-out instead of racing its 900ms idle timer.
+    // Wait for the actual fade-out instead of racing its idle timer.
     await page.waitForFunction(
       () => {
         const menu = document.querySelector('.price-card__breed-menu:not([hidden])');
         if (!menu) return false;
-        const track = menu.querySelector('[data-price-breed-scrollbar]');
+        const track = menu.parentElement?.querySelector(':scope > [data-price-breed-scrollbar]');
         return menu.scrollHeight <= menu.clientHeight + 1
           || Boolean(track && Number.parseFloat(getComputedStyle(track).opacity) === 0);
       },
@@ -2009,7 +2030,8 @@ for (const locale of locales) {
       const openCard = menu?.closest('.price-card');
       const rect = menu?.getBoundingClientRect();
       const menuStyle = menu ? getComputedStyle(menu) : null;
-      const breedScrollbar = menu?.querySelector('[data-price-breed-scrollbar]');
+      const nativeScrollbarStyle = menu ? getComputedStyle(menu, '::-webkit-scrollbar') : null;
+      const breedScrollbar = menu?.parentElement?.querySelector(':scope > [data-price-breed-scrollbar]');
       const breedScrollbarRect = breedScrollbar?.getBoundingClientRect();
       const breedScrollbarStyle = breedScrollbar ? getComputedStyle(breedScrollbar) : null;
       const hasBreedOverflow = menu ? menu.scrollHeight > menu.clientHeight + 1 : false;
@@ -2056,6 +2078,13 @@ for (const locale of locales) {
         insideViewport: Boolean(rect && rect.left >= 8 && rect.right <= window.innerWidth - 8 && rect.top >= 8 && rect.bottom <= window.innerHeight - 8),
         boundedWidth: Boolean(rect && rect.width <= 681),
         roundedMenu: Boolean(menuStyle && Number.parseFloat(menuStyle.borderRadius) >= 18),
+        singleScrollbar: !hasBreedOverflow || Boolean(
+          menu?.hasAttribute('data-custom-scrollbar-host')
+          && menuStyle?.scrollbarWidth === 'none'
+          && nativeScrollbarStyle?.display === 'none'
+          && Number.parseFloat(nativeScrollbarStyle?.width || '0') === 0
+          && menu.parentElement?.querySelectorAll(':scope > [data-price-breed-scrollbar]').length === 1
+        ),
         scrollbarContained: !hasBreedOverflow || Boolean(
           rect
           && breedScrollbarRect
@@ -2084,6 +2113,7 @@ for (const locale of locales) {
       && breedMenuState.insideViewport
       && breedMenuState.boundedWidth
       && breedMenuState.roundedMenu
+      && breedMenuState.singleScrollbar
       && breedMenuState.scrollbarContained
       && breedMenuState.scrollbarRounded
       && breedMenuState.scrollbarIdleHidden
@@ -2094,6 +2124,51 @@ for (const locale of locales) {
       breedMenuPasses,
       breedMenuPasses ? '' : JSON.stringify(breedMenuState)
     );
+    if (breedMenuState.singleScrollbar) {
+      const canTestScrollbarFade = await page.evaluate(() => {
+        const menu = document.querySelector('.price-card__breed-menu:not([hidden])');
+        return Boolean(menu && menu.scrollHeight > menu.clientHeight + 1);
+      });
+      const menuBox = canTestScrollbarFade
+        ? await page.locator('.price-card__breed-menu:not([hidden])').boundingBox()
+        : null;
+      if (menuBox) {
+        await page.mouse.move(menuBox.x + menuBox.width / 2, menuBox.y + menuBox.height / 2);
+        await page.mouse.wheel(0, 320);
+      }
+      if (menuBox) {
+        await page.waitForFunction(() => {
+          const menu = document.querySelector('.price-card__breed-menu:not([hidden])');
+          const track = menu?.parentElement?.querySelector(':scope > [data-price-breed-scrollbar]');
+          return Boolean(track && Number.parseFloat(getComputedStyle(track).opacity) >= 0.5);
+        }, null, { timeout: 2500 });
+      }
+      const activeOpacity = menuBox ? await page.evaluate(() => {
+        const menu = document.querySelector('.price-card__breed-menu:not([hidden])');
+        const track = menu?.parentElement?.querySelector(':scope > [data-price-breed-scrollbar]');
+        return Number.parseFloat(getComputedStyle(track).opacity);
+      }) : 0;
+      if (menuBox) {
+        await page.waitForFunction(() => {
+          const menu = document.querySelector('.price-card__breed-menu:not([hidden])');
+          const track = menu?.parentElement?.querySelector(':scope > [data-price-breed-scrollbar]');
+          return Boolean(track && Number.parseFloat(getComputedStyle(track).opacity) <= 0.1);
+        }, null, { timeout: 5000 });
+      }
+      const idleOpacity = menuBox ? await page.evaluate(() => {
+        const menu = document.querySelector('.price-card__breed-menu:not([hidden])');
+        const track = menu?.parentElement?.querySelector(':scope > [data-price-breed-scrollbar]');
+        return Number.parseFloat(getComputedStyle(track).opacity);
+      }) : 0;
+      const scrollbarFadeState = menuBox ? { activeOpacity, idleOpacity } : { skipped: true };
+      const scrollbarFadePasses = scrollbarFadeState.skipped
+        || (scrollbarFadeState.activeOpacity >= 0.5 && scrollbarFadeState.idleOpacity <= 0.1);
+      assert(
+        `${locale} ${label}: breed scrollbar fades in while scrolling and out after idle`,
+        scrollbarFadePasses,
+        scrollbarFadePasses ? '' : JSON.stringify(scrollbarFadeState)
+      );
+    }
     if (locale === 'ru') {
       const allBreedLabels = await page.evaluate(() => (
         window.PricePageCatalog?.categoriesByLocale?.ru || []

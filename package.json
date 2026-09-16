@@ -24,6 +24,7 @@
     "price:smoke:prod": "node tools/price-list-smoke.mjs https://hundesalon-nika.com",
     "animal:photos:update": "node tools/update-animal-breed-photos.mjs",
     "animal:photos:build": "node tools/build-animal-breed-photo-manifest.mjs",
+    "animal:photos:reindex": "node tools/reindex-animal-breed-photo-manifest.mjs",
     "animal:photos:contact-sheets": "node tools/render-animal-photo-contact-sheets.mjs",
     "check:live-crawl": "node tools/site-crawl-live.mjs",
     "check:live-robots": "node tools/check-live-robots.mjs",

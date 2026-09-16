@@ -164,7 +164,7 @@ test('small-animal nail price retrieval prioritizes the standalone service', () 
   const firstBlock = reference.split('\n\n---\n\n')[0];
 
   assert.match(firstBlock, /Дополнительные услуги/i);
-  assert.match(firstBlock, /Подстригание когтей — маленькие породы — 7 €/i);
+  assert.match(firstBlock, /Подстригание когтей — маленькие породы — 10 €/i);
   assert.match(reference, /Подстригают только свободную часть когтя/i);
 });
 

@@ -75,6 +75,7 @@
     { key: 'small', sourceKeys: ['small'], grid: 'four' },
     { key: 'medium', sourceKeys: ['medium'], grid: 'four' },
     { key: 'large', sourceKeys: ['large'], grid: 'four' },
+    { key: 'giant', sourceKeys: ['giant'], grid: 'four' },
     { key: 'cats', sourceKeys: ['cats'], grid: 'four' },
     { key: 'smallAnimals', sourceKeys: ['smallAnimals'], layout: 'small-animal-species' },
     {
@@ -85,7 +86,7 @@
     },
     { key: 'other', sourceKeys: ['other'] },
   ];
-  const categoryNavigationKeys = ['small', 'medium', 'large', 'cats', 'smallAnimals'];
+  const categoryNavigationKeys = ['small', 'medium', 'large', 'giant', 'cats', 'smallAnimals'];
   const searchFilterCopy = ({
     de: {
       label: 'Suchfilter',
@@ -99,6 +100,7 @@
       small: 'Klein',
       medium: 'Mittelgroß',
       large: 'Groß',
+      giant: 'Riesig',
       coat: 'Felltyp',
       anyCoat: 'Alle Felltypen',
       long: 'Langhaar',
@@ -120,6 +122,7 @@
       small: 'Small',
       medium: 'Medium',
       large: 'Large',
+      giant: 'Giant',
       coat: 'Coat type',
       anyCoat: 'Any coat',
       long: 'Long-haired',
@@ -141,6 +144,7 @@
       small: 'Маленькие',
       medium: 'Средние',
       large: 'Большие',
+      giant: 'Гигантские',
       coat: 'Тип шерсти',
       anyCoat: 'Любой тип',
       long: 'Длинношёрстные',
@@ -162,6 +166,7 @@
       small: 'Малі',
       medium: 'Середні',
       large: 'Великі',
+      giant: 'Гігантські',
       coat: 'Тип шерсті',
       anyCoat: 'Будь-який тип',
       long: 'Довгошерсті',
@@ -440,8 +445,8 @@
   let savedPriceModalScrollTop = 0;
 
   const syncBreedMenuScrollIndicator = menu => {
-    const track = menu?.querySelector('[data-price-breed-scrollbar]');
-    const thumb = menu?.querySelector('[data-price-breed-scrollbar-thumb]');
+    const track = menu?.parentElement?.querySelector(':scope > [data-price-breed-scrollbar]');
+    const thumb = track?.querySelector('[data-price-breed-scrollbar-thumb]');
     if (!track || !thumb) return;
 
     const hasOverflow = menu.scrollHeight > menu.clientHeight + 1;
@@ -451,6 +456,10 @@
       thumb.style.transform = 'translateY(0)';
       return;
     }
+
+    track.style.top = `${menu.offsetTop + 14}px`;
+    track.style.left = `${menu.offsetLeft + menu.offsetWidth - 14}px`;
+    track.style.height = `${Math.max(0, menu.clientHeight - 28)}px`;
 
     const trackHeight = track.clientHeight;
     if (!trackHeight) return;
@@ -471,12 +480,17 @@
   const showBreedMenuScrollIndicator = menu => {
     if (!menu) return;
     syncBreedMenuScrollIndicator(menu);
+    const track = menu.nextElementSibling?.matches('[data-price-breed-scrollbar]')
+      ? menu.nextElementSibling
+      : null;
     menu.classList.add('price-breed-menu--scrolling');
+    track?.classList.add('price-card__breed-scrollbar--visible');
     if (breedMenuScrollIndicatorTimer) window.clearTimeout(breedMenuScrollIndicatorTimer);
     breedMenuScrollIndicatorTimer = window.setTimeout(() => {
-      if (breedMenuScrollTarget === menu) menu.classList.remove('price-breed-menu--scrolling');
+      menu.classList.remove('price-breed-menu--scrolling');
+      track?.classList.remove('price-card__breed-scrollbar--visible');
       breedMenuScrollIndicatorTimer = null;
-    }, 900);
+    }, 3000);
   };
 
   const setBreedMenuScrollLock = locked => {
@@ -574,6 +588,7 @@
         if (breedMenuScrollTouchHandler) breedMenuScrollTarget.removeEventListener('touchmove', breedMenuScrollTouchHandler);
         if (breedMenuScrollIndicatorScrollHandler) breedMenuScrollTarget.removeEventListener('scroll', breedMenuScrollIndicatorScrollHandler);
         breedMenuScrollTarget.classList.remove('price-breed-menu--scrolling');
+        breedMenuScrollTarget.nextElementSibling?.classList.remove('price-card__breed-scrollbar--visible');
         breedMenuScrollTarget = null;
         breedMenuScrollWheelHandler = null;
         breedMenuScrollTouchHandler = null;
@@ -741,6 +756,7 @@
                     ['small', searchFilterCopy.small],
                     ['medium', searchFilterCopy.medium],
                     ['large', searchFilterCopy.large],
+                    ['giant', searchFilterCopy.giant],
                   ])}
                 </select>
               </label>
@@ -856,7 +872,7 @@
     'small-animal:rabbit:short:4',
   ]);
   const IMPORTANT_CATEGORY_ID = 'ru-important-information';
-  const DENTAL_SERVICE_INDEX = 3;
+  const DENTAL_SERVICE_INDEX = 4;
   const DENTAL_MAX_WEIGHT_KG = 6;
   const DENTAL_GROOMING_DISCOUNT_RATE = 0.3;
   const CURRENCY_MINOR_UNITS = 100;
@@ -909,10 +925,11 @@
     ...sourceCategories.filter(category => category.animalType === 'dog').map(category => category.id),
   ]);
   const additionalServiceIndexesByGroup = {
-    small: [0, 3, 4, 5],
-    medium: [1, 4, 5],
-    large: [2, 4, 5],
-    mixed: [0, 1, 2, 4, 5],
+    small: [0, 4, 5, 6, 7],
+    medium: [1, 5, 6, 8],
+    large: [2, 5, 6, 9],
+    giant: [3, 5, 6, 10],
+    mixed: [0, 1, 2, 3, 5, 6, 7, 8, 9, 10],
   };
 
   const getAdditionalServices = (category, selectedBreed = null) => {
@@ -987,13 +1004,13 @@
             <span class="price-card__badge-count"><span class="price-card__badge-word">${escapeHtml(breedCountText.word)}:</span><span class="price-card__badge-number price-number">${escapeHtml(breedCountText.value)}</span></span>
             <span class="price-card__badge-icon-motion" aria-hidden="true"><span class="price-card__badge-icon"></span></span>
           </button>
-          <div class="price-card__breed-menu${isAdditionalCategory ? ' price-card__breed-menu--categories' : ''}" id="${escapeHtml(breedMenuId)}" hidden>
+          <div class="price-card__breed-menu${isAdditionalCategory ? ' price-card__breed-menu--categories' : ''}" id="${escapeHtml(breedMenuId)}" data-custom-scrollbar-host hidden>
             <p class="price-card__breed-menu-title">${escapeHtml(isAdditionalCategory ? locale.additionalCategoryMenuLabel : locale.chooseBreedLabel || locale.cardCountSuffix)}</p>
             <ul class="price-card__breed-list" id="${escapeHtml(breedListId)}" data-price-breed-list></ul>
-            <span class="price-card__breed-scrollbar" data-price-breed-scrollbar aria-hidden="true">
-              <span class="price-card__breed-scrollbar-thumb" data-price-breed-scrollbar-thumb></span>
-            </span>
           </div>
+          <span class="price-card__breed-scrollbar" data-price-breed-scrollbar aria-hidden="true">
+            <span class="price-card__breed-scrollbar-thumb" data-price-breed-scrollbar-thumb></span>
+          </span>
         </div>`;
     const informationPreview = isInformationCategory
       ? locale.informationCardPreview || locale.serviceConditions?.informationLead || ''
@@ -1607,7 +1624,7 @@
     return services.filter(service => selectedIds.has(service.id));
   };
 
-  const NAIL_TRIM_SERVICE_INDEXES = new Set([0, 1, 2]);
+  const NAIL_TRIM_SERVICE_INDEXES = new Set([0, 1, 2, 3]);
 
   const getDentalWeight = () => {
     const normalized = String(modalDentalWeightInput?.value || '').replace(',', '.');
@@ -2118,7 +2135,7 @@
   };
 
   const getSearchAnimalType = category => {
-    if (category.animalType === 'dog' || ['small', 'medium', 'large'].includes(category.groupKey)) return 'dog';
+    if (category.animalType === 'dog' || ['small', 'medium', 'large', 'giant'].includes(category.groupKey)) return 'dog';
     if (category.groupKey === 'cats') return 'cat';
     if (category.groupKey === 'smallAnimals') return 'smallAnimals';
     return 'other';
@@ -2686,7 +2703,7 @@
     const menuTop = menuViewportTop - controlRect.top;
     menu.style.top = `${Math.round(menuTop)}px`;
     menu.dataset.priceMenuAlign = opensToRight ? 'start' : 'end';
-    showBreedMenuScrollIndicator(menu);
+    syncBreedMenuScrollIndicator(menu);
   };
 
   const startBreedArrowCloseAnimation = toggle => {
@@ -2788,6 +2805,7 @@
         window.HundesalonNavPill?.activate?.(breedsToggle);
         setBreedMenuScrollLock(true);
         positionBreedMenu(breedsToggle);
+        showBreedMenuScrollIndicator(breedMenu);
         window.requestAnimationFrame(() => {
           if (breedsToggle.getAttribute('aria-expanded') === 'true') positionBreedMenu(breedsToggle);
         });

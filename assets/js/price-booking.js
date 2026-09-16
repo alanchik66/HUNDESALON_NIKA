@@ -51,7 +51,7 @@
     'short-haired': [75, 105],
     'double-coat-longhair': [180, 150],
     'express-shedding': [90, 120, 150, 180],
-    'additional-services': [15, 15, 20, 30, 60, 30, 20, 20, 90],
+    'additional-services': [15, 15, 20, 25, 60, 30, 30, 75, 90, 110, 140],
   });
 
   const parseServiceIndex = serviceId => {

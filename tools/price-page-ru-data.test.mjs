@@ -21,7 +21,7 @@ const expectedCategoryIds = [
   'ru-additional-services',
   'ru-important-information',
 ];
-const expectedCatalogHash = '7a6a206188e329719114735f7694cc9816b8d7af7497af7bbaf7a00013e3efb3';
+const expectedCatalogHash = '5ad984a1104a1b626c8c9b13ae72a16b376507a3c005e1f5c2fa4d85af46cc7e';
 
 const loadRussianCatalog = () => {
   const context = vm.createContext({ window: {} });
@@ -49,10 +49,10 @@ test('Russian price catalog keeps its public output stable', () => {
 });
 
 const nailTrimLabels = {
-  ru: ['Подстригание когтей — маленькие породы', 'Подстригание когтей — средние породы', 'Подстригание когтей — большие породы'],
-  de: ['Krallenschneiden — kleine Rassen', 'Krallenschneiden — mittelgroße Rassen', 'Krallenschneiden — große Rassen'],
-  en: ['Nail trimming — small breeds', 'Nail trimming — medium breeds', 'Nail trimming — large breeds'],
-  uk: ['Підстригання кігтів — малі породи', 'Підстригання кігтів — середні породи', 'Підстригання кігтів — великі породи'],
+  ru: ['Подстригание когтей — маленькие породы', 'Подстригание когтей — средние породы', 'Подстригание когтей — большие породы', 'Подстригание когтей — гигантские породы'],
+  de: ['Krallenschneiden — kleine Rassen', 'Krallenschneiden — mittelgroße Rassen', 'Krallenschneiden — große Rassen', 'Krallenschneiden — sehr große Rassen'],
+  en: ['Nail trimming — small breeds', 'Nail trimming — medium breeds', 'Nail trimming — large breeds', 'Nail trimming — giant breeds'],
+  uk: ['Підстригання кігтів — малі породи', 'Підстригання кігтів — середні породи', 'Підстригання кігтів — великі породи', 'Підстригання кігтів — гігантські породи'],
 };
 
 test('nail trimming labels use dog breed sizes in every locale', () => {
@@ -62,7 +62,7 @@ test('nail trimming labels use dog breed sizes in every locale', () => {
       vm.runInContext(fs.readFileSync(path.join(root, relativePath), 'utf8'), context, { filename: relativePath });
     }
     const category = context.window.PriceBookingCatalog.build(lang).getCategory('ru-additional-services');
-    assert.deepEqual(Array.from(category.services.slice(0, 3), service => service.label), nailTrimLabels[lang]);
+    assert.deepEqual(Array.from(category.services.slice(0, 4), service => service.label), nailTrimLabels[lang]);
   }
 });
 

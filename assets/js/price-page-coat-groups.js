@@ -5,7 +5,7 @@
   if (!catalog?.categoriesByLocale || !global.FciDogBreedIntegration) return;
 
   const sourceIds = new Set(Object.values(global.FciDogBreedIntegration.categories));
-  const sizes = ['small', 'medium', 'large'];
+  const sizes = ['small', 'medium', 'large', 'giant'];
   const coats = ['short', 'wire', 'long', 'double'];
   const copy = {
     ru: {
@@ -18,6 +18,8 @@
       wireSummary: 'Уход за жёсткой шерстью с учётом породы; тримминг доступен по запросу.',
       doubleSummary: 'Уход за остевой шерстью и подшёрстком с учётом структуры шерсти.',
       care: 'Комплексный уход',
+      bath: 'Купание + гигиенический уход',
+      handstripping: 'Тримминг',
     },
     de: {
       long: 'Langhaarige Rassen',
@@ -29,6 +31,8 @@
       wireSummary: 'Rassegerechte Pflege von rauem Fell; Trimmen ist auf Anfrage verfügbar.',
       doubleSummary: 'Pflege von Deckhaar und Unterwolle passend zur Fellstruktur.',
       care: 'Komplettpflege',
+      bath: 'Baden + Hygienepflege',
+      handstripping: 'Trimmen',
     },
     en: {
       long: 'Long-haired breeds',
@@ -40,6 +44,8 @@
       wireSummary: 'Breed-appropriate care for wire coats; hand stripping is available on request.',
       doubleSummary: 'Care for the outer coat and undercoat, tailored to the coat structure.',
       care: 'Full care',
+      bath: 'Bath + hygiene care',
+      handstripping: 'Hand stripping',
     },
     uk: {
       long: 'Довгошерсті породи',
@@ -51,6 +57,8 @@
       wireSummary: 'Догляд за жорсткою шерстю з урахуванням породи; тримінг доступний за запитом.',
       doubleSummary: 'Догляд за остьовою шерстю та підшерстям з урахуванням структури шерсті.',
       care: 'Комплексний догляд',
+      bath: 'Купання + гігієнічний догляд',
+      handstripping: 'Тримінг',
     },
   };
 
@@ -60,6 +68,9 @@
   // FCI 168 (Dandie Dinmont) and 294 (Otterhound) explicitly describe coats as "not wiry".
   // FCI references: /Nomenclature/Standards/{097g05,215g09,208g09,094g05,165g07}-en.pdf.
   // Non-wire exceptions: /Nomenclature/Standards/{056g01,168g03,294g06}-en.pdf.
+  // Salon size bands use adult breed-standard weight: up to 6, 6–15, 15–30, and 30+ kg.
+  // A standard range that reaches the next boundary uses the heavier band; stable breed keys
+  // keep coat/size varieties deterministic and identical in every locale.
   const shortDoubleFci = new Set([15, 44, 64, 163, 192, 223, 240, 254, 287, 293, 296, 315, 321, 351, 360]);
   const shortDoubleBase = new Set([6, 9, 25]); // Pug, Beagle, Rottweiler.
   const smallDoubleFci = new Set([75, 148, 209, 218, 231]);
@@ -68,10 +79,18 @@
   const nonWireDoubleFci = new Set([56, 168, 294]);
   const largeSingleFci = new Set([93, 99, 105, 110, 124, 228, 269, 372]);
   const mediumLargeFci = new Set([38, 39, 46, 47, 55, 87, 93, 138, 141, 221, 238, 251, 277, 312, 313, 364, 367]);
-  const largeWireFci = new Set([15, 89, 98, 107, 160, 164, 165, 191, 216, 223, 232, 239, 245, 282, 294, 320]);
   const smallWireFci = new Set([67, 103, 148, 168, 308]);
   const smallWireBase = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22]);
+  const tinyWireBase = new Set([2, 5, 6, 20, 21]);
   const largeSpanielFci = new Set([2, 6, 106, 108, 114, 117, 118, 120, 175, 224, 330]);
+  const largePoodleFci = new Set([37, 298, 301, 336]);
+  const largePoodleBase = new Set([15, 16]);
+  const largeSpitzFci = new Set([48, 261, 291, 317, 318, 319, 334, 358]);
+  const largeSpitzBase = new Set([4, 5, 7]);
+  const giantSpitzFci = new Set([291]);
+  const giantWireFci = new Set([15, 98, 107, 160, 164, 165, 191, 216, 223, 232, 239, 294, 320]);
+  const giantWireBase = new Set([10, 17]);
+  const mediumSmallCoatFci = new Set([75, 209, 231, 246]);
 
   function classify(category, index) {
     const key = category.breedKeys[index];
@@ -81,32 +100,39 @@
     let size = category.pageSection;
     if (category.id === 'ru-small-growing-coat') {
       coat = smallDoubleFci.has(fci) || smallDoubleBase.has(base) ? 'double' : 'long';
-      size = fci === 209 ? 'medium' : 'small';
+      size = mediumSmallCoatFci.has(fci) ? 'medium' : 'small';
     } else if (category.id === 'ru-poodles-bichons') {
       coat = base === 4 || poodleDoubleFci.has(fci) ? 'double' : 'long';
-      size = fci || [2, 3, 14, 15, 16].includes(base) ? 'medium' : 'small';
+      size = largePoodleFci.has(fci) || largePoodleBase.has(base) ? 'large'
+        : fci || [2, 3, 14].includes(base) ? 'medium' : 'small';
     } else if (category.id === 'ru-spitz') {
       coat = 'double';
-      size = [0, 1, 2, 3, 6].includes(base) || [195, 265].includes(fci) ? 'small' : 'medium';
+      size = giantSpitzFci.has(fci) ? 'giant'
+        : largeSpitzBase.has(base) || largeSpitzFci.has(fci) ? 'large'
+          : [0, 1, 2].includes(base) || fci === 195 ? 'small' : 'medium';
     } else if (category.id === 'ru-spaniels') {
       coat = [0, 1, 4, 5].includes(base) || [104, 222].includes(fci) ? 'double' : 'long';
-      size = [2, 3].includes(base) ? 'small' : largeSpanielFci.has(fci) || base === 8 ? 'large' : 'medium';
+      size = base === 8 ? 'giant'
+        : largeSpanielFci.has(fci) || [4, 5, 6, 7, 9].includes(base) || [104, 222].includes(fci) ? 'large'
+          : 'medium';
     } else if (category.id === 'ru-wire-coat') {
       coat = nonWireDoubleFci.has(fci) ? 'double' : 'wire';
-      size = smallWireBase.has(base) || smallWireFci.has(fci) ? 'small'
-        : [10, 17].includes(base) || largeWireFci.has(fci) ? 'large' : 'medium';
-      if (fci === 94) size = key.includes('small-') ? 'small' : key.includes('large-') ? 'large' : 'medium';
-      if (fci === 376) size = key.includes('large-') ? 'large' : 'medium';
+      size = smallWireBase.has(base) || smallWireFci.has(fci) ? 'medium' : 'large';
+      if (tinyWireBase.has(base) || (fci === 148 && /(?:rabbit|miniature)/.test(key))) size = 'small';
+      if (fci === 148 && !/(?:rabbit|miniature)/.test(key)) size = 'medium';
+      if (giantWireBase.has(base) || giantWireFci.has(fci)) size = 'giant';
+      if (fci === 94) size = key.includes('small-') ? 'small' : key.includes('large-') ? 'large' : 'large';
+      if (fci === 376) size = 'large';
     } else if (category.id === 'ru-short-coat') {
       coat = shortDoubleFci.has(fci) || shortDoubleBase.has(base) ? 'double' : 'short';
       const priceIndex = category.breedServiceIndexes[index];
-      size = priceIndex < 2 ? 'small' : priceIndex === 2 ? 'medium' : 'large';
-      if ([8, 9, 13, 14, 15].includes(base) || [34, 35, 64, 163].includes(fci)) size = 'medium';
-      if (fci === 223) size = 'large';
+      size = sizes[priceIndex] || 'giant';
     } else if (category.id === 'ru-large-dogs') {
       coat = base >= 28 || largeSingleFci.has(fci) ? 'long' : 'double';
-      size = fci === 83 ? 'small' : [3, 4, 5].includes(base) || mediumLargeFci.has(fci) ? 'medium' : 'large';
+      size = fci === 83 ? 'medium'
+        : [3, 4, 5, 7, 8, 10, 25].includes(base) || mediumLargeFci.has(fci) ? 'large' : 'giant';
     }
+    if (fci === 148) size = /(?:rabbit|miniature)/.test(key) ? 'small' : 'medium';
     return { coat, size };
   }
 
@@ -118,16 +144,25 @@
     });
   }
 
-  function serviceKey(source, row, index) {
-    if (row.key === 'puppy-intro') return row.key;
-    if (source.id === 'ru-short-coat' || index === source.priceRows.length - 2) return 'bath-hygiene';
-    if (source.id === 'ru-wire-coat' && index === 1) return 'handstripping';
-    return 'full-care';
-  }
   const serviceOrder = ['puppy-intro', 'full-care', 'bath-hygiene', 'handstripping'];
-  const amount = value => {
-    const match = Object.values(value || {}).find(text => /\d/.test(text))?.match(/\d+(?:[.,]\d+)?/);
-    return match ? Number(match[0].replace(',', '.')) : Infinity;
+  const priceMatrix = {
+    small: { puppy: 50, short: [60, 50], wire: [80, 60, 75], long: [80, 60], double: [80, 60] },
+    medium: { puppy: 55, short: [70, 60], wire: [90, 70, 90], long: [90, 70], double: [90, 75] },
+    large: { puppy: 60, short: [90, 75], wire: [110, 85, 110], long: [105, 85], double: [110, 90] },
+    giant: { puppy: 70, short: [110, 95], wire: [140, 105, 140], long: [130, 110], double: [140, 120] },
+  };
+  const priceText = (lang, value) => ({
+    [lang]: lang === 'en' ? `from €${value}` : lang === 'uk' ? `від ${value} €` : lang === 'de' ? `ab ${value} €` : `от ${value} €`,
+  });
+  const auditedRows = (source, membership, lang, text) => {
+    const tariff = priceMatrix[membership.size];
+    const [fullPrice, bathPrice] = tariff[membership.coat];
+    const puppy = source.priceRows.find(row => row.key === 'puppy-intro');
+    return [
+      puppy && { ...puppy, key: 'puppy-intro', price: priceText(lang, tariff.puppy) },
+      { key: 'full-care', label: { [lang]: text.care }, price: priceText(lang, fullPrice) },
+      { key: 'bath-hygiene', label: { [lang]: text.bath }, price: priceText(lang, bathPrice) },
+    ].filter(Boolean);
   };
 
   for (const [lang, text] of Object.entries(copy)) {
@@ -139,16 +174,7 @@
         const breedKey = source.breedKeys[index];
         const membership = memberships.get(breedKey);
         if (!membership) throw new Error('Missing breed classification: ' + breedKey);
-        const rows = source.priceRows.flatMap((row, rowIndex) => {
-          if (source.id === 'ru-short-coat' && row.key !== 'puppy-intro') {
-            if (rowIndex !== source.breedServiceIndexes[index]) return [];
-            return [
-              { ...row, key: 'full-care', label: { [lang]: text.care } },
-              { ...row, key: 'bath-hygiene' },
-            ];
-          }
-          return [{ ...row, key: serviceKey(source, row, rowIndex) }];
-        });
+        const rows = auditedRows(source, membership, lang, text);
         buckets.get(membership.size + ':' + membership.coat).push({
           name, breedKey, fci: source.breedFciNumbers[index], rows, notes: source.notes,
           services: source.services, sourceCategoryId: source.id,
@@ -162,9 +188,8 @@
       if (!breeds.length) continue;
       const keys = serviceOrder.filter(key => breeds.some(breed => breed.rows.some(row => row.key === key)));
       const priceRows = keys.map(key => {
-        const options = breeds.flatMap(breed => breed.rows.filter(row => row.key === key));
-        const cheapest = options.reduce((best, row) => amount(row.price) < amount(best.price) ? row : best);
-        return { ...cheapest, label: key === 'full-care' ? { [lang]: text.care } : cheapest.label };
+        const option = breeds.find(breed => breed.rows.some(row => row.key === key)).rows.find(row => row.key === key);
+        return { ...option };
       });
       grouped.push({
         id: 'ru-' + coat + '-coat-' + size,
