@@ -14801,7 +14801,10 @@ body.price-page .price-page-hero[data-price-hero] .price-breed-search__result-co
   flex-wrap: wrap;
   gap: 0.25rem 0.85rem;
   min-width: 0;
-  font-size: 0.8rem;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 0.2vw + 0.85rem, 1.1rem);
+  font-weight: 400;
+  letter-spacing: 0.035em;
   line-height: 1.5;
 }
 
@@ -15072,7 +15075,7 @@ body.price-page main.page-offset-top {
   }
 
   body.price-page .price-page-hero[data-price-hero] .price-breed-search__result-count {
-    font-size: 0.8rem;
+    font-size: 1rem;
   }
 
   body.price-page .price-page-hero[data-price-hero] .price-page-hero__actions {
@@ -15194,7 +15197,7 @@ body.price-page main.page-offset-top {
   }
 
   body.price-page .price-page-hero[data-price-hero] .price-breed-search__result-count {
-    font-size: 0.72rem;
+    font-size: 0.9rem;
   }
 
   body.price-page .price-page-hero[data-price-hero] .price-page-hero__actions {

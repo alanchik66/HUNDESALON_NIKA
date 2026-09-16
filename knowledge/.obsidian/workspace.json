@@ -183,7 +183,8 @@
               "title": "Source Control"
             }
           }
-        ]
+        ],
+        "currentTab": 6
       }
     ],
     "direction": "horizontal",
@@ -204,7 +205,7 @@
       "obsidian-excalidraw-plugin:Создать новый чертеж": false
     }
   },
-  "active": "5cf63bf9a3cb0358",
+  "active": "b8468c4d0fbe3327",
   "lastOpenFiles": [
     "Без названия.canvas",
     "07_Release.md",
