@@ -829,24 +829,50 @@ for (const locale of locales) {
     const coatFilter = page.locator('[data-price-search-filter="coat"]');
     const searchReset = page.locator('[data-price-search-reset]');
     for (const animalCase of [
-      { value: 'cat', categoryIds: ['ru-cat-short-coat', 'ru-cat-special-coat', 'ru-cat-long-coat', 'ru-cat-double-coat'] },
-      { value: 'smallAnimals', categoryIds: ['ru-guinea-pig-short-coat', 'ru-guinea-pig-long-coat', 'ru-rabbit-short-coat', 'ru-rabbit-long-coat'] },
+      {
+        value: 'cat',
+        categoryIds: ['ru-cat-short-coat', 'ru-cat-special-coat', 'ru-cat-long-coat', 'ru-cat-double-coat'],
+        coatOptions: ['all', 'short', 'special', 'long', 'double'],
+        selectedCoat: 'special',
+        filteredCategoryIds: ['ru-cat-special-coat'],
+      },
+      {
+        value: 'smallAnimals',
+        categoryIds: ['ru-guinea-pig-short-coat', 'ru-guinea-pig-long-coat', 'ru-rabbit-short-coat', 'ru-rabbit-long-coat'],
+        coatOptions: ['all', 'short', 'long'],
+        selectedCoat: 'long',
+        filteredCategoryIds: ['ru-guinea-pig-long-coat', 'ru-rabbit-long-coat'],
+      },
     ]) {
       await animalFilter.selectOption(animalCase.value);
-      const animalFilterState = await page.evaluate(expectedCategoryIds => ({
+      const animalFilterState = await page.evaluate(expected => ({
         cardIds: Array.from(document.querySelectorAll('[data-price-categories] [data-category-id]'))
           .map(card => card.dataset.categoryId),
-        dogRefinementsDisabled: Array.from(document.querySelectorAll('[data-price-search-filter="size"], [data-price-search-filter="coat"]'))
-          .every(select => select.disabled && select.value === 'all'),
+        sizeDisabled: document.querySelector('[data-price-search-filter="size"]')?.disabled === true,
+        sizeHidden: document.querySelector('[data-price-search-filter="size"]')?.closest('label')?.hidden === true,
+        coatEnabled: document.querySelector('[data-price-search-filter="coat"]')?.disabled === false,
+        coatOptions: Array.from(document.querySelector('[data-price-search-filter="coat"]')?.options || [])
+          .map(option => option.value),
         resultCount: document.querySelector('[data-price-search-result-count]')?.textContent?.trim() || '',
-        expectedCategoryIds,
-      }), animalCase.categoryIds);
+        expected,
+      }), animalCase);
       assert(
-        `${locale} ${label}: ${animalCase.value} filter isolates its four animal categories`,
+        `${locale} ${label}: ${animalCase.value} exposes its relevant coat filter`,
         JSON.stringify(animalFilterState.cardIds) === JSON.stringify(animalCase.categoryIds)
-          && animalFilterState.dogRefinementsDisabled
+          && animalFilterState.sizeDisabled
+          && animalFilterState.sizeHidden
+          && animalFilterState.coatEnabled
+          && JSON.stringify(animalFilterState.coatOptions) === JSON.stringify(animalCase.coatOptions)
           && /[1-9]\d*/u.test(animalFilterState.resultCount),
         JSON.stringify(animalFilterState)
+      );
+      await coatFilter.selectOption(animalCase.selectedCoat);
+      const coatFilteredCardIds = await page.locator('[data-price-categories] [data-category-id]')
+        .evaluateAll(cards => cards.map(card => card.dataset.categoryId));
+      assert(
+        `${locale} ${label}: ${animalCase.value} coat filter narrows matching categories`,
+        JSON.stringify(coatFilteredCardIds) === JSON.stringify(animalCase.filteredCategoryIds),
+        JSON.stringify(coatFilteredCardIds)
       );
     }
     await animalFilter.selectOption('dog');

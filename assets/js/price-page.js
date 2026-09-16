@@ -107,6 +107,7 @@
       short: 'Kurzhaar',
       wire: 'Rauhaar',
       double: 'Doppelfell',
+      special: 'Rex, draht- oder haarlos',
       results: 'Gefunden',
       reset: 'Alles zurücksetzen',
     },
@@ -129,6 +130,7 @@
       short: 'Short-haired',
       wire: 'Wire-haired',
       double: 'Double coat',
+      special: 'Rex, wire-haired or hairless',
       results: 'Found',
       reset: 'Reset all',
     },
@@ -151,6 +153,7 @@
       short: 'Короткошёрстные',
       wire: 'Жёсткошёрстные',
       double: 'Двойная шерсть',
+      special: 'Рексовые, жёсткие или бесшёрстные',
       results: 'Найдено',
       reset: 'Сбросить всё',
     },
@@ -173,6 +176,7 @@
       short: 'Короткошерсті',
       wire: 'Жорсткошерсті',
       double: 'Подвійна шерсть',
+      special: 'Рексові, жорсткі або безшерсті',
       results: 'Знайдено',
       reset: 'Скинути все',
     },
@@ -186,6 +190,18 @@
   const renderSearchFilterOptions = options => options
     .map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`)
     .join('');
+  const getCoatFilterOptions = animalType => {
+    const coatKeys = ({
+      dog: ['short', 'wire', 'long', 'double'],
+      cat: ['short', 'special', 'long', 'double'],
+      smallAnimals: ['short', 'long'],
+      all: ['short', 'wire', 'special', 'long', 'double'],
+    })[animalType] || [];
+    return [
+      ['all', searchFilterCopy.anyCoat],
+      ...coatKeys.map(key => [key, searchFilterCopy[key]]),
+    ];
+  };
 
   const createCategoryViews = () => {
     const views = [];
@@ -763,13 +779,7 @@
               <label class="price-breed-search__filter">
                 <span class="price-breed-search__filter-label">${escapeHtml(searchFilterCopy.coat)}</span>
                 <select class="price-breed-search__filter-select" data-price-search-filter="coat" aria-controls="price-categories price-breed-search-suggestions">
-                  ${renderSearchFilterOptions([
-                    ['all', searchFilterCopy.anyCoat],
-                    ['short', searchFilterCopy.short],
-                    ['wire', searchFilterCopy.wire],
-                    ['long', searchFilterCopy.long],
-                    ['double', searchFilterCopy.double],
-                  ])}
+                  ${renderSearchFilterOptions(getCoatFilterOptions('all'))}
                 </select>
               </label>
             </div>
@@ -2065,6 +2075,7 @@
   const searchSuggestions = heroRoot.querySelector('[data-price-breed-search-suggestions]');
   const searchSuggestionsList = heroRoot.querySelector('[data-price-breed-search-suggestions-list]');
   const searchStatus = heroRoot.querySelector('[data-price-breed-search-status]');
+  const searchFilters = heroRoot.querySelector('[data-price-search-filters]');
   const searchFilterSelects = Array.from(heroRoot.querySelectorAll('[data-price-search-filter]'));
   const searchResultCount = heroRoot.querySelector('[data-price-search-result-count]');
   const searchReset = heroRoot.querySelector('[data-price-search-reset]');
@@ -2143,7 +2154,7 @@
   const matchesSearchFilters = match => {
     if (searchFilterState.animal !== 'all' && match.animalType !== searchFilterState.animal) return false;
     if (searchFilterState.size !== 'all' && (match.animalType !== 'dog' || match.size !== searchFilterState.size)) return false;
-    if (searchFilterState.coat !== 'all' && (match.animalType !== 'dog' || match.coat !== searchFilterState.coat)) return false;
+    if (searchFilterState.coat !== 'all' && match.coat !== searchFilterState.coat) return false;
     return true;
   };
   const hasActiveSearchFilters = () => Object.values(searchFilterState).some(value => value !== 'all');
@@ -2165,7 +2176,7 @@
           sectionLabel: locale.sizeGroupTitles?.[category.groupKey] || locale.servicesTitle,
           animalType,
           size: animalType === 'dog' ? category.groupKey : '',
-          coat: animalType === 'dog' ? category.coatType || '' : '',
+          coat: category.coatType || '',
           photoKey: photo?.key || '',
         };
       });
@@ -2440,12 +2451,27 @@
     searchFilterState.coat = 'all';
   };
   const syncSearchFilterControls = () => {
+    const hidesDogSize = !['all', 'dog'].includes(searchFilterState.animal);
+    searchFilters?.classList.toggle('price-breed-search__filters--animal-coat', hidesDogSize);
     searchFilterSelects.forEach(select => {
       const filterKey = select.dataset.priceSearchFilter;
       if (!Object.hasOwn(searchFilterState, filterKey)) return;
+      if (filterKey === 'coat') {
+        const coatOptions = getCoatFilterOptions(searchFilterState.animal);
+        const supportedValues = new Set(coatOptions.map(([value]) => value));
+        if (!supportedValues.has(searchFilterState.coat)) searchFilterState.coat = 'all';
+        const optionSignature = coatOptions.map(([value, label]) => `${value}:${label}`).join('|');
+        if (select.dataset.optionSignature !== optionSignature) {
+          select.innerHTML = renderSearchFilterOptions(coatOptions);
+          select.dataset.optionSignature = optionSignature;
+        }
+      }
       select.value = searchFilterState[filterKey];
-      select.disabled = (filterKey === 'size' || filterKey === 'coat')
-        && !['all', 'dog'].includes(searchFilterState.animal);
+      select.disabled = filterKey === 'size' && hidesDogSize;
+      if (filterKey === 'size') {
+        const sizeField = select.closest('.price-breed-search__filter');
+        if (sizeField) sizeField.hidden = hidesDogSize;
+      }
       select.dispatchEvent(new Event('site-select:refresh'));
     });
     if (searchReset) {
@@ -2567,8 +2593,7 @@
       searchFilterState[filterKey] = select.value;
       if (filterKey === 'animal' && !['all', 'dog'].includes(select.value)) {
         searchFilterState.size = 'all';
-        searchFilterState.coat = 'all';
-      } else if ((filterKey === 'size' || filterKey === 'coat') && select.value !== 'all') {
+      } else if (filterKey === 'size' && select.value !== 'all') {
         searchFilterState.animal = 'dog';
       }
 

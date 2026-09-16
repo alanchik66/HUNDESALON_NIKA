@@ -1210,6 +1210,15 @@ body.light .price-configurator__result {
   min-width: 0;
 }
 
+body.price-page .price-page-hero[data-price-hero]
+  .price-breed-search__filters.price-breed-search__filters--animal-coat {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+body.price-page .price-page-hero[data-price-hero] .price-breed-search__filter[hidden] {
+  display: none;
+}
+
 .price-breed-search__filter-label {
   color: rgb(255 239 209 / 0.72);
   font-family: var(--font-ui, 'Cinzel', serif);
