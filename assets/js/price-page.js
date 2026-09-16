@@ -95,12 +95,12 @@
       dog: 'Hunde',
       cat: 'Katzen',
       smallAnimals: 'Kleintiere',
-      size: 'Hundegröße',
-      anySize: 'Alle Größen',
-      small: 'Klein',
-      medium: 'Mittelgroß',
-      large: 'Groß',
-      giant: 'Riesig',
+      weight: 'Gewicht',
+      anyWeight: 'Jedes Gewicht',
+      small: 'Bis 6 kg',
+      medium: '6–15 kg',
+      large: '15‑30 kg',
+      giant: 'Ab 30 kg',
       coat: 'Felltyp',
       anyCoat: 'Alle Felltypen',
       long: 'Langhaar',
@@ -108,7 +108,11 @@
       wire: 'Rauhaar',
       double: 'Doppelfell',
       special: 'Rex, draht- oder haarlos',
-      results: 'Gefunden',
+      sort: 'Sortierung',
+      sortDefault: 'Empfohlen',
+      sortWeightAsc: 'Gewicht: leicht zuerst',
+      sortWeightDesc: 'Gewicht: schwer zuerst',
+      results: 'Rassen gefunden',
       reset: 'Alles zurücksetzen',
     },
     en: {
@@ -118,12 +122,12 @@
       dog: 'Dogs',
       cat: 'Cats',
       smallAnimals: 'Small animals',
-      size: 'Dog size',
-      anySize: 'Any size',
-      small: 'Small',
-      medium: 'Medium',
-      large: 'Large',
-      giant: 'Giant',
+      weight: 'Weight',
+      anyWeight: 'Any weight',
+      small: 'Up to 6 kg',
+      medium: '6–15 kg',
+      large: '15‑30 kg',
+      giant: '30 kg and over',
       coat: 'Coat type',
       anyCoat: 'Any coat',
       long: 'Long-haired',
@@ -131,7 +135,11 @@
       wire: 'Wire-haired',
       double: 'Double coat',
       special: 'Rex, wire-haired or hairless',
-      results: 'Found',
+      sort: 'Sort by',
+      sortDefault: 'Recommended',
+      sortWeightAsc: 'Weight: low to high',
+      sortWeightDesc: 'Weight: high to low',
+      results: 'Breeds found',
       reset: 'Reset all',
     },
     ru: {
@@ -141,12 +149,12 @@
       dog: 'Собаки',
       cat: 'Кошки',
       smallAnimals: 'Мелкие животные',
-      size: 'Размер собаки',
-      anySize: 'Любой размер',
-      small: 'Маленькие',
-      medium: 'Средние',
-      large: 'Большие',
-      giant: 'Гигантские',
+      weight: 'Вес',
+      anyWeight: 'Любой вес',
+      small: 'До 6 кг',
+      medium: '6–15 кг',
+      large: '15‑30 кг',
+      giant: 'От 30 кг',
       coat: 'Тип шерсти',
       anyCoat: 'Любой тип',
       long: 'Длинношёрстные',
@@ -154,7 +162,11 @@
       wire: 'Жёсткошёрстные',
       double: 'Двойная шерсть',
       special: 'Рексовые, жёсткие или бесшёрстные',
-      results: 'Найдено',
+      sort: 'Сортировка',
+      sortDefault: 'Рекомендуемые',
+      sortWeightAsc: 'Вес: от малого',
+      sortWeightDesc: 'Вес: от большого',
+      results: 'Найдено пород',
       reset: 'Сбросить всё',
     },
     uk: {
@@ -164,12 +176,12 @@
       dog: 'Собаки',
       cat: 'Коти',
       smallAnimals: 'Дрібні тварини',
-      size: 'Розмір собаки',
-      anySize: 'Будь-який розмір',
-      small: 'Малі',
-      medium: 'Середні',
-      large: 'Великі',
-      giant: 'Гігантські',
+      weight: 'Вага',
+      anyWeight: 'Будь-яка вага',
+      small: 'До 6 кг',
+      medium: '6–15 кг',
+      large: '15‑30 кг',
+      giant: 'Від 30 кг',
       coat: 'Тип шерсті',
       anyCoat: 'Будь-який тип',
       long: 'Довгошерсті',
@@ -177,7 +189,11 @@
       wire: 'Жорсткошерсті',
       double: 'Подвійна шерсть',
       special: 'Рексові, жорсткі або безшерсті',
-      results: 'Знайдено',
+      sort: 'Сортування',
+      sortDefault: 'Рекомендовані',
+      sortWeightAsc: 'Вага: від малої',
+      sortWeightDesc: 'Вага: від великої',
+      results: 'Знайдено порід',
       reset: 'Скинути все',
     },
   })[lang];
@@ -765,10 +781,10 @@
                 </select>
               </label>
               <label class="price-breed-search__filter">
-                <span class="price-breed-search__filter-label">${escapeHtml(searchFilterCopy.size)}</span>
-                <select class="price-breed-search__filter-select" data-price-search-filter="size" aria-controls="price-categories price-breed-search-suggestions">
+                <span class="price-breed-search__filter-label">${escapeHtml(searchFilterCopy.weight)}</span>
+                <select class="price-breed-search__filter-select" data-price-search-filter="weight" aria-controls="price-categories price-breed-search-suggestions">
                   ${renderSearchFilterOptions([
-                    ['all', searchFilterCopy.anySize],
+                    ['all', searchFilterCopy.anyWeight],
                     ['small', searchFilterCopy.small],
                     ['medium', searchFilterCopy.medium],
                     ['large', searchFilterCopy.large],
@@ -780,6 +796,16 @@
                 <span class="price-breed-search__filter-label">${escapeHtml(searchFilterCopy.coat)}</span>
                 <select class="price-breed-search__filter-select" data-price-search-filter="coat" aria-controls="price-categories price-breed-search-suggestions">
                   ${renderSearchFilterOptions(getCoatFilterOptions('all'))}
+                </select>
+              </label>
+              <label class="price-breed-search__filter">
+                <span class="price-breed-search__filter-label">${escapeHtml(searchFilterCopy.sort)}</span>
+                <select class="price-breed-search__filter-select" data-price-search-filter="sort" aria-controls="price-categories price-breed-search-suggestions">
+                  ${renderSearchFilterOptions([
+                    ['default', searchFilterCopy.sortDefault],
+                    ['weight-asc', searchFilterCopy.sortWeightAsc],
+                    ['weight-desc', searchFilterCopy.sortWeightDesc],
+                  ])}
                 </select>
               </label>
             </div>
@@ -1088,9 +1114,28 @@
 
     const allBreeds = category.breeds?.[lang] || category.breeds?.en || [];
     const isAdditionalCategory = (category.sourceId || category.id) === ADDITIONAL_CATEGORY_ID;
-    list.innerHTML = allBreeds
-      .map((item, index) => {
-        const sourceIndex = category.breedIndexes?.[index] ?? index;
+    const breedEntries = allBreeds.map((item, index) => ({
+      item,
+      index,
+      sourceIndex: category.breedIndexes?.[index] ?? index,
+    }));
+    if (searchFilterState.sort !== 'default') {
+      breedEntries.sort((left, right) => {
+        const leftMatch = breedSearchMatchById.get(`${category.id}:${left.sourceIndex}`) || {
+          id: `${category.id}:${left.sourceIndex}`,
+          label: left.item,
+          weightValue: Number.POSITIVE_INFINITY,
+        };
+        const rightMatch = breedSearchMatchById.get(`${category.id}:${right.sourceIndex}`) || {
+          id: `${category.id}:${right.sourceIndex}`,
+          label: right.item,
+          weightValue: Number.POSITIVE_INFINITY,
+        };
+        return compareBreedMatches(leftMatch, rightMatch);
+      });
+    }
+    list.innerHTML = breedEntries
+      .map(({ item, index, sourceIndex }) => {
         const photoSubject = getBreedPhotoSubject(category, item, index, sourceIndex);
         const photoKey = isAdditionalCategory ? ADDITIONAL_CATEGORY_PHOTO_KEYS[sourceIndex] : photoSubject?.photoKey;
         const photo = getAnimalPhotoEntry(photoKey);
@@ -2075,12 +2120,11 @@
   const searchSuggestions = heroRoot.querySelector('[data-price-breed-search-suggestions]');
   const searchSuggestionsList = heroRoot.querySelector('[data-price-breed-search-suggestions-list]');
   const searchStatus = heroRoot.querySelector('[data-price-breed-search-status]');
-  const searchFilters = heroRoot.querySelector('[data-price-search-filters]');
   const searchFilterSelects = Array.from(heroRoot.querySelectorAll('[data-price-search-filter]'));
   const searchResultCount = heroRoot.querySelector('[data-price-search-result-count]');
   const searchReset = heroRoot.querySelector('[data-price-search-reset]');
   const SEARCH_MIN_CHARS = 2;
-  const searchFilterState = { animal: 'all', size: 'all', coat: 'all' };
+  const searchFilterState = { animal: 'all', weight: 'all', coat: 'all', sort: 'default' };
 
   const normalizeSearch = value => String(value || '')
     .toLocaleLowerCase(lang)
@@ -2151,13 +2195,49 @@
     if (category.groupKey === 'smallAnimals') return 'smallAnimals';
     return 'other';
   };
+  const dogWeightRanges = {
+    small: { min: 0, max: 5.99, value: 3 },
+    medium: { min: 6, max: 14.99, value: 10.5 },
+    large: { min: 15, max: 29.99, value: 22.5 },
+    giant: { min: 30, max: 60, value: 30 },
+  };
+  const getWeightBands = (min, max) => {
+    const bands = [];
+    if (min < 6) bands.push('small');
+    if (max >= 6 && min < 15) bands.push('medium');
+    if (max >= 15 && min < 30) bands.push('large');
+    if (max >= 30) bands.push('giant');
+    return bands;
+  };
+  const getBreedWeightProfile = (category, filteredIndex, sourceIndex, animalType) => {
+    if (animalType === 'dog' && dogWeightRanges[category.groupKey]) {
+      const range = dogWeightRanges[category.groupKey];
+      return { ...range, bands: [category.groupKey] };
+    }
+    if (animalType === 'smallAnimals') {
+      return { min: 0, max: 5.99, value: 2, bands: ['small'] };
+    }
+
+    const metadata = category.breedMetadata?.[lang]?.[sourceIndex]
+      || category.breedMetadata?.[lang]?.[filteredIndex]
+      || null;
+    const min = Number(metadata?.weightKg?.min);
+    const max = Number(metadata?.weightKg?.max);
+    if (Number.isFinite(min) && Number.isFinite(max)) {
+      return { min, max, value: (min + max) / 2, bands: getWeightBands(min, max) };
+    }
+    return { min: null, max: null, value: Number.POSITIVE_INFINITY, bands: [] };
+  };
   const matchesSearchFilters = match => {
     if (searchFilterState.animal !== 'all' && match.animalType !== searchFilterState.animal) return false;
-    if (searchFilterState.size !== 'all' && (match.animalType !== 'dog' || match.size !== searchFilterState.size)) return false;
+    if (searchFilterState.weight !== 'all' && !match.weightBands.includes(searchFilterState.weight)) return false;
     if (searchFilterState.coat !== 'all' && match.coat !== searchFilterState.coat) return false;
     return true;
   };
-  const hasActiveSearchFilters = () => Object.values(searchFilterState).some(value => value !== 'all');
+  const hasActiveSearchFilters = () => searchFilterState.animal !== 'all'
+    || searchFilterState.weight !== 'all'
+    || searchFilterState.coat !== 'all'
+    || searchFilterState.sort !== 'default';
 
   const breedSearchMatches = categoryViews
     .filter(category => getSearchAnimalType(category) !== 'other')
@@ -2166,6 +2246,7 @@
       return (category.breeds?.[lang] || category.breeds?.en || []).map((label, index) => {
         const breedIndex = category.breedIndexes?.[index] ?? index;
         const photo = getAnimalPhotoRecord(category, label, index, breedIndex);
+        const weight = getBreedWeightProfile(category, index, breedIndex, animalType);
         return {
           id: `${category.id}:${breedIndex}`,
           label,
@@ -2175,18 +2256,38 @@
           categoryLabel: getText(category.title),
           sectionLabel: locale.sizeGroupTitles?.[category.groupKey] || locale.servicesTitle,
           animalType,
-          size: animalType === 'dog' ? category.groupKey : '',
+          weightBands: weight.bands,
+          weightValue: weight.value,
           coat: category.coatType || '',
           photoKey: photo?.key || '',
         };
       });
     });
+  const breedSearchMatchById = new Map(breedSearchMatches.map(match => [match.id, match]));
+
+  const compareBreedMatches = (left, right) => {
+    if (searchFilterState.sort === 'weight-asc' || searchFilterState.sort === 'weight-desc') {
+      const direction = searchFilterState.sort === 'weight-desc' ? -1 : 1;
+      const leftWeight = Number.isFinite(left.weightValue) ? left.weightValue : Number.MAX_SAFE_INTEGER;
+      const rightWeight = Number.isFinite(right.weightValue) ? right.weightValue : Number.MAX_SAFE_INTEGER;
+      return direction * (leftWeight - rightWeight)
+        || breedSearchCollator.compare(left.label, right.label)
+        || left.id.localeCompare(right.id);
+    }
+    return left.id.localeCompare(right.id);
+  };
+  const sortBreedMatches = matches => {
+    if (searchFilterState.sort === 'default') return matches;
+    return [...matches].sort(compareBreedMatches);
+  };
 
   const findBreedMatches = query => {
     const normalizedQuery = normalizeSearch(query);
-    if (normalizedQuery.length < SEARCH_MIN_CHARS) return breedSearchMatches.filter(matchesSearchFilters);
+    if (normalizedQuery.length < SEARCH_MIN_CHARS) {
+      return sortBreedMatches(breedSearchMatches.filter(matchesSearchFilters));
+    }
     const queryTokens = normalizeBreedTokens(query);
-    return breedSearchMatches
+    const scoredMatches = breedSearchMatches
       .map(match => ({
         match,
         score: queryTokens.reduce((total, queryToken) => {
@@ -2197,13 +2298,36 @@
         }, 0),
       }))
       .filter(result => Number.isFinite(result.score))
-      .sort((left, right) =>
+      .filter(result => Number.isFinite(result.score));
+    if (searchFilterState.sort === 'default') {
+      scoredMatches.sort((left, right) =>
         left.score - right.score
         || breedSearchCollator.compare(left.match.label, right.match.label)
         || left.match.id.localeCompare(right.match.id)
-      )
-      .map(result => result.match)
-      .filter(matchesSearchFilters);
+      );
+    } else {
+      scoredMatches.sort((left, right) => compareBreedMatches(left.match, right.match));
+    }
+    return scoredMatches.map(result => result.match).filter(matchesSearchFilters);
+  };
+  const getCategoryWeightValue = categoryId => {
+    const weights = breedSearchMatches
+      .filter(match => match.categoryId === categoryId && Number.isFinite(match.weightValue))
+      .map(match => match.weightValue);
+    return weights.length ? weights.reduce((sum, value) => sum + value, 0) / weights.length : Number.POSITIVE_INFINITY;
+  };
+  const sortCategoryViews = views => {
+    if (searchFilterState.sort === 'default') return views;
+    const sorted = [...views];
+    sorted.sort((left, right) => {
+      const leftTitle = getText(left.title);
+      const rightTitle = getText(right.title);
+      const direction = searchFilterState.sort === 'weight-desc' ? -1 : 1;
+      const leftWeight = getCategoryWeightValue(left.id);
+      const rightWeight = getCategoryWeightValue(right.id);
+      return direction * (leftWeight - rightWeight) || breedSearchCollator.compare(leftTitle, rightTitle);
+    });
+    return sorted;
   };
 
   let activeSuggestionIndex = -1;
@@ -2447,12 +2571,11 @@
 
   const resetSearchFilters = () => {
     searchFilterState.animal = 'all';
-    searchFilterState.size = 'all';
+    searchFilterState.weight = 'all';
     searchFilterState.coat = 'all';
+    searchFilterState.sort = 'default';
   };
   const syncSearchFilterControls = () => {
-    const hidesDogSize = !['all', 'dog'].includes(searchFilterState.animal);
-    searchFilters?.classList.toggle('price-breed-search__filters--animal-coat', hidesDogSize);
     searchFilterSelects.forEach(select => {
       const filterKey = select.dataset.priceSearchFilter;
       if (!Object.hasOwn(searchFilterState, filterKey)) return;
@@ -2467,11 +2590,7 @@
         }
       }
       select.value = searchFilterState[filterKey];
-      select.disabled = filterKey === 'size' && hidesDogSize;
-      if (filterKey === 'size') {
-        const sizeField = select.closest('.price-breed-search__filter');
-        if (sizeField) sizeField.hidden = hidesDogSize;
-      }
+      select.disabled = false;
       select.dispatchEvent(new Event('site-select:refresh'));
     });
     if (searchReset) {
@@ -2494,7 +2613,7 @@
     const sections = sectionGroups
       .map(group => renderSection(
         group.key,
-        visibleCategories.filter(category => group.sourceKeys.includes(category.groupKey)),
+        sortCategoryViews(visibleCategories.filter(category => group.sourceKeys.includes(category.groupKey))),
         group
       ))
       .filter(section => section.includes('price-card'))
@@ -2517,7 +2636,18 @@
         searchStatus.textContent = matches.length ? '' : locale.searchEmpty || 'No matching breed found.';
       }
     }
-    if (searchResultCount) searchResultCount.textContent = `${searchFilterCopy.results}: ${matches.length}`;
+    if (searchResultCount) {
+      const counts = { dog: 0, cat: 0, smallAnimals: 0 };
+      matches.forEach(match => {
+        if (Object.hasOwn(counts, match.animalType)) counts[match.animalType] += 1;
+      });
+      searchResultCount.innerHTML = [
+        `<span class="price-breed-search__count-total">${escapeHtml(searchFilterCopy.results)}: ${matches.length}</span>`,
+        ...Object.entries(counts).map(([type, count]) =>
+          `<span class="price-breed-search__count-group">${escapeHtml(searchFilterCopy[type])}: ${count}</span>`
+        ),
+      ].join(' ');
+    }
     if (searchClear) searchClear.hidden = !normalizedQuery;
     syncSearchFilterControls();
     window.HundesalonNavPill?.scan?.(cardsRoot);
@@ -2591,11 +2721,6 @@
       const filterKey = select.dataset.priceSearchFilter;
       if (!Object.hasOwn(searchFilterState, filterKey)) return;
       searchFilterState[filterKey] = select.value;
-      if (filterKey === 'animal' && !['all', 'dog'].includes(select.value)) {
-        searchFilterState.size = 'all';
-      } else if (filterKey === 'size' && select.value !== 'all') {
-        searchFilterState.animal = 'dog';
-      }
 
       syncSearchFilterControls();
       const query = searchInput?.value || '';

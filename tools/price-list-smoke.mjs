@@ -10,10 +10,10 @@ const baseUrl = externalBaseUrl || staticServer.baseUrl;
 const outDir = path.resolve('test-results', 'price-list-smoke');
 const supportedLocales = ['ru', 'de', 'en', 'uk'];
 const expectedSearchFilterCopy = {
-  de: ['Tierart', 'Hundegröße', 'Felltyp', 'Gefunden', 'Alles zurücksetzen'],
-  en: ['Animal', 'Dog size', 'Coat type', 'Found', 'Reset all'],
-  ru: ['Вид животного', 'Размер собаки', 'Тип шерсти', 'Найдено', 'Сбросить всё'],
-  uk: ['Вид тварини', 'Розмір собаки', 'Тип шерсті', 'Знайдено', 'Скинути все'],
+  de: ['Tierart', 'Gewicht', 'Felltyp', 'Sortierung', 'Rassen gefunden', 'Alles zurücksetzen'],
+  en: ['Animal', 'Weight', 'Coat type', 'Sort by', 'Breeds found', 'Reset all'],
+  ru: ['Вид животного', 'Вес', 'Тип шерсти', 'Сортировка', 'Найдено пород', 'Сбросить всё'],
+  uk: ['Вид тварини', 'Вага', 'Тип шерсті', 'Сортування', 'Знайдено порід', 'Скинути все'],
 };
 const expectedWeightRangeCopy = {
   de: ['Gewicht: bis 6 kg', 'Gewicht: 6–15 kg', 'Gewicht: 15–30 kg', 'Gewicht: ab 30 kg'],
@@ -168,6 +168,7 @@ for (const locale of locales) {
       const categoryActions = Array.from(hero?.querySelectorAll('[data-price-section-action]') || []);
       const categoryAction = categoryActions[0];
       const heroSearch = hero?.querySelector('.price-page-hero__search');
+      const categoryActionsNav = hero?.querySelector('.price-page-hero__actions');
       const breedToggle = document.querySelector('[data-price-breeds-toggle]');
       const breedBadgeMotion = breedToggle?.querySelector('.price-card__badge-icon-motion');
       const breedBadgeIcon = breedToggle?.querySelector('.price-card__badge-icon');
@@ -184,6 +185,8 @@ for (const locale of locales) {
       const firstCardDetailsToggle = firstCard?.querySelector('[data-price-card-toggle]');
       const firstCardDetails = firstCard?.querySelector('[data-price-card-details]');
       const heroRect = hero?.getBoundingClientRect();
+      const heroSearchRect = heroSearch?.getBoundingClientRect();
+      const categoryActionsRect = categoryActionsNav?.getBoundingClientRect();
       const cardRect = firstCard?.getBoundingClientRect();
       const firstThreeCardRects = cards.slice(0, 3).map(card => card.getBoundingClientRect());
       const cardButtonStyle = firstCardButton ? getComputedStyle(firstCardButton) : null;
@@ -227,6 +230,13 @@ for (const locale of locales) {
           const rect = action.getBoundingClientRect();
           return rect.width > 0 && rect.left >= -1 && rect.right <= window.innerWidth + 1;
         }),
+        categoryActionsMatchSearchWidth: Boolean(
+          heroSearchRect
+          && categoryActionsRect
+          && Math.abs(heroSearchRect.width - categoryActionsRect.width) <= 1
+          && Math.abs(heroSearchRect.left - categoryActionsRect.left) <= 1
+          && Math.abs(heroSearchRect.right - categoryActionsRect.right) <= 1
+        ),
         searchBeforeCategoryAction: Boolean(
           heroSearch
           && categoryAction
@@ -412,16 +422,22 @@ for (const locale of locales) {
     assert(`${locale} ${label}: breed search rendered`, state.breedSearchReady);
     assert(
       `${locale} ${label}: category navigation fits the intended rows`,
-      state.categoryActionsFit && state.categoryActionRowCount === (label === 'desktop' ? 1 : 2),
-      JSON.stringify({ rows: state.categoryActionRowCount, fits: state.categoryActionsFit })
+      state.categoryActionsFit
+        && state.categoryActionsMatchSearchWidth
+        && state.categoryActionRowCount === (label === 'desktop' ? 1 : 2),
+      JSON.stringify({
+        rows: state.categoryActionRowCount,
+        fits: state.categoryActionsFit,
+        matchesSearchWidth: state.categoryActionsMatchSearchWidth,
+      })
     );
     assert(
       `${locale} ${label}: localized search filters and result counter rendered`,
-      JSON.stringify(state.searchFilterState.labels) === JSON.stringify(expectedSearchFilterCopy[locale].slice(0, 3))
-        && JSON.stringify(state.searchFilterState.values) === JSON.stringify(['all', 'all', 'all'])
-        && state.searchFilterState.resultCount.startsWith(`${expectedSearchFilterCopy[locale][3]}:`)
+      JSON.stringify(state.searchFilterState.labels) === JSON.stringify(expectedSearchFilterCopy[locale].slice(0, 4))
+        && JSON.stringify(state.searchFilterState.values) === JSON.stringify(['all', 'all', 'all', 'default'])
+        && state.searchFilterState.resultCount.startsWith(`${expectedSearchFilterCopy[locale][4]}:`)
         && /\d/u.test(state.searchFilterState.resultCount)
-        && state.searchFilterState.resetLabel === expectedSearchFilterCopy[locale][4]
+        && state.searchFilterState.resetLabel === expectedSearchFilterCopy[locale][5]
         && state.searchFilterState.resetHidden,
       JSON.stringify(state.searchFilterState)
     );
@@ -825,8 +841,9 @@ for (const locale of locales) {
     assert(`${locale} ${label}: breed search focus`, breedSearchFocus);
 
     const animalFilter = page.locator('[data-price-search-filter="animal"]');
-    const sizeFilter = page.locator('[data-price-search-filter="size"]');
+    const weightFilter = page.locator('[data-price-search-filter="weight"]');
     const coatFilter = page.locator('[data-price-search-filter="coat"]');
+    const sortFilter = page.locator('[data-price-search-filter="sort"]');
     const searchReset = page.locator('[data-price-search-reset]');
     for (const animalCase of [
       {
@@ -848,8 +865,8 @@ for (const locale of locales) {
       const animalFilterState = await page.evaluate(expected => ({
         cardIds: Array.from(document.querySelectorAll('[data-price-categories] [data-category-id]'))
           .map(card => card.dataset.categoryId),
-        sizeDisabled: document.querySelector('[data-price-search-filter="size"]')?.disabled === true,
-        sizeHidden: document.querySelector('[data-price-search-filter="size"]')?.closest('label')?.hidden === true,
+        weightEnabled: document.querySelector('[data-price-search-filter="weight"]')?.disabled === false,
+        weightVisible: document.querySelector('[data-price-search-filter="weight"]')?.closest('label')?.hidden === false,
         coatEnabled: document.querySelector('[data-price-search-filter="coat"]')?.disabled === false,
         coatOptions: Array.from(document.querySelector('[data-price-search-filter="coat"]')?.options || [])
           .map(option => option.value),
@@ -859,8 +876,8 @@ for (const locale of locales) {
       assert(
         `${locale} ${label}: ${animalCase.value} exposes its relevant coat filter`,
         JSON.stringify(animalFilterState.cardIds) === JSON.stringify(animalCase.categoryIds)
-          && animalFilterState.sizeDisabled
-          && animalFilterState.sizeHidden
+          && animalFilterState.weightEnabled
+          && animalFilterState.weightVisible
           && animalFilterState.coatEnabled
           && JSON.stringify(animalFilterState.coatOptions) === JSON.stringify(animalCase.coatOptions)
           && /[1-9]\d*/u.test(animalFilterState.resultCount),
@@ -875,8 +892,23 @@ for (const locale of locales) {
         JSON.stringify(coatFilteredCardIds)
       );
     }
+    await animalFilter.selectOption('smallAnimals');
+    await coatFilter.selectOption('all');
+    await weightFilter.selectOption('small');
+    const smallAnimalWeightCards = await page.locator('[data-price-categories] [data-category-id]')
+      .evaluateAll(cards => cards.map(card => card.dataset.categoryId));
+    assert(
+      `${locale} ${label}: weight filter includes small animals below 6 kg`,
+      JSON.stringify(smallAnimalWeightCards) === JSON.stringify([
+        'ru-guinea-pig-short-coat',
+        'ru-guinea-pig-long-coat',
+        'ru-rabbit-short-coat',
+        'ru-rabbit-long-coat',
+      ]),
+      JSON.stringify(smallAnimalWeightCards)
+    );
     await animalFilter.selectOption('dog');
-    await sizeFilter.selectOption('small');
+    await weightFilter.selectOption('small');
     await coatFilter.selectOption('wire');
     const wireFilterState = await page.evaluate(() => ({
       cardIds: Array.from(document.querySelectorAll('[data-price-categories] [data-category-id]'))
@@ -887,12 +919,12 @@ for (const locale of locales) {
     assert(
       `${locale} ${label}: wire coat filter isolates the small wire-haired category`,
       JSON.stringify(wireFilterState.cardIds) === JSON.stringify(['ru-wire-coat-small'])
-        && JSON.stringify(wireFilterState.values) === JSON.stringify(['dog', 'small', 'wire'])
+        && JSON.stringify(wireFilterState.values) === JSON.stringify(['dog', 'small', 'wire', 'default'])
         && /[1-9]\d*/u.test(wireFilterState.resultCount),
       JSON.stringify(wireFilterState)
     );
     for (const size of ['medium', 'large']) {
-      await sizeFilter.selectOption(size);
+      await weightFilter.selectOption(size);
       const cardIds = await page.locator('[data-price-categories] [data-category-id]')
         .evaluateAll(cards => cards.map(card => card.dataset.categoryId));
       assert(
@@ -901,7 +933,7 @@ for (const locale of locales) {
         JSON.stringify(cardIds)
       );
     }
-    await sizeFilter.selectOption('small');
+    await weightFilter.selectOption('small');
     for (const coat of ['wire', 'short']) {
       await coatFilter.selectOption(coat);
       const categoryId = `ru-${coat}-coat-small`;
@@ -939,7 +971,7 @@ for (const locale of locales) {
         await page.waitForFunction(() => !document.querySelector('#price-category-modal')?.classList.contains('active'));
       }
     }
-    await sizeFilter.selectOption('medium');
+    await weightFilter.selectOption('medium');
     await coatFilter.selectOption('short');
     await page.waitForFunction(
       () => {
@@ -951,7 +983,7 @@ for (const locale of locales) {
     );
     const structuredFilterState = await page.evaluate(() => ({
       values: Array.from(document.querySelectorAll('[data-price-search-filter]')).map(select => select.value),
-      dogRefinementsEnabled: Array.from(document.querySelectorAll('[data-price-search-filter="size"], [data-price-search-filter="coat"]'))
+      dogRefinementsEnabled: Array.from(document.querySelectorAll('[data-price-search-filter="weight"], [data-price-search-filter="coat"]'))
         .every(select => !select.disabled),
       cardIds: Array.from(document.querySelectorAll('[data-price-categories] [data-category-id]'))
         .map(card => card.dataset.categoryId),
@@ -960,7 +992,7 @@ for (const locale of locales) {
     }));
     assert(
       `${locale} ${label}: animal, dog size and coat filters combine`,
-      JSON.stringify(structuredFilterState.values) === JSON.stringify(['dog', 'medium', 'short'])
+      JSON.stringify(structuredFilterState.values) === JSON.stringify(['dog', 'medium', 'short', 'default'])
         && structuredFilterState.dogRefinementsEnabled
         && JSON.stringify(structuredFilterState.cardIds) === JSON.stringify(['ru-short-coat-medium'])
         && /[1-9]\d*/u.test(structuredFilterState.resultCount)
@@ -1022,11 +1054,47 @@ for (const locale of locales) {
     assert(
       `${locale} ${label}: search reset restores the complete catalog`,
       !resetFilterState.query
-        && JSON.stringify(resetFilterState.values) === JSON.stringify(['all', 'all', 'all'])
+        && JSON.stringify(resetFilterState.values) === JSON.stringify(['all', 'all', 'all', 'default'])
         && resetFilterState.resetHidden
         && /\d/u.test(resetFilterState.resultCount),
       JSON.stringify(resetFilterState)
     );
+
+    const sortOptions = await sortFilter.locator('option').evaluateAll(options => options.map(option => option.value));
+    assert(
+      `${locale} ${label}: concise weight sorting options are available`,
+      JSON.stringify(sortOptions) === JSON.stringify(['default', 'weight-asc', 'weight-desc']),
+      JSON.stringify(sortOptions)
+    );
+    await animalFilter.selectOption('cat');
+    await sortFilter.selectOption('weight-desc');
+    const sortableCatCard = page.locator('[data-price-categories] [data-category-id^="ru-cat-"]').first();
+    await sortableCatCard.locator('[data-price-breeds-toggle]').evaluate(button => button.click());
+    const weightSortState = await page.evaluate(currentLocale => {
+      const card = document.querySelector('[data-price-categories] [data-category-id^="ru-cat-"]');
+      const category = window.PricePageCatalog?.categoriesByLocale?.[currentLocale]
+        ?.find(item => item.id === card?.dataset.categoryId);
+      const weights = Array.from(card?.querySelectorAll('[data-price-breed-index]') || []).map(option => {
+        const metadata = category?.breedMetadata?.[currentLocale]?.[Number(option.dataset.priceBreedIndex)];
+        return (Number(metadata?.weightKg?.min) + Number(metadata?.weightKg?.max)) / 2;
+      });
+      return {
+        selected: document.querySelector('[data-price-search-filter="sort"]')?.value || '',
+        resetVisible: !document.querySelector('[data-price-search-reset]')?.hidden,
+        filterValues: Array.from(document.querySelectorAll('[data-price-search-filter]')).map(select => select.value),
+        weights,
+        descending: weights.length > 1 && weights.every((weight, index) => index === 0 || weights[index - 1] >= weight),
+      };
+    }, locale);
+    assert(
+      `${locale} ${label}: descending weight sorting is applied and resettable`,
+      weightSortState.selected === 'weight-desc'
+        && weightSortState.resetVisible
+        && weightSortState.descending
+        && JSON.stringify(weightSortState.filterValues) === JSON.stringify(['cat', 'all', 'all', 'weight-desc']),
+      JSON.stringify(weightSortState)
+    );
+    await searchReset.evaluate(button => button.click());
 
     const breedAlphabetState = await page.evaluate(currentLocale => {
       const collator = new Intl.Collator(currentLocale, { sensitivity: 'base', numeric: true });

@@ -11,10 +11,10 @@
             "id": "5cf63bf9a3cb0358",
             "type": "leaf",
             "state": {
-              "type": "empty",
+              "type": "graph",
               "state": {},
-              "icon": "lucide-file",
-              "title": "Новая вкладка"
+              "icon": "lucide-git-fork",
+              "title": "Граф"
             }
           }
         ]
@@ -204,7 +204,7 @@
       "obsidian-excalidraw-plugin:Создать новый чертеж": false
     }
   },
-  "active": "958f840926f06134",
+  "active": "5cf63bf9a3cb0358",
   "lastOpenFiles": [
     "Без названия.canvas",
     "07_Release.md",
