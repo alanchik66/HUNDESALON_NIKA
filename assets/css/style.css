@@ -7885,27 +7885,25 @@ body > .section:first-of-type {
 }
 
 .hero-title {
-  background: var(--hero-white-gold);
-  background-size: 100% 145%;
-  background-position: 50% 42%;
+  background: var(--liquid-gold);
+  background-size: var(--title-gradient-size);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  -webkit-text-stroke: var(--hero-white-gold-edge);
-  filter: var(--hero-white-gold-filter);
+  -webkit-text-stroke: var(--liquid-gold-edge);
+  filter: var(--liquid-gold-filter);
 }
 
 body.light .hero-title {
-  background: var(--hero-white-gold);
-  background-size: 100% 145%;
-  background-position: 50% 42%;
+  background: var(--liquid-gold);
+  background-size: var(--title-gradient-size);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  -webkit-text-stroke: var(--hero-white-gold-edge);
-  filter: var(--hero-white-gold-filter);
+  -webkit-text-stroke: var(--liquid-gold-edge);
+  filter: var(--liquid-gold-filter);
 }
 
 .section-title {
@@ -8024,15 +8022,14 @@ body.light .hero-title {
   line-height: 1.08;
   letter-spacing: 0.1em;
   text-align: center;
-  background: var(--hero-white-gold);
-  background-size: 100% 145%;
-  background-position: 50% 42%;
+  background: var(--liquid-gold);
+  background-size: var(--title-gradient-size);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  -webkit-text-stroke: var(--hero-white-gold-edge);
-  filter: var(--hero-white-gold-filter);
+  -webkit-text-stroke: var(--liquid-gold-edge);
+  filter: var(--liquid-gold-filter);
 }
 
 html[lang='de'] .about-text > :is(h1, h2):first-child {
@@ -14482,7 +14479,7 @@ body.price-page .price-categories-grid[data-price-categories]:empty {
 }
 
 body.price-page .price-page-hero[data-price-hero] {
-  gap: clamp(0.75rem, 1vw, 1rem);
+  gap: clamp(1.2rem, 1.8vw, 1.8rem);
   padding: clamp(1.1rem, 1.6vw, 1.6rem) clamp(1rem, 2.5vw, 2.5rem) clamp(1rem, 1.4vw, 1.4rem);
   text-align: center;
 }
@@ -14491,7 +14488,7 @@ body.price-page .price-page-hero[data-price-hero] .price-page-hero__copy {
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: clamp(0.55rem, 0.8vw, 0.8rem);
+  gap: clamp(0.75rem, 1vw, 1rem);
   width: min(100%, 1140px);
   margin-inline: auto;
   padding: 0;
@@ -14525,7 +14522,7 @@ body.price-page .price-page-hero[data-price-hero] .price-page-hero__intro {
 
 body.price-page .price-page-hero[data-price-hero] .price-page-hero__intro-copy {
   display: grid;
-  gap: 0.45rem;
+  gap: var(--price-search-stack-gap, 0.65rem);
   min-width: 0;
   max-width: 100%;
   overflow-wrap: break-word;
@@ -14554,8 +14551,8 @@ body.price-page .price-page-hero[data-price-hero] .price-page-hero__categories-a
   max-width: 100%;
   box-sizing: border-box;
   margin-top: 0;
-  min-height: 3.25rem;
-  padding: 0.5rem 0.5rem;
+  min-height: 2.8rem;
+  padding: 0.3rem 0.5rem;
   gap: 0.28rem;
   border-radius: var(--nav-pill-radius);
   font-size: clamp(0.78rem, 0.22vw + 0.73rem, 0.92rem);
@@ -14791,31 +14788,62 @@ body.price-page .price-page-hero[data-price-hero] .site-select__option {
 }
 
 body.price-page .price-page-hero[data-price-hero] .price-breed-search__summary {
-  min-height: 34px;
+  min-height: auto;
+  margin-top: 0;
   flex-wrap: wrap;
-  padding: 0.15rem 0.3rem;
+  justify-content: center;
+  padding: 0;
 }
 
 body.price-page .price-page-hero[data-price-hero] .price-breed-search__result-count {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
+  text-align: center;
   gap: 0.25rem 0.85rem;
   min-width: 0;
   font-family: var(--font-display);
-  font-size: clamp(1rem, 0.2vw + 0.85rem, 1.1rem);
+  font-size: clamp(1.25rem, 1.1vw + 0.85rem, 1.9rem);
   font-weight: 400;
-  letter-spacing: 0.035em;
-  line-height: 1.5;
+  letter-spacing: 0.1em;
+  line-height: 1.25;
+  background: var(--liquid-gold);
+  background-size: var(--title-gradient-size);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  -webkit-text-stroke: var(--liquid-gold-edge);
+  paint-order: stroke fill;
+  text-shadow: none;
+  filter: var(--liquid-gold-filter);
+}
+
+body.price-page .price-page-hero[data-price-hero]
+  .price-breed-search__result-count
+  > :is(
+    .price-breed-search__count-total,
+    .price-breed-search__count-group
+  ) {
+  background: var(--liquid-gold);
+  background-size: var(--title-gradient-size);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  -webkit-text-stroke: var(--liquid-gold-edge);
+  paint-order: stroke fill;
+  text-shadow: none;
+  filter: var(--liquid-gold-filter);
 }
 
 body.price-page .price-page-hero[data-price-hero] .price-breed-search__count-total {
-  color: rgb(255 239 209 / 0.9);
+  font-weight: 400;
 }
 
 body.price-page .price-page-hero[data-price-hero] .price-breed-search__count-group {
   white-space: nowrap;
   font-weight: 400;
-  color: rgb(255 239 209 / 0.72);
 }
 
 body.price-page .price-page-hero[data-price-hero] .price-breed-search__count-group::before {
@@ -14903,9 +14931,9 @@ body.price-page .price-page-hero[data-price-hero] .price-breed-search__count-gro
   body.price-page .price-page-hero[data-price-hero] .price-page-hero__categories-action {
     justify-self: center;
     width: 100%;
-    min-height: 3rem;
-    padding: 0.58rem 0.8rem;
-    gap: 0.55rem;
+    min-height: 2.6rem;
+    padding: 0.28rem 0.6rem;
+    gap: 0.35rem;
     font-size: 0.9rem;
   }
 
@@ -15033,7 +15061,7 @@ body.price-page main.page-offset-top {
     .price-page-hero[data-price-hero]
     .price-page-hero__search-frame
     > .price-breed-search {
-    gap: 0.35rem;
+    gap: var(--price-search-stack-gap, 0.65rem);
     padding: 0.5rem;
   }
 
@@ -15071,7 +15099,7 @@ body.price-page main.page-offset-top {
   }
 
   body.price-page .price-page-hero[data-price-hero] .price-breed-search__summary {
-    min-height: 28px;
+    min-height: auto;
   }
 
   body.price-page .price-page-hero[data-price-hero] .price-breed-search__result-count {
@@ -15138,7 +15166,7 @@ body.price-page main.page-offset-top {
     .price-page-hero[data-price-hero]
     .price-page-hero__search-frame
     > .price-breed-search {
-    gap: 0.35rem;
+    gap: var(--price-search-stack-gap, 0.65rem);
     padding: 0.45rem;
   }
 
@@ -15193,7 +15221,7 @@ body.price-page main.page-offset-top {
 
   body.price-page .price-page-hero[data-price-hero] .price-breed-search__summary {
     align-items: center;
-    min-height: 26px;
+    min-height: auto;
   }
 
   body.price-page .price-page-hero[data-price-hero] .price-breed-search__result-count {

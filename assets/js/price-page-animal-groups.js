@@ -16,130 +16,104 @@
   const copy = {
     de: {
       catShort: 'Kurzhaarige Katzenrassen',
-      catSpecial: 'Rex-, Drahthaar- und haarlose Rassen',
       catLong: 'Langhaarige Katzenrassen',
-      catDouble: 'Katzenrassen mit Doppelfell',
       catShortSummary: 'Schonende Pflege von kurzem Fell und Haut, passend zur jeweiligen Rasse.',
-      catSpecialSummary: 'Individuelle Pflege für lockiges, drahtiges, sehr feines oder haarloses Fell.',
       catLongSummary: 'Gründliche Pflege von langem und halblangem Fell mit Entfilzung nach Bedarf.',
-      catDoubleSummary: 'Pflege von Deckhaar und dichter Unterwolle mit gründlichem Ausbürsten.',
-      guineaShort: 'Kurzhaarige und plüschhaarige Meerschweinchen',
-      guineaLong: 'Langhaarige und strukturierte Meerschweinchen',
-      rabbitShort: 'Kurzhaarige und rexhaarige Kaninchen',
-      rabbitLong: 'Langhaarige und Wollkaninchen',
-      guineaShortSummary: 'Sanfte Hygiene- und Fellpflege für kurzes, glattes oder plüschiges Fell.',
-      guineaLongSummary: 'Sorgfältiges Kämmen und Hygienepflege für langes, lockiges oder strukturiertes Fell.',
-      rabbitShortSummary: 'Schonendes Ausbürsten und Hygienepflege; Baden gehört nicht zur Standardpflege.',
-      rabbitLongSummary: 'Intensive Woll- und Langhaarpflege mit vorsichtigem Lösen von Verfilzungen.',
+      guinea: 'Meerschweinchen',
+      rabbit: 'Kaninchen',
+      guineaSummary: 'Sorgfältige Pflege für Meerschweinchen, passend zu ihren individuellen Bedürfnissen.',
+      rabbitSummary: 'Sorgfältige Pflege für Kaninchen, passend zu ihren individuellen Bedürfnissen.',
     },
     en: {
       catShort: 'Short-haired cat breeds',
-      catSpecial: 'Rex, wire-haired and hairless breeds',
       catLong: 'Long-haired cat breeds',
-      catDouble: 'Double-coated cat breeds',
       catShortSummary: 'Gentle short-coat and skin care tailored to the breed.',
-      catSpecialSummary: 'Individual care for curly, wiry, very fine or hairless coats.',
       catLongSummary: 'Thorough care for long and semi-long coats, with detangling when needed.',
-      catDoubleSummary: 'Outer-coat and dense-undercoat care with thorough brushing.',
-      guineaShort: 'Short-haired and plush-coated guinea pigs',
-      guineaLong: 'Long-haired and textured-coat guinea pigs',
-      rabbitShort: 'Short-haired and rex-coated rabbits',
-      rabbitLong: 'Long-haired and wool-coated rabbits',
-      guineaShortSummary: 'Gentle hygiene and coat care for short, smooth or plush coats.',
-      guineaLongSummary: 'Careful combing and hygiene care for long, curly or textured coats.',
-      rabbitShortSummary: 'Gentle brushing and hygiene care; bathing is not part of standard rabbit care.',
-      rabbitLongSummary: 'Intensive wool and long-coat care with careful detangling.',
+      guinea: 'Guinea pigs',
+      rabbit: 'Rabbits',
+      guineaSummary: 'Careful guinea-pig care tailored to each animal’s individual needs.',
+      rabbitSummary: 'Careful rabbit care tailored to each animal’s individual needs.',
     },
     ru: {
       catShort: 'Короткошёрстные породы кошек',
-      catSpecial: 'Рексовые, жёсткошёрстные и бесшёрстные породы',
       catLong: 'Длинношёрстные породы кошек',
-      catDouble: 'Породы кошек с двойным типом шерсти',
       catShortSummary: 'Бережный уход за короткой шерстью и кожей с учётом особенностей породы.',
-      catSpecialSummary: 'Индивидуальный уход за кудрявой, жёсткой, очень тонкой шерстью или кожей бесшёрстных кошек.',
       catLongSummary: 'Тщательный уход за длинной и полудлинной шерстью с распутыванием при необходимости.',
-      catDoubleSummary: 'Уход за остевой шерстью и плотным подшёрстком с тщательным вычёсыванием.',
-      guineaShort: 'Короткошёрстные и плюшевые морские свинки',
-      guineaLong: 'Длинношёрстные и структурношёрстные морские свинки',
-      rabbitShort: 'Короткошёрстные и рексовые кролики',
-      rabbitLong: 'Длинношёрстные и шерстяные кролики',
-      guineaShortSummary: 'Бережный гигиенический уход за короткой, гладкой или плюшевой шерстью.',
-      guineaLongSummary: 'Тщательное расчёсывание и гигиенический уход за длинной, кудрявой или структурной шерстью.',
-      rabbitShortSummary: 'Бережное вычёсывание и гигиенический уход; купание не входит в стандартную процедуру.',
-      rabbitLongSummary: 'Интенсивный уход за длинной и шерстяной шерстью с аккуратным распутыванием.',
+      guinea: 'Морские свинки',
+      rabbit: 'Кролики',
+      guineaSummary: 'Бережный уход за морскими свинками с учётом индивидуальных особенностей.',
+      rabbitSummary: 'Бережный уход за кроликами с учётом индивидуальных особенностей.',
     },
     uk: {
       catShort: 'Короткошерсті породи котів',
-      catSpecial: 'Рексові, жорсткошерсті та безшерсті породи',
       catLong: 'Довгошерсті породи котів',
-      catDouble: 'Породи котів із подвійним типом шерсті',
       catShortSummary: 'Делікатний догляд за короткою шерстю та шкірою з урахуванням особливостей породи.',
-      catSpecialSummary: 'Індивідуальний догляд за кучерявою, жорсткою, дуже тонкою шерстю або шкірою безшерстих котів.',
       catLongSummary: 'Ретельний догляд за довгою та напівдовгою шерстю з розплутуванням за потреби.',
-      catDoubleSummary: 'Догляд за остьовою шерстю та щільним підшерстям із ретельним вичісуванням.',
-      guineaShort: 'Короткошерсті та плюшеві морські свинки',
-      guineaLong: 'Довгошерсті та структурношерсті морські свинки',
-      rabbitShort: 'Короткошерсті та рексові кролики',
-      rabbitLong: 'Довгошерсті та вовняні кролики',
-      guineaShortSummary: 'Делікатний гігієнічний догляд за короткою, гладкою або плюшевою шерстю.',
-      guineaLongSummary: 'Ретельне розчісування та гігієнічний догляд за довгою, кучерявою або структурною шерстю.',
-      rabbitShortSummary: 'Делікатне вичісування та гігієнічний догляд; купання не входить до стандартної процедури.',
-      rabbitLongSummary: 'Інтенсивний догляд за довгою та вовняною шерстю з обережним розплутуванням.',
+      guinea: 'Морські свинки',
+      rabbit: 'Кролики',
+      guineaSummary: 'Дбайливий догляд за морськими свинками з урахуванням індивідуальних особливостей.',
+      rabbitSummary: 'Дбайливий догляд за кроликами з урахуванням індивідуальних особливостей.',
     },
   };
 
-  const specialCatIds = new Set([
-    'american-wirehair', 'cornish-rex', 'devon-rex', 'donskoy', 'german-rex',
-    'laperm-longhair', 'laperm-shorthair', 'lykoi', 'peterbald',
-    'selkirk-rex-longhair', 'selkirk-rex-shorthair', 'sphynx', 'tennessee-rex',
+  // Dense/double coats are deliberately folded into the two customer-facing
+  // cat groups. Long-haired variants stay in the long group; the remaining
+  // double-coated breeds are serviced with the short-coat tariff and workflow.
+  const longDoubleCatIds = new Set([
+    'british-longhair', 'kurilian-bobtail-longhair', 'maine-coon', 'maine-coon-polydactyl',
+    'neva-masquerade', 'norwegian-forest-cat', 'siberian', 'turkish-van',
   ]);
   const catGroups = [
-    { key: 'short', title: 'catShort', summary: 'catShortSummary', accepts: metadata => metadata.coatType === 'short' && !specialCatIds.has(metadata.id) },
-    { key: 'special', title: 'catSpecial', summary: 'catSpecialSummary', accepts: metadata => specialCatIds.has(metadata.id) },
-    { key: 'long', title: 'catLong', summary: 'catLongSummary', accepts: metadata => metadata.coatType === 'long' && !specialCatIds.has(metadata.id) },
-    { key: 'double', title: 'catDouble', summary: 'catDoubleSummary', accepts: metadata => metadata.coatType === 'double' },
+    {
+      key: 'short',
+      title: 'catShort',
+      summary: 'catShortSummary',
+      accepts: metadata => metadata.coatType === 'short'
+        || (metadata.coatType === 'double' && !longDoubleCatIds.has(metadata.id)),
+    },
+    {
+      key: 'long',
+      title: 'catLong',
+      summary: 'catLongSummary',
+      accepts: metadata => metadata.coatType === 'long'
+        || (metadata.coatType === 'double' && longDoubleCatIds.has(metadata.id)),
+    },
   ];
 
   const smallAnimalGroups = [
     {
-      id: 'ru-guinea-pig-short-coat', species: 'guinea-pig', coatType: 'short', title: 'guineaShort', summary: 'guineaShortSummary',
-      names: {
+      id: 'ru-guinea-pigs', species: 'guinea-pig', title: 'guinea', summary: 'guineaSummary', priceIndexes: [0, 1],
+      coatGroups: {
+        short: {
         de: ['Glatthaar', 'English Crested', 'American Crested', 'Rex', 'US-Teddy'],
         en: ['American / English', 'English Crested', 'American Crested', 'Rex', 'Teddy'],
         ru: ['Американская гладкошёрстная', 'Английский крестед', 'Американский крестед', 'Рекс', 'Тедди'],
         uk: ['Американська гладкошерста', 'Англійський крестед', 'Американський крестед', 'Рекс', 'Тедді'],
-      },
-      priceIndexes: [0, 1],
-    },
-    {
-      id: 'ru-guinea-pig-long-coat', species: 'guinea-pig', coatType: 'long', title: 'guineaLong', summary: 'guineaLongSummary',
-      names: {
+        },
+        long: {
         de: ['Peruaner', 'Sheltie', 'Coronet', 'Texel', 'Alpaka'],
         en: ['Peruvian', 'Silkie / Sheltie', 'Coronet', 'Texel', 'Alpaca'],
         ru: ['Перуанская', 'Шелти', 'Коронет', 'Тексель', 'Альпака'],
         uk: ['Перуанська', 'Шелті', 'Коронет', 'Тексель', 'Альпака'],
+        },
       },
-      priceIndexes: [0, 1],
     },
     {
-      id: 'ru-rabbit-short-coat', species: 'rabbit', coatType: 'short', title: 'rabbitShort', summary: 'rabbitShortSummary',
-      names: {
+      id: 'ru-rabbits', species: 'rabbit', title: 'rabbit', summary: 'rabbitSummary', priceIndexes: [2],
+      coatGroups: {
+        short: {
         de: ['Farbenzwerge', 'Holländer', 'Mini Rex', 'Rex', 'Zwergwidder'],
         en: ['Netherland Dwarf', 'Dutch', 'Mini Rex', 'Rex', 'Holland Lop'],
         ru: ['Нидерландский карликовый', 'Голландский', 'Мини-рекс', 'Рекс', 'Карликовый баран'],
         uk: ['Нідерландський карликовий', 'Голландський', 'Міні-рекс', 'Рекс', 'Карликовий баран'],
-      },
-      priceIndexes: [2],
-    },
-    {
-      id: 'ru-rabbit-long-coat', species: 'rabbit', coatType: 'long', title: 'rabbitLong', summary: 'rabbitLongSummary',
-      names: {
+        },
+        long: {
         de: ['Englisches Angora', 'Französisches Angora', 'Löwenkopf', 'Jersey Wooly', 'American Fuzzy Lop'],
         en: ['English Angora', 'French Angora', 'Lionhead', 'Jersey Wooly', 'American Fuzzy Lop'],
         ru: ['Английская ангора', 'Французская ангора', 'Львиноголовый', 'Джерси вули', 'Американский пушистый баран'],
         uk: ['Англійська ангора', 'Французька ангора', 'Левоголовий', 'Джерсі вулі', 'Американський пухнастий баран'],
+        },
       },
-      priceIndexes: [2],
     },
   ];
 
@@ -168,24 +142,28 @@
     });
 
     const smallAnimals = smallAnimalGroups.map(definition => {
-      const breedKeys = definition.names[lang].map((_, index) => `${definition.species}:${definition.coatType}:${index}`);
+      const breedEntries = Object.entries(definition.coatGroups).flatMap(([coatType, names]) => names[lang].map((name, index) => ({
+        name,
+        coatType,
+        breedKey: `${definition.species}:${coatType}:${index}`,
+        photoTitle: names.en[index],
+      })));
       return {
         ...smallSource,
         id: definition.id,
         animalType: 'smallAnimal',
         species: definition.species,
-        coatType: definition.coatType,
         title: { [lang]: copy[lang][definition.title] },
         summary: { [lang]: copy[lang][definition.summary] },
-        breeds: { [lang]: [...definition.names[lang]] },
-        breedKeys,
+        breeds: { [lang]: breedEntries.map(entry => entry.name) },
+        breedKeys: breedEntries.map(entry => entry.breedKey),
         breedMetadata: {
-          [lang]: definition.names[lang].map((_, index) => ({
-            id: breedKeys[index], species: definition.species, coatType: definition.coatType, sizeClass: 'small', surcharge: 0,
-            photoTitle: definition.names.en[index],
+          [lang]: breedEntries.map(entry => ({
+            id: entry.breedKey, species: definition.species, coatType: entry.coatType, sizeClass: 'small', surcharge: 0,
+            photoTitle: entry.photoTitle,
           })),
         },
-        breedPhotoTitles: { [lang]: [...definition.names.en] },
+        breedPhotoTitles: { [lang]: breedEntries.map(entry => entry.photoTitle) },
         breedSource: smallAnimalBreedSource,
         breedSourceUrls: smallAnimalSourceUrls,
         priceRows: definition.priceIndexes.map(index => smallSource.priceRows[index]),

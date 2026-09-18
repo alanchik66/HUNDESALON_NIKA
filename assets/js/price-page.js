@@ -76,8 +76,7 @@
     { key: 'medium', sourceKeys: ['medium'], grid: 'four' },
     { key: 'large', sourceKeys: ['large'], grid: 'four' },
     { key: 'giant', sourceKeys: ['giant'], grid: 'four' },
-    { key: 'cats', sourceKeys: ['cats'], grid: 'four' },
-    { key: 'smallAnimals', sourceKeys: ['smallAnimals'], layout: 'small-animal-species' },
+    { key: 'cats-animals', sourceKeys: ['cats', 'smallAnimals'], layout: 'category-row', grid: 'four' },
     {
       key: 'additional',
       sourceKeys: ['additional', 'important'],
@@ -108,10 +107,6 @@
       wire: 'Rauhaar',
       double: 'Doppelfell',
       special: 'Rex, draht- oder haarlos',
-      sort: 'Sortierung',
-      sortDefault: 'Empfohlen',
-      sortWeightAsc: 'Gewicht: leicht zuerst',
-      sortWeightDesc: 'Gewicht: schwer zuerst',
       results: 'Rassen gefunden',
       reset: 'Alles zurücksetzen',
     },
@@ -135,10 +130,6 @@
       wire: 'Wire-haired',
       double: 'Double coat',
       special: 'Rex, wire-haired or hairless',
-      sort: 'Sort by',
-      sortDefault: 'Recommended',
-      sortWeightAsc: 'Weight: low to high',
-      sortWeightDesc: 'Weight: high to low',
       results: 'Breeds found',
       reset: 'Reset all',
     },
@@ -162,10 +153,6 @@
       wire: 'Жёсткошёрстные',
       double: 'Двойная шерсть',
       special: 'Рексовые, жёсткие или бесшёрстные',
-      sort: 'Сортировка',
-      sortDefault: 'Рекомендуемые',
-      sortWeightAsc: 'Вес: от малого',
-      sortWeightDesc: 'Вес: от большого',
       results: 'Найдено пород',
       reset: 'Сбросить всё',
     },
@@ -189,19 +176,9 @@
       wire: 'Жорсткошерсті',
       double: 'Подвійна шерсть',
       special: 'Рексові, жорсткі або безшерсті',
-      sort: 'Сортування',
-      sortDefault: 'Рекомендовані',
-      sortWeightAsc: 'Вага: від малої',
-      sortWeightDesc: 'Вага: від великої',
       results: 'Знайдено порід',
       reset: 'Скинути все',
     },
-  })[lang];
-  const smallAnimalSpeciesLabels = ({
-    de: { 'guinea-pig': 'Meerschweinchen', rabbit: 'Kaninchen' },
-    en: { 'guinea-pig': 'Guinea pigs', rabbit: 'Rabbits' },
-    ru: { 'guinea-pig': 'Морские свинки', rabbit: 'Кролики' },
-    uk: { 'guinea-pig': 'Морські свинки', rabbit: 'Кролики' },
   })[lang];
   const renderSearchFilterOptions = options => options
     .map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`)
@@ -209,8 +186,8 @@
   const getCoatFilterOptions = animalType => {
     const coatKeys = ({
       dog: ['short', 'wire', 'long', 'double'],
-      cat: ['short', 'special', 'long', 'double'],
-      smallAnimals: ['short', 'long'],
+      cat: ['short', 'long'],
+      smallAnimals: [],
       all: ['short', 'wire', 'special', 'long', 'double'],
     })[animalType] || [];
     return [
@@ -746,6 +723,26 @@
   if (!cardsRoot || !heroRoot) return;
 
   if (!cardsRoot.id) cardsRoot.id = 'price-categories';
+  let activePriceSection = '';
+
+  const renderCategoryNavigation = () => `
+    <nav class="price-section-navigation nav-main" aria-label="${escapeHtml(locale.heroCategoriesAction || 'View categories')}">
+      ${categoryNavigationKeys.map(sectionKey => `
+        <button
+          type="button"
+          class="price-section-navigation__action filter-btn${sectionKey === activePriceSection ? ' active' : ''}"
+          data-nav-pill="price-categories-action"
+          data-price-section-action="${escapeHtml(sectionKey)}"
+          aria-controls="price-section-${escapeHtml(sectionKey)}"
+          ${sectionKey === activePriceSection ? 'aria-current="true"' : ''}
+        >
+          <span>${escapeHtml(locale.sizeGroupTitles?.[sectionKey] || sectionKey)}</span>
+          <span class="price-section-navigation__action-icon" aria-hidden="true">
+            <span class="site-icon-arrow site-icon-arrow-right"></span>
+          </span>
+        </button>`).join('')}
+    </nav>
+  `;
 
   const renderHero = () => {
     heroRoot.innerHTML = `
@@ -798,16 +795,6 @@
                   ${renderSearchFilterOptions(getCoatFilterOptions('all'))}
                 </select>
               </label>
-              <label class="price-breed-search__filter">
-                <span class="price-breed-search__filter-label">${escapeHtml(searchFilterCopy.sort)}</span>
-                <select class="price-breed-search__filter-select" data-price-search-filter="sort" aria-controls="price-categories price-breed-search-suggestions">
-                  ${renderSearchFilterOptions([
-                    ['default', searchFilterCopy.sortDefault],
-                    ['weight-asc', searchFilterCopy.sortWeightAsc],
-                    ['weight-desc', searchFilterCopy.sortWeightDesc],
-                  ])}
-                </select>
-              </label>
             </div>
             <div class="price-breed-search__summary">
               <p class="price-breed-search__result-count" data-price-search-result-count aria-live="polite" aria-atomic="true"></p>
@@ -825,11 +812,12 @@
         ${categoryNavigationKeys.map(sectionKey => `
           <button
             type="button"
-            class="price-page-hero__categories-action filter-btn"
+            class="price-page-hero__categories-action filter-btn${sectionKey === activePriceSection ? ' active' : ''}"
             data-nav-pill="price-categories-action"
             data-price-categories-action
             data-price-section-action="${escapeHtml(sectionKey)}"
             aria-controls="price-section-${escapeHtml(sectionKey)}"
+            ${sectionKey === activePriceSection ? 'aria-current="true"' : ''}
           >
             <span>${escapeHtml(locale.sizeGroupTitles?.[sectionKey] || sectionKey)}</span>
             <span class="price-page-hero__categories-action-icon" aria-hidden="true">
@@ -2114,7 +2102,8 @@
   };
 
   window.HundesalonNavPill?.scan?.(heroRoot);
-  const categoriesActions = Array.from(heroRoot.querySelectorAll('[data-price-section-action]'));
+  const getCategoryActions = () => Array.from(document.querySelectorAll('[data-price-section-action]'));
+  const heroCategoryActions = Array.from(heroRoot.querySelectorAll('[data-price-section-action]'));
   const searchInput = heroRoot.querySelector('[data-price-breed-search-input]');
   const searchClear = heroRoot.querySelector('[data-price-breed-search-clear]');
   const searchSuggestions = heroRoot.querySelector('[data-price-breed-search-suggestions]');
@@ -2390,33 +2379,7 @@
   const renderSection = (sectionKey, views, options = {}) => {
     const title = locale.sizeGroupTitles?.[sectionKey] || locale.servicesTitle;
     const weightRange = locale.sizeGroupWeightRanges?.[sectionKey] || '';
-    if (options.layout === 'small-animal-species') {
-      const speciesSections = ['guinea-pig', 'rabbit']
-        .map(species => {
-          const speciesViews = views.filter(category => category.species === species);
-          if (!speciesViews.length) return '';
-          return `
-            <section class="price-small-animal-group" data-small-animal-species="${escapeHtml(species)}" aria-labelledby="price-small-animal-${escapeHtml(species)}-title">
-              <div class="price-small-animal-group__heading">
-                <h3 class="price-small-animal-group__title" id="price-small-animal-${escapeHtml(species)}-title">${escapeHtml(smallAnimalSpeciesLabels[species])}</h3>
-              </div>
-              <div class="price-size-section__cards">
-                ${speciesViews.map(renderCard).join('')}
-              </div>
-            </section>`;
-        })
-        .join('');
-      return `
-        <section class="price-size-section price-size-section--small-animals" id="price-section-${escapeHtml(sectionKey)}" data-price-section="${escapeHtml(sectionKey)}" data-price-section-target="${escapeHtml(sectionKey)}">
-          <div class="price-size-section__heading">
-            <h2 class="price-size-section__title">${escapeHtml(title)}</h2>
-          </div>
-          <div class="price-small-animal-groups">
-            ${speciesSections}
-          </div>
-        </section>
-      `;
-    }
+    const gridAttribute = options.grid ? ` data-price-section-grid="${escapeHtml(options.grid)}"` : '';
     if (options.layout === 'category-row') {
       const categorySections = (options.sourceKeys || [])
         .map(categoryKey => {
@@ -2435,15 +2398,15 @@
         })
         .join('');
       return `
-        <section class="price-size-section price-size-section--category-row" data-price-section="${escapeHtml(sectionKey)}">
+        <section class="price-size-section price-size-section--category-row" data-price-section="${escapeHtml(sectionKey)}"${gridAttribute}>
           <div class="price-size-section__category-grid">
             ${categorySections}
           </div>
+          ${renderCategoryNavigation()}
         </section>
       `;
     }
     const sectionClass = options.showHeading === false ? ' price-size-section--cards-only' : '';
-    const gridAttribute = options.grid ? ` data-price-section-grid="${escapeHtml(options.grid)}"` : '';
     return `
         <section class="price-size-section${sectionClass}" id="price-section-${escapeHtml(sectionKey)}" data-price-section="${escapeHtml(sectionKey)}" data-price-section-target="${escapeHtml(sectionKey)}"${gridAttribute}>
         ${options.showHeading === false ? '' : `
@@ -2454,6 +2417,7 @@
         <div class="price-size-section__cards">
           ${views.map(renderCard).join('')}
         </div>
+        ${renderCategoryNavigation()}
       </section>
     `;
   };
@@ -2582,15 +2546,20 @@
       if (filterKey === 'coat') {
         const coatOptions = getCoatFilterOptions(searchFilterState.animal);
         const supportedValues = new Set(coatOptions.map(([value]) => value));
+        const isRelevant = coatOptions.length > 1;
         if (!supportedValues.has(searchFilterState.coat)) searchFilterState.coat = 'all';
         const optionSignature = coatOptions.map(([value, label]) => `${value}:${label}`).join('|');
         if (select.dataset.optionSignature !== optionSignature) {
           select.innerHTML = renderSearchFilterOptions(coatOptions);
           select.dataset.optionSignature = optionSignature;
         }
+        const filterLabel = select.closest('label');
+        if (filterLabel) filterLabel.hidden = !isRelevant;
+        select.disabled = !isRelevant;
+      } else {
+        select.disabled = false;
       }
       select.value = searchFilterState[filterKey];
-      select.disabled = false;
       select.dispatchEvent(new Event('site-select:refresh'));
     });
     if (searchReset) {
@@ -2671,6 +2640,7 @@
   const navigateToPriceSection = action => {
     const sectionKey = action.dataset.priceSectionAction || '';
     if (!sectionKey) return;
+    activePriceSection = sectionKey;
     if (searchInput) searchInput.value = '';
     resetSearchFilters();
     closeBreedSuggestions();
@@ -2679,8 +2649,8 @@
     window.requestAnimationFrame(() => {
       const target = cardsRoot.querySelector(`[data-price-section-target="${sectionKey}"]`);
       if (!target) return;
-      categoriesActions.forEach(button => {
-        const selected = button === action;
+      getCategoryActions().forEach(button => {
+        const selected = button.dataset.priceSectionAction === activePriceSection;
         button.classList.toggle('active', selected);
         if (selected) {
           button.setAttribute('aria-current', 'true');
@@ -2712,8 +2682,12 @@
       )?.focus({ preventScroll: true });
     });
   };
-  categoriesActions.forEach(action => {
+  heroCategoryActions.forEach(action => {
     action.addEventListener('click', () => navigateToPriceSection(action));
+  });
+  cardsRoot.addEventListener('click', event => {
+    const action = event.target.closest('[data-price-section-action]');
+    if (action) navigateToPriceSection(action);
   });
 
   searchFilterSelects.forEach(select => {

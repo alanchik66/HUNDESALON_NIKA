@@ -10,10 +10,10 @@ const baseUrl = externalBaseUrl || staticServer.baseUrl;
 const outDir = path.resolve('test-results', 'price-list-smoke');
 const supportedLocales = ['ru', 'de', 'en', 'uk'];
 const expectedSearchFilterCopy = {
-  de: ['Tierart', 'Gewicht', 'Felltyp', 'Sortierung', 'Rassen gefunden', 'Alles zurücksetzen'],
-  en: ['Animal', 'Weight', 'Coat type', 'Sort by', 'Breeds found', 'Reset all'],
-  ru: ['Вид животного', 'Вес', 'Тип шерсти', 'Сортировка', 'Найдено пород', 'Сбросить всё'],
-  uk: ['Вид тварини', 'Вага', 'Тип шерсті', 'Сортування', 'Знайдено порід', 'Скинути все'],
+  de: ['Tierart', 'Gewicht', 'Felltyp', 'Rassen gefunden', 'Alles zurücksetzen'],
+  en: ['Animal', 'Weight', 'Coat type', 'Breeds found', 'Reset all'],
+  ru: ['Вид животного', 'Вес', 'Тип шерсти', 'Найдено пород', 'Сбросить всё'],
+  uk: ['Вид тварини', 'Вага', 'Тип шерсті', 'Знайдено порід', 'Скинути все'],
 };
 const expectedWeightRangeCopy = {
   de: ['Gewicht: bis 6 kg', 'Gewicht: 6–15 kg', 'Gewicht: 15–30 kg', 'Gewicht: ab 30 kg'],
@@ -433,11 +433,11 @@ for (const locale of locales) {
     );
     assert(
       `${locale} ${label}: localized search filters and result counter rendered`,
-      JSON.stringify(state.searchFilterState.labels) === JSON.stringify(expectedSearchFilterCopy[locale].slice(0, 4))
-        && JSON.stringify(state.searchFilterState.values) === JSON.stringify(['all', 'all', 'all', 'default'])
-        && state.searchFilterState.resultCount.startsWith(`${expectedSearchFilterCopy[locale][4]}:`)
+      JSON.stringify(state.searchFilterState.labels) === JSON.stringify(expectedSearchFilterCopy[locale].slice(0, 3))
+        && JSON.stringify(state.searchFilterState.values) === JSON.stringify(['all', 'all', 'all'])
+        && state.searchFilterState.resultCount.startsWith(`${expectedSearchFilterCopy[locale][3]}:`)
         && /\d/u.test(state.searchFilterState.resultCount)
-        && state.searchFilterState.resetLabel === expectedSearchFilterCopy[locale][5]
+        && state.searchFilterState.resetLabel === expectedSearchFilterCopy[locale][4]
         && state.searchFilterState.resetHidden,
       JSON.stringify(state.searchFilterState)
     );
@@ -843,22 +843,23 @@ for (const locale of locales) {
     const animalFilter = page.locator('[data-price-search-filter="animal"]');
     const weightFilter = page.locator('[data-price-search-filter="weight"]');
     const coatFilter = page.locator('[data-price-search-filter="coat"]');
-    const sortFilter = page.locator('[data-price-search-filter="sort"]');
     const searchReset = page.locator('[data-price-search-reset]');
     for (const animalCase of [
       {
         value: 'cat',
-        categoryIds: ['ru-cat-short-coat', 'ru-cat-special-coat', 'ru-cat-long-coat', 'ru-cat-double-coat'],
-        coatOptions: ['all', 'short', 'special', 'long', 'double'],
-        selectedCoat: 'special',
-        filteredCategoryIds: ['ru-cat-special-coat'],
+        categoryIds: ['ru-cat-short-coat', 'ru-cat-long-coat'],
+        coatOptions: ['all', 'short', 'long'],
+        coatFilterAvailable: true,
+        selectedCoat: 'short',
+        filteredCategoryIds: ['ru-cat-short-coat'],
       },
       {
         value: 'smallAnimals',
-        categoryIds: ['ru-guinea-pig-short-coat', 'ru-guinea-pig-long-coat', 'ru-rabbit-short-coat', 'ru-rabbit-long-coat'],
-        coatOptions: ['all', 'short', 'long'],
-        selectedCoat: 'long',
-        filteredCategoryIds: ['ru-guinea-pig-long-coat', 'ru-rabbit-long-coat'],
+        categoryIds: ['ru-guinea-pigs', 'ru-rabbits'],
+        coatOptions: ['all'],
+        coatFilterAvailable: false,
+        selectedCoat: 'all',
+        filteredCategoryIds: ['ru-guinea-pigs', 'ru-rabbits'],
       },
     ]) {
       await animalFilter.selectOption(animalCase.value);
@@ -868,22 +869,24 @@ for (const locale of locales) {
         weightEnabled: document.querySelector('[data-price-search-filter="weight"]')?.disabled === false,
         weightVisible: document.querySelector('[data-price-search-filter="weight"]')?.closest('label')?.hidden === false,
         coatEnabled: document.querySelector('[data-price-search-filter="coat"]')?.disabled === false,
+        coatVisible: document.querySelector('[data-price-search-filter="coat"]')?.closest('label')?.hidden === false,
         coatOptions: Array.from(document.querySelector('[data-price-search-filter="coat"]')?.options || [])
           .map(option => option.value),
         resultCount: document.querySelector('[data-price-search-result-count]')?.textContent?.trim() || '',
         expected,
       }), animalCase);
       assert(
-        `${locale} ${label}: ${animalCase.value} exposes its relevant coat filter`,
+        `${locale} ${label}: ${animalCase.value} exposes the appropriate coat filter`,
         JSON.stringify(animalFilterState.cardIds) === JSON.stringify(animalCase.categoryIds)
           && animalFilterState.weightEnabled
           && animalFilterState.weightVisible
-          && animalFilterState.coatEnabled
+          && animalFilterState.coatEnabled === animalCase.coatFilterAvailable
+          && animalFilterState.coatVisible === animalCase.coatFilterAvailable
           && JSON.stringify(animalFilterState.coatOptions) === JSON.stringify(animalCase.coatOptions)
           && /[1-9]\d*/u.test(animalFilterState.resultCount),
         JSON.stringify(animalFilterState)
       );
-      await coatFilter.selectOption(animalCase.selectedCoat);
+      if (animalCase.coatFilterAvailable) await coatFilter.selectOption(animalCase.selectedCoat);
       const coatFilteredCardIds = await page.locator('[data-price-categories] [data-category-id]')
         .evaluateAll(cards => cards.map(card => card.dataset.categoryId));
       assert(
@@ -900,10 +903,8 @@ for (const locale of locales) {
     assert(
       `${locale} ${label}: weight filter includes small animals below 6 kg`,
       JSON.stringify(smallAnimalWeightCards) === JSON.stringify([
-        'ru-guinea-pig-short-coat',
-        'ru-guinea-pig-long-coat',
-        'ru-rabbit-short-coat',
-        'ru-rabbit-long-coat',
+        'ru-guinea-pigs',
+        'ru-rabbits',
       ]),
       JSON.stringify(smallAnimalWeightCards)
     );
@@ -919,7 +920,7 @@ for (const locale of locales) {
     assert(
       `${locale} ${label}: wire coat filter isolates the small wire-haired category`,
       JSON.stringify(wireFilterState.cardIds) === JSON.stringify(['ru-wire-coat-small'])
-        && JSON.stringify(wireFilterState.values) === JSON.stringify(['dog', 'small', 'wire', 'default'])
+        && JSON.stringify(wireFilterState.values) === JSON.stringify(['dog', 'small', 'wire'])
         && /[1-9]\d*/u.test(wireFilterState.resultCount),
       JSON.stringify(wireFilterState)
     );
@@ -992,7 +993,7 @@ for (const locale of locales) {
     }));
     assert(
       `${locale} ${label}: animal, dog size and coat filters combine`,
-      JSON.stringify(structuredFilterState.values) === JSON.stringify(['dog', 'medium', 'short', 'default'])
+      JSON.stringify(structuredFilterState.values) === JSON.stringify(['dog', 'medium', 'short'])
         && structuredFilterState.dogRefinementsEnabled
         && JSON.stringify(structuredFilterState.cardIds) === JSON.stringify(['ru-short-coat-medium'])
         && /[1-9]\d*/u.test(structuredFilterState.resultCount)
@@ -1054,47 +1055,11 @@ for (const locale of locales) {
     assert(
       `${locale} ${label}: search reset restores the complete catalog`,
       !resetFilterState.query
-        && JSON.stringify(resetFilterState.values) === JSON.stringify(['all', 'all', 'all', 'default'])
+        && JSON.stringify(resetFilterState.values) === JSON.stringify(['all', 'all', 'all'])
         && resetFilterState.resetHidden
         && /\d/u.test(resetFilterState.resultCount),
       JSON.stringify(resetFilterState)
     );
-
-    const sortOptions = await sortFilter.locator('option').evaluateAll(options => options.map(option => option.value));
-    assert(
-      `${locale} ${label}: concise weight sorting options are available`,
-      JSON.stringify(sortOptions) === JSON.stringify(['default', 'weight-asc', 'weight-desc']),
-      JSON.stringify(sortOptions)
-    );
-    await animalFilter.selectOption('cat');
-    await sortFilter.selectOption('weight-desc');
-    const sortableCatCard = page.locator('[data-price-categories] [data-category-id^="ru-cat-"]').first();
-    await sortableCatCard.locator('[data-price-breeds-toggle]').evaluate(button => button.click());
-    const weightSortState = await page.evaluate(currentLocale => {
-      const card = document.querySelector('[data-price-categories] [data-category-id^="ru-cat-"]');
-      const category = window.PricePageCatalog?.categoriesByLocale?.[currentLocale]
-        ?.find(item => item.id === card?.dataset.categoryId);
-      const weights = Array.from(card?.querySelectorAll('[data-price-breed-index]') || []).map(option => {
-        const metadata = category?.breedMetadata?.[currentLocale]?.[Number(option.dataset.priceBreedIndex)];
-        return (Number(metadata?.weightKg?.min) + Number(metadata?.weightKg?.max)) / 2;
-      });
-      return {
-        selected: document.querySelector('[data-price-search-filter="sort"]')?.value || '',
-        resetVisible: !document.querySelector('[data-price-search-reset]')?.hidden,
-        filterValues: Array.from(document.querySelectorAll('[data-price-search-filter]')).map(select => select.value),
-        weights,
-        descending: weights.length > 1 && weights.every((weight, index) => index === 0 || weights[index - 1] >= weight),
-      };
-    }, locale);
-    assert(
-      `${locale} ${label}: descending weight sorting is applied and resettable`,
-      weightSortState.selected === 'weight-desc'
-        && weightSortState.resetVisible
-        && weightSortState.descending
-        && JSON.stringify(weightSortState.filterValues) === JSON.stringify(['cat', 'all', 'all', 'weight-desc']),
-      JSON.stringify(weightSortState)
-    );
-    await searchReset.evaluate(button => button.click());
 
     const breedAlphabetState = await page.evaluate(currentLocale => {
       const collator = new Intl.Collator(currentLocale, { sensitivity: 'base', numeric: true });

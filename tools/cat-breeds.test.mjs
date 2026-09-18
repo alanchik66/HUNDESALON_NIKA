@@ -17,12 +17,10 @@ const catSources = [
   'assets/js/price-page-cat-breeds.js',
   'assets/js/price-page-animal-groups.js',
 ];
-const expectedCatCategoryIds = ['ru-cat-short-coat', 'ru-cat-special-coat', 'ru-cat-long-coat', 'ru-cat-double-coat'];
+const expectedCatCategoryIds = ['ru-cat-short-coat', 'ru-cat-long-coat'];
 const expectedSmallAnimalCategoryIds = [
-  'ru-guinea-pig-short-coat',
-  'ru-guinea-pig-long-coat',
-  'ru-rabbit-short-coat',
-  'ru-rabbit-long-coat',
+  'ru-guinea-pigs',
+  'ru-rabbits',
 ];
 
 const runSources = sourcePaths => {
@@ -75,7 +73,7 @@ test('cat registry contains unique localized weighted coat profiles', () => {
   }
 });
 
-test('cat integration exposes four localized coat groups without losing or duplicating breeds', () => {
+test('cat integration exposes two localized coat groups without losing or duplicating breeds', () => {
   const window = runSources([...baseSources, ...catSources]);
 
   for (const locale of locales) {
@@ -94,7 +92,7 @@ test('cat integration exposes four localized coat groups without losing or dupli
   }
 
   const russianCategories = window.PricePageCatalog.categoriesByLocale.ru;
-  const russianCategory = russianCategories.find(item => item.id === 'ru-cat-double-coat');
+  const russianCategory = russianCategories.find(item => item.id === 'ru-cat-long-coat');
   assert.deepEqual(JSON.parse(JSON.stringify(russianCategory.breedMetadata.ru.find(item => item.id === 'maine-coon'))), {
     id: 'maine-coon',
     sourceCode: 'MCO',
@@ -105,24 +103,29 @@ test('cat integration exposes four localized coat groups without losing or dupli
     surcharge: 15,
     photoTitle: 'Maine Coon cat',
   });
-  const specialCategory = russianCategories.find(item => item.id === 'ru-cat-special-coat');
-  assert.ok(specialCategory.breedMetadata.ru.some(item => item.id === 'american-wirehair'));
-  assert.ok(specialCategory.breedMetadata.ru.some(item => item.id === 'sphynx'));
-  assert.ok(specialCategory.breedMetadata.ru.some(item => item.id === 'selkirk-rex-longhair'));
+  const shortCategory = russianCategories.find(item => item.id === 'ru-cat-short-coat');
+  assert.ok(shortCategory.breedMetadata.ru.some(item => item.id === 'american-wirehair'));
+  assert.ok(shortCategory.breedMetadata.ru.some(item => item.id === 'sphynx'));
+  assert.ok(shortCategory.breedMetadata.ru.some(item => item.id === 'selkirk-rex-shorthair'));
+  assert.ok(russianCategory.breedMetadata.ru.some(item => item.id === 'selkirk-rex-longhair'));
+  assert.ok(russianCategory.breedMetadata.ru.some(item => item.id === 'british-longhair'));
+  assert.ok(shortCategory.breedMetadata.ru.some(item => item.id === 'british-shorthair'));
 });
 
-test('small animals are split into four localized care groups with species-correct prices', () => {
+test('small animals are split into two species groups with species-correct prices', () => {
   const window = runSources([...baseSources, ...catSources]);
   for (const locale of locales) {
     const categories = expectedSmallAnimalCategoryIds.map(id =>
       window.PricePageCatalog.categoriesByLocale[locale].find(item => item.id === id)
     );
     assert.ok(categories.every(Boolean), `missing small-animal care group for ${locale}`);
-    assert.ok(categories.every(category => category.breeds[locale].length === 5));
-    assert.ok(categories.slice(0, 2).every(category => category.priceRows.length === 2));
-    assert.ok(categories.slice(2).every(category => category.priceRows.length === 1));
-    assert.ok(categories.slice(0, 2).every(category => category.priceRows[0].price[locale].includes('30')));
-    assert.ok(categories.slice(2).every(category => category.priceRows[0].price[locale].includes('35')));
+    assert.ok(categories.every(category => category.breeds[locale].length === 10));
+    assert.equal(categories[0].species, 'guinea-pig');
+    assert.equal(categories[1].species, 'rabbit');
+    assert.equal(categories[0].priceRows.length, 2);
+    assert.equal(categories[1].priceRows.length, 1);
+    assert.ok(categories[0].priceRows[0].price[locale].includes('30'));
+    assert.ok(categories[1].priceRows[0].price[locale].includes('35'));
   }
 });
 
