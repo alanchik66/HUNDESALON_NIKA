@@ -37,6 +37,12 @@ const NAIL_INTENT_PATTERN = /(?:krall|nail|claw|когт|кігт|подстр|�
 const ADDITIONAL_SERVICES_PATTERN =
   /(?:zusatzleistungen|additional services|дополнительные услуги|додаткові послуги)/iu;
 const BREED_INTENT_PATTERN = /(?:\bbreed\b|\brasse\b|пород[ауы]|породи|порода)/iu;
+const HIGH_RISK_ANIMAL_QUERY_PATTERN =
+  /(?:(?:heavy|difficult|labored)\s+breath|(?:schwer|atemnot)[\p{L}\p{M}]*|(?:тяж[её]л|затрудн)[\p{L}\p{M}]*\s+(?:дых|дыш)|(?:важк|утруднен)[\p{L}\p{M}]*\s+дих)/iu;
+const HIGH_RISK_ANIMAL_REFERENCE_PATTERN =
+  /(?:(?:heavy|difficult|labored).{0,24}breath|(?:schwer|atemnot)[\p{L}\p{M}]*|(?:тяж[её]л|затрудн)[\p{L}\p{M}]*.{0,24}(?:дых|дыш)|(?:важк|утруднен)[\p{L}\p{M}]*.{0,24}дих)/iu;
+const SAFETY_REFERENCE_PATTERN =
+  /(?:safety|safe|sicher|stress|handling|emergency|veterin|безопас|безпек|стресс|обращени|противопоказ|ветерин|экстрен)/iu;
 const MAX_BREED_IMAGE_BYTES = 8 * 1024 * 1024;
 
 const STOP_WORDS = new Set([
@@ -386,6 +392,10 @@ function scoreKnowledgeEntry(entry, normalizedQuery, terms, locale) {
     ADDITIONAL_SERVICES_PATTERN.test(title)
   ) {
     score += 100;
+  }
+  if (HIGH_RISK_ANIMAL_QUERY_PATTERN.test(normalizedQuery)) {
+    if (HIGH_RISK_ANIMAL_REFERENCE_PATTERN.test(text)) score += 300;
+    else if (SAFETY_REFERENCE_PATTERN.test(`${title} ${text}`)) score += 80;
   }
   if (/source priority|public business facts|response patterns/i.test(entry.title)) score += 0.25;
   return score;

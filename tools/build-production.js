@@ -62,6 +62,7 @@ const copyEntries = [
   'favicon.ico',
   'site.webmanifest',
   'sw.js',
+  'sp-push-worker-fb.js',
   'browserconfig.xml',
   'BingSiteAuth.xml',
 ];
@@ -365,6 +366,8 @@ function injectSendPulseIntegrations(directory, version) {
   const aiChatStylePattern = /\s*<link\s+[^>]*href="[^"]*ai-chat\.css\?[^"\s]+"[^>]*>/g;
   const liveChatScriptPattern = /\s*<script\s+src="https:\/\/cdn\.pulse\.is\/livechat\/loader\.js"[^>]*><\/script>/g;
   const popupScriptPattern = /\s*<script\s+src="https:\/\/static\.sppopups\.com\/assets\/loader\.js"[^>]*><\/script>/g;
+  const pushScriptPattern = /\s*<script\s+charset="UTF-8"\s+src="https:\/\/web\.webpushs\.com\/js\/push\/ad3860c1c56016022bf413f3d7ab36f6_1\.js"\s+async><\/script>/g;
+  const pushHomePages = new Set(['de/index.html', 'en/index.html', 'ru/index.html', 'uk/index.html']);
 
   function walk(dir) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -384,7 +387,8 @@ function injectSendPulseIntegrations(directory, version) {
         .replace(aiChatScriptPattern, '')
         .replace(aiChatStylePattern, '')
         .replace(liveChatScriptPattern, '')
-        .replace(popupScriptPattern, '');
+        .replace(popupScriptPattern, '')
+        .replace(pushScriptPattern, '');
 
       const scriptPrefix = path
         .relative(path.dirname(fullPath), path.join(directory, 'assets/js'))
@@ -400,7 +404,12 @@ function injectSendPulseIntegrations(directory, version) {
         `<script src="${scriptPrefix}/sendpulse-integrations.js?v=${version}"></script>`,
         `<script src="${scriptPrefix}/ai-chat.js?v=${version}"></script>`,
       ].join('\n');
-      const next = cleaned.replace('</head>', `${stylesheet}\n</head>`).replace('</body>', `\n${loaders}\n</body>`);
+      const pushLoader = pushHomePages.has(relativePath)
+        ? '<script charset="UTF-8" src="https://web.webpushs.com/js/push/ad3860c1c56016022bf413f3d7ab36f6_1.js" async></script>'
+        : '';
+      const next = cleaned
+        .replace('</head>', `${stylesheet}${pushLoader ? `\n${pushLoader}` : ''}\n</head>`)
+        .replace('</body>', `\n${loaders}\n</body>`);
       if (next !== original) {
         fs.writeFileSync(fullPath, next, 'utf8');
         htmlFiles += 1;

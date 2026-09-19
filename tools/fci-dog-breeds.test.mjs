@@ -17,7 +17,7 @@ const DOG_CATEGORY_IDS = [
   'ru-large-dogs',
 ];
 const EXPECTED_CATEGORY_COUNTS = [22, 21, 29, 26, 65, 173, 99];
-const EXPECTED_COAT_CATEGORY_COUNTS = [11, 7, 20, 13, 27, 17, 9, 27, 56, 24, 19, 47, 61, 14, 13, 70];
+const EXPECTED_COAT_CATEGORY_COUNTS = [11, 7, 9, 11, 13, 27, 17, 6, 3, 27, 56, 24, 15, 4, 47, 61, 14, 13, 70];
 const EXPECTED_IRISH_WOLFHOUND = {
   de: 'Irischer Wolfshund',
   en: 'Irish Wolfhound',
@@ -287,14 +287,71 @@ test('all localized price pages load FCI data before booking and UI code', () =>
 });
 
 const AUDITED_DOG_TARIFF = {
-  small: { puppy: 50, short: [60, 50], wire: [80, 60, 75], long: [80, 60], double: [80, 60] },
-  medium: { puppy: 55, short: [70, 60], wire: [90, 70, 90], long: [90, 70], double: [90, 75] },
-  large: { puppy: 60, short: [90, 75], wire: [110, 85, 110], long: [105, 85], double: [110, 90] },
-  giant: { puppy: 70, short: [110, 95], wire: [140, 105, 140], long: [130, 110], double: [140, 120] },
+  small: {
+    puppy: 50,
+    short: { full: 60, bath: 60 },
+    wire: { full: 80, bath: 60, handstripping: 60 },
+    long: { full: 80, bath: 60 },
+    curly: { full: 80, bath: 60 },
+    double: { full: 80, bath: 60, deshedding: 30 },
+  },
+  medium: {
+    puppy: 50,
+    short: { full: 80, bath: 70 },
+    wire: { full: 90, bath: 70, handstripping: 60 },
+    long: { full: 90, bath: 70 },
+    curly: { full: 100, bath: 80 },
+    double: { full: 90, bath: 75, deshedding: 30 },
+  },
+  large: {
+    puppy: 50,
+    short: { full: 100, bath: 90 },
+    wire: { full: 120, bath: 90, handstripping: 60 },
+    long: { full: 120, bath: 90 },
+    curly: { full: 120, bath: 90 },
+    double: { full: 120, bath: 90, deshedding: 30 },
+  },
+  giant: {
+    puppy: 50,
+    short: { full: 120, bath: 120 },
+    wire: { full: 150, bath: 105, handstripping: 60 },
+    long: { full: 150, bath: 110 },
+    curly: { full: 150, bath: 110 },
+    double: { full: 150, bath: 120, deshedding: 30 },
+  },
+};
+const EXPECTED_COATS_BY_SIZE = {
+  small: ['short', 'wire', 'long', 'curly', 'double'],
+  medium: ['short', 'wire', 'long', 'curly', 'double'],
+  large: ['short', 'wire', 'long', 'curly', 'double'],
+  giant: ['short', 'wire', 'long', 'double'],
+};
+const EXPECTED_TRIMMING_LABEL = {
+  ru: 'Тримминг',
+  de: 'Trimmen',
+  en: 'Trimming',
+  uk: 'Тримінг',
+};
+const EXPECTED_TRIMMING_PRICE = {
+  ru: '60 € / час',
+  de: '60 € / Std.',
+  en: '€60 / hour',
+  uk: '60 € / год.',
+};
+const expectedDogServicePrices = (section, coat) => {
+  const tariff = AUDITED_DOG_TARIFF[section];
+  const coatTariff = tariff[coat];
+  return [
+    ['puppy-intro', tariff.puppy],
+    ['full-groom', coatTariff.full],
+    ['hygiene', coatTariff.bath],
+    coatTariff.handstripping && ['trimming', coatTariff.handstripping],
+    coatTariff.deshedding && ['deshedding', coatTariff.deshedding],
+  ].filter(Boolean);
 };
 
 test('coat groups apply the audited size and coat tariff without public size codes', () => {
-  const serviceOrder = ['puppy-intro', 'full-care', 'bath-hygiene', 'handstripping'];
+  const serviceOrder = ['puppy-intro', 'full-groom', 'hygiene', 'trimming', 'deshedding'];
   const after = runSources([...BASE_SOURCES, ...FCI_SOURCES, 'assets/js/price-page-coat-groups.js', 'assets/js/price-booking.js']);
   const referenceCatalog = after.PriceBookingCatalog.build('ru');
   const expectedCounts = referenceCatalog.categories.map(category => category.breeds.length);
@@ -327,28 +384,33 @@ test('coat groups apply the audited size and coat tariff without public size cod
     }
     for (const section of ['small', 'medium', 'large', 'giant']) {
       const categories = catalog.categories.filter(category => category.source.pageSection === section);
-      assert.deepEqual(clone(categories.map(category => category.source.coatType)),
-        ['short', 'wire', 'long', 'double']);
+      assert.deepEqual(clone(categories.map(category => category.source.coatType)), EXPECTED_COATS_BY_SIZE[section]);
       for (const category of categories) {
-        const expectedAmounts = [AUDITED_DOG_TARIFF[section].puppy, ...AUDITED_DOG_TARIFF[section][category.source.coatType].slice(0, 2)];
         assert.deepEqual(
-          clone(category.services.map(service => Number(service.price.match(/\d+/u)?.[0]))),
-          expectedAmounts,
+          clone(category.services.map(service => [service.key, Number(service.price.match(/\d+/u)?.[0])])),
+          expectedDogServicePrices(section, category.source.coatType),
           `${lang}:${category.id}: audited tariff drifted`
         );
         assert.ok(category.breeds.length);
-        assert.ok(category.services.some(service => service.key === 'full-care'));
-        assert.ok(category.services.some(service => service.key === 'bath-hygiene'));
+        assert.ok(category.services.some(service => service.key === 'full-groom'));
+        assert.ok(category.services.some(service => service.key === 'hygiene'));
         assert.ok(category.services.some(service => service.key === 'puppy-intro'));
+        assert.ok(category.services.every(service => !['bath-dry', 'haircut'].includes(service.key)));
+        assert.equal(category.services.some(service => service.key === 'trimming'), category.source.coatType === 'wire');
+        if (category.source.coatType === 'wire') {
+          const trimming = category.services.find(service => service.key === 'trimming');
+          assert.equal(trimming.label, EXPECTED_TRIMMING_LABEL[lang]);
+          assert.equal(trimming.price, EXPECTED_TRIMMING_PRICE[lang]);
+        }
         for (const breed of category.breeds) {
-          assert.ok(catalog.getServices(category.id, breed.id).some(service => service.key === 'full-care'));
-          assert.ok(catalog.getServices(category.id, breed.id).some(service => service.key === 'bath-hygiene'));
+          assert.ok(catalog.getServices(category.id, breed.id).some(service => service.key === 'full-groom'));
+          assert.ok(catalog.getServices(category.id, breed.id).some(service => service.key === 'hygiene'));
           const keys = category.source.breedKeys;
           assert.equal(new Set(keys).size, keys.length);
         }
       }
     }
-    assert.equal(catalog.categories.filter(category => category.source.animalType === 'dog').length, 16);
+    assert.equal(catalog.categories.filter(category => category.source.animalType === 'dog').length, 19);
     for (const oldId of DOG_CATEGORY_IDS) assert.equal(catalog.getCategory(oldId), null);
   }
 });
@@ -360,7 +422,7 @@ test('all locales use identical coat memberships and preserve specialist service
   const expected = membership('ru');
   assert.equal(expected.size, 435);
   for (const lang of LOCALES) assert.deepEqual([...membership(lang)].sort(), [...expected].sort());
-  assert.equal(expected.get('ru-poodles-bichons:base:0'), 'ru-long-coat-small');
+  assert.equal(expected.get('ru-poodles-bichons:base:0'), 'ru-curly-coat-small');
   assert.equal(expected.get('ru-poodles-bichons:base:4'), 'ru-double-coat-small');
   assert.equal(expected.get('ru-spitz:base:0'), 'ru-double-coat-small');
   assert.equal(expected.get('ru-large-dogs:base:0'), 'ru-double-coat-giant');
@@ -377,29 +439,26 @@ test('all locales use identical coat memberships and preserve specialist service
   assert.equal(expected.get('fci:294:breed'), 'ru-double-coat-giant');
   assert.equal(expected.get('fci:148:standard-long'), 'ru-double-coat-medium');
   assert.equal(expected.get('ru-spaniels:base:0'), 'ru-double-coat-medium');
-  assert.equal(expected.get('fci:37:breed'), 'ru-long-coat-large');
+  assert.equal(expected.get('fci:37:breed'), 'ru-curly-coat-large');
   assert.equal(expected.get('fci:160:breed'), 'ru-wire-coat-giant');
   const catalog = window.PriceBookingCatalog.build('ru');
   const westie = catalog.breeds.find(breed => breed.label === 'Вест-хайленд-уайт-терьер');
   const bichon = catalog.breeds.find(breed => breed.label === 'Бишон-фризе');
   assert.equal(westie.categoryId, 'ru-wire-coat-medium');
   assert.equal(bichon.categoryId, 'ru-double-coat-small');
-  assert.ok(catalog.getServices(catalog.getCategory('ru-additional-services').id).some(service => service.key === 'trimming'));
-  assert.ok(catalog.getServices(westie.categoryId, westie.id).every(service => service.key !== 'trimming'));
+  assert.ok(catalog.getServices(catalog.getCategory('ru-additional-services').id).every(service => service.key !== 'trimming'));
+  assert.ok(catalog.getServices(westie.categoryId, westie.id).some(service => service.key === 'trimming'));
 });
 
-test('localized additional services keep the shared service indexes and trimming identity', () => {
+test('localized additional services keep only the approved tariffs and shared indexes', () => {
   const window = runSources([...BASE_SOURCES, ...FCI_SOURCES, 'assets/js/price-page-coat-groups.js', 'assets/js/price-booking.js']);
-    const trimmingPatterns = { de: /^Trimmen — /, en: /^Hand stripping — /, ru: /^Тримминг — /, uk: /^Тримінг — / };
   for (const lang of LOCALES) {
     const services = window.PriceBookingCatalog.build(lang).getServices('ru-additional-services');
     assert.deepEqual(clone(services.map(service => {
       const amount = service.price.match(/\d+/u);
       return amount ? Number(amount[0]) : null;
-    })), [10, 12, 15, 18, 100, 20, 25, 75, 90, 110, 140], `${lang}: additional service tariff indexes drifted`);
-    const trimming = services.filter(service => service.key === 'trimming');
-    assert.equal(trimming.length, 4, `${lang}: trimming needs one tariff per weight group`);
-    assert.deepEqual(clone(trimming.map(service => service.index)), [7, 8, 9, 10], `${lang}: trimming service indexes drifted`);
-    assert.ok(trimming.every(service => trimmingPatterns[lang].test(service.label)));
+    })), [15, 100, 20, 25, 15], `${lang}: additional service tariff indexes drifted`);
+    assert.equal(services.length, 5, `${lang}: only approved additional services remain`);
+    assert.ok(services.every(service => !/(?:Trimmen|Hand stripping|Тримминг|Тримінг)/u.test(service.label)));
   }
 });

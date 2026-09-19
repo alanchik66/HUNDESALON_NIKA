@@ -14,15 +14,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const KNOWLEDGE_RELATIVE_PATH = 'knowledge/03_Resources/SendPulse_AI_Agent_Knowledge.md';
 const KNOWLEDGE_PATH = path.join(ROOT, KNOWLEDGE_RELATIVE_PATH);
 const ANIMAL_REFERENCE_RELATIVE_PATH = 'knowledge/03_Resources/Animal_Grooming_Reference.md';
-
-const PRICE_SOURCE_PATHS = [
-  'assets/js/price-page-data.js',
-  'assets/js/price-page-ru-data.js',
-  'assets/js/price-page-locales.js',
-  'assets/js/fci-dog-breeds-data.js',
-  'assets/js/price-page-fci-breeds.js',
-  'assets/js/price-catalog.js',
-];
+const PRICE_PAGE_RUNTIME_DOCUMENT = 'ru/prays-list.html';
+const PRICE_CATALOG_ENTRY_PATH = 'assets/js/price-catalog.js';
+const PRICE_PAGE_RENDER_PATH = 'assets/js/price-page.js';
 
 const PUBLIC_PAGE_PATHS = [
   'index.html',
@@ -59,6 +53,29 @@ function read(relativePath) {
   return normalizeSourceText(readFileSync(path.join(ROOT, relativePath), 'utf8'));
 }
 
+/**
+ * Use the exact data-script order of the published price page, rather than a
+ * parallel hand-maintained subset. This makes a catalog transformation part of
+ * the knowledge fingerprint and prevents the assistant from retaining a price
+ * that is no longer visible to a customer.
+ */
+export function listPriceCatalogRuntimeSourcePaths({ runtimeDocument = PRICE_PAGE_RUNTIME_DOCUMENT } = {}) {
+  const scriptSources = Array.from(
+    read(runtimeDocument).matchAll(
+      /<script\b[^>]*\bsrc=["'](?:\.\.\/)?(assets\/js\/[^"'?]+\.js)(?:\?[^"']*)?["'][^>]*>\s*<\/script>/giu
+    ),
+    match => match[1]
+  );
+  const entryIndex = scriptSources.indexOf(PRICE_CATALOG_ENTRY_PATH);
+  const renderIndex = scriptSources.indexOf(PRICE_PAGE_RENDER_PATH);
+  if (entryIndex === -1 || renderIndex === -1 || renderIndex <= entryIndex) {
+    throw new Error(`Unable to resolve the price catalog runtime sequence from ${runtimeDocument}.`);
+  }
+  return scriptSources.slice(entryIndex, renderIndex);
+}
+
+export const PRICE_CATALOG_RUNTIME_SOURCE_PATHS = Object.freeze(listPriceCatalogRuntimeSourcePaths());
+
 function sourceDigest(relativePaths) {
   const hash = createHash('sha256');
   hash.update('hundesalon-nika-sendpulse-knowledge-v1\0');
@@ -71,10 +88,10 @@ function sourceDigest(relativePaths) {
   return hash.digest('hex');
 }
 
-function loadPriceCatalog() {
-  const sandbox = { window: {} };
+export function loadPublishedPriceCatalog() {
+  const sandbox = { Intl, window: {} };
   vm.createContext(sandbox);
-  for (const relativePath of PRICE_SOURCE_PATHS) {
+  for (const relativePath of PRICE_CATALOG_RUNTIME_SOURCE_PATHS) {
     vm.runInContext(read(relativePath), sandbox, { filename: relativePath, timeout: 2_000 });
   }
 
@@ -99,6 +116,12 @@ function localize(value, locale) {
     : String(candidate).trim();
 }
 
+function formatCategoryTitle(category, locale, localeConfig) {
+  const title = localize(category.title, locale) || category.id;
+  const sizeGroupTitle = localize(localeConfig?.sizeGroupTitles?.[category.pageSection], locale);
+  return sizeGroupTitle ? `${sizeGroupTitle} — ${title}` : title;
+}
+
 function chunks(items, size = 14) {
   const result = [];
   for (let index = 0; index < items.length; index += size) {
@@ -107,7 +130,7 @@ function chunks(items, size = 14) {
   return result;
 }
 
-function formatServiceDetails(categories, serviceCatalog, locale) {
+function formatServiceDetails(categories, serviceCatalog, locale, localeConfig) {
   // Import only descriptions linked by a stable key from the current price page.
   // The older catalog also contains legacy prices and unlisted service variants:
   // these must not become new offers or override the current category prices.
@@ -132,7 +155,7 @@ function formatServiceDetails(categories, serviceCatalog, locale) {
     lines.push('- These service-specific details take priority over general category care lists. Do not add procedures from other packages.');
     lines.push(`- Note: ${service.note}`, `- Description: ${service.description}`);
     for (const { category, priceRow } of offers) {
-      lines.push(`- Price: ${label} — ${localize(priceRow.price, locale)}; Category: ${localize(category.title, locale)}`);
+        lines.push(`- Price: ${label} — ${localize(priceRow.price, locale)}; Category: ${formatCategoryTitle(category, locale, localeConfig)}`);
     }
   }
   return lines;
@@ -148,13 +171,14 @@ function formatPriceCatalog(catalog, serviceCatalog) {
 
   for (const locale of LOCALES) {
     const categories = catalog.categoriesByLocale[locale];
+    const localeConfig = catalog.locales?.[locale] || {};
     if (!Array.isArray(categories) || categories.length === 0) {
       throw new Error(`No price categories found for locale ${locale}.`);
     }
 
     lines.push('', `### ${locale.toUpperCase()} — published catalog ###`);
     for (const category of categories) {
-      const title = localize(category.title, locale) || category.id;
+      const title = formatCategoryTitle(category, locale, localeConfig);
       lines.push('', `#### ${title} ####`);
 
       const summary = localize(category.summary, locale);
@@ -194,7 +218,7 @@ function formatPriceCatalog(catalog, serviceCatalog) {
         if (text) lines.push(`- Note: ${text}`);
       }
     }
-    lines.push(...formatServiceDetails(categories, serviceCatalog, locale));
+    lines.push(...formatServiceDetails(categories, serviceCatalog, locale, localeConfig));
   }
 
   return lines.join('\n');
@@ -348,14 +372,15 @@ function replaceAnimalReference(document, snapshot) {
 
 export function buildKnowledgeDocument({ template = read(KNOWLEDGE_RELATIVE_PATH) } = {}) {
   const sourcePaths = [
-    ...PRICE_SOURCE_PATHS,
+    PRICE_PAGE_RUNTIME_DOCUMENT,
+    ...PRICE_CATALOG_RUNTIME_SOURCE_PATHS,
     ANIMAL_REFERENCE_RELATIVE_PATH,
     ...LOCALES.map(locale => `${locale}/agb.html`),
     ...LOCALES.flatMap(locale => PUBLIC_PAGE_PATHS.map(pagePath => `${locale}/${pagePath}`))
       .filter(relativePath => existsSync(path.join(ROOT, relativePath))),
   ];
   const fingerprint = sourceDigest(sourcePaths);
-  const { catalog, serviceCatalog } = loadPriceCatalog();
+  const { catalog, serviceCatalog } = loadPublishedPriceCatalog();
 
   let document = normalizeSourceText(template);
   const fingerprintLine = `Generated source fingerprint: sha256:${fingerprint}`;

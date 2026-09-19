@@ -72,10 +72,10 @@
   };
 
   const sectionGroups = [
-    { key: 'small', sourceKeys: ['small'], grid: 'four' },
-    { key: 'medium', sourceKeys: ['medium'], grid: 'four' },
-    { key: 'large', sourceKeys: ['large'], grid: 'four' },
-    { key: 'giant', sourceKeys: ['giant'], grid: 'four' },
+    { key: 'small', sourceKeys: ['small'], grid: 'five' },
+    { key: 'medium', sourceKeys: ['medium'], grid: 'five' },
+    { key: 'large', sourceKeys: ['large'], grid: 'five' },
+    { key: 'giant', sourceKeys: ['giant'], grid: 'five' },
     { key: 'cats-animals', sourceKeys: ['cats', 'smallAnimals'], layout: 'category-row', grid: 'four' },
     {
       key: 'additional',
@@ -86,6 +86,8 @@
     { key: 'other', sourceKeys: ['other'] },
   ];
   const categoryNavigationKeys = ['small', 'medium', 'large', 'giant', 'cats', 'smallAnimals'];
+  const DOG_SIZE_SECTION_SELECTOR = ':is([data-price-section="small"], [data-price-section="medium"], [data-price-section="large"], [data-price-section="giant"])';
+  const CAT_ANIMALS_SECTION_SELECTOR = '[data-price-section="cats-animals"]';
   const searchFilterCopy = ({
     de: {
       label: 'Suchfilter',
@@ -103,6 +105,7 @@
       coat: 'Felltyp',
       anyCoat: 'Alle Felltypen',
       long: 'Langhaar',
+      curly: 'Pudel- und Lockenfell',
       short: 'Kurzhaar',
       wire: 'Rauhaar',
       double: 'Doppelfell',
@@ -126,6 +129,7 @@
       coat: 'Coat type',
       anyCoat: 'Any coat',
       long: 'Long-haired',
+      curly: 'Poodle and curly coats',
       short: 'Short-haired',
       wire: 'Wire-haired',
       double: 'Double coat',
@@ -149,6 +153,7 @@
       coat: 'Тип шерсти',
       anyCoat: 'Любой тип',
       long: 'Длинношёрстные',
+      curly: 'Пудельная и кудрявая шерсть',
       short: 'Короткошёрстные',
       wire: 'Жёсткошёрстные',
       double: 'Двойная шерсть',
@@ -172,6 +177,7 @@
       coat: 'Тип шерсті',
       anyCoat: 'Будь-який тип',
       long: 'Довгошерсті',
+      curly: 'Пудельна та кучерява шерсть',
       short: 'Короткошерсті',
       wire: 'Жорсткошерсті',
       double: 'Подвійна шерсть',
@@ -185,10 +191,10 @@
     .join('');
   const getCoatFilterOptions = animalType => {
     const coatKeys = ({
-      dog: ['short', 'wire', 'long', 'double'],
+      dog: ['short', 'wire', 'long', 'curly', 'double'],
       cat: ['short', 'long'],
       smallAnimals: [],
-      all: ['short', 'wire', 'special', 'long', 'double'],
+      all: ['short', 'wire', 'special', 'long', 'curly', 'double'],
     })[animalType] || [];
     return [
       ['all', searchFilterCopy.anyCoat],
@@ -896,7 +902,7 @@
     'small-animal:rabbit:short:4',
   ]);
   const IMPORTANT_CATEGORY_ID = 'ru-important-information';
-  const DENTAL_SERVICE_INDEX = 4;
+  const DENTAL_SERVICE_INDEX = 1;
   const DENTAL_MAX_WEIGHT_KG = 6;
   const DENTAL_GROOMING_DISCOUNT_RATE = 0.3;
   const CURRENCY_MINOR_UNITS = 100;
@@ -949,38 +955,30 @@
     ...sourceCategories.filter(category => category.animalType === 'dog').map(category => category.id),
   ]);
   const additionalServiceIndexesByGroup = {
-    small: [0, 4, 5, 6, 7],
-    medium: [1, 5, 6, 8],
-    large: [2, 5, 6, 9],
-    giant: [3, 5, 6, 10],
-    mixed: [0, 1, 2, 3, 5, 6, 7, 8, 9, 10],
+    small: [0, 1, 2, 3, 4],
+    medium: [0, 2, 4],
+    large: [0, 2, 4],
+    giant: [0, 2, 4],
   };
 
-  const getAdditionalServices = (category, selectedBreed = null) => {
+  const getAdditionalServices = category => {
     if (!bookingCatalog || !category) return [];
     const sourceCategoryId = category.sourceId || category.id;
     const services = bookingCatalog.getServices(ADDITIONAL_CATEGORY_ID);
-    const breedCategory = bookingCatalog.getCategory(selectedBreed?.categoryId || sourceCategoryId);
-    const breedSourceId = breedCategory?.source.breedSourceCategoryIds?.[selectedBreed?.index]
-      || selectedBreed?.categoryId || sourceCategoryId;
-    const supportsTrimming = breedSourceId === 'ru-wire-coat' || breedCategory?.source.coatType === 'wire';
     if (sourceCategoryId === ADDITIONAL_CATEGORY_ID) {
-      return services.filter(service => {
-        if (service.key !== 'trimming') return true;
-        return supportsTrimming;
-      });
+      // The standalone additional-services card has no size selection, so it only offers universal services.
+      return services.filter(service => [0, 2, 4].includes(service.index));
     }
-    if (category.animalType === 'smallAnimal' || sourceCategoryId === 'ru-small-animals') {
+    if (category.animalType === 'cat'
+      || category.animalType === 'smallAnimal'
+      || sourceCategoryId === 'ru-cats-grooming'
+      || sourceCategoryId === 'ru-small-animals') {
       return services.filter(service => service.index === 0);
     }
     if (!DOG_CATEGORY_IDS.has(sourceCategoryId)) return [];
     const serviceGroup = category.additionalServiceGroup || category.groupKey;
     const allowedIndexes = additionalServiceIndexesByGroup[serviceGroup] || [];
-    return services.filter(service => {
-      if (service.key === 'trimming') return supportsTrimming;
-      if (!allowedIndexes.includes(service.index)) return false;
-      return true;
-    });
+    return services.filter(service => allowedIndexes.includes(service.index));
   };
 
   const getAdditionalServiceNotes = category => {
@@ -1667,7 +1665,7 @@
     return services.filter(service => selectedIds.has(service.id));
   };
 
-  const NAIL_TRIM_SERVICE_INDEXES = new Set([0, 1, 2, 3]);
+  const NAIL_TRIM_SERVICE_INDEXES = new Set([0]);
 
   const getDentalWeight = () => {
     const normalized = String(modalDentalWeightInput?.value || '').replace(',', '.');
@@ -1939,12 +1937,13 @@
     const serviceIndexes = new Set(category.priceIndexes || bookingCategory.services.map(service => service.index));
     const primaryServices = isAdditionalSelection
       ? []
-      : bookingCatalog
-        .getServices(sourceCategoryId, modalBreedSelect.value)
-        .filter(service => serviceIndexes.has(service.index));
-    const selectedBreed = bookingCatalog.getBreed(modalBreedSelect.value);
+      : sourceCategoryId === ADDITIONAL_CATEGORY_ID
+        ? getAdditionalServices(category)
+        : bookingCatalog
+          .getServices(sourceCategoryId, modalBreedSelect.value)
+          .filter(service => serviceIndexes.has(service.index));
     const additionalServices = isAdditionalSelection || sourceCategoryId !== ADDITIONAL_CATEGORY_ID
-      ? getAdditionalServices(category, selectedBreed)
+      ? getAdditionalServices(category)
       : [];
     const allowMultiplePrimary = isAdditionalSelection || sourceCategoryId === ADDITIONAL_CATEGORY_ID;
     const preferredServiceId = Number.isInteger(preferredServiceIndex)
@@ -2427,8 +2426,10 @@
     cardAlignmentFrame = 0;
     const allTops = Array.from(cardsRoot.querySelectorAll('.price-card__top'));
     allTops.forEach(top => top.style.removeProperty('min-height'));
-    cardsRoot.querySelectorAll('[data-price-section-grid="four"] .price-card__service-option')
+    cardsRoot.querySelectorAll(`${DOG_SIZE_SECTION_SELECTOR} .price-card__service-option`)
       .forEach(service => service.style.removeProperty('min-height'));
+    cardsRoot.querySelectorAll(`${CAT_ANIMALS_SECTION_SELECTOR} .price-card`)
+      .forEach(card => card.style.removeProperty('min-height'));
     if (window.matchMedia('(max-width: 720px)').matches) return;
 
     // Measure only after the reset has reached layout, then apply all writes together.
@@ -2443,7 +2444,7 @@
       const updates = [];
 
       alignmentRoots.forEach(root => {
-        const isDogGrid = Boolean(root.closest('[data-price-section-grid="four"]'));
+        const isDogGrid = Boolean(root.closest(DOG_SIZE_SECTION_SELECTOR));
         const rows = new Map();
         root.querySelectorAll('.price-card').forEach(card => {
           const top = card.querySelector('.price-card__top');
@@ -2462,21 +2463,33 @@
           row.forEach(({ top }) => updates.push([top, maxHeight]));
           if (!isDogGrid) return;
 
-          // Keep matching dog services level when a longer label or price wraps.
-          const serviceRows = row.map(({ card }) => Array.from(card.querySelectorAll('.price-card__service-option')));
-          const serviceCount = serviceRows[0].length;
-          if (!serviceRows.every(services => services.length === serviceCount)) return;
-          for (let index = 0; index < serviceCount; index += 1) {
-            const services = serviceRows.map(items => items[index]);
+          // Keep only like-for-like dog services level when a longer label or price wraps.
+          const serviceIndexes = new Set(
+            row.flatMap(({ card }) => Array.from(card.querySelectorAll('[data-price-service-select]'))
+              .map(service => service.dataset.priceServiceIndex))
+          );
+          serviceIndexes.forEach(index => {
+            const services = row.map(({ card }) => card.querySelector(`[data-price-service-select][data-price-service-index="${index}"]`));
+            if (services.some(service => !service)) return;
             const heights = services.map(service => service.offsetHeight);
-            if (heights.some(height => height <= 0)) continue;
+            if (heights.some(height => height <= 0)) return;
             const serviceHeight = Math.ceil(Math.max(...heights));
             services.forEach(service => updates.push([service, serviceHeight]));
-          }
+          });
         });
       });
 
       updates.forEach(([element, height]) => element.style.setProperty('min-height', `${height}px`));
+
+      // Cats and small animals share a category row. Match their visible card height to the
+      // giant-dog reference only after text/service rows have been aligned, so no locale gets
+      // a brittle fixed pixel height or a stretched narrow tile.
+      const giantCards = Array.from(cardsRoot.querySelectorAll('[data-price-section="giant"] .price-card'));
+      const catAnimalCards = Array.from(cardsRoot.querySelectorAll(`${CAT_ANIMALS_SECTION_SELECTOR} .price-card`));
+      if (!giantCards.length || !catAnimalCards.length) return;
+      const referenceHeight = Math.ceil(Math.max(...giantCards.map(card => card.getBoundingClientRect().height)));
+      if (!Number.isFinite(referenceHeight) || referenceHeight <= 0) return;
+      catAnimalCards.forEach(card => card.style.setProperty('min-height', `${referenceHeight}px`));
     });
   };
 

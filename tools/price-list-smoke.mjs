@@ -319,7 +319,19 @@ for (const locale of locales) {
       const currentLocale = document.documentElement.lang;
       const categories = window.PricePageCatalog?.categoriesByLocale?.[currentLocale] || [];
       const categoriesById = new Map(categories.map(category => [category.id, category]));
-      const expectedServiceKeys = ['puppy-intro', 'full-care', 'bath-hygiene'];
+      const expectedServiceKeysByCoat = {
+  short: ['puppy-intro', 'full-groom', 'hygiene'],
+  wire: ['puppy-intro', 'full-groom', 'hygiene', 'trimming'],
+  long: ['puppy-intro', 'full-groom', 'hygiene'],
+  curly: ['puppy-intro', 'full-groom', 'hygiene'],
+  double: ['puppy-intro', 'full-groom', 'hygiene', 'deshedding'],
+      };
+      const expectedCoatsBySection = {
+        small: ['short', 'wire', 'long', 'curly', 'double'],
+        medium: ['short', 'wire', 'long', 'curly', 'double'],
+        large: ['short', 'wire', 'long', 'curly', 'double'],
+        giant: ['short', 'wire', 'long', 'double'],
+      };
       const follows = (before, after) => Boolean(
         before
         && after
@@ -334,19 +346,19 @@ for (const locale of locales) {
           const cta = card.querySelector('[data-price-open]');
           const orderedNodes = [...primaryRows, additionalRow, cta];
           const serviceKeys = (category?.priceRows || []).map(row => row.key);
+          const expectedServiceKeys = expectedServiceKeysByCoat[category?.coatType] || [];
           return {
             id: card.dataset.categoryId,
             serviceKeys,
             primaryRowCount: primaryRows.length,
             hasAdditionalRow: Boolean(additionalRow),
             hasCta: Boolean(cta),
-            orderCorrect: orderedNodes.length === 5
-              && orderedNodes.every(Boolean)
+            orderCorrect: orderedNodes.every(Boolean)
               && orderedNodes.slice(1).every((node, index) => follows(orderedNodes[index], node)),
             serviceKeysCorrect: JSON.stringify(serviceKeys) === JSON.stringify(expectedServiceKeys),
           };
         });
-      const minimumGridGap = layoutLabel === 'mobile' ? 16 : 24;
+      const minimumGridGap = layoutLabel === 'mobile' ? 16 : 20;
       const sizeSections = ['small', 'medium', 'large', 'giant'].map(sectionKey => {
         const section = document.querySelector(`[data-price-section="${sectionKey}"]`);
         const heading = section?.querySelector('.price-size-section__heading');
@@ -366,15 +378,18 @@ for (const locale of locales) {
         }
         const horizontalGaps = rows.flatMap(row => row.slice(1).map((rect, index) => rect.left - row[index].right));
         const verticalGaps = rows.slice(1).map((row, index) => row[0].top - Math.max(...rows[index].map(rect => rect.bottom)));
-        const expectedCardCount = 4;
+        const expectedCoatTypes = expectedCoatsBySection[sectionKey] || [];
+        const expectedCardCount = expectedCoatTypes.length;
         const expectedRowLengths = layoutLabel === 'mobile'
           ? Array(expectedCardCount).fill(1)
-          : layoutLabel === 'tablet' ? [2, 2] : [4];
+          : layoutLabel === 'tablet'
+            ? Array.from({ length: Math.ceil(expectedCardCount / 2) }, (_, index) => index < Math.floor(expectedCardCount / 2) ? 2 : expectedCardCount % 2 || 2)
+            : [expectedCardCount];
         const widths = rects.map(rect => rect.width);
         const coatTypes = cards.map(card => categoriesById.get(card.dataset.categoryId)?.coatType || '');
         const serviceRects = cards.map(card => Array.from(card.querySelectorAll('[data-price-service-select], [data-price-additional-select]'))
           .map(service => service.getBoundingClientRect()));
-        const serviceAlignment = rows.map(row => [0, 1, 2, 3].map(index => {
+        const serviceAlignment = rows.map(row => [0, 1, 2].map(index => {
           const matchingServices = row.map(rect => serviceRects[rects.indexOf(rect)][index]);
           const tops = matchingServices.map(service => service?.top ?? Infinity);
           const heights = matchingServices.map(service => service?.height ?? Infinity);
@@ -392,6 +407,7 @@ for (const locale of locales) {
           weightBesideTitle: Boolean(title && weight && Math.abs(title.getBoundingClientRect().top - weight.getBoundingClientRect().top) <= 12),
           cardIds: cards.map(card => card.dataset.categoryId),
           coatTypes,
+          expectedCoatTypes,
           gridGap,
           rowGap,
           rowLengths: rows.map(row => row.length),
@@ -405,6 +421,7 @@ for (const locale of locales) {
             .every(service => !service.style.minHeight)),
           widthSpread: widths.length ? Math.max(...widths) - Math.min(...widths) : Infinity,
           geometryCorrect: cards.length === expectedCardCount
+            && JSON.stringify(coatTypes) === JSON.stringify(expectedCoatTypes)
             && JSON.stringify(rows.map(row => row.length)) === JSON.stringify(expectedRowLengths)
             && Number.isFinite(gridGap)
             && gridGap >= minimumGridGap - 0.25
@@ -416,7 +433,36 @@ for (const locale of locales) {
       });
       return { dogTiles, sizeSections };
     };
+    const readCompanionTileState = () => {
+      const toRect = card => {
+        const rect = card.getBoundingClientRect();
+        return {
+          width: rect.width,
+          height: rect.height,
+        };
+      };
+      const giantCards = Array.from(document.querySelectorAll('[data-price-section="giant"] .price-card'));
+      const catAnimalSection = document.querySelector('[data-price-section="cats-animals"]');
+      const catAnimalCards = Array.from(catAnimalSection?.querySelectorAll('.price-card') || []);
+      const giantRects = giantCards.map(toRect);
+      const catAnimalRects = catAnimalCards.map(toRect);
+      const reference = giantRects.reduce(
+        (largest, rect) => rect.height > largest.height ? rect : largest,
+        giantRects[0] || { width: 0, height: 0 }
+      );
+      return {
+        catAnimalCardCount: catAnimalRects.length,
+        giantCardCount: giantRects.length,
+        catAnimalSizes: catAnimalRects,
+        giantSizes: giantRects,
+        cardSizesMatch: Boolean(reference.width && reference.height)
+          && catAnimalRects.every(rect => Math.abs(rect.width - reference.width) <= 2
+            && Math.abs(rect.height - reference.height) <= 2),
+        singleSectionNavigation: catAnimalSection?.querySelectorAll(':scope > .price-section-navigation').length === 1,
+      };
+    };
     const dogTileDomState = await page.evaluate(readDogTileDomState, label);
+    const companionTileState = await page.evaluate(readCompanionTileState);
 
     assert(`${locale} ${label}: hero rendered`, state.heroTitle.length > 0);
     assert(`${locale} ${label}: breed search rendered`, state.breedSearchReady);
@@ -466,11 +512,11 @@ for (const locale of locales) {
     assert(`${locale} ${label}: modal exists`, state.modalReady);
     assert(`${locale} ${label}: calculation localization exists`, state.calculationLocalizationReady);
     assert(
-      `${locale} ${label}: every dog tile keeps the required service and CTA order`,
-      dogTileDomState.dogTiles.length === 16
+      `${locale} ${label}: every dog tile keeps its applicable service and CTA order`,
+      dogTileDomState.dogTiles.length === 19
         && dogTileDomState.dogTiles.every(tile =>
           tile.serviceKeysCorrect
-          && tile.primaryRowCount === 3
+          && tile.primaryRowCount === tile.serviceKeys.length
           && tile.hasAdditionalRow
           && tile.hasCta
           && tile.orderCorrect
@@ -478,9 +524,9 @@ for (const locale of locales) {
       JSON.stringify(dogTileDomState.dogTiles)
     );
     assert(
-      `${locale} ${label}: every dog size shows four ordered coat tiles`,
+      `${locale} ${label}: every dog size shows its ordered applicable coat tiles`,
       dogTileDomState.sizeSections.every(section =>
-        JSON.stringify(section.coatTypes) === JSON.stringify(['short', 'wire', 'long', 'double'])
+        JSON.stringify(section.coatTypes) === JSON.stringify(section.expectedCoatTypes)
       ),
       JSON.stringify(dogTileDomState.sizeSections)
     );
@@ -498,13 +544,21 @@ for (const locale of locales) {
       JSON.stringify(dogTileDomState.sizeSections)
     );
     assert(
+      `${locale} ${label}: cats and small-animal tiles share the giant-tile size without a duplicate navigation row`,
+      companionTileState.catAnimalCardCount === 4
+        && companionTileState.giantCardCount === 4
+        && companionTileState.singleSectionNavigation
+        && (label === 'mobile' || companionTileState.cardSizesMatch),
+      JSON.stringify(companionTileState)
+    );
+    assert(
       `${locale} ${label}: matching service rows align across every dog tile row`,
       dogTileDomState.sizeSections.every(section => section.serviceRowsAligned),
       JSON.stringify(dogTileDomState.sizeSections.map(({ sectionKey, serviceAlignment, serviceMinHeights }) => ({ sectionKey, serviceAlignment, serviceMinHeights })))
     );
     if (label === 'desktop') {
       for (const target of [
-        { label: 'tablet', width: 900, layout: 'tablet', section: 'small' },
+        { label: 'tablet', width: 1024, layout: 'tablet', section: 'cats-animals' },
         { label: 'narrow-desktop', width: 1200, layout: 'desktop', section: 'large' },
         { label: 'mobile-resize', width: devices['iPhone 13'].viewport.width, layout: 'mobile', section: 'small' },
         { label: 'desktop-resize', width: viewport.width, layout: 'desktop', section: 'large' },
@@ -530,12 +584,21 @@ for (const locale of locales) {
           await page.waitForTimeout(500);
         }
         const resizedGridState = await page.evaluate(readDogTileDomState, target.layout);
+        const resizedCompanionTileState = await page.evaluate(readCompanionTileState);
         assert(
           `${locale} ${target.label}: dog columns and matching service rows adapt after resize`,
-          resizedGridState.dogTiles.length === 16
+          resizedGridState.dogTiles.length === 19
             && resizedGridState.sizeSections.every(section => section.geometryCorrect && section.serviceRowsAligned
               && (target.layout !== 'mobile' || section.serviceRowsReset)),
           JSON.stringify(resizedGridState.sizeSections)
+        );
+        assert(
+          `${locale} ${target.label}: cats and small animals retain the giant-tile size after resize`,
+          resizedCompanionTileState.catAnimalCardCount === 4
+            && resizedCompanionTileState.giantCardCount === 4
+            && resizedCompanionTileState.singleSectionNavigation
+            && (target.layout === 'mobile' || resizedCompanionTileState.cardSizesMatch),
+          JSON.stringify(resizedCompanionTileState)
         );
         const screenshotPath = path.join(outDir, `${locale}-${target.label}-grid.png`);
         await page.locator(`[data-price-section="${target.section}"]`).screenshot({
@@ -644,6 +707,52 @@ for (const locale of locales) {
             && modalSpeciesState.selected === additionalBreedLabels[speciesIndex].trim()
             && modalSpeciesState.visibleSelected === additionalBreedLabels[speciesIndex].trim(),
           JSON.stringify(modalSpeciesState)
+        );
+        await modalClose.evaluate(button => button.click());
+        await page.waitForFunction(
+          () => !document.querySelector('#price-category-modal')?.classList.contains('active'),
+          null,
+          { timeout: 5000 }
+        );
+      }
+
+      const universalNailCategoryIds = [
+        'ru-short-coat-small',
+        'ru-short-coat-medium',
+        'ru-short-coat-large',
+        'ru-short-coat-giant',
+        'ru-cat-short-coat',
+        'ru-cat-long-coat',
+        'ru-guinea-pigs',
+        'ru-rabbits',
+      ];
+      for (const categoryId of universalNailCategoryIds) {
+        const categoryCard = page.locator(`[data-category-id="${categoryId}"]`);
+        assert(`ru desktop: ${categoryId} category exists`, await categoryCard.count() === 1);
+        const additionalButton = categoryCard.locator('[data-price-additional-select]');
+        assert(`ru desktop: ${categoryId} exposes additional services`, await additionalButton.count() === 1);
+        await additionalButton.evaluate(button => button.click());
+        await page.waitForFunction(
+          () => document.querySelector('#price-category-modal')?.classList.contains('active'),
+          null,
+          { timeout: 5000 }
+        );
+        const nailOptionState = await page.evaluate(() => {
+          const option = document.querySelector('[data-price-modal-additional-service-options] [data-service-index="0"]')
+            ?.closest('label.price-category-modal__service-option');
+          return {
+            exists: Boolean(option),
+            visible: Boolean(option && !option.hidden),
+            text: option?.textContent?.replace(/\s+/gu, ' ').trim() || '',
+          };
+        });
+        assert(
+          `ru desktop: ${categoryId} offers nail trimming for 15 euro`,
+          nailOptionState.exists
+            && nailOptionState.visible
+            && nailOptionState.text.includes('Подстригание когтей')
+            && nailOptionState.text.includes('15'),
+          JSON.stringify(nailOptionState)
         );
         await modalClose.evaluate(button => button.click());
         await page.waitForFunction(
@@ -895,8 +1004,9 @@ for (const locale of locales) {
         JSON.stringify(coatFilteredCardIds)
       );
     }
-    await animalFilter.selectOption('smallAnimals');
+    await animalFilter.selectOption('dog');
     await coatFilter.selectOption('all');
+    await animalFilter.selectOption('smallAnimals');
     await weightFilter.selectOption('small');
     const smallAnimalWeightCards = await page.locator('[data-price-categories] [data-category-id]')
       .evaluateAll(cards => cards.map(card => card.dataset.categoryId));
@@ -935,6 +1045,18 @@ for (const locale of locales) {
       );
     }
     await weightFilter.selectOption('small');
+    const expectedTrimmingLabel = {
+      ru: 'Тримминг',
+      de: 'Trimmen',
+      en: 'Trimming',
+      uk: 'Тримінг',
+    }[locale];
+    const expectedRenderedTrimmingPrice = {
+      ru: '60 / час',
+      de: '60 / Std.',
+      en: '60 / hour',
+      uk: '60 / год.',
+    }[locale];
     for (const coat of ['wire', 'short']) {
       await coatFilter.selectOption(coat);
       const categoryId = `ru-${coat}-coat-small`;
@@ -945,6 +1067,25 @@ for (const locale of locales) {
       }, { currentLocale: locale, categoryId, coat });
       assert(`${locale} ${label}: small ${coat} Podengo variant exists`, breedIndex >= 0);
       const coatCard = page.locator(`[data-category-id="${categoryId}"]`);
+      const primaryLabels = await coatCard.locator('[data-price-service-select]')
+        .evaluateAll(rows => rows.map(row => row.textContent.replace(/\s+/gu, ' ').trim()));
+      assert(
+        `${locale} ${label}: ${coat} category has no separate bath-and-dry or haircut-without-bath service`,
+        primaryLabels.every(service => !/(?:профессиональн.*суш|без куп|professionell.*Trock|ohne Baden|professional drying|without bathing|професійн.*суш|без купан)/iu.test(service)),
+        JSON.stringify(primaryLabels)
+      );
+      assert(
+        `${locale} ${label}: trimming is named simply and appears only for wire coats`,
+        primaryLabels.some(service => service.includes(expectedTrimmingLabel)) === (coat === 'wire'),
+        JSON.stringify(primaryLabels)
+      );
+      assert(
+        `${locale} ${label}: trimming is priced per hour rather than per 60 minutes`,
+        coat === 'wire'
+          ? primaryLabels.some(service => service.includes(expectedTrimmingLabel) && service.includes(expectedRenderedTrimmingPrice))
+          : primaryLabels.every(service => !service.includes(expectedRenderedTrimmingPrice)),
+        JSON.stringify(primaryLabels)
+      );
       await coatCard.locator('[data-price-breeds-toggle]').evaluate(button => button.click());
       await coatCard.locator(`[data-price-breed-index="${breedIndex}"]`).evaluate(button => button.click());
       for (const mode of ['primary', 'additional']) {
@@ -958,14 +1099,16 @@ for (const locale of locales) {
           const fieldset = document.querySelector('[data-price-modal-additional-service-fieldset]');
           return {
             selectedBreedId: document.querySelector('[data-price-modal-breed]')?.value || '',
+            trimmingIndex: index,
             trimmingVisible: Boolean(fieldset && !fieldset.hidden
               && fieldset.querySelector(`[data-service-index="${index}"] input[type="checkbox"]`)),
           };
         }, locale);
         assert(
-          `${locale} ${label}: ${mode} ${coat} breed has applicable trimming services`,
+          `${locale} ${label}: ${mode} ${coat} breed has no deprecated trimming extra`,
           trimmingState.selectedBreedId === `${categoryId}:breed:${breedIndex}`
-            && trimmingState.trimmingVisible === (coat === 'wire'),
+            && trimmingState.trimmingIndex === -1
+            && !trimmingState.trimmingVisible,
           JSON.stringify(trimmingState)
         );
         await page.locator('[data-price-modal-close]').evaluate(button => button.click());
@@ -1075,8 +1218,8 @@ for (const locale of locales) {
       };
     }, locale);
     assert(
-      `${locale} ${label}: all sixteen dog categories use the locale alphabet`,
-      breedAlphabetState.categoryCount === 16 && breedAlphabetState.unsortedCategoryIds.length === 0,
+      `${locale} ${label}: all nineteen dog categories use the locale alphabet`,
+      breedAlphabetState.categoryCount === 19 && breedAlphabetState.unsortedCategoryIds.length === 0,
       JSON.stringify(breedAlphabetState)
     );
 
@@ -1192,7 +1335,7 @@ for (const locale of locales) {
     await breedSearch.fill('');
     await page.waitForSelector('[data-price-categories] .price-card', { timeout: 15000 });
 
-    const categoryAction = page.locator('[data-price-section-action="small"]');
+    const categoryAction = page.locator('[data-price-categories-action][data-price-section-action="small"]');
     if (label === 'desktop') {
       // Card filtering schedules an alignment frame that can move the element under
       // the synthetic pointer. Let layout settle, then verify both :hover and motion.
@@ -1266,7 +1409,7 @@ for (const locale of locales) {
       JSON.stringify(categoryClickState)
     );
     for (const sectionKey of ['small', 'medium', 'large', 'giant', 'cats', 'smallAnimals']) {
-      if (sectionKey !== 'small') await page.locator(`[data-price-section-action="${sectionKey}"]`).click();
+        if (sectionKey !== 'small') await page.locator(`[data-price-categories-action][data-price-section-action="${sectionKey}"]`).click();
       await page.waitForFunction(
         key => document.activeElement?.closest?.(`[data-price-section-target="${key}"]`),
         sectionKey,
@@ -1275,8 +1418,20 @@ for (const locale of locales) {
       await page.waitForFunction(
         key => {
           const target = document.querySelector(`[data-price-section-target="${key}"]`);
-          const rect = target?.getBoundingClientRect();
-          return Boolean(rect && rect.bottom > 0 && rect.top < window.innerHeight);
+          const heading = target?.querySelector(':scope > .price-size-section__heading')
+            || target?.querySelector('.price-size-section__heading');
+          const section = target?.closest('.price-size-section');
+          const scrollRoot = document.querySelector('.site-scroll-root');
+          const rect = heading?.getBoundingClientRect();
+          const rootRect = scrollRoot?.getBoundingClientRect();
+          const viewportTop = rootRect?.top ?? 0;
+          const viewportBottom = rootRect?.bottom ?? window.innerHeight;
+          return Boolean(
+            rect
+            && rect.top >= viewportTop - 1
+            && rect.bottom <= viewportBottom + 1
+            && section?.querySelectorAll(':scope > .price-section-navigation').length === 1
+          );
         },
         sectionKey,
         { timeout: 15000 }
@@ -1286,7 +1441,7 @@ for (const locale of locales) {
     const informationCard = page.locator('[data-category-id="ru-important-information"]');
     const informationPreview = await informationCard.locator('.price-card__information-preview').textContent();
     const informationHighlights = await informationCard.locator('.price-card__information-highlights li').count();
-    assert(`${locale} ${label}: information card preview`, Boolean(informationPreview?.trim()) && informationHighlights === 5);
+    assert(`${locale} ${label}: information card preview`, Boolean(informationPreview?.trim()) && informationHighlights === 6);
     if (label === 'mobile') await informationCard.locator('[data-price-card-toggle]').click();
     await informationCard.locator('[data-price-open]').click();
     await page.waitForSelector('#price-category-modal.active', { timeout: 15000 });
@@ -1631,24 +1786,27 @@ for (const locale of locales) {
       const primaryServices = page.locator('[data-price-modal-service-options] input[type="checkbox"]');
       const dentalWeightControl = page.locator('[data-price-modal-dental-weight]');
       const dentalWeight = page.locator('[data-price-modal-dental-weight-input]');
-      const dentalService = page.locator('[data-price-modal-additional-service-options] [data-service-index="4"] input');
+      const dentalService = page.locator('[data-price-modal-additional-service-options] [data-service-index="1"] input');
 
       assert('ru desktop: three primary grooming services available', await primaryServices.count() >= 3);
       for (let index = 0; index < 3; index += 1) {
         await primaryServices.nth(index).check({ force: true });
         assert(`ru desktop: primary service ${index + 1} does not request dental weight`, !(await dentalWeightControl.isVisible()));
-        assert(`ru desktop: dental option remains selectable for primary service ${index + 1}`, await dentalService.isEnabled());
+        assert(`ru desktop: dental option remains available for primary service ${index + 1}`, await dentalService.count() === 1);
       }
 
       await primaryServices.first().check({ force: true });
       assert('ru desktop: dental weight input disabled before dental selection', await dentalWeight.isDisabled());
-      await dentalService.check({ force: true });
+      await dentalService.evaluate(input => {
+        input.checked = true;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
       const dentalRequiredState = await page.evaluate(() => ({
         weightVisible: Boolean(document.querySelector('[data-price-modal-dental-weight]')?.offsetParent),
         inputEnabled: !document.querySelector('[data-price-modal-dental-weight-input]')?.disabled,
         inputRequired: Boolean(document.querySelector('[data-price-modal-dental-weight-input]')?.required),
         status: document.querySelector('[data-price-modal-dental-weight-status]')?.dataset.state || '',
-        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="4"] input')?.checked),
+        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="1"] input')?.checked),
         bookingDisabled: document.querySelector('[data-price-modal-booking]')?.getAttribute('aria-disabled') === 'true',
         totalAmount: document.querySelector('[data-price-modal-selected-price]')?.dataset.totalAmount || '',
         hasDiscount: Boolean(document.querySelector('.price-category-modal__breakdown-discount')),
@@ -1669,7 +1827,7 @@ for (const locale of locales) {
       await dentalWeight.fill('6.1');
       const dentalTooHeavyState = await page.evaluate(() => ({
         status: document.querySelector('[data-price-modal-dental-weight-status]')?.dataset.state || '',
-        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="4"] input')?.checked),
+        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="1"] input')?.checked),
         bookingDisabled: document.querySelector('[data-price-modal-booking]')?.getAttribute('aria-disabled') === 'true',
         totalAmount: document.querySelector('[data-price-modal-selected-price]')?.dataset.totalAmount || '',
         hasDiscount: Boolean(document.querySelector('.price-category-modal__breakdown-discount')),
@@ -1687,7 +1845,7 @@ for (const locale of locales) {
       await dentalWeight.fill('5.5');
       const dentalCalculation = await page.evaluate(() => ({
         status: document.querySelector('[data-price-modal-dental-weight-status]')?.dataset.state || '',
-        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="4"] input')?.checked),
+        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="1"] input')?.checked),
         total: document.querySelector('[data-price-modal-selected-price]')?.textContent?.trim() || '',
         totalAmount: Number(document.querySelector('[data-price-modal-selected-price]')?.dataset.totalAmount || NaN),
         subtotalAmount: Number(document.querySelector('.price-category-modal__breakdown-subtotal')?.dataset.priceSubtotalAmount || NaN),
@@ -1720,7 +1878,10 @@ for (const locale of locales) {
         JSON.stringify(dentalCalculation)
       );
 
-      await dentalService.uncheck({ force: true });
+      await dentalService.evaluate(input => {
+        input.checked = false;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
       const dentalClearedState = await page.evaluate(() => ({
         weightHidden: Boolean(document.querySelector('[data-price-modal-dental-weight]')?.hidden),
         inputDisabled: Boolean(document.querySelector('[data-price-modal-dental-weight-input]')?.disabled),

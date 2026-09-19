@@ -525,6 +525,25 @@
       },
     },
     {
+      key: 'ear-care',
+      groups: ['dogs', 'cats', 'others'],
+      booking: { de: 'Ohrenpflege', en: 'Ear care', ru: 'Уход за ушами', uk: 'Догляд за вухами' },
+      label: { de: 'Ohrenpflege als Einzelleistung', en: 'Standalone ear care', ru: 'Уход за ушами как отдельная услуга', uk: 'Догляд за вухами як окрема послуга' },
+      note: {
+        de: 'Als Einzelleistung nach Zustand und sicherem Pflegeumfang.',
+        en: 'A standalone service based on condition and a safe care scope.',
+        ru: 'Отдельная услуга с учётом состояния ушей и безопасного объёма ухода.',
+        uk: 'Окрема послуга з урахуванням стану вух і безпечного обсягу догляду.',
+      },
+      prices: { default: '15 €' },
+      desc: {
+        de: 'Schonende äußere Reinigung und Kontrolle der Ohren.',
+        en: 'Gentle external cleaning and checking of the ears.',
+        ru: 'Бережная наружная очистка и осмотр ушей.',
+        uk: 'Дбайливе зовнішнє очищення й огляд вух.',
+      },
+    },
+    {
       key: 'parasite',
       groups: ['dogs', 'cats', 'others'],
       booking: { de: 'Zusatzleistung', en: 'Extra service', ru: 'Дополнительная услуга', uk: 'Додаткова послуга' },

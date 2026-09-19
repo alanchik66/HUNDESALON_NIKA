@@ -99,11 +99,13 @@ test('Russian dental retrieval uses the canonical price and excludes the obsolet
 test('knowledge retrieval matches inflected Russian and Ukrainian breed names', () => {
   const russian = selectAiChatKnowledge('Повторите цену ухода за карликовым пуделем.', 'ru');
   assert.match(russian, /Карликовый пудель/i);
-  assert.match(russian, /Комплексный груминг — от 90 €/i);
+  assert.match(russian, /Маленькие породы — Пудельный и кудрявый тип шерсти/i);
+  assert.match(russian, /Комплексный уход — от 80 €/i);
 
   const ukrainian = selectAiChatKnowledge('Повторіть ціну догляду за карликовим пуделем.', 'uk');
   assert.match(ukrainian, /Карликовий пудель/i);
-  assert.match(ukrainian, /Комплексний грумінг — від 90 €/i);
+  assert.match(ukrainian, /Малі породи — Пудельний і кучерявий тип шерсті/i);
+  assert.match(ukrainian, /Комплексний догляд — від 80 €/i);
 });
 
 test('knowledge retrieval resolves the common Komondor misspelling to the official large-dog category', () => {
@@ -114,8 +116,8 @@ test('knowledge retrieval resolves the common Komondor misspelling to the offici
   ]) {
     const reference = selectAiChatKnowledge(query, 'ru');
     assert.match(reference, /Командор → Комондор/);
-    assert.match(reference, /7\. Крупные собаки/);
-    assert.match(reference, /Комплексный уход — от 130 €/);
+    assert.match(reference, /Гигантские породы — Породы с двойным типом шерсти/);
+    assert.match(reference, /Комплексный уход — от 150 €/);
   }
 });
 
@@ -123,8 +125,8 @@ test('knowledge retrieval resolves Irish Wolfhound spelling errors to the wire-c
   const reference = selectAiChatKnowledge('Где ирланский валкодав?', 'ru');
 
   assert.match(reference, /Ирландский волкодав/);
-  assert.match(reference, /5\. Жёсткошёрстные породы/);
-  assert.match(reference, /Стрижка — от 90 €/);
+  assert.match(reference, /Гигантские породы — Жёсткошёрстные породы/);
+  assert.match(reference, /Тримминг — 60 € \/ час/);
 });
 
 test('animal-care retrieval selects species-specific safety guidance', () => {
@@ -164,7 +166,7 @@ test('small-animal nail price retrieval prioritizes the standalone service', () 
   const firstBlock = reference.split('\n\n---\n\n')[0];
 
   assert.match(firstBlock, /Дополнительные услуги/i);
-  assert.match(firstBlock, /Подстригание когтей — маленькие породы — 10 €/i);
+  assert.match(firstBlock, /Подстригание когтей — 15 €/i);
   assert.match(reference, /Подстригают только свободную часть когтя/i);
 });
 

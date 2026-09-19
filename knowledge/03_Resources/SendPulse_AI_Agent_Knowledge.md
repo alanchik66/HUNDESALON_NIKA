@@ -1,6 +1,6 @@
 # HUNDESALON_NIKA Website Knowledge for the SendPulse AI Agent #
 
-Generated source fingerprint: sha256:44931dabcc9353d9ddf533e0cb2f2b6f531e2ad126fbb391cecce8c535819f5f
+Generated source fingerprint: sha256:b3d49c479219acfa234eded4bd3645d5133445f7452b0eb1dcf6a212e952f979
 
 This document is the factual knowledge base for the customer-facing SendPulse live-chat AI agent. It covers the public HUNDESALON_NIKA website in German, English, Russian, and Ukrainian.
 
@@ -147,143 +147,236 @@ This detailed catalog is the only authoritative website price source. Generic ov
 
 ### DE — published catalog ###
 
-#### 1. Langhaarige Rassen ####
-- Summary: Komplettpflege für kleine Rassen mit ständig wachsendem Fell.
-- Breeds 1: Australian Silky Terrier, Biewer Yorkshire Terrier, Bologneser, Bolonka Zwetna, Chinesischer Schopfhund – Powder Puff, Havaneser, Japanischer Chin, Kontinentaler Zwergspaniel, Langhaar-Chihuahua, Langhaar-Kaninchendackel, Langhaar-Zwergdackel, Langhaardackel, Lhasa Apso, Malteser
-- Breeds 2: Pekingese, Russischer Toy – Langhaar, Shih Tzu, Skye Terrier, Tibet-Spaniel, Tibet-Terrier, Tschechischer Terrier, Yorkshire Terrier
-- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Schneiden und Formen, Welpen-Eingewöhnung
+#### Kleine Rassen — Kurzhaarige Rassen ####
+- Summary: Baden, Pflege von kurzem Fell und Haut sowie Hygienepflege.
+- Breeds: Brabanter Griffon, Chinesischer Schopfhund – haarlos, Englischer Toy Terrier (Schwarz und Loh), Glatthaar-Russischer Toy, Jack Russell Terrier – Glatthaar, Japanischer Terrier, Kurzhaar-Chihuahua, Kurzhaar-Kaninchendackel, Portugiesischer Podengo – klein, Kurzhaar, Prager Rattler, Zwergpinscher
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Fellpflege, Welpen-Eingewöhnung
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 60 €
+- Price: Baden + Hygienepflege — ab 60 €
+
+#### Kleine Rassen — Rauhaarige Rassen ####
+- Summary: Rassegerechte Pflege von rauem Fell; Trimmen ist eine eigene Hauptleistung.
+- Breeds: Affenpinscher, Jack Russell Terrier – rauhaarig, Norfolk Terrier, Norwich Terrier, Portugiesischer Podengo – klein, Rauhaar, Rauhaar-Kaninchendackel, Rauhaardackel
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Schneiden und Formen, Welpen-Eingewöhnung
+- Price: Welpen-Eingewöhnung — ab 50 €
 - Price: Komplettpflege — ab 80 €
 - Price: Baden + Hygienepflege — ab 60 €
-- Price: Welpen-Eingewöhnung — ab 50 €
-- Note: Komplettpflege umfasst Beratung, Ausbürsten, professionelles Waschen und Trocknen, Schneiden und Formen des Fells, hygienische Pflege, Augen-, Ohren- und Krallenpflege sowie das abschließende Finish des Hundes.
-- Note: Baden und Hygienepflege umfassen professionelles Waschen und Trocknen, Ausbürsten, Krallenpflege, Ohrenreinigung sowie den hygienischen Schnitt an Pfoten, Fang, im Leistenbereich und unter der Rute.
-- Note: Der erste Termin zur Welpengewöhnung dient der sanften Gewöhnung an Salon und Pflege.
+- Price: Trimmen — 60 € / Std.
 
-#### 2. Pudel, Bichons und Pudeltypen ####
-- Summary: Sorgfältige Pflege für lockiges und voluminöses Fell.
-- Breeds 1: Amerikanischer Wasserspaniel, Bedlington Terrier, Bichon Frisé, Cavapoo, Cockapoo, Coton de Tuléar, Havapoo, Irish Soft Coated Wheaten Terrier, Kerry Blue Terrier, Kleine und mittelgroße Schnoodle, Kleinpudel, Löwchen, Maltipoo, Poochon
-- Breeds 2: Portugiesischer Wasserhund, Shih-Poo, Spanischer Wasserhund, Toypudel, Wasserhund der Romagna, Yorkipoo, Zwergpudel
-- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Konditionierung, Schneiden und Formen, Welpen-Eingewöhnung
-- Price: Komplettpflege — ab 90 €
-- Price: Baden + Hygienepflege — ab 70 €
-- Price: Welpen-Eingewöhnung — ab 50 €
-- Note: Bei Pudeln und Bichons umfasst die Komplettpflege Beratung, Ausbürsten, professionelles Waschen, Konditionierung und Trocknen, Schneiden und Formen des Fells, hygienische Pflege, Augen-, Ohren- und Krallenpflege sowie das abschließende Finish des Hundes.
-- Note: Baden und Hygienepflege umfassen professionelles Waschen und Trocknen, Ausbürsten, Krallenpflege, Ohrenreinigung sowie den hygienischen Schnitt an Pfoten, Fang, im Leistenbereich und unter der Rute.
-
-#### 3. Spitze ####
-- Summary: Pflege von dichtem Unterfell, natürlichem Volumen und Form.
-- Breeds 1: Deutscher Spitz, groß, Deutscher Spitz, klein, Deutscher Spitz, mittel, Deutscher Spitz, Zwergspitz, Eurasier, Finnischer Lapphund, Finnischer Lapplandhirtenhund, Finnischer Spitz, Hokkaido, Islandhund, Italienischer Volpino, Japan-Spitz, Kai, Karelischer Bärenhund
-- Breeds 2: Kintamani-Bali-Hund, Kishu, Koreanischer Jindo, Norrbottenspitz, Norwegischer Buhund, Norwegischer Elchhund Grau, Norwegischer Elchhund Schwarz, Norwegischer Lundehund, Pomeranian, Schwedischer Lapphund, Schwedischer Wallhund, Shiba, Shikoku, Thai-Bangkaew-Hund
-- Breeds 3: Wolfsspitz
-- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Unterwolle entfernen, Fellpflege, Schneiden und Formen, Welpen-Eingewöhnung
-- Price: Komplettpflege — ab 90 €
-- Price: Baden + Hygienepflege — auf Anfrage
-- Price: Welpen-Eingewöhnung — ab 50 €
-- Note: Bei Spitzrassen umfasst die Komplettpflege Baden, professionelles Trocknen, gründliches Ausbürsten der Unterwolle, Fellpflege und Formgebung sowie Augen-, Ohren-, Krallen- und Hygienepflege.
-
-#### 4. Spaniels ####
-- Summary: Form, Volumen und ein sauberes Finish für Spaniels.
-- Breeds 1: Amerikanischer Cocker Spaniel, Blauer Picardie-Spaniel, Bretonischer Spaniel, Cavalier King Charles Spaniel, Clumber Spaniel, Deutsch Langhaar, Deutscher Wachtelhund, Drent'scher Hühnerhund, Englischer Cocker Spaniel, Englischer Setter, Englischer Springer Spaniel, Field Spaniel, Französicher Spaniel, Friesischer Vorstehhund
-- Breeds 2: Gordon Setter, Grosser Münsterländer Vorstehhund, Irischer Rot-Weisser Setter, Irischer Roter Setter, King Charles Spaniel, Kleiner Münsterländer, Nederlandse Kooikerhondje, Picardie-Spaniel, Pont-Audemer Spaniel, Russischer Jagdspaniel, Sussex Spaniel, Welsh Springer Spaniel
+#### Kleine Rassen — Langhaarige Rassen ####
+- Summary: Pflege von ständig wachsendem, langem und halblangem Fell passend zur Rasse.
+- Breeds: Australian Silky Terrier, Biewer Yorkshire Terrier, Bologneser, Havaneser, Japanischer Chin, Kontinentaler Zwergspaniel, Malteser, Russischer Toy – Langhaar, Yorkshire Terrier
 - Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Schneiden und Formen, Welpen-Eingewöhnung
-- Price: Komplettpflege — ab 105 €
-- Price: Baden + Hygienepflege — ab 85 €
 - Price: Welpen-Eingewöhnung — ab 50 €
-- Note: Komplettpflege umfasst Beratung, Ausbürsten, professionelles Waschen und Trocknen, Schneiden und Formen des Fells, hygienische Pflege, Augen-, Ohren- und Krallenpflege sowie das abschließende Finish des Hundes.
-- Note: Baden und Hygienepflege umfassen professionelles Waschen und Trocknen, Ausbürsten, Krallenpflege, Ohrenreinigung sowie den hygienischen Schnitt an Pfoten, Fang, im Leistenbereich und unter der Rute.
-
-#### 5. Rauhaarige Rassen ####
-- Summary: Schneiden passend zur Struktur des rauen Fells; Trimmen als Zusatzleistung.
-- Breeds 1: Affenpinscher, Airedale Terrier, Apenninen-Laufhund – Rauhaar, Ardennen-Treibhund, Australian Terrier, Basset Fauve De Bretagne, Belgischer Griffon, Belgischer Schäferhund – Laekenois, Blauer Griffon der Gascogne, Böhmisch Rauhbart, Border Terrier, Briquet Griffon Vendeen, Brüsseler Griffon, Cairn-Terrier
-- Breeds 2: Dandie Dinmont Terrier, Deutsch Drahthaar, Deutsch Stichelhaar, Deutscher Jagdterrier – Rauhaar, Drahthaariger Italienischer Laufhund, Drahthaariger Ungarischer Vorstehhund, Flandrischer Treibhund, Französischer Rauhhaariger Vorstehhund (Korthals), Griffon Fauve De Bretagne, Griffon Nivernais, Grosser Basset Griffon Vendeen, Grosser Griffon Vendeen, Holländischer Schäferhund – Rauhaar, Holländischer Smoushund
-- Breeds 3: Irischer Glen Of Imaal Terrier, Irischer Wolfshund, Irish Terrier, Italienischer Spinone, Jack Russell Terrier – rauhaarig, Kleiner Basset Griffon Vendeen, Kromfohrländer – Rauhaar, Lakeland Terrier, Mittelschnauzer, Norfolk Terrier, Norwich Terrier, Otterhund, Parson Russell Terrier – rauhaarig, Podenco Ibicenco – Rauhaar
-- Breeds 4: Portugiesischer Podengo – groß, Rauhaar, Portugiesischer Podengo – klein, Rauhaar, Portugiesischer Podengo – mittelgroß, Rauhaar, Pudelpointer, Pumi, Rauhaar-Foxterrier, Rauhaar-Kaninchendackel, Rauhaar-Zwergdackel, Rauhaardackel, Rauhhaarige Istrianer Bracke, Riesenschnauzer, Sabueso Fino Colombiano – groß, Rauhaar, Sabueso Fino Colombiano – Standard, Rauhaar, Schottischer Hirschhund
-- Breeds 5: Scottish Terrier, Sealyham Terrier, Segugio Maremmano – Rauhaar, Slowakischer Rauhbart, Steirische Rauhhaarbracke, Stichelhaariger Bosnischer Laufhund- Genannt Barak, Welsh Terrier, West Highland White Terrier, Zwergschnauzer
-- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Schneiden und Formen, Welpen-Eingewöhnung
-- Price: Schneiden — ab 90 €
-- Price: Baden + Hygienepflege — ab 70 €
-- Price: Welpen-Eingewöhnung — ab 50 €
-- Note: Schneiden und Formen umfassen Beratung, professionelles Waschen und Trocknen, Fellpflege, hygienische Pflege sowie Augen-, Ohren- und Krallenpflege.
-- Note: Trimmen wird auf Anfrage und abhängig von Fellstruktur und Fellzustand als Zusatzleistung angeboten.
-- Note: Baden und Hygienepflege umfassen professionelles Waschen und Trocknen, Ausbürsten, Krallenpflege, Ohrenreinigung sowie den hygienischen Schnitt an Pfoten, Fang, im Leistenbereich und unter der Rute.
-
-#### 6. Kurzhaarige Hunde ####
-- Summary: Komplette Pflege nach der Größe des kurzhaarigen Hundes.
-- Breeds 1: Alpenländische Dachsbracke, Altdänischer Vorstehhund, American Foxhound, Amerikanische Bulldogge, Amerikanischer Bully, Amerikanischer Pitbullterrier, Amerikanischer Staffordshire-Terrier, Andalusischer Terrier, Apenninen-Laufhund – Kurzhaar, Ariege-Vorstehhund, Ariegeois, Australian Kelpie, Australian Stumpy Tail Cattle Dog, Australischer Treibhund
-- Breeds 2: Azawakh, Basenji, Basset Artesien Normand, Basset Hound, Bayerischer Gebirgsschweisshund, Beagle, Beagle-Harrier, Beauceron, Belgischer Schäferhund – Malinois, Billy, Blauer Basset der Gascogne, Bluthund, Bordeauxdogge, Boston Terrier
-- Breeds 3: Bourbonnaiser Vorstehhund, Boxer, Brabanter Griffon, Brandlbracke (Vieräugl), Braque D'auvergne, Braque Saint-Germain, Brasilianische Campeiro-Bulldogge, Brasilianischer Laufhund, Brasilianischer Terrier, Broholmer, Bullmastiff, Bullterrier, Cane Corso, Cao Fila De Sao Miguel
-- Breeds 4: Chien D'artois, Chinesischer Schopfhund – haarlos, Cirneco Dell'etna, Continental Bulldog, Dalmatiner, Dänisch-Schwedischer Farmhund, Deutsch-Kurzhaar, Deutsche Bracke, Deutsche Dogge, Deutscher Jagdterrier – derbglatt, Deutscher Pinscher, Dobermann, Dogo Argentino, Dreifarbiger Serbischer Laufhund
-- Breeds 5: Dunkerbracke - Norwegischer Laufhund, Englische Bulldogge, Englischer Pointer, Englischer Toy Terrier (Schwarz und Loh), English Foxhound, Estnische Bracke, Fila Brasileiro, Finnischer Laufhund, Fox Terrier (Glatthaar), Französische Bulldogge, Französischer Dreifarbiger Laufhund, Französischer Vorstehhund - Typus Gascogne, Französischer Vorstehhund - Typus Pyrenäen, Französischer Weiss-Oranger Laufhund
-- Breeds 6: Französischer Weiss-Schwarzer Laufhund, Glatthaar-Russischer Toy, Greyhound, Griechischer Laufhund, Grosser Anglo-Franz.Weiss-Schwarzer Laufhund, Grosser Anglo-Französischer Dreifarbiger Laufhund, Grosser Anglo-Französischer Weiss-Oranger Laufhund, Grosser Blauer Gascogne-Laufhund, Großer Gascon Saintongeois, Halden-Bracke, Hamiltonstövare, Hannoverscher Schweisshund, Harrier, Holländischer Schäferhund – Kurzhaar
-- Breeds 7: Hygen-Bracke, Italienischer Vorstehhund, Italienisches Windspiel, Jack Russell Terrier – Glatthaar, Japanischer Terrier, Kanaan-Hund, Kleiner Blauer Gascogne Laufhund, Kleiner Gascon Saintongeois, Kromfohrländer – Glatthaar, Kurzhaar-Chihuahua, Kurzhaar-Dackel, Kurzhaar-Kaninchendackel, Kurzhaar-Zwergdackel, Kurzhaarige Istrianer Bracke
-- Breeds 8: Kurzhaariger Italienischer Laufhund, Kurzhaariger Schottischer Schaferhund, Lancashire Heeler, Mallorca-Dogge, Mallorca-Schäferhund – Kurzhaar, Manchester Terrier, Mastiff, Mastino Napoletano, Mexikanischer Nackthund – Miniatur, behaart, Mexikanischer Nackthund – Miniatur, haarlos, Mexikanischer Nackthund – mittelgroß, behaart, Mexikanischer Nackthund – mittelgroß, haarlos, Mexikanischer Nackthund – Standardgröße, behaart, Mexikanischer Nackthund – Standardgröße, haarlos
-- Breeds 9: Miniatur-Bullterrier, Mittelgrosser Anglo-Französischer Laufhund, Montenegrinischer Gebirgslaufhund, Mops, Österreichischer Pinscher, Parson Russell Terrier – Glatthaar, Perdiguero von Burgos, Peruanischer Nackthund – groß, behaart, Peruanischer Nackthund – groß, haarlos, Peruanischer Nackthund – klein, behaart, Peruanischer Nackthund – klein, haarlos, Peruanischer Nackthund – mittelgroß, behaart, Peruanischer Nackthund – mittelgroß, haarlos, Pharaonenhund
-- Breeds 10: Podenco Canario, Podenco Ibicenco – Kurzhaar, Poitevin, Polnische Bracke, Polnischer Jagdhund, Polnischer Windhund, Porcelaine, Portugiesischer Podengo – groß, Kurzhaar, Portugiesischer Podengo – klein, Kurzhaar, Portugiesischer Podengo – mittelgroß, Kurzhaar, Portugiesischer Vorstehhund, Prager Rattler, Presa Canario, Rhodesian Ridgeback
-- Breeds 11: Rottweiler, Sabueso Fino Colombiano – groß, Kurzhaar, Sabueso Fino Colombiano – Standard, Kurzhaar, Saluki – Kurzhaar, Savetalbracke - Posavatz-Bracke, Schillerstövare, Schwarz-Lohfarbener Waschbärenhund, Schwedische Dachsbracke, Schweizer Laufhund, Schweizer Niederlaufhund, Segugio Maremmano – Kurzhaar, Serbischer Laufhund, Shar Pei, Sloughi
-- Breeds 12: Slowakischer Laufhund, Smålandsstövare, Spanischer Laufhund, Spanischer Windhund, Staffordshire Bullterrier, Taiwan-Hund, Tatranský Durič, Thailand-Ridgeback, Tiroler Bracke, Tosa, Ungarische Bracke - Transylvanischer Laufhund, Ungarischer Vorstehhund, Ungarischer Windhund, Uruguayischer Cimarron
-- Breeds 13: Valencianischer Terrier, Weimaraner – Kurzhaar, Westfälische Dachsbracke, Whippet, Zwergpinscher
-- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Fellpflege, Welpen-Eingewöhnung
+- Price: Komplettpflege — ab 80 €
 - Price: Baden + Hygienepflege — ab 60 €
+
+#### Kleine Rassen — Pudel- und Lockenfell ####
+- Summary: Schnitt und Pflege von Pudel- und Lockenfell mit Blick auf Form und Lockendichte.
+- Breeds: Cavapoo, Cockapoo, Coton de Tuléar, Havapoo, Löwchen, Maltipoo, Poochon, Shih-Poo, Toypudel, Yorkipoo, Zwergpudel
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Konditionierung, Schneiden und Formen, Welpen-Eingewöhnung
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 80 €
+- Price: Baden + Hygienepflege — ab 60 €
+
+#### Kleine Rassen — Rassen mit Doppelfell ####
+- Summary: Pflege von Deckhaar und Unterwolle passend zur Fellstruktur.
+- Breeds: Bichon Frisé, Bolonka Zwetna, Chinesischer Schopfhund – Powder Puff, Deutscher Spitz, klein, Deutscher Spitz, Zwergspitz, Italienischer Volpino, Langhaar-Chihuahua, Langhaar-Kaninchendackel, Langhaar-Zwergdackel, Lhasa Apso, Pekingese, Pomeranian, Shih Tzu
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Konditionierung, Schneiden und Formen, Welpen-Eingewöhnung, Unterwolle entfernen, Fellpflege
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 80 €
+- Price: Baden + Hygienepflege — ab 60 €
+- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.
+
+#### Mittlere Rassen — Kurzhaarige Rassen ####
+- Summary: Baden, Pflege von kurzem Fell und Haut sowie Hygienepflege.
+- Breeds 1: Andalusischer Terrier, Basenji, Basset Artesien Normand, Blauer Basset der Gascogne, Boston Terrier, Brasilianischer Terrier, Dänisch-Schwedischer Farmhund, Deutscher Jagdterrier – derbglatt, Deutscher Pinscher, Englische Bulldogge, Fox Terrier (Glatthaar), Französische Bulldogge, Italienisches Windspiel, Kurzhaar-Dackel
+- Breeds 2: Kurzhaar-Zwergdackel, Manchester Terrier, Mexikanischer Nackthund – Miniatur, behaart, Mexikanischer Nackthund – Miniatur, haarlos, Parson Russell Terrier – Glatthaar, Peruanischer Nackthund – klein, behaart, Peruanischer Nackthund – klein, haarlos, Schwedische Dachsbracke, Schweizer Niederlaufhund, Tatranský Durič, Valencianischer Terrier, Westfälische Dachsbracke, Whippet
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Fellpflege, Welpen-Eingewöhnung
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 80 €
 - Price: Baden + Hygienepflege — ab 70 €
+
+#### Mittlere Rassen — Rauhaarige Rassen ####
+- Summary: Rassegerechte Pflege von rauem Fell; Trimmen ist eine eigene Hauptleistung.
+- Breeds 1: Australian Terrier, Belgischer Griffon, Border Terrier, Brüsseler Griffon, Cairn-Terrier, Deutscher Jagdterrier – Rauhaar, Holländischer Smoushund, Kleiner Basset Griffon Vendeen, Lakeland Terrier, Parson Russell Terrier – rauhaarig, Rauhaar-Foxterrier, Rauhaar-Zwergdackel, Scottish Terrier, Sealyham Terrier
+- Breeds 2: Welsh Terrier, West Highland White Terrier, Zwergschnauzer
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Schneiden und Formen, Welpen-Eingewöhnung
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 90 €
+- Price: Baden + Hygienepflege — ab 70 €
+- Price: Trimmen — 60 € / Std.
+
+#### Mittlere Rassen — Langhaarige Rassen ####
+- Summary: Pflege von ständig wachsendem, langem und halblangem Fell passend zur Rasse.
+- Breeds: Bretonischer Spaniel, Cavalier King Charles Spaniel, King Charles Spaniel, Kleiner Münsterländer, Nederlandse Kooikerhondje, Tschechischer Terrier
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Schneiden und Formen, Welpen-Eingewöhnung
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 90 €
+- Price: Baden + Hygienepflege — ab 70 €
+
+#### Mittlere Rassen — Pudel- und Lockenfell ####
+- Summary: Schnitt und Pflege von Pudel- und Lockenfell mit Blick auf Form und Lockendichte.
+- Breeds: Bedlington Terrier, Kleine und mittelgroße Schnoodle, Kleinpudel
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Konditionierung, Schneiden und Formen, Welpen-Eingewöhnung
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 100 €
 - Price: Baden + Hygienepflege — ab 80 €
-- Price: Baden + Hygienepflege — ab 100 €
-- Price: Welpen-Eingewöhnung — ab 50 €
-- Note: Die Komplettpflege umfasst Baden, professionelles Trocknen, Hygienepflege, Augen- und Ohrenpflege, Krallenschneiden, Ausbürsten und Fellpflege.
 
-#### 7. Große Hunde ####
-- Summary: Komplettpflege für große Rassen mit großem Fellvolumen.
-- Breeds 1: Abruzzen-Maremmen-Schäferhund, Afghanischer Windhund, Akita Inu, Alaskan Malamute, Amerikanische Akita, Appenzeller Sennenhund, Atlas-Berghund (Aïdi), Australischer Schäferhund, Barsoi - Russischer Jagdwindhund, Bearded Collie, Belgischer Schäferhund – Groenendael, Belgischer Schäferhund – Tervueren, Bergamasker Hirtenhund, Berner Sennenhund
-- Breeds 2: Bernhardiner, Bobtail, Böhmischer Schäferhund, Border Collie, Bosnisch-Herzegowinischer-Kroatischer Schäferhund, Briard, Castro-Laboreiro-Hund, Chesapeake Bay Retriever, Chow-Chow, Ciobanesc Românesc Carpatin, Ciobănesc Românesc Corb, Ciobanesc Românesc Mioritic, Curly Coated Retriever, Deutscher Schäferhund
-- Breeds 3: Do Khyi, Entlebucher Sennenhund, Flat Coated Retriever, Französischer Wasserhund, Friesischer Wasserhund, Golden Retriever, Groenlandhund, Große Australian Labradoodle, Große Bernedoodle, Große Goldendoodle, Große Labradoodle, Großer Schweizer Sennenhund, Großpudel, Holländischer Schäferhund – Langhaar
-- Breeds 4: Hovawart, Irischer Wasserspaniel, Jugoslawischer Hirtenhund - Sarplaninac, Kanadischer Eskimohund, Kangal-Hirtenhund, Karst-Schäferhund, Katalanischer Schäferhund, Kaukasischer Owtscharka, Kazakh Tazy, Komondor, Kroatischer Schäferhund, Kuvasz, Labrador Retriever, Landseer (Europäisch-Kontinentaler Typ)
-- Breeds 5: Langhaar-Collie, Langhaariger Pyrenaen-Schaferhund, Leonberger, Macedonian Shepherd Dog Karaman, Mallorca-Schäferhund – Langhaar, Miniatur Amerikanischer Schäferhund, Mudi, Neufundländer, Niederländischer Schapendoes, Nova Scotia Retriever, Ostsibirischer Laïka, Picardie-Schäferhund, Polnischer Niederungshütehund, Polnischer Tatra-Schäferhund
-- Breeds 6: Portugiesischer Schäferhund, Puli, Pyrenaen-Hutehund Mit Kurzhaarigem Gesicht, Pyrenäen-Mastiff, Pyrenäenberghund, Rafeiro von Alentejo, Rumänischer Bukowina-Schäferhund, Russisch-Europäischer Laïka, Russischer Schwarzer Terrier, Saarlooswolfhund, Saluki – befedert, Samojede, Schipperke, Schwedischer Elchhund
-- Breeds 7: Serra-Da-Estrela-Berghund, Shetland-Schäferhund, Siberian Husky, Slowakischer Tschuvatsch, Spanischer Mastiff, Südrussischer Ovtcharka, Transmontano-Hirtenhund, Tschechoslowakischer Wolfhund, Weimaraner – Langhaar, Weisser Schweizer Schäferhund, Welsh Corgi (Cardigan), Welsh Corgi (Pembroke), Westsibirischer Laïka, Yakutskaya Laika
-- Breeds 8: Zentralasiatischer Owtscharka
-- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Unterwolle entfernen, Fellpflege, Welpen-Eingewöhnung
-- Price: Komplettpflege — ab 130 €
-- Price: Baden + Hygienepflege — auf Anfrage
+#### Mittlere Rassen — Rassen mit Doppelfell ####
+- Summary: Pflege von Deckhaar und Unterwolle passend zur Fellstruktur.
+- Breeds 1: Amerikanischer Cocker Spaniel, Basset Hound, Beagle, Dandie Dinmont Terrier, Deutscher Spitz, mittel, Englischer Cocker Spaniel, Finnischer Lapphund, Finnischer Lapplandhirtenhund, Islandhund, Japan-Spitz, Kintamani-Bali-Hund, Lancashire Heeler, Langhaardackel, Mops
+- Breeds 2: Norrbottenspitz, Norwegischer Buhund, Norwegischer Elchhund Grau, Norwegischer Elchhund Schwarz, Norwegischer Lundehund, Österreichischer Pinscher, Schipperke, Schwedischer Lapphund, Schwedischer Wallhund, Shiba, Skye Terrier, Tibet-Spaniel, Tibet-Terrier
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Schneiden und Formen, Welpen-Eingewöhnung, Fellpflege, Unterwolle entfernen
 - Price: Welpen-Eingewöhnung — ab 50 €
-- Note: Die Komplettpflege umfasst Waschen, professionelles Trocknen, gründliches Ausbürsten, Fellpflege sowie Augen-, Ohren-, Krallen- und Hygienepflege.
+- Price: Komplettpflege — ab 90 €
+- Price: Baden + Hygienepflege — ab 75 €
+- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.
 
-#### Katzen – Ausbürsten / Schneiden ####
-- Summary: Die Leistung findet im Beisein der Halterin oder des Halters statt.
-- Breeds: Katzen aller Rassen
+#### Große Rassen — Kurzhaarige Rassen ####
+- Summary: Baden, Pflege von kurzem Fell und Haut sowie Hygienepflege.
+- Breeds 1: Amerikanischer Bully, Amerikanischer Pitbullterrier, Amerikanischer Staffordshire-Terrier, Apenninen-Laufhund – Kurzhaar, Ariegeois, Bayerischer Gebirgsschweisshund, Beagle-Harrier, Bourbonnaiser Vorstehhund, Brandlbracke (Vieräugl), Bullterrier, Chien D'artois, Cirneco Dell'etna, Continental Bulldog, Deutsche Bracke
+- Breeds 2: Dreifarbiger Serbischer Laufhund, Dunkerbracke - Norwegischer Laufhund, Estnische Bracke, Finnischer Laufhund, Französischer Vorstehhund - Typus Pyrenäen, Griechischer Laufhund, Halden-Bracke, Hamiltonstövare, Hannoverscher Schweisshund, Harrier, Hygen-Bracke, Kanaan-Hund, Kleiner Blauer Gascogne Laufhund, Kleiner Gascon Saintongeois
+- Breeds 3: Kurzhaarige Istrianer Bracke, Kurzhaariger Italienischer Laufhund, Mexikanischer Nackthund – mittelgroß, behaart, Mexikanischer Nackthund – mittelgroß, haarlos, Miniatur-Bullterrier, Mittelgrosser Anglo-Französischer Laufhund, Montenegrinischer Gebirgslaufhund, Peruanischer Nackthund – mittelgroß, behaart, Peruanischer Nackthund – mittelgroß, haarlos, Pharaonenhund, Polnischer Jagdhund, Porcelaine, Portugiesischer Podengo – mittelgroß, Kurzhaar, Portugiesischer Vorstehhund
+- Breeds 4: Sabueso Fino Colombiano – Standard, Kurzhaar, Savetalbracke - Posavatz-Bracke, Schillerstövare, Schweizer Laufhund, Segugio Maremmano – Kurzhaar, Serbischer Laufhund, Shar Pei, Slowakischer Laufhund, Smålandsstövare, Spanischer Laufhund, Staffordshire Bullterrier, Taiwan-Hund, Tiroler Bracke, Ungarische Bracke - Transylvanischer Laufhund
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Fellpflege, Welpen-Eingewöhnung
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 100 €
+- Price: Baden + Hygienepflege — ab 90 €
+
+#### Große Rassen — Rauhaarige Rassen ####
+- Summary: Rassegerechte Pflege von rauem Fell; Trimmen ist eine eigene Hauptleistung.
+- Breeds 1: Apenninen-Laufhund – Rauhaar, Ardennen-Treibhund, Basset Fauve De Bretagne, Blauer Griffon der Gascogne, Böhmisch Rauhbart, Briquet Griffon Vendeen, Drahthaariger Italienischer Laufhund, Griffon Fauve De Bretagne, Griffon Nivernais, Grosser Basset Griffon Vendeen, Grosser Griffon Vendeen, Irischer Glen Of Imaal Terrier, Irish Terrier, Kromfohrländer – Rauhaar
+- Breeds 2: Mittelschnauzer, Podenco Ibicenco – Rauhaar, Portugiesischer Podengo – groß, Rauhaar, Portugiesischer Podengo – mittelgroß, Rauhaar, Rauhhaarige Istrianer Bracke, Sabueso Fino Colombiano – groß, Rauhaar, Sabueso Fino Colombiano – Standard, Rauhaar, Segugio Maremmano – Rauhaar, Steirische Rauhhaarbracke, Stichelhaariger Bosnischer Laufhund- Genannt Barak
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Schneiden und Formen, Welpen-Eingewöhnung
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 120 €
+- Price: Baden + Hygienepflege — ab 90 €
+- Price: Trimmen — 60 € / Std.
+
+#### Große Rassen — Langhaarige Rassen ####
+- Summary: Pflege von ständig wachsendem, langem und halblangem Fell passend zur Rasse.
+- Breeds 1: Blauer Picardie-Spaniel, Deutsch Langhaar, Drent'scher Hühnerhund, Englischer Setter, Field Spaniel, Französicher Spaniel, Gordon Setter, Grosser Münsterländer Vorstehhund, Irischer Rot-Weisser Setter, Irischer Roter Setter, Picardie-Spaniel, Pont-Audemer Spaniel, Portugiesischer Schäferhund, Russischer Jagdspaniel
+- Breeds 2: Sussex Spaniel
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Schneiden und Formen, Welpen-Eingewöhnung, Unterwolle entfernen, Fellpflege
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 120 €
+- Price: Baden + Hygienepflege — ab 90 €
+
+#### Große Rassen — Pudel- und Lockenfell ####
+- Summary: Schnitt und Pflege von Pudel- und Lockenfell mit Blick auf Form und Lockendichte.
+- Breeds: Irish Soft Coated Wheaten Terrier, Kerry Blue Terrier, Portugiesischer Wasserhund, Spanischer Wasserhund
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Konditionierung, Schneiden und Formen, Welpen-Eingewöhnung
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 120 €
+- Price: Baden + Hygienepflege — ab 90 €
+
+#### Große Rassen — Rassen mit Doppelfell ####
+- Summary: Pflege von Deckhaar und Unterwolle passend zur Fellstruktur.
+- Breeds 1: Alaskan Malamute, Alpenländische Dachsbracke, Amerikanischer Wasserspaniel, Appenzeller Sennenhund, Australian Kelpie, Australian Stumpy Tail Cattle Dog, Australischer Schäferhund, Australischer Treibhund, Bergamasker Hirtenhund, Böhmischer Schäferhund, Border Collie, Chow-Chow, Deutscher Spitz, groß, Deutscher Wachtelhund
+- Breeds 2: Englischer Springer Spaniel, Entlebucher Sennenhund, Finnischer Spitz, Friesischer Vorstehhund, Friesischer Wasserhund, Hokkaido, Holländischer Schäferhund – Kurzhaar, Kai, Karelischer Bärenhund, Katalanischer Schäferhund, Kishu, Koreanischer Jindo, Kroatischer Schäferhund, Kromfohrländer – Glatthaar
+- Breeds 3: Kurzhaariger Schottischer Schaferhund, Langhaariger Pyrenaen-Schaferhund, Miniatur Amerikanischer Schäferhund, Mudi, Niederländischer Schapendoes, Nova Scotia Retriever, Polnischer Niederungshütehund, Puli, Pumi, Pyrenaen-Hutehund Mit Kurzhaarigem Gesicht, Shetland-Schäferhund, Shikoku, Siberian Husky, Thai-Bangkaew-Hund
+- Breeds 4: Wasserhund der Romagna, Welsh Corgi (Cardigan), Welsh Corgi (Pembroke), Welsh Springer Spaniel, Wolfsspitz
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Unterwolle entfernen, Fellpflege, Welpen-Eingewöhnung, Konditionierung, Schneiden und Formen
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 120 €
+- Price: Baden + Hygienepflege — ab 90 €
+- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.
+
+#### Riesenrassen — Kurzhaarige Rassen ####
+- Summary: Baden, Pflege von kurzem Fell und Haut sowie Hygienepflege.
+- Breeds 1: Altdänischer Vorstehhund, American Foxhound, Amerikanische Bulldogge, Ariege-Vorstehhund, Azawakh, Billy, Bluthund, Bordeauxdogge, Boxer, Braque D'auvergne, Braque Saint-Germain, Brasilianische Campeiro-Bulldogge, Brasilianischer Laufhund, Bullmastiff
+- Breeds 2: Cane Corso, Cao Fila De Sao Miguel, Dalmatiner, Deutsch-Kurzhaar, Deutsche Dogge, Dobermann, Dogo Argentino, Englischer Pointer, English Foxhound, Fila Brasileiro, Französischer Dreifarbiger Laufhund, Französischer Vorstehhund - Typus Gascogne, Französischer Weiss-Oranger Laufhund, Französischer Weiss-Schwarzer Laufhund
+- Breeds 3: Greyhound, Grosser Anglo-Franz.Weiss-Schwarzer Laufhund, Grosser Anglo-Französischer Dreifarbiger Laufhund, Grosser Anglo-Französischer Weiss-Oranger Laufhund, Grosser Blauer Gascogne-Laufhund, Großer Gascon Saintongeois, Italienischer Vorstehhund, Mallorca-Dogge, Mastiff, Mastino Napoletano, Mexikanischer Nackthund – Standardgröße, behaart, Mexikanischer Nackthund – Standardgröße, haarlos, Perdiguero von Burgos, Peruanischer Nackthund – groß, behaart
+- Breeds 4: Peruanischer Nackthund – groß, haarlos, Podenco Canario, Podenco Ibicenco – Kurzhaar, Poitevin, Polnische Bracke, Polnischer Windhund, Portugiesischer Podengo – groß, Kurzhaar, Presa Canario, Rhodesian Ridgeback, Sabueso Fino Colombiano – groß, Kurzhaar, Saluki – Kurzhaar, Schwarz-Lohfarbener Waschbärenhund, Sloughi, Spanischer Windhund
+- Breeds 5: Thailand-Ridgeback, Tosa, Ungarischer Vorstehhund, Uruguayischer Cimarron, Weimaraner – Kurzhaar
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Fellpflege, Welpen-Eingewöhnung
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 120 €
+- Price: Baden + Hygienepflege — ab 120 €
+
+#### Riesenrassen — Rauhaarige Rassen ####
+- Summary: Rassegerechte Pflege von rauem Fell; Trimmen ist eine eigene Hauptleistung.
+- Breeds: Airedale Terrier, Belgischer Schäferhund – Laekenois, Deutsch Drahthaar, Deutsch Stichelhaar, Drahthaariger Ungarischer Vorstehhund, Flandrischer Treibhund, Französischer Rauhhaariger Vorstehhund (Korthals), Holländischer Schäferhund – Rauhaar, Irischer Wolfshund, Italienischer Spinone, Pudelpointer, Riesenschnauzer, Schottischer Hirschhund, Slowakischer Rauhbart
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Schneiden und Formen, Welpen-Eingewöhnung
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 150 €
+- Price: Baden + Hygienepflege — ab 105 €
+- Price: Trimmen — 60 € / Std.
+
+#### Riesenrassen — Langhaarige Rassen ####
+- Summary: Pflege von ständig wachsendem, langem und halblangem Fell passend zur Rasse.
+- Breeds: Afghanischer Windhund, Clumber Spaniel, Curly Coated Retriever, Französischer Wasserhund, Große Australian Labradoodle, Große Bernedoodle, Große Goldendoodle, Große Labradoodle, Großpudel, Irischer Wasserspaniel, Kazakh Tazy, Saluki – befedert, Weimaraner – Langhaar
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Unterwolle entfernen, Fellpflege, Welpen-Eingewöhnung, Schneiden und Formen
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 150 €
+- Price: Baden + Hygienepflege — ab 110 €
+
+#### Riesenrassen — Rassen mit Doppelfell ####
+- Summary: Pflege von Deckhaar und Unterwolle passend zur Fellstruktur.
+- Breeds 1: Abruzzen-Maremmen-Schäferhund, Akita Inu, Amerikanische Akita, Atlas-Berghund (Aïdi), Barsoi - Russischer Jagdwindhund, Bearded Collie, Beauceron, Belgischer Schäferhund – Groenendael, Belgischer Schäferhund – Malinois, Belgischer Schäferhund – Tervueren, Berner Sennenhund, Bernhardiner, Bobtail, Bosnisch-Herzegowinischer-Kroatischer Schäferhund
+- Breeds 2: Briard, Broholmer, Castro-Laboreiro-Hund, Chesapeake Bay Retriever, Ciobanesc Românesc Carpatin, Ciobănesc Românesc Corb, Ciobanesc Românesc Mioritic, Deutscher Schäferhund, Do Khyi, Eurasier, Flat Coated Retriever, Golden Retriever, Groenlandhund, Großer Schweizer Sennenhund
+- Breeds 3: Holländischer Schäferhund – Langhaar, Hovawart, Jugoslawischer Hirtenhund - Sarplaninac, Kanadischer Eskimohund, Kangal-Hirtenhund, Karst-Schäferhund, Kaukasischer Owtscharka, Komondor, Kuvasz, Labrador Retriever, Landseer (Europäisch-Kontinentaler Typ), Langhaar-Collie, Leonberger, Macedonian Shepherd Dog Karaman
+- Breeds 4: Mallorca-Schäferhund – Kurzhaar, Mallorca-Schäferhund – Langhaar, Neufundländer, Ostsibirischer Laïka, Otterhund, Picardie-Schäferhund, Polnischer Tatra-Schäferhund, Pyrenäen-Mastiff, Pyrenäenberghund, Rafeiro von Alentejo, Rottweiler, Rumänischer Bukowina-Schäferhund, Russisch-Europäischer Laïka, Russischer Schwarzer Terrier
+- Breeds 5: Saarlooswolfhund, Samojede, Schwedischer Elchhund, Serra-Da-Estrela-Berghund, Slowakischer Tschuvatsch, Spanischer Mastiff, Südrussischer Ovtcharka, Transmontano-Hirtenhund, Tschechoslowakischer Wolfhund, Ungarischer Windhund, Weisser Schweizer Schäferhund, Westsibirischer Laïka, Yakutskaya Laika, Zentralasiatischer Owtscharka
+- Included/listed care: Baden, Professionelles Trocknen, Hygienepflege, Augenpflege, Ohrenpflege, Krallen schneiden, Ausbürsten, Unterwolle entfernen, Fellpflege, Welpen-Eingewöhnung, Schneiden und Formen
+- Price: Welpen-Eingewöhnung — ab 50 €
+- Price: Komplettpflege — ab 150 €
+- Price: Baden + Hygienepflege — ab 120 €
+- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.
+
+#### Katzen — Kurzhaarige Katzenrassen ####
+- Summary: Schonende Pflege von kurzem Fell und Haut, passend zur jeweiligen Rasse.
+- Breeds 1: Abessinier, Amerikanischer Bobtail Kurzhaar, American Curl Kurzhaar, Amerikanisch Kurzhaar, Amerikanisch Drahthaar, Australian Mist, Bengal, Bombay-Katze, Britisch Kurzhaar, Burma-Katze, Burmilla, Chartreux, Chausie, Cornish Rex
+- Breeds 2: Devon Rex, Don-Sphynx, Ägyptische Mau, Europäisch Kurzhaar, Exotisch Kurzhaar, German Rex, Havana Brown, Highlander Kurzhaar, Hauskatze Kurzhaar, Japanischer Bobtail Kurzhaar, Khao Manee, Korat, Kurilen-Bobtail Kurzhaar, LaPerm Kurzhaar
+- Breeds 3: Lykoi, Manx, Manx mit Schwanz, Minuet, Minuet hochbeinig, Munchkin, Ocicat, Orientalisch Kurzhaar, Peterbald, Pixiebob, Russisch Blau, Savannah, Schottische Faltohrkatze, Schottische Geradeohrkatze
+- Breeds 4: Selkirk Rex Kurzhaar, Siamkatze, Singapura, Snowshoe, Sokoke, Sphynx, Tennessee Rex, Thai-Katze, Tonkanese, Toyger
 - Included/listed care: Ausbürsten, Entfernen abgestorbener Haare und Unterwolle, Schneiden und Formen, Baden, Professionelles Trocknen, Augenpflege, Ohrenpflege, Krallen schneiden, Hygienepflege
 - Price: Ausbürsten / Schneiden + Hygienepflege — ab 60 €
 - Price: Ausbürsten / Schneiden + Baden + Hygienepflege — ab 90 €
 - Note: Ausbürsten und Schneiden umfassen professionelles Ausbürsten, das Entfernen abgestorbener Haare und Unterwolle, Schneiden sowie Augen-, Ohren-, Krallen- und Hygienepflege.
 - Note: Bei der Variante mit Baden kommen Baden und professionelles Trocknen hinzu. Die Leistung findet im Beisein der Halterin oder des Halters statt.
 
-#### Kleintiere ####
-- Summary: Schonende Hygiene für Meerschweinchen und Kaninchen.
-- Breeds: Meerschweinchen, Kaninchen
+#### Katzen — Langhaarige Katzenrassen ####
+- Summary: Gründliche Pflege von langem und halblangem Fell mit Entfilzung nach Bedarf.
+- Breeds 1: Amerikanischer Bobtail Langhaar, American Curl Langhaar, Balinese, Bengal Langhaar, Heilige Birma, Britisch Langhaar, Burmilla Langhaar, Cherubim, Cymric, Cymric mit Schwanz, Highlander, Himalaya-Katze, Hauskatze Langhaar, Japanischer Bobtail Langhaar
+- Breeds 2: Kurilen-Bobtail Langhaar, LaPerm Langhaar, Maine Coon, Maine Coon Polydaktyl, Minuet Langhaar, Minuet hochbeinig Langhaar, Munchkin Langhaar, Nebelung, Neva Masquarade, Norwegische Waldkatze, Orientalisch Langhaar, Perser, Pixiebob Langhaar, Ragdoll
+- Breeds 3: Schottische Faltohrkatze Langhaar, Schottische Geradeohrkatze Langhaar, Selkirk Rex Langhaar, Sibirische Katze, Somali, Türkisch Angora, Türkisch Van
+- Included/listed care: Ausbürsten, Entfernen abgestorbener Haare und Unterwolle, Schneiden und Formen, Baden, Professionelles Trocknen, Augenpflege, Ohrenpflege, Krallen schneiden, Hygienepflege
+- Price: Ausbürsten / Schneiden + Hygienepflege — ab 60 €
+- Price: Ausbürsten / Schneiden + Baden + Hygienepflege — ab 90 €
+- Note: Ausbürsten und Schneiden umfassen professionelles Ausbürsten, das Entfernen abgestorbener Haare und Unterwolle, Schneiden sowie Augen-, Ohren-, Krallen- und Hygienepflege.
+- Note: Bei der Variante mit Baden kommen Baden und professionelles Trocknen hinzu. Die Leistung findet im Beisein der Halterin oder des Halters statt.
+
+#### Kleintiere — Meerschweinchen ####
+- Summary: Sorgfältige Pflege für Meerschweinchen, passend zu ihren individuellen Bedürfnissen.
+- Breeds: Glatthaar, English Crested, American Crested, Rex, US-Teddy, Peruaner, Sheltie, Coronet, Texel, Alpaka
 - Included/listed care: Ausbürsten, Baden, Professionelles Trocknen, Augenpflege, Ohrenpflege, Hygienepflege
 - Price: Meerschweinchen – Hygienepflege — ab 30 €
 - Price: Meerschweinchen – Baden + Pflege — ab 40 €
-- Price: Kaninchen – Ausbürsten + Hygienepflege — ab 35 €
-- Note: Bei Meerschweinchen umfasst die Pflege Ausbürsten, das Entfernen abgestorbener Haare, bei Bedarf Kürzen sowie Augen-, Ohren- und Hygienepflege. Baden und Pflege werden als eigene Leistung angeboten; bei Kaninchen gehört Baden nicht zur Standardpflege.
 
-#### Zusatzleistungen ####
+#### Kleintiere — Kaninchen ####
+- Summary: Sorgfältige Pflege für Kaninchen, passend zu ihren individuellen Bedürfnissen.
+- Breeds: Farbenzwerge, Holländer, Mini Rex, Rex, Zwergwidder, Englisches Angora, Französisches Angora, Löwenkopf, Jersey Wooly, American Fuzzy Lop
+- Included/listed care: Ausbürsten, Baden, Professionelles Trocknen, Augenpflege, Ohrenpflege, Hygienepflege
+- Price: Kaninchen – Ausbürsten + Hygienepflege — ab 35 €
+- Note: Bei Meerschweinchen umfasst die Pflege Ausbürsten, das Entfernen abgestorbener Haare, bei Bedarf Kürzen sowie Augen-, Ohren- und Hygienepflege. Baden und Pflege werden als eigene Leistung angeboten; bei Kaninchen gehört Baden nicht zur Standardpflege. Andere Kleintiere nur nach vorheriger Abstimmung von Umfang und sicherer Durchführung.
+
+#### Zusatzleistungen — Zusatzleistungen ####
 - Summary: Zusatzpflege, die zur Hauptleistung ergänzt werden kann.
 - Breeds: Hunde, Katzen, Meerschweinchen, Kaninchen
 - Included/listed care: Krallen schneiden, Ultraschall-Zahnreinigung ohne Narkose, Aufbau-Maske, Ozontherapie
-- Price: Krallenschneiden — kleine Rassen — 10 €
-- Price: Krallenschneiden — mittelgroße Rassen — 12 €
-- Price: Krallenschneiden — große Rassen — 15 €
-- Price: Krallenschneiden — sehr große Rassen — 18 €
+- Price: Krallenschneiden — 15 €
 - Price: Ultraschall-Zahnpflege bis 6 kg — ab 100 €
-- Price: Aufbau- / Wellnessmaske — ab 20 €
-- Price: Ozontherapie — ab 25 €
-- Price: Trimmen — kleine Rassen — ab 75 €
-- Price: Trimmen — mittelgroße Rassen — ab 90 €
-- Price: Trimmen — große Rassen — ab 110 €
-- Price: Trimmen — sehr große Rassen — ab 140 €
-- Note: Zu den Zusatzleistungen gehören Krallenschneiden nach Größe, Trimmen für rauhaarige Rassen, Ultraschall-Zahnpflege ohne Narkose bis 6 kg, Aufbau-/Wellnessmaske, Ozontherapie und der erste Termin zur Welpengewöhnung.
+- Price: Aufbau- / SPA-Maske — ab 20 €
+- Price: Ozontherapie — kleine Rassen — ab 25 €
+- Price: Ohrenpflege als Einzelleistung — 15 €
+- Note: Krallenschneiden ist für Hunde aller Größen sowie Katzen, Meerschweinchen und Kaninchen verfügbar. Ultraschall-Zahnpflege ohne Narkose bis 6 kg und Ozontherapie werden nur für kleine Hunde angeboten. Aufbau-/SPA-Maske und Ohrenpflege als Einzelleistung werden passend zum Tier ausgewählt.
 - Note: Bei gemeinsamer Buchung mit der Pflege gibt es auf die Ultraschall-Zahnpflege 30 % Rabatt; sie ersetzt keine tierärztliche Zahnbehandlung.
 - Note: Der erste Termin zur Welpengewöhnung dient der sanften Gewöhnung an Salon und Pflege.
 
-#### Wichtige Informationen ####
+#### Wichtige Informationen — Wichtige Informationen ####
 - Summary: Der Preis „ab“ hängt vom tatsächlichen Arbeitsaufwand ab.
 - Breeds: Alle Tiere
 
@@ -291,514 +384,1078 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: Sanfter Einstieg in die Fellpflege für Welpen bis 4 Monate.
 - Description: Kennenlernen der Pflegeperson, behutsame Gewöhnung an den Pflegetisch, die Bürste und das Föhngeräusch sowie leichte Pflege. Wenn der Welpe ruhig bleibt und die Schritte zulässt, können wir ihn auch vollständig bürsten, baden und sanft antrocknen. Ist er sehr lebhaft oder noch nicht bereit, konzentrieren wir uns auf die Eingewöhnung und gehen in seinem Tempo vor. Entscheidend ist, dass er sich sicher fühlt; nicht alle Pflegeschritte müssen beim ersten Besuch stattfinden.
-- Price: Welpen-Eingewöhnung — ab 50 €; Category: 1. Langhaarige Rassen
-- Price: Welpen-Eingewöhnung — ab 50 €; Category: 2. Pudel, Bichons und Pudeltypen
-- Price: Welpen-Eingewöhnung — ab 50 €; Category: 3. Spitze
-- Price: Welpen-Eingewöhnung — ab 50 €; Category: 4. Spaniels
-- Price: Welpen-Eingewöhnung — ab 50 €; Category: 5. Rauhaarige Rassen
-- Price: Welpen-Eingewöhnung — ab 50 €; Category: 6. Kurzhaarige Hunde
-- Price: Welpen-Eingewöhnung — ab 50 €; Category: 7. Große Hunde
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Kleine Rassen — Kurzhaarige Rassen
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Kleine Rassen — Rauhaarige Rassen
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Kleine Rassen — Langhaarige Rassen
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Kleine Rassen — Pudel- und Lockenfell
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Kleine Rassen — Rassen mit Doppelfell
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Mittlere Rassen — Kurzhaarige Rassen
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Mittlere Rassen — Rauhaarige Rassen
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Mittlere Rassen — Langhaarige Rassen
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Mittlere Rassen — Pudel- und Lockenfell
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Mittlere Rassen — Rassen mit Doppelfell
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Große Rassen — Kurzhaarige Rassen
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Große Rassen — Rauhaarige Rassen
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Große Rassen — Langhaarige Rassen
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Große Rassen — Pudel- und Lockenfell
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Große Rassen — Rassen mit Doppelfell
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Riesenrassen — Kurzhaarige Rassen
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Riesenrassen — Rauhaarige Rassen
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Riesenrassen — Langhaarige Rassen
+- Price: Welpen-Eingewöhnung — ab 50 €; Category: Riesenrassen — Rassen mit Doppelfell
 
-#### Trimmen — kleine Rassen — service details ####
+#### Komplettpflege — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Der Endpreis hängt von Fellzustand, Verfilzungen, Verhalten und Zeitaufwand ab.
+- Description: Komplettpflege mit Baden, Föhnen, Schnitt und Fellfinish.
+- Price: Komplettpflege — ab 60 €; Category: Kleine Rassen — Kurzhaarige Rassen
+- Price: Komplettpflege — ab 80 €; Category: Kleine Rassen — Rauhaarige Rassen
+- Price: Komplettpflege — ab 80 €; Category: Kleine Rassen — Langhaarige Rassen
+- Price: Komplettpflege — ab 80 €; Category: Kleine Rassen — Pudel- und Lockenfell
+- Price: Komplettpflege — ab 80 €; Category: Kleine Rassen — Rassen mit Doppelfell
+- Price: Komplettpflege — ab 80 €; Category: Mittlere Rassen — Kurzhaarige Rassen
+- Price: Komplettpflege — ab 90 €; Category: Mittlere Rassen — Rauhaarige Rassen
+- Price: Komplettpflege — ab 90 €; Category: Mittlere Rassen — Langhaarige Rassen
+- Price: Komplettpflege — ab 100 €; Category: Mittlere Rassen — Pudel- und Lockenfell
+- Price: Komplettpflege — ab 90 €; Category: Mittlere Rassen — Rassen mit Doppelfell
+- Price: Komplettpflege — ab 100 €; Category: Große Rassen — Kurzhaarige Rassen
+- Price: Komplettpflege — ab 120 €; Category: Große Rassen — Rauhaarige Rassen
+- Price: Komplettpflege — ab 120 €; Category: Große Rassen — Langhaarige Rassen
+- Price: Komplettpflege — ab 120 €; Category: Große Rassen — Pudel- und Lockenfell
+- Price: Komplettpflege — ab 120 €; Category: Große Rassen — Rassen mit Doppelfell
+- Price: Komplettpflege — ab 120 €; Category: Riesenrassen — Kurzhaarige Rassen
+- Price: Komplettpflege — ab 150 €; Category: Riesenrassen — Rauhaarige Rassen
+- Price: Komplettpflege — ab 150 €; Category: Riesenrassen — Langhaarige Rassen
+- Price: Komplettpflege — ab 150 €; Category: Riesenrassen — Rassen mit Doppelfell
+
+#### Baden + Hygienepflege — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Ideal als pflegender Zwischentermin zwischen zwei Komplettpflege-Terminen.
+- Description: Baden, Föhnen, Bürsten, Ohren, Augen, Krallen und Hygienezonen.
+- Price: Baden + Hygienepflege — ab 60 €; Category: Kleine Rassen — Kurzhaarige Rassen
+- Price: Baden + Hygienepflege — ab 60 €; Category: Kleine Rassen — Rauhaarige Rassen
+- Price: Baden + Hygienepflege — ab 60 €; Category: Kleine Rassen — Langhaarige Rassen
+- Price: Baden + Hygienepflege — ab 60 €; Category: Kleine Rassen — Pudel- und Lockenfell
+- Price: Baden + Hygienepflege — ab 60 €; Category: Kleine Rassen — Rassen mit Doppelfell
+- Price: Baden + Hygienepflege — ab 70 €; Category: Mittlere Rassen — Kurzhaarige Rassen
+- Price: Baden + Hygienepflege — ab 70 €; Category: Mittlere Rassen — Rauhaarige Rassen
+- Price: Baden + Hygienepflege — ab 70 €; Category: Mittlere Rassen — Langhaarige Rassen
+- Price: Baden + Hygienepflege — ab 80 €; Category: Mittlere Rassen — Pudel- und Lockenfell
+- Price: Baden + Hygienepflege — ab 75 €; Category: Mittlere Rassen — Rassen mit Doppelfell
+- Price: Baden + Hygienepflege — ab 90 €; Category: Große Rassen — Kurzhaarige Rassen
+- Price: Baden + Hygienepflege — ab 90 €; Category: Große Rassen — Rauhaarige Rassen
+- Price: Baden + Hygienepflege — ab 90 €; Category: Große Rassen — Langhaarige Rassen
+- Price: Baden + Hygienepflege — ab 90 €; Category: Große Rassen — Pudel- und Lockenfell
+- Price: Baden + Hygienepflege — ab 90 €; Category: Große Rassen — Rassen mit Doppelfell
+- Price: Baden + Hygienepflege — ab 120 €; Category: Riesenrassen — Kurzhaarige Rassen
+- Price: Baden + Hygienepflege — ab 105 €; Category: Riesenrassen — Rauhaarige Rassen
+- Price: Baden + Hygienepflege — ab 110 €; Category: Riesenrassen — Langhaarige Rassen
+- Price: Baden + Hygienepflege — ab 120 €; Category: Riesenrassen — Rassen mit Doppelfell
+
+#### Trimmen — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: Für rauhaarige Rassen nach Fellstruktur und Aufwand.
 - Description: Rassegerechtes Trimmen per Hand oder Maschine.
-- Price: Trimmen — kleine Rassen — ab 75 €; Category: Zusatzleistungen
-- Price: Trimmen — kleine Rassen — ab 90 €; Category: Zusatzleistungen
-- Price: Trimmen — kleine Rassen — ab 110 €; Category: Zusatzleistungen
-- Price: Trimmen — kleine Rassen — ab 140 €; Category: Zusatzleistungen
+- Price: Trimmen — 60 € / Std.; Category: Kleine Rassen — Rauhaarige Rassen
+- Price: Trimmen — 60 € / Std.; Category: Mittlere Rassen — Rauhaarige Rassen
+- Price: Trimmen — 60 € / Std.; Category: Große Rassen — Rauhaarige Rassen
+- Price: Trimmen — 60 € / Std.; Category: Riesenrassen — Rauhaarige Rassen
+
+#### Express-Entwollung / Unterwolle entfernen — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Reduziert lose Haare deutlich, stoppt den natürlichen Fellwechsel nicht.
+- Description: Professionelle Entfernung von losem Haar und Unterwolle.
+- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.; Category: Kleine Rassen — Rassen mit Doppelfell
+- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.; Category: Mittlere Rassen — Rassen mit Doppelfell
+- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.; Category: Große Rassen — Rassen mit Doppelfell
+- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.; Category: Riesenrassen — Rassen mit Doppelfell
 
 ### EN — published catalog ###
 
-#### 1. Long-haired breeds ####
-- Summary: Full care for small breeds with continuously growing coats.
-- Breeds 1: Australian Silky Terrier, Biewer Yorkshire Terrier, Bolognese, Chinese Crested — Powder Puff variety, Continental Toy Spaniel, Czech Terrier, Havanese, Japanese Chin, Lhasa Apso, Long-haired Chihuahua, Long-haired Dachshund, Long-haired Miniature Dachshund, Long-haired Rabbit Dachshund, Maltese
-- Breeds 2: Pekingese, Russian Colored Bolonka, Russian Toy — long-haired, Shih Tzu, Skye Terrier, Tibetan Spaniel, Tibetan Terrier, Yorkshire Terrier
-- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Clipping and styling, Puppy introduction grooming
-- Price: Full grooming — from €80
-- Price: Bath + hygiene care — from €60
-- Price: First puppy grooming — from €50
-- Note: Full grooming includes a consultation, brushing, professional washing and drying, clipping and coat styling, hygiene care, eye, ear and nail care, and the dog’s final finish.
-- Note: Bath and hygiene care include professional washing and drying, brushing, nail care, ear cleaning, and a hygiene trim of the paws, muzzle, groin area, and under-tail area.
-- Note: The first puppy grooming visit is designed to gently familiarise the puppy with the salon and grooming care.
-
-#### 2. Poodles, bichons and poodle-type breeds ####
-- Summary: Detailed care for curly and voluminous coats.
-- Breeds 1: American Water Spaniel, Bedlington Terrier, Bichon Frise, Cavapoo, Cockapoo, Coton de Tulear, Havapoo, Irish Soft Coated Wheaten Terrier, Kerry Blue Terrier, Löwchen, Maltipoo, Medium Poodle, Miniature Poodle, Poochon
-- Breeds 2: Portuguese Water Dog, Romagna Water Dog, Shih-Poo, Small and medium Schnoodle, Spanish Water Dog, Toy Poodle, Yorkipoo
-- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Conditioning, Clipping and styling, Puppy introduction grooming
-- Price: Full grooming — from €90
-- Price: Bath + hygiene care — from €70
-- Price: First puppy grooming — from €50
-- Note: For poodles and bichons, full grooming includes a consultation, brushing, professional washing, conditioning and drying, clipping and coat styling, hygiene care, eye, ear and nail care, and the dog’s final finish.
-- Note: Bath and hygiene care include professional washing and drying, brushing, nail care, ear cleaning, and a hygiene trim of the paws, muzzle, groin area, and under-tail area.
-
-#### 3. Spitz breeds ####
-- Summary: Care for dense undercoat, natural volume and shape.
-- Breeds 1: Eurasian, Finnish Lapponian Dog, Finnish Spitz, German Spitz, dwarf, German Spitz, large, German Spitz, medium, German Spitz, small, Hokkaido, Icelandic Sheepdog, Italian Volpino, Japanese Spitz, Kai, Karelian Bear Dog, Keeshond
-- Breeds 2: Kintamani-Bali Dog, Kishu, Korea Jindo Dog, Lapponian Herder, Norrbottenspitz, Norwegian Buhund, Norwegian Elkhound Black, Norwegian Elkhound Grey, Norwegian Lundehund, Pomeranian, Shiba, Shikoku, Swedish Lapphund, Swedish Vallhund
-- Breeds 3: Thai Bangkaew Dog
-- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Undercoat removal, Coat care, Clipping and styling, Puppy introduction grooming
-- Price: Full grooming — from €90
-- Price: Bath + hygiene care — on request
-- Price: First puppy grooming — from €50
-- Note: For Spitz breeds, full grooming includes bathing, professional drying, thorough undercoat brushing, coat care and shape finishing, plus eye, ear, nail and hygiene care.
-
-#### 4. Spaniels ####
-- Summary: Shape, volume and a neat finish for spaniels.
-- Breeds 1: American Cocker Spaniel, Blue Picardy Spaniel, Brittany Spaniel, Cavalier King Charles Spaniel, Clumber Spaniel, Deutsch Langhaar, Drentsche Partridge Dog, English Cocker Spaniel, English Setter, English Springer Spaniel, Field Spaniel, French Spaniel, German Spaniel, Gordon Setter
-- Breeds 2: Irish Red and White Setter, Irish Red Setter, King Charles Spaniel, Kleiner Münsterländer, Large Munsterlander, Nederlandse Kooikerhondje, Picardy Spaniel, Pont-Audemer Spaniel, Russian Hunting Spaniel, Stabijhoun, Sussex Spaniel, Welsh Springer Spaniel
-- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Clipping and styling, Puppy introduction grooming
-- Price: Full grooming — from €105
-- Price: Bath + hygiene care — from €85
-- Price: First puppy grooming — from €50
-- Note: Full grooming includes a consultation, brushing, professional washing and drying, clipping and coat styling, hygiene care, eye, ear and nail care, and the dog’s final finish.
-- Note: Bath and hygiene care include professional washing and drying, brushing, nail care, ear cleaning, and a hygiene trim of the paws, muzzle, groin area, and under-tail area.
-
-#### 5. Wire-coated breeds ####
-- Summary: Clipping according to the wire coat structure; trimming available as an additional service.
-- Breeds 1: Affenpinscher, Airedale Terrier, Appennine Hound — rough-haired, Australian Terrier, Basset Fauve De Bretagne, Belgian Griffon, Belgian Shepherd Dog — Laekenois, Blue Gascony Griffon, Bohemian Wire-Haired Pointing Griffon, Border Terrier, Bosnian Broken-Haired Hound - Called Barak, Bouvier Des Ardennes, Bouvier Des Flandres, Briquet Griffon Vendeen
-- Breeds 2: Brussels Griffon, Cairn Terrier, Coarse-Haired Styrian Hound, Colombian Fino Hound — large, rough-haired, Colombian Fino Hound — standard, rough-haired, Dandie Dinmont Terrier, Deerhound, Deutsch Stichelhaar, Dutch Shepherd Dog — rough-haired, Dutch Smoushond, Fawn Brittany Griffon, German Hunting Terrier — rough-haired, German Wire- Haired Pointing Dog, Giant Schnauzer
-- Breeds 3: Grand Basset Griffon Vendeen, Grand Griffon Vendeen, Griffon Nivernais, Hungarian Wire-Haired Pointer, Ibizan Hound — rough-haired, Irish Glen of Imaal Terrier, Irish Terrier, Irish Wolfhound, Istrian Wire-Haired Hound, Italian Rough-Haired Segugio, Italian Spinone, Jack Russell Terrier — wire-haired, Kromfohrländer — rough-haired, Lakeland Terrier
-- Breeds 4: Miniature Schnauzer, Norfolk Terrier, Norwich Terrier, Otterhound, Parson Russell Terrier — wire-haired, Petit Basset Griffon Vendeen, Portuguese Podengo — large, wire-haired, Portuguese Podengo — medium, wire-haired, Portuguese Podengo — small, wire-haired, Pudelpointer, Pumi, Scottish Terrier, Sealyham Terrier, Segugio Maremmano — rough-haired
-- Breeds 5: Standard Schnauzer, Welsh Terrier, West Highland White Terrier, Wire Fox Terrier, Wire-haired Dachshund, Wire-haired Miniature Dachshund, Wire-Haired Pointing Griffon Korthals, Wire-haired Rabbit Dachshund, Wirehaired Slovakian Pointer
-- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Clipping and styling, Puppy introduction grooming
-- Price: Clipping — from €90
-- Price: Bath + hygiene care — from €70
-- Price: First puppy grooming — from €50
-- Note: Clipping and styling include a consultation, professional washing and drying, coat shaping, hygiene care, and eye, ear and nail care.
-- Note: Trimming is available on request and depends on coat structure and condition as an additional service.
-- Note: Bath and hygiene care include professional washing and drying, brushing, nail care, ear cleaning, and a hygiene trim of the paws, muzzle, groin area, and under-tail area.
-
-#### 6. Short-coated dogs ####
-- Summary: Full care package according to the dog’s size.
-- Breeds 1: Alpine Dachsbracke, American Bulldog, American Bully, American Foxhound, American Pit Bull Terrier, American Staffordshire Terrier, Andalusian Terrier, Sherry Terrier, Appennine Hound — smooth-haired, Ariege Pointing Dog, Ariegeois, Artois Hound, Australian Cattle Dog, Australian Kelpie, Australian Stumpy Tail Cattle Dog
-- Breeds 2: Austrian Black and Tan Hound, Austrian Pinscher, Auvergne Pointer, Azawakh, Basenji, Basset Hound, Bavarian Mountain Scent Hound, Beagle, Beagle Harrier, Beauce Sheepdog, Belgian Shepherd Dog — Malinois, Billy, Black and Tan Coonhound, Bloodhound
-- Breeds 3: Blue Gascony Basset, Boston Terrier, Bourbonnais Pointing Dog, Boxer, Brazilian Campeiro Bulldog, Brazilian Terrier, Brazilian Tracker, Broholmer, Bull Terrier, Bullmastiff, Burgos Pointing Dog, Canaan Dog, Canarian Hound, Cane Corso
-- Breeds 4: Chinese Crested Dog — hairless, Cimarrón Uruguayo, Cirneco Dell'etna, Collie Smooth, Colombian Fino Hound — large, smooth-haired, Colombian Fino Hound — standard, smooth-haired, Continental Bulldog, Dalmatian, Danish-Swedish Farmdog, Dobermann, Dogo Argentino, Dogue De Bordeaux, Drever, Dutch Shepherd Dog — short-haired
-- Breeds 5: English Bulldog, English Foxhound, English Pointer, English Toy Terrier (Black &Tan), Estonian Hound, Fila Brasileiro, Finnish Hound, Fox Terrier (Smooth), French Bulldog, French Pointing Dog - Gascogne Type, French Pointing Dog - Pyrenean Type, French Tricolour Hound, French White & Black Hound, French White and Orange Hound
-- Breeds 6: German Hound, German Hunting Terrier — coarse smooth-haired, German Pinscher, German Shorthaired Pointer, Grand Gascon Saintongeois, Great Anglo-French Tricolour Hound, Great Anglo-French White & Orange Hound, Great Anglo-French White and Black Hound, Great Dane, Great Gascony Blue, Greyhound, Halden Hound, Hamiltonstövare, Hanoverian Scent Hound
-- Breeds 7: Harrier, Hellenic Hound, Hungarian Greyhound, Hungarian Hound - Transylvanian Scent Hound, Hungarian Vizsla, Hygen Hound, Ibizan Hound — smooth-haired, Istrian Short-Haired Hound, Italian Greyhound, Italian Pointing Dog, Italian Short-Haired Segugio, Jack Russell Terrier — smooth-haired, Japanese Terrier, Kromfohrländer — smooth-haired
-- Breeds 8: Lancashire Heeler, Majorca Mastiff, Majorca Shepherd Dog — short-haired, Manchester Terrier, Mastiff, Medium-Sized Anglo-French Hound, Miniature Bull Terrier, Miniature Pinscher, Montenegrin Mountain Hound, Neapolitan Mastiff, Norman Artesien Basset, Norwegian Hound, Old Danish Pointing Dog, Parson Russell Terrier — smooth-haired
-- Breeds 9: Peruvian Hairless Dog — large, coated, Peruvian Hairless Dog — large, hairless, Peruvian Hairless Dog — medium, coated, Peruvian Hairless Dog — medium, hairless, Peruvian Hairless Dog — small, coated, Peruvian Hairless Dog — small, hairless, Petit Brabançon, Pharaoh Hound, Poitevin, Polish Greyhound, Polish Hound, Polish Hunting Dog, Porcelaine, Portuguese Podengo — large, smooth-haired
-- Breeds 10: Portuguese Podengo — medium, smooth-haired, Portuguese Podengo — small, smooth-haired, Portuguese Pointing Dog, Posavatz Hound, Prague Ratter, Presa Canario, Pug, Rhodesian Ridgeback, Rottweiler, Russian Toy — smooth coat, Saint Germain Pointer, Saint Miguel Cattle Dog, Saluki — smooth-haired, Schillerstövare
-- Breeds 11: Segugio Maremmano — smooth-haired, Serbian Hound, Serbian Tricolour Hound, Shar Pei, Short-haired Chihuahua, Short-haired Dachshund, Short-haired Miniature Dachshund, Sloughi, Slovakian Hound, Smålandsstövare, Small Blue Gascony, Small Gascon Saintongeois, Small Swiss Hound, Smooth-haired Rabbit Dachshund
-- Breeds 12: Spanish Greyhound, Spanish Hound, Staffordshire Bull Terrier, Swiss Hound, Taiwan Dog, Tatra Hound, Thai Ridgeback Dog, Tosa, Tyrolean Hound, Valencian Terrier, Weimaraner — short-haired, Westphalian Dachsbracke, Whippet, Xoloitzcuintli — medium, coated
-- Breeds 13: Xoloitzcuintli — medium, hairless, Xoloitzcuintli — miniature, coated, Xoloitzcuintli — miniature, hairless, Xoloitzcuintli — standard, coated, Xoloitzcuintli — standard, hairless
+#### Small breeds — Short-haired breeds ####
+- Summary: Bathing, short coat and skin care, and hygiene care.
+- Breeds: Chinese Crested Dog — hairless, English Toy Terrier (Black &Tan), Jack Russell Terrier — smooth-haired, Japanese Terrier, Miniature Pinscher, Petit Brabançon, Portuguese Podengo — small, smooth-haired, Prague Ratter, Russian Toy — smooth coat, Short-haired Chihuahua, Smooth-haired Rabbit Dachshund
 - Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Coat care, Puppy introduction grooming
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €60
 - Price: Bath + hygiene care — from €60
+
+#### Small breeds — Wire-haired breeds ####
+- Summary: Breed-appropriate care for wire coats; trimming is a dedicated primary service.
+- Breeds: Affenpinscher, Jack Russell Terrier — wire-haired, Norfolk Terrier, Norwich Terrier, Portuguese Podengo — small, wire-haired, Wire-haired Dachshund, Wire-haired Rabbit Dachshund
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Clipping and styling, Puppy introduction grooming
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €80
+- Price: Bath + hygiene care — from €60
+- Price: Trimming — €60 / hour
+
+#### Small breeds — Long-haired breeds ####
+- Summary: Care for continuously growing, long and semi-long coats, tailored to the breed.
+- Breeds: Australian Silky Terrier, Biewer Yorkshire Terrier, Bolognese, Continental Toy Spaniel, Havanese, Japanese Chin, Maltese, Russian Toy — long-haired, Yorkshire Terrier
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Clipping and styling, Puppy introduction grooming
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €80
+- Price: Bath + hygiene care — from €60
+
+#### Small breeds — Poodle and curly coats ####
+- Summary: Clipping and care for poodle and curly coats, tailored to shape and curl density.
+- Breeds: Cavapoo, Cockapoo, Coton de Tulear, Havapoo, Löwchen, Maltipoo, Miniature Poodle, Poochon, Shih-Poo, Toy Poodle, Yorkipoo
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Conditioning, Clipping and styling, Puppy introduction grooming
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €80
+- Price: Bath + hygiene care — from €60
+
+#### Small breeds — Double-coated breeds ####
+- Summary: Care for the outer coat and undercoat, tailored to the coat structure.
+- Breeds: Bichon Frise, Chinese Crested — Powder Puff variety, German Spitz, dwarf, German Spitz, small, Italian Volpino, Lhasa Apso, Long-haired Chihuahua, Long-haired Miniature Dachshund, Long-haired Rabbit Dachshund, Pekingese, Pomeranian, Russian Colored Bolonka, Shih Tzu
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Conditioning, Clipping and styling, Puppy introduction grooming, Undercoat removal, Coat care
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €80
+- Price: Bath + hygiene care — from €60
+- Price: Express deshedding / undercoat removal — €30 / 30 min
+
+#### Medium breeds — Short-haired breeds ####
+- Summary: Bathing, short coat and skin care, and hygiene care.
+- Breeds 1: Andalusian Terrier, Sherry Terrier, Basenji, Blue Gascony Basset, Boston Terrier, Brazilian Terrier, Danish-Swedish Farmdog, Drever, English Bulldog, Fox Terrier (Smooth), French Bulldog, German Hunting Terrier — coarse smooth-haired, German Pinscher, Italian Greyhound, Manchester Terrier
+- Breeds 2: Norman Artesien Basset, Parson Russell Terrier — smooth-haired, Peruvian Hairless Dog — small, coated, Peruvian Hairless Dog — small, hairless, Short-haired Dachshund, Short-haired Miniature Dachshund, Small Swiss Hound, Tatra Hound, Valencian Terrier, Westphalian Dachsbracke, Whippet, Xoloitzcuintli — miniature, coated, Xoloitzcuintli — miniature, hairless
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Coat care, Puppy introduction grooming
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €80
 - Price: Bath + hygiene care — from €70
+
+#### Medium breeds — Wire-haired breeds ####
+- Summary: Breed-appropriate care for wire coats; trimming is a dedicated primary service.
+- Breeds 1: Australian Terrier, Belgian Griffon, Border Terrier, Brussels Griffon, Cairn Terrier, Dutch Smoushond, German Hunting Terrier — rough-haired, Lakeland Terrier, Miniature Schnauzer, Parson Russell Terrier — wire-haired, Petit Basset Griffon Vendeen, Scottish Terrier, Sealyham Terrier, Welsh Terrier
+- Breeds 2: West Highland White Terrier, Wire Fox Terrier, Wire-haired Miniature Dachshund
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Clipping and styling, Puppy introduction grooming
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €90
+- Price: Bath + hygiene care — from €70
+- Price: Trimming — €60 / hour
+
+#### Medium breeds — Long-haired breeds ####
+- Summary: Care for continuously growing, long and semi-long coats, tailored to the breed.
+- Breeds: Brittany Spaniel, Cavalier King Charles Spaniel, Czech Terrier, King Charles Spaniel, Kleiner Münsterländer, Nederlandse Kooikerhondje
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Clipping and styling, Puppy introduction grooming
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €90
+- Price: Bath + hygiene care — from €70
+
+#### Medium breeds — Poodle and curly coats ####
+- Summary: Clipping and care for poodle and curly coats, tailored to shape and curl density.
+- Breeds: Bedlington Terrier, Medium Poodle, Small and medium Schnoodle
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Conditioning, Clipping and styling, Puppy introduction grooming
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €100
 - Price: Bath + hygiene care — from €80
-- Price: Bath + hygiene care — from €100
-- Price: First puppy grooming — from €50
-- Note: Full care includes bathing, professional drying, hygiene care, eye and ear care, nail trimming, brushing, and coat care.
 
-#### 7. Large dogs ####
-- Summary: Full care for large breeds with a substantial coat volume.
-- Breeds 1: Abruzzes and Maremma Shepherd Dog, Afghan Hound, Akita Inu, Alaskan Malamute, American Akita, Appenzell Cattle Dog, Atlas Mountain Dog (Aidi), Australian Shepherd, Bearded Collie, Belgian Shepherd Dog — Groenendael, Belgian Shepherd Dog — Tervueren, Bergamasco Shepherd, Bernese Mountain Dog, Bohemian Shepherd Dog
-- Breeds 2: Border Collie, Borzoi - Russian Hunting Sighthound, Bosnian and Herzegovinian - Croatian Shepherd Dog, Briard, Canadian Eskimo Dog, Castro Laboreiro Dog, Catalan Sheepdog, Caucasian Shepherd, Central Asian Shepherd, Chesapeake Bay Retriever, Chow Chow, Croatian Shepherd Dog, Curly Coated Retriever, Czechoslovakian Wolfdog
-- Breeds 3: Dutch Schapendoes, Dutch Shepherd Dog — long-haired, East Siberian Laika, Entlebuch Cattle Dog, Estrela Mountain Dog, Flat Coated Retriever, French Water Dog, German Shepherd, Golden Retriever, Great Pyrenees, Greater Swiss Mountain Dog, Greenland Dog, Hovawart, Irish Water Spaniel
-- Breeds 4: Jämthund, Kangal Shepherd Dog, Karst Shepherd Dog, Kazakh Tazy, Komondor, Kuvasz, Labrador Retriever, Landseer (European Continental Type), Large Australian Labradoodle, Large Bernedoodle, Large Goldendoodle, Large Labradoodle, Leonberger, Long-Haired Pyrenean Sheepdog
-- Breeds 5: Macedonian Shepherd Dog Karaman, Majorca Shepherd Dog — long-haired, Miniature American Shepherd, Mudi, Newfoundland, Nova Scotia Duck Tolling Retriever, Old English Sheepdog, Picardy Sheepdog, Polish Lowland Sheepdog, Polish Tatra Shepherd, Portuguese Sheepdog, Puli, Pyrenean Mastiff, Pyrenean Sheepdog - Smooth Faced
-- Breeds 6: Rafeiro of Alentejo, Romanian Bucovina Shepherd, Romanian Carpathian Shepherd Dog, Romanian Mioritic Shepherd Dog, Romanian Raven Shepherd Dog, Rough Collie, Russian Black Terrier, Russian-European Laika, Saarloos Wolfhond, Saint Bernard, Saluki — fringed, Samoyed, Schipperke, Shetland Sheepdog
-- Breeds 7: Siberian Husky, Slovakian Chuvach, South Russian Shepherd Dog, Spanish Mastiff, Standard Poodle, Tibetan Mastiff, Transmontano Mastiff, Weimaraner — long-haired, Welsh Corgi (Cardigan), Welsh Corgi (Pembroke), West Siberian Laika, Wetterhoun, White Swiss Shepherd Dog, Yakutian Laika
-- Breeds 8: Yugoslavian Shepherd Dog - Sharplanina
-- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Undercoat removal, Coat care, Puppy introduction grooming
-- Price: Full care — from €130
-- Price: Bath + hygiene care — on request
-- Price: First puppy grooming — from €50
-- Note: Full care includes washing, professional drying, thorough brushing, coat care, and eye, ear, nail and hygiene care.
+#### Medium breeds — Double-coated breeds ####
+- Summary: Care for the outer coat and undercoat, tailored to the coat structure.
+- Breeds 1: American Cocker Spaniel, Austrian Pinscher, Basset Hound, Beagle, Dandie Dinmont Terrier, English Cocker Spaniel, Finnish Lapponian Dog, German Spitz, medium, Icelandic Sheepdog, Japanese Spitz, Kintamani-Bali Dog, Lancashire Heeler, Lapponian Herder, Long-haired Dachshund
+- Breeds 2: Norrbottenspitz, Norwegian Buhund, Norwegian Elkhound Black, Norwegian Elkhound Grey, Norwegian Lundehund, Pug, Schipperke, Shiba, Skye Terrier, Swedish Lapphund, Swedish Vallhund, Tibetan Spaniel, Tibetan Terrier
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Clipping and styling, Puppy introduction grooming, Coat care, Undercoat removal
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €90
+- Price: Bath + hygiene care — from €75
+- Price: Express deshedding / undercoat removal — €30 / 30 min
 
-#### Cats — brushing / clipping ####
-- Summary: The service is performed in the owner’s presence.
-- Breeds: Cats of all breeds
+#### Large breeds — Short-haired breeds ####
+- Summary: Bathing, short coat and skin care, and hygiene care.
+- Breeds 1: American Bully, American Pit Bull Terrier, American Staffordshire Terrier, Appennine Hound — smooth-haired, Ariegeois, Artois Hound, Austrian Black and Tan Hound, Bavarian Mountain Scent Hound, Beagle Harrier, Bourbonnais Pointing Dog, Bull Terrier, Canaan Dog, Cirneco Dell'etna, Colombian Fino Hound — standard, smooth-haired
+- Breeds 2: Continental Bulldog, Estonian Hound, Finnish Hound, French Pointing Dog - Pyrenean Type, German Hound, Halden Hound, Hamiltonstövare, Hanoverian Scent Hound, Harrier, Hellenic Hound, Hungarian Hound - Transylvanian Scent Hound, Hygen Hound, Istrian Short-Haired Hound, Italian Short-Haired Segugio
+- Breeds 3: Medium-Sized Anglo-French Hound, Miniature Bull Terrier, Montenegrin Mountain Hound, Norwegian Hound, Peruvian Hairless Dog — medium, coated, Peruvian Hairless Dog — medium, hairless, Pharaoh Hound, Polish Hunting Dog, Porcelaine, Portuguese Podengo — medium, smooth-haired, Portuguese Pointing Dog, Posavatz Hound, Schillerstövare, Segugio Maremmano — smooth-haired
+- Breeds 4: Serbian Hound, Serbian Tricolour Hound, Shar Pei, Slovakian Hound, Smålandsstövare, Small Blue Gascony, Small Gascon Saintongeois, Spanish Hound, Staffordshire Bull Terrier, Swiss Hound, Taiwan Dog, Tyrolean Hound, Xoloitzcuintli — medium, coated, Xoloitzcuintli — medium, hairless
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Coat care, Puppy introduction grooming
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €100
+- Price: Bath + hygiene care — from €90
+
+#### Large breeds — Wire-haired breeds ####
+- Summary: Breed-appropriate care for wire coats; trimming is a dedicated primary service.
+- Breeds 1: Appennine Hound — rough-haired, Basset Fauve De Bretagne, Blue Gascony Griffon, Bohemian Wire-Haired Pointing Griffon, Bosnian Broken-Haired Hound - Called Barak, Bouvier Des Ardennes, Briquet Griffon Vendeen, Coarse-Haired Styrian Hound, Colombian Fino Hound — large, rough-haired, Colombian Fino Hound — standard, rough-haired, Fawn Brittany Griffon, Grand Basset Griffon Vendeen, Grand Griffon Vendeen, Griffon Nivernais
+- Breeds 2: Ibizan Hound — rough-haired, Irish Glen of Imaal Terrier, Irish Terrier, Istrian Wire-Haired Hound, Italian Rough-Haired Segugio, Kromfohrländer — rough-haired, Portuguese Podengo — large, wire-haired, Portuguese Podengo — medium, wire-haired, Segugio Maremmano — rough-haired, Standard Schnauzer
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Clipping and styling, Puppy introduction grooming
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €120
+- Price: Bath + hygiene care — from €90
+- Price: Trimming — €60 / hour
+
+#### Large breeds — Long-haired breeds ####
+- Summary: Care for continuously growing, long and semi-long coats, tailored to the breed.
+- Breeds 1: Blue Picardy Spaniel, Deutsch Langhaar, Drentsche Partridge Dog, English Setter, Field Spaniel, French Spaniel, Gordon Setter, Irish Red and White Setter, Irish Red Setter, Large Munsterlander, Picardy Spaniel, Pont-Audemer Spaniel, Portuguese Sheepdog, Russian Hunting Spaniel
+- Breeds 2: Sussex Spaniel
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Clipping and styling, Puppy introduction grooming, Undercoat removal, Coat care
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €120
+- Price: Bath + hygiene care — from €90
+
+#### Large breeds — Poodle and curly coats ####
+- Summary: Clipping and care for poodle and curly coats, tailored to shape and curl density.
+- Breeds: Irish Soft Coated Wheaten Terrier, Kerry Blue Terrier, Portuguese Water Dog, Spanish Water Dog
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Conditioning, Clipping and styling, Puppy introduction grooming
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €120
+- Price: Bath + hygiene care — from €90
+
+#### Large breeds — Double-coated breeds ####
+- Summary: Care for the outer coat and undercoat, tailored to the coat structure.
+- Breeds 1: Alaskan Malamute, Alpine Dachsbracke, American Water Spaniel, Appenzell Cattle Dog, Australian Cattle Dog, Australian Kelpie, Australian Shepherd, Australian Stumpy Tail Cattle Dog, Bergamasco Shepherd, Bohemian Shepherd Dog, Border Collie, Catalan Sheepdog, Chow Chow, Collie Smooth
+- Breeds 2: Croatian Shepherd Dog, Dutch Schapendoes, Dutch Shepherd Dog — short-haired, English Springer Spaniel, Entlebuch Cattle Dog, Finnish Spitz, German Spaniel, German Spitz, large, Hokkaido, Kai, Karelian Bear Dog, Keeshond, Kishu, Korea Jindo Dog
+- Breeds 3: Kromfohrländer — smooth-haired, Long-Haired Pyrenean Sheepdog, Miniature American Shepherd, Mudi, Nova Scotia Duck Tolling Retriever, Polish Lowland Sheepdog, Puli, Pumi, Pyrenean Sheepdog - Smooth Faced, Romagna Water Dog, Shetland Sheepdog, Shikoku, Siberian Husky, Stabijhoun
+- Breeds 4: Thai Bangkaew Dog, Welsh Corgi (Cardigan), Welsh Corgi (Pembroke), Welsh Springer Spaniel, Wetterhoun
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Undercoat removal, Coat care, Puppy introduction grooming, Conditioning, Clipping and styling
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €120
+- Price: Bath + hygiene care — from €90
+- Price: Express deshedding / undercoat removal — €30 / 30 min
+
+#### Giant breeds — Short-haired breeds ####
+- Summary: Bathing, short coat and skin care, and hygiene care.
+- Breeds 1: American Bulldog, American Foxhound, Ariege Pointing Dog, Auvergne Pointer, Azawakh, Billy, Black and Tan Coonhound, Bloodhound, Boxer, Brazilian Campeiro Bulldog, Brazilian Tracker, Bullmastiff, Burgos Pointing Dog, Canarian Hound
+- Breeds 2: Cane Corso, Cimarrón Uruguayo, Colombian Fino Hound — large, smooth-haired, Dalmatian, Dobermann, Dogo Argentino, Dogue De Bordeaux, English Foxhound, English Pointer, Fila Brasileiro, French Pointing Dog - Gascogne Type, French Tricolour Hound, French White & Black Hound, French White and Orange Hound
+- Breeds 3: German Shorthaired Pointer, Grand Gascon Saintongeois, Great Anglo-French Tricolour Hound, Great Anglo-French White & Orange Hound, Great Anglo-French White and Black Hound, Great Dane, Great Gascony Blue, Greyhound, Hungarian Vizsla, Ibizan Hound — smooth-haired, Italian Pointing Dog, Majorca Mastiff, Mastiff, Neapolitan Mastiff
+- Breeds 4: Old Danish Pointing Dog, Peruvian Hairless Dog — large, coated, Peruvian Hairless Dog — large, hairless, Poitevin, Polish Greyhound, Polish Hound, Portuguese Podengo — large, smooth-haired, Presa Canario, Rhodesian Ridgeback, Saint Germain Pointer, Saint Miguel Cattle Dog, Saluki — smooth-haired, Sloughi, Spanish Greyhound
+- Breeds 5: Thai Ridgeback Dog, Tosa, Weimaraner — short-haired, Xoloitzcuintli — standard, coated, Xoloitzcuintli — standard, hairless
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Coat care, Puppy introduction grooming
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €120
+- Price: Bath + hygiene care — from €120
+
+#### Giant breeds — Wire-haired breeds ####
+- Summary: Breed-appropriate care for wire coats; trimming is a dedicated primary service.
+- Breeds: Airedale Terrier, Belgian Shepherd Dog — Laekenois, Bouvier Des Flandres, Deerhound, Deutsch Stichelhaar, Dutch Shepherd Dog — rough-haired, German Wire- Haired Pointing Dog, Giant Schnauzer, Hungarian Wire-Haired Pointer, Irish Wolfhound, Italian Spinone, Pudelpointer, Wire-Haired Pointing Griffon Korthals, Wirehaired Slovakian Pointer
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Clipping and styling, Puppy introduction grooming
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €150
+- Price: Bath + hygiene care — from €105
+- Price: Trimming — €60 / hour
+
+#### Giant breeds — Long-haired breeds ####
+- Summary: Care for continuously growing, long and semi-long coats, tailored to the breed.
+- Breeds: Afghan Hound, Clumber Spaniel, Curly Coated Retriever, French Water Dog, Irish Water Spaniel, Kazakh Tazy, Large Australian Labradoodle, Large Bernedoodle, Large Goldendoodle, Large Labradoodle, Saluki — fringed, Standard Poodle, Weimaraner — long-haired
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Undercoat removal, Coat care, Puppy introduction grooming, Clipping and styling
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €150
+- Price: Bath + hygiene care — from €110
+
+#### Giant breeds — Double-coated breeds ####
+- Summary: Care for the outer coat and undercoat, tailored to the coat structure.
+- Breeds 1: Abruzzes and Maremma Shepherd Dog, Akita Inu, American Akita, Atlas Mountain Dog (Aidi), Bearded Collie, Beauce Sheepdog, Belgian Shepherd Dog — Groenendael, Belgian Shepherd Dog — Malinois, Belgian Shepherd Dog — Tervueren, Bernese Mountain Dog, Borzoi - Russian Hunting Sighthound, Bosnian and Herzegovinian - Croatian Shepherd Dog, Briard, Broholmer
+- Breeds 2: Canadian Eskimo Dog, Castro Laboreiro Dog, Caucasian Shepherd, Central Asian Shepherd, Chesapeake Bay Retriever, Czechoslovakian Wolfdog, Dutch Shepherd Dog — long-haired, East Siberian Laika, Estrela Mountain Dog, Eurasian, Flat Coated Retriever, German Shepherd, Golden Retriever, Great Pyrenees
+- Breeds 3: Greater Swiss Mountain Dog, Greenland Dog, Hovawart, Hungarian Greyhound, Jämthund, Kangal Shepherd Dog, Karst Shepherd Dog, Komondor, Kuvasz, Labrador Retriever, Landseer (European Continental Type), Leonberger, Macedonian Shepherd Dog Karaman, Majorca Shepherd Dog — long-haired
+- Breeds 4: Majorca Shepherd Dog — short-haired, Newfoundland, Old English Sheepdog, Otterhound, Picardy Sheepdog, Polish Tatra Shepherd, Pyrenean Mastiff, Rafeiro of Alentejo, Romanian Bucovina Shepherd, Romanian Carpathian Shepherd Dog, Romanian Mioritic Shepherd Dog, Romanian Raven Shepherd Dog, Rottweiler, Rough Collie
+- Breeds 5: Russian Black Terrier, Russian-European Laika, Saarloos Wolfhond, Saint Bernard, Samoyed, Slovakian Chuvach, South Russian Shepherd Dog, Spanish Mastiff, Tibetan Mastiff, Transmontano Mastiff, West Siberian Laika, White Swiss Shepherd Dog, Yakutian Laika, Yugoslavian Shepherd Dog - Sharplanina
+- Included/listed care: Bath, Professional drying, Hygiene care, Eye care, Ear care, Nail trim, Brushing, Undercoat removal, Coat care, Puppy introduction grooming, Clipping and styling
+- Price: Puppy introduction grooming — from €50
+- Price: Full care — from €150
+- Price: Bath + hygiene care — from €120
+- Price: Express deshedding / undercoat removal — €30 / 30 min
+
+#### Cats — Short-haired cat breeds ####
+- Summary: Gentle short-coat and skin care tailored to the breed.
+- Breeds 1: Abyssinian, American Bobtail Shorthair, American Curl Shorthair, American Shorthair, American Wirehair, Australian Mist, Bengal, Bombay, British Shorthair, Burmese, Burmilla, Chartreux, Chausie, Cornish Rex
+- Breeds 2: Devon Rex, Donskoy, Egyptian Mau, European Shorthair, Exotic Shorthair, German Rex, Havana, Highlander Shorthair, House Cat Shorthair, Japanese Bobtail Shorthair, Khaomanee, Korat, Kurilian Bobtail Shorthair, LaPerm Shorthair
+- Breeds 3: Lykoi, Manx, Manx Tailed, Minuet, Minuet Talls, Munchkin, Ocicat, Oriental Shorthair, Peterbald, Pixiebob, Russian Blue, Savannah, Scottish Fold, Scottish Straight
+- Breeds 4: Selkirk Rex Shorthair, Siamese, Singapura, Snowshoe, Sokoke, Sphynx, Tennessee Rex, Thai, Tonkinese, Toyger
 - Included/listed care: Brushing, Dead coat and undercoat removal, Clipping and styling, Bath, Professional drying, Eye care, Ear care, Nail trim, Hygiene care
 - Price: Brushing / clipping + hygiene care — from €60
 - Price: Brushing / clipping + bath + hygiene care — from €90
 - Note: Brushing and clipping include professional brushing, removal of dead hair and undercoat, clipping, and eye, ear, nail and hygiene care.
 - Note: With the bathing option, bathing and professional drying are added. The service is performed in the owner’s presence.
 
-#### Small animals ####
-- Summary: Gentle hygiene care for guinea pigs and rabbits.
-- Breeds: Guinea pigs, Rabbits
+#### Cats — Long-haired cat breeds ####
+- Summary: Thorough care for long and semi-long coats, with detangling when needed.
+- Breeds 1: American Bobtail Longhair, American Curl Longhair, Balinese, Bengal Longhair, Birman, British Longhair, Burmilla Longhair, Cherubim, Cymric, Cymric Tailed, Highlander, Himalayan, House Cat Longhair, Japanese Bobtail Longhair
+- Breeds 2: Kurilian Bobtail Longhair, LaPerm Longhair, Maine Coon, Maine Coon Polydactyl, Minuet Longhair, Minuet Talls Longhair, Munchkin Longhair, Nebelung, Neva Masquerade, Norwegian Forest Cat, Oriental Longhair, Persian, Pixiebob Longhair, Ragdoll
+- Breeds 3: Scottish Fold Longhair, Scottish Straight Longhair, Selkirk Rex Longhair, Siberian, Somali, Turkish Angora, Turkish Van
+- Included/listed care: Brushing, Dead coat and undercoat removal, Clipping and styling, Bath, Professional drying, Eye care, Ear care, Nail trim, Hygiene care
+- Price: Brushing / clipping + hygiene care — from €60
+- Price: Brushing / clipping + bath + hygiene care — from €90
+- Note: Brushing and clipping include professional brushing, removal of dead hair and undercoat, clipping, and eye, ear, nail and hygiene care.
+- Note: With the bathing option, bathing and professional drying are added. The service is performed in the owner’s presence.
+
+#### Small animals — Guinea pigs ####
+- Summary: Careful guinea-pig care tailored to each animal’s individual needs.
+- Breeds: American / English, English Crested, American Crested, Rex, Teddy, Peruvian, Silkie / Sheltie, Coronet, Texel, Alpaca
 - Included/listed care: Brushing, Bath, Professional drying, Eye care, Ear care, Hygiene care
 - Price: Guinea pigs — hygiene care — from €30
 - Price: Guinea pigs — bath + care — from €40
-- Price: Rabbits — brushing + hygiene care — from €35
-- Note: For guinea pigs, care includes brushing, removal of dead hair, trimming when needed, and eye, ear and hygiene care. Bath and care are offered as a separate service; bathing is not part of standard rabbit care.
 
-#### Additional services ####
+#### Small animals — Rabbits ####
+- Summary: Careful rabbit care tailored to each animal’s individual needs.
+- Breeds: Netherland Dwarf, Dutch, Mini Rex, Rex, Holland Lop, English Angora, French Angora, Lionhead, Jersey Wooly, American Fuzzy Lop
+- Included/listed care: Brushing, Bath, Professional drying, Eye care, Ear care, Hygiene care
+- Price: Rabbits — brushing + hygiene care — from €35
+- Note: For guinea pigs, care includes brushing, removal of dead hair, trimming when needed, and eye, ear and hygiene care. Bath and care are offered as a separate service; bathing is not part of standard rabbit care. Other small animals are accepted only after agreeing the scope and a safe procedure in advance.
+
+#### Additional services — Additional services ####
 - Summary: Additional care that can be added to the main service.
 - Breeds: Dogs, Cats, Guinea pigs, Rabbits
 - Included/listed care: Nail trim, Ultrasonic teeth cleaning without anesthesia, Restorative mask, Ozone therapy
-- Price: Nail trimming — small breeds — €10
-- Price: Nail trimming — medium breeds — €12
-- Price: Nail trimming — large breeds — €15
-- Price: Nail trimming — giant breeds — €18
+- Price: Nail trimming — €15
 - Price: Ultrasonic teeth cleaning up to 6 kg — from €100
-- Price: Restorative / wellness mask — from €20
-- Price: Ozone therapy — from €25
-- Price: Hand stripping — small breeds — from €75
-- Price: Hand stripping — medium breeds — from €90
-- Price: Hand stripping — large breeds — from €110
-- Price: Hand stripping — giant breeds — from €140
-- Note: Additional services include nail trimming by size, trimming for wire-coated breeds, ultrasonic teeth cleaning without anaesthesia up to 6 kg, a restorative or wellness mask, ozone therapy and first puppy grooming.
+- Price: Restorative / spa mask — from €20
+- Price: Ozone therapy — small breeds — from €25
+- Price: Ear care as a standalone service — €15
+- Note: Nail trimming is available for dogs of every size, cats, guinea pigs and rabbits. Ultrasonic teeth cleaning without anaesthesia up to 6 kg and ozone therapy are offered only for small dogs. A restorative / spa mask and standalone ear care are selected as appropriate for the animal.
 - Note: When booked together with grooming, ultrasonic teeth cleaning receives a 30% discount; it does not replace veterinary dental treatment.
 - Note: The first puppy grooming visit is designed to gently familiarise the puppy with the salon and grooming care.
 
-#### Important information ####
+#### Important information — Important information ####
 - Summary: Prices are “from” and depend on the actual amount of work.
 - Breeds: All animals
 
-#### First puppy grooming — service details ####
+#### Puppy introduction grooming — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: A gentle introduction to grooming for puppies up to 4 months old.
 - Description: Meeting the groomer, gently getting used to the grooming table, brush and sound of the dryer, and light care. If the puppy stays calm and allows it, we can also brush the whole coat, give a full bath and gently dry the coat. If the puppy is very lively or not yet ready, we focus on familiarisation and go at their pace. The priority is helping the puppy feel safe, rather than completing every grooming step on the first visit.
-- Price: First puppy grooming — from €50; Category: 1. Long-haired breeds
-- Price: First puppy grooming — from €50; Category: 2. Poodles, bichons and poodle-type breeds
-- Price: First puppy grooming — from €50; Category: 3. Spitz breeds
-- Price: First puppy grooming — from €50; Category: 4. Spaniels
-- Price: First puppy grooming — from €50; Category: 5. Wire-coated breeds
-- Price: First puppy grooming — from €50; Category: 6. Short-coated dogs
-- Price: First puppy grooming — from €50; Category: 7. Large dogs
+- Price: Puppy introduction grooming — from €50; Category: Small breeds — Short-haired breeds
+- Price: Puppy introduction grooming — from €50; Category: Small breeds — Wire-haired breeds
+- Price: Puppy introduction grooming — from €50; Category: Small breeds — Long-haired breeds
+- Price: Puppy introduction grooming — from €50; Category: Small breeds — Poodle and curly coats
+- Price: Puppy introduction grooming — from €50; Category: Small breeds — Double-coated breeds
+- Price: Puppy introduction grooming — from €50; Category: Medium breeds — Short-haired breeds
+- Price: Puppy introduction grooming — from €50; Category: Medium breeds — Wire-haired breeds
+- Price: Puppy introduction grooming — from €50; Category: Medium breeds — Long-haired breeds
+- Price: Puppy introduction grooming — from €50; Category: Medium breeds — Poodle and curly coats
+- Price: Puppy introduction grooming — from €50; Category: Medium breeds — Double-coated breeds
+- Price: Puppy introduction grooming — from €50; Category: Large breeds — Short-haired breeds
+- Price: Puppy introduction grooming — from €50; Category: Large breeds — Wire-haired breeds
+- Price: Puppy introduction grooming — from €50; Category: Large breeds — Long-haired breeds
+- Price: Puppy introduction grooming — from €50; Category: Large breeds — Poodle and curly coats
+- Price: Puppy introduction grooming — from €50; Category: Large breeds — Double-coated breeds
+- Price: Puppy introduction grooming — from €50; Category: Giant breeds — Short-haired breeds
+- Price: Puppy introduction grooming — from €50; Category: Giant breeds — Wire-haired breeds
+- Price: Puppy introduction grooming — from €50; Category: Giant breeds — Long-haired breeds
+- Price: Puppy introduction grooming — from €50; Category: Giant breeds — Double-coated breeds
 
-#### Hand stripping — small breeds — service details ####
+#### Full care — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Final price depends on coat condition, mats, behaviour and time required.
+- Description: Full grooming with bath, drying, haircut and coat finishing.
+- Price: Full care — from €60; Category: Small breeds — Short-haired breeds
+- Price: Full care — from €80; Category: Small breeds — Wire-haired breeds
+- Price: Full care — from €80; Category: Small breeds — Long-haired breeds
+- Price: Full care — from €80; Category: Small breeds — Poodle and curly coats
+- Price: Full care — from €80; Category: Small breeds — Double-coated breeds
+- Price: Full care — from €80; Category: Medium breeds — Short-haired breeds
+- Price: Full care — from €90; Category: Medium breeds — Wire-haired breeds
+- Price: Full care — from €90; Category: Medium breeds — Long-haired breeds
+- Price: Full care — from €100; Category: Medium breeds — Poodle and curly coats
+- Price: Full care — from €90; Category: Medium breeds — Double-coated breeds
+- Price: Full care — from €100; Category: Large breeds — Short-haired breeds
+- Price: Full care — from €120; Category: Large breeds — Wire-haired breeds
+- Price: Full care — from €120; Category: Large breeds — Long-haired breeds
+- Price: Full care — from €120; Category: Large breeds — Poodle and curly coats
+- Price: Full care — from €120; Category: Large breeds — Double-coated breeds
+- Price: Full care — from €120; Category: Giant breeds — Short-haired breeds
+- Price: Full care — from €150; Category: Giant breeds — Wire-haired breeds
+- Price: Full care — from €150; Category: Giant breeds — Long-haired breeds
+- Price: Full care — from €150; Category: Giant breeds — Double-coated breeds
+
+#### Bath + hygiene care — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Maintenance care between full grooming appointments.
+- Description: Bath, dry, brush, ears, eyes, nails and hygiene areas.
+- Price: Bath + hygiene care — from €60; Category: Small breeds — Short-haired breeds
+- Price: Bath + hygiene care — from €60; Category: Small breeds — Wire-haired breeds
+- Price: Bath + hygiene care — from €60; Category: Small breeds — Long-haired breeds
+- Price: Bath + hygiene care — from €60; Category: Small breeds — Poodle and curly coats
+- Price: Bath + hygiene care — from €60; Category: Small breeds — Double-coated breeds
+- Price: Bath + hygiene care — from €70; Category: Medium breeds — Short-haired breeds
+- Price: Bath + hygiene care — from €70; Category: Medium breeds — Wire-haired breeds
+- Price: Bath + hygiene care — from €70; Category: Medium breeds — Long-haired breeds
+- Price: Bath + hygiene care — from €80; Category: Medium breeds — Poodle and curly coats
+- Price: Bath + hygiene care — from €75; Category: Medium breeds — Double-coated breeds
+- Price: Bath + hygiene care — from €90; Category: Large breeds — Short-haired breeds
+- Price: Bath + hygiene care — from €90; Category: Large breeds — Wire-haired breeds
+- Price: Bath + hygiene care — from €90; Category: Large breeds — Long-haired breeds
+- Price: Bath + hygiene care — from €90; Category: Large breeds — Poodle and curly coats
+- Price: Bath + hygiene care — from €90; Category: Large breeds — Double-coated breeds
+- Price: Bath + hygiene care — from €120; Category: Giant breeds — Short-haired breeds
+- Price: Bath + hygiene care — from €105; Category: Giant breeds — Wire-haired breeds
+- Price: Bath + hygiene care — from €110; Category: Giant breeds — Long-haired breeds
+- Price: Bath + hygiene care — from €120; Category: Giant breeds — Double-coated breeds
+
+#### Trimming — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: For wire-coated breeds based on coat structure and workload.
 - Description: Breed-appropriate hand or clipper stripping.
-- Price: Hand stripping — small breeds — from €75; Category: Additional services
-- Price: Hand stripping — small breeds — from €90; Category: Additional services
-- Price: Hand stripping — small breeds — from €110; Category: Additional services
-- Price: Hand stripping — small breeds — from €140; Category: Additional services
+- Price: Trimming — €60 / hour; Category: Small breeds — Wire-haired breeds
+- Price: Trimming — €60 / hour; Category: Medium breeds — Wire-haired breeds
+- Price: Trimming — €60 / hour; Category: Large breeds — Wire-haired breeds
+- Price: Trimming — €60 / hour; Category: Giant breeds — Wire-haired breeds
+
+#### Express deshedding / undercoat removal — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Reduces loose coat significantly but does not stop natural shedding.
+- Description: Professional removal of loose coat and undercoat.
+- Price: Express deshedding / undercoat removal — €30 / 30 min; Category: Small breeds — Double-coated breeds
+- Price: Express deshedding / undercoat removal — €30 / 30 min; Category: Medium breeds — Double-coated breeds
+- Price: Express deshedding / undercoat removal — €30 / 30 min; Category: Large breeds — Double-coated breeds
+- Price: Express deshedding / undercoat removal — €30 / 30 min; Category: Giant breeds — Double-coated breeds
 
 ### RU — published catalog ###
 
-#### 1. Длинношёрстные породы ####
-- Summary: Комплексный уход для небольших пород с постоянно растущей шерстью.
-- Breeds 1: Австралийский шелковистый терьер, Бивер-йоркширский терьер, Болоньез, Йоркширский терьер, Китайская хохлатая — пуховая разновидность, Континентальный той спаниель, Кроличья такса длинношёрстная, Лхаса апсо, Мальтезе, Пекинес, Русская Цветная болонка, Русский той длинношёрстный, Скай терьер, Такса длинношёрстная
-- Breeds 2: Тибетский спаниель, Тибетский терьер, Хаванез, Цвергтакса длинношёрстная, Чешский терьер, Чихуахуа длинношёрстный, Ши-тцу, Японский хин
-- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Стрижка и оформление, Знакомство щенка с грумингом
-- Price: Комплексный груминг — от 80 €
+#### Маленькие породы — Короткошёрстные породы ####
+- Summary: Купание, уход за короткой шерстью и кожей, гигиенические процедуры.
+- Breeds: Английский той терьер (черно-подпалый), Джек-рассел-терьер — гладкошёрстный, Карликовый пинчер, Китайская хохлатая собака — голая, Кроличья такса короткошёрстная, Португальский поденгу — малый, короткошёрстный, Пражский крысарик, Пти брабансон, Русский той гладкошёрстный, Чихуахуа короткошёрстный, Японский терьер
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Уход за шерстью, Знакомство щенка с грумингом
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 60 €
 - Price: Купание + гигиенический уход — от 60 €
-- Price: Первый груминг щенка — от 50 €
-- Note: Полный груминг включает консультацию, расчёсывание, профессиональное мытьё и сушку, стрижку и оформление шерсти, гигиеническую обработку, уход за ушами и когтями и финальное оформление собаки.
-- Note: Услуга «Купание + гигиенический уход» включает профессиональное мытьё и сушку, расчёсывание, обработку когтей, очистку ушей, гигиеническую стрижку лап, морды, паховой зоны и зоны под хвостом.
 
-#### 2. Пудели, бишоны и пудельные породы ####
-- Summary: Тщательный уход за кудрявой и объёмной шерстью.
-- Breeds 1: Американский водяной спаниель, Бедлингтон терьер, Бишон-фризе, Ирландский мягкошерстный пшеничный терьер, Испанская водяная собака, Йоркипу, Кавапу, Карликовый пудель, Керри-блю-терьер, Кокапу, Котон-де-тулеар, Лаготто романьоло, Лёвхен, Малый пудель
-- Breeds 2: Мальтипу, Небольшие и средние шнудли, Португальская водяная собака, Пучон, Той-пудель, Хавапу, Ши-пу
-- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Кондиционирование, Стрижка и оформление, Знакомство щенка с грумингом
-- Price: Комплексный груминг — от 90 €
-- Price: Купание + гигиенический уход — от 70 €
-- Price: Первый груминг щенка — от 50 €
-- Note: Полный груминг для пуделей и бишонов включает консультацию, расчёсывание, профессиональное мытьё, кондиционирование и сушку, стрижку и оформление шерсти, гигиеническую обработку, уход за ушами и когтями и финальное оформление собаки.
-- Note: Услуга «Купание + гигиенический уход» включает профессиональное мытьё и сушку, расчёсывание, обработку когтей, очистку ушей, гигиеническую стрижку лап, морды, паховой зоны и зоны под хвостом.
+#### Маленькие породы — Жёсткошёрстные породы ####
+- Summary: Уход за жёсткой шерстью с учётом породы; тримминг — отдельная основная услуга.
+- Breeds: Аффенпинчер, Джек-рассел-терьер — жесткошёрстный, Кроличья такса жёсткошёрстная, Норвич-терьер, Норфолк-терьер, Португальский поденгу — малый, жёсткошёрстный, Такса жесткошёрстная
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Стрижка и оформление, Знакомство щенка с грумингом
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 80 €
+- Price: Купание + гигиенический уход — от 60 €
+- Price: Тримминг — 60 € / час
 
-#### 3. Шпицы ####
-- Summary: Работа с плотным подшёрстком, естественным объёмом и формой.
-- Breeds 1: Вольфшпиц, Евразиер, Исландская овчарка, Итальянский вольпино, Каи, Карельская медвежья собака, Кинтамани Бали Дог, Кисю, Корейская собака чиндо, Лапландская оленегонная собака, Немецкий шпиц большой, Немецкий шпиц карликовый, Немецкий шпиц малый, Немецкий шпиц средний
-- Breeds 2: Норботтен шпиц, Норвежский бухунт, Норвежский лундехунд, Норвежский элькхунд серый, Норвежский элькхунд чёрный, Померанский шпиц, Сиба, Сикоку, Тайский бангкеу, Финская лапландская собака, Финский шпиц, Хоккайдо, Шведский вальхунд, Шведский лаппхунд
-- Breeds 3: Японский шпиц
-- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Удаление подшерстка, Уход за шерстью, Стрижка и оформление, Знакомство щенка с грумингом
-- Price: Комплексный груминг — от 90 €
-- Price: Купание + гигиенический уход — по запросу
-- Price: Первый груминг щенка — от 50 €
-- Note: Комплексный груминг для шпицев включает купание, профессиональную сушку, тщательное вычёсывание подшёрстка, уход за шерстью и оформление формы, а также уход за ушами и когтями и гигиенический уход.
-
-#### 4. Спаниели ####
-- Summary: Форма, объём и аккуратное оформление шерсти спаниелей.
-- Breeds 1: Американский кокер-спаниель, Английский кокер-спаниель, Английский сеттер, Английский спрингер-спаниель, Большой мюнстерлендер, Бретонский эпаньоль, Вельш-спрингер-спаниель, Голубой пикардийский эпаньоль, Дрентская куропаточная собака, Ирландский красно-белый сеттер, Ирландский красный сеттер, Кавалер-кинг-чарльз-спаниель, Кинг-чарльз-спаниель, Кламбер-спаниель
-- Breeds 2: Малый мюнстерлендер, Немецкий лангхаар, Немецкий спаниель, Нидерландский койкерхондье, Пикардийский эпаньоль, Понт-одемерский эпаньоль, Русский охотничий спаниель, Сеттер гордон, Стабихун, Суссекс-спаниель, Филд-спаниель, Французский эпаньоль
+#### Маленькие породы — Длинношёрстные породы ####
+- Summary: Уход за постоянно растущей, длинной и полудлинной шерстью с учётом особенностей породы.
+- Breeds: Австралийский шелковистый терьер, Бивер-йоркширский терьер, Болоньез, Йоркширский терьер, Континентальный той спаниель, Мальтезе, Русский той длинношёрстный, Хаванез, Японский хин
 - Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Стрижка и оформление, Знакомство щенка с грумингом
-- Price: Комплексный груминг — от 105 €
-- Price: Купание + гигиенический уход — от 85 €
-- Price: Первый груминг щенка — от 50 €
-- Note: Полный груминг включает консультацию, расчёсывание, профессиональное мытьё и сушку, стрижку и оформление шерсти, гигиеническую обработку, уход за ушами и когтями и финальное оформление собаки.
-- Note: Услуга «Купание + гигиенический уход» включает профессиональное мытьё и сушку, расчёсывание, обработку когтей, очистку ушей, гигиеническую стрижку лап, морды, паховой зоны и зоны под хвостом.
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 80 €
+- Price: Купание + гигиенический уход — от 60 €
 
-#### 5. Жёсткошёрстные породы ####
-- Summary: Стрижка или ручной тримминг с учётом структуры жёсткой шерсти.
-- Breeds 1: Австралийский терьер, Апеннинская гончая — жёсткошёрстная, Арденский бувье, Аффенпинчер, Бельгийская овчарка — лакенуа, Бельгийский гриффон, Богемский жесткошерстный легавый гриффон, Большой вандейский бассет гриффон, Большой вандейский гриффон, Бордер-терьер, Боснийская грубошерстная гончая (барак), Бретонский рыжий бассет, Бретонский рыжий гриффон, Брюссельский гриффон
-- Breeds 2: Вандейский гриффон брике, Вельштерьер, Венгерская выжла ж-ш, Вест-хайленд-уайт-терьер, Голландская овчарка — жёсткошёрстная, Голландский смаусхонд, Голубой гасконский гриффон, Денди динмонт терьер, Джек-рассел-терьер — жесткошёрстный, Дирхаунд, Жесткошерстная легавая гриффон кортальса, Ирландский волкодав, Ирландский глен оф имаал терьер, Ирландский терьер
-- Breeds 3: Истрийская ж-ш гончая, Итальянский жесткошерстный сегуджио, Итальянский спиноне, Керн-терьер, Колумбийская гончая фино — большая, жёсткошёрстная, Колумбийская гончая фино — стандартная, жёсткошёрстная, Кроличья такса жёсткошёрстная, Кромфорлендер — жёсткошёрстный, Лейкленд-терьер, Малый вандейский бассет гриффон, Мареммская гончая — жёсткошёрстная, Миттельшнауцер, Немецкий дратхаар, Немецкий охотничий терьер — жёсткошёрстный
-- Breeds 4: Немецкий штихельхаар, Нивернезский гриффон, Норвич-терьер, Норфолк-терьер, Оттерхаунд, Парсон-рассел-терьер — жесткошёрстный, Поденко ибиценко — жёсткошёрстный, Португальский поденгу — большой, жёсткошёрстный, Португальский поденгу — малый, жёсткошёрстный, Португальский поденгу — средний, жёсткошёрстный, Пудельпойнтер, Пуми, Ризеншнауцер, Силихем-терьер
-- Breeds 5: Словацкая грубошерстная легавая, Такса жесткошёрстная, Фландрский бувье, Фокстерьер жесткошёрстный, Цвергтакса жесткошёрстная, Цвергшнауцер, Шотландский терьер, Штирийский жесткошерстный бракк, Эрдельтерьер
+#### Маленькие породы — Пудельный и кудрявый тип шерсти ####
+- Summary: Стрижка и уход за пудельной и кудрявой шерстью с учётом формы и плотности завитка.
+- Breeds: Йоркипу, Кавапу, Карликовый пудель, Кокапу, Котон-де-тулеар, Лёвхен, Мальтипу, Пучон, Той-пудель, Хавапу, Ши-пу
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Кондиционирование, Стрижка и оформление, Знакомство щенка с грумингом
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 80 €
+- Price: Купание + гигиенический уход — от 60 €
+
+#### Маленькие породы — Породы с двойным типом шерсти ####
+- Summary: Уход за остевой шерстью и подшёрстком с учётом структуры шерсти.
+- Breeds: Бишон-фризе, Итальянский вольпино, Китайская хохлатая — пуховая разновидность, Кроличья такса длинношёрстная, Лхаса апсо, Немецкий шпиц карликовый, Немецкий шпиц малый, Пекинес, Померанский шпиц, Русская Цветная болонка, Цвергтакса длинношёрстная, Чихуахуа длинношёрстный, Ши-тцу
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Кондиционирование, Стрижка и оформление, Знакомство щенка с грумингом, Удаление подшерстка, Уход за шерстью
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 80 €
+- Price: Купание + гигиенический уход — от 60 €
+- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.
+
+#### Средние породы — Короткошёрстные породы ####
+- Summary: Купание, уход за короткой шерстью и кожей, гигиенические процедуры.
+- Breeds 1: Английский бульдог, Андалузский терьер, Артезиано-нормандский бассет, Басенджи, Бостон-терьер, Бразильский терьер, Валенсийский терьер, Вестфальский таксообразный бракк, Голубой гасконский бассет, Датско-шведская фермерская собака, Древер, Ксолоитцкуинтли — миниатюрный, голый, Ксолоитцкуинтли — миниатюрный, покрытый шерстью, Левретка
+- Breeds 2: Манчестерский терьер, Немецкий охотничий терьер — грубый гладкошёрстный, Немецкий пинчер, Парсон-рассел-терьер — гладкошёрстный, Перуанская голая собака — малая, голая, Перуанская голая собака — малая, покрытая шерстью, Такса короткошёрстная, Татранская гончая, Уиппет, Фокстерьер (гладкошерстный), Французский бульдог, Цвергтакса короткошёрстная, Швейцарская коротконогая гончая
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Уход за шерстью, Знакомство щенка с грумингом
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 80 €
+- Price: Купание + гигиенический уход — от 70 €
+
+#### Средние породы — Жёсткошёрстные породы ####
+- Summary: Уход за жёсткой шерстью с учётом породы; тримминг — отдельная основная услуга.
+- Breeds 1: Австралийский терьер, Бельгийский гриффон, Бордер-терьер, Брюссельский гриффон, Вельштерьер, Вест-хайленд-уайт-терьер, Голландский смаусхонд, Керн-терьер, Лейкленд-терьер, Малый вандейский бассет гриффон, Немецкий охотничий терьер — жёсткошёрстный, Парсон-рассел-терьер — жесткошёрстный, Силихем-терьер, Фокстерьер жесткошёрстный
+- Breeds 2: Цвергтакса жесткошёрстная, Цвергшнауцер, Шотландский терьер
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Стрижка и оформление, Знакомство щенка с грумингом
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 90 €
+- Price: Купание + гигиенический уход — от 70 €
+- Price: Тримминг — 60 € / час
+
+#### Средние породы — Длинношёрстные породы ####
+- Summary: Уход за постоянно растущей, длинной и полудлинной шерстью с учётом особенностей породы.
+- Breeds: Бретонский эпаньоль, Кавалер-кинг-чарльз-спаниель, Кинг-чарльз-спаниель, Малый мюнстерлендер, Нидерландский койкерхондье, Чешский терьер
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Стрижка и оформление, Знакомство щенка с грумингом
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 90 €
+- Price: Купание + гигиенический уход — от 70 €
+
+#### Средние породы — Пудельный и кудрявый тип шерсти ####
+- Summary: Стрижка и уход за пудельной и кудрявой шерстью с учётом формы и плотности завитка.
+- Breeds: Бедлингтон терьер, Малый пудель, Небольшие и средние шнудли
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Кондиционирование, Стрижка и оформление, Знакомство щенка с грумингом
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 100 €
+- Price: Купание + гигиенический уход — от 80 €
+
+#### Средние породы — Породы с двойным типом шерсти ####
+- Summary: Уход за остевой шерстью и подшёрстком с учётом структуры шерсти.
+- Breeds 1: Австрийский пинчер, Американский кокер-спаниель, Английский кокер-спаниель, Бассет хаунд, Бигль, Денди динмонт терьер, Исландская овчарка, Кинтамани Бали Дог, Ланкаширский хилер, Лапландская оленегонная собака, Мопс, Немецкий шпиц средний, Норботтен шпиц, Норвежский бухунт
+- Breeds 2: Норвежский лундехунд, Норвежский элькхунд серый, Норвежский элькхунд чёрный, Сиба, Скай терьер, Схипперке, Такса длинношёрстная, Тибетский спаниель, Тибетский терьер, Финская лапландская собака, Шведский вальхунд, Шведский лаппхунд, Японский шпиц
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Уход за шерстью, Знакомство щенка с грумингом, Стрижка и оформление, Удаление подшерстка
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 90 €
+- Price: Купание + гигиенический уход — от 75 €
+- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.
+
+#### Большие породы — Короткошёрстные породы ####
+- Summary: Купание, уход за короткой шерстью и кожей, гигиенические процедуры.
+- Breeds 1: Австрийская черно-подпалая гончая, Американский булли, Американский питбультерьер, Американский стаффордширский терьер, Англо-французская малая гончая, Апеннинская гончая — короткошёрстная, Арьежская гончая, Баварская горная гончая, Бигль харьер, Бультерьер, Бурбонская легавая, Венгерская трансильванская гончая, Ганноверская гончая, Гончая Гамильтона
+- Breeds 2: Гончая д’артуа, Гончая Шиллера, Греческая гончая, Испанская гончая, Истрийская к-ш гончая, Итальянский короткошерстный сегуджио, Колумбийская гончая фино — стандартная, короткошёрстная, Континентальный бульдог, Ксолоитцкуинтли — средний, голый, Ксолоитцкуинтли — средний, покрытый шерстью, Малая голубая гасконская гончая, Малый гасконский сентонжуа, Мареммская гончая — короткошёрстная, Миниатюрный бультерьер
+- Breeds 3: Немецкая гончая, Норвежская гончая дункер, Перуанская голая собака — средняя, голая, Перуанская голая собака — средняя, покрытая шерстью, Польская охотничья собака, Порселен, Португальская легавая, Португальский поденгу — средний, короткошёрстный, Посавская гончая, Сербская гончая, Сербская трехцветная гончая, Словацкая гончая, Смоландская гончая, Стаффордширский бультерьер
+- Breeds 4: Тайваньская собака, Тирольская гончая, Фараонова собака, Финская гончая, Французская легавая пиренейского типа, Хальденская гончая, Ханаанская собака, Харьер, Хигенская гочая, Черногорская горная гончая, Чирнеко дель’этна, Шарпей, Швейцарская гончая, Эстонская гончая
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Уход за шерстью, Знакомство щенка с грумингом
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 100 €
+- Price: Купание + гигиенический уход — от 90 €
+
+#### Большие породы — Жёсткошёрстные породы ####
+- Summary: Уход за жёсткой шерстью с учётом породы; тримминг — отдельная основная услуга.
+- Breeds 1: Апеннинская гончая — жёсткошёрстная, Арденский бувье, Богемский жесткошерстный легавый гриффон, Большой вандейский бассет гриффон, Большой вандейский гриффон, Боснийская грубошерстная гончая (барак), Бретонский рыжий бассет, Бретонский рыжий гриффон, Вандейский гриффон брике, Голубой гасконский гриффон, Ирландский глен оф имаал терьер, Ирландский терьер, Истрийская ж-ш гончая, Итальянский жесткошерстный сегуджио
+- Breeds 2: Колумбийская гончая фино — большая, жёсткошёрстная, Колумбийская гончая фино — стандартная, жёсткошёрстная, Кромфорлендер — жёсткошёрстный, Мареммская гончая — жёсткошёрстная, Миттельшнауцер, Нивернезский гриффон, Поденко ибиценко — жёсткошёрстный, Португальский поденгу — большой, жёсткошёрстный, Португальский поденгу — средний, жёсткошёрстный, Штирийский жесткошерстный бракк
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Стрижка и оформление, Знакомство щенка с грумингом
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 120 €
+- Price: Купание + гигиенический уход — от 90 €
+- Price: Тримминг — 60 € / час
+
+#### Большие породы — Длинношёрстные породы ####
+- Summary: Уход за постоянно растущей, длинной и полудлинной шерстью с учётом особенностей породы.
+- Breeds 1: Английский сеттер, Большой мюнстерлендер, Голубой пикардийский эпаньоль, Дрентская куропаточная собака, Ирландский красно-белый сеттер, Ирландский красный сеттер, Немецкий лангхаар, Пикардийский эпаньоль, Понт-одемерский эпаньоль, Португальская овчарка, Русский охотничий спаниель, Сеттер гордон, Суссекс-спаниель, Филд-спаниель
+- Breeds 2: Французский эпаньоль
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Стрижка и оформление, Знакомство щенка с грумингом, Удаление подшерстка, Уход за шерстью
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 120 €
+- Price: Купание + гигиенический уход — от 90 €
+
+#### Большие породы — Пудельный и кудрявый тип шерсти ####
+- Summary: Стрижка и уход за пудельной и кудрявой шерстью с учётом формы и плотности завитка.
+- Breeds: Ирландский мягкошерстный пшеничный терьер, Испанская водяная собака, Керри-блю-терьер, Португальская водяная собака
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Кондиционирование, Стрижка и оформление, Знакомство щенка с грумингом
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 120 €
+- Price: Купание + гигиенический уход — от 90 €
+
+#### Большие породы — Породы с двойным типом шерсти ####
+- Summary: Уход за остевой шерстью и подшёрстком с учётом структуры шерсти.
+- Breeds 1: Австралийская короткохвостая пастушья собака, Австралийская овчарка, Австралийская пастушья собака, Австралийский келпи, Альпийский таксообразный бракк, Аляскинский маламут, Американский водяной спаниель, Английский спрингер-спаниель, Аппенцеллер зенненхунд, Бергамская овчарка, Богемская овчарка, Бордер-колли, Вельш корги кардиган, Вельш корги пемброк
+- Breeds 2: Вельш-спрингер-спаниель, Вольфшпиц, Голландская овчарка — короткошёрстная, Голландский схапендус, Каи, Карельская медвежья собака, Каталонская овчарка, Кисю, Колли короткошерстный, Корейская собака чиндо, Кромфорлендер — гладкошёрстный, Лаготто романьоло, Миниатюрная американская овчарка, Муди
+- Breeds 3: Немецкий спаниель, Немецкий шпиц большой, Новошотландский ретривер, Пиренейская овчарка длинношерстная, Пиренейская овчарка с гладкой шерстью на морде, Польская низинная овчарка, Пули, Пуми, Сибирский хаски, Сикоку, Стабихун, Тайский бангкеу, Финский шпиц, Фризская водяная собака
+- Breeds 4: Хоккайдо, Хорватская овчарка, Чау-чау, Шелти, Энтлебухер зенненхунд
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Уход за шерстью, Знакомство щенка с грумингом, Удаление подшерстка, Кондиционирование, Стрижка и оформление
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 120 €
+- Price: Купание + гигиенический уход — от 90 €
+- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.
+
+#### Гигантские породы — Короткошёрстные породы ####
+- Summary: Купание, уход за короткой шерстью и кожей, гигиенические процедуры.
+- Breeds 1: Азавак, Американский бульдог, Американский фоксхаунд, Английский пойнтер, Английский фоксхаунд, Аргентинский дог, Арьежская легавая, Билли, Бладхаунд, Боксёр, Большая англо-французская бело-оранжевая гончая, Большая англо-французская бело-чёрная гончая, Большая англо-французская трехцветная гончая, Большая голубая гасконская гончая
+- Breeds 2: Большой гасконский сентонжуа, Бордоский дог, Бразильская гончая, Бразильский бульдог кампейру, Бразильский фила, Бульмастиф, Бургосская легавая, Веймаранер — короткошёрстный, Венгерская выжла, Грейхаунд, Далматин, Доберман, Испанская борзая, Итальянский бракк
+- Breeds 3: Кане-корсо, Колумбийская гончая фино — большая, короткошёрстная, Ксолоитцкуинтли — стандартный, голый, Ксолоитцкуинтли — стандартный, покрытый шерстью, Курцхаар, Майоркский мастиф, Мастиф, Неаполитанский мастиф, Немецкий дог, Овернский бракк, Перуанская голая собака — большая, голая, Перуанская голая собака — большая, покрытая шерстью, Поденко ибиценко — короткошёрстный, Поденко канарио
+- Breeds 4: Польская борзая, Польская гончая, Португальский поденгу — большой, короткошёрстный, Преса канарио, Пуатевин, Родезийский риджбек, Салюки — короткошёрстный, Сан-мигельская пастушья собака, Сен-жерменский бракк, Слюги, Стародатская легавая, Тайский риджбек, Тоса, Уругвайский симаррон
+- Breeds 5: Французская бело-оранжевая гончая, Французская бело-чёрная гончая, Французская легавая гасконского типа, Французская трехцветная гончая, Черно-подпалый кунхаунд
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Уход за шерстью, Знакомство щенка с грумингом
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 120 €
+- Price: Купание + гигиенический уход — от 120 €
+
+#### Гигантские породы — Жёсткошёрстные породы ####
+- Summary: Уход за жёсткой шерстью с учётом породы; тримминг — отдельная основная услуга.
+- Breeds: Бельгийская овчарка — лакенуа, Венгерская выжла ж-ш, Голландская овчарка — жёсткошёрстная, Дирхаунд, Жесткошерстная легавая гриффон кортальса, Ирландский волкодав, Итальянский спиноне, Немецкий дратхаар, Немецкий штихельхаар, Пудельпойнтер, Ризеншнауцер, Словацкая грубошерстная легавая, Фландрский бувье, Эрдельтерьер
 - Search aliases (resolve to the official catalog name): Ирландский вольфхаунд → Ирландский волкодав
 - Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Стрижка и оформление, Знакомство щенка с грумингом
-- Price: Стрижка — от 90 €
-- Price: Купание + гигиенический уход — от 70 €
-- Price: Первый груминг щенка — от 50 €
-- Note: Стрижка и оформление включают консультацию, профессиональное мытьё и сушку, оформление шерсти, гигиеническую обработку, уход за ушами и когтями и финальное оформление собаки.
-- Note: Тримминг выполняется по запросу с учётом структуры и состояния шерсти и доступен в дополнительных услугах.
-- Note: Услуга «Купание + гигиенический уход» включает профессиональное мытьё и сушку, расчёсывание, обработку когтей, очистку ушей, гигиеническую стрижку лап, морды, паховой зоны и зоны под хвостом.
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 150 €
+- Price: Купание + гигиенический уход — от 105 €
+- Price: Тримминг — 60 € / час
 
-#### 6. Короткошёрстные собаки ####
-- Summary: Полный комплекс ухода по размеру короткошёрстной собаки.
-- Breeds 1: Австралийская короткохвостая пастушья собака, Австралийская пастушья собака, Австралийский келпи, Австрийская черно-подпалая гончая, Австрийский пинчер, Азавак, Альпийский таксообразный бракк, Американский булли, Американский бульдог, Американский питбультерьер, Американский стаффордширский терьер, Американский фоксхаунд, Английский бульдог, Английский пойнтер
-- Breeds 2: Английский той терьер (черно-подпалый), Английский фоксхаунд, Англо-французская малая гончая, Андалузский терьер, Апеннинская гончая — короткошёрстная, Аргентинский дог, Артезиано-нормандский бассет, Арьежская гончая, Арьежская легавая, Баварская горная гончая, Басенджи, Бассет хаунд, Бельгийская овчарка — малинуа, Бигль
-- Breeds 3: Бигль харьер, Билли, Бладхаунд, Боксёр, Большая англо-французская бело-оранжевая гончая, Большая англо-французская бело-чёрная гончая, Большая англо-французская трехцветная гончая, Большая голубая гасконская гончая, Большой гасконский сентонжуа, Бордоский дог, Босерон, Бостон-терьер, Бразильская гончая, Бразильский бульдог кампейру
-- Breeds 4: Бразильский терьер, Бразильский фила, Брохольмер, Бульмастиф, Бультерьер, Бурбонская легавая, Бургосская легавая, Валенсийский терьер, Веймаранер — короткошёрстный, Венгерская борзая, Венгерская выжла, Венгерская трансильванская гончая, Вестфальский таксообразный бракк, Ганноверская гончая
-- Breeds 5: Голландская овчарка — короткошёрстная, Голубой гасконский бассет, Гончая Гамильтона, Гончая д’артуа, Гончая Шиллера, Грейхаунд, Греческая гончая, Далматин, Датско-шведская фермерская собака, Джек-рассел-терьер — гладкошёрстный, Доберман, Древер, Испанская борзая, Испанская гончая
-- Breeds 6: Истрийская к-ш гончая, Итальянский бракк, Итальянский короткошерстный сегуджио, Кане-корсо, Карликовый пинчер, Китайская хохлатая собака — голая, Колли короткошерстный, Колумбийская гончая фино — большая, короткошёрстная, Колумбийская гончая фино — стандартная, короткошёрстная, Континентальный бульдог, Кроличья такса короткошёрстная, Кромфорлендер — гладкошёрстный, Ксолоитцкуинтли — миниатюрный, голый, Ксолоитцкуинтли — миниатюрный, покрытый шерстью
-- Breeds 7: Ксолоитцкуинтли — средний, голый, Ксолоитцкуинтли — средний, покрытый шерстью, Ксолоитцкуинтли — стандартный, голый, Ксолоитцкуинтли — стандартный, покрытый шерстью, Курцхаар, Ланкаширский хилер, Левретка, Майоркская овчарка — короткошёрстная, Майоркский мастиф, Малая голубая гасконская гончая, Малый гасконский сентонжуа, Манчестерский терьер, Мареммская гончая — короткошёрстная, Мастиф
-- Breeds 8: Миниатюрный бультерьер, Мопс, Неаполитанский мастиф, Немецкая гончая, Немецкий дог, Немецкий охотничий терьер — грубый гладкошёрстный, Немецкий пинчер, Норвежская гончая дункер, Овернский бракк, Парсон-рассел-терьер — гладкошёрстный, Перуанская голая собака — большая, голая, Перуанская голая собака — большая, покрытая шерстью, Перуанская голая собака — малая, голая, Перуанская голая собака — малая, покрытая шерстью
-- Breeds 9: Перуанская голая собака — средняя, голая, Перуанская голая собака — средняя, покрытая шерстью, Поденко ибиценко — короткошёрстный, Поденко канарио, Польская борзая, Польская гончая, Польская охотничья собака, Порселен, Португальская легавая, Португальский поденгу — большой, короткошёрстный, Португальский поденгу — малый, короткошёрстный, Португальский поденгу — средний, короткошёрстный, Посавская гончая, Пражский крысарик
-- Breeds 10: Преса канарио, Пти брабансон, Пуатевин, Родезийский риджбек, Ротвейлер, Русский той гладкошёрстный, Салюки — короткошёрстный, Сан-мигельская пастушья собака, Сен-жерменский бракк, Сербская гончая, Сербская трехцветная гончая, Словацкая гончая, Слюги, Смоландская гончая
-- Breeds 11: Стародатская легавая, Стаффордширский бультерьер, Тайваньская собака, Тайский риджбек, Такса короткошёрстная, Татранская гончая, Тирольская гончая, Тоса, Уиппет, Уругвайский симаррон, Фараонова собака, Финская гончая, Фокстерьер (гладкошерстный), Французская бело-оранжевая гончая
-- Breeds 12: Французская бело-чёрная гончая, Французская легавая гасконского типа, Французская легавая пиренейского типа, Французская трехцветная гончая, Французский бульдог, Хальденская гончая, Ханаанская собака, Харьер, Хигенская гочая, Цвергтакса короткошёрстная, Черно-подпалый кунхаунд, Черногорская горная гончая, Чирнеко дель’этна, Чихуахуа короткошёрстный
-- Breeds 13: Шарпей, Швейцарская гончая, Швейцарская коротконогая гончая, Эстонская гончая, Японский терьер
-- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Уход за шерстью, Знакомство щенка с грумингом
-- Price: Купание + гигиенический уход — от 60 €
-- Price: Купание + гигиенический уход — от 70 €
-- Price: Купание + гигиенический уход — от 80 €
-- Price: Купание + гигиенический уход — от 100 €
-- Price: Первый груминг щенка — от 50 €
-- Note: Полный комплекс ухода включает купание, профессиональную сушку, вычёсывание, уход за шерстью, уход за глазами и ушами, обработку когтей и гигиенический уход.
-- Note: Размерная группа и ориентировочная стоимость определяются по выбранной породе; точная цена подтверждается после оценки питомца и объёма работы.
+#### Гигантские породы — Длинношёрстные породы ####
+- Summary: Уход за постоянно растущей, длинной и полудлинной шерстью с учётом особенностей породы.
+- Breeds: Афганская борзая, Большой пудель, Веймаранер — длинношёрстный, Ирландский водяной спаниель, Кламбер-спаниель, Крупные австралийские лабрадудли, Крупные бернедудли, Крупные голдендудли, Крупные лабрадудли, Курчавошерстный ретривер, Салюки — с очёсами, Тазы, Французская водяная собака (барбе)
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Удаление подшерстка, Уход за шерстью, Знакомство щенка с грумингом, Стрижка и оформление
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 150 €
+- Price: Купание + гигиенический уход — от 110 €
 
-#### 7. Крупные собаки ####
-- Summary: Комплексный уход для крупных пород с большим объёмом шерсти.
-- Breeds 1: Австралийская овчарка, Акита-ину, Аляскинский маламут, Американская акита, Аппенцеллер зенненхунд, Атласская горная собака (аиди), Афганская борзая, Белая швейцарская овчарка, Бельгийская овчарка — грюнендаль, Бельгийская овчарка — тервюрен, Бергамская овчарка, Бернский зенненхунд, Бобтейл, Богемская овчарка
-- Breeds 2: Большой пудель, Большой швейцарский зенненхунд, Бордер-колли, Бородатый колли, Бриар, Веймаранер — длинношёрстный, Вельш корги кардиган, Вельш корги пемброк, Волчья собака Саарлоса, Восточносибирская лайка, Голден-ретривер, Голландская овчарка — длинношёрстная, Голландский схапендус, Гренландская собака
-- Breeds 3: Западносибирская лайка, Ирландский водяной спаниель, Испанский мастиф, Кавказская овчарка, Канадская эскимосская собака, Кангальская овчарка, Карстская овчарка, Кастро лаборейро, Каталонская овчарка, Колли длинношёрстный, Комондор, Крупные австралийские лабрадудли, Крупные бернедудли, Крупные голдендудли
-- Breeds 4: Крупные лабрадудли, Кувас, Курчавошерстный ретривер, Лабрадор-ретривер, Ландсир, Леонбергер, Майоркская овчарка — длинношёрстная, Македонская овчарка караман, Мареммо-абруцкая овчарка, Миниатюрная американская овчарка, Муди, Немецкая овчарка, Новошотландский ретривер, Ньюфаундленд
-- Breeds 5: Пикардийская овчарка, Пиренейская горная собака, Пиренейская овчарка длинношерстная, Пиренейская овчарка с гладкой шерстью на морде, Пиренейский мастиф, Польская низинная овчарка, Польская подгалянская овчарка, Португальская овчарка, Прямошерстный ретривер, Пули, Рафейро до алентейжо, Румынская буковинская овчарка, Румынская карпатская овчарка, Румынская миоритская овчарка
-- Breeds 6: Румынская черная овчарка, Русская псовая борзая, Русский чёрный терьер, Русско-европейская лайка, Салюки — с очёсами, Самоед, Сенбернар, Сибирский хаски, Словацкий чувач, Среднеазиатская овчарка, Схипперке, Тазы, Тибетский мастиф, Торняк Овчарка Боснии и Герцоговины и Хорватии
-- Breeds 7: Трансмонтанский мастиф, Французская водяная собака (барбе), Фризская водяная собака, Ховаварт, Хорватская овчарка, Чау-чау, Чесапик бей ретривер, Чехословацкая волчья собака, Шелти, Энтлебухер зенненхунд, Эштрельская горная собака, Югославская овчарка шарпланина, Южнорусская овчарка, Якутская лайка
-- Breeds 8: Ямтхунд
+#### Гигантские породы — Породы с двойным типом шерсти ####
+- Summary: Уход за остевой шерстью и подшёрстком с учётом структуры шерсти.
+- Breeds 1: Акита-ину, Американская акита, Атласская горная собака (аиди), Белая швейцарская овчарка, Бельгийская овчарка — грюнендаль, Бельгийская овчарка — малинуа, Бельгийская овчарка — тервюрен, Бернский зенненхунд, Бобтейл, Большой швейцарский зенненхунд, Бородатый колли, Босерон, Бриар, Брохольмер
+- Breeds 2: Венгерская борзая, Волчья собака Саарлоса, Восточносибирская лайка, Голден-ретривер, Голландская овчарка — длинношёрстная, Гренландская собака, Евразиер, Западносибирская лайка, Испанский мастиф, Кавказская овчарка, Канадская эскимосская собака, Кангальская овчарка, Карстская овчарка, Кастро лаборейро
+- Breeds 3: Колли длинношёрстный, Комондор, Кувас, Лабрадор-ретривер, Ландсир, Леонбергер, Майоркская овчарка — длинношёрстная, Майоркская овчарка — короткошёрстная, Македонская овчарка караман, Мареммо-абруцкая овчарка, Немецкая овчарка, Ньюфаундленд, Оттерхаунд, Пикардийская овчарка
+- Breeds 4: Пиренейская горная собака, Пиренейский мастиф, Польская подгалянская овчарка, Прямошерстный ретривер, Рафейро до алентейжо, Ротвейлер, Румынская буковинская овчарка, Румынская карпатская овчарка, Румынская миоритская овчарка, Румынская черная овчарка, Русская псовая борзая, Русский чёрный терьер, Русско-европейская лайка, Самоед
+- Breeds 5: Сенбернар, Словацкий чувач, Среднеазиатская овчарка, Тибетский мастиф, Торняк Овчарка Боснии и Герцоговины и Хорватии, Трансмонтанский мастиф, Ховаварт, Чесапик бей ретривер, Чехословацкая волчья собака, Эштрельская горная собака, Югославская овчарка шарпланина, Южнорусская овчарка, Якутская лайка, Ямтхунд
 - Search aliases (resolve to the official catalog name): Командор → Комондор, Коммандор → Комондор
-- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Удаление подшерстка, Уход за шерстью, Знакомство щенка с грумингом
-- Price: Комплексный уход — от 130 €
-- Price: Купание + гигиенический уход — по запросу
-- Price: Первый груминг щенка — от 50 €
-- Note: В комплекс входят мойка, профессиональная сушка, тщательное вычёсывание, уход за шерстью, уход за глазами и ушами, обработка когтей и гигиенический уход.
+- Included/listed care: Купание, Профессиональная сушка, Гигиенический уход, Уход за глазами, Уход за ушами, Подстригание когтей, Вычёсывание, Удаление подшерстка, Уход за шерстью, Знакомство щенка с грумингом, Стрижка и оформление
+- Price: Знакомство щенка с грумингом — от 50 €
+- Price: Комплексный уход — от 150 €
+- Price: Купание + гигиенический уход — от 120 €
+- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.
 
-#### Кошки — вычёсывание / стрижка ####
-- Summary: Услуга проводится в присутствии владельца.
-- Breeds: Кошки всех пород
+#### Кошки — Короткошёрстные породы кошек ####
+- Summary: Бережный уход за короткой шерстью и кожей с учётом особенностей породы.
+- Breeds 1: Абиссинская кошка, Американский короткошёрстный бобтейл, Американский керл короткошерстный, Американская короткошерстная кошка, Американская жесткошерстная кошка, Австралийский мист, Бенгальская кошка, Бомбейская кошка, Британская короткошерстная кошка, Бурманская кошка, Бурмилла, Шартрез, Чаузи, Корниш-рекс
+- Breeds 2: Девон-рекс, Донской сфинкс, Египетская мау, Европейская короткошерстная кошка, Экзотическая короткошерстная кошка, Немецкий рекс, Гавана браун, Хайлендер короткошерстный, Домашняя короткошерстная кошка, Японский бобтейл короткошерстный, Као-мани, Корат, Курильский бобтейл короткошерстный, Ла-перм короткошерстная
+- Breeds 3: Ликой, Мэнкс, Мэнкс хвостатый, Минует, Минует высоконогий, Манчкин, Оцикет, Ориентальная короткошерстная кошка, Петерболд, Пиксибоб, Русская голубая кошка, Саванна, Шотландская вислоухая кошка, Шотландская прямоухая кошка
+- Breeds 4: Селкирк-рекс короткошерстный, Сиамская кошка, Сингапура, Сноу-шу, Сококе, Сфинкс, Теннессийский рекс, Тайская кошка, Тонкинская кошка, Тойгер
 - Included/listed care: Вычёсывание, Удаление отмершей шерсти и подшёрстка, Стрижка и оформление, Купание, Профессиональная сушка, Уход за глазами, Уход за ушами, Подстригание когтей, Гигиенический уход
 - Price: Вычёсывание / стрижка + гигиенический уход — от 60 €
 - Price: Вычёсывание / стрижка + купание + гигиенический уход — от 90 €
 - Note: В базовую процедуру входит профессиональное вычёсывание, удаление отмершей шерсти и подшёрстка, стрижка, уход за глазами и ушами, обработка когтей и гигиенический уход.
 - Note: При выборе варианта с купанием дополнительно выполняются купание и профессиональная сушка. Услуга проводится в присутствии владельца.
 
-#### Мелкие животные ####
-- Summary: Бережный гигиенический уход для морских свинок и кроликов.
-- Breeds: Морские свинки, Кролики
+#### Кошки — Длинношёрстные породы кошек ####
+- Summary: Тщательный уход за длинной и полудлинной шерстью с распутыванием при необходимости.
+- Breeds 1: Американский длинношёрстный бобтейл, Американский керл длинношерстный, Балинезийская кошка, Бенгальская кошка длинношерстная, Священная бирманская кошка, Британская длинношерстная кошка, Бурмилла длинношерстная, Черубим, Кимрик, Кимрик хвостатый, Хайлендер, Гималайская кошка, Домашняя длинношерстная кошка, Японский бобтейл длинношерстный
+- Breeds 2: Курильский бобтейл длинношерстный, Ла-перм длинношерстная, Мейн-кун, Мейн-кун полидактильный, Минует длинношерстный, Минует высоконогий длинношерстный, Манчкин длинношерстный, Нибелунг, Невская маскарадная кошка, Норвежская лесная кошка, Ориентальная длинношерстная кошка, Персидская кошка, Пиксибоб длинношерстный, Рэгдолл
+- Breeds 3: Шотландская вислоухая длинношерстная кошка, Шотландская прямоухая длинношерстная кошка, Селкирк-рекс длинношерстный, Сибирская кошка, Сомалийская кошка, Турецкая ангора, Турецкий ван
+- Included/listed care: Вычёсывание, Удаление отмершей шерсти и подшёрстка, Стрижка и оформление, Купание, Профессиональная сушка, Уход за глазами, Уход за ушами, Подстригание когтей, Гигиенический уход
+- Price: Вычёсывание / стрижка + гигиенический уход — от 60 €
+- Price: Вычёсывание / стрижка + купание + гигиенический уход — от 90 €
+- Note: В базовую процедуру входит профессиональное вычёсывание, удаление отмершей шерсти и подшёрстка, стрижка, уход за глазами и ушами, обработка когтей и гигиенический уход.
+- Note: При выборе варианта с купанием дополнительно выполняются купание и профессиональная сушка. Услуга проводится в присутствии владельца.
+
+#### Мелкие животные — Морские свинки ####
+- Summary: Бережный уход за морскими свинками с учётом индивидуальных особенностей.
+- Breeds: Американская гладкошёрстная, Английский крестед, Американский крестед, Рекс, Тедди, Перуанская, Шелти, Коронет, Тексель, Альпака
 - Included/listed care: Вычёсывание, Купание, Профессиональная сушка, Уход за глазами, Уход за ушами, Гигиенический уход
 - Price: Морские свинки — гигиенический уход — от 30 €
 - Price: Морские свинки — купание + уход — от 40 €
+- Note: Уход включает удаление отмершей шерсти и подшёрстка, при необходимости подравнивание шерсти, глаза, уши и гигиену.
+- Note: Уход за другими мелкими животными возможен только после предварительного согласования объёма и безопасного способа процедуры.
+
+#### Мелкие животные — Кролики ####
+- Summary: Бережный уход за кроликами с учётом индивидуальных особенностей.
+- Breeds: Нидерландский карликовый, Голландский, Мини-рекс, Рекс, Карликовый баран, Английская ангора, Французская ангора, Львиноголовый, Джерси вули, Американский пушистый баран
+- Included/listed care: Вычёсывание, Купание, Профессиональная сушка, Уход за глазами, Уход за ушами, Гигиенический уход
 - Price: Кролики — вычёсывание + гигиенический уход — от 35 €
 - Note: Для кроликов купание в стандартный уход не входит.
 - Note: Уход включает удаление отмершей шерсти и подшёрстка, при необходимости подравнивание шерсти, глаза, уши и гигиену.
+- Note: Уход за другими мелкими животными возможен только после предварительного согласования объёма и безопасного способа процедуры.
 
-#### Дополнительные услуги ####
+#### Дополнительные услуги — Дополнительные услуги ####
 - Summary: Дополнительный уход, который можно добавить к основной процедуре.
 - Breeds: Собаки, Кошки, Морские свинки, Кролики
 - Included/listed care: Подстригание когтей, Ультразвуковая чистка зубов без наркоза, Восстанавливающая маска, Озонотерапия
-- Price: Подстригание когтей — маленькие породы — 10 €
-- Price: Подстригание когтей — средние породы — 12 €
-- Price: Подстригание когтей — большие породы — 15 €
-- Price: Подстригание когтей — гигантские породы — 18 €
+- Price: Подстригание когтей — 15 €
 - Price: Ультразвуковая чистка зубов без наркоза (до 6 кг) — от 100 €
-- Price: Восстанавливающая / оздоровительная маска — от 20 €
-- Price: Озонотерапия — от 25 €
-- Price: Тримминг — маленькие породы — от 75 €
-- Price: Тримминг — средние породы — от 90 €
-- Price: Тримминг — большие породы — от 110 €
-- Price: Тримминг — гигантские породы — от 140 €
+- Price: Восстанавливающая / SPA-маска — от 20 €
+- Price: Озонотерапия — маленькие породы — от 25 €
+- Price: Уход за ушами как отдельная услуга — 15 €
 - Note: При совмещении ультразвуковой чистки зубов с грумингом — скидка 30%. Процедура не заменяет ветеринарное стоматологическое лечение.
 
-#### Важная информация ####
+#### Важная информация — Важная информация ####
 - Summary: Стоимость указана «от» и зависит от фактического объёма работы.
 - Breeds: Все животные
 
-#### Первый груминг щенка — service details ####
+#### Знакомство щенка с грумингом — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: Бережное знакомство с грумингом для щенков до 4 месяцев.
 - Description: Знакомство с мастером, постепенное привыкание к груминг-столу, расчёске и звуку фена, лёгкий уход. Если щенок спокоен и позволяет проводить процедуры, можем полностью расчесать его, искупать и бережно подсушить. Если он слишком активен или пока не готов, сосредоточимся на знакомстве и будем двигаться в его темпе. Главная задача — помочь щенку почувствовать себя в безопасности, а не выполнить все процедуры за первый визит.
-- Price: Первый груминг щенка — от 50 €; Category: 1. Длинношёрстные породы
-- Price: Первый груминг щенка — от 50 €; Category: 2. Пудели, бишоны и пудельные породы
-- Price: Первый груминг щенка — от 50 €; Category: 3. Шпицы
-- Price: Первый груминг щенка — от 50 €; Category: 4. Спаниели
-- Price: Первый груминг щенка — от 50 €; Category: 5. Жёсткошёрстные породы
-- Price: Первый груминг щенка — от 50 €; Category: 6. Короткошёрстные собаки
-- Price: Первый груминг щенка — от 50 €; Category: 7. Крупные собаки
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Маленькие породы — Короткошёрстные породы
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Маленькие породы — Жёсткошёрстные породы
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Маленькие породы — Длинношёрстные породы
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Маленькие породы — Пудельный и кудрявый тип шерсти
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Маленькие породы — Породы с двойным типом шерсти
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Средние породы — Короткошёрстные породы
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Средние породы — Жёсткошёрстные породы
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Средние породы — Длинношёрстные породы
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Средние породы — Пудельный и кудрявый тип шерсти
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Средние породы — Породы с двойным типом шерсти
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Большие породы — Короткошёрстные породы
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Большие породы — Жёсткошёрстные породы
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Большие породы — Длинношёрстные породы
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Большие породы — Пудельный и кудрявый тип шерсти
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Большие породы — Породы с двойным типом шерсти
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Гигантские породы — Короткошёрстные породы
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Гигантские породы — Жёсткошёрстные породы
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Гигантские породы — Длинношёрстные породы
+- Price: Знакомство щенка с грумингом — от 50 €; Category: Гигантские породы — Породы с двойным типом шерсти
 
-#### Тримминг — маленькие породы — service details ####
+#### Комплексный уход — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Итоговая цена зависит от состояния шерсти, колтунов, поведения и времени работы.
+- Description: Комплексный уход с купанием, сушкой, стрижкой и оформлением шерсти.
+- Price: Комплексный уход — от 60 €; Category: Маленькие породы — Короткошёрстные породы
+- Price: Комплексный уход — от 80 €; Category: Маленькие породы — Жёсткошёрстные породы
+- Price: Комплексный уход — от 80 €; Category: Маленькие породы — Длинношёрстные породы
+- Price: Комплексный уход — от 80 €; Category: Маленькие породы — Пудельный и кудрявый тип шерсти
+- Price: Комплексный уход — от 80 €; Category: Маленькие породы — Породы с двойным типом шерсти
+- Price: Комплексный уход — от 80 €; Category: Средние породы — Короткошёрстные породы
+- Price: Комплексный уход — от 90 €; Category: Средние породы — Жёсткошёрстные породы
+- Price: Комплексный уход — от 90 €; Category: Средние породы — Длинношёрстные породы
+- Price: Комплексный уход — от 100 €; Category: Средние породы — Пудельный и кудрявый тип шерсти
+- Price: Комплексный уход — от 90 €; Category: Средние породы — Породы с двойным типом шерсти
+- Price: Комплексный уход — от 100 €; Category: Большие породы — Короткошёрстные породы
+- Price: Комплексный уход — от 120 €; Category: Большие породы — Жёсткошёрстные породы
+- Price: Комплексный уход — от 120 €; Category: Большие породы — Длинношёрстные породы
+- Price: Комплексный уход — от 120 €; Category: Большие породы — Пудельный и кудрявый тип шерсти
+- Price: Комплексный уход — от 120 €; Category: Большие породы — Породы с двойным типом шерсти
+- Price: Комплексный уход — от 120 €; Category: Гигантские породы — Короткошёрстные породы
+- Price: Комплексный уход — от 150 €; Category: Гигантские породы — Жёсткошёрстные породы
+- Price: Комплексный уход — от 150 €; Category: Гигантские породы — Длинношёрстные породы
+- Price: Комплексный уход — от 150 €; Category: Гигантские породы — Породы с двойным типом шерсти
+
+#### Купание + гигиенический уход — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Поддерживающий уход между полноценными грумингами.
+- Description: Купание, сушка, вычёсывание, уши, глаза, когти и гигиенические зоны.
+- Price: Купание + гигиенический уход — от 60 €; Category: Маленькие породы — Короткошёрстные породы
+- Price: Купание + гигиенический уход — от 60 €; Category: Маленькие породы — Жёсткошёрстные породы
+- Price: Купание + гигиенический уход — от 60 €; Category: Маленькие породы — Длинношёрстные породы
+- Price: Купание + гигиенический уход — от 60 €; Category: Маленькие породы — Пудельный и кудрявый тип шерсти
+- Price: Купание + гигиенический уход — от 60 €; Category: Маленькие породы — Породы с двойным типом шерсти
+- Price: Купание + гигиенический уход — от 70 €; Category: Средние породы — Короткошёрстные породы
+- Price: Купание + гигиенический уход — от 70 €; Category: Средние породы — Жёсткошёрстные породы
+- Price: Купание + гигиенический уход — от 70 €; Category: Средние породы — Длинношёрстные породы
+- Price: Купание + гигиенический уход — от 80 €; Category: Средние породы — Пудельный и кудрявый тип шерсти
+- Price: Купание + гигиенический уход — от 75 €; Category: Средние породы — Породы с двойным типом шерсти
+- Price: Купание + гигиенический уход — от 90 €; Category: Большие породы — Короткошёрстные породы
+- Price: Купание + гигиенический уход — от 90 €; Category: Большие породы — Жёсткошёрстные породы
+- Price: Купание + гигиенический уход — от 90 €; Category: Большие породы — Длинношёрстные породы
+- Price: Купание + гигиенический уход — от 90 €; Category: Большие породы — Пудельный и кудрявый тип шерсти
+- Price: Купание + гигиенический уход — от 90 €; Category: Большие породы — Породы с двойным типом шерсти
+- Price: Купание + гигиенический уход — от 120 €; Category: Гигантские породы — Короткошёрстные породы
+- Price: Купание + гигиенический уход — от 105 €; Category: Гигантские породы — Жёсткошёрстные породы
+- Price: Купание + гигиенический уход — от 110 €; Category: Гигантские породы — Длинношёрстные породы
+- Price: Купание + гигиенический уход — от 120 €; Category: Гигантские породы — Породы с двойным типом шерсти
+
+#### Тримминг — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: Для жестошёрстных пород с учётом структуры шерсти и объёма работы.
 - Description: Породный тримминг вручную или машинкой.
-- Price: Тримминг — маленькие породы — от 75 €; Category: Дополнительные услуги
-- Price: Тримминг — маленькие породы — от 90 €; Category: Дополнительные услуги
-- Price: Тримминг — маленькие породы — от 110 €; Category: Дополнительные услуги
-- Price: Тримминг — маленькие породы — от 140 €; Category: Дополнительные услуги
+- Price: Тримминг — 60 € / час; Category: Маленькие породы — Жёсткошёрстные породы
+- Price: Тримминг — 60 € / час; Category: Средние породы — Жёсткошёрстные породы
+- Price: Тримминг — 60 € / час; Category: Большие породы — Жёсткошёрстные породы
+- Price: Тримминг — 60 € / час; Category: Гигантские породы — Жёсткошёрстные породы
+
+#### Экспресс-линька / удаление подшёрстка — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Заметно снижает линьку, но не отменяет естественный цикл.
+- Description: Профессиональное удаление отмершей шерсти и подшёрстка.
+- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.; Category: Маленькие породы — Породы с двойным типом шерсти
+- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.; Category: Средние породы — Породы с двойным типом шерсти
+- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.; Category: Большие породы — Породы с двойным типом шерсти
+- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.; Category: Гигантские породы — Породы с двойным типом шерсти
+
+#### Уход за ушами как отдельная услуга — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Отдельная услуга с учётом состояния ушей и безопасного объёма ухода.
+- Description: Бережная наружная очистка и осмотр ушей.
+- Price: Уход за ушами как отдельная услуга — 15 €; Category: Дополнительные услуги — Дополнительные услуги
 
 ### UK — published catalog ###
 
-#### 1. Довгошерсті породи ####
-- Summary: Комплексний догляд для малих порід із шерстю, що постійно росте.
-- Breeds 1: Австралійський Шовковистий Тер`єр, Бівер-йоркширський тер’єр, Болоньєз, Гаванез, Йоркширський тер’єр, Китайська чубата — пухова різновидність, Континентальний Той Спанієль (Папійон та Фален), Кроляча такса довгошерста, Лхаса апсо, Мальтезе, Пекінес, Російська кольорова болонка, Російський той довгошерстий, Скай Тер`єр
-- Breeds 2: Такса довгошерста, Тибетський Спанієль, Тибетський Тер`єр, Цвергтакса довгошерста, Чеський Тер`єр, Чихуахуа довгошерстий, Ши-тцу, Японський хін
-- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Стрижка та оформлення, Знайомство цуценяти з грумінгом
-- Price: Комплексний грумінг — від 80 €
+#### Малі породи — Короткошерсті породи ####
+- Summary: Купання, догляд за короткою шерстю та шкірою, гігієнічні процедури.
+- Breeds: Англійський Той Тер`єр, Гладкошерстий чихуахуа, Джек-рассел-тер’єр — гладкошерстий, Карликовий пінчер, Китайський чубатий собака — голий, Кроляча такса короткошерста, Малий брабанський грифон — пті брабансон, Португальський поденгу — малий, короткошерстий, Празький крисарик, Російський той — гладкошерстий, Японський Тер`єр
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Догляд за шерстю, Знайомство цуценяти з грумінгом
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 60 €
 - Price: Купання + гігієнічний догляд — від 60 €
-- Price: Перший грумінг цуценяти — від 50 €
-- Note: Повний грумінг включає консультацію, розчісування, професійне миття та сушіння, стрижку й оформлення шерсті, гігієнічний догляд, догляд за очима, вухами та кігтями і фінальне оформлення собаки.
-- Note: Купання та гігієнічний догляд включають професійне миття й сушіння, розчісування, обробку кігтів, очищення вух, гігієнічну стрижку лап, морди, пахової зони та зони під хвостом.
-- Note: Перший грумінг цуценяти допомагає м’яко познайомити його із салоном і процедурами догляду.
 
-#### 2. Пуделі, бішони та пудельні породи ####
-- Summary: Ретельний догляд за кучерявою та об’ємною шерстю.
-- Breeds 1: Американський Водяний Собака, Бедлінгтон Тер`єр, Бішон-фрізе, Ірландський м’якошерстий пшеничний тер’єр, Іспанський Водяний Собака, Йоркіпу, Кавапу, Карликовий пудель, Керрі-блю-тер’єр, Кокапу, Котон-де-тулеар, Левхен, Малий пудель, Мальтіпу
-- Breeds 2: Невеликі та середні шнудлі, Португальський Водяний Собака, Пучон, Романський Водяний Собака, Той-пудель, Хавапу, Ши-пу
-- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Кондиціонування, Стрижка та оформлення, Знайомство цуценяти з грумінгом
-- Price: Комплексний грумінг — від 90 €
-- Price: Купання + гігієнічний догляд — від 70 €
-- Price: Перший грумінг цуценяти — від 50 €
-- Note: Для пуделів і бішонів повний грумінг включає консультацію, розчісування, професійне миття, кондиціонування та сушіння, стрижку й оформлення шерсті, гігієнічний догляд, догляд за очима, вухами та кігтями і фінальне оформлення собаки.
-- Note: Купання та гігієнічний догляд включають професійне миття й сушіння, розчісування, обробку кігтів, очищення вух, гігієнічну стрижку лап, морди, пахової зони та зони під хвостом.
+#### Малі породи — Жорсткошерсті породи ####
+- Summary: Догляд за жорсткою шерстю з урахуванням породи; тримінг — окрема основна послуга.
+- Breeds: Аффенпінчер, Джек-рассел-тер’єр — жорсткошерстий, Жорсткошерста такса, Кроляча такса жорсткошерста, Норвіч-тер’єр, Норфолк-тер’єр, Португальський поденгу — малий, жорсткошерстий
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Стрижка та оформлення, Знайомство цуценяти з грумінгом
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 80 €
+- Price: Купання + гігієнічний догляд — від 60 €
+- Price: Тримінг — 60 € / год.
 
-#### 3. Шпіци ####
-- Summary: Догляд за щільним підшерстям, природним об’ємом і формою.
-- Breeds 1: Вольфшпіц, Євразієр, Ісландський Пастуший Собака, Італійський Волпіно, Кай, Карельський Ведмежий Собака, Кішу, Корейський Собака Джиндо, Лапландський Оленегонний Собака, Німецький шпіц великий, Німецький шпіц карликовий, Німецький шпіц малий, Німецький шпіц середній, Норботтен Шпіц
-- Breeds 2: Норвезький Бухунд, Норвезький Елкхунд Сірий (Норвезький Лосиний Собака), Норвезький Елкхунд Чорний (Норвезький Лосиний Собака), Норвезький Лундехунд, Померанський шпіц, Собака Кінтамані-Балі, Тайський Собака Бангкаєв, Фінський Лапхунд, Фінський шпіц, Хоккайдо, Шведський Валхунд (Вестгоцький Шпіц), Шведський Лапхунд, Шиба, Шикоку
-- Breeds 3: Японський шпіц
-- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Видалення підшерстя, Догляд за шерстю, Стрижка та оформлення, Знайомство цуценяти з грумінгом
-- Price: Комплексний грумінг — від 90 €
-- Price: Купання + гігієнічний догляд — за запитом
-- Price: Перший грумінг цуценяти — від 50 €
-- Note: Для шпіців комплексний грумінг включає купання, професійне сушіння, ретельне вичісування підшерстя, догляд за шерстю та оформлення форми, а також догляд за очима, вухами, кігтями і гігієнічний догляд.
-
-#### 4. Спанієлі ####
-- Summary: Форма, об’єм та акуратне оформлення шерсті спанієлів.
-- Breeds 1: Американський кокер-спанієль, Англійський кокер-спанієль, Англійський Сетер, Англійський спрингер-спанієль, Блакитний Пікардійський Спанієль, Великий Мюнстерлендерський Лягавий Собака, Вельш-спрингер-спанієль, Дрентський Куріпковий Собака, Епаньоль Бретон - Бретонський Спанієль, Ірландський Сетер, Ірландський Червоно-білий Сетер, Кавалер-кинг-чарльз-спанієль, Кінг-чарльз-спанієль, Кламбер-спанієль
-- Breeds 2: Малий Мюнстерлендерський Лягавий Собака, Нідерландський Спанієль, Німецький Довгошерстий Лягавий Собака - Лангхаар, Німецький Спанієль, Пікардійський Спанієль, Понт-Одемерський Спанієль, Російський мисливський спанієль, Стабіхун - Фризійський Лягавий Собака, Суссекс-спанієль, Філд-спанієль, Французький Спанієль, Шотландський Сетер
+#### Малі породи — Довгошерсті породи ####
+- Summary: Догляд за шерстю, що постійно росте, довгою та напівдовгою шерстю з урахуванням породи.
+- Breeds: Австралійський Шовковистий Тер`єр, Бівер-йоркширський тер’єр, Болоньєз, Гаванез, Йоркширський тер’єр, Континентальний Той Спанієль (Папійон та Фален), Мальтезе, Російський той довгошерстий, Японський хін
 - Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Стрижка та оформлення, Знайомство цуценяти з грумінгом
-- Price: Комплексний грумінг — від 105 €
-- Price: Купання + гігієнічний догляд — від 85 €
-- Price: Перший грумінг цуценяти — від 50 €
-- Note: Повний грумінг включає консультацію, розчісування, професійне миття та сушіння, стрижку й оформлення шерсті, гігієнічний догляд, догляд за очима, вухами та кігтями і фінальне оформлення собаки.
-- Note: Купання та гігієнічний догляд включають професійне миття й сушіння, розчісування, обробку кігтів, очищення вух, гігієнічну стрижку лап, морди, пахової зони та зони під хвостом.
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 80 €
+- Price: Купання + гігієнічний догляд — від 60 €
 
-#### 5. Жорсткошерсті породи ####
-- Summary: Стрижка з урахуванням структури жорсткої шерсті; тримінг як додаткова послуга.
-- Breeds 1: Австралійський тер’єр, Апеннінський гончак — жорсткошерстий, Арденський Був`є, Аффенпінчер, Бельгійська вівчарка — лакенуа, Бельгійський гриффон, Блакитний Гасконський Грифон, Богемський Жорсткошерстий Лягавий Грифон - Чеський Фоусек, Бордер-тер’єр, Боснійський Грубошерстий Гончак - Барак, Брюссельський гриффон, Вандейський Грифон - Бріке, Великий Вандейський Басет Грифон, Великий Вандейський Грифон
-- Breeds 2: Вельштер’єр, Вест-хайленд-вайт-тер’єр, Данді Дінмонт Тер`єр, Джек-рассел-тер’єр — жорсткошерстий, Дірхаунд, Ердельтер’єр, Жорсткошерста такса, Жорсткошерста цвергтакса, Жорсткошерстий Лягавий Грифон Кортальса, Жорсткошерстий фокстер’єр, Ірландський вовкодав, Ірландський Глен-оф-Імааль Тер`єр, Ірландський тер’єр, Істрийський Грубошерстий Гончак
-- Breeds 3: Італійський Грубошерстий Гончак, Італійський Спінон - Італійський Жорсткошерстий Лягавий Собака, Керн-тер’єр, Колумбійський гончак фіно — великий, жорсткошерстий, Колумбійський гончак фіно — стандартний, жорсткошерстий, Кроляча такса жорсткошерста, Кромфорлендер — жорсткошерстий, Лейкленд-тер’єр, Малий Вандейський Басет Грифон, Маремський гончак — жорсткошерстий, Міттельшнауцер, Нівернський Грифон, Нідерландська вівчарка — жорсткошерста, Нідерландський Смаусхонд
-- Breeds 4: Німецький Жорсткошерстий Лягавий Собака - Дратхаар, Німецький мисливський тер’єр — жорсткошерстий, Німецький Штіхельхаар, Норвіч-тер’єр, Норфолк-тер’єр, Оттерхаунд - Видровий Собака, Палевий Бретонський Басет, Палевий Бретонський Грифон, Парсон-рассел-тер’єр — жорсткошерстий, Поденко ібісенко — жорсткошерстий, Португальський поденгу — великий, жорсткошерстий, Португальський поденгу — малий, жорсткошерстий, Португальський поденгу — середній, жорсткошерстий, Пудельпойнтер
-- Breeds 5: Пумі, Різеншнауцер, Сіліхем-тер’єр, Словацький Жорсткошерстий Лягавий Собака, Угорська Жорсткошерста Вижла, Фландрський Був`є, Цвергшнауцер, Шотландський тер’єр, Штирський Грубошерстий Гончак
+#### Малі породи — Пудельний і кучерявий тип шерсті ####
+- Summary: Стрижка й догляд за пудельною та кучерявою шерстю з урахуванням форми й густоти завитка.
+- Breeds: Йоркіпу, Кавапу, Карликовий пудель, Кокапу, Котон-де-тулеар, Левхен, Мальтіпу, Пучон, Той-пудель, Хавапу, Ши-пу
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Кондиціонування, Стрижка та оформлення, Знайомство цуценяти з грумінгом
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 80 €
+- Price: Купання + гігієнічний догляд — від 60 €
+
+#### Малі породи — Породи з подвійним типом шерсті ####
+- Summary: Догляд за остьовою шерстю та підшерстям з урахуванням структури шерсті.
+- Breeds: Бішон-фрізе, Італійський Волпіно, Китайська чубата — пухова різновидність, Кроляча такса довгошерста, Лхаса апсо, Німецький шпіц карликовий, Німецький шпіц малий, Пекінес, Померанський шпіц, Російська кольорова болонка, Цвергтакса довгошерста, Чихуахуа довгошерстий, Ши-тцу
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Кондиціонування, Стрижка та оформлення, Знайомство цуценяти з грумінгом, Видалення підшерстя, Догляд за шерстю
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 80 €
+- Price: Купання + гігієнічний догляд — від 60 €
+- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.
+
+#### Середні породи — Короткошерсті породи ####
+- Summary: Купання, догляд за короткою шерстю та шкірою, гігієнічні процедури.
+- Breeds 1: Англійський бульдог, Андалузький тер'єр, Хересський тер'єр, Артезіансько-Норманський Басет, Басенджі, Блакитний Гасконський Басет, Бостон-тер’єр, Бразильський Тер`єр, Валенсійський тер'єр, Вестфальський Таксоподібний Гончак, Віппет, Гладкошерста такса, Гладкошерста цвергтакса, Датсько-шведський Фермерський Собака, Древер - Шведський Таксоподібний Гончак
+- Breeds 2: Левретка, Малий Швейцарський Гончак, Манчестерський Тер`єр, Мексиканський голий собака — мініатюрний, вкритий шерстю, Мексиканський голий собака — мініатюрний, голий, Німецький мисливський тер’єр — грубий гладкошерстий, Німецький пінчер, Парсон-рассел-тер’єр — гладкошерстий, Перуанський голий собака — малий, вкритий шерстю, Перуанський голий собака — малий, голий, Татранський Гончак, Фокстер`єр гладкошерстий, Французький бульдог
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Догляд за шерстю, Знайомство цуценяти з грумінгом
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 80 €
+- Price: Купання + гігієнічний догляд — від 70 €
+
+#### Середні породи — Жорсткошерсті породи ####
+- Summary: Догляд за жорсткою шерстю з урахуванням породи; тримінг — окрема основна послуга.
+- Breeds 1: Австралійський тер’єр, Бельгійський гриффон, Бордер-тер’єр, Брюссельський гриффон, Вельштер’єр, Вест-хайленд-вайт-тер’єр, Жорсткошерста цвергтакса, Жорсткошерстий фокстер’єр, Керн-тер’єр, Лейкленд-тер’єр, Малий Вандейський Басет Грифон, Нідерландський Смаусхонд, Німецький мисливський тер’єр — жорсткошерстий, Парсон-рассел-тер’єр — жорсткошерстий
+- Breeds 2: Сіліхем-тер’єр, Цвергшнауцер, Шотландський тер’єр
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Стрижка та оформлення, Знайомство цуценяти з грумінгом
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 90 €
+- Price: Купання + гігієнічний догляд — від 70 €
+- Price: Тримінг — 60 € / год.
+
+#### Середні породи — Довгошерсті породи ####
+- Summary: Догляд за шерстю, що постійно росте, довгою та напівдовгою шерстю з урахуванням породи.
+- Breeds: Епаньоль Бретон - Бретонський Спанієль, Кавалер-кинг-чарльз-спанієль, Кінг-чарльз-спанієль, Малий Мюнстерлендерський Лягавий Собака, Нідерландський Спанієль, Чеський Тер`єр
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Стрижка та оформлення, Знайомство цуценяти з грумінгом
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 90 €
+- Price: Купання + гігієнічний догляд — від 70 €
+
+#### Середні породи — Пудельний і кучерявий тип шерсті ####
+- Summary: Стрижка й догляд за пудельною та кучерявою шерстю з урахуванням форми й густоти завитка.
+- Breeds: Бедлінгтон Тер`єр, Малий пудель, Невеликі та середні шнудлі
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Кондиціонування, Стрижка та оформлення, Знайомство цуценяти з грумінгом
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 100 €
+- Price: Купання + гігієнічний догляд — від 80 €
+
+#### Середні породи — Породи з подвійним типом шерсті ####
+- Summary: Догляд за остьовою шерстю та підшерстям з урахуванням структури шерсті.
+- Breeds 1: Австрійський Пінчер, Американський кокер-спанієль, Англійський кокер-спанієль, Басет Хаунд, Бігль, Данді Дінмонт Тер`єр, Ісландський Пастуший Собака, Ланкаширський Хілер, Лапландський Оленегонний Собака, Мопс, Німецький шпіц середній, Норботтен Шпіц, Норвезький Бухунд, Норвезький Елкхунд Сірий (Норвезький Лосиний Собака)
+- Breeds 2: Норвезький Елкхунд Чорний (Норвезький Лосиний Собака), Норвезький Лундехунд, Скай Тер`єр, Собака Кінтамані-Балі, Такса довгошерста, Тибетський Спанієль, Тибетський Тер`єр, Фінський Лапхунд, Шведський Валхунд (Вестгоцький Шпіц), Шведський Лапхунд, Шиба, Шиперке, Японський шпіц
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Догляд за шерстю, Знайомство цуценяти з грумінгом, Стрижка та оформлення, Видалення підшерстя
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 90 €
+- Price: Купання + гігієнічний догляд — від 75 €
+- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.
+
+#### Великі породи — Короткошерсті породи ####
+- Summary: Купання, догляд за короткою шерстю та шкірою, гігієнічні процедури.
+- Breeds 1: Австрійський Чорно-підпалий Гончак, Американський буллі, Американський пітбультер’єр, Американський стаффордширський тер’єр, Апеннінський гончак — короткошерстий, Ар`єзький Гончак, Артуазький Гончак, Баварський Гірський Гончак, Бігль - Харієр, Бультер’єр, Бурбонський Лягавий Собака, Гановерський Гончак, Гончак Гамільтона, Гончак Шиллера
+- Breeds 2: Еллінський Гончак, Естонський Гончак, Іспанський Гончак, Істрийський Короткошерстий Гончак, Італійський Короткошерстий Гончак, Колумбійський гончак фіно — стандартний, короткошерстий, Континентальний бульдог, Малий Блакитний Гасконський Гончак, Малий гасконський сентонжуа, Маремський гончак — короткошерстий, Мексиканський голий собака — середній, вкритий шерстю, Мексиканський голий собака — середній, голий, Мініатюрний бультер’єр, Німецький Брак - Німецький Гончак
+- Breeds 3: Норвезький Гончак, Перуанський голий собака — середній, вкритий шерстю, Перуанський голий собака — середній, голий, Позавський Гончак, Польський Мисливський Собака, Порселен - Порцеляновий Собака, Португальський Лягавий Собака, Португальський поденгу — середній, короткошерстий, Сербський Гончак, Сербський Триколірний Гончак, Середній Англо-Французький Гончак, Словацький Копов - Словацький Гончак, Смоландський Гончак, Стаффордширський бультер’єр
+- Breeds 4: Тайванський Собака, Тирольський Гончак - Тирольський Брак, Угорський Гончак - Трансильванський Гончак, Фараоновий Собака, Фінський Гончак, Французький Лягавий Собака - Піренейський тип, Хальденський Гончак - Хальденстевер, Ханаанський Собака, Харієр, Хігенський Гончак - Хігенхунд, Чирнеко Дель Етна, Чорногорський Гірський Гончак, Шарпей, Швейцарський Гончак
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Догляд за шерстю, Знайомство цуценяти з грумінгом
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 100 €
+- Price: Купання + гігієнічний догляд — від 90 €
+
+#### Великі породи — Жорсткошерсті породи ####
+- Summary: Догляд за жорсткою шерстю з урахуванням породи; тримінг — окрема основна послуга.
+- Breeds 1: Апеннінський гончак — жорсткошерстий, Арденський Був`є, Блакитний Гасконський Грифон, Богемський Жорсткошерстий Лягавий Грифон - Чеський Фоусек, Боснійський Грубошерстий Гончак - Барак, Вандейський Грифон - Бріке, Великий Вандейський Басет Грифон, Великий Вандейський Грифон, Ірландський Глен-оф-Імааль Тер`єр, Ірландський тер’єр, Істрийський Грубошерстий Гончак, Італійський Грубошерстий Гончак, Колумбійський гончак фіно — великий, жорсткошерстий, Колумбійський гончак фіно — стандартний, жорсткошерстий
+- Breeds 2: Кромфорлендер — жорсткошерстий, Маремський гончак — жорсткошерстий, Міттельшнауцер, Нівернський Грифон, Палевий Бретонський Басет, Палевий Бретонський Грифон, Поденко ібісенко — жорсткошерстий, Португальський поденгу — великий, жорсткошерстий, Португальський поденгу — середній, жорсткошерстий, Штирський Грубошерстий Гончак
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Стрижка та оформлення, Знайомство цуценяти з грумінгом
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 120 €
+- Price: Купання + гігієнічний догляд — від 90 €
+- Price: Тримінг — 60 € / год.
+
+#### Великі породи — Довгошерсті породи ####
+- Summary: Догляд за шерстю, що постійно росте, довгою та напівдовгою шерстю з урахуванням породи.
+- Breeds 1: Англійський Сетер, Блакитний Пікардійський Спанієль, Великий Мюнстерлендерський Лягавий Собака, Дрентський Куріпковий Собака, Ірландський Сетер, Ірландський Червоно-білий Сетер, Німецький Довгошерстий Лягавий Собака - Лангхаар, Пікардійський Спанієль, Понт-Одемерський Спанієль, Португальська Вівчарка, Російський мисливський спанієль, Суссекс-спанієль, Філд-спанієль, Французький Спанієль
+- Breeds 2: Шотландський Сетер
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Стрижка та оформлення, Знайомство цуценяти з грумінгом, Видалення підшерстя, Догляд за шерстю
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 120 €
+- Price: Купання + гігієнічний догляд — від 90 €
+
+#### Великі породи — Пудельний і кучерявий тип шерсті ####
+- Summary: Стрижка й догляд за пудельною та кучерявою шерстю з урахуванням форми й густоти завитка.
+- Breeds: Ірландський м’якошерстий пшеничний тер’єр, Іспанський Водяний Собака, Керрі-блю-тер’єр, Португальський Водяний Собака
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Кондиціонування, Стрижка та оформлення, Знайомство цуценяти з грумінгом
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 120 €
+- Price: Купання + гігієнічний догляд — від 90 €
+
+#### Великі породи — Породи з подвійним типом шерсті ####
+- Summary: Догляд за остьовою шерстю та підшерстям з урахуванням структури шерсті.
+- Breeds 1: Австралійська вівчарка, Австралійський Келпі, Австралійський Короткохвостий Пастуший Собака, Австралійський Хілер (Австралійський Скотогонний Собака), Альпійський Таксоподібний Гончак, Аляскинський маламут, Американський Водяний Собака, Англійський спрингер-спанієль, Аппенцеплер Зененхунд, Бергамська вівчарка, Богемська Вівчарка – Чоцький Пес, Бордер-колі, Вельш Коргі Кардиган, Вельш Коргі Пемброк
+- Breeds 2: Вельш-спрингер-спанієль, Вольфшпіц, Ентлебухер Зененхунд, Кай, Карельський Ведмежий Собака, Каталонська Вівчарка, Кішу, Коллі короткошерста, Корейський Собака Джиндо, Кромфорлендер — гладкошерстий, Мініатюрна Американська Вівчарка, Муді, Нідерландська вівчарка — короткошерста, Нідерландський Схапендус
+- Breeds 3: Німецький Спанієль, Німецький шпіц великий, Нова Скотія Дак Толін Ретривер, Піренейська Вівчарка гладкоморда, Піренейська Вівчарка довгошерста, Польська Вівчарка Низинна, Пулі, Пумі, Романський Водяний Собака, Сибірський хаскі, Стабіхун - Фризійський Лягавий Собака, Тайський Собака Бангкаєв, Фінський шпіц, Фризійський Водяний Собака
+- Breeds 4: Хоккайдо, Хорватська Вівчарка, Чау-чау, Шелті, Шикоку
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Видалення підшерстя, Догляд за шерстю, Знайомство цуценяти з грумінгом, Кондиціонування, Стрижка та оформлення
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 120 €
+- Price: Купання + гігієнічний догляд — від 90 €
+- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.
+
+#### Гігантські породи — Короткошерсті породи ####
+- Summary: Купання, догляд за короткою шерстю та шкірою, гігієнічні процедури.
+- Breeds 1: Азавак, Азорський Пастуший Собака (Філа Сан Мігель), Американський бульдог, Американський Фоксхаунд, Англійський пойнтер, Англійський Фоксхаунд, Ар`єзький Лягавий Собака, Аргентинський дог, Біллі, Бладхаунд, Боксер, Бордоський Дог, Бразильський Бульдог Кампейро, Бразильський слідовий собака
+- Breeds 2: Бульмастиф, Бургоський Лягавий Собака, Веймаранер — короткошерстий, Великий Англо-Французький Біло-Рудий Гончак, Великий Англо-Французький Біло-Чорний Гончак, Великий Англо-Французький Триколірний Гончак, Великий Блакитний Гасконський Гончак, Великий гасконський сентонжуа, Грейхаунд, Далматин, Доберман, Іспанський Хорт, Італійський Лягавий Собака, Канарський Мастиф
+- Breeds 3: Кане-корсо, Колумбійський гончак фіно — великий, короткошерстий, Курцхаар, Майорський Мастиф (Ка Де Бо), Мастиф, Мексиканський голий собака — стандартний, вкритий шерстю, Мексиканський голий собака — стандартний, голий, Неаполітанський Мастиф, Німецький дог, Овернський Лягавий Собака, Перуанський голий собака — великий, вкритий шерстю, Перуанський голий собака — великий, голий, Поденко ібісенко — короткошерстий, Поденко канаріо
+- Breeds 4: Польський Гончак, Польський Хорт, Португальський поденгу — великий, короткошерстий, Пуатвен, Родезійський риджбек, Салюкі — короткошерстий, Сен-Жерменський Лягавий Собака, Слюгі - Арабський Хорт, Стародатський Лягавий Собака, Тайський Риджбек, Тоса, Угорська вижла, Уругвайський Сімарон, Філа Бразилейро
+- Breeds 5: Французький Біло-Рудий Гончак, Французький Біло-Чорний Гончак, Французький Лягавий Собака - Гасконський тип, Французький Триколірний Гончак, Чорно-підпалий Кунхунд - Єнотовий Собака
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Догляд за шерстю, Знайомство цуценяти з грумінгом
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 120 €
+- Price: Купання + гігієнічний догляд — від 120 €
+
+#### Гігантські породи — Жорсткошерсті породи ####
+- Summary: Догляд за жорсткою шерстю з урахуванням породи; тримінг — окрема основна послуга.
+- Breeds: Бельгійська вівчарка — лакенуа, Дірхаунд, Ердельтер’єр, Жорсткошерстий Лягавий Грифон Кортальса, Ірландський вовкодав, Італійський Спінон - Італійський Жорсткошерстий Лягавий Собака, Нідерландська вівчарка — жорсткошерста, Німецький Жорсткошерстий Лягавий Собака - Дратхаар, Німецький Штіхельхаар, Пудельпойнтер, Різеншнауцер, Словацький Жорсткошерстий Лягавий Собака, Угорська Жорсткошерста Вижла, Фландрський Був`є
 - Search aliases (resolve to the official catalog name): Ірландський вольфгаунд → Ірландський вовкодав
 - Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Стрижка та оформлення, Знайомство цуценяти з грумінгом
-- Price: Стрижка — від 90 €
-- Price: Купання + гігієнічний догляд — від 70 €
-- Price: Перший грумінг цуценяти — від 50 €
-- Note: Стрижка та оформлення включають консультацію, професійне миття й сушіння, догляд та оформлення шерсті, гігієнічний догляд, догляд за очима, вухами та кігтями.
-- Note: Тримінг виконується за запитом з урахуванням структури та стану шерсті як додаткова послуга.
-- Note: Купання та гігієнічний догляд включають професійне миття й сушіння, розчісування, обробку кігтів, очищення вух, гігієнічну стрижку лап, морди, пахової зони та зони під хвостом.
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 150 €
+- Price: Купання + гігієнічний догляд — від 105 €
+- Price: Тримінг — 60 € / год.
 
-#### 6. Короткошерсті собаки ####
-- Summary: Повний комплекс догляду відповідно до розміру короткошерстого собаки.
-- Breeds 1: Австралійський Келпі, Австралійський Короткохвостий Пастуший Собака, Австралійський Хілер (Австралійський Скотогонний Собака), Австрійський Пінчер, Австрійський Чорно-підпалий Гончак, Азавак, Азорський Пастуший Собака (Філа Сан Мігель), Альпійський Таксоподібний Гончак, Американський буллі, Американський бульдог, Американський пітбультер’єр, Американський стаффордширський тер’єр, Американський Фоксхаунд, Англійський бульдог
-- Breeds 2: Англійський пойнтер, Англійський Той Тер`єр, Англійський Фоксхаунд, Андалузький тер'єр, Хересський тер'єр, Апеннінський гончак — короткошерстий, Ар`єзький Гончак, Ар`єзький Лягавий Собака, Аргентинський дог, Артезіансько-Норманський Басет, Артуазький Гончак, Баварський Гірський Гончак, Басенджі, Басет Хаунд, Бельгійська вівчарка — малінуа
-- Breeds 3: Бігль, Бігль - Харієр, Біллі, Бладхаунд, Блакитний Гасконський Басет, Боксер, Бордоський Дог, Босерон, Бостон-тер’єр, Бразильський Бульдог Кампейро, Бразильський слідовий собака, Бразильський Тер`єр, Брохольмер, Бульмастиф
-- Breeds 4: Бультер’єр, Бурбонський Лягавий Собака, Бургоський Лягавий Собака, Валенсійський тер'єр, Веймаранер — короткошерстий, Великий Англо-Французький Біло-Рудий Гончак, Великий Англо-Французький Біло-Чорний Гончак, Великий Англо-Французький Триколірний Гончак, Великий Блакитний Гасконський Гончак, Великий гасконський сентонжуа, Вестфальський Таксоподібний Гончак, Віппет, Гановерський Гончак, Гладкошерста такса
-- Breeds 5: Гладкошерста цвергтакса, Гладкошерстий чихуахуа, Гончак Гамільтона, Гончак Шиллера, Грейхаунд, Далматин, Датсько-шведський Фермерський Собака, Джек-рассел-тер’єр — гладкошерстий, Доберман, Древер - Шведський Таксоподібний Гончак, Еллінський Гончак, Естонський Гончак, Іспанський Гончак, Іспанський Хорт
-- Breeds 6: Істрийський Короткошерстий Гончак, Італійський Короткошерстий Гончак, Італійський Лягавий Собака, Канарський Мастиф, Кане-корсо, Карликовий пінчер, Китайський чубатий собака — голий, Коллі короткошерста, Колумбійський гончак фіно — великий, короткошерстий, Колумбійський гончак фіно — стандартний, короткошерстий, Континентальний бульдог, Кроляча такса короткошерста, Кромфорлендер — гладкошерстий, Курцхаар
-- Breeds 7: Ланкаширський Хілер, Левретка, Майорська вівчарка — короткошерста, Майорський Мастиф (Ка Де Бо), Малий Блакитний Гасконський Гончак, Малий брабанський грифон — пті брабансон, Малий гасконський сентонжуа, Малий Швейцарський Гончак, Манчестерський Тер`єр, Маремський гончак — короткошерстий, Мастиф, Мексиканський голий собака — мініатюрний, вкритий шерстю, Мексиканський голий собака — мініатюрний, голий, Мексиканський голий собака — середній, вкритий шерстю
-- Breeds 8: Мексиканський голий собака — середній, голий, Мексиканський голий собака — стандартний, вкритий шерстю, Мексиканський голий собака — стандартний, голий, Мініатюрний бультер’єр, Мопс, Неаполітанський Мастиф, Нідерландська вівчарка — короткошерста, Німецький Брак - Німецький Гончак, Німецький дог, Німецький мисливський тер’єр — грубий гладкошерстий, Німецький пінчер, Норвезький Гончак, Овернський Лягавий Собака, Парсон-рассел-тер’єр — гладкошерстий
-- Breeds 9: Перуанський голий собака — великий, вкритий шерстю, Перуанський голий собака — великий, голий, Перуанський голий собака — малий, вкритий шерстю, Перуанський голий собака — малий, голий, Перуанський голий собака — середній, вкритий шерстю, Перуанський голий собака — середній, голий, Поденко ібісенко — короткошерстий, Поденко канаріо, Позавський Гончак, Польський Гончак, Польський Мисливський Собака, Польський Хорт, Порселен - Порцеляновий Собака, Португальський Лягавий Собака
-- Breeds 10: Португальський поденгу — великий, короткошерстий, Португальський поденгу — малий, короткошерстий, Португальський поденгу — середній, короткошерстий, Празький крисарик, Пуатвен, Родезійський риджбек, Російський той — гладкошерстий, Ротвейлер, Салюкі — короткошерстий, Сен-Жерменський Лягавий Собака, Сербський Гончак, Сербський Триколірний Гончак, Середній Англо-Французький Гончак, Словацький Копов - Словацький Гончак
-- Breeds 11: Слюгі - Арабський Хорт, Смоландський Гончак, Стародатський Лягавий Собака, Стаффордширський бультер’єр, Тайванський Собака, Тайський Риджбек, Татранський Гончак, Тирольський Гончак - Тирольський Брак, Тоса, Угорська вижла, Угорський Гончак - Трансильванський Гончак, Угорський Хорт, Уругвайський Сімарон, Фараоновий Собака
-- Breeds 12: Філа Бразилейро, Фінський Гончак, Фокстер`єр гладкошерстий, Французький Біло-Рудий Гончак, Французький Біло-Чорний Гончак, Французький бульдог, Французький Лягавий Собака - Гасконський тип, Французький Лягавий Собака - Піренейський тип, Французький Триколірний Гончак, Хальденський Гончак - Хальденстевер, Ханаанський Собака, Харієр, Хігенський Гончак - Хігенхунд, Чирнеко Дель Етна
-- Breeds 13: Чорно-підпалий Кунхунд - Єнотовий Собака, Чорногорський Гірський Гончак, Шарпей, Швейцарський Гончак, Японський Тер`єр
-- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Догляд за шерстю, Знайомство цуценяти з грумінгом
-- Price: Купання + гігієнічний догляд — від 60 €
-- Price: Купання + гігієнічний догляд — від 70 €
-- Price: Купання + гігієнічний догляд — від 80 €
-- Price: Купання + гігієнічний догляд — від 100 €
-- Price: Перший грумінг цуценяти — від 50 €
-- Note: Повний догляд включає купання, професійне сушіння, гігієнічний догляд, догляд за очима й вухами, обробку кігтів, вичісування та догляд за шерстю.
+#### Гігантські породи — Довгошерсті породи ####
+- Summary: Догляд за шерстю, що постійно росте, довгою та напівдовгою шерстю з урахуванням породи.
+- Breeds: Афганський Хорт, Веймаранер — довгошерстий, Великий пудель, Великі австралійські лабрадудлі, Великі бернедудлі, Великі голдендудлі, Великі лабрадудлі, Ірландський Водяний Спанієль, Казахський Тази, Кламбер-спанієль, Кучерявошерстий Ретривер, Салюкі — з очосами, Французький Водяний Собака
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Видалення підшерстя, Догляд за шерстю, Знайомство цуценяти з грумінгом, Стрижка та оформлення
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 150 €
+- Price: Купання + гігієнічний догляд — від 110 €
 
-#### 7. Великі собаки ####
-- Summary: Комплексний догляд для великих порід із великим об’ємом шерсті.
-- Breeds 1: Абруцько-Мареммська Вівчарка, Австралійська вівчарка, Акіта-іну, Аляскинський маламут, Американська акіта, Аппенцеплер Зененхунд, Атласький Гірський Собака (Аїді), Афганський Хорт, Бельгійська вівчарка — грюнендаль, Бельгійська вівчарка — тервюрен, Бергамська вівчарка, Бернський зенненхунд, Біла Швейцарська Вівчарка, Бобтейл
-- Breeds 2: Богемська Вівчарка – Чоцький Пес, Бордер-колі, Бородата Коллі, Бріар, Буковинська Вівчарка, Веймаранер — довгошерстий, Великий пудель, Великий швейцарський зенненхунд, Великі австралійські лабрадудлі, Великі бернедудлі, Великі голдендудлі, Великі лабрадудлі, Вельш Коргі Кардиган, Вельш Коргі Пемброк
-- Breeds 3: Голден-ретривер, Гренландський Їздовий Собака, Довгошерстий колі, Ентлебухер Зененхунд, Ємтхунд, Західносибірська Лайка, Ірландський Водяний Спанієль, Іспанський Мастиф, Кавказька вівчарка, Казахський Тази, Канадський Ескімоський Собака, Кангал, Као де Кастро Лаборейро, Као де Серра де Естрела (Ештрельская Гірська Вівчарка)
-- Breeds 4: Карстська Вівчарка, Каталонська Вівчарка, Комондор, Кувас, Кучерявошерстий Ретривер, Лабрадор-ретривер, Ландзир, Леонбергер, Майорська вівчарка — довгошерста, Македонська Вівчарка Караман, Мініатюрна Американська Вівчарка, Муді, Нідерландська вівчарка — довгошерста, Нідерландський Схапендус
-- Breeds 5: Німецька вівчарка, Нова Скотія Дак Толін Ретривер, Ньюфаундленд, Південноруська Вівчарка, Пікардійська Вівчарка, Піренейська Вівчарка гладкоморда, Піренейська Вівчарка довгошерста, Піренейський гірський собака, Піренейський Мастиф, Польська Вівчарка Низинна, Польська Вівчарка Підгалянська, Португальська Вівчарка, Прямошерстий Ретривер, Пулі
-- Breeds 6: Рафейру до Алентежу (Португальский Сторожовий Собака), Російський Псовий Хорт, Російський чорний тер’єр, Російсько-європейська Лайка, Румунська Вівчарка Корб, Румунська Карпатська Вівчарка, Румунська Міорітська Вівчарка, Саарлоський Вовчий Собака, Салюкі — з очосами, Самоїд, Сенбернар, Середньоазійська вівчарка, Сибірський хаскі, Словацький Чувач
-- Breeds 7: Східносибірська Лайка, Тибетський Мастиф, Торнжак, Трансмонтанський мастиф, Французький Водяний Собака, Фризійський Водяний Собака, Ховаварт, Хорватська Вівчарка, Чау-чау, Чесапік Бей Ретривер, Чехословацький Вовчак, Шарпланінак (Югославська Вівчарка), Шелті, Шиперке
-- Breeds 8: Якутська Лайка
+#### Гігантські породи — Породи з подвійним типом шерсті ####
+- Summary: Догляд за остьовою шерстю та підшерстям з урахуванням структури шерсті.
+- Breeds 1: Абруцько-Мареммська Вівчарка, Акіта-іну, Американська акіта, Атласький Гірський Собака (Аїді), Бельгійська вівчарка — грюнендаль, Бельгійська вівчарка — малінуа, Бельгійська вівчарка — тервюрен, Бернський зенненхунд, Біла Швейцарська Вівчарка, Бобтейл, Бородата Коллі, Босерон, Бріар, Брохольмер
+- Breeds 2: Буковинська Вівчарка, Великий швейцарський зенненхунд, Голден-ретривер, Гренландський Їздовий Собака, Довгошерстий колі, Євразієр, Ємтхунд, Західносибірська Лайка, Іспанський Мастиф, Кавказька вівчарка, Канадський Ескімоський Собака, Кангал, Као де Кастро Лаборейро, Као де Серра де Естрела (Ештрельская Гірська Вівчарка)
+- Breeds 3: Карстська Вівчарка, Комондор, Кувас, Лабрадор-ретривер, Ландзир, Леонбергер, Майорська вівчарка — довгошерста, Майорська вівчарка — короткошерста, Македонська Вівчарка Караман, Нідерландська вівчарка — довгошерста, Німецька вівчарка, Ньюфаундленд, Оттерхаунд - Видровий Собака, Південноруська Вівчарка
+- Breeds 4: Пікардійська Вівчарка, Піренейський гірський собака, Піренейський Мастиф, Польська Вівчарка Підгалянська, Прямошерстий Ретривер, Рафейру до Алентежу (Португальский Сторожовий Собака), Російський Псовий Хорт, Російський чорний тер’єр, Російсько-європейська Лайка, Ротвейлер, Румунська Вівчарка Корб, Румунська Карпатська Вівчарка, Румунська Міорітська Вівчарка, Саарлоський Вовчий Собака
+- Breeds 5: Самоїд, Сенбернар, Середньоазійська вівчарка, Словацький Чувач, Східносибірська Лайка, Тибетський Мастиф, Торнжак, Трансмонтанський мастиф, Угорський Хорт, Ховаварт, Чесапік Бей Ретривер, Чехословацький Вовчак, Шарпланінак (Югославська Вівчарка), Якутська Лайка
 - Search aliases (resolve to the official catalog name): Командор → Комондор, Коммандор → Комондор
-- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Видалення підшерстя, Догляд за шерстю, Знайомство цуценяти з грумінгом
-- Price: Комплексний догляд — від 130 €
-- Price: Купання + гігієнічний догляд — за запитом
-- Price: Перший грумінг цуценяти — від 50 €
-- Note: Повний догляд включає миття, професійне сушіння, ретельне вичісування, догляд за шерстю, очі, вуха, кігті та гігієнічний догляд.
+- Included/listed care: Купання, Професійне сушіння, Гігієнічний догляд, Догляд за очима, Догляд за вухами, Підрізання кігтів, Вичісування, Видалення підшерстя, Догляд за шерстю, Знайомство цуценяти з грумінгом, Стрижка та оформлення
+- Price: Знайомство цуценяти з грумінгом — від 50 €
+- Price: Комплексний догляд — від 150 €
+- Price: Купання + гігієнічний догляд — від 120 €
+- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.
 
-#### Коти — вичісування / стрижка ####
-- Summary: Послуга проводиться у присутності власника.
-- Breeds: Коти всіх порід
+#### Коти — Короткошерсті породи котів ####
+- Summary: Делікатний догляд за короткою шерстю та шкірою з урахуванням особливостей породи.
+- Breeds 1: Абісинська кішка, Американський короткошерстий бобтейл, Американський керл короткошерстий, Американська короткошерста кішка, Американська жорсткошерста кішка, Австралійський міст, Бенгальська кішка, Бомбейська кішка, Британська короткошерста кішка, Бурманська кішка, Бурміла, Шартрез, Чаузі, Корніш-рекс
+- Breeds 2: Девон-рекс, Донський сфінкс, Єгипетська мау, Європейська короткошерста кішка, Екзотична короткошерста кішка, Німецький рекс, Гавана браун, Хайлендер короткошерстий, Домашня короткошерста кішка, Японський бобтейл короткошерстий, Као-мані, Корат, Курильський бобтейл короткошерстий, Ла-перм короткошерста
+- Breeds 3: Лікой, Менкс, Менкс хвостатий, Мінует, Мінует високоногий, Манчкін, Оцикет, Орієнтальна короткошерста кішка, Петерболд, Піксі-боб, Російська блакитна кішка, Саванна, Шотландська висловуха кішка, Шотландська прямоуха кішка
+- Breeds 4: Селкірк-рекс короткошерстий, Сіамська кішка, Сінгапурська кішка, Сноу-шу, Сококе, Сфінкс, Теннессійський рекс, Тайська кішка, Тонкінська кішка, Тойгер
 - Included/listed care: Вичісування, Видалення відмерлої шерсті й підшерстя, Стрижка та оформлення, Купання, Професійне сушіння, Догляд за очима, Догляд за вухами, Підрізання кігтів, Гігієнічний догляд
 - Price: Вичісування / стрижка + гігієнічний догляд — від 60 €
 - Price: Вичісування / стрижка + купання + гігієнічний догляд — від 90 €
 - Note: Вичісування та стрижка включають професійне вичісування, видалення відмерлої шерсті й підшерстя, стрижку, догляд за очима та вухами, обробку кігтів і гігієнічний догляд.
 - Note: У варіанті з купанням додатково виконуються купання та професійне сушіння. Послуга проводиться у присутності власника.
 
-#### Дрібні тварини ####
-- Summary: Бережний гігієнічний догляд для морських свинок і кроликів.
-- Breeds: Морські свинки, Кролики
+#### Коти — Довгошерсті породи котів ####
+- Summary: Ретельний догляд за довгою та напівдовгою шерстю з розплутуванням за потреби.
+- Breeds 1: Американський довгошерстий бобтейл, Американський керл довгошерстий, Балінезійська кішка, Бенгальська кішка довгошерста, Священна бірманська кішка, Британська довгошерста кішка, Бурміла довгошерста, Черубім, Кімрійська кішка, Кімрійська кішка хвостата, Хайлендер, Гімалайська кішка, Домашня довгошерста кішка, Японський бобтейл довгошерстий
+- Breeds 2: Курильський бобтейл довгошерстий, Ла-перм довгошерста, Мейн-кун, Мейн-кун полідактильний, Мінует довгошерстий, Мінует високоногий довгошерстий, Манчкін довгошерстий, Небелунг, Невська маскарадна кішка, Норвезька лісова кішка, Орієнтальна довгошерста кішка, Перська кішка, Піксі-боб довгошерстий, Регдол
+- Breeds 3: Шотландська висловуха довгошерста кішка, Шотландська прямоуха довгошерста кішка, Селкірк-рекс довгошерстий, Сибірська кішка, Сомалійська кішка, Турецька ангора, Турецький ван
+- Included/listed care: Вичісування, Видалення відмерлої шерсті й підшерстя, Стрижка та оформлення, Купання, Професійне сушіння, Догляд за очима, Догляд за вухами, Підрізання кігтів, Гігієнічний догляд
+- Price: Вичісування / стрижка + гігієнічний догляд — від 60 €
+- Price: Вичісування / стрижка + купання + гігієнічний догляд — від 90 €
+- Note: Вичісування та стрижка включають професійне вичісування, видалення відмерлої шерсті й підшерстя, стрижку, догляд за очима та вухами, обробку кігтів і гігієнічний догляд.
+- Note: У варіанті з купанням додатково виконуються купання та професійне сушіння. Послуга проводиться у присутності власника.
+
+#### Дрібні тварини — Морські свинки ####
+- Summary: Дбайливий догляд за морськими свинками з урахуванням індивідуальних особливостей.
+- Breeds: Американська гладкошерста, Англійський крестед, Американський крестед, Рекс, Тедді, Перуанська, Шелті, Коронет, Тексель, Альпака
 - Included/listed care: Вичісування, Купання, Професійне сушіння, Догляд за очима, Догляд за вухами, Гігієнічний догляд
 - Price: Морські свинки — гігієнічний догляд — від 30 €
 - Price: Морські свинки — купання + догляд — від 40 €
-- Price: Кролики — вичісування + гігієнічний догляд — від 35 €
-- Note: Для морських свинок догляд включає вичісування, видалення відмерлої шерсті, за потреби підрівнювання, а також догляд за очима, вухами та гігієнічний догляд. Купання та догляд пропонуються як окрема послуга; купання не входить до стандартного догляду за кроликами.
 
-#### Додаткові послуги ####
+#### Дрібні тварини — Кролики ####
+- Summary: Дбайливий догляд за кроликами з урахуванням індивідуальних особливостей.
+- Breeds: Нідерландський карликовий, Голландський, Міні-рекс, Рекс, Карликовий баран, Англійська ангора, Французька ангора, Левоголовий, Джерсі вулі, Американський пухнастий баран
+- Included/listed care: Вичісування, Купання, Професійне сушіння, Догляд за очима, Догляд за вухами, Гігієнічний догляд
+- Price: Кролики — вичісування + гігієнічний догляд — від 35 €
+- Note: Для морських свинок догляд включає вичісування, видалення відмерлої шерсті, за потреби підрівнювання, а також догляд за очима, вухами та гігієнічний догляд. Купання та догляд пропонуються як окрема послуга; купання не входить до стандартного догляду за кроликами. Інших дрібних тварин приймаємо лише після попереднього погодження обсягу та безпечного способу процедури.
+
+#### Додаткові послуги — Додаткові послуги ####
 - Summary: Додатковий догляд, який можна додати до основної процедури.
 - Breeds: Собаки, Коти, Морські свинки, Кролики
 - Included/listed care: Підрізання кігтів, Ультразвукове чищення зубів без наркозу, Відновлювальна маска, Озонотерапія
-- Price: Підстригання кігтів — малі породи — 10 €
-- Price: Підстригання кігтів — середні породи — 12 €
-- Price: Підстригання кігтів — великі породи — 15 €
-- Price: Підстригання кігтів — гігантські породи — 18 €
+- Price: Підстригання кігтів — 15 €
 - Price: Ультразвукова чистка зубів до 6 кг — від 100 €
-- Price: Відновлювальна / оздоровча маска — від 20 €
-- Price: Озонотерапія — від 25 €
-- Price: Тримінг — малі породи — від 75 €
-- Price: Тримінг — середні породи — від 90 €
-- Price: Тримінг — великі породи — від 110 €
-- Price: Тримінг — гігантські породи — від 140 €
-- Note: До додаткових послуг належать підрізання кігтів відповідно до розміру, тримінг для жорсткошерстих порід, ультразвукова чистка зубів без наркозу до 6 кг, відновлювальна або оздоровча маска, озонотерапія та перший грумінг цуценяти.
+- Price: Відновлювальна / SPA-маска — від 20 €
+- Price: Озонотерапія — малі породи — від 25 €
+- Price: Догляд за вухами як окрема послуга — 15 €
+- Note: Підстригання кігтів доступне для собак усіх розмірів, котів, морських свинок і кроликів. Ультразвукове чищення зубів без наркозу до 6 кг та озонотерапія пропонуються лише для малих собак. Відновлювальна / SPA-маска й догляд за вухами як окрема послуга підбираються відповідно до потреб тварини.
 - Note: При одночасному бронюванні з грумінгом на ультразвукову чистку зубів діє знижка 30%; процедура не замінює ветеринарне стоматологічне лікування.
 - Note: Перший грумінг цуценяти допомагає м’яко познайомити його із салоном і процедурами догляду.
 
-#### Важлива інформація ####
+#### Важлива інформація — Важлива інформація ####
 - Summary: Вартість вказана «від» і залежить від фактичного обсягу роботи.
 - Breeds: Усі тварини
 
-#### Перший грумінг цуценяти — service details ####
+#### Знайомство цуценяти з грумінгом — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: Дбайливе знайомство з грумінгом для цуценят до 4 місяців.
 - Description: Знайомство з майстром, поступове звикання до грумінг-столу, гребінця та звуку фена, легкий догляд. Якщо цуценя спокійне й дозволяє проводити процедури, можемо повністю розчесати його, викупати та дбайливо підсушити. Якщо воно надто активне або ще не готове, зосередимося на знайомстві й рухатимемося в його темпі. Головне — допомогти цуценяті почуватися в безпеці, а не виконати всі процедури за перший візит.
-- Price: Перший грумінг цуценяти — від 50 €; Category: 1. Довгошерсті породи
-- Price: Перший грумінг цуценяти — від 50 €; Category: 2. Пуделі, бішони та пудельні породи
-- Price: Перший грумінг цуценяти — від 50 €; Category: 3. Шпіци
-- Price: Перший грумінг цуценяти — від 50 €; Category: 4. Спанієлі
-- Price: Перший грумінг цуценяти — від 50 €; Category: 5. Жорсткошерсті породи
-- Price: Перший грумінг цуценяти — від 50 €; Category: 6. Короткошерсті собаки
-- Price: Перший грумінг цуценяти — від 50 €; Category: 7. Великі собаки
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Малі породи — Короткошерсті породи
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Малі породи — Жорсткошерсті породи
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Малі породи — Довгошерсті породи
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Малі породи — Пудельний і кучерявий тип шерсті
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Малі породи — Породи з подвійним типом шерсті
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Середні породи — Короткошерсті породи
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Середні породи — Жорсткошерсті породи
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Середні породи — Довгошерсті породи
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Середні породи — Пудельний і кучерявий тип шерсті
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Середні породи — Породи з подвійним типом шерсті
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Великі породи — Короткошерсті породи
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Великі породи — Жорсткошерсті породи
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Великі породи — Довгошерсті породи
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Великі породи — Пудельний і кучерявий тип шерсті
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Великі породи — Породи з подвійним типом шерсті
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Гігантські породи — Короткошерсті породи
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Гігантські породи — Жорсткошерсті породи
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Гігантські породи — Довгошерсті породи
+- Price: Знайомство цуценяти з грумінгом — від 50 €; Category: Гігантські породи — Породи з подвійним типом шерсті
 
-#### Тримінг — малі породи — service details ####
+#### Комплексний догляд — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Кінцева ціна залежить від стану шерсті, ковтунів, поведінки та часу роботи.
+- Description: Комплексний догляд із купанням, сушінням, стрижкою та оформленням шерсті.
+- Price: Комплексний догляд — від 60 €; Category: Малі породи — Короткошерсті породи
+- Price: Комплексний догляд — від 80 €; Category: Малі породи — Жорсткошерсті породи
+- Price: Комплексний догляд — від 80 €; Category: Малі породи — Довгошерсті породи
+- Price: Комплексний догляд — від 80 €; Category: Малі породи — Пудельний і кучерявий тип шерсті
+- Price: Комплексний догляд — від 80 €; Category: Малі породи — Породи з подвійним типом шерсті
+- Price: Комплексний догляд — від 80 €; Category: Середні породи — Короткошерсті породи
+- Price: Комплексний догляд — від 90 €; Category: Середні породи — Жорсткошерсті породи
+- Price: Комплексний догляд — від 90 €; Category: Середні породи — Довгошерсті породи
+- Price: Комплексний догляд — від 100 €; Category: Середні породи — Пудельний і кучерявий тип шерсті
+- Price: Комплексний догляд — від 90 €; Category: Середні породи — Породи з подвійним типом шерсті
+- Price: Комплексний догляд — від 100 €; Category: Великі породи — Короткошерсті породи
+- Price: Комплексний догляд — від 120 €; Category: Великі породи — Жорсткошерсті породи
+- Price: Комплексний догляд — від 120 €; Category: Великі породи — Довгошерсті породи
+- Price: Комплексний догляд — від 120 €; Category: Великі породи — Пудельний і кучерявий тип шерсті
+- Price: Комплексний догляд — від 120 €; Category: Великі породи — Породи з подвійним типом шерсті
+- Price: Комплексний догляд — від 120 €; Category: Гігантські породи — Короткошерсті породи
+- Price: Комплексний догляд — від 150 €; Category: Гігантські породи — Жорсткошерсті породи
+- Price: Комплексний догляд — від 150 €; Category: Гігантські породи — Довгошерсті породи
+- Price: Комплексний догляд — від 150 €; Category: Гігантські породи — Породи з подвійним типом шерсті
+
+#### Купання + гігієнічний догляд — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Підтримувальний догляд між повноцінними грумінгами.
+- Description: Купання, сушіння, вичісування, вуха, очі, кігті та гігієнічні зони.
+- Price: Купання + гігієнічний догляд — від 60 €; Category: Малі породи — Короткошерсті породи
+- Price: Купання + гігієнічний догляд — від 60 €; Category: Малі породи — Жорсткошерсті породи
+- Price: Купання + гігієнічний догляд — від 60 €; Category: Малі породи — Довгошерсті породи
+- Price: Купання + гігієнічний догляд — від 60 €; Category: Малі породи — Пудельний і кучерявий тип шерсті
+- Price: Купання + гігієнічний догляд — від 60 €; Category: Малі породи — Породи з подвійним типом шерсті
+- Price: Купання + гігієнічний догляд — від 70 €; Category: Середні породи — Короткошерсті породи
+- Price: Купання + гігієнічний догляд — від 70 €; Category: Середні породи — Жорсткошерсті породи
+- Price: Купання + гігієнічний догляд — від 70 €; Category: Середні породи — Довгошерсті породи
+- Price: Купання + гігієнічний догляд — від 80 €; Category: Середні породи — Пудельний і кучерявий тип шерсті
+- Price: Купання + гігієнічний догляд — від 75 €; Category: Середні породи — Породи з подвійним типом шерсті
+- Price: Купання + гігієнічний догляд — від 90 €; Category: Великі породи — Короткошерсті породи
+- Price: Купання + гігієнічний догляд — від 90 €; Category: Великі породи — Жорсткошерсті породи
+- Price: Купання + гігієнічний догляд — від 90 €; Category: Великі породи — Довгошерсті породи
+- Price: Купання + гігієнічний догляд — від 90 €; Category: Великі породи — Пудельний і кучерявий тип шерсті
+- Price: Купання + гігієнічний догляд — від 90 €; Category: Великі породи — Породи з подвійним типом шерсті
+- Price: Купання + гігієнічний догляд — від 120 €; Category: Гігантські породи — Короткошерсті породи
+- Price: Купання + гігієнічний догляд — від 105 €; Category: Гігантські породи — Жорсткошерсті породи
+- Price: Купання + гігієнічний догляд — від 110 €; Category: Гігантські породи — Довгошерсті породи
+- Price: Купання + гігієнічний догляд — від 120 €; Category: Гігантські породи — Породи з подвійним типом шерсті
+
+#### Тримінг — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: Для жорсткошерстих порід з урахуванням структури шерсті та обсягу роботи.
 - Description: Породний триммінг вручну або машинкою.
-- Price: Тримінг — малі породи — від 75 €; Category: Додаткові послуги
-- Price: Тримінг — малі породи — від 90 €; Category: Додаткові послуги
-- Price: Тримінг — малі породи — від 110 €; Category: Додаткові послуги
-- Price: Тримінг — малі породи — від 140 €; Category: Додаткові послуги
+- Price: Тримінг — 60 € / год.; Category: Малі породи — Жорсткошерсті породи
+- Price: Тримінг — 60 € / год.; Category: Середні породи — Жорсткошерсті породи
+- Price: Тримінг — 60 € / год.; Category: Великі породи — Жорсткошерсті породи
+- Price: Тримінг — 60 € / год.; Category: Гігантські породи — Жорсткошерсті породи
+
+#### Експрес-линька / видалення підшерстка — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Помітно зменшує линьку, але не скасовує природний цикл.
+- Description: Професійне видалення відмерлої шерсті та підшерстка.
+- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.; Category: Малі породи — Породи з подвійним типом шерсті
+- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.; Category: Середні породи — Породи з подвійним типом шерсті
+- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.; Category: Великі породи — Породи з подвійним типом шерсті
+- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.; Category: Гігантські породи — Породи з подвійним типом шерсті
 
 ## 7. Booking process and payment ##
 
@@ -1119,15 +1776,13 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Wir betreuen Hunde, Katzen, Kaninchen und andere Kleintiere. Wir arbeiten nach Terminvereinbarung.
 - Unsere Leistungen
 - Maßgeschneiderte Pflege für Fell, Haut und Wohlbefinden: vom präzisen Haarschnitt bis zur sanften Komplettpflege mit ruhiger, persönlicher Betreuung.
-- Hundepflege
-- Modell-, Hygiene- und Kreativschnitte für alle Rassen mit ruhiger, individueller Betreuung.
-- ab 35 €
+- Komplettpflege für Hunde
+- Rasse- und fellgerechte Komplettpflege mit Baden, Hygiene und professionellem Finish.
+- ab 60 €
 - Katzenpflege
 - Sanfter Umgang, sichere Techniken und besonders angenehme Pflege für empfindliche Katzen.
-- ab 45 €
-- Baden & Pflege
+- Baden + Hygienepflege
 - Professionelle Kosmetik, schonende Trocknung, Bürsten, Ohrenreinigung und feine Finish-Arbeit.
-- ab 25 €
 - Zahnreinigung
 - Ultraschallreinigung, Zahnsteinentfernung und frischer Atem für ein gepflegtes Wohlgefühl.
 - ab 100 €
@@ -1404,15 +2059,13 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - We accept dogs, cats, rabbits and other small pets. We work by appointment.
 - Our services
 - Tailored grooming for coat, skin and comfort: from precise haircuts to refined full-service care with a calm, premium finish.
-- Dog grooming
-- Breed-standard, hygienic and creative cuts for all breeds with a polished premium finish.
-- from € 35
+- Full dog grooming
+- Breed- and coat-specific full care with bathing, hygiene care and a professional finish.
+- from € 60
 - Cat grooming
 - Careful handling, safe techniques and comfort-first care for sensitive cats.
-- from € 45
-- Bathing & care
+- Bath + hygiene care
 - Professional cosmetics, drying, brushing, ear cleaning and a refined finishing touch.
-- from € 25
 - Teeth cleaning
 - Ultrasonic cleaning, tartar removal and fresh breath for a truly groomed look.
 - from € 100
@@ -1689,15 +2342,13 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Принимаем собак, кошек, кроликов и других мелких домашних животных. Работаем по предварительной записи.
 - Наши услуги
 - Подбираем уход под породу, тип шерсти и чувствительность питомца: от точной стрижки до комплексного премиального сервиса с заботой о комфорте.
-- Стрижка собак
-- Модельные, гигиенические и креативные стрижки для любых пород с аккуратным премиальным финишем.
-- от 35 €
-- Стрижка кошек
+- Комплексный уход за собаками
+- Комплексная процедура с купанием, гигиеной и профессиональным уходом с учётом породы и типа шерсти.
+- от 60 €
+- Уход за кошками
 - Бережное отношение, безопасные техники и максимальный комфорт для кошки в спокойной обстановке.
-- от 45 €
-- Купание и уход
+- Купание + гигиенический уход
 - Профессиональная косметика, сушка, расчёсывание, чистка ушей и аккуратный финальный штрих.
-- от 25 €
 - Чистка зубов
 - Ультразвуковая чистка, удаление зубного камня и свежее дыхание для действительно ухоженного вида.
 - от 100 €
@@ -1974,15 +2625,13 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Приймаємо собак, котів, кроликів та інших дрібних домашніх тварин. Працюємо за попереднім записом.
 - Наші послуги
 - Підбираємо догляд під породу, тип шерсті та чутливість улюбленця: від точної стрижки до комплексного преміального сервісу з турботою про комфорт.
-- Стрижка собак
-- Модельні, гігієнічні та креативні стрижки для будь-яких порід з акуратним преміальним фінішем.
-- від 35 €
-- Стрижка котів
+- Комплексний догляд за собаками
+- Комплексна процедура з купанням, гігієною та професійним доглядом з урахуванням породи й типу шерсті.
+- від 60 €
+- Догляд за котами
 - Дбайливе ставлення, безпечні техніки та максимальний комфорт для кота у спокійній атмосфері.
-- від 45 €
-- Купання та догляд
+- Купання + гігієнічний догляд
 - Професійна косметика, сушіння, розчісування, чищення вух і акуратний фінальний штрих.
-- від 25 €
 - Чищення зубів
 - Ультразвукове чищення, видалення зубного каменю та свіже дихання для справді доглянутого вигляду.
 - від 100 €

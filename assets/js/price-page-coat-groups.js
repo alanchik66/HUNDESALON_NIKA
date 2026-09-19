@@ -6,58 +6,70 @@
 
   const sourceIds = new Set(Object.values(global.FciDogBreedIntegration.categories));
   const sizes = ['small', 'medium', 'large', 'giant'];
-  const coats = ['short', 'wire', 'long', 'double'];
+  const coats = ['short', 'wire', 'long', 'curly', 'double'];
   const copy = {
     ru: {
       long: 'Длинношёрстные породы',
+      curly: 'Пудельный и кудрявый тип шерсти',
       short: 'Короткошёрстные породы',
       wire: 'Жёсткошёрстные породы',
       double: 'Породы с двойным типом шерсти',
-      longSummary: 'Уход за длинной и кудрявой шерстью с учётом особенностей породы.',
+      longSummary: 'Уход за постоянно растущей, длинной и полудлинной шерстью с учётом особенностей породы.',
+      curlySummary: 'Стрижка и уход за пудельной и кудрявой шерстью с учётом формы и плотности завитка.',
       shortSummary: 'Купание, уход за короткой шерстью и кожей, гигиенические процедуры.',
-      wireSummary: 'Уход за жёсткой шерстью с учётом породы; тримминг доступен по запросу.',
+      wireSummary: 'Уход за жёсткой шерстью с учётом породы; тримминг — отдельная основная услуга.',
       doubleSummary: 'Уход за остевой шерстью и подшёрстком с учётом структуры шерсти.',
       care: 'Комплексный уход',
       bath: 'Купание + гигиенический уход',
+      deshedding: 'Экспресс-линька / удаление подшёрстка',
       handstripping: 'Тримминг',
     },
     de: {
       long: 'Langhaarige Rassen',
+      curly: 'Pudel- und Lockenfell',
       short: 'Kurzhaarige Rassen',
       wire: 'Rauhaarige Rassen',
       double: 'Rassen mit Doppelfell',
-      longSummary: 'Pflege von langem und lockigem Fell passend zur jeweiligen Rasse.',
+      longSummary: 'Pflege von ständig wachsendem, langem und halblangem Fell passend zur Rasse.',
+      curlySummary: 'Schnitt und Pflege von Pudel- und Lockenfell mit Blick auf Form und Lockendichte.',
       shortSummary: 'Baden, Pflege von kurzem Fell und Haut sowie Hygienepflege.',
-      wireSummary: 'Rassegerechte Pflege von rauem Fell; Trimmen ist auf Anfrage verfügbar.',
+      wireSummary: 'Rassegerechte Pflege von rauem Fell; Trimmen ist eine eigene Hauptleistung.',
       doubleSummary: 'Pflege von Deckhaar und Unterwolle passend zur Fellstruktur.',
       care: 'Komplettpflege',
       bath: 'Baden + Hygienepflege',
+      deshedding: 'Express-Entwollung / Unterwolle entfernen',
       handstripping: 'Trimmen',
     },
     en: {
       long: 'Long-haired breeds',
+      curly: 'Poodle and curly coats',
       short: 'Short-haired breeds',
       wire: 'Wire-haired breeds',
       double: 'Double-coated breeds',
-      longSummary: 'Care for long and curly coats, tailored to the breed.',
+      longSummary: 'Care for continuously growing, long and semi-long coats, tailored to the breed.',
+      curlySummary: 'Clipping and care for poodle and curly coats, tailored to shape and curl density.',
       shortSummary: 'Bathing, short coat and skin care, and hygiene care.',
-      wireSummary: 'Breed-appropriate care for wire coats; hand stripping is available on request.',
+      wireSummary: 'Breed-appropriate care for wire coats; trimming is a dedicated primary service.',
       doubleSummary: 'Care for the outer coat and undercoat, tailored to the coat structure.',
       care: 'Full care',
       bath: 'Bath + hygiene care',
-      handstripping: 'Hand stripping',
+      deshedding: 'Express deshedding / undercoat removal',
+      handstripping: 'Trimming',
     },
     uk: {
       long: 'Довгошерсті породи',
+      curly: 'Пудельний і кучерявий тип шерсті',
       short: 'Короткошерсті породи',
       wire: 'Жорсткошерсті породи',
       double: 'Породи з подвійним типом шерсті',
-      longSummary: 'Догляд за довгою та кучерявою шерстю з урахуванням породи.',
+      longSummary: 'Догляд за шерстю, що постійно росте, довгою та напівдовгою шерстю з урахуванням породи.',
+      curlySummary: 'Стрижка й догляд за пудельною та кучерявою шерстю з урахуванням форми й густоти завитка.',
       shortSummary: 'Купання, догляд за короткою шерстю та шкірою, гігієнічні процедури.',
-      wireSummary: 'Догляд за жорсткою шерстю з урахуванням породи; тримінг доступний за запитом.',
+      wireSummary: 'Догляд за жорсткою шерстю з урахуванням породи; тримінг — окрема основна послуга.',
       doubleSummary: 'Догляд за остьовою шерстю та підшерстям з урахуванням структури шерсті.',
       care: 'Комплексний догляд',
       bath: 'Купання + гігієнічний догляд',
+      deshedding: 'Експрес-линька / видалення підшерстка',
       handstripping: 'Тримінг',
     },
   };
@@ -102,7 +114,7 @@
       coat = smallDoubleFci.has(fci) || smallDoubleBase.has(base) ? 'double' : 'long';
       size = mediumSmallCoatFci.has(fci) ? 'medium' : 'small';
     } else if (category.id === 'ru-poodles-bichons') {
-      coat = base === 4 || poodleDoubleFci.has(fci) ? 'double' : 'long';
+      coat = base === 4 || poodleDoubleFci.has(fci) ? 'double' : 'curly';
       size = largePoodleFci.has(fci) || largePoodleBase.has(base) ? 'large'
         : fci || [2, 3, 14].includes(base) ? 'medium' : 'small';
     } else if (category.id === 'ru-spitz') {
@@ -128,7 +140,9 @@
       const priceIndex = category.breedServiceIndexes[index];
       size = sizes[priceIndex] || 'giant';
     } else if (category.id === 'ru-large-dogs') {
-      coat = base >= 28 || largeSingleFci.has(fci) ? 'long' : 'double';
+      coat = /(?:poodle|doodle)/iu.test(key)
+        ? 'curly'
+        : base >= 28 || largeSingleFci.has(fci) ? 'long' : 'double';
       size = fci === 83 ? 'medium'
         : [3, 4, 5, 7, 8, 10, 25].includes(base) || mediumLargeFci.has(fci) ? 'large' : 'giant';
     }
@@ -144,24 +158,59 @@
     });
   }
 
-  const serviceOrder = ['puppy-intro', 'full-care', 'bath-hygiene', 'handstripping'];
+  const serviceOrder = ['puppy-intro', 'full-groom', 'hygiene', 'trimming', 'deshedding'];
   const priceMatrix = {
-    small: { puppy: 50, short: [60, 50], wire: [80, 60, 75], long: [80, 60], double: [80, 60] },
-    medium: { puppy: 55, short: [70, 60], wire: [90, 70, 90], long: [90, 70], double: [90, 75] },
-    large: { puppy: 60, short: [90, 75], wire: [110, 85, 110], long: [105, 85], double: [110, 90] },
-    giant: { puppy: 70, short: [110, 95], wire: [140, 105, 140], long: [130, 110], double: [140, 120] },
+    small: {
+      puppy: 50,
+      short: { full: 60, bath: 60 },
+      wire: { full: 80, bath: 60, handstripping: 60 },
+      long: { full: 80, bath: 60 },
+      curly: { full: 80, bath: 60 },
+      double: { full: 80, bath: 60, deshedding: { amount: 30, minutes: 30 } },
+    },
+    medium: {
+      puppy: 50,
+      short: { full: 80, bath: 70 },
+      wire: { full: 90, bath: 70, handstripping: 60 },
+      long: { full: 90, bath: 70 },
+      curly: { full: 100, bath: 80 },
+      double: { full: 90, bath: 75, deshedding: { amount: 30, minutes: 30 } },
+    },
+    large: {
+      puppy: 50,
+      short: { full: 100, bath: 90 },
+      wire: { full: 120, bath: 90, handstripping: 60 },
+      long: { full: 120, bath: 90 },
+      curly: { full: 120, bath: 90 },
+      double: { full: 120, bath: 90, deshedding: { amount: 30, minutes: 30 } },
+    },
+    giant: {
+      puppy: 50,
+      short: { full: 120, bath: 120 },
+      wire: { full: 150, bath: 105, handstripping: 60 },
+      long: { full: 150, bath: 110 },
+      curly: { full: 150, bath: 110 },
+      double: { full: 150, bath: 120, deshedding: { amount: 30, minutes: 30 } },
+    },
   };
   const priceText = (lang, value) => ({
     [lang]: lang === 'en' ? `from €${value}` : lang === 'uk' ? `від ${value} €` : lang === 'de' ? `ab ${value} €` : `от ${value} €`,
   });
-  const auditedRows = (source, membership, lang, text) => {
+  const timedPriceText = (lang, { amount, minutes }) => ({
+    [lang]: lang === 'en' ? `€${amount} / ${minutes} min` : lang === 'uk' ? `${amount} € / ${minutes} хв.` : lang === 'de' ? `${amount} € / ${minutes} Min.` : `${amount} € / ${minutes} мин.`,
+  });
+  const hourlyPriceText = (lang, amount) => ({
+    [lang]: lang === 'en' ? `€${amount} / hour` : lang === 'uk' ? `${amount} € / год.` : lang === 'de' ? `${amount} € / Std.` : `${amount} € / час`,
+  });
+  const auditedRows = (membership, lang, text) => {
     const tariff = priceMatrix[membership.size];
-    const [fullPrice, bathPrice] = tariff[membership.coat];
-    const puppy = source.priceRows.find(row => row.key === 'puppy-intro');
+    const coatTariff = tariff[membership.coat];
     return [
-      puppy && { ...puppy, key: 'puppy-intro', price: priceText(lang, tariff.puppy) },
-      { key: 'full-care', label: { [lang]: text.care }, price: priceText(lang, fullPrice) },
-      { key: 'bath-hygiene', label: { [lang]: text.bath }, price: priceText(lang, bathPrice) },
+      { key: 'full-groom', label: { [lang]: text.care }, price: priceText(lang, coatTariff.full) },
+      { key: 'hygiene', label: { [lang]: text.bath }, price: priceText(lang, coatTariff.bath) },
+      coatTariff.deshedding && { key: 'deshedding', label: { [lang]: text.deshedding }, price: timedPriceText(lang, coatTariff.deshedding) },
+      coatTariff.handstripping && { key: 'trimming', label: { [lang]: text.handstripping }, price: hourlyPriceText(lang, coatTariff.handstripping) },
+      { key: 'puppy-intro', label: { [lang]: catalog.serviceLabels.puppyIntro[lang] }, price: priceText(lang, tariff.puppy) },
     ].filter(Boolean);
   };
 
@@ -174,7 +223,7 @@
         const breedKey = source.breedKeys[index];
         const membership = memberships.get(breedKey);
         if (!membership) throw new Error('Missing breed classification: ' + breedKey);
-        const rows = auditedRows(source, membership, lang, text);
+        const rows = auditedRows(membership, lang, text);
         buckets.get(membership.size + ':' + membership.coat).push({
           name, breedKey, fci: source.breedFciNumbers[index], rows, notes: source.notes,
           services: source.services, sourceCategoryId: source.id,

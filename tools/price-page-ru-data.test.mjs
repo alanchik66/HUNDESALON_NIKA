@@ -21,7 +21,7 @@ const expectedCategoryIds = [
   'ru-additional-services',
   'ru-important-information',
 ];
-const expectedCatalogHash = '5ad984a1104a1b626c8c9b13ae72a16b376507a3c005e1f5c2fa4d85af46cc7e';
+const expectedCatalogHash = '7d67b9fd1ba34645a96d71e733fe5e03165f121780559571b5dbcce042e5f339';
 
 const loadRussianCatalog = () => {
   const context = vm.createContext({ window: {} });
@@ -49,20 +49,22 @@ test('Russian price catalog keeps its public output stable', () => {
 });
 
 const nailTrimLabels = {
-  ru: ['Подстригание когтей — маленькие породы', 'Подстригание когтей — средние породы', 'Подстригание когтей — большие породы', 'Подстригание когтей — гигантские породы'],
-  de: ['Krallenschneiden — kleine Rassen', 'Krallenschneiden — mittelgroße Rassen', 'Krallenschneiden — große Rassen', 'Krallenschneiden — sehr große Rassen'],
-  en: ['Nail trimming — small breeds', 'Nail trimming — medium breeds', 'Nail trimming — large breeds', 'Nail trimming — giant breeds'],
-  uk: ['Підстригання кігтів — малі породи', 'Підстригання кігтів — середні породи', 'Підстригання кігтів — великі породи', 'Підстригання кігтів — гігантські породи'],
+  ru: 'Подстригание когтей',
+  de: 'Krallenschneiden',
+  en: 'Nail trimming',
+  uk: 'Підстригання кігтів',
 };
 
-test('nail trimming labels use dog breed sizes in every locale', () => {
+test('nail trimming has one transparent 15 euro price in every locale', () => {
   for (const lang of ['ru', 'de', 'en', 'uk']) {
     const context = vm.createContext({ window: {} });
     for (const relativePath of [...sourceFiles, 'assets/js/price-page-locales.js', 'assets/js/price-booking.js']) {
       vm.runInContext(fs.readFileSync(path.join(root, relativePath), 'utf8'), context, { filename: relativePath });
     }
     const category = context.window.PriceBookingCatalog.build(lang).getCategory('ru-additional-services');
-    assert.deepEqual(Array.from(category.services.slice(0, 4), service => service.label), nailTrimLabels[lang]);
+    const nailTrim = category.services[0];
+    assert.equal(nailTrim.label, nailTrimLabels[lang]);
+    assert.equal(Number(nailTrim.price.match(/\d+/u)?.[0]), 15);
   }
 });
 

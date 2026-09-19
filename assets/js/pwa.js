@@ -21,7 +21,7 @@
   window.addEventListener(
     'load',
     () => {
-      navigator.serviceWorker.register('/sw.js').catch(error => {
+      navigator.serviceWorker.register('/sp-push-worker-fb.js', { updateViaCache: 'none' }).catch(error => {
         console.warn('[pwa] Service worker registration failed:', error?.message || error);
       });
     },

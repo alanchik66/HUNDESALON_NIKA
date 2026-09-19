@@ -38,7 +38,7 @@
     'ru-poodles-bichons': { de: 'Sorgfältige Pflege für lockiges und voluminöses Fell.', en: 'Detailed care for curly and voluminous coats.', uk: 'Ретельний догляд за кучерявою та об’ємною шерстю.' },
     'ru-spitz': { de: 'Pflege von dichtem Unterfell, natürlichem Volumen und Form.', en: 'Care for dense undercoat, natural volume and shape.', uk: 'Догляд за щільним підшерстям, природним об’ємом і формою.' },
     'ru-spaniels': { de: 'Form, Volumen und sauberes Finish für Spaniels.', en: 'Shape, volume and a neat finish for spaniels.', uk: 'Форма, об’єм та акуратне оформлення шерсті спанієлів.' },
-    'ru-wire-coat': { de: 'Schneiden passend zur rauen Fellstruktur, Trimmen als Zusatzleistung.', en: 'Clipping according to the wire coat structure, trimming available as an additional service.', uk: 'Стрижка з урахуванням структури жорсткої шерсті, тримінг доступний як додаткова послуга.' },
+    'ru-wire-coat': { de: 'Pflege passend zur rauen Fellstruktur; Handstripping wird als Hauptleistung angeboten.', en: 'Care tailored to the wire coat structure; hand stripping is offered as a primary service.', uk: 'Догляд з урахуванням структури жорсткої шерсті; ручний тримінг пропонується як основна послуга.' },
     'ru-short-coat': { de: 'Komplette Pflege nach Größe des kurzhaarigen Hundes.', en: 'Full care package according to the dog’s size.', uk: 'Повний комплекс догляду відповідно до розміру короткошерстого собаки.' },
     'ru-large-dogs': { de: 'Komplettpflege für große Rassen mit viel Fell.', en: 'Full care for large breeds with a substantial coat volume.', uk: 'Комплексний догляд для великих порід із великим об’ємом шерсті.' },
     'ru-cats-grooming': { de: 'Die Leistung findet im Beisein der Halterin oder des Halters statt.', en: 'The service is performed in the owner’s presence.', uk: 'Послуга проводиться у присутності власника.' },
@@ -78,9 +78,9 @@
       uk: 'Стрижка та оформлення включають консультацію, професійне миття й сушіння, догляд та оформлення шерсті, гігієнічний догляд, догляд за очима, вухами та кігтями.',
     },
     trim: {
-      de: 'Trimmen wird auf Anfrage und abhängig von Fellstruktur und Fellzustand als Zusatzleistung angeboten.',
-      en: 'Trimming is available on request and depends on coat structure and condition as an additional service.',
-      uk: 'Тримінг виконується за запитом з урахуванням структури та стану шерсті як додаткова послуга.',
+      de: 'Handstripping wird als eigene Hauptleistung angeboten und richtet sich nach Fellstruktur und Fellzustand.',
+      en: 'Hand stripping is offered as a dedicated primary service and depends on coat structure and condition.',
+      uk: 'Ручний тримінг пропонується як окрема основна послуга та залежить від структури й стану шерсті.',
     },
     shortCoat: {
       de: 'Die Komplettpflege umfasst Baden, professionelles Trocknen, Hygienepflege, Augen- und Ohrenpflege, Krallenschneiden, Ausbürsten und Fellpflege.',
@@ -105,14 +105,14 @@
       uk: 'У варіанті з купанням додатково виконуються купання та професійне сушіння. Послуга проводиться у присутності власника.',
     },
     smallAnimals: {
-      de: 'Bei Meerschweinchen umfasst die Pflege Ausbürsten, das Entfernen abgestorbener Haare, bei Bedarf Kürzen sowie Augen-, Ohren- und Hygienepflege. Baden und Pflege werden als eigene Leistung angeboten; bei Kaninchen gehört Baden nicht zur Standardpflege.',
-      en: 'For guinea pigs, care includes brushing, removal of dead hair, trimming when needed, and eye, ear and hygiene care. Bath and care are offered as a separate service; bathing is not part of standard rabbit care.',
-      uk: 'Для морських свинок догляд включає вичісування, видалення відмерлої шерсті, за потреби підрівнювання, а також догляд за очима, вухами та гігієнічний догляд. Купання та догляд пропонуються як окрема послуга; купання не входить до стандартного догляду за кроликами.',
+      de: 'Bei Meerschweinchen umfasst die Pflege Ausbürsten, das Entfernen abgestorbener Haare, bei Bedarf Kürzen sowie Augen-, Ohren- und Hygienepflege. Baden und Pflege werden als eigene Leistung angeboten; bei Kaninchen gehört Baden nicht zur Standardpflege. Andere Kleintiere nur nach vorheriger Abstimmung von Umfang und sicherer Durchführung.',
+      en: 'For guinea pigs, care includes brushing, removal of dead hair, trimming when needed, and eye, ear and hygiene care. Bath and care are offered as a separate service; bathing is not part of standard rabbit care. Other small animals are accepted only after agreeing the scope and a safe procedure in advance.',
+      uk: 'Для морських свинок догляд включає вичісування, видалення відмерлої шерсті, за потреби підрівнювання, а також догляд за очима, вухами та гігієнічний догляд. Купання та догляд пропонуються як окрема послуга; купання не входить до стандартного догляду за кроликами. Інших дрібних тварин приймаємо лише після попереднього погодження обсягу та безпечного способу процедури.',
     },
     additional: {
-      de: 'Zu den Zusatzleistungen gehören Krallenschneiden nach Größe, Trimmen für rauhaarige Rassen, Ultraschall-Zahnpflege ohne Narkose bis 6 kg, Aufbau-/Wellnessmaske, Ozontherapie und der erste Termin zur Welpengewöhnung.',
-      en: 'Additional services include nail trimming by size, trimming for wire-coated breeds, ultrasonic teeth cleaning without anaesthesia up to 6 kg, a restorative or wellness mask, ozone therapy and first puppy grooming.',
-      uk: 'До додаткових послуг належать підрізання кігтів відповідно до розміру, тримінг для жорсткошерстих порід, ультразвукова чистка зубів без наркозу до 6 кг, відновлювальна або оздоровча маска, озонотерапія та перший грумінг цуценяти.',
+      de: 'Krallenschneiden ist für Hunde aller Größen sowie Katzen, Meerschweinchen und Kaninchen verfügbar. Ultraschall-Zahnpflege ohne Narkose bis 6 kg und Ozontherapie werden nur für kleine Hunde angeboten. Aufbau-/SPA-Maske und Ohrenpflege als Einzelleistung werden passend zum Tier ausgewählt.',
+      en: 'Nail trimming is available for dogs of every size, cats, guinea pigs and rabbits. Ultrasonic teeth cleaning without anaesthesia up to 6 kg and ozone therapy are offered only for small dogs. A restorative / spa mask and standalone ear care are selected as appropriate for the animal.',
+      uk: 'Підстригання кігтів доступне для собак усіх розмірів, котів, морських свинок і кроликів. Ультразвукове чищення зубів без наркозу до 6 кг та озонотерапія пропонуються лише для малих собак. Відновлювальна / SPA-маска й догляд за вухами як окрема послуга підбираються відповідно до потреб тварини.',
     },
     additionalDental: {
       de: 'Bei gemeinsamer Buchung mit der Pflege gibt es auf die Ultraschall-Zahnpflege 30 % Rabatt; sie ersetzt keine tierärztliche Zahnbehandlung.',
@@ -172,7 +172,9 @@
     from75: { de: 'ab 75 €', en: 'from €75', uk: 'від 75 €' },
     from90: { de: 'ab 90 €', en: 'from €90', uk: 'від 90 €' },
     from110: { de: 'ab 110 €', en: 'from €110', uk: 'від 110 €' },
+    from120: { de: 'ab 120 €', en: 'from €120', uk: 'від 120 €' },
     from140: { de: 'ab 140 €', en: 'from €140', uk: 'від 140 €' },
+    from150: { de: 'ab 150 €', en: 'from €150', uk: 'від 150 €' },
     from100: { de: 'ab 100 €', en: 'from €100', uk: 'від 100 €' },
     request: { de: 'auf Anfrage', en: 'on request', uk: 'за запитом' },
   };
@@ -190,11 +192,10 @@
     large: make('ru-large-dogs', { de: '8. Große Hunde', en: '8. Large dogs', uk: '8. Великі собаки' }, breed(['Labrador Retriever', 'Golden Retriever', 'Deutscher Schäferhund', 'Belgischer Schäferhund', 'Siberian Husky', 'Akita Inu', 'Samojede', 'Bernhardiner', 'Bobtail', 'Berner Sennenhund', 'Neufundländer', 'Leonberger'], ['Labrador Retriever', 'Golden Retriever', 'German Shepherd', 'Belgian Shepherd', 'Siberian Husky', 'Akita Inu', 'Samoyed', 'Saint Bernard', 'Bobtail', 'Bernese Mountain Dog', 'Newfoundland', 'Leonberger'], ['Лабрадор-ретривер', 'Золотистий ретривер', 'Німецька вівчарка', 'Бельгійська вівчарка', 'Сибірський хаскі', 'Акіта-іну', 'Самоїд', 'Сенбернар', 'Бобтейл', 'Бернський зенненхунд', 'Ньюфаундленд', 'Леонбергер']), { de: ['Komplettpflege'], en: ['Full care'], uk: ['Комплексний догляд'] }, [p('main130')]),
   cats: make('ru-cats-grooming', { de: 'Katzen – Ausbürsten / Schneiden', en: 'Cats — brushing / clipping', uk: 'Коти — вичісування / стрижка' }, breed(['Katzen aller Rassen'], ['Cats of all breeds'], ['Коти всіх порід']), { de: ['Ausbürsten / Schneiden + Hygienepflege', 'Ausbürsten / Schneiden + Baden + Hygienepflege'], en: ['Brushing / clipping + hygiene care', 'Brushing / clipping + bath + hygiene care'], uk: ['Вичісування / стрижка + гігієнічний догляд', 'Вичісування / стрижка + купання + гігієнічний догляд'] }, [{ de: 'ab 60 €', en: 'from €60', uk: 'від 60 €' }, { de: 'ab 90 €', en: 'from €90', uk: 'від 90 €' }]),
     smallAnimals: make('ru-small-animals', { de: 'Kleintiere', en: 'Small animals', uk: 'Дрібні тварини' }, breed(['Meerschweinchen', 'Kaninchen'], ['Guinea pigs', 'Rabbits'], ['Морські свинки', 'Кролики']), { de: ['Meerschweinchen – Hygienepflege', 'Meerschweinchen – Baden + Pflege', 'Kaninchen – Ausbürsten + Hygienepflege'], en: ['Guinea pigs — hygiene care', 'Guinea pigs — bath + care', 'Rabbits — brushing + hygiene care'], uk: ['Морські свинки — гігієнічний догляд', 'Морські свинки — купання + догляд', 'Кролики — вичісування + гігієнічний догляд'] }, [p('main30'), p('main40'), p('main35')]),
-    additional: make('ru-additional-services', { de: 'Zusatzleistungen', en: 'Additional services', uk: 'Додаткові послуги' }, breed(['Hunde', 'Katzen', 'Meerschweinchen', 'Kaninchen'], ['Dogs', 'Cats', 'Guinea pigs', 'Rabbits'], ['Собаки', 'Коти', 'Морські свинки', 'Кролики']), { de: ['Krallenschneiden — kleine Rassen', 'Krallenschneiden — mittelgroße Rassen', 'Krallenschneiden — große Rassen', 'Krallenschneiden — sehr große Rassen', 'Ultraschall-Zahnpflege bis 6 kg', 'Aufbau- / Wellnessmaske', 'Ozontherapie', 'Trimmen — kleine Rassen', 'Trimmen — mittelgroße Rassen', 'Trimmen — große Rassen', 'Trimmen — sehr große Rassen'], en: ['Nail trimming — small breeds', 'Nail trimming — medium breeds', 'Nail trimming — large breeds', 'Nail trimming — giant breeds', 'Ultrasonic teeth cleaning up to 6 kg', 'Restorative / wellness mask', 'Ozone therapy', 'Hand stripping — small breeds', 'Hand stripping — medium breeds', 'Hand stripping — large breeds', 'Hand stripping — giant breeds'], uk: ['Підстригання кігтів — малі породи', 'Підстригання кігтів — середні породи', 'Підстригання кігтів — великі породи', 'Підстригання кігтів — гігантські породи', 'Ультразвукова чистка зубів до 6 кг', 'Відновлювальна / оздоровча маска', 'Озонотерапія', 'Тримінг — малі породи', 'Тримінг — середні породи', 'Тримінг — великі породи', 'Тримінг — гігантські породи'] }, [{ de: '10 €', en: '€10', uk: '10 €' }, { de: '12 €', en: '€12', uk: '12 €' }, { de: '15 €', en: '€15', uk: '15 €' }, { de: '18 €', en: '€18', uk: '18 €' }, p('from100'), p('from20'), p('from25'), p('from75'), p('from90'), p('from110'), p('from140')]),
+    additional: make('ru-additional-services', { de: 'Zusatzleistungen', en: 'Additional services', uk: 'Додаткові послуги' }, breed(['Hunde', 'Katzen', 'Meerschweinchen', 'Kaninchen'], ['Dogs', 'Cats', 'Guinea pigs', 'Rabbits'], ['Собаки', 'Коти', 'Морські свинки', 'Кролики']), { de: ['Krallenschneiden', 'Ultraschall-Zahnpflege bis 6 kg', 'Aufbau- / SPA-Maske', 'Ozontherapie — kleine Rassen', 'Ohrenpflege als Einzelleistung'], en: ['Nail trimming', 'Ultrasonic teeth cleaning up to 6 kg', 'Restorative / spa mask', 'Ozone therapy — small breeds', 'Ear care as a standalone service'], uk: ['Підстригання кігтів', 'Ультразвукова чистка зубів до 6 кг', 'Відновлювальна / SPA-маска', 'Озонотерапія — малі породи', 'Догляд за вухами як окрема послуга'] }, [{ de: '15 €', en: '€15', uk: '15 €' }, p('from100'), p('from20'), p('from25'), { de: '15 €', en: '€15', uk: '15 €' }]),
     important: make('ru-important-information', { de: 'Wichtige Informationen', en: 'Important information', uk: 'Важлива інформація' }, breed(['Alle Tiere'], ['All animals'], ['Усі тварини']), { de: [], en: [], uk: [] }, []),
   };
 
-  common.additional.copy.priceRows.slice(7).forEach(row => { row.key = 'trimming'; });
   const definitions = Object.values(common);
   apply('de', definitions);
   apply('en', definitions);
@@ -253,7 +254,7 @@
     },
     'ru-wire-coat': {
       title: { de: '5. Rauhaarige Rassen', en: '5. Wire-coated breeds', uk: '5. Жорсткошерсті породи' },
-      summary: { de: 'Schneiden passend zur Struktur des rauen Fells; Trimmen als Zusatzleistung.', en: 'Clipping according to the wire coat structure; trimming available as an additional service.', uk: 'Стрижка з урахуванням структури жорсткої шерсті; тримінг як додаткова послуга.' },
+      summary: { de: 'Pflege passend zur Struktur des rauen Fells; Handstripping als Hauptleistung.', en: 'Care tailored to the wire coat structure; hand stripping as a primary service.', uk: 'Догляд з урахуванням структури жорсткої шерсті; ручний тримінг як основна послуга.' },
       section: 'medium', additionalServiceGroup: 'mixed',
       breeds: {
         de: ['West Highland White Terrier', 'Cairn-Terrier', 'Jack Russell Terrier – rauhaarig', 'Parson Russell Terrier – rauhaarig', 'Border Terrier', 'Norfolk Terrier', 'Norwich Terrier', 'Rauhaar-Foxterrier', 'Welsh Terrier', 'Irish Terrier', 'Airedale Terrier', 'Lakeland Terrier', 'Scottish Terrier', 'Sealyham Terrier', 'Kerry Blue Terrier', 'Irish Soft Coated Wheaten Terrier', 'Australian Terrier', 'Zwergschnauzer', 'Mittelschnauzer', 'Riesenschnauzer', 'Brüsseler Griffon', 'Belgischer Griffon', 'Brabanter Griffon', 'Affenpinscher', 'Rauhaardackel', 'Rauhaar-Zwergdackel'],

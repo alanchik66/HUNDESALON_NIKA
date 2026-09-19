@@ -5,7 +5,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
-import { buildKnowledgeDocument, extractPublicText, normalizeSourceText } from './generate-sendpulse-ai-knowledge.mjs';
+import {
+  buildKnowledgeDocument,
+  extractPublicText,
+  loadPublishedPriceCatalog,
+  normalizeSourceText,
+  PRICE_CATALOG_RUNTIME_SOURCE_PATHS,
+} from './generate-sendpulse-ai-knowledge.mjs';
 import { buildAiChatKnowledgeIndex, renderAiChatKnowledgeModule } from './generate-ai-chat-index.mjs';
 import { syncKnowledge } from './sync-sendpulse-ai-knowledge.mjs';
 
@@ -17,6 +23,35 @@ function listHtmlFiles(directory) {
     if (entry.isDirectory()) return listHtmlFiles(absolutePath);
     return entry.isFile() && entry.name.endsWith('.html') ? [absolutePath] : [];
   });
+}
+
+function localize(value, locale) {
+  if (value == null) return '';
+  if (typeof value === 'string' || typeof value === 'number') return String(value).trim();
+  const candidate = value[locale] ?? value.en ?? value.de ?? value.ru ?? value.uk ?? '';
+  return Array.isArray(candidate) ? candidate.map(item => localize(item, locale)).filter(Boolean).join(', ') : String(candidate).trim();
+}
+
+function publishedCatalogSection(content, locale) {
+  const heading = `### ${locale.toUpperCase()} — published catalog ###`;
+  const start = content.indexOf(heading);
+  assert.notEqual(start, -1, `${locale}: published catalog heading is missing`);
+  const next = content.indexOf('\n### ', start + heading.length);
+  return content.slice(start, next === -1 ? undefined : next);
+}
+
+function categoryCatalogBlock(section, title, locale) {
+  const heading = `#### ${title} ####`;
+  const start = section.indexOf(heading);
+  assert.notEqual(start, -1, `${locale}:${title}: category heading is missing`);
+  const next = section.indexOf('\n#### ', start + heading.length);
+  return section.slice(start, next === -1 ? undefined : next);
+}
+
+function categoryTitle(category, locale, localeConfig) {
+  const title = localize(category.title, locale) || category.id;
+  const sizeGroupTitle = localize(localeConfig?.sizeGroupTitles?.[category.pageSection], locale);
+  return sizeGroupTitle ? `${sizeGroupTitle} — ${title}` : title;
 }
 
 function jsonResponse(payload, status = 200) {
@@ -35,9 +70,9 @@ test('knowledge generator includes canonical prices and all supported locales', 
   assert.match(content, /RU — published catalog/);
   assert.match(content, /UK — published catalog/);
   assert.match(content, /Komplettpflege — ab 80 €/);
-  assert.match(content, /Full grooming — from €80/);
-  assert.match(content, /Комплексный груминг — от 80 €/);
-  assert.match(content, /Комплексний грумінг — від 80 €/);
+  assert.match(content, /Full care — from €80/);
+  assert.match(content, /Комплексный уход — от 80 €/);
+  assert.match(content, /Комплексний догляд — від 80 €/);
   assert.match(content, /Search aliases .*: Командор → Комондор/);
   assert.match(content, /Коммандор → Комондор/);
   assert.match(content, /Ирландский вольфхаунд → Ирландский волкодав/);
@@ -68,7 +103,7 @@ test('knowledge generator refreshes the stored source fingerprint', () => {
 test('bot knowledge uses the same published service details as the price modal in every locale', () => {
   const { content, sourcePaths } = buildKnowledgeDocument();
   assert.ok(sourcePaths.includes('assets/js/price-catalog.js'));
-  const context = vm.createContext({ window: {} });
+  const context = vm.createContext({ Intl, window: {} });
   for (const relativePath of sourcePaths.filter(value => value.startsWith('assets/js/'))) {
     vm.runInContext(readFileSync(path.join(ROOT, relativePath), 'utf8'), context, { filename: relativePath });
   }
@@ -82,11 +117,49 @@ test('bot knowledge uses the same published service details as the price modal i
     const puppyEntry = entries.find(entry => entry.text.includes(puppy.note));
     assert.ok(puppyEntry);
     assert.ok(puppyEntry.text.includes(puppy.description));
-    assert.equal((puppyEntry.text.match(/^- Price:/gm) || []).length, 7);
+    const expectedPuppyOffers = context.window.PricePageCatalog.categoriesByLocale[locale]
+      .flatMap(category => category.priceRows || [])
+      .filter(row => row.key === 'puppy-intro').length;
+    assert.equal((puppyEntry.text.match(/^- Price:/gm) || []).length, expectedPuppyOffers);
     assert.doesNotMatch(puppyEntry.text, /\+15 €|light coat shaping|nails, eye and ear care/i);
   }
   assert.doesNotMatch(content, /It can include light brushing, careful bathing and drying, nails/);
   assert.doesNotMatch(content, /Für Maine Coons und große Katzen kann ein Zuschlag von \+15 €/);
+});
+
+test('knowledge generator mirrors every customer-visible runtime price row and validates its service details', () => {
+  const { content, sourcePaths } = buildKnowledgeDocument();
+  assert.ok(sourcePaths.includes('ru/prays-list.html'));
+  assert.deepEqual(
+    sourcePaths.filter(relativePath => relativePath.startsWith('assets/js/')),
+    [...PRICE_CATALOG_RUNTIME_SOURCE_PATHS],
+    'knowledge fingerprint must include the same catalog data-script sequence as the price page'
+  );
+
+  const { catalog, serviceCatalog } = loadPublishedPriceCatalog();
+  for (const locale of ['de', 'en', 'ru', 'uk']) {
+    const section = publishedCatalogSection(content, locale);
+    const services = serviceCatalog.build(locale).services;
+    const categories = catalog.categoriesByLocale[locale];
+    assert.ok(Array.isArray(categories) && categories.length > 0, `${locale}: runtime price catalog is empty`);
+
+    for (const category of categories) {
+      const title = categoryTitle(category, locale, catalog.locales?.[locale]);
+      const categoryBlock = categoryCatalogBlock(section, title, locale);
+      for (const row of category.priceRows || []) {
+        const label = localize(row.label, locale);
+        const price = localize(row.price, locale);
+        assert.ok(
+          categoryBlock.includes(`- Price: ${label} — ${price}`),
+          `${locale}:${category.id}:${row.key || label} is absent or differs in generated knowledge`
+        );
+        if (!row.key) continue;
+        const service = services.find(item => item.key === row.key);
+        assert.ok(service?.note?.trim(), `${locale}:${row.key} lacks a canonical service note`);
+        assert.ok(service?.description?.trim(), `${locale}:${row.key} lacks a canonical service description`);
+      }
+    }
+  }
 });
 
 test('checked-in bot knowledge and retrieval index stay synchronized with website sources', () => {
@@ -133,7 +206,7 @@ test('AI chat index is deterministic and contains localized exact-price sections
   }
   const germanPoodle = index.find(entry => entry.locale === 'de' && /Zwergpudel/.test(entry.text));
   assert.ok(germanPoodle);
-  assert.match(germanPoodle.text, /Komplettpflege — ab 90 €/);
+  assert.match(germanPoodle.text, /Komplettpflege — ab 80 €/);
   assert.doesNotMatch(germanPoodle.text, /groom(?:ing|er)/i);
 });
 
