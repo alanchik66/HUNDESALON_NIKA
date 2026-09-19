@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = relativePath => readFileSync(path.join(ROOT, relativePath), 'utf8');
 const locales = ['de', 'en', 'ru', 'uk'];
-const SENDPULSE_LOADER = 'https://web.webpushs.com/js/push/ad3860c1c56016022bf413f3d7ab36f6_1.js';
+const SENDPULSE_LOADER = '//web.webpushs.com/js/push/ad3860c1c56016022bf413f3d7ab36f6_1.js';
 const SENDPULSE_WORKER = 'https://web.webpushs.com/sp-push-worker-fb.js?ver=2.0';
 
 test('SendPulse Web Push and PWA share one root-scoped worker', () => {

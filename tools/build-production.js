@@ -366,7 +366,7 @@ function injectSendPulseIntegrations(directory, version) {
   const aiChatStylePattern = /\s*<link\s+[^>]*href="[^"]*ai-chat\.css\?[^"\s]+"[^>]*>/g;
   const liveChatScriptPattern = /\s*<script\s+src="https:\/\/cdn\.pulse\.is\/livechat\/loader\.js"[^>]*><\/script>/g;
   const popupScriptPattern = /\s*<script\s+src="https:\/\/static\.sppopups\.com\/assets\/loader\.js"[^>]*><\/script>/g;
-  const pushScriptPattern = /\s*<script\s+charset="UTF-8"\s+src="https:\/\/web\.webpushs\.com\/js\/push\/ad3860c1c56016022bf413f3d7ab36f6_1\.js"\s+async><\/script>/g;
+  const pushScriptPattern = /\s*<script\s+charset="UTF-8"\s+src="(?:https:)?\/\/web\.webpushs\.com\/js\/push\/ad3860c1c56016022bf413f3d7ab36f6_1\.js"\s+async><\/script>/g;
   const pushHomePages = new Set(['de/index.html', 'en/index.html', 'ru/index.html', 'uk/index.html']);
 
   function walk(dir) {
@@ -405,7 +405,7 @@ function injectSendPulseIntegrations(directory, version) {
         `<script src="${scriptPrefix}/ai-chat.js?v=${version}"></script>`,
       ].join('\n');
       const pushLoader = pushHomePages.has(relativePath)
-        ? '<script charset="UTF-8" src="https://web.webpushs.com/js/push/ad3860c1c56016022bf413f3d7ab36f6_1.js" async></script>'
+      ? '<script charset="UTF-8" src="//web.webpushs.com/js/push/ad3860c1c56016022bf413f3d7ab36f6_1.js" async></script>'
         : '';
       const next = cleaned
         .replace('</head>', `${stylesheet}${pushLoader ? `\n${pushLoader}` : ''}\n</head>`)
