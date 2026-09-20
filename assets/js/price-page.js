@@ -1,7 +1,7 @@
 (function initPricePage(global) {
   const catalog = global.PricePageCatalog;
   if (!catalog) return;
-
+  const getBreedTokenScore = global.PriceBookingCatalog.tokenScore;
   const root = document.querySelector('[data-price-page]') || document.querySelector('body.price-page .container.page-offset-top');
   const modal = document.querySelector('[data-price-modal]');
 
@@ -955,11 +955,12 @@
     ...sourceCategories.filter(category => category.animalType === 'dog').map(category => category.id),
   ]);
   const additionalServiceIndexesByGroup = {
-    small: [0, 1, 2, 3, 4],
-    medium: [0, 2, 4],
-    large: [0, 2, 4],
-    giant: [0, 2, 4],
+    small: [0, 1, 2, 3, 4, 5],
+    medium: [0, 2, 4, 5],
+    large: [0, 2, 4, 5],
+    giant: [0, 2, 4, 5],
   };
+  const DESHEDDING_ADDITIONAL_SERVICE_INDEX = 5;
 
   const getAdditionalServices = category => {
     if (!bookingCatalog || !category) return [];
@@ -977,8 +978,9 @@
     }
     if (!DOG_CATEGORY_IDS.has(sourceCategoryId)) return [];
     const serviceGroup = category.additionalServiceGroup || category.groupKey;
-    const allowedIndexes = additionalServiceIndexesByGroup[serviceGroup] || [];
-    return services.filter(service => allowedIndexes.includes(service.index));
+    const allowedIndexes = new Set(additionalServiceIndexesByGroup[serviceGroup] || []);
+    if (category.coatType === 'wire') allowedIndexes.delete(DESHEDDING_ADDITIONAL_SERVICE_INDEX);
+    return services.filter(service => allowedIndexes.has(service.index));
   };
 
   const getAdditionalServiceNotes = category => {
@@ -1224,9 +1226,13 @@
   `;
   const modalHero = modalSummary?.closest('.price-category-modal__hero');
   modalHero?.insertAdjacentElement('afterend', modalSelection);
-  if (modalHero) modalSelection.prepend(modalHero);
   const modalSelectionControls = modalSelection.querySelector('[data-price-modal-selection-controls]');
   const modalSelectionHeader = modalSelection.querySelector('[data-price-modal-selection-header]');
+  const modalContext = document.createElement('div');
+  modalContext.className = 'price-category-modal__context';
+  modalSelection.prepend(modalContext);
+  if (modalHero) modalContext.append(modalHero);
+  modalContext.append(modalSelectionHeader);
   const modalBreedSelect = modalSelection.querySelector('[data-price-modal-breed]');
   const modalBreedPhoto = modalSelection.querySelector('[data-price-modal-breed-photo]');
   const modalBreedPhotoImage = modalSelection.querySelector('[data-price-modal-breed-photo-image]');
@@ -1718,17 +1724,25 @@
     return !dentalSelected || eligible;
   };
 
-  const syncAdditionalNailTrimVisibility = (additionalServices, selectedPrimaryServices) => {
+  const syncIncludedAdditionalServices = (additionalServices, selectedPrimaryServices) => {
     if (!modalAdditionalServiceOptions) return;
     const nailsIncluded = selectedPrimaryServices.some(service => service.includesNailTrim);
+    const fullCareSelected = selectedPrimaryServices.some(service => service.key === 'full-groom');
+    if (modalAdditionalServiceHint) {
+      modalAdditionalServiceHint.textContent = fullCareSelected
+        ? locale.fullCareIncludedHint || locale.additionalServicesHint || ''
+        : locale.additionalServicesHint || '';
+    }
     const additionalServiceById = new Map(additionalServices.map(service => [service.id, service]));
 
     modalAdditionalServiceOptions.querySelectorAll('label.price-category-modal__service-option').forEach(option => {
       const input = option.querySelector('input[type="checkbox"]');
       const service = additionalServiceById.get(input?.value);
       if (!service) return;
-      const shouldHide = nailsIncluded && NAIL_TRIM_SERVICE_INDEXES.has(service.index);
+      const shouldHide = (nailsIncluded && NAIL_TRIM_SERVICE_INDEXES.has(service.index))
+        || (fullCareSelected && [4, DESHEDDING_ADDITIONAL_SERVICE_INDEX].includes(service.index));
       option.hidden = shouldHide;
+      input.disabled = shouldHide;
       if (shouldHide && input.checked) input.checked = false;
     });
   };
@@ -1738,7 +1752,7 @@
     const sourceCategoryId = category.sourceId || category.id;
     const selectedBreed = bookingCatalog.getBreed(modalBreedSelect.value);
     const selectedPrimaryServices = getSelectedServices(primaryServices, modalServiceOptions);
-    syncAdditionalNailTrimVisibility(additionalServices, selectedPrimaryServices);
+    syncIncludedAdditionalServices(additionalServices, selectedPrimaryServices);
     const dentalWeightValid = syncDentalEligibility(additionalServices);
     const selectedAdditionalServices = getSelectedServices(additionalServices, modalAdditionalServiceOptions);
     const {
@@ -2068,6 +2082,10 @@
     registrationCompletedForSelection = false;
     if (modalDentalWeightInput) modalDentalWeightInput.value = '';
     state.lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    root.querySelectorAll('.is-price-selected').forEach(element => element.classList.remove('is-price-selected'));
+    const selectedCard = state.lastFocus?.closest('.price-card');
+    selectedCard?.classList.add('is-price-selected');
+    state.lastFocus?.closest('.price-card__service-option')?.classList.add('is-price-selected');
     state.activeCategory = category;
     const isAdditionalSelection = selectionMode === 'additional';
     const isInformationSelection = selectionMode === 'information';
@@ -2122,56 +2140,6 @@
 
   const normalizeBreedTokens = value => normalizeSearch(value).split(/[\s/–—-]+/u).filter(Boolean);
   const breedSearchCollator = new Intl.Collator(lang, { sensitivity: 'base', numeric: true });
-  const getMaxFuzzyDistance = token => {
-    if (token.length >= 9) return 2;
-    if (token.length >= 4) return 1;
-    return 0;
-  };
-  const getEditDistance = (left, right, maxDistance) => {
-    if (left === right) return 0;
-    if (Math.abs(left.length - right.length) > maxDistance) return maxDistance + 1;
-
-    let previousPrevious = null;
-    let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
-    for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
-      const current = [leftIndex];
-      for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
-        const substitutionCost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
-        let distance = Math.min(
-          current[rightIndex - 1] + 1,
-          previous[rightIndex] + 1,
-          previous[rightIndex - 1] + substitutionCost
-        );
-        if (
-          previousPrevious
-          && leftIndex > 1
-          && rightIndex > 1
-          && left[leftIndex - 1] === right[rightIndex - 2]
-          && left[leftIndex - 2] === right[rightIndex - 1]
-        ) {
-          distance = Math.min(distance, previousPrevious[rightIndex - 2] + 1);
-        }
-        current[rightIndex] = distance;
-      }
-      previousPrevious = previous;
-      previous = current;
-    }
-    return previous[right.length];
-  };
-  const getBreedTokenScore = (candidateToken, queryToken) => {
-    if (candidateToken.startsWith(queryToken)) return 0;
-    const maxDistance = getMaxFuzzyDistance(queryToken);
-    if (!maxDistance) return Number.POSITIVE_INFINITY;
-
-    let distance = getEditDistance(queryToken, candidateToken, maxDistance);
-    if (candidateToken.length > queryToken.length) {
-      distance = Math.min(
-        distance,
-        getEditDistance(queryToken, candidateToken.slice(0, queryToken.length), maxDistance)
-      );
-    }
-    return distance <= maxDistance ? 10 + distance : Number.POSITIVE_INFINITY;
-  };
   const getBreedSearchTokens = label => {
     const aliases = locale.breedSearchAliases?.[label] || [];
     return [...new Set([label, ...aliases].flatMap(normalizeBreedTokens))];
@@ -2481,15 +2449,6 @@
 
       updates.forEach(([element, height]) => element.style.setProperty('min-height', `${height}px`));
 
-      // Cats and small animals share a category row. Match their visible card height to the
-      // giant-dog reference only after text/service rows have been aligned, so no locale gets
-      // a brittle fixed pixel height or a stretched narrow tile.
-      const giantCards = Array.from(cardsRoot.querySelectorAll('[data-price-section="giant"] .price-card'));
-      const catAnimalCards = Array.from(cardsRoot.querySelectorAll(`${CAT_ANIMALS_SECTION_SELECTOR} .price-card`));
-      if (!giantCards.length || !catAnimalCards.length) return;
-      const referenceHeight = Math.ceil(Math.max(...giantCards.map(card => card.getBoundingClientRect().height)));
-      if (!Number.isFinite(referenceHeight) || referenceHeight <= 0) return;
-      catAnimalCards.forEach(card => card.style.setProperty('min-height', `${referenceHeight}px`));
     });
   };
 
@@ -2650,6 +2609,7 @@
   });
   document.fonts?.ready?.then(schedulePriceCardAlignment);
 
+
   const navigateToPriceSection = action => {
     const sectionKey = action.dataset.priceSectionAction || '';
     if (!sectionKey) return;
@@ -2678,12 +2638,11 @@
       const scrollRoot = document.querySelector('.site-scroll-root');
 
       if (scrollRoot) {
-        const rootRect = scrollRoot.getBoundingClientRect();
         const targetRect = target.getBoundingClientRect();
         const maxScroll = Math.max(0, scrollRoot.scrollHeight - scrollRoot.clientHeight);
         const destination = Math.max(
           0,
-          Math.min(maxScroll, scrollRoot.scrollTop + targetRect.top - rootRect.top - 18)
+          Math.min(maxScroll, scrollRoot.scrollTop + targetRect.top - 18)
         );
         scrollRoot.scrollTo({ top: destination, behavior });
       } else {

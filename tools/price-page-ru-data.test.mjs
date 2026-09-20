@@ -21,7 +21,7 @@ const expectedCategoryIds = [
   'ru-additional-services',
   'ru-important-information',
 ];
-const expectedCatalogHash = '7d67b9fd1ba34645a96d71e733fe5e03165f121780559571b5dbcce042e5f339';
+const expectedCatalogHash = 'bf1a9da8894b0096b26627d33b846a31f6b410c4a12760dce8d389120859a4a7';
 
 const loadRussianCatalog = () => {
   const context = vm.createContext({ window: {} });

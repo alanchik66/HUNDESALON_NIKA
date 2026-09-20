@@ -236,8 +236,9 @@ class BeforeAfterGallery {
     const filterOrder = [
       { key: 'dogs', label: labels.dogs },
       { key: 'cats', label: labels.cats },
+      { key: 'smallAnimals', label: ({ de: 'Kleintiere', en: 'Small animals', ru: 'МЕЛКИЕ ЖИВОТНЫЕ', uk: 'ДРІБНІ ТВАРИНИ' })[this.options.lang] || 'Kleintiere' },
       { key: 'salon', label: labels.salon },
-      { key: 'all', label: labels.all },
+      { key: 'all', label: ({ de: 'Mediathek', en: 'Media library', ru: 'МЕДИАТЕКА', uk: 'МЕДІАТЕКА' })[this.options.lang] || labels.all },
     ];
     const filterHTML = `
       <div class="before-after-filters nav-main" role="tablist" aria-label="Media filters">
@@ -285,6 +286,12 @@ class BeforeAfterGallery {
   renderGallery() {
     const filteredItems =
       this.currentFilter === 'all' ? this.items : this.items.filter(item => item.category === this.currentFilter);
+
+    if (!filteredItems.length) {
+      const emptyText = ({ de: 'Fotos folgen in Kürze.', en: 'Photos coming soon.', ru: 'Фотографии скоро появятся.', uk: 'Фотографії незабаром з’являться.' })[this.options.lang] || 'Fotos folgen in Kürze.';
+      this.container.innerHTML = `<p class="before-after-empty" role="status">${escapeHtml(emptyText)}</p>`;
+      return;
+    }
 
     this.container.innerHTML = filteredItems
       .map(

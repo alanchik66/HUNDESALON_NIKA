@@ -454,10 +454,10 @@
         default: 'ab 85 €',
       },
       desc: {
-        de: 'Komplettpflege mit Baden, Föhnen, Schnitt und Fellfinish.',
-        en: 'Full grooming with bath, drying, haircut and coat finishing.',
-        ru: 'Комплексный уход с купанием, сушкой, стрижкой и оформлением шерсти.',
-        uk: 'Комплексний догляд із купанням, сушінням, стрижкою та оформленням шерсті.',
+        de: 'Komplettpflege beinhaltet Baden, Föhnen, typgerechte Fellpflege und bei Bedarf Schnitt, Krallen- und äußere Ohrenpflege sowie reguläre Entfernung loser Haare und Unterwolle. Ohrenpflege und Express-Entwollung werden nicht zusätzlich berechnet. Handstripping ist eine separate Leistung. Mehraufwand über die Standardpflege hinaus wird vorab nach Umfang und Preis vereinbart.',
+        en: 'Full grooming includes bathing, drying, coat-appropriate care and a haircut where appropriate, nails, external ear hygiene and routine removal of loose hair and undercoat. Ear care and express deshedding are not charged again. Handstripping is a separate service. Work beyond standard care requires prior agreement on scope and price.',
+        ru: 'Комплексный уход включает купание, сушку, уход по типу шерсти и стрижку при необходимости, когти, наружную гигиену ушей и стандартное удаление отмершей шерсти и подшёрстка. Уход за ушами и экспресс-линька повторно не оплачиваются. Ручной тримминг — отдельная услуга. Объём и стоимость работы сверх стандартного ухода согласуются заранее.',
+        uk: 'Комплексний догляд включає купання, сушіння, догляд за типом шерсті та стрижку за потреби, кігті, зовнішню гігієну вух і стандартне видалення відмерлої шерсті та підшерстя. Догляд за вухами й експрес-линька повторно не оплачуються. Ручний тримінг — окрема послуга. Обсяг і вартість роботи понад стандартний догляд узгоджуються заздалегідь.',
       },
     },
     {

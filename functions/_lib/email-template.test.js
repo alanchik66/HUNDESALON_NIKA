@@ -18,7 +18,7 @@ test('buildBrandedEmail renders a branded, escaped and linkified email shell', (
   assert.match(html, /background-color:#07150d/);
   assert.match(html, /background-color:#c6a15b/);
   assert.doesNotMatch(html, /height:3px;font-size:0;line-height:0;background-color:#c6a15b/);
-  assert.match(html, /width="96" height="96" alt="HUNDESALON_NIKA"/);
+  assert.match(html, /width="72" height="72" alt="HUNDESALON_NIKA"/);
   assert.match(html, /href="https:\/\/hundesalon-nika\.com"[^>]*>HUNDESALON_NIKA<\/a>/);
   assert.doesNotMatch(html, />hundesalon-nika\.com<\/a>/);
   assert.match(html, /@keyframes emailNavRefraction/);
@@ -34,16 +34,7 @@ test('buildBrandedEmail renders a branded, escaped and linkified email shell', (
   assert.match(html, /ВСЕ СОЦСЕТИ/);
   assert.match(html, /Конфиденциальность/);
   assert.match(html, /raw\.githubusercontent\.com\/alanchik66\/HUNDESALON_NIKA\/main\/assets\/images\/icons\/whatsapp\.png/);
-  assert.match(html, /id="nika-email-theme" type="checkbox"/);
-  assert.match(html, /for="nika-email-theme"/);
   assert.match(html, /@media \(prefers-color-scheme: light\)/);
-  assert.match(html, /\.theme-toggle:checked \+ \.email-bg/);
-  assert.match(html, /class="language-control" href="https:\/\/hundesalon-nika\.com\/ru\/"/);
-  assert.match(html, /assets\/images\/icons\/globe-language\.webp/);
-  assert.match(html, /assets\/images\/icons\/sunrise\.webp/);
-  assert.match(html, /class="control-icon"[^>]*width="25" height="25"/);
-  assert.match(html, /class="control-icon theme-icon" src="https:\/\/hundesalon-nika\.com\/assets\/images\/icons\/sunrise\.webp"/);
-  assert.match(html, /class="header-tools"/);
 });
 
 test('buildBrandedEmail falls back to German for an unknown locale', () => {
@@ -52,7 +43,6 @@ test('buildBrandedEmail falls back to German for an unknown locale', () => {
   assert.match(html, /lang="de"/);
   assert.match(html, /Premium-Fellpflege in Leipzig/);
   assert.match(html, /Website öffnen/);
-  assert.match(html, /href="https:\/\/hundesalon-nika\.com\/de\/" title="Sprache wechseln"/);
 });
 
 test('master email standard includes every active business alias and strict sender roles', () => {
@@ -73,3 +63,15 @@ test('master email standard includes every active business alias and strict send
     replyTo: 'info@hundesalon-nika.com',
   });
 });
+
+for (const lang of ['de', 'en', 'ru', 'uk']) {
+  test(`email header stays left aligned without website-only controls: ${lang}`, () => {
+    const html = buildBrandedEmail({ lang, title: 'Test', bodyText: 'Body' });
+    assert.doesNotMatch(html, /language-control|theme-control|theme-toggle|globe-language|sunrise/);
+    assert.doesNotMatch(html, /display:block !important; width:100% !important; text-align:center/);
+    assert.match(html, /class="brand-cell" width="84"/);
+    assert.match(html, /class="nav-cell"/);
+    assert.match(html, /class="header-navigation"/);
+    assert.match(html, /padding:0 14px 16px/);
+  });
+}

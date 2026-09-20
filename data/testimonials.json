@@ -14,6 +14,11 @@
     "photoUrl": "/assets/images/testimonials/sofia-luna.jpg"
   },
   {
+    "language": "de",
+    "name": "Elena V.",
+    "text": "Erstklassige Profis! Das Ergebnis hat alle Erwartungen übertroffen."
+  },
+  {
     "language": "ru",
     "name": "Анна К.",
     "petName": "Мило",
@@ -26,6 +31,11 @@
     "petName": "Луна",
     "text": "Кошку привели в порядок мягко и бережно. Атмосфера тёплая, чистая и очень профессиональная.",
     "photoUrl": "/assets/images/testimonials/sofia-luna.jpg"
+  },
+  {
+    "language": "ru",
+    "name": "Ольга Р.",
+    "text": "Профессионалы высокого класса. Результат превзошёл ожидания."
   },
   {
     "language": "en",
@@ -42,6 +52,11 @@
     "photoUrl": "/assets/images/testimonials/sofia-luna.jpg"
   },
   {
+    "language": "en",
+    "name": "Elena V.",
+    "text": "Top-class professionals! The result exceeded all expectations."
+  },
+  {
     "language": "uk",
     "name": "Анна К.",
     "petName": "Міло",
@@ -54,5 +69,10 @@
     "petName": "Луна",
     "text": "Кішку привели до ладу мʼяко й дбайливо. Атмосфера тепла, чиста та дуже професійна.",
     "photoUrl": "/assets/images/testimonials/sofia-luna.jpg"
+  },
+  {
+    "language": "uk",
+    "name": "Олена Р.",
+    "text": "Професіонали найвищого класу. Результат перевершив очікування."
   }
 ]

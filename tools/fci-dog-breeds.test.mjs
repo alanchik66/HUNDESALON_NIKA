@@ -293,7 +293,7 @@ const AUDITED_DOG_TARIFF = {
     wire: { full: 80, bath: 60, handstripping: 60 },
     long: { full: 80, bath: 60 },
     curly: { full: 80, bath: 60 },
-    double: { full: 80, bath: 60, deshedding: 30 },
+    double: { full: 80, bath: 60 },
   },
   medium: {
     puppy: 50,
@@ -301,7 +301,7 @@ const AUDITED_DOG_TARIFF = {
     wire: { full: 90, bath: 70, handstripping: 60 },
     long: { full: 90, bath: 70 },
     curly: { full: 100, bath: 80 },
-    double: { full: 90, bath: 75, deshedding: 30 },
+    double: { full: 90, bath: 75 },
   },
   large: {
     puppy: 50,
@@ -309,7 +309,7 @@ const AUDITED_DOG_TARIFF = {
     wire: { full: 120, bath: 90, handstripping: 60 },
     long: { full: 120, bath: 90 },
     curly: { full: 120, bath: 90 },
-    double: { full: 120, bath: 90, deshedding: 30 },
+    double: { full: 120, bath: 90 },
   },
   giant: {
     puppy: 50,
@@ -317,7 +317,7 @@ const AUDITED_DOG_TARIFF = {
     wire: { full: 150, bath: 105, handstripping: 60 },
     long: { full: 150, bath: 110 },
     curly: { full: 150, bath: 110 },
-    double: { full: 150, bath: 120, deshedding: 30 },
+    double: { full: 150, bath: 120 },
   },
 };
 const EXPECTED_COATS_BY_SIZE = {
@@ -346,12 +346,11 @@ const expectedDogServicePrices = (section, coat) => {
     ['full-groom', coatTariff.full],
     ['hygiene', coatTariff.bath],
     coatTariff.handstripping && ['trimming', coatTariff.handstripping],
-    coatTariff.deshedding && ['deshedding', coatTariff.deshedding],
   ].filter(Boolean);
 };
 
 test('coat groups apply the audited size and coat tariff without public size codes', () => {
-  const serviceOrder = ['puppy-intro', 'full-groom', 'hygiene', 'trimming', 'deshedding'];
+  const serviceOrder = ['puppy-intro', 'full-groom', 'hygiene', 'trimming'];
   const after = runSources([...BASE_SOURCES, ...FCI_SOURCES, 'assets/js/price-page-coat-groups.js', 'assets/js/price-booking.js']);
   const referenceCatalog = after.PriceBookingCatalog.build('ru');
   const expectedCounts = referenceCatalog.categories.map(category => category.breeds.length);
@@ -457,8 +456,9 @@ test('localized additional services keep only the approved tariffs and shared in
     assert.deepEqual(clone(services.map(service => {
       const amount = service.price.match(/\d+/u);
       return amount ? Number(amount[0]) : null;
-    })), [15, 100, 20, 25, 15], `${lang}: additional service tariff indexes drifted`);
-    assert.equal(services.length, 5, `${lang}: only approved additional services remain`);
+    })), [15, 100, 20, 25, 15, 30], `${lang}: additional service tariff indexes drifted`);
+    assert.equal(services.length, 6, `${lang}: only approved additional services remain`);
     assert.ok(services.every(service => !/(?:Trimmen|Hand stripping|Тримминг|Тримінг)/u.test(service.label)));
+    assert.match(services[5].label, /(?:Express|Экспресс|Експрес)/u);
   }
 });

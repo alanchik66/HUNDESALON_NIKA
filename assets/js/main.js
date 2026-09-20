@@ -3,6 +3,19 @@
  * Shared header, language navigation, and weather widget bootstrap live in site-shell.js.
  */
 document.addEventListener('DOMContentLoaded', () => {
+  // Source previews and production pages share the same assistant launcher.
+  // Production injects these assets at build time; do not load a second copy.
+  if (!document.querySelector('link[href*="/ai-chat.css"]')) {
+    const chatStyles = document.createElement('link');
+    chatStyles.rel = 'stylesheet';
+    chatStyles.href = '/assets/css/ai-chat.css';
+    document.head.appendChild(chatStyles);
+  }
+  if (!document.querySelector('script[src*="/ai-chat.js"]')) {
+    const chatScript = document.createElement('script');
+    chatScript.src = '/assets/js/ai-chat.js';
+    document.head.appendChild(chatScript);
+  }
   const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
   const isCoarsePointer = window.matchMedia?.('(hover: none), (pointer: coarse)')?.matches ?? false;
   const isLowPowerDevice =
@@ -145,6 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
     bodyChildren.forEach(node => {
       if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'SCRIPT') return;
       if (node.nodeType === Node.ELEMENT_NODE && node.id === 'booking-modal') return;
+      // Fixed scroll controls must share the page scrollbar's outer stacking context.
+      if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('price-scroll-controls')) return;
       root.appendChild(node);
     });
 
@@ -157,6 +172,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return root;
   })();
+
+  // Shared page navigation: available on every locale and page, not only the price list.
+  const lang = document.documentElement.lang.slice(0, 2);
+  const scrollLabels = {
+    ru: ['В начало страницы', 'В конец страницы'],
+    uk: ['На початок сторінки', 'У кінець сторінки'],
+    de: ['Zum Seitenanfang', 'Zum Seitenende'],
+    en: ['Back to top', 'Go to bottom'],
+  }[lang] || ['Back to top', 'Go to bottom'];
+  const scrollControls = document.createElement('div');
+  scrollControls.className = 'price-scroll-controls';
+  scrollControls.innerHTML = scrollLabels.map((label, index) =>
+    `<button type="button" data-price-scroll="${index ? 'bottom' : 'top'}" aria-label="${label}" title="${label}"><span class="site-icon-arrow" aria-hidden="true"></span></button>`
+  ).join('');
+  document.body.appendChild(scrollControls);
+  let scrollControlFrame = 0;
+  let observedScrollTrack = null;
+  const scrollTrackObserver = new ResizeObserver(() => alignScrollControls());
+  const alignScrollControls = () => {
+    if (scrollControlFrame) return;
+    scrollControlFrame = requestAnimationFrame(() => {
+      scrollControlFrame = 0;
+      const track = document.querySelector('.custom-scrollbar-track--page');
+      if (!track) return;
+      if (observedScrollTrack !== track) {
+        scrollTrackObserver.disconnect();
+        scrollTrackObserver.observe(track);
+        observedScrollTrack = track;
+      }
+      const rect = track.getBoundingClientRect();
+      if (rect.height) scrollControls.style.top = `${rect.top + rect.height / 2}px`;
+    });
+  };
+  window.addEventListener('resize', alignScrollControls, { passive: true });
+  document.addEventListener('scroll', alignScrollControls, { capture: true, passive: true });
+  window.addEventListener('load', alignScrollControls, { once: true });
+  alignScrollControls();
+  scrollControls.addEventListener('click', event => {
+    const button = event.target.closest('[data-price-scroll]');
+    if (!button) return;
+    const scroller = document.querySelector('.site-scroll-root') || document.scrollingElement;
+    if (!scroller) return;
+    scroller.scrollTo({
+      top: button.dataset.priceScroll === 'top' ? 0 : scroller.scrollHeight,
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    });
+  });
 
   const scrollActivityTimers = new WeakMap();
   const scrollActivityFadeDelay = prefersReducedMotion ? 220 : 900;
@@ -937,8 +999,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const hero = document.querySelector('.hero');
 
   let activeMusicPanel = null;
+  let socialPickerOpenFrame = null;
+  let socialPanelOpenFrame = null;
+  let socialIconsOpenFrame = null;
 
   const closeSocialIconsUI = () => {
+    if (socialIconsOpenFrame !== null) {
+      cancelAnimationFrame(socialIconsOpenFrame);
+      socialIconsOpenFrame = null;
+    }
     if (!socialIconsToggle || !socialIconsList) return;
     socialIconsToggle.setAttribute('aria-expanded', 'false');
     socialIconsToggle.classList.remove('is-open');
@@ -958,6 +1027,14 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const closeAllMusicUI = () => {
+    if (socialPickerOpenFrame !== null) {
+      cancelAnimationFrame(socialPickerOpenFrame);
+      socialPickerOpenFrame = null;
+    }
+    if (socialPanelOpenFrame !== null) {
+      cancelAnimationFrame(socialPanelOpenFrame);
+      socialPanelOpenFrame = null;
+    }
     if (socialPlayerToggle) {
       socialPlayerToggle.classList.remove('is-open');
       socialPlayerToggle.setAttribute('aria-expanded', 'false');
@@ -1015,7 +1092,9 @@ document.addEventListener('DOMContentLoaded', () => {
     panel.setAttribute('aria-hidden', 'false');
     activateLazyIframe(panel);
     positionPanel(panel);
-    requestAnimationFrame(() => {
+    socialPanelOpenFrame = requestAnimationFrame(() => {
+      socialPanelOpenFrame = null;
+      if (activeMusicPanel !== panel || panel.hidden) return;
       panel.classList.add('is-open');
       positionPanel(panel);
     });
@@ -1038,7 +1117,11 @@ document.addEventListener('DOMContentLoaded', () => {
         socialServicePicker.setAttribute('aria-hidden', 'false');
         socialPlayerToggle.setAttribute('aria-expanded', 'true');
         socialPlayerToggle.classList.add('is-open');
-        requestAnimationFrame(() => socialServicePicker.classList.add('is-open'));
+        socialPickerOpenFrame = requestAnimationFrame(() => {
+          socialPickerOpenFrame = null;
+          if (socialServicePicker.hidden || socialPlayerToggle.getAttribute('aria-expanded') !== 'true') return;
+          socialServicePicker.classList.add('is-open');
+        });
       } else {
         openServicePanel(socialSpotifyPanel);
       }
@@ -1098,7 +1181,9 @@ document.addEventListener('DOMContentLoaded', () => {
         socialIconsToggle.classList.add('is-open');
         socialIconsList.hidden = false;
         socialIconsList.setAttribute('aria-hidden', 'false');
-        requestAnimationFrame(() => {
+        socialIconsOpenFrame = requestAnimationFrame(() => {
+          socialIconsOpenFrame = null;
+          if (socialIconsList.hidden || socialIconsToggle.getAttribute('aria-expanded') !== 'true') return;
           socialIconsList.classList.add('is-open');
         });
       }
@@ -1115,6 +1200,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (event.key === 'Escape') closeSocialIconsUI();
     });
   }
+
+  /* Keep the two header icon groups mutually exclusive. The service picker
+     has a high stacking level, so leaving it open while crossing to the
+     social links can place an invisible animated layer over later pointer
+     targets at some viewport widths. */
+  const socialPlayerWrap = socialPlayerToggle?.closest('.social-player-wrap');
+  socialPlayerWrap?.addEventListener('pointerenter', closeSocialIconsUI);
+  socialPlayerWrap?.addEventListener('focusin', closeSocialIconsUI);
+  document.querySelectorAll('.social-icons-wrap, .social-icons--desktop, #social-icons-list').forEach(region => {
+    region.addEventListener('pointerenter', closeAllMusicUI);
+    region.addEventListener('focusin', closeAllMusicUI);
+  });
 
   [pageHeader, pageTopRow, socialBar].filter(Boolean).forEach(element => {
     element.addEventListener('transitionend', () => {
@@ -1348,6 +1445,39 @@ document.addEventListener('DOMContentLoaded', () => {
   let ticking = false;
   let navProgressBar = null;
 
+  if (pageHeader) {
+    const revealHeader = document.createElement('button');
+    const revealLabels = {
+      ru: 'Показать главное меню',
+      uk: 'Показати головне меню',
+      de: 'Hauptmenü anzeigen',
+      en: 'Show main menu',
+    };
+    const revealLabel = revealLabels[document.documentElement.lang] || revealLabels.en;
+    revealHeader.type = 'button';
+    revealHeader.className = 'header-reveal-control';
+    revealHeader.setAttribute('aria-label', revealLabel);
+    revealHeader.title = revealLabel;
+    const revealHint = document.createElement('span');
+    revealHint.className = 'header-reveal-control__hint';
+    revealHint.setAttribute('aria-hidden', 'true');
+    const shortLabels = { ru: 'Навигационное меню', uk: 'Навігаційне меню', de: 'Navigationsmenü', en: 'Navigation menu' };
+    const hintText = document.createElement('span');
+    hintText.textContent = shortLabels[document.documentElement.lang] || shortLabels.en;
+    revealHint.appendChild(hintText);
+    const arrow = document.createElement('span');
+    arrow.className = 'site-icon-arrow';
+    arrow.setAttribute('aria-hidden', 'true');
+    revealHint.appendChild(arrow);
+    revealHeader.appendChild(revealHint);
+    revealHeader.addEventListener('click', () => {
+      lastScroll = scrollRoot.scrollTop;
+      document.body.classList.remove('hide-header');
+      pageHeader.querySelector('a[href], button')?.focus({ preventScroll: true });
+    });
+    document.body.appendChild(revealHeader);
+  }
+
   const handleScroll = () => {
     const current = scrollRoot.scrollTop;
     const delta = current - lastScroll;
@@ -1370,6 +1500,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!shouldAutoHideHeader || current <= 24) {
       document.body.classList.remove('hide-header');
     } else if (delta > downDeltaThreshold && current > heroHideOffset) {
+      closeAllMusicUI();
+      closeSocialIconsUI();
       document.body.classList.add('hide-header');
     } else if (current < heroRevealOffset) {
       document.body.classList.remove('hide-header');
@@ -1658,109 +1790,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ЕДИНЫЙ rAF цикл для ВСЕХ точек — максимально плавно */
   const allTouchPoints = [];
-  const plasmaGlobes = new Set();
   let touchRaf = 0;
   const now = () => performance.now();
 
-  const mountPlasmaGlobe = (link, layer) => {
-    layer.classList.add('nav-plasma--globe');
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 100 100');
-    svg.setAttribute('preserveAspectRatio', 'none');
-    svg.setAttribute('aria-hidden', 'true');
-    const paths = Array.from({ length: 9 }, () => {
-      const path = document.createElementNS(svg.namespaceURI, 'path');
-      svg.appendChild(path);
-      return path;
-    });
-    const core = document.createElementNS(svg.namespaceURI, 'circle');
-    core.setAttribute('cx', '50');
-    core.setAttribute('cy', '50');
-    core.setAttribute('r', '2');
-    core.classList.add('nav-plasma-core');
-    svg.appendChild(core);
-    const contact = document.createElementNS(svg.namespaceURI, 'circle');
-    contact.setAttribute('r', '2.5');
-    contact.classList.add('nav-plasma-contact');
-    svg.appendChild(contact);
-    layer.appendChild(svg);
-    const globe = { paths, visible: false, pointer: null, frame: 0, phase: Math.random() * 10 };
-    plasmaGlobes.add(globe);
-    const observer = new IntersectionObserver(entries => {
-      globe.visible = entries[0].isIntersecting;
-      if (globe.visible) startTouchLoop();
-    });
-    observer.observe(link);
-    const signal = layer._pointerEvents.signal;
-    link.addEventListener('pointermove', event => {
-      const rect = link.getBoundingClientRect();
-      globe.pointer = [
-        Math.max(0, Math.min(100, (event.clientX - rect.left) / rect.width * 100)),
-        Math.max(0, Math.min(100, (event.clientY - rect.top) / rect.height * 100)),
-      ];
-      contact.setAttribute('cx', globe.pointer[0].toFixed(2));
-      contact.setAttribute('cy', globe.pointer[1].toFixed(2));
-      layer.classList.add('is-attracted');
-    }, { signal });
-    link.addEventListener('pointerleave', () => {
-      globe.pointer = null;
-      layer.classList.remove('is-attracted');
-    }, { signal });
-    layer._disposeGlobe = () => {
-      observer.disconnect();
-      plasmaGlobes.delete(globe);
-    };
-    startTouchLoop();
-  };
-
-  // Smooth random targets keep each filament independent without abrupt jumps.
-  const plasmaNoise = (time, seed) => {
-    const step = Math.floor(time);
-    const fraction = time - step;
-    const blend = fraction * fraction * (3 - 2 * fraction);
-    const sample = value => {
-      const random = Math.sin(value * 127.1 + seed * 311.7) * 43758.5453;
-      return (random - Math.floor(random)) * 2 - 1;
-    };
-    return sample(step) * (1 - blend) + sample(step + 1) * blend;
-  };
-
-  const drawPlasmaGlobe = (globe, ts) => {
-    if (ts - globe.frame < 32) return;
-    globe.frame = ts;
-    const t = ts / 2000 + globe.phase;
-    globe.paths.forEach((path, index) => {
-      const seed = globe.phase + index * 17;
-      const angle = index * Math.PI * 2 / globe.paths.length + plasmaNoise(t * 0.6, seed) * 1.2;
-      const attracted = globe.pointer && index < 4;
-      const end = attracted ? globe.pointer : [50 + 53 * Math.cos(angle), 50 + 53 * Math.sin(angle)];
-      const dx = end[0] - 50;
-      const dy = end[1] - 50;
-      const length = Math.hypot(dx, dy) || 1;
-      const points = Array.from({ length: 9 }, (_, step) => {
-        const fraction = step / 8;
-        const wave = Math.sin(Math.PI * fraction) * (
-          plasmaNoise(t * 2.1 + fraction * 9, seed + 1) * 4 +
-          plasmaNoise(t * 3.7 - fraction * 13, seed + 2) * 2
-        );
-        return [50 + dx * fraction - dy / length * wave, 50 + dy * fraction + dx / length * wave];
-      });
-      let d = 'M50 50';
-      for (let i = 1; i < points.length - 1; i++) {
-        const point = points[i];
-        const next = points[i + 1];
-        d += ` Q${point[0].toFixed(2)} ${point[1].toFixed(2)} ${((point[0] + next[0]) / 2).toFixed(2)} ${((point[1] + next[1]) / 2).toFixed(2)}`;
-      }
-      d += ` T${end[0].toFixed(2)} ${end[1].toFixed(2)}`;
-      if (!attracted && index % 2 === 0) {
-        const fork = points[5];
-        const spread = plasmaNoise(t * 0.9, seed + 3) * 7;
-        d += ` M${fork[0].toFixed(2)} ${fork[1].toFixed(2)} Q${(points[6][0] - dy / length * spread).toFixed(2)} ${(points[6][1] + dx / length * spread).toFixed(2)} ${(end[0] - dy / length * spread).toFixed(2)} ${(end[1] + dx / length * spread).toFixed(2)}`;
-      }
-      path.setAttribute('d', d);
-      path.style.opacity = String(attracted ? 0.95 : 0.5 + plasmaNoise(t * 1.8, seed + 4) * 0.14);
-    });
-  };
 
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) startTouchLoop();
@@ -1772,11 +1804,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     let hasActivePoints = false;
-    plasmaGlobes.forEach(globe => {
-      if (!globe.visible) return;
-      hasActivePoints = true;
-      drawPlasmaGlobe(globe, ts);
-    });
     for (let i = 0; i < allTouchPoints.length; i++) {
       const el = allTouchPoints[i];
       if (!el._active) continue;
@@ -1886,7 +1913,9 @@ document.addEventListener('DOMContentLoaded', () => {
     link.classList.contains('active') ||
     link.getAttribute('aria-current') === 'page' ||
     link.getAttribute('aria-current') === 'true' ||
-    link.getAttribute('aria-pressed') === 'true';
+    link.getAttribute('aria-pressed') === 'true' ||
+    link.getAttribute('aria-selected') === 'true' ||
+    Boolean(link.querySelector('input:checked'));
 
   const removeTouchPoints = root => {
     root?._touchResizeObserver?.disconnect();
@@ -1906,13 +1935,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const pointerEvents = new window.AbortController();
     activePlasma._pointerEvents = pointerEvents;
     activePlasma.className = cta ? 'nav-plasma--active nav-plasma--cta' : 'nav-plasma--active';
+    activePlasma.setAttribute('aria-hidden', 'true');
     link.appendChild(activePlasma);
 
     if (!sitePerfHeavy) return;
-    if (link.hasAttribute('data-price-section-action')) {
-      mountPlasmaGlobe(link, activePlasma);
-      return;
-    }
 
     const syncTouchBounds = (width, height) => {
       activePlasma._touchWidth = width;
@@ -2044,7 +2070,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const activePlasma = link.querySelector('.nav-plasma--active');
     if (!activePlasma) return;
     activePlasma._pointerEvents?.abort();
-    activePlasma._disposeGlobe?.();
     removeTouchPoints(activePlasma);
     activePlasma.remove();
   };
@@ -2065,6 +2090,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const bindNavPill = link => {
     if (link.dataset.navPillBound === '1') return;
     link.dataset.navPillBound = '1';
+    if (link.matches('.btn-neon, .filter-btn')) {
+      link.dataset.navPill ||= 'shared-control';
+    }
 
     const isFilterPill = link.classList.contains('filter-btn');
     const isOnlineOrderPill = link.classList.contains('online-order-pill');
@@ -2078,7 +2106,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!prefersReducedMotion && (!isCoarsePointer || window.innerWidth >= 768)) {
       link.addEventListener('mouseenter', event => {
-        if (link.hasAttribute('data-price-section-action') && !isNavPillActive(link)) return;
         if (!link.querySelector('.nav-plasma--active')) {
           mountActivePlasma(link, { cta: isOnlineOrderPill, pointerEvent: event });
         }
@@ -2092,7 +2119,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     link.addEventListener('focus', () => {
-      if (link.hasAttribute('data-price-section-action') && !isNavPillActive(link)) return;
       mountActivePlasma(link, { cta: isOnlineOrderPill });
     });
     link.addEventListener('blur', () => {
@@ -2102,8 +2128,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     link.addEventListener('click', event => {
+      if (link.matches(':disabled, [aria-disabled="true"]')) return;
       if (isFilterPill) {
-        playNavPillClickFlash(link, { cta: link.hasAttribute('data-price-section-action') });
+        playNavPillClickFlash(link);
         return;
       }
 
@@ -2127,7 +2154,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const navPillSelector =
-    '.nav-main > a, .nav-main > .dropdown > a, .before-after-filters.nav-main > .filter-btn, #booking-modal .nav-main > .filter-btn, .select-btn-wrapper.nav-main > .filter-btn, .online-order-pill, [data-nav-pill]';
+    '.nav-main > a, .nav-main > .dropdown > a, .filter-btn, .btn-neon, .online-order-pill, [data-nav-pill]';
 
   document.querySelectorAll(navPillSelector).forEach(link => {
     if (link.closest('.nav-gallery-dropdown')) return;
@@ -2137,9 +2164,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.HundesalonNavPill = {
     scan(root = document) {
       root
-        .querySelectorAll(
-          '.before-after-filters.nav-main > .filter-btn, #booking-modal .nav-main > .filter-btn, .select-btn-wrapper.nav-main > .filter-btn, .online-order-pill, [data-nav-pill]'
-        )
+        .querySelectorAll(navPillSelector)
         .forEach(bindNavPill);
     },
     activate(link) {

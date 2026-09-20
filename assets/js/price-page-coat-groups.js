@@ -21,7 +21,6 @@
       doubleSummary: 'Уход за остевой шерстью и подшёрстком с учётом структуры шерсти.',
       care: 'Комплексный уход',
       bath: 'Купание + гигиенический уход',
-      deshedding: 'Экспресс-линька / удаление подшёрстка',
       handstripping: 'Тримминг',
     },
     de: {
@@ -37,7 +36,6 @@
       doubleSummary: 'Pflege von Deckhaar und Unterwolle passend zur Fellstruktur.',
       care: 'Komplettpflege',
       bath: 'Baden + Hygienepflege',
-      deshedding: 'Express-Entwollung / Unterwolle entfernen',
       handstripping: 'Trimmen',
     },
     en: {
@@ -53,7 +51,6 @@
       doubleSummary: 'Care for the outer coat and undercoat, tailored to the coat structure.',
       care: 'Full care',
       bath: 'Bath + hygiene care',
-      deshedding: 'Express deshedding / undercoat removal',
       handstripping: 'Trimming',
     },
     uk: {
@@ -69,7 +66,6 @@
       doubleSummary: 'Догляд за остьовою шерстю та підшерстям з урахуванням структури шерсті.',
       care: 'Комплексний догляд',
       bath: 'Купання + гігієнічний догляд',
-      deshedding: 'Експрес-линька / видалення підшерстка',
       handstripping: 'Тримінг',
     },
   };
@@ -158,7 +154,7 @@
     });
   }
 
-  const serviceOrder = ['puppy-intro', 'full-groom', 'hygiene', 'trimming', 'deshedding'];
+  const serviceOrder = ['puppy-intro', 'full-groom', 'hygiene', 'trimming'];
   const priceMatrix = {
     small: {
       puppy: 50,
@@ -166,7 +162,7 @@
       wire: { full: 80, bath: 60, handstripping: 60 },
       long: { full: 80, bath: 60 },
       curly: { full: 80, bath: 60 },
-      double: { full: 80, bath: 60, deshedding: { amount: 30, minutes: 30 } },
+      double: { full: 80, bath: 60 },
     },
     medium: {
       puppy: 50,
@@ -174,7 +170,7 @@
       wire: { full: 90, bath: 70, handstripping: 60 },
       long: { full: 90, bath: 70 },
       curly: { full: 100, bath: 80 },
-      double: { full: 90, bath: 75, deshedding: { amount: 30, minutes: 30 } },
+      double: { full: 90, bath: 75 },
     },
     large: {
       puppy: 50,
@@ -182,7 +178,7 @@
       wire: { full: 120, bath: 90, handstripping: 60 },
       long: { full: 120, bath: 90 },
       curly: { full: 120, bath: 90 },
-      double: { full: 120, bath: 90, deshedding: { amount: 30, minutes: 30 } },
+      double: { full: 120, bath: 90 },
     },
     giant: {
       puppy: 50,
@@ -190,14 +186,11 @@
       wire: { full: 150, bath: 105, handstripping: 60 },
       long: { full: 150, bath: 110 },
       curly: { full: 150, bath: 110 },
-      double: { full: 150, bath: 120, deshedding: { amount: 30, minutes: 30 } },
+      double: { full: 150, bath: 120 },
     },
   };
   const priceText = (lang, value) => ({
     [lang]: lang === 'en' ? `from €${value}` : lang === 'uk' ? `від ${value} €` : lang === 'de' ? `ab ${value} €` : `от ${value} €`,
-  });
-  const timedPriceText = (lang, { amount, minutes }) => ({
-    [lang]: lang === 'en' ? `€${amount} / ${minutes} min` : lang === 'uk' ? `${amount} € / ${minutes} хв.` : lang === 'de' ? `${amount} € / ${minutes} Min.` : `${amount} € / ${minutes} мин.`,
   });
   const hourlyPriceText = (lang, amount) => ({
     [lang]: lang === 'en' ? `€${amount} / hour` : lang === 'uk' ? `${amount} € / год.` : lang === 'de' ? `${amount} € / Std.` : `${amount} € / час`,
@@ -208,7 +201,6 @@
     return [
       { key: 'full-groom', label: { [lang]: text.care }, price: priceText(lang, coatTariff.full) },
       { key: 'hygiene', label: { [lang]: text.bath }, price: priceText(lang, coatTariff.bath) },
-      coatTariff.deshedding && { key: 'deshedding', label: { [lang]: text.deshedding }, price: timedPriceText(lang, coatTariff.deshedding) },
       coatTariff.handstripping && { key: 'trimming', label: { [lang]: text.handstripping }, price: hourlyPriceText(lang, coatTariff.handstripping) },
       { key: 'puppy-intro', label: { [lang]: catalog.serviceLabels.puppyIntro[lang] }, price: priceText(lang, tariff.puppy) },
     ].filter(Boolean);

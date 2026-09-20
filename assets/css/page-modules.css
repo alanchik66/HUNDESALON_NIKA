@@ -262,16 +262,26 @@ body.price-page .price-breed-photo__source {
 }
 
 /* Services overview: wide, compact cards with calm editorial typography. */
+body.services-page .services.section {
+  padding-block: 0 20px;
+}
+
 body.services-page .services > .container {
   width: min(100%, 1640px);
   max-width: none;
+  display: grid;
+  gap: 20px;
+}
+
+body.services-page .services > .container > :is(.section-title, .section-center) {
+  margin: 0;
 }
 
 body.services-page .services-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-auto-rows: 1fr;
   align-items: stretch;
-  gap: clamp(30px, 2.4vw, 46px);
+  gap: 20px;
 }
 
 body.services-page .service-card {
@@ -280,7 +290,7 @@ body.services-page .service-card {
   justify-content: flex-start;
   height: 100%;
   min-height: 0;
-  padding: clamp(20px, 1.55vw, 26px);
+  padding: 20px;
   overflow: clip;
   transform: translate3d(0, 0, 0);
   transition:
@@ -321,7 +331,7 @@ body.services-page .service-card .price {
   body.services-page .service-card:hover {
     z-index: 2;
     border-color: rgb(221 183 95 / 58%);
-    transform: translate3d(0, -9px, 0) scale(1.012);
+    transform: none;
     box-shadow:
       0 26px 54px rgb(0 0 0 / 38%),
       0 0 0 1px rgb(214 174 82 / 18%),
@@ -1610,6 +1620,17 @@ body.price-page .price-page-hero[data-price-hero] .price-breed-search__filter[hi
   font-size: 1.3rem;
   line-height: 1.3;
   text-wrap: pretty;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* Grid children must be allowed to shrink before long localized text wraps. */
+body.price-page .price-card,
+body.price-page .price-card__top {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .price-card__summary {
@@ -3485,7 +3506,7 @@ body.booking-modal-open {
   text-transform: uppercase;
 }
 
-#booking-modal .booking-selection__field select {
+#booking-modal .booking-selection__field :is(select, input[type='search']) {
   width: 100%;
   min-height: 46px;
   padding: 0.65rem 0.8rem;
@@ -3499,7 +3520,7 @@ body.booking-modal-open {
   text-transform: none;
 }
 
-#booking-modal .booking-selection__field select:focus-visible {
+#booking-modal .booking-selection__field :is(select, input[type='search']):focus-visible {
   outline: 2px solid var(--gold, #c9a84c);
   outline-offset: 2px;
 }
@@ -4505,12 +4526,26 @@ body.booking-modal-open {
   padding: 18px;
 }
 
-.testimonial-card img {
+.testimonial-card img,
+.testimonial-card__avatar {
   width: 72px;
   height: 72px;
-  object-fit: cover;
   border: 1px solid rgb(236 205 138 / 40%);
   border-radius: 50%;
+}
+
+.testimonial-card img {
+  object-fit: cover;
+}
+
+.testimonial-card__avatar {
+  display: grid;
+  place-items: center;
+  color: #f3d58f;
+  background: linear-gradient(145deg, rgb(27 78 57 / 0.96), rgb(6 24 17 / 0.98));
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .testimonial-card__text,
@@ -4541,14 +4576,33 @@ body.booking-modal-open {
 .newsletter-card {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-  gap: 24px;
+  gap: 20px;
   align-items: center;
-  padding: clamp(22px, 4vw, 34px);
+  padding: clamp(18px, 2vw, 24px);
+}
+
+.newsletter-card .section-title {
+  margin: 8px 0 12px;
+  padding: 0;
+  font-size: clamp(1.35rem, 1.7vw, 2rem);
+  line-height: 1.25;
+  letter-spacing: 0.025em;
+  text-align: start;
+}
+
+.newsletter-card .section-title::after {
+  display: none;
+}
+
+.newsletter-card p {
+  text-align: start;
+  font-size: 1rem;
+  line-height: 1.45;
 }
 
 .newsletter-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
 }
 
@@ -4564,7 +4618,7 @@ body.booking-modal-open {
   border: 0;
 }
 
-.newsletter-form input {
+.newsletter-form input[type='email'] {
   min-height: 48px;
   color: #fff7e8;
   background: #ffffff14;
@@ -4574,7 +4628,7 @@ body.booking-modal-open {
 }
 
 .newsletter-form .btn-neon {
-  min-height: 38px;
+  min-height: 44px;
   border: 0;
 }
 
@@ -4628,7 +4682,11 @@ body.booking-modal-open {
 }
 
 .newsletter-form__consent input {
-  width: auto;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  accent-color: #c9a84c;
   margin-top: 0.2rem;
   flex-shrink: 0;
 }
@@ -5787,7 +5845,7 @@ body .btn-read:hover .site-icon-arrow-right {
   position: absolute;
   top: 0;
   left: 50%;
-  width: 4px;
+  width: 1px;
   height: 100%;
   background: linear-gradient(
     to bottom,
@@ -5803,7 +5861,7 @@ body .btn-read:hover .site-icon-arrow-right {
 }
 
 .before-after-slider::before {
-  content: '◀ ▶';
+  content: '‹ ›';
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5812,22 +5870,24 @@ body .btn-read:hover .site-icon-arrow-right {
   left: 50%;
   width: 44px;
   height: 44px;
-  background: var(--accent-gold);
+  background: rgb(10 35 26 / 0.22);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  box-shadow: 0 0 24px rgba(198, 161, 91, 0.6);
+  box-shadow: 0 3px 12px rgb(0 0 0 / 0.2);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
-  font-size: 14px;
-  color: var(--bg-dark);
-  font-weight: 700;
+  font-size: 28px;
+  color: #ffe3a0;
+  font-weight: 400;
   letter-spacing: 2px;
 }
 
 .before-after-slider:hover::before {
   transform: translate(-50%, -50%) scale(1.1);
-  box-shadow: 0 0 32px rgba(198, 161, 91, 0.8);
+  box-shadow: 0 3px 16px rgb(201 168 76 / 0.25);
 }
 
 .before-after-label {
@@ -5883,7 +5943,7 @@ body .btn-read:hover .site-icon-arrow-right {
 
 .before-after-card {
   position: relative;
-  aspect-ratio: 4/3;
+  aspect-ratio: auto;
   border-radius: 28px;
   overflow: hidden;
   background: var(--glass-bg);
@@ -5925,12 +5985,9 @@ body .btn-read:hover .site-icon-arrow-right {
 }
 
 .before-after-card-info {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   padding: 16px;
-  background: transparent;
+  background: #071b13;
   z-index: 15;
   color: white;
   text-shadow: none;
@@ -5955,9 +6012,15 @@ body .btn-read:hover .site-icon-arrow-right {
 .before-after-filters.nav-main {
   grid-column: auto;
   place-self: auto;
-  margin: 0 auto 24px;
+  margin: 20px auto;
   width: 100%;
   justify-content: center;
+}
+
+.before-after-empty {
+  grid-column: 1 / -1;
+  padding: 24px;
+  text-align: center;
 }
 
 .before-after-filters.nav-main > .filter-btn {
@@ -5976,7 +6039,7 @@ body .btn-read:hover .site-icon-arrow-right {
   .before-after-slider::before {
     width: 52px;
     height: 52px;
-    font-size: 12px;
+    font-size: 28px;
   }
 
   .gallery-before-after-grid {
@@ -6018,7 +6081,26 @@ body.light .before-after-label {
 }
 
 body.light .before-after-slider::before {
-  background: var(--accent-gold-dark);
+  background: rgb(10 35 26 / 0.22);
+}
+
+.before-after-card > .before-after-container {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.before-after-card .before-after-wrapper {
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+}
+
+.before-after-card {
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
 }
 
 /* ── Price-linked promotion --------------------------------------------- */
@@ -6461,6 +6543,9 @@ body.light .before-after-slider::before {
 }
 
 .client-registration-modal {
+  --registration-edge: clamp(12px, 2vw, 24px);
+  box-sizing: border-box;
+  padding: var(--registration-edge);
   z-index: 10002;
 }
 
@@ -6476,8 +6561,8 @@ body.light .before-after-slider::before {
 .client-registration-modal__content {
   position: relative;
   box-sizing: border-box;
-  width: min(100% - 1rem, 1080px);
-  max-height: min(calc(100dvh - 0.9rem), 1080px);
+  width: min(100%, 1080px);
+  max-height: min(calc(100dvh - 2 * var(--registration-edge)), 1080px);
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
@@ -6533,9 +6618,8 @@ body.light .before-after-slider::before {
 }
 
 .client-registration-selection p {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   gap: 0.5rem 1rem;
   margin: 0;
   color: rgb(255 239 209 / 0.72);
@@ -6543,6 +6627,8 @@ body.light .before-after-slider::before {
 }
 
 .client-registration-selection strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--accent-gold);
   text-align: right;
 }
@@ -7196,8 +7282,8 @@ body.price-page .price-size-section__title {
 }
 
 body.price-page .price-card__title {
-  font-size: clamp(1.32rem, 1.1vw + 0.7rem, 1.62rem);
-  line-height: 1.26;
+  font-size: clamp(1.44rem, 1.2vw + 0.72rem, 1.8rem);
+  line-height: 1.23;
 }
 
 body.price-page .price-card__summary {
@@ -7291,7 +7377,7 @@ body.price-page #price-category-modal .price-category-modal__summary {
   }
 
   body.price-page .price-card__title {
-    font-size: clamp(1.22rem, 5vw, 1.45rem);
+    font-size: clamp(1.28rem, 5.2vw, 1.52rem);
   }
 
   body.price-page .price-card__summary {
@@ -7983,6 +8069,64 @@ body.light.price-page main[data-price-page] .price-card__promotion-button {
   background: linear-gradient(145deg, rgb(52 211 153 / 0.07), rgb(255 255 255 / 0.025));
 }
 
+#booking-modal .booking-selection__extras {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgb(201 168 76 / 0.25);
+  border-radius: 16px;
+}
+
+#booking-modal .booking-selection__extras[hidden] {
+  display: none;
+}
+
+#booking-modal .booking-selection__services {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgb(201 168 76 / 0.25);
+  border-radius: 16px;
+}
+
+#booking-modal [data-booking-service-buttons] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 10px;
+}
+
+#booking-modal .booking-selection__service-button {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid rgb(201 168 76 / 0.3);
+  border-radius: 12px;
+  background: rgb(5 25 18 / 0.7);
+  color: var(--accent-gold);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+  cursor: pointer;
+}
+
+#booking-modal .booking-selection__service-button[aria-pressed='true'] {
+  border-color: rgb(201 168 76 / 0.38);
+  background: rgb(201 168 76 / 0.09);
+  box-shadow: none;
+}
+
+#booking-modal .booking-selection__service-button[aria-pressed='true'] .price-category-modal__service-option-check {
+  border-color: transparent;
+  background: transparent url('../images/icons/app-drawer.png') center / 100% no-repeat;
+}
+
+#booking-modal .booking-selection__service-button:focus-visible {
+  outline: 2px solid #e6c875;
+  outline-offset: 2px;
+}
+
 #booking-modal .booking-selection__risk legend {
   padding-inline: 0.28rem;
   color: var(--gold, #c9a84c);
@@ -8037,7 +8181,11 @@ body.light.price-page main[data-price-page] .price-card__promotion-button {
 @media (width >= 660px) {
   #booking-modal .booking-selection__risk {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-items: start;
+    align-items: stretch;
+  }
+
+  #booking-modal .booking-selection__risk .booking-selection__field {
+    grid-template-rows: 1fr auto;
   }
 
   #booking-modal .booking-selection__risk legend,
@@ -8066,7 +8214,7 @@ body.light.price-page main[data-price-page] .price-card__promotion-button {
 }
 
 #booking-modal .modal-content.is-booking-step-1 {
-  width: min(100%, 840px);
+  width: min(100%, 1120px);
   max-height: min(94dvh, 860px);
 }
 
@@ -8115,6 +8263,122 @@ body.light.price-page main[data-price-page] .price-card__promotion-button {
 #booking-modal .booking-selection {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: end;
+}
+
+/* A single, compact type scale for the booking selector and its controls. */
+#booking-modal .booking-selection {
+  font-family: var(--font-body, serif);
+  gap: 16px;
+  padding: 20px;
+}
+
+#booking-modal .booking-selection__field {
+  min-width: 0;
+  font-size: 16px;
+  line-height: 1.3;
+  letter-spacing: 0.015em;
+  text-transform: none;
+}
+
+#booking-modal .booking-selection__field :is(select, input[type='search']) {
+  box-sizing: border-box;
+  height: 48px;
+  min-width: 0;
+  padding: 10px 12px;
+  font: 500 18px / 1.35 var(--font-body, serif);
+}
+
+#booking-modal .booking-selection__field input[type='search'] {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+#booking-modal .booking-selection__field input[type='search']::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+#booking-modal .booking-selection > label:has([data-booking-breed]) {
+  grid-column: 1 / -1;
+}
+
+#booking-modal .booking-selection legend {
+  padding-inline: 6px;
+  font: 600 17px / 1.35 var(--font-body, serif);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+#booking-modal [data-booking-service-buttons] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+}
+
+#booking-modal .booking-selection__service-button {
+  font: 500 18px / 1.35 var(--font-body, serif);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  color: rgb(255 239 209 / 0.86);
+  background: rgb(255 255 255 / 0.035);
+  border-color: rgb(201 168 76 / 0.14);
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px 14px;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+#booking-modal .booking-selection__service-button strong {
+  color: var(--accent-gold);
+  font: inherit;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* Selection controls use the quiet price-dialog treatment, not navigation effects. */
+#booking-modal .booking-selection__service-button > :is(.nav-plasma, .nav-plasma--active) {
+  display: none;
+}
+
+#booking-modal .booking-selection__service-button:hover {
+  border-color: rgb(201 168 76 / 0.38);
+  background: rgb(201 168 76 / 0.09);
+}
+
+#booking-modal .booking-selection__price {
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+#booking-modal :is(.booking-selection__intro, .booking-selection__risk-hint, .booking-selection__timing) {
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+#booking-modal .step-indicator .step {
+  font: 600 18px / 1.3 var(--font-body, serif);
+  min-height: 48px;
+  padding: 10px;
+}
+
+#booking-modal #step-1.booking-step.active > h3 {
+  font-size: 22px;
+  line-height: 1.3;
+  margin: 0 0 16px;
+}
+
+@media (max-width: 640px) {
+  #booking-modal [data-booking-service-buttons],
+  #booking-modal .booking-selection__extras {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #booking-modal .step-indicator .step {
+    font-size: 15px;
+    padding: 8px 6px;
+  }
 }
 
 #booking-modal .booking-selection__intro,
@@ -8196,7 +8460,7 @@ body.light.price-page main[data-price-page] .price-card__promotion-button {
   }
 
   body.price-page .price-card__title {
-    font-size: clamp(1.06rem, 4vw, 1.2rem);
+    font-size: clamp(1.12rem, 4.2vw, 1.3rem);
     line-height: 1.22;
   }
 
@@ -8226,7 +8490,7 @@ body.light.price-page main[data-price-page] .price-card__promotion-button {
   }
 
   body.price-page .price-card__title {
-    font-size: 1.02rem;
+    font-size: 1.1rem;
   }
 
   body.price-page .price-card__price {
@@ -8240,24 +8504,31 @@ body.price-page {
   --price-section-gap: 20px;
   --price-card-grid-gap: var(--price-section-gap);
   --price-card-grid-gap-fifth: 4px;
-  --price-ui-gap: clamp(0.55rem, 0.8vw, 0.78rem);
-  --price-ui-pad: clamp(0.78rem, 1.25vw, 1.08rem);
+  --price-ui-gap: clamp(0.52rem, 0.7vw, 0.7rem);
+  --price-ui-pad: clamp(0.74rem, 1.05vw, 0.96rem);
   --price-modal-pad: clamp(0.72rem, 1.35vw, 1.05rem);
 }
 
 body.price-page main[data-price-page],
 body.price-page .container.page-offset-top {
   box-sizing: border-box;
+  display: grid;
+  gap: var(--price-page-gap);
   width: 100%;
   max-width: 1720px;
+}
+
+body.price-page .price-page-hero[data-price-hero] {
+  align-content: start;
+  min-height: 0;
 }
 
 body.price-page .price-categories-grid[data-price-categories] {
   gap: 0;
 }
 
-body.price-page .price-page > .price-categories-grid[data-price-categories] {
-  margin-top: calc(-1 * var(--price-page-gap));
+body.price-page .container.page-offset-top > .price-categories-grid[data-price-categories] {
+  margin-top: 0;
 }
 
 body.price-page .price-size-section,
@@ -8305,7 +8576,7 @@ body.price-page .price-size-section:is(
   [data-price-section='large'],
   [data-price-section='giant']
 ) .price-size-section__cards {
-  grid-template-columns: repeat(var(--price-dog-columns), minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
 }
 
 body.price-page .price-section-navigation {
@@ -8417,6 +8688,16 @@ body.price-page .price-size-section__category-grid {
 }
 
 @media (min-width: 1200px) {
+  /* Both animal groups are visible together; avoid a redundant local jump. */
+  body.price-page .price-size-section[data-price-section='cats-animals'] > .price-section-navigation {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  body.price-page .price-size-section[data-price-section='cats-animals']
+    > .price-section-navigation [data-price-section-action='smallAnimals'] {
+    display: none;
+  }
+
   body.price-page .price-size-section[data-price-section='cats-animals'] .price-size-section__category-grid {
     width: calc(80% - var(--price-card-grid-gap-fifth));
     margin-inline: auto;
@@ -8437,23 +8718,23 @@ body.price-page .price-size-section__category-grid {
   }
 }
 
-body.price-page main[data-price-page] .price-card {
+body.price-page .container.page-offset-top .price-card {
   gap: var(--price-ui-gap);
   padding: var(--price-ui-pad);
 }
 
-body.price-page main[data-price-page] .price-card.price-card--breeds-open > .price-card__top {
+body.price-page .container.page-offset-top .price-card.price-card--breeds-open > .price-card__top {
   z-index: 1001;
   transform: translateZ(32px);
 }
 
-body.price-page main[data-price-page] .price-card.price-card--breeds-open > .price-card__details,
-body.price-page main[data-price-page] .price-card.price-card--breeds-open > .price-card__footer {
+body.price-page .container.page-offset-top .price-card.price-card--breeds-open > .price-card__details,
+body.price-page .container.page-offset-top .price-card.price-card--breeds-open > .price-card__footer {
   z-index: 0;
   transform: translateZ(0);
 }
 
-body.price-page main[data-price-page] .price-card.price-card--breeds-open .price-card__breed-menu {
+body.price-page .container.page-offset-top .price-card.price-card--breeds-open .price-card__breed-menu {
   z-index: 1002;
 }
 
@@ -8469,13 +8750,13 @@ body.price-page .price-card__meta {
 }
 
 body.price-page .price-card__service-options {
-  gap: 0.42rem;
+  gap: 0.38rem;
 }
 
-body.price-page main[data-price-page] .price-card__service-option {
-  min-height: 46px;
+body.price-page .container.page-offset-top .price-card__service-option {
+  min-height: 44px;
   gap: 0.55rem;
-  padding: 0.48rem 0.62rem;
+  padding: 0.42rem 0.58rem;
 }
 
 body.price-page .price-card__breed-menu,
@@ -8597,8 +8878,69 @@ body.price-page #price-category-modal .price-category-modal__selection {
   backdrop-filter: blur(18px) saturate(1.18);
 }
 
-body.price-page #price-category-modal .price-category-modal__selection > .price-category-modal__header {
+body.price-page #price-category-modal .price-category-modal__context {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #0c251b, #040f0b);
+  box-shadow: 0 8px 18px rgb(0 0 0 / 0.2);
+}
+
+body.price-page #price-category-modal .price-category-modal__context > .price-category-modal__header {
   grid-area: auto;
+  padding-bottom: 0;
+}
+
+body.price-page #price-category-modal .price-category-modal__context .section-title {
+  margin: 0;
+  font-size: clamp(1.05rem, 1.5vw, 1.5rem);
+}
+
+body.price-page #price-category-modal .price-category-modal__context .section-title::after {
+  display: none;
+}
+
+body.price-page #price-category-modal .price-category-modal__context .price-category-modal__summary {
+  margin: 0;
+  font-size: 0.85rem !important;
+  line-height: 1.25;
+}
+
+body.price-page #price-category-modal .price-category-modal__context .section-kicker,
+body.price-page #price-category-modal .price-category-modal__context .price-category-modal__selection-title {
+  font-size: 0.72rem !important;
+  line-height: 1.2;
+}
+
+body.price-page #price-category-modal .price-category-modal__context .price-category-modal__selection-field {
+  gap: 0.25rem;
+  font-size: 0.85rem !important;
+}
+
+body.price-page #price-category-modal .price-category-modal__context .price-category-modal__breed-photo {
+  min-height: 0;
+  padding: 0;
+}
+
+body.price-page #price-category-modal .price-category-modal__context .price-category-modal__selection-header {
+  position: relative;
+  top: auto;
+  margin: 0;
+  padding: 0.35rem;
+  border-radius: 10px;
+  background: transparent;
+  box-shadow: none;
+}
+
+body.price-page #price-category-modal .price-category-modal__context .price-category-modal__breed-photo-media {
+  width: clamp(64px, 7vw, 100px);
+  min-height: 0;
+  height: auto;
+  aspect-ratio: 4 / 3;
 }
 
 body.price-page #price-category-modal .price-category-modal__selection-controls {
@@ -8651,19 +8993,38 @@ body.price-page #price-category-modal .price-category-modal__dental-weight,
 body.price-page #price-category-modal .price-category-modal__calculation,
 body.price-page #price-category-modal .price-category-modal__panel,
 body.price-page #price-category-modal .price-category-modal__service-conditions {
-  gap: 0.5rem;
-  padding: 0.68rem;
+  gap: 0.35rem;
+  padding: 0.5rem;
 }
 
 body.price-page #price-category-modal .price-category-modal__service-options {
-  gap: 0.45rem;
-  margin-top: 0.42rem;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
 }
 
 body.price-page #price-category-modal .price-category-modal__service-option {
-  min-height: 58px;
-  gap: 0.48rem;
-  padding: 0.5rem 0.58rem;
+  min-height: 44px;
+  gap: 0.4rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 1rem !important;
+  line-height: 1.2;
+  border-radius: 11px;
+}
+
+body.price-page #price-category-modal .price-category-modal__service-option > span,
+body.price-page #price-category-modal .price-category-modal__service-option strong {
+  font-size: inherit !important;
+  line-height: inherit;
+}
+
+body.price-page #price-category-modal .price-category-modal__service-fieldset legend {
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem !important;
+  line-height: 1.2;
+}
+
+body.price-page #price-category-modal .price-category-modal__service-hint {
+  font-size: 0.875rem !important;
   line-height: 1.25;
 }
 
@@ -8692,7 +9053,7 @@ body.price-page #price-category-modal .price-category-modal__list--breeds li {
 }
 
 .client-registration-modal__header {
-  position: sticky;
+  position: relative;
   top: 0;
   z-index: 40;
   display: grid;
@@ -8776,8 +9137,8 @@ body.price-page #booking-modal .step-indicator {
 @media (max-width: 720px) {
   body.price-page {
     --price-dog-columns: 1;
-    --price-ui-gap: 0.42rem;
-    --price-ui-pad: 0.58rem;
+    --price-ui-gap: 0.38rem;
+    --price-ui-pad: 0.54rem;
     --price-modal-pad: 0.52rem;
   }
 
@@ -8787,7 +9148,7 @@ body.price-page #booking-modal .step-indicator {
 
   body.price-page .price-size-section,
   body.price-page .price-size-section__category {
-    gap: 0;
+    gap: var(--price-section-gap);
   }
 
   body.price-page .price-size-section__cards,
@@ -8795,9 +9156,28 @@ body.price-page #booking-modal .step-indicator {
     gap: 1rem;
   }
 
+  body.price-page .price-size-section[data-price-section='cats-animals'] .price-size-section__heading {
+    min-height: 2.35rem;
+    padding: var(--price-section-gap) 0.1rem 0;
+  }
+
+  body.price-page .price-size-section__heading {
+    padding-block: var(--price-section-gap) 0;
+  }
+
+  body.price-page .price-size-section[data-price-section='cats-animals'] .price-size-section__title {
+    max-width: 100%;
+    font-size: clamp(0.72rem, 3.4vw, 1.05rem);
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    text-wrap: nowrap;
+    overflow-wrap: normal;
+  }
+
   body.price-page .price-section-navigation {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-top: 1rem;
+    margin-top: 0;
   }
 
   body.price-page .price-small-animal-groups {
@@ -8817,12 +9197,12 @@ body.price-page #booking-modal .step-indicator {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  body.price-page main[data-price-page] .price-card {
+  body.price-page .container.page-offset-top .price-card {
     border-radius: 16px;
   }
 
   body.price-page .price-card__mobile-toggle,
-  body.price-page main[data-price-page] .price-card__service-option {
+  body.price-page .container.page-offset-top .price-card__service-option {
     min-height: 44px;
   }
 
@@ -8912,9 +9292,9 @@ body.price-page #booking-modal .step-indicator {
   }
 
   body.price-page #price-category-modal .price-category-modal__service-option {
-    min-height: 50px;
-    padding: 0.42rem 0.48rem;
-    font-size: 0.9rem;
+    min-height: 44px;
+    padding: 0.3rem 0.45rem;
+    font-size: 0.95rem !important;
   }
 
   body.price-page #price-category-modal .site-select__trigger,
@@ -8925,8 +9305,8 @@ body.price-page #booking-modal .step-indicator {
 
   .client-registration-modal__content {
     --client-modal-pad: 0.55rem;
-    width: calc(100% - 0.56rem);
-    max-height: calc(100dvh - 0.56rem);
+    width: 100%;
+    max-height: calc(100dvh - 2 * var(--registration-edge));
     border-radius: 14px;
   }
 
@@ -8934,6 +9314,15 @@ body.price-page #booking-modal .step-indicator {
     gap: 0.16rem;
     margin-bottom: 0.48rem;
     padding: 0.48rem 2.9rem 0.52rem var(--client-modal-pad);
+  }
+
+  .client-registration-selection p {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.2rem;
+  }
+
+  .client-registration-selection strong {
+    text-align: left;
   }
 
   .client-registration-modal__header .section-title {
@@ -9208,21 +9597,326 @@ body.price-page .price-category-modal__breed-photo a {
   }
 }
 
-/* Keep compact dog sections fully visible after category navigation on
-   wide, height-constrained desktop viewports. */
-@media (min-width: 1200px) and (max-height: 900px) {
+/* Use the search frame's animated gold/emerald edge for selected price items. */
+body.price-page :is(
+  .price-card.is-price-selected,
+  .price-card__service-option:is(.is-price-selected, :focus-visible),
+  .price-category-modal__service-option:has(input:checked)
+) {
+  position: relative;
+  outline: none !important;
+  border-color: transparent !important;
+  box-shadow: 0 0 16px rgb(60 218 166 / 0.14) !important;
+}
+
+body.price-page :is(
+  .price-card.is-price-selected,
+  .price-card__service-option:is(.is-price-selected, :focus-visible),
+  .price-category-modal__service-option:has(input:checked)
+)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(110deg, rgb(201 168 76 / 0.92), rgb(61 218 166 / 0.82) 34%, rgb(255 224 142 / 0.96) 55%, rgb(33 143 111 / 0.9) 79%, rgb(201 168 76 / 0.92));
+  background-size: 260% 260%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 1;
+  transform: none;
+  pointer-events: none;
+  animation: price-hero-search-gradient 8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.price-page .is-price-selected::after,
+  body.price-page .price-card__service-option:focus-visible::after,
+  body.price-page .price-category-modal__service-option:has(input:checked)::after {
+    animation: none;
+  }
+}
+
+.price-scroll-controls {
+  position: fixed;
+  right: max(2px, env(safe-area-inset-right));
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1400;
+  display: grid;
+  gap: 16px;
+}
+
+.price-scroll-controls button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #d9ba68;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  opacity: 1;
+}
+
+.price-scroll-controls .site-icon-arrow::before {
+  opacity: 0.6;
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgb(255 255 255 / 0.12), transparent 60%), rgb(10 35 27 / 0.3);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
+  pointer-events: none;
+}
+
+.price-scroll-controls .site-icon-arrow {
+  position: relative;
+  opacity: 1 !important;
+  display: block;
+  width: 19.2px;
+  min-width: 19.2px;
+  height: 19.2px;
+  background: none;
+  pointer-events: none;
+}
+
+/* Both visual layers share the arrow's bounce and click rotation timeline. */
+.price-scroll-controls .site-icon-arrow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('../images/icons/chevron-down.webp') center / contain no-repeat;
+}
+
+.price-scroll-controls [data-price-scroll='top'] .site-icon-arrow {
+  --arrow-rotate: rotate(180deg);
+}
+
+.price-scroll-controls button:is(:hover, :focus-visible) {
+  color: #ffe5a0;
+}
+
+.price-scroll-controls button:is(:hover, :focus-visible) .site-icon-arrow::before {
+  background: linear-gradient(145deg, rgb(255 255 255 / 0.18), transparent 60%), rgb(18 67 50 / 0.4);
+}
+
+.price-scroll-controls button:focus-visible {
+  outline: 2px solid #c9a84c;
+  outline-offset: 2px;
+}
+
+.price-scroll-controls button:active .site-icon-arrow::before {
+  background: rgb(27 88 65 / 0.4);
+}
+
+body.price-modal-open .price-scroll-controls {
+  display: none;
+}
+
+body.price-page .site-scroll-root main[data-price-page] {
+  width: calc(100% - 46px - env(safe-area-inset-right));
+  max-width: none;
+  margin-inline: 0;
+  padding-inline: clamp(12px, 1.5vw, 24px);
+  box-sizing: border-box;
+}
+
+/* Keep the assistant in the same reserved rail instead of narrowing the page. */
+body.price-page .hn-ai-chat {
+  /* Reserve space for the protruding AI badge, including display safe areas. */
+  right: calc(12px + env(safe-area-inset-right));
+}
+
+body.price-page .hn-ai-launcher {
+  width: 44px;
+  height: 44px;
+}
+
+body.price-page .custom-scrollbar-track--page {
+  right: max(21px, calc(env(safe-area-inset-right) + 19px));
+}
+
+body.price-page .custom-scrollbar-thumb--page {
+  right: max(22px, calc(env(safe-area-inset-right) + 20px));
+}
+
+/* Supplementary cards retain readable content within the available viewport. */
+body.price-page main[data-price-page] #price-section-additional .price-card {
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  min-height: 0;
+  max-height: calc(100dvh - 140px);
+  transform: none;
+}
+
+body.price-page #price-section-additional .price-card__top {
+  min-height: 0;
+}
+
+body.price-page #price-section-additional .price-card__details {
+  display: grid;
+  min-height: 0;
+}
+
+body.price-page #price-section-additional .price-card__details-inner {
+  display: grid;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+@media (min-width: 721px) {
+  body.price-page main[data-price-page] #price-section-additional .price-card {
+    height: calc(100dvh - 140px);
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+
+  body.price-page #price-section-additional .price-card__details {
+    grid-template-rows: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  body.price-page #price-section-additional .price-card[data-price-card-expanded='true'] .price-card__details {
+    min-height: 100px;
+  }
+
+  body.price-page #price-section-additional .price-card[data-price-card-expanded='true'] .price-card__details-inner {
+    overflow-y: auto;
+  }
+}
+
+/* Content, not viewport height, determines each category's footprint. */
+body.price-page .price-size-section:is(
+  [data-price-section='small'],
+  [data-price-section='medium'],
+  [data-price-section='large'],
+  [data-price-section='giant'],
+  [data-price-section='cats-animals']
+) {
+  min-height: 0;
+  /* The collapsed header divider sits 4px below the section jump offset. */
+  padding-top: 4px;
+  padding-bottom: 56px;
+  box-sizing: border-box;
+}
+
+/* Equalize cards only against the tallest content in their group. The viewport
+   reserve belongs after navigation, never inside the visible content gaps. */
+body.price-page .price-size-section:is(
+  [data-price-section='small'],
+  [data-price-section='medium'],
+  [data-price-section='large'],
+  [data-price-section='giant']
+) {
+  grid-template-rows: auto auto auto;
+  align-content: start;
+}
+
+body.price-page .price-size-section[data-price-section='cats-animals'] {
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: stretch;
+}
+
+body.price-page .price-size-section:is(
+  [data-price-section='small'],
+  [data-price-section='medium'],
+  [data-price-section='large'],
+  [data-price-section='giant']
+) > .price-size-section__cards {
+  grid-auto-rows: 1fr;
+  align-content: start;
+  align-items: stretch;
+}
+
+body.price-page .price-size-section[data-price-section='cats-animals'] > .price-size-section__category-grid {
+  align-content: start;
+  align-items: stretch;
+  gap: var(--price-section-gap);
+}
+
+body.price-page .price-size-section[data-price-section='cats-animals'] .price-size-section__category {
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: stretch;
+  height: 100%;
+}
+
+body.price-page
+  .price-size-section[data-price-section='cats-animals']
+  .price-size-section__category
+  .price-size-section__cards {
+  grid-template-rows: none;
+  grid-auto-rows: 1fr;
+  align-content: stretch;
+  align-items: stretch;
+  height: 100%;
+  gap: var(--price-section-gap);
+}
+
+/* Highlight interaction without moving cards out of the shared grid. */
+body.price-page main[data-price-page] .price-size-section[data-price-section='cats-animals']
+  .price-card:not(.price-card--breeds-open):is(:hover, :focus-within) {
+  transform: none;
+}
+
+body.price-page .price-size-section:is(
+  [data-price-section='small'],
+  [data-price-section='medium'],
+  [data-price-section='large'],
+  [data-price-section='giant'],
+  [data-price-section='cats-animals']
+) .price-card {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  align-self: stretch;
+  height: 100%;
+}
+
+@media (max-width: 720px) {
   body.price-page .price-size-section:is(
     [data-price-section='small'],
     [data-price-section='medium'],
     [data-price-section='large'],
-    [data-price-section='giant']
-  ) {
-    /* The section navigation lands 18px above the viewport edge; reserve
-       that same amount so the following size section stays below the fold. */
-    min-height: calc(100dvh + 18px);
-    padding-bottom: 36px;
-    box-sizing: border-box;
+    [data-price-section='giant'],
+    [data-price-section='cats-animals']
+  ) .price-card {
+    grid-template-rows: repeat(4, auto);
+    align-content: start;
   }
+
+  /* The collapsed details track is still a grid item. Compensate its gap so
+     the last visible control has the same edge inset as the badge above. */
+  body.price-page .container.page-offset-top .price-card[data-price-card-expanded='false'] {
+    padding-bottom: calc(var(--price-ui-pad) - var(--price-ui-gap));
+  }
+
+  body.price-page .price-size-section[data-price-section='cats-animals'] .price-card__top {
+    min-height: 5.25rem;
+  }
+}
+
+body.price-page .price-size-section:is(
+  [data-price-section='small'],
+  [data-price-section='medium'],
+  [data-price-section='large'],
+  [data-price-section='giant'],
+  [data-price-section='cats-animals']
+) > .price-section-navigation {
+  align-self: start;
+}
+
+/* Keep compact dog sections fully visible after category navigation on
+   wide, height-constrained desktop viewports. */
+@media (min-width: 1200px) and (max-height: 900px) {
 
   body.price-page .price-size-section:is(
     [data-price-section='small'],
@@ -9231,7 +9925,7 @@ body.price-page .price-category-modal__breed-photo a {
     [data-price-section='giant']
   ) .price-size-section__heading {
     gap: 0.8rem;
-    padding-block: 0.75rem;
+    padding-block: var(--price-section-gap) 0;
   }
 
   body.price-page .price-size-section:is(
@@ -9255,8 +9949,8 @@ body.price-page .price-category-modal__breed-photo a {
     [data-price-section='large'],
     [data-price-section='giant']
   ) .price-card {
-    gap: 0.46rem;
-    padding: 0.78rem;
+    gap: 0.4rem;
+    padding: 0.7rem;
     border-radius: 22px;
   }
 
@@ -9266,8 +9960,8 @@ body.price-page .price-category-modal__breed-photo a {
     [data-price-section='large'],
     [data-price-section='giant']
   ) .price-card__top {
-    gap: 0.42rem;
-    min-height: 10.5rem;
+    gap: 0.36rem;
+    min-height: 10rem;
   }
 
   body.price-page .price-size-section:is(
@@ -9292,7 +9986,7 @@ body.price-page .price-category-modal__breed-photo a {
     [data-price-section='large'],
     [data-price-section='giant']
   ) .price-card__title {
-    font-size: clamp(1.02rem, 1.15vw, 1.16rem);
+    font-size: clamp(1.14rem, 1.3vw, 1.32rem);
     line-height: 1.22;
   }
 
@@ -9334,7 +10028,7 @@ body.price-page .price-category-modal__breed-photo a {
     font-size: 1.3rem;
   }
 
-  body.price-page main[data-price-page]
+  body.price-page .container.page-offset-top
     .price-size-section:is(
       [data-price-section='small'],
       [data-price-section='medium'],
@@ -9342,10 +10036,10 @@ body.price-page .price-category-modal__breed-photo a {
       [data-price-section='giant']
     )
     .price-card__service-options {
-    gap: 0.34rem;
+    gap: 0.28rem;
   }
 
-  body.price-page main[data-price-page]
+  body.price-page .container.page-offset-top
     .price-size-section:is(
       [data-price-section='small'],
       [data-price-section='medium'],
@@ -9353,9 +10047,9 @@ body.price-page .price-category-modal__breed-photo a {
       [data-price-section='giant']
     )
     .price-card__service-option {
-    min-height: 38px;
+    min-height: 36px;
     gap: 0.45rem;
-    padding: 0.34rem 0.52rem;
+    padding: 0.28rem 0.5rem;
     font-size: 0.92rem;
     line-height: 1.18;
   }
@@ -9369,17 +10063,17 @@ body.price-page .price-category-modal__breed-photo a {
     font-size: 0.86rem;
   }
 
-  /* Cats and small animals keep the same readable density as dog cards, but
-     their height remains content-led and is aligned in JavaScript after layout. */
+  /* Cats and small animals use the same compact type scale and equal-card
+     geometry as dog categories. */
   body.price-page .price-size-section[data-price-section='cats-animals'] .price-card {
-    gap: 0.46rem;
-    padding: 0.78rem;
+    gap: 0.4rem;
+    padding: 0.7rem;
     border-radius: 22px;
   }
 
   body.price-page .price-size-section[data-price-section='cats-animals'] .price-card__top {
-    gap: 0.42rem;
-    min-height: 10.5rem;
+    gap: 0.36rem;
+    min-height: 10rem;
   }
 
   body.price-page .price-size-section[data-price-section='cats-animals'] .price-card__badge,
@@ -9389,7 +10083,7 @@ body.price-page .price-category-modal__breed-photo a {
   }
 
   body.price-page .price-size-section[data-price-section='cats-animals'] .price-card__title {
-    font-size: clamp(1.02rem, 1.15vw, 1.16rem);
+    font-size: clamp(1.14rem, 1.3vw, 1.32rem);
     line-height: 1.22;
   }
 
@@ -9411,18 +10105,18 @@ body.price-page .price-category-modal__breed-photo a {
     font-size: 1.3rem;
   }
 
-  body.price-page main[data-price-page]
+  body.price-page .container.page-offset-top
     .price-size-section[data-price-section='cats-animals']
     .price-card__service-options {
-    gap: 0.34rem;
+    gap: 0.28rem;
   }
 
-  body.price-page main[data-price-page]
+  body.price-page .container.page-offset-top
     .price-size-section[data-price-section='cats-animals']
     .price-card__service-option {
-    min-height: 38px;
+    min-height: 36px;
     gap: 0.45rem;
-    padding: 0.34rem 0.52rem;
+    padding: 0.28rem 0.5rem;
     font-size: 0.92rem;
     line-height: 1.18;
   }

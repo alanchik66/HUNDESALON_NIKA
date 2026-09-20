@@ -324,7 +324,7 @@ for (const locale of locales) {
   wire: ['puppy-intro', 'full-groom', 'hygiene', 'trimming'],
   long: ['puppy-intro', 'full-groom', 'hygiene'],
   curly: ['puppy-intro', 'full-groom', 'hygiene'],
-  double: ['puppy-intro', 'full-groom', 'hygiene', 'deshedding'],
+  double: ['puppy-intro', 'full-groom', 'hygiene'],
       };
       const expectedCoatsBySection = {
         small: ['short', 'wire', 'long', 'curly', 'double'],
@@ -1094,14 +1094,21 @@ for (const locale of locales) {
         }
         await page.waitForFunction(() => document.querySelector('#price-category-modal')?.classList.contains('active'));
         const trimmingState = await page.evaluate(currentLocale => {
-          const index = window.PricePageCatalog.categoriesByLocale[currentLocale]
-            .find(category => category.id === 'ru-additional-services').priceRows.findIndex(row => row.key === 'trimming');
+          const additionalRows = window.PricePageCatalog.categoriesByLocale[currentLocale]
+            .find(category => category.id === 'ru-additional-services').priceRows;
+          const index = additionalRows.findIndex(row => row.key === 'trimming');
+          const desheddingIndex = additionalRows.findIndex(row =>
+            /(?:Express|Экспресс|Експрес)/u.test(Object.values(row.label || {}).join(' '))
+          );
           const fieldset = document.querySelector('[data-price-modal-additional-service-fieldset]');
           return {
             selectedBreedId: document.querySelector('[data-price-modal-breed]')?.value || '',
             trimmingIndex: index,
             trimmingVisible: Boolean(fieldset && !fieldset.hidden
               && fieldset.querySelector(`[data-service-index="${index}"] input[type="checkbox"]`)),
+            desheddingIndex,
+            desheddingVisible: Boolean(fieldset && !fieldset.hidden
+              && fieldset.querySelector(`[data-service-index="${desheddingIndex}"] input[type="checkbox"]`)),
           };
         }, locale);
         assert(
@@ -1109,6 +1116,12 @@ for (const locale of locales) {
           trimmingState.selectedBreedId === `${categoryId}:breed:${breedIndex}`
             && trimmingState.trimmingIndex === -1
             && !trimmingState.trimmingVisible,
+          JSON.stringify(trimmingState)
+        );
+        assert(
+          `${locale} ${label}: ${mode} express deshedding is an add-on only for non-wire dogs`,
+          trimmingState.desheddingIndex === 5
+            && trimmingState.desheddingVisible === (coat !== 'wire'),
           JSON.stringify(trimmingState)
         );
         await page.locator('[data-price-modal-close]').evaluate(button => button.click());

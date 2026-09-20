@@ -1,6 +1,6 @@
 # HUNDESALON_NIKA Website Knowledge for the SendPulse AI Agent #
 
-Generated source fingerprint: sha256:b3d49c479219acfa234eded4bd3645d5133445f7452b0eb1dcf6a212e952f979
+Generated source fingerprint: sha256:5b8f8aaf40e98111fa4a0df11c18f1a6609ff4ffe777d7f8dc37f97697e87e97
 
 This document is the factual knowledge base for the customer-facing SendPulse live-chat AI agent. It covers the public HUNDESALON_NIKA website in German, English, Russian, and Ukrainian.
 
@@ -187,7 +187,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Welpen-Eingewöhnung — ab 50 €
 - Price: Komplettpflege — ab 80 €
 - Price: Baden + Hygienepflege — ab 60 €
-- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.
 
 #### Mittlere Rassen — Kurzhaarige Rassen ####
 - Summary: Baden, Pflege von kurzem Fell und Haut sowie Hygienepflege.
@@ -232,7 +231,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Welpen-Eingewöhnung — ab 50 €
 - Price: Komplettpflege — ab 90 €
 - Price: Baden + Hygienepflege — ab 75 €
-- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.
 
 #### Große Rassen — Kurzhaarige Rassen ####
 - Summary: Baden, Pflege von kurzem Fell und Haut sowie Hygienepflege.
@@ -282,7 +280,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Welpen-Eingewöhnung — ab 50 €
 - Price: Komplettpflege — ab 120 €
 - Price: Baden + Hygienepflege — ab 90 €
-- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.
 
 #### Riesenrassen — Kurzhaarige Rassen ####
 - Summary: Baden, Pflege von kurzem Fell und Haut sowie Hygienepflege.
@@ -324,7 +321,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Welpen-Eingewöhnung — ab 50 €
 - Price: Komplettpflege — ab 150 €
 - Price: Baden + Hygienepflege — ab 120 €
-- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.
 
 #### Katzen — Kurzhaarige Katzenrassen ####
 - Summary: Schonende Pflege von kurzem Fell und Haut, passend zur jeweiligen Rasse.
@@ -366,13 +362,14 @@ This detailed catalog is the only authoritative website price source. Generic ov
 #### Zusatzleistungen — Zusatzleistungen ####
 - Summary: Zusatzpflege, die zur Hauptleistung ergänzt werden kann.
 - Breeds: Hunde, Katzen, Meerschweinchen, Kaninchen
-- Included/listed care: Krallen schneiden, Ultraschall-Zahnreinigung ohne Narkose, Aufbau-Maske, Ozontherapie
+- Included/listed care: Krallen schneiden, Ultraschall-Zahnreinigung ohne Narkose, Aufbau-Maske, Ozontherapie, Entfernen abgestorbener Haare und Unterwolle
 - Price: Krallenschneiden — 15 €
 - Price: Ultraschall-Zahnpflege bis 6 kg — ab 100 €
 - Price: Aufbau- / SPA-Maske — ab 20 €
 - Price: Ozontherapie — kleine Rassen — ab 25 €
 - Price: Ohrenpflege als Einzelleistung — 15 €
-- Note: Krallenschneiden ist für Hunde aller Größen sowie Katzen, Meerschweinchen und Kaninchen verfügbar. Ultraschall-Zahnpflege ohne Narkose bis 6 kg und Ozontherapie werden nur für kleine Hunde angeboten. Aufbau-/SPA-Maske und Ohrenpflege als Einzelleistung werden passend zum Tier ausgewählt.
+- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.
+- Note: Krallenschneiden ist für Hunde aller Größen sowie Katzen, Meerschweinchen und Kaninchen verfügbar. Express-Entwollung wird für alle Hundefelltypen außer Rauhaar als Zusatzleistung angeboten. Ultraschall-Zahnpflege ohne Narkose bis 6 kg und Ozontherapie werden nur für kleine Hunde angeboten. Aufbau-/SPA-Maske und Ohrenpflege als Einzelleistung werden passend zum Tier ausgewählt.
 - Note: Bei gemeinsamer Buchung mit der Pflege gibt es auf die Ultraschall-Zahnpflege 30 % Rabatt; sie ersetzt keine tierärztliche Zahnbehandlung.
 - Note: Der erste Termin zur Welpengewöhnung dient der sanften Gewöhnung an Salon und Pflege.
 
@@ -407,7 +404,7 @@ This detailed catalog is the only authoritative website price source. Generic ov
 #### Komplettpflege — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: Der Endpreis hängt von Fellzustand, Verfilzungen, Verhalten und Zeitaufwand ab.
-- Description: Komplettpflege mit Baden, Föhnen, Schnitt und Fellfinish.
+- Description: Komplettpflege beinhaltet Baden, Föhnen, typgerechte Fellpflege und bei Bedarf Schnitt, Krallen- und äußere Ohrenpflege sowie reguläre Entfernung loser Haare und Unterwolle. Ohrenpflege und Express-Entwollung werden nicht zusätzlich berechnet. Handstripping ist eine separate Leistung. Mehraufwand über die Standardpflege hinaus wird vorab nach Umfang und Preis vereinbart.
 - Price: Komplettpflege — ab 60 €; Category: Kleine Rassen — Kurzhaarige Rassen
 - Price: Komplettpflege — ab 80 €; Category: Kleine Rassen — Rauhaarige Rassen
 - Price: Komplettpflege — ab 80 €; Category: Kleine Rassen — Langhaarige Rassen
@@ -461,15 +458,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Trimmen — 60 € / Std.; Category: Große Rassen — Rauhaarige Rassen
 - Price: Trimmen — 60 € / Std.; Category: Riesenrassen — Rauhaarige Rassen
 
-#### Express-Entwollung / Unterwolle entfernen — service details ####
-- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
-- Note: Reduziert lose Haare deutlich, stoppt den natürlichen Fellwechsel nicht.
-- Description: Professionelle Entfernung von losem Haar und Unterwolle.
-- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.; Category: Kleine Rassen — Rassen mit Doppelfell
-- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.; Category: Mittlere Rassen — Rassen mit Doppelfell
-- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.; Category: Große Rassen — Rassen mit Doppelfell
-- Price: Express-Entwollung / Unterwolle entfernen — 30 € / 30 Min.; Category: Riesenrassen — Rassen mit Doppelfell
-
 ### EN — published catalog ###
 
 #### Small breeds — Short-haired breeds ####
@@ -512,7 +500,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Puppy introduction grooming — from €50
 - Price: Full care — from €80
 - Price: Bath + hygiene care — from €60
-- Price: Express deshedding / undercoat removal — €30 / 30 min
 
 #### Medium breeds — Short-haired breeds ####
 - Summary: Bathing, short coat and skin care, and hygiene care.
@@ -557,7 +544,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Puppy introduction grooming — from €50
 - Price: Full care — from €90
 - Price: Bath + hygiene care — from €75
-- Price: Express deshedding / undercoat removal — €30 / 30 min
 
 #### Large breeds — Short-haired breeds ####
 - Summary: Bathing, short coat and skin care, and hygiene care.
@@ -607,7 +593,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Puppy introduction grooming — from €50
 - Price: Full care — from €120
 - Price: Bath + hygiene care — from €90
-- Price: Express deshedding / undercoat removal — €30 / 30 min
 
 #### Giant breeds — Short-haired breeds ####
 - Summary: Bathing, short coat and skin care, and hygiene care.
@@ -649,7 +634,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Puppy introduction grooming — from €50
 - Price: Full care — from €150
 - Price: Bath + hygiene care — from €120
-- Price: Express deshedding / undercoat removal — €30 / 30 min
 
 #### Cats — Short-haired cat breeds ####
 - Summary: Gentle short-coat and skin care tailored to the breed.
@@ -691,13 +675,14 @@ This detailed catalog is the only authoritative website price source. Generic ov
 #### Additional services — Additional services ####
 - Summary: Additional care that can be added to the main service.
 - Breeds: Dogs, Cats, Guinea pigs, Rabbits
-- Included/listed care: Nail trim, Ultrasonic teeth cleaning without anesthesia, Restorative mask, Ozone therapy
+- Included/listed care: Nail trim, Ultrasonic teeth cleaning without anesthesia, Restorative mask, Ozone therapy, Dead coat and undercoat removal
 - Price: Nail trimming — €15
 - Price: Ultrasonic teeth cleaning up to 6 kg — from €100
 - Price: Restorative / spa mask — from €20
 - Price: Ozone therapy — small breeds — from €25
 - Price: Ear care as a standalone service — €15
-- Note: Nail trimming is available for dogs of every size, cats, guinea pigs and rabbits. Ultrasonic teeth cleaning without anaesthesia up to 6 kg and ozone therapy are offered only for small dogs. A restorative / spa mask and standalone ear care are selected as appropriate for the animal.
+- Price: Express deshedding / undercoat removal — €30 / 30 min
+- Note: Nail trimming is available for dogs of every size, cats, guinea pigs and rabbits. Express deshedding is available as an add-on for every dog coat type except wire coats. Ultrasonic teeth cleaning without anaesthesia up to 6 kg and ozone therapy are offered only for small dogs. A restorative / spa mask and standalone ear care are selected as appropriate for the animal.
 - Note: When booked together with grooming, ultrasonic teeth cleaning receives a 30% discount; it does not replace veterinary dental treatment.
 - Note: The first puppy grooming visit is designed to gently familiarise the puppy with the salon and grooming care.
 
@@ -732,7 +717,7 @@ This detailed catalog is the only authoritative website price source. Generic ov
 #### Full care — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: Final price depends on coat condition, mats, behaviour and time required.
-- Description: Full grooming with bath, drying, haircut and coat finishing.
+- Description: Full grooming includes bathing, drying, coat-appropriate care and a haircut where appropriate, nails, external ear hygiene and routine removal of loose hair and undercoat. Ear care and express deshedding are not charged again. Handstripping is a separate service. Work beyond standard care requires prior agreement on scope and price.
 - Price: Full care — from €60; Category: Small breeds — Short-haired breeds
 - Price: Full care — from €80; Category: Small breeds — Wire-haired breeds
 - Price: Full care — from €80; Category: Small breeds — Long-haired breeds
@@ -786,15 +771,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Trimming — €60 / hour; Category: Large breeds — Wire-haired breeds
 - Price: Trimming — €60 / hour; Category: Giant breeds — Wire-haired breeds
 
-#### Express deshedding / undercoat removal — service details ####
-- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
-- Note: Reduces loose coat significantly but does not stop natural shedding.
-- Description: Professional removal of loose coat and undercoat.
-- Price: Express deshedding / undercoat removal — €30 / 30 min; Category: Small breeds — Double-coated breeds
-- Price: Express deshedding / undercoat removal — €30 / 30 min; Category: Medium breeds — Double-coated breeds
-- Price: Express deshedding / undercoat removal — €30 / 30 min; Category: Large breeds — Double-coated breeds
-- Price: Express deshedding / undercoat removal — €30 / 30 min; Category: Giant breeds — Double-coated breeds
-
 ### RU — published catalog ###
 
 #### Маленькие породы — Короткошёрстные породы ####
@@ -837,7 +813,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Знакомство щенка с грумингом — от 50 €
 - Price: Комплексный уход — от 80 €
 - Price: Купание + гигиенический уход — от 60 €
-- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.
 
 #### Средние породы — Короткошёрстные породы ####
 - Summary: Купание, уход за короткой шерстью и кожей, гигиенические процедуры.
@@ -882,7 +857,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Знакомство щенка с грумингом — от 50 €
 - Price: Комплексный уход — от 90 €
 - Price: Купание + гигиенический уход — от 75 €
-- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.
 
 #### Большие породы — Короткошёрстные породы ####
 - Summary: Купание, уход за короткой шерстью и кожей, гигиенические процедуры.
@@ -932,7 +906,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Знакомство щенка с грумингом — от 50 €
 - Price: Комплексный уход — от 120 €
 - Price: Купание + гигиенический уход — от 90 €
-- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.
 
 #### Гигантские породы — Короткошёрстные породы ####
 - Summary: Купание, уход за короткой шерстью и кожей, гигиенические процедуры.
@@ -976,7 +949,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Знакомство щенка с грумингом — от 50 €
 - Price: Комплексный уход — от 150 €
 - Price: Купание + гигиенический уход — от 120 €
-- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.
 
 #### Кошки — Короткошёрстные породы кошек ####
 - Summary: Бережный уход за короткой шерстью и кожей с учётом особенностей породы.
@@ -1022,12 +994,13 @@ This detailed catalog is the only authoritative website price source. Generic ov
 #### Дополнительные услуги — Дополнительные услуги ####
 - Summary: Дополнительный уход, который можно добавить к основной процедуре.
 - Breeds: Собаки, Кошки, Морские свинки, Кролики
-- Included/listed care: Подстригание когтей, Ультразвуковая чистка зубов без наркоза, Восстанавливающая маска, Озонотерапия
+- Included/listed care: Подстригание когтей, Ультразвуковая чистка зубов без наркоза, Восстанавливающая маска, Озонотерапия, Удаление отмершей шерсти и подшёрстка
 - Price: Подстригание когтей — 15 €
 - Price: Ультразвуковая чистка зубов без наркоза (до 6 кг) — от 100 €
 - Price: Восстанавливающая / SPA-маска — от 20 €
 - Price: Озонотерапия — маленькие породы — от 25 €
 - Price: Уход за ушами как отдельная услуга — 15 €
+- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.
 - Note: При совмещении ультразвуковой чистки зубов с грумингом — скидка 30%. Процедура не заменяет ветеринарное стоматологическое лечение.
 
 #### Важная информация — Важная информация ####
@@ -1061,7 +1034,7 @@ This detailed catalog is the only authoritative website price source. Generic ov
 #### Комплексный уход — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: Итоговая цена зависит от состояния шерсти, колтунов, поведения и времени работы.
-- Description: Комплексный уход с купанием, сушкой, стрижкой и оформлением шерсти.
+- Description: Комплексный уход включает купание, сушку, уход по типу шерсти и стрижку при необходимости, когти, наружную гигиену ушей и стандартное удаление отмершей шерсти и подшёрстка. Уход за ушами и экспресс-линька повторно не оплачиваются. Ручной тримминг — отдельная услуга. Объём и стоимость работы сверх стандартного ухода согласуются заранее.
 - Price: Комплексный уход — от 60 €; Category: Маленькие породы — Короткошёрстные породы
 - Price: Комплексный уход — от 80 €; Category: Маленькие породы — Жёсткошёрстные породы
 - Price: Комплексный уход — от 80 €; Category: Маленькие породы — Длинношёрстные породы
@@ -1115,20 +1088,17 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Тримминг — 60 € / час; Category: Большие породы — Жёсткошёрстные породы
 - Price: Тримминг — 60 € / час; Category: Гигантские породы — Жёсткошёрстные породы
 
-#### Экспресс-линька / удаление подшёрстка — service details ####
-- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
-- Note: Заметно снижает линьку, но не отменяет естественный цикл.
-- Description: Профессиональное удаление отмершей шерсти и подшёрстка.
-- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.; Category: Маленькие породы — Породы с двойным типом шерсти
-- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.; Category: Средние породы — Породы с двойным типом шерсти
-- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.; Category: Большие породы — Породы с двойным типом шерсти
-- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.; Category: Гигантские породы — Породы с двойным типом шерсти
-
 #### Уход за ушами как отдельная услуга — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: Отдельная услуга с учётом состояния ушей и безопасного объёма ухода.
 - Description: Бережная наружная очистка и осмотр ушей.
 - Price: Уход за ушами как отдельная услуга — 15 €; Category: Дополнительные услуги — Дополнительные услуги
+
+#### Экспресс-линька / удаление подшёрстка — service details ####
+- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
+- Note: Заметно снижает линьку, но не отменяет естественный цикл.
+- Description: Профессиональное удаление отмершей шерсти и подшёрстка.
+- Price: Экспресс-линька / удаление подшёрстка — 30 € / 30 мин.; Category: Дополнительные услуги — Дополнительные услуги
 
 ### UK — published catalog ###
 
@@ -1172,7 +1142,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Знайомство цуценяти з грумінгом — від 50 €
 - Price: Комплексний догляд — від 80 €
 - Price: Купання + гігієнічний догляд — від 60 €
-- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.
 
 #### Середні породи — Короткошерсті породи ####
 - Summary: Купання, догляд за короткою шерстю та шкірою, гігієнічні процедури.
@@ -1217,7 +1186,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Знайомство цуценяти з грумінгом — від 50 €
 - Price: Комплексний догляд — від 90 €
 - Price: Купання + гігієнічний догляд — від 75 €
-- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.
 
 #### Великі породи — Короткошерсті породи ####
 - Summary: Купання, догляд за короткою шерстю та шкірою, гігієнічні процедури.
@@ -1267,7 +1235,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Знайомство цуценяти з грумінгом — від 50 €
 - Price: Комплексний догляд — від 120 €
 - Price: Купання + гігієнічний догляд — від 90 €
-- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.
 
 #### Гігантські породи — Короткошерсті породи ####
 - Summary: Купання, догляд за короткою шерстю та шкірою, гігієнічні процедури.
@@ -1311,7 +1278,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Знайомство цуценяти з грумінгом — від 50 €
 - Price: Комплексний догляд — від 150 €
 - Price: Купання + гігієнічний догляд — від 120 €
-- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.
 
 #### Коти — Короткошерсті породи котів ####
 - Summary: Делікатний догляд за короткою шерстю та шкірою з урахуванням особливостей породи.
@@ -1353,13 +1319,14 @@ This detailed catalog is the only authoritative website price source. Generic ov
 #### Додаткові послуги — Додаткові послуги ####
 - Summary: Додатковий догляд, який можна додати до основної процедури.
 - Breeds: Собаки, Коти, Морські свинки, Кролики
-- Included/listed care: Підрізання кігтів, Ультразвукове чищення зубів без наркозу, Відновлювальна маска, Озонотерапія
+- Included/listed care: Підрізання кігтів, Ультразвукове чищення зубів без наркозу, Відновлювальна маска, Озонотерапія, Видалення відмерлої шерсті й підшерстя
 - Price: Підстригання кігтів — 15 €
 - Price: Ультразвукова чистка зубів до 6 кг — від 100 €
 - Price: Відновлювальна / SPA-маска — від 20 €
 - Price: Озонотерапія — малі породи — від 25 €
 - Price: Догляд за вухами як окрема послуга — 15 €
-- Note: Підстригання кігтів доступне для собак усіх розмірів, котів, морських свинок і кроликів. Ультразвукове чищення зубів без наркозу до 6 кг та озонотерапія пропонуються лише для малих собак. Відновлювальна / SPA-маска й догляд за вухами як окрема послуга підбираються відповідно до потреб тварини.
+- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.
+- Note: Підстригання кігтів доступне для собак усіх розмірів, котів, морських свинок і кроликів. Експрес-линька доступна як додаткова послуга для всіх типів шерсті собак, крім жорсткої. Ультразвукове чищення зубів без наркозу до 6 кг та озонотерапія пропонуються лише для малих собак. Відновлювальна / SPA-маска й догляд за вухами як окрема послуга підбираються відповідно до потреб тварини.
 - Note: При одночасному бронюванні з грумінгом на ультразвукову чистку зубів діє знижка 30%; процедура не замінює ветеринарне стоматологічне лікування.
 - Note: Перший грумінг цуценяти допомагає м’яко познайомити його із салоном і процедурами догляду.
 
@@ -1394,7 +1361,7 @@ This detailed catalog is the only authoritative website price source. Generic ov
 #### Комплексний догляд — service details ####
 - These service-specific details take priority over general category care lists. Do not add procedures from other packages.
 - Note: Кінцева ціна залежить від стану шерсті, ковтунів, поведінки та часу роботи.
-- Description: Комплексний догляд із купанням, сушінням, стрижкою та оформленням шерсті.
+- Description: Комплексний догляд включає купання, сушіння, догляд за типом шерсті та стрижку за потреби, кігті, зовнішню гігієну вух і стандартне видалення відмерлої шерсті та підшерстя. Догляд за вухами й експрес-линька повторно не оплачуються. Ручний тримінг — окрема послуга. Обсяг і вартість роботи понад стандартний догляд узгоджуються заздалегідь.
 - Price: Комплексний догляд — від 60 €; Category: Малі породи — Короткошерсті породи
 - Price: Комплексний догляд — від 80 €; Category: Малі породи — Жорсткошерсті породи
 - Price: Комплексний догляд — від 80 €; Category: Малі породи — Довгошерсті породи
@@ -1447,15 +1414,6 @@ This detailed catalog is the only authoritative website price source. Generic ov
 - Price: Тримінг — 60 € / год.; Category: Середні породи — Жорсткошерсті породи
 - Price: Тримінг — 60 € / год.; Category: Великі породи — Жорсткошерсті породи
 - Price: Тримінг — 60 € / год.; Category: Гігантські породи — Жорсткошерсті породи
-
-#### Експрес-линька / видалення підшерстка — service details ####
-- These service-specific details take priority over general category care lists. Do not add procedures from other packages.
-- Note: Помітно зменшує линьку, але не скасовує природний цикл.
-- Description: Професійне видалення відмерлої шерсті та підшерстка.
-- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.; Category: Малі породи — Породи з подвійним типом шерсті
-- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.; Category: Середні породи — Породи з подвійним типом шерсті
-- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.; Category: Великі породи — Породи з подвійним типом шерсті
-- Price: Експрес-линька / видалення підшерстка — 30 € / 30 хв.; Category: Гігантські породи — Породи з подвійним типом шерсті
 
 ## 7. Booking process and payment ##
 
@@ -1788,21 +1746,30 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - ab 100 €
 - Beliebte Einstiegsseiten
 - Hundepflege in Leipzig Hundefriseur Leipzig Hundesalon Leipzig Preisliste Online-Buchung
-- Kundenbewertungen
-- "Toller Salon! Mein Hund sieht nach dem Schnitt wie aus einem Magazin aus."
-- — Anna K.
-- "Sie haben meinen Kater, der früher Angst vor der Fellpflege hatte, sehr einfühlsam geschnitten."
-- — Dmitri T.
-- "Erstklassige Profis! Das Ergebnis hat alle Erwartungen übertroffen."
-- — Elena V.
 
 ### DE — o-nas.html ###
 - URL: https://hundesalon-nika.com/de/o-nas.html
 - Über uns
-- HUNDESALON_NIKA ist ein professionelles Pflegeteam, vereint durch die Liebe zu Tieren. Wir kümmern uns nicht nur um das Äußere, sondern auch um das Wohlbefinden jedes Haustieres. Unsere Fachkräfte bilden sich regelmäßig weiter, verwenden sichere Produkte und verfolgen für jede Rasse einen individuellen Ansatz. Der Salon ist modern ausgestattet, alle Behandlungen finden in einer ruhigen, freundlichen Atmosphäre statt.
-- Wir betreuen Hunde, Katzen, Kaninchen und andere Kleintiere. Wir arbeiten nach Terminvereinbarung.
-- Unsere Mission ist es, professionelle Pflege nicht nur zu einem notwendigen Termin, sondern zu einem angenehmen Erlebnis für Tier und Halter zu machen. Wir verwenden ausschließlich hypoallergene Kosmetik führender europäischer Marken und sichere Techniken. Alle Fachkräfte verfügen über eine Berufsausbildung und entsprechende Zertifikate.
-- Wir sind auch Züchter von Hunden und Katzen und verstehen daher die Bedürfnisse unserer Kunden aus erster Hand. Kommen Sie zu uns und Ihr Liebling wird noch schöner und gesünder!
+- HUNDESALON NIKA — professionelle Pflege mit Fürsorge für jedes Tier
+- Professionelle Fellpflege mit Fürsorge und Respekt für Tiere.
+- Für uns ist Fellpflege weit mehr als ein schöner Haarschnitt. Es geht um die Gesundheit von Haut und Fell, das Wohlbefinden des Tieres und das Vertrauen, das bei jeder Behandlung besonders wichtig ist.
+- Wir verfügen über mehr als 12 Jahre Berufserfahrung in der Tierpflege. Wir haben eine fachbezogene Ausbildung und Zertifikate, bilden uns regelmäßig weiter und stimmen die Pflege individuell auf Rasse, Felltyp, Alter, Zustand und Charakter des Tieres ab.
+- Fürsorge ohne unnötigen Stress
+- Im HUNDESALON NIKA setzen wir auf einen behutsamen Umgang mit Tieren. Wir drängen die Tiere nicht und bemühen uns um eine ruhige, freundliche Atmosphäre, in der sie sich möglichst wohlfühlen können.
+- Besonders aufmerksam betreuen wir Welpen, ältere sowie sensible und ängstliche Tiere. Unser Ziel ist nicht nur ein schönes Ergebnis: Wir tun auch alles dafür, dass der Besuch bei uns für das Tier nicht zu einer unangenehmen Erfahrung wird.
+- Wir arbeiten ohne Sedierung.
+- Professionelle und individuelle Pflege
+- Im Salon verwenden wir moderne professionelle Ausstattung, hochwertige Werkzeuge und sorgfältig ausgewählte Pflegeprodukte. Produkte und Anwendungen wählen wir passend zum Felltyp, zum Hautzustand und zu den individuellen Bedürfnissen des Tieres aus.
+- Wir bieten umfassende Pflege: professionelle Fellpflege, Baden und Hygienepflege, Entfernung loser Haare und Unterwolle, SPA-Pflege, Fell- und Krallenpflege sowie Ultraschall-Zahnreinigung ohne Narkose.
+- Bei uns sind Hunde verschiedener Rassen und Größen, Katzen, Kaninchen und andere kleine Haustiere willkommen.
+- Wir verstehen Tierhalter
+- Unsere Erfahrung mit Tieren ist nicht nur beruflicher Natur. Wir haben auch Erfahrung in der Zucht von Hunden und Katzen und wissen daher, wie wichtig Gesundheit, Charakter, die richtige Pflege und die individuellen Besonderheiten jedes Tieres sind.
+- Ein Tier ist für uns nicht einfach der nächste Kunde im Terminkalender. Jedes Tier braucht einen eigenen Ansatz, Zeit und Aufmerksamkeit.
+- Unsere Philosophie
+- Wir möchten, dass Sie uns Ihren Liebling mit einem guten Gefühl anvertrauen können und Ihr Tier die Fellpflege nach und nach als vertrauten und sicheren Bestandteil seiner Versorgung erlebt.
+- Schönheit. Gesundheit. Wohlbefinden. Vertrauen.
+- Auf diesen Grundsätzen beruht die Arbeit von HUNDESALON NIKA.
+- Wir arbeiten nach vorheriger Terminvereinbarung, damit wir jedem Tier die nötige Zeit und Aufmerksamkeit widmen können.
 
 ### DE — nashi-uslugi.html ###
 - URL: https://hundesalon-nika.com/de/nashi-uslugi.html
@@ -2071,21 +2038,30 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - from € 100
 - Popular landing pages
 - Dog grooming in Leipzig Dog groomer Leipzig Dog salon Leipzig Price list Online booking
-- Client reviews
-- "Excellent salon! My dog looks ready for a magazine cover after grooming."
-- — Anna K.
-- "They groomed my cat very carefully — he used to be scared of grooming."
-- — Dmitri T.
-- "Top-class professionals! The result exceeded all expectations."
-- — Elena V.
 
 ### EN — o-nas.html ###
 - URL: https://hundesalon-nika.com/en/o-nas.html
 - About Us
-- HUNDESALON_NIKA is a team of professional groomers united by their love for animals. We care not only about appearance but also about the comfort of every pet. Our specialists continuously improve their skills, use safe products and take an individual approach to every breed. The salon is equipped with modern tools, and all procedures take place in a calm, friendly atmosphere.
-- We accept dogs, cats, rabbits and other small pets. We work by appointment.
-- Our mission is to make grooming not just a routine procedure but a pleasant experience for both the pet and its owner. We use only hypoallergenic cosmetics from leading European brands and safe techniques. Every specialist holds professional qualifications and certificates.
-- We are also breeders of dogs and cats, so we understand our clients' needs firsthand. Come and visit us, and your pet will look even more beautiful and feel healthier!
+- HUNDESALON NIKA — professional care for every pet
+- Professional grooming with care and respect for animals.
+- For us, grooming is much more than a beautiful haircut. It is about healthy skin and coat, an animal’s comfort and the trust that matters during every treatment.
+- We bring more than 12 years of professional grooming experience. We hold relevant qualifications and certificates, continue to develop our knowledge and tailor each treatment to the pet’s breed, coat type, age, condition and temperament.
+- Care without unnecessary stress
+- At HUNDESALON NIKA, we take a gentle approach to animals. We do not rush pets and aim to create a calm, friendly atmosphere where they can feel as comfortable as possible.
+- We pay particular attention to puppies, older pets and sensitive or anxious animals. Our aim is not only a beautiful result, but also to do everything we can to prevent a grooming visit from becoming an unpleasant experience.
+- We work without sedation.
+- Professional, individual care
+- Our salon uses modern professional equipment, quality tools and carefully selected grooming products. Products and treatments are chosen according to coat type, skin condition and each animal’s individual needs.
+- We offer comprehensive care: professional grooming, bathing and hygiene treatments, de-shedding, SPA care, coat and nail care, as well as ultrasonic teeth cleaning without anaesthesia.
+- We welcome dogs of different breeds and sizes, cats, rabbits and other small pets.
+- We understand pet owners
+- Our experience with animals goes beyond our professional work. We also have experience breeding dogs and cats, so we understand how much health, temperament, appropriate care and each pet’s individual characteristics matter.
+- To us, an animal is not simply the next client in the diary. Every pet needs its own approach, time and attention.
+- Our philosophy
+- We want owners to feel comfortable entrusting their companions to us, and pets to gradually experience grooming as a familiar and safe part of their care.
+- Beauty. Health. Comfort. Trust.
+- These are the principles behind our work at HUNDESALON NIKA.
+- We work by appointment so that we can give every pet the time and attention they need.
 
 ### EN — nashi-uslugi.html ###
 - URL: https://hundesalon-nika.com/en/nashi-uslugi.html
@@ -2354,21 +2330,30 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - от 100 €
 - Популярные страницы
 - Груминг собак в Лейпциге Наши услуги Прайс-лист Онлайн-запись
-- Отзывы клиентов
-- "Чудесный салон! Моя собака после стрижки выглядит как с обложки."
-- — Анна К.
-- "Очень бережно подстригли кота, который раньше боялся груминга."
-- — Дмитрий Т.
-- "Профессионалы высокого класса. Результат превзошёл ожидания."
-- — Ольга Р.
 
 ### RU — o-nas.html ###
 - URL: https://hundesalon-nika.com/ru/o-nas.html
 - О нас
-- HUNDESALON_NIKA — это команда профессиональных грумеров, объединённых любовью к животным. Мы заботимся не только о внешнем виде, но и о комфорте каждого питомца. Наши специалисты регулярно повышают квалификацию, используют безопасные материалы и индивидуальный подход к питомцам каждой породы. Салон оснащён современным оборудованием, а процедуры проводятся в спокойной, дружелюбной атмосфере.
-- Принимаем собак, кошек, кроликов и других мелких домашних животных. Работаем по предварительной записи.
-- Наша миссия — сделать груминг не просто обязательной процедурой, а приятным времяпрепровождением для питомца и его владельца. Мы используем только гипоаллергенную косметику ведущих европейских брендов и безопасные техники. Каждый мастер имеет профильное образование и сертификаты.
-- Мы также являемся заводчиками собак и кошек, поэтому понимаем потребности наших клиентов изнутри. Приходите к нам, и ваш любимец станет ещё красивее и здоровее!
+- HUNDESALON NIKA — профессиональный уход с заботой о каждом питомце
+- Профессиональный груминг с заботой и уважением к животным.
+- Для нас груминг — это гораздо больше, чем красивая стрижка. Это здоровье шерсти и кожи, комфорт животного и доверие, которое особенно важно во время каждой процедуры.
+- За нашими плечами более 12 лет профессионального опыта в груминге. Мы имеем профильное образование и сертификаты, регулярно совершенствуем свои знания и подбираем уход индивидуально — с учётом породы, типа шерсти, возраста, состояния и характера питомца.
+- Забота без лишнего стресса
+- В HUNDESALON NIKA мы придерживаемся бережного подхода к животным. Не торопим питомца и стараемся создать спокойную, доброжелательную атмосферу, в которой он сможет чувствовать себя максимально комфортно.
+- Особенно внимательно мы работаем с щенками, пожилыми, чувствительными и тревожными животными. Наша задача — не только получить красивый результат, но и сделать всё возможное, чтобы посещение грумера не стало для питомца неприятным опытом.
+- Мы работаем без седации.
+- Профессиональный и индивидуальный уход
+- В салоне используется современное профессиональное оборудование, качественные инструменты и тщательно подобранная косметика. Средства и процедуры выбираются в зависимости от типа шерсти, состояния кожи и индивидуальных потребностей животного.
+- Мы предлагаем комплексный уход: профессиональный груминг, купание и гигиенические процедуры, экспресс-линьку, SPA-уход, уход за шерстью и когтями, а также ультразвуковую чистку зубов без наркоза.
+- Мы принимаем собак разных пород и размеров, кошек, кроликов и других мелких домашних животных.
+- Мы понимаем владельцев животных
+- Наш опыт связан с животными не только профессионально. Мы также имеем опыт разведения собак и кошек, поэтому хорошо понимаем, насколько важны здоровье, характер, правильный уход и индивидуальные особенности каждого питомца.
+- Для нас животное — не просто следующий клиент в расписании. Каждый питомец требует своего подхода, времени и внимания.
+- Наша философия
+- Мы хотим, чтобы владелец мог спокойно доверить нам своего любимца, а питомец постепенно воспринимал груминг как привычную и безопасную часть ухода.
+- Красота. Здоровье. Комфорт. Доверие.
+- Именно на этих принципах строится работа HUNDESALON NIKA.
+- Приём осуществляется по предварительной записи, чтобы мы могли уделить каждому питомцу необходимое время и внимание.
 
 ### RU — nashi-uslugi.html ###
 - URL: https://hundesalon-nika.com/ru/nashi-uslugi.html
@@ -2637,21 +2622,30 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - від 100 €
 - Популярні сторінки
 - Грумінг собак у Лейпцигу Hundefriseur Leipzig Грумінг-салон у Лейпцигу Прайс-лист Онлайн-запис
-- Відгуки клієнтів
-- "Чудовий салон! Моя собака після стрижки виглядає як з обкладинки."
-- — Анна К.
-- "Дуже дбайливо підстригли кота, який раніше боявся грумінгу."
-- — Дмитро Т.
-- "Професіонали найвищого класу. Результат перевершив очікування."
-- — Олена Р.
 
 ### UK — o-nas.html ###
 - URL: https://hundesalon-nika.com/uk/o-nas.html
 - Про нас
-- HUNDESALON_NIKA — це команда професійних грумерів, об'єднаних любов'ю до тварин. Ми дбаємо не лише про зовнішній вигляд, а й про комфорт кожного улюбленця. Наші фахівці регулярно підвищують кваліфікацію, використовують безпечні матеріали та індивідуальний підхід до кожної породи. Салон оснащено сучасним обладнанням, а процедури проводяться у спокійній, дружній атмосфері.
-- Приймаємо собак, котів, кроликів та інших дрібних домашніх тварин. Працюємо за попереднім записом.
-- Наша місія — зробити грумінг не просто обов’язковою, а приємною процедурою для улюбленця та його власника. Ми використовуємо лише гіпоалергенну косметику провідних європейських брендів і безпечні техніки. Кожен майстер має профільну освіту та сертифікати.
-- Ми також є заводчиками собак і котів, тому розуміємо потреби наших клієнтів зсередини. Приходьте до нас — і ваш улюбленець стане ще гарнішим і здоровішим!
+- HUNDESALON NIKA — професійний догляд із турботою про кожного улюбленця
+- Професійний грумінг із турботою та повагою до тварин.
+- Для нас грумінг — це набагато більше, ніж гарна стрижка. Це здоров’я шерсті та шкіри, комфорт тварини й довіра, яка особливо важлива під час кожної процедури.
+- За нашими плечима понад 12 років професійного досвіду в грумінгу. Ми маємо профільну освіту й сертифікати, регулярно вдосконалюємо свої знання та підбираємо догляд індивідуально — з урахуванням породи, типу шерсті, віку, стану й характеру улюбленця.
+- Турбота без зайвого стресу
+- У HUNDESALON NIKA ми дотримуємося дбайливого підходу до тварин. Не квапимо улюбленця й намагаємося створити спокійну, доброзичливу атмосферу, у якій він зможе почуватися максимально комфортно.
+- Особливо уважно ми працюємо з цуценятами, літніми, чутливими й тривожними тваринами. Наше завдання — не лише отримати гарний результат, а й зробити все можливе, щоб відвідування грумера не стало для улюбленця неприємним досвідом.
+- Ми працюємо без седації.
+- Професійний та індивідуальний догляд
+- У салоні використовується сучасне професійне обладнання, якісні інструменти й ретельно підібрана косметика. Засоби та процедури обираються залежно від типу шерсті, стану шкіри й індивідуальних потреб тварини.
+- Ми пропонуємо комплексний догляд: професійний грумінг, купання та гігієнічні процедури, експрес-линяння, SPA-догляд, догляд за шерстю й кігтями, а також ультразвукове чищення зубів без наркозу.
+- Ми приймаємо собак різних порід і розмірів, котів, кроликів та інших дрібних домашніх тварин.
+- Ми розуміємо власників тварин
+- Наш досвід пов’язаний із тваринами не лише професійно. Ми також маємо досвід розведення собак і котів, тому добре розуміємо, наскільки важливі здоров’я, характер, правильний догляд та індивідуальні особливості кожного улюбленця.
+- Для нас тварина — не просто наступний клієнт у розкладі. Кожен улюбленець потребує свого підходу, часу й уваги.
+- Наша філософія
+- Ми хочемо, щоб власник міг спокійно довірити нам свого улюбленця, а тварина поступово сприймала грумінг як звичну й безпечну частину догляду.
+- Краса. Здоров’я. Комфорт. Довіра.
+- Саме на цих принципах ґрунтується робота HUNDESALON NIKA.
+- Прийом здійснюється за попереднім записом, щоб ми могли приділити кожному улюбленцю необхідний час і увагу.
 
 ### UK — nashi-uslugi.html ###
 - URL: https://hundesalon-nika.com/uk/nashi-uslugi.html

@@ -51,7 +51,8 @@
     'short-haired': [75, 105],
     'double-coat-longhair': [180, 150],
     'express-shedding': [90, 120, 150, 180],
-    'additional-services': [15, 15, 20, 25, 60, 30, 30, 75, 90, 110, 140],
+    'additional-services': [15, 60, 20, 25, 15, 30],
+    'ru-additional-services': [15, 60, 20, 25, 15, 30],
   });
 
   const parseServiceIndex = serviceId => {
@@ -76,7 +77,7 @@
 
   const resolveTiming = ({ categoryId, serviceIndex = 0, breedIndex = 0, clientType = 'new', coatCondition = 'good', behavior = 'calm' } = {}) => {
     const standardMinutes = resolveStandardDuration(categoryId, serviceIndex);
-    const isAdditionalService = categoryId === 'additional-services';
+    const isAdditionalService = categoryId === 'additional-services' || categoryId === 'ru-additional-services';
     const firstVisitExtraMinutes = clientType === 'returning'
       ? 0
       : isAdditionalService
@@ -172,7 +173,9 @@
         price: getText(priceRow.price, safeLang),
         includesNailTrim: Boolean(category.services?.includes('nails')),
         standardDurationMinutes: resolveStandardDuration(category.id, index),
-        bufferMinutes: category.id === 'additional-services' ? 15 : BOOKING_SCHEDULE.defaultBufferMinutes,
+        bufferMinutes: category.id === 'additional-services' || category.id === 'ru-additional-services'
+          ? 15
+          : BOOKING_SCHEDULE.defaultBufferMinutes,
       }));
 
       return {
@@ -193,6 +196,7 @@
     const getServices = (categoryId, breedId = '') => {
       const category = getCategory(categoryId);
       if (!category) return [];
+      if (breedId && getBreed(breedId)?.categoryId !== categoryId) return [];
 
       if (category.id === 'ru-short-coat' && breedId) {
         const breed = getBreed(breedId);
@@ -224,7 +228,7 @@
       const breed = getBreed(breedId);
       const service = getServices(categoryId, breedId).find(item => item.id === serviceId);
 
-      if (!category || !breed || !service) {
+      if (!category || !breed || breed.categoryId !== categoryId || !service) {
         return { price: '', label: '', category: null, breed: null, service: null };
       }
 
@@ -260,5 +264,36 @@
     };
   };
 
-  global.PriceBookingCatalog = { build };
+  const searchTokens = value => String(value || '').toLowerCase().normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '').split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+
+  const tokenScore = (candidate, query) => {
+    if (candidate.startsWith(query)) return 0;
+    const limit = query.length >= 9 ? 2 : query.length >= 4 ? 1 : 0;
+    if (!limit) return Infinity;
+    const distance = target => {
+      if (Math.abs(query.length - target.length) > limit) return limit + 1;
+      const rows = Array.from({ length: query.length + 1 }, (_, i) => [i]);
+      rows[0] = Array.from({ length: target.length + 1 }, (_, i) => i);
+      for (let i = 1; i <= query.length; i += 1) {
+        for (let j = 1; j <= target.length; j += 1) {
+          rows[i][j] = Math.min(rows[i - 1][j] + 1, rows[i][j - 1] + 1,
+            rows[i - 1][j - 1] + Number(query[i - 1] !== target[j - 1]));
+          if (i > 1 && j > 1 && query[i - 1] === target[j - 2] && query[i - 2] === target[j - 1]) {
+            rows[i][j] = Math.min(rows[i][j], rows[i - 2][j - 2] + 1);
+          }
+        }
+      }
+      return rows[query.length][target.length];
+    };
+    const best = Math.min(distance(candidate), distance(candidate.slice(0, query.length)));
+    return best <= limit ? 10 + best : Infinity;
+  };
+  const breedSearchScore = (label, query, lang) => {
+    const aliases = pageCatalog.locales?.[lang]?.breedSearchAliases?.[label] || [];
+    const candidates = [label, ...aliases].flatMap(searchTokens);
+    return searchTokens(query).reduce((sum, token) => sum + Math.min(...candidates.map(word => tokenScore(word, token))), 0);
+  };
+
+  global.PriceBookingCatalog = { build, searchTokens, tokenScore, breedSearchScore };
 })(window);

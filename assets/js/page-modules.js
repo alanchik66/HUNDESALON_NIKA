@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
       datetimeStep: '2. Дата и время привода',
       datetimeTitle: 'Выберите дату и время привода',
       breedLabel: 'Порода или категория',
-      serviceLabel: 'Подходящая услуга',
+      serviceLabel: 'Основная услуга',
       priceLabel: 'Ориентировочная цена',
       chooseBreedFirst: 'Сначала выберите породу или категорию питомца',
       noServiceForBreed: 'Для выбранной породы пока нет доступной услуги.',
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
       datetimeStep: '2. Дата й час привезення',
       datetimeTitle: 'Оберіть дату й час привезення',
       breedLabel: 'Порода або категорія',
-      serviceLabel: 'Доступна послуга',
+      serviceLabel: 'Основна послуга',
       priceLabel: 'Орієнтовна вартість',
       chooseBreedFirst: 'Спочатку оберіть породу або категорію улюбленця',
       noServiceForBreed: 'Для обраної породи наразі немає доступної послуги.',
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
       datetimeStep: '2. Date and arrival time',
       datetimeTitle: 'Choose a date and arrival time',
       breedLabel: 'Breed or category',
-      serviceLabel: 'Available service',
+      serviceLabel: 'Main service',
       priceLabel: 'Estimated price',
       chooseBreedFirst: 'Choose a breed or pet category first',
       noServiceForBreed: 'No service is currently available for this breed.',
@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
       datetimeStep: '2. Datum und Ankunftszeit',
       datetimeTitle: 'Datum und Ankunftszeit auswählen',
       breedLabel: 'Rasse oder Kategorie',
-      serviceLabel: 'Passende Leistung',
+      serviceLabel: 'Hauptleistung',
       priceLabel: 'Richtpreis',
       chooseBreedFirst: 'Wählen Sie zuerst Rasse oder Tierkategorie',
       noServiceForBreed: 'Für diese Rasse ist derzeit keine passende Leistung verfügbar.',
@@ -682,13 +682,13 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     localFunctionsRequired: {
       ru: url =>
-        `Локальная страница открыта без серверной отправки. Откройте ${url} — там форма отправит заявку правильно.`,
+        `Данные не сохранены: локальный сервер не поддерживает отправку форм. Запустите npm run dev:cf и откройте ${url}. Для сохранения также требуется настроенное серверное хранилище.`,
       uk: url =>
-        `Локальну сторінку відкрито без серверного надсилання. Відкрийте ${url} — там форма надішле заявку правильно.`,
+        `Дані не збережено: локальний сервер не підтримує надсилання форм. Запустіть npm run dev:cf і відкрийте ${url}. Для збереження також потрібне налаштоване серверне сховище.`,
       en: url =>
-        `This local page is running without server sending. Open ${url} and the booking form will submit correctly.`,
+        `Data was not saved: this local server cannot process forms. Run npm run dev:cf and open ${url}. Saving also requires configured server storage.`,
       de: url =>
-        `Diese lokale Seite läuft ohne Server-Versand. Öffnen Sie ${url}, dann sendet das Buchungsformular korrekt.`,
+        `Daten wurden nicht gespeichert: Dieser lokale Server kann keine Formulare verarbeiten. Starten Sie npm run dev:cf und öffnen Sie ${url}. Zum Speichern muss auch der Serverspeicher eingerichtet sein.`,
     },
   };
 
@@ -873,7 +873,7 @@ document.addEventListener('DOMContentLoaded', () => {
           break;
         }
 
-        if ((response.status === 404 || response.status === 405) && endpoint === '/sendmail') {
+        if ([404, 405, 501].includes(response.status) && isLocalStaticProbe) {
           shouldShowLocalFunctionHint = Boolean(getLocalCloudflareSendmailUrl());
           continue;
         }
@@ -1887,6 +1887,7 @@ document.addEventListener('DOMContentLoaded', () => {
       selectedCategoryId: '',
       selectedBreedId: '',
       selectedServiceId: '',
+      selectedExtras: [],
       selectedPrice: '',
       selectedServiceLabel: '',
       selectedPriceOverride: '',
@@ -1918,7 +1919,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const getSelectedTiming = () => {
       if (bookingCatalog?.getTiming) {
-        return bookingCatalog.getTiming({
+        const timing = bookingCatalog.getTiming({
           categoryId: state.selectedCategoryId,
           breedId: state.selectedBreedId,
           serviceId: state.selectedServiceId,
@@ -1926,6 +1927,9 @@ document.addEventListener('DOMContentLoaded', () => {
           coatCondition: state.coatCondition || 'good',
           behavior: state.behavior || 'calm',
         });
+        const extraMinutes = state.selectedExtras.reduce((sum, item) => sum + (item.standardDurationMinutes || 0), 0);
+        return { ...timing, standardMinutes: timing.standardMinutes + extraMinutes,
+          estimatedMinutes: timing.estimatedMinutes + extraMinutes, safeBlockMinutes: timing.safeBlockMinutes + extraMinutes };
       }
 
       const standardMinutes = 120;
@@ -2390,19 +2394,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const selection = document.createElement('div');
       selection.className = 'booking-selection';
+      const filterCopy = ({
+        ru: { search: 'Поиск породы', coat: 'Тип шерсти', all: 'Все типы шерсти', empty: 'Породы не найдены' },
+        uk: { search: 'Пошук породи', coat: 'Тип шерсті', all: 'Усі типи шерсті', empty: 'Породи не знайдено' },
+        de: { search: 'Rasse suchen', coat: 'Felltyp', all: 'Alle Felltypen', empty: 'Keine Rassen gefunden' },
+        en: { search: 'Search breeds', coat: 'Coat type', all: 'All coat types', empty: 'No breeds found' },
+      })[pageLang];
       selection.innerHTML = `
-        <p class="booking-selection__intro">${bookingCopy.chooseBreed}</p>
+        <label class="booking-selection__field"><span>${filterCopy.search}</span><input type="search" data-booking-search autocomplete="off" /></label>
+        <label class="booking-selection__field"><span>${filterCopy.coat}</span><select data-booking-coat-filter><option value="">${filterCopy.all}</option></select></label>
         <label class="booking-selection__field">
           <span>${bookingCopy.breedLabel}</span>
           <select data-booking-breed required></select>
         </label>
-        <label class="booking-selection__field">
-          <span>${bookingCopy.serviceLabel}</span>
-          <select data-booking-service required disabled></select>
-        </label>
+        <fieldset class="booking-selection__services"><legend>${bookingCopy.serviceLabel}</legend>
+          <select data-booking-service hidden disabled aria-label="${bookingCopy.serviceLabel}"></select>
+          <div data-booking-service-buttons></div>
+        </fieldset>
         <div class="booking-selection__price" data-booking-price aria-live="polite">
           ${bookingCopy.chooseBreedFirst}
         </div>
+        <fieldset class="booking-selection__extras" data-booking-extras></fieldset>
+        <p class="booking-selection__intro" data-booking-inclusions></p>
         <fieldset class="booking-selection__risk" data-booking-risk>
           <legend>${bookingRiskCopy.clientTypeLabel}</legend>
           <label class="booking-selection__field">
@@ -2440,7 +2453,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const breedSelect = selection.querySelector('[data-booking-breed]');
       const serviceSelect = selection.querySelector('[data-booking-service]');
+      const serviceButtonsRoot = selection.querySelector('[data-booking-service-buttons]');
+      const breedSearch = selection.querySelector('[data-booking-search]');
+      const coatFilter = selection.querySelector('[data-booking-coat-filter]');
+      const coatTypes = new Map();
+      bookingCatalog.categories.forEach(category => {
+        const coat = category.source.coatType;
+        if (coat && !coatTypes.has(coat)) coatTypes.set(coat, category.title);
+      });
+      coatTypes.forEach((title, coat) => {
+        const option = document.createElement('option');
+        option.value = coat;
+        option.textContent = title;
+        coatFilter.appendChild(option);
+      });
       const priceOutput = selection.querySelector('[data-booking-price]');
+      const extrasRoot = selection.querySelector('[data-booking-extras]');
       const clientTypeSelect = selection.querySelector('[data-booking-client-type]');
       const coatConditionSelect = selection.querySelector('[data-booking-coat-condition]');
       const behaviorSelect = selection.querySelector('[data-booking-behavior]');
@@ -2493,9 +2521,27 @@ document.addEventListener('DOMContentLoaded', () => {
         breedSelect.appendChild(group);
       });
 
+      const renderServiceButton = (button, service) => {
+        const indicator = document.createElement('span');
+        indicator.className = 'price-category-modal__service-option-check';
+        indicator.setAttribute('aria-hidden', 'true');
+        const label = document.createElement('span');
+        label.className = 'price-category-modal__service-option-name';
+        label.textContent = service.label;
+        const price = document.createElement('strong');
+        price.textContent = service.price;
+        button.setAttribute('aria-label', `${service.label} — ${service.price}`);
+        button.append(indicator, label, price);
+      };
+
       const updateSelection = () => {
         const selectedBreed = bookingCatalog.getBreed(breedSelect.value);
         if (!selectedBreed) {
+          serviceButtonsRoot.replaceChildren();
+          extrasRoot.replaceChildren();
+          extrasRoot.hidden = true;
+          state.selectedExtras = [];
+          selection.querySelector('[data-booking-inclusions]').hidden = true;
           serviceSelect.replaceChildren();
           serviceSelect.disabled = true;
           setCurrencyText(priceOutput, bookingCopy.chooseBreedFirst);
@@ -2528,31 +2574,124 @@ document.addEventListener('DOMContentLoaded', () => {
           : services[0]?.id || '';
         serviceSelect.value = selectedServiceId;
         state.selectedServiceId = selectedServiceId;
+        serviceButtonsRoot.replaceChildren();
+        services.forEach(service => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'booking-selection__service-button';
+          button.setAttribute('aria-pressed', String(service.id === selectedServiceId));
+          renderServiceButton(button, service);
+          button.addEventListener('click', () => {
+            serviceSelect.value = service.id;
+            serviceSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            serviceButtonsRoot.querySelectorAll('button')[services.indexOf(service)]?.focus({ preventScroll: true });
+          });
+          serviceButtonsRoot.appendChild(button);
+        });
 
         const quote = bookingCatalog.resolveQuote(
           state.selectedCategoryId,
           state.selectedBreedId,
           state.selectedServiceId
         );
+        const extrasCategory = bookingCatalog.categories.find(item => item.id.endsWith('additional-services'));
+        const fullCare = quote.service?.key === 'full-groom' || /комплекс|комплексн|komplett|full groom/i.test(quote.service?.label || '');
+        const nonDog = /cats|small-animals/.test(selectedBreed.categoryId);
+        const categoryRules = quote.category?.source || {};
+        const inclusionNote = selection.querySelector('[data-booking-inclusions]');
+        inclusionNote.textContent = fullCare ? window.PricePageCatalog?.locales?.[pageLang]?.fullCareIncludedHint || '' : '';
+        inclusionNote.hidden = !inclusionNote.textContent;
+        const eligibleExtras = (extrasCategory?.services || []).filter(item => {
+          if (item.index === 0) return !quote.service?.includesNailTrim;
+          if (nonDog) return false;
+          if (item.index === 2) return true;
+          if (item.index === 3) return categoryRules.additionalServiceGroup === 'small';
+          if (item.index === 4) return !fullCare;
+          if (item.index === 5) return !fullCare && categoryRules.coatType !== 'wire' && !/wire/.test(selectedBreed.categoryId);
+          return false;
+        });
+        state.selectedExtras = state.selectedExtras.filter(item => eligibleExtras.some(extra => extra.id === item.id));
+        extrasRoot.replaceChildren();
+        const extrasLegend = document.createElement('legend');
+        extrasLegend.textContent = ({ ru: 'Дополнительные услуги (необязательно)', uk: 'Додаткові послуги (необов’язково)', de: 'Zusatzleistungen (optional)', en: 'Additional services (optional)' })[pageLang];
+        extrasRoot.appendChild(extrasLegend);
+        extrasRoot.hidden = !eligibleExtras.length;
+        eligibleExtras.forEach(extra => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'booking-selection__service-button';
+          button.dataset.bookingExtra = extra.id;
+          const selected = state.selectedExtras.some(item => item.id === extra.id);
+          button.setAttribute('aria-pressed', String(selected));
+          renderServiceButton(button, extra);
+          button.addEventListener('click', () => {
+            state.selectedExtras = selected ? state.selectedExtras.filter(item => item.id !== extra.id) : [...state.selectedExtras, extra];
+            updateSelection();
+            Array.from(extrasRoot.querySelectorAll('[data-booking-extra]'))
+              .find(item => item.dataset.bookingExtra === String(extra.id))?.focus({ preventScroll: true });
+            resetSummaryConfirmation();
+            if (state.selectedDate) renderTimeSlots();
+          });
+          extrasRoot.appendChild(button);
+        });
         state.selectedService = state.selectedServiceLabel || quote.label;
         state.selectedPrice = state.selectedPriceOverride || quote.price;
-        const displayedPrice = state.selectedPriceOverride || quote.price;
+        if (state.selectedExtras.length) {
+          state.selectedService += ` + ${state.selectedExtras.map(item => item.label).join(' + ')}`;
+          state.selectedPrice += ` + ${state.selectedExtras.map(item => item.price).join(' + ')}`;
+        }
+        const displayedPrice = state.selectedPrice;
         setCurrencyText(
           priceOutput,
           displayedPrice ? `${bookingCopy.priceLabel}: ${displayedPrice}` : bookingCopy.noServiceForBreed
         );
         syncHiddenFields();
         renderTimingPreview();
+        window.HundesalonNavPill?.scan?.(selection);
       };
 
       const initialBreed = allBreeds.some(breed => breed.id === state.selectedBreedId)
         ? state.selectedBreedId
         : allBreeds[0]?.id || '';
       breedSelect.value = initialBreed;
+      const filterBreeds = () => {
+        const previous = breedSelect.value;
+        const query = breedSearch.value.trim().toLocaleLowerCase(pageLang).replaceAll('ё', 'е');
+        breedSelect.replaceChildren();
+        bookingCatalog.categories.forEach(category => {
+          if (coatFilter.value && category.source.coatType !== coatFilter.value) return;
+          const matches = category.breeds
+            .map(breed => ({ breed, score: window.PriceBookingCatalog.breedSearchScore(breed.label, query, pageLang) }))
+            .filter(result => Number.isFinite(result.score))
+            .sort((left, right) => left.score - right.score)
+            .map(result => result.breed);
+          if (!matches.length) return;
+          const group = document.createElement('optgroup');
+          group.label = category.title;
+          matches.forEach(breed => {
+            const option = document.createElement('option');
+            option.value = breed.id;
+            option.textContent = breed.label;
+            group.appendChild(option);
+          });
+          breedSelect.appendChild(group);
+        });
+        if ([...breedSelect.options].some(option => option.value === previous)) breedSelect.value = previous;
+        if (!breedSelect.options.length) {
+          const option = document.createElement('option');
+          option.value = '';
+          option.textContent = filterCopy.empty;
+          breedSelect.appendChild(option);
+        }
+        if (breedSelect.value !== previous) breedSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      };
+      breedSearch.addEventListener('input', filterBreeds);
+      coatFilter.addEventListener('change', filterBreeds);
       clientTypeSelect.value = state.clientType;
       coatConditionSelect.value = state.coatCondition;
       behaviorSelect.value = state.behavior;
       breedSelect.addEventListener('change', () => {
+        state.selectedExtras = [];
         state.selectedServiceId = '';
         state.selectedServiceLabel = '';
         state.selectedPriceOverride = '';
@@ -2878,6 +3017,7 @@ document.addEventListener('DOMContentLoaded', () => {
       state.selectedCategoryId = preset.categoryId || '';
       state.selectedBreedId = preset.breedId || '';
       state.selectedServiceId = preset.serviceId || '';
+      state.selectedExtras = [];
       state.selectedPrice = preset.price || '';
       state.selectedServiceLabel = preset.serviceLabel || '';
       state.selectedPriceOverride = preset.priceOverride || '';
