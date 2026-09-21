@@ -83,6 +83,16 @@ export async function onRequest({ request, env }) {
     result = { ok: false, reason: 'confirmation_pending', partial: true };
   }
   if (!result.ok) {
+    console.warn(
+      JSON.stringify({
+        event: 'booking_confirmation_failed',
+        reason: result.reason,
+        stage: result.stage || '',
+        providerStatus: result.providerStatus || 0,
+        calendarAlias: result.calendarAlias || '',
+        partial: Boolean(result.partial),
+      })
+    );
     if (result.reason === 'slot_conflict') {
       return page('Время уже занято', 'Google Calendar не был изменён. Выберите с клиентом другое время.', 409);
     }

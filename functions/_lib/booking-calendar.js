@@ -44,7 +44,21 @@ const BOOKING_COLUMN = Object.freeze({
 
 async function bookingJsonFetch(url, options) {
   try {
-    return await safeJsonFetch(url, options);
+    const response = await safeJsonFetch(url, options);
+    if (!response.ok && response.status !== 404 && response.status !== 409) {
+      // Log provider status only: URLs, tokens and booking data stay private.
+      console.warn(
+        JSON.stringify({
+          event: 'booking_google_request_failed',
+          operation: options?.method || 'GET',
+          provider: String(url).includes('/calendar/') ? 'calendar' : 'sheets',
+          status: response.status,
+          code: response.body?.error?.status || '',
+          reason: response.body?.error?.errors?.[0]?.reason || '',
+        })
+      );
+    }
+    return response;
   } catch {
     return { ok: false, status: 0, body: null, networkError: true };
   }
@@ -232,7 +246,7 @@ export async function confirmGoogleBooking(env, requestId) {
   try {
     token = await googleToken(env);
   } catch {
-    return { ok: false, reason: 'calendar_unavailable' };
+    return { ok: false, reason: 'calendar_unavailable', stage: 'token' };
   }
   if (!token) return { ok: false, reason: 'google_not_configured' };
   const authHeaders = { Authorization: `Bearer ${token}` };
@@ -275,7 +289,7 @@ export async function confirmGoogleBooking(env, requestId) {
   let createdNow = false;
   if (existing.ok) {
     if (!matchesBookingEvent(existing.body, deterministicEventId, safeRequestId)) {
-      return { ok: false, reason: 'calendar_unavailable' };
+      return { ok: false, reason: 'calendar_unavailable', stage: 'event_identity' };
     }
     event = existing.body;
     deduplicated = true;
@@ -286,7 +300,7 @@ export async function confirmGoogleBooking(env, requestId) {
       body: JSON.stringify({ timeMin, timeMax, items: [{ id: calendarId }] }),
     });
     const busy = freeBusy.body?.calendars?.[calendarId]?.busy;
-    if (!freeBusy.ok || !Array.isArray(busy)) return { ok: false, reason: 'calendar_unavailable' };
+    if (!freeBusy.ok || !Array.isArray(busy)) return { ok: false, reason: 'calendar_unavailable', stage: 'free_busy' };
     if (busy.length) return { ok: false, reason: 'slot_conflict' };
 
     const row = initialMatch.row;
@@ -320,7 +334,13 @@ export async function confirmGoogleBooking(env, requestId) {
       event = created.body;
       createdNow = true;
     } else if (created.status >= 400 && created.status < 500 && created.status !== 409) {
-      return { ok: false, reason: 'calendar_unavailable' };
+      return {
+        ok: false,
+        reason: 'calendar_unavailable',
+        stage: 'event_create',
+        providerStatus: created.status,
+        calendarAlias: calendarId === 'primary' ? 'primary' : 'explicit',
+      };
     } else {
       const recovered = await bookingJsonFetch(`${eventUrl}/${encodeURIComponent(deterministicEventId)}`, {
         headers: authHeaders,
@@ -332,7 +352,7 @@ export async function confirmGoogleBooking(env, requestId) {
       deduplicated = true;
     }
   } else {
-    return { ok: false, reason: 'calendar_unavailable' };
+    return { ok: false, reason: 'calendar_unavailable', stage: 'event_read' };
   }
 
   const race = await resolveConcurrentSlot({
