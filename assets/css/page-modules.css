@@ -8699,7 +8699,7 @@ body.price-page .price-size-section__category-grid {
   }
 
   body.price-page .price-size-section[data-price-section='cats-animals'] .price-size-section__category-grid {
-    width: calc(80% - var(--price-card-grid-gap-fifth));
+    width: 100%;
     margin-inline: auto;
   }
 }
@@ -9050,6 +9050,13 @@ body.price-page #price-category-modal .price-category-modal__list--breeds li {
 .client-registration-modal__content {
   --client-modal-pad: clamp(0.78rem, 1.5vw, 1.15rem);
   padding: var(--client-modal-pad);
+}
+
+.client-registration-modal__controls {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 0;
 }
 
 .client-registration-modal__header {
@@ -9840,9 +9847,10 @@ body.price-page .price-size-section:is(
 }
 
 body.price-page .price-size-section[data-price-section='cats-animals'] > .price-size-section__category-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(36rem + var(--price-card-grid-gap))), 1fr));
   align-content: start;
   align-items: stretch;
-  gap: var(--price-section-gap);
+  gap: var(--price-card-grid-gap);
 }
 
 body.price-page .price-size-section[data-price-section='cats-animals'] .price-size-section__category {
@@ -9855,12 +9863,13 @@ body.price-page
   .price-size-section[data-price-section='cats-animals']
   .price-size-section__category
   .price-size-section__cards {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
   grid-template-rows: none;
   grid-auto-rows: 1fr;
   align-content: stretch;
   align-items: stretch;
   height: 100%;
-  gap: var(--price-section-gap);
+  gap: var(--price-card-grid-gap);
 }
 
 /* Highlight interaction without moving cards out of the shared grid. */

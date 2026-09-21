@@ -1329,8 +1329,10 @@
   registrationModal.setAttribute('aria-hidden', 'true');
   registrationModal.innerHTML = `
     <div class="modal-content client-registration-modal__content">
-      <header class="client-registration-modal__header">
+      <div class="client-registration-modal__controls">
         <button type="button" class="modal-close client-registration-modal__close" data-client-registration-close aria-label="${escapeHtml(locale.closeLabel || 'Close')}" >&times;</button>
+      </div>
+      <header class="client-registration-modal__header">
         <p class="section-kicker" data-client-registration-kicker></p>
         <h2 class="section-title" data-client-registration-title></h2>
         <p class="client-registration-modal__lead" data-client-registration-lead></p>

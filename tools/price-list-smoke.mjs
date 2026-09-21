@@ -99,6 +99,19 @@ const readLoadedPhotoImages = async (page, selector) => {
 const localContainedPhotosPass = photos => photos.length > 0
   && photos.every(photo => photo.local && photo.loaded && photo.objectFit === 'contain');
 
+// Element screenshots cannot represent sections taller than the fixed scroll root.
+// Navigate as a visitor does and capture the actual viewport instead.
+const captureSection = async (page, sectionKey, screenshotPath) => {
+  const key = sectionKey === 'cats-animals' ? 'cats' : sectionKey;
+  await page.locator(`[data-price-categories-action][data-price-section-action="${key}"]`).click();
+  await page.waitForFunction(targetKey => {
+    const heading = document.querySelector(`[data-price-section-target="${targetKey}"] .price-size-section__heading`);
+    const rect = heading?.getBoundingClientRect();
+    return rect && rect.top >= -1 && rect.bottom <= innerHeight;
+  }, key);
+  await page.screenshot({ path: screenshotPath, animations: 'disabled' });
+};
+
 await mkdir(outDir, { recursive: true });
 
 const browser = await chromium.launch({
@@ -380,11 +393,17 @@ for (const locale of locales) {
         const verticalGaps = rows.slice(1).map((row, index) => row[0].top - Math.max(...rows[index].map(rect => rect.bottom)));
         const expectedCoatTypes = expectedCoatsBySection[sectionKey] || [];
         const expectedCardCount = expectedCoatTypes.length;
-        const expectedRowLengths = layoutLabel === 'mobile'
-          ? Array(expectedCardCount).fill(1)
-          : layoutLabel === 'tablet'
-            ? Array.from({ length: Math.ceil(expectedCardCount / 2) }, (_, index) => index < Math.floor(expectedCardCount / 2) ? 2 : expectedCardCount % 2 || 2)
-            : [expectedCardCount];
+        // The responsive repair uses an 18rem minimum, not five fixed desktop columns.
+        const minCardWidth = 18 * Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+        const availableWidth = grid.clientWidth
+          - Number.parseFloat(gridStyle.paddingLeft) - Number.parseFloat(gridStyle.paddingRight);
+        const columnGap = Number.parseFloat(gridStyle.columnGap);
+        const expectedColumns = Math.min(expectedCardCount, Math.max(1,
+          Math.floor((availableWidth + columnGap + 0.5) / (minCardWidth + columnGap))));
+        const expectedRowLengths = Array.from(
+          { length: Math.ceil(expectedCardCount / expectedColumns) },
+          (_, index) => Math.min(expectedColumns, expectedCardCount - index * expectedColumns)
+        );
         const widths = rects.map(rect => rect.width);
         const coatTypes = cards.map(card => categoriesById.get(card.dataset.categoryId)?.coatType || '');
         const serviceRects = cards.map(card => Array.from(card.querySelectorAll('[data-price-service-select], [data-price-additional-select]'))
@@ -446,18 +465,29 @@ for (const locale of locales) {
       const catAnimalCards = Array.from(catAnimalSection?.querySelectorAll('.price-card') || []);
       const giantRects = giantCards.map(toRect);
       const catAnimalRects = catAnimalCards.map(toRect);
-      const reference = giantRects.reduce(
-        (largest, rect) => rect.height > largest.height ? rect : largest,
-        giantRects[0] || { width: 0, height: 0 }
-      );
+      // Different service content may have different heights across sections.
+      // Keep each companion group uniform and inside the available page width.
+      const companionGroups = Array.from(catAnimalSection?.querySelectorAll('.price-size-section__cards') || []);
+      const companionGrid = catAnimalSection?.querySelector('.price-size-section__category-grid');
+      const minimumWidth = 18 * Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
       return {
         catAnimalCardCount: catAnimalRects.length,
         giantCardCount: giantRects.length,
         catAnimalSizes: catAnimalRects,
         giantSizes: giantRects,
-        cardSizesMatch: Boolean(reference.width && reference.height)
-          && catAnimalRects.every(rect => Math.abs(rect.width - reference.width) <= 2
-            && Math.abs(rect.height - reference.height) <= 2),
+        usesFullWidth: Boolean(companionGrid && catAnimalSection
+          && Math.abs(companionGrid.clientWidth - catAnimalSection.clientWidth) <= 2),
+        cardSizesMatch: companionGroups.length === 2 && companionGroups.every(grid => {
+          const cards = Array.from(grid.querySelectorAll('.price-card'));
+          const rects = cards.map(card => card.getBoundingClientRect());
+          const bounds = grid.getBoundingClientRect();
+          return rects.length > 0 && rects.every(rect => rect.width > 0 && rect.height > 0
+            && rect.width >= Math.min(bounds.width, minimumWidth) - 2
+            && Math.abs(rect.width - rects[0].width) <= 2
+            && Math.abs(rect.height - rects[0].height) <= 2
+            && rect.left >= bounds.left - 1 && rect.right <= bounds.right + 1)
+            && cards.every(card => card.scrollWidth <= card.clientWidth + 1);
+        }),
         singleSectionNavigation: catAnimalSection?.querySelectorAll(':scope > .price-section-navigation').length === 1,
       };
     };
@@ -544,10 +574,11 @@ for (const locale of locales) {
       JSON.stringify(dogTileDomState.sizeSections)
     );
     assert(
-      `${locale} ${label}: cats and small-animal tiles share the giant-tile size without a duplicate navigation row`,
+      `${locale} ${label}: companion tiles are uniform within groups without overflow or duplicate navigation`,
       companionTileState.catAnimalCardCount === 4
         && companionTileState.giantCardCount === 4
         && companionTileState.singleSectionNavigation
+        && companionTileState.usesFullWidth
         && (label === 'mobile' || companionTileState.cardSizesMatch),
       JSON.stringify(companionTileState)
     );
@@ -593,18 +624,16 @@ for (const locale of locales) {
           JSON.stringify(resizedGridState.sizeSections)
         );
         assert(
-          `${locale} ${target.label}: cats and small animals retain the giant-tile size after resize`,
+          `${locale} ${target.label}: companion tiles stay uniform and contained after resize`,
           resizedCompanionTileState.catAnimalCardCount === 4
             && resizedCompanionTileState.giantCardCount === 4
             && resizedCompanionTileState.singleSectionNavigation
+            && resizedCompanionTileState.usesFullWidth
             && (target.layout === 'mobile' || resizedCompanionTileState.cardSizesMatch),
           JSON.stringify(resizedCompanionTileState)
         );
         const screenshotPath = path.join(outDir, `${locale}-${target.label}-grid.png`);
-        await page.locator(`[data-price-section="${target.section}"]`).screenshot({
-          path: screenshotPath,
-          animations: 'disabled',
-        });
+        await captureSection(page, target.section, screenshotPath);
         geometryScreenshots.push(screenshotPath);
       }
       await page.setViewportSize(viewport);
@@ -644,7 +673,7 @@ for (const locale of locales) {
 
     if (geometryOnly) {
       const screenshotPath = path.join(outDir, `${locale}-${label}-geometry.png`);
-      await page.locator('[data-price-section="small"]').screenshot({ path: screenshotPath, animations: 'disabled' });
+      await captureSection(page, 'small', screenshotPath);
       geometryScreenshots.push(screenshotPath);
       await context.close();
       continue;
@@ -1394,7 +1423,7 @@ for (const locale of locales) {
       );
       const timing = activationAnimation?.effect?.getTiming?.() || {};
       return {
-        clickFlashCount: action.querySelectorAll('.nav-plasma--cta-flash').length,
+        clickFlashCount: action.querySelectorAll(':scope > .nav-plasma:not(.nav-plasma--active)').length,
         arrowActivationAttached: Boolean(activationAnimation),
         activationKind: action.dataset.siteArrowActivationKind || '',
         activationDuration: Number(action.dataset.siteArrowActivationDuration || 0),
@@ -1521,8 +1550,8 @@ for (const locale of locales) {
         photoName,
         photoAlt,
         photoInsideSelectionHeader: photo?.parentElement === selectionHeader,
-        categoryHeaderInsideUnifiedTile: categoryHeader?.parentElement === unifiedTile,
-        selectionHeaderInsideUnifiedTile: selectionHeader?.parentElement === unifiedTile,
+        categoryHeaderInsideUnifiedTile: Boolean(categoryHeader && unifiedTile?.contains(categoryHeader)),
+        selectionHeaderInsideUnifiedTile: Boolean(selectionHeader && unifiedTile?.contains(selectionHeader)),
         categoryHeaderPrecedesSelectionHeader: categoryHeader?.nextElementSibling === selectionHeader,
         unifiedTileHasSingleFrame: Boolean(unifiedTile && categoryHeader && selectionHeader
           && parseFloat(getComputedStyle(unifiedTile).borderTopWidth) > 0
@@ -1689,6 +1718,8 @@ for (const locale of locales) {
         const modalHeader = modal?.querySelector('.price-category-modal__header');
         const selectionHeader = modal?.querySelector('.price-category-modal__selection-header');
         const selectionHeaderStyle = selectionHeader ? getComputedStyle(selectionHeader) : null;
+        const context = selectionHeader?.closest('.price-category-modal__context');
+        const contextStyle = context ? getComputedStyle(context) : null;
       const title = modal?.querySelector('[data-price-modal-title]')?.textContent?.trim() || '';
       const summary = modal?.querySelector('[data-price-modal-summary]')?.textContent?.trim() || '';
       const breedOptions = modal?.querySelectorAll('[data-price-modal-breed] option').length || 0;
@@ -1747,6 +1778,9 @@ for (const locale of locales) {
           selectionHeaderPosition: selectionHeader ? getComputedStyle(selectionHeader).position : '',
           selectionHeaderRadius: Number.parseFloat(selectionHeaderStyle?.borderTopLeftRadius || '0'),
           selectionHeaderPaddingLeft: Number.parseFloat(selectionHeaderStyle?.paddingLeft || '0'),
+          contextPosition: contextStyle?.position || '',
+          contextContainsIntro: Boolean(modalHeader && context?.contains(modalHeader)),
+          contextPaddingLeft: Number.parseFloat(contextStyle?.paddingLeft || '0'),
           serviceOptionMaxHeight: serviceOptionHeights.length ? Math.max(...serviceOptionHeights) : 0,
           serviceLegendStates,
           legacyMarkup: Boolean(legacyMarkup),
@@ -1756,15 +1790,17 @@ for (const locale of locales) {
       assert(`${locale} ${label}: modal title`, modalState.title.length > 0);
       assert(`${locale} ${label}: modal summary`, modalState.summary.length > 0);
       assert(
-        `${locale} ${label}: category intro scrolls and selection uses compact sticky header`,
+        `${locale} ${label}: category intro and selection share a compact sticky context`,
         modalState.modalHeaderPosition !== 'sticky'
           && modalState.modalHeaderHeight > 0
           && modalState.modalHeaderHeight <= 180
-           && modalState.selectionHeaderPosition === 'sticky'
+           && modalState.selectionHeaderPosition === 'relative'
+           && modalState.contextPosition === 'sticky'
+           && modalState.contextContainsIntro
            && modalState.selectionHeaderHeight > 0
            && modalState.selectionHeaderHeight <= (label === 'mobile' ? 220 : 190)
            && modalState.selectionHeaderRadius >= 10
-           && modalState.selectionHeaderPaddingLeft >= 10,
+           && modalState.selectionHeaderPaddingLeft + modalState.contextPaddingLeft >= 10,
         JSON.stringify({
           intro: { position: modalState.modalHeaderPosition, height: modalState.modalHeaderHeight },
           selection: { position: modalState.selectionHeaderPosition, height: modalState.selectionHeaderHeight },
@@ -1960,6 +1996,8 @@ for (const locale of locales) {
         const observedScrollActivity = window.__priceSmokeCategoryScrollActivity;
         const header = content.querySelector('.price-category-modal__header');
         const selectionHeader = content.querySelector('.price-category-modal__selection-header');
+        const stickyContext = selectionHeader?.closest('.price-category-modal__context');
+        const stickyRect = stickyContext?.getBoundingClientRect();
         const close = content.querySelector('.price-category-modal__close');
         const contentRect = content.getBoundingClientRect();
         const headerRect = header?.getBoundingClientRect();
@@ -1988,10 +2026,12 @@ for (const locale of locales) {
           ),
           selectionHeaderTop: selectionHeaderRect?.top || 0,
           selectionHeaderPosition: selectionHeader ? getComputedStyle(selectionHeader).position : '',
+          contextPosition: stickyContext ? getComputedStyle(stickyContext).position : '',
           selectionHeaderPinned: Boolean(
-            selectionHeaderRect
-            && selectionHeaderRect.top >= contentRect.top - 1
-            && selectionHeaderRect.top <= contentRect.top + 32
+            selectionHeaderRect && stickyRect
+            && stickyRect.top >= contentRect.top - 1
+            && stickyRect.top <= contentRect.top + 32
+            && selectionHeaderRect.top >= stickyRect.top
             && selectionHeaderRect.bottom <= contentRect.bottom + 1
           ),
           closeVisible: Boolean(
@@ -2022,10 +2062,11 @@ for (const locale of locales) {
       JSON.stringify(categoryScrollState)
     );
     assert(
-      `${locale} ${label}: category intro collapses and breed selection stays pinned`,
+      `${locale} ${label}: shared category context and breed selection stay pinned`,
       categoryScrollState.headerPosition !== 'sticky'
         && categoryScrollState.introScrolledAway
-        && categoryScrollState.selectionHeaderPosition === 'sticky'
+        && categoryScrollState.selectionHeaderPosition === 'relative'
+        && categoryScrollState.contextPosition === 'sticky'
         && categoryScrollState.selectionHeaderPinned
         && categoryScrollState.closeVisible,
       JSON.stringify(categoryScrollState)
@@ -2122,13 +2163,12 @@ for (const locale of locales) {
           navActions: actions?.querySelectorAll('.btn-neon[data-nav-pill="client-registration-action"]').length === 2,
           singleColumnLayout: form ? getComputedStyle(form).gridTemplateColumns.trim().split(/\s+/).filter(column => Number.parseFloat(column) > 1).length === 1 : false,
           headerTop: headerRect?.top || 0,
-          stickyHeader: Boolean(
+          scrollingHeader: Boolean(
             header
-            && getComputedStyle(header).position === 'sticky'
+            && getComputedStyle(header).position === 'relative'
             && contentRect
             && headerRect
             && closeRect
-            && headerRect.top >= contentRect.top - 1
             && closeRect.top >= contentRect.top - 1
             && closeRect.bottom <= contentRect.bottom + 1
           ),
@@ -2148,9 +2188,9 @@ for (const locale of locales) {
         registrationState.hiddenBreed && registrationState.noSpeciesDuplicate && registrationState.petContext && registrationState.navActions && registrationState.singleColumnLayout && registrationState.matteBackdrop
       );
       assert(
-        `${locale} ${label}: registration header stays visible while modal scrolls`,
-        registrationState.stickyHeader
-          && Math.abs(registrationState.headerTop - registrationHeaderBefore) <= 1,
+        `${locale} ${label}: registration intro scrolls without hiding the close control`,
+        registrationState.scrollingHeader
+          && (!registrationState.modalCanScroll || registrationState.headerTop < registrationHeaderBefore),
         JSON.stringify({ before: registrationHeaderBefore, after: registrationState })
       );
 
