@@ -148,7 +148,7 @@ function eventOverlaps(event, startMs, endMs) {
 function isManagedBookingEvent(event) {
   return Boolean(
     cleanText(event?.extendedProperties?.private?.bookingRequestId, 36) ||
-      /(?:^|\n)booking_request_id=[0-9a-f-]{36}(?:\n|$)/i.test(String(event?.description || ''))
+    /(?:^|\n)booking_request_id=[0-9a-f-]{36}(?:\n|$)/i.test(String(event?.description || ''))
   );
 }
 
@@ -249,8 +249,16 @@ export async function confirmGoogleBooking(env, requestId) {
   }
   if (initialStatus !== 'pending') return { ok: false, reason: 'invalid_state' };
 
-  const startDateTime = bookingValue(initialMatch.row, 'calendarStart', 32);
-  const endDateTime = bookingValue(initialMatch.row, 'calendarEnd', 32);
+  // Sheets USER_ENTERED dates can be rendered with a space instead of ISO's T.
+  // Normalize only that separator; keep strict date/DST validation below.
+  const startDateTime = bookingValue(initialMatch.row, 'calendarStart', 32).replace(
+    /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})$/,
+    '$1T$2'
+  );
+  const endDateTime = bookingValue(initialMatch.row, 'calendarEnd', 32).replace(
+    /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})$/,
+    '$1T$2'
+  );
   const timeMin = berlinLocalToUtc(startDateTime);
   const timeMax = berlinLocalToUtc(endDateTime);
   if (!timeMin || !timeMax || Date.parse(timeMax) <= Date.parse(timeMin)) {

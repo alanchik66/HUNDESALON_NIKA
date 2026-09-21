@@ -47,41 +47,53 @@ function calendarEvent() {
   };
 }
 
-test('creates one deterministic confirmed calendar event and updates the booking row', async () => {
-  const originalFetch = globalThis.fetch;
-  const calls = [];
-  globalThis.fetch = async (url, options = {}) => {
-    const target = String(url);
-    calls.push({ target, options });
-    if (target.includes('/values/bookings!A1%3AAH')) return Response.json({ values: [[], bookingRow()] });
-    if (target.endsWith(`/events/${eventId}`)) return Response.json({}, { status: 404 });
-    if (target.endsWith('/calendar/v3/freeBusy')) {
-      return Response.json({ calendars: { 'calendar@example.com': { busy: [] } } });
-    }
-    if (target.endsWith('/events') && options.method === 'POST') return Response.json(calendarEvent());
-    if (target.includes('/events?')) return Response.json({ items: [calendarEvent()] });
-    if (target.includes('/values/bookings!AD2%3AAF2')) return Response.json({ updatedRange: 'bookings!AD2:AF2' });
-    throw new Error(`Unexpected fetch: ${target}`);
-  };
+for (const { locale, separator } of ['de', 'en', 'ru', 'uk'].flatMap(locale =>
+  ['T', ' '].map(separator => ({ locale, separator }))
+)) {
+  test(`confirms ${locale} booking with date separator ${JSON.stringify(separator)}`, async () => {
+    const originalFetch = globalThis.fetch;
+    const calls = [];
+    globalThis.fetch = async (url, options = {}) => {
+      const target = String(url);
+      calls.push({ target, options });
+      if (target.includes('/values/bookings!A1%3AAH')) {
+        const row = bookingRow();
+        row[1] = locale;
+        row[32] = row[32].replace('T', separator);
+        row[33] = row[33].replace('T', separator);
+        return Response.json({ values: [[], row] });
+      }
+      if (target.endsWith(`/events/${eventId}`)) return Response.json({}, { status: 404 });
+      if (target.endsWith('/calendar/v3/freeBusy')) {
+        return Response.json({ calendars: { 'calendar@example.com': { busy: [] } } });
+      }
+      if (target.endsWith('/events') && options.method === 'POST') return Response.json(calendarEvent());
+      if (target.includes('/events?')) return Response.json({ items: [calendarEvent()] });
+      if (target.includes('/values/bookings!AD2%3AAF2')) return Response.json({ updatedRange: 'bookings!AD2:AF2' });
+      throw new Error(`Unexpected fetch: ${target}`);
+    };
 
-  try {
-    const result = await confirmGoogleBooking(env, requestId);
-    assert.equal(result.ok, true);
-    assert.equal(result.eventId, eventId);
-    const calendarCall = calls.find(
-      call => call.target.includes('/calendar/v3/calendars/') && call.options.method === 'POST'
-    );
-    const event = JSON.parse(calendarCall.options.body);
-    assert.equal(event.id, eventId);
-    assert.equal(event.status, 'confirmed');
-    assert.equal(event.visibility, 'private');
-    assert.equal(event.extendedProperties.private.bookingRequestId, requestId);
-    const sheetCall = calls.find(call => call.target.includes('/values/bookings!AD2%3AAF2'));
-    assert.deepEqual(JSON.parse(sheetCall.options.body).values[0].slice(0, 1), ['confirmed']);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
+    try {
+      const result = await confirmGoogleBooking(env, requestId);
+      assert.equal(result.ok, true);
+      assert.equal(result.eventId, eventId);
+      const calendarCall = calls.find(
+        call => call.target.includes('/calendar/v3/calendars/') && call.options.method === 'POST'
+      );
+      const event = JSON.parse(calendarCall.options.body);
+      assert.equal(event.id, eventId);
+      assert.equal(event.status, 'confirmed');
+      assert.equal(event.visibility, 'private');
+      assert.deepEqual(event.start, { dateTime: '2030-01-02T10:00:00', timeZone: 'Europe/Berlin' });
+      assert.deepEqual(event.end, { dateTime: '2030-01-02T12:00:00', timeZone: 'Europe/Berlin' });
+      assert.equal(event.extendedProperties.private.bookingRequestId, requestId);
+      const sheetCall = calls.find(call => call.target.includes('/values/bookings!AD2%3AAF2'));
+      assert.deepEqual(JSON.parse(sheetCall.options.body).values[0].slice(0, 1), ['confirmed']);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+}
 
 test('returns an already confirmed booking without creating or updating anything', async () => {
   const originalFetch = globalThis.fetch;
