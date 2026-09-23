@@ -2641,10 +2641,18 @@
 
       if (scrollRoot) {
         const targetRect = target.getBoundingClientRect();
+        // The collapsed navigation hint extends below its 24px reveal rail.
+        // Reserve its footprint even before scrolling makes the hint visible.
+        const navigationHint = document.querySelector('.header-reveal-control__hint');
+        const hintStyle = navigationHint ? getComputedStyle(navigationHint) : null;
+        const navigationInset = hintStyle
+          ? (Number.parseFloat(hintStyle.top) || 0)
+            + Math.max(navigationHint.offsetHeight, Number.parseFloat(hintStyle.minHeight) || 0) + 8
+          : 18;
         const maxScroll = Math.max(0, scrollRoot.scrollHeight - scrollRoot.clientHeight);
         const destination = Math.max(
           0,
-          Math.min(maxScroll, scrollRoot.scrollTop + targetRect.top - 18)
+          Math.min(maxScroll, scrollRoot.scrollTop + targetRect.top - Math.max(18, navigationInset))
         );
         scrollRoot.scrollTo({ top: destination, behavior });
       } else {

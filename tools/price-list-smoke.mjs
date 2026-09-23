@@ -109,6 +109,13 @@ const captureSection = async (page, sectionKey, screenshotPath) => {
     const rect = heading?.getBoundingClientRect();
     return rect && rect.top >= -1 && rect.bottom <= innerHeight;
   }, key);
+  await page.waitForFunction(targetKey => {
+    const heading = document.querySelector(`[data-price-section-target="${targetKey}"] .price-size-section__heading`);
+    const hint = document.querySelector('.header-reveal-control__hint');
+    const rect = heading?.getBoundingClientRect();
+    const hintRect = hint?.getBoundingClientRect();
+    return rect && (!hintRect || !hintRect.height || rect.top >= hintRect.bottom + 1);
+  }, key);
   await page.screenshot({ path: screenshotPath, animations: 'disabled' });
 };
 
