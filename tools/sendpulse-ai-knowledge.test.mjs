@@ -228,11 +228,11 @@ test('custom chat keeps personal support inside the branded conversation', () =>
   assert.match(buildSource, /ai-chat\.js/);
 });
 
-test('mobile SendPulse welcome toast does not block page interactions', () => {
+test('mobile SendPulse welcome toast stays out of the content area', () => {
   const source = readFileSync(path.join(ROOT, 'assets/js/sendpulse-integrations.js'), 'utf8');
   assert.match(
     source,
-    /@media \(max-width: 560px\)[\s\S]*?\.widget-toast\s*\{[\s\S]*?pointer-events:\s*none !important;[\s\S]*?\.widget-toast \.button-close\s*\{[\s\S]*?pointer-events:\s*auto !important;/
+    /@media \(max-width: 560px\)[\s\S]*?\.widget-toast\s*\{[\s\S]*?display:\s*none !important;/
   );
 });
 

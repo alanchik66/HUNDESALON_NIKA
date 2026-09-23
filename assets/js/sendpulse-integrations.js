@@ -607,11 +607,7 @@
       }
 
       .widget-toast {
-        pointer-events: none !important;
-      }
-
-      .widget-toast .button-close {
-        pointer-events: auto !important;
+        display: none !important;
       }
     }
   `;
