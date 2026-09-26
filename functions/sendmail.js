@@ -41,7 +41,6 @@ const DEFAULT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const DEFAULT_CLIENT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const DEFAULT_ADMIN_EMAILS = [];
 const ONLINE_PAYMENTS_HARD_DISABLED = true;
-const SLACK_TIMEOUT_MS = 4500;
 const CLIENT_REGISTRATION_FORM_TYPE = 'client_registration';
 const CLIENT_REGISTRATION_SHEET = 'clients';
 const REGISTRATION_PET_SPECIES = new Set(['dog', 'cat', 'small_animal', 'rabbit', 'guinea_pig', 'other']);
@@ -646,33 +645,9 @@ function buildSlackPayload(data) {
   };
 }
 
-/**
- * Sends a message to Slack if SLACK_WEBHOOK_URL is configured.
- * @param {any} env
- * @param {object} payload
- */
-async function sendSlackNotification(env, payload) {
-  if (!siteNotificationsEnabled(env)) return false;
-  const webhook = String(env?.SLACK_WEBHOOK_URL || '').trim();
-  if (!webhook) return false;
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), SLACK_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(webhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-    return response.ok;
-  } catch (err) {
-    console.warn('[sendmail] Slack notify failed:', err?.message || err);
-    return false;
-  } finally {
-    clearTimeout(timeout);
-  }
+/** Slack is retired. This compatibility shim deliberately performs no network request. */
+async function sendSlackNotification() {
+  return false;
 }
 
 function buildTelegramNotification(data) {
@@ -696,6 +671,32 @@ function buildTelegramNotification(data) {
     `Сообщение: ${data.message || '—'}`,
   ];
   return lines.filter(line => line !== null).join('\n');
+}
+
+async function sendTelegramEmailFailureAlert(env, { formType, requestId, status, lang }) {
+  const copy = {
+    de: 'SendPulse-E-Mailzustellung fehlgeschlagen',
+    en: 'SendPulse email delivery failed',
+    ru: 'Не удалось отправить письмо через SendPulse',
+    uk: 'Не вдалося надіслати лист через SendPulse',
+  };
+  try {
+    const result = await sendTelegramMessage(env, {
+      text: `${copy[lang] || copy.de}\nForm: ${formType}\nRequest ID: ${requestId}\nHTTP status: ${Number(status || 0)}`,
+      category: formType === 'booking' ? 'orders' : 'messages',
+    });
+    console.info(
+      '[sendmail] Telegram email-failure alert',
+      JSON.stringify({ request_id: requestId, form_type: formType, ok: result?.ok === true, status: Number(result?.status || 0) })
+    );
+    return result;
+  } catch {
+    console.info(
+      '[sendmail] Telegram email-failure alert',
+      JSON.stringify({ request_id: requestId, form_type: formType, ok: false, status: 0 })
+    );
+    return { ok: false };
+  }
 }
 
 /**
@@ -1326,7 +1327,7 @@ export async function onRequest(ctx) {
 
   if (!hasSendPulseCredentials) {
     console.error('[sendmail] SendPulse credentials not configured');
-    const slackDelivered = await sendSlackNotification(env, slackLeadPayload);
+    await sendSlackNotification(env, slackLeadPayload);
     const telegramDelivered = await sendTelegramMessage(env, {
       text: buildTelegramNotification({
         formType,
@@ -1353,7 +1354,7 @@ export async function onRequest(ctx) {
       registrationDelivered || formType === 'booking' || bookingResults.some(result => result?.ok === true);
     const requiredDeliveryCompleted = clientRecordRequired
       ? registrationDelivered
-      : slackDelivered || telegramDelivered.ok || integrationDelivered;
+      : telegramDelivered.ok || integrationDelivered;
     if (requiredDeliveryCompleted) {
       console.warn('[sendmail] Delivered via fallback because SendPulse is not configured');
       return jsonResponse(
@@ -1383,28 +1384,17 @@ export async function onRequest(ctx) {
     console.error(
       JSON.stringify({ event: 'sendmail_network_error', error: String(err?.name || 'Error').slice(0, 80) })
     );
-    await sendSlackNotification(
-      env,
-      buildSlackPayload({
-        level: 'error',
-        formType,
-        lang,
-        name,
-        email,
-        phone,
-        service: canonicalService,
-        date,
-        time,
-        message: `Network error while sending via SendPulse: ${err?.message || 'unknown error'}`,
-        origin,
-        pagePath: requestUrl.pathname,
-      })
-    );
+    await sendTelegramEmailFailureAlert(env, {
+      formType,
+      requestId: automationEventData.request_id,
+      status: 0,
+      lang,
+    });
     return jsonResponse({ success: false, message: copy.error }, 502, origin);
   }
 
   if (sendPulseRes.ok) {
-    await Promise.allSettled([
+    const notificationResults = await Promise.allSettled([
       sendSendPulseAutomationEvent(env, {
         eventType: automationEventType,
         data: automationEventData,
@@ -1434,6 +1424,18 @@ export async function onRequest(ctx) {
       runBookingFollowups(),
       sendAdminNotification(),
     ]);
+    const adminNotificationResult = notificationResults[4];
+    const adminNotification =
+      adminNotificationResult?.status === 'fulfilled' ? adminNotificationResult.value : null;
+    console.info(
+      '[sendmail] admin notification delivery',
+      JSON.stringify({
+        request_id: automationEventData.request_id,
+        form_type: formType,
+        ok: adminNotification?.ok === true,
+        status: Number(adminNotification?.status || 0),
+      })
+    );
     return jsonResponse(
       {
         success: true,
@@ -1446,22 +1448,11 @@ export async function onRequest(ctx) {
   }
 
   console.error(JSON.stringify({ event: 'sendmail_provider_error', status: Number(sendPulseRes.status || 0) }));
-  await sendSlackNotification(
-    env,
-    buildSlackPayload({
-      level: 'error',
-      formType,
-      lang,
-      name,
-      email,
-      phone,
-      service: canonicalService,
-      date,
-      time,
-      message: `SendPulse delivery failed with status ${sendPulseRes.status}.`,
-      origin,
-      pagePath: requestUrl.pathname,
-    })
-  );
+  await sendTelegramEmailFailureAlert(env, {
+    formType,
+    requestId: automationEventData.request_id,
+    status: sendPulseRes.status,
+    lang,
+  });
   return jsonResponse({ success: false, message: copy.error }, 502, origin);
 }

@@ -346,6 +346,59 @@ test('accepts explicit consent and persists the registration', async () => {
   }
 });
 
+test('logs failed admin email delivery without exposing recipient data or contacting retired Slack', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalInfo = console.info;
+  const logLines = [];
+  let adminEmailAttempts = 0;
+  let slackAttempts = 0;
+  globalThis.fetch = async (url, options = {}) => {
+    if (String(url) === 'https://gateway.example/test') {
+      return Response.json({ success: true });
+    }
+    if (String(url) === 'https://hooks.slack.test/legacy') {
+      slackAttempts += 1;
+      return Response.json({ ok: true });
+    }
+    if (String(url).includes('/smtp/emails')) {
+      const payload = JSON.parse(options.body);
+      const recipients = payload.email?.to?.map(item => item.email) || [];
+      if (recipients.includes('anna@example.com')) {
+        adminEmailAttempts += 1;
+        return Response.json({ result: false }, { status: 400 });
+      }
+      return Response.json({ result: true });
+    }
+    throw new Error(`Unexpected integration request: ${url}`);
+  };
+  console.info = (...args) => logLines.push(args.join(' '));
+
+  try {
+    const response = await onRequest({
+      request: registrationRequest({ privacy: 'yes', agb: 'yes' }),
+      env: {
+        GOOGLE_APPS_SCRIPT_WEBHOOK_URL: 'https://gateway.example/test',
+        GOOGLE_GATEWAY_SECRET: 'unit-test-secret',
+        SENDPULSE_API_KEY: 'unit-test-key',
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        ADMIN_NOTIFICATION_EMAILS: 'anna@example.com',
+        SLACK_WEBHOOK_URL: 'https://hooks.slack.test/legacy',
+      },
+    });
+    assert.equal(response.status, 200);
+    assert.equal(adminEmailAttempts, 1);
+    assert.equal(slackAttempts, 0);
+    const adminLog = logLines.find(line => line.includes('[sendmail] admin notification delivery'));
+    assert.ok(adminLog);
+    assert.match(adminLog, /"ok":false/);
+    assert.match(adminLog, /"status":400/);
+    assert.doesNotMatch(adminLog, /anna@example\.com/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.info = originalInfo;
+  }
+});
+
 test('accepts review feedback with rating metadata', async () => {
   const originalFetch = globalThis.fetch;
   const payloads = [];
