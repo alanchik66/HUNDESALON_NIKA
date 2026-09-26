@@ -73,7 +73,6 @@ OUTLOOK_SENDER=
 TEAM_ID=
 TEAM_CHANNEL_ID=
 TEAMS_WEBHOOK_URL=
-SLACK_WEBHOOK_URL=
 SITE_NOTIFICATIONS_ENABLED=false
 # Telegram manager notifications (bot token and channel/chat ID stay secret).
 TELEGRAM_BOT_TOKEN=

@@ -334,7 +334,7 @@ test('a reply to a known website card never falls back to a Telegram direct mess
   }
 });
 
-test('a failed support notification does not prevent the customer auto reply', async () => {
+test('a transient support notification failure retries and preserves the customer auto reply', async () => {
   const originalFetch = globalThis.fetch;
   const requests = [];
   globalThis.fetch = async (_url, options) => {
@@ -364,10 +364,12 @@ test('a failed support notification does not prevent the customer auto reply', a
     });
 
     assert.equal(response.status, 200);
-    assert.equal(requests.length, 2);
-    assert.equal(requests[1].chat_id, '12345');
-    assert.match(requests[1].text, /Спасибо за сообщение/);
-    assert.equal(requests[1].reply_markup.remove_keyboard, true);
+    assert.equal(requests.length, 3);
+    assert.equal(requests[0].chat_id, '-100123');
+    assert.equal(requests[1].chat_id, '-100123');
+    assert.equal(requests[2].chat_id, '12345');
+    assert.match(requests[2].text, /Спасибо за сообщение/);
+    assert.equal(requests[2].reply_markup.remove_keyboard, true);
   } finally {
     globalThis.fetch = originalFetch;
   }

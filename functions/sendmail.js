@@ -566,90 +566,6 @@ function getClientEmailFrom(env, fallback = DEFAULT_CLIENT_FROM) {
   return getEnvValue(env, 'CLIENT_EMAIL_FROM') || fallback;
 }
 
-/**
- * Builds a compact, readable Slack payload for website leads.
- * @param {object} data
- * @returns {{ text: string, blocks: object[] }}
- */
-function buildSlackPayload(data) {
-  const lines = [
-    `Форма: ${data.formType}`,
-    `Язык: ${data.lang}`,
-    `Имя: ${data.name}`,
-    `E-mail: ${data.email}`,
-    data.phone ? `Телефон: ${data.phone}` : null,
-    data.service ? `Услуга: ${data.service}` : null,
-    data.date ? `Дата: ${data.date}` : null,
-    data.time ? `Время: ${data.time}` : null,
-    data.bookingStatus ? `Статус: ${data.bookingStatus}` : null,
-    data.clientType ? `Статус клиента: ${data.clientType}` : null,
-    data.coatCondition ? `Состояние шерсти: ${data.coatCondition}` : null,
-    data.behaviour ? `Поведение: ${data.behaviour}` : null,
-    data.estimatedDurationMinutes ? `Ориентировочная длительность: ${data.estimatedDurationMinutes} мин` : null,
-    data.bookingBufferMinutes ? `Внутренний резерв: ${data.bookingBufferMinutes} мин` : null,
-    data.safeBlockMinutes ? `Безопасный блок: ${data.safeBlockMinutes} мин` : null,
-    data.fileUrl ? `Файл: ${data.fileUrl}` : null,
-    data.paymentStatus ? `Оплата: ${data.paymentStatus}` : null,
-    data.promotion ? `Акция: ${data.promotion}` : null,
-    data.petName ? `Питомец: ${data.petName}` : null,
-    data.petBreed ? `Порода: ${data.petBreed}` : null,
-    data.petTagNumber ? `Номер жетона: ${data.petTagNumber}` : null,
-    data.pagePath ? `Страница: ${data.pagePath}` : null,
-  ].filter(line => line !== null);
-
-  const title =
-    data.level === 'error'
-      ? ':rotating_light: Ошибка отправки формы на сайте'
-      : ':dog: Новая заявка с сайта HUNDESALON NIKA';
-
-  const messagePreview = String(data.message || '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 700);
-
-  return {
-    text: `${title}\n${lines.join('\n')}`,
-    blocks: [
-      {
-        type: 'header',
-        text: {
-          type: 'plain_text',
-          text: title.replace(/:[^\s:]+:/g, '').trim(),
-          emoji: true,
-        },
-      },
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: lines.map(line => `• ${line}`).join('\n'),
-        },
-      },
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `*Сообщение:*\n${messagePreview || '—'}`,
-        },
-      },
-      {
-        type: 'context',
-        elements: [
-          {
-            type: 'mrkdwn',
-            text: `Источник: ${data.origin || 'unknown'} | ${new Date().toISOString()}`,
-          },
-        ],
-      },
-    ],
-  };
-}
-
-/** Slack is retired. This compatibility shim deliberately performs no network request. */
-async function sendSlackNotification() {
-  return false;
-}
-
 function buildTelegramNotification(data) {
   const lines = [
     data.level === 'error' ? '⚠️ Ошибка обработки заявки' : '🐕 Новая заявка с сайта HUNDESALON NIKA',
@@ -996,34 +912,6 @@ export async function onRequest(ctx) {
       ? await buildBookingConfirmationUrl(env, origin, automationEventData.request_id)
       : '';
 
-  const slackLeadPayload = buildSlackPayload({
-    level: 'info',
-    formType,
-    lang,
-    name,
-    email,
-    phone,
-    service: canonicalService,
-    date,
-    time,
-    bookingStatus,
-    clientType: formType === 'booking' ? clientTypeLabel : '',
-    coatCondition: formType === 'booking' ? coatCondition : '',
-    behaviour: formType === 'booking' ? behaviour : '',
-    estimatedDurationMinutes: formType === 'booking' ? safeEstimatedDurationMinutes : 0,
-    bookingBufferMinutes: formType === 'booking' ? bookingBufferMinutes : 0,
-    safeBlockMinutes: formType === 'booking' ? safeBlockMinutes : 0,
-    fileUrl: uploadedFileUrl,
-    paymentStatus,
-    promotion: '',
-    petName,
-    petBreed,
-    petTagNumber,
-    message: resolvedMessage,
-    origin,
-    pagePath: requestUrl.pathname,
-  });
-
   if (resolvedMessage.length > 2000) {
     return jsonResponse({ success: false, message: copy.error }, 400, origin);
   }
@@ -1327,7 +1215,6 @@ export async function onRequest(ctx) {
 
   if (!hasSendPulseCredentials) {
     console.error('[sendmail] SendPulse credentials not configured');
-    await sendSlackNotification(env, slackLeadPayload);
     const telegramDelivered = await sendTelegramMessage(env, {
       text: buildTelegramNotification({
         formType,
@@ -1399,7 +1286,6 @@ export async function onRequest(ctx) {
         eventType: automationEventType,
         data: automationEventData,
       }),
-      sendSlackNotification(env, slackLeadPayload),
       sendTelegramMessage(env, {
         text: buildTelegramNotification({
           formType,
@@ -1424,7 +1310,19 @@ export async function onRequest(ctx) {
       runBookingFollowups(),
       sendAdminNotification(),
     ]);
-    const adminNotificationResult = notificationResults[4];
+    const telegramNotificationResult = notificationResults[1];
+    const telegramNotification =
+      telegramNotificationResult?.status === 'fulfilled' ? telegramNotificationResult.value : null;
+    console.info(
+      '[sendmail] Telegram notification delivery',
+      JSON.stringify({
+        request_id: automationEventData.request_id,
+        form_type: formType,
+        ok: telegramNotification?.ok === true,
+        status: Number(telegramNotification?.status || 0),
+      })
+    );
+    const adminNotificationResult = notificationResults[3];
     const adminNotification =
       adminNotificationResult?.status === 'fulfilled' ? adminNotificationResult.value : null;
     console.info(
@@ -1436,6 +1334,14 @@ export async function onRequest(ctx) {
         status: Number(adminNotification?.status || 0),
       })
     );
+    if (adminRecipients.length > 0 && adminNotification?.ok !== true) {
+      await sendTelegramEmailFailureAlert(env, {
+        formType,
+        requestId: automationEventData.request_id,
+        status: Number(adminNotification?.status || 0),
+        lang,
+      });
+    }
     return jsonResponse(
       {
         success: true,

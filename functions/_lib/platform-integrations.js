@@ -456,11 +456,24 @@ export async function sendTelegramMessage(
   }
   if (replyMarkup) payload.reply_markup = replyMarkup;
 
-  return safeJsonFetch(`${TELEGRAM_API_URL}/bot${encodeURIComponent(token)}/sendMessage`, {
-    method: 'POST',
-    headers: JSON_HEADERS,
-    body: JSON.stringify(payload),
-  });
+  let lastResult = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const result = await safeJsonFetch(`${TELEGRAM_API_URL}/bot${encodeURIComponent(token)}/sendMessage`, {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify(payload),
+      });
+      result.ok = result.ok && result.body?.ok === true;
+      if (result.ok || ![408, 429, 500, 502, 503, 504].includes(result.status)) return result;
+      lastResult = result;
+    } catch (error) {
+      lastResult = { ok: false, status: 0, body: { error: error?.name || 'network error' } };
+    }
+    if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 250 * 2 ** attempt));
+  }
+  console.error('[telegram] message delivery failed', JSON.stringify({ status: Number(lastResult?.status || 0) }));
+  return lastResult || { ok: false, status: 0, body: { error: 'Telegram request failed' } };
 }
 
 function telegramMultipartBody({ fields, fileBody, fileName, mimeType, boundary }) {

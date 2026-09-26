@@ -346,19 +346,19 @@ test('accepts explicit consent and persists the registration', async () => {
   }
 });
 
-test('logs failed admin email delivery without exposing recipient data or contacting retired Slack', async () => {
+test('logs failed admin email delivery without exposing recipient data and records Telegram status', async () => {
   const originalFetch = globalThis.fetch;
   const originalInfo = console.info;
   const logLines = [];
   let adminEmailAttempts = 0;
-  let slackAttempts = 0;
+  let telegramAttempts = 0;
   globalThis.fetch = async (url, options = {}) => {
     if (String(url) === 'https://gateway.example/test') {
       return Response.json({ success: true });
     }
-    if (String(url) === 'https://hooks.slack.test/legacy') {
-      slackAttempts += 1;
-      return Response.json({ ok: true });
+    if (String(url).includes('/sendMessage')) {
+      telegramAttempts += 1;
+      return Response.json({ ok: true, result: { message_id: 10 } });
     }
     if (String(url).includes('/smtp/emails')) {
       const payload = JSON.parse(options.body);
@@ -382,17 +382,21 @@ test('logs failed admin email delivery without exposing recipient data or contac
         SENDPULSE_API_KEY: 'unit-test-key',
         SITE_NOTIFICATIONS_ENABLED: 'true',
         ADMIN_NOTIFICATION_EMAILS: 'anna@example.com',
-        SLACK_WEBHOOK_URL: 'https://hooks.slack.test/legacy',
+        TELEGRAM_BOT_TOKEN: 'unit-test-token',
+        TELEGRAM_CHAT_ID: '-100123',
       },
     });
     assert.equal(response.status, 200);
     assert.equal(adminEmailAttempts, 1);
-    assert.equal(slackAttempts, 0);
+    assert.equal(telegramAttempts, 2);
     const adminLog = logLines.find(line => line.includes('[sendmail] admin notification delivery'));
     assert.ok(adminLog);
     assert.match(adminLog, /"ok":false/);
     assert.match(adminLog, /"status":400/);
     assert.doesNotMatch(adminLog, /anna@example\.com/);
+    const telegramLog = logLines.find(line => line.includes('[sendmail] Telegram notification delivery'));
+    assert.ok(telegramLog);
+    assert.match(telegramLog, /"ok":true/);
   } finally {
     globalThis.fetch = originalFetch;
     console.info = originalInfo;

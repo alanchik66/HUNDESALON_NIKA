@@ -194,6 +194,28 @@ test('Telegram notification posts plain text without logging credentials', async
   }
 });
 
+test('Telegram notification retries a temporary provider failure once', async () => {
+  const originalFetch = globalThis.fetch;
+  let attempts = 0;
+  globalThis.fetch = async () => {
+    attempts += 1;
+    return attempts === 1
+      ? Response.json({ ok: false }, { status: 503 })
+      : Response.json({ ok: true, result: { message_id: 4 } });
+  };
+
+  try {
+    const result = await sendTelegramMessage(
+      { SITE_NOTIFICATIONS_ENABLED: 'true', TELEGRAM_BOT_TOKEN: 'unit-test-token', TELEGRAM_CHAT_ID: '-100123' },
+      { text: 'retry test' }
+    );
+    assert.equal(result.ok, true);
+    assert.equal(attempts, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('Telegram personal-support notification uses its dedicated forum topic', async () => {
   const originalFetch = globalThis.fetch;
   let request = null;

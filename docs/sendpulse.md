@@ -7,7 +7,7 @@
 - При наличии `SENDPULSE_ADDRESSBOOK_ID` обработчики добавляют или обновляют контакт в единой mailing list.
 - После успешной основной отправки сервер передаёт нормализованные события booking/contact/newsletter в Automation 360 по resource name и с Bearer-авторизацией. URL события не принимается из браузера, поэтому пользователь не может подменить endpoint.
 - `_lib/platform-integrations.js` кэширует OAuth-токен, поддерживает static API key, логирует только технический статус и повторяет временные ошибки до трёх раз.
-- Google Calendar/Sheets, Slack/Teams остаются переходными резервными интеграциями. Их отключают только после подтверждённого запуска соответствующих Automation 360 actions.
+- Google Calendar/Sheets используются для учёта клиентов и записей; уведомления салона направляются через SendPulse и Telegram.
 
 SendPulse является единственным email-транспортом. Старый email-провайдер и его runtime-переменные запрещены проверкой `check:email-provider`.
 

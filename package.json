@@ -159,7 +159,6 @@
     "google:setup-wif": "node tools/setup-gcp-workload-identity.mjs",
     "ops:finish-manual": "node tools/complete-manual-checklist.mjs",
     "check:message-draft": "node tools/check-message-draft-live.mjs",
-    "slack:test": "node tools/slack-test-webhook.mjs",
     "check:prod": "npm run check:live-html && npm run google:gsc:audit && npm run check:message-draft",
     "check:all": "node tools/check-all.mjs",
     "git:push": "node tools/git-push-all.mjs",
