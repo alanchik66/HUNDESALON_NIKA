@@ -15207,6 +15207,11 @@ body.nav-open sp-live-chat {
   display: none !important;
 }
 
+body.nav-open #hundesalon-ai-chat {
+  display: none !important;
+  pointer-events: none !important;
+}
+
 #mobile-nav {
   --mobile-nav-drawer-width: min(420px, 88vw);
   top: 0 !important;
