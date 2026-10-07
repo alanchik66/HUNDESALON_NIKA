@@ -56,12 +56,17 @@ export function readSendPulseEmailDiagnostics(output) {
     for (const log of Array.isArray(event?.logs) ? event.logs : []) {
       const message = logArguments(log).join(' ');
       const markerIndex = message.indexOf(SENDPULSE_EMAIL_LOG);
-      if (markerIndex < 0) continue;
+      let structured = null;
+      try {
+        const candidate = JSON.parse(message);
+        if (candidate.event === 'sendpulse_email_delivery') structured = candidate;
+      } catch {}
+      if (markerIndex < 0 && !structured) continue;
 
       const detailsText = message.slice(markerIndex + SENDPULSE_EMAIL_LOG.length);
       const detailsStart = detailsText.indexOf('{');
-      let details = {};
-      if (detailsStart >= 0) {
+      let details = structured || {};
+      if (!structured && detailsStart >= 0) {
         try {
           details = JSON.parse(detailsText.slice(detailsStart));
         } catch {

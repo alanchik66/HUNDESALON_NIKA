@@ -18,7 +18,8 @@
     "format": "prettier --write \"assets/js/**/*.js\" \"assets/css/**/*.css\" \"ru/**/*.html\" \"de/**/*.html\" \"en/**/*.html\" \"uk/**/*.html\" \"*.html\"",
     "backup:full": "node tools/create-full-backup.mjs",
     "validate": "node tools/run-npm-quiet.mjs run lint && node tools/run-npm-quiet.mjs run check:links && node tools/run-npm-quiet.mjs run check:project && node tools/run-npm-quiet.mjs run check:payments && node tools/run-npm-quiet.mjs run test:unit && node tools/run-npm-quiet.mjs run check:email-provider && node tools/run-npm-quiet.mjs run check:sendpulse-ai-knowledge",
-    "qa:max": "npm run validate && npm run build:production && npm run check:budgets && npm run test:browser",
+    "qa:max": "npm run check:security-production && npm run validate && npm run build:production && npm run check:budgets && npm run test:browser",
+    "check:security-production": "npm audit --omit=dev",
     "check": "npm run validate",
     "check:links": "node tools/check-links.js",
     "price:smoke": "node tools/price-list-smoke.mjs",
@@ -199,12 +200,13 @@
   },
   "overrides": {
     "esbuild": "^0.28.1",
-    "fast-uri": "3.1.6",
+    "fast-uri": "3.1.8",
     "js-yaml": "4.3.2",
-    "smol-toml": "^1.8.0",
-    "undici": "7.29.0",
+    "smol-toml": "^1.9.0",
+    "undici": "7.30.0",
     "ws": "^8.20.1",
-    "sharp": "0.35.4"
+    "sharp": "0.35.5",
+    "katex": "0.18.2"
   },
   "engines": {
     "node": ">=24.16.0 <27",
@@ -223,8 +225,10 @@
   ],
   "allowScripts": {
     "esbuild@0.28.1": true,
+    "esbuild@0.28.2": true,
     "workerd@1.20260617.1": true,
     "workerd@1.20260801.1": true,
-    "sharp@0.35.4": true
+    "workerd@1.20261006.1": true,
+    "sharp@0.35.5": true
   }
 }

@@ -7,11 +7,12 @@ import {
   sendPulseEmailWasAccepted,
 } from './cloudflare-tail-logs.mjs';
 
-const event = messages => JSON.stringify({
-  outcome: 'ok',
-  logs: [{ level: 'info', message: messages }],
-  event: { request: { url: 'https://hundesalon-nika.com/sendmail', method: 'POST' } },
-});
+const event = messages =>
+  JSON.stringify({
+    outcome: 'ok',
+    logs: [{ level: 'info', message: messages }],
+    event: { request: { url: 'https://hundesalon-nika.com/sendmail', method: 'POST' } },
+  });
 
 test('reads SendPulse success from Wrangler log argument arrays without exposing unrelated fields', () => {
   const output = [
@@ -46,11 +47,29 @@ test('distinguishes missing log evidence from an observed provider failure', () 
   assert.equal(sendPulseEmailWasAccepted([]), null);
 });
 
+test('reads structured SendPulse events without leaking extra fields', () => {
+  const output = event([
+    JSON.stringify({
+      event: 'sendpulse_email_delivery',
+      ok: true,
+      status: 200,
+      attempt: 1,
+      recipient: 'customer@example.test',
+    }),
+  ]);
+  assert.deepEqual(readSendPulseEmailDiagnostics(output), [{ ok: true, status: 200, attempt: 1 }]);
+  assert.deepEqual(readSendPulseEmailDiagnostics(event(['{"event":"unrelated","ok":true,"status":200}'])), []);
+});
+
 test('parses Wrangler events when JSON objects are pretty-printed across lines', () => {
-  const output = `Wrangler tail connected\n${JSON.stringify({
-    outcome: 'ok',
-    logs: [{ message: ['[sendpulse] email delivery', '{"ok":true,"status":202,"attempt":1}'] }],
-  }, null, 2)}\n`;
+  const output = `Wrangler tail connected\n${JSON.stringify(
+    {
+      outcome: 'ok',
+      logs: [{ message: ['[sendpulse] email delivery', '{"ok":true,"status":202,"attempt":1}'] }],
+    },
+    null,
+    2
+  )}\n`;
 
   const events = parseCloudflareTailEvents(output);
   const diagnostics = readSendPulseEmailDiagnostics(output);

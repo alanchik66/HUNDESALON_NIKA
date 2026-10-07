@@ -22,7 +22,7 @@ const assert = (name, condition, detail = '') => {
 
 await mkdir(outDir, { recursive: true });
 const server = await startStaticTestServer();
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
 
 try {
   for (const scenario of scenarios) {
