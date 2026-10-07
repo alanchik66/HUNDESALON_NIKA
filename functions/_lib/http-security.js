@@ -280,6 +280,9 @@ export function applyApiResponseHeaders(response, origin) {
   const headers = new Headers(response.headers);
   headers.set('X-Content-Type-Options', 'nosniff');
   headers.set('Cache-Control', 'no-store');
+  headers.set('X-Frame-Options', 'SAMEORIGIN');
+  headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
   return applyCorsResponseHeaders(
     new Response(response.body, {
       status: response.status,

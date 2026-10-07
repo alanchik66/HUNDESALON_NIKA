@@ -16,6 +16,23 @@ const SENDPULSE_EVENT_NAME_RE = /^[a-z0-9][a-z0-9._-]{0,79}$/i;
 const googleTokenCache = new Map();
 let sendPulseTokenCache = null;
 
+/**
+ * Structured logging for production functions.
+ */
+function logStructured(level, event, data = {}) {
+  const logEntry = JSON.stringify({
+    level,
+    timestamp: new Date().toISOString(),
+    event,
+    ...data,
+  });
+  if (level === 'error') {
+    console.error(logEntry);
+  } else {
+    console.log(logEntry);
+  }
+}
+
 export function cleanText(value, maxLength = 2000) {
   let s = String(value ?? '')
     .normalize('NFKC')
@@ -472,7 +489,9 @@ export async function sendTelegramMessage(
     }
     if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 250 * 2 ** attempt));
   }
-  console.error('[telegram] message delivery failed', JSON.stringify({ status: Number(lastResult?.status || 0) }));
+  logStructured('error', 'telegram_message_delivery_failed', {
+    status: Number(lastResult?.status || 0),
+  });
   return lastResult || { ok: false, status: 0, body: { error: 'Telegram request failed' } };
 }
 
@@ -481,8 +500,7 @@ function telegramMultipartBody({ fields, fileBody, fileName, mimeType, boundary 
   const fieldParts = Object.entries(fields)
     .filter(([, value]) => String(value ?? '').trim())
     .map(
-      ([name, value]) =>
-        `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${String(value)}\r\n`
+      ([name, value]) => `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${String(value)}\r\n`
     )
     .join('');
   const safeName = cleanText(fileName, 180).replace(/[\\/:*?"<>|]/g, '-') || 'attachment';
@@ -586,9 +604,7 @@ export async function sendTelegramDocument(
     fields,
     fileBody: source.body,
     fileName,
-    mimeType: /^[\w!#$&^_.+-]+\/[\w!#$&^_.+-]+$/.test(safeMimeType)
-      ? safeMimeType
-      : 'application/octet-stream',
+    mimeType: /^[\w!#$&^_.+-]+\/[\w!#$&^_.+-]+$/.test(safeMimeType) ? safeMimeType : 'application/octet-stream',
     boundary,
   });
 
@@ -689,18 +705,19 @@ export async function sendSendPulseEmail(env, { to, subject, text, html = '', re
         body: JSON.stringify(payload),
       });
       result.ok = result.ok && result.body?.result === true;
-      console.info(
-        '[sendpulse] email delivery',
-        JSON.stringify({ ok: result.ok, status: result.status, attempt: attempt + 1 })
-      );
+      logStructured('info', 'sendpulse_email_delivery', {
+        ok: result.ok,
+        status: result.status,
+        attempt: attempt + 1,
+      });
       if (result.ok || ![408, 429, 500, 502, 503, 504].includes(result.status)) return result;
       lastResult = result;
     } catch (error) {
       lastResult = { ok: false, status: 0, body: { error: error?.message || 'network error' } };
-      console.error(
-        '[sendpulse] email delivery error',
-        JSON.stringify({ attempt: attempt + 1, error: error?.message || 'unknown' })
-      );
+      logStructured('error', 'sendpulse_email_delivery_error', {
+        attempt: attempt + 1,
+        error: error?.message || 'unknown',
+      });
     }
     if (attempt < 2) await sleep(250 * 2 ** attempt);
   }
@@ -741,7 +758,9 @@ export async function sendSendPulseAutomationEvent(env, { eventType = '', data =
     return { ok: false, skipped: true, reason: `SendPulse event ${envName} is not configured.` };
   }
   if (!SENDPULSE_EVENT_NAME_RE.test(eventName)) {
-    console.error('[sendpulse] automation event configuration error', JSON.stringify({ eventType: normalizedType }));
+    logStructured('error', 'sendpulse_automation_event_config_error', {
+      eventType: normalizedType,
+    });
     return { ok: false, skipped: true, reason: `SendPulse event ${envName} has an invalid resource name.` };
   }
 
@@ -768,10 +787,12 @@ export async function sendSendPulseAutomationEvent(env, { eventType = '', data =
         },
         body: JSON.stringify(payload),
       });
-      console.info(
-        '[sendpulse] automation event',
-        JSON.stringify({ eventType: normalizedType, ok: result.ok, status: result.status, attempt: attempt + 1 })
-      );
+      logStructured('info', 'sendpulse_automation_event', {
+        eventType: normalizedType,
+        ok: result.ok,
+        status: result.status,
+        attempt: attempt + 1,
+      });
       if (result.ok || ![408, 429, 500, 502, 503, 504].includes(result.status)) return result;
       lastResult = result;
     } catch (error) {

@@ -4,6 +4,7 @@
   ],
   "github.copilot.chat.cli.customAgents.enabled": true,
   "github.copilot.chat.localIndex.enabled": true,
+  "github.copilot.chat.agent.autoFix": false,
   "files.eol": "\n",
   "editor.formatOnSave": true,
   "editor.formatOnPaste": true,
@@ -20,14 +21,8 @@
   "htmlhint.enable": true,
   "chat.agent.enabled": true,
   "chat.agent.maxRequests": 25,
-  "github.copilot.chat.agent.autoFix": false,
   "chat.mcp.access": "all",
-  "chat.mcp.discovery.enabled": {
-    "claude-desktop": false,
-    "windsurf": false,
-    "cursor-global": false,
-    "cursor-workspace": false
-  },
+  "chat.mcp.discovery.enabled": false,
   "chat.mcp.apps.enabled": true,
   "chat.stickyScroll.enabled": true,
   "chat.experimental.stickyScroll.enabled": true,

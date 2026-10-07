@@ -18,6 +18,24 @@ import {
   readFormDataBody,
   readJsonBody,
 } from './_lib/http-security.js';
+
+/**
+ * Structured logging for production functions.
+ * Uses console.error for critical errors but with structured JSON format.
+ */
+function logStructured(level, event, data = {}) {
+  const logEntry = JSON.stringify({
+    level,
+    timestamp: new Date().toISOString(),
+    event,
+    ...data,
+  });
+  if (level === 'error') {
+    console.error(logEntry);
+  } else {
+    console.log(logEntry);
+  }
+}
 import {
   appendGoogleSheetRow,
   getEnvList,
@@ -603,7 +621,12 @@ async function sendTelegramEmailFailureAlert(env, { formType, requestId, status,
     });
     console.info(
       '[sendmail] Telegram email-failure alert',
-      JSON.stringify({ request_id: requestId, form_type: formType, ok: result?.ok === true, status: Number(result?.status || 0) })
+      JSON.stringify({
+        request_id: requestId,
+        form_type: formType,
+        ok: result?.ok === true,
+        status: Number(result?.status || 0),
+      })
     );
     return result;
   } catch {
@@ -903,14 +926,17 @@ export async function onRequest(ctx) {
     formType === 'booking'
       ? {
           inline_keyboard: [
-            [{ text: '✅ Подтвердить запись в Google Calendar', callback_data: `booking_confirm:${automationEventData.request_id}` }],
+            [
+              {
+                text: '✅ Подтвердить запись в Google Calendar',
+                callback_data: `booking_confirm:${automationEventData.request_id}`,
+              },
+            ],
           ],
         }
       : null;
   const bookingConfirmationUrl =
-    formType === 'booking'
-      ? await buildBookingConfirmationUrl(env, origin, automationEventData.request_id)
-      : '';
+    formType === 'booking' ? await buildBookingConfirmationUrl(env, origin, automationEventData.request_id) : '';
 
   if (resolvedMessage.length > 2000) {
     return jsonResponse({ success: false, message: copy.error }, 400, origin);
@@ -1064,12 +1090,9 @@ export async function onRequest(ctx) {
         ],
       });
     } catch (error) {
-      console.error(
-        JSON.stringify({
-          message: 'booking sheet write failed',
-          error: error instanceof Error ? error.message : String(error),
-        })
-      );
+      logStructured('error', 'booking_sheet_write_failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return { ok: false, error: 'booking sheet write failed' };
     }
   };
@@ -1166,12 +1189,9 @@ export async function onRequest(ctx) {
       });
       return [result];
     } catch (error) {
-      console.error(
-        JSON.stringify({
-          message: 'client registration sheet write failed',
-          error: error instanceof Error ? error.message : String(error),
-        })
-      );
+      logStructured('error', 'client_registration_sheet_write_failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return [{ ok: false, error: 'client registration sheet write failed' }];
     }
   };
@@ -1203,18 +1223,18 @@ export async function onRequest(ctx) {
     Boolean(getEnvValue(env, 'SENDPULSE_CLIENT_ID') && getEnvValue(env, 'SENDPULSE_CLIENT_SECRET'));
   const bookingPersistence = await persistBookingRequest();
   if (formType === 'booking' && bookingPersistence?.ok !== true) {
-    console.error(JSON.stringify({ message: 'booking was not stored in the admin register' }));
+    logStructured('error', 'booking_not_stored_in_register');
     return jsonResponse({ success: false, message: copy.error }, 503, origin);
   }
   const registrationResults = await runClientRegistrationIntegration();
   const registrationDelivered = registrationResults.some(result => result?.ok === true);
   if (clientRecordRequired && !registrationDelivered) {
-    console.error(JSON.stringify({ message: 'client registration was not stored in the admin register' }));
+    logStructured('error', 'client_registration_not_stored_in_register');
     return jsonResponse({ success: false, message: copy.error }, 503, origin);
   }
 
   if (!hasSendPulseCredentials) {
-    console.error('[sendmail] SendPulse credentials not configured');
+    logStructured('warn', 'sendpulse_credentials_not_configured');
     const telegramDelivered = await sendTelegramMessage(env, {
       text: buildTelegramNotification({
         formType,
@@ -1268,9 +1288,9 @@ export async function onRequest(ctx) {
       html: buildBrandedEmail({ title: subject, bodyText: textBody, lang }),
     });
   } catch (err) {
-    console.error(
-      JSON.stringify({ event: 'sendmail_network_error', error: String(err?.name || 'Error').slice(0, 80) })
-    );
+    logStructured('error', 'sendmail_network_error', {
+      error: String(err?.name || 'Error').slice(0, 80),
+    });
     await sendTelegramEmailFailureAlert(env, {
       formType,
       requestId: automationEventData.request_id,
@@ -1323,8 +1343,7 @@ export async function onRequest(ctx) {
       })
     );
     const adminNotificationResult = notificationResults[3];
-    const adminNotification =
-      adminNotificationResult?.status === 'fulfilled' ? adminNotificationResult.value : null;
+    const adminNotification = adminNotificationResult?.status === 'fulfilled' ? adminNotificationResult.value : null;
     console.info(
       '[sendmail] admin notification delivery',
       JSON.stringify({
@@ -1353,7 +1372,9 @@ export async function onRequest(ctx) {
     );
   }
 
-  console.error(JSON.stringify({ event: 'sendmail_provider_error', status: Number(sendPulseRes.status || 0) }));
+  logStructured('error', 'sendmail_provider_error', {
+    status: Number(sendPulseRes.status || 0),
+  });
   await sendTelegramEmailFailureAlert(env, {
     formType,
     requestId: automationEventData.request_id,

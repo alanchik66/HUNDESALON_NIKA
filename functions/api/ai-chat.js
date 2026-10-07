@@ -14,6 +14,23 @@ import {
 import { getOneDriveAccessToken, getOneDriveDownloadUrl, isOneDriveConfigured } from '../_lib/onedrive.js';
 import { sendTelegramMessage } from '../_lib/platform-integrations.js';
 
+/**
+ * Structured logging for production functions.
+ */
+function logStructured(level, event, data = {}) {
+  const logEntry = JSON.stringify({
+    level,
+    timestamp: new Date().toISOString(),
+    event,
+    ...data,
+  });
+  if (level === 'error') {
+    console.error(logEntry);
+  } else {
+    console.log(logEntry);
+  }
+}
+
 const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses';
 const DEFAULT_MODEL = 'gpt-5.6-luna';
 const SUPPORTED_LOCALES = new Set(['de', 'en', 'ru', 'uk']);
@@ -472,12 +489,23 @@ function validatePayload(payload) {
   if (!/^[a-f0-9-]{36}$/i.test(sessionId)) return null;
   if (!/^[a-f0-9-]{64,160}$/i.test(sessionToken)) return null;
   if (!/^[a-f0-9-]{36}$/i.test(clientMessageId)) return null;
-  return { locale, message, sessionId, sessionToken, clientMessageId, pagePath, mode, history: sanitizeHistory(payload.history) };
+  return {
+    locale,
+    message,
+    sessionId,
+    sessionToken,
+    clientMessageId,
+    pagePath,
+    mode,
+    history: sanitizeHistory(payload.history),
+  };
 }
 
 export function detectCustomerLocale(message, fallbackLocale = 'de') {
   const fallback = SUPPORTED_LOCALES.has(fallbackLocale) ? fallbackLocale : 'de';
-  const text = String(message || '').normalize('NFKC').toLocaleLowerCase();
+  const text = String(message || '')
+    .normalize('NFKC')
+    .toLocaleLowerCase();
   if (!text.trim()) return fallback;
   if (/[іїєґ]/u.test(text)) return 'uk';
   if (/[ыэёъ]/u.test(text)) return 'ru';
@@ -666,7 +694,11 @@ export async function onRequest(context) {
   if (!incoming.inserted) {
     const previous = await findReplyForMessage(env, session.session_id, payload.clientMessageId);
     if (previous?.body) {
-      return jsonResponse({ answer: previous.body, handoff: false, available: true, deduplicated: true }, 200, originCheck.origin);
+      return jsonResponse(
+        { answer: previous.body, handoff: false, available: true, deduplicated: true },
+        200,
+        originCheck.origin
+      );
     }
   } else {
     try {
@@ -676,7 +708,9 @@ export async function onRequest(context) {
       });
       if (notification?.ok) await registerTelegramDelivery(env, session, notification, payload.clientMessageId);
     } catch (error) {
-      console.error('[ai-chat] staff notification failed', error?.name || 'Error');
+      logStructured('error', 'ai_chat_staff_notification_failed', {
+        error: error?.name || 'Error',
+      });
     }
   }
 
@@ -714,13 +748,11 @@ export async function onRequest(context) {
       apiKey,
       model,
       payload,
-      reference: learnedGuidance
-        ? `${reference}\n\nSTAFF-TAUGHT EXAMPLES:\n${learnedGuidance}`
-        : reference,
+      reference: learnedGuidance ? `${reference}\n\nSTAFF-TAUGHT EXAMPLES:\n${learnedGuidance}` : reference,
       imageUrl,
     });
     if (!upstream.ok) {
-      console.error(JSON.stringify({ event: 'ai_chat_upstream_error', status: upstream.status }));
+      logStructured('error', 'ai_chat_upstream_error', { status: upstream.status });
       return jsonResponse({ answer: copy.unavailable, handoff: true, available: false }, 200, originCheck.origin);
     }
 
@@ -736,7 +768,11 @@ export async function onRequest(context) {
 
     const currentSession = await authenticateChatSession(env, payload.sessionId, payload.sessionToken);
     if (currentSession?.conversation_mode === 'human') {
-      return jsonResponse({ waitingForStaff: true, handoff: true, available: true, mode: 'human' }, 200, originCheck.origin);
+      return jsonResponse(
+        { waitingForStaff: true, handoff: true, available: true, mode: 'human' },
+        200,
+        originCheck.origin
+      );
     }
 
     await recordChatMessage(env, session, {
@@ -754,7 +790,9 @@ export async function onRequest(context) {
       });
       if (notification?.ok) await registerTelegramDelivery(env, session, notification, payload.clientMessageId);
     } catch (error) {
-      console.error('[ai-chat] AI answer notification failed', error?.name || 'Error');
+      logStructured('error', 'ai_chat_answer_notification_failed', {
+        error: error?.name || 'Error',
+      });
     }
 
     return jsonResponse(
@@ -768,7 +806,9 @@ export async function onRequest(context) {
       originCheck.origin
     );
   } catch (error) {
-    console.error(JSON.stringify({ event: 'ai_chat_request_failed', reason: error?.name || 'Error' }));
+    logStructured('error', 'ai_chat_request_failed', {
+      reason: error?.name || 'Error',
+    });
     return jsonResponse({ answer: copy.unavailable, handoff: true, available: false }, 200, originCheck.origin);
   }
 }
