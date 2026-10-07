@@ -18,7 +18,9 @@
     "format": "prettier --write \"assets/js/**/*.js\" \"assets/css/**/*.css\" \"ru/**/*.html\" \"de/**/*.html\" \"en/**/*.html\" \"uk/**/*.html\" \"*.html\"",
     "backup:full": "node tools/create-full-backup.mjs",
     "validate": "node tools/run-npm-quiet.mjs run lint && node tools/run-npm-quiet.mjs run check:links && node tools/run-npm-quiet.mjs run check:project && node tools/run-npm-quiet.mjs run check:payments && node tools/run-npm-quiet.mjs run test:unit && node tools/run-npm-quiet.mjs run check:email-provider && node tools/run-npm-quiet.mjs run check:sendpulse-ai-knowledge",
-    "qa:max": "npm run check:security-production && npm run validate && npm run build:production && npm run check:budgets && npm run test:browser",
+    "qa:max": "npm run check:security-dependencies && npm run test:security-braces && npm run check:security-production && npm run validate && npm run build:production && npm run check:budgets && npm run test:browser",
+    "check:security-dependencies": "npm audit",
+    "test:security-braces": "node --test tools/braces-security.test.mjs",
     "check:security-production": "npm audit --omit=dev",
     "check": "npm run validate",
     "check:links": "node tools/check-links.js",
@@ -206,7 +208,8 @@
     "undici": "7.30.0",
     "ws": "^8.20.1",
     "sharp": "0.35.5",
-    "katex": "0.18.2"
+    "katex": "0.18.2",
+    "braces": "https://codeload.github.com/Im-Fran/braces/tar.gz/11568474fd2d330d4a56a3aba63f8f90030ba15e"
   },
   "engines": {
     "node": ">=24.16.0 <27",

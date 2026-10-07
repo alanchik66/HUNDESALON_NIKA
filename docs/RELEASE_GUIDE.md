@@ -26,8 +26,10 @@ Account settings, access permissions and live notification tests require separat
 
 ## Dependency security
 
-`npm run check:security-production` rejects vulnerable production dependencies and is part of `qa:max`. Also run the full `npm audit` before releasing tooling changes; a clean production audit does not imply a clean development tree.
+`npm run check:security-dependencies` runs the full `npm audit`, including development dependencies. Both this check and `check:security-production` are part of `qa:max`; findings are not suppressed.
 
-As of 2026-10-07, the updated dependency tree has zero production vulnerabilities. The full audit still reports eight high findings, all propagated from `braces@3.0.3` through the development-only lint toolchain. [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) has no published patched version. This risk remains open, not fixed or dismissed.
+As of 2026-10-08, full and production audits report zero vulnerabilities. The official `braces` release remains affected by [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm). The development toolchain temporarily uses the reviewed [Im-Fran/braces security fork](https://github.com/Im-Fran/braces/releases/tag/3.0.4), pinned to commit `11568474fd2d330d4a56a3aba63f8f90030ba15e`, not a mutable branch or tag. Its downloaded archive integrity is recorded in the lockfile. This is not an official upstream release.
 
-Use only fixed, repository-controlled lint globs. Do not pass customer input or external glob patterns to linters. Do not run lint on untrusted repositories with privileged credentials. Recheck the advisory before each tooling release and use an upstream patch when available. Do not use `npm audit fix --force`: the proposed downgrades remove current lint functionality without providing a suitable maintained upgrade.
+The fork limits parser nesting to 100, rejecting deeper input with `SyntaxError` before recursive walkers run. `test:security-braces` checks that all consumers resolve this snapshot, malicious deep patterns are rejected and ordinary lint globs remain compatible. Hand-built ASTs bypass the parser: never feed an untrusted AST to the compile or expand entry points.
+
+Use fixed, repository-controlled lint globs and never run lint on untrusted repositories with privileged credentials. Recheck official releases before each tooling update and remove the temporary override when an equivalent upstream fix is available. Do not use `npm audit fix --force` or dismiss findings to make a gate pass.
