@@ -10,7 +10,7 @@ Review and stage specific files. Never stage `.dev.vars`, credentials, local OAu
 
 ## Publish
 
-Commit the reviewed changes and push `main` without force. Cloudflare Pages builds the GitHub revision automatically. Confirm that the successful production deployment references the exact pushed commit.
+Commit the reviewed changes and push `main` without force. This Pages project uses Direct Upload; a push does not deploy it. The optional GitHub Actions deployment requires `workflow_dispatch`. Confirm that the successful production deployment references the exact pushed commit.
 
 For an explicitly authorized manual deployment, rebuild with `npm run build:production` after committing, then run `node tools/deploy-pages.mjs --branch main --commit-dirty=false`. Do not deploy uncommitted Functions or stale build artifacts.
 

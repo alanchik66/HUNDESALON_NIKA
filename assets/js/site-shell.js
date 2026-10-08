@@ -3781,8 +3781,21 @@
     return extractSupportedLang(rawLang) || 'en';
   }
 
+  function rememberPreferredLanguage(lang) {
+    try {
+      localStorage.setItem('preferred_lang', lang);
+    } catch {
+      // Language navigation and shell setup must work without persistence.
+    }
+  }
+
   function resolvePreferredLaunchLanguage() {
-    const storedPreference = extractSupportedLang(localStorage.getItem('preferred_lang'));
+    let storedPreference = null;
+    try {
+      storedPreference = extractSupportedLang(localStorage.getItem('preferred_lang'));
+    } catch {
+      // Fall back to the browser's language preferences.
+    }
     if (storedPreference) {
       return storedPreference;
     }
@@ -4210,7 +4223,9 @@
     if (shellScript?.src) {
       try {
         const scriptUrl = new URL(shellScript.src, window.location.href);
-        return new URL(`./header-weather-sun-scene.js?v=${WEATHER_WIDGET_ASSET_VERSION}`, scriptUrl).href;
+        // Match the deployed shell version so immutable caches receive updated scene code.
+        const version = scriptUrl.searchParams.get('v') || WEATHER_WIDGET_ASSET_VERSION;
+        return new URL(`./header-weather-sun-scene.js?v=${encodeURIComponent(version)}`, scriptUrl).href;
       } catch {
         // Fall through to site-root assets path.
       }
@@ -13534,7 +13549,7 @@
           return;
         }
 
-        localStorage.setItem('preferred_lang', lang);
+        rememberPreferredLanguage(lang);
 
         const preNavigationAnimationMs = 260;
 
@@ -13573,7 +13588,7 @@
     }
 
     if (context.currentLang) {
-      localStorage.setItem('preferred_lang', context.currentLang);
+      rememberPreferredLanguage(context.currentLang);
     }
 
     initIndependentEuroMotion();

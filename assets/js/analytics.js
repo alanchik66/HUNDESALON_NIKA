@@ -9,6 +9,10 @@
   const isClarityProjectId = value => /^[a-z0-9]{6,24}$/i.test(String(value || '').trim());
 
   const getConsent = () => {
+    const sessionConsent = window.__hundesalonCookieConsent;
+    if (typeof sessionConsent?.analytics === 'boolean') {
+      return sessionConsent.analytics;
+    }
     try {
       const stored = JSON.parse(localStorage.getItem(CONSENT_KEY) || '{}');
       return stored.analytics === true;
@@ -122,6 +126,9 @@
   };
 
   window.addEventListener('hundesalon:cookie-consent', event => {
+    if (typeof event.detail?.analytics === 'boolean') {
+      window.__hundesalonCookieConsent = event.detail;
+    }
     if (event.detail?.analytics === true) {
       void bootAnalytics();
     }

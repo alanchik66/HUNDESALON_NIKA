@@ -1,6 +1,6 @@
 import { getEnvValue, sendSendPulseEmail } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
-import { timingSafeEqualStrings } from './_lib/http-security.js';
+import { isRequestBodyTooLarge, readJsonBody, timingSafeEqualStrings } from './_lib/http-security.js';
 
 const AUTOREPLY_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const REPLY_TO_EMAIL = 'info@hundesalon-nika.com';
@@ -43,20 +43,14 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: false, error: 'Unauthorized' }, 401);
   }
 
-  const contentLength = Number(request.headers.get('Content-Length') || 0);
-  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
-    return json({ ok: false, error: 'Payload too large' }, 413);
-  }
-
   let payload;
   try {
-    const rawBody = await request.text();
-    if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_BYTES) {
-      return json({ ok: false, error: 'Payload too large' }, 413);
-    }
-    payload = JSON.parse(rawBody);
-  } catch {
-    return json({ ok: false, error: 'Invalid JSON' }, 400);
+    payload = await readJsonBody(request, MAX_BODY_BYTES);
+  } catch (error) {
+    return json(
+      { ok: false, error: isRequestBodyTooLarge(error) ? 'Payload too large' : 'Invalid JSON' },
+      isRequestBodyTooLarge(error) ? 413 : 400
+    );
   }
 
   const to = String(payload?.to || '')

@@ -103,24 +103,24 @@ export async function registerChatCustomer(env, input) {
     .first();
   if (!customer?.id) return { ok: false, code: 'DATABASE_ERROR' };
   const session = await createSession(db, customer.id, profile.locale, profile.pagePath);
-  return { ok: true, ...session, customer };
+  // An email match in the CRM does not prove ownership of the stored contact.
+  // Return only the profile submitted by this visitor, including an empty phone.
+  return {
+    ok: true,
+    ...session,
+    customer: {
+      id: customer.id,
+      first_name: profile.firstName,
+      last_name: profile.lastName,
+      email: profile.email,
+      phone: profile.phone,
+      locale: profile.locale,
+    },
+  };
 }
 
 export async function authenticateChatSession(env, sessionId, token) {
   const db = database(env);
-  if (!db && globalThis?.process?.release?.name === 'node' && SESSION_RE.test(String(sessionId || '')) && TOKEN_RE.test(String(token || ''))) {
-    return {
-      session_id: sessionId,
-      customer_id: '00000000-0000-4000-8000-000000000001',
-      locale: 'de',
-      status: 'active',
-      conversation_mode: 'ai',
-      first_name: 'Test',
-      last_name: 'Customer',
-      email: 'test@example.com',
-      phone: '',
-    };
-  }
   if (!db || !SESSION_RE.test(String(sessionId || '')) || !TOKEN_RE.test(String(token || ''))) return null;
   const hash = await tokenHash(token);
   return db
@@ -140,7 +140,9 @@ export async function setChatSessionMode(env, sessionId, mode = 'human') {
   const normalizedMode = mode === 'human' ? 'human' : 'ai';
   if (!db || !SESSION_RE.test(String(sessionId || ''))) return false;
   const result = await db
-    .prepare("UPDATE chat_sessions SET conversation_mode = ? WHERE id = ? AND status = 'active' AND conversation_mode <> ?")
+    .prepare(
+      "UPDATE chat_sessions SET conversation_mode = ? WHERE id = ? AND status = 'active' AND conversation_mode <> ?"
+    )
     .bind(normalizedMode, sessionId, normalizedMode)
     .run();
   return Number(result?.meta?.changes || 0) > 0;
@@ -151,7 +153,13 @@ export async function renewChatSession(env, sessionId, token, pagePath = '') {
   const db = database(env);
   if (!current || !db) return null;
   await db.prepare("UPDATE chat_sessions SET status = 'closed' WHERE id = ?").bind(sessionId).run();
-  return createSession(db, current.customer_id, current.locale, cleanText(pagePath, 300));
+  const renewed = await createSession(db, current.customer_id, current.locale, cleanText(pagePath, 300));
+  // Only possession of the previous session token may transfer staff reply routing.
+  await db
+    .prepare('UPDATE chat_telegram_deliveries SET session_id = ? WHERE session_id = ?')
+    .bind(renewed.sessionId, sessionId)
+    .run();
+  return renewed;
 }
 
 export async function recordChatMessage(env, session, input) {
@@ -327,9 +335,8 @@ export async function getChatSessionForTelegramReply(env, chatId, repliedMessage
                c.first_name, c.last_name, c.email, COALESCE(c.phone, '') AS phone, c.locale
         FROM chat_telegram_deliveries d
         JOIN chat_customers c ON c.id = d.customer_id
-        JOIN chat_sessions s ON s.customer_id = d.customer_id AND s.status = 'active'
+        JOIN chat_sessions s ON s.id = d.session_id AND s.status = 'active'
         WHERE d.telegram_chat_id = ? AND d.telegram_message_id = ?
-        ORDER BY CASE WHEN s.id = d.session_id THEN 0 ELSE 1 END, s.last_message_at DESC
         LIMIT 1`
     )
     .bind(String(chatId), Number(repliedMessageId))

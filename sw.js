@@ -7,11 +7,7 @@ const CORE_ASSETS = [
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache =>
-      cache.addAll(CORE_ASSETS).catch(() => Promise.resolve())
-    )
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE_ASSETS).catch(() => Promise.resolve())));
   self.skipWaiting();
 });
 
@@ -46,6 +42,18 @@ function isNetworkFirstRequest(request, url) {
   return false;
 }
 
+function cacheResponse(event, request, response) {
+  if (!response.ok) return;
+  const copy = response.clone();
+  // Keep cache writes alive after returning a response; quota failures must not break navigation.
+  event.waitUntil(
+    caches
+      .open(CACHE_NAME)
+      .then(cache => cache.put(request, copy))
+      .catch(() => undefined)
+  );
+}
+
 self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') {
@@ -61,10 +69,7 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(request)
         .then(response => {
-          if (response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
-          }
+          cacheResponse(event, request, response);
           return response;
         })
         .catch(() => caches.match(request))
@@ -72,19 +77,14 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  event.respondWith(
-    caches.match(request).then(cached => {
-      const network = fetch(request)
-        .then(response => {
-          if (response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
-          }
-          return response;
-        })
-        .catch(() => cached);
-
-      return cached || network;
+  const network = fetch(request)
+    .then(response => {
+      cacheResponse(event, request, response);
+      return response;
     })
-  );
+    .catch(() => caches.match(request));
+
+  // A cached response can finish immediately while its background refresh still needs the worker.
+  event.waitUntil(network.then(() => undefined));
+  event.respondWith(caches.match(request).then(cached => cached || network));
 });

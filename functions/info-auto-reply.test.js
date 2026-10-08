@@ -3,6 +3,38 @@ import assert from 'node:assert/strict';
 
 import { onRequestPost } from './info-auto-reply.js';
 
+test('stops an authenticated relay body without Content-Length before draining the stream', async () => {
+  const relaySecret = 'bounded-relay-test-fixture';
+  let cancelled = false;
+  let remainderRead = false;
+  const body = new ReadableStream(
+    {
+      start(controller) {
+        controller.enqueue(new Uint8Array(8 * 1024 + 1));
+      },
+      pull(controller) {
+        remainderRead = true;
+        controller.close();
+      },
+      cancel() {
+        cancelled = true;
+      },
+    },
+    { highWaterMark: 0 }
+  );
+  const request = new Request('https://hundesalon-nika.com/info-auto-reply', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${relaySecret}`, 'Content-Type': 'application/json' },
+    body,
+    duplex: 'half',
+  });
+  assert.equal(request.headers.has('Content-Length'), false);
+  const response = await onRequestPost({ request, env: { INFO_AUTOREPLY_SECRET: relaySecret } });
+  assert.equal(response.status, 413);
+  assert.equal(cancelled, true);
+  assert.equal(remainderRead, false);
+});
+
 test('automatic information mail sends from info and routes replies to info', async () => {
   const originalFetch = globalThis.fetch;
   let sendPulsePayload;

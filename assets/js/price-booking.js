@@ -113,10 +113,43 @@
     return match ? match.slice(1).map(Number) : null;
   };
 
-  const toLocalDateTime = (isoDate, minutes) => {
+  const salonOffsetFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Berlin',
+    timeZoneName: 'longOffset',
+  });
+  const salonDateTimeFormatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Berlin',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  });
+  const formatSalonDateTime = date => {
+    const parts = salonDateTimeFormatter.formatToParts(date);
+    const value = type => parts.find(part => part.type === type)?.value || '';
+    return `${value('year')}-${value('month')}-${value('day')}T${value('hour')}:${value('minute')}:${value('second')}`;
+  };
+
+  // Match the backend's salon wall-clock conversion, including DST offsets.
+  const toSalonDateTime = (isoDate, minutes) => {
     const parts = parseIsoDateParts(isoDate);
     if (!parts) return null;
-    return new Date(parts[0], parts[1] - 1, parts[2], Math.floor(minutes / 60), minutes % 60, 0, 0);
+    const local = `${isoDate}T${formatMinutesAsTime(minutes)}:00`;
+    const naive = Date.UTC(parts[0], parts[1] - 1, parts[2], Math.floor(minutes / 60), minutes % 60, 0, 0);
+    let utc = naive;
+    for (let iteration = 0; iteration < 3; iteration += 1) {
+      const zone = salonOffsetFormatter.formatToParts(new Date(utc))
+        .find(part => part.type === 'timeZoneName')?.value;
+      const offset = String(zone || '').match(/^GMT([+-])(\d{2}):?(\d{2})$/);
+      if (!offset) return null;
+      const offsetMinutes = (Number(offset[2]) * 60 + Number(offset[3])) * (offset[1] === '-' ? -1 : 1);
+      utc = naive - offsetMinutes * 60 * 1000;
+    }
+    const result = new Date(utc);
+    return formatSalonDateTime(result) === local ? result : null;
   };
 
   const normalizeBusyIntervals = busyIntervals => (Array.isArray(busyIntervals) ? busyIntervals : [])
@@ -135,15 +168,14 @@
     const lastStart = BOOKING_SCHEDULE.workdayEndMinutes - timing.safeBlockMinutes;
     if (lastStart < BOOKING_SCHEDULE.workdayStartMinutes) return [];
 
-    const todayKey = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
     const starts = [];
     const step = calendarConfigured ? timing.slotStepMinutes : timing.safeBlockMinutes;
 
     for (let minutes = BOOKING_SCHEDULE.workdayStartMinutes; minutes <= lastStart; minutes += step) {
-      const start = toLocalDateTime(isoDate, minutes);
-      const end = toLocalDateTime(isoDate, minutes + timing.safeBlockMinutes);
+      const start = toSalonDateTime(isoDate, minutes);
+      const end = toSalonDateTime(isoDate, minutes + timing.safeBlockMinutes);
       if (!start || !end) continue;
-      if (isoDate === todayKey && start.getTime() <= now.getTime()) continue;
+      if (start.getTime() <= now.getTime()) continue;
 
       const overlaps = busy.some(interval => interval.start < end.getTime() && interval.end > start.getTime());
       if (!overlaps) starts.push(formatMinutesAsTime(minutes));

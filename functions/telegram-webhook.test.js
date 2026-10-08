@@ -248,6 +248,49 @@ test('a plain administrator message in the personal topic is delivered to the la
   ));
 });
 
+test('an explicit reply to an unavailable website session cannot use another client in the personal topic', async () => {
+  const database = websiteChatDatabase({ conversationMode: 'human', sessionAvailable: false });
+  const originalPrepare = database.prepare;
+  database.prepare = sql => {
+    const statement = originalPrepare(sql);
+    if (sql.includes('d.message_thread_id = ?')) {
+      statement.first = async () => ({
+        session_id: crypto.randomUUID(),
+        customer_id: crypto.randomUUID(),
+        email: 'another-client@example.com',
+        conversation_mode: 'human',
+      });
+    }
+    return statement;
+  };
+  const response = await onRequest({
+    request: new Request('https://hundesalon-nika.com/telegram-webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
+      },
+      body: JSON.stringify(websiteChatAdminReply('Private reply to the original client', { threadId: 197 })),
+    }),
+    env: {
+      CHAT_DB: database,
+      TELEGRAM_CHAT_ID: '-100123',
+      TELEGRAM_TOPIC_PERSONAL_ID: '197',
+      TELEGRAM_WEBHOOK_SECRET: 'test-webhook-secret',
+    },
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).reason, 'website_session_not_found');
+  assert.equal(
+    database.sqlCalls.some(sql => sql.includes('d.message_thread_id = ?')),
+    false
+  );
+  assert.equal(
+    database.sqlCalls.some(sql => sql.includes('INSERT OR IGNORE INTO chat_messages')),
+    false
+  );
+});
+
 test('the personal website topic never falls back to a Telegram client direct message', async () => {
   const originalFetch = globalThis.fetch;
   const requests = [];

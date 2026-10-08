@@ -133,7 +133,12 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ========== THEME TOGGLE ========== */
   const themeToggle = document.getElementById('theme-toggle');
   if (themeToggle) {
-    const saved = localStorage.getItem('theme');
+    let saved = null;
+    try {
+      saved = localStorage.getItem('theme');
+    } catch {
+      // Theme persistence is optional when browser storage is blocked.
+    }
     if (saved === 'light') document.body.classList.add('light');
     themeToggle.textContent = '';
     themeToggle.setAttribute('aria-label', getThemeToggleLabel(document.body.classList.contains('light')));
@@ -141,7 +146,11 @@ document.addEventListener('DOMContentLoaded', () => {
     themeToggle.addEventListener('click', () => {
       document.body.classList.toggle('light');
       const isLight = document.body.classList.contains('light');
-      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      try {
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      } catch {
+        // Keep the visible theme and its accessible label in sync.
+      }
       themeToggle.textContent = '';
       themeToggle.setAttribute('aria-label', getThemeToggleLabel(isLight));
     });

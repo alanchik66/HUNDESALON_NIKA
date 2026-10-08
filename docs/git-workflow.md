@@ -43,7 +43,9 @@ Variables:
 
 Zone automation stays local in `HUNDESALON_NIKA — Zone Ops`; it is not used for GitHub Pages deploy.
 
-### GitLab CI
+### GitLab CI (исторические настройки)
+
+Этот раздел сохранён как история удалённого зеркала. GitLab сейчас не участвует в CI, push или деплое проекта; переменные ниже не требуется настраивать.
 
 Settings → CI/CD → Variables:
 
@@ -52,15 +54,16 @@ Settings → CI/CD → Variables:
 | `CLOUDFLARE_ACCOUNT_ID` | yes       | no     | `25e872aeab8cb246c69142ab07cd0fee`                          |
 | `CLOUDFLARE_API_TOKEN`  | yes       | yes    | Cloudflare token with **Account → Cloudflare Pages → Edit** |
 
-The GitLab deploy job runs only on `main` and only when both variables exist.
+The former GitLab deploy job ran only on `main` and only when both variables existed.
 
 ## Ежедневный цикл
 
 Для полного цикла релиза (проверка, коммит, пуш и деплой) используйте единый скрипт:
 
 ```bash
-# Запустите скрипт и следуйте инструкциям
-./tools/release.ps1
+# Сначала явно выберите проверенные файлы через git add <точные пути>.
+# Unstaged и untracked файлы останавливают релиз до любых изменений.
+./tools/release.ps1 -CommitMessage "fix: describe reviewed changes"
 ```
 
 `npm run git:push`:
@@ -73,7 +76,7 @@ The GitLab deploy job runs only on `main` and only when both variables exist.
 
 ### Политика веток
 
-В GitHub и GitLab держим только `main`. Не создаем sync/fallback ветки. Если GitLab push не проходит из-за защиты `main`, исправляем права protected branch и повторяем `npm run git:push`.
+В GitHub держим только `main`. Не создаем sync/fallback ветки. GitLab mirror удалён; `npm run git:push` работает только с `origin` на GitHub. Историческая политика `main` и protected branches для GitLab к текущему процессу не применяется.
 
 Если GitHub Actions не стартует из-за billing/account/policy issue, делайте прямой деплой:
 
@@ -85,7 +88,7 @@ Cloudflare production можно выкатывать напрямую до во
 
 ## Remotes (не трогать без нужды)
 
-```
+```text
 origin  → GitHub (fetch + push)
 ```
 
@@ -97,9 +100,11 @@ origin  → GitHub (fetch + push)
 npm run git:cleanup
 ```
 
-Удаляет merged локальные служебные ветки, чистит prunable worktree metadata и показывает remote-ветки вне `main`, если они снова появились. В репозиториях GitHub/GitLab должна оставаться только ветка `main`.
+Удаляет merged локальные служебные ветки, чистит prunable worktree metadata без удаления каталогов checkout и показывает remote-ветки вне `main`, если они снова появились. Активные и locked worktree сохраняются. На GitHub должна оставаться только ветка `main`.
 
-## Оранжевое предупреждение в Protected branches
+## Оранжевое предупреждение в Protected branches (история GitLab)
+
+Следующий блок описывает прежнее зеркало. Он не требует изменения текущих настроек аккаунтов или GitHub.
 
 Текст вроде _«Giving merge rights to a protected branch also gives elevated permissions for certain CI/CD features»_ — **это не поломка**, а напоминание GitLab о безопасности.
 

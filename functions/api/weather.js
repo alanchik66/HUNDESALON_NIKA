@@ -725,6 +725,8 @@ export async function onRequest(context) {
     url.searchParams.get('lang') || request.headers.get('Accept-Language')
   );
   const timeZone = normalizeTimeZone(url.searchParams.get('timezone'));
+  const rateLimitOptions = { route: 'weather-current', limit: 24, windowSec: 60 };
+  let rateLimitChecked = false;
   let location = parseWeatherCoordinates(
     url.searchParams.get('latitude'),
     url.searchParams.get('longitude')
@@ -734,6 +736,12 @@ export async function onRequest(context) {
     const locationQuery = String(url.searchParams.get('location') || '').trim();
     location = parseWeatherLocation(locationQuery);
     if (!location && locationQuery && locationQuery.length <= 160) {
+      // Named locations already contact an upstream provider before the weather cache lookup.
+      const rateLimitResponse = await enforceRateLimit(request, rateLimitOptions);
+      if (rateLimitResponse) {
+        return respond(rateLimitResponse);
+      }
+      rateLimitChecked = true;
       location = await resolveNamedLocation(locationQuery, language).catch(() => null);
     }
   }
@@ -752,13 +760,11 @@ export async function onRequest(context) {
     return respond(apiResponse(cachedPayload, { cacheStatus: 'HIT', method: request.method }));
   }
 
-  const rateLimitResponse = await enforceRateLimit(request, {
-    route: 'weather-current',
-    limit: 24,
-    windowSec: 60,
-  });
-  if (rateLimitResponse) {
-    return respond(rateLimitResponse);
+  if (!rateLimitChecked) {
+    const rateLimitResponse = await enforceRateLimit(request, rateLimitOptions);
+    if (rateLimitResponse) {
+      return respond(rateLimitResponse);
+    }
   }
 
   const [brightSkyResult, metResult] = await Promise.allSettled([

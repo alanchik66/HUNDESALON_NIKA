@@ -14021,8 +14021,8 @@ body.light .social-icons-toggle.is-open {
   }
 }
 
-/* Final weather header geometry lock: keep the scene readable and out of the social strip. */
-@media (width >= 901px) and (width <= 1400px) {
+/* Keep localized navigation on its own row until every header control fits beside it. */
+@media (width >= 901px) and (width <= 1600px) {
   .header .top-row {
     grid-template-areas:
       'logo burger weather controls'
@@ -14075,7 +14075,7 @@ body.light .social-icons-toggle.is-open {
   }
 }
 
-@media (width >= 1401px) {
+@media (width >= 1601px) {
   .header .top-row {
     grid-template-areas: 'logo burger weather nav controls' !important;
     grid-template-columns:

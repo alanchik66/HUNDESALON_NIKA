@@ -132,7 +132,8 @@ export class HeaderWeatherSunScene {
     const height = Math.max(8, this.canvas.clientHeight);
     const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
     this.renderer.setPixelRatio(pixelRatio);
-    this.renderer.setSize(Math.round(width * pixelRatio), Math.round(height * pixelRatio), false);
+    // WebGLRenderer applies its pixel ratio to these CSS dimensions itself.
+    this.renderer.setSize(Math.round(width), Math.round(height), false);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
   }

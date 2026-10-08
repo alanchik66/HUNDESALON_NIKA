@@ -1,4 +1,4 @@
-import { enforceRateLimit } from '../_lib/http-security.js';
+import { enforceRateLimit, isRequestBodyTooLarge, readTextBody } from '../_lib/http-security.js';
 import { confirmGoogleBooking } from '../_lib/booking-calendar.js';
 import { verifyBookingConfirmationToken } from '../_lib/booking-confirmation.js';
 
@@ -47,11 +47,13 @@ export async function onRequest({ request, env }) {
     if (!(request.headers.get('Content-Type') || '').toLowerCase().startsWith('application/x-www-form-urlencoded')) {
       return page('Неверный запрос', 'Откройте исходную ссылку из служебного письма.', 415);
     }
-    const contentLength = Number(request.headers.get('Content-Length') || 0);
-    if (contentLength > 2048) return page('Неверный запрос', 'Размер запроса превышен.', 413);
-    const body = await request.text();
-    if (body.length > 2048) return page('Неверный запрос', 'Размер запроса превышен.', 413);
-    params = new URLSearchParams(body);
+    try {
+      params = new URLSearchParams(await readTextBody(request, 2048));
+    } catch (error) {
+      return isRequestBodyTooLarge(error)
+        ? page('Неверный запрос', 'Размер запроса превышен.', 413)
+        : page('Неверный запрос', 'Не удалось прочитать запрос. Откройте исходную ссылку из служебного письма.', 400);
+    }
   } else {
     params = new URL(request.url).searchParams;
   }

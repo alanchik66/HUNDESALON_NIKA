@@ -141,10 +141,10 @@ Ctrl+Shift+P → "Tasks: Run Task" → "Сборка для продакшена
 
 ### 2. Деплой в Cloudflare Pages
 
-Для автоматизации всего процесса (линтинг, коммит, пуш и деплой) используйте единый скрипт:
+Для автоматизации всего процесса (полный QA, коммит, пуш, деплой и live-проверки) сначала явно выберите проверенные файлы через `git add <точные пути>`. Скрипт остановится, если остались unstaged или untracked файлы:
 
 ```bash
-./tools/release.ps1
+./tools/release.ps1 -CommitMessage "fix: describe reviewed changes"
 ```
 
 Если требуется только ручной деплой уже собранной версии:
@@ -173,7 +173,7 @@ npm run dev:worker
 - Включите SSL-сертификат
 - Проверьте все языковые версии
 
-> 📖 Подробная инструкция: [DEPLOY_GUIDE.md](DEPLOY_GUIDE.md)
+> 📖 Подробная инструкция: [Production release](docs/RELEASE_GUIDE.md)
 
 ## 🌍 Языки
 
@@ -331,14 +331,14 @@ Ctrl+` → Terminal
 ### Мониторинг
 
 ```bash
-# Анализ производительности
+# Проверка безопасности зависимостей
 npm run audit
 
 # Проверка ссылок
 npm run test:links
 
-# Размер файлов
-npm run analyze:bundle
+# Размер production-ресурсов после сборки
+npm run check:budgets
 ```
 
 ## 🔒 Безопасность

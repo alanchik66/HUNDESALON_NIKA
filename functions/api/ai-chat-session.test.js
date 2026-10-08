@@ -61,6 +61,37 @@ function chatDatabase(initialMode = 'human') {
   };
 }
 
+test('registration does not disclose an existing CRM phone to an anonymous email match', async () => {
+  const restoreCache = installCacheStub();
+  const storedPhone = '+49 341 5550100';
+  const database = {
+    prepare() {
+      return {
+        bind() { return this; },
+        async run() { return { meta: { changes: 1 } }; },
+        async first() {
+          return { id: crypto.randomUUID(), first_name: 'Stored', last_name: 'Contact', email: 'customer@example.com', phone: storedPhone, locale: 'de' };
+        },
+      };
+    },
+  };
+  try {
+    const response = await onRequest({
+      request: createRequest({ action: 'register', firstName: 'New', lastName: 'Visitor', email: 'customer@example.com', phone: '', privacyConsent: true }),
+      env: { CHAT_DB: database },
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(payload.customer.phone, '');
+    assert.equal(payload.customer.firstName, 'New');
+    assert.equal(payload.customer.lastName, 'Visitor');
+    assert.equal(JSON.stringify(payload).includes(storedPhone), false);
+    assert.match(payload.sessionToken, /^[a-f0-9-]{64,160}$/i);
+  } finally {
+    restoreCache();
+  }
+});
+
 test('a registered client can switch a personal consultation back to AI mode', async () => {
   const restoreCache = installCacheStub();
   const database = chatDatabase('human');

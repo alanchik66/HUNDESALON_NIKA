@@ -48,6 +48,7 @@ try {
     });
     await page.locator('body').evaluate((body, light) => body.classList.toggle('light', light), scenario.light);
     await page.waitForSelector('.header .online-order-pill .nav-plasma--active', { timeout: 15000 });
+    await page.evaluate(() => document.fonts.ready);
 
     const state = await page.evaluate(mobile => {
       const target = mobile
@@ -55,6 +56,11 @@ try {
         : document.querySelector('.nav-main a[aria-current="page"] .nav-plasma--active');
       const targetRect = target?.getBoundingClientRect();
       const headerRect = document.querySelector('.header')?.getBoundingClientRect();
+      const themeToggle = document.querySelector('#theme-toggle');
+      const themeRect = themeToggle?.getBoundingClientRect();
+      const themeHit = themeRect
+        ? document.elementFromPoint(themeRect.left + themeRect.width / 2, themeRect.top + themeRect.height / 2)
+        : null;
       const backgroundImage = target ? getComputedStyle(target, '::before').backgroundImage : '';
       return {
         backgroundImage,
@@ -62,6 +68,14 @@ try {
         headerHeight: headerRect?.height || 0,
         targetWidth: targetRect?.width || 0,
         overflowX: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+        themeVisible: Boolean(
+          themeRect?.width > 0 &&
+          themeRect.left >= 0 &&
+          themeRect.right <= window.innerWidth &&
+          themeRect.top >= 0 &&
+          themeRect.bottom <= window.innerHeight
+        ),
+        themeHit: Boolean(themeToggle && (themeHit === themeToggle || themeToggle.contains(themeHit))),
       };
     }, scenario.mobile);
 
@@ -69,6 +83,15 @@ try {
     assert(`${scenario.name}: two plasma conic layers`, state.conicLayers === 2, state.backgroundImage.slice(0, 180));
     assert(`${scenario.name}: header rendered`, state.headerHeight > 0);
     assert(`${scenario.name}: no horizontal overflow`, !state.overflowX);
+    assert(`${scenario.name}: theme control remains inside the viewport`, state.themeVisible);
+    assert(`${scenario.name}: theme control accepts pointer input`, state.themeHit);
+    const initialLight = await page.locator('body').evaluate(body => body.classList.contains('light'));
+    await page.locator('#theme-toggle').click();
+    assert(
+      `${scenario.name}: pointer click switches theme`,
+      (await page.locator('body').evaluate(body => body.classList.contains('light'))) !== initialLight
+    );
+    await page.locator('#theme-toggle').click();
 
     await page.screenshot({
       path: path.join(outDir, `${scenario.name}.png`),

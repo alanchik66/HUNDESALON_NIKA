@@ -75,6 +75,9 @@ function chatDatabase(sessionOverrides = {}) {
         async run() {
           return { meta: { changes: 1 } };
         },
+        async all() {
+          return { results: [] };
+        },
       };
     },
   };
@@ -233,7 +236,7 @@ test('explicit human request is handed off without an OpenAI call', async () => 
   try {
     const response = await onRequest({
       request: createRequest(requestBody({ message: 'Ich möchte mit einem Mitarbeiter sprechen.' })),
-      env: {},
+      env: { CHAT_DB: chatDatabase() },
     });
     const payload = await response.json();
     assert.equal(response.status, 200);
@@ -326,7 +329,7 @@ test('inflected Russian human request is recognized without a model call', async
   try {
     const response = await onRequest({
       request: createRequest(requestBody({ locale: 'ru', message: 'Хочу поговорить со специалистом.' })),
-      env: { OPENAI_API_KEY: 'test-key' },
+      env: { CHAT_DB: chatDatabase(), OPENAI_API_KEY: 'test-key' },
     });
     const payload = await response.json();
     assert.equal(payload.handoff, true);
@@ -341,7 +344,7 @@ test('inflected Russian human request is recognized without a model call', async
 test('missing OpenAI secret fails safely and offers personal support', async () => {
   const restoreCache = installCacheStub();
   try {
-    const response = await onRequest({ request: createRequest(requestBody()), env: {} });
+    const response = await onRequest({ request: createRequest(requestBody()), env: { CHAT_DB: chatDatabase() } });
     const payload = await response.json();
     assert.equal(response.status, 200);
     assert.equal(payload.available, false);
@@ -374,7 +377,7 @@ test('OpenAI request uses bounded context and returns the model answer', async (
           })),
         })
       ),
-      env: { OPENAI_API_KEY: 'test-key' },
+      env: { CHAT_DB: chatDatabase(), OPENAI_API_KEY: 'test-key' },
     });
     const payload = await response.json();
     assert.equal(response.status, 200);
@@ -407,7 +410,7 @@ test('OpenAI request uses bounded context and returns the model answer', async (
   }
 });
 
-test('successful AI answer is mirrored to Telegram', async () => {
+test('the customer message and successful AI answer are mirrored to Telegram', async () => {
   const restoreCache = installCacheStub();
   const originalFetch = globalThis.fetch;
   const telegramPayloads = [];
@@ -429,6 +432,7 @@ test('successful AI answer is mirrored to Telegram', async () => {
     const response = await onRequest({
       request: createRequest(requestBody()),
       env: {
+        CHAT_DB: chatDatabase(),
         OPENAI_API_KEY: 'test-key',
         SITE_NOTIFICATIONS_ENABLED: 'true',
         TELEGRAM_BOT_TOKEN: 'telegram-test-token',
@@ -440,10 +444,12 @@ test('successful AI answer is mirrored to Telegram', async () => {
 
     assert.equal(response.status, 200);
     assert.equal(payload.available, true);
-    assert.equal(telegramPayloads.length, 1);
+    assert.equal(telegramPayloads.length, 2);
     assert.equal(telegramPayloads[0].message_thread_id, 42);
-    assert.match(telegramPayloads[0].text, /Ответ AI-агента сайта/);
-    assert.match(telegramPayloads[0].text, /Die Komplettpflege kostet ab 80 €/);
+    assert.match(telegramPayloads[0].text, /Сообщение из AI-чата сайта/);
+    assert.equal(telegramPayloads[1].message_thread_id, 42);
+    assert.match(telegramPayloads[1].text, /Ответ AI-агента сайта/);
+    assert.match(telegramPayloads[1].text, /Die Komplettpflege kostet ab 80 €/);
   } finally {
     globalThis.fetch = originalFetch;
     restoreCache();
@@ -461,7 +467,7 @@ test('Russian price answers receive the mandatory final-price disclosure', async
   try {
     const response = await onRequest({
       request: createRequest(requestBody({ locale: 'ru', message: 'Сколько стоит подстригание когтей?', pagePath: '/ru/prays-list.html' })),
-      env: { OPENAI_API_KEY: 'test-key' },
+      env: { CHAT_DB: chatDatabase(), OPENAI_API_KEY: 'test-key' },
     });
     const payload = await response.json();
     assert.match(payload.answer, /от 7 €/);
@@ -469,6 +475,19 @@ test('Russian price answers receive the mandatory final-price disclosure', async
     assert.doesNotMatch(payload.answer, /стоит\s+7\s*(?:€|евро)/i);
     assert.doesNotMatch(payload.answer, /от\s+от/i);
     assert.match(payload.answer, /Точную стоимость мастер оценит и согласует с вами до начала процедуры/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreCache();
+  }
+});
+
+test('chat requests without a configured session database are rejected before a model call', async () => {
+  const restoreCache = installCacheStub();
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => assert.fail('An unauthenticated request must not contact an upstream service');
+  try {
+    const response = await onRequest({ request: createRequest(requestBody()), env: { OPENAI_API_KEY: 'fixture-key' } });
+    assert.equal(response.status, 401);
   } finally {
     globalThis.fetch = originalFetch;
     restoreCache();
@@ -508,7 +527,7 @@ test('puppy request sends the approved care conditions to the answer model witho
   try {
     const response = await onRequest({
       request: createRequest(requestBody({ locale: 'ru', message: 'Что входит в первый груминг щенка?', pagePath: '/ru/prays-list.html' })),
-      env: { OPENAI_API_KEY: 'test-key' },
+      env: { CHAT_DB: chatDatabase(), OPENAI_API_KEY: 'test-key' },
     });
     assert.equal(response.status, 200);
     assert.equal((await response.json()).available, true);

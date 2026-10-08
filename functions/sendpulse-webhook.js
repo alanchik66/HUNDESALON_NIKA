@@ -6,7 +6,13 @@
  * SendPulse URL: /sendpulse-webhook?token=<same-secret>
  */
 
-import { enforceRateLimit, jsonResponse, timingSafeEqualStrings } from './_lib/http-security.js';
+import {
+  enforceRateLimit,
+  isRequestBodyTooLarge,
+  jsonResponse,
+  readTextBody,
+  timingSafeEqualStrings,
+} from './_lib/http-security.js';
 import { getEnvValue } from './_lib/platform-integrations.js';
 
 const MAX_BODY_BYTES = 512 * 1024;
@@ -52,14 +58,14 @@ export async function onRequest(context) {
   });
   if (rateLimited) return rateLimited;
 
-  const contentLength = Number(request.headers.get('Content-Length') || 0);
-  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
-    return jsonResponse({ error: 'Payload too large' }, 413);
-  }
-
-  const rawBody = await request.text();
-  if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_BYTES) {
-    return jsonResponse({ error: 'Payload too large' }, 413);
+  let rawBody;
+  try {
+    rawBody = await readTextBody(request, MAX_BODY_BYTES);
+  } catch (error) {
+    return jsonResponse(
+      { error: isRequestBodyTooLarge(error) ? 'Payload too large' : 'Invalid request body' },
+      isRequestBodyTooLarge(error) ? 413 : 400
+    );
   }
 
   let payload;

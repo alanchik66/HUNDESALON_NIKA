@@ -505,7 +505,8 @@ export async function onRequest({ request, env }) {
       String(message.chat?.id) === configuredChatId
         ? await getChatSessionForTelegramReply(env, message.chat?.id, message.reply_to_message?.message_id)
         : null;
-    if (!websiteSession && isPersonalTopic) {
+    // An explicit reply must keep its original recipient, even when that session has ended.
+    if (!websiteSession && isPersonalTopic && !message.reply_to_message?.message_id) {
       websiteSession = await getChatSessionForTelegramTopic(env, message.chat?.id, message.message_thread_id);
     }
     if (websiteSession) {
@@ -518,12 +519,7 @@ export async function onRequest({ request, env }) {
         replyToMessageId: websiteSession.source_message_id,
       });
       if (stored.inserted) {
-        await recordChatLearningExample(
-          env,
-          websiteSession,
-          websiteSession.source_message_id,
-          text
-        ).catch(() => false);
+        await recordChatLearningExample(env, websiteSession, websiteSession.source_message_id, text).catch(() => false);
         await registerTelegramDelivery(
           env,
           websiteSession,
@@ -560,7 +556,12 @@ export async function onRequest({ request, env }) {
           text: `🟢 Диалог принят сотрудником\n${formatChatCustomer(websiteSession)}\n\nAI-ассистент приостановлен. Следующие сообщения клиента поступят в эту ветку. Отвечайте на эту карточку, чтобы продолжить диалог на сайте.`,
         }).catch(() => ({ ok: false }));
         if (handoffNotification?.ok) {
-          await registerTelegramDelivery(env, websiteSession, handoffNotification, websiteSession.source_message_id).catch(() => false);
+          await registerTelegramDelivery(
+            env,
+            websiteSession,
+            handoffNotification,
+            websiteSession.source_message_id
+          ).catch(() => false);
         }
       }
       return json({

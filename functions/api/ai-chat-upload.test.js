@@ -15,6 +15,7 @@ globalThis.caches = { default: { match: async () => null, put: async () => {} } 
 
 const origin = 'https://hundesalon-nika.com';
 const env = {
+  CHAT_DB: chatDatabase(),
   MS_TENANT_ID: 'consumers', MS_CLIENT_ID: 'client-id', MS_CLIENT_SECRET: 'test-secret',
   MS_REFRESH_TOKEN: 'refresh-token', ONEDRIVE_UPLOAD_FOLDER: 'root-folder',
 };
@@ -23,6 +24,31 @@ const sessionId = '12345678-1234-4234-8234-123456789012';
 const sessionToken = `${'a'.repeat(64)}-${'b'.repeat(36)}`;
 const contentSha256 = 'a'.repeat(64);
 const downloadUrl = 'https://public.dm.files.1drv.com/temporary-original-file';
+
+function chatDatabase() {
+  return {
+    prepare(sql) {
+      let values;
+      return {
+        bind(...boundValues) {
+          values = boundValues;
+          return this;
+        },
+        async first() {
+          if (!sql.includes('FROM chat_sessions s') || values[0] !== sessionId) return null;
+          const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(sessionToken));
+          const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+          return values[1] === hash
+            ? { session_id: sessionId, customer_id: '00000000-0000-4000-8000-000000000001', conversation_mode: 'ai' }
+            : null;
+        },
+        async run() {
+          return { meta: { changes: 1 } };
+        },
+      };
+    },
+  };
+}
 
 test('accepts Microsoft personal upload hosts without allowing lookalike domains', () => {
   assert.equal(isOneDriveUploadUrl(uploadUrl), true);

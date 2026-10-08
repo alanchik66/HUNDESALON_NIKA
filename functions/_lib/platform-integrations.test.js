@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   answerTelegramCallbackQuery,
+  appendGoogleSheetRow,
   callGoogleAppsScriptGateway,
   getGoogleCalendarBusyIntervals,
   sendSendPulseAutomationEvent,
@@ -122,6 +123,57 @@ test('Apps Script HTTP 200 errors remain integration failures', async () => {
     globalThis.fetch = originalFetch;
   }
 });
+
+for (const [transport, env] of [
+  [
+    'Apps Script',
+    {
+      GOOGLE_APPS_SCRIPT_WEBHOOK_URL: 'https://script.google.com/macros/s/test/exec',
+      GOOGLE_GATEWAY_SECRET: 'unit-test-secret',
+    },
+  ],
+  [
+    'Sheets webhook',
+    {
+      GOOGLE_SHEETS_WEBHOOK_URL: 'https://gateway.example.test/sheets',
+      GOOGLE_GATEWAY_SECRET: 'unit-test-secret',
+    },
+  ],
+  ['Sheets API', { GOOGLE_OAUTH_ACCESS_TOKEN: 'unit-test-token' }],
+]) {
+  test(`${transport} stores formula-like customer input as literal text`, async () => {
+    const originalFetch = globalThis.fetch;
+    const values = ['=1+1', ' \t=SUM(1,2)', 'Name', '+49123456789', 35, false, '2026-10-12'];
+    let calls = 0;
+    globalThis.fetch = async (url, options) => {
+      calls += 1;
+      const payload = JSON.parse(options.body);
+      const row = transport === 'Sheets API' ? payload.values[0] : payload.values;
+      assert.deepEqual(row, ["'=1+1", "' \t=SUM(1,2)", ...values.slice(2)]);
+      if (transport === 'Apps Script') {
+        assert.equal(payload.action, 'sheets');
+      }
+      if (transport === 'Sheets API') {
+        assert.equal(new URL(url).searchParams.get('valueInputOption'), 'USER_ENTERED');
+      }
+      return Response.json({ success: true });
+    };
+
+    try {
+      const result = await appendGoogleSheetRow(env, {
+        spreadsheetId: 'fixture-spreadsheet',
+        sheetName: 'bookings',
+        values,
+      });
+      assert.equal(result.ok, true);
+      assert.equal(calls, 1);
+      assert.equal(values[0], '=1+1');
+      assert.equal(values[1], ' \t=SUM(1,2)');
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+}
 
 test('reads busy intervals through the configured Apps Script gateway', async () => {
   const originalFetch = globalThis.fetch;

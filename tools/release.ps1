@@ -1,6 +1,7 @@
-#/usr/bin/env pwsh
+#!/usr/bin/env pwsh
 #
-# Комплексный скрипт для релиза: линтинг, коммит (если нужно), пуш и деплой.
+# Релиз проверенных файлов: полный QA, коммит уже staged изменений, push и deploy.
+# Перед запуском вручную выберите файлы через git add <точные пути>.
 #
 [CmdletBinding()]
 param(
@@ -9,6 +10,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+Set-Location -LiteralPath (Split-Path -Parent $PSScriptRoot)
 
 function Write-Step([string]$Message) {
   Write-Host "=> $($Message)" -ForegroundColor Cyan
@@ -31,37 +33,82 @@ function Invoke-NpmScript([string]$ScriptName, [string]$StepName) {
   Write-Ok "$StepName завершен успешно."
 }
 
-try {
-  # 0. Синхронизация с удаленным репозиторием
-  Write-Step "Синхронизация с GitHub (git pull)..."
-  & git pull origin main
+function Invoke-GitCommand([string[]]$Arguments) {
+  $output = & git @Arguments
   if ($LASTEXITCODE -ne 0) {
-    throw "git pull не удался (код выхода: $LASTEXITCODE)."
+    throw "git $($Arguments -join ' ') не удался (код выхода: $LASTEXITCODE)."
   }
-  Write-Ok "Локальная версия обновлена."
+  return $output
+}
 
-  # 1. Линтинг
-  Invoke-NpmScript -ScriptName 'lint' -StepName 'Линтинг кода'
+function Assert-ReviewedChanges {
+  $status = @(Invoke-GitCommand -Arguments @('status', '--porcelain'))
+  # Не добавляем все файлы автоматически: незавершённые operational scripts
+  # и несвязанные изменения должны остаться за пределами релиза.
+  $unreviewed = @($status | Where-Object { $_.Length -lt 2 -or $_.Substring(1, 1) -ne ' ' })
+  if ($unreviewed.Count -gt 0) {
+    throw 'Есть unstaged или untracked файлы. Сохраните их отдельно и явно stage только проверенные файлы перед релизом.'
+  }
+  $stagedPaths = @(Invoke-GitCommand -Arguments @('diff', '--cached', '--name-only', '--diff-filter=ACMR'))
+  $privatePaths = @($stagedPaths | Where-Object {
+    $_ -notin @('.dev.vars.example', '.codex/environments/environment.toml') -and (
+      $_ -match '(^|/)(\.dev\.vars(?:\.|$)|\.env(?:\.|$)|\.secrets/|\.cloudflare-[^/]*|\.codex/|temp/|test-results/)' -or
+      $_ -match '\.(key|pem|token)$'
+    )
+  })
+  if ($privatePaths.Count -gt 0) {
+    throw 'В staged файлах есть секреты, локальные настройки или временные артефакты. Уберите их из index перед релизом.'
+  }
+  return $status.Count -gt 0
+}
 
-  # 2. Коммит (если есть изменения)
-  $gitStatus = git status --porcelain
-  if (-not [string]::IsNullOrWhiteSpace($gitStatus)) {
-    Write-Step "Обнаружены изменения. Подготовка к коммиту..."
-    git add -A
-    if ([string]::IsNullOrWhiteSpace($CommitMessage)) {
-      $CommitMessage = Read-Host -Prompt "Введите сообщение коммита"
-    }
-    git commit -m $CommitMessage
+try {
+  $branch = Invoke-GitCommand -Arguments @('branch', '--show-current')
+  if ($branch -ne 'main') {
+    throw "Релиз разрешён только из main (текущая ветка: $branch)."
+  }
+  $hasStagedChanges = Assert-ReviewedChanges
+  if ($hasStagedChanges -and [string]::IsNullOrWhiteSpace($CommitMessage)) {
+    throw 'Для staged изменений передайте -CommitMessage. Скрипт не выбирает файлы и не создаёт сообщение за вас.'
+  }
+
+  # Проверяем remote без pull: автоматическое слияние изменило бы уже проверенный код.
+  Write-Step 'Проверка истории GitHub...'
+  Invoke-GitCommand -Arguments @('fetch', 'origin', 'main')
+  & git merge-base --is-ancestor origin/main HEAD
+  if ($LASTEXITCODE -ne 0) {
+    throw 'main отстаёт от origin/main или история разошлась. Синхронизируйте и повторно проверьте изменения перед релизом.'
+  }
+
+  Invoke-NpmScript -ScriptName 'qa:max' -StepName 'Полная проверка качества'
+  Invoke-GitCommand -Arguments @('diff', '--check')
+  Invoke-GitCommand -Arguments @('diff', '--cached', '--check')
+  $hasStagedChanges = Assert-ReviewedChanges
+
+  if ($hasStagedChanges) {
+    Write-Step 'Коммит явно выбранных и проверенных файлов...'
+    Invoke-GitCommand -Arguments @('commit', '-m', $CommitMessage)
     Write-Ok "Изменения закоммичены: `"$CommitMessage`""
   } else {
     Write-Ok "Рабочая директория чиста. Пропускаем коммит."
   }
 
-  # 3. Пуш
+  # Build после commit получает окончательную версию HEAD для cache stamp.
+  Invoke-NpmScript -ScriptName 'build:production' -StepName 'Сборка ревизии релиза'
+  if (Assert-ReviewedChanges) {
+    throw 'После сборки появились staged изменения. Повторно проверьте их перед публикацией.'
+  }
   Invoke-NpmScript -ScriptName 'git:push' -StepName 'Пуш в GitHub'
 
-  # 4. Деплой
-  Invoke-NpmScript -ScriptName 'deploy:full' -StepName 'Деплой на Cloudflare Pages'
+  Write-Step 'Деплой проверенной ревизии на Cloudflare Pages...'
+  & node tools/deploy-pages.mjs --branch main --commit-dirty=false
+  if ($LASTEXITCODE -ne 0) {
+    throw "Деплой не удался (код выхода: $LASTEXITCODE)."
+  }
+  # Live проверки не создают бронирования и не отправляют служебные сообщения.
+  Invoke-NpmScript -ScriptName 'check:live-html' -StepName 'Проверка production HTML'
+  Invoke-NpmScript -ScriptName 'check:live-robots' -StepName 'Проверка production robots'
+  Invoke-NpmScript -ScriptName 'price:smoke:prod' -StepName 'Проверка production прайс-листа'
 
   Write-Host "`n🎉 Релиз успешно завершен!" -ForegroundColor Magenta
 }

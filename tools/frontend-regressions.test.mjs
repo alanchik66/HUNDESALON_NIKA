@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runInNewContext } from 'node:vm';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -199,4 +200,200 @@ test('express deshedding is an add-on for every non-wire dog coat', async () => 
   assert.match(pricePage, /small: \[0, 1, 2, 3, 4, 5\]/);
   assert.match(pricePage, /medium: \[0, 2, 4, 5\]/);
   assert.match(pricePage, /if \(category\.coatType === 'wire'\) allowedIndexes\.delete\(DESHEDDING_ADDITIONAL_SERVICE_INDEX\);/);
+});
+
+test('cookie choices remain usable when browser storage rejects writes', async () => {
+  const [cookieSource, analyticsSource] = await Promise.all([
+    readFile(path.join(root, 'assets/js/cookie-consent.js'), 'utf8'),
+    readFile(path.join(root, 'assets/js/analytics.js'), 'utf8'),
+  ]);
+
+  for (const choice of ['accept', 'necessary']) {
+    const listeners = new Map();
+    const trackingScripts = [];
+    let click;
+    let removed = false;
+    class Element {}
+    class ConsentEvent {
+      constructor(type, options) {
+        this.type = type;
+        this.detail = options.detail;
+      }
+    }
+    const banner = {
+      setAttribute() {},
+      addEventListener(type, handler) { click = handler; },
+      classList: { add() {} },
+      remove() { removed = true; },
+    };
+    const document = {
+      currentScript: null,
+      documentElement: { lang: 'de' },
+      readyState: 'complete',
+      querySelector: () => null,
+      createElement: tag => tag === 'section' ? banner : {},
+      body: { appendChild() {} },
+      head: { appendChild: script => trackingScripts.push(script) },
+    };
+    const window = {
+      location: { origin: 'https://hundesalon-nika.com' },
+      addEventListener: (type, handler) => listeners.set(type, handler),
+      dispatchEvent: event => listeners.get(event.type)?.(event),
+      setTimeout: handler => handler(),
+    };
+    const context = {
+      document, window, URL, HTMLElement: Element, CustomEvent: ConsentEvent,
+      localStorage: {
+        getItem: () => null,
+        setItem() { throw new Error('Storage is unavailable'); },
+      },
+    };
+
+    runInNewContext(analyticsSource, context);
+    runInNewContext(cookieSource, context);
+    assert.equal(trackingScripts.length, 0, 'tracking must wait for consent');
+    const target = new Element();
+    target.dataset = { cookieChoice: choice };
+    assert.doesNotThrow(() => click({ target }));
+    await new Promise(resolve => setImmediate(resolve));
+
+    assert.equal(removed, true, `${choice} must dismiss the banner`);
+    assert.equal(window.__hundesalonCookieConsent.analytics, choice === 'accept');
+    assert.equal(trackingScripts.length, choice === 'accept' ? 1 : 0);
+    if (choice === 'accept') assert.match(trackingScripts[0].src, /googletagmanager\.com/);
+  }
+});
+
+test('header sun uses one device-pixel scaling pass', async () => {
+  const source = await readFile(path.join(root, 'assets/js/header-weather-sun-scene.js'), 'utf8');
+  const runnable = source.replace(/^import .+;$/m, '').replace(/^export /gm, '');
+  const context = {
+    THREE: { MathUtils: { degToRad: value => value * Math.PI / 180 }, Clock: class {} },
+    window: { devicePixelRatio: 2, matchMedia: () => ({ matches: false }) },
+  };
+  const Scene = runInNewContext(`${runnable}\nHeaderWeatherSunScene;`, context);
+
+  for (const dpr of [1, 2, 3]) {
+    context.window.devicePixelRatio = dpr;
+    const canvas = { clientWidth: 100, clientHeight: 60 };
+    const scene = new Scene(canvas);
+    let pixelRatio;
+    scene.renderer = {
+      setPixelRatio: value => { pixelRatio = value; },
+      setSize: (width, height) => {
+        canvas.width = Math.floor(width * pixelRatio);
+        canvas.height = Math.floor(height * pixelRatio);
+      },
+    };
+    scene.camera = { updateProjectionMatrix() {} };
+    scene.resize();
+    assert.equal(canvas.width, 100 * Math.min(dpr, 2));
+    assert.equal(canvas.height, 60 * Math.min(dpr, 2));
+    assert.equal(scene.camera.aspect, 100 / 60);
+  }
+});
+
+test('booking slots use the salon timezone for foreign visitors across DST changes', async () => {
+  const source = await readFile(path.join(root, 'assets/js/price-booking.js'), 'utf8');
+  const previousTimeZone = process.env.TZ;
+  const timing = { safeBlockMinutes: 60, slotStepMinutes: 30 };
+
+  try {
+    for (const timeZone of ['Europe/Berlin', 'America/New_York', 'Asia/Tokyo']) {
+      process.env.TZ = timeZone;
+      const window = { PricePageCatalog: { categories: [] } };
+      runInNewContext(source, { window, Intl, Date });
+      const catalog = window.PriceBookingCatalog.build('de');
+
+      for (const [date, offset] of [
+        ['2026-03-28', '+01:00'], ['2026-03-29', '+02:00'],
+        ['2026-10-24', '+02:00'], ['2026-10-25', '+01:00'],
+      ]) {
+        const busy = [{ start: `${date}T09:00:00${offset}`, end: `${date}T10:00:00${offset}` }];
+        const slots = catalog.getAvailableStartTimes(date, timing, busy, {
+          calendarConfigured: true,
+          now: new Date('2026-01-01T00:00:00Z'),
+        });
+        assert.equal(slots[0], '10:00', `${timeZone}, ${date}: occupied salon slots must stay unavailable`);
+        assert.equal(slots.includes('09:00'), false);
+        assert.equal(slots.includes('09:30'), false);
+      }
+
+      const currentDay = catalog.getAvailableStartTimes('2026-10-26', timing, [], {
+        calendarConfigured: true,
+        now: new Date('2026-10-26T08:10:00Z'),
+      });
+      assert.equal(currentDay[0], '09:30', `${timeZone}: only future salon slots may be selected`);
+      assert.equal(catalog.getAvailableStartTimes('2026-02-30', timing, [], {
+        calendarConfigured: true, now: new Date('2026-01-01T00:00:00Z'),
+      }).length, 0, 'invalid calendar dates must not normalize to another day');
+    }
+  } finally {
+    if (previousTimeZone === undefined) delete process.env.TZ;
+    else process.env.TZ = previousTimeZone;
+  }
+});
+
+test('theme initialization and toggling work when browser storage is blocked', async () => {
+  const source = await readFile(path.join(root, 'assets/js/main.js'), 'utf8');
+  const themeCode = source.split('/* ========== THEME TOGGLE ========== */')[1].split('  const scrollRoot =')[0];
+  const classes = new Set();
+  let toggle;
+  let label;
+  const document = {
+    getElementById: () => ({
+      textContent: '',
+      setAttribute: (name, value) => { label = value; },
+      addEventListener: (type, handler) => { toggle = handler; },
+    }),
+    body: { classList: {
+      add: value => classes.add(value),
+      contains: value => classes.has(value),
+      toggle: value => classes.has(value) ? classes.delete(value) : classes.add(value),
+    } },
+  };
+  const storage = {
+    getItem() { throw new Error('Storage read denied'); },
+    setItem() { throw new Error('Storage write denied'); },
+  };
+  const initialize = new Function('document', 'localStorage', 'getThemeToggleLabel', `${themeCode}\nreturn true;`);
+  assert.equal(initialize(document, storage, light => light ? 'Dark theme' : 'Light theme'), true);
+  assert.equal(label, 'Light theme');
+  assert.doesNotThrow(() => toggle());
+  assert.equal(classes.has('light'), true);
+  assert.equal(label, 'Dark theme');
+});
+
+test('blocked preference storage does not stop shell setup or language navigation', async () => {
+  const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
+  const declaration = name => source.match(new RegExp(`  function ${name}\\([^)]*\\) \\{[\\s\\S]*?\\n  \\}`))[0];
+  const storage = {
+    getItem() { throw new Error('Storage read denied'); },
+    setItem() { throw new Error('Storage write denied'); },
+  };
+  const window = { navigator: { languages: ['ru-RU'] }, location: { href: 'https://hundesalon-nika.com/de/index.html' }, addEventListener() {} };
+  const common = `${declaration('extractSupportedLang')}\n${declaration('rememberPreferredLanguage')}`;
+  const preferred = new Function('SUPPORTED_LANGS', 'localStorage', 'window', `${common}\n${declaration('resolvePreferredLaunchLanguage')}\nreturn resolvePreferredLaunchLanguage();`);
+  assert.equal(preferred(['de', 'en', 'ru', 'uk'], storage, window), 'ru');
+
+  let headerInitialized = false;
+  const context = { currentLang: 'de', pageLang: 'de', menuSections: { more: 'More' } };
+  const helpers = {
+    resolvePageContext: () => context,
+    getLaunchLanguageRedirectUrl: () => null,
+    initIndependentEuroMotion() {},
+    standardizePageHeader: () => { headerInitialized = true; },
+    hardenHeaderA11y() {}, syncHeaderWeatherWidget() {}, normalizeMenuSeparators() {}, fitHomeLabelToLogo() {},
+  };
+  const initialize = new Function('localStorage', 'window', 'document', ...Object.keys(helpers), `${common}\n${declaration('init')}\nreturn init();`);
+  assert.equal(initialize(storage, window, {}, ...Object.values(helpers)).currentLang, 'de');
+  assert.equal(headerInitialized, true);
+
+  const navigateBody = source.match(/const navigateToLanguage = async \(\) => \{([\s\S]*?)\n      \};/)[1];
+  const navigate = new Function('localStorage', 'window', 'closeLangDropdown', 'item', 'buildLanguageUrl', 'context', 'playWeatherLocaleSwitchAnimation', 'remountWeatherPreviewForLanguage', 'wait', `${common}\nreturn async () => {${navigateBody}};`)(
+    storage, window, () => {}, { getAttribute: () => 'en' }, () => '/en/index.html', context,
+    async () => {}, async () => {}, async () => {},
+  );
+  await navigate();
+  assert.equal(window.location.href, '/en/index.html');
 });

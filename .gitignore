@@ -174,7 +174,10 @@ booking-*-browser.png
 *.lockb
 
 # ═══════════════ ЛОКАЛЬНЫЕ AI / AGENT НАСТРОЙКИ (НЕ ДЛЯ САЙТА) ═══════════════
-.codex/
+.codex/*
+!.codex/environments/
+.codex/environments/*
+!.codex/environments/environment.toml
 .secrets/
 .vscode/mcp.json
 tools/_*.mjs

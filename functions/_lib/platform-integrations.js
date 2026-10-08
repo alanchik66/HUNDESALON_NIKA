@@ -256,7 +256,13 @@ export async function callGoogleAppsScriptGateway(env, action, payload) {
 }
 
 export async function appendGoogleSheetRow(env, { spreadsheetId, sheetName = 'bookings', values }) {
-  const appsScriptResult = await callGoogleAppsScriptGateway(env, 'sheets', { spreadsheetId, sheetName, values });
+  // Every transport uses spreadsheet input parsing; user text must never execute as a formula.
+  const literalValues = values.map(value => (typeof value === 'string' && /^\s*=/.test(value) ? `'${value}` : value));
+  const appsScriptResult = await callGoogleAppsScriptGateway(env, 'sheets', {
+    spreadsheetId,
+    sheetName,
+    values: literalValues,
+  });
   if (!appsScriptResult.skipped) {
     return appsScriptResult;
   }
@@ -269,7 +275,7 @@ export async function appendGoogleSheetRow(env, { spreadsheetId, sheetName = 'bo
         ...JSON_HEADERS,
         'X-Hundesalon-Gateway-Secret': getEnvValue(env, 'GOOGLE_GATEWAY_SECRET'),
       },
-      body: JSON.stringify({ spreadsheetId, sheetName, values }),
+      body: JSON.stringify({ spreadsheetId, sheetName, values: literalValues }),
     });
   }
 
@@ -289,7 +295,7 @@ export async function appendGoogleSheetRow(env, { spreadsheetId, sheetName = 'bo
         ...JSON_HEADERS,
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ values: [values] }),
+      body: JSON.stringify({ values: [literalValues] }),
     }
   );
 }

@@ -17,9 +17,7 @@ function escapeAttr(value) {
 }
 
 function setMetaContent(html, attrName, attrValue, content, { property = false } = {}) {
-  const selector = property
-    ? `${attrName}=["']${attrValue}["']`
-    : `name=["']${attrValue}["']`;
+  const selector = property ? `${attrName}=["']${attrValue}["']` : `name=["']${attrValue}["']`;
   const re = new RegExp(
     `(<meta\\s+${property ? 'property' : 'name'}=["']${attrValue}["'][^>]*content=["'])([^"']*)(["'][^>]*>)`,
     'i'
@@ -31,9 +29,7 @@ function setMetaContent(html, attrName, attrValue, content, { property = false }
     'i'
   );
   if (blockRe.test(html)) {
-    return html.replace(blockRe, match =>
-      match.replace(/content=["'][^"']*["']/i, `content="${escapeAttr(content)}"`)
-    );
+    return html.replace(blockRe, match => match.replace(/content=["'][^"']*["']/i, `content="${escapeAttr(content)}"`));
   }
 
   const indent = html.match(/^([ \t]*)<title>/im)?.[1] || '    ';
@@ -66,7 +62,7 @@ for (const lang of langs) {
     const rel = path.join(lang, file);
     const key = pageKey(rel);
     if (!key || !META_DESCRIPTIONS[key]) {
-      if (key) missingConfig.push(rel);
+      if (key) report.missingConfig.push(rel);
       continue;
     }
 
@@ -93,9 +89,15 @@ for (const lang of langs) {
   }
 }
 
-console.log(JSON.stringify({
-  updated: report.updated.length,
-  added: report.added.length,
-  skipped: report.skipped.length,
-  details: report,
-}, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      updated: report.updated.length,
+      added: report.added.length,
+      skipped: report.skipped.length,
+      details: report,
+    },
+    null,
+    2
+  )
+);

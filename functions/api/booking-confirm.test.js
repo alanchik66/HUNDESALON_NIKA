@@ -15,6 +15,62 @@ const env = {
   SHEET_ID: 'sheet-id',
 };
 
+test('stops an oversized confirmation form without Content-Length before draining the stream', async () => {
+  let cancelled = false;
+  let remainderRead = false;
+  const body = new ReadableStream(
+    {
+      start(controller) {
+        controller.enqueue(new Uint8Array(2049));
+      },
+      pull(controller) {
+        remainderRead = true;
+        controller.close();
+      },
+      cancel() {
+        cancelled = true;
+      },
+    },
+    { highWaterMark: 0 }
+  );
+  const request = new Request('https://hundesalon-nika.com/api/booking-confirm', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+    duplex: 'half',
+  });
+  assert.equal(request.headers.has('Content-Length'), false);
+  const response = await onRequest({ request, env });
+  assert.equal(response.status, 413);
+  assert.equal(cancelled, true);
+  assert.equal(remainderRead, false);
+});
+
+test('enforces the confirmation form limit in bytes for multibyte text', async () => {
+  const request = new Request('https://hundesalon-nika.com/api/booking-confirm', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'é'.repeat(1100),
+  });
+  const response = await onRequest({ request, env });
+  assert.equal(response.status, 413);
+});
+
+test('returns a client error when the confirmation form stream cannot be read', async () => {
+  const request = new Request('https://hundesalon-nika.com/api/booking-confirm', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new ReadableStream({
+      start(controller) {
+        controller.error(new Error('fixture read failure'));
+      },
+    }),
+    duplex: 'half',
+  });
+  const response = await onRequest({ request, env });
+  assert.equal(response.status, 400);
+});
+
 test('rejects an unsigned booking confirmation request without contacting Google', async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => assert.fail('Google must not be contacted');
