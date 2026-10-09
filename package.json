@@ -186,7 +186,7 @@
     "weather-widget"
   ],
   "author": "HUNDESALON NIKA",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "private": true,
   "devDependencies": {
     "@axe-core/playwright": "4.12.1",

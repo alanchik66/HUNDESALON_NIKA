@@ -254,11 +254,12 @@ export async function recordChatLearningExample(env, session, sourceMessageId, s
   const reply = learningText(staffReply);
   if (customerMessage.length < 12 || reply.length < 12) return false;
   const locale = learningLocale(customerMessage, session.locale);
+  // Heuristic redaction is incomplete; automatic copies require a separate privacy review.
   const result = await db
     .prepare(
       `INSERT OR IGNORE INTO chat_learning_examples
-         (id, locale, customer_message, staff_reply, created_at)
-       VALUES (?, ?, ?, ?, ?)`
+         (id, locale, customer_message, staff_reply, created_at, review_status)
+       VALUES (?, ?, ?, ?, ?, 'pending')`
     )
     .bind(crypto.randomUUID(), locale, customerMessage, reply, new Date().toISOString())
     .run();
@@ -268,14 +269,19 @@ export async function recordChatLearningExample(env, session, sourceMessageId, s
 export async function listChatLearningExamples(env, locale, limit = 40) {
   const db = database(env);
   if (!db || !LOCALES.has(locale)) return [];
-  const result = await db
-    .prepare(
-      `SELECT customer_message, staff_reply FROM chat_learning_examples
-       WHERE locale = ? ORDER BY created_at DESC LIMIT ?`
-    )
-    .bind(locale, Math.max(1, Math.min(Number(limit) || 40, 100)))
-    .all();
-  return Array.isArray(result?.results) ? result.results : [];
+  try {
+    const result = await db
+      .prepare(
+        `SELECT customer_message, staff_reply FROM chat_learning_examples
+         WHERE locale = ? AND review_status = 'approved' ORDER BY created_at DESC LIMIT ?`
+      )
+      .bind(locale, Math.max(1, Math.min(Number(limit) || 40, 100)))
+      .all();
+    return Array.isArray(result?.results) ? result.results : [];
+  } catch {
+    // Older databases and failed reads must never expose unreviewed private conversations.
+    return [];
+  }
 }
 
 export async function getLatestBreedImage(env, session) {

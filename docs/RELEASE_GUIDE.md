@@ -14,6 +14,10 @@ Commit the reviewed changes and push `main` without force. This Pages project us
 
 For an explicitly authorized manual deployment, rebuild with `npm run build:production` after committing, then run `node tools/deploy-pages.mjs --branch main --commit-dirty=false`. Do not deploy uncommitted Functions or stale build artifacts.
 
+## Database changes
+
+Deploy compatible readers before changing the schema. Review unapplied D1 migrations and preserve a Time Travel bookmark before applying an additive migration. Do not approve private learning examples as part of deployment; see [AI chat learning review](CHAT_LEARNING_REVIEW.md).
+
 ## Verify
 
 - Check the production asset version and all four locales: `de`, `en`, `ru`, `uk`.

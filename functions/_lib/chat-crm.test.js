@@ -8,7 +8,9 @@ import {
   findReplyForMessage,
   getChatSessionForTelegramReply,
   getLatestBreedImage,
+  listChatLearningExamples,
   listChatReplies,
+  recordChatLearningExample,
   recordChatMessage,
   registerChatCustomer,
   registerTelegramDelivery,
@@ -99,16 +101,19 @@ test('chat authorization matches the stored token hash and rejects wrong tokens 
   assert.equal(await authenticateChatSession(env, registered.sessionId, registered.token), null);
 });
 
-function sqliteDatabase(t) {
+function sqliteDatabase(t, { through = '' } = {}) {
   const sqlite = new DatabaseSync(':memory:');
   t.after(() => sqlite.close());
   const migrationDirectory = new URL('../../migrations/', import.meta.url);
   for (const name of readdirSync(migrationDirectory)
-    .filter(name => name.endsWith('.sql'))
+    .filter(name => name.endsWith('.sql') && (!through || name <= through))
     .sort()) {
     sqlite.exec(readFileSync(new URL(name, migrationDirectory), 'utf8'));
   }
   return {
+    applyMigration(name) {
+      sqlite.exec(readFileSync(new URL(name, migrationDirectory), 'utf8'));
+    },
     prepare(sql) {
       const statement = sqlite.prepare(sql);
       let values = [];
@@ -195,4 +200,63 @@ test('authenticated renewal transfers staff reply routing only to the renewed se
   assert.deepEqual(await listChatReplies(env, visitorSession), []);
   const renewedSession = await authenticateChatSession(env, renewed.sessionId, renewed.token);
   assert.equal((await listChatReplies(env, renewedSession))[0].body, 'Reply to the verified continuation');
+});
+
+test('legacy learning rows stay private before and after the review migration without losing their contents', async t => {
+  const database = sqliteDatabase(t, { through: '0005_chat_learning_examples.sql' });
+  const env = { CHAT_DB: database };
+  const id = crypto.randomUUID();
+  const customerMessage = 'Private visitor Fixture Person asks about poodle care.';
+  const staffReply = 'Private reply concerning Fixture Street and poodle care.';
+  await database
+    .prepare(
+      'INSERT INTO chat_learning_examples (id, locale, customer_message, staff_reply, created_at) VALUES (?, ?, ?, ?, ?)'
+    )
+    .bind(id, 'en', customerMessage, staffReply, '2026-10-09T00:00:00Z')
+    .run();
+  assert.deepEqual(await listChatLearningExamples(env, 'en'), []);
+
+  database.applyMigration('0006_chat_learning_review.sql');
+  const retained = await database
+    .prepare('SELECT customer_message, staff_reply, review_status FROM chat_learning_examples WHERE id = ?')
+    .bind(id)
+    .first();
+  assert.equal(retained.customer_message, customerMessage);
+  assert.equal(retained.staff_reply, staffReply);
+  assert.equal(retained.review_status, 'pending');
+  assert.deepEqual(await listChatLearningExamples(env, 'en'), []);
+});
+
+test('automatic staff learning remains pending and only reviewed approved examples reach shared guidance', async t => {
+  const database = sqliteDatabase(t);
+  const env = { CHAT_DB: database, CHAT_STAFF_LEARNING_ENABLED: 'true' };
+  const registered = await registerChatCustomer(env, profile);
+  const session = await authenticateChatSession(env, registered.sessionId, registered.token);
+  const sourceMessageId = crypto.randomUUID();
+  const privateQuestion = 'Fixture Person at Fixture Street asks about poodle care.';
+  const privateReply = 'A private staff reply to Fixture Person about poodle care.';
+  await recordChatMessage(env, session, { id: sourceMessageId, body: privateQuestion });
+  assert.equal(await recordChatLearningExample(env, session, sourceMessageId, privateReply), true);
+  const candidate = await database.prepare('SELECT review_status FROM chat_learning_examples').first();
+  assert.equal(candidate.review_status, 'pending');
+  assert.deepEqual(await listChatLearningExamples(env, 'en'), []);
+
+  for (const [locale, question, reply, status] of [
+    ['en', 'How is poodle care priced?', 'Use the verified public price list.', 'approved'],
+    ['en', 'Rejected private poodle care question.', 'Rejected private poodle care reply.', 'rejected'],
+    ['de', 'Wie wird die Pudelpflege berechnet?', 'Die veröffentlichte Preisliste gilt.', 'approved'],
+  ]) {
+    await database
+      .prepare(
+        'INSERT INTO chat_learning_examples (id, locale, customer_message, staff_reply, created_at, review_status) VALUES (?, ?, ?, ?, ?, ?)'
+      )
+      .bind(crypto.randomUUID(), locale, question, reply, '2026-10-09T00:00:00Z', status)
+      .run();
+  }
+  const guidance = await listChatLearningExamples(env, 'en');
+  assert.equal(guidance.length, 1);
+  assert.equal(guidance[0].customer_message, 'How is poodle care priced?');
+  assert.equal(guidance[0].staff_reply, 'Use the verified public price list.');
+  const crmSource = await database.prepare('SELECT body FROM chat_messages WHERE id = ?').bind(sourceMessageId).first();
+  assert.equal(crmSource.body, privateQuestion);
 });

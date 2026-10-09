@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 
 import { detectCustomerLocale, normalizeAiAnswer, normalizeGermanCareTerms, onRequest, selectAiChatKnowledge } from './ai-chat.js';
 
@@ -81,6 +83,98 @@ function chatDatabase(sessionOverrides = {}) {
       };
     },
   };
+}
+
+for (const migrated of [false, true]) {
+  test(`AI excludes unreviewed private learning data with ${migrated ? 'reviewed' : 'legacy'} schema`, async t => {
+    const sqlite = new DatabaseSync(':memory:');
+    t.after(() => sqlite.close());
+    sqlite.exec(readFileSync(new URL('../../migrations/0005_chat_learning_examples.sql', import.meta.url), 'utf8'));
+    if (migrated) {
+      sqlite.exec(readFileSync(new URL('../../migrations/0006_chat_learning_review.sql', import.meta.url), 'utf8'));
+    }
+    const question = requestBody().message;
+    if (migrated) {
+      const insert = sqlite.prepare(
+        'INSERT INTO chat_learning_examples (id, locale, customer_message, staff_reply, created_at, review_status) VALUES (?, ?, ?, ?, ?, ?)'
+      );
+      for (const [status, customerQuestion, reply] of [
+        [
+          'pending',
+          `${question} PRIVATE_CUSTOMER_FIXTURE`,
+          'PRIVATE_PERSON_FIXTURE at PRIVATE_STREET_FIXTURE requests poodle care.',
+        ],
+        [
+          'rejected',
+          `${question} REJECTED_PRIVATE_CUSTOMER_FIXTURE`,
+          'REJECTED_PRIVATE_PERSON_FIXTURE requests poodle care.',
+        ],
+        ['approved', question, 'CURATED_PUBLIC_GUIDANCE uses the published price list for poodle care.'],
+      ]) {
+        insert.run(crypto.randomUUID(), 'de', customerQuestion, reply, '2026-10-09T00:00:00Z', status);
+      }
+    } else {
+      sqlite
+        .prepare(
+          'INSERT INTO chat_learning_examples (id, locale, customer_message, staff_reply, created_at) VALUES (?, ?, ?, ?, ?)'
+        )
+        .run(
+          crypto.randomUUID(),
+          'de',
+          `${question} PRIVATE_CUSTOMER_FIXTURE`,
+          'PRIVATE_PERSON_FIXTURE at PRIVATE_STREET_FIXTURE requests poodle care.',
+          '2026-10-09T00:00:00Z'
+        );
+    }
+
+    const database = chatDatabase();
+    const originalPrepare = database.prepare;
+    database.prepare = sql => {
+      if (!sql.includes('FROM chat_learning_examples')) return originalPrepare(sql);
+      const statement = sqlite.prepare(sql);
+      let values;
+      return {
+        bind(...boundValues) {
+          values = boundValues;
+          return this;
+        },
+        async all() {
+          return { results: statement.all(...values) };
+        },
+      };
+    };
+    const restoreCache = installCacheStub();
+    const originalFetch = globalThis.fetch;
+    let modelPayload;
+    globalThis.fetch = async (url, options) => {
+      assert.equal(String(url), 'https://api.openai.com/v1/responses');
+      modelPayload = JSON.parse(options.body);
+      return Response.json({ output_text: 'Die Preise stehen in der veröffentlichten Preisliste.' });
+    };
+
+    try {
+      const response = await onRequest({
+        request: createRequest(requestBody()),
+        env: { CHAT_DB: database, OPENAI_API_KEY: 'unit-test-token', CHAT_STAFF_LEARNING_ENABLED: 'true' },
+      });
+      assert.equal(response.status, 200);
+      assert.equal((await response.json()).available, true);
+      assert.match(modelPayload.instructions, /VERIFIED WEBSITE KNOWLEDGE:/);
+      assert.doesNotMatch(
+        modelPayload.instructions,
+        /PRIVATE_CUSTOMER_FIXTURE|PRIVATE_PERSON_FIXTURE|PRIVATE_STREET_FIXTURE/
+      );
+      if (migrated) {
+        assert.match(modelPayload.instructions, /STAFF-TAUGHT EXAMPLES:/);
+        assert.match(modelPayload.instructions, /CURATED_PUBLIC_GUIDANCE/);
+      } else {
+        assert.doesNotMatch(modelPayload.instructions, /STAFF-TAUGHT EXAMPLES:/);
+      }
+    } finally {
+      globalThis.fetch = originalFetch;
+      restoreCache();
+    }
+  });
 }
 
 test('knowledge retrieval selects the exact German breed and price context', () => {

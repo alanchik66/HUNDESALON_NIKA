@@ -169,13 +169,47 @@ test('first administrator reply pauses AI and creates a continuation card in the
     assert.ok(database.boundCalls.some(
       call => call.sql.includes('INSERT OR REPLACE INTO chat_telegram_deliveries') && call.values[1] === 72
     ));
-    assert.ok(database.boundCalls.some(
-      call => call.sql.includes('INSERT OR IGNORE INTO chat_learning_examples') &&
-        call.values[2] === 'Сколько стоит комплексный уход за пуделем?'
-    ));
+    assert.ok(
+      database.boundCalls.some(
+        call =>
+          call.sql.includes('INSERT OR IGNORE INTO chat_learning_examples') &&
+          call.values[2] === 'Сколько стоит комплексный уход за пуделем?' &&
+          call.sql.includes("'pending'")
+      )
+    );
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test('staff relay keeps working when the learning review migration is not available', async () => {
+  const database = websiteChatDatabase({ conversationMode: 'human' });
+  const originalPrepare = database.prepare;
+  database.prepare = sql => {
+    if (sql.includes('INSERT OR IGNORE INTO chat_learning_examples')) {
+      throw new Error('table chat_learning_examples has no column named review_status');
+    }
+    return originalPrepare(sql);
+  };
+  const response = await onRequest({
+    request: new Request('https://hundesalon-nika.com/telegram-webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
+      },
+      body: JSON.stringify(websiteChatAdminReply('The original customer still receives this reply.')),
+    }),
+    env: {
+      CHAT_DB: database,
+      TELEGRAM_CHAT_ID: '-100123',
+      TELEGRAM_WEBHOOK_SECRET: 'test-webhook-secret',
+    },
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).relayed, true);
+  assert.ok(database.sqlCalls.some(sql => sql.includes('INSERT OR IGNORE INTO chat_messages')));
+  assert.ok(database.boundCalls.some(call => call.sql.includes('INSERT OR REPLACE INTO chat_telegram_deliveries')));
 });
 
 test('administrator replies from the personal topic are delivered to the existing website chat', async () => {
