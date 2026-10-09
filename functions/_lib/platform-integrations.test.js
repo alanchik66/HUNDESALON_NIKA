@@ -10,7 +10,52 @@ import {
   sendSendPulseEmail,
   sendTelegramDocument,
   sendTelegramMessage,
+  upsertSendPulseContact,
 } from './platform-integrations.js';
+
+test('SendPulse address-book contacts use the documented variable-name map', async () => {
+  const originalFetch = globalThis.fetch;
+  let request;
+  globalThis.fetch = async (url, options) => {
+    request = { url, ...options, payload: JSON.parse(options.body) };
+    // Model the provider contract: the update-variable endpoint uses a different shape.
+    if (Array.isArray(request.payload.emails[0].variables))
+      return Response.json({ error: 'invalid_variables' }, { status: 422 });
+    return Response.json({ result: true });
+  };
+  try {
+    const result = await upsertSendPulseContact(
+      { SENDPULSE_API_KEY: 'unit-test-token', SENDPULSE_ADDRESSBOOK_ID: '123' },
+      {
+        email: ' QA+release@EXAMPLE.COM ',
+        name: 'Grüße — Дякуємо',
+        phone: '+49123456789',
+        lang: 'de',
+        source: '/booking/',
+        formType: 'booking',
+      }
+    );
+    assert.equal(result.ok, true);
+    assert.equal(request.url, 'https://api.sendpulse.com/addressbooks/123/emails');
+    assert.equal(request.method, 'POST');
+    assert.deepEqual(request.payload, {
+      emails: [
+        {
+          email: 'qa+release@example.com',
+          variables: {
+            name: 'Grüße — Дякуємо',
+            phone: '+49123456789',
+            language: 'de',
+            lead_source: '/booking/',
+            form_type: 'booking',
+          },
+        },
+      ],
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
 
 test('SendPulse email encodes UTF-8 HTML and preserves sender and Reply-To', async () => {
   const originalFetch = globalThis.fetch;
@@ -367,7 +412,10 @@ test('Telegram document notification sends a short-lived HTTPS file URL to the c
     assert.match(payload, /name="chat_id"\r\n\r\n-100123/);
     assert.match(payload, /name="caption"\r\n\r\nОригинал из OneDrive/);
     assert.match(payload, /name="message_thread_id"\r\n\r\n42/);
-    assert.match(payload, /filename\*=UTF-8''%D1%84%D0%BE%D1%82%D0%BE%20%D0%BF%D0%B8%D1%82%D0%BE%D0%BC%D1%86%D0%B0\.png/);
+    assert.match(
+      payload,
+      /filename\*=UTF-8''%D1%84%D0%BE%D1%82%D0%BE%20%D0%BF%D0%B8%D1%82%D0%BE%D0%BC%D1%86%D0%B0\.png/
+    );
     assert.match(payload, /Content-Type: image\/png/);
     assert.match(payload, /original bytes/);
   } finally {

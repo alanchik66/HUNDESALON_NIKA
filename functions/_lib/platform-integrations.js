@@ -824,16 +824,19 @@ export async function upsertSendPulseContact(
     return { ok: false, skipped: true, reason: 'SendPulse address book is not configured.' };
   }
 
-  const variables = [
-    ['name', name],
-    ['phone', phone],
-    ['language', lang],
-    ['service_type', service],
-    ['lead_source', source],
-    ['form_type', formType],
-  ]
-    .filter(([, value]) => hasUsableValue(value))
-    .map(([variableName, value]) => ({ name: variableName, value: String(value) }));
+  // The address-book endpoint accepts a variable-name map (unlike /emails/variable).
+  const variables = Object.fromEntries(
+    [
+      ['name', name],
+      ['phone', phone],
+      ['language', lang],
+      ['service_type', service],
+      ['lead_source', source],
+      ['form_type', formType],
+    ]
+      .filter(([, value]) => hasUsableValue(value))
+      .map(([variableName, value]) => [variableName, String(value)])
+  );
 
   return safeJsonFetch(`${SENDPULSE_API_URL}/addressbooks/${encodeURIComponent(addressBookId)}/emails`, {
     method: 'POST',
