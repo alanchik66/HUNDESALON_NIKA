@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { handleMessageDraft } from './draft-service.js';
+import { withResourceQuotaDatabase } from '../../tools/lib/resource-quota-test-db.mjs';
 
 globalThis.caches = {
   default: { match: async () => null, put: async () => {} },
@@ -46,7 +47,7 @@ function context(body, env = {}) {
       },
       body: JSON.stringify(body),
     }),
-    env,
+    env: { CHAT_DB: withResourceQuotaDatabase(), ...env },
   };
 }
 

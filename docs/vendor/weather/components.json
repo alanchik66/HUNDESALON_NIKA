@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-10-09",
+  "components": [
+    {
+      "name": "Axios",
+      "observedVersion": "1.15.1",
+      "observedIn": "3d-weather-codrops-main/src/weather-service.mjs",
+      "identifier": "AXIOS_VERSION",
+      "license": {
+        "file": "axios-1.15.1.LICENSE.txt",
+        "sourceUrl": "https://raw.githubusercontent.com/axios/axios/v1.15.1/LICENSE",
+        "sha256": "82761059eaedacb3356803aea8a170d8298609f91b14fc32ee1bfb40d690183c"
+      }
+    }
+  ],
+  "runtimeNotice": {
+    "file": "3d-weather-codrops-main/dist-widget/THIRD_PARTY_LICENSES.txt",
+    "sha256": "a042c6df2d0cb793247b6247ba7e27424581b774718e766da0abcec047c86723",
+    "preservedPrefixSha256": "00c4350f4b6519ca29595fa931d0f8f9d5a932dd4ad7a17e2886b84a63ed9c99",
+    "preservedPrefixBytes": 3358
+  }
+}

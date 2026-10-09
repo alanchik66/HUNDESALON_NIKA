@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { withResourceQuotaDatabase } from '../../tools/lib/resource-quota-test-db.mjs';
 
 import {
   isOneDriveUploadUrl,
+  createOneDriveUploadTicket,
   oneDriveContentFileName,
   oneDriveContentIdentity,
   saveOneDriveTranscript,
@@ -16,8 +18,11 @@ globalThis.caches = { default: { match: async () => null, put: async () => {} } 
 const origin = 'https://hundesalon-nika.com';
 const env = {
   CHAT_DB: chatDatabase(),
-  MS_TENANT_ID: 'consumers', MS_CLIENT_ID: 'client-id', MS_CLIENT_SECRET: 'test-secret',
-  MS_REFRESH_TOKEN: 'refresh-token', ONEDRIVE_UPLOAD_FOLDER: 'root-folder',
+  MS_TENANT_ID: 'consumers',
+  MS_CLIENT_ID: 'client-id',
+  MS_CLIENT_SECRET: 'test-secret',
+  MS_REFRESH_TOKEN: 'refresh-token',
+  ONEDRIVE_UPLOAD_FOLDER: 'root-folder',
 };
 const uploadUrl = 'https://my.microsoftpersonalcontent.com/personal/test/uploadSession';
 const sessionId = '12345678-1234-4234-8234-123456789012';
@@ -26,7 +31,7 @@ const contentSha256 = 'a'.repeat(64);
 const downloadUrl = 'https://public.dm.files.1drv.com/temporary-original-file';
 
 function chatDatabase() {
-  return {
+  return withResourceQuotaDatabase({
     prepare(sql) {
       let values;
       return {
@@ -47,7 +52,7 @@ function chatDatabase() {
         },
       };
     },
-  };
+  });
 }
 
 test('accepts Microsoft personal upload hosts without allowing lookalike domains', () => {
@@ -59,7 +64,8 @@ test('accepts Microsoft personal upload hosts without allowing lookalike domains
 
 function request(body, ip = crypto.randomUUID()) {
   return new Request(`${origin}/api/ai-chat-upload`, {
-    method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', 'CF-Connecting-IP': ip },
+    method: 'POST',
+    headers: { Origin: origin, 'Content-Type': 'application/json', 'CF-Connecting-IP': ip },
     body: JSON.stringify({ sessionToken, clientMessageId: crypto.randomUUID(), ...body }),
   });
 }
@@ -76,13 +82,19 @@ function graphFetch({ itemParent = 'session-folder', itemName = 'delivery-check.
       return existingItem ? Response.json(existingItem) : new Response(null, { status: 404 });
     }
     if (target.includes('/items/session-folder/children?')) return Response.json({ value: [] });
-    if (target === uploadUrl && options.method === 'PUT') return Response.json({ id: 'completion-receipt' }, { status: 201 });
+    if (target === uploadUrl && options.method === 'PUT')
+      return Response.json({ id: 'completion-receipt' }, { status: 201 });
     if (target.endsWith(':/content') && options.method === 'PUT') return Response.json({ id: 'transcript-item' });
-    if (target.includes('/me/drive/items/file-1234567890')) return Response.json({
-      id: 'file-1234567890', name: itemName, size: 2048,
-      file: { mimeType: 'text/plain' }, webUrl: 'https://1drv.ms/u/test', parentReference: { id: itemParent },
-      '@microsoft.graph.downloadUrl': downloadUrl,
-    });
+    if (target.includes('/me/drive/items/file-1234567890'))
+      return Response.json({
+        id: 'file-1234567890',
+        name: itemName,
+        size: 2048,
+        file: { mimeType: 'text/plain' },
+        webUrl: 'https://1drv.ms/u/test',
+        parentReference: { id: itemParent },
+        '@microsoft.graph.downloadUrl': downloadUrl,
+      });
     throw new Error(`Unexpected fetch: ${target}`);
   };
 }
@@ -93,12 +105,18 @@ test('rejects files larger than 150 MiB before contacting OneDrive', async () =>
   try {
     const response = await onRequest({
       request: request({
-        action: 'start', fileName: 'large.bin', size: AI_CHAT_UPLOAD_MAX_BYTES + 1, sessionId, contentSha256,
+        action: 'start',
+        fileName: 'large.bin',
+        size: AI_CHAT_UPLOAD_MAX_BYTES + 1,
+        sessionId,
+        contentSha256,
       }),
       env,
     });
     assert.equal(response.status, 400);
-  } finally { globalThis.fetch = originalFetch; }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('rejects a missing or invalid content hash before contacting OneDrive', async () => {
@@ -110,7 +128,9 @@ test('rejects a missing or invalid content hash before contacting OneDrive', asy
       env,
     });
     assert.equal(response.status, 400);
-  } finally { globalThis.fetch = originalFetch; }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('starts a signed resumable OneDrive upload session', async () => {
@@ -128,13 +148,16 @@ test('starts a signed resumable OneDrive upload session', async () => {
     });
     const body = await response.json();
     assert.equal(response.status, 200);
-    assert.equal(body.uploadUrl, uploadUrl);
+    assert.match(body.uploadUrl, /^nika-upload-v1\./);
+    assert.equal(body.uploadUrl.includes(uploadUrl), false);
     assert.equal(body.chunkSize, AI_CHAT_UPLOAD_CHUNK_MAX_BYTES);
     assert.match(body.uploadSignature, /^[\w-]{40,}$/);
     assert.equal(uploadProperties.item['@microsoft.graph.conflictBehavior'], 'fail');
     assert.equal(uploadProperties.item.name.endsWith('.bin'), true);
     assert.equal(Object.hasOwn(uploadProperties.item, 'fileSize'), false);
-  } finally { globalThis.fetch = originalFetch; }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('deduplicates the same file in one chat session before creating an upload session', async () => {
@@ -162,38 +185,60 @@ test('deduplicates the same file in one chat session before creating an upload s
     assert.equal(body.deduplicated, true);
     assert.equal(body.storage, 'onedrive');
     assert.equal(sessionCreated, false);
-  } finally { globalThis.fetch = originalFetch; }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('verifies the OneDrive session folder before accepting completion', async () => {
   const originalFetch = globalThis.fetch;
   const itemName = await oneDriveContentFileName({
-    scope: 'ai-chat', sessionId, contentSha256, fileName: 'delivery-check.txt', mimeType: 'text/plain',
+    scope: 'ai-chat',
+    sessionId,
+    contentSha256,
+    fileName: 'delivery-check.txt',
+    mimeType: 'text/plain',
   });
   globalThis.fetch = graphFetch({ itemParent: 'another-folder', itemName });
   try {
     const response = await onRequest({
       request: request({
-        action: 'complete', fileId: 'file-1234567890', fileName: 'delivery-check.txt', size: 2048,
-        mimeType: 'text/plain', sessionId, contentSha256,
+        action: 'complete',
+        fileId: 'file-1234567890',
+        fileName: 'delivery-check.txt',
+        size: 2048,
+        mimeType: 'text/plain',
+        sessionId,
+        contentSha256,
       }),
       env,
     });
     assert.equal(response.status, 400);
-  } finally { globalThis.fetch = originalFetch; }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('accepts completion only for the deterministic OneDrive item identity', async () => {
   const originalFetch = globalThis.fetch;
   const itemName = await oneDriveContentFileName({
-    scope: 'ai-chat', sessionId, contentSha256, fileName: 'delivery-check.txt', mimeType: 'text/plain',
+    scope: 'ai-chat',
+    sessionId,
+    contentSha256,
+    fileName: 'delivery-check.txt',
+    mimeType: 'text/plain',
   });
   globalThis.fetch = graphFetch({ itemName });
   try {
     const response = await onRequest({
       request: request({
-        action: 'complete', fileId: 'file-1234567890', fileName: 'delivery-check.txt', size: 2048,
-        mimeType: 'text/plain', sessionId, contentSha256,
+        action: 'complete',
+        fileId: 'file-1234567890',
+        fileName: 'delivery-check.txt',
+        size: 2048,
+        mimeType: 'text/plain',
+        sessionId,
+        contentSha256,
       }),
       env,
     });
@@ -201,13 +246,19 @@ test('accepts completion only for the deterministic OneDrive item identity', asy
     assert.equal(response.status, 200);
     assert.equal(body.storage, 'onedrive');
     assert.equal(body.deduplicated, false);
-  } finally { globalThis.fetch = originalFetch; }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('replayed completion creates only one staff notification', async () => {
   const originalFetch = globalThis.fetch;
   const itemName = await oneDriveContentFileName({
-    scope: 'ai-chat', sessionId, contentSha256, fileName: 'delivery-check.txt', mimeType: 'text/plain',
+    scope: 'ai-chat',
+    sessionId,
+    contentSha256,
+    fileName: 'delivery-check.txt',
+    mimeType: 'text/plain',
   });
   let receiptCommits = 0;
   let telegramCalls = 0;
@@ -219,8 +270,12 @@ test('replayed completion creates only one staff notification', async () => {
     }
     if (target.includes('/me/drive/items/file-1234567890')) {
       return Response.json({
-        id: 'file-1234567890', name: itemName, size: 2048, file: { mimeType: 'text/plain' },
-        webUrl: 'https://1drv.ms/u/test', parentReference: { id: 'session-folder' },
+        id: 'file-1234567890',
+        name: itemName,
+        size: 2048,
+        file: { mimeType: 'text/plain' },
+        webUrl: 'https://1drv.ms/u/test',
+        parentReference: { id: 'session-folder' },
         '@microsoft.graph.downloadUrl': downloadUrl,
       });
     }
@@ -233,7 +288,9 @@ test('replayed completion creates only one staff notification', async () => {
         : Response.json({ error: { code: 'nameAlreadyExists' } }, { status: 409 });
     }
     if (target === downloadUrl) {
-      return new Response(new Uint8Array(2048), { headers: { 'Content-Length': '2048', 'Content-Type': 'text/plain' } });
+      return new Response(new Uint8Array(2048), {
+        headers: { 'Content-Length': '2048', 'Content-Type': 'text/plain' },
+      });
     }
     if (target.includes('api.telegram.org') && target.endsWith('/sendDocument')) {
       telegramCalls += 1;
@@ -243,10 +300,16 @@ test('replayed completion creates only one staff notification', async () => {
     throw new Error(`Unexpected fetch: ${target}`);
   };
 
-  const completionRequest = () => request({
-    action: 'complete', fileId: 'file-1234567890', fileName: 'delivery-check.txt', size: 2048,
-    mimeType: 'text/plain', sessionId, contentSha256,
-  });
+  const completionRequest = () =>
+    request({
+      action: 'complete',
+      fileId: 'file-1234567890',
+      fileName: 'delivery-check.txt',
+      size: 2048,
+      mimeType: 'text/plain',
+      sessionId,
+      contentSha256,
+    });
   const completionEnv = {
     ...env,
     SITE_NOTIFICATIONS_ENABLED: 'true',
@@ -272,7 +335,11 @@ test('keeps files above the Telegram limit in OneDrive and sends an explicit lin
   const originalFetch = globalThis.fetch;
   const largeSize = TELEGRAM_FILE_MAX_BYTES + 1;
   const itemName = await oneDriveContentFileName({
-    scope: 'ai-chat', sessionId, contentSha256, fileName: 'large-video.mp4', mimeType: 'video/mp4',
+    scope: 'ai-chat',
+    sessionId,
+    contentSha256,
+    fileName: 'large-video.mp4',
+    mimeType: 'video/mp4',
   });
   const item = {
     id: 'large-file-1234567890',
@@ -374,7 +441,9 @@ test('reconciles concurrent copies with different extensions to one physical One
       return Response.json({ id: 'completion-receipt' }, { status: 201 });
     }
     if (target === downloadUrl) {
-      return new Response(new Uint8Array(2048), { headers: { 'Content-Length': '2048', 'Content-Type': 'text/plain' } });
+      return new Response(new Uint8Array(2048), {
+        headers: { 'Content-Length': '2048', 'Content-Type': 'text/plain' },
+      });
     }
     if (target.includes('api.telegram.org') && target.endsWith('/sendDocument')) {
       telegramCalls += 1;
@@ -460,7 +529,9 @@ test('releases a completion claim after a Telegram API rejection so a replay can
       return Response.json({ id: 'completion-receipt' }, { status: 201 });
     }
     if (target === downloadUrl) {
-      return new Response(new Uint8Array(2048), { headers: { 'Content-Length': '2048', 'Content-Type': 'text/plain' } });
+      return new Response(new Uint8Array(2048), {
+        headers: { 'Content-Length': '2048', 'Content-Type': 'text/plain' },
+      });
     }
     if (target.includes('api.telegram.org') && target.endsWith('/sendDocument')) {
       telegramCalls += 1;
@@ -511,13 +582,24 @@ test('stores the current transcript in the matching OneDrive session folder', as
     return response;
   };
   try {
-    const response = await onRequest({ request: request({ action: 'transcript', sessionId, revision: 1, locale: 'ru', messages: [{ role: 'user', content: 'Здравствуйте' }] }), env });
+    const response = await onRequest({
+      request: request({
+        action: 'transcript',
+        sessionId,
+        revision: 1,
+        locale: 'ru',
+        messages: [{ role: 'user', content: 'Здравствуйте' }],
+      }),
+      env,
+    });
     assert.equal(response.status, 200);
     assert.equal((await response.json()).transcriptId, 'transcript-item');
     assert.equal(transcript.revision, 1);
     assert.equal(transcript.messages[0].content, 'Здравствуйте');
     assert.equal(createPrecondition, '*');
-  } finally { globalThis.fetch = originalFetch; }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('keeps the newest transcript revision when an older conditional write finishes later', async () => {
@@ -595,7 +677,8 @@ test('rejects an invalid transcript session before contacting OneDrive', async (
 test('proxies only a signed OneDrive upload chunk', async () => {
   const originalFetch = globalThis.fetch;
   const bytes = new Uint8Array([1, 2, 3, 4]);
-  const signature = await signOneDriveUploadUrl(env, uploadUrl);
+  const uploadTicket = await createOneDriveUploadTicket(env, { uploadUrl, size: 4, sessionId });
+  const signature = await signOneDriveUploadUrl(env, uploadTicket);
   globalThis.fetch = async (url, options) => {
     assert.equal(String(url), uploadUrl);
     assert.equal(options.method, 'PUT');
@@ -603,15 +686,26 @@ test('proxies only a signed OneDrive upload chunk', async () => {
     return Response.json({ id: 'file-1234567890' }, { status: 201 });
   };
   try {
-    const response = await onRequest({ request: new Request(`${origin}/api/ai-chat-upload?action=chunk`, {
-      method: 'POST', headers: {
-        Origin: origin, 'CF-Connecting-IP': crypto.randomUUID(), 'Content-Type': 'application/octet-stream',
-        'Content-Range': 'bytes 0-3/4', 'Content-Length': '4', 'X-Upload-Url': uploadUrl,
-        'X-Upload-Signature': signature,
-      }, body: bytes,
-    }), env });
+    const response = await onRequest({
+      request: new Request(`${origin}/api/ai-chat-upload?action=chunk`, {
+        method: 'POST',
+        headers: {
+          Origin: origin,
+          'CF-Connecting-IP': crypto.randomUUID(),
+          'Content-Type': 'application/octet-stream',
+          'Content-Range': 'bytes 0-3/4',
+          'Content-Length': '4',
+          'X-Upload-Url': uploadTicket,
+          'X-Upload-Signature': signature,
+        },
+        body: bytes,
+      }),
+      env,
+    });
     assert.deepEqual(await response.json(), { success: true, complete: true, file: { id: 'file-1234567890' } });
-  } finally { globalThis.fetch = originalFetch; }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('rejects unsigned destinations and oversized chunks', async () => {
@@ -622,11 +716,24 @@ test('rejects unsigned destinations and oversized chunks', async () => {
       ['https://example.com/upload', 'bad', 'bytes 0-3/4'],
       [uploadUrl, 'bad', `bytes 0-${AI_CHAT_UPLOAD_CHUNK_MAX_BYTES}/${AI_CHAT_UPLOAD_CHUNK_MAX_BYTES + 1}`],
     ]) {
-      const response = await onRequest({ request: new Request(`${origin}/api/ai-chat-upload?action=chunk`, {
-        method: 'POST', headers: { Origin: origin, 'CF-Connecting-IP': crypto.randomUUID(), 'Content-Type': 'application/octet-stream', 'Content-Range': range, 'X-Upload-Url': target, 'X-Upload-Signature': signature },
-        body: new Uint8Array([1]),
-      }), env });
+      const response = await onRequest({
+        request: new Request(`${origin}/api/ai-chat-upload?action=chunk`, {
+          method: 'POST',
+          headers: {
+            Origin: origin,
+            'CF-Connecting-IP': crypto.randomUUID(),
+            'Content-Type': 'application/octet-stream',
+            'Content-Range': range,
+            'X-Upload-Url': target,
+            'X-Upload-Signature': signature,
+          },
+          body: new Uint8Array([1]),
+        }),
+        env,
+      });
       assert.equal(response.status, 400);
     }
-  } finally { globalThis.fetch = originalFetch; }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

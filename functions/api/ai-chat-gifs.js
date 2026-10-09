@@ -1,11 +1,15 @@
 import { enforceRateLimit, jsonResponse } from '../_lib/http-security.js';
+import { reserveResourceUsage, resourceQuotaResponse } from '../_lib/resource-quotas.js';
 
 const GIPHY_API_ORIGIN = 'https://api.giphy.com';
 const ALLOWED_LOCALES = new Set(['de', 'en', 'ru', 'uk']);
 const RESULT_LIMIT = 24;
 
 function cleanQuery(value) {
-  return String(value || '').trim().replace(/\s+/g, ' ').slice(0, 50);
+  return String(value || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .slice(0, 50);
 }
 
 function safeGiphyUrl(value) {
@@ -23,7 +27,10 @@ function normalizedItem(item) {
   if (!item?.id || !preview || !url) return null;
   return {
     id: String(item.id).slice(0, 80),
-    title: String(item.title || item.alt_text || 'GIF').trim().slice(0, 160) || 'GIF',
+    title:
+      String(item.title || item.alt_text || 'GIF')
+        .trim()
+        .slice(0, 160) || 'GIF',
     preview,
     url,
   };
@@ -41,8 +48,13 @@ export async function onRequestGet({ request, env }) {
   if (limited) return limited;
 
   const query = cleanQuery(requestUrl.searchParams.get('q'));
-  const requestedLocale = String(requestUrl.searchParams.get('locale') || '').toLowerCase().slice(0, 2);
+  const requestedLocale = String(requestUrl.searchParams.get('locale') || '')
+    .toLowerCase()
+    .slice(0, 2);
   const locale = ALLOWED_LOCALES.has(requestedLocale) ? requestedLocale : 'de';
+  const quota = await reserveResourceUsage(env, request, { resource: 'gifs' });
+  if (!quota.ok) return resourceQuotaResponse(quota, origin, locale);
+
   const endpoint = query ? 'search' : 'trending';
   const params = new URLSearchParams({
     api_key: apiKey,

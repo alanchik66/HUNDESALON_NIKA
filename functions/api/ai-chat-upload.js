@@ -14,6 +14,7 @@ import {
 import {
   claimOneDriveCompletion,
   createOneDriveUploadSession,
+  createOneDriveUploadTicket,
   ensureOneDriveSessionFolder,
   getOneDriveAccessToken,
   getOneDriveDownloadUrl,
@@ -26,7 +27,7 @@ import {
   releaseOneDriveCompletionClaim,
   saveOneDriveTranscript,
   signOneDriveUploadUrl,
-  verifyOneDriveUploadUrl,
+  readOneDriveUploadTicket,
 } from '../_lib/onedrive.js';
 import {
   authenticateChatSession,
@@ -34,6 +35,7 @@ import {
   recordChatMessage,
   registerTelegramDelivery,
 } from '../_lib/chat-crm.js';
+import { reserveResourceUsage, resourceQuotaResponse } from '../_lib/resource-quotas.js';
 
 export const AI_CHAT_UPLOAD_MAX_BYTES = 150 * 1024 * 1024;
 export const AI_CHAT_UPLOAD_CHUNK_MAX_BYTES = 10 * 1024 * 1024;
@@ -45,12 +47,12 @@ const SESSION_ID_RE = /^[a-zA-Z0-9_-]{16,64}$/;
 
 function normalizedFile(input) {
   const size = Number(input?.size);
-  const rawName = cleanText(input?.fileName, 180).replace(/[\\/:*?"<>|]/g, '-').replace(/^\.+/, '');
+  const rawName = cleanText(input?.fileName, 180)
+    .replace(/[\\/:*?"<>|]/g, '-')
+    .replace(/^\.+/, '');
   const fileName = rawName || 'attachment';
   const rawType = cleanText(input?.mimeType, 120).toLowerCase().split(';', 1)[0].trim();
-  const mimeType = /^[\w!#$&^_.+-]+\/[\w!#$&^_.+-]+$/.test(rawType)
-    ? rawType
-    : 'application/octet-stream';
+  const mimeType = /^[\w!#$&^_.+-]+\/[\w!#$&^_.+-]+$/.test(rawType) ? rawType : 'application/octet-stream';
   const kind = input?.kind === 'voice' ? 'voice' : 'file';
   const mode = input?.mode === 'human' ? 'human' : 'ai';
   const contentSha256 = cleanText(input?.contentSha256, 64).toLowerCase();
@@ -88,11 +90,18 @@ async function sessionContext(env, sessionId) {
   return folder?.id ? { token, folder } : null;
 }
 
-async function startUpload(env, payload, origin) {
+async function startUpload(env, payload, origin, request) {
   const file = normalizedFile(payload);
   if (!file.valid) {
     return jsonResponse({ success: false, message: 'Invalid file, session, or content hash.' }, 400, origin);
   }
+  if (!isOneDriveConfigured(env)) return unconfigured(origin);
+  const quota = await reserveResourceUsage(env, request, {
+    resource: 'uploads',
+    sessionId: file.sessionId,
+    bytes: file.size,
+  });
+  if (!quota.ok) return resourceQuotaResponse(quota, origin, payload.locale);
   const session = await sessionContext(env, file.sessionId);
   if (!session) return unconfigured(origin);
   const contentIdentity = await oneDriveContentIdentity({ scope: 'ai-chat', ...file });
@@ -108,10 +117,13 @@ async function startUpload(env, payload, origin) {
       contentIdentity,
       storedName
     );
-    if (!existing.ok) return { response: jsonResponse({ success: false, message: 'Could not verify OneDrive storage.' }, 502, origin) };
+    if (!existing.ok)
+      return { response: jsonResponse({ success: false, message: 'Could not verify OneDrive storage.' }, 502, origin) };
     if (!existing.item) return { item: null };
     if (!existing.item.file || Number(existing.item.size) !== file.size) {
-      return { response: jsonResponse({ success: false, message: 'OneDrive content identity conflict.' }, 409, origin) };
+      return {
+        response: jsonResponse({ success: false, message: 'OneDrive content identity conflict.' }, 409, origin),
+      };
     }
     return {
       response: jsonResponse(
@@ -140,12 +152,18 @@ async function startUpload(env, payload, origin) {
   if (!upload?.uploadUrl) {
     return jsonResponse({ success: false, message: 'Could not start the secure OneDrive upload.' }, 502, origin);
   }
-  const uploadSignature = await signOneDriveUploadUrl(env, upload.uploadUrl);
+  const uploadTicket = await createOneDriveUploadTicket(env, {
+    uploadUrl: upload.uploadUrl,
+    size: file.size,
+    sessionId: file.sessionId,
+  });
+  if (!uploadTicket) return unconfigured(origin);
+  const uploadSignature = await signOneDriveUploadUrl(env, uploadTicket);
   if (!uploadSignature) return unconfigured(origin);
   return jsonResponse(
     {
       success: true,
-      uploadUrl: upload.uploadUrl,
+      uploadUrl: uploadTicket,
       uploadSignature,
       fileName: file.fileName,
       size: file.size,
@@ -378,13 +396,46 @@ async function storeTranscript(env, payload, origin) {
   return jsonResponse({ success: true, storage: 'onedrive', transcriptId: item.id }, 200, origin);
 }
 
+/** Bound streamed chunks even when a caller falsifies or omits Content-Length. */
+async function readUploadChunk(request, maximum) {
+  if (!request.body) return new Uint8Array();
+  const reader = request.body.getReader();
+  const parts = [];
+  let size = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > maximum) {
+        await reader.cancel().catch(() => {});
+        return new Uint8Array();
+      }
+      parts.push(value);
+    }
+  } catch {
+    return new Uint8Array();
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const part of parts) {
+    bytes.set(part, offset);
+    offset += part.byteLength;
+  }
+  return bytes;
+}
+
 export async function proxyUploadChunk(request, env, origin) {
-  const uploadUrl = cleanText(request.headers.get('X-Upload-Url'), 4096);
+  const uploadTicket = cleanText(request.headers.get('X-Upload-Url'), 8192);
   const signature = cleanText(request.headers.get('X-Upload-Signature'), 128);
   const contentRange = cleanText(request.headers.get('Content-Range'), 100);
   const match = contentRange.match(/^bytes (\d+)-(\d+)\/(\d+)$/);
-  const contentLength = Number(request.headers.get('Content-Length'));
-  if (!(await verifyOneDriveUploadUrl(env, uploadUrl, signature)) || !match) {
+  const contentLengthHeader = request.headers.get('Content-Length');
+  const contentLength = contentLengthHeader === null ? null : Number(contentLengthHeader);
+  const ticket = await readOneDriveUploadTicket(env, uploadTicket, signature);
+  if (!ticket || !match) {
     return jsonResponse({ success: false, message: 'Invalid upload chunk.' }, 400, origin);
   }
   const limited = await enforceRateLimit(request, {
@@ -407,25 +458,39 @@ export async function proxyUploadChunk(request, env, origin) {
     end < start ||
     total < 1 ||
     total > AI_CHAT_UPLOAD_MAX_BYTES ||
+    total !== ticket.size ||
     end >= total ||
     chunkBytes > AI_CHAT_UPLOAD_CHUNK_MAX_BYTES ||
     (!finalChunk && chunkBytes % (320 * 1024) !== 0) ||
-    (Number.isFinite(contentLength) && contentLength !== chunkBytes)
+    (contentLength !== null && (!Number.isSafeInteger(contentLength) || contentLength !== chunkBytes))
   ) {
     return jsonResponse({ success: false, message: 'Upload chunk did not pass validation.' }, 400, origin);
   }
-  const chunk = await request.arrayBuffer();
+  const quota = await reserveResourceUsage(env, request, {
+    resource: 'upload_transfer',
+    sessionId: ticket.sessionId,
+    bytes: chunkBytes,
+  });
+  if (!quota.ok) return resourceQuotaResponse(quota, origin);
+  const chunk = await readUploadChunk(request, chunkBytes);
   if (chunk.byteLength !== chunkBytes) {
     return jsonResponse({ success: false, message: 'Upload chunk did not pass validation.' }, 400, origin);
   }
-  const response = await fetch(uploadUrl, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/octet-stream',
-      'Content-Range': contentRange,
-    },
-    body: chunk,
-  });
+  let response;
+  try {
+    response = await fetch(ticket.uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Content-Range': contentRange,
+      },
+      body: chunk,
+      signal: globalThis.AbortSignal.timeout(25_000),
+    });
+  } catch {
+    console.error(JSON.stringify({ event: 'upload_chunk_upstream_unavailable' }));
+    return jsonResponse({ success: false, message: 'Could not upload the OneDrive file chunk.' }, 502, origin);
+  }
   if (response.status === 202) return jsonResponse({ success: true, complete: false }, 200, origin);
   if (response.status === 200 || response.status === 201) {
     const file = await response.json().catch(() => ({}));
@@ -484,7 +549,14 @@ export async function onRequest({ request, env }) {
     });
     if (limited) return limited;
   }
-  if (action === 'start') return startUpload(env, payload, originCheck.origin);
+  if (action === 'start') return startUpload(env, payload, originCheck.origin, request);
+  if (!isOneDriveConfigured(env)) return unconfigured(originCheck.origin);
+  const quota = await reserveResourceUsage(env, request, {
+    resource: 'storage',
+    sessionId: crmSession.session_id,
+    bytes: action === 'transcript' ? new TextEncoder().encode(JSON.stringify(payload)).byteLength : 0,
+  });
+  if (!quota.ok) return resourceQuotaResponse(quota, originCheck.origin, payload.locale);
   if (action === 'transcript') return storeTranscript(env, payload, originCheck.origin);
   return completeUpload(env, payload, originCheck.origin, crmSession);
 }

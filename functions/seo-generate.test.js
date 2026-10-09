@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { onRequest } from './seo-generate.js';
+import { withResourceQuotaDatabase } from '../tools/lib/resource-quota-test-db.mjs';
 
 globalThis.caches = { default: { match: async () => null, put: async () => {} } };
 const origin = 'https://hundesalon-nika.com';
@@ -16,7 +17,11 @@ function context(authorized = true) {
       },
       body: JSON.stringify({ topic: 'Dog grooming' }),
     }),
-    env: { AI_SERVICE_WEBHOOK_SECRET: 'test-auth', OPENAI_API_KEY: 'test-provider-key' },
+    env: {
+      CHAT_DB: withResourceQuotaDatabase(),
+      AI_SERVICE_WEBHOOK_SECRET: 'test-auth',
+      OPENAI_API_KEY: 'test-provider-key',
+    },
   };
 }
 

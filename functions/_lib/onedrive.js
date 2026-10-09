@@ -74,13 +74,19 @@ function graphHeaders(token, contentType = '') {
 }
 
 function safeSessionId(value) {
-  return cleanText(value, 80).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64) || 'unknown';
+  return (
+    cleanText(value, 80)
+      .replace(/[^a-zA-Z0-9_-]/g, '')
+      .slice(0, 64) || 'unknown'
+  );
 }
 
 function contentExtension(fileName, mimeType) {
   const canonical = MIME_EXTENSIONS[cleanText(mimeType, 120).toLowerCase()];
   if (canonical) return canonical;
-  const match = cleanText(fileName, 180).toLowerCase().match(/\.[a-z0-9]{1,10}$/);
+  const match = cleanText(fileName, 180)
+    .toLowerCase()
+    .match(/\.[a-z0-9]{1,10}$/);
   return match?.[0] || '.bin';
 }
 
@@ -89,7 +95,9 @@ function hex(bytes) {
 }
 
 export async function oneDriveContentIdentity({ scope, sessionId, contentSha256 }) {
-  const safeScope = cleanText(scope, 24).toLowerCase().replace(/[^a-z0-9-]/g, '');
+  const safeScope = cleanText(scope, 24)
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '');
   const safeId = cleanText(sessionId, 80);
   const safeHash = cleanText(contentSha256, 64).toLowerCase();
   if (!safeScope || !SESSION_ID_RE.test(safeId) || !CONTENT_HASH_RE.test(safeHash)) return '';
@@ -175,9 +183,7 @@ export async function getOneDriveItemByContentIdentity(token, folderId, identity
     if (!exact.ok || exact.item) return exact;
   }
   const listed = await listOneDriveItemsByContentIdentity(token, folderId, identity);
-  return listed.ok
-    ? { ok: true, item: listed.items[0] || null }
-    : { ok: false, item: null, status: listed.status };
+  return listed.ok ? { ok: true, item: listed.items[0] || null } : { ok: false, item: null, status: listed.status };
 }
 
 export async function deleteOneDriveItem(token, itemId) {
@@ -315,7 +321,91 @@ export async function signOneDriveUploadUrl(env, uploadUrl) {
   const key = await signatureKey(env);
   if (!key) return '';
   const bytes = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(uploadUrl)));
-  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+}
+
+const UPLOAD_TICKET_PREFIX = 'nika-upload-v1.';
+const UPLOAD_TICKET_TTL_MS = 60 * 60 * 1000;
+
+async function uploadTicketKey(env) {
+  const value = config(env);
+  const secret = value.clientSecret || value.refreshToken;
+  if (!secret) return null;
+  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('nika-upload-ticket-key-v1:' + secret));
+  return crypto.subtle.importKey('raw', bytes, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+}
+
+/** Do not disclose the Microsoft bearer URL: every client chunk must pass the quota guard. */
+export async function createOneDriveUploadTicket(env, { uploadUrl, size, sessionId, now = Date.now() }) {
+  if (
+    !isOneDriveUploadUrl(uploadUrl) ||
+    uploadUrl.length > 4096 ||
+    !SESSION_ID_RE.test(sessionId) ||
+    !Number.isSafeInteger(size) ||
+    size < 1 ||
+    size > 150 * 1024 * 1024 ||
+    !Number.isFinite(now)
+  )
+    return '';
+  const key = await uploadTicketKey(env);
+  if (!key) return '';
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const payload = new TextEncoder().encode(
+    JSON.stringify({ uploadUrl, size, sessionId, expiresAt: now + UPLOAD_TICKET_TTL_MS })
+  );
+  const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, payload));
+  const packed = new Uint8Array(iv.byteLength + ciphertext.byteLength);
+  packed.set(iv);
+  packed.set(ciphertext, iv.byteLength);
+  const encoded = btoa(String.fromCharCode(...packed))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+  return UPLOAD_TICKET_PREFIX + encoded;
+}
+
+export async function readOneDriveUploadTicket(env, ticket, signature, now = Date.now()) {
+  if (
+    typeof ticket !== 'string' ||
+    !ticket.startsWith(UPLOAD_TICKET_PREFIX) ||
+    ticket.length > 8192 ||
+    !Number.isFinite(now)
+  )
+    return null;
+  const expected = await signOneDriveUploadUrl(env, ticket);
+  const actual = cleanText(signature, 128);
+  if (!expected || expected.length !== actual.length) return null;
+  let difference = 0;
+  for (let index = 0; index < expected.length; index += 1)
+    difference |= expected.charCodeAt(index) ^ actual.charCodeAt(index);
+  if (difference) return null;
+  try {
+    const encoded = ticket.slice(UPLOAD_TICKET_PREFIX.length);
+    if (!/^[A-Za-z0-9_-]+$/.test(encoded)) return null;
+    const packed = Uint8Array.from(atob(encoded.replace(/-/g, '+').replace(/_/g, '/')), char => char.charCodeAt(0));
+    if (packed.length < 29) return null;
+    const key = await uploadTicketKey(env);
+    if (!key) return null;
+    const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: packed.slice(0, 12) }, key, packed.slice(12));
+    const value = JSON.parse(new TextDecoder().decode(plaintext));
+    if (
+      !isOneDriveUploadUrl(value.uploadUrl) ||
+      !SESSION_ID_RE.test(value.sessionId) ||
+      !Number.isSafeInteger(value.size) ||
+      value.size < 1 ||
+      value.size > 150 * 1024 * 1024 ||
+      !Number.isFinite(value.expiresAt) ||
+      value.expiresAt <= now ||
+      value.expiresAt > now + UPLOAD_TICKET_TTL_MS
+    )
+      return null;
+    return value;
+  } catch {
+    return null;
+  }
 }
 
 export async function verifyOneDriveUploadUrl(env, uploadUrl, signature) {
@@ -324,7 +414,8 @@ export async function verifyOneDriveUploadUrl(env, uploadUrl, signature) {
   const actual = cleanText(signature, 128);
   if (!expected || expected.length !== actual.length) return false;
   let difference = 0;
-  for (let index = 0; index < expected.length; index += 1) difference |= expected.charCodeAt(index) ^ actual.charCodeAt(index);
+  for (let index = 0; index < expected.length; index += 1)
+    difference |= expected.charCodeAt(index) ^ actual.charCodeAt(index);
   return difference === 0;
 }
 
@@ -337,7 +428,10 @@ export async function signOneDriveFileReference(env, { fileId, fileUrl, sessionI
   if (!key) return '';
   const payload = `hundesalon-booking-file-v1\0${safeSessionIdValue}\0${safeFileId}\0${safeFileUrl}`;
   const bytes = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload)));
-  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
 }
 
 export async function verifyOneDriveFileReference(env, reference, signature) {
@@ -345,7 +439,8 @@ export async function verifyOneDriveFileReference(env, reference, signature) {
   const actual = cleanText(signature, 128);
   if (!expected || expected.length !== actual.length) return false;
   let difference = 0;
-  for (let index = 0; index < expected.length; index += 1) difference |= expected.charCodeAt(index) ^ actual.charCodeAt(index);
+  for (let index = 0; index < expected.length; index += 1)
+    difference |= expected.charCodeAt(index) ^ actual.charCodeAt(index);
   return difference === 0;
 }
 

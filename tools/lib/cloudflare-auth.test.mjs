@@ -7,6 +7,7 @@ import test from 'node:test';
 import {
   getWranglerConfigPath,
   loadWranglerOAuth,
+  loadDevVars,
   refreshWranglerOAuth,
   removeDevVar,
   upsertDevVar,
@@ -163,4 +164,78 @@ test('removes a process-only dev variable even when its file is absent', t => {
 
   assert.equal(process.env[key], undefined);
   assert.equal(existsSync(filePath), false);
+});
+
+function avoidRealTokenFile(t) {
+  const previous = process.env.CLOUDFLARE_API_TOKEN;
+  process.env.CLOUDFLARE_API_TOKEN = 'fixture-scoped-token-sentinel';
+  t.after(() => {
+    if (previous === undefined) delete process.env.CLOUDFLARE_API_TOKEN;
+    else process.env.CLOUDFLARE_API_TOKEN = previous;
+  });
+}
+
+test('loads matching quoted fixture values without shell interpolation, unescaping or type coercion', t => {
+  const { filePath, key } = useDevVarsFixture(t, '');
+  avoidRealTokenFile(t);
+  const cases = [
+    ['"fixture-refresh-token"', 'fixture-refresh-token'],
+    ["'fixture-client-secret'", 'fixture-client-secret'],
+    ['"  fixture inner spaces  "', '  fixture inner spaces  '],
+    ['"fixture=a=b"', 'fixture=a=b'],
+    ['""', ''],
+    ["''", ''],
+    ['12345', '12345'],
+    ['$fixture $(fixture) `fixture`', '$fixture $(fixture) `fixture`'],
+    ['"literal$fixture `fixture`"', 'literal$fixture `fixture`'],
+    ['"literal\\n"', 'literal\\n'],
+  ];
+  for (const [encoded, expected] of cases) {
+    delete process.env[key];
+    writeFileSync(filePath, '\uFEFF  ' + key + ' = ' + encoded + '\r\n', 'utf8');
+    loadDevVars(filePath);
+    assert.equal(process.env[key], expected);
+    assert.equal(typeof process.env[key], 'string');
+  }
+});
+
+test('keeps mismatched or single quotes literal and strips only one matching outer pair', t => {
+  const { filePath, key } = useDevVarsFixture(t, '');
+  avoidRealTokenFile(t);
+  for (const [encoded, expected] of [
+    ['\'fixture"', '\'fixture"'],
+    ['"fixture\'', '"fixture\''],
+    ["'", "'"],
+    ['"', '"'],
+    ['"\'fixture\'"', "'fixture'"],
+  ]) {
+    delete process.env[key];
+    writeFileSync(filePath, key + '=' + encoded + '\n', 'utf8');
+    loadDevVars(filePath);
+    assert.equal(process.env[key], expected);
+  }
+});
+
+test('loading quoted fixture values never replaces an existing process variable, including empty values', t => {
+  const { filePath, key } = useDevVarsFixture(t, 'NIKA_AUTH_TEST_KEY="fixture-file-secret"\n');
+  avoidRealTokenFile(t);
+  for (const existing of ['fixture-process-value', '']) {
+    process.env[key] = existing;
+    loadDevVars(filePath);
+    assert.equal(process.env[key], existing);
+  }
+});
+
+test('loading fixture secrets produces no console output and leaves the credential fixture unchanged', t => {
+  const content = 'NIKA_AUTH_TEST_KEY="fixture-private-refresh-token"\n';
+  const { filePath, key } = useDevVarsFixture(t, content);
+  avoidRealTokenFile(t);
+  delete process.env[key];
+  const logs = [];
+  for (const method of ['log', 'info', 'warn', 'error']) t.mock.method(console, method, (...args) => logs.push(args));
+  loadDevVars(filePath);
+  assert.equal(process.env[key], 'fixture-private-refresh-token');
+  assert.deepEqual(logs, []);
+  assert.equal(readFileSync(filePath, 'utf8'), content);
+  assert.equal(process.env.CLOUDFLARE_API_TOKEN, 'fixture-scoped-token-sentinel');
 });

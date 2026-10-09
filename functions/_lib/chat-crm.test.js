@@ -7,6 +7,7 @@ import {
   authenticateChatSession,
   findReplyForMessage,
   getChatSessionForTelegramReply,
+  getChatSessionForTelegramTopic,
   getLatestBreedImage,
   listChatLearningExamples,
   listChatReplies,
@@ -27,7 +28,7 @@ const profile = {
 };
 
 function customerDatabase() {
-  const customer = { id: crypto.randomUUID(), phone: '+49 341 5550100' };
+  const customer = { id: crypto.randomUUID(), email: profile.email, phone: '+49 341 5550100' };
   let session;
   return {
     customer,
@@ -42,17 +43,19 @@ function customerDatabase() {
           return this;
         },
         async run() {
-          if (sql.includes('INSERT INTO chat_customers')) {
-            Object.assign(customer, {
-              first_name: values[1],
-              last_name: values[2],
-              email: values[3],
-              phone: values[4] || customer.phone,
-              locale: values[5],
-            });
-          }
           if (sql.includes('INSERT INTO chat_sessions')) {
-            session = { session_id: values[0], customer_id: values[1], token_hash: values[2], status: 'active' };
+            session = {
+              session_id: values[0],
+              customer_id: values[1],
+              token_hash: values[2],
+              locale: values[3],
+              status: 'active',
+              first_name: values[7],
+              last_name: values[8],
+              email: values[9],
+              phone: values[10],
+              privacy_consent_at: values[11],
+            };
           }
           return { meta: { changes: 1 } };
         },
@@ -162,6 +165,100 @@ test('a new visitor with the same email cannot read prior replies, attachments o
   assert.deepEqual(await listChatReplies(env, visitorSession), []);
   assert.equal(await findReplyForMessage(env, visitorSession.session_id, sourceMessageId), null);
   assert.equal(await getLatestBreedImage(env, visitorSession), null);
+});
+
+test('anonymous email matches preserve the shared CRM identity and use their own session profile', async t => {
+  const database = sqliteDatabase(t);
+  const env = { CHAT_DB: database };
+  const originalProfile = {
+    ...profile,
+    firstName: 'Original',
+    lastName: 'Contact',
+    phone: '+49 341 5550100',
+    locale: 'de',
+  };
+  const original = await registerChatCustomer(env, originalProfile);
+  const before = await database.prepare('SELECT * FROM chat_customers WHERE id = ?').bind(original.customer.id).first();
+  const submitted = { ...profile, firstName: 'Guest', lastName: 'Visitor', phone: '+49 341 5550200', locale: 'uk' };
+  const visitor = await registerChatCustomer(env, submitted);
+  assert.deepEqual(
+    await database.prepare('SELECT * FROM chat_customers WHERE id = ?').bind(original.customer.id).first(),
+    before
+  );
+  const originalSession = await authenticateChatSession(env, original.sessionId, original.token);
+  assert.equal(originalSession.first_name, 'Original');
+  assert.equal(originalSession.phone, originalProfile.phone);
+  assert.equal(originalSession.locale, 'de');
+  const guestSession = await authenticateChatSession(env, visitor.sessionId, visitor.token);
+  assert.equal(guestSession.first_name, submitted.firstName);
+  assert.equal(guestSession.last_name, submitted.lastName);
+  assert.equal(guestSession.phone, submitted.phone);
+  assert.equal(guestSession.locale, 'uk');
+  assert.equal(guestSession.email, profile.email);
+  await registerTelegramDelivery(env, guestSession, {
+    body: { result: { message_id: 72, message_thread_id: 19, chat: { id: -100123 } } },
+  });
+  for (const routed of [
+    await getChatSessionForTelegramReply(env, '-100123', 72),
+    await getChatSessionForTelegramTopic(env, '-100123', 19),
+  ]) {
+    assert.equal(routed.session_id, visitor.sessionId);
+    assert.equal(routed.first_name, submitted.firstName);
+    assert.equal(routed.phone, submitted.phone);
+    assert.equal(routed.locale, 'uk');
+  }
+  const blankPhoneVisitor = await registerChatCustomer(env, profile);
+  const blankSession = await authenticateChatSession(env, blankPhoneVisitor.sessionId, blankPhoneVisitor.token);
+  assert.equal(blankSession.phone, '');
+  const renewed = await renewChatSession(env, blankPhoneVisitor.sessionId, blankPhoneVisitor.token);
+  const renewedSession = await authenticateChatSession(env, renewed.sessionId, renewed.token);
+  assert.equal(renewedSession.phone, '');
+  assert.equal(renewedSession.first_name, profile.firstName);
+  assert.equal(renewedSession.privacy_consent_at, blankSession.privacy_consent_at);
+  assert.deepEqual(
+    await database.prepare('SELECT * FROM chat_customers WHERE id = ?').bind(original.customer.id).first(),
+    before
+  );
+});
+
+test('the profile migration preserves legacy session authentication and existing CRM data', async t => {
+  const database = sqliteDatabase(t, { through: '0006_chat_learning_review.sql' });
+  const customerId = crypto.randomUUID();
+  const sessionId = crypto.randomUUID();
+  const token = 'a'.repeat(100);
+  const tokenBytes = new TextEncoder().encode(token);
+  const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', tokenBytes)), byte =>
+    byte.toString(16).padStart(2, '0')
+  ).join('');
+  await database
+    .prepare('INSERT INTO chat_customers VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(
+      customerId,
+      'Legacy',
+      'Contact',
+      profile.email,
+      '+49 341 5550100',
+      'de',
+      '2026-01-01',
+      '2026-01-01',
+      '2026-01-01'
+    )
+    .run();
+  await database
+    .prepare(
+      'INSERT INTO chat_sessions (id, customer_id, token_hash, locale, created_at, last_message_at) VALUES (?, ?, ?, ?, ?, ?)'
+    )
+    .bind(sessionId, customerId, hash, 'en', '2026-01-01', '2026-01-01')
+    .run();
+  const before = await database.prepare('SELECT * FROM chat_customers').first();
+  database.applyMigration('0007_chat_session_profiles.sql');
+  const authenticated = await authenticateChatSession({ CHAT_DB: database }, sessionId, token);
+  assert.equal(authenticated.first_name, 'Legacy');
+  assert.equal(authenticated.phone, '+49 341 5550100');
+  assert.equal(authenticated.locale, 'en');
+  assert.equal(authenticated.privacy_consent_at, '2026-01-01');
+  assert.deepEqual(await database.prepare('SELECT * FROM chat_customers').first(), before);
+  assert.equal((await database.prepare('SELECT profile_phone FROM chat_sessions').first()).profile_phone, null);
 });
 
 test('staff replies to a closed session cannot switch to a new anonymous session sharing its email', async t => {

@@ -17,6 +17,7 @@ import {
   uploadSmallFileToOneDrive,
 } from './_lib/onedrive.js';
 import { cleanText } from './_lib/platform-integrations.js';
+import { reserveResourceUsage, resourceQuotaResponse } from './_lib/resource-quotas.js';
 
 const MULTIPART_OVERHEAD_BYTES = 1024 * 1024;
 const UPLOAD_SESSION_RE = /^[a-zA-Z0-9_-]{16,64}$/;
@@ -84,6 +85,13 @@ async function handleMultipartUpload(request, env, origin) {
   }
   if (!isOneDriveConfigured(env)) return oneDriveNotConfiguredResponse(origin);
 
+  const quota = await reserveResourceUsage(env, request, {
+    resource: 'uploads',
+    sessionId: 'booking-' + uploadSessionId,
+    bytes: file.size,
+  });
+  if (!quota.ok) return resourceQuotaResponse(quota, origin, cleanText(readUploadField(formData, 'lang'), 8));
+
   const token = await getOneDriveAccessToken(env);
   if (!token) return oneDriveNotConfiguredResponse(origin);
   const folder = await ensureOneDriveSessionFolder(env, token, `booking-${uploadSessionId}`);
@@ -121,7 +129,8 @@ async function handleMultipartUpload(request, env, origin) {
       fileUrl,
       sessionId: uploadSessionId,
     });
-    if (!fileUrl || !fileProof) return jsonResponse({ success: false, message: 'OneDrive file proof failed.' }, 502, origin);
+    if (!fileUrl || !fileProof)
+      return jsonResponse({ success: false, message: 'OneDrive file proof failed.' }, 502, origin);
     return jsonResponse(
       {
         success: true,
@@ -147,7 +156,8 @@ async function handleMultipartUpload(request, env, origin) {
     fileUrl,
     sessionId: uploadSessionId,
   });
-  if (!fileUrl || !fileProof) return jsonResponse({ success: false, message: 'OneDrive file proof failed.' }, 502, origin);
+  if (!fileUrl || !fileProof)
+    return jsonResponse({ success: false, message: 'OneDrive file proof failed.' }, 502, origin);
   return jsonResponse(
     {
       success: true,

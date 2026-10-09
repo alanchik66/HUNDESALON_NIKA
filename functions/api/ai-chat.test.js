@@ -1,9 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { withResourceQuotaDatabase } from '../../tools/lib/resource-quota-test-db.mjs';
 import { readFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 
-import { detectCustomerLocale, normalizeAiAnswer, normalizeGermanCareTerms, onRequest, selectAiChatKnowledge } from './ai-chat.js';
+import {
+  detectCustomerLocale,
+  normalizeAiAnswer,
+  normalizeGermanCareTerms,
+  onRequest,
+  selectAiChatKnowledge,
+} from './ai-chat.js';
 
 function installCacheStub() {
   const original = globalThis.caches;
@@ -60,7 +67,7 @@ function chatDatabase(sessionOverrides = {}) {
     phone: '',
     ...sessionOverrides,
   };
-  return {
+  return withResourceQuotaDatabase({
     sqlCalls,
     boundCalls,
     prepare(sql) {
@@ -82,7 +89,7 @@ function chatDatabase(sessionOverrides = {}) {
         },
       };
     },
-  };
+  });
 }
 
 for (const migrated of [false, true]) {
@@ -270,23 +277,61 @@ test('small-animal nail price retrieval prioritizes the standalone service', () 
 for (const { locale, questions, patterns } of [
   {
     locale: 'ru',
-    questions: ['Что входит в первый груминг щенка?', 'Щенку 3 месяца. Его будут купать и сушить?', 'Щенок боится фена. Что вы будете делать?', 'Можно ли на первый груминг щенку 5 месяцев?', 'Первый груминг щенка лабрадора — сколько стоит?'],
-    patterns: [/до 4 месяцев/, /Если щенок спокоен/, /полностью расчесать/, /искупать/, /подсушить/, /в его темпе/, /от 50 €/],
+    questions: [
+      'Что входит в первый груминг щенка?',
+      'Щенку 3 месяца. Его будут купать и сушить?',
+      'Щенок боится фена. Что вы будете делать?',
+      'Можно ли на первый груминг щенку 5 месяцев?',
+      'Первый груминг щенка лабрадора — сколько стоит?',
+    ],
+    patterns: [
+      /до 4 месяцев/,
+      /Если щенок спокоен/,
+      /полностью расчесать/,
+      /искупать/,
+      /подсушить/,
+      /в его темпе/,
+      /от 50 €/,
+    ],
   },
   {
     locale: 'de',
     questions: ['Was gehört zur Welpen-Eingewöhnung?', 'Mein Welpe hat Angst vor dem Föhn. Wird er gebadet?'],
-    patterns: [/bis 4 Monate/, /Wenn der Welpe ruhig/, /vollständig bürsten/, /baden/, /antrocknen/, /in seinem Tempo/, /ab 50 €/],
+    patterns: [
+      /bis 4 Monate/,
+      /Wenn der Welpe ruhig/,
+      /vollständig bürsten/,
+      /baden/,
+      /antrocknen/,
+      /in seinem Tempo/,
+      /ab 50 €/,
+    ],
   },
   {
     locale: 'en',
     questions: ['What is included in first puppy grooming?', 'My puppy is afraid of the dryer. Will you bathe him?'],
-    patterns: [/up to 4 months/, /If the puppy stays calm/, /brush the whole coat/, /full bath/, /gently dry/, /at their pace/, /from €50/],
+    patterns: [
+      /up to 4 months/,
+      /If the puppy stays calm/,
+      /brush the whole coat/,
+      /full bath/,
+      /gently dry/,
+      /at their pace/,
+      /from €50/,
+    ],
   },
   {
     locale: 'uk',
     questions: ['Що входить у перший грумінг цуценяти?', 'Цуценя боїться фена. Чи будете його купати?'],
-    patterns: [/до 4 місяців/, /Якщо цуценя спокійне/, /повністю розчесати/, /викупати/, /підсушити/, /в його темпі/, /від 50 €/],
+    patterns: [
+      /до 4 місяців/,
+      /Якщо цуценя спокійне/,
+      /повністю розчесати/,
+      /викупати/,
+      /підсушити/,
+      /в його темпі/,
+      /від 50 €/,
+    ],
   },
 ]) {
   test(`${locale}: puppy questions retrieve the age, conditional care and canonical starting price together`, () => {
@@ -364,9 +409,11 @@ test('personal-support mode sends the message to staff without an OpenAI call', 
     assert.equal(payload.handoff, true);
     assert.equal(payload.available, true);
     assert.equal(called, false);
-    assert.ok(database.boundCalls.some(
-      call => call.sql.includes('UPDATE chat_sessions SET conversation_mode') && call.values[0] === 'human'
-    ));
+    assert.ok(
+      database.boundCalls.some(
+        call => call.sql.includes('UPDATE chat_sessions SET conversation_mode') && call.values[0] === 'human'
+      )
+    );
   } finally {
     globalThis.fetch = originalFetch;
     restoreCache();
@@ -486,13 +533,28 @@ test('OpenAI request uses bounded context and returns the model answer', async (
     assert.match(upstreamPayload.instructions, /Default to 1-3 short sentences, at most 60 words/);
     assert.match(upstreamPayload.instructions, /Give more detail only when the customer explicitly asks/);
     assert.match(upstreamPayload.instructions, /Preserve essential conditions such as age limits, conditional care/);
-    assert.match(upstreamPayload.instructions, /First accept the constraint, then ask at most one safety-relevant question/);
+    assert.match(
+      upstreamPayload.instructions,
+      /First accept the constraint, then ask at most one safety-relevant question/
+    );
     assert.match(upstreamPayload.instructions, /Never automatically replace a request for local trimming/);
-    assert.match(upstreamPayload.instructions, /isolated report of loose stool after a food change is not by itself a reason/);
-    assert.match(upstreamPayload.instructions, /If the customer wants to bring their own shampoo, accept this politely/);
+    assert.match(
+      upstreamPayload.instructions,
+      /isolated report of loose stool after a food change is not by itself a reason/
+    );
+    assert.match(
+      upstreamPayload.instructions,
+      /If the customer wants to bring their own shampoo, accept this politely/
+    );
     assert.match(upstreamPayload.instructions, /For every grooming-service recommendation or safety clarification/);
-    assert.match(upstreamPayload.instructions, /photo, short video, voice message\/audio or document directly in this chat/);
-    assert.match(upstreamPayload.instructions, /never reproduce entire reference blocks or the full knowledge document/);
+    assert.match(
+      upstreamPayload.instructions,
+      /photo, short video, voice message\/audio or document directly in this chat/
+    );
+    assert.match(
+      upstreamPayload.instructions,
+      /never reproduce entire reference blocks or the full knowledge document/
+    );
     assert.match(upstreamPayload.instructions, /Ultrasonic teeth cleaning.*от 100 €/s);
     assert.match(upstreamPayload.instructions, /obsolete teeth-cleaning price от 55 €/);
     assert.ok(upstreamPayload.instructions.length < 14_000);
@@ -560,7 +622,9 @@ test('Russian price answers receive the mandatory final-price disclosure', async
 
   try {
     const response = await onRequest({
-      request: createRequest(requestBody({ locale: 'ru', message: 'Сколько стоит подстригание когтей?', pagePath: '/ru/prays-list.html' })),
+      request: createRequest(
+        requestBody({ locale: 'ru', message: 'Сколько стоит подстригание когтей?', pagePath: '/ru/prays-list.html' })
+      ),
       env: { CHAT_DB: chatDatabase(), OPENAI_API_KEY: 'test-key' },
     });
     const payload = await response.json();
@@ -620,12 +684,22 @@ test('puppy request sends the approved care conditions to the answer model witho
 
   try {
     const response = await onRequest({
-      request: createRequest(requestBody({ locale: 'ru', message: 'Что входит в первый груминг щенка?', pagePath: '/ru/prays-list.html' })),
+      request: createRequest(
+        requestBody({ locale: 'ru', message: 'Что входит в первый груминг щенка?', pagePath: '/ru/prays-list.html' })
+      ),
       env: { CHAT_DB: chatDatabase(), OPENAI_API_KEY: 'test-key' },
     });
     assert.equal(response.status, 200);
     assert.equal((await response.json()).available, true);
-    for (const pattern of [/до 4 месяцев/, /Если щенок спокоен/, /полностью расчесать/, /искупать/, /подсушить/, /в его темпе/, /от 50 €/]) {
+    for (const pattern of [
+      /до 4 месяцев/,
+      /Если щенок спокоен/,
+      /полностью расчесать/,
+      /искупать/,
+      /подсушить/,
+      /в его темпе/,
+      /от 50 €/,
+    ]) {
       assert.match(instructions, pattern);
     }
     assert.ok(instructions.length < 14_000);

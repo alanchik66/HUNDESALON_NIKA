@@ -1,6 +1,7 @@
 import { enforceRateLimit, isRequestBodyTooLarge, readTextBody } from '../_lib/http-security.js';
 import { confirmGoogleBooking } from '../_lib/booking-calendar.js';
 import { verifyBookingConfirmationToken } from '../_lib/booking-confirmation.js';
+import { createDeliveryTracker } from '../_lib/delivery-tracking.js';
 
 function escapeHtml(value) {
   return String(value || '')
@@ -80,7 +81,8 @@ export async function onRequest({ request, env }) {
 
   let result;
   try {
-    result = await confirmGoogleBooking(env, token.requestId);
+    const track = createDeliveryTracker(env, { requestId: token.requestId, formType: 'booking' });
+    result = await track('calendar', () => confirmGoogleBooking(env, token.requestId));
   } catch {
     result = { ok: false, reason: 'confirmation_pending', partial: true };
   }

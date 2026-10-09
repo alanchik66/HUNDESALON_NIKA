@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 
 import { onRequest } from './upload.js';
 import { oneDriveContentIdentity } from './_lib/onedrive.js';
+import { withResourceQuotaDatabase } from '../tools/lib/resource-quota-test-db.mjs';
 
 globalThis.File ||= File;
 globalThis.caches = {
@@ -14,6 +15,7 @@ globalThis.caches = {
 const origin = 'https://hundesalon-nika.com';
 const uploadSessionId = 'booking-session-1234567890';
 const oneDriveEnv = {
+  CHAT_DB: withResourceQuotaDatabase(),
   MS_TENANT_ID: 'consumers',
   MS_CLIENT_ID: 'client-id',
   MS_REFRESH_TOKEN: 'refresh-token',
@@ -115,8 +117,14 @@ test('stores a booking photo only in OneDrive', async () => {
     assert.equal(body.fileId, 'photo-item');
     assert.equal(body.fileUrl, 'https://1drv.ms/i/test-photo');
     assert.match(body.fileProof, /^[A-Za-z0-9_-]{43}$/);
-    assert.equal(destinations.some(target => /googleapis\.com.*(?:drive|upload)/i.test(target)), false);
-    assert.equal(destinations.some(target => target.includes('graph.microsoft.com')), true);
+    assert.equal(
+      destinations.some(target => /googleapis\.com.*(?:drive|upload)/i.test(target)),
+      false
+    );
+    assert.equal(
+      destinations.some(target => target.includes('graph.microsoft.com')),
+      true
+    );
   } finally {
     globalThis.fetch = originalFetch;
   }

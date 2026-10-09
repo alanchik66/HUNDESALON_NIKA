@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { transformSync } from 'esbuild';
@@ -184,11 +184,30 @@ function assertNoSecretArtifacts(directory) {
 
 ensureLeafletVendorBundle();
 
+// Rebuild maintained weather modules before clearing the previous production bundle.
+// The historical runtime remains a verified vendor/baseline input for rollback.
+const weatherCandidate = path.join(root, 'output', 'weather-production');
+execFileSync(
+  process.execPath,
+  [path.join(root, '3d-weather-codrops-main', 'scripts', 'build.mjs'), '--out-dir', weatherCandidate],
+  { cwd: root, stdio: 'inherit' }
+);
+const weatherManifest = JSON.parse(
+  fs.readFileSync(path.join(root, '3d-weather-codrops-main', 'build-manifest.json'), 'utf8')
+);
+
 emptyDirectory(dist);
 
 for (const entry of copyEntries) {
   copyRecursive(path.join(root, entry), path.join(dist, entry));
 }
+
+for (const entry of weatherManifest.entries) {
+  for (const file of [entry.output, `${entry.output}.map`]) {
+    fs.copyFileSync(path.join(weatherCandidate, file), path.join(dist, '3d-weather-codrops-main', 'dist-widget', file));
+  }
+}
+console.log(`Built ${weatherManifest.entries.length} weather modules from maintained sources.`);
 
 if (skippedProductionPaths.size > 0) {
   console.log(`Skipped ${skippedProductionPaths.size} local/source-only production asset(s).`);
@@ -366,7 +385,8 @@ function injectSendPulseIntegrations(directory, version) {
   const aiChatStylePattern = /\s*<link\s+[^>]*href="[^"]*ai-chat\.css\?[^"\s]+"[^>]*>/g;
   const liveChatScriptPattern = /\s*<script\s+src="https:\/\/cdn\.pulse\.is\/livechat\/loader\.js"[^>]*><\/script>/g;
   const popupScriptPattern = /\s*<script\s+src="https:\/\/static\.sppopups\.com\/assets\/loader\.js"[^>]*><\/script>/g;
-  const pushScriptPattern = /\s*<script\s+charset="UTF-8"\s+src="(?:https:)?\/\/web\.webpushs\.com\/js\/push\/ad3860c1c56016022bf413f3d7ab36f6_1\.js"\s+async><\/script>/g;
+  const pushScriptPattern =
+    /\s*<script\s+charset="UTF-8"\s+src="(?:https:)?\/\/web\.webpushs\.com\/js\/push\/ad3860c1c56016022bf413f3d7ab36f6_1\.js"\s+async><\/script>/g;
   const pushHomePages = new Set(['de/index.html', 'en/index.html', 'ru/index.html', 'uk/index.html']);
 
   function walk(dir) {
@@ -405,7 +425,7 @@ function injectSendPulseIntegrations(directory, version) {
         `<script src="${scriptPrefix}/ai-chat.js?v=${version}"></script>`,
       ].join('\n');
       const pushLoader = pushHomePages.has(relativePath)
-      ? '<script charset="UTF-8" src="//web.webpushs.com/js/push/ad3860c1c56016022bf413f3d7ab36f6_1.js" async></script>'
+        ? '<script charset="UTF-8" src="//web.webpushs.com/js/push/ad3860c1c56016022bf413f3d7ab36f6_1.js" async></script>'
         : '';
       const next = cleaned
         .replace('</head>', `${stylesheet}${pushLoader ? `\n${pushLoader}` : ''}\n</head>`)

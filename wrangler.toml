@@ -10,10 +10,15 @@ pages_build_output_dir = "dist"
 binding = "CHAT_DB"
 database_name = "nika-db"
 database_id = "b95aa18e-fca6-408b-91f9-8e262b6acf41"
-preview_database_id = "b95aa18e-fca6-408b-91f9-8e262b6acf41"
+preview_database_id = "6df5c8b1-6f8d-4ff6-851e-d7f149c31009"
 
-# Preview deployments are intentionally non-transactional. Secrets and other
-# external-service settings stay in Cloudflare and are never committed here.
+[[env.preview.d1_databases]]
+binding = "CHAT_DB"
+database_name = "nika-db-preview"
+database_id = "6df5c8b1-6f8d-4ff6-851e-d7f149c31009"
+preview_database_id = "6df5c8b1-6f8d-4ff6-851e-d7f149c31009"
+
+# Preview has its own database and no production service credentials.
 [env.preview.vars]
 SITE_NOTIFICATIONS_ENABLED = "false"
 PAYMENTS_ONLINE_ENABLED = "false"

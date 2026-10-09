@@ -1,0 +1,211 @@
+{
+  "checkedAt": "2026-10-09",
+  "plugins": [
+    {
+      "id": "calendar-beta",
+      "repo": "liamcain/obsidian-calendar-plugin",
+      "revision": "f5c39c4e4a4ddc8c111d5f992c7976a711fa2e09",
+      "release": "2.0.0-beta.2",
+      "manifestVersion": "2.0.0",
+      "runtimeSha256": "64d1c6c620803246724bc922c5c2e0a17c406ffc23f6bbcfbfb14c643958fbb7",
+      "sourceArchive": "https://github.com/liamcain/obsidian-calendar-plugin/archive/f5c39c4e4a4ddc8c111d5f992c7976a711fa2e09.tar.gz",
+      "sourcePackageUrl": "https://raw.githubusercontent.com/liamcain/obsidian-calendar-plugin/f5c39c4e4a4ddc8c111d5f992c7976a711fa2e09/package.json",
+      "declaredPackageLicense": "MIT",
+      "license": null,
+      "observedLicenseText": "No license file in verified tag; package declares MIT"
+    },
+    {
+      "id": "dataview",
+      "repo": "blacksmithgu/obsidian-dataview",
+      "revision": "29b1ad87e1f2b964b4fa0c209f11d0622469bdb0",
+      "release": "0.5.68",
+      "license": {
+        "file": "dataview.LICENSE.txt",
+        "sourceUrl": "https://raw.githubusercontent.com/blacksmithgu/obsidian-dataview/29b1ad87e1f2b964b4fa0c209f11d0622469bdb0/LICENSE.txt",
+        "sha256": "17aef9ec4eb5b89ff105e257ae1d5c84adb3af0b6f596ae1c5726093bec6801c",
+        "declared": "MIT"
+      },
+      "manifestVersion": "0.5.68",
+      "runtimeSha256": "6bb1cf7010afad830e73575fca0e2bfbd3279c562e3d9d24f2d2f45161eb7d00",
+      "sourceArchive": "https://github.com/blacksmithgu/obsidian-dataview/archive/29b1ad87e1f2b964b4fa0c209f11d0622469bdb0.tar.gz",
+      "sourcePackageUrl": "https://raw.githubusercontent.com/blacksmithgu/obsidian-dataview/29b1ad87e1f2b964b4fa0c209f11d0622469bdb0/package.json",
+      "declaredPackageLicense": "MIT",
+      "upstreamRuntimeSha256": "794e9eaede73920bb8d54b0eda4f5de2182d698cc638774500f24f14bcd4da0b",
+      "canonicalEquivalent": false,
+      "runtimePatch": {
+        "file": "dataview.runtime-transform.json",
+        "sha256": "991d6ea95fc85b7123a5dbc7e57ee0c0b446ff004971f24cb89ba5b7ed8391c6",
+        "applyMode": "Verified exact string and inline source-map mapping transformation",
+        "verifiedRestoredSha256": "6bb1cf7010afad830e73575fca0e2bfbd3279c562e3d9d24f2d2f45161eb7d00"
+      },
+      "bundledNotices": {
+        "file": "dataview.BUNDLED_NOTICES.txt",
+        "sha256": "419ebeed835e97d2bb98bfdbdfa92c532a24fc11e25dd17ce510471b23d9e8ff"
+      },
+      "observedLicenseText": "MIT",
+      "packageMetadataConflict": false
+    },
+    {
+      "id": "obsidian-excalidraw-plugin",
+      "repo": "zsviczian/obsidian-excalidraw-plugin",
+      "revision": "1c8b10130a8d4db4ba03c680549da6e7ed5ce61e",
+      "release": "2.27.2",
+      "license": {
+        "file": "obsidian-excalidraw-plugin.LICENSE.txt",
+        "sourceUrl": "https://raw.githubusercontent.com/zsviczian/obsidian-excalidraw-plugin/1c8b10130a8d4db4ba03c680549da6e7ed5ce61e/LICENSE",
+        "sha256": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
+        "declared": "MIT"
+      },
+      "manifestVersion": "2.27.2",
+      "runtimeSha256": "8c2ee2329efab38b90e0f948cab4ea662c258e2ba1a0cdd651a6a9fe65f21808",
+      "sourceArchive": "https://github.com/zsviczian/obsidian-excalidraw-plugin/archive/1c8b10130a8d4db4ba03c680549da6e7ed5ce61e.tar.gz",
+      "sourcePackageUrl": "https://raw.githubusercontent.com/zsviczian/obsidian-excalidraw-plugin/1c8b10130a8d4db4ba03c680549da6e7ed5ce61e/package.json",
+      "declaredPackageLicense": "MIT",
+      "bundledNotices": {
+        "file": "obsidian-excalidraw-plugin.BUNDLED_NOTICES.txt",
+        "sha256": "81122eb3c31de721ec1f0a6b5269f49f4ec917129b3b1e44a2442b34792a48fb"
+      },
+      "observedLicenseText": "AGPL-3.0",
+      "packageMetadataConflict": true
+    },
+    {
+      "id": "obsidian-git",
+      "repo": "Vinzent03/obsidian-git",
+      "revision": "4011f9a21e26cb08bd2dd68899c8a5d4d0111e70",
+      "release": "2.39.0",
+      "license": {
+        "file": "obsidian-git.LICENSE.txt",
+        "sourceUrl": "https://raw.githubusercontent.com/Vinzent03/obsidian-git/4011f9a21e26cb08bd2dd68899c8a5d4d0111e70/LICENSE",
+        "sha256": "b9c17ede4874ca24c60e397096cfb51c33fc1474b8bdb0cf02e90ace5912cada",
+        "declared": "MIT"
+      },
+      "manifestVersion": "2.39.0",
+      "runtimeSha256": "d5a74036cf17c1a02957c1f33f59e47cf3af83525641c4374ca1fa09d95f3eb4",
+      "sourceArchive": "https://github.com/Vinzent03/obsidian-git/archive/4011f9a21e26cb08bd2dd68899c8a5d4d0111e70.tar.gz",
+      "sourcePackageUrl": "https://raw.githubusercontent.com/Vinzent03/obsidian-git/4011f9a21e26cb08bd2dd68899c8a5d4d0111e70/package.json",
+      "declaredPackageLicense": "MIT",
+      "bundledNotices": {
+        "file": "obsidian-git.BUNDLED_NOTICES.txt",
+        "sha256": "01bd570d1a24335af0b09207a5311ccd83c9c2eeca538f4e069c2d94447ca5ff"
+      },
+      "observedLicenseText": "MIT",
+      "packageMetadataConflict": false
+    },
+    {
+      "id": "obsidian-style-settings",
+      "repo": "community-archive/obsidian-style-settings",
+      "revision": "4ebec6ae0131a9d5e8307bb5e26d59db5ba2e81c",
+      "release": "1.0.9",
+      "license": {
+        "file": "obsidian-style-settings.LICENSE.txt",
+        "sourceUrl": "https://raw.githubusercontent.com/community-archive/obsidian-style-settings/4ebec6ae0131a9d5e8307bb5e26d59db5ba2e81c/LICENSE.md",
+        "sha256": "8b1ba204bb69a0ade2bfcf65ef294a920f6bb361b317dba43c7ef29d96332b9b",
+        "declared": "MIT"
+      },
+      "manifestVersion": "1.0.9",
+      "runtimeSha256": "1828abaacdab4c5578b705a625c585b30512f8efad4c7cfc5a18e70cc3557468",
+      "sourceArchive": "https://github.com/community-archive/obsidian-style-settings/archive/4ebec6ae0131a9d5e8307bb5e26d59db5ba2e81c.tar.gz",
+      "sourcePackageUrl": "https://raw.githubusercontent.com/community-archive/obsidian-style-settings/4ebec6ae0131a9d5e8307bb5e26d59db5ba2e81c/package.json",
+      "declaredPackageLicense": "MIT",
+      "bundledNotices": {
+        "file": "obsidian-style-settings.BUNDLED_NOTICES.txt",
+        "sha256": "b70553fde6a1b75f2dcfa47bd10a138f78b32f488dc7b0019b3fb984aa26151a"
+      },
+      "observedLicenseText": "GPL-3.0",
+      "packageMetadataConflict": true
+    },
+    {
+      "id": "obsidian-tasks-plugin",
+      "repo": "obsidian-tasks-group/obsidian-tasks",
+      "revision": "9173205606e49846f456caf438fdc0e5baded77e",
+      "release": "8.4.0",
+      "license": {
+        "file": "obsidian-tasks-plugin.LICENSE.txt",
+        "sourceUrl": "https://raw.githubusercontent.com/obsidian-tasks-group/obsidian-tasks/8.4.0/LICENSE",
+        "sha256": "88debbb735b26a9f2b022da623acc41867149887e2f34ea2e8bbe94f1c9b9bad",
+        "declared": "MIT"
+      },
+      "manifestVersion": "8.4.0",
+      "runtimeSha256": "2b4f9ce24d26f1d0cb191dca9a73477454d256e03e51d81f37faeee7a293ad1b",
+      "sourceArchive": "https://github.com/obsidian-tasks-group/obsidian-tasks/archive/9173205606e49846f456caf438fdc0e5baded77e.tar.gz",
+      "sourcePackageUrl": "https://raw.githubusercontent.com/obsidian-tasks-group/obsidian-tasks/8.4.0/package.json",
+      "declaredPackageLicense": "MIT",
+      "sourceTag": "8.4.0",
+      "bundledNotices": {
+        "file": "obsidian-tasks-plugin.BUNDLED_NOTICES.txt",
+        "sha256": "c4541ee4adefe36bfb6c662eb55ea567c5e4f46030355d0935df6602386db1fd"
+      },
+      "observedLicenseText": "MIT",
+      "packageMetadataConflict": false
+    },
+    {
+      "id": "periodic-notes",
+      "repo": "liamcain/obsidian-periodic-notes",
+      "revision": "5b96e4f14130b0c024edb5ddb7871d01d61d9522",
+      "release": "0.0.17",
+      "license": {
+        "file": "periodic-notes.LICENSE.txt",
+        "sourceUrl": "https://raw.githubusercontent.com/liamcain/obsidian-periodic-notes/0.0.17/LICENSE",
+        "sha256": "d82eb6573ee60fd3516ea8d8f8d4d7bc3170ec9391a2f975f9868320e943701a",
+        "declared": "MIT"
+      },
+      "manifestVersion": "0.0.17",
+      "runtimeSha256": "934ca94359b6a4b9f02093d4a44fa59654c5237b31cf02d7b982c58168851bb1",
+      "sourceArchive": "https://github.com/liamcain/obsidian-periodic-notes/archive/5b96e4f14130b0c024edb5ddb7871d01d61d9522.tar.gz",
+      "sourcePackageUrl": "https://raw.githubusercontent.com/liamcain/obsidian-periodic-notes/0.0.17/package.json",
+      "declaredPackageLicense": "MIT",
+      "upstreamRuntimeSha256": "ccf1a18673693d1036fc7614c3af9d23e5edfe425d1053df81dddcc29b1f8b0e",
+      "canonicalEquivalent": false,
+      "runtimePatch": {
+        "file": "periodic-notes.runtime.patch",
+        "sha256": "ab3d713a895ff97e8ef68404e308723165e1c2e657bcf59c8fbe903acdd8c0eb",
+        "applyMode": "git apply --unidiff-zero",
+        "verifiedRestoredSha256": "934ca94359b6a4b9f02093d4a44fa59654c5237b31cf02d7b982c58168851bb1"
+      },
+      "sourceTag": "0.0.17",
+      "bundledNotices": {
+        "file": "periodic-notes.BUNDLED_NOTICES.txt",
+        "sha256": "0d8f66cd4afb566cb5b7e1540c68f43b939d3eba12ace290f18abc4f4cb53ed0"
+      },
+      "observedLicenseText": "MIT",
+      "packageMetadataConflict": false
+    },
+    {
+      "id": "templater-obsidian",
+      "repo": "SilentVoid13/Templater",
+      "revision": "b74b8dd21d686ca8fb88f11a9709db9487113a17",
+      "release": "2.25.0",
+      "license": {
+        "file": "templater-obsidian.LICENSE.txt",
+        "sourceUrl": "https://raw.githubusercontent.com/SilentVoid13/Templater/2.25.0/LICENSE.TXT",
+        "sha256": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
+        "declared": "AGPL-3.0-only"
+      },
+      "manifestVersion": "2.25.0",
+      "runtimeSha256": "6a29790e8ad3bb3de5bcc7381588f20093b2dbecc1ff27d8a5d7ed3fcebbdf4e",
+      "sourceArchive": "https://github.com/SilentVoid13/Templater/archive/b74b8dd21d686ca8fb88f11a9709db9487113a17.tar.gz",
+      "sourcePackageUrl": "https://raw.githubusercontent.com/SilentVoid13/Templater/2.25.0/package.json",
+      "declaredPackageLicense": "AGPL-3.0-only",
+      "sourceTag": "2.25.0",
+      "observedLicenseText": "AGPL-3.0",
+      "packageMetadataConflict": false
+    }
+  ],
+  "components": [
+    {
+      "plugin": "obsidian-git",
+      "name": "isomorphic-git path.join (derived from ZenFS)",
+      "version": "1.40.0",
+      "sourceUrl": "https://raw.githubusercontent.com/isomorphic-git/isomorphic-git/v1.40.0/src/utils/join.js",
+      "sourceFile": "sources/isomorphic-git-join.js",
+      "sha256": "748dfaa1d7b2871912c447b0cd8616d083d22e52a0c62d43de81c5b45096c242",
+      "licenseIdentifier": "LGPL-3.0-or-later",
+      "noticeFile": "obsidian-git.BUNDLED_NOTICES.txt",
+      "license": {
+        "file": "LGPL-3.0-or-later.txt",
+        "sourceUrl": "https://raw.githubusercontent.com/spdx/license-list-data/v3.27.0/text/LGPL-3.0-or-later.txt",
+        "sha256": "996af0513df21f7496288951c41428a03c174e9e4a9d63665c57d670f845ccb1"
+      }
+    }
+  ]
+}

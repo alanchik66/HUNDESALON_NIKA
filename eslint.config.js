@@ -81,7 +81,7 @@ export default [
     },
   },
   {
-    files: ['tools/**/*.{js,mjs,cjs}'],
+    files: ['tools/**/*.{js,mjs,cjs}', '3d-weather-codrops-main/scripts/**/*.mjs', 'docs/vendor/obsidian/verify.mjs'],
     ignores: ['tools/_*.mjs', 'tools/ffmpeg/**', 'tools/ffmpeg_extract/**'],
     languageOptions: {
       ecmaVersion: 2025,

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { onRequestGet } from './ai-chat-gifs.js';
+import { withResourceQuotaDatabase } from '../../tools/lib/resource-quota-test-db.mjs';
 
 globalThis.caches = { default: { match: async () => null, put: async () => {} } };
 
@@ -54,7 +55,7 @@ test('uses safe-search and returns only normalized GIPHY media URLs', async () =
   try {
     const response = await onRequestGet({
       request: request('?q=happy%20dog&locale=ru', crypto.randomUUID(), { country: 'de', regionCode: 'sn' }),
-      env: { GIPHY_API_KEY: 'test' },
+      env: { CHAT_DB: withResourceQuotaDatabase(), GIPHY_API_KEY: 'test' },
     });
     const payload = await response.json();
     assert.equal(response.status, 200);

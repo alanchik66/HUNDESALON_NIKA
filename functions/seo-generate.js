@@ -15,6 +15,7 @@ import {
   readJsonBody,
 } from './_lib/http-security.js';
 import { fetchAiResponse } from './_lib/ai-upstream.js';
+import { reserveResourceUsage, resourceQuotaResponse } from './_lib/resource-quotas.js';
 import { APPROVED_AI_MODEL, DEFAULT_SEO_MAX_TOKENS, hasAiServiceAuth, MAX_SEO_MAX_TOKENS } from './_lib/ai-policy.js';
 
 const OPENAI_CHAT_COMPLETIONS_URL = 'https://api.openai.com/v1/chat/completions';
@@ -278,6 +279,9 @@ export async function onRequest(context) {
   if (JSON.stringify(input).length > 8000) {
     return jsonResponse({ error: 'Input is too large' }, 413, origin);
   }
+
+  const quota = await reserveResourceUsage(context.env, request, { resource: 'ai' });
+  if (!quota.ok) return resourceQuotaResponse(quota, origin);
 
   const model = APPROVED_AI_MODEL;
   const maxTokens = parseBoundedInteger(

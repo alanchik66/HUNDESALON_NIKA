@@ -23,6 +23,7 @@ import {
   resolveApprovedModel,
 } from './ai-policy.js';
 import { fetchAiResponse } from './ai-upstream.js';
+import { reserveResourceUsage, resourceQuotaResponse } from './resource-quotas.js';
 
 const OPENAI_CHAT_COMPLETIONS_URL = 'https://api.openai.com/v1/chat/completions';
 const MAX_REQUEST_BODY_BYTES = 64 * 1024;
@@ -345,6 +346,9 @@ export async function handleMessageDraft(context) {
     }
     return jsonResponse({ error: 'Draft service is not configured' }, 503, origin);
   }
+
+  const quota = await reserveResourceUsage(context.env, request, { resource: 'ai' });
+  if (!quota.ok) return resourceQuotaResponse(quota, origin);
 
   const resolvedModel = APPROVED_AI_MODEL;
   const maxTokens = parseBoundedTokens(

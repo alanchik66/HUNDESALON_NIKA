@@ -42,17 +42,32 @@ function normalizeProfile(input) {
   return { valid, firstName, lastName, email, phone, locale, pagePath, privacyConsent };
 }
 
-async function createSession(db, customerId, locale, pagePath) {
+async function createSession(db, customerId, locale, pagePath, profile) {
   const sessionId = crypto.randomUUID();
   const token = randomToken();
   const hash = await tokenHash(token);
   const now = new Date().toISOString();
   await db
     .prepare(
-      `INSERT INTO chat_sessions (id, customer_id, token_hash, locale, page_path, created_at, last_message_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO chat_sessions
+         (id, customer_id, token_hash, locale, page_path, created_at, last_message_at,
+          profile_first_name, profile_last_name, profile_email, profile_phone, profile_privacy_consent_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .bind(sessionId, customerId, hash, locale, pagePath, now, now)
+    .bind(
+      sessionId,
+      customerId,
+      hash,
+      locale,
+      pagePath,
+      now,
+      now,
+      profile.firstName,
+      profile.lastName,
+      profile.email,
+      profile.phone,
+      profile.privacyConsentAt
+    )
     .run();
   return { sessionId, token };
 }
@@ -74,13 +89,7 @@ export async function registerChatCustomer(env, input) {
       `INSERT INTO chat_customers
          (id, first_name, last_name, email, phone, locale, privacy_consent_at, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(email) DO UPDATE SET
-         first_name = excluded.first_name,
-         last_name = excluded.last_name,
-         phone = CASE WHEN excluded.phone <> '' THEN excluded.phone ELSE chat_customers.phone END,
-         locale = excluded.locale,
-         privacy_consent_at = excluded.privacy_consent_at,
-         updated_at = excluded.updated_at`
+       ON CONFLICT(email) DO NOTHING`
     )
     .bind(
       newCustomerId,
@@ -102,7 +111,11 @@ export async function registerChatCustomer(env, input) {
     .bind(profile.email)
     .first();
   if (!customer?.id) return { ok: false, code: 'DATABASE_ERROR' };
-  const session = await createSession(db, customer.id, profile.locale, profile.pagePath);
+  // Unverified contact details belong to this session, not to an existing CRM identity.
+  const session = await createSession(db, customer.id, profile.locale, profile.pagePath, {
+    ...profile,
+    privacyConsentAt: now,
+  });
   // An email match in the CRM does not prove ownership of the stored contact.
   // Return only the profile submitted by this visitor, including an empty phone.
   return {
@@ -126,7 +139,11 @@ export async function authenticateChatSession(env, sessionId, token) {
   return db
     .prepare(
       `SELECT s.id AS session_id, s.customer_id, s.locale, s.status, s.conversation_mode,
-              c.first_name, c.last_name, c.email, COALESCE(c.phone, '') AS phone
+              COALESCE(s.profile_first_name, c.first_name) AS first_name,
+              COALESCE(s.profile_last_name, c.last_name) AS last_name,
+              COALESCE(s.profile_email, c.email) AS email,
+              COALESCE(s.profile_phone, c.phone, '') AS phone,
+              COALESCE(s.profile_privacy_consent_at, c.privacy_consent_at) AS privacy_consent_at
        FROM chat_sessions s
        JOIN chat_customers c ON c.id = s.customer_id
        WHERE s.id = ? AND s.token_hash = ? AND s.status = 'active' LIMIT 1`
@@ -153,7 +170,13 @@ export async function renewChatSession(env, sessionId, token, pagePath = '') {
   const db = database(env);
   if (!current || !db) return null;
   await db.prepare("UPDATE chat_sessions SET status = 'closed' WHERE id = ?").bind(sessionId).run();
-  const renewed = await createSession(db, current.customer_id, current.locale, cleanText(pagePath, 300));
+  const renewed = await createSession(db, current.customer_id, current.locale, cleanText(pagePath, 300), {
+    firstName: current.first_name,
+    lastName: current.last_name,
+    email: current.email,
+    phone: current.phone,
+    privacyConsentAt: current.privacy_consent_at,
+  });
   // Only possession of the previous session token may transfer staff reply routing.
   await db
     .prepare('UPDATE chat_telegram_deliveries SET session_id = ? WHERE session_id = ?')
@@ -338,7 +361,10 @@ export async function getChatSessionForTelegramReply(env, chatId, repliedMessage
                 d.source_message_id
               ) AS source_message_id,
               s.conversation_mode,
-               c.first_name, c.last_name, c.email, COALESCE(c.phone, '') AS phone, c.locale
+              COALESCE(s.profile_first_name, c.first_name) AS first_name,
+              COALESCE(s.profile_last_name, c.last_name) AS last_name,
+              COALESCE(s.profile_email, c.email) AS email,
+              COALESCE(s.profile_phone, c.phone, '') AS phone, s.locale
         FROM chat_telegram_deliveries d
         JOIN chat_customers c ON c.id = d.customer_id
         JOIN chat_sessions s ON s.id = d.session_id AND s.status = 'active'
@@ -369,7 +395,10 @@ export async function getChatSessionForTelegramTopic(env, chatId, messageThreadI
   return db
     .prepare(
       `SELECT d.session_id, d.customer_id, d.source_message_id, s.conversation_mode,
-              c.first_name, c.last_name, c.email, COALESCE(c.phone, '') AS phone, c.locale
+              COALESCE(s.profile_first_name, c.first_name) AS first_name,
+              COALESCE(s.profile_last_name, c.last_name) AS last_name,
+              COALESCE(s.profile_email, c.email) AS email,
+              COALESCE(s.profile_phone, c.phone, '') AS phone, s.locale
        FROM chat_telegram_deliveries d
        JOIN chat_customers c ON c.id = d.customer_id
        JOIN chat_sessions s ON s.id = d.session_id

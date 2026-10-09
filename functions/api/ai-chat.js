@@ -1,6 +1,7 @@
 import { AI_CHAT_KNOWLEDGE, AI_CHAT_KNOWLEDGE_FINGERPRINT } from '../_generated/ai-chat-knowledge.js';
 import { assertAllowedOrigin, enforceRateLimit, jsonResponse } from '../_lib/http-security.js';
 import { fetchAiResponse } from '../_lib/ai-upstream.js';
+import { reserveResourceUsage } from '../_lib/resource-quotas.js';
 import {
   authenticateChatSession,
   findReplyForMessage,
@@ -736,6 +737,22 @@ export async function onRequest(context) {
   const apiKey = getEnv(context, 'OPENAI_API_KEY');
   if (!apiKey) {
     return jsonResponse({ answer: copy.unavailable, handoff: true, available: false }, 200, originCheck.origin);
+  }
+
+  const quota = await reserveResourceUsage(env, request, { resource: 'ai', sessionId: session.session_id });
+  if (!quota.ok) {
+    const response = jsonResponse(
+      {
+        answer: copy.unavailable,
+        handoff: true,
+        available: false,
+        reason: quota.reason === 'exceeded' ? 'RESOURCE_DAILY_LIMIT' : 'RESOURCE_TEMPORARILY_UNAVAILABLE',
+      },
+      200,
+      originCheck.origin
+    );
+    response.headers.set('Retry-After', String(quota.retryAfter));
+    return response;
   }
 
   const reference = selectAiChatKnowledge(payload.message, payload.locale);

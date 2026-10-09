@@ -9,6 +9,7 @@ import {
 } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
 import { confirmGoogleBooking } from './_lib/booking-calendar.js';
+import { createDeliveryTracker } from './_lib/delivery-tracking.js';
 import { isRequestBodyTooLarge, readJsonBody, timingSafeEqualStrings } from './_lib/http-security.js';
 import {
   formatChatCustomer,
@@ -95,40 +96,50 @@ const LANGUAGE_OPTIONS = Object.freeze([
 
 const AUTO_REPLY_COPY = Object.freeze({
   de: {
-    welcome: 'Willkommen bei HUNDESALON_NIKA. Tippen Sie neben dem Nachrichtenfeld auf „NIKA Menü“ – dort öffnet sich unser Markenmenü.',
+    welcome:
+      'Willkommen bei HUNDESALON_NIKA. Tippen Sie neben dem Nachrichtenfeld auf „NIKA Menü“ – dort öffnet sich unser Markenmenü.',
     showcase: 'Öffnen Sie das interaktive HUNDESALON_NIKA Menü über die Schaltfläche unten.',
-    booking: 'Öffnen Sie die Online-Terminbuchung über die Schaltfläche unten. Wenn Sie Hilfe benötigen, wählen Sie „Mitarbeiter kontaktieren“.',
-    prices: 'Preise und Leistungen öffnen Sie über die Schaltfläche unten. Für eine individuelle Empfehlung nennen Sie bitte Rasse, Größe und Fellzustand Ihres Tieres.',
+    booking:
+      'Öffnen Sie die Online-Terminbuchung über die Schaltfläche unten. Wenn Sie Hilfe benötigen, wählen Sie „Mitarbeiter kontaktieren“.',
+    prices:
+      'Preise und Leistungen öffnen Sie über die Schaltfläche unten. Für eine individuelle Empfehlung nennen Sie bitte Rasse, Größe und Fellzustand Ihres Tieres.',
     address: 'Wir sind in Leipzig. Adresse und Öffnungszeiten öffnen Sie über die Schaltfläche unten.',
     language: 'Öffnen Sie „NIKA Menü“ und tippen Sie oben auf den Globus, um Ihre Sprache zu wählen.',
-    support: 'Ihre Support-Anfrage wurde weitergeleitet. Schreiben Sie Ihre Nachricht direkt in diesen Chat – wir antworten hier.',
-    fallback: 'Vielen Dank für Ihre Nachricht. Wählen Sie einen Bereich im Menü oder beschreiben Sie Ihr Anliegen kurz.',
+    support:
+      'Ihre Support-Anfrage wurde weitergeleitet. Schreiben Sie Ihre Nachricht direkt in diesen Chat – wir antworten hier.',
+    fallback:
+      'Vielen Dank für Ihre Nachricht. Wählen Sie einen Bereich im Menü oder beschreiben Sie Ihr Anliegen kurz.',
   },
   en: {
     welcome: 'Welcome to HUNDESALON_NIKA. Tap “NIKA Menu” beside the message field to open our branded menu.',
     showcase: 'Open the interactive HUNDESALON_NIKA menu with the button below.',
     booking: 'Open online booking with the button below. If you need help, choose “Contact support”.',
-    prices: 'Open services and prices with the button below. For a personalised recommendation, please tell us your pet’s breed, size and coat condition.',
+    prices:
+      'Open services and prices with the button below. For a personalised recommendation, please tell us your pet’s breed, size and coat condition.',
     address: 'We are in Leipzig. Open our address and opening hours with the button below.',
     language: 'Open “NIKA Menu” and tap the globe at the top to choose your language.',
     support: 'Your support request has been forwarded. Send your message in this chat and we will reply here.',
     fallback: 'Thank you for your message. Choose a section from the menu or briefly describe your question.',
   },
   ru: {
-    welcome: 'Добро пожаловать в HUNDESALON_NIKA. Нажмите «Меню NIKA» рядом со строкой сообщения — откроется фирменное меню.',
+    welcome:
+      'Добро пожаловать в HUNDESALON_NIKA. Нажмите «Меню NIKA» рядом со строкой сообщения — откроется фирменное меню.',
     showcase: 'Откройте интерактивное фирменное меню HUNDESALON_NIKA кнопкой ниже.',
     booking: 'Откройте онлайн-запись кнопкой ниже. Если нужна помощь, выберите «Связаться с сотрудником».',
-    prices: 'Цены и услуги открываются кнопкой ниже. Для индивидуальной рекомендации напишите породу, размер и состояние шерсти питомца.',
+    prices:
+      'Цены и услуги открываются кнопкой ниже. Для индивидуальной рекомендации напишите породу, размер и состояние шерсти питомца.',
     address: 'Мы находимся в Лейпциге. Адрес и часы работы открываются кнопкой ниже.',
     language: 'Откройте «Меню NIKA» и нажмите на глобус вверху, чтобы выбрать язык.',
     support: 'Запрос передан в поддержку. Напишите сообщение прямо в этот чат — мы ответим здесь.',
     fallback: 'Спасибо за сообщение. Выберите раздел в меню или кратко опишите ваш вопрос.',
   },
   uk: {
-    welcome: 'Ласкаво просимо до HUNDESALON_NIKA. Натисніть «Меню NIKA» біля поля повідомлення — відкриється фірмове меню.',
+    welcome:
+      'Ласкаво просимо до HUNDESALON_NIKA. Натисніть «Меню NIKA» біля поля повідомлення — відкриється фірмове меню.',
     showcase: 'Відкрийте інтерактивне фірмове меню HUNDESALON_NIKA кнопкою нижче.',
     booking: 'Відкрийте онлайн-запис кнопкою нижче. Якщо потрібна допомога, оберіть «Зв’язатися з підтримкою».',
-    prices: 'Ціни та послуги відкриваються кнопкою нижче. Для індивідуальної рекомендації напишіть породу, розмір і стан шерсті улюбленця.',
+    prices:
+      'Ціни та послуги відкриваються кнопкою нижче. Для індивідуальної рекомендації напишіть породу, розмір і стан шерсті улюбленця.',
     address: 'Ми знаходимося в Лейпцигу. Адреса та години роботи відкриваються кнопкою нижче.',
     language: 'Відкрийте «Меню NIKA» і натисніть на глобус угорі, щоб обрати мову.',
     support: 'Запит передано до підтримки. Напишіть повідомлення в цей чат — ми відповімо тут.',
@@ -163,11 +174,15 @@ function buildMenuRemovalMarkup() {
 function buildWebAppMarkup(language) {
   const labels = MENU_COPY[language] || MENU_COPY.en;
   return {
-    inline_keyboard: [[{
-      text: labels.showcase,
-      web_app: { url: showcaseUrl(language) },
-      style: 'success',
-    }]],
+    inline_keyboard: [
+      [
+        {
+          text: labels.showcase,
+          web_app: { url: showcaseUrl(language) },
+          style: 'success',
+        },
+      ],
+    ],
   };
 }
 
@@ -196,7 +211,8 @@ function parseCallbackAction(data) {
 
   const [action, language] = value.split(':', 2);
   const supportedLanguage = LANGUAGE_OPTIONS.some(([code]) => code === language) ? language : '';
-  if (action === CALLBACK_ACTIONS.support && supportedLanguage) return { intent: 'support', language: supportedLanguage };
+  if (action === CALLBACK_ACTIONS.support && supportedLanguage)
+    return { intent: 'support', language: supportedLanguage };
   if (action === CALLBACK_ACTIONS.language && supportedLanguage) return { intent: 'menu', language: supportedLanguage };
   return null;
 }
@@ -260,7 +276,8 @@ async function handleBookingConfirmation(env, callbackQuery, callbackAction, mes
 
   let result;
   try {
-    result = await confirmGoogleBooking(env, callbackAction.requestId);
+    const track = createDeliveryTracker(env, { requestId: callbackAction.requestId, formType: 'booking' });
+    result = await track('calendar', () => confirmGoogleBooking(env, callbackAction.requestId));
   } catch {
     console.error('[telegram] booking confirmation request failed');
     result = { ok: false, reason: 'confirmation_pending', partial: true };
@@ -331,15 +348,29 @@ function resolveIntent(text) {
   const commandPayload = commandMatch?.[2] || '';
   if (command === 'start' && commandPayload === 'support') return 'support';
   if (
-    ['showcase', 'premium', 'app'].includes(command)
-    || /(?:premium|фирменн|премиум|інтерактивн).{0,40}(?:menü|menu|меню)/i.test(value)
-  ) return 'showcase';
+    ['showcase', 'premium', 'app'].includes(command) ||
+    /(?:premium|фирменн|премиум|інтерактивн).{0,40}(?:menü|menu|меню)/i.test(value)
+  )
+    return 'showcase';
   if (['start', 'menu'].includes(command) || /^\s*(?:menü|menu|меню)\s*$/i.test(value)) return 'menu';
   if (command === 'language' || /(?:^|\s)(?:language|sprache|язык|мова)(?:\s|$)/i.test(value)) return 'language';
-  if (['booking', 'book', 'termin'].includes(command) || /buch|termin|запис|заказ|booking|appointment/.test(value)) return 'booking';
-  if (['services', 'prices', 'price'].includes(command) || /preis|preise|leistung|prices|цены|услуг|послуг|service|стоим/.test(value)) return 'prices';
-  if (['address', 'location', 'hours'].includes(command) || /address|adresse|адрес|адреса|где|öffnungszeit|zeiten|часы|годин|врем|open/.test(value)) return 'address';
-  if (command === 'support' || /mitarbeiter|сотруд|оператор|человек|support|суппорт|підтрим|help|unterstützung/.test(value)) return 'support';
+  if (['booking', 'book', 'termin'].includes(command) || /buch|termin|запис|заказ|booking|appointment/.test(value))
+    return 'booking';
+  if (
+    ['services', 'prices', 'price'].includes(command) ||
+    /preis|preise|leistung|prices|цены|услуг|послуг|service|стоим/.test(value)
+  )
+    return 'prices';
+  if (
+    ['address', 'location', 'hours'].includes(command) ||
+    /address|adresse|адрес|адреса|где|öffnungszeit|zeiten|часы|годин|врем|open/.test(value)
+  )
+    return 'address';
+  if (
+    command === 'support' ||
+    /mitarbeiter|сотруд|оператор|человек|support|суппорт|підтрим|help|unterstützung/.test(value)
+  )
+    return 'support';
   if (/newsletter|подпис|підпис|рассыл|розсил|abonn/.test(value)) return 'newsletter';
   if (/instagram|facebook|tiktok|соцсет|соцмереж|social/.test(value)) return 'social';
   return 'fallback';
@@ -358,7 +389,10 @@ function looksGerman(text) {
 }
 
 function preferredLanguage(text, languageCode = '') {
-  const code = String(languageCode || '').trim().toLowerCase().split('-')[0];
+  const code = String(languageCode || '')
+    .trim()
+    .toLowerCase()
+    .split('-')[0];
   if (Object.hasOwn(AUTO_REPLY_COPY, code)) return code;
 
   const value = String(text || '');
@@ -368,7 +402,10 @@ function preferredLanguage(text, languageCode = '') {
 }
 
 function selectedLanguageFromText(text) {
-  const value = String(text || '').normalize('NFKC').trim().toLocaleLowerCase();
+  const value = String(text || '')
+    .normalize('NFKC')
+    .trim()
+    .toLocaleLowerCase();
   return LANGUAGE_OPTIONS.find(([, label]) => value === label.toLocaleLowerCase())?.[0] || '';
 }
 
@@ -424,7 +461,9 @@ function buildSupportNotification(sender, text, fromMenuButton = false) {
     `Клиент Telegram ID: ${cleanText(sender.id, 40)}`,
     '',
     text,
-  ].filter(line => line !== null).join('\n');
+  ]
+    .filter(line => line !== null)
+    .join('\n');
 }
 
 function extractClientId(message) {
@@ -482,13 +521,19 @@ export async function onRequest({ request, env }) {
     try {
       const acknowledgement = await answerTelegramCallbackQuery(env, {
         callbackQueryId: callbackQuery.id,
-        text: callbackAction?.intent === 'support' ? (MENU_COPY[reply.language] || MENU_COPY.en).supportAcknowledgement : '',
+        text:
+          callbackAction?.intent === 'support'
+            ? (MENU_COPY[reply.language] || MENU_COPY.en).supportAcknowledgement
+            : '',
       });
       if (!acknowledgement?.ok) {
-        console.error('[telegram] callback acknowledgement failed', JSON.stringify({
-          status: Number(acknowledgement?.status || 0),
-          skipped: Boolean(acknowledgement?.skipped),
-        }));
+        console.error(
+          '[telegram] callback acknowledgement failed',
+          JSON.stringify({
+            status: Number(acknowledgement?.status || 0),
+            skipped: Boolean(acknowledgement?.skipped),
+          })
+        );
       }
     } catch {
       console.error('[telegram] callback acknowledgement request failed');
@@ -594,9 +639,7 @@ export async function onRequest({ request, env }) {
 
   if (['menu', 'showcase', 'language'].includes(reply.intent) || reply.languageSelected) {
     try {
-      const menuRequests = [
-        setTelegramMenuButton(env, { chatId: String(message.chat.id), language: reply.language }),
-      ];
+      const menuRequests = [setTelegramMenuButton(env, { chatId: String(message.chat.id), language: reply.language })];
       if (reply.intent === 'menu') {
         menuRequests.push(setTelegramMenuButton(env));
       }
@@ -609,17 +652,25 @@ export async function onRequest({ request, env }) {
     }
   }
 
-  if (reply.intent !== 'language' && reply.intent !== 'showcase' && !reply.languageSelected && callbackAction?.intent !== 'menu') {
+  if (
+    reply.intent !== 'language' &&
+    reply.intent !== 'showcase' &&
+    !reply.languageSelected &&
+    callbackAction?.intent !== 'menu'
+  ) {
     try {
       const supportNotification = await sendTelegramMessage(env, {
         text: buildSupportNotification(sender, text, callbackAction?.intent === 'support'),
         category: classifyMessage(text),
       });
       if (!supportNotification?.ok) {
-        console.error('[telegram] support notification failed', JSON.stringify({
-          status: Number(supportNotification?.status || 0),
-          skipped: Boolean(supportNotification?.skipped),
-        }));
+        console.error(
+          '[telegram] support notification failed',
+          JSON.stringify({
+            status: Number(supportNotification?.status || 0),
+            skipped: Boolean(supportNotification?.skipped),
+          })
+        );
       }
     } catch {
       console.error('[telegram] support notification request failed');
@@ -635,10 +686,13 @@ export async function onRequest({ request, env }) {
         replyMarkup: reply.replyMarkup,
       });
       if (!autoReply?.ok) {
-        console.error('[telegram] auto reply failed', JSON.stringify({
-          status: Number(autoReply?.status || 0),
-          skipped: Boolean(autoReply?.skipped),
-        }));
+        console.error(
+          '[telegram] auto reply failed',
+          JSON.stringify({
+            status: Number(autoReply?.status || 0),
+            skipped: Boolean(autoReply?.skipped),
+          })
+        );
         return json({ ok: false }, 502);
       }
     } catch {
