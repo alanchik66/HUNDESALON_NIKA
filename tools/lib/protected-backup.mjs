@@ -94,6 +94,9 @@ async function securePath(target, directory = false) {
   );
 }
 
+// Recovery tooling shares the same strict file permissions as encrypted backups.
+export { securePath as secureBackupPath };
+
 async function dpapi(mode, value) {
   const script = [
     '$ErrorActionPreference="Stop";',
