@@ -210,7 +210,7 @@ test('real tar backup restores an isolated fixture and excludes regenerable dire
   await fs.mkdir(restored);
   const tar =
     process.platform === 'win32' ? path.join(process.env.SystemRoot || 'C:/Windows', 'System32/tar.exe') : 'tar';
-  const child = spawn(tar, ['-xf', '-', '-C', restored], { windowsHide: true, stdio: ['pipe', 'ignore', 'ignore'] });
+  const child = spawn(tar, ['-xzf', '-', '-C', restored], { windowsHide: true, stdio: ['pipe', 'ignore', 'ignore'] });
   const completion = new Promise((resolve, reject) => {
     child.once('error', reject);
     child.once('close', code => (code === 0 ? resolve() : reject(new Error('fixture restore failed'))));

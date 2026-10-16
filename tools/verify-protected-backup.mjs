@@ -14,7 +14,7 @@ export async function verifyProjectBackup({ file, keyProvider = windowsBackupKey
     throw new Error('Structured Git bundle restore is not supported by this CLI; use a separate Git restore verifier.');
   const tar =
     process.platform === 'win32' ? path.join(process.env.SystemRoot || 'C:/Windows', 'System32/tar.exe') : 'tar';
-  const child = spawn(tar, ['-tf', '-'], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+  const child = spawn(tar, ['-tzf', '-'], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
   child.stderr.resume();
   let entries = 0;
   let listingBytes = 0;
