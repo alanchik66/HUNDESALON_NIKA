@@ -48,6 +48,24 @@ cd integrations\devin-telegram
 npm start
 ```
 
+На Windows есть готовый запускатель (сам находит `node.exe` и конфиг в корне репо):
+
+```cmd
+integrations\devin-telegram\start-bot.cmd
+```
+
+### Автозапуск при входе в Windows (постоянная работа на своём ПК)
+
+Зарегистрируйте бота в Планировщике задач — он будет стартовать при входе в систему и переживать перезагрузки:
+
+```powershell
+schtasks /Create /TN "DevinTelegramBot" /SC ONLOGON /RL LIMITED /TR '"C:\путь\к\HUNDESALON_NIKA\integrations\devin-telegram\start-bot.cmd" --log'
+```
+
+Флаг `--log` пишет вывод бота в `.devin\telegram-bot.log`. Задача запускает `start-bot.cmd` напрямую — так путь с пробелами работает корректно (обёртка `cmd /c "..."` теряет кавычки при хранении в Планировщике). Проверьте, что задача записалась как надо: `schtasks /Query /TN DevinTelegramBot /XML`.
+
+Проверить: `schtasks /Run /TN "DevinTelegramBot"`, остановить: `schtasks /End /TN "DevinTelegramBot"`, удалить: `schtasks /Delete /TN "DevinTelegramBot"`. Запускайте только один экземпляр бота — Telegram long polling допускает одного слушателя на токен; второй процесс (например, облачный и локальный одновременно) начнёт перехватывать сообщения друг у друга.
+
 ## Команды бота
 
 - `/status` — состояние шлюза и активной сессии этого чата.
