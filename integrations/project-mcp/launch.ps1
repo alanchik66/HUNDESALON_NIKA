@@ -4,6 +4,10 @@ param(
   [switch]$PrepareOnly
 )
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
+[Console]::InputEncoding = [Text.UTF8Encoding]::new($false)
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
+$OutputEncoding = [Text.UTF8Encoding]::new($false)
 $stage = 'repository validation'
 try {
   $RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path

@@ -48,6 +48,12 @@ blueprint. The account MCP command must bootstrap the launcher from the same rev
 commit, not an ephemeral branch or a VM-only script. Do not add production secrets to
 the MCP environment or widen the installation scope.
 
+`bootstrap.ps1` is the auditable account-command payload. The Windows command embeds
+this source with an explicit commit using PowerShell's standard UTF-16 `-EncodedCommand`
+argument, avoiding cross-shell quoting. It discovers the checkout under `%USERPROFILE%`,
+validates its origin, fetches the immutable commit when needed and loads its launcher.
+No execution-policy bypass flag is used. Input/output are explicitly UTF-8.
+
 Rollback: restore the previous account command or stop this module. No Cloudflare,
 database, payment or production resource migration is involved. Do not merge or deploy
 the PR merely to test this local MCP.

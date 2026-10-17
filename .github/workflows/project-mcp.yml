@@ -35,6 +35,8 @@ jobs:
         run: |
           $tokens = $null
           $errors = $null
-          [void][System.Management.Automation.Language.Parser]::ParseFile(
-            (Join-Path $PWD 'launch.ps1'), [ref]$tokens, [ref]$errors)
-          if ($errors.Count) { throw 'Windows launcher syntax check failed' }
+          foreach ($script in @('launch.ps1', 'bootstrap.ps1')) {
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Join-Path $PWD $script), [ref]$tokens, [ref]$errors)
+            if ($errors.Count) { throw 'Windows launcher syntax check failed' }
+          }
