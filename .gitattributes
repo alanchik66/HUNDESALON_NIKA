@@ -30,7 +30,5 @@
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 graphify-out/graph.json merge=graphify
 
-3d-weather-codrops-main/dist-widget/react-vendor-DdSZTPSL.mjs text eol=crlf
-
 # This exact restoration delta retains upstream whitespace; verify.mjs checks its hash.
 docs/vendor/obsidian/periodic-notes.runtime.patch -whitespace
