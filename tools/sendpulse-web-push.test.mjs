@@ -39,7 +39,7 @@ test('production output has the exact opt-in loader and required CSP permissions
   ]) {
     assert.ok(headers.includes(origin), `missing CSP origin: ${origin}`);
   }
-  assert.match(headers, /\/sp-push-worker-fb\.js\n  Cache-Control: public, max-age=0, must-revalidate/);
+  assert.match(headers, /\/sp-push-worker-fb\.js\r?\n  Cache-Control: public, max-age=0, must-revalidate/);
 });
 
 test('each homepage offers an explicit localized opt-in and documents it locally', () => {
