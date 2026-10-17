@@ -1,6 +1,7 @@
 param(
   [Parameter(Mandatory = $true)][string]$RepoRoot,
-  [Parameter(Mandatory = $true)][ValidatePattern('^[0-9a-f]{40}$')][string]$Commit
+  [Parameter(Mandatory = $true)][ValidatePattern('^[0-9a-f]{40}$')][string]$Commit,
+  [switch]$PrepareOnly
 )
 $ErrorActionPreference = 'Stop'
 $stage = 'repository validation'
@@ -41,6 +42,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Pinned dependency installation failed' }
     [IO.File]::WriteAllText($marker, $hash, [Text.UTF8Encoding]::new($false))
   }
+  if ($PrepareOnly) { return }
   & $node (Join-Path $cache 'server.mjs') --root $RepoRoot
   exit $LASTEXITCODE
 } catch {

@@ -40,6 +40,9 @@ It fetches the pinned commit if absent, never switches branches or changes track
 and installs lockfile dependencies with lifecycle scripts disabled. Setup logs stay off
 stdout. Later starts reuse the dependency cache.
 
+Use `-PrepareOnly` during Windows environment setup to populate that immutable cache
+without starting the server. This is idempotent; an unchanged lockfile does not reinstall.
+
 The launcher uses the project's pinned Node/npm installed by the saved Devin Windows
 blueprint. The account MCP command must bootstrap the launcher from the same reviewed
 commit, not an ephemeral branch or a VM-only script. Do not add production secrets to
