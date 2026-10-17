@@ -1,7 +1,7 @@
 @echo off
 rem Запуск шлюза Telegram -> Devin из корня репозитория или из этой папки.
 rem Требует заполненный .devin\telegram-bot.env в корне репозитория.
-setlocal EnableDelayedExpansion
+setlocal
 
 set "SCRIPT_DIR=%~dp0"
 set "ENV_FILE=%SCRIPT_DIR%..\..\.devin\telegram-bot.env"
@@ -27,7 +27,7 @@ for %%p in (
   "%LOCALAPPDATA%\Programs\nodejs\node.exe"
   "C:\hostedtoolcache\node\24.0.1\x64\node.exe"
 ) do (
-  if not defined NODE_EXE if exist %%p set "NODE_EXE=%%~p"
+  if not defined NODE_EXE if exist %%p set "NODE_EXE=%%~fp"
 )
 
 :node_found
@@ -36,7 +36,12 @@ if not defined NODE_EXE (
   exit /b 1
 )
 
+set "LOG_FILE=%SCRIPT_DIR%..\..\.devin\telegram-bot.log"
 echo [start-bot] node: %NODE_EXE%
 echo [start-bot] env:  %ENV_FILE%
 cd /d "%SCRIPT_DIR%..\.."
-"%NODE_EXE%" --env-file="%ENV_FILE%" integrations\devin-telegram\bot.mjs
+if /i "%~1"=="--log" (
+  "%NODE_EXE%" --env-file="%ENV_FILE%" integrations\devin-telegram\bot.mjs >> "%LOG_FILE%" 2>&1
+) else (
+  "%NODE_EXE%" --env-file="%ENV_FILE%" integrations\devin-telegram\bot.mjs
+)

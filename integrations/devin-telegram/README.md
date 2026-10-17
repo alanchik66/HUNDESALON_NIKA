@@ -59,8 +59,10 @@ integrations\devin-telegram\start-bot.cmd
 Зарегистрируйте бота в Планировщике задач — он будет стартовать при входе в систему и переживать перезагрузки:
 
 ```powershell
-schtasks /Create /TN "DevinTelegramBot" /SC ONLOGON /RL LIMITED /TR "cmd /c \"C:\путь\к\HUNDESALON_NIKA\integrations\devin-telegram\start-bot.cmd\" >> \"C:\путь\к\HUNDESALON_NIKA\.devin\telegram-bot.log\" 2>&1"
+schtasks /Create /TN "DevinTelegramBot" /SC ONLOGON /RL LIMITED /TR '"C:\путь\к\HUNDESALON_NIKA\integrations\devin-telegram\start-bot.cmd" --log'
 ```
+
+Флаг `--log` пишет вывод бота в `.devin\telegram-bot.log`. Задача запускает `start-bot.cmd` напрямую — так путь с пробелами работает корректно (обёртка `cmd /c "..."` теряет кавычки при хранении в Планировщике). Проверьте, что задача записалась как надо: `schtasks /Query /TN DevinTelegramBot /XML`.
 
 Проверить: `schtasks /Run /TN "DevinTelegramBot"`, остановить: `schtasks /End /TN "DevinTelegramBot"`, удалить: `schtasks /Delete /TN "DevinTelegramBot"`. Запускайте только один экземпляр бота — Telegram long polling допускает одного слушателя на токен; второй процесс (например, облачный и локальный одновременно) начнёт перехватывать сообщения друг у друга.
 
