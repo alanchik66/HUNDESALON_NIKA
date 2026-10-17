@@ -8,10 +8,13 @@ import {
   migrateState,
   normalizeSessionId,
   parseCommand,
+  parseScope,
+  scopeKey,
   sessionLabel,
   shortId,
   splitMessage,
   stripBotMention,
+  topicName,
 } from "./bot.mjs";
 
 test("splitMessage разбивает длинный текст на части", () => {
@@ -85,7 +88,7 @@ test("shortId и sessionLabel помечают сессии", () => {
 
 test("migrateState переносит старый формат sessionId в чат владельца", () => {
   const migrated = migrateState({ sessionId: "devin-abc123" }, { ownerId: "269792140" });
-  assert.deepEqual(migrated.chats["269792140"], {
+  assert.deepEqual(migrated.chats["269792140:0"], {
     active: "devin-abc123",
     sessions: [{ id: "devin-abc123", title: null }],
   });
@@ -95,15 +98,32 @@ test("migrateState сохраняет чаты и поднимает active из
   const migrated = migrateState({
     chats: {
       "111": { sessions: [{ id: "devin-a", title: null }] },
-      "222": { active: "devin-b", sessions: [{ id: "devin-b", title: "T" }] },
+      "222:5": { active: "devin-b", sessions: [{ id: "devin-b", title: "T" }] },
     },
+    offset: 42,
   });
-  assert.equal(migrated.chats["111"].active, "devin-a");
-  assert.equal(migrated.chats["222"].active, "devin-b");
-  assert.equal(migrated.chats["222"].sessions[0].title, "T");
+  assert.equal(migrated.chats["111:0"].active, "devin-a");
+  assert.equal(migrated.chats["222:5"].active, "devin-b");
+  assert.equal(migrated.chats["222:5"].sessions[0].title, "T");
+  assert.equal(migrated.offset, 42);
 });
 
 test("migrateState без владельца не привязывает legacy-сессию", () => {
   const migrated = migrateState({ sessionId: "devin-abc123" }, {});
   assert.deepEqual(migrated.chats, {});
+});
+
+test("scopeKey и parseScope кодируют чат и топик", () => {
+  assert.equal(scopeKey(269792140, 0), "269792140:0");
+  assert.equal(scopeKey(-5378765672, 12), "-5378765672:12");
+  assert.equal(scopeKey("-5378765672"), "-5378765672:0");
+  assert.deepEqual(parseScope("-5378765672:12"), { chatId: "-5378765672", threadId: 12 });
+  assert.deepEqual(parseScope("269792140:0"), { chatId: "269792140", threadId: 0 });
+});
+
+test("topicName строит название темы из текста задачи", () => {
+  assert.equal(topicName("поправь футер на сайте"), "поправь футер на сайте");
+  assert.equal(topicName("первая строка\nвторая"), "первая строка");
+  assert.equal(topicName("   "), "Задача");
+  assert.ok(topicName("слово ".repeat(30)).length <= 64);
 });
