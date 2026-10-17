@@ -3656,6 +3656,8 @@
   const HEADER_WEATHER_READINGS_CACHE_TTL = 12 * 60 * 60 * 1000;
   let headerWeatherReverseGeoProxyUnavailable = false;
   const HEADER_WEATHER_GEO_TIMEOUT = 12000;
+  const HEADER_WEATHER_GEO_MOUNT_WAIT = 1500;
+  const HEADER_WEATHER_FALLBACK_LOCATION = '51.340632, 12.374733';
   const HEADER_WEATHER_STRICT_STYLE_LOCK = true;
   const HEADER_WEATHER_BERLIN_LABEL = 'Ber' + 'lin';
   const HEADER_WEATHER_BERLIN_ALIAS_KEY = ('ber' + 'lin').toLowerCase();
@@ -4532,7 +4534,7 @@
 
   function getHeaderWeatherLocationLabel(host) {
     const locationLabel = host?.shadowRoot?.querySelector('.weather-header-card__location')?.textContent?.trim();
-    return host?.dataset?.weatherLocation || locationLabel || '';
+    return host?.dataset?.weatherLocation || host?.dataset?.weatherFallbackLocation || locationLabel || '';
   }
 
   function formatHeaderWeatherCityDistrictDisplayLabel(value) {
@@ -13085,16 +13087,33 @@
     }
 
     try {
-      await applyHeaderWeatherAutoGeoLocation(host);
+      const geoResolution = applyHeaderWeatherAutoGeoLocation(host).catch(() => null);
+      const geoPendingMarker = {};
+      let geoWaitTimeoutId = 0;
+      const geoResult = await Promise.race([
+        geoResolution,
+        new Promise(resolve => {
+          geoWaitTimeoutId = window.setTimeout(() => resolve(geoPendingMarker), HEADER_WEATHER_GEO_MOUNT_WAIT);
+        }),
+      ]);
+      window.clearTimeout(geoWaitTimeoutId);
+      const geoPending = geoResult === geoPendingMarker;
 
       const weatherWidget = await loadHeaderWeatherWidgetLoader(host.dataset.widgetSrc);
       const requestedLocation = parseHeaderWeatherCoordinates(host.dataset.weatherLocation)
         ? host.dataset.weatherLocation
         : '';
-      // Geolocation was already requested above. If the visitor denied it (a normal
-      // mobile-browser path), let the widget use its Leipzig fallback instead of
-      // prompting a second time and logging a GeolocationPositionError.
-      const useDeviceGeolocation = !requestedLocation && host.dataset.weatherGeoResolved !== 'unavailable';
+      // Geolocation was already requested above. If the visitor denied it, has not
+      // answered the permission prompt yet, or it is still resolving, render the
+      // Leipzig fallback now instead of prompting a second time; a late position
+      // remounts the widget below.
+      const useDeviceGeolocation =
+        !geoPending && !requestedLocation && host.dataset.weatherGeoResolved !== 'unavailable';
+      if (requestedLocation) {
+        delete host.dataset.weatherFallbackLocation;
+      } else {
+        host.dataset.weatherFallbackLocation = HEADER_WEATHER_FALLBACK_LOCATION;
+      }
 
       const widgetApi = await weatherWidget.mountWeatherWidget(host, {
         variant: 'header',
@@ -13184,6 +13203,25 @@
       }
 
       emitHeaderWeatherEvent('site-shell:weather-ready', host.dataset.weatherExpanded === 'true');
+
+      if (geoPending) {
+        void geoResolution
+          .then(result => {
+            if (
+              !result?.coords ||
+              !host.isConnected ||
+              host.dataset.weatherMounted !== 'true' ||
+              host.__weatherWidgetInstance !== widgetApi ||
+              !parseHeaderWeatherCoordinates(host.dataset.weatherLocation)
+            ) {
+              return null;
+            }
+            headerWeatherCurrentCache.clear();
+            host.__weatherCurrentMeta = null;
+            return remountHeaderWeatherWidgetForGeo(host);
+          })
+          .catch(() => null);
+      }
     } catch {
       // console.error('Header weather widget failed to mount:', error);
       host.dataset.weatherMounted = 'false';
