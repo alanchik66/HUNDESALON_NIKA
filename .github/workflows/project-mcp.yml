@@ -29,3 +29,12 @@ jobs:
       - run: npm ci --ignore-scripts --no-fund
       - run: npm audit --audit-level=moderate
       - run: npm test
+      - name: Parse Windows launcher
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $PWD 'launch.ps1'), [ref]$tokens, [ref]$errors)
+          if ($errors.Count) { throw 'Windows launcher syntax check failed' }
