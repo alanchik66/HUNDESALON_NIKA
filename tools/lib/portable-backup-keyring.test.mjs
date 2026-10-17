@@ -14,7 +14,7 @@ const LIBRARY = path.resolve(import.meta.dirname, 'portable-backup-keyring.mjs')
 const VERIFIER = path.resolve(import.meta.dirname, '../verify-protected-backup.mjs');
 
 async function fixture(t) {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'nika-portable-keyring-test-'));
+  const directory = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'nika-portable-keyring-test-')));
   const recoverySecret = generateRecoveryCode();
   const keys = new Map([
     [randomUUID(), randomBytes(32)],
