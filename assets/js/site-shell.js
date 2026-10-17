@@ -3656,6 +3656,8 @@
   const HEADER_WEATHER_READINGS_CACHE_TTL = 12 * 60 * 60 * 1000;
   let headerWeatherReverseGeoProxyUnavailable = false;
   const HEADER_WEATHER_GEO_TIMEOUT = 12000;
+  const HEADER_WEATHER_GEO_MOUNT_WAIT = 1500;
+  const HEADER_WEATHER_FALLBACK_LOCATION = '51.340632, 12.374733';
   const HEADER_WEATHER_STRICT_STYLE_LOCK = true;
   const HEADER_WEATHER_BERLIN_LABEL = 'Ber' + 'lin';
   const HEADER_WEATHER_BERLIN_ALIAS_KEY = ('ber' + 'lin').toLowerCase();
@@ -4532,7 +4534,10 @@
 
   function getHeaderWeatherLocationLabel(host) {
     const locationLabel = host?.shadowRoot?.querySelector('.weather-header-card__location')?.textContent?.trim();
-    return host?.dataset?.weatherLocation || locationLabel || '';
+    if (host?.dataset?.weatherManualLocation === 'true') {
+      return locationLabel || '';
+    }
+    return host?.dataset?.weatherLocation || host?.dataset?.weatherFallbackLocation || locationLabel || '';
   }
 
   function formatHeaderWeatherCityDistrictDisplayLabel(value) {
@@ -7067,7 +7072,7 @@
   }
 
   async function resolveHeaderWeatherAstro(host) {
-    const locationLabel = host?.dataset?.weatherLocation || getHeaderWeatherLocationLabel(host);
+    const locationLabel = getHeaderWeatherLocationLabel(host);
     const locationMeta = await resolveHeaderWeatherLocationMeta(locationLabel);
     if (!locationMeta) {
       return null;
@@ -7426,7 +7431,7 @@
   }
 
   async function resolveHeaderWeatherCurrent(host) {
-    const locationLabel = host?.dataset?.weatherLocation || getHeaderWeatherLocationLabel(host);
+    const locationLabel = getHeaderWeatherLocationLabel(host);
     const locationMeta = await resolveHeaderWeatherLocationMeta(locationLabel);
     if (!locationMeta) {
       return null;
@@ -7466,9 +7471,19 @@
       return;
     }
 
-    const locationQuery = host.dataset.weatherLocation || getHeaderWeatherLocationLabel(host);
+    if (host.dataset.weatherManualLocation === 'true') {
+      return;
+    }
+
+    const widgetInstance = host.__weatherWidgetInstance;
+    const locationQuery = getHeaderWeatherLocationLabel(host);
     const locationMeta = await resolveHeaderWeatherLocationMeta(locationQuery).catch(() => null);
-    if (!locationMeta) {
+    if (
+      !locationMeta ||
+      host.__weatherWidgetInstance !== widgetInstance ||
+      host.dataset.weatherManualLocation === 'true' ||
+      getHeaderWeatherLocationLabel(host) !== locationQuery
+    ) {
       return;
     }
 
@@ -7530,6 +7545,16 @@
   function syncHeaderWeatherPublicLocationLabel(host) {
     const root = host?.shadowRoot;
     if (!root) {
+      return;
+    }
+
+    if (host.dataset.weatherManualLocation === 'true') {
+      const manualLocationLabel = getHeaderWeatherLocationLabel(host);
+      if (manualLocationLabel && manualLocationLabel !== host.__weatherManualLocationLabel) {
+        host.__weatherManualLocationLabel = manualLocationLabel;
+        host.__weatherCurrentMeta = null;
+        scheduleHeaderWeatherReadingsSync(host);
+      }
       return;
     }
 
@@ -12690,6 +12715,31 @@
       host.__weatherMenuStrictTapBound = true;
     }
 
+    if (!host.__weatherManualLocationBound) {
+      const markManualLocation = event => {
+        const target = event.target;
+        const selectsSuggestion =
+          event.type === 'click' &&
+          target?.closest?.('button.weather-location-selector__suggestion') &&
+          !target.closest('.weather-location-selector__suggestion--status');
+        const submitsSearch =
+          event.type === 'submit' && target?.querySelector?.('.weather-location-selector__input')?.value?.trim();
+        if (!selectsSuggestion && !submitsSearch) {
+          return;
+        }
+        host.dataset.weatherManualLocation = 'true';
+        host.__weatherManualLocationLabel = '';
+        host.__weatherCurrentMeta = null;
+        delete host.dataset.weatherFallbackLocation;
+        delete host.dataset.weatherResolvedLocationLabel;
+        delete host.dataset.weatherRegionLabel;
+        delete host.dataset.weatherAreaState;
+      };
+      host.shadowRoot.addEventListener('click', markManualLocation, true);
+      host.shadowRoot.addEventListener('submit', markManualLocation, true);
+      host.__weatherManualLocationBound = true;
+    }
+
     applyHeaderWeatherLocationSearchCopy(host);
     bindHeaderWeatherOutsideDismiss(host);
     bindHeaderWeatherDropdownScrollState(host);
@@ -12798,7 +12848,12 @@
   }
 
   async function refreshHeaderWeatherGeoLocation(host) {
-    if (!host || host.dataset.weatherMounted !== 'true' || document.hidden) {
+    if (
+      !host ||
+      host.dataset.weatherMounted !== 'true' ||
+      host.dataset.weatherManualLocation === 'true' ||
+      document.hidden
+    ) {
       return;
     }
 
@@ -13060,6 +13115,8 @@
     delete host.dataset.weatherRegionLabel;
     delete host.dataset.weatherAreaState;
     delete host.dataset.weatherExpanded;
+    delete host.dataset.weatherManualLocation;
+    delete host.dataset.weatherFallbackLocation;
     host.classList.remove('is-mounted');
     document.body?.classList.remove('header-weather-expanded');
     emitHeaderWeatherEvent('site-shell:weather-ready', false);
@@ -13085,16 +13142,33 @@
     }
 
     try {
-      await applyHeaderWeatherAutoGeoLocation(host);
+      const geoResolution = applyHeaderWeatherAutoGeoLocation(host).catch(() => null);
+      const geoPendingMarker = {};
+      let geoWaitTimeoutId = 0;
+      const geoResult = await Promise.race([
+        geoResolution,
+        new Promise(resolve => {
+          geoWaitTimeoutId = window.setTimeout(() => resolve(geoPendingMarker), HEADER_WEATHER_GEO_MOUNT_WAIT);
+        }),
+      ]);
+      window.clearTimeout(geoWaitTimeoutId);
+      const geoPending = geoResult === geoPendingMarker;
 
       const weatherWidget = await loadHeaderWeatherWidgetLoader(host.dataset.widgetSrc);
       const requestedLocation = parseHeaderWeatherCoordinates(host.dataset.weatherLocation)
         ? host.dataset.weatherLocation
         : '';
-      // Geolocation was already requested above. If the visitor denied it (a normal
-      // mobile-browser path), let the widget use its Leipzig fallback instead of
-      // prompting a second time and logging a GeolocationPositionError.
-      const useDeviceGeolocation = !requestedLocation && host.dataset.weatherGeoResolved !== 'unavailable';
+      // Geolocation was already requested above. If the visitor denied it, has not
+      // answered the permission prompt yet, or it is still resolving, render the
+      // Leipzig fallback now instead of prompting a second time; a late position
+      // remounts the widget below.
+      const useDeviceGeolocation =
+        !geoPending && !requestedLocation && host.dataset.weatherGeoResolved !== 'unavailable';
+      if (requestedLocation) {
+        delete host.dataset.weatherFallbackLocation;
+      } else {
+        host.dataset.weatherFallbackLocation = HEADER_WEATHER_FALLBACK_LOCATION;
+      }
 
       const widgetApi = await weatherWidget.mountWeatherWidget(host, {
         variant: 'header',
@@ -13184,6 +13258,30 @@
       }
 
       emitHeaderWeatherEvent('site-shell:weather-ready', host.dataset.weatherExpanded === 'true');
+
+      if (geoPending) {
+        void geoResolution
+          .then(result => {
+            if (
+              !result?.coords ||
+              !host.isConnected ||
+              host.dataset.weatherMounted !== 'true' ||
+              host.__weatherWidgetInstance !== widgetApi ||
+              host.dataset.weatherManualLocation === 'true' ||
+              host.dataset.weatherLocation === requestedLocation ||
+              !parseHeaderWeatherCoordinates(host.dataset.weatherLocation)
+            ) {
+              return null;
+            }
+            headerWeatherCurrentCache.clear();
+            host.__weatherCurrentMeta = null;
+            delete host.dataset.weatherResolvedLocationLabel;
+            delete host.dataset.weatherRegionLabel;
+            host.dataset.weatherAreaState = 'resolving';
+            return remountHeaderWeatherWidgetForGeo(host);
+          })
+          .catch(() => null);
+      }
     } catch {
       // console.error('Header weather widget failed to mount:', error);
       host.dataset.weatherMounted = 'false';
