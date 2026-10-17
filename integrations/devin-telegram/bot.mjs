@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // Защищённый шлюз Telegram -> облачная сессия Devin (REST API v1).
+// У каждого чата своя привязанная сессия; ответы Devin помечаются названием сессии.
 // Запуск: node --env-file=.devin/telegram-bot.env integrations/devin-telegram/bot.mjs
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -57,20 +58,41 @@ export function isOutboundUserMessage(msg) {
 
 export function parseCommand(text) {
   const [raw = "", ...rest] = String(text ?? "").trim().split(/\s+/);
-  const command = raw.startsWith("/") ? raw.slice(1).split("@")[0].toLowerCase() : null;
-  return { command, arg: rest.join(" ") };
+  const [name = "", target = ""] = raw.startsWith("/")
+    ? raw.slice(1).split("@")
+    : [null, null];
+  return { command: name ? name.toLowerCase() : null, arg: rest.join(" "), target };
+}
+
+export function stripBotMention(text, botUsername) {
+  if (!botUsername) return String(text ?? "").trim();
+  const mention = new RegExp(`@${botUsername}`, "gi");
+  return String(text ?? "").replace(mention, " ").replace(/\s+/g, " ").trim();
+}
+
+export function shortId(sessionId) {
+  const id = String(sessionId ?? "");
+  return id.startsWith("devin-") ? `devin-${id.slice(6, 14)}` : id;
+}
+
+export function sessionLabel(session) {
+  const title = String(session?.title ?? "").trim();
+  return title || shortId(session?.id);
 }
 
 function buildHelp() {
   return [
-    "Шлюз Telegram ↔ Devin.",
-    "Любой текст без команды отправляется в привязанную сессию Devin (или создаёт новую).",
+    "Шлюз Telegram ↔ Devin. У каждого чата — своя сессия.",
+    "Любой текст без команды отправляется в сессию этого чата (или создаёт новую).",
+    "В группах пишите @<бот> <задача> или отвечайте на сообщения бота.",
     "",
-    "/status — состояние шлюза и привязанной сессии",
+    "/status — состояние шлюза и сессии этого чата",
+    "/list — сессии этого чата",
+    "/use <N|devin-...> — переключить активную сессию чата",
     "/new — следующий запрос создаст новую сессию Devin",
     "/bind <devin-...|URL> — привязать существующую сессию",
-    "/cancel — остановить привязанную сессию (требует /cancel confirm)",
-    "/whoami — ваш Telegram user ID",
+    "/cancel — остановить активную сессию (требует /cancel confirm)",
+    "/whoami — ваш Telegram user ID и chat ID",
     "/help — эта справка",
   ].join("\n");
 }
@@ -90,12 +112,32 @@ function loadConfig(env) {
   };
 }
 
-function loadState(stateFile, seedSessionId) {
+export function migrateState(parsed, { seedSessionId = null, ownerId = null } = {}) {
+  const chats =
+    parsed?.chats && typeof parsed.chats === "object" && !Array.isArray(parsed.chats)
+      ? parsed.chats
+      : {};
+  const legacy = normalizeSessionId(parsed?.sessionId || "") || seedSessionId;
+  if (legacy && ownerId && !chats[String(ownerId)]) {
+    chats[String(ownerId)] = {
+      active: legacy,
+      sessions: [{ id: legacy, title: null }],
+    };
+  }
+  for (const entry of Object.values(chats)) {
+    if (!entry || typeof entry !== "object") continue;
+    if (!Array.isArray(entry.sessions)) entry.sessions = [];
+    if (!entry.active && entry.sessions.length > 0) entry.active = entry.sessions[0].id;
+  }
+  return { chats };
+}
+
+export function loadState(stateFile, seedSessionId, ownerId) {
   try {
     const parsed = JSON.parse(readFileSync(stateFile, "utf8"));
-    return { sessionId: normalizeSessionId(parsed.sessionId || "") || seedSessionId };
+    return migrateState(parsed, { seedSessionId, ownerId });
   } catch {
-    return { sessionId: seedSessionId };
+    return migrateState({}, { seedSessionId, ownerId });
   }
 }
 
@@ -110,8 +152,30 @@ function saveState(stateFile, state) {
 
 export function makeGateway({ config, state, fetchImpl = fetch, log = console.error }) {
   let running = true;
-  let pendingCancel = false;
-  let activePoll = null;
+  const pendingCancel = new Set();
+  const activePolls = new Map();
+  const titleCache = new Map();
+
+  function chatEntry(chatId) {
+    const key = String(chatId);
+    if (!state.chats[key]) state.chats[key] = { active: null, sessions: [] };
+    const entry = state.chats[key];
+    if (!Array.isArray(entry.sessions)) entry.sessions = [];
+    return entry;
+  }
+
+  function findSession(entry, sessionId) {
+    return entry.sessions.find((s) => s.id === sessionId) ?? null;
+  }
+
+  function activeSession(chatId) {
+    const entry = chatEntry(chatId);
+    return entry.active ? findSession(entry, entry.active) : null;
+  }
+
+  function labelFor(sessionId) {
+    return titleCache.get(sessionId) || shortId(sessionId);
+  }
 
   async function telegram(method, body) {
     const res = await fetchImpl(`${config.telegramApi}/bot${config.token}/${method}`, {
@@ -153,65 +217,87 @@ export function makeGateway({ config, state, fetchImpl = fetch, log = console.er
   }
 
   function bind(chatId, sessionId) {
-    state.sessionId = sessionId;
-    pendingCancel = false;
+    const entry = chatEntry(chatId);
+    if (!findSession(entry, sessionId)) {
+      entry.sessions.push({ id: sessionId, title: titleCache.get(sessionId) ?? null });
+    }
+    entry.active = sessionId;
+    pendingCancel.delete(String(chatId));
     saveState(config.stateFile, state);
     ensurePolling(chatId, sessionId);
   }
 
   function ensurePolling(chatId, sessionId) {
-    if (activePoll?.sessionId === sessionId) return;
-    activePoll = { sessionId, done: pollSession(chatId, sessionId).catch((error) => {
-      log("Ошибка поллинга сессии:", error.message);
-    }) };
+    if (activePolls.has(sessionId)) return;
+    activePolls.set(sessionId, { chatId });
+    pollSession(chatId, sessionId)
+      .catch((error) => {
+        log("Ошибка поллинга сессии:", error.message);
+      })
+      .finally(() => activePolls.delete(sessionId));
   }
 
   async function pollSession(chatId, sessionId) {
     const seen = new Set();
+    let snapshot;
     try {
-      const first = await devinApi(`/v1/sessions/${sessionId}`);
-      for (const msg of first.messages ?? []) seen.add(msg.event_id);
+      snapshot = await devinApi(`/v1/sessions/${sessionId}`);
+      for (const msg of snapshot.messages ?? []) seen.add(msg.event_id);
     } catch (error) {
       await send(chatId, `Не удалось прочитать сессию ${sessionId}: ${error.message}`);
       return;
     }
+    updateTitle(chatId, sessionId, snapshot);
     let announcedEnd = false;
-    while (running && state.sessionId === sessionId) {
+    while (running && chatEntry(chatId).active === sessionId) {
       await delay(config.pollMs);
-      let snapshot;
       try {
         snapshot = await devinApi(`/v1/sessions/${sessionId}`);
       } catch (error) {
         log("poll error:", error.message);
         continue;
       }
+      updateTitle(chatId, sessionId, snapshot);
+      const label = labelFor(sessionId);
       for (const msg of snapshot.messages ?? []) {
         if (seen.has(msg.event_id)) continue;
         seen.add(msg.event_id);
         if (isOutboundUserMessage(msg)) continue;
         try {
-          await send(chatId, msg.message);
+          await send(chatId, `[${label}] ${msg.message}`);
         } catch (error) {
           log("Не удалось переслать сообщение в Telegram:", error.message);
         }
       }
       if (!announcedEnd && TERMINAL_STATUSES.has(snapshot.status_enum)) {
         announcedEnd = true;
-        await send(chatId, `Сессия ${sessionId} завершилась (статус: ${snapshot.status_enum}).`);
+        await send(chatId, `[${label}] Сессия завершилась (статус: ${snapshot.status_enum}).`);
       }
       if (announcedEnd) break;
     }
   }
 
+  function updateTitle(chatId, sessionId, snapshot) {
+    const title = String(snapshot?.title ?? "").trim();
+    if (!title) return;
+    const entry = chatEntry(chatId);
+    const session = findSession(entry, sessionId);
+    if (titleCache.get(sessionId) === title && session?.title === title) return;
+    titleCache.set(sessionId, title);
+    if (session) session.title = title;
+    saveState(config.stateFile, state);
+  }
+
   async function handleText(chatId, text) {
     try {
-      if (state.sessionId) {
-        await devinApi(`/v1/sessions/${state.sessionId}/message`, {
+      const entry = chatEntry(chatId);
+      if (entry.active) {
+        await devinApi(`/v1/sessions/${entry.active}/message`, {
           method: "POST",
           body: { message: text },
         });
-        await send(chatId, `Отправлено в сессию ${state.sessionId}.`);
-        ensurePolling(chatId, state.sessionId);
+        await send(chatId, `Отправлено в [${labelFor(entry.active)}].`);
+        ensurePolling(chatId, entry.active);
       } else {
         const created = await devinApi("/v1/sessions", {
           method: "POST",
@@ -220,7 +306,7 @@ export function makeGateway({ config, state, fetchImpl = fetch, log = console.er
         const sessionId = normalizeSessionId(created?.session_id);
         if (!sessionId) throw new Error("Devin API не вернул session_id");
         bind(chatId, sessionId);
-        await send(chatId, `Создана сессия ${created.url ?? sessionId}`);
+        await send(chatId, `Создана сессия [${labelFor(sessionId)}] ${created.url ?? sessionId}`);
       }
     } catch (error) {
       await send(chatId, `Ошибка Devin: ${error.message}`);
@@ -228,33 +314,77 @@ export function makeGateway({ config, state, fetchImpl = fetch, log = console.er
   }
 
   async function handleCommand(chatId, userId, command, arg) {
+    const entry = chatEntry(chatId);
     switch (command) {
       case "start":
       case "help":
         await send(chatId, buildHelp());
         return;
       case "whoami":
-        await send(chatId, `Ваш Telegram user ID: ${userId}`);
+        await send(chatId, `Telegram user ID: ${userId}\nChat ID: ${chatId}`);
         return;
       case "status": {
+        const session = activeSession(chatId);
+        if (!session) {
+          await send(chatId, `Шлюз работает. В этом чате нет активной сессии (chat ID: ${chatId}).`);
+          return;
+        }
         let extra = "";
-        if (state.sessionId) {
-          try {
-            const s = await devinApi(`/v1/sessions/${state.sessionId}`);
-            extra = ` Статус: ${s.status_enum ?? s.status}.`;
-          } catch (error) {
-            extra = ` (${error.message})`;
-          }
+        try {
+          const s = await devinApi(`/v1/sessions/${session.id}`);
+          extra = ` Статус: ${s.status_enum ?? s.status}.`;
+          updateTitle(chatId, session.id, s);
+        } catch (error) {
+          extra = ` (${error.message})`;
         }
         await send(
           chatId,
-          `Шлюз работает. Сессия: ${state.sessionId ?? "не привязана"}.${extra}`,
+          `Шлюз работает. Активная сессия: [${sessionLabel(session)}] ${session.id}.${extra}`,
         );
         return;
       }
+      case "list": {
+        if (entry.sessions.length === 0) {
+          await send(chatId, "В этом чате пока нет сессий. Отправьте текст — создам новую.");
+          return;
+        }
+        const lines = entry.sessions.map((s, i) => {
+          const marker = s.id === entry.active ? "→" : `${i + 1}.`;
+          return `${marker} [${sessionLabel(s)}] ${s.id}`;
+        });
+        await send(chatId, `Сессии этого чата:\n${lines.join("\n")}\nПереключить: /use N`);
+        return;
+      }
+      case "use": {
+        const argId = normalizeSessionId(arg);
+        let target = null;
+        if (argId) {
+          target = findSession(entry, argId);
+          if (!target) {
+            bind(chatId, argId);
+            await send(chatId, `Привязана сессия [${labelFor(argId)}].`);
+            return;
+          }
+        } else {
+          const n = Number(arg);
+          if (Number.isInteger(n) && n >= 1 && n <= entry.sessions.length) {
+            target = entry.sessions[n - 1];
+          }
+        }
+        if (!target) {
+          await send(chatId, "Формат: /use N (номер из /list) или /use devin-<id>");
+          return;
+        }
+        entry.active = target.id;
+        pendingCancel.delete(String(chatId));
+        saveState(config.stateFile, state);
+        ensurePolling(chatId, target.id);
+        await send(chatId, `Активная сессия: [${sessionLabel(target)}].`);
+        return;
+      }
       case "new":
-        state.sessionId = null;
-        pendingCancel = false;
+        entry.active = null;
+        pendingCancel.delete(String(chatId));
         saveState(config.stateFile, state);
         await send(chatId, "Привязка снята. Следующий запрос создаст новую сессию Devin.");
         return;
@@ -265,30 +395,31 @@ export function makeGateway({ config, state, fetchImpl = fetch, log = console.er
           return;
         }
         bind(chatId, sessionId);
-        await send(chatId, `Привязана сессия ${sessionId}.`);
+        await send(chatId, `Привязана сессия [${labelFor(sessionId)}].`);
         return;
       }
       case "cancel": {
-        if (!state.sessionId) {
-          await send(chatId, "Нет привязанной сессии.");
+        if (!entry.active) {
+          await send(chatId, "В этом чате нет активной сессии.");
           return;
         }
         if (arg.toLowerCase() !== "confirm") {
-          pendingCancel = true;
+          pendingCancel.add(String(chatId));
           await send(
             chatId,
-            `Остановка сессии ${state.sessionId} необратима. Подтвердите: /cancel confirm`,
+            `Остановка сессии [${labelFor(entry.active)}] необратима. Подтвердите: /cancel confirm`,
           );
           return;
         }
+        const sessionId = entry.active;
         try {
-          await devinApi(`/v1/sessions/${state.sessionId}`, { method: "DELETE" });
-          await send(chatId, `Сессия ${state.sessionId} остановлена.`);
+          await devinApi(`/v1/sessions/${sessionId}`, { method: "DELETE" });
+          await send(chatId, `Сессия [${labelFor(sessionId)}] остановлена.`);
         } catch (error) {
           await send(chatId, `Ошибка остановки: ${error.message}`);
         }
-        state.sessionId = null;
-        pendingCancel = false;
+        entry.active = null;
+        pendingCancel.delete(String(chatId));
         saveState(config.stateFile, state);
         return;
       }
@@ -300,7 +431,7 @@ export function makeGateway({ config, state, fetchImpl = fetch, log = console.er
   async function handleMessage(msg) {
     const chatId = msg?.chat?.id;
     const userId = msg?.from?.id;
-    const text = msg?.text;
+    let text = msg?.text;
     if (chatId === undefined || userId === undefined || typeof text !== "string") return;
     if (config.ownerId && !isOwner(userId, config.ownerId)) {
       await send(chatId, `Доступ запрещён. Ваш Telegram user ID: ${userId}`);
@@ -316,13 +447,27 @@ export function makeGateway({ config, state, fetchImpl = fetch, log = console.er
         return;
       }
     }
-    const { command, arg } = parseCommand(text);
+    const { command, arg, target } = parseCommand(text);
+    const chatType = msg.chat.type;
+    if (chatType !== "private") {
+      const botUsername = config.botUsername;
+      const replyToBot = msg.reply_to_message?.from?.id === config.botId;
+      const mentioned = botUsername && !command
+        ? text.toLowerCase().includes(`@${botUsername.toLowerCase()}`)
+        : false;
+      if (command && target && botUsername && target.toLowerCase() !== botUsername.toLowerCase()) {
+        return; // команда адресована другому боту
+      }
+      if (!command && !replyToBot && !mentioned) return; // чужой разговор в группе
+      if (mentioned) text = stripBotMention(text, botUsername);
+      if (!text) return;
+    }
     if (command) {
       await handleCommand(chatId, userId, command, arg);
       return;
     }
     if (!config.devinKey) {
-      await send(chatId, "DEVIN_API_KEY не задан — добавьте ключ сервисного пользователя в конфигурацию.");
+      await send(chatId, "DEVIN_API_KEY не задан — добавьте персональный ключ Devin API в конфигурацию.");
       return;
     }
     await handleText(chatId, text);
@@ -330,17 +475,30 @@ export function makeGateway({ config, state, fetchImpl = fetch, log = console.er
 
   async function run() {
     try {
+      const me = await telegram("getMe");
+      config.botId = me?.id;
+      config.botUsername = me?.username ?? "";
+    } catch (error) {
+      log("getMe:", error.message);
+    }
+    try {
       await telegram("setMyCommands", {
         commands: [
-          { command: "status", description: "Состояние шлюза" },
+          { command: "status", description: "Состояние шлюза и сессии чата" },
+          { command: "list", description: "Сессии этого чата" },
+          { command: "use", description: "Переключить сессию" },
           { command: "new", description: "Новая сессия Devin" },
           { command: "bind", description: "Привязать сессию" },
           { command: "cancel", description: "Остановить сессию" },
-          { command: "whoami", description: "Показать user ID" },
+          { command: "whoami", description: "Показать ID" },
         ],
       });
     } catch (error) {
       log("setMyCommands:", error.message);
+    }
+    // Возобновить поллинг активных сессий после рестарта.
+    for (const [chatId, entry] of Object.entries(state.chats ?? {})) {
+      if (entry?.active) ensurePolling(chatId, entry.active);
     }
     let offset = 0;
     while (running) {
@@ -373,7 +531,7 @@ export function makeGateway({ config, state, fetchImpl = fetch, log = console.er
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 if (isMain) {
   const config = loadConfig(process.env);
-  const state = loadState(config.stateFile, config.seedSessionId);
+  const state = loadState(config.stateFile, config.seedSessionId, config.ownerId);
   const gateway = makeGateway({ config, state });
   process.on("SIGINT", () => gateway.stop());
   process.on("SIGTERM", () => gateway.stop());
