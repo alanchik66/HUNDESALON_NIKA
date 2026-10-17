@@ -1,8 +1,17 @@
 @echo off
 rem Запуск шлюза Telegram -> Devin из корня репозитория или из этой папки.
 rem Требует заполненный .devin\telegram-bot.env в корне репозитория.
-setlocal
+rem --log: весь вывод (включая ошибки запуска) уходит в .devin\telegram-bot.log — для Планировщика задач.
 
+if /i "%~1"=="--log" (
+  call :main >> "%~dp0..\..\.devin\telegram-bot.log" 2>&1
+  exit /b %ERRORLEVEL%
+)
+call :main
+exit /b %ERRORLEVEL%
+
+:main
+setlocal
 set "SCRIPT_DIR=%~dp0"
 set "ENV_FILE=%SCRIPT_DIR%..\..\.devin\telegram-bot.env"
 
@@ -36,12 +45,8 @@ if not defined NODE_EXE (
   exit /b 1
 )
 
-set "LOG_FILE=%SCRIPT_DIR%..\..\.devin\telegram-bot.log"
 echo [start-bot] node: %NODE_EXE%
 echo [start-bot] env:  %ENV_FILE%
 cd /d "%SCRIPT_DIR%..\.."
-if /i "%~1"=="--log" (
-  "%NODE_EXE%" --env-file="%ENV_FILE%" integrations\devin-telegram\bot.mjs >> "%LOG_FILE%" 2>&1
-) else (
-  "%NODE_EXE%" --env-file="%ENV_FILE%" integrations\devin-telegram\bot.mjs
-)
+"%NODE_EXE%" --env-file="%ENV_FILE%" integrations\devin-telegram\bot.mjs
+exit /b %ERRORLEVEL%
