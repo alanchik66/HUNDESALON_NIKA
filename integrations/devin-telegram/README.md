@@ -14,7 +14,7 @@
 ## Настройка
 
 1. В Telegram откройте `@BotFather` → `/newbot` → получите токен.
-2. В Devin откройте **Settings → Devin API → Service users**, создайте сервисного пользователя и скопируйте ключ `cog_...` (показывается один раз).
+2. В Devin откройте **Settings → Devin API → API keys (legacy) → Personal API key → View key** и скопируйте ключ `apk_user_...`. Важно: API v1 принимает только персональный ключ — токены сервисных пользователей (вкладка Service users) отклоняются с `403 Unauthorized`.
 3. Скопируйте конфиг:
 
    ```powershell
@@ -27,7 +27,7 @@
    |---|---|
    | `TELEGRAM_BOT_TOKEN` | токен от BotFather |
    | `TELEGRAM_OWNER_ID` | ваш числовой Telegram user ID (можно оставить пустым — см. ниже) |
-   | `DEVIN_API_KEY` | ключ сервисного пользователя `cog_...` |
+   | `DEVIN_API_KEY` | персональный ключ `apk_user_...` (см. шаг 2) |
    | `DEVIN_SESSION_ID` | опционально: `devin-...` для привязки существующей сессии |
 
 5. Узнать `TELEGRAM_OWNER_ID`: оставьте поле пустым, запустите бота, отправьте ему `/whoami` — он вернёт ваш ID. Впишите его и перезапустите.
