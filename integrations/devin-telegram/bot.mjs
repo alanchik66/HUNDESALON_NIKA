@@ -258,10 +258,13 @@ export function makeGateway({ config, state, fetchImpl = fetch, log = console.er
   function bind(scope, sessionId, { fresh = false } = {}) {
     const entry = chatEntry(scope);
     let session = findSession(entry, sessionId);
+    // Помечаем origin только у сессий, созданных этим шлюзом (fresh),
+    // а не у привязанных извне через /bind — иначе метка врёт об источнике.
     if (!session) {
-      session = { id: sessionId, title: titleCache.get(sessionId) ?? null, origin: config.origin };
+      session = { id: sessionId, title: titleCache.get(sessionId) ?? null };
+      if (fresh) session.origin = config.origin;
       entry.sessions.push(session);
-    } else if (!session.origin) {
+    } else if (fresh && !session.origin) {
       session.origin = config.origin;
     }
     entry.active = sessionId;
