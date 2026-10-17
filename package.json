@@ -173,7 +173,7 @@
     "graphify:check": "graphify check-update .",
     "graphify:diagnose": "graphify diagnose multigraph --graph graphify-out/graph.json",
     "graphify:hook": "graphify hook install",
-    "lint:tools": "eslint \"tools/**/*.{js,mjs,cjs}\" \"3d-weather-codrops-main/scripts/**/*.mjs\" docs/vendor/obsidian/verify.mjs",
+    "lint:tools": "eslint \"tools/**/*.{js,mjs,cjs}\" \"3d-weather-codrops-main/scripts/**/*.mjs\" docs/vendor/obsidian/verify.mjs \"integrations/project-mcp/*.mjs\"",
     "backup:d1": "node tools/backup-d1.mjs",
     "backup:verify": "node tools/verify-protected-backup.mjs",
     "review:chat-learning": "node tools/chat-learning-review.mjs",

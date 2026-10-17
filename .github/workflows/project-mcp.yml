@@ -1,0 +1,40 @@
+name: Project MCP
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'integrations/project-mcp/**'
+      - '.github/workflows/project-mcp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: integrations/project-mcp
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: integrations/project-mcp/package-lock.json
+      - run: npm ci --ignore-scripts --no-fund
+      - run: npm audit --audit-level=moderate
+      - run: npm test
+      - name: Parse Windows launcher
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $PWD 'launch.ps1'), [ref]$tokens, [ref]$errors)
+          if ($errors.Count) { throw 'Windows launcher syntax check failed' }
