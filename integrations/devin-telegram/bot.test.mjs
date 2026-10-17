@@ -7,6 +7,7 @@ import {
   isValidSessionId,
   migrateState,
   normalizeSessionId,
+  originTag,
   parseCommand,
   parseScope,
   scopeKey,
@@ -126,4 +127,12 @@ test("topicName строит название темы из текста зад�
   assert.equal(topicName("первая строка\nвторая"), "первая строка");
   assert.equal(topicName("   "), "Задача");
   assert.ok(topicName("слово ".repeat(30)).length <= 64);
+});
+
+test("originTag помечает локальные и облачные сессии", () => {
+  assert.equal(originTag({ origin: "cloud" }), " · облако");
+  assert.equal(originTag({ origin: "local" }), " · локально");
+  assert.equal(originTag({ origin: "vm-01" }), " · vm-01");
+  assert.equal(originTag({}), "");
+  assert.equal(originTag(null), "");
 });

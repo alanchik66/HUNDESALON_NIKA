@@ -82,6 +82,13 @@ export function sessionLabel(session) {
   return title || shortId(session?.id);
 }
 
+// Метка происхождения сессии: какой шлюз её создал (cloud VM или локальный ПК).
+export function originTag(session) {
+  const origin = String(session?.origin ?? "").trim();
+  if (!origin) return "";
+  return ` · ${{ cloud: "облако", local: "локально" }[origin] || origin}`;
+}
+
 // Область привязки: "<chatId>:<threadId>" (threadId = 0 для чата без топика).
 export function scopeKey(chatId, threadId) {
   return `${chatId}:${Number(threadId) || 0}`;
@@ -126,6 +133,8 @@ function loadConfig(env) {
     pollMs: Number(env.POLL_INTERVAL_MS) || 4000,
     stateFile: env.STATE_FILE || DEFAULT_STATE_FILE,
     seedSessionId: normalizeSessionId(env.DEVIN_SESSION_ID || ""),
+    // Где работает шлюз: "local" (ПК пользователя) или "cloud" (облачная VM).
+    origin: env.BOT_ORIGIN?.trim() || "local",
   };
 }
 
@@ -198,8 +207,8 @@ export function makeGateway({ config, state, fetchImpl = fetch, log = console.er
 
   function labelFor(scope, sessionId) {
     const entry = chatEntry(scope);
-    if (entry.name) return entry.name;
-    return titleCache.get(sessionId) || shortId(sessionId);
+    const name = entry.name || titleCache.get(sessionId) || shortId(sessionId);
+    return name + originTag(findSession(entry, sessionId));
   }
 
   async function telegram(method, body) {
@@ -244,34 +253,44 @@ export function makeGateway({ config, state, fetchImpl = fetch, log = console.er
     return data;
   }
 
-  function bind(scope, sessionId) {
+  // fresh=true для только что созданных сессий: их первые ответы надо переслать,
+  // а не считать старыми.
+  function bind(scope, sessionId, { fresh = false } = {}) {
     const entry = chatEntry(scope);
-    if (!findSession(entry, sessionId)) {
-      entry.sessions.push({ id: sessionId, title: titleCache.get(sessionId) ?? null });
+    let session = findSession(entry, sessionId);
+    if (!session) {
+      session = { id: sessionId, title: titleCache.get(sessionId) ?? null, origin: config.origin };
+      entry.sessions.push(session);
+    } else if (!session.origin) {
+      session.origin = config.origin;
     }
     entry.active = sessionId;
     pendingCancel.delete(scope);
     persist();
-    ensurePolling(scope, sessionId);
+    ensurePolling(scope, sessionId, fresh);
   }
 
-  function ensurePolling(scope, sessionId) {
+  function ensurePolling(scope, sessionId, fresh = false) {
     const key = `${scope}|${sessionId}`;
     if (activePolls.has(key)) return;
     activePolls.set(key, {});
-    pollSession(scope, sessionId)
+    pollSession(scope, sessionId, { fresh })
       .catch((error) => {
         log("Ошибка поллинга сессии:", error.message);
       })
       .finally(() => activePolls.delete(key));
   }
 
-  async function pollSession(scope, sessionId) {
+  async function pollSession(scope, sessionId, { fresh = false } = {}) {
     const seen = new Set();
     let snapshot;
     try {
       snapshot = await devinApi(`/v1/sessions/${sessionId}`);
-      for (const msg of snapshot.messages ?? []) seen.add(msg.event_id);
+      // Для существующих сессий снимок — базовая линия: старую историю не шлём.
+      // Для новых сессий снимок может уже содержать первый ответ Devin — его шлём.
+      if (!fresh) {
+        for (const msg of snapshot.messages ?? []) seen.add(msg.event_id);
+      }
     } catch (error) {
       await send(scope, `Не удалось прочитать сессию ${sessionId}: ${error.message}`);
       return;
@@ -337,7 +356,7 @@ export function makeGateway({ config, state, fetchImpl = fetch, log = console.er
         });
         const sessionId = normalizeSessionId(created?.session_id);
         if (!sessionId) throw new Error("Devin API не вернул session_id");
-        bind(scope, sessionId);
+        bind(scope, sessionId, { fresh: true });
         await send(scope, `Создана сессия [${labelFor(scope, sessionId)}] ${created.url ?? sessionId}`);
       }
     } catch (error) {
@@ -382,7 +401,7 @@ export function makeGateway({ config, state, fetchImpl = fetch, log = console.er
         }
         const lines = entry.sessions.map((s, i) => {
           const marker = s.id === entry.active ? "→" : `${i + 1}.`;
-          return `${marker} [${sessionLabel(s)}] ${s.id}`;
+          return `${marker} [${sessionLabel(s)}${originTag(s)}] ${s.id}`;
         });
         await send(scope, `Сессии:\n${lines.join("\n")}\nПереключить: /use N`);
         return;
@@ -411,7 +430,7 @@ export function makeGateway({ config, state, fetchImpl = fetch, log = console.er
         pendingCancel.delete(scope);
         persist();
         ensurePolling(scope, target.id);
-        await send(scope, `Активная сессия: [${sessionLabel(target)}].`);
+        await send(scope, `Активная сессия: [${sessionLabel(target)}${originTag(target)}].`);
         return;
       }
       case "new":
@@ -530,28 +549,35 @@ export function makeGateway({ config, state, fetchImpl = fetch, log = console.er
 
     if (!mentioned && !replyToBot) return; // чужой разговор в группе
 
-    // Новая задача на верхнем уровне группы: пробуем создать отдельную тему.
     if (!config.devinKey) {
       await send(scope, "DEVIN_API_KEY не задан — добавьте персональный ключ Devin API в конфигурацию.");
       return;
     }
-    try {
-      const topic = await telegram("createForumTopic", {
-        chat_id: String(chatId),
-        name: topicName(text),
-      });
-      const topicId = Number(topic?.message_thread_id) || 0;
+    const generalScope = scopeKey(chatId, 0);
+    // Если в General выбрана активная сессия (/bind или /use) — задача идёт в неё.
+    if (!chatEntry(generalScope).active) {
+      // Новая задача: пробуем создать отдельную тему с названием из текста.
+      let topicId = 0;
+      let topicTitle = "";
+      try {
+        const topic = await telegram("createForumTopic", {
+          chat_id: String(chatId),
+          name: topicName(text),
+        });
+        topicId = Number(topic?.message_thread_id) || 0;
+        topicTitle = String(topic?.name ?? "");
+      } catch (error) {
+        log("createForumTopic (группа не в режиме тем?):", error.message);
+      }
       if (topicId) {
         const topicScope = scopeKey(chatId, topicId);
-        chatEntry(topicScope).name = topic.name || topicName(text);
+        chatEntry(topicScope).name = topicTitle || topicName(text);
         persist();
         await handleText(topicScope, text);
         return;
       }
-    } catch (error) {
-      log("createForumTopic (группа не в режиме тем?):", error.message);
     }
-    await handleText(scope, text);
+    await handleText(generalScope, text);
   }
 
   async function run() {
