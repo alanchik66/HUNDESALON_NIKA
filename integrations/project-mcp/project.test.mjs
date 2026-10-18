@@ -56,6 +56,7 @@ test('denies hard links, binary content, invalid UTF-8 and oversized files', asy
   await fs.writeFile(path.join(root, 'invalid.txt'), Buffer.from([0xff]));
   await fs.writeFile(path.join(root, 'large.txt'), Buffer.alloc(262145, 65));
   for (const name of ['linked.txt', 'binary.txt', 'invalid.txt', 'large.txt']) await assert.rejects(() => reader.read(name));
+  assert.deepEqual((await reader.list()).entries.map(entry => entry.name), ['README.md']);
 });
 
 test('caps directory results and marks truncation', async t => {

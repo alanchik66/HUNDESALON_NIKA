@@ -45,6 +45,23 @@ export async function createProjectReader(directory) {
     return { filename: real, stat };
   }
 
+  async function read(value) {
+    if (!isTextFile(path.basename(value))) throw new Error('Only source text files are permitted');
+    const { filename, stat } = await resolve(value);
+    if (!stat.isFile() || stat.nlink !== 1 || stat.size > MAX_BYTES) throw new Error('File is not permitted');
+    const handle = await fs.open(filename, 'r');
+    try {
+      const opened = await handle.stat();
+      if (opened.dev !== stat.dev || opened.ino !== stat.ino || opened.nlink !== 1 || opened.size > MAX_BYTES) {
+        throw new Error('File changed during access');
+      }
+      const buffer = Buffer.alloc(MAX_BYTES + 1);
+      const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+      if (bytesRead > MAX_BYTES || buffer.subarray(0, bytesRead).includes(0)) throw new Error('File is not permitted');
+      return new TextDecoder('utf-8', { fatal: true }).decode(buffer.subarray(0, bytesRead));
+    } finally { await handle.close(); }
+  }
+
   return {
     async list(value = '.') {
       const { filename, stat } = await resolve(value);
@@ -58,10 +75,9 @@ export async function createProjectReader(directory) {
           if (++scanned > 1000 || files.length >= MAX_ENTRIES) { truncated = true; break; }
           try {
             const relative = value === '.' ? entry.name : `${value}/${entry.name}`;
-            permittedParts(relative);
-            if (entry.isSymbolicLink()) continue;
-            if (!entry.isDirectory() && (!entry.isFile() || !isTextFile(entry.name))) continue;
-            files.push({ name: entry.name, type: entry.isDirectory() ? 'directory' : 'file' });
+            const { stat: candidate } = await resolve(relative);
+            if (!candidate.isDirectory()) await read(relative);
+            files.push({ name: entry.name, type: candidate.isDirectory() ? 'directory' : 'file' });
           } catch {}
         }
       } finally {
@@ -70,21 +86,6 @@ export async function createProjectReader(directory) {
       files.sort((a, b) => a.name.localeCompare(b.name));
       return { entries: files, truncated };
     },
-    async read(value) {
-      if (!isTextFile(path.basename(value))) throw new Error('Only source text files are permitted');
-      const { filename, stat } = await resolve(value);
-      if (!stat.isFile() || stat.nlink !== 1 || stat.size > MAX_BYTES) throw new Error('File is not permitted');
-      const handle = await fs.open(filename, 'r');
-      try {
-        const opened = await handle.stat();
-        if (opened.dev !== stat.dev || opened.ino !== stat.ino || opened.nlink !== 1 || opened.size > MAX_BYTES) {
-          throw new Error('File changed during access');
-        }
-        const buffer = Buffer.alloc(MAX_BYTES + 1);
-        const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
-        if (bytesRead > MAX_BYTES || buffer.subarray(0, bytesRead).includes(0)) throw new Error('File is not permitted');
-        return new TextDecoder('utf-8', { fatal: true }).decode(buffer.subarray(0, bytesRead));
-      } finally { await handle.close(); }
-    },
+    read,
   };
 }

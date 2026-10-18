@@ -38,7 +38,10 @@ There is no network listener or separate API key.
 runtime inputs directly from that Git object into a commit-scoped LocalAppData cache.
 It fetches the pinned commit if absent, never switches branches or changes tracked files,
 and installs lockfile dependencies with lifecycle scripts disabled. Setup logs stay off
-stdout. Later starts reuse the dependency cache.
+stdout. Later starts reuse the dependency cache. Node and npm versions also come from
+the pinned Git object, never the active checkout. The completion marker is removed
+before reinstalling dependencies and written only after npm succeeds, so interrupted
+installs are retried rather than treated as complete.
 
 Use `-PrepareOnly` during Windows environment setup to populate that immutable cache
 without starting the server. This is idempotent; an unchanged lockfile does not reinstall.

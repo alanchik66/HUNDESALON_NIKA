@@ -6,7 +6,7 @@
   "engines": { "node": ">=24" },
   "scripts": {
     "start": "node server.mjs",
-    "test": "node --test *.test.mjs"
+    "test": "node --test project.test.mjs launch.test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.1"
