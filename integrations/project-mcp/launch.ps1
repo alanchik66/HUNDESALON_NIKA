@@ -46,8 +46,21 @@ try {
     $npmCli = Join-Path $env:LOCALAPPDATA "devin-node\npm-$($Matches[1])\node_modules\npm\bin\npm-cli.js"
     $stage = 'dependency installation'
     if (Test-Path -LiteralPath $marker) { Remove-Item -LiteralPath $marker -Force }
-    & $node $npmCli ci --prefix $cache --ignore-scripts --no-audit --no-fund 2>&1 | ForEach-Object { [Console]::Error.WriteLine($_.ToString()) }
-    if ($LASTEXITCODE -ne 0) { throw 'Pinned dependency installation failed' }
+    $install = [Diagnostics.ProcessStartInfo]::new()
+    $install.FileName = $node
+    $install.Arguments = "`"$npmCli`" ci --prefix `"$cache`" --ignore-scripts --no-audit --no-fund"
+    $install.UseShellExecute = $false
+    $install.RedirectStandardOutput = $true
+    $install.RedirectStandardError = $true
+    $process = [Diagnostics.Process]::Start($install)
+    try {
+      $stdout = $process.StandardOutput.ReadToEndAsync()
+      $stderr = $process.StandardError.ReadToEndAsync()
+      $process.WaitForExit()
+      [Console]::Error.Write($stdout.GetAwaiter().GetResult())
+      [Console]::Error.Write($stderr.GetAwaiter().GetResult())
+      if ($process.ExitCode -ne 0) { throw 'Pinned dependency installation failed' }
+    } finally { $process.Dispose() }
     [IO.File]::WriteAllText($marker, $hash, [Text.UTF8Encoding]::new($false))
   }
   if ($PrepareOnly) { return }

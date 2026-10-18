@@ -7,8 +7,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
-test('Windows launcher uses pinned toolchain and invalidates completion marker before a failed reinstall', { skip: process.platform !== 'win32' }, async t => {
-  const directory = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'nika-mcp-launch-')));
+test('Windows launcher pins its toolchain, retries failed installs and accepts successful npm stderr', { skip: process.platform !== 'win32' }, async t => {
+  const directory = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'nika mcp launch-')));
   t.after(() => fs.rm(directory, { recursive: true, force: true }));
   const commit = '1'.repeat(40);
   const cache = path.join(directory, 'devin-project-mcp', commit);
@@ -73,4 +73,20 @@ test('Windows launcher uses pinned toolchain and invalidates completion marker b
   assert.equal(retried.status, 1, retried.stderr);
   assert.match(retried.stderr, /dependency installation/);
   await assert.rejects(() => fs.stat(marker), { code: 'ENOENT' });
+  await fs.writeFile(npm, `
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const cache = process.argv[process.argv.indexOf('--prefix') + 1];
+    const sdk = path.join(cache, 'node_modules', '@modelcontextprotocol', 'sdk');
+    fs.mkdirSync(sdk, { recursive: true });
+    fs.writeFileSync(path.join(sdk, 'package.json'), '{}');
+    process.stdout.write('installed successfully\\n'.repeat(4096));
+    process.stderr.write('npm notice diagnostic\\n'.repeat(4096));
+  `);
+  const installed = run();
+  assert.equal(installed.status, 0, installed.stderr);
+  assert.equal(installed.stdout, '');
+  assert.match(installed.stderr, /installed successfully/);
+  assert.match(installed.stderr, /npm notice diagnostic/);
+  assert.equal(await fs.readFile(marker, 'utf8'), hash);
 });
