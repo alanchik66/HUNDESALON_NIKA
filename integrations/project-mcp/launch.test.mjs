@@ -56,7 +56,8 @@ test('Windows launcher uses pinned toolchain and invalidates completion marker b
     & ([scriptblock]::Create([IO.File]::ReadAllText(${quote(launcher)}))) -RepoRoot ${quote(directory)} -Commit '${commit}' -PrepareOnly
     exit $LASTEXITCODE
   `;
-  const run = () => spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], { encoding: 'utf8', timeout: 30000 });
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => key.toLowerCase() !== 'psmodulepath'));
+  const run = () => spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], { env, encoding: 'utf8', timeout: 30000 });
   const cached = run();
   assert.equal(cached.status, 0, cached.stderr);
   assert.equal(cached.stdout, '');
