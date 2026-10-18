@@ -50,7 +50,7 @@
       "source": "src/weather-service.mjs",
       "output": "weatherService-iG8lrujy.mjs",
       "baselineSha256": "4e1172083c348cf56f9bdd659495b1b81dec38872815cfe549763192504a1310",
-      "canonicalSha256": "37ffbbc22a6a3552d8bb7b7075de86123bc26241c34d5f2f982b3f8f267e57e4",
+      "canonicalSha256": "d303c23f9ea757ff767831042053cbadb0b30cadca380dd967903bed3dd4c669",
       "recoveredNames": {
         "Xn": "weatherService",
         "Qn": "isPartlyCloudy",
@@ -66,7 +66,7 @@
       "source": "src/widget.mjs",
       "output": "weather-widget.es.js",
       "baselineSha256": "11a30d167a9b9a21724da59e07a94ddfcc2dff2186c7946af7294c1bb3609cf7",
-      "canonicalSha256": "84ec240b735e0b295e53c15a53cc14566947e78de63e284c64e9fe7cadbb4092",
+      "canonicalSha256": "9577416f1391aff539499e2a08ad7799fe97dc35e3b7191db74388efd74db3bc",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -110,7 +110,7 @@
       "source": "src/header-preview.mjs",
       "output": "weather-widget.header-panel-preview.es.js",
       "baselineSha256": "b850b368a2d72b4110c329fed9440dd4c70bea7f6287da6e872986271bb360c2",
-      "canonicalSha256": "55d0037d8e54b878b0768034f3abf26d1dfa0e77ee896bbe1f62fcfeeb28aa0d",
+      "canonicalSha256": "d8a36546360fa567e6e15f481c4bf32716c0438f618bf580082d30ae7c8d0cb2",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -154,7 +154,7 @@
       "source": "src/header-dropdown.mjs",
       "output": "weather-widget.header-panel-dropdown-scene.es.js",
       "baselineSha256": "6336c75ab083aafd574ec0ae1344ac7ac515782231d1658dfe950e2a032175f7",
-      "canonicalSha256": "c51b4cef1d855bbb82072083ec4a39ae33787d1a9e9df7571be8a6fffe190efb",
+      "canonicalSha256": "43d52dbb3108ceed41ee5a12d3ef57073e230e836da787dcbc65bd00ac7efeea",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
