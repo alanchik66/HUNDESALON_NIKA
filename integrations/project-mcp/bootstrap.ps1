@@ -12,7 +12,10 @@ try {
   }
   & git -C $repo rev-parse --verify --quiet "$Commit`^{commit}" | Out-Null
   if ($LASTEXITCODE -ne 0) {
-    & git -C $repo fetch --no-tags origin $Commit 2>&1 | Out-Null
+    & {
+      $ErrorActionPreference = 'Continue'
+      & git -C $repo fetch --no-tags origin $Commit 2>&1 | Out-Null
+    }
     if ($LASTEXITCODE -ne 0) { throw 'Pinned source fetch failed' }
   }
   $source = & git -C $repo show "$Commit`:integrations/project-mcp/launch.ps1"

@@ -23,7 +23,10 @@ try {
   & git -C $RepoRoot rev-parse --verify --quiet "$Commit`^{commit}" | Out-Null
   if ($LASTEXITCODE -ne 0) {
     $stage = 'pinned source fetch'
-    & git -C $RepoRoot fetch --no-tags origin $Commit 2>&1 | Out-Null
+    & {
+      $ErrorActionPreference = 'Continue'
+      & git -C $RepoRoot fetch --no-tags origin $Commit 2>&1 | Out-Null
+    }
     if ($LASTEXITCODE -ne 0) { throw 'Pinned source fetch failed' }
   }
   $cache = Join-Path $env:LOCALAPPDATA "devin-project-mcp\$Commit"
