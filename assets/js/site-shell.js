@@ -4532,9 +4532,21 @@
     }
   }
 
+  function isHeaderWeatherManualCoordinateLocation(host) {
+    return (
+      host?.dataset?.weatherManualLocation === 'true' &&
+      host.dataset.weatherGeoSource === 'manual' &&
+      Boolean(parseHeaderWeatherCoordinates(host.dataset.weatherLocation))
+    );
+  }
+
+  function isHeaderWeatherTextManualLocation(host) {
+    return host?.dataset?.weatherManualLocation === 'true' && !isHeaderWeatherManualCoordinateLocation(host);
+  }
+
   function getHeaderWeatherLocationLabel(host) {
     const locationLabel = host?.shadowRoot?.querySelector('.weather-header-card__location')?.textContent?.trim();
-    if (host?.dataset?.weatherManualLocation === 'true') {
+    if (isHeaderWeatherTextManualLocation(host)) {
       return locationLabel || '';
     }
     return host?.dataset?.weatherLocation || host?.dataset?.weatherFallbackLocation || locationLabel || '';
@@ -5780,7 +5792,7 @@
   function resolveHeaderWeatherReadings(host) {
     hydrateHeaderWeatherReadingsFromCache(host);
 
-    const manualLocation = host?.dataset?.weatherManualLocation === 'true';
+    const manualLocation = isHeaderWeatherTextManualLocation(host);
     const widgetReadings = extractHeaderWeatherReadingsFromHost(host);
     const apiReadings = manualLocation ? null : buildHeaderWeatherReadingsFromMeta(host);
     const apiReadingsAreFresh = apiReadings && isHeaderWeatherCurrentMetaFresh(host?.__weatherCurrentMeta);
@@ -7511,7 +7523,7 @@
       return;
     }
 
-    if (host.dataset.weatherManualLocation === 'true') {
+    if (isHeaderWeatherTextManualLocation(host)) {
       return;
     }
 
@@ -7521,7 +7533,7 @@
     if (
       !locationMeta ||
       host.__weatherWidgetInstance !== widgetInstance ||
-      host.dataset.weatherManualLocation === 'true' ||
+      isHeaderWeatherTextManualLocation(host) ||
       getHeaderWeatherLocationLabel(host) !== locationQuery
     ) {
       return;
@@ -7588,7 +7600,7 @@
       return;
     }
 
-    if (host.dataset.weatherManualLocation === 'true') {
+    if (isHeaderWeatherTextManualLocation(host)) {
       const manualLocationLabel = getHeaderWeatherLocationLabel(host);
       if (manualLocationLabel && manualLocationLabel !== host.__weatherManualLocationLabel) {
         host.__weatherManualLocationLabel = manualLocationLabel;
@@ -12768,6 +12780,18 @@
         if (!selectsSuggestion && !submitsSearch) {
           return;
         }
+        const suggestion = selectsSuggestion
+          ? target.closest('button.weather-location-selector__suggestion')
+          : findHeaderWeatherSubmittedSuggestion(target);
+        const suggestionCoords = parseHeaderWeatherCoordinates(
+          `${suggestion?.dataset?.latitude ?? ''}, ${suggestion?.dataset?.longitude ?? ''}`
+        );
+        if (suggestionCoords) {
+          event.preventDefault();
+          event.stopPropagation();
+          void selectHeaderWeatherManualCoordinates(host, suggestionCoords);
+          return;
+        }
         host.dataset.weatherManualLocation = 'true';
         host.__weatherManualLocationLabel = '';
         host.__weatherCurrentMeta = null;
@@ -12860,6 +12884,56 @@
     scheduleHeaderWeatherReadingsSync(host);
   }
 
+  function findHeaderWeatherSubmittedSuggestion(form) {
+    const query = String(form?.querySelector?.('.weather-location-selector__input')?.value || '')
+      .trim()
+      .toLocaleLowerCase();
+    const suggestions = Array.from(
+      form
+        ?.closest?.('.weather-location-selector')
+        ?.querySelectorAll?.(
+          'button.weather-location-selector__suggestion[data-latitude][data-longitude]:not(.weather-location-selector__suggestion--status)'
+        ) || []
+    );
+    if (!query || !suggestions.length) {
+      return null;
+    }
+
+    const normalize = value =>
+      String(value || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLocaleLowerCase();
+    return (
+      suggestions.find(button => {
+        const name = normalize(button.querySelector('strong')?.textContent);
+        const area = normalize(button.querySelector('span')?.textContent);
+        return name === query || (area && `${name}, ${area}` === query);
+      }) || suggestions[0]
+    );
+  }
+
+  async function selectHeaderWeatherManualCoordinates(host, coords) {
+    if (!host?.isConnected || host.dataset.weatherMounted !== 'true') {
+      return;
+    }
+
+    headerWeatherCurrentCache.clear();
+    host.__weatherCurrentMeta = null;
+    host.__weatherManualLocationLabel = '';
+    host.dataset.weatherManualLocation = 'true';
+    host.dataset.weatherLocation = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
+    host.dataset.weatherGeoSource = 'manual';
+    host.dataset.weatherGeoUpdatedAt = String(Date.now());
+    host.dataset.weatherAreaState = 'resolving';
+    delete host.dataset.weatherGeoAccuracy;
+    delete host.dataset.weatherGeoTargetMet;
+    delete host.dataset.weatherFallbackLocation;
+    delete host.dataset.weatherResolvedLocationLabel;
+    delete host.dataset.weatherRegionLabel;
+    await remountHeaderWeatherWidgetForGeo(host);
+  }
+
   async function remountHeaderWeatherWidgetForGeo(host) {
     const weatherLocation = String(host?.dataset?.weatherLocation || '').trim();
     if (!host || !parseHeaderWeatherCoordinates(weatherLocation)) {
@@ -12877,6 +12951,7 @@
       weatherResolvedLocationLabel: host.dataset.weatherResolvedLocationLabel || '',
       weatherRegionLabel: host.dataset.weatherRegionLabel || '',
       weatherAreaState: host.dataset.weatherAreaState || 'resolving',
+      weatherManualLocation: host.dataset.weatherManualLocation || '',
     };
 
     unmountHeaderWeatherWidget();
