@@ -5561,13 +5561,38 @@
     return `${Math.round(numericValue)}%`;
   }
 
+  function getHeaderWeatherReadingsLocationKey(host) {
+    const label = getHeaderWeatherLocationLabel(host);
+    const coords = parseHeaderWeatherCoordinates(label);
+    if (coords) {
+      return `${coords.latitude.toFixed(2)},${coords.longitude.toFixed(2)}`;
+    }
+    return label.toLocaleLowerCase().replace(/\s+/g, ' ').trim();
+  }
+
+  function resetHeaderWeatherReadingsState(host) {
+    if (!host) {
+      return;
+    }
+
+    delete host.__weatherHumidityValue;
+    delete host.__weatherPressureMmHg;
+    delete host.__weatherPressureValue;
+    delete host.__weatherReadingsSnapshot;
+    delete host.__weatherReadingsCache;
+    host.__weatherReadingsCacheLoaded = false;
+  }
+
   function readHeaderWeatherReadingsCache(host) {
     if (!host) {
       return null;
     }
 
+    const locationKey = getHeaderWeatherReadingsLocationKey(host);
+    const matchesLocation = cache => !cache?.location || !locationKey || cache.location === locationKey;
+
     if (host.__weatherReadingsCacheLoaded) {
-      return host.__weatherReadingsCache || null;
+      return matchesLocation(host.__weatherReadingsCache) ? host.__weatherReadingsCache || null : null;
     }
 
     host.__weatherReadingsCacheLoaded = true;
@@ -5586,6 +5611,7 @@
       }
 
       host.__weatherReadingsCache = {
+        location: typeof payload?.location === 'string' ? payload.location : '',
         humidity: normalizeHeaderWeatherHumidityValue(payload?.humidity),
         pressureMmHg:
           Number.isFinite(Number(payload?.pressureMmHg)) && Number(payload.pressureMmHg) > 0
@@ -5594,14 +5620,19 @@
         updatedAt: Number(payload?.updatedAt) || Date.now(),
       };
 
-      return host.__weatherReadingsCache;
+      return matchesLocation(host.__weatherReadingsCache) ? host.__weatherReadingsCache : null;
     } catch {
       return null;
     }
   }
 
   function writeHeaderWeatherReadingsCache(host, nextValues) {
-    if (!host || !nextValues || typeof nextValues !== 'object') {
+    if (
+      !host ||
+      !nextValues ||
+      typeof nextValues !== 'object' ||
+      host.dataset?.weatherManualLocation === 'true'
+    ) {
       return;
     }
 
@@ -5619,6 +5650,7 @@
           : null;
 
     const payload = {
+      location: getHeaderWeatherReadingsLocationKey(host),
       humidity,
       pressureMmHg,
       updatedAt: Date.now(),
@@ -5636,7 +5668,7 @@
   }
 
   function hydrateHeaderWeatherReadingsFromCache(host) {
-    if (!host) {
+    if (!host || host.dataset?.weatherManualLocation === 'true') {
       return;
     }
 
@@ -5748,8 +5780,9 @@
   function resolveHeaderWeatherReadings(host) {
     hydrateHeaderWeatherReadingsFromCache(host);
 
+    const manualLocation = host?.dataset?.weatherManualLocation === 'true';
     const widgetReadings = extractHeaderWeatherReadingsFromHost(host);
-    const apiReadings = buildHeaderWeatherReadingsFromMeta(host);
+    const apiReadings = manualLocation ? null : buildHeaderWeatherReadingsFromMeta(host);
     const apiReadingsAreFresh = apiReadings && isHeaderWeatherCurrentMetaFresh(host?.__weatherCurrentMeta);
     const resolvedReadings = apiReadingsAreFresh
       ? {
@@ -5772,6 +5805,10 @@
 
     if (!resolvedReadings) {
       return null;
+    }
+
+    if (manualLocation) {
+      return resolvedReadings;
     }
 
     if (!resolvedReadings.humidity) {
@@ -5911,6 +5948,9 @@
     }
     if (readings.condition) {
       host.dataset.weatherCondition = readings.condition;
+    }
+    if (host.dataset.weatherManualLocation === 'true') {
+      return;
     }
     if (readings.humidity) {
       host.__weatherHumidityValue = readings.humidity;
@@ -7553,6 +7593,7 @@
       if (manualLocationLabel && manualLocationLabel !== host.__weatherManualLocationLabel) {
         host.__weatherManualLocationLabel = manualLocationLabel;
         host.__weatherCurrentMeta = null;
+        resetHeaderWeatherReadingsState(host);
         scheduleHeaderWeatherReadingsSync(host);
       }
       return;
@@ -12730,6 +12771,7 @@
         host.dataset.weatherManualLocation = 'true';
         host.__weatherManualLocationLabel = '';
         host.__weatherCurrentMeta = null;
+        resetHeaderWeatherReadingsState(host);
         delete host.dataset.weatherFallbackLocation;
         delete host.dataset.weatherResolvedLocationLabel;
         delete host.dataset.weatherRegionLabel;
@@ -12838,6 +12880,7 @@
     };
 
     unmountHeaderWeatherWidget();
+    resetHeaderWeatherReadingsState(host);
     Object.entries(geoDataset).forEach(([key, value]) => {
       if (value) {
         host.dataset[key] = value;
