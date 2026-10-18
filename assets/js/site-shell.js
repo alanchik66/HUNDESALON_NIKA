@@ -5565,7 +5565,7 @@
     const label = getHeaderWeatherLocationLabel(host);
     const coords = parseHeaderWeatherCoordinates(label);
     if (coords) {
-      return `${coords.latitude.toFixed(2)},${coords.longitude.toFixed(2)}`;
+      return `${coords.latitude.toFixed(5)},${coords.longitude.toFixed(5)}`;
     }
     return label.toLocaleLowerCase().replace(/\s+/g, ' ').trim();
   }
