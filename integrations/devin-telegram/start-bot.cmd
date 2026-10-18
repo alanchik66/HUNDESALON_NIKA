@@ -5,9 +5,9 @@ rem --log: весь вывод (включая ошибки запуска) ух
 
 if /i "%~1"=="--log" (
   call :main >> "%~dp0..\..\.devin\telegram-bot.log" 2>&1
-  exit /b %ERRORLEVEL%
+) else (
+  call :main
 )
-call :main
 exit /b %ERRORLEVEL%
 
 :main
