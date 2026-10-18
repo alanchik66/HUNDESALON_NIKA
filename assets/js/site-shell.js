@@ -4488,6 +4488,9 @@
       }
 
       const coords = await resolveHeaderWeatherBrowserGeoCoords({ force });
+      if (host.dataset.weatherManualLocation === 'true') {
+        return { changed: false, coords: null, distanceMeters: 0 };
+      }
       host.dataset.weatherGeoCheckedAt = String(Date.now());
       if (!coords) {
         delete host.dataset.weatherLocation;
@@ -12771,6 +12774,16 @@
     if (!host.__weatherManualLocationBound) {
       const markManualLocation = event => {
         const target = event.target;
+        if (
+          event.type === 'click' &&
+          host.dataset.weatherManualLocation === 'true' &&
+          target?.closest?.('button.weather-location-selector__current')
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+          void restoreHeaderWeatherDeviceLocation(host);
+          return;
+        }
         const selectsSuggestion =
           event.type === 'click' &&
           target?.closest?.('button.weather-location-selector__suggestion') &&
@@ -12791,6 +12804,10 @@
           event.stopPropagation();
           void selectHeaderWeatherManualCoordinates(host, suggestionCoords);
           return;
+        }
+        if (host.dataset.weatherGeoSource === 'manual') {
+          delete host.dataset.weatherLocation;
+          delete host.dataset.weatherGeoSource;
         }
         host.dataset.weatherManualLocation = 'true';
         host.__weatherManualLocationLabel = '';
@@ -12932,6 +12949,20 @@
     delete host.dataset.weatherResolvedLocationLabel;
     delete host.dataset.weatherRegionLabel;
     await remountHeaderWeatherWidgetForGeo(host);
+  }
+
+  async function restoreHeaderWeatherDeviceLocation(host) {
+    if (!host?.isConnected || host.dataset.weatherMounted !== 'true') {
+      return;
+    }
+
+    const pageLang = normalizeLangCode(host.__weatherLocale || host.dataset.weatherLocale || 'en');
+    headerWeatherCurrentCache.clear();
+    host.__weatherCurrentMeta = null;
+    host.__weatherManualLocationLabel = '';
+    unmountHeaderWeatherWidget();
+    resetHeaderWeatherReadingsState(host);
+    await mountHeaderWeatherWidget(pageLang);
   }
 
   async function remountHeaderWeatherWidgetForGeo(host) {
