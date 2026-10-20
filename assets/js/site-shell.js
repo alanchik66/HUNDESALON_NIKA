@@ -12774,14 +12774,16 @@
     if (!host.__weatherManualLocationBound) {
       const markManualLocation = event => {
         const target = event.target;
-        if (
-          event.type === 'click' &&
-          host.dataset.weatherManualLocation === 'true' &&
-          target?.closest?.('button.weather-location-selector__current')
-        ) {
+        const currentLocationButton =
+          event.type === 'click' ? target?.closest?.('button.weather-location-selector__current') : null;
+        if (currentLocationButton && host.__weatherCurrentLocationPassthrough) {
+          host.__weatherCurrentLocationPassthrough = false;
+          return;
+        }
+        if (currentLocationButton && host.dataset.weatherManualLocation === 'true') {
           event.preventDefault();
           event.stopPropagation();
-          void restoreHeaderWeatherDeviceLocation(host);
+          void restoreHeaderWeatherDeviceLocation(host, currentLocationButton);
           return;
         }
         const selectsSuggestion =
@@ -12951,18 +12953,52 @@
     await remountHeaderWeatherWidgetForGeo(host);
   }
 
-  async function restoreHeaderWeatherDeviceLocation(host) {
+  async function restoreHeaderWeatherDeviceLocation(host, currentLocationButton) {
     if (!host?.isConnected || host.dataset.weatherMounted !== 'true') {
       return;
     }
 
-    const pageLang = normalizeLangCode(host.__weatherLocale || host.dataset.weatherLocale || 'en');
+    const widgetInstance = host.__weatherWidgetInstance;
+    const coords = await resolveHeaderWeatherBrowserGeoCoords({ force: true }).catch(() => null);
+    if (
+      !host.isConnected ||
+      host.dataset.weatherMounted !== 'true' ||
+      host.__weatherWidgetInstance !== widgetInstance ||
+      host.dataset.weatherManualLocation !== 'true'
+    ) {
+      return;
+    }
+
+    if (!coords) {
+      if (currentLocationButton?.isConnected) {
+        host.__weatherCurrentLocationPassthrough = true;
+        currentLocationButton.click();
+        host.__weatherCurrentLocationPassthrough = false;
+      }
+      return;
+    }
+
+    const now = String(Date.now());
+    const accuracy = Number(coords.accuracy);
     headerWeatherCurrentCache.clear();
     host.__weatherCurrentMeta = null;
     host.__weatherManualLocationLabel = '';
-    unmountHeaderWeatherWidget();
-    resetHeaderWeatherReadingsState(host);
-    await mountHeaderWeatherWidget(pageLang);
+    delete host.dataset.weatherManualLocation;
+    host.dataset.weatherLocation = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
+    host.dataset.weatherGeoSource = coords.source || 'gps';
+    host.dataset.weatherGeoCheckedAt = now;
+    host.dataset.weatherGeoUpdatedAt = now;
+    host.dataset.weatherAreaState = 'resolving';
+    if (Number.isFinite(accuracy) && accuracy >= 0) {
+      host.dataset.weatherGeoAccuracy = accuracy.toFixed(1);
+      host.dataset.weatherGeoTargetMet = accuracy <= HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS ? 'true' : 'false';
+    } else {
+      delete host.dataset.weatherGeoAccuracy;
+      delete host.dataset.weatherGeoTargetMet;
+    }
+    delete host.dataset.weatherResolvedLocationLabel;
+    delete host.dataset.weatherRegionLabel;
+    await remountHeaderWeatherWidgetForGeo(host);
   }
 
   async function remountHeaderWeatherWidgetForGeo(host) {
