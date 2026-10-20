@@ -180,6 +180,8 @@ var React = toInteropDefault(getReact()),
                               {
                                 type: `button`,
                                 className: `weather-location-selector__suggestion`,
+                                'data-latitude': e.latitude,
+                                'data-longitude': e.longitude,
                                 onClick: () => z(e),
                                 children: [
                                   (0, jsxRuntime.jsx)(`strong`, { children: e.name }),
