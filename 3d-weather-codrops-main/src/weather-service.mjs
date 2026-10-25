@@ -2060,7 +2060,7 @@ var compiledWeatherConfiguration = {
           timezone: String(e.timezone || ``).trim(),
         },
         i = jn(r) || `${t},${n}`;
-      return { query: Nn(e.query || i), explicitMeta: r };
+      return { query: `${t},${n}`, explicitMeta: r };
     }
     throw X();
   },
