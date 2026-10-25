@@ -25,6 +25,8 @@ the real root and gateway installations, not in that source snapshot.
   public image URLs retain permanent redirects.
 - Removed nine generated before/after cards that reused the same two brand images.
   The localized empty state remains until real, approved comparison photos exist.
+  Gallery instructions and SEO descriptions in all four locales describe that
+  pending state; they do not promise an existing photo collection or slider.
 - Project checks validate actual gallery image references instead of requiring
   eighteen placeholder files.
 - Generated Graphify reports and indexes remain local. The pre-existing modified
