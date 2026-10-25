@@ -44,6 +44,11 @@ jobs:
 
       - name: Purge Cloudflare zone cache
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_PAGES_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 25e872aeab8cb246c69142ab07cd0fee
-        run: npm run cf:purge-cache
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN (Zone Read + Cache Purge) is not set; zone cache was not purged."
+          elif ! npm run cf:purge-cache; then
+            echo "::warning::Deployment succeeded, but the zone cache purge failed; cached assets may be stale."
+          fi
