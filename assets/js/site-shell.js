@@ -12807,6 +12807,12 @@
           void selectHeaderWeatherManualCoordinates(host, suggestionCoords);
           return;
         }
+        if (submitsSearch && !host.__weatherSearchPassthrough) {
+          event.preventDefault();
+          event.stopPropagation();
+          void selectHeaderWeatherManualQuery(host, target, submitsSearch);
+          return;
+        }
         if (host.dataset.weatherGeoSource === 'manual') {
           delete host.dataset.weatherLocation;
           delete host.dataset.weatherGeoSource;
@@ -12951,6 +12957,34 @@
     delete host.dataset.weatherResolvedLocationLabel;
     delete host.dataset.weatherRegionLabel;
     await remountHeaderWeatherWidgetForGeo(host);
+  }
+
+  async function selectHeaderWeatherManualQuery(host, form, query) {
+    if (!host?.isConnected || host.dataset.weatherMounted !== 'true') {
+      return;
+    }
+
+    const widgetInstance = host.__weatherWidgetInstance;
+    const locationMeta = await resolveHeaderWeatherLocationMeta(query).catch(() => null);
+    if (!host.isConnected || host.dataset.weatherMounted !== 'true' || host.__weatherWidgetInstance !== widgetInstance) {
+      return;
+    }
+
+    const latitude = Number(locationMeta?.latitude);
+    const longitude = Number(locationMeta?.longitude);
+    if (hasValidHeaderWeatherCoordinates(latitude, longitude)) {
+      await selectHeaderWeatherManualCoordinates(host, { latitude, longitude });
+      return;
+    }
+
+    if (form?.isConnected && typeof form.requestSubmit === 'function') {
+      host.__weatherSearchPassthrough = true;
+      try {
+        form.requestSubmit();
+      } finally {
+        host.__weatherSearchPassthrough = false;
+      }
+    }
   }
 
   async function restoreHeaderWeatherDeviceLocation(host, currentLocationButton) {
