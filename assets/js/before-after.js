@@ -339,82 +339,8 @@ class BeforeAfterGallery {
   }
 }
 
-const GALLERY_IMAGE_BASE = '../assets/images/before-after/';
-const GALLERY_CARD_COUNT = 9;
-const beforeAfterCardFolder = index => `card-${String(index).padStart(2, '0')}`;
-const galleryBeforeImage = index => `${GALLERY_IMAGE_BASE}${beforeAfterCardFolder(index)}/before.jpg`;
-const galleryAfterImage = index => `${GALLERY_IMAGE_BASE}${beforeAfterCardFolder(index)}/after.jpg`;
-
-const beforeAfterLabelsByLang = {
-  de: { before: 'VORHER', after: 'NACHHER', comparison: 'Vorher-Nachher-Vergleich' },
-  en: { before: 'BEFORE', after: 'AFTER', comparison: 'Before and after comparison' },
-  ru: { before: 'ДО', after: 'ПОСЛЕ', comparison: 'Сравнение до и после' },
-  uk: { before: 'ДО', after: 'ПІСЛЯ', comparison: 'Порівняння до і після' },
-};
-
-const categoryBadgeByLang = {
-  de: { dogs: 'Hunde', cats: 'Katzen', salon: 'Salon' },
-  en: { dogs: 'Dogs', cats: 'Cats', salon: 'Salon' },
-  ru: { dogs: 'СОБАКИ', cats: 'КОШКИ', salon: 'САЛОН' },
-  uk: { dogs: 'СОБАКИ', cats: 'КОТИ', salon: 'САЛОН' },
-};
-
-const cardCategories = ['dogs', 'dogs', 'dogs', 'salon', 'salon', 'salon', 'cats', 'cats', 'cats'];
-
-const galleryCardTitle = (lang, index) => {
-  const copy = {
-    de: `Transformation ${index}`,
-    en: `Transformation ${index}`,
-    ru: `Преображение ${index}`,
-    uk: `Перетворення ${index}`,
-  };
-  return copy[lang] || copy.de;
-};
-
-const galleryCardDescription = lang => {
-  const copy = {
-    de: 'Sichtbarer Vergleich vor und nach der Pflege.',
-    en: 'A visible comparison before and after grooming.',
-    ru: 'Наглядное сравнение до и после ухода.',
-    uk: 'Наочне порівняння до і після догляду.',
-  };
-  return copy[lang] || copy.de;
-};
-
-const beforeAfterCardBlueprints = Array.from({ length: GALLERY_CARD_COUNT }, (_, offset) => {
-  const gallery = offset + 1;
-  const category = cardCategories[offset] || 'dogs';
-
-  return { gallery, category };
-});
-
-const buildBeforeAfterItems = lang => {
-  const labels = beforeAfterLabelsByLang[lang] || beforeAfterLabelsByLang.de;
-
-  return beforeAfterCardBlueprints.map(card => {
-    const title = galleryCardTitle(lang, card.gallery);
-    return {
-      beforeImage: galleryBeforeImage(card.gallery),
-      afterImage: galleryAfterImage(card.gallery),
-      beforeLabel: labels.before,
-      afterLabel: labels.after,
-      beforeAlt: `${title} — ${labels.before}`,
-      afterAlt: `${title} — ${labels.after}`,
-      sliderLabel: labels.comparison,
-      badge: categoryBadgeByLang[lang]?.[card.category] || categoryBadgeByLang.de[card.category],
-      category: card.category,
-      title,
-      description: galleryCardDescription(lang),
-    };
-  });
-};
-
-const beforeAfterItems = {
-  de: buildBeforeAfterItems('de'),
-  en: buildBeforeAfterItems('en'),
-  ru: buildBeforeAfterItems('ru'),
-  uk: buildBeforeAfterItems('uk'),
-};
+// Publish only approved customer comparisons; brand images are not grooming results.
+const beforeAfterItems = { de: [], en: [], ru: [], uk: [] };
 
 function isBeforeAfterPage() {
   if (document.getElementById('before-after-gallery')) {

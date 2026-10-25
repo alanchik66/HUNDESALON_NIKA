@@ -15,25 +15,32 @@ const normalizeDate = value => {
 
 const isWithinBookingHorizon = date => {
   const requested = new Date(`${date}T00:00:00Z`);
-  const today = new Date();
-  const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Berlin',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const value = type => parts.find(part => part.type === type)?.value;
+  const todayUtc = new Date(`${value('year')}-${value('month')}-${value('day')}T00:00:00Z`);
   const latest = new Date(todayUtc);
   latest.setUTCDate(latest.getUTCDate() + MAX_LOOKAHEAD_DAYS);
   return requested >= todayUtc && requested <= latest;
 };
 
-const normalizeBusyIntervals = intervals => (Array.isArray(intervals) ? intervals : [])
-  .map(interval => {
-    const start = Date.parse(interval?.start || '');
-    const end = Date.parse(interval?.end || '');
-    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
-    return {
-      start: new Date(start).toISOString(),
-      end: new Date(end).toISOString(),
-    };
-  })
-  .filter(Boolean)
-  .slice(0, 100);
+const normalizeBusyIntervals = intervals =>
+  (Array.isArray(intervals) ? intervals : [])
+    .map(interval => {
+      const start = Date.parse(interval?.start || '');
+      const end = Date.parse(interval?.end || '');
+      if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
+      return {
+        start: new Date(start).toISOString(),
+        end: new Date(end).toISOString(),
+      };
+    })
+    .filter(Boolean)
+    .slice(0, 100);
 
 export async function onRequestGet({ request, env }) {
   const requestedOrigin = String(request.headers.get('Origin') || '').trim();
@@ -82,8 +89,8 @@ export async function onRequestGet({ request, env }) {
       200,
       origin
     );
-  } catch (error) {
-    console.warn('[booking-availability] Calendar lookup failed:', error?.message || error);
+  } catch {
+    console.warn(JSON.stringify({ event: 'booking_availability_lookup_failed' }));
     return jsonResponse({ success: true, configured: false, date, busyIntervals: [] }, 200, origin);
   }
 }

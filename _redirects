@@ -141,32 +141,32 @@
 /assets/images/social-preview-1200x630.png /assets/images/brand/social-preview-1200x630.png 301
 
 # Hero carousel slides renamed under /assets/images/hero/
-/assets/images/gallery1.jpg /assets/images/hero/slide-01.jpg 301
-/assets/images/gallery2.jpg /assets/images/hero/slide-02.jpg 301
-/assets/images/gallery3.jpg /assets/images/hero/slide-03.jpg 301
-/assets/images/gallery4.jpg /assets/images/hero/slide-04.jpg 301
-/assets/images/gallery5.jpg /assets/images/hero/slide-05.jpg 301
-/assets/images/gallery6.jpg /assets/images/hero/slide-06.jpg 301
+/assets/images/gallery1.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/gallery2.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/gallery3.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/gallery4.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/gallery5.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/gallery6.jpg /assets/images/brand/hero-dog.jpg 301
 
 # Before/after gallery legacy filenames
-/assets/images/before-after/card-01/gallery-before-1.jpg /assets/images/before-after/card-01/before.jpg 301
-/assets/images/before-after/card-01/gallery-after-1.jpg /assets/images/before-after/card-01/after.jpg 301
-/assets/images/before-after/card-02/gallery-before-2.jpg /assets/images/before-after/card-02/before.jpg 301
-/assets/images/before-after/card-02/gallery-after-2.jpg /assets/images/before-after/card-02/after.jpg 301
-/assets/images/before-after/card-03/gallery-before-3.jpg /assets/images/before-after/card-03/before.jpg 301
-/assets/images/before-after/card-03/gallery-after-3.jpg /assets/images/before-after/card-03/after.jpg 301
-/assets/images/before-after/card-04/gallery-before-4.jpg /assets/images/before-after/card-04/before.jpg 301
-/assets/images/before-after/card-04/gallery-after-4.jpg /assets/images/before-after/card-04/after.jpg 301
-/assets/images/before-after/card-05/gallery-before-5.jpg /assets/images/before-after/card-05/before.jpg 301
-/assets/images/before-after/card-05/gallery-after-5.jpg /assets/images/before-after/card-05/after.jpg 301
-/assets/images/before-after/card-06/gallery-before-6.jpg /assets/images/before-after/card-06/before.jpg 301
-/assets/images/before-after/card-06/gallery-after-6.jpg /assets/images/before-after/card-06/after.jpg 301
-/assets/images/before-after/card-07/gallery-before-7.jpg /assets/images/before-after/card-07/before.jpg 301
-/assets/images/before-after/card-07/gallery-after-7.jpg /assets/images/before-after/card-07/after.jpg 301
-/assets/images/before-after/card-08/gallery-before-8.jpg /assets/images/before-after/card-08/before.jpg 301
-/assets/images/before-after/card-08/gallery-after-8.jpg /assets/images/before-after/card-08/after.jpg 301
-/assets/images/before-after/card-09/gallery-before-9.jpg /assets/images/before-after/card-09/before.jpg 301
-/assets/images/before-after/card-09/gallery-after-9.jpg /assets/images/before-after/card-09/after.jpg 301
+/assets/images/before-after/card-01/gallery-before-1.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-01/gallery-after-1.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-02/gallery-before-2.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-02/gallery-after-2.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-03/gallery-before-3.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-03/gallery-after-3.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-04/gallery-before-4.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-04/gallery-after-4.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-05/gallery-before-5.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-05/gallery-after-5.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-06/gallery-before-6.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-06/gallery-after-6.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-07/gallery-before-7.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-07/gallery-after-7.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-08/gallery-before-8.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-08/gallery-after-8.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-09/gallery-before-9.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-09/gallery-after-9.jpg /assets/images/brand/hero-dog.jpg 301
 
 # UI icons moved from icon-pak to /assets/images/icons/ (kebab-case filenames)
 /assets/images/icon-pak/Gotovie%20iconki%20dlya%20saita/apple_music.png /assets/images/icons/apple-music.png 301
@@ -195,3 +195,31 @@
 
 # Динамические правила всегда должны идти после статических.
 /ua/* /uk/:splat 301
+
+# Consolidated identical media: preserve historical public URLs.
+/assets/images/hero/slide-01.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/hero/slide-02.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/hero/slide-03.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/hero/slide-04.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/hero/slide-05.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/hero/slide-06.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-01/before.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-01/after.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-02/before.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-02/after.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-03/before.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-03/after.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-04/before.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-04/after.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-05/before.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-05/after.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-06/before.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-06/after.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-07/before.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-07/after.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-08/before.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-08/after.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/before-after/card-09/before.jpg /assets/images/brand/logo.png 301
+/assets/images/before-after/card-09/after.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/testimonials/anna-milo.jpg /assets/images/brand/hero-dog.jpg 301
+/assets/images/testimonials/sofia-luna.jpg /assets/images/brand/hero-dog.jpg 301

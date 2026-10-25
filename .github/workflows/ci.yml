@@ -1,8 +1,9 @@
 name: CI
 
-# Optional while GitHub account billing can lock Actions runners.
-# Production validate/deploy path: `npm run validate` / `npm run deploy:full` (Wrangler).
+# Validate both proposed changes and the actual production branch.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
   pull_request:
 
@@ -51,3 +52,16 @@ jobs:
 
       - name: Run visual and accessibility smoke tests
         run: npm run test:browser
+
+      - name: Check client registration recovery in every locale and viewport
+        run: node tools/client-registration-smoke.mjs
+
+  deploy:
+    name: Deploy validated production revision
+    needs: validate-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      deployments: write
+    uses: ./.github/workflows/cloudflare-pages.yml
+    secrets: inherit

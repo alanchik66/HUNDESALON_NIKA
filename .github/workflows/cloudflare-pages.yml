@@ -1,10 +1,8 @@
 name: Deploy Cloudflare Pages
 
-# Deploys production on every push to main; `npm run deploy` / `deploy:full` (Wrangler
-# Direct Upload) remains the manual fallback if GitHub Actions is billing-locked.
+# Called only after the CI quality gates pass. Manual runs repeat those gates.
 on:
-  push:
-    branches: [main]
+  workflow_call:
   workflow_dispatch:
 
 permissions:
@@ -33,8 +31,31 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Install Google gateway dependencies for manual validation
+        if: github.event_name == 'workflow_dispatch'
+        run: npm --prefix integrations/google-gateway ci
+
+      - name: Audit dependencies for manual deployment
+        if: github.event_name == 'workflow_dispatch'
+        run: npm run audit:all
+
+      - name: Validate manual deployment
+        if: github.event_name == 'workflow_dispatch'
+        run: npm run validate
+
+      - name: Build production bundle
+        run: npm run build:production
+
+      - name: Enforce production asset budgets
+        run: npm run check:budgets
+
+      - name: Install Chromium for manual browser checks
+        if: github.event_name == 'workflow_dispatch'
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify browser behavior for manual deployment
+        if: github.event_name == 'workflow_dispatch'
+        run: npm run test:browser && node tools/client-registration-smoke.mjs
 
       - name: Deploy to Cloudflare Pages
         env:

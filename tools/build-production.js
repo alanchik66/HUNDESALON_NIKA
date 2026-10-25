@@ -4,7 +4,7 @@ import { execFileSync, execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { transformSync } from 'esbuild';
-import { isProductionSourceOnlyPath } from './lib/production-assets.mjs';
+import { assertProductionSourcePath, isProductionSourceOnlyPath } from './lib/production-assets.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -69,8 +69,9 @@ const copyEntries = [
 
 function readIgnoredProductionPaths() {
   try {
-    const output = execSync(
-      'git ls-files --others -i --exclude-standard -z -- assets 3d-weather-codrops-main/dist-widget',
+    const output = execFileSync(
+      'git',
+      ['ls-files', '--others', '-i', '--exclude-standard', '-z', '--', ...copyEntries],
       {
         cwd: root,
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -94,7 +95,7 @@ const skippedProductionPaths = new Set();
 function copyRecursive(source, target) {
   if (!fs.existsSync(source)) return;
 
-  const stat = fs.statSync(source);
+  const stat = assertProductionSourcePath(root, source);
   if (stat.isDirectory()) {
     fs.mkdirSync(target, { recursive: true });
     for (const entry of fs.readdirSync(source)) {

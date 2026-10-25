@@ -11174,33 +11174,18 @@ body.light .nika-tooltip--visible {
    ========================================================= */
 
 .gallery-item--1,
-.gallery-item-1 {
-  background-image: url('../images/hero/slide-01.jpg');
-}
-
+.gallery-item-1,
 .gallery-item--2,
-.gallery-item-2 {
-  background-image: url('../images/hero/slide-02.jpg');
-}
-
+.gallery-item-2,
 .gallery-item--3,
-.gallery-item-3 {
-  background-image: url('../images/hero/slide-03.jpg');
-}
-
+.gallery-item-3,
 .gallery-item--4,
-.gallery-item-4 {
-  background-image: url('../images/hero/slide-04.jpg');
-}
-
+.gallery-item-4,
 .gallery-item--5,
-.gallery-item-5 {
-  background-image: url('../images/hero/slide-05.jpg');
-}
-
+.gallery-item-5,
 .gallery-item--6,
 .gallery-item-6 {
-  background-image: url('../images/hero/slide-06.jpg');
+  background-image: url('../images/brand/hero-dog.jpg');
 }
 
 .header-weather-shell,

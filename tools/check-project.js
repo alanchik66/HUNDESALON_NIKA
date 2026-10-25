@@ -174,7 +174,7 @@ if (fs.existsSync(path.join(root, '_redirects'))) {
     '/ru/index.html /ru/ 301',
     '/uk/index.html /uk/ 301',
     '/assets/images/logo.png /assets/images/brand/logo.png 301',
-    '/assets/images/gallery1.jpg /assets/images/hero/slide-01.jpg 301',
+    '/assets/images/gallery1.jpg /assets/images/brand/hero-dog.jpg 301',
     '/assets/images/icon-pak/Gotovie%20iconki%20dlya%20saita/Home.png /assets/images/icons/home.png 301',
     '/de/blog.html /de/blog/blog 301',
     '/en/blog.html /en/blog/blog 301',
@@ -251,14 +251,10 @@ if (fs.existsSync(path.join(root, 'indexnow-key.txt'))) {
   assert(read('_headers').includes('/indexnow-key.txt'), '_headers must include cache policy for indexnow-key.txt');
 }
 
-for (let card = 1; card <= 9; card += 1) {
-  const folder = `card-${String(card).padStart(2, '0')}`;
-  for (const name of ['before.jpg', 'after.jpg']) {
-    assert(
-      fs.existsSync(path.join(root, 'assets/images/before-after', folder, name)),
-      `Missing before-after asset: assets/images/before-after/${folder}/${name}`
-    );
-  }
+for (const match of read('assets/js/before-after.js').matchAll(
+  /['"](?:\.\.\/|\/)?(assets\/images\/[^'"?]+\.(?:jpg|png|webp))['"]/g
+)) {
+  assert(fs.existsSync(path.join(root, match[1])), `Missing before-after asset: ${match[1]}`);
 }
 
 for (const file of [
@@ -275,7 +271,7 @@ for (const file of [
   'assets/images/brand/logo.png',
   'assets/images/brand/search-logo-clear-512.png',
   'assets/images/brand/social-preview-1200x630.png',
-  'assets/images/hero/slide-01.jpg',
+  'assets/images/brand/hero-dog.jpg',
   'assets/images/icons/home.png',
 ]) {
   assert(fs.existsSync(path.join(root, file)), `Missing brand search asset: ${file}`);
