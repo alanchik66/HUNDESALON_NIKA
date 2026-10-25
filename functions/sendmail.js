@@ -51,6 +51,7 @@ import { buildBrandedEmail } from './_lib/email-template.js';
 import { buildBookingConfirmationUrl } from './_lib/booking-confirmation.js';
 import { verifyOneDriveFileReference } from './_lib/onedrive.js';
 import { createDeliveryTracker, pruneDeliveryMetadata } from './_lib/delivery-tracking.js';
+import { storeClientRegistration, syncClientRegistration } from './_lib/client-registrations.js';
 
 const DEFAULT_RECIPIENT = 'info@hundesalon-nika.com';
 const DEFAULT_BOOKING_RECIPIENT = 'info@hundesalon-nika.com';
@@ -718,7 +719,11 @@ export async function onRequest(ctx) {
           error: error.message,
           formType: fields.form_type || 'unknown',
         });
-        return jsonResponse({ success: false, message: 'Verification service unavailable. Please try again.' }, 503, origin);
+        return jsonResponse(
+          { success: false, message: 'Verification service unavailable. Please try again.' },
+          503,
+          origin
+        );
       }
     }
   }
@@ -1188,6 +1193,8 @@ export async function onRequest(ctx) {
     );
   };
 
+  let registrationStoredInD1 = false;
+  let registrationMirror = null;
   const runClientRegistrationIntegration = async () => {
     const shouldStoreClientRecord =
       formType === CLIENT_REGISTRATION_FORM_TYPE || (formType === 'booking' && !clientRegistrationId);
@@ -1196,37 +1203,47 @@ export async function onRequest(ctx) {
     }
 
     try {
+      const values = [
+        submittedAt,
+        automationEventData.request_id,
+        lang,
+        formType,
+        canonicalService,
+        servicePrice,
+        serviceCategory,
+        promotionKey,
+        '',
+        '',
+        name,
+        email,
+        phone,
+        petName,
+        petSpecies,
+        petBreed,
+        petAge,
+        petSex,
+        petTagNumber,
+        message,
+        privacyConsent ? 'yes' : 'no',
+        agbConsent ? 'yes' : 'no',
+        source,
+        origin,
+        requestUrl.pathname,
+      ];
+      if (formType === CLIENT_REGISTRATION_FORM_TYPE) {
+        const record = { requestId: automationEventData.request_id, values };
+        const stored = await storeClientRegistration(env, record);
+        if (stored.ok) {
+          registrationStoredInD1 = true;
+          registrationMirror = () => track('client_register', () => syncClientRegistration(env, record));
+          return [stored];
+        }
+      }
       const result = await track('client_register', () =>
         appendGoogleSheetRow(env, {
           spreadsheetId: getEnvValue(env, 'SHEET_ID'),
           sheetName: CLIENT_REGISTRATION_SHEET,
-          values: [
-            submittedAt,
-            automationEventData.request_id,
-            lang,
-            formType,
-            canonicalService,
-            servicePrice,
-            serviceCategory,
-            promotionKey,
-            '',
-            '',
-            name,
-            email,
-            phone,
-            petName,
-            petSpecies,
-            petBreed,
-            petAge,
-            petSex,
-            petTagNumber,
-            message,
-            privacyConsent ? 'yes' : 'no',
-            agbConsent ? 'yes' : 'no',
-            source,
-            origin,
-            requestUrl.pathname,
-          ],
+          values,
         })
       );
       return [result];
@@ -1275,89 +1292,12 @@ export async function onRequest(ctx) {
     return jsonResponse({ success: false, message: copy.error }, 503, origin);
   }
 
-  if (!hasSendPulseCredentials) {
-    logStructured('warn', 'sendpulse_credentials_not_configured');
-    await track('email_main', async () => ({ ok: false, skipped: true }));
-    const telegramDelivered = await track('telegram', () =>
-      sendTelegramMessage(env, {
-        text: buildTelegramNotification({
-          formType,
-          lang,
-          name,
-          email,
-          phone,
-          service: canonicalService,
-          date,
-          time,
-          paymentStatus,
-          promotion: '',
-          petName,
-          petBreed,
-          petTagNumber,
-          message: resolvedMessage,
-          pagePath: requestUrl.pathname,
-        }),
-        category: formType === 'booking' ? 'orders' : 'messages',
-        replyMarkup: bookingConfirmationMarkup,
-      })
-    );
-    const bookingResults = await runBookingFollowups();
-    const integrationDelivered =
-      registrationDelivered || formType === 'booking' || bookingResults.some(result => result?.ok === true);
-    const requiredDeliveryCompleted = clientRecordRequired
-      ? registrationDelivered
-      : telegramDelivered.ok || integrationDelivered;
-    if (requiredDeliveryCompleted) {
-      console.warn('[sendmail] Delivered via fallback because SendPulse is not configured');
-      return jsonResponse(
-        {
-          success: true,
-          message: formType === CLIENT_REGISTRATION_FORM_TYPE ? copy.registrationSuccess : copy.success,
-          ...(formType === CLIENT_REGISTRATION_FORM_TYPE ? { registration_id: automationEventData.request_id } : {}),
-        },
-        200,
-        origin
-      );
-    }
-    return jsonResponse({ success: false, message: copy.error }, 503, origin);
-  }
-
-  let sendPulseRes;
-  try {
-    sendPulseRes = await track('email_main', () =>
-      sendSendPulseEmail(env, {
-        from: senderFrom,
-        to: recipient,
-        replyTo: email,
-        subject,
-        text: textBody,
-        html: buildBrandedEmail({ title: subject, bodyText: textBody, lang }),
-      })
-    );
-  } catch (err) {
-    logStructured('error', 'sendmail_network_error', {
-      error: String(err?.name || 'Error').slice(0, 80),
-    });
-    await track('failure_alert', () =>
-      sendTelegramEmailFailureAlert(env, {
-        formType,
-        requestId: automationEventData.request_id,
-        status: 0,
-        lang,
-      })
-    );
-    return jsonResponse({ success: false, message: copy.error }, 502, origin);
-  }
-
-  if (sendPulseRes.ok) {
-    const notificationResults = await Promise.allSettled([
-      track('automation', () =>
-        sendSendPulseAutomationEvent(env, {
-          eventType: automationEventType,
-          data: automationEventData,
-        })
-      ),
-      track('telegram', () =>
+  const deliverNotifications = async () => {
+    if (registrationMirror) await registrationMirror();
+    if (!hasSendPulseCredentials) {
+      logStructured('warn', 'sendpulse_credentials_not_configured');
+      await track('email_main', async () => ({ ok: false, skipped: true }));
+      const telegramDelivered = await track('telegram', () =>
         sendTelegramMessage(env, {
           text: buildTelegramNotification({
             formType,
@@ -1379,71 +1319,167 @@ export async function onRequest(ctx) {
           category: formType === 'booking' ? 'orders' : 'messages',
           replyMarkup: bookingConfirmationMarkup,
         })
-      ),
-      runBookingFollowups(),
-      track('email_admin', sendAdminNotification),
-    ]);
-    const telegramNotificationResult = notificationResults[1];
-    const telegramNotification =
-      telegramNotificationResult?.status === 'fulfilled' ? telegramNotificationResult.value : null;
-    console.info(
-      '[sendmail] Telegram notification delivery',
-      JSON.stringify({
-        request_id: automationEventData.request_id,
-        form_type: formType,
-        ok: telegramNotification?.ok === true,
-        status: Number(telegramNotification?.status || 0),
-      })
-    );
-    const adminNotificationResult = notificationResults[3];
-    const adminNotification = adminNotificationResult?.status === 'fulfilled' ? adminNotificationResult.value : null;
-    console.info(
-      '[sendmail] admin notification delivery',
-      JSON.stringify({
-        request_id: automationEventData.request_id,
-        form_type: formType,
-        ok: adminNotification?.ok === true,
-        status: Number(adminNotification?.status || 0),
-      })
-    );
-    const bookingFollowups = notificationResults[2];
-    const clientEmail = bookingFollowups?.status === 'fulfilled' ? bookingFollowups.value?.[0] : null;
-    if (
-      siteNotificationsEnabled(env) &&
-      ((adminRecipients.length > 0 && adminNotification?.ok !== true) ||
-        (formType === 'booking' && clientEmail?.ok !== true))
-    ) {
-      const failedEmail = formType === 'booking' && clientEmail?.ok !== true ? clientEmail : adminNotification;
+      );
+      const bookingResults = await runBookingFollowups();
+      const integrationDelivered =
+        registrationDelivered || formType === 'booking' || bookingResults.some(result => result?.ok === true);
+      const requiredDeliveryCompleted = clientRecordRequired
+        ? registrationDelivered
+        : telegramDelivered.ok || integrationDelivered;
+      if (requiredDeliveryCompleted) {
+        console.warn('[sendmail] Delivered via fallback because SendPulse is not configured');
+        return jsonResponse(
+          {
+            success: true,
+            message: formType === CLIENT_REGISTRATION_FORM_TYPE ? copy.registrationSuccess : copy.success,
+            ...(formType === CLIENT_REGISTRATION_FORM_TYPE ? { registration_id: automationEventData.request_id } : {}),
+          },
+          200,
+          origin
+        );
+      }
+      return jsonResponse({ success: false, message: copy.error }, 503, origin);
+    }
+
+    let sendPulseRes;
+    try {
+      sendPulseRes = await track('email_main', () =>
+        sendSendPulseEmail(env, {
+          from: senderFrom,
+          to: recipient,
+          replyTo: email,
+          subject,
+          text: textBody,
+          html: buildBrandedEmail({ title: subject, bodyText: textBody, lang }),
+        })
+      );
+    } catch (err) {
+      logStructured('error', 'sendmail_network_error', {
+        error: String(err?.name || 'Error').slice(0, 80),
+      });
       await track('failure_alert', () =>
         sendTelegramEmailFailureAlert(env, {
           formType,
           requestId: automationEventData.request_id,
-          status: Number(failedEmail?.status || 0),
+          status: 0,
           lang,
         })
       );
+      return jsonResponse({ success: false, message: copy.error }, 502, origin);
     }
+
+    if (sendPulseRes.ok) {
+      const notificationResults = await Promise.allSettled([
+        track('automation', () =>
+          sendSendPulseAutomationEvent(env, {
+            eventType: automationEventType,
+            data: automationEventData,
+          })
+        ),
+        track('telegram', () =>
+          sendTelegramMessage(env, {
+            text: buildTelegramNotification({
+              formType,
+              lang,
+              name,
+              email,
+              phone,
+              service: canonicalService,
+              date,
+              time,
+              paymentStatus,
+              promotion: '',
+              petName,
+              petBreed,
+              petTagNumber,
+              message: resolvedMessage,
+              pagePath: requestUrl.pathname,
+            }),
+            category: formType === 'booking' ? 'orders' : 'messages',
+            replyMarkup: bookingConfirmationMarkup,
+          })
+        ),
+        runBookingFollowups(),
+        track('email_admin', sendAdminNotification),
+      ]);
+      const telegramNotificationResult = notificationResults[1];
+      const telegramNotification =
+        telegramNotificationResult?.status === 'fulfilled' ? telegramNotificationResult.value : null;
+      console.info(
+        '[sendmail] Telegram notification delivery',
+        JSON.stringify({
+          request_id: automationEventData.request_id,
+          form_type: formType,
+          ok: telegramNotification?.ok === true,
+          status: Number(telegramNotification?.status || 0),
+        })
+      );
+      const adminNotificationResult = notificationResults[3];
+      const adminNotification = adminNotificationResult?.status === 'fulfilled' ? adminNotificationResult.value : null;
+      console.info(
+        '[sendmail] admin notification delivery',
+        JSON.stringify({
+          request_id: automationEventData.request_id,
+          form_type: formType,
+          ok: adminNotification?.ok === true,
+          status: Number(adminNotification?.status || 0),
+        })
+      );
+      const bookingFollowups = notificationResults[2];
+      const clientEmail = bookingFollowups?.status === 'fulfilled' ? bookingFollowups.value?.[0] : null;
+      if (
+        siteNotificationsEnabled(env) &&
+        ((adminRecipients.length > 0 && adminNotification?.ok !== true) ||
+          (formType === 'booking' && clientEmail?.ok !== true))
+      ) {
+        const failedEmail = formType === 'booking' && clientEmail?.ok !== true ? clientEmail : adminNotification;
+        await track('failure_alert', () =>
+          sendTelegramEmailFailureAlert(env, {
+            formType,
+            requestId: automationEventData.request_id,
+            status: Number(failedEmail?.status || 0),
+            lang,
+          })
+        );
+      }
+      return jsonResponse(
+        {
+          success: true,
+          message: formType === CLIENT_REGISTRATION_FORM_TYPE ? copy.registrationSuccess : copy.success,
+          ...(formType === CLIENT_REGISTRATION_FORM_TYPE ? { registration_id: automationEventData.request_id } : {}),
+        },
+        200,
+        origin
+      );
+    }
+
+    logStructured('error', 'sendmail_provider_error', {
+      status: Number(sendPulseRes.status || 0),
+    });
+    await track('failure_alert', () =>
+      sendTelegramEmailFailureAlert(env, {
+        formType,
+        requestId: automationEventData.request_id,
+        status: sendPulseRes.status,
+        lang,
+      })
+    );
+    return jsonResponse({ success: false, message: copy.error }, 502, origin);
+  };
+
+  if (registrationStoredInD1) {
+    const notifications = deliverNotifications().catch(() => {
+      logStructured('error', 'client_registration_notification_failed', {
+        request_id: automationEventData.request_id,
+      });
+    });
+    if (typeof ctx.waitUntil === 'function') ctx.waitUntil(notifications);
+    else await notifications;
     return jsonResponse(
-      {
-        success: true,
-        message: formType === CLIENT_REGISTRATION_FORM_TYPE ? copy.registrationSuccess : copy.success,
-        ...(formType === CLIENT_REGISTRATION_FORM_TYPE ? { registration_id: automationEventData.request_id } : {}),
-      },
+      { success: true, message: copy.registrationSuccess, registration_id: automationEventData.request_id },
       200,
       origin
     );
   }
-
-  logStructured('error', 'sendmail_provider_error', {
-    status: Number(sendPulseRes.status || 0),
-  });
-  await track('failure_alert', () =>
-    sendTelegramEmailFailureAlert(env, {
-      formType,
-      requestId: automationEventData.request_id,
-      status: sendPulseRes.status,
-      lang,
-    })
-  );
-  return jsonResponse({ success: false, message: copy.error }, 502, origin);
+  return deliverNotifications();
 }

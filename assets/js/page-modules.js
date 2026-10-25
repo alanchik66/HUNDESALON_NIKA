@@ -798,6 +798,8 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const submitSendmailForm = async (form, submitBtn) => {
+    if (form.dataset?.sendmailPending === 'true') return false;
+    if (form.dataset) form.dataset.sendmailPending = 'true';
     const originalText = submitBtn?.textContent ?? '';
 
     form.querySelectorAll('.form-status').forEach(el => el.remove());
@@ -887,6 +889,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch {
       lastResult = { success: false };
     } finally {
+      if (form.dataset) delete form.dataset.sendmailPending;
       if (!statusEl.classList.contains('form-status--success')) {
         const localCloudflarePageUrl = getLocalCloudflarePageUrl();
         statusEl.classList.add('form-status--error');

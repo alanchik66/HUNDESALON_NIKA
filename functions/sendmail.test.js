@@ -3,12 +3,111 @@ import assert from 'node:assert/strict';
 
 import { onRequest } from './sendmail.js';
 import { signOneDriveFileReference } from './_lib/onedrive.js';
+import { DatabaseSync } from 'node:sqlite';
+import { readFileSync } from 'node:fs';
 
 globalThis.caches = {
   default: { match: async () => null, put: async () => {} },
 };
 
 const origin = 'https://hundesalon-nika.com';
+
+function registrationDatabase(t) {
+  const sqlite = new DatabaseSync(':memory:');
+  sqlite.exec(readFileSync(new URL('../migrations/0010_client_registrations.sql', import.meta.url), 'utf8'));
+  sqlite.exec(readFileSync(new URL('../migrations/0009_delivery_tracking.sql', import.meta.url), 'utf8'));
+  t.after(() => sqlite.close());
+  return {
+    sqlite,
+    binding: {
+      prepare(sql) {
+        return {
+          bind(...params) {
+            return {
+              async run() {
+                return { success: true, meta: { changes: Number(sqlite.prepare(sql).run(...params).changes) } };
+              },
+            };
+          },
+        };
+      },
+    },
+  };
+}
+
+test('durably accepts registration before Google responds and preserves a failed mirror', async t => {
+  const { sqlite, binding } = registrationDatabase(t);
+  let release;
+  const blocked = new Promise(resolve => {
+    release = resolve;
+  });
+  const work = [];
+  t.mock.method(globalThis, 'fetch', async () => {
+    await blocked;
+    return Response.json({ success: false }, { status: 503 });
+  });
+  const response = await onRequest({
+    request: registrationRequest({ privacy: 'yes', agb: 'yes' }),
+    env: { CHAT_DB: binding, GOOGLE_APPS_SCRIPT_WEBHOOK_URL: 'https://gateway.example/test' },
+    waitUntil(promise) {
+      work.push(promise);
+    },
+  });
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.success, true);
+  const row = sqlite.prepare('SELECT * FROM client_registrations WHERE request_id = ?').get(result.registration_id);
+  assert.equal(JSON.parse(row.values_json)[11], 'customer@example.com');
+  assert.equal(row.sheet_synced_at, null);
+  release();
+  await Promise.all(work);
+  assert.equal(sqlite.prepare('SELECT sync_attempts FROM client_registrations').get().sync_attempts, 1);
+  assert.equal(sqlite.prepare('SELECT sheet_synced_at FROM client_registrations').get().sheet_synced_at, null);
+});
+
+test('a saved registration remains successful when both Google and email fail', async t => {
+  const { sqlite, binding } = registrationDatabase(t);
+  t.mock.method(globalThis, 'fetch', async () => Response.json({ success: false, result: false }, { status: 400 }));
+  const response = await onRequest({
+    request: registrationRequest({ privacy: 'yes', agb: 'yes' }),
+    env: {
+      CHAT_DB: binding,
+      GOOGLE_APPS_SCRIPT_WEBHOOK_URL: 'https://gateway.example/test',
+      SENDPULSE_API_KEY: 'test-key',
+    },
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).success, true);
+  assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM client_registrations').get().n, 1);
+});
+
+test('registration fails closed if neither database nor Google can save it', async t => {
+  t.mock.method(globalThis, 'fetch', async () => Response.json({ success: false }, { status: 503 }));
+  const response = await onRequest({
+    request: registrationRequest({ privacy: 'yes', agb: 'yes' }),
+    env: {
+      CHAT_DB: {
+        prepare() {
+          throw new Error('unavailable');
+        },
+      },
+      GOOGLE_APPS_SCRIPT_WEBHOOK_URL: 'https://gateway.example/test',
+    },
+  });
+  assert.equal(response.status, 503);
+  assert.notEqual((await response.json()).success, true);
+});
+
+test('marks a successfully mirrored registration in the durable store', async t => {
+  const { sqlite, binding } = registrationDatabase(t);
+  t.mock.method(globalThis, 'fetch', async () => Response.json({ success: true }));
+  const response = await onRequest({
+    request: registrationRequest({ privacy: 'yes', agb: 'yes' }),
+    env: { CHAT_DB: binding, GOOGLE_APPS_SCRIPT_WEBHOOK_URL: 'https://gateway.example/test' },
+  });
+  assert.equal(response.status, 200);
+  assert.ok(sqlite.prepare('SELECT sheet_synced_at FROM client_registrations').get().sheet_synced_at);
+});
 
 function registrationRequest(consents = {}, fields = {}) {
   return new Request(`${origin}/sendmail`, {

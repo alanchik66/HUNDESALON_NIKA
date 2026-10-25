@@ -227,6 +227,7 @@ const createSendmailHarness = ({ localStatic = false, request }) => {
   const button = { disabled: false, textContent: 'Send' };
   const fallbackUrl = localStatic ? 'http://127.0.0.1:8788/sendmail' : '';
   const form = {
+    dataset: {},
     querySelectorAll: () => [],
     appendChild: element => statuses.push(element),
     reset() {},
@@ -309,6 +310,18 @@ test('production send waits for its delayed HTTP result without the local probe 
   assert.equal(await sending, true);
   assert.equal(harness.statuses.at(-1).textContent, 'Success');
   assert.equal(harness.button.disabled, false);
+});
+
+test('shared form submission ignores duplicate events and unlocks after completion', async () => {
+  const response = deferred();
+  const harness = createSendmailHarness({ request: () => response.promise });
+  const first = harness.submit();
+  assert.equal(await harness.submit(), false);
+  assert.equal(harness.requests.length, 1);
+  response.resolve(jsonResponse(200, { success: true }));
+  assert.equal(await first, true);
+  assert.equal(await harness.submit(), true);
+  assert.equal(harness.requests.length, 2);
 });
 
 test('sendmail receives booking fields but never receives the uploaded photo bytes', async () => {
