@@ -3,7 +3,12 @@
  * Env: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
  * Binding: PAYMENT_EVENTS (KV; required when online payments are enabled)
  */
-import { jsonResponse } from './_lib/http-security.js';
+import {
+  isRequestBodyTooLarge,
+  jsonResponse,
+  readTextBody,
+  timingSafeEqualStrings,
+} from './_lib/http-security.js';
 import {
   appendGoogleSheetRow,
   cleanText,
@@ -13,8 +18,9 @@ import {
 } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
 
-const DEFAULT_FROM = 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>';
+const DEFAULT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const ONLINE_PAYMENTS_HARD_DISABLED = true;
+const MAX_WEBHOOK_BODY_BYTES = 512 * 1024;
 
 function paymentsOnlineEnabled(env) {
   if (ONLINE_PAYMENTS_HARD_DISABLED) return false;
@@ -36,13 +42,6 @@ async function hmacSha256Hex(secret, payload) {
   return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function timingSafeEqual(a, b) {
-  if (a.length !== b.length) return false;
-  let out = 0;
-  for (let i = 0; i < a.length; i += 1) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return out === 0;
-}
-
 async function verifyStripeSignature(rawBody, header, secret) {
   if (!header || !secret) return false;
   let timestamp = '';
@@ -58,7 +57,8 @@ async function verifyStripeSignature(rawBody, header, secret) {
   if (!Number.isFinite(age) || age > 300) return false;
   const signed = `${timestamp}.${rawBody}`;
   const expected = await hmacSha256Hex(secret, signed);
-  return signatures.some(sig => timingSafeEqual(sig, expected));
+  const matches = await Promise.all(signatures.map(signature => timingSafeEqualStrings(signature, expected)));
+  return matches.some(Boolean);
 }
 
 async function reservePaymentEvent(env, eventId) {
@@ -79,7 +79,18 @@ export async function onRequest(context) {
   }
 
   const webhookSecret = getEnvValue(env, 'STRIPE_WEBHOOK_SECRET');
-  const rawBody = await request.text();
+  let rawBody;
+  try {
+    rawBody = await readTextBody(request, MAX_WEBHOOK_BODY_BYTES);
+  } catch (error) {
+    return jsonResponse(
+      {
+        success: false,
+        message: isRequestBodyTooLarge(error) ? 'Payload too large' : 'Invalid request body',
+      },
+      isRequestBodyTooLarge(error) ? 413 : 400
+    );
+  }
   const signature = request.headers.get('Stripe-Signature') || '';
 
   if (!hasUsableValue(webhookSecret)) {

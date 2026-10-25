@@ -6,8 +6,13 @@
 
   const isPlaceholder = value => !value || value === 'G-XXXXXXXXXX' || String(value).includes('XXXXXXXX');
   const isAdsId = value => /^AW-\d+$/.test(String(value || ''));
+  const isClarityProjectId = value => /^[a-z0-9]{6,24}$/i.test(String(value || '').trim());
 
   const getConsent = () => {
+    const sessionConsent = window.__hundesalonCookieConsent;
+    if (typeof sessionConsent?.analytics === 'boolean') {
+      return sessionConsent.analytics;
+    }
     try {
       const stored = JSON.parse(localStorage.getItem(CONSENT_KEY) || '{}');
       return stored.analytics === true;
@@ -76,7 +81,7 @@
 
   const injectClarity = (projectId) => {
     const id = String(projectId || '').trim();
-    if (!id || window.__hundesalonClarityReady) {
+    if (!isClarityProjectId(id) || window.__hundesalonClarityReady) {
       return;
     }
 
@@ -121,6 +126,9 @@
   };
 
   window.addEventListener('hundesalon:cookie-consent', event => {
+    if (typeof event.detail?.analytics === 'boolean') {
+      window.__hundesalonCookieConsent = event.detail;
+    }
     if (event.detail?.analytics === true) {
       void bootAnalytics();
     }

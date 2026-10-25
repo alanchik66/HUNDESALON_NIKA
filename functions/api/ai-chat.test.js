@@ -1,7 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { withResourceQuotaDatabase } from '../../tools/lib/resource-quota-test-db.mjs';
+import { readFileSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 
-import { normalizeAiAnswer, normalizeGermanCareTerms, onRequest, selectAiChatKnowledge } from './ai-chat.js';
+import {
+  detectCustomerLocale,
+  normalizeAiAnswer,
+  normalizeGermanCareTerms,
+  onRequest,
+  selectAiChatKnowledge,
+} from './ai-chat.js';
 
 function installCacheStub() {
   const original = globalThis.caches;
@@ -26,6 +35,8 @@ function requestBody(overrides = {}) {
     history: [],
     pagePath: '/de/prays-list.html',
     sessionId: '12345678-1234-4234-8234-123456789012',
+    sessionToken: `${'a'.repeat(64)}-${'b'.repeat(36)}`,
+    clientMessageId: crypto.randomUUID(),
     ...overrides,
   };
 }
@@ -41,43 +52,286 @@ function createRequest(body) {
   });
 }
 
+function chatDatabase(sessionOverrides = {}) {
+  const sqlCalls = [];
+  const boundCalls = [];
+  const session = {
+    session_id: '12345678-1234-4234-8234-123456789012',
+    customer_id: '00000000-0000-4000-8000-000000000001',
+    locale: 'de',
+    status: 'active',
+    conversation_mode: 'ai',
+    first_name: 'Test',
+    last_name: 'Customer',
+    email: 'test@example.com',
+    phone: '',
+    ...sessionOverrides,
+  };
+  return withResourceQuotaDatabase({
+    sqlCalls,
+    boundCalls,
+    prepare(sql) {
+      sqlCalls.push(sql);
+      return {
+        bind(...values) {
+          boundCalls.push({ sql, values });
+          return this;
+        },
+        async first() {
+          if (sql.includes('FROM chat_sessions s')) return session;
+          return null;
+        },
+        async run() {
+          return { meta: { changes: 1 } };
+        },
+        async all() {
+          return { results: [] };
+        },
+      };
+    },
+  });
+}
+
+for (const migrated of [false, true]) {
+  test(`AI excludes unreviewed private learning data with ${migrated ? 'reviewed' : 'legacy'} schema`, async t => {
+    const sqlite = new DatabaseSync(':memory:');
+    t.after(() => sqlite.close());
+    sqlite.exec(readFileSync(new URL('../../migrations/0005_chat_learning_examples.sql', import.meta.url), 'utf8'));
+    if (migrated) {
+      sqlite.exec(readFileSync(new URL('../../migrations/0006_chat_learning_review.sql', import.meta.url), 'utf8'));
+    }
+    const question = requestBody().message;
+    if (migrated) {
+      const insert = sqlite.prepare(
+        'INSERT INTO chat_learning_examples (id, locale, customer_message, staff_reply, created_at, review_status) VALUES (?, ?, ?, ?, ?, ?)'
+      );
+      for (const [status, customerQuestion, reply] of [
+        [
+          'pending',
+          `${question} PRIVATE_CUSTOMER_FIXTURE`,
+          'PRIVATE_PERSON_FIXTURE at PRIVATE_STREET_FIXTURE requests poodle care.',
+        ],
+        [
+          'rejected',
+          `${question} REJECTED_PRIVATE_CUSTOMER_FIXTURE`,
+          'REJECTED_PRIVATE_PERSON_FIXTURE requests poodle care.',
+        ],
+        ['approved', question, 'CURATED_PUBLIC_GUIDANCE uses the published price list for poodle care.'],
+      ]) {
+        insert.run(crypto.randomUUID(), 'de', customerQuestion, reply, '2026-10-09T00:00:00Z', status);
+      }
+    } else {
+      sqlite
+        .prepare(
+          'INSERT INTO chat_learning_examples (id, locale, customer_message, staff_reply, created_at) VALUES (?, ?, ?, ?, ?)'
+        )
+        .run(
+          crypto.randomUUID(),
+          'de',
+          `${question} PRIVATE_CUSTOMER_FIXTURE`,
+          'PRIVATE_PERSON_FIXTURE at PRIVATE_STREET_FIXTURE requests poodle care.',
+          '2026-10-09T00:00:00Z'
+        );
+    }
+
+    const database = chatDatabase();
+    const originalPrepare = database.prepare;
+    database.prepare = sql => {
+      if (!sql.includes('FROM chat_learning_examples')) return originalPrepare(sql);
+      const statement = sqlite.prepare(sql);
+      let values;
+      return {
+        bind(...boundValues) {
+          values = boundValues;
+          return this;
+        },
+        async all() {
+          return { results: statement.all(...values) };
+        },
+      };
+    };
+    const restoreCache = installCacheStub();
+    const originalFetch = globalThis.fetch;
+    let modelPayload;
+    globalThis.fetch = async (url, options) => {
+      assert.equal(String(url), 'https://api.openai.com/v1/responses');
+      modelPayload = JSON.parse(options.body);
+      return Response.json({ output_text: 'Die Preise stehen in der veröffentlichten Preisliste.' });
+    };
+
+    try {
+      const response = await onRequest({
+        request: createRequest(requestBody()),
+        env: { CHAT_DB: database, OPENAI_API_KEY: 'unit-test-token', CHAT_STAFF_LEARNING_ENABLED: 'true' },
+      });
+      assert.equal(response.status, 200);
+      assert.equal((await response.json()).available, true);
+      assert.match(modelPayload.instructions, /VERIFIED WEBSITE KNOWLEDGE:/);
+      assert.doesNotMatch(
+        modelPayload.instructions,
+        /PRIVATE_CUSTOMER_FIXTURE|PRIVATE_PERSON_FIXTURE|PRIVATE_STREET_FIXTURE/
+      );
+      if (migrated) {
+        assert.match(modelPayload.instructions, /STAFF-TAUGHT EXAMPLES:/);
+        assert.match(modelPayload.instructions, /CURATED_PUBLIC_GUIDANCE/);
+      } else {
+        assert.doesNotMatch(modelPayload.instructions, /STAFF-TAUGHT EXAMPLES:/);
+      }
+    } finally {
+      globalThis.fetch = originalFetch;
+      restoreCache();
+    }
+  });
+}
+
 test('knowledge retrieval selects the exact German breed and price context', () => {
   const reference = selectAiChatKnowledge('Was kostet eine Komplettpflege für einen Zwergpudel?', 'de');
   assert.match(reference, /Zwergpudel/i);
   assert.match(reference, /Komplettpflege/i);
   assert.match(reference, /€|EUR/);
+  assert.ok(reference.length <= 8_000);
+});
+
+test('Russian dental retrieval uses the canonical price and excludes the obsolete overview price', () => {
+  const reference = selectAiChatKnowledge('Сколько стоит чистка зубов собаке до 6 кг?', 'ru');
+  assert.match(reference, /Ультразвуковая чистка зубов без наркоза \(до 6 кг\).*от 100 €/s);
+  assert.match(reference, /скидка 30%/i);
+  assert.match(reference, /не заменяет ветеринарное стоматологическое лечение/i);
+  assert.doesNotMatch(reference, /от 55 €/i);
 });
 
 test('knowledge retrieval matches inflected Russian and Ukrainian breed names', () => {
   const russian = selectAiChatKnowledge('Повторите цену ухода за карликовым пуделем.', 'ru');
   assert.match(russian, /Карликовый пудель/i);
-  assert.match(russian, /Комплексный груминг — от 90 €/i);
+  assert.match(russian, /Маленькие породы — Пудельный и кудрявый тип шерсти/i);
+  assert.match(russian, /Комплексный уход — от 80 €/i);
 
   const ukrainian = selectAiChatKnowledge('Повторіть ціну догляду за карликовим пуделем.', 'uk');
   assert.match(ukrainian, /Карликовий пудель/i);
-  assert.match(ukrainian, /Комплексний грумінг — від 90 €/i);
+  assert.match(ukrainian, /Малі породи — Пудельний і кучерявий тип шерсті/i);
+  assert.match(ukrainian, /Комплексний догляд — від 80 €/i);
+});
+
+test('knowledge retrieval resolves the common Komondor misspelling to the official large-dog category', () => {
+  for (const query of [
+    'К какой категории относится порода командор?',
+    'Найдите коммандора.',
+    'Где находится порода коммандор?',
+  ]) {
+    const reference = selectAiChatKnowledge(query, 'ru');
+    assert.match(reference, /Командор → Комондор/);
+    assert.match(reference, /Гигантские породы — Породы с двойным типом шерсти/);
+    assert.match(reference, /Комплексный уход — от 150 €/);
+  }
+});
+
+test('knowledge retrieval resolves Irish Wolfhound spelling errors to the wire-coat category', () => {
+  const reference = selectAiChatKnowledge('Где ирланский валкодав?', 'ru');
+
+  assert.match(reference, /Ирландский волкодав/);
+  assert.match(reference, /Гигантские породы — Жёсткошёрстные породы/);
+  assert.match(reference, /Тримминг — 60 € \/ час/);
+});
+
+test('animal-care retrieval selects species-specific safety guidance', () => {
+  const guineaPig = selectAiChatKnowledge('Как безопасно подстричь когти морской свинке?', 'ru');
+  assert.match(guineaPig, /Подстригают только свободную часть когтя/i);
+  assert.match(guineaPig, /сосудисто-нервный пучок/i);
+
+  const rabbit = selectAiChatKnowledge('Можно ли полностью купать кролика?', 'ru');
+  assert.match(rabbit, /Стандартный уход не включает купание/i);
+  assert.match(rabbit, /Полная ванна, погружение/i);
+
+  const cat = selectAiChatKnowledge('Кошка тяжело дышит во время вычёсывания.', 'ru');
+  assert.match(cat, /тяжёлом дыхании/i);
+  assert.match(cat, /ветеринар/i);
+});
+
+test('grooming retrieval supplies the limited-service, own-shampoo and chat-media rules', () => {
+  const limitedService = selectAiChatKnowledge(
+    'У шпица понос после смены корма. Нужно только подстричь уши и шерсть вокруг попы без купания.',
+    'ru'
+  );
+  assert.match(limitedService, /не должен автоматически переводить запрос в пакет/i);
+  assert.match(limitedService, /понос после смены корма/i);
+  assert.match(limitedService, /частичная гигиеническая коррекция/i);
+
+  const ownShampoo = selectAiChatKnowledge(
+    'Можно принести свой лечебный шампунь и отправить вам фото инструкции?',
+    'ru'
+  );
+  assert.match(ownShampoo, /можете принести свой шампунь/i);
+  assert.match(ownShampoo, /фото, короткое видео, голосовое сообщение/i);
+  assert.match(ownShampoo, /не просит один и тот же материал повторно/i);
+});
+
+test('small-animal nail price retrieval prioritizes the standalone service', () => {
+  const reference = selectAiChatKnowledge('Можно ли подстричь когти морской свинке и сколько это стоит?', 'ru');
+  const firstBlock = reference.split('\n\n---\n\n')[0];
+
+  assert.match(firstBlock, /Дополнительные услуги/i);
+  assert.match(firstBlock, /Подстригание когтей — 15 €/i);
+  assert.match(reference, /Подстригают только свободную часть когтя/i);
 });
 
 for (const { locale, questions, patterns } of [
   {
     locale: 'ru',
-    questions: ['Что входит в первый груминг щенка?', 'Щенку 3 месяца. Его будут купать и сушить?', 'Щенок боится фена. Что вы будете делать?', 'Можно ли на первый груминг щенку 5 месяцев?', 'Первый груминг щенка лабрадора — сколько стоит?'],
-    patterns: [/до 4 месяцев/, /Если щенок спокоен/, /полностью расчесать/, /искупать/, /подсушить/, /в его темпе/, /от 50 €/],
+    questions: [
+      'Что входит в первый груминг щенка?',
+      'Щенку 3 месяца. Его будут купать и сушить?',
+      'Щенок боится фена. Что вы будете делать?',
+      'Можно ли на первый груминг щенку 5 месяцев?',
+      'Первый груминг щенка лабрадора — сколько стоит?',
+    ],
+    patterns: [
+      /до 4 месяцев/,
+      /Если щенок спокоен/,
+      /полностью расчесать/,
+      /искупать/,
+      /подсушить/,
+      /в его темпе/,
+      /от 50 €/,
+    ],
   },
   {
     locale: 'de',
     questions: ['Was gehört zur Welpen-Eingewöhnung?', 'Mein Welpe hat Angst vor dem Föhn. Wird er gebadet?'],
-    patterns: [/bis 4 Monate/, /Wenn der Welpe ruhig/, /vollständig bürsten/, /baden/, /antrocknen/, /in seinem Tempo/, /ab 50 €/],
+    patterns: [
+      /bis 4 Monate/,
+      /Wenn der Welpe ruhig/,
+      /vollständig bürsten/,
+      /baden/,
+      /antrocknen/,
+      /in seinem Tempo/,
+      /ab 50 €/,
+    ],
   },
   {
     locale: 'en',
     questions: ['What is included in first puppy grooming?', 'My puppy is afraid of the dryer. Will you bathe him?'],
-    patterns: [/up to 4 months/, /If the puppy stays calm/, /brush the whole coat/, /full bath/, /gently dry/, /at their pace/, /from €50/],
+    patterns: [
+      /up to 4 months/,
+      /If the puppy stays calm/,
+      /brush the whole coat/,
+      /full bath/,
+      /gently dry/,
+      /at their pace/,
+      /from €50/,
+    ],
   },
   {
     locale: 'uk',
     questions: ['Що входить у перший грумінг цуценяти?', 'Цуценя боїться фена. Чи будете його купати?'],
-    patterns: [/до 4 місяців/, /Якщо цуценя спокійне/, /повністю розчесати/, /викупати/, /підсушити/, /в його темпі/, /від 50 €/],
+    patterns: [
+      /до 4 місяців/,
+      /Якщо цуценя спокійне/,
+      /повністю розчесати/,
+      /викупати/,
+      /підсушити/,
+      /в його темпі/,
+      /від 50 €/,
+    ],
   },
 ]) {
   test(`${locale}: puppy questions retrieve the age, conditional care and canonical starting price together`, () => {
@@ -102,6 +356,13 @@ test('AI answer normalization removes unsupported Markdown without changing the 
   assert.equal(normalizeAiAnswer('## Цена\n__От 90 €__', 'ru'), 'Цена\nОт 90 €');
 });
 
+test('reply locale follows the customer message instead of the page language', () => {
+  assert.equal(detectCustomerLocale('Добрый вечір. В мене пес, його треба привести до ладу.', 'ru'), 'uk');
+  assert.equal(detectCustomerLocale('Здравствуйте, сколько стоит уход за собакой?', 'uk'), 'ru');
+  assert.equal(detectCustomerLocale('Hello, please tell me the price for my dog.', 'de'), 'en');
+  assert.equal(detectCustomerLocale('Hallo, ich möchte einen Termin für meinen Hund.', 'en'), 'de');
+});
+
 test('explicit human request is handed off without an OpenAI call', async () => {
   const restoreCache = installCacheStub();
   const originalFetch = globalThis.fetch;
@@ -114,13 +375,83 @@ test('explicit human request is handed off without an OpenAI call', async () => 
   try {
     const response = await onRequest({
       request: createRequest(requestBody({ message: 'Ich möchte mit einem Mitarbeiter sprechen.' })),
-      env: {},
+      env: { CHAT_DB: chatDatabase() },
     });
     const payload = await response.json();
     assert.equal(response.status, 200);
     assert.equal(payload.handoff, true);
     assert.equal(payload.available, true);
     assert.equal(called, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreCache();
+  }
+});
+
+test('personal-support mode sends the message to staff without an OpenAI call', async () => {
+  const restoreCache = installCacheStub();
+  const originalFetch = globalThis.fetch;
+  let called = false;
+  globalThis.fetch = async () => {
+    called = true;
+    throw new Error('unexpected');
+  };
+
+  const database = chatDatabase();
+  try {
+    const response = await onRequest({
+      request: createRequest(requestBody({ mode: 'human', message: 'Bitte rufen Sie mich zurück.' })),
+      env: { CHAT_DB: database, OPENAI_API_KEY: 'test-key' },
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(payload.waitingForStaff, true);
+    assert.equal(payload.handoff, true);
+    assert.equal(payload.available, true);
+    assert.equal(called, false);
+    assert.ok(
+      database.boundCalls.some(
+        call => call.sql.includes('UPDATE chat_sessions SET conversation_mode') && call.values[0] === 'human'
+      )
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreCache();
+  }
+});
+
+test('an administrator takeover persists personal mode and blocks the AI model', async () => {
+  const restoreCache = installCacheStub();
+  const originalFetch = globalThis.fetch;
+  const telegramPayloads = [];
+  globalThis.fetch = async (url, init) => {
+    assert.match(String(url), /api\.telegram\.org/);
+    telegramPayloads.push(JSON.parse(init.body));
+    return new Response(JSON.stringify({ ok: true, result: { message_id: 91, chat: { id: -100123 } } }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  try {
+    const response = await onRequest({
+      request: createRequest(requestBody({ mode: 'ai', message: 'Noch eine Frage.' })),
+      env: {
+        CHAT_DB: chatDatabase({ conversation_mode: 'human' }),
+        OPENAI_API_KEY: 'test-key',
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        TELEGRAM_BOT_TOKEN: 'telegram-test-token',
+        TELEGRAM_CHAT_ID: '-100123',
+        TELEGRAM_TOPIC_MESSAGES_ID: '42',
+        TELEGRAM_TOPIC_PERSONAL_ID: '197',
+      },
+    });
+    const payload = await response.json();
+
+    assert.equal(payload.mode, 'human');
+    assert.equal(payload.waitingForStaff, true);
+    assert.equal(telegramPayloads.length, 1);
+    assert.equal(telegramPayloads[0].message_thread_id, 197);
+    assert.match(telegramPayloads[0].text, /Личная консультация/);
   } finally {
     globalThis.fetch = originalFetch;
     restoreCache();
@@ -139,7 +470,7 @@ test('inflected Russian human request is recognized without a model call', async
   try {
     const response = await onRequest({
       request: createRequest(requestBody({ locale: 'ru', message: 'Хочу поговорить со специалистом.' })),
-      env: { OPENAI_API_KEY: 'test-key' },
+      env: { CHAT_DB: chatDatabase(), OPENAI_API_KEY: 'test-key' },
     });
     const payload = await response.json();
     assert.equal(payload.handoff, true);
@@ -154,7 +485,7 @@ test('inflected Russian human request is recognized without a model call', async
 test('missing OpenAI secret fails safely and offers personal support', async () => {
   const restoreCache = installCacheStub();
   try {
-    const response = await onRequest({ request: createRequest(requestBody()), env: {} });
+    const response = await onRequest({ request: createRequest(requestBody()), env: { CHAT_DB: chatDatabase() } });
     const payload = await response.json();
     assert.equal(response.status, 200);
     assert.equal(payload.available, false);
@@ -187,7 +518,7 @@ test('OpenAI request uses bounded context and returns the model answer', async (
           })),
         })
       ),
-      env: { OPENAI_API_KEY: 'test-key' },
+      env: { CHAT_DB: chatDatabase(), OPENAI_API_KEY: 'test-key' },
     });
     const payload = await response.json();
     assert.equal(response.status, 200);
@@ -202,10 +533,119 @@ test('OpenAI request uses bounded context and returns the model answer', async (
     assert.match(upstreamPayload.instructions, /Default to 1-3 short sentences, at most 60 words/);
     assert.match(upstreamPayload.instructions, /Give more detail only when the customer explicitly asks/);
     assert.match(upstreamPayload.instructions, /Preserve essential conditions such as age limits, conditional care/);
-    assert.match(upstreamPayload.instructions, /never reproduce entire reference blocks or the full knowledge document/);
-    assert.ok(upstreamPayload.instructions.length < 12_500);
+    assert.match(
+      upstreamPayload.instructions,
+      /First accept the constraint, then ask at most one safety-relevant question/
+    );
+    assert.match(upstreamPayload.instructions, /Never automatically replace a request for local trimming/);
+    assert.match(
+      upstreamPayload.instructions,
+      /isolated report of loose stool after a food change is not by itself a reason/
+    );
+    assert.match(
+      upstreamPayload.instructions,
+      /If the customer wants to bring their own shampoo, accept this politely/
+    );
+    assert.match(upstreamPayload.instructions, /For every grooming-service recommendation or safety clarification/);
+    assert.match(
+      upstreamPayload.instructions,
+      /photo, short video, voice message\/audio or document directly in this chat/
+    );
+    assert.match(
+      upstreamPayload.instructions,
+      /never reproduce entire reference blocks or the full knowledge document/
+    );
+    assert.match(upstreamPayload.instructions, /Ultrasonic teeth cleaning.*от 100 €/s);
+    assert.match(upstreamPayload.instructions, /obsolete teeth-cleaning price от 55 €/);
+    assert.ok(upstreamPayload.instructions.length < 14_000);
     assert.ok(upstreamPayload.input.length < 10_000);
     assert.doesNotMatch(upstreamPayload.instructions, /test-key/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreCache();
+  }
+});
+
+test('the customer message and successful AI answer are mirrored to Telegram', async () => {
+  const restoreCache = installCacheStub();
+  const originalFetch = globalThis.fetch;
+  const telegramPayloads = [];
+
+  globalThis.fetch = async (url, init) => {
+    if (String(url).includes('api.telegram.org')) {
+      telegramPayloads.push(JSON.parse(init.body));
+      return new Response(JSON.stringify({ ok: true, result: { message_id: 100 + telegramPayloads.length } }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify({ output_text: 'Die Komplettpflege kostet ab 80 €.' }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  try {
+    const response = await onRequest({
+      request: createRequest(requestBody()),
+      env: {
+        CHAT_DB: chatDatabase(),
+        OPENAI_API_KEY: 'test-key',
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        TELEGRAM_BOT_TOKEN: 'telegram-test-token',
+        TELEGRAM_CHAT_ID: '-1001234567890',
+        TELEGRAM_TOPIC_MESSAGES_ID: '42',
+      },
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.available, true);
+    assert.equal(telegramPayloads.length, 2);
+    assert.equal(telegramPayloads[0].message_thread_id, 42);
+    assert.match(telegramPayloads[0].text, /Сообщение из AI-чата сайта/);
+    assert.equal(telegramPayloads[1].message_thread_id, 42);
+    assert.match(telegramPayloads[1].text, /Ответ AI-агента сайта/);
+    assert.match(telegramPayloads[1].text, /Die Komplettpflege kostet ab 80 €/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreCache();
+  }
+});
+
+test('Russian price answers receive the mandatory final-price disclosure', async () => {
+  const restoreCache = installCacheStub();
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () =>
+    new Response(JSON.stringify({ output_text: 'Подстригание когтей стоит 7 евро; маска — от 15 €.' }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  try {
+    const response = await onRequest({
+      request: createRequest(
+        requestBody({ locale: 'ru', message: 'Сколько стоит подстригание когтей?', pagePath: '/ru/prays-list.html' })
+      ),
+      env: { CHAT_DB: chatDatabase(), OPENAI_API_KEY: 'test-key' },
+    });
+    const payload = await response.json();
+    assert.match(payload.answer, /от 7 €/);
+    assert.match(payload.answer, /от 15 €/);
+    assert.doesNotMatch(payload.answer, /стоит\s+7\s*(?:€|евро)/i);
+    assert.doesNotMatch(payload.answer, /от\s+от/i);
+    assert.match(payload.answer, /Точную стоимость мастер оценит и согласует с вами до начала процедуры/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreCache();
+  }
+});
+
+test('chat requests without a configured session database are rejected before a model call', async () => {
+  const restoreCache = installCacheStub();
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => assert.fail('An unauthenticated request must not contact an upstream service');
+  try {
+    const response = await onRequest({ request: createRequest(requestBody()), env: { OPENAI_API_KEY: 'fixture-key' } });
+    assert.equal(response.status, 401);
   } finally {
     globalThis.fetch = originalFetch;
     restoreCache();
@@ -244,15 +684,25 @@ test('puppy request sends the approved care conditions to the answer model witho
 
   try {
     const response = await onRequest({
-      request: createRequest(requestBody({ locale: 'ru', message: 'Что входит в первый груминг щенка?', pagePath: '/ru/prays-list.html' })),
-      env: { OPENAI_API_KEY: 'test-key' },
+      request: createRequest(
+        requestBody({ locale: 'ru', message: 'Что входит в первый груминг щенка?', pagePath: '/ru/prays-list.html' })
+      ),
+      env: { CHAT_DB: chatDatabase(), OPENAI_API_KEY: 'test-key' },
     });
     assert.equal(response.status, 200);
     assert.equal((await response.json()).available, true);
-    for (const pattern of [/до 4 месяцев/, /Если щенок спокоен/, /полностью расчесать/, /искупать/, /подсушить/, /в его темпе/, /от 50 €/]) {
+    for (const pattern of [
+      /до 4 месяцев/,
+      /Если щенок спокоен/,
+      /полностью расчесать/,
+      /искупать/,
+      /подсушить/,
+      /в его темпе/,
+      /от 50 €/,
+    ]) {
       assert.match(instructions, pattern);
     }
-    assert.ok(instructions.length < 12_500);
+    assert.ok(instructions.length < 14_000);
     assert.doesNotMatch(instructions, /It can include light brushing, careful bathing and drying, nails/);
   } finally {
     globalThis.fetch = originalFetch;

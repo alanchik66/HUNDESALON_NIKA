@@ -22,7 +22,7 @@ const requiredFiles = [
 ];
 
 const indexFiles = ['index.html', 'de/index.html', 'en/index.html', 'ru/index.html', 'uk/index.html'];
-const ignoredDirs = new Set(['.git', 'node_modules', 'dist', 'temp', 'tmp', 'test-results', '.wrangler']);
+const ignoredDirs = new Set(['.git', 'node_modules', 'dist', 'temp', 'tmp', 'test-results', '.wrangler', 'Python']);
 const failures = [];
 
 function read(relativePath) {
@@ -67,8 +67,10 @@ if (fs.existsSync(path.join(root, 'workers/pages-proxy.js'))) {
   const workerSource = read('workers/pages-proxy.js');
   assert(fs.existsSync(workerConfigPath), 'Missing worker config: workers/wrangler.toml');
   assert(
-    workerSource.includes('geolocation=(self)') && /headers\.set\(\s*['"]Permissions-Policy['"]/.test(workerSource),
-    'workers/pages-proxy.js must allow same-origin geolocation in the final response'
+    workerSource.includes('geolocation=(self)') &&
+      workerSource.includes('microphone=(self)') &&
+      /headers\.set\(\s*['"]Permissions-Policy['"]/.test(workerSource),
+    'workers/pages-proxy.js must allow same-origin geolocation and microphone access in the final response'
   );
 
   if (fs.existsSync(workerConfigPath)) {
@@ -206,14 +208,14 @@ for (const file of indexFiles) {
   const html = read(file);
   assert(html.includes('Leipzig'), `${file}: missing Leipzig geo signal`);
   assert(html.includes('"addressLocality": "Leipzig"'), `${file}: JSON-LD addressLocality must be Leipzig`);
-  assert(html.includes('"streetAddress": "Walter-Markov-Ring 1"'), `${file}: JSON-LD streetAddress is missing`);
-  assert(html.includes('"postalCode": "04288"'), `${file}: JSON-LD postalCode is missing`);
+  assert(html.includes('"streetAddress": "Untere Eichstädtstraße 38"'), `${file}: JSON-LD streetAddress is missing`);
+  assert(html.includes('"postalCode": "04299"'), `${file}: JSON-LD postalCode is missing`);
   assert(
     html.includes('/favicon.ico') || html.includes('/assets/images/favicon/favicon.ico'),
     `${file}: missing favicon.ico link`
   );
   assert(html.includes('/site.webmanifest'), `${file}: missing web manifest link`);
-  assert(html.includes('search-logo-clear-512.png'), `${file}: missing transparent search logo structured signal`);
+  assert(html.includes('logo-from-card-crown-512.png'), `${file}: missing opaque search logo structured signal`);
 
   for (const match of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
     try {

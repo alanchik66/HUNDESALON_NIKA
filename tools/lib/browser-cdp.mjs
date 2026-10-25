@@ -16,6 +16,13 @@ export function pageScript(body, options = {}) {
     const visible = el => !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
     const norm = s => (s || '').replace(/\\s+/g, ' ').trim();
     const txt = el => norm(el.innerText || el.value || el.getAttribute('aria-label') || '');
+    const labels = el =>
+      [...new Set([
+        el.innerText,
+        el.value,
+        el.getAttribute('aria-label'),
+        el.getAttribute('title'),
+      ].map(norm).filter(Boolean))];
     const setNativeValue = (el, value) => {
       const proto = Object.getPrototypeOf(el);
       const d = Object.getOwnPropertyDescriptor(proto, 'value');
@@ -34,9 +41,10 @@ export function pageScript(body, options = {}) {
       const ex = options.exclude ? new RegExp(options.exclude, 'i') : null;
       for (const el of root.querySelectorAll(${JSON.stringify(clickSelectors)})) {
         if (!visible(el) || el.disabled) continue;
-        const t = txt(el);
-        if (ex && ex.test(t)) continue;
-        if (re.test(t)) { el.click(); return t; }
+        const candidates = labels(el);
+        if (ex && candidates.some(candidate => ex.test(candidate))) continue;
+        const match = candidates.find(candidate => re.test(candidate));
+        if (match) { el.click(); return match; }
       }
       return null;
     };

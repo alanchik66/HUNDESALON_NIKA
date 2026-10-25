@@ -1,7 +1,9 @@
 /** Shared production policy for the site's paid AI gateway calls. */
 
-export const APPROVED_AI_MODEL = 'google/gemini-2.5-flash-lite';
-export const APPROVED_AI_PROVIDER = 'google-ai-studio';
+import { timingSafeEqualStrings } from './http-security.js';
+
+export const APPROVED_AI_MODEL = 'gpt-5.6-luna';
+export const APPROVED_AI_PROVIDER = 'openai';
 export const AI_PROVIDER_POLICY = Object.freeze({
   only: [APPROVED_AI_PROVIDER],
   allow_fallbacks: false,
@@ -42,18 +44,9 @@ export function getBearerToken(request) {
   return /^Bearer\s+(.+)$/i.exec(header)?.[1]?.trim() || '';
 }
 
-function constantTimeEqual(left, right) {
-  if (!left || left.length !== right.length) return false;
-  let difference = 0;
-  for (let index = 0; index < left.length; index += 1) {
-    difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
-  }
-  return difference === 0;
-}
-
-export function hasAiServiceAuth(request, context) {
+export async function hasAiServiceAuth(request, context) {
   const secret = getContextEnvVar(context, AI_SERVICE_SECRET_ENV);
-  return Boolean(secret) && constantTimeEqual(getBearerToken(request), secret);
+  return Boolean(secret) && timingSafeEqualStrings(getBearerToken(request), secret);
 }
 
 export function resolveApprovedModel(value) {

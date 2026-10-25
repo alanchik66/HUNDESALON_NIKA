@@ -30,6 +30,12 @@ const SHEET_HEADERS = {
     'estimated_duration_minutes',
     'booking_buffer_minutes',
     'safe_block_minutes',
+    'request_id',
+    'calendar_status',
+    'calendar_confirmed_at',
+    'calendar_event_id',
+    'calendar_start',
+    'calendar_end',
   ],
   subscribers: ['created_at', 'email', 'lang', 'page', 'origin', 'consent'],
   clients: [
@@ -132,27 +138,15 @@ function getOrCreateCalendar() {
   return calendar;
 }
 
-function getOrCreateFolder() {
-  const folderId = PROPS.getProperty('DRIVE_FOLDER_ID');
-  if (folderId) return DriveApp.getFolderById(folderId);
-
-  const folder = DriveApp.createFolder('HUNDESALON NIKA Uploads');
-  PROPS.setProperty('DRIVE_FOLDER_ID', folder.getId());
-  return folder;
-}
-
 function setup() {
   const calendar = getOrCreateCalendar();
   const sheet = getOrCreateSheet('bookings').getParent();
   Object.keys(SHEET_HEADERS).forEach(name => getOrCreateSheet(name));
-  const folder = getOrCreateFolder();
 
   return {
     success: true,
     calendarId: calendar.getId(),
     spreadsheetId: sheet.getId(),
-    driveFolderId: folder.getId(),
-    driveFolderUrl: folder.getUrl(),
   };
 }
 
@@ -205,23 +199,202 @@ function getCalendarBusyIntervals(payload) {
   return { success: true, busyIntervals: busyIntervals };
 }
 
-function uploadDriveFile(payload) {
-  const folder = getOrCreateFolder();
-  const bytes = Utilities.base64Decode(payload.fileBase64 || '');
-  const blob = Utilities.newBlob(
-    bytes,
-    payload.mimeType || 'application/octet-stream',
-    payload.fileName || 'upload.bin'
-  );
-  const file = folder.createFile(blob);
-  file.setDescription(JSON.stringify(payload.metadata || {}));
+function findBookingRecord(sheet, requestId) {
+  const values = sheet.getDataRange().getValues();
+  const rowOffset = values.findIndex(function (row, index) {
+    return index > 0 && String(row[28] || '').trim().toLowerCase() === requestId;
+  });
+  return rowOffset < 1 ? null : { rowOffset: rowOffset, row: values[rowOffset] };
+}
 
+function bookingDetails(row) {
   return {
-    success: true,
-    fileId: file.getId(),
-    fileUrl: file.getUrl(),
-    webViewLink: file.getUrl(),
+    name: String(row[3] || ''),
+    service: String(row[6] || ''),
+    date: String(row[7] || ''),
+    time: String(row[8] || ''),
+    petName: String(row[13] || ''),
+    petBreed: String(row[15] || ''),
   };
+}
+
+function persistBookingConfirmation(sheet, requestId, eventId) {
+  try {
+    const current = findBookingRecord(sheet, requestId);
+    if (!current) return { success: false, reason: 'booking_not_found' };
+    const status = String(current.row[29] || '').trim().toLowerCase();
+    const storedEventId = String(current.row[31] || '').trim();
+    if (status === 'confirmed' && storedEventId) {
+      return {
+        success: true,
+        deduplicated: true,
+        eventId: storedEventId,
+        booking: bookingDetails(current.row),
+      };
+    }
+    if (status !== 'pending') return { success: false, reason: 'invalid_state' };
+    const confirmedAt = new Date().toISOString();
+    sheet.getRange(current.rowOffset + 1, 30, 1, 3).setValues([['confirmed', confirmedAt, eventId]]);
+    SpreadsheetApp.flush();
+    return {
+      success: true,
+      deduplicated: false,
+      eventId: eventId,
+      confirmedAt: confirmedAt,
+      booking: bookingDetails(current.row),
+    };
+  } catch (error) {
+    return { success: false, reason: 'sheet_update_failed', partial: true };
+  }
+}
+
+function isManagedBookingEvent(event) {
+  return /(?:^|\n)booking_request_id=[0-9a-f-]{36}(?:\n|$)/i.test(String(event.getDescription() || ''));
+}
+
+function bookingEventWins(calendar, start, end, event) {
+  const eventId = String(event.getId());
+  const candidates = calendar.getEvents(start, end);
+  if (
+    candidates.some(function (candidate) {
+      return String(candidate.getId()) !== eventId && !isManagedBookingEvent(candidate);
+    })
+  ) {
+    return false;
+  }
+  if (!candidates.some(function (candidate) { return String(candidate.getId()) === eventId; })) {
+    candidates.push(event);
+  }
+  const bookingCandidates = candidates.filter(isManagedBookingEvent);
+  bookingCandidates.sort(function (left, right) {
+    const byCreated = left.getDateCreated().getTime() - right.getDateCreated().getTime();
+    return byCreated || String(left.getId()).localeCompare(String(right.getId()));
+  });
+  return bookingCandidates.length > 0 && String(bookingCandidates[0].getId()) === eventId;
+}
+
+function confirmBooking(payload) {
+  const requestId = String(payload.requestId || '').trim().toLowerCase();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(requestId)) {
+    return { success: false, reason: 'invalid_booking' };
+  }
+
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) return { success: false, reason: 'calendar_unavailable' };
+  let createAttempted = false;
+  let createdEvent = null;
+  try {
+    const spreadsheetId = String(payload.spreadsheetId || PROPS.getProperty('SHEET_ID') || '').trim();
+    const spreadsheet = spreadsheetId ? SpreadsheetApp.openById(spreadsheetId) : getOrCreateSheet('bookings').getParent();
+    const sheet = spreadsheet.getSheetByName('bookings');
+    if (!sheet) return { success: false, reason: 'booking_not_found' };
+    ensureSheetHeaders(sheet, 'bookings');
+    const record = findBookingRecord(sheet, requestId);
+    if (!record) return { success: false, reason: 'booking_not_found' };
+    const row = record.row;
+    const status = String(row[29] || '').trim().toLowerCase();
+    const storedEventId = String(row[31] || '').trim();
+    const booking = bookingDetails(row);
+    if (status === 'confirmed' && storedEventId) {
+      return { success: true, deduplicated: true, eventId: storedEventId, booking: booking };
+    }
+    if (status !== 'pending') return { success: false, reason: 'invalid_state' };
+
+    const start = Utilities.parseDate(String(row[32] || ''), 'Europe/Berlin', "yyyy-MM-dd'T'HH:mm:ss");
+    const end = Utilities.parseDate(String(row[33] || ''), 'Europe/Berlin', "yyyy-MM-dd'T'HH:mm:ss");
+    if (!start || !end || !Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start) {
+      return { success: false, reason: 'invalid_booking_time' };
+    }
+
+    const calendarId = String(payload.calendarId || PROPS.getProperty('CALENDAR_ID') || '').trim();
+    const calendar = calendarId ? CalendarApp.getCalendarById(calendarId) : getOrCreateCalendar();
+    if (!calendar) return { success: false, reason: 'calendar_unavailable' };
+    const requestMarker = 'booking_request_id=' + requestId;
+    const conflicts = calendar.getEvents(start, end);
+    const existing = conflicts.find(function (event) {
+      return String(event.getDescription() || '').includes(requestMarker);
+    });
+    if (existing) {
+      let existingWins;
+      try {
+        existingWins = bookingEventWins(calendar, start, end, existing);
+      } catch (arbitrationError) {
+        return { success: false, reason: 'confirmation_pending', partial: true };
+      }
+      if (!existingWins) {
+        try {
+          existing.deleteEvent();
+          return { success: false, reason: 'slot_conflict' };
+        } catch (cleanupError) {
+          return { success: false, reason: 'calendar_cleanup_failed', partial: true };
+        }
+      }
+      const recovered = persistBookingConfirmation(sheet, requestId, existing.getId());
+      return recovered.success ? Object.assign(recovered, { deduplicated: true }) : recovered;
+    }
+    if (conflicts.length) return { success: false, reason: 'slot_conflict' };
+
+    const description = [
+      requestMarker,
+      'Name: ' + String(row[3] || ''),
+      'E-mail: ' + String(row[4] || ''),
+      'Phone: ' + String(row[5] || ''),
+      'Pet: ' + String(row[13] || '') + ' (' + String(row[15] || '') + ')',
+      row[9] ? 'OneDrive: ' + String(row[9]) : '',
+      row[11] ? 'Message: ' + String(row[11]) : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+    createAttempted = true;
+    createdEvent = calendar.createEvent(
+      'HUNDESALON NIKA: ' + String(row[6] || '') + ' — ' + String(row[3] || ''),
+      start,
+      end,
+      { description: description }
+    );
+    let createdWins;
+    try {
+      createdWins = bookingEventWins(calendar, start, end, createdEvent);
+    } catch (arbitrationError) {
+      try {
+        createdEvent.deleteEvent();
+        return { success: false, reason: 'calendar_unavailable' };
+      } catch (cleanupError) {
+        return { success: false, reason: 'calendar_cleanup_failed', partial: true };
+      }
+    }
+    if (!createdWins) {
+      try {
+        createdEvent.deleteEvent();
+        return { success: false, reason: 'slot_conflict' };
+      } catch (cleanupError) {
+        return { success: false, reason: 'calendar_cleanup_failed', partial: true };
+      }
+    }
+    const persisted = persistBookingConfirmation(sheet, requestId, createdEvent.getId());
+    if (persisted.success && !persisted.deduplicated) return persisted;
+    if (!persisted.success && persisted.partial) return persisted;
+    try {
+      createdEvent.deleteEvent();
+    } catch (cleanupError) {
+      return { success: false, reason: 'calendar_cleanup_failed', partial: true };
+    }
+    if (persisted.success) return persisted;
+    return { success: false, reason: persisted.reason, partial: false };
+  } catch (error) {
+    if (createdEvent) {
+      try {
+        createdEvent.deleteEvent();
+        return { success: false, reason: 'calendar_unavailable' };
+      } catch (cleanupError) {
+        return { success: false, reason: 'calendar_cleanup_failed', partial: true };
+      }
+    }
+    if (createAttempted) return { success: false, reason: 'confirmation_pending', partial: true };
+    return { success: false, reason: 'calendar_unavailable', message: error.message || 'Confirmation failed' };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function doPost(e) {
@@ -233,7 +406,7 @@ function doPost(e) {
     if (payload.action === 'sheets') return jsonResponse(appendSheet(payload));
     if (payload.action === 'calendar') return jsonResponse(createCalendarEvent(payload));
     if (payload.action === 'calendar_freebusy') return jsonResponse(getCalendarBusyIntervals(payload));
-    if (payload.action === 'drive') return jsonResponse(uploadDriveFile(payload));
+    if (payload.action === 'booking_confirm') return jsonResponse(confirmBooking(payload));
 
     return jsonResponse({ success: false, message: 'Unknown action' });
   } catch (error) {

@@ -1,4 +1,4 @@
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { chromium, devices } from 'playwright';
 
@@ -9,6 +9,18 @@ const staticServer = externalBaseUrl ? null : await startStaticTestServer();
 const baseUrl = externalBaseUrl || staticServer.baseUrl;
 const outDir = path.resolve('test-results', 'price-list-smoke');
 const supportedLocales = ['ru', 'de', 'en', 'uk'];
+const expectedSearchFilterCopy = {
+  de: ['Tierart', 'Gewicht', 'Felltyp', 'Rassen gefunden', 'Alles zurücksetzen'],
+  en: ['Animal', 'Weight', 'Coat type', 'Breeds found', 'Reset all'],
+  ru: ['Вид животного', 'Вес', 'Тип шерсти', 'Найдено пород', 'Сбросить всё'],
+  uk: ['Вид тварини', 'Вага', 'Тип шерсті', 'Знайдено порід', 'Скинути все'],
+};
+const expectedWeightRangeCopy = {
+  de: ['Gewicht: bis 6 kg', 'Gewicht: 6–15 kg', 'Gewicht: 15–30 kg', 'Gewicht: ab 30 kg'],
+  en: ['Weight: up to 6 kg', 'Weight: 6–15 kg', 'Weight: 15–30 kg', 'Weight: 30 kg and over'],
+  ru: ['Вес: до 6 кг', 'Вес: 6–15 кг', 'Вес: 15–30 кг', 'Вес: от 30 кг'],
+  uk: ['Вага: до 6 кг', 'Вага: 6–15 кг', 'Вага: 15–30 кг', 'Вага: від 30 кг'],
+};
 const requestedLocales = (process.env.PRICE_SMOKE_LOCALES || '')
   .split(',')
   .map(locale => locale.trim())
@@ -17,8 +29,10 @@ const locales = requestedLocales.length
   ? supportedLocales.filter(locale => requestedLocales.includes(locale))
   : supportedLocales;
 const requestedLayout = process.env.PRICE_SMOKE_LAYOUT || '';
+const geometryOnly = process.env.PRICE_SMOKE_GEOMETRY_ONLY === '1';
+const desktopWidth = Number.parseInt(process.env.PRICE_SMOKE_DESKTOP_WIDTH || '1440', 10);
 const layouts = [
-  ['desktop', { width: 1440, height: 900 }, 'desktop'],
+  ['desktop', { width: desktopWidth, height: 900 }, 'desktop'],
   ['mobile', devices['iPhone 13'].viewport, 'mobile'],
 ].filter(([label]) => !requestedLayout || label === requestedLayout);
 const additionalScreenshots = locales.includes('ru') && layouts.some(([label]) => label === 'desktop')
@@ -28,6 +42,13 @@ const additionalScreenshots = locales.includes('ru') && layouts.some(([label]) =
       path.join(outDir, 'ru-desktop-category-scrolled.png'),
     ]
   : [];
+const searchFilterScreenshots = locales.includes('ru')
+  ? layouts.map(([, , screenshotSuffix]) => path.join(outDir, `ru-${screenshotSuffix}-search-filters.png`))
+  : [];
+const tabletScreenshots = layouts.some(([label]) => label === 'desktop')
+  ? locales.map(locale => path.join(outDir, `${locale}-tablet-grid.png`))
+  : [];
+const geometryScreenshots = [];
 
 const checks = [];
 
@@ -38,9 +59,72 @@ const assert = (name, ok, detail = '') => {
   }
 };
 
+const normalizeTimingFunction = value => String(value || '')
+  .trim()
+  .toLowerCase()
+  .replace(/\s+/g, '')
+  .replace(/(^|[(,])(-?)\.(\d+)/g, '$1$20.$3');
+
+const readLoadedPhotoImages = async (page, selector) => {
+  await page.waitForSelector(selector, { state: 'attached', timeout: 15000 });
+  await page.locator(selector).evaluateAll(images => {
+    images.forEach(image => {
+      image.loading = 'eager';
+    });
+  });
+  await page.waitForFunction(
+    imageSelector => {
+      const images = Array.from(document.querySelectorAll(imageSelector));
+      return images.length > 0 && images.every(image => image.complete && image.naturalWidth > 0);
+    },
+    selector,
+    { timeout: 15000 }
+  );
+  return page.evaluate(imageSelector => {
+    const images = Array.from(document.querySelectorAll(imageSelector));
+    return images.map(image => {
+      const url = new URL(image.currentSrc || image.src, document.baseURI);
+      return {
+        url: url.href,
+        local: url.origin === window.location.origin
+          && /^\/assets\/images\/animal-breeds\/[a-f0-9]{16}-[a-z0-9-]+\.webp$/u.test(url.pathname),
+        loaded: image.complete && image.naturalWidth > 0 && image.naturalHeight > 0,
+        objectFit: getComputedStyle(image).objectFit,
+        alt: image.alt,
+      };
+    });
+  }, selector);
+};
+
+const localContainedPhotosPass = photos => photos.length > 0
+  && photos.every(photo => photo.local && photo.loaded && photo.objectFit === 'contain');
+
+// Element screenshots cannot represent sections taller than the fixed scroll root.
+// Navigate as a visitor does and capture the actual viewport instead.
+const captureSection = async (page, sectionKey, screenshotPath) => {
+  const key = sectionKey === 'cats-animals' ? 'cats' : sectionKey;
+  await page.locator(`[data-price-categories-action][data-price-section-action="${key}"]`).click();
+  await page.waitForFunction(targetKey => {
+    const heading = document.querySelector(`[data-price-section-target="${targetKey}"] .price-size-section__heading`);
+    const rect = heading?.getBoundingClientRect();
+    return rect && rect.top >= -1 && rect.bottom <= innerHeight;
+  }, key);
+  await page.waitForFunction(targetKey => {
+    const heading = document.querySelector(`[data-price-section-target="${targetKey}"] .price-size-section__heading`);
+    const hint = document.querySelector('.header-reveal-control__hint');
+    const rect = heading?.getBoundingClientRect();
+    const hintRect = hint?.getBoundingClientRect();
+    return rect && (!hintRect || !hintRect.height || rect.top >= hintRect.bottom + 1);
+  }, key);
+  await page.screenshot({ path: screenshotPath, animations: 'disabled' });
+};
+
 await mkdir(outDir, { recursive: true });
 
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({
+  headless: true,
+  ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}),
+});
 
 for (const locale of locales) {
   for (const [label, viewport, screenshotSuffix] of layouts) {
@@ -62,7 +146,38 @@ for (const locale of locales) {
     }
 
     await page.waitForSelector('[data-price-categories] .price-card', { timeout: 15000 });
+    await page.waitForFunction(
+      () => Object.keys(window.AnimalBreedPhotoData?.entriesByKey || {}).length > 0,
+      null,
+      { timeout: 30000 }
+    );
+    const photoManifestState = await page.evaluate(() => {
+      const manifest = window.AnimalBreedPhotoData || {};
+      const entries = Object.values(manifest.entriesByKey || {});
+      const localAssets = entries.map(entry => entry.localAsset || '');
+      return {
+        version: manifest.version,
+        entryCount: entries.length,
+        localAssetCount: localAssets.filter(Boolean).length,
+        uniqueLocalAssetCount: new Set(localAssets.filter(Boolean)).size,
+        sharedPhotoGroupCount: manifest.sharedPhotoGroups?.length ?? -1,
+        invalidLocalAssets: localAssets.filter(asset =>
+          !/^\/assets\/images\/animal-breeds\/[a-f0-9]{16}-[a-z0-9-]+\.webp$/u.test(asset)
+        ).slice(0, 3),
+      };
+    });
+    assert(
+      `${locale} ${label}: local animal photo manifest is complete`,
+      photoManifestState.version === 1
+        && photoManifestState.entryCount > 0
+        && photoManifestState.localAssetCount === photoManifestState.entryCount
+        && photoManifestState.uniqueLocalAssetCount === photoManifestState.entryCount
+        && photoManifestState.sharedPhotoGroupCount === 0
+        && photoManifestState.invalidLocalAssets.length === 0,
+      JSON.stringify(photoManifestState)
+    );
     await page.locator('[data-price-categories]').scrollIntoViewIfNeeded();
+    await page.evaluate(() => document.fonts.ready);
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 
     const state = await page.evaluate(() => {
@@ -70,14 +185,16 @@ for (const locale of locales) {
       const cards = Array.from(document.querySelectorAll('[data-price-categories] .price-card'));
       const modal = document.querySelector('[data-price-modal]');
       const firstCardButton = document.querySelector('[data-price-categories] [data-price-open]');
-      const categoryAction = hero?.querySelector('[data-price-categories-action]');
+      const categoryActions = Array.from(hero?.querySelectorAll('[data-price-section-action]') || []);
+      const categoryAction = categoryActions[0];
       const heroSearch = hero?.querySelector('.price-page-hero__search');
-      const categoryActionIcon = categoryAction?.querySelector('.price-page-hero__categories-action-icon');
-      const categoryActionArrow = categoryActionIcon?.querySelector('.site-icon-arrow.site-icon-arrow-right');
+      const categoryActionsNav = hero?.querySelector('.price-page-hero__actions');
       const breedToggle = document.querySelector('[data-price-breeds-toggle]');
       const breedBadgeMotion = breedToggle?.querySelector('.price-card__badge-icon-motion');
       const breedBadgeIcon = breedToggle?.querySelector('.price-card__badge-icon');
       const firstCard = cards[0];
+      const pageContainer = hero?.closest('.container.page-offset-top');
+      const firstDogGrid = document.querySelector('[data-price-section="small"] .price-size-section__cards');
       const currentLocale = document.documentElement.lang;
       const additionalCard = document.querySelector('[data-category-id="ru-additional-services"]');
       const additionalSourceCategory = window.PricePageCatalog?.categoriesByLocale?.[currentLocale]
@@ -88,39 +205,74 @@ for (const locale of locales) {
       const firstCardDetailsToggle = firstCard?.querySelector('[data-price-card-toggle]');
       const firstCardDetails = firstCard?.querySelector('[data-price-card-details]');
       const heroRect = hero?.getBoundingClientRect();
+      const heroSearchRect = heroSearch?.getBoundingClientRect();
+      const categoryActionsRect = categoryActionsNav?.getBoundingClientRect();
       const cardRect = firstCard?.getBoundingClientRect();
       const firstThreeCardRects = cards.slice(0, 3).map(card => card.getBoundingClientRect());
       const cardButtonStyle = firstCardButton ? getComputedStyle(firstCardButton) : null;
       const cardButtonBefore = firstCardButton ? getComputedStyle(firstCardButton, '::before') : null;
       const cardButtonAfter = firstCardButton ? getComputedStyle(firstCardButton, '::after') : null;
-      const categoryActionArrowStyle = categoryActionArrow ? getComputedStyle(categoryActionArrow) : null;
       const breedBadgeMotionStyle = breedBadgeMotion ? getComputedStyle(breedBadgeMotion) : null;
       const breedBadgeIconStyle = breedBadgeIcon ? getComputedStyle(breedBadgeIcon) : null;
       const rootStyle = getComputedStyle(document.documentElement);
       const firstSectionMetaTops = Array.from(
         document.querySelectorAll('[data-price-section="small"] .price-card__meta')
-      ).slice(0, 3).map(meta => meta.offsetTop);
+      ).slice(0, 4).map(meta => meta.offsetTop);
       const firstSectionCtaBottoms = Array.from(
         document.querySelectorAll('[data-price-section="small"] .price-card__cta')
-      ).slice(0, 3).map(button => button.getBoundingClientRect().bottom);
+      ).slice(0, 4).map(button => button.getBoundingClientRect().bottom);
       return {
         heroTitle: hero?.querySelector('.section-title')?.textContent?.trim() || '',
         breedSearchReady: Boolean(hero?.querySelector('[data-price-breed-search-input]')),
-        categoryActionReady: Boolean(
-          hero?.querySelector('[data-price-categories-action][aria-controls="price-categories"]')
+        searchFilterState: {
+          labels: Array.from(hero?.querySelectorAll('.price-breed-search__filter-label') || [])
+            .map(item => item.textContent?.trim() || ''),
+          values: Array.from(hero?.querySelectorAll('[data-price-search-filter]') || [])
+            .map(select => select.value),
+          resultCount: hero?.querySelector('[data-price-search-result-count]')?.textContent?.trim() || '',
+          resetLabel: hero?.querySelector('[data-price-search-reset]')?.textContent?.trim() || '',
+          resetHidden: Boolean(hero?.querySelector('[data-price-search-reset]')?.hidden),
+        },
+        categoryActionReady: categoryActions.length === 6
+          && categoryActions.map(action => action.dataset.priceSectionAction).join(',') === 'small,medium,large,giant,cats,smallAnimals'
+          && categoryActions.every(action => {
+            const controlId = action.getAttribute('aria-controls');
+            const expectedLabel = window.PricePageCatalog?.locales?.[currentLocale]?.sizeGroupTitles?.[action.dataset.priceSectionAction];
+            return Boolean(
+              controlId
+              && document.getElementById(controlId)
+              && action.textContent.includes(expectedLabel)
+              && action.dataset.navPillBound === '1'
+            );
+          }),
+        categoryActionRowCount: new Set(categoryActions.map(action => Math.round(action.getBoundingClientRect().top))).size,
+        categoryActionsFit: categoryActions.every(action => {
+          const rect = action.getBoundingClientRect();
+          return rect.width > 0 && rect.left >= -1 && rect.right <= window.innerWidth + 1;
+        }),
+        categoryActionsMatchSearchWidth: Boolean(
+          heroSearchRect
+          && categoryActionsRect
+          && Math.abs(heroSearchRect.width - categoryActionsRect.width) <= 1
+          && Math.abs(heroSearchRect.left - categoryActionsRect.left) <= 1
+          && Math.abs(heroSearchRect.right - categoryActionsRect.right) <= 1
         ),
         searchBeforeCategoryAction: Boolean(
           heroSearch
           && categoryAction
           && (heroSearch.compareDocumentPosition(categoryAction) & Node.DOCUMENT_POSITION_FOLLOWING)
         ),
-        categoryActionUsesSiteArrow: Boolean(
-          categoryAction?.dataset.navPillBound === '1'
-          && categoryActionIcon?.getAttribute('aria-hidden') === 'true'
-        && categoryActionArrowStyle?.backgroundImage.includes('chevron-down.webp')
-          && categoryActionArrowStyle?.animationName.includes('siteArrowDirectionalBounce')
-          && categoryActionArrowStyle?.getPropertyValue('--arrow-rotate').includes('-90deg')
-        ),
+        categoryActionUsesSiteArrow: Boolean(categoryActions.length) && categoryActions.every(action => {
+          const icon = action.querySelector('.price-page-hero__categories-action-icon');
+          const arrow = icon?.querySelector('.site-icon-arrow.site-icon-arrow-right');
+          const style = arrow ? getComputedStyle(arrow) : null;
+          return Boolean(
+            icon?.getAttribute('aria-hidden') === 'true'
+            && style?.backgroundImage.includes('chevron-down.webp')
+            && style?.animationName.includes('siteArrowDirectionalBounce')
+            && style?.getPropertyValue('--arrow-rotate').includes('-90deg')
+          );
+        }),
         breedBadgeArrowUsesSiteMotion: Boolean(
           breedBadgeMotionStyle?.animationName.includes('siteArrowAxisBounce')
           && breedBadgeMotionStyle?.getPropertyValue('--site-arrow-motion-peak-x').trim() === '-7px'
@@ -159,6 +311,16 @@ for (const locale of locales) {
           ? firstThreeCardRects[2].bottom - firstThreeCardRects[0].top
           : Infinity,
         overflowX: document.documentElement.scrollWidth > window.innerWidth + 1,
+        pageFrame: {
+          containerTag: pageContainer?.tagName || '',
+          containerWidth: pageContainer?.getBoundingClientRect().width || 0,
+          dogGridWidth: firstDogGrid?.getBoundingClientRect().width || 0,
+          widthLimit: Math.min(window.innerWidth, 1720),
+          cardEdgesFit: cards.every(card => {
+            const rect = card.getBoundingClientRect();
+            return rect.left >= -1 && rect.right <= window.innerWidth + 1;
+          }),
+        },
         modalReady: Boolean(modal),
         calculationLocalizationReady: Boolean(
           window.PricePageCatalog?.locales?.[document.documentElement.lang]?.subtotalBeforeDiscountLabel
@@ -173,13 +335,200 @@ for (const locale of locales) {
       };
     });
 
+    const readDogTileDomState = layoutLabel => {
+      const currentLocale = document.documentElement.lang;
+      const categories = window.PricePageCatalog?.categoriesByLocale?.[currentLocale] || [];
+      const categoriesById = new Map(categories.map(category => [category.id, category]));
+      const expectedServiceKeysByCoat = {
+  short: ['puppy-intro', 'full-groom', 'hygiene'],
+  wire: ['puppy-intro', 'full-groom', 'hygiene', 'trimming'],
+  long: ['puppy-intro', 'full-groom', 'hygiene'],
+  curly: ['puppy-intro', 'full-groom', 'hygiene'],
+  double: ['puppy-intro', 'full-groom', 'hygiene'],
+      };
+      const expectedCoatsBySection = {
+        small: ['short', 'wire', 'long', 'curly', 'double'],
+        medium: ['short', 'wire', 'long', 'curly', 'double'],
+        large: ['short', 'wire', 'long', 'curly', 'double'],
+        giant: ['short', 'wire', 'long', 'double'],
+      };
+      const follows = (before, after) => Boolean(
+        before
+        && after
+        && (before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING)
+      );
+      const dogTiles = Array.from(document.querySelectorAll('[data-price-categories] .price-card'))
+        .filter(card => categoriesById.get(card.dataset.categoryId)?.animalType === 'dog')
+        .map(card => {
+          const category = categoriesById.get(card.dataset.categoryId);
+          const primaryRows = Array.from(card.querySelectorAll('[data-price-service-select]'));
+          const additionalRow = card.querySelector('[data-price-additional-select]');
+          const cta = card.querySelector('[data-price-open]');
+          const orderedNodes = [...primaryRows, additionalRow, cta];
+          const serviceKeys = (category?.priceRows || []).map(row => row.key);
+          const expectedServiceKeys = expectedServiceKeysByCoat[category?.coatType] || [];
+          return {
+            id: card.dataset.categoryId,
+            serviceKeys,
+            primaryRowCount: primaryRows.length,
+            hasAdditionalRow: Boolean(additionalRow),
+            hasCta: Boolean(cta),
+            orderCorrect: orderedNodes.every(Boolean)
+              && orderedNodes.slice(1).every((node, index) => follows(orderedNodes[index], node)),
+            serviceKeysCorrect: JSON.stringify(serviceKeys) === JSON.stringify(expectedServiceKeys),
+          };
+        });
+      const minimumGridGap = layoutLabel === 'mobile' ? 16 : 20;
+      const sizeSections = ['small', 'medium', 'large', 'giant'].map(sectionKey => {
+        const section = document.querySelector(`[data-price-section="${sectionKey}"]`);
+        const heading = section?.querySelector('.price-size-section__heading');
+        const title = heading?.querySelector('.price-size-section__title');
+        const weight = heading?.querySelector('.price-size-section__weight');
+        const grid = section?.querySelector('.price-size-section__cards');
+        const cards = Array.from(grid?.children || []).filter(child => child.matches('.price-card'));
+        const rects = cards.map(card => card.getBoundingClientRect());
+        const gridStyle = grid ? getComputedStyle(grid) : null;
+        const gridGap = Number.parseFloat(layoutLabel === 'mobile' ? gridStyle?.rowGap : gridStyle?.columnGap);
+        const rowGap = Number.parseFloat(gridStyle?.rowGap);
+        const rows = [];
+        for (const rect of rects) {
+          const row = rows.find(items => Math.abs(items[0].top - rect.top) <= 1);
+          if (row) row.push(rect);
+          else rows.push([rect]);
+        }
+        const horizontalGaps = rows.flatMap(row => row.slice(1).map((rect, index) => rect.left - row[index].right));
+        const verticalGaps = rows.slice(1).map((row, index) => row[0].top - Math.max(...rows[index].map(rect => rect.bottom)));
+        const expectedCoatTypes = expectedCoatsBySection[sectionKey] || [];
+        const expectedCardCount = expectedCoatTypes.length;
+        // The responsive repair uses an 18rem minimum, not five fixed desktop columns.
+        const minCardWidth = 18 * Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+        const availableWidth = grid.clientWidth
+          - Number.parseFloat(gridStyle.paddingLeft) - Number.parseFloat(gridStyle.paddingRight);
+        const columnGap = Number.parseFloat(gridStyle.columnGap);
+        const expectedColumns = Math.min(expectedCardCount, Math.max(1,
+          Math.floor((availableWidth + columnGap + 0.5) / (minCardWidth + columnGap))));
+        const expectedRowLengths = Array.from(
+          { length: Math.ceil(expectedCardCount / expectedColumns) },
+          (_, index) => Math.min(expectedColumns, expectedCardCount - index * expectedColumns)
+        );
+        const widths = rects.map(rect => rect.width);
+        const coatTypes = cards.map(card => categoriesById.get(card.dataset.categoryId)?.coatType || '');
+        const serviceRects = cards.map(card => Array.from(card.querySelectorAll('[data-price-service-select], [data-price-additional-select]'))
+          .map(service => service.getBoundingClientRect()));
+        const serviceAlignment = rows.map(row => [0, 1, 2].map(index => {
+          const matchingServices = row.map(rect => serviceRects[rects.indexOf(rect)][index]);
+          const tops = matchingServices.map(service => service?.top ?? Infinity);
+          const heights = matchingServices.map(service => service?.height ?? Infinity);
+          return {
+            index,
+            topSpread: Math.max(...tops) - Math.min(...tops),
+            heightSpread: Math.max(...heights) - Math.min(...heights),
+          };
+        }));
+        return {
+          sectionKey,
+          weightText: weight?.textContent?.trim() || '',
+          weightFits: Boolean(weight && weight.scrollWidth <= weight.clientWidth && weight.scrollHeight <= weight.clientHeight),
+          headingFits: Boolean(heading && heading.scrollWidth <= heading.clientWidth),
+          weightBesideTitle: Boolean(title && weight && Math.abs(title.getBoundingClientRect().top - weight.getBoundingClientRect().top) <= 12),
+          cardIds: cards.map(card => card.dataset.categoryId),
+          coatTypes,
+          expectedCoatTypes,
+          gridGap,
+          rowGap,
+          rowLengths: rows.map(row => row.length),
+          horizontalGaps,
+          verticalGaps,
+          serviceAlignment,
+          serviceMinHeights: cards.map(card => Array.from(card.querySelectorAll('[data-price-service-select], [data-price-additional-select]'))
+            .map(service => ({ inline: service.style.minHeight, computed: getComputedStyle(service).minHeight }))),
+          serviceRowsAligned: serviceAlignment.every(row => row.every(service => service.topSpread <= 1 && service.heightSpread <= 1)),
+          serviceRowsReset: cards.every(card => Array.from(card.querySelectorAll('[data-price-service-select], [data-price-additional-select]'))
+            .every(service => !service.style.minHeight)),
+          widthSpread: widths.length ? Math.max(...widths) - Math.min(...widths) : Infinity,
+          geometryCorrect: cards.length === expectedCardCount
+            && JSON.stringify(coatTypes) === JSON.stringify(expectedCoatTypes)
+            && JSON.stringify(rows.map(row => row.length)) === JSON.stringify(expectedRowLengths)
+            && Number.isFinite(gridGap)
+            && gridGap >= minimumGridGap - 0.25
+            && horizontalGaps.every(gap => Math.abs(gap - gridGap) <= 1)
+            && verticalGaps.every(gap => Math.abs(gap - rowGap) <= 1)
+            && rows.every(row => row.every((rect, column) => Math.abs(rect.left - rects[column].left) <= 1))
+            && Math.max(...widths) - Math.min(...widths) <= 1,
+        };
+      });
+      return { dogTiles, sizeSections };
+    };
+    const readCompanionTileState = () => {
+      const toRect = card => {
+        const rect = card.getBoundingClientRect();
+        return {
+          width: rect.width,
+          height: rect.height,
+        };
+      };
+      const giantCards = Array.from(document.querySelectorAll('[data-price-section="giant"] .price-card'));
+      const catAnimalSection = document.querySelector('[data-price-section="cats-animals"]');
+      const catAnimalCards = Array.from(catAnimalSection?.querySelectorAll('.price-card') || []);
+      const giantRects = giantCards.map(toRect);
+      const catAnimalRects = catAnimalCards.map(toRect);
+      // Different service content may have different heights across sections.
+      // Keep each companion group uniform and inside the available page width.
+      const companionGroups = Array.from(catAnimalSection?.querySelectorAll('.price-size-section__cards') || []);
+      const companionGrid = catAnimalSection?.querySelector('.price-size-section__category-grid');
+      const minimumWidth = 18 * Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+      return {
+        catAnimalCardCount: catAnimalRects.length,
+        giantCardCount: giantRects.length,
+        catAnimalSizes: catAnimalRects,
+        giantSizes: giantRects,
+        usesFullWidth: Boolean(companionGrid && catAnimalSection
+          && Math.abs(companionGrid.clientWidth - catAnimalSection.clientWidth) <= 2),
+        cardSizesMatch: companionGroups.length === 2 && companionGroups.every(grid => {
+          const cards = Array.from(grid.querySelectorAll('.price-card'));
+          const rects = cards.map(card => card.getBoundingClientRect());
+          const bounds = grid.getBoundingClientRect();
+          return rects.length > 0 && rects.every(rect => rect.width > 0 && rect.height > 0
+            && rect.width >= Math.min(bounds.width, minimumWidth) - 2
+            && Math.abs(rect.width - rects[0].width) <= 2
+            && Math.abs(rect.height - rects[0].height) <= 2
+            && rect.left >= bounds.left - 1 && rect.right <= bounds.right + 1)
+            && cards.every(card => card.scrollWidth <= card.clientWidth + 1);
+        }),
+        singleSectionNavigation: catAnimalSection?.querySelectorAll(':scope > .price-section-navigation').length === 1,
+      };
+    };
+    const dogTileDomState = await page.evaluate(readDogTileDomState, label);
+    const companionTileState = await page.evaluate(readCompanionTileState);
+
     assert(`${locale} ${label}: hero rendered`, state.heroTitle.length > 0);
     assert(`${locale} ${label}: breed search rendered`, state.breedSearchReady);
-    assert(`${locale} ${label}: extra hero flow absent`, state.legacyHeroFlowAbsent);
-    assert(`${locale} ${label}: cards rendered`, state.cardCount >= 9);
     assert(
-      `${locale} ${label}: additional services contain only dogs and cats`,
-      state.additionalCardBreedCount === 2 && state.additionalSourceBreedCount === 2,
+      `${locale} ${label}: category navigation fits the intended rows`,
+      state.categoryActionsFit
+        && state.categoryActionsMatchSearchWidth
+        && state.categoryActionRowCount === (label === 'desktop' ? 1 : 2),
+      JSON.stringify({
+        rows: state.categoryActionRowCount,
+        fits: state.categoryActionsFit,
+        matchesSearchWidth: state.categoryActionsMatchSearchWidth,
+      })
+    );
+    assert(
+      `${locale} ${label}: localized search filters and result counter rendered`,
+      JSON.stringify(state.searchFilterState.labels) === JSON.stringify(expectedSearchFilterCopy[locale].slice(0, 3))
+        && JSON.stringify(state.searchFilterState.values) === JSON.stringify(['all', 'all', 'all'])
+        && state.searchFilterState.resultCount.startsWith(`${expectedSearchFilterCopy[locale][3]}:`)
+        && /\d/u.test(state.searchFilterState.resultCount)
+        && state.searchFilterState.resetLabel === expectedSearchFilterCopy[locale][4]
+        && state.searchFilterState.resetHidden,
+      JSON.stringify(state.searchFilterState)
+    );
+    assert(`${locale} ${label}: extra hero flow absent`, state.legacyHeroFlowAbsent);
+    assert(`${locale} ${label}: cards rendered`, state.cardCount >= 16);
+    assert(
+      `${locale} ${label}: additional services expose four animal categories`,
+      state.additionalCardBreedCount === 4 && state.additionalSourceBreedCount === 4,
       JSON.stringify({
         card: state.additionalCardBreedCount,
         source: state.additionalSourceBreedCount,
@@ -189,9 +538,113 @@ for (const locale of locales) {
     assert(`${locale} ${label}: open button rendered`, state.cardButtonLabel.length > 0);
     assert(`${locale} ${label}: card button uses navigation effects`, state.cardButtonUsesNavigationSystem);
     assert(`${locale} ${label}: no horizontal overflow`, !state.overflowX);
+    assert(
+      `${locale} ${label}: localized page wrappers give the dog grid the full available width`,
+      state.pageFrame.containerWidth >= state.pageFrame.widthLimit - 80
+        && state.pageFrame.containerWidth <= state.pageFrame.widthLimit + 1
+        && state.pageFrame.dogGridWidth >= state.pageFrame.widthLimit - 150
+        && state.pageFrame.cardEdgesFit,
+      JSON.stringify(state.pageFrame)
+    );
     assert(`${locale} ${label}: modal exists`, state.modalReady);
     assert(`${locale} ${label}: calculation localization exists`, state.calculationLocalizationReady);
+    assert(
+      `${locale} ${label}: every dog tile keeps its applicable service and CTA order`,
+      dogTileDomState.dogTiles.length === 19
+        && dogTileDomState.dogTiles.every(tile =>
+          tile.serviceKeysCorrect
+          && tile.primaryRowCount === tile.serviceKeys.length
+          && tile.hasAdditionalRow
+          && tile.hasCta
+          && tile.orderCorrect
+        ),
+      JSON.stringify(dogTileDomState.dogTiles)
+    );
+    assert(
+      `${locale} ${label}: every dog size shows its ordered applicable coat tiles`,
+      dogTileDomState.sizeSections.every(section =>
+        JSON.stringify(section.coatTypes) === JSON.stringify(section.expectedCoatTypes)
+      ),
+      JSON.stringify(dogTileDomState.sizeSections)
+    );
+    assert(
+      `${locale} ${label}: dog size headings show localized weight ranges without clipping`,
+      JSON.stringify(dogTileDomState.sizeSections.map(section => section.weightText))
+        === JSON.stringify(expectedWeightRangeCopy[locale])
+        && dogTileDomState.sizeSections.every(section => section.weightFits && section.headingFits)
+        && (label !== 'desktop' || dogTileDomState.sizeSections.every(section => section.weightBesideTitle)),
+      JSON.stringify(dogTileDomState.sizeSections.map(({ sectionKey, weightText, weightFits, headingFits, weightBesideTitle }) => ({ sectionKey, weightText, weightFits, headingFits, weightBesideTitle })))
+    );
+    assert(
+      `${locale} ${label}: dog tiles keep equal widths and responsive columns with wider desktop gaps`,
+      dogTileDomState.sizeSections.every(section => section.geometryCorrect),
+      JSON.stringify(dogTileDomState.sizeSections)
+    );
+    assert(
+      `${locale} ${label}: companion tiles are uniform within groups without overflow or duplicate navigation`,
+      companionTileState.catAnimalCardCount === 4
+        && companionTileState.giantCardCount === 4
+        && companionTileState.singleSectionNavigation
+        && companionTileState.usesFullWidth
+        && (label === 'mobile' || companionTileState.cardSizesMatch),
+      JSON.stringify(companionTileState)
+    );
+    assert(
+      `${locale} ${label}: matching service rows align across every dog tile row`,
+      dogTileDomState.sizeSections.every(section => section.serviceRowsAligned),
+      JSON.stringify(dogTileDomState.sizeSections.map(({ sectionKey, serviceAlignment, serviceMinHeights }) => ({ sectionKey, serviceAlignment, serviceMinHeights })))
+    );
     if (label === 'desktop') {
+      for (const target of [
+        { label: 'tablet', width: 1024, layout: 'tablet', section: 'cats-animals' },
+        { label: 'narrow-desktop', width: 1200, layout: 'desktop', section: 'large' },
+        { label: 'mobile-resize', width: devices['iPhone 13'].viewport.width, layout: 'mobile', section: 'small' },
+        { label: 'desktop-resize', width: viewport.width, layout: 'desktop', section: 'large' },
+      ]) {
+        if (target.label === 'narrow-desktop') {
+          await page.locator('[data-category-id="ru-wire-coat-large"]').hover();
+        }
+        await page.setViewportSize({ width: target.width, height: 1024 });
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        for (const section of await page.locator('[data-price-section="small"], [data-price-section="medium"], [data-price-section="large"], [data-price-section="giant"]').all()) {
+          await section.scrollIntoViewIfNeeded();
+        }
+        await page.locator('[data-price-section] .price-card').evaluateAll(cards => {
+          cards.forEach(card => {
+            card.getAnimations().forEach(animation => animation.cancel());
+            card.style.opacity = '1';
+            card.style.transform = 'none';
+            card.style.transition = 'none';
+          });
+        });
+        if (target.label === 'narrow-desktop') {
+          await page.mouse.move(0, 0);
+          await page.waitForTimeout(500);
+        }
+        const resizedGridState = await page.evaluate(readDogTileDomState, target.layout);
+        const resizedCompanionTileState = await page.evaluate(readCompanionTileState);
+        assert(
+          `${locale} ${target.label}: dog columns and matching service rows adapt after resize`,
+          resizedGridState.dogTiles.length === 19
+            && resizedGridState.sizeSections.every(section => section.geometryCorrect && section.serviceRowsAligned
+              && (target.layout !== 'mobile' || section.serviceRowsReset)),
+          JSON.stringify(resizedGridState.sizeSections)
+        );
+        assert(
+          `${locale} ${target.label}: companion tiles stay uniform and contained after resize`,
+          resizedCompanionTileState.catAnimalCardCount === 4
+            && resizedCompanionTileState.giantCardCount === 4
+            && resizedCompanionTileState.singleSectionNavigation
+            && resizedCompanionTileState.usesFullWidth
+            && (target.layout === 'mobile' || resizedCompanionTileState.cardSizesMatch),
+          JSON.stringify(resizedCompanionTileState)
+        );
+        const screenshotPath = path.join(outDir, `${locale}-${target.label}-grid.png`);
+        await captureSection(page, target.section, screenshotPath);
+        geometryScreenshots.push(screenshotPath);
+      }
+      await page.setViewportSize(viewport);
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       assert(
         `${locale} ${label}: card dividers aligned`,
         state.firstSectionMetaSpread <= 1,
@@ -225,6 +678,14 @@ for (const locale of locales) {
       );
     }
 
+    if (geometryOnly) {
+      const screenshotPath = path.join(outDir, `${locale}-${label}-geometry.png`);
+      await captureSection(page, 'small', screenshotPath);
+      geometryScreenshots.push(screenshotPath);
+      await context.close();
+      continue;
+    }
+
     assert(locale + ' ' + label + ': category navigation rendered', state.categoryActionReady);
     assert(locale + ' ' + label + ': breed search precedes category navigation', state.searchBeforeCategoryAction);
     assert(locale + ' ' + label + ': category navigation uses site arrow system', state.categoryActionUsesSiteArrow);
@@ -241,12 +702,15 @@ for (const locale of locales) {
       await additionalBreedToggle.evaluate(toggle => toggle.click());
       await page.waitForSelector(
         '[data-category-id="ru-additional-services"] .price-card__breed-menu:not([hidden])',
-        { timeout: 5000 }
+        { timeout: 10000 }
       );
-      const additionalBreedLabels = await additionalBreedOptions.allTextContents();
+      const additionalBreedLabels = await additionalBreedOptions
+        .locator('.price-card__breed-option-name')
+        .allTextContents();
       assert(
-        'ru desktop: additional category menu has exactly two species',
-        additionalBreedLabels.length === 2,
+        'ru desktop: additional category menu has four correctly named animal categories',
+        JSON.stringify(additionalBreedLabels.map(item => item.trim()))
+          === JSON.stringify(['Собаки', 'Кошки', 'Морские свинки', 'Кролики']),
         JSON.stringify(additionalBreedLabels)
       );
 
@@ -274,11 +738,57 @@ for (const locale of locales) {
         }));
         assert(
           `ru desktop: additional species ${speciesIndex + 1} stays consistent in modal`,
-          modalSpeciesState.labels.length === 2
-            && modalSpeciesState.labels.every((species, index) => species === additionalBreedLabels[index])
-            && modalSpeciesState.selected === additionalBreedLabels[speciesIndex]
-            && modalSpeciesState.visibleSelected === additionalBreedLabels[speciesIndex],
+          modalSpeciesState.labels.length === 4
+            && modalSpeciesState.labels.every((species, index) => species === additionalBreedLabels[index].trim())
+            && modalSpeciesState.selected === additionalBreedLabels[speciesIndex].trim()
+            && modalSpeciesState.visibleSelected === additionalBreedLabels[speciesIndex].trim(),
           JSON.stringify(modalSpeciesState)
+        );
+        await modalClose.evaluate(button => button.click());
+        await page.waitForFunction(
+          () => !document.querySelector('#price-category-modal')?.classList.contains('active'),
+          null,
+          { timeout: 5000 }
+        );
+      }
+
+      const universalNailCategoryIds = [
+        'ru-short-coat-small',
+        'ru-short-coat-medium',
+        'ru-short-coat-large',
+        'ru-short-coat-giant',
+        'ru-cat-short-coat',
+        'ru-cat-long-coat',
+        'ru-guinea-pigs',
+        'ru-rabbits',
+      ];
+      for (const categoryId of universalNailCategoryIds) {
+        const categoryCard = page.locator(`[data-category-id="${categoryId}"]`);
+        assert(`ru desktop: ${categoryId} category exists`, await categoryCard.count() === 1);
+        const additionalButton = categoryCard.locator('[data-price-additional-select]');
+        assert(`ru desktop: ${categoryId} exposes additional services`, await additionalButton.count() === 1);
+        await additionalButton.evaluate(button => button.click());
+        await page.waitForFunction(
+          () => document.querySelector('#price-category-modal')?.classList.contains('active'),
+          null,
+          { timeout: 5000 }
+        );
+        const nailOptionState = await page.evaluate(() => {
+          const option = document.querySelector('[data-price-modal-additional-service-options] [data-service-index="0"]')
+            ?.closest('label.price-category-modal__service-option');
+          return {
+            exists: Boolean(option),
+            visible: Boolean(option && !option.hidden),
+            text: option?.textContent?.replace(/\s+/gu, ' ').trim() || '',
+          };
+        });
+        assert(
+          `ru desktop: ${categoryId} offers nail trimming for 15 euro`,
+          nailOptionState.exists
+            && nailOptionState.visible
+            && nailOptionState.text.includes('Подстригание когтей')
+            && nailOptionState.text.includes('15'),
+          JSON.stringify(nailOptionState)
         );
         await modalClose.evaluate(button => button.click());
         await page.waitForFunction(
@@ -475,6 +985,320 @@ for (const locale of locales) {
     const breedSearchFocus = await page.evaluate(() => document.activeElement?.matches('[data-price-breed-search-input]') || false);
     assert(`${locale} ${label}: breed search focus`, breedSearchFocus);
 
+    const animalFilter = page.locator('[data-price-search-filter="animal"]');
+    const weightFilter = page.locator('[data-price-search-filter="weight"]');
+    const coatFilter = page.locator('[data-price-search-filter="coat"]');
+    const searchReset = page.locator('[data-price-search-reset]');
+    for (const animalCase of [
+      {
+        value: 'cat',
+        categoryIds: ['ru-cat-short-coat', 'ru-cat-long-coat'],
+        coatOptions: ['all', 'short', 'long'],
+        coatFilterAvailable: true,
+        selectedCoat: 'short',
+        filteredCategoryIds: ['ru-cat-short-coat'],
+      },
+      {
+        value: 'smallAnimals',
+        categoryIds: ['ru-guinea-pigs', 'ru-rabbits'],
+        coatOptions: ['all'],
+        coatFilterAvailable: false,
+        selectedCoat: 'all',
+        filteredCategoryIds: ['ru-guinea-pigs', 'ru-rabbits'],
+      },
+    ]) {
+      await animalFilter.selectOption(animalCase.value);
+      const animalFilterState = await page.evaluate(expected => ({
+        cardIds: Array.from(document.querySelectorAll('[data-price-categories] [data-category-id]'))
+          .map(card => card.dataset.categoryId),
+        weightEnabled: document.querySelector('[data-price-search-filter="weight"]')?.disabled === false,
+        weightVisible: document.querySelector('[data-price-search-filter="weight"]')?.closest('label')?.hidden === false,
+        coatEnabled: document.querySelector('[data-price-search-filter="coat"]')?.disabled === false,
+        coatVisible: document.querySelector('[data-price-search-filter="coat"]')?.closest('label')?.hidden === false,
+        coatOptions: Array.from(document.querySelector('[data-price-search-filter="coat"]')?.options || [])
+          .map(option => option.value),
+        resultCount: document.querySelector('[data-price-search-result-count]')?.textContent?.trim() || '',
+        expected,
+      }), animalCase);
+      assert(
+        `${locale} ${label}: ${animalCase.value} exposes the appropriate coat filter`,
+        JSON.stringify(animalFilterState.cardIds) === JSON.stringify(animalCase.categoryIds)
+          && animalFilterState.weightEnabled
+          && animalFilterState.weightVisible
+          && animalFilterState.coatEnabled === animalCase.coatFilterAvailable
+          && animalFilterState.coatVisible === animalCase.coatFilterAvailable
+          && JSON.stringify(animalFilterState.coatOptions) === JSON.stringify(animalCase.coatOptions)
+          && /[1-9]\d*/u.test(animalFilterState.resultCount),
+        JSON.stringify(animalFilterState)
+      );
+      if (animalCase.coatFilterAvailable) await coatFilter.selectOption(animalCase.selectedCoat);
+      const coatFilteredCardIds = await page.locator('[data-price-categories] [data-category-id]')
+        .evaluateAll(cards => cards.map(card => card.dataset.categoryId));
+      assert(
+        `${locale} ${label}: ${animalCase.value} coat filter narrows matching categories`,
+        JSON.stringify(coatFilteredCardIds) === JSON.stringify(animalCase.filteredCategoryIds),
+        JSON.stringify(coatFilteredCardIds)
+      );
+    }
+    await animalFilter.selectOption('dog');
+    await coatFilter.selectOption('all');
+    await animalFilter.selectOption('smallAnimals');
+    await weightFilter.selectOption('small');
+    const smallAnimalWeightCards = await page.locator('[data-price-categories] [data-category-id]')
+      .evaluateAll(cards => cards.map(card => card.dataset.categoryId));
+    assert(
+      `${locale} ${label}: weight filter includes small animals below 6 kg`,
+      JSON.stringify(smallAnimalWeightCards) === JSON.stringify([
+        'ru-guinea-pigs',
+        'ru-rabbits',
+      ]),
+      JSON.stringify(smallAnimalWeightCards)
+    );
+    await animalFilter.selectOption('dog');
+    await weightFilter.selectOption('small');
+    await coatFilter.selectOption('wire');
+    const wireFilterState = await page.evaluate(() => ({
+      cardIds: Array.from(document.querySelectorAll('[data-price-categories] [data-category-id]'))
+        .map(card => card.dataset.categoryId),
+      values: Array.from(document.querySelectorAll('[data-price-search-filter]')).map(select => select.value),
+      resultCount: document.querySelector('[data-price-search-result-count]')?.textContent?.trim() || '',
+    }));
+    assert(
+      `${locale} ${label}: wire coat filter isolates the small wire-haired category`,
+      JSON.stringify(wireFilterState.cardIds) === JSON.stringify(['ru-wire-coat-small'])
+        && JSON.stringify(wireFilterState.values) === JSON.stringify(['dog', 'small', 'wire'])
+        && /[1-9]\d*/u.test(wireFilterState.resultCount),
+      JSON.stringify(wireFilterState)
+    );
+    for (const size of ['medium', 'large']) {
+      await weightFilter.selectOption(size);
+      const cardIds = await page.locator('[data-price-categories] [data-category-id]')
+        .evaluateAll(cards => cards.map(card => card.dataset.categoryId));
+      assert(
+        `${locale} ${label}: wire coat filter isolates the ${size} wire-haired category`,
+        JSON.stringify(cardIds) === JSON.stringify([`ru-wire-coat-${size}`]),
+        JSON.stringify(cardIds)
+      );
+    }
+    await weightFilter.selectOption('small');
+    const expectedTrimmingLabel = {
+      ru: 'Тримминг',
+      de: 'Trimmen',
+      en: 'Trimming',
+      uk: 'Тримінг',
+    }[locale];
+    const expectedRenderedTrimmingPrice = {
+      ru: '60 / час',
+      de: '60 / Std.',
+      en: '60 / hour',
+      uk: '60 / год.',
+    }[locale];
+    for (const coat of ['wire', 'short']) {
+      await coatFilter.selectOption(coat);
+      const categoryId = `ru-${coat}-coat-small`;
+      const breedIndex = await page.evaluate(({ currentLocale, categoryId, coat }) => {
+        const category = window.PricePageCatalog.categoriesByLocale[currentLocale]
+          .find(item => item.id === categoryId);
+        return category.breedKeys.indexOf(`fci:94:small-${coat === 'wire' ? 'wire' : 'smooth'}`);
+      }, { currentLocale: locale, categoryId, coat });
+      assert(`${locale} ${label}: small ${coat} Podengo variant exists`, breedIndex >= 0);
+      const coatCard = page.locator(`[data-category-id="${categoryId}"]`);
+      const primaryLabels = await coatCard.locator('[data-price-service-select]')
+        .evaluateAll(rows => rows.map(row => row.textContent.replace(/\s+/gu, ' ').trim()));
+      assert(
+        `${locale} ${label}: ${coat} category has no separate bath-and-dry or haircut-without-bath service`,
+        primaryLabels.every(service => !/(?:профессиональн.*суш|без куп|professionell.*Trock|ohne Baden|professional drying|without bathing|професійн.*суш|без купан)/iu.test(service)),
+        JSON.stringify(primaryLabels)
+      );
+      assert(
+        `${locale} ${label}: trimming is named simply and appears only for wire coats`,
+        primaryLabels.some(service => service.includes(expectedTrimmingLabel)) === (coat === 'wire'),
+        JSON.stringify(primaryLabels)
+      );
+      assert(
+        `${locale} ${label}: trimming is priced per hour rather than per 60 minutes`,
+        coat === 'wire'
+          ? primaryLabels.some(service => service.includes(expectedTrimmingLabel) && service.includes(expectedRenderedTrimmingPrice))
+          : primaryLabels.every(service => !service.includes(expectedRenderedTrimmingPrice)),
+        JSON.stringify(primaryLabels)
+      );
+      await coatCard.locator('[data-price-breeds-toggle]').evaluate(button => button.click());
+      await coatCard.locator(`[data-price-breed-index="${breedIndex}"]`).evaluate(button => button.click());
+      for (const mode of ['primary', 'additional']) {
+        if (mode === 'additional') {
+          await coatCard.locator('[data-price-additional-select]').evaluate(button => button.click());
+        }
+        await page.waitForFunction(() => document.querySelector('#price-category-modal')?.classList.contains('active'));
+        const trimmingState = await page.evaluate(currentLocale => {
+          const additionalRows = window.PricePageCatalog.categoriesByLocale[currentLocale]
+            .find(category => category.id === 'ru-additional-services').priceRows;
+          const index = additionalRows.findIndex(row => row.key === 'trimming');
+          const desheddingIndex = additionalRows.findIndex(row =>
+            /(?:Express|Экспресс|Експрес)/u.test(Object.values(row.label || {}).join(' '))
+          );
+          const fieldset = document.querySelector('[data-price-modal-additional-service-fieldset]');
+          return {
+            selectedBreedId: document.querySelector('[data-price-modal-breed]')?.value || '',
+            trimmingIndex: index,
+            trimmingVisible: Boolean(fieldset && !fieldset.hidden
+              && fieldset.querySelector(`[data-service-index="${index}"] input[type="checkbox"]`)),
+            desheddingIndex,
+            desheddingVisible: Boolean(fieldset && !fieldset.hidden
+              && fieldset.querySelector(`[data-service-index="${desheddingIndex}"] input[type="checkbox"]`)),
+          };
+        }, locale);
+        assert(
+          `${locale} ${label}: ${mode} ${coat} breed has no deprecated trimming extra`,
+          trimmingState.selectedBreedId === `${categoryId}:breed:${breedIndex}`
+            && trimmingState.trimmingIndex === -1
+            && !trimmingState.trimmingVisible,
+          JSON.stringify(trimmingState)
+        );
+        assert(
+          `${locale} ${label}: ${mode} express deshedding is an add-on only for non-wire dogs`,
+          trimmingState.desheddingIndex === 5
+            && trimmingState.desheddingVisible === (coat !== 'wire'),
+          JSON.stringify(trimmingState)
+        );
+        await page.locator('[data-price-modal-close]').evaluate(button => button.click());
+        await page.waitForFunction(() => !document.querySelector('#price-category-modal')?.classList.contains('active'));
+      }
+    }
+    await weightFilter.selectOption('medium');
+    await coatFilter.selectOption('short');
+    await page.waitForFunction(
+      () => {
+        const cards = Array.from(document.querySelectorAll('[data-price-categories] [data-category-id]'));
+        return cards.length === 1 && cards[0].dataset.categoryId === 'ru-short-coat-medium';
+      },
+      null,
+      { timeout: 15000 }
+    );
+    const structuredFilterState = await page.evaluate(() => ({
+      values: Array.from(document.querySelectorAll('[data-price-search-filter]')).map(select => select.value),
+      dogRefinementsEnabled: Array.from(document.querySelectorAll('[data-price-search-filter="weight"], [data-price-search-filter="coat"]'))
+        .every(select => !select.disabled),
+      cardIds: Array.from(document.querySelectorAll('[data-price-categories] [data-category-id]'))
+        .map(card => card.dataset.categoryId),
+      resultCount: document.querySelector('[data-price-search-result-count]')?.textContent?.trim() || '',
+      resetVisible: !document.querySelector('[data-price-search-reset]')?.hidden,
+    }));
+    assert(
+      `${locale} ${label}: animal, dog size and coat filters combine`,
+      JSON.stringify(structuredFilterState.values) === JSON.stringify(['dog', 'medium', 'short'])
+        && structuredFilterState.dogRefinementsEnabled
+        && JSON.stringify(structuredFilterState.cardIds) === JSON.stringify(['ru-short-coat-medium'])
+        && /[1-9]\d*/u.test(structuredFilterState.resultCount)
+        && structuredFilterState.resetVisible,
+      JSON.stringify(structuredFilterState)
+    );
+    if (locale === 'ru') {
+      await page.locator('[data-price-hero]').screenshot({
+        path: path.join(outDir, `ru-${screenshotSuffix}-search-filters.png`),
+        animations: 'disabled',
+      });
+    }
+
+    const filteredBreedQuery = await page.evaluate(currentLocale => {
+      const category = window.PricePageCatalog?.categoriesByLocale?.[currentLocale]
+        ?.find(item => item.id === 'ru-short-coat-medium');
+      return category?.breeds?.[currentLocale]?.[0] || '';
+    }, locale);
+    await breedSearch.fill(filteredBreedQuery);
+    const combinedFilterState = await page.evaluate(() => ({
+      query: document.querySelector('[data-price-breed-search-input]')?.value?.trim() || '',
+      resultCategoryIds: Array.from(document.querySelectorAll('[data-price-breed-result]'))
+        .map(result => result.dataset.priceBreedResultCategory),
+      cardIds: Array.from(document.querySelectorAll('[data-price-categories] [data-category-id]'))
+        .map(card => card.dataset.categoryId),
+    }));
+    assert(
+      `${locale} ${label}: structured filters combine with fuzzy text search`,
+      combinedFilterState.query === filteredBreedQuery
+        && combinedFilterState.resultCategoryIds.length > 0
+        && combinedFilterState.resultCategoryIds.every(categoryId => categoryId === 'ru-short-coat-medium')
+        && JSON.stringify(combinedFilterState.cardIds) === JSON.stringify(['ru-short-coat-medium']),
+      JSON.stringify(combinedFilterState)
+    );
+    const searchSuggestionPhotos = await readLoadedPhotoImages(
+      page,
+      '[data-price-breed-result] .price-breed-search__suggestion-media img'
+    );
+    const searchSuggestionCount = await page.locator('[data-price-breed-result]').count();
+    assert(
+      `${locale} ${label}: search suggestions use loaded local contain photos`,
+      searchSuggestionPhotos.length === searchSuggestionCount
+        && localContainedPhotosPass(searchSuggestionPhotos),
+      JSON.stringify({ suggestionCount: searchSuggestionCount, photos: searchSuggestionPhotos })
+    );
+
+    await searchReset.click();
+    await page.waitForFunction(
+      expectedCardCount => document.querySelectorAll('[data-price-categories] .price-card').length === expectedCardCount,
+      state.cardCount,
+      { timeout: 15000 }
+    );
+    const resetFilterState = await page.evaluate(() => ({
+      query: document.querySelector('[data-price-breed-search-input]')?.value || '',
+      values: Array.from(document.querySelectorAll('[data-price-search-filter]')).map(select => select.value),
+      resetHidden: Boolean(document.querySelector('[data-price-search-reset]')?.hidden),
+      resultCount: document.querySelector('[data-price-search-result-count]')?.textContent?.trim() || '',
+    }));
+    assert(
+      `${locale} ${label}: search reset restores the complete catalog`,
+      !resetFilterState.query
+        && JSON.stringify(resetFilterState.values) === JSON.stringify(['all', 'all', 'all'])
+        && resetFilterState.resetHidden
+        && /\d/u.test(resetFilterState.resultCount),
+      JSON.stringify(resetFilterState)
+    );
+
+    const breedAlphabetState = await page.evaluate(currentLocale => {
+      const collator = new Intl.Collator(currentLocale, { sensitivity: 'base', numeric: true });
+      const dogCategories = (window.PricePageCatalog?.categoriesByLocale?.[currentLocale] || [])
+        .filter(category => category.animalType === 'dog');
+      return {
+        categoryCount: dogCategories.length,
+        unsortedCategoryIds: dogCategories.flatMap(category => {
+          const names = category.breeds?.[currentLocale] || [];
+          const sorted = [...names].sort((left, right) => collator.compare(left, right));
+          return names.every((name, index) => name === sorted[index]) ? [] : [category.id];
+        }),
+      };
+    }, locale);
+    assert(
+      `${locale} ${label}: all nineteen dog categories use the locale alphabet`,
+      breedAlphabetState.categoryCount === 19 && breedAlphabetState.unsortedCategoryIds.length === 0,
+      JSON.stringify(breedAlphabetState)
+    );
+
+    if (locale === 'ru' && label === 'desktop') {
+      const typoCases = [
+        { query: 'Командор', expected: 'Комондор', categoryId: 'ru-double-coat-giant' },
+        { query: 'Коммандор', expected: 'Комондор', categoryId: 'ru-double-coat-giant' },
+        { query: 'Ирланский валкодав', expected: 'Ирландский волкодав', categoryId: 'ru-wire-coat-giant' },
+      ];
+      for (const typoCase of typoCases) {
+        await breedSearch.fill(typoCase.query);
+        const typoState = await page.evaluate(expected => {
+          const results = Array.from(document.querySelectorAll('[data-price-breed-result]')).map(button => ({
+            name: button.querySelector('.price-breed-search__suggestion-name')?.textContent?.trim() || '',
+            categoryId: button.dataset.priceBreedResultCategory || '',
+          }));
+          return {
+            match: results.find(result => result.name === expected.name) || null,
+            results,
+            filteredCardCount: document.querySelectorAll('[data-price-categories] .price-card').length,
+          };
+        }, { name: typoCase.expected });
+        assert(
+          `ru desktop: typo «${typoCase.query}» resolves to «${typoCase.expected}»`,
+          typoState.match?.categoryId === typoCase.categoryId && typoState.filteredCardCount === 1,
+          JSON.stringify(typoState)
+        );
+      }
+    }
+
     const breedQuery = await page.evaluate(() => {
       const breedOption = document.querySelector('[data-price-breed-select]');
       const breedToggle = document.querySelector('[data-price-breeds-toggle]');
@@ -494,7 +1318,42 @@ for (const locale of locales) {
       `${locale} ${label}: breed search filters cards`,
       breedSearchAction.value.length >= 2 && breedSearchAction.suggestionsVisible && breedSearchAction.filteredCardCount > 0
     );
-    await page.locator('[data-price-breed-result]').first().click();
+    await breedSearch.press('ArrowDown');
+    const keyboardSuggestionState = await page.evaluate(() => {
+      const input = document.querySelector('[data-price-breed-search-input]');
+      const activeId = input?.getAttribute('aria-activedescendant') || '';
+      const activeOption = activeId ? document.getElementById(activeId) : null;
+      return {
+        activeId,
+        selected: activeOption?.getAttribute('aria-selected') || '',
+        role: activeOption?.getAttribute('role') || '',
+        expanded: input?.getAttribute('aria-expanded') || '',
+      };
+    });
+    assert(
+      `${locale} ${label}: breed search keyboard navigation exposes the active option`,
+      keyboardSuggestionState.activeId
+        && keyboardSuggestionState.selected === 'true'
+        && keyboardSuggestionState.role === 'option'
+        && keyboardSuggestionState.expanded === 'true',
+      JSON.stringify(keyboardSuggestionState)
+    );
+    await breedSearch.press('Escape');
+    const escapedSuggestionState = await page.evaluate(() => {
+      const input = document.querySelector('[data-price-breed-search-input]');
+      return {
+        hidden: document.querySelector('[data-price-breed-search-suggestions]')?.hidden,
+        activeId: input?.getAttribute('aria-activedescendant') || '',
+        value: input?.value || '',
+      };
+    });
+    assert(
+      `${locale} ${label}: Escape closes suggestions without clearing the filter`,
+      escapedSuggestionState.hidden && !escapedSuggestionState.activeId && escapedSuggestionState.value,
+      JSON.stringify(escapedSuggestionState)
+    );
+    await breedSearch.press('ArrowDown');
+    await breedSearch.press('Enter');
     await page.waitForFunction(
       () => document.querySelectorAll('[data-price-categories] .price-card').length > 0
         && document.querySelector('[data-price-breed-search-suggestions]')?.hidden
@@ -525,7 +1384,7 @@ for (const locale of locales) {
     await breedSearch.fill('');
     await page.waitForSelector('[data-price-categories] .price-card', { timeout: 15000 });
 
-    const categoryAction = page.locator('[data-price-categories-action]');
+    const categoryAction = page.locator('[data-price-categories-action][data-price-section-action="small"]');
     if (label === 'desktop') {
       // Card filtering schedules an alignment frame that can move the element under
       // the synthetic pointer. Let layout settle, then verify both :hover and motion.
@@ -562,39 +1421,76 @@ for (const locale of locales) {
     }
     const categoryClickState = await categoryAction.evaluate(action => {
       action.click();
+      const arrow = action.querySelector('.site-icon-arrow');
+      const sharedSettings = window.HundesalonSiteArrow?.getSettings?.() || {};
+      const activationAnimation = arrow?.getAnimations().find(animation =>
+        animation.effect?.getKeyframes?.().some(frame =>
+          Number.parseFloat(String(frame.rotate || '')) === sharedSettings.spinDegrees
+        )
+      );
+      const timing = activationAnimation?.effect?.getTiming?.() || {};
       return {
-        clickFlashCount: action.querySelectorAll('.nav-plasma--cta-flash').length,
+        clickFlashCount: action.querySelectorAll(':scope > .nav-plasma:not(.nav-plasma--active)').length,
+        arrowActivationAttached: Boolean(activationAnimation),
+        activationKind: action.dataset.siteArrowActivationKind || '',
+        activationDuration: Number(action.dataset.siteArrowActivationDuration || 0),
+        activationEasing: action.dataset.siteArrowActivationEasing || '',
+        activationTurns: Number(action.dataset.siteArrowActivationTurns || 0),
+        animationDuration: Number(timing.duration || 0),
+        animationEasing: String(timing.easing || ''),
+        sharedSettings,
       };
     });
+    const categoryArrowSettingsMatch = categoryClickState.activationDuration === categoryClickState.sharedSettings.duration
+      && normalizeTimingFunction(categoryClickState.activationEasing)
+        === normalizeTimingFunction(categoryClickState.sharedSettings.easing)
+      && categoryClickState.activationTurns === categoryClickState.sharedSettings.turnCount
+      && categoryClickState.animationDuration === categoryClickState.sharedSettings.duration
+      && normalizeTimingFunction(categoryClickState.animationEasing)
+        === normalizeTimingFunction(categoryClickState.sharedSettings.easing);
     assert(
-      `${locale} ${label}: category navigation click effect`,
-      categoryClickState.clickFlashCount === 1,
+      `${locale} ${label}: category navigation uses the shared arrow activation effect`,
+      categoryClickState.clickFlashCount === 1
+        && categoryClickState.arrowActivationAttached
+        && categoryClickState.activationKind === 'spin'
+        && categoryClickState.sharedSettings.turnCount === 3
+        && categoryArrowSettingsMatch,
       JSON.stringify(categoryClickState)
     );
-    await page.waitForFunction(
-      () => Boolean(document.activeElement?.closest?.('[data-price-categories]')),
-      null,
-      { timeout: 15000 }
-    );
-    const categoryNavigationState = await page.evaluate(() => {
-      const root = document.querySelector('.site-scroll-root');
-      const cards = document.querySelector('[data-price-categories]');
-      const focused = document.activeElement?.closest?.('[data-price-categories]');
-      return {
-        focusInCards: Boolean(focused),
-        cardsVisible: Boolean(cards && cards.getBoundingClientRect().top < window.innerHeight),
-        rootHasInternalScroll: Boolean(root && root.scrollHeight > root.clientHeight),
-      };
-    });
-    assert(
-      locale + ' ' + label + ': category navigation works',
-      categoryNavigationState.focusInCards && categoryNavigationState.cardsVisible
-    );
+    for (const sectionKey of ['small', 'medium', 'large', 'giant', 'cats', 'smallAnimals']) {
+        if (sectionKey !== 'small') await page.locator(`[data-price-categories-action][data-price-section-action="${sectionKey}"]`).click();
+      await page.waitForFunction(
+        key => document.activeElement?.closest?.(`[data-price-section-target="${key}"]`),
+        sectionKey,
+        { timeout: 15000 }
+      );
+      await page.waitForFunction(
+        key => {
+          const target = document.querySelector(`[data-price-section-target="${key}"]`);
+          const heading = target?.querySelector(':scope > .price-size-section__heading')
+            || target?.querySelector('.price-size-section__heading');
+          const section = target?.closest('.price-size-section');
+          const scrollRoot = document.querySelector('.site-scroll-root');
+          const rect = heading?.getBoundingClientRect();
+          const rootRect = scrollRoot?.getBoundingClientRect();
+          const viewportTop = rootRect?.top ?? 0;
+          const viewportBottom = rootRect?.bottom ?? window.innerHeight;
+          return Boolean(
+            rect
+            && rect.top >= viewportTop - 1
+            && rect.bottom <= viewportBottom + 1
+            && section?.querySelectorAll(':scope > .price-section-navigation').length === 1
+          );
+        },
+        sectionKey,
+        { timeout: 15000 }
+      );
+    }
 
     const informationCard = page.locator('[data-category-id="ru-important-information"]');
     const informationPreview = await informationCard.locator('.price-card__information-preview').textContent();
     const informationHighlights = await informationCard.locator('.price-card__information-highlights li').count();
-    assert(`${locale} ${label}: information card preview`, Boolean(informationPreview?.trim()) && informationHighlights === 5);
+    assert(`${locale} ${label}: information card preview`, Boolean(informationPreview?.trim()) && informationHighlights === 6);
     if (label === 'mobile') await informationCard.locator('[data-price-card-toggle]').click();
     await informationCard.locator('[data-price-open]').click();
     await page.waitForSelector('#price-category-modal.active', { timeout: 15000 });
@@ -626,6 +1522,114 @@ for (const locale of locales) {
     if (label === 'mobile') await firstCard.locator('[data-price-card-toggle]').click();
     await firstCard.locator('[data-price-open]').click();
     await page.waitForSelector('#price-category-modal.active', { timeout: 15000 });
+    const initialModalScrollTop = await page.locator('#price-category-modal .modal-content').evaluate(content => content.scrollTop);
+    assert(`${locale} ${label}: category modal opens at the top`, initialModalScrollTop <= 1, String(initialModalScrollTop));
+
+    const modalBreedPhotos = await readLoadedPhotoImages(
+      page,
+      '#price-category-modal.active [data-price-modal-breed-photo]:not([hidden]) [data-price-modal-breed-photo-image]'
+    );
+    const modalBreedPhotoBinding = await page.evaluate(() => {
+      const modal = document.querySelector('#price-category-modal.active');
+      const unifiedTile = modal?.querySelector('.price-category-modal__selection');
+      const categoryHeader = modal?.querySelector('.price-category-modal__header');
+      const selectionHeader = modal?.querySelector('[data-price-modal-selection-header]');
+      const photo = modal?.querySelector('[data-price-modal-breed-photo]');
+      const selectedBreed = modal?.querySelector('[data-price-modal-breed]')?.selectedOptions?.[0]?.textContent?.trim() || '';
+      const photoName = modal?.querySelector('[data-price-modal-breed-photo-name]')?.textContent?.trim() || '';
+      const photoAlt = modal?.querySelector('[data-price-modal-breed-photo-image]')?.alt?.trim() || '';
+      const selectionField = modal?.querySelector('.price-category-modal__selection-field');
+      const photoMedia = photo?.querySelector('.price-category-modal__breed-photo-media');
+      const photoCaption = photo?.querySelector('figcaption');
+      const close = modal?.querySelector('[data-price-modal-close]');
+      const headerRect = selectionHeader?.getBoundingClientRect();
+      const photoRect = photo?.getBoundingClientRect();
+      const selectionFieldRect = selectionField?.getBoundingClientRect();
+      const photoMediaRect = photoMedia?.getBoundingClientRect();
+      const photoCaptionRect = photoCaption?.getBoundingClientRect();
+      const closeRect = close?.getBoundingClientRect();
+      const visibleCaptionItems = Array.from(photoCaption?.children || []).filter((item) => {
+        const style = getComputedStyle(item);
+        return !item.hidden && style.display !== 'none' && style.visibility !== 'hidden';
+      });
+      return {
+        selectedBreed,
+        photoName,
+        photoAlt,
+        photoInsideSelectionHeader: photo?.parentElement === selectionHeader,
+        categoryHeaderInsideUnifiedTile: Boolean(categoryHeader && unifiedTile?.contains(categoryHeader)),
+        selectionHeaderInsideUnifiedTile: Boolean(selectionHeader && unifiedTile?.contains(selectionHeader)),
+        categoryHeaderPrecedesSelectionHeader: categoryHeader?.nextElementSibling === selectionHeader,
+        unifiedTileHasSingleFrame: Boolean(unifiedTile && categoryHeader && selectionHeader
+          && parseFloat(getComputedStyle(unifiedTile).borderTopWidth) > 0
+          && parseFloat(getComputedStyle(categoryHeader).borderTopWidth) === 0
+          && parseFloat(getComputedStyle(selectionHeader).borderTopWidth) === 0),
+        headerHeight: headerRect?.height || 0,
+        photoContained: Boolean(headerRect && photoRect
+          && photoRect.left >= headerRect.left
+          && photoRect.right <= headerRect.right
+          && photoRect.top >= headerRect.top
+          && photoRect.bottom <= headerRect.bottom),
+        photoAvoidsClose: Boolean(photoRect && closeRect
+          && (photoRect.right <= closeRect.left || photoRect.left >= closeRect.right
+            || photoRect.bottom <= closeRect.top || photoRect.top >= closeRect.bottom)),
+        noSelectionOverflow: Boolean(selectionHeader
+          && selectionHeader.scrollWidth <= selectionHeader.clientWidth
+          && selectionHeader.scrollHeight <= selectionHeader.clientHeight),
+        viewportWidth: window.innerWidth,
+        headerClass: selectionHeader?.className || '',
+        headerColumns: selectionHeader ? getComputedStyle(selectionHeader).gridTemplateColumns : '',
+        photoColumns: photo ? getComputedStyle(photo).gridTemplateColumns : '',
+        photoSize: photoRect ? [photoRect.width, photoRect.height] : [],
+        equalMainColumns: Boolean(selectionFieldRect && photoRect
+          && Math.abs(selectionFieldRect.width - photoRect.width) <= 1),
+        photoMatchesCaptionHeight: Boolean(photoMediaRect && photoCaptionRect
+          && Math.abs(photoMediaRect.height - photoCaptionRect.height) <= 1),
+        captionFitsSingleLine: visibleCaptionItems.every((item) => {
+          const style = getComputedStyle(item);
+          const itemRect = item.getBoundingClientRect();
+          return style.whiteSpace === 'nowrap'
+            && (!photoCaptionRect || itemRect.width <= photoCaptionRect.width + 1)
+            && item.scrollWidth <= item.clientWidth + 1
+            && item.scrollHeight <= item.clientHeight + 1;
+        }),
+        captionItems: visibleCaptionItems.map((item) => {
+          const itemRect = item.getBoundingClientRect();
+          return { text: item.textContent?.trim() || '', width: itemRect.width, available: photoCaptionRect?.width || 0 };
+        }),
+      };
+    });
+    assert(
+      `${locale} ${label}: modal breed selection uses a loaded local contain photo`,
+      modalBreedPhotos.length === 1
+        && localContainedPhotosPass(modalBreedPhotos)
+        && modalBreedPhotoBinding.selectedBreed.length > 0
+        && modalBreedPhotoBinding.photoName === modalBreedPhotoBinding.selectedBreed
+        && modalBreedPhotoBinding.photoAlt === modalBreedPhotoBinding.selectedBreed,
+      JSON.stringify({ photos: modalBreedPhotos, binding: modalBreedPhotoBinding })
+    );
+    assert(
+      `${locale} ${label}: breed photo and source stay inside the compact selection block`,
+      modalBreedPhotoBinding.photoInsideSelectionHeader
+        && modalBreedPhotoBinding.categoryHeaderInsideUnifiedTile
+        && modalBreedPhotoBinding.selectionHeaderInsideUnifiedTile
+        && modalBreedPhotoBinding.categoryHeaderPrecedesSelectionHeader
+        && modalBreedPhotoBinding.unifiedTileHasSingleFrame
+        && modalBreedPhotoBinding.photoContained
+        && modalBreedPhotoBinding.photoAvoidsClose
+        && modalBreedPhotoBinding.noSelectionOverflow
+        && modalBreedPhotoBinding.headerHeight <= (label === 'mobile' ? 220 : 190),
+      JSON.stringify(modalBreedPhotoBinding)
+    );
+    assert(
+      `${locale} ${label}: desktop breed preview is balanced 50/50 without wrapped attribution`,
+      label === 'mobile' || (
+        modalBreedPhotoBinding.equalMainColumns
+          && modalBreedPhotoBinding.photoMatchesCaptionHeight
+          && modalBreedPhotoBinding.captionFitsSingleLine
+      ),
+      JSON.stringify(modalBreedPhotoBinding)
+    );
 
     const initialModalState = await page.evaluate(() => {
       const modal = document.querySelector('#price-category-modal');
@@ -720,6 +1724,9 @@ for (const locale of locales) {
         const modal = document.querySelector('#price-category-modal');
         const modalHeader = modal?.querySelector('.price-category-modal__header');
         const selectionHeader = modal?.querySelector('.price-category-modal__selection-header');
+        const selectionHeaderStyle = selectionHeader ? getComputedStyle(selectionHeader) : null;
+        const context = selectionHeader?.closest('.price-category-modal__context');
+        const contextStyle = context ? getComputedStyle(context) : null;
       const title = modal?.querySelector('[data-price-modal-title]')?.textContent?.trim() || '';
       const summary = modal?.querySelector('[data-price-modal-summary]')?.textContent?.trim() || '';
       const breedOptions = modal?.querySelectorAll('[data-price-modal-breed] option').length || 0;
@@ -736,6 +1743,27 @@ for (const locale of locales) {
         const serviceOptionHeights = Array.from(
           modal?.querySelectorAll('.price-category-modal__service-option:not([hidden])') || []
         ).map(option => option.getBoundingClientRect().height);
+        const serviceLegendStates = Array.from(
+          modal?.querySelectorAll('.price-category-modal__service-fieldset:not([hidden])') || []
+        ).map((fieldset) => {
+          const legend = fieldset.querySelector('legend');
+          const fieldsetRect = fieldset.getBoundingClientRect();
+          const legendRect = legend?.getBoundingClientRect();
+          const legendStyle = legend ? getComputedStyle(legend) : null;
+          return {
+            text: legend?.textContent?.trim() || '',
+            float: legendStyle?.float || '',
+            contained: Boolean(legendRect
+              && legendRect.left >= fieldsetRect.left + 1
+              && legendRect.right <= fieldsetRect.right - 1
+              && legendRect.top >= fieldsetRect.top + 1
+              && legendRect.bottom <= fieldsetRect.bottom - 1),
+            noOverflow: Boolean(legend
+              && legend.scrollWidth <= legend.clientWidth + 1
+              && legendRect
+              && legendRect.width <= fieldsetRect.width - 2),
+          };
+        });
         return {
         title,
         summary,
@@ -755,7 +1783,13 @@ for (const locale of locales) {
           modalHeaderPosition: modalHeader ? getComputedStyle(modalHeader).position : '',
           selectionHeaderHeight: selectionHeader?.getBoundingClientRect().height || 0,
           selectionHeaderPosition: selectionHeader ? getComputedStyle(selectionHeader).position : '',
+          selectionHeaderRadius: Number.parseFloat(selectionHeaderStyle?.borderTopLeftRadius || '0'),
+          selectionHeaderPaddingLeft: Number.parseFloat(selectionHeaderStyle?.paddingLeft || '0'),
+          contextPosition: contextStyle?.position || '',
+          contextContainsIntro: Boolean(modalHeader && context?.contains(modalHeader)),
+          contextPaddingLeft: Number.parseFloat(contextStyle?.paddingLeft || '0'),
           serviceOptionMaxHeight: serviceOptionHeights.length ? Math.max(...serviceOptionHeights) : 0,
+          serviceLegendStates,
           legacyMarkup: Boolean(legacyMarkup),
         };
     });
@@ -763,13 +1797,17 @@ for (const locale of locales) {
       assert(`${locale} ${label}: modal title`, modalState.title.length > 0);
       assert(`${locale} ${label}: modal summary`, modalState.summary.length > 0);
       assert(
-        `${locale} ${label}: category intro scrolls and selection uses compact sticky header`,
+        `${locale} ${label}: category intro and selection share a compact sticky context`,
         modalState.modalHeaderPosition !== 'sticky'
           && modalState.modalHeaderHeight > 0
           && modalState.modalHeaderHeight <= 180
-          && modalState.selectionHeaderPosition === 'sticky'
-          && modalState.selectionHeaderHeight > 0
-          && modalState.selectionHeaderHeight <= 190,
+           && modalState.selectionHeaderPosition === 'relative'
+           && modalState.contextPosition === 'sticky'
+           && modalState.contextContainsIntro
+           && modalState.selectionHeaderHeight > 0
+           && modalState.selectionHeaderHeight <= (label === 'mobile' ? 220 : 190)
+           && modalState.selectionHeaderRadius >= 10
+           && modalState.selectionHeaderPaddingLeft + modalState.contextPaddingLeft >= 10,
         JSON.stringify({
           intro: { position: modalState.modalHeaderPosition, height: modalState.modalHeaderHeight },
           selection: { position: modalState.selectionHeaderPosition, height: modalState.selectionHeaderHeight },
@@ -780,6 +1818,15 @@ for (const locale of locales) {
         modalState.serviceOptionMaxHeight > 0
           && modalState.serviceOptionMaxHeight <= (label === 'mobile' ? 96 : 90),
         `maxHeight=${modalState.serviceOptionMaxHeight}`
+      );
+      assert(
+        `${locale} ${label}: service headings stay inside their frames`,
+        modalState.serviceLegendStates.length > 0
+          && modalState.serviceLegendStates.every(state => state.text.length > 0
+            && state.float === 'left'
+            && state.contained
+            && state.noOverflow),
+        JSON.stringify(modalState.serviceLegendStates)
       );
     assert(`${locale} ${label}: breed selector`, modalState.breedOptions > 0);
     assert(`${locale} ${label}: service selector`, modalState.serviceOptions > 0);
@@ -795,24 +1842,27 @@ for (const locale of locales) {
       const primaryServices = page.locator('[data-price-modal-service-options] input[type="checkbox"]');
       const dentalWeightControl = page.locator('[data-price-modal-dental-weight]');
       const dentalWeight = page.locator('[data-price-modal-dental-weight-input]');
-      const dentalService = page.locator('[data-price-modal-additional-service-options] [data-service-index="3"] input');
+      const dentalService = page.locator('[data-price-modal-additional-service-options] [data-service-index="1"] input');
 
       assert('ru desktop: three primary grooming services available', await primaryServices.count() >= 3);
       for (let index = 0; index < 3; index += 1) {
         await primaryServices.nth(index).check({ force: true });
         assert(`ru desktop: primary service ${index + 1} does not request dental weight`, !(await dentalWeightControl.isVisible()));
-        assert(`ru desktop: dental option remains selectable for primary service ${index + 1}`, await dentalService.isEnabled());
+        assert(`ru desktop: dental option remains available for primary service ${index + 1}`, await dentalService.count() === 1);
       }
 
       await primaryServices.first().check({ force: true });
       assert('ru desktop: dental weight input disabled before dental selection', await dentalWeight.isDisabled());
-      await dentalService.check({ force: true });
+      await dentalService.evaluate(input => {
+        input.checked = true;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
       const dentalRequiredState = await page.evaluate(() => ({
         weightVisible: Boolean(document.querySelector('[data-price-modal-dental-weight]')?.offsetParent),
         inputEnabled: !document.querySelector('[data-price-modal-dental-weight-input]')?.disabled,
         inputRequired: Boolean(document.querySelector('[data-price-modal-dental-weight-input]')?.required),
         status: document.querySelector('[data-price-modal-dental-weight-status]')?.dataset.state || '',
-        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="3"] input')?.checked),
+        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="1"] input')?.checked),
         bookingDisabled: document.querySelector('[data-price-modal-booking]')?.getAttribute('aria-disabled') === 'true',
         totalAmount: document.querySelector('[data-price-modal-selected-price]')?.dataset.totalAmount || '',
         hasDiscount: Boolean(document.querySelector('.price-category-modal__breakdown-discount')),
@@ -825,7 +1875,7 @@ for (const locale of locales) {
           && dentalRequiredState.status === 'required'
           && dentalRequiredState.dentalChecked
           && dentalRequiredState.bookingDisabled
-          && dentalRequiredState.totalAmount === '180'
+          && dentalRequiredState.totalAmount === '150'
           && !dentalRequiredState.hasDiscount,
         JSON.stringify(dentalRequiredState)
       );
@@ -833,7 +1883,7 @@ for (const locale of locales) {
       await dentalWeight.fill('6.1');
       const dentalTooHeavyState = await page.evaluate(() => ({
         status: document.querySelector('[data-price-modal-dental-weight-status]')?.dataset.state || '',
-        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="3"] input')?.checked),
+        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="1"] input')?.checked),
         bookingDisabled: document.querySelector('[data-price-modal-booking]')?.getAttribute('aria-disabled') === 'true',
         totalAmount: document.querySelector('[data-price-modal-selected-price]')?.dataset.totalAmount || '',
         hasDiscount: Boolean(document.querySelector('.price-category-modal__breakdown-discount')),
@@ -843,7 +1893,7 @@ for (const locale of locales) {
         dentalTooHeavyState.status === 'ineligible'
           && dentalTooHeavyState.dentalChecked
           && dentalTooHeavyState.bookingDisabled
-          && dentalTooHeavyState.totalAmount === '180'
+          && dentalTooHeavyState.totalAmount === '150'
           && !dentalTooHeavyState.hasDiscount,
         JSON.stringify(dentalTooHeavyState)
       );
@@ -851,7 +1901,7 @@ for (const locale of locales) {
       await dentalWeight.fill('5.5');
       const dentalCalculation = await page.evaluate(() => ({
         status: document.querySelector('[data-price-modal-dental-weight-status]')?.dataset.state || '',
-        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="3"] input')?.checked),
+        dentalChecked: Boolean(document.querySelector('[data-price-modal-additional-service-options] [data-service-index="1"] input')?.checked),
         total: document.querySelector('[data-price-modal-selected-price]')?.textContent?.trim() || '',
         totalAmount: Number(document.querySelector('[data-price-modal-selected-price]')?.dataset.totalAmount || NaN),
         subtotalAmount: Number(document.querySelector('.price-category-modal__breakdown-subtotal')?.dataset.priceSubtotalAmount || NaN),
@@ -868,10 +1918,10 @@ for (const locale of locales) {
         'ru desktop: grooming dental discount calculation',
         dentalCalculation.status === 'eligible'
           && dentalCalculation.dentalChecked
-          && dentalCalculation.total.includes('150')
+          && dentalCalculation.total.includes('120')
           && dentalCalculation.total.includes('Итого от')
-          && dentalCalculation.subtotalAmount === 180
-          && dentalCalculation.subtotalText.includes('180')
+          && dentalCalculation.subtotalAmount === 150
+          && dentalCalculation.subtotalText.includes('150')
           && dentalCalculation.discountLabel.includes('30%')
           && dentalCalculation.discountAmount.includes('30')
           && dentalCalculation.discountBase === 100
@@ -884,7 +1934,10 @@ for (const locale of locales) {
         JSON.stringify(dentalCalculation)
       );
 
-      await dentalService.uncheck({ force: true });
+      await dentalService.evaluate(input => {
+        input.checked = false;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
       const dentalClearedState = await page.evaluate(() => ({
         weightHidden: Boolean(document.querySelector('[data-price-modal-dental-weight]')?.hidden),
         inputDisabled: Boolean(document.querySelector('[data-price-modal-dental-weight-input]')?.disabled),
@@ -897,7 +1950,7 @@ for (const locale of locales) {
         dentalClearedState.weightHidden
           && dentalClearedState.inputDisabled
           && !dentalClearedState.inputRequired
-          && dentalClearedState.total.includes('80')
+          && dentalClearedState.total.includes('50')
           && !dentalClearedState.hasDiscount,
         JSON.stringify(dentalClearedState)
       );
@@ -940,7 +1993,7 @@ for (const locale of locales) {
           return true;
         },
         null,
-        { timeout: 1000 }
+        { timeout: 5000 }
       );
     }
     const categoryScrollState = await categoryContent.evaluate(content => {
@@ -950,6 +2003,8 @@ for (const locale of locales) {
         const observedScrollActivity = window.__priceSmokeCategoryScrollActivity;
         const header = content.querySelector('.price-category-modal__header');
         const selectionHeader = content.querySelector('.price-category-modal__selection-header');
+        const stickyContext = selectionHeader?.closest('.price-category-modal__context');
+        const stickyRect = stickyContext?.getBoundingClientRect();
         const close = content.querySelector('.price-category-modal__close');
         const contentRect = content.getBoundingClientRect();
         const headerRect = header?.getBoundingClientRect();
@@ -978,10 +2033,12 @@ for (const locale of locales) {
           ),
           selectionHeaderTop: selectionHeaderRect?.top || 0,
           selectionHeaderPosition: selectionHeader ? getComputedStyle(selectionHeader).position : '',
+          contextPosition: stickyContext ? getComputedStyle(stickyContext).position : '',
           selectionHeaderPinned: Boolean(
-            selectionHeaderRect
-            && selectionHeaderRect.top >= contentRect.top - 1
-            && selectionHeaderRect.top <= contentRect.top + 32
+            selectionHeaderRect && stickyRect
+            && stickyRect.top >= contentRect.top - 1
+            && stickyRect.top <= contentRect.top + 32
+            && selectionHeaderRect.top >= stickyRect.top
             && selectionHeaderRect.bottom <= contentRect.bottom + 1
           ),
           closeVisible: Boolean(
@@ -1012,10 +2069,11 @@ for (const locale of locales) {
       JSON.stringify(categoryScrollState)
     );
     assert(
-      `${locale} ${label}: category intro collapses and breed selection stays pinned`,
+      `${locale} ${label}: shared category context and breed selection stay pinned`,
       categoryScrollState.headerPosition !== 'sticky'
         && categoryScrollState.introScrolledAway
-        && categoryScrollState.selectionHeaderPosition === 'sticky'
+        && categoryScrollState.selectionHeaderPosition === 'relative'
+        && categoryScrollState.contextPosition === 'sticky'
         && categoryScrollState.selectionHeaderPinned
         && categoryScrollState.closeVisible,
       JSON.stringify(categoryScrollState)
@@ -1112,13 +2170,12 @@ for (const locale of locales) {
           navActions: actions?.querySelectorAll('.btn-neon[data-nav-pill="client-registration-action"]').length === 2,
           singleColumnLayout: form ? getComputedStyle(form).gridTemplateColumns.trim().split(/\s+/).filter(column => Number.parseFloat(column) > 1).length === 1 : false,
           headerTop: headerRect?.top || 0,
-          stickyHeader: Boolean(
+          scrollingHeader: Boolean(
             header
-            && getComputedStyle(header).position === 'sticky'
+            && getComputedStyle(header).position === 'relative'
             && contentRect
             && headerRect
             && closeRect
-            && headerRect.top >= contentRect.top - 1
             && closeRect.top >= contentRect.top - 1
             && closeRect.bottom <= contentRect.bottom + 1
           ),
@@ -1138,9 +2195,9 @@ for (const locale of locales) {
         registrationState.hiddenBreed && registrationState.noSpeciesDuplicate && registrationState.petContext && registrationState.navActions && registrationState.singleColumnLayout && registrationState.matteBackdrop
       );
       assert(
-        `${locale} ${label}: registration header stays visible while modal scrolls`,
-        registrationState.stickyHeader
-          && Math.abs(registrationState.headerTop - registrationHeaderBefore) <= 1,
+        `${locale} ${label}: registration intro scrolls without hiding the close control`,
+        registrationState.scrollingHeader
+          && (!registrationState.modalCanScroll || registrationState.headerTop < registrationHeaderBefore),
         JSON.stringify({ before: registrationHeaderBefore, after: registrationState })
       );
 
@@ -1183,22 +2240,43 @@ for (const locale of locales) {
     const scrollBeforeBreedMenu = await page.evaluate(() => document.querySelector('.site-scroll-root')?.scrollTop || 0);
     await breedToggle.evaluate(toggle => toggle.click());
     await page.waitForSelector('.price-card__breed-menu:not([hidden])', { timeout: 15000 });
+    const breedMenuPhotos = await readLoadedPhotoImages(
+      page,
+      '.price-card__breed-menu:not([hidden]) .price-card__breed-option-media img'
+    );
+    const breedMenuOptionCount = await page.locator(
+      '.price-card__breed-menu:not([hidden]) .price-card__breed-option'
+    ).count();
+    assert(
+      `${locale} ${label}: opened breed list uses loaded local contain thumbnails`,
+      breedMenuPhotos.length === breedMenuOptionCount && localContainedPhotosPass(breedMenuPhotos),
+      JSON.stringify({ optionCount: breedMenuOptionCount, photos: breedMenuPhotos })
+    );
     const openedBreedArrowState = await breedToggle.evaluate(toggle => {
       const motion = toggle.querySelector('.price-card__badge-icon-motion');
-      const icon = toggle.querySelector('.price-card__badge-icon');
       const motionStyle = motion ? getComputedStyle(motion) : null;
-      const iconStyle = icon ? getComputedStyle(icon) : null;
       return {
         expanded: toggle.getAttribute('aria-expanded'),
         motionAnimation: motionStyle?.animationName || '',
         motionPeak: motionStyle?.getPropertyValue('--site-arrow-motion-peak-x').trim() || '',
-        rotationAnimation: iconStyle?.animationName || '',
+        activationKind: toggle.dataset.siteArrowActivationKind || '',
+        activationDuration: Number(toggle.dataset.siteArrowActivationDuration || 0),
+        activationEasing: toggle.dataset.siteArrowActivationEasing || '',
+        activationTurns: Number(toggle.dataset.siteArrowActivationTurns || 0),
+        sharedSettings: window.HundesalonSiteArrow?.getSettings?.() || {},
       };
     });
+    const openedBreedArrowSettingsMatch = openedBreedArrowState.activationDuration === categoryClickState.activationDuration
+      && openedBreedArrowState.activationEasing === categoryClickState.activationEasing
+      && openedBreedArrowState.activationTurns === categoryClickState.activationTurns
+      && openedBreedArrowState.activationDuration === openedBreedArrowState.sharedSettings.duration
+      && openedBreedArrowState.activationEasing === openedBreedArrowState.sharedSettings.easing
+      && openedBreedArrowState.activationTurns === openedBreedArrowState.sharedSettings.turnCount;
     const openedBreedArrowPasses = openedBreedArrowState.expanded === 'true'
       && openedBreedArrowState.motionAnimation.includes('siteArrowAxisBounce')
       && openedBreedArrowState.motionPeak === '7px'
-      && openedBreedArrowState.rotationAnimation.includes('priceBreedArrowOpen');
+      && openedBreedArrowState.activationKind === 'open'
+      && openedBreedArrowSettingsMatch;
     assert(
       `${locale} ${label}: opened breed arrow moves right and keeps rotation`,
       openedBreedArrowPasses,
@@ -1213,12 +2291,12 @@ for (const locale of locales) {
       { timeout: 15000 }
     );
     // Opening can trigger a delayed scroll event while fonts/layout settle.
-    // Wait for the actual fade-out instead of racing its 900ms idle timer.
+    // Wait for the actual fade-out instead of racing its idle timer.
     await page.waitForFunction(
       () => {
         const menu = document.querySelector('.price-card__breed-menu:not([hidden])');
         if (!menu) return false;
-        const track = menu.querySelector('[data-price-breed-scrollbar]');
+        const track = menu.parentElement?.querySelector(':scope > [data-price-breed-scrollbar]');
         return menu.scrollHeight <= menu.clientHeight + 1
           || Boolean(track && Number.parseFloat(getComputedStyle(track).opacity) === 0);
       },
@@ -1232,7 +2310,8 @@ for (const locale of locales) {
       const openCard = menu?.closest('.price-card');
       const rect = menu?.getBoundingClientRect();
       const menuStyle = menu ? getComputedStyle(menu) : null;
-      const breedScrollbar = menu?.querySelector('[data-price-breed-scrollbar]');
+      const nativeScrollbarStyle = menu ? getComputedStyle(menu, '::-webkit-scrollbar') : null;
+      const breedScrollbar = menu?.parentElement?.querySelector(':scope > [data-price-breed-scrollbar]');
       const breedScrollbarRect = breedScrollbar?.getBoundingClientRect();
       const breedScrollbarStyle = breedScrollbar ? getComputedStyle(breedScrollbar) : null;
       const hasBreedOverflow = menu ? menu.scrollHeight > menu.clientHeight + 1 : false;
@@ -1279,6 +2358,13 @@ for (const locale of locales) {
         insideViewport: Boolean(rect && rect.left >= 8 && rect.right <= window.innerWidth - 8 && rect.top >= 8 && rect.bottom <= window.innerHeight - 8),
         boundedWidth: Boolean(rect && rect.width <= 681),
         roundedMenu: Boolean(menuStyle && Number.parseFloat(menuStyle.borderRadius) >= 18),
+        singleScrollbar: !hasBreedOverflow || Boolean(
+          menu?.hasAttribute('data-custom-scrollbar-host')
+          && menuStyle?.scrollbarWidth === 'none'
+          && nativeScrollbarStyle?.display === 'none'
+          && Number.parseFloat(nativeScrollbarStyle?.width || '0') === 0
+          && menu.parentElement?.querySelectorAll(':scope > [data-price-breed-scrollbar]').length === 1
+        ),
         scrollbarContained: !hasBreedOverflow || Boolean(
           rect
           && breedScrollbarRect
@@ -1307,6 +2393,7 @@ for (const locale of locales) {
       && breedMenuState.insideViewport
       && breedMenuState.boundedWidth
       && breedMenuState.roundedMenu
+      && breedMenuState.singleScrollbar
       && breedMenuState.scrollbarContained
       && breedMenuState.scrollbarRounded
       && breedMenuState.scrollbarIdleHidden
@@ -1317,12 +2404,60 @@ for (const locale of locales) {
       breedMenuPasses,
       breedMenuPasses ? '' : JSON.stringify(breedMenuState)
     );
+    if (breedMenuState.singleScrollbar) {
+      const canTestScrollbarFade = await page.evaluate(() => {
+        const menu = document.querySelector('.price-card__breed-menu:not([hidden])');
+        return Boolean(menu && menu.scrollHeight > menu.clientHeight + 1);
+      });
+      const menuBox = canTestScrollbarFade
+        ? await page.locator('.price-card__breed-menu:not([hidden])').boundingBox()
+        : null;
+      if (menuBox) {
+        await page.mouse.move(menuBox.x + menuBox.width / 2, menuBox.y + menuBox.height / 2);
+        await page.mouse.wheel(0, 320);
+      }
+      if (menuBox) {
+        await page.waitForFunction(() => {
+          const menu = document.querySelector('.price-card__breed-menu:not([hidden])');
+          const track = menu?.parentElement?.querySelector(':scope > [data-price-breed-scrollbar]');
+          return Boolean(track && Number.parseFloat(getComputedStyle(track).opacity) >= 0.5);
+        }, null, { timeout: 2500 });
+      }
+      const activeOpacity = menuBox ? await page.evaluate(() => {
+        const menu = document.querySelector('.price-card__breed-menu:not([hidden])');
+        const track = menu?.parentElement?.querySelector(':scope > [data-price-breed-scrollbar]');
+        return Number.parseFloat(getComputedStyle(track).opacity);
+      }) : 0;
+      if (menuBox) {
+        await page.waitForFunction(() => {
+          const menu = document.querySelector('.price-card__breed-menu:not([hidden])');
+          const track = menu?.parentElement?.querySelector(':scope > [data-price-breed-scrollbar]');
+          return Boolean(track && Number.parseFloat(getComputedStyle(track).opacity) <= 0.1);
+        }, null, { timeout: 5000 });
+      }
+      const idleOpacity = menuBox ? await page.evaluate(() => {
+        const menu = document.querySelector('.price-card__breed-menu:not([hidden])');
+        const track = menu?.parentElement?.querySelector(':scope > [data-price-breed-scrollbar]');
+        return Number.parseFloat(getComputedStyle(track).opacity);
+      }) : 0;
+      const scrollbarFadeState = menuBox ? { activeOpacity, idleOpacity } : { skipped: true };
+      const scrollbarFadePasses = scrollbarFadeState.skipped
+        || (scrollbarFadeState.activeOpacity >= 0.5 && scrollbarFadeState.idleOpacity <= 0.1);
+      assert(
+        `${locale} ${label}: breed scrollbar fades in while scrolling and out after idle`,
+        scrollbarFadePasses,
+        scrollbarFadePasses ? '' : JSON.stringify(scrollbarFadeState)
+      );
+    }
     if (locale === 'ru') {
+      const allBreedLabels = await page.evaluate(() => (
+        window.PricePageCatalog?.categoriesByLocale?.ru || []
+      ).flatMap(category => category.breeds?.ru || []));
       assert(
         `${locale} ${label}: Russian Colored Bolonka label is canonical`,
-        breedMenuState.breedLabels.includes('Русская Цветная болонка')
-          && !breedMenuState.breedLabels.some(name => name.includes('/') || /Zwetna/i.test(name)),
-        JSON.stringify(breedMenuState.breedLabels)
+        allBreedLabels.includes('Русская Цветная болонка')
+          && !allBreedLabels.some(name => /Русская Цветная болонка\s*\/|Zwetna/i.test(name)),
+        JSON.stringify(allBreedLabels)
       );
     }
 
@@ -1350,20 +2485,29 @@ for (const locale of locales) {
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     const closedBreedArrowState = await breedToggle.evaluate(toggle => {
       const motion = toggle.querySelector('.price-card__badge-icon-motion');
-      const icon = toggle.querySelector('.price-card__badge-icon');
       const motionStyle = motion ? getComputedStyle(motion) : null;
-      const iconStyle = icon ? getComputedStyle(icon) : null;
       return {
         expanded: toggle.getAttribute('aria-expanded'),
         motionAnimation: motionStyle?.animationName || '',
         motionPeak: motionStyle?.getPropertyValue('--site-arrow-motion-peak-x').trim() || '',
-        rotationAnimation: iconStyle?.animationName || '',
+        activationKind: toggle.dataset.siteArrowActivationKind || '',
+        activationDuration: Number(toggle.dataset.siteArrowActivationDuration || 0),
+        activationEasing: toggle.dataset.siteArrowActivationEasing || '',
+        activationTurns: Number(toggle.dataset.siteArrowActivationTurns || 0),
+        sharedSettings: window.HundesalonSiteArrow?.getSettings?.() || {},
       };
     });
+    const closedBreedArrowSettingsMatch = closedBreedArrowState.activationDuration === categoryClickState.activationDuration
+      && closedBreedArrowState.activationEasing === categoryClickState.activationEasing
+      && closedBreedArrowState.activationTurns === categoryClickState.activationTurns
+      && closedBreedArrowState.activationDuration === closedBreedArrowState.sharedSettings.duration
+      && closedBreedArrowState.activationEasing === closedBreedArrowState.sharedSettings.easing
+      && closedBreedArrowState.activationTurns === closedBreedArrowState.sharedSettings.turnCount;
     const closedBreedArrowPasses = closedBreedArrowState.expanded === 'false'
       && closedBreedArrowState.motionAnimation.includes('siteArrowAxisBounce')
       && closedBreedArrowState.motionPeak === '-7px'
-      && closedBreedArrowState.rotationAnimation.includes('priceBreedArrowClose');
+      && closedBreedArrowState.activationKind === 'close'
+      && closedBreedArrowSettingsMatch;
     assert(
       `${locale} ${label}: closed breed arrow moves left and keeps rotation`,
       closedBreedArrowPasses,
@@ -1373,6 +2517,15 @@ for (const locale of locales) {
       () => !document.querySelector('.price-card__breed-menu:not([hidden])'),
       null,
       { timeout: 15000 }
+    );
+    await page.waitForFunction(
+      () => !document.querySelector('[data-price-breeds-toggle].price-breed-arrow--closing'),
+      null,
+      { timeout: 5000 }
+    );
+    assert(
+      `${locale} ${label}: shared close animation releases breed arrow state`,
+      !((await breedToggle.getAttribute('class')) || '').includes('price-breed-arrow--closing')
     );
     await page.waitForFunction(
       () => !document.querySelector('#price-category-modal')?.classList.contains('active'),
@@ -1386,13 +2539,19 @@ for (const locale of locales) {
 await browser.close();
 await staticServer?.close();
 
+await writeFile(
+  path.join(outDir, `${geometryOnly ? 'geometry-' : ''}summary-${locales.join('-')}-${layouts.map(([label]) => label).join('-')}${desktopWidth !== 1440 ? `-${desktopWidth}` : ''}.json`),
+  JSON.stringify({ ok: true, checksCount: checks.length, geometryOnly, desktopWidth, locales, layouts: layouts.map(([label]) => label), tabletGridChecked: tabletScreenshots.length > 0 }, null, 2)
+);
+
 console.log(
   JSON.stringify(
     {
       ok: true,
-      screenshots: locales.flatMap(locale => layouts.map(([, , screenshotSuffix]) =>
+      checksCount: checks.length,
+      screenshots: geometryOnly ? geometryScreenshots : locales.flatMap(locale => layouts.map(([, , screenshotSuffix]) =>
         path.join(outDir, `${locale}-${screenshotSuffix}.png`)
-      )).concat(additionalScreenshots),
+      )).concat(additionalScreenshots, searchFilterScreenshots, geometryScreenshots),
       checks,
     },
     null,

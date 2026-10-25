@@ -5,6 +5,7 @@ import {
   calculateApparentTemperature,
   normalizeBrightSkyCurrent,
   normalizeMetCurrent,
+  onRequest,
   parseWeatherCoordinates,
   parseWeatherLocation,
   weatherCodeFromBrightSky,
@@ -104,4 +105,100 @@ test('apparent temperature remains finite for normal current observations', () =
   assert.equal(calculateApparentTemperature(null, 50, 10), null);
   assert.equal(calculateApparentTemperature(20, null, null), 20);
   assert.ok(Number.isFinite(calculateApparentTemperature(25, 40, 10)));
+});
+
+test('weather rate limit rejects named locations before contacting any geocoder', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalCaches = globalThis.caches;
+  let upstreamCalls = 0;
+  globalThis.fetch = async () => {
+    upstreamCalls += 1;
+    throw new Error('Unexpected upstream request');
+  };
+  globalThis.caches = {
+    default: {
+      match: async request => {
+        assert.equal(new URL(request.url).hostname, 'rate-limit.hundesalon-nika.internal');
+        return new Response('24');
+      },
+      put: async () => assert.fail('Rejected requests must not update the cache'),
+    },
+  };
+
+  try {
+    const response = await onRequest({
+      request: new Request('https://hundesalon-nika.com/api/weather?location=Leipzig'),
+    });
+    assert.equal(response.status, 429);
+    assert.equal(upstreamCalls, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+    globalThis.caches = originalCaches;
+  }
+});
+
+test('cached weather coordinates avoid upstream requests even when the rate limit is reached', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalCaches = globalThis.caches;
+  globalThis.fetch = async () => assert.fail('Cached coordinates must not contact a provider');
+  globalThis.caches = {
+    default: {
+      match: async request => {
+        assert.equal(new URL(request.url).hostname, 'weather-cache.hundesalon-nika.internal');
+        return Response.json({ location: { name: 'Leipzig' } });
+      },
+      put: async () => assert.fail('Cache hits must not consume a rate-limit allowance'),
+    },
+  };
+
+  try {
+    const response = await onRequest({
+      request: new Request('https://hundesalon-nika.com/api/weather?latitude=51.3397&longitude=12.3731'),
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('X-Weather-Cache'), 'HIT');
+    assert.equal((await response.json()).cached, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+    globalThis.caches = originalCaches;
+  }
+});
+
+test('a named location consumes one rate-limit allowance before reading cached weather', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalCaches = globalThis.caches;
+  let upstreamCalls = 0;
+  let limiterWrites = 0;
+  globalThis.fetch = async url => {
+    upstreamCalls += 1;
+    assert.equal(new URL(url).searchParams.get('q'), 'Leipzig');
+    return Response.json({
+      features: [{ geometry: { coordinates: [12.3731, 51.3397] }, properties: { name: 'Leipzig' } }],
+    });
+  };
+  globalThis.caches = {
+    default: {
+      match: async request =>
+        new URL(request.url).hostname === 'rate-limit.hundesalon-nika.internal'
+          ? null
+          : Response.json({ location: { name: 'Leipzig' } }),
+      put: async (request, response) => {
+        assert.equal(new URL(request.url).hostname, 'rate-limit.hundesalon-nika.internal');
+        assert.equal(await response.text(), '1');
+        limiterWrites += 1;
+      },
+    },
+  };
+
+  try {
+    const response = await onRequest({
+      request: new Request('https://hundesalon-nika.com/api/weather?location=Leipzig'),
+    });
+    assert.equal(response.status, 200);
+    assert.equal(upstreamCalls, 1);
+    assert.equal(limiterWrites, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    globalThis.caches = originalCaches;
+  }
 });

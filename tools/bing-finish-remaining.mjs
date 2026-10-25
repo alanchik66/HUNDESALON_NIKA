@@ -4,9 +4,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { openBingApiAccess } from './lib/bing-api-access.mjs';
 import { openBingWebmasterSession } from './lib/browser-cdp.mjs';
 import { BING_INDEXNOW_COVERAGE, hasBingApiKey } from './lib/bing-api.mjs';
-import { siteQuery } from './lib/bing-wmt.mjs';
+import { SITE_HOST, siteQuery } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.BING_MAIL_EDGE_PORT || 9224);
@@ -157,33 +158,8 @@ await withSession(async s => {
   );
 
   console.log('3/4 API Access…');
-  for (const apiPath of ['settings/apiaccess', 'settings/api', 'settings']) {
-    await s.nav(apiPath);
-    const probe = await s.eval(`return { url: location.href, body: (document.body?.innerText||'').slice(0, 400) };`);
-    if (
-      /api|ключ|key|token|subscription/i.test(probe.body) &&
-      !/не найдено|not found|страниц не найдено/i.test(probe.body)
-    ) {
-      report.apiProbe = probe;
-      break;
-    }
-    report.apiProbe = probe;
-  }
-  report.apiAccess = await evalRetry(
-    s,
-    `
-    const body = document.body?.innerText || '';
-    const gen = clickMatch('generate api|создать ключ|generate key|new api|сгенерировать|create api');
-    await sleep(2000);
-    return {
-      url: location.href,
-      generateClicked: gen,
-      hasApiSection: /api|ключ|key|token/i.test(body),
-      success: /api|ключ|key|token/i.test(body),
-      sample: body.slice(0, 800),
-    };
-  `
-  );
+  report.apiAccess = await openBingApiAccess(s, { expectedHost: SITE_HOST });
+  report.apiAccess.success = Boolean(report.apiAccess.hasApiKeyControl);
 
   console.log('4/4 Microsoft Clarity…');
   await s.nav('clarity');

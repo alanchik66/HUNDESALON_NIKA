@@ -6,19 +6,16 @@
  * SendPulse URL: /sendpulse-webhook?token=<same-secret>
  */
 
-import { enforceRateLimit, jsonResponse } from './_lib/http-security.js';
+import {
+  enforceRateLimit,
+  isRequestBodyTooLarge,
+  jsonResponse,
+  readTextBody,
+  timingSafeEqualStrings,
+} from './_lib/http-security.js';
 import { getEnvValue } from './_lib/platform-integrations.js';
 
 const MAX_BODY_BYTES = 512 * 1024;
-
-function timingSafeEqual(left, right) {
-  if (!left || !right || left.length !== right.length) return false;
-  let result = 0;
-  for (let index = 0; index < left.length; index += 1) {
-    result |= left.charCodeAt(index) ^ right.charCodeAt(index);
-  }
-  return result === 0;
-}
 
 function getWebhookToken(request) {
   const headerToken = String(request.headers.get('X-SendPulse-Webhook-Secret') || '').trim();
@@ -50,7 +47,7 @@ export async function onRequest(context) {
     return jsonResponse({ error: 'Webhook is not configured' }, 503);
   }
 
-  if (!timingSafeEqual(getWebhookToken(request), secret)) {
+  if (!(await timingSafeEqualStrings(getWebhookToken(request), secret))) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
 
@@ -61,14 +58,14 @@ export async function onRequest(context) {
   });
   if (rateLimited) return rateLimited;
 
-  const contentLength = Number(request.headers.get('Content-Length') || 0);
-  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
-    return jsonResponse({ error: 'Payload too large' }, 413);
-  }
-
-  const rawBody = await request.text();
-  if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_BYTES) {
-    return jsonResponse({ error: 'Payload too large' }, 413);
+  let rawBody;
+  try {
+    rawBody = await readTextBody(request, MAX_BODY_BYTES);
+  } catch (error) {
+    return jsonResponse(
+      { error: isRequestBodyTooLarge(error) ? 'Payload too large' : 'Invalid request body' },
+      isRequestBodyTooLarge(error) ? 413 : 400
+    );
   }
 
   let payload;

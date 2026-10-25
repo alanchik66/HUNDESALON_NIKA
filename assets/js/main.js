@@ -3,6 +3,19 @@
  * Shared header, language navigation, and weather widget bootstrap live in site-shell.js.
  */
 document.addEventListener('DOMContentLoaded', () => {
+  // Source previews and production pages share the same assistant launcher.
+  // Production injects these assets at build time; do not load a second copy.
+  if (!document.querySelector('link[href*="/ai-chat.css"]')) {
+    const chatStyles = document.createElement('link');
+    chatStyles.rel = 'stylesheet';
+    chatStyles.href = '/assets/css/ai-chat.css';
+    document.head.appendChild(chatStyles);
+  }
+  if (!document.querySelector('script[src*="/ai-chat.js"]')) {
+    const chatScript = document.createElement('script');
+    chatScript.src = '/assets/js/ai-chat.js';
+    document.head.appendChild(chatScript);
+  }
   const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
   const isCoarsePointer = window.matchMedia?.('(hover: none), (pointer: coarse)')?.matches ?? false;
   const isLowPowerDevice =
@@ -120,7 +133,12 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ========== THEME TOGGLE ========== */
   const themeToggle = document.getElementById('theme-toggle');
   if (themeToggle) {
-    const saved = localStorage.getItem('theme');
+    let saved = null;
+    try {
+      saved = localStorage.getItem('theme');
+    } catch {
+      // Theme persistence is optional when browser storage is blocked.
+    }
     if (saved === 'light') document.body.classList.add('light');
     themeToggle.textContent = '';
     themeToggle.setAttribute('aria-label', getThemeToggleLabel(document.body.classList.contains('light')));
@@ -128,7 +146,11 @@ document.addEventListener('DOMContentLoaded', () => {
     themeToggle.addEventListener('click', () => {
       document.body.classList.toggle('light');
       const isLight = document.body.classList.contains('light');
-      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      try {
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      } catch {
+        // Keep the visible theme and its accessible label in sync.
+      }
       themeToggle.textContent = '';
       themeToggle.setAttribute('aria-label', getThemeToggleLabel(isLight));
     });
@@ -145,6 +167,8 @@ document.addEventListener('DOMContentLoaded', () => {
     bodyChildren.forEach(node => {
       if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'SCRIPT') return;
       if (node.nodeType === Node.ELEMENT_NODE && node.id === 'booking-modal') return;
+      // Fixed scroll controls must share the page scrollbar's outer stacking context.
+      if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('price-scroll-controls')) return;
       root.appendChild(node);
     });
 
@@ -157,6 +181,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return root;
   })();
+
+  // Shared page navigation: available on every locale and page, not only the price list.
+  const lang = document.documentElement.lang.slice(0, 2);
+  const scrollLabels = {
+    ru: ['В начало страницы', 'В конец страницы'],
+    uk: ['На початок сторінки', 'У кінець сторінки'],
+    de: ['Zum Seitenanfang', 'Zum Seitenende'],
+    en: ['Back to top', 'Go to bottom'],
+  }[lang] || ['Back to top', 'Go to bottom'];
+  const scrollControls = document.createElement('div');
+  scrollControls.className = 'price-scroll-controls';
+  scrollControls.innerHTML = scrollLabels.map((label, index) =>
+    `<button type="button" data-price-scroll="${index ? 'bottom' : 'top'}" aria-label="${label}" title="${label}"><span class="site-icon-arrow" aria-hidden="true"></span></button>`
+  ).join('');
+  document.body.appendChild(scrollControls);
+  let scrollControlFrame = 0;
+  let observedScrollTrack = null;
+  const scrollTrackObserver = new ResizeObserver(() => alignScrollControls());
+  const alignScrollControls = () => {
+    if (scrollControlFrame) return;
+    scrollControlFrame = requestAnimationFrame(() => {
+      scrollControlFrame = 0;
+      const track = document.querySelector('.custom-scrollbar-track--page');
+      if (!track) return;
+      if (observedScrollTrack !== track) {
+        scrollTrackObserver.disconnect();
+        scrollTrackObserver.observe(track);
+        observedScrollTrack = track;
+      }
+      const rect = track.getBoundingClientRect();
+      if (rect.height) scrollControls.style.top = `${rect.top + rect.height / 2}px`;
+    });
+  };
+  window.addEventListener('resize', alignScrollControls, { passive: true });
+  document.addEventListener('scroll', alignScrollControls, { capture: true, passive: true });
+  window.addEventListener('load', alignScrollControls, { once: true });
+  alignScrollControls();
+  scrollControls.addEventListener('click', event => {
+    const button = event.target.closest('[data-price-scroll]');
+    if (!button) return;
+    const scroller = document.querySelector('.site-scroll-root') || document.scrollingElement;
+    if (!scroller) return;
+    scroller.scrollTo({
+      top: button.dataset.priceScroll === 'top' ? 0 : scroller.scrollHeight,
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    });
+  });
 
   const scrollActivityTimers = new WeakMap();
   const scrollActivityFadeDelay = prefersReducedMotion ? 220 : 900;
@@ -705,10 +776,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setMenuState = (isOpen, { restoreFocus = true } = {}) => {
-      if (isOpen && !isAtMenuOpenTop()) {
-        return;
-      }
-
       syncMobileNavLayout();
 
       burger.classList.toggle('active', isOpen);
@@ -888,35 +955,8 @@ document.addEventListener('DOMContentLoaded', () => {
       closeMenu({ restoreFocus: false });
     };
 
-    mobileNav.addEventListener('click', handleMobileNavLinkActivation, true);
-
-    // Дополнительный fallback для мобильных браузеров: закрываем меню на pointer/touch
-    // даже если click-событие у ссылки не дошло до контейнера.
-    const handleMobileNavPointerActivation = event => {
-      if (!isMenuOpen()) return;
-      const target = resolveEventElementTarget(event);
-      if (!target) return;
-      const link = target.closest('#mobile-nav a[href], #mobileNav a[href]');
-      if (!link) return;
-
-      // iOS can drop anchor navigation when the menu is closed in capture phase
-      // before the synthetic click/default link action is executed.
-      if (event.type === 'touchend' || event.type === 'pointerup') {
-        window.setTimeout(() => {
-          if (!isMenuOpen()) return;
-          setGalleryMenuState(false);
-          closeMenu({ restoreFocus: false });
-        }, 0);
-        return;
-      }
-
-      setGalleryMenuState(false);
-      closeMenu({ restoreFocus: false });
-    };
-
-    document.addEventListener('pointerup', handleMobileNavPointerActivation, true);
-    document.addEventListener('touchend', handleMobileNavPointerActivation, { capture: true, passive: true });
-    document.addEventListener('click', handleMobileNavPointerActivation, true);
+    // Let the browser complete the native anchor action before closing the drawer.
+    mobileNav.addEventListener('click', handleMobileNavLinkActivation);
     window.addEventListener('pageshow', normalizeNavLockState, { passive: true });
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
@@ -968,8 +1008,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const hero = document.querySelector('.hero');
 
   let activeMusicPanel = null;
+  let socialPickerOpenFrame = null;
+  let socialPanelOpenFrame = null;
+  let socialIconsOpenFrame = null;
 
   const closeSocialIconsUI = () => {
+    if (socialIconsOpenFrame !== null) {
+      cancelAnimationFrame(socialIconsOpenFrame);
+      socialIconsOpenFrame = null;
+    }
     if (!socialIconsToggle || !socialIconsList) return;
     socialIconsToggle.setAttribute('aria-expanded', 'false');
     socialIconsToggle.classList.remove('is-open');
@@ -989,6 +1036,14 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const closeAllMusicUI = () => {
+    if (socialPickerOpenFrame !== null) {
+      cancelAnimationFrame(socialPickerOpenFrame);
+      socialPickerOpenFrame = null;
+    }
+    if (socialPanelOpenFrame !== null) {
+      cancelAnimationFrame(socialPanelOpenFrame);
+      socialPanelOpenFrame = null;
+    }
     if (socialPlayerToggle) {
       socialPlayerToggle.classList.remove('is-open');
       socialPlayerToggle.setAttribute('aria-expanded', 'false');
@@ -1046,7 +1101,9 @@ document.addEventListener('DOMContentLoaded', () => {
     panel.setAttribute('aria-hidden', 'false');
     activateLazyIframe(panel);
     positionPanel(panel);
-    requestAnimationFrame(() => {
+    socialPanelOpenFrame = requestAnimationFrame(() => {
+      socialPanelOpenFrame = null;
+      if (activeMusicPanel !== panel || panel.hidden) return;
       panel.classList.add('is-open');
       positionPanel(panel);
     });
@@ -1069,7 +1126,11 @@ document.addEventListener('DOMContentLoaded', () => {
         socialServicePicker.setAttribute('aria-hidden', 'false');
         socialPlayerToggle.setAttribute('aria-expanded', 'true');
         socialPlayerToggle.classList.add('is-open');
-        requestAnimationFrame(() => socialServicePicker.classList.add('is-open'));
+        socialPickerOpenFrame = requestAnimationFrame(() => {
+          socialPickerOpenFrame = null;
+          if (socialServicePicker.hidden || socialPlayerToggle.getAttribute('aria-expanded') !== 'true') return;
+          socialServicePicker.classList.add('is-open');
+        });
       } else {
         openServicePanel(socialSpotifyPanel);
       }
@@ -1129,7 +1190,9 @@ document.addEventListener('DOMContentLoaded', () => {
         socialIconsToggle.classList.add('is-open');
         socialIconsList.hidden = false;
         socialIconsList.setAttribute('aria-hidden', 'false');
-        requestAnimationFrame(() => {
+        socialIconsOpenFrame = requestAnimationFrame(() => {
+          socialIconsOpenFrame = null;
+          if (socialIconsList.hidden || socialIconsToggle.getAttribute('aria-expanded') !== 'true') return;
           socialIconsList.classList.add('is-open');
         });
       }
@@ -1146,6 +1209,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (event.key === 'Escape') closeSocialIconsUI();
     });
   }
+
+  /* Keep the two header icon groups mutually exclusive. The service picker
+     has a high stacking level, so leaving it open while crossing to the
+     social links can place an invisible animated layer over later pointer
+     targets at some viewport widths. */
+  const socialPlayerWrap = socialPlayerToggle?.closest('.social-player-wrap');
+  socialPlayerWrap?.addEventListener('pointerenter', closeSocialIconsUI);
+  socialPlayerWrap?.addEventListener('focusin', closeSocialIconsUI);
+  document.querySelectorAll('.social-icons-wrap, .social-icons--desktop, #social-icons-list').forEach(region => {
+    region.addEventListener('pointerenter', closeAllMusicUI);
+    region.addEventListener('focusin', closeAllMusicUI);
+  });
 
   [pageHeader, pageTopRow, socialBar].filter(Boolean).forEach(element => {
     element.addEventListener('transitionend', () => {
@@ -1379,6 +1454,39 @@ document.addEventListener('DOMContentLoaded', () => {
   let ticking = false;
   let navProgressBar = null;
 
+  if (pageHeader) {
+    const revealHeader = document.createElement('button');
+    const revealLabels = {
+      ru: 'Показать главное меню',
+      uk: 'Показати головне меню',
+      de: 'Hauptmenü anzeigen',
+      en: 'Show main menu',
+    };
+    const revealLabel = revealLabels[document.documentElement.lang] || revealLabels.en;
+    revealHeader.type = 'button';
+    revealHeader.className = 'header-reveal-control';
+    revealHeader.setAttribute('aria-label', revealLabel);
+    revealHeader.title = revealLabel;
+    const revealHint = document.createElement('span');
+    revealHint.className = 'header-reveal-control__hint';
+    revealHint.setAttribute('aria-hidden', 'true');
+    const shortLabels = { ru: 'Навигационное меню', uk: 'Навігаційне меню', de: 'Navigationsmenü', en: 'Navigation menu' };
+    const hintText = document.createElement('span');
+    hintText.textContent = shortLabels[document.documentElement.lang] || shortLabels.en;
+    revealHint.appendChild(hintText);
+    const arrow = document.createElement('span');
+    arrow.className = 'site-icon-arrow';
+    arrow.setAttribute('aria-hidden', 'true');
+    revealHint.appendChild(arrow);
+    revealHeader.appendChild(revealHint);
+    revealHeader.addEventListener('click', () => {
+      lastScroll = scrollRoot.scrollTop;
+      document.body.classList.remove('hide-header');
+      pageHeader.querySelector('a[href], button')?.focus({ preventScroll: true });
+    });
+    document.body.appendChild(revealHeader);
+  }
+
   const handleScroll = () => {
     const current = scrollRoot.scrollTop;
     const delta = current - lastScroll;
@@ -1401,6 +1509,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!shouldAutoHideHeader || current <= 24) {
       document.body.classList.remove('hide-header');
     } else if (delta > downDeltaThreshold && current > heroHideOffset) {
+      closeAllMusicUI();
+      closeSocialIconsUI();
       document.body.classList.add('hide-header');
     } else if (current < heroRevealOffset) {
       document.body.classList.remove('hide-header');
@@ -1692,12 +1802,23 @@ document.addEventListener('DOMContentLoaded', () => {
   let touchRaf = 0;
   const now = () => performance.now();
 
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) startTouchLoop();
+  });
+
   function tickTouches(ts) {
+    if (document.hidden) {
+      touchRaf = 0;
+      return;
+    }
     let hasActivePoints = false;
     for (let i = 0; i < allTouchPoints.length; i++) {
       const el = allTouchPoints[i];
       if (!el._active) continue;
       hasActivePoints = true;
+      // Pointer contacts stay attached to the pointer instead of wandering away.
+      if (el._isCursor) continue;
 
       /* Хаотическая смена цели — непрерывно, без задержек */
       if (ts >= el._nextMove) {
@@ -1800,7 +1921,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const isNavPillActive = link =>
     link.classList.contains('active') ||
     link.getAttribute('aria-current') === 'page' ||
-    link.getAttribute('aria-current') === 'true';
+    link.getAttribute('aria-current') === 'true' ||
+    link.getAttribute('aria-pressed') === 'true' ||
+    link.getAttribute('aria-selected') === 'true' ||
+    Boolean(link.querySelector('input:checked'));
 
   const removeTouchPoints = root => {
     root?._touchResizeObserver?.disconnect();
@@ -1817,7 +1941,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (link.querySelector('.nav-plasma--active')) return;
 
     const activePlasma = document.createElement('span');
+    const pointerEvents = new window.AbortController();
+    activePlasma._pointerEvents = pointerEvents;
     activePlasma.className = cta ? 'nav-plasma--active nav-plasma--cta' : 'nav-plasma--active';
+    activePlasma.setAttribute('aria-hidden', 'true');
     link.appendChild(activePlasma);
 
     if (!sitePerfHeavy) return;
@@ -1904,7 +2031,7 @@ document.addEventListener('DOMContentLoaded', () => {
       activePlasma.style.setProperty('--plasma-y', dy.toFixed(1));
     };
 
-    link.addEventListener('mouseenter', event => {
+    const enterPlasma = event => {
       cursorTips.forEach(cursorTip => {
         cursorTip._active = false;
         cursorTip.classList.remove('active');
@@ -1923,7 +2050,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const my = ((event.clientY - rect.top) / rect.height) * 100;
       positionCursorTips(mx, my);
       moveRaysToward(mx, my);
-    });
+    };
+    link.addEventListener('mouseenter', enterPlasma, { signal: pointerEvents.signal });
 
     link.addEventListener('mousemove', event => {
       const rect = link.getBoundingClientRect();
@@ -1931,7 +2059,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const my = Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100));
       positionCursorTips(mx, my);
       moveRaysToward(mx, my);
-    });
+    }, { signal: pointerEvents.signal });
 
     link.addEventListener('mouseleave', () => {
       activeCursorTips.forEach(cursorTip => {
@@ -1943,12 +2071,14 @@ document.addEventListener('DOMContentLoaded', () => {
       activeCursorTips = [];
       activePlasma.style.setProperty('--plasma-x', '0');
       activePlasma.style.setProperty('--plasma-y', '0');
-    });
+    }, { signal: pointerEvents.signal });
+    if (options.pointerEvent) enterPlasma(options.pointerEvent);
   };
 
   const unmountActivePlasma = link => {
     const activePlasma = link.querySelector('.nav-plasma--active');
     if (!activePlasma) return;
+    activePlasma._pointerEvents?.abort();
     removeTouchPoints(activePlasma);
     activePlasma.remove();
   };
@@ -1969,6 +2099,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const bindNavPill = link => {
     if (link.dataset.navPillBound === '1') return;
     link.dataset.navPillBound = '1';
+    if (link.matches('.btn-neon, .filter-btn')) {
+      link.dataset.navPill ||= 'shared-control';
+    }
 
     const isFilterPill = link.classList.contains('filter-btn');
     const isOnlineOrderPill = link.classList.contains('online-order-pill');
@@ -1981,9 +2114,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!prefersReducedMotion && (!isCoarsePointer || window.innerWidth >= 768)) {
-      link.addEventListener('mouseenter', () => {
+      link.addEventListener('mouseenter', event => {
         if (!link.querySelector('.nav-plasma--active')) {
-          mountActivePlasma(link, { cta: isOnlineOrderPill });
+          mountActivePlasma(link, { cta: isOnlineOrderPill, pointerEvent: event });
         }
       });
 
@@ -1994,7 +2127,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    link.addEventListener('focus', () => {
+      mountActivePlasma(link, { cta: isOnlineOrderPill });
+    });
+    link.addEventListener('blur', () => {
+      if (!isNavPillActive(link) && !isOnlineOrderPill && !link.matches(':hover')) {
+        unmountActivePlasma(link);
+      }
+    });
+
     link.addEventListener('click', event => {
+      if (link.matches(':disabled, [aria-disabled="true"]')) return;
       if (isFilterPill) {
         playNavPillClickFlash(link);
         return;
@@ -2020,7 +2163,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const navPillSelector =
-    '.nav-main > a, .nav-main > .dropdown > a, .before-after-filters.nav-main > .filter-btn, #booking-modal .nav-main > .filter-btn, .select-btn-wrapper.nav-main > .filter-btn, .online-order-pill, [data-nav-pill]';
+    '.nav-main > a, .nav-main > .dropdown > a, .filter-btn, .btn-neon, .online-order-pill, [data-nav-pill]';
 
   document.querySelectorAll(navPillSelector).forEach(link => {
     if (link.closest('.nav-gallery-dropdown')) return;
@@ -2030,9 +2173,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.HundesalonNavPill = {
     scan(root = document) {
       root
-        .querySelectorAll(
-          '.before-after-filters.nav-main > .filter-btn, #booking-modal .nav-main > .filter-btn, .select-btn-wrapper.nav-main > .filter-btn, .online-order-pill, [data-nav-pill]'
-        )
+        .querySelectorAll(navPillSelector)
         .forEach(bindNavPill);
     },
     activate(link) {
@@ -2043,6 +2184,128 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!link) return;
       unmountActivePlasma(link);
     },
+  };
+
+  const siteArrowActivationAnimations = new WeakMap();
+  const parseSiteArrowDuration = value => {
+    const normalized = String(value || '').trim().toLowerCase();
+    const amount = Number.parseFloat(normalized);
+    if (!Number.isFinite(amount)) return 1800;
+    return normalized.endsWith('ms') ? amount : normalized.endsWith('s') ? amount * 1000 : amount;
+  };
+  const getSiteArrowActivationSettings = () => {
+    const rootStyle = getComputedStyle(document.documentElement);
+    const duration = parseSiteArrowDuration(rootStyle.getPropertyValue('--site-arrow-activation-duration'));
+    const easing = rootStyle.getPropertyValue('--site-arrow-activation-easing').trim()
+      || 'cubic-bezier(0.65, 0.05, 0.15, 1)';
+    const configuredTurns = Number.parseFloat(
+      rootStyle.getPropertyValue('--site-arrow-activation-turn-count')
+    );
+    const turnCount = Number.isFinite(configuredTurns) && configuredTurns > 0 ? configuredTurns : 3;
+    return { duration, easing, turnCount, spinDegrees: turnCount * 360 };
+  };
+  const finishBreedArrowClose = (control, arrow) => {
+    if (!control.classList.contains('price-breed-arrow--closing')) return;
+    arrow.dispatchEvent(new window.AnimationEvent('animationend', { animationName: 'priceBreedArrowClose' }));
+  };
+  const playSiteArrowActivation = (control, state = {}) => {
+    if (prefersReducedMotion || !control) return;
+    const settings = getSiteArrowActivationSettings();
+    const isBreedToggle = control.matches('[data-price-breeds-toggle]');
+    const arrows = control.querySelectorAll(
+      isBreedToggle
+        ? '.price-card__badge-icon'
+        : '.site-icon-arrow, .site-select__arrow, .nav-dropdown-chevron, .lang-dropdown-btn > i:last-child, .btn-read i.fa-arrow-right'
+    );
+    arrows.forEach(arrow => {
+      const previous = siteArrowActivationAnimations.get(arrow);
+      previous?.animation.cancel();
+      if (previous?.isBreedClose) finishBreedArrowClose(previous.control, arrow);
+
+      const isBreedOpen = isBreedToggle && state.expanded === true;
+      const isBreedClose = isBreedToggle && state.expanded === false;
+      const keyframes = isBreedOpen
+        ? [{ transform: 'rotate(90deg)' }, { transform: `rotate(${90 + settings.spinDegrees + 180}deg)` }]
+        : isBreedClose
+          ? [{ transform: 'rotate(-90deg)' }, { transform: `rotate(${-90 - settings.spinDegrees - 180}deg)` }]
+          : [{ rotate: '0deg' }, { rotate: `${settings.spinDegrees}deg` }];
+      const animation = arrow.animate(keyframes, {
+        duration: settings.duration,
+        easing: settings.easing,
+      });
+      const record = { animation, control, isBreedClose };
+      siteArrowActivationAnimations.set(arrow, record);
+      control.dataset.siteArrowActivationKind = isBreedOpen ? 'open' : isBreedClose ? 'close' : 'spin';
+      control.dataset.siteArrowActivationDuration = String(settings.duration);
+      control.dataset.siteArrowActivationEasing = settings.easing;
+      control.dataset.siteArrowActivationTurns = String(settings.turnCount);
+      animation.addEventListener('finish', () => {
+        if (isBreedClose) finishBreedArrowClose(control, arrow);
+        if (siteArrowActivationAnimations.get(arrow) === record) siteArrowActivationAnimations.delete(arrow);
+      }, { once: true });
+      animation.addEventListener('cancel', () => {
+        if (siteArrowActivationAnimations.get(arrow) === record) siteArrowActivationAnimations.delete(arrow);
+      }, { once: true });
+    });
+
+    if (control.matches('.mobile-dropdown-btn')) {
+      try {
+        const previous = siteArrowActivationAnimations.get(control);
+        previous?.animation.cancel();
+        const animation = control.animate(
+          [{ rotate: '0deg' }, { rotate: `${settings.spinDegrees}deg` }],
+          {
+            duration: settings.duration,
+            easing: settings.easing,
+            pseudoElement: '::after',
+          }
+        );
+        const record = { animation, control, isBreedClose: false };
+        siteArrowActivationAnimations.set(control, record);
+        const release = () => {
+          if (siteArrowActivationAnimations.get(control) === record) {
+            siteArrowActivationAnimations.delete(control);
+          }
+        };
+        animation.addEventListener('finish', release, { once: true });
+        animation.addEventListener('cancel', release, { once: true });
+      } catch {
+        // The continuous shared bounce remains available when pseudo-element WAAPI is unsupported.
+      }
+    }
+  };
+
+  document.addEventListener('click', event => {
+    const control = event.target instanceof Element
+      ? event.target.closest('button, a, [role="button"], .mobile-dropdown-btn')
+      : null;
+    if (!control) return;
+    const isBreedToggle = control.matches('[data-price-breeds-toggle]');
+    const hasArrow = control.matches('.mobile-dropdown-btn') || control.querySelector(
+      '.site-icon-arrow, .site-select__arrow, .nav-dropdown-chevron, .lang-dropdown-btn > i:last-child, .btn-read i.fa-arrow-right'
+    );
+    if (hasArrow && !isBreedToggle) playSiteArrowActivation(control);
+  }, { capture: true });
+
+  const breedArrowStateObserver = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      const control = mutation.target instanceof Element ? mutation.target : null;
+      if (!control?.matches('[data-price-breeds-toggle]')) return;
+      const expanded = control.getAttribute('aria-expanded') === 'true';
+      if (expanded === (mutation.oldValue === 'true')) return;
+      playSiteArrowActivation(control, { expanded });
+    });
+  });
+  breedArrowStateObserver.observe(document.body, {
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['aria-expanded'],
+    attributeOldValue: true,
+  });
+
+  window.HundesalonSiteArrow = {
+    play: playSiteArrowActivation,
+    getSettings: getSiteArrowActivationSettings,
   };
 
   /* ========== SOCIAL ICONS — ENTRANCE ANIMATION ON PAGE LOAD ========== */

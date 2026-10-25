@@ -51,7 +51,8 @@
     'short-haired': [75, 105],
     'double-coat-longhair': [180, 150],
     'express-shedding': [90, 120, 150, 180],
-    'additional-services': [15, 15, 20, 30, 60, 30, 20, 20, 90],
+    'additional-services': [15, 60, 20, 25, 15, 30],
+    'ru-additional-services': [15, 60, 20, 25, 15, 30],
   });
 
   const parseServiceIndex = serviceId => {
@@ -76,7 +77,7 @@
 
   const resolveTiming = ({ categoryId, serviceIndex = 0, breedIndex = 0, clientType = 'new', coatCondition = 'good', behavior = 'calm' } = {}) => {
     const standardMinutes = resolveStandardDuration(categoryId, serviceIndex);
-    const isAdditionalService = categoryId === 'additional-services';
+    const isAdditionalService = categoryId === 'additional-services' || categoryId === 'ru-additional-services';
     const firstVisitExtraMinutes = clientType === 'returning'
       ? 0
       : isAdditionalService
@@ -112,10 +113,43 @@
     return match ? match.slice(1).map(Number) : null;
   };
 
-  const toLocalDateTime = (isoDate, minutes) => {
+  const salonOffsetFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Berlin',
+    timeZoneName: 'longOffset',
+  });
+  const salonDateTimeFormatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Berlin',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  });
+  const formatSalonDateTime = date => {
+    const parts = salonDateTimeFormatter.formatToParts(date);
+    const value = type => parts.find(part => part.type === type)?.value || '';
+    return `${value('year')}-${value('month')}-${value('day')}T${value('hour')}:${value('minute')}:${value('second')}`;
+  };
+
+  // Match the backend's salon wall-clock conversion, including DST offsets.
+  const toSalonDateTime = (isoDate, minutes) => {
     const parts = parseIsoDateParts(isoDate);
     if (!parts) return null;
-    return new Date(parts[0], parts[1] - 1, parts[2], Math.floor(minutes / 60), minutes % 60, 0, 0);
+    const local = `${isoDate}T${formatMinutesAsTime(minutes)}:00`;
+    const naive = Date.UTC(parts[0], parts[1] - 1, parts[2], Math.floor(minutes / 60), minutes % 60, 0, 0);
+    let utc = naive;
+    for (let iteration = 0; iteration < 3; iteration += 1) {
+      const zone = salonOffsetFormatter.formatToParts(new Date(utc))
+        .find(part => part.type === 'timeZoneName')?.value;
+      const offset = String(zone || '').match(/^GMT([+-])(\d{2}):?(\d{2})$/);
+      if (!offset) return null;
+      const offsetMinutes = (Number(offset[2]) * 60 + Number(offset[3])) * (offset[1] === '-' ? -1 : 1);
+      utc = naive - offsetMinutes * 60 * 1000;
+    }
+    const result = new Date(utc);
+    return formatSalonDateTime(result) === local ? result : null;
   };
 
   const normalizeBusyIntervals = busyIntervals => (Array.isArray(busyIntervals) ? busyIntervals : [])
@@ -134,15 +168,14 @@
     const lastStart = BOOKING_SCHEDULE.workdayEndMinutes - timing.safeBlockMinutes;
     if (lastStart < BOOKING_SCHEDULE.workdayStartMinutes) return [];
 
-    const todayKey = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
     const starts = [];
     const step = calendarConfigured ? timing.slotStepMinutes : timing.safeBlockMinutes;
 
     for (let minutes = BOOKING_SCHEDULE.workdayStartMinutes; minutes <= lastStart; minutes += step) {
-      const start = toLocalDateTime(isoDate, minutes);
-      const end = toLocalDateTime(isoDate, minutes + timing.safeBlockMinutes);
+      const start = toSalonDateTime(isoDate, minutes);
+      const end = toSalonDateTime(isoDate, minutes + timing.safeBlockMinutes);
       if (!start || !end) continue;
-      if (isoDate === todayKey && start.getTime() <= now.getTime()) continue;
+      if (start.getTime() <= now.getTime()) continue;
 
       const overlaps = busy.some(interval => interval.start < end.getTime() && interval.end > start.getTime());
       if (!overlaps) starts.push(formatMinutesAsTime(minutes));
@@ -154,11 +187,14 @@
   const build = lang => {
     const safeLang = ['de', 'en', 'ru', 'uk'].includes(lang) ? lang : 'en';
     const categories = getSourceCategories(safeLang).map(category => {
-      const breeds = (category.breeds?.[safeLang] || category.breeds?.en || []).map((label, index) => ({
+      const breedServiceIndexes = category.breedServiceIndexes || [];
+      const breeds = (category.breeds?.[safeLang] || []).map((label, index) => ({
         id: `${category.id}:breed:${index}`,
         categoryId: category.id,
         index,
         label,
+        metadata: category.breedMetadata?.[safeLang]?.[index] || category.breedMetadata?.[index] || null,
+        serviceIndex: Number.isInteger(breedServiceIndexes[index]) ? breedServiceIndexes[index] : null,
       }));
       const services = (category.priceRows || []).map((priceRow, index) => ({
         id: `${category.id}:service:${index}`,
@@ -169,7 +205,9 @@
         price: getText(priceRow.price, safeLang),
         includesNailTrim: Boolean(category.services?.includes('nails')),
         standardDurationMinutes: resolveStandardDuration(category.id, index),
-        bufferMinutes: category.id === 'additional-services' ? 15 : BOOKING_SCHEDULE.defaultBufferMinutes,
+        bufferMinutes: category.id === 'additional-services' || category.id === 'ru-additional-services'
+          ? 15
+          : BOOKING_SCHEDULE.defaultBufferMinutes,
       }));
 
       return {
@@ -190,14 +228,31 @@
     const getServices = (categoryId, breedId = '') => {
       const category = getCategory(categoryId);
       if (!category) return [];
+      if (breedId && getBreed(breedId)?.categoryId !== categoryId) return [];
 
       if (category.id === 'ru-short-coat' && breedId) {
         const breed = getBreed(breedId);
-        const priceIndex = getShortCoatPriceIndex(breed?.index ?? 0);
+        const priceIndex = Number.isInteger(breed?.serviceIndex)
+          ? breed.serviceIndex
+          : getShortCoatPriceIndex(breed?.index ?? 0);
         return category.services.filter(service => service.index === priceIndex || service.key === 'puppy-intro');
       }
 
-      return category.services;
+      const breed = getBreed(breedId);
+      if (category.source.breedServiceRows && breedId) {
+        if (breed?.categoryId !== categoryId) return [];
+        const rows = category.source.breedServiceRows[breed.index];
+        return category.services.filter(service => rows?.[service.index]).map(service => ({
+          ...service,
+          label: getText(rows[service.index].label, safeLang),
+          price: getText(rows[service.index].price, safeLang),
+        }));
+      }
+      const prices = breed?.categoryId === categoryId ? category.source.breedServicePrices?.[breed.index] : null;
+      return prices ? category.services.map(service => ({
+        ...service,
+        price: prices[service.index] ? getText(prices[service.index], safeLang) : service.price,
+      })) : category.services;
     };
 
     const resolveQuote = (categoryId, breedId, serviceId) => {
@@ -205,7 +260,7 @@
       const breed = getBreed(breedId);
       const service = getServices(categoryId, breedId).find(item => item.id === serviceId);
 
-      if (!category || !breed || !service) {
+      if (!category || !breed || breed.categoryId !== categoryId || !service) {
         return { price: '', label: '', category: null, breed: null, service: null };
       }
 
@@ -241,5 +296,36 @@
     };
   };
 
-  global.PriceBookingCatalog = { build };
+  const searchTokens = value => String(value || '').toLowerCase().normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '').split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+
+  const tokenScore = (candidate, query) => {
+    if (candidate.startsWith(query)) return 0;
+    const limit = query.length >= 9 ? 2 : query.length >= 4 ? 1 : 0;
+    if (!limit) return Infinity;
+    const distance = target => {
+      if (Math.abs(query.length - target.length) > limit) return limit + 1;
+      const rows = Array.from({ length: query.length + 1 }, (_, i) => [i]);
+      rows[0] = Array.from({ length: target.length + 1 }, (_, i) => i);
+      for (let i = 1; i <= query.length; i += 1) {
+        for (let j = 1; j <= target.length; j += 1) {
+          rows[i][j] = Math.min(rows[i - 1][j] + 1, rows[i][j - 1] + 1,
+            rows[i - 1][j - 1] + Number(query[i - 1] !== target[j - 1]));
+          if (i > 1 && j > 1 && query[i - 1] === target[j - 2] && query[i - 2] === target[j - 1]) {
+            rows[i][j] = Math.min(rows[i][j], rows[i - 2][j - 2] + 1);
+          }
+        }
+      }
+      return rows[query.length][target.length];
+    };
+    const best = Math.min(distance(candidate), distance(candidate.slice(0, query.length)));
+    return best <= limit ? 10 + best : Infinity;
+  };
+  const breedSearchScore = (label, query, lang) => {
+    const aliases = pageCatalog.locales?.[lang]?.breedSearchAliases?.[label] || [];
+    const candidates = [label, ...aliases].flatMap(searchTokens);
+    return searchTokens(query).reduce((sum, token) => sum + Math.min(...candidates.map(word => tokenScore(word, token))), 0);
+  };
+
+  global.PriceBookingCatalog = { build, searchTokens, tokenScore, breedSearchScore };
 })(window);

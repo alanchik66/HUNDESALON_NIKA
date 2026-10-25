@@ -4,14 +4,14 @@
  */
 
 import {
-  sanitizeOrigin,
   assertAllowedOrigin,
   enforceRateLimit,
   isLocalDevOrigin,
+  isRequestBodyTooLarge,
   jsonResponse,
+  readJsonBody,
 } from './http-security.js';
 import {
-  AI_PROVIDER_POLICY,
   APPROVED_AI_MODEL,
   DEFAULT_DRAFT_MAX_TOKENS,
   hasAiServiceAuth,
@@ -22,14 +22,11 @@ import {
   parseBoundedTokens,
   resolveApprovedModel,
 } from './ai-policy.js';
+import { fetchAiResponse } from './ai-upstream.js';
+import { reserveResourceUsage, resourceQuotaResponse } from './resource-quotas.js';
 
-const LEGACY_SERVICE_PREFIX = ['OPEN', 'ROUTER'].join('');
-const DEFAULT_SERVICE_GATEWAY_URL = ['https://', 'open', 'router.ai', '/api/v1/chat/completions'].join('');
-const DEFAULT_SITE_NAME = 'HUNDESALON NIKA';
-
-function legacyEnvName(suffix) {
-  return `${LEGACY_SERVICE_PREFIX}_${suffix}`;
-}
+const OPENAI_CHAT_COMPLETIONS_URL = 'https://api.openai.com/v1/chat/completions';
+const MAX_REQUEST_BODY_BYTES = 64 * 1024;
 
 function isLocalRequest(origin) {
   return isLocalDevOrigin(origin);
@@ -229,7 +226,7 @@ function buildLocalDraftResponse(payload, reason) {
       },
     ],
     fallback: true,
-    reason: reason || 'SERVICE_GATEWAY_FALLBACK',
+    reason: reason || 'AI_DRAFT_FALLBACK',
   };
 }
 
@@ -321,8 +318,11 @@ export async function handleMessageDraft(context) {
 
   let payload;
   try {
-    payload = await request.json();
-  } catch {
+    payload = await readJsonBody(request, MAX_REQUEST_BODY_BYTES);
+  } catch (error) {
+    if (isRequestBodyTooLarge(error)) {
+      return jsonResponse({ error: 'Payload too large' }, 413, origin);
+    }
     return jsonResponse({ error: 'Invalid JSON body' }, 400, origin);
   }
 
@@ -331,32 +331,28 @@ export async function handleMessageDraft(context) {
     return jsonResponse(buildLocalDraftResponse(publicDraftPayload, 'PUBLIC_FIXED_TEMPLATE'), 200, origin);
   }
 
-  if (!hasAiServiceAuth(request, context)) {
+  if (!(await hasAiServiceAuth(request, context))) {
     return jsonResponse({ error: 'AI service authorization required' }, 401, origin);
   }
 
   const payloadError = validatePayload(payload);
   if (payloadError) return jsonResponse({ error: payloadError }, 400, origin);
 
-  const apiKey =
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_API_KEY') || getEnvVarFromContext(context, legacyEnvName('API_KEY'));
+  const apiKey = getEnvVarFromContext(context, 'OPENAI_API_KEY');
 
   if (!apiKey) {
     if (isLocalRequest(origin)) {
-      return jsonResponse(buildLocalDraftResponse(payload, 'SERVICE_GATEWAY_NOT_CONFIGURED'), 200, origin);
+      return jsonResponse(buildLocalDraftResponse(payload, 'OPENAI_NOT_CONFIGURED'), 200, origin);
     }
     return jsonResponse({ error: 'Draft service is not configured' }, 503, origin);
   }
 
-  const configuredModel =
-    getContextEnvVar(context, 'SERVICE_GATEWAY_DEFAULT_MODEL') ||
-    getContextEnvVar(context, legacyEnvName('DEFAULT_MODEL'));
-  const resolvedModel = resolveApprovedModel(configuredModel);
-  if (!resolvedModel) {
-    return jsonResponse({ error: 'AI model configuration rejected' }, 503, origin);
-  }
+  const quota = await reserveResourceUsage(context.env, request, { resource: 'ai' });
+  if (!quota.ok) return resourceQuotaResponse(quota, origin);
+
+  const resolvedModel = APPROVED_AI_MODEL;
   const maxTokens = parseBoundedTokens(
-    getContextEnvVar(context, 'SERVICE_GATEWAY_MAX_TOKENS'),
+    getContextEnvVar(context, 'OPENAI_DRAFT_MAX_TOKENS'),
     DEFAULT_DRAFT_MAX_TOKENS,
     64,
     MAX_DRAFT_MAX_TOKENS
@@ -365,49 +361,29 @@ export async function handleMessageDraft(context) {
   const requestPayload = {
     messages: payload.messages.map(({ role, content }) => ({ role, content })),
     model: resolvedModel,
-    temperature: 0.2,
-    max_tokens: maxTokens,
-    provider: AI_PROVIDER_POLICY,
+    max_completion_tokens: maxTokens,
   };
-
-  const referer =
-    sanitizeOrigin(
-      getEnvVarFromContext(context, 'SERVICE_GATEWAY_SITE_URL') ||
-        getEnvVarFromContext(context, legacyEnvName('SITE_URL'))
-    ) || sanitizeOrigin(origin);
-  const title = String(
-    getEnvVarFromContext(context, 'SERVICE_GATEWAY_SITE_NAME') ||
-      getEnvVarFromContext(context, legacyEnvName('SITE_NAME')) ||
-      DEFAULT_SITE_NAME
-  ).trim();
-  const serviceGatewayUrl = DEFAULT_SERVICE_GATEWAY_URL;
 
   const upstreamHeaders = {
     Authorization: `Bearer ${apiKey}`,
     'Content-Type': 'application/json',
   };
-  if (referer) upstreamHeaders['HTTP-Referer'] = referer;
-  if (title) upstreamHeaders[['X-Open', 'Router-Title'].join('')] = title;
 
   const callDraftService = body =>
-    fetch(serviceGatewayUrl, {
+    fetchAiResponse(OPENAI_CHAT_COMPLETIONS_URL, {
       method: 'POST',
       headers: upstreamHeaders,
       body: JSON.stringify(body),
     });
 
   let upstream;
+  let text;
   try {
-    upstream = await callDraftService(requestPayload);
-  } catch (error) {
-    return jsonResponse(
-      { error: 'Failed to reach draft service', details: String(error?.message || error) },
-      502,
-      origin
-    );
+    ({ response: upstream, text } = await callDraftService(requestPayload));
+  } catch {
+    return jsonResponse({ error: 'Failed to reach draft service' }, 502, origin);
   }
 
-  const text = await upstream.text();
   if (!upstream.ok) return jsonResponse({ error: 'Draft service request failed' }, 502, origin);
   return new Response(text, {
     status: 200,

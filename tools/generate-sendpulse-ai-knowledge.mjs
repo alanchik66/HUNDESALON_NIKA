@@ -13,13 +13,10 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const KNOWLEDGE_RELATIVE_PATH = 'knowledge/03_Resources/SendPulse_AI_Agent_Knowledge.md';
 const KNOWLEDGE_PATH = path.join(ROOT, KNOWLEDGE_RELATIVE_PATH);
-
-const PRICE_SOURCE_PATHS = [
-  'assets/js/price-page-data.js',
-  'assets/js/price-page-ru-data.js',
-  'assets/js/price-page-locales.js',
-  'assets/js/price-catalog.js',
-];
+const ANIMAL_REFERENCE_RELATIVE_PATH = 'knowledge/03_Resources/Animal_Grooming_Reference.md';
+const PRICE_PAGE_RUNTIME_DOCUMENT = 'ru/prays-list.html';
+const PRICE_CATALOG_ENTRY_PATH = 'assets/js/price-catalog.js';
+const PRICE_PAGE_RENDER_PATH = 'assets/js/price-page.js';
 
 const PUBLIC_PAGE_PATHS = [
   'index.html',
@@ -41,6 +38,12 @@ const PUBLIC_PAGE_PATHS = [
 const LOCALES = ['de', 'en', 'ru', 'uk'];
 const AUTO_SITE_START = '<!-- SENDPULSE_AUTO_SITE_START -->';
 const AUTO_SITE_END = '<!-- SENDPULSE_AUTO_SITE_END -->';
+const AUTO_ANIMAL_START = '<!-- SENDPULSE_AUTO_ANIMAL_START -->';
+const AUTO_ANIMAL_END = '<!-- SENDPULSE_AUTO_ANIMAL_END -->';
+
+function isLegacyOverviewPrice(line) {
+  return /(?:ab|from|от|від)\s+55\s*€/iu.test(line);
+}
 
 export function normalizeSourceText(content) {
   return content.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
@@ -49,6 +52,29 @@ export function normalizeSourceText(content) {
 function read(relativePath) {
   return normalizeSourceText(readFileSync(path.join(ROOT, relativePath), 'utf8'));
 }
+
+/**
+ * Use the exact data-script order of the published price page, rather than a
+ * parallel hand-maintained subset. This makes a catalog transformation part of
+ * the knowledge fingerprint and prevents the assistant from retaining a price
+ * that is no longer visible to a customer.
+ */
+export function listPriceCatalogRuntimeSourcePaths({ runtimeDocument = PRICE_PAGE_RUNTIME_DOCUMENT } = {}) {
+  const scriptSources = Array.from(
+    read(runtimeDocument).matchAll(
+      /<script\b[^>]*\bsrc=["'](?:\.\.\/)?(assets\/js\/[^"'?]+\.js)(?:\?[^"']*)?["'][^>]*>\s*<\/script>/giu
+    ),
+    match => match[1]
+  );
+  const entryIndex = scriptSources.indexOf(PRICE_CATALOG_ENTRY_PATH);
+  const renderIndex = scriptSources.indexOf(PRICE_PAGE_RENDER_PATH);
+  if (entryIndex === -1 || renderIndex === -1 || renderIndex <= entryIndex) {
+    throw new Error(`Unable to resolve the price catalog runtime sequence from ${runtimeDocument}.`);
+  }
+  return scriptSources.slice(entryIndex, renderIndex);
+}
+
+export const PRICE_CATALOG_RUNTIME_SOURCE_PATHS = Object.freeze(listPriceCatalogRuntimeSourcePaths());
 
 function sourceDigest(relativePaths) {
   const hash = createHash('sha256');
@@ -62,10 +88,10 @@ function sourceDigest(relativePaths) {
   return hash.digest('hex');
 }
 
-function loadPriceCatalog() {
-  const sandbox = { window: {} };
+export function loadPublishedPriceCatalog() {
+  const sandbox = { Intl, window: {} };
   vm.createContext(sandbox);
-  for (const relativePath of PRICE_SOURCE_PATHS) {
+  for (const relativePath of PRICE_CATALOG_RUNTIME_SOURCE_PATHS) {
     vm.runInContext(read(relativePath), sandbox, { filename: relativePath, timeout: 2_000 });
   }
 
@@ -90,6 +116,12 @@ function localize(value, locale) {
     : String(candidate).trim();
 }
 
+function formatCategoryTitle(category, locale, localeConfig) {
+  const title = localize(category.title, locale) || category.id;
+  const sizeGroupTitle = localize(localeConfig?.sizeGroupTitles?.[category.pageSection], locale);
+  return sizeGroupTitle ? `${sizeGroupTitle} — ${title}` : title;
+}
+
 function chunks(items, size = 14) {
   const result = [];
   for (let index = 0; index < items.length; index += size) {
@@ -98,7 +130,7 @@ function chunks(items, size = 14) {
   return result;
 }
 
-function formatServiceDetails(categories, serviceCatalog, locale) {
+function formatServiceDetails(categories, serviceCatalog, locale, localeConfig) {
   // Import only descriptions linked by a stable key from the current price page.
   // The older catalog also contains legacy prices and unlisted service variants:
   // these must not become new offers or override the current category prices.
@@ -123,7 +155,7 @@ function formatServiceDetails(categories, serviceCatalog, locale) {
     lines.push('- These service-specific details take priority over general category care lists. Do not add procedures from other packages.');
     lines.push(`- Note: ${service.note}`, `- Description: ${service.description}`);
     for (const { category, priceRow } of offers) {
-      lines.push(`- Price: ${label} — ${localize(priceRow.price, locale)}; Category: ${localize(category.title, locale)}`);
+        lines.push(`- Price: ${label} — ${localize(priceRow.price, locale)}; Category: ${formatCategoryTitle(category, locale, localeConfig)}`);
     }
   }
   return lines;
@@ -139,13 +171,14 @@ function formatPriceCatalog(catalog, serviceCatalog) {
 
   for (const locale of LOCALES) {
     const categories = catalog.categoriesByLocale[locale];
+    const localeConfig = catalog.locales?.[locale] || {};
     if (!Array.isArray(categories) || categories.length === 0) {
       throw new Error(`No price categories found for locale ${locale}.`);
     }
 
     lines.push('', `### ${locale.toUpperCase()} — published catalog ###`);
     for (const category of categories) {
-      const title = localize(category.title, locale) || category.id;
+      const title = formatCategoryTitle(category, locale, localeConfig);
       lines.push('', `#### ${title} ####`);
 
       const summary = localize(category.summary, locale);
@@ -157,6 +190,17 @@ function formatPriceCatalog(catalog, serviceCatalog) {
         const suffix = breeds.length > 14 ? ` ${index + 1}` : '';
         lines.push(`- Breeds${suffix}: ${group.join(', ')}`);
       });
+      const breedSet = new Set(breeds);
+      const searchAliases = Object.entries(catalog.locales?.[locale]?.breedSearchAliases || {})
+        .filter(([officialName]) => breedSet.has(officialName))
+        .flatMap(([officialName, aliases]) =>
+          (Array.isArray(aliases) ? aliases : [aliases])
+            .filter(Boolean)
+            .map(alias => `${alias} → ${officialName}`)
+        );
+      if (searchAliases.length) {
+        lines.push(`- Search aliases (resolve to the official catalog name): ${searchAliases.join(', ')}`);
+      }
 
       const services = (category.services || [])
         .map(service => localize(catalog.serviceLabels?.[service], locale))
@@ -174,7 +218,7 @@ function formatPriceCatalog(catalog, serviceCatalog) {
         if (text) lines.push(`- Note: ${text}`);
       }
     }
-    lines.push(...formatServiceDetails(categories, serviceCatalog, locale));
+    lines.push(...formatServiceDetails(categories, serviceCatalog, locale, localeConfig));
   }
 
   return lines.join('\n');
@@ -275,7 +319,11 @@ function formatPublicSiteSnapshot() {
       const pageLines = extractPublicText(read(relativePath));
       if (!pageLines.length) continue;
       lines.push('', `### ${locale.toUpperCase()} — ${pagePath} ###`, `- URL: https://hundesalon-nika.com/${locale}/${pagePath}`);
-      for (const line of pageLines) lines.push(line.startsWith('- ') ? line : `- ${line}`);
+      for (const line of pageLines) {
+        // Overview cards are non-authoritative; never expose the obsolete dental price to retrieval.
+        if (isLegacyOverviewPrice(line)) continue;
+        lines.push(line.startsWith('- ') ? line : `- ${line}`);
+      }
     }
   }
 
@@ -300,15 +348,39 @@ function replaceSiteSnapshot(document, snapshot) {
   return `${document.trimEnd()}\n\n${snapshot}\n`;
 }
 
+function formatAnimalReference() {
+  const reference = read(ANIMAL_REFERENCE_RELATIVE_PATH).replace(/^# .+?\n+/u, '').trim();
+  return [
+    AUTO_ANIMAL_START,
+    '## 15. Verified animal grooming reference ##',
+    '',
+    'This internal reference is source-grounded guidance for safe salon communication. It never overrides the published price list, salon rules, or the requirement to refer medical questions to a veterinarian.',
+    '',
+    reference,
+    AUTO_ANIMAL_END,
+  ].join('\n');
+}
+
+function replaceAnimalReference(document, snapshot) {
+  const start = document.indexOf(AUTO_ANIMAL_START);
+  const end = document.indexOf(AUTO_ANIMAL_END);
+  if (start !== -1 && end !== -1 && end > start) {
+    return `${document.slice(0, start)}${snapshot}${document.slice(end + AUTO_ANIMAL_END.length)}`;
+  }
+  return `${document.trimEnd()}\n\n${snapshot}\n`;
+}
+
 export function buildKnowledgeDocument({ template = read(KNOWLEDGE_RELATIVE_PATH) } = {}) {
   const sourcePaths = [
-    ...PRICE_SOURCE_PATHS,
+    PRICE_PAGE_RUNTIME_DOCUMENT,
+    ...PRICE_CATALOG_RUNTIME_SOURCE_PATHS,
+    ANIMAL_REFERENCE_RELATIVE_PATH,
     ...LOCALES.map(locale => `${locale}/agb.html`),
     ...LOCALES.flatMap(locale => PUBLIC_PAGE_PATHS.map(pagePath => `${locale}/${pagePath}`))
       .filter(relativePath => existsSync(path.join(ROOT, relativePath))),
   ];
   const fingerprint = sourceDigest(sourcePaths);
-  const { catalog, serviceCatalog } = loadPriceCatalog();
+  const { catalog, serviceCatalog } = loadPublishedPriceCatalog();
 
   let document = normalizeSourceText(template);
   const fingerprintLine = `Generated source fingerprint: sha256:${fingerprint}`;
@@ -332,6 +404,7 @@ export function buildKnowledgeDocument({ template = read(KNOWLEDGE_RELATIVE_PATH
     formatRulesSnapshot(),
   );
   document = replaceSiteSnapshot(document, formatPublicSiteSnapshot());
+  document = replaceAnimalReference(document, formatAnimalReference());
   return { content: `${document.trimEnd()}\n`, fingerprint, sourcePaths };
 }
 

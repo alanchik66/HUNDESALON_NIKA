@@ -4,11 +4,28 @@ import {
   getEnvValue,
   hasUsableValue,
   safeJsonFetch,
+  sendSendPulseEmail,
   sendTelegramMessage,
 } from './_lib/platform-integrations.js';
+import { buildBrandedEmail } from './_lib/email-template.js';
+import { confirmGoogleBooking } from './_lib/booking-calendar.js';
+import { createDeliveryTracker } from './_lib/delivery-tracking.js';
+import { isRequestBodyTooLarge, readJsonBody, timingSafeEqualStrings } from './_lib/http-security.js';
+import {
+  formatChatCustomer,
+  getChatSessionForTelegramReply,
+  getChatSessionForTelegramTopic,
+  hasTelegramDelivery,
+  isTelegramPersonalTopic,
+  recordChatLearningExample,
+  recordChatMessage,
+  registerTelegramDelivery,
+  setChatSessionMode,
+} from './_lib/chat-crm.js';
 
 const SITE_ORIGIN = 'https://hundesalon-nika.com';
 const TELEGRAM_API_URL = 'https://api.telegram.org';
+const MAX_REQUEST_BODY_BYTES = 1024 * 1024;
 const MENU_COPY = Object.freeze({
   de: {
     showcase: '✨ NIKA Premium-Menü',
@@ -66,7 +83,9 @@ const SITE_PATHS = Object.freeze({
 const CALLBACK_ACTIONS = Object.freeze({
   support: 'support',
   language: 'language',
+  bookingConfirm: 'booking_confirm',
 });
+const BOOKING_REQUEST_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const LANGUAGE_OPTIONS = Object.freeze([
   ['de', 'Deutsch'],
@@ -77,40 +96,50 @@ const LANGUAGE_OPTIONS = Object.freeze([
 
 const AUTO_REPLY_COPY = Object.freeze({
   de: {
-    welcome: 'Willkommen bei HUNDESALON_NIKA. Tippen Sie neben dem Nachrichtenfeld auf „NIKA Menü“ – dort öffnet sich unser Markenmenü.',
+    welcome:
+      'Willkommen bei HUNDESALON_NIKA. Tippen Sie neben dem Nachrichtenfeld auf „NIKA Menü“ – dort öffnet sich unser Markenmenü.',
     showcase: 'Öffnen Sie das interaktive HUNDESALON_NIKA Menü über die Schaltfläche unten.',
-    booking: 'Öffnen Sie die Online-Terminbuchung über die Schaltfläche unten. Wenn Sie Hilfe benötigen, wählen Sie „Mitarbeiter kontaktieren“.',
-    prices: 'Preise und Leistungen öffnen Sie über die Schaltfläche unten. Für eine individuelle Empfehlung nennen Sie bitte Rasse, Größe und Fellzustand Ihres Tieres.',
+    booking:
+      'Öffnen Sie die Online-Terminbuchung über die Schaltfläche unten. Wenn Sie Hilfe benötigen, wählen Sie „Mitarbeiter kontaktieren“.',
+    prices:
+      'Preise und Leistungen öffnen Sie über die Schaltfläche unten. Für eine individuelle Empfehlung nennen Sie bitte Rasse, Größe und Fellzustand Ihres Tieres.',
     address: 'Wir sind in Leipzig. Adresse und Öffnungszeiten öffnen Sie über die Schaltfläche unten.',
     language: 'Öffnen Sie „NIKA Menü“ und tippen Sie oben auf den Globus, um Ihre Sprache zu wählen.',
-    support: 'Ihre Support-Anfrage wurde weitergeleitet. Schreiben Sie Ihre Nachricht direkt in diesen Chat – wir antworten hier.',
-    fallback: 'Vielen Dank für Ihre Nachricht. Wählen Sie einen Bereich im Menü oder beschreiben Sie Ihr Anliegen kurz.',
+    support:
+      'Ihre Support-Anfrage wurde weitergeleitet. Schreiben Sie Ihre Nachricht direkt in diesen Chat – wir antworten hier.',
+    fallback:
+      'Vielen Dank für Ihre Nachricht. Wählen Sie einen Bereich im Menü oder beschreiben Sie Ihr Anliegen kurz.',
   },
   en: {
     welcome: 'Welcome to HUNDESALON_NIKA. Tap “NIKA Menu” beside the message field to open our branded menu.',
     showcase: 'Open the interactive HUNDESALON_NIKA menu with the button below.',
     booking: 'Open online booking with the button below. If you need help, choose “Contact support”.',
-    prices: 'Open services and prices with the button below. For a personalised recommendation, please tell us your pet’s breed, size and coat condition.',
+    prices:
+      'Open services and prices with the button below. For a personalised recommendation, please tell us your pet’s breed, size and coat condition.',
     address: 'We are in Leipzig. Open our address and opening hours with the button below.',
     language: 'Open “NIKA Menu” and tap the globe at the top to choose your language.',
     support: 'Your support request has been forwarded. Send your message in this chat and we will reply here.',
     fallback: 'Thank you for your message. Choose a section from the menu or briefly describe your question.',
   },
   ru: {
-    welcome: 'Добро пожаловать в HUNDESALON_NIKA. Нажмите «Меню NIKA» рядом со строкой сообщения — откроется фирменное меню.',
+    welcome:
+      'Добро пожаловать в HUNDESALON_NIKA. Нажмите «Меню NIKA» рядом со строкой сообщения — откроется фирменное меню.',
     showcase: 'Откройте интерактивное фирменное меню HUNDESALON_NIKA кнопкой ниже.',
     booking: 'Откройте онлайн-запись кнопкой ниже. Если нужна помощь, выберите «Связаться с сотрудником».',
-    prices: 'Цены и услуги открываются кнопкой ниже. Для индивидуальной рекомендации напишите породу, размер и состояние шерсти питомца.',
+    prices:
+      'Цены и услуги открываются кнопкой ниже. Для индивидуальной рекомендации напишите породу, размер и состояние шерсти питомца.',
     address: 'Мы находимся в Лейпциге. Адрес и часы работы открываются кнопкой ниже.',
     language: 'Откройте «Меню NIKA» и нажмите на глобус вверху, чтобы выбрать язык.',
     support: 'Запрос передан в поддержку. Напишите сообщение прямо в этот чат — мы ответим здесь.',
     fallback: 'Спасибо за сообщение. Выберите раздел в меню или кратко опишите ваш вопрос.',
   },
   uk: {
-    welcome: 'Ласкаво просимо до HUNDESALON_NIKA. Натисніть «Меню NIKA» біля поля повідомлення — відкриється фірмове меню.',
+    welcome:
+      'Ласкаво просимо до HUNDESALON_NIKA. Натисніть «Меню NIKA» біля поля повідомлення — відкриється фірмове меню.',
     showcase: 'Відкрийте інтерактивне фірмове меню HUNDESALON_NIKA кнопкою нижче.',
     booking: 'Відкрийте онлайн-запис кнопкою нижче. Якщо потрібна допомога, оберіть «Зв’язатися з підтримкою».',
-    prices: 'Ціни та послуги відкриваються кнопкою нижче. Для індивідуальної рекомендації напишіть породу, розмір і стан шерсті улюбленця.',
+    prices:
+      'Ціни та послуги відкриваються кнопкою нижче. Для індивідуальної рекомендації напишіть породу, розмір і стан шерсті улюбленця.',
     address: 'Ми знаходимося в Лейпцигу. Адреса та години роботи відкриваються кнопкою нижче.',
     language: 'Відкрийте «Меню NIKA» і натисніть на глобус угорі, щоб обрати мову.',
     support: 'Запит передано до підтримки. Напишіть повідомлення в цей чат — ми відповімо тут.',
@@ -145,11 +174,15 @@ function buildMenuRemovalMarkup() {
 function buildWebAppMarkup(language) {
   const labels = MENU_COPY[language] || MENU_COPY.en;
   return {
-    inline_keyboard: [[{
-      text: labels.showcase,
-      web_app: { url: showcaseUrl(language) },
-      style: 'success',
-    }]],
+    inline_keyboard: [
+      [
+        {
+          text: labels.showcase,
+          web_app: { url: showcaseUrl(language) },
+          style: 'success',
+        },
+      ],
+    ],
   };
 }
 
@@ -169,14 +202,143 @@ function buildActionMarkup(intent, language, resolvedBookingUrl) {
 
 function parseCallbackAction(data) {
   const value = String(data || '').trim();
+  const bookingConfirmation = value.match(/^booking_confirm:([0-9a-f-]{36})$/i);
+  if (bookingConfirmation && BOOKING_REQUEST_ID_RE.test(bookingConfirmation[1])) {
+    return { intent: CALLBACK_ACTIONS.bookingConfirm, requestId: bookingConfirmation[1].toLowerCase() };
+  }
   if (value === CALLBACK_ACTIONS.support) return { intent: 'support', language: '' };
   if (value === CALLBACK_ACTIONS.language) return { intent: 'language', language: '' };
 
   const [action, language] = value.split(':', 2);
   const supportedLanguage = LANGUAGE_OPTIONS.some(([code]) => code === language) ? language : '';
-  if (action === CALLBACK_ACTIONS.support && supportedLanguage) return { intent: 'support', language: supportedLanguage };
+  if (action === CALLBACK_ACTIONS.support && supportedLanguage)
+    return { intent: 'support', language: supportedLanguage };
   if (action === CALLBACK_ACTIONS.language && supportedLanguage) return { intent: 'menu', language: supportedLanguage };
   return null;
+}
+
+async function isTelegramBookingAdministrator(env, message, sender) {
+  const configuredChatId = getEnvValue(env, 'TELEGRAM_CHAT_ID');
+  const chatId = String(message?.chat?.id ?? '');
+  const userId = String(sender?.id ?? '');
+  if (!configuredChatId || chatId !== configuredChatId || !userId || sender?.is_bot) return false;
+  if (message?.chat?.type === 'private' && chatId === userId) return true;
+
+  const token = getEnvValue(env, 'TELEGRAM_BOT_TOKEN');
+  if (!token) return false;
+  const membership = await safeJsonFetch(`${TELEGRAM_API_URL}/bot${encodeURIComponent(token)}/getChatMember`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    body: JSON.stringify({ chat_id: chatId, user_id: Number(userId) }),
+  });
+  return membership.ok && ['creator', 'administrator'].includes(membership.body?.result?.status);
+}
+
+async function clearBookingConfirmationButton(env, callbackQuery, message) {
+  const token = getEnvValue(env, 'TELEGRAM_BOT_TOKEN');
+  if (!token) return false;
+  const payload = callbackQuery?.inline_message_id
+    ? { inline_message_id: callbackQuery.inline_message_id, reply_markup: { inline_keyboard: [] } }
+    : {
+        chat_id: String(message?.chat?.id ?? ''),
+        message_id: message?.message_id,
+        reply_markup: { inline_keyboard: [] },
+      };
+  if ((!payload.chat_id || !payload.message_id) && !payload.inline_message_id) return false;
+  const result = await safeJsonFetch(`${TELEGRAM_API_URL}/bot${encodeURIComponent(token)}/editMessageReplyMarkup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    body: JSON.stringify(payload),
+  });
+  return result.ok && result.body?.ok !== false;
+}
+
+async function handleBookingConfirmation(env, callbackQuery, callbackAction, message, sender) {
+  let authorized = false;
+  try {
+    authorized = await isTelegramBookingAdministrator(env, message, sender);
+  } catch {
+    console.error('[telegram] booking administrator verification failed');
+  }
+  if (!authorized) {
+    await answerTelegramCallbackQuery(env, {
+      callbackQueryId: callbackQuery.id,
+      text: 'Подтверждать запись может только администратор чата.',
+      showAlert: true,
+    });
+    return json({ ok: true, confirmed: false, skipped: true });
+  }
+
+  await answerTelegramCallbackQuery(env, {
+    callbackQueryId: callbackQuery.id,
+    text: 'Проверяю запись…',
+  });
+
+  let result;
+  try {
+    const track = createDeliveryTracker(env, { requestId: callbackAction.requestId, formType: 'booking' });
+    result = await track('calendar', () => confirmGoogleBooking(env, callbackAction.requestId));
+  } catch {
+    console.error('[telegram] booking confirmation request failed');
+    result = { ok: false, reason: 'confirmation_pending', partial: true };
+  }
+  if (!result.ok) {
+    const partial = result.partial || ['confirmation_pending', 'calendar_cleanup_failed'].includes(result.reason);
+    let notification;
+    try {
+      notification = await sendTelegramMessage(env, {
+        chatId: String(message.chat.id),
+        messageThreadId: message.message_thread_id,
+        text:
+          result.reason === 'slot_conflict'
+            ? '⚠️ Запись не подтверждена: это время уже занято в Google Calendar.'
+            : partial
+              ? '⚠️ Подтверждение не завершено: событие могло быть создано. Не создавайте новую заявку — повторите эту же кнопку позже.'
+              : '⚠️ Не удалось подтвердить запись. Google Calendar не был изменён; повторите позже.',
+      });
+    } catch {
+      notification = null;
+    }
+    if (!notification?.ok || notification.body?.ok === false) {
+      console.error('[telegram] booking confirmation failure notification was not delivered');
+      return json({ ok: false, confirmed: false, retryable: true }, 502);
+    }
+    return json({ ok: true, confirmed: false });
+  }
+
+  const booking = result.booking || {};
+  const statusText = result.deduplicated ? 'Запись уже была подтверждена ранее.' : 'Запись подтверждена.';
+  let notification;
+  try {
+    notification = await sendTelegramMessage(env, {
+      chatId: String(message.chat.id),
+      messageThreadId: message.message_thread_id,
+      text: [
+        `✅ ${statusText}`,
+        booking.date && booking.time ? `${booking.date}, ${booking.time}` : '',
+        booking.service || '',
+        booking.name || '',
+        booking.petName ? `Питомец: ${booking.petName}${booking.petBreed ? ` (${booking.petBreed})` : ''}` : '',
+        'Событие сохранено в Google Calendar без дубликата.',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    });
+  } catch {
+    notification = null;
+  }
+  if (!notification?.ok || notification.body?.ok === false) {
+    console.error('[telegram] booking confirmation result was not delivered');
+    return json({ ok: false, confirmed: true, retryable: true }, 502);
+  }
+  let buttonCleared = false;
+  try {
+    buttonCleared = await clearBookingConfirmationButton(env, callbackQuery, message);
+  } catch {
+    buttonCleared = false;
+  }
+  if (!buttonCleared) console.error('[telegram] booking confirmation button was not cleared');
+  return json({ ok: true, confirmed: true, deduplicated: result.deduplicated === true });
 }
 
 function resolveIntent(text) {
@@ -186,15 +348,29 @@ function resolveIntent(text) {
   const commandPayload = commandMatch?.[2] || '';
   if (command === 'start' && commandPayload === 'support') return 'support';
   if (
-    ['showcase', 'premium', 'app'].includes(command)
-    || /(?:premium|фирменн|премиум|інтерактивн).{0,40}(?:menü|menu|меню)/i.test(value)
-  ) return 'showcase';
+    ['showcase', 'premium', 'app'].includes(command) ||
+    /(?:premium|фирменн|премиум|інтерактивн).{0,40}(?:menü|menu|меню)/i.test(value)
+  )
+    return 'showcase';
   if (['start', 'menu'].includes(command) || /^\s*(?:menü|menu|меню)\s*$/i.test(value)) return 'menu';
   if (command === 'language' || /(?:^|\s)(?:language|sprache|язык|мова)(?:\s|$)/i.test(value)) return 'language';
-  if (['booking', 'book', 'termin'].includes(command) || /buch|termin|запис|заказ|booking|appointment/.test(value)) return 'booking';
-  if (['services', 'prices', 'price'].includes(command) || /preis|preise|leistung|prices|цены|услуг|послуг|service|стоим/.test(value)) return 'prices';
-  if (['address', 'location', 'hours'].includes(command) || /address|adresse|адрес|адреса|где|öffnungszeit|zeiten|часы|годин|врем|open/.test(value)) return 'address';
-  if (command === 'support' || /mitarbeiter|сотруд|оператор|человек|support|суппорт|підтрим|help|unterstützung/.test(value)) return 'support';
+  if (['booking', 'book', 'termin'].includes(command) || /buch|termin|запис|заказ|booking|appointment/.test(value))
+    return 'booking';
+  if (
+    ['services', 'prices', 'price'].includes(command) ||
+    /preis|preise|leistung|prices|цены|услуг|послуг|service|стоим/.test(value)
+  )
+    return 'prices';
+  if (
+    ['address', 'location', 'hours'].includes(command) ||
+    /address|adresse|адрес|адреса|где|öffnungszeit|zeiten|часы|годин|врем|open/.test(value)
+  )
+    return 'address';
+  if (
+    command === 'support' ||
+    /mitarbeiter|сотруд|оператор|человек|support|суппорт|підтрим|help|unterstützung/.test(value)
+  )
+    return 'support';
   if (/newsletter|подпис|підпис|рассыл|розсил|abonn/.test(value)) return 'newsletter';
   if (/instagram|facebook|tiktok|соцсет|соцмереж|social/.test(value)) return 'social';
   return 'fallback';
@@ -213,7 +389,10 @@ function looksGerman(text) {
 }
 
 function preferredLanguage(text, languageCode = '') {
-  const code = String(languageCode || '').trim().toLowerCase().split('-')[0];
+  const code = String(languageCode || '')
+    .trim()
+    .toLowerCase()
+    .split('-')[0];
   if (Object.hasOwn(AUTO_REPLY_COPY, code)) return code;
 
   const value = String(text || '');
@@ -223,7 +402,10 @@ function preferredLanguage(text, languageCode = '') {
 }
 
 function selectedLanguageFromText(text) {
-  const value = String(text || '').normalize('NFKC').trim().toLocaleLowerCase();
+  const value = String(text || '')
+    .normalize('NFKC')
+    .trim()
+    .toLocaleLowerCase();
   return LANGUAGE_OPTIONS.find(([, label]) => value === label.toLocaleLowerCase())?.[0] || '';
 }
 
@@ -279,25 +461,15 @@ function buildSupportNotification(sender, text, fromMenuButton = false) {
     `Клиент Telegram ID: ${cleanText(sender.id, 40)}`,
     '',
     text,
-  ].filter(line => line !== null).join('\n');
+  ]
+    .filter(line => line !== null)
+    .join('\n');
 }
 
 function extractClientId(message) {
   const source = cleanText(message?.reply_to_message?.text || '', 3900);
   const match = source.match(/Клиент Telegram ID:\s*(\d+)/i);
   return match?.[1] || '';
-}
-
-function secretsMatch(expected, received) {
-  const encoder = new TextEncoder();
-  const expectedBytes = encoder.encode(expected);
-  const receivedBytes = encoder.encode(received);
-  const maxLength = Math.max(expectedBytes.length, receivedBytes.length);
-  let difference = expectedBytes.length ^ receivedBytes.length;
-  for (let index = 0; index < maxLength; index += 1) {
-    difference |= (expectedBytes[index] || 0) ^ (receivedBytes[index] || 0);
-  }
-  return difference === 0;
 }
 
 function json(data, status = 200) {
@@ -314,11 +486,16 @@ export async function onRequest({ request, env }) {
 
   const expectedSecret = getEnvValue(env, 'TELEGRAM_WEBHOOK_SECRET');
   const receivedSecret = String(request.headers.get('X-Telegram-Bot-Api-Secret-Token') || '').trim();
-  if (!hasUsableValue(expectedSecret) || !secretsMatch(expectedSecret, receivedSecret)) {
+  if (!hasUsableValue(expectedSecret) || !(await timingSafeEqualStrings(expectedSecret, receivedSecret))) {
     return json({ ok: false }, 401);
   }
 
-  const update = await request.json().catch(() => null);
+  let update;
+  try {
+    update = await readJsonBody(request, MAX_REQUEST_BODY_BYTES);
+  } catch (error) {
+    return json({ ok: false }, isRequestBodyTooLarge(error) ? 413 : 400);
+  }
   const callbackQuery = update?.callback_query;
   const message = callbackQuery?.message || update?.message;
   const sender = callbackQuery?.from || message?.from || {};
@@ -331,6 +508,9 @@ export async function onRequest({ request, env }) {
     }
     return json({ ok: true, skipped: true });
   }
+  if (callbackQuery && callbackAction?.intent === CALLBACK_ACTIONS.bookingConfirm) {
+    return handleBookingConfirmation(env, callbackQuery, callbackAction, message, sender);
+  }
   const text = callbackAction?.intent || cleanText(message?.text || message?.caption, 2200);
   if (!message || !text || sender.is_bot) {
     return json({ ok: true, skipped: true });
@@ -341,13 +521,19 @@ export async function onRequest({ request, env }) {
     try {
       const acknowledgement = await answerTelegramCallbackQuery(env, {
         callbackQueryId: callbackQuery.id,
-        text: callbackAction?.intent === 'support' ? (MENU_COPY[reply.language] || MENU_COPY.en).supportAcknowledgement : '',
+        text:
+          callbackAction?.intent === 'support'
+            ? (MENU_COPY[reply.language] || MENU_COPY.en).supportAcknowledgement
+            : '',
       });
       if (!acknowledgement?.ok) {
-        console.error('[telegram] callback acknowledgement failed', JSON.stringify({
-          status: Number(acknowledgement?.status || 0),
-          skipped: Boolean(acknowledgement?.skipped),
-        }));
+        console.error(
+          '[telegram] callback acknowledgement failed',
+          JSON.stringify({
+            status: Number(acknowledgement?.status || 0),
+            skipped: Boolean(acknowledgement?.skipped),
+          })
+        );
       }
     } catch {
       console.error('[telegram] callback acknowledgement request failed');
@@ -356,6 +542,93 @@ export async function onRequest({ request, env }) {
 
   const configuredChatId = getEnvValue(env, 'TELEGRAM_CHAT_ID');
   if (message.chat?.type !== 'private') {
+    const isPersonalTopic =
+      String(message.chat?.id) === configuredChatId
+        ? await isTelegramPersonalTopic(env, message.message_thread_id)
+        : false;
+    let websiteSession =
+      String(message.chat?.id) === configuredChatId
+        ? await getChatSessionForTelegramReply(env, message.chat?.id, message.reply_to_message?.message_id)
+        : null;
+    // An explicit reply must keep its original recipient, even when that session has ended.
+    if (!websiteSession && isPersonalTopic && !message.reply_to_message?.message_id) {
+      websiteSession = await getChatSessionForTelegramTopic(env, message.chat?.id, message.message_thread_id);
+    }
+    if (websiteSession) {
+      const handoffActivated = await setChatSessionMode(env, websiteSession.session_id, 'human');
+      const stored = await recordChatMessage(env, websiteSession, {
+        direction: 'outbound',
+        channel: 'telegram',
+        kind: 'text',
+        body: text,
+        replyToMessageId: websiteSession.source_message_id,
+      });
+      if (stored.inserted) {
+        await recordChatLearningExample(env, websiteSession, websiteSession.source_message_id, text).catch(() => false);
+        await registerTelegramDelivery(
+          env,
+          websiteSession,
+          {
+            body: {
+              result: {
+                message_id: message.message_id,
+                message_thread_id: message.message_thread_id,
+                chat: { id: message.chat?.id },
+              },
+            },
+          },
+          websiteSession.source_message_id
+        ).catch(() => false);
+      }
+      const emailText = `${text}\n\nЭто сообщение также доступно в чате на сайте HUNDESALON_NIKA.`;
+      const emailDelivery = stored.inserted
+        ? await sendSendPulseEmail(env, {
+            to: websiteSession.email,
+            subject: 'Ответ HUNDESALON_NIKA на ваше обращение',
+            text: emailText,
+            html: buildBrandedEmail({
+              title: 'Ответ HUNDESALON_NIKA на ваше обращение',
+              bodyText: emailText,
+              lang: websiteSession.locale,
+            }),
+            replyTo: getEnvValue(env, 'SENDPULSE_REPLY_TO', 'info@hundesalon-nika.com'),
+          }).catch(() => ({ ok: false }))
+        : { ok: true, skipped: true };
+      let handoffNotification = { ok: true, skipped: true };
+      if (handoffActivated) {
+        handoffNotification = await sendTelegramMessage(env, {
+          category: 'personal',
+          text: `🟢 Диалог принят сотрудником\n${formatChatCustomer(websiteSession)}\n\nAI-ассистент приостановлен. Следующие сообщения клиента поступят в эту ветку. Отвечайте на эту карточку, чтобы продолжить диалог на сайте.`,
+        }).catch(() => ({ ok: false }));
+        if (handoffNotification?.ok) {
+          await registerTelegramDelivery(
+            env,
+            websiteSession,
+            handoffNotification,
+            websiteSession.source_message_id
+          ).catch(() => false);
+        }
+      }
+      return json({
+        ok: true,
+        relayed: true,
+        destination: 'website_chat',
+        mode: 'human',
+        movedToPersonal: handoffActivated && handoffNotification?.ok === true,
+        emailDelivered: emailDelivery?.ok === true,
+      });
+    }
+    if (isPersonalTopic) {
+      return json({ ok: true, skipped: true, destination: 'website_chat', reason: 'website_session_not_found' });
+    }
+    const repliedWebsiteMessage = await hasTelegramDelivery(
+      env,
+      message.chat?.id,
+      message.reply_to_message?.message_id
+    );
+    if (repliedWebsiteMessage) {
+      return json({ ok: true, skipped: true, destination: 'website_chat', reason: 'website_session_not_found' });
+    }
     const clientId = extractClientId(message);
     if (clientId && String(message.chat?.id) === configuredChatId) {
       await sendTelegramMessage(env, { chatId: clientId, text });
@@ -366,9 +639,7 @@ export async function onRequest({ request, env }) {
 
   if (['menu', 'showcase', 'language'].includes(reply.intent) || reply.languageSelected) {
     try {
-      const menuRequests = [
-        setTelegramMenuButton(env, { chatId: String(message.chat.id), language: reply.language }),
-      ];
+      const menuRequests = [setTelegramMenuButton(env, { chatId: String(message.chat.id), language: reply.language })];
       if (reply.intent === 'menu') {
         menuRequests.push(setTelegramMenuButton(env));
       }
@@ -381,17 +652,25 @@ export async function onRequest({ request, env }) {
     }
   }
 
-  if (reply.intent !== 'language' && reply.intent !== 'showcase' && !reply.languageSelected && callbackAction?.intent !== 'menu') {
+  if (
+    reply.intent !== 'language' &&
+    reply.intent !== 'showcase' &&
+    !reply.languageSelected &&
+    callbackAction?.intent !== 'menu'
+  ) {
     try {
       const supportNotification = await sendTelegramMessage(env, {
         text: buildSupportNotification(sender, text, callbackAction?.intent === 'support'),
         category: classifyMessage(text),
       });
       if (!supportNotification?.ok) {
-        console.error('[telegram] support notification failed', JSON.stringify({
-          status: Number(supportNotification?.status || 0),
-          skipped: Boolean(supportNotification?.skipped),
-        }));
+        console.error(
+          '[telegram] support notification failed',
+          JSON.stringify({
+            status: Number(supportNotification?.status || 0),
+            skipped: Boolean(supportNotification?.skipped),
+          })
+        );
       }
     } catch {
       console.error('[telegram] support notification request failed');
@@ -407,10 +686,13 @@ export async function onRequest({ request, env }) {
         replyMarkup: reply.replyMarkup,
       });
       if (!autoReply?.ok) {
-        console.error('[telegram] auto reply failed', JSON.stringify({
-          status: Number(autoReply?.status || 0),
-          skipped: Boolean(autoReply?.skipped),
-        }));
+        console.error(
+          '[telegram] auto reply failed',
+          JSON.stringify({
+            status: Number(autoReply?.status || 0),
+            skipped: Boolean(autoReply?.skipped),
+          })
+        );
         return json({ ok: false }, 502);
       }
     } catch {

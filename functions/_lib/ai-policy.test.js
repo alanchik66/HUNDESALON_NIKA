@@ -14,22 +14,22 @@ const request = authorization =>
     headers: { Authorization: authorization || '' },
   });
 
-test('allows only the existing Gemini model and fixed Google provider policy', () => {
+test('allows only the approved OpenAI model and fixed provider policy', () => {
   assert.equal(resolveApprovedModel(APPROVED_AI_MODEL), APPROVED_AI_MODEL);
   assert.equal(resolveApprovedModel(''), APPROVED_AI_MODEL);
   assert.equal(resolveApprovedModel('other/model'), '');
   assert.deepEqual(AI_PROVIDER_POLICY, {
-    only: ['google-ai-studio'],
+    only: ['openai'],
     allow_fallbacks: false,
     require_parameters: true,
   });
 });
 
-test('requires the server-side AI service secret', () => {
+test('requires the server-side AI service secret', async () => {
   const context = { env: { AI_SERVICE_WEBHOOK_SECRET: 'secret-value' } };
-  assert.equal(hasAiServiceAuth(request(''), context), false);
-  assert.equal(hasAiServiceAuth(request('Bearer wrong'), context), false);
-  assert.equal(hasAiServiceAuth(request('Bearer secret-value'), context), true);
+  assert.equal(await hasAiServiceAuth(request(''), context), false);
+  assert.equal(await hasAiServiceAuth(request('Bearer wrong'), context), false);
+  assert.equal(await hasAiServiceAuth(request('Bearer secret-value'), context), true);
 });
 
 test('bounds output tokens conservatively', () => {

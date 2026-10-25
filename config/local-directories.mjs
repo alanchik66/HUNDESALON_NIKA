@@ -2,7 +2,7 @@
 import { NAP } from './brand-profiles.mjs';
 
 const q = encodeURIComponent('HUNDESALON NIKA Leipzig');
-const q2 = encodeURIComponent('Hundesalon Nika Walter-Markov-Ring');
+const q2 = encodeURIComponent(`${NAP.name} ${NAP.street}`);
 
 export const LOCAL_DIRECTORIES = [
   {
@@ -25,13 +25,6 @@ export const LOCAL_DIRECTORIES = [
     searchUrl: `https://branchenbuch.meinestadt.de/leipzig`,
     registerUrl: 'https://www.meinestadt.de/unternehmen/b2b',
     match: /hundesalon|nika|grooming/i,
-  },
-  {
-    id: '11880',
-    name: '11880.com',
-    searchUrl: `https://www.11880.com/suche/hundesalon-leipzig`,
-    registerUrl: 'https://firma-eintragen-kostenlos.11880.com/',
-    match: /hundesalon|nika|hundepflege/i,
   },
 ];
 

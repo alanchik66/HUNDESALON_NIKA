@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import Busboy from 'busboy';
+import { createHash, timingSafeEqual } from 'node:crypto';
 
 const PORT = Number(process.env.PORT || 8080);
 const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8' };
@@ -7,10 +7,9 @@ const TOKEN_URL = 'http://metadata.google.internal/computeMetadata/v1/instance/s
 const SCOPES = [
   'https://www.googleapis.com/auth/calendar',
   'https://www.googleapis.com/auth/spreadsheets',
-  'https://www.googleapis.com/auth/drive',
 ];
 const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT || 'hundesalon-nika-shell-2026';
-const STORAGE_BUCKET = process.env.STORAGE_BUCKET || 'hundesalon-nika-shell-uploads';
+const MAX_JSON_BODY_BYTES = 64 * 1024;
 
 const tokenCache = new Map();
 
@@ -23,12 +22,29 @@ function getSecret() {
   return String(process.env.GATEWAY_SHARED_SECRET || '').trim();
 }
 
+function secretsMatch(left, right) {
+  const leftDigest = createHash('sha256')
+    .update(String(left ?? ''), 'utf8')
+    .digest();
+  const rightDigest = createHash('sha256')
+    .update(String(right ?? ''), 'utf8')
+    .digest();
+  return timingSafeEqual(leftDigest, rightDigest);
+}
+
+function publicHttpError(statusCode, publicMessage) {
+  const error = new Error(publicMessage);
+  error.statusCode = statusCode;
+  error.publicMessage = publicMessage;
+  return error;
+}
+
 function requireSecret(req, res) {
   const configured = getSecret();
   const provided =
     req.headers['x-hundesalon-gateway-secret'] || String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
 
-  if (!configured || provided !== configured) {
+  if (!configured || !secretsMatch(provided, configured)) {
     respond(res, 403, { success: false, message: 'Forbidden' });
     return false;
   }
@@ -37,39 +53,20 @@ function requireSecret(req, res) {
 
 async function readJson(req) {
   const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
+  let totalBytes = 0;
+  for await (const chunk of req) {
+    totalBytes += chunk.length;
+    if (totalBytes > MAX_JSON_BODY_BYTES) {
+      throw publicHttpError(413, 'Payload too large');
+    }
+    chunks.push(chunk);
+  }
   if (!chunks.length) return {};
-  return JSON.parse(Buffer.concat(chunks).toString('utf8'));
-}
-
-async function readMultipart(req) {
-  return new Promise((resolve, reject) => {
-    const fields = {};
-    let file = null;
-    const busboy = Busboy({ headers: req.headers, limits: { fileSize: 15 * 1024 * 1024, files: 1 } });
-
-    busboy.on('field', (name, value) => {
-      fields[name] = value;
-    });
-
-    busboy.on('file', (name, stream, info) => {
-      const chunks = [];
-      stream.on('data', chunk => chunks.push(chunk));
-      stream.on('limit', () => reject(new Error('File is larger than 15 MB.')));
-      stream.on('end', () => {
-        file = {
-          fieldName: name,
-          fileName: info.filename || 'upload.bin',
-          mimeType: info.mimeType || 'application/octet-stream',
-          buffer: Buffer.concat(chunks),
-        };
-      });
-    });
-
-    busboy.on('error', reject);
-    busboy.on('finish', () => resolve({ fields, file }));
-    req.pipe(busboy);
-  });
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  } catch {
+    throw publicHttpError(400, 'Invalid JSON');
+  }
 }
 
 async function getGoogleToken(scopes = SCOPES) {
@@ -109,7 +106,9 @@ async function googleJson(url, { method = 'GET', body = null, scopes = SCOPES } 
     data = { raw: text };
   }
   if (!response.ok) {
-    throw new Error(`${method} ${url} failed: ${response.status} ${JSON.stringify(data).slice(0, 600)}`);
+    const error = new Error(`Google API request failed with status ${response.status}`);
+    error.statusCode = 502;
+    throw error;
   }
   return data;
 }
@@ -144,47 +143,6 @@ async function writeFirestoreDocument(collection, data) {
   );
 }
 
-function safeObjectName(fileName) {
-  const cleaned = String(fileName || 'upload.bin')
-    .normalize('NFKD')
-    .replace(/[^\w.-]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 120);
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  return `uploads/${stamp}-${crypto.randomUUID()}-${cleaned || 'upload.bin'}`;
-}
-
-async function uploadStorageObject(file, metadata = {}) {
-  const objectName = safeObjectName(file.fileName);
-  const token = await getGoogleToken(['https://www.googleapis.com/auth/devstorage.read_write']);
-  const response = await fetch(
-    `https://storage.googleapis.com/upload/storage/v1/b/${encodeURIComponent(STORAGE_BUCKET)}/o?uploadType=media&name=${encodeURIComponent(objectName)}`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': file.mimeType || 'application/octet-stream',
-        'X-Goog-Meta-Source': 'hundesalon-nika',
-        'X-Goog-Meta-Details': Buffer.from(JSON.stringify(metadata)).toString('base64url').slice(0, 1024),
-      },
-      body: file.buffer,
-    }
-  );
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(`Cloud Storage upload failed: ${response.status} ${JSON.stringify(data).slice(0, 600)}`);
-  }
-  return {
-    success: true,
-    id: data.id,
-    name: data.name,
-    bucket: STORAGE_BUCKET,
-    object: objectName,
-    webViewLink: `https://console.cloud.google.com/storage/browser/_details/${encodeURIComponent(STORAGE_BUCKET)}/${encodeURIComponent(objectName)}?project=${encodeURIComponent(PROJECT_ID)}`,
-  };
-}
-
 async function createSetup(ownerEmail) {
   const calendar = await googleJson('https://www.googleapis.com/calendar/v3/calendars', {
     method: 'POST',
@@ -204,8 +162,6 @@ async function createSetup(ownerEmail) {
     createdAt: new Date().toISOString(),
     ownerEmail,
     calendarId: calendar.id,
-    storageBucket: STORAGE_BUCKET,
-    storageMode: 'cloud-storage',
     logMode: 'firestore',
   });
 
@@ -213,7 +169,6 @@ async function createSetup(ownerEmail) {
     success: true,
     calendarId: calendar.id,
     logMode: 'firestore',
-    storageBucket: STORAGE_BUCKET,
   };
 }
 
@@ -233,11 +188,11 @@ async function appendSheetRow(payload) {
   }
 
   return googleJson(
-    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(`${sheetName}!A:Z`)}:append?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(`${sheetName}!A:AZ`)}:append?valueInputOption=USER_ENTERED`,
     {
       method: 'POST',
       body: { values: [payload.values || []] },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'],
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     }
   );
 }
@@ -274,47 +229,6 @@ async function getCalendarBusyIntervals(payload) {
   });
 }
 
-async function uploadDriveFile(req) {
-  const { fields, file } = await readMultipart(req);
-  if (!file) throw new Error('Missing file.');
-
-  const metadata = JSON.parse(fields.metadata || '{}');
-  if (STORAGE_BUCKET && process.env.GOOGLE_UPLOAD_MODE !== 'drive') {
-    return uploadStorageObject(file, metadata);
-  }
-
-  const folderId = metadata.folderId || process.env.DRIVE_UPLOAD_FOLDER;
-  if (!folderId) throw new Error('Missing Drive folder.');
-
-  const boundary = `hundesalon_${crypto.randomUUID()}`;
-  const meta = {
-    name: file.fileName,
-    parents: [folderId],
-    description: JSON.stringify(metadata),
-  };
-  const head = Buffer.from(
-    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: ${file.mimeType}\r\n\r\n`,
-    'utf8'
-  );
-  const tail = Buffer.from(`\r\n--${boundary}--`, 'utf8');
-  const body = Buffer.concat([head, file.buffer, tail]);
-  const token = await getGoogleToken(['https://www.googleapis.com/auth/drive.file']);
-  const response = await fetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': `multipart/related; boundary=${boundary}`,
-      },
-      body,
-    }
-  );
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(`Drive upload failed: ${response.status} ${JSON.stringify(data).slice(0, 600)}`);
-  return data;
-}
-
 async function handle(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (req.method === 'GET' && url.pathname === '/health') {
@@ -342,21 +256,17 @@ async function handle(req, res) {
       respond(res, 200, result);
       return;
     }
-    if (req.method === 'POST' && url.pathname === '/drive') {
-      respond(res, 200, await uploadDriveFile(req));
-      return;
-    }
-
     respond(res, 404, { success: false, message: 'Not found' });
   } catch (error) {
-    console.error(error);
-    respond(res, 502, { success: false, message: error.message || 'Gateway failed' });
+    const status = Number(error?.statusCode || 502);
+    console.error(JSON.stringify({ event: 'gateway_request_failed', status, error: error?.name || 'Error' }));
+    respond(res, status, { success: false, message: error?.publicMessage || 'Gateway request failed' });
   }
 }
 
 createServer((req, res) => {
   handle(req, res).catch(error => {
-    console.error(error);
+    console.error(JSON.stringify({ event: 'gateway_unhandled_error', error: error?.name || 'Error' }));
     respond(res, 500, { success: false, message: 'Internal error' });
   });
 }).listen(PORT, () => {

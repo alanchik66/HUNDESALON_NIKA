@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { onRequest } from './sendmail.js';
+import { signOneDriveFileReference } from './_lib/onedrive.js';
 
 globalThis.caches = {
   default: { match: async () => null, put: async () => {} },
@@ -61,6 +62,121 @@ test('rejects false-like consent values without running integrations', async () 
     const response = await onRequest({
       request: registrationRequest({ privacy: 'false', agb: 'no' }),
       env: {},
+    });
+    assert.equal(response.status, 400);
+    assert.equal(calls, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('rejects a forged booking attachment before running integrations', async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    throw new Error('Integrations must not run for forged file references.');
+  };
+
+  try {
+    const response = await onRequest({
+      request: registrationRequest(
+        { privacy: 'yes', agb: 'yes' },
+        {
+          form_type: 'booking',
+          date: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+          time: '10:00',
+          uploaded_file_url: 'https://evil.example/pet.jpg',
+          uploaded_file_id: 'forged-item',
+          uploaded_file_proof: 'forged-proof',
+          upload_session_id: 'booking-session-1234567890',
+        }
+      ),
+      env: {},
+    });
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).error, 'Request failed');
+    assert.equal(calls, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('accepts an exact signed OneDrive booking attachment reference', async () => {
+  const originalFetch = globalThis.fetch;
+  const proofEnv = {
+    MS_CLIENT_ID: 'client-id',
+    MS_REFRESH_TOKEN: 'reference-signing-secret',
+    GOOGLE_APPS_SCRIPT_WEBHOOK_URL: 'https://gateway.example/test',
+  };
+  const reference = {
+    fileId: 'onedrive-item-123456',
+    fileUrl: 'https://1drv.ms/u/signed-booking-photo',
+    sessionId: 'booking-session-1234567890',
+  };
+  const proof = await signOneDriveFileReference(proofEnv, reference);
+  globalThis.fetch = async (_url, options) => {
+    const payload = JSON.parse(options.body);
+    assert.equal(payload.action, 'sheets');
+    assert.equal(payload.sheetName, 'bookings');
+    assert.equal(payload.values[9], reference.fileUrl);
+    return Response.json({ success: true });
+  };
+
+  try {
+    const response = await onRequest({
+      request: registrationRequest(
+        { privacy: 'yes', agb: 'yes' },
+        {
+          form_type: 'booking',
+          date: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+          time: '10:00',
+          client_registration_id: 'existing',
+          uploaded_file_url: reference.fileUrl,
+          uploaded_file_id: reference.fileId,
+          uploaded_file_proof: proof,
+          upload_session_id: reference.sessionId,
+        }
+      ),
+      env: proofEnv,
+    });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).success, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('rejects a tampered allowed-domain OneDrive reference with an otherwise valid proof', async () => {
+  const originalFetch = globalThis.fetch;
+  const proofEnv = { MS_CLIENT_ID: 'client-id', MS_REFRESH_TOKEN: 'reference-signing-secret' };
+  const reference = {
+    fileId: 'onedrive-item-123456',
+    fileUrl: 'https://1drv.ms/u/signed-booking-photo',
+    sessionId: 'booking-session-1234567890',
+  };
+  const proof = await signOneDriveFileReference(proofEnv, reference);
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    throw new Error('Integrations must not run for tampered OneDrive references.');
+  };
+
+  try {
+    const response = await onRequest({
+      request: registrationRequest(
+        { privacy: 'yes', agb: 'yes' },
+        {
+          form_type: 'booking',
+          date: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+          time: '10:00',
+          uploaded_file_url: 'https://1drv.ms/u/tampered-booking-photo',
+          uploaded_file_id: reference.fileId,
+          uploaded_file_proof: proof,
+          upload_session_id: reference.sessionId,
+        }
+      ),
+      env: proofEnv,
     });
     assert.equal(response.status, 400);
     assert.equal(calls, 0);
@@ -131,14 +247,30 @@ for (const encoding of ['urlencoded', 'multipart']) {
 }
 
 for (const scenario of [
-  { name: 'calendar success cannot replace required client persistence', succeeds: 'calendar', status: 503 },
-  { name: 'booking row success cannot replace required client persistence', succeeds: 'bookings', status: 503 },
-  { name: 'successful required client persistence is accepted', succeeds: 'clients', status: 200 },
   {
-    name: 'existing registration does not require another client row',
-    succeeds: 'calendar',
+    name: 'booking row success cannot replace required client persistence',
+    succeeds: ['bookings'],
+    status: 503,
+    expectedCalls: ['bookings', 'clients'],
+  },
+  {
+    name: 'client persistence cannot replace a failed booking row',
+    succeeds: ['clients'],
+    status: 503,
+    expectedCalls: ['bookings'],
+  },
+  {
+    name: 'booking and required client rows are both persisted before success',
+    succeeds: ['bookings', 'clients'],
+    status: 200,
+    expectedCalls: ['bookings', 'clients'],
+  },
+  {
+    name: 'existing registration accepts a persisted pending booking row',
+    succeeds: ['bookings'],
     status: 200,
     id: 'existing',
+    expectedCalls: ['bookings'],
   },
 ]) {
   test(`booking fallback: ${scenario.name}`, async () => {
@@ -149,7 +281,15 @@ for (const scenario of [
       const payload = JSON.parse(options.body);
       const operation = payload.action === 'sheets' ? payload.sheetName : payload.action;
       calls.push(operation);
-      return Response.json({ success: operation === scenario.succeeds });
+      if (operation === 'bookings') {
+        assert.match(payload.values[28], /^[0-9a-f-]{36}$/i);
+        assert.equal(payload.values[29], 'pending');
+        assert.equal(payload.values[30], '');
+        assert.equal(payload.values[31], '');
+        assert.match(payload.values[32], /^\d{4}-\d{2}-\d{2}T10:00:00$/);
+        assert.match(payload.values[33], /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00$/);
+      }
+      return Response.json({ success: scenario.succeeds.includes(operation) });
     };
 
     try {
@@ -173,7 +313,7 @@ for (const scenario of [
       const body = await response.json();
       if (scenario.status === 200) assert.equal(body.success, true);
       else assert.equal(body.error, 'Internal server error');
-      assert.deepEqual(calls, scenario.id ? ['calendar', 'bookings'] : ['calendar', 'bookings', 'clients']);
+      assert.deepEqual(calls, scenario.expectedCalls);
     } finally {
       globalThis.fetch = originalFetch;
     }
@@ -206,6 +346,63 @@ test('accepts explicit consent and persists the registration', async () => {
   }
 });
 
+test('logs failed admin email delivery without exposing recipient data and records Telegram status', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalInfo = console.info;
+  const logLines = [];
+  let adminEmailAttempts = 0;
+  let telegramAttempts = 0;
+  globalThis.fetch = async (url, options = {}) => {
+    if (String(url) === 'https://gateway.example/test') {
+      return Response.json({ success: true });
+    }
+    if (String(url).includes('/sendMessage')) {
+      telegramAttempts += 1;
+      return Response.json({ ok: true, result: { message_id: 10 } });
+    }
+    if (String(url).includes('/smtp/emails')) {
+      const payload = JSON.parse(options.body);
+      const recipients = payload.email?.to?.map(item => item.email) || [];
+      if (recipients.includes('anna@example.com')) {
+        adminEmailAttempts += 1;
+        return Response.json({ result: false }, { status: 400 });
+      }
+      return Response.json({ result: true });
+    }
+    throw new Error(`Unexpected integration request: ${url}`);
+  };
+  console.info = (...args) => logLines.push(args.join(' '));
+
+  try {
+    const response = await onRequest({
+      request: registrationRequest({ privacy: 'yes', agb: 'yes' }),
+      env: {
+        GOOGLE_APPS_SCRIPT_WEBHOOK_URL: 'https://gateway.example/test',
+        GOOGLE_GATEWAY_SECRET: 'unit-test-secret',
+        SENDPULSE_API_KEY: 'unit-test-key',
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        ADMIN_NOTIFICATION_EMAILS: 'anna@example.com',
+        TELEGRAM_BOT_TOKEN: 'unit-test-token',
+        TELEGRAM_CHAT_ID: '-100123',
+      },
+    });
+    assert.equal(response.status, 200);
+    assert.equal(adminEmailAttempts, 1);
+    assert.equal(telegramAttempts, 2);
+    const adminLog = logLines.find(line => line.includes('[sendmail] admin notification delivery'));
+    assert.ok(adminLog);
+    assert.match(adminLog, /"ok":false/);
+    assert.match(adminLog, /"status":400/);
+    assert.doesNotMatch(adminLog, /anna@example\.com/);
+    const telegramLog = logLines.find(line => line.includes('[sendmail] Telegram notification delivery'));
+    assert.ok(telegramLog);
+    assert.match(telegramLog, /"ok":true/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.info = originalInfo;
+  }
+});
+
 test('accepts review feedback with rating metadata', async () => {
   const originalFetch = globalThis.fetch;
   const payloads = [];
@@ -231,6 +428,9 @@ test('accepts review feedback with rating metadata', async () => {
     assert.ok(payloads.some(payload => payload.inquiry_type === 'public_review'));
     assert.ok(payloads.some(payload => payload.review_rating === '5'));
     assert.ok(payloads.some(payload => payload.review_channel === 'website'));
+    const emailPayload = payloads.find(payload => payload.email?.from);
+    assert.equal(emailPayload.email.from.email, 'info@hundesalon-nika.com');
+    assert.equal(emailPayload.email.reply_to.email, 'reviewer@example.com');
   } finally {
     globalThis.fetch = originalFetch;
   }

@@ -51,17 +51,25 @@
           ${
             localizedItems.length
               ? localizedItems
-                  .map(
-                    item => `
+                  .map(item => {
+                    const name = String(item.name ?? '').trim();
+                    const petName = String(item.petName ?? '').trim();
+                    const photoUrl = String(item.photoUrl ?? '').trim();
+                    const author = petName ? `${name} · ${petName}` : name;
+                    const avatar = photoUrl
+                      ? `<img src="${escapeHtml(photoUrl)}" alt="${escapeHtml(name)}" width="96" height="96" loading="lazy" decoding="async">`
+                      : `<span class="testimonial-card__avatar" aria-hidden="true">${escapeHtml(name.charAt(0).toUpperCase() || 'N')}</span>`;
+
+                    return `
               <article class="testimonial-card">
-                <img src="${escapeHtml(item.photoUrl)}" alt="${escapeHtml(item.name)}" width="96" height="96" loading="lazy" decoding="async">
+                ${avatar}
                 <div>
                   <p class="testimonial-card__text">“${escapeHtml(item.text)}”</p>
-                  <p class="testimonial-card__author">${escapeHtml(item.name)} · ${escapeHtml(item.petName)}</p>
+                  <p class="testimonial-card__author">${escapeHtml(author)}</p>
                 </div>
               </article>
-            `
-                  )
+            `;
+                  })
                   .join('')
               : `<p class="testimonial-card testimonial-card--empty">${copy.empty}</p>`
           }
@@ -78,7 +86,9 @@
 
     const lang = getLang();
     try {
-      const response = await fetch('/data/testimonials.json', { headers: { Accept: 'application/json' } });
+      const response = await fetch('/data/testimonials.json?v=20260919-reviews-dedup', {
+        headers: { Accept: 'application/json' },
+      });
       if (!response.ok) {
         throw new Error(`Testimonials request failed with ${response.status}`);
       }

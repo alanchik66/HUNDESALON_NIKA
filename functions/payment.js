@@ -6,19 +6,29 @@
  *   STRIPE_DEPOSIT_AMOUNT_CENTS   — default 2000 (€20)
  *   SITE_ORIGIN                   — default https://hundesalon-nika.com
  *
- * POST JSON → { success, url, sessionId } or error status
- * GET ?session_id= → verify paid session + metadata
+ * POST JSON → { success, url, sessionId } or error status.
+ * Payment status is processed only through the signed Stripe webhook; there is
+ * deliberately no public Checkout Session lookup endpoint.
  */
-import { assertAllowedOrigin, jsonResponse } from './_lib/http-security.js';
+import {
+  assertAllowedOrigin,
+  enforceRateLimit,
+  isRequestBodyTooLarge,
+  jsonResponse,
+  readJsonBody,
+} from './_lib/http-security.js';
 import { cleanText, getEnvValue, hasUsableValue } from './_lib/platform-integrations.js';
 
 const DEFAULT_DEPOSIT_CENTS = 2000;
 const DEFAULT_ORIGIN = 'https://hundesalon-nika.com';
 const ONLINE_PAYMENTS_HARD_DISABLED = true;
+const MAX_REQUEST_BODY_BYTES = 16 * 1024;
 
 function paymentsOnlineEnabled(env) {
   if (ONLINE_PAYMENTS_HARD_DISABLED) return false;
-  const raw = String(getEnvValue(env, 'PAYMENTS_ONLINE_ENABLED') || '').trim().toLowerCase();
+  const raw = String(getEnvValue(env, 'PAYMENTS_ONLINE_ENABLED') || '')
+    .trim()
+    .toLowerCase();
   return raw === '1' || raw === 'true' || raw === 'on' || raw === 'yes';
 }
 
@@ -73,20 +83,8 @@ async function stripeForm(secretKey, path, params) {
   return { ok: response.ok, status: response.status, data };
 }
 
-async function stripeGet(secretKey, path) {
-  const response = await fetch(`https://api.stripe.com/v1/${path}`, {
-    headers: { Authorization: `Bearer ${secretKey}` },
-  });
-  const data = await response.json().catch(() => ({}));
-  return { ok: response.ok, status: response.status, data };
-}
-
 function stripeKey(env) {
-  return (
-    getEnvValue(env, 'STRIPE_SECRET_KEY') ||
-    getEnvValue(env, 'PAYMENT_PROVIDER_KEY') ||
-    ''
-  );
+  return getEnvValue(env, 'STRIPE_SECRET_KEY') || getEnvValue(env, 'PAYMENT_PROVIDER_KEY') || '';
 }
 
 export async function onRequest(context) {
@@ -127,42 +125,22 @@ export async function onRequest(context) {
     );
   }
 
-  if (request.method === 'GET') {
-    const url = new URL(request.url);
-    const sessionId = cleanText(url.searchParams.get('session_id'), 200);
-    if (!sessionId.startsWith('cs_')) {
-      return jsonResponse({ success: false, message: 'Missing session_id' }, 400, originCheck.origin);
-    }
-    const result = await stripeGet(secret, `checkout/sessions/${sessionId}`);
-    if (!result.ok) {
-      return jsonResponse(
-        { success: false, message: result.data?.error?.message || 'Stripe session lookup failed' },
-        result.status || 502,
-        originCheck.origin
-      );
-    }
-    const session = result.data;
-    return jsonResponse(
-      {
-        success: true,
-        paid: session.payment_status === 'paid',
-        status: session.status,
-        paymentStatus: session.payment_status,
-        amountTotal: session.amount_total,
-        currency: session.currency,
-        customerEmail: session.customer_details?.email || session.customer_email || '',
-        metadata: session.metadata || {},
-      },
-      200,
-      originCheck.origin
-    );
-  }
+  const rateLimited = await enforceRateLimit(request, { route: 'payment', limit: 6, windowSec: 60 });
+  if (rateLimited) return rateLimited;
 
   if (request.method !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, POST' } });
+    return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
   }
 
-  const body = await request.json().catch(() => ({}));
+  let body;
+  try {
+    body = await readJsonBody(request, MAX_REQUEST_BODY_BYTES);
+  } catch (error) {
+    if (isRequestBodyTooLarge(error)) {
+      return jsonResponse({ success: false, message: 'Payload too large' }, 413, originCheck.origin);
+    }
+    return jsonResponse({ success: false, message: 'Invalid request body' }, 400, originCheck.origin);
+  }
   const lang = cleanText(body.lang || 'de', 8).slice(0, 2) || 'de';
   const name = cleanText(body.name, 120);
   const email = cleanText(body.email, 180).toLowerCase();
@@ -179,7 +157,7 @@ export async function onRequest(context) {
   }
 
   const origin = siteOrigin(env, originCheck.origin);
-  const successUrl = `${origin}/${lang}/onlayn-bronirovanie?payment=success&session_id={CHECKOUT_SESSION_ID}`;
+  const successUrl = `${origin}/${lang}/onlayn-bronirovanie?payment=success`;
   const cancelUrl = `${origin}/${lang}/onlayn-bronirovanie?payment=cancelled`;
 
   const productName =
@@ -227,7 +205,10 @@ export async function onRequest(context) {
 
   let created = await stripeForm(secret, 'checkout/sessions', params);
   // Fallback to card (+ Link) if some methods are not enabled on the account yet
-  if (!created.ok && /payment_method_types|invalid|not activated|cannot be used/i.test(created.data?.error?.message || '')) {
+  if (
+    !created.ok &&
+    /payment_method_types|invalid|not activated|cannot be used/i.test(created.data?.error?.message || '')
+  ) {
     const fallback = { ...params };
     Object.keys(fallback).forEach(key => {
       if (key.startsWith('payment_method_types[')) delete fallback[key];
@@ -236,7 +217,10 @@ export async function onRequest(context) {
     fallback['payment_method_types[1]'] = 'link';
     created = await stripeForm(secret, 'checkout/sessions', fallback);
   }
-  if (!created.ok && /payment_method_types|invalid|not activated|cannot be used/i.test(created.data?.error?.message || '')) {
+  if (
+    !created.ok &&
+    /payment_method_types|invalid|not activated|cannot be used/i.test(created.data?.error?.message || '')
+  ) {
     const cardOnly = { ...params };
     Object.keys(cardOnly).forEach(key => {
       if (key.startsWith('payment_method_types[')) delete cardOnly[key];

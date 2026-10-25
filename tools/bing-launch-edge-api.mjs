@@ -1,5 +1,5 @@
 /**
- * Launch Edge with CDP and open Bing API Access page.
+ * Launch Edge with CDP and open the verified Bing Webmaster property.
  */
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -7,7 +7,7 @@ import { browserPidFile, launchTrackedBrowser, stopTrackedBrowser } from './lib/
 
 const port = process.env.BING_MAIL_EDGE_PORT || '9224';
 const siteQ = encodeURIComponent('https://hundesalon-nika.com/');
-const startUrl = `https://www.bing.com/webmasters/settings/apiaccess?siteUrl=${siteQ}`;
+const startUrl = `https://www.bing.com/webmasters/home?siteUrl=${siteQ}`;
 
 const candidates = [
   path.join(process.env.ProgramFiles || '', 'Microsoft/Edge/Application/msedge.exe'),
@@ -38,6 +38,7 @@ launchTrackedBrowser(
 
 console.log(`Edge started on port ${port}`);
 console.log(startUrl);
+console.log('API access: Settings -> API access.');
 
 for (let i = 0; i < 20; i += 1) {
   try {

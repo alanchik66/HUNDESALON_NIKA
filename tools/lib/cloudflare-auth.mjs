@@ -27,7 +27,13 @@ export function loadDevVars(filePath = path.join(REPO_ROOT, '.dev.vars')) {
     const eq = trimmed.indexOf('=');
     if (eq === -1) continue;
     const key = trimmed.slice(0, eq).trim();
-    const value = trimmed.slice(eq + 1).trim();
+    const rawValue = trimmed.slice(eq + 1).trim();
+    const quote = rawValue[0];
+    // Env-file quotes delimit a literal string; never interpolate or unescape secrets.
+    const value =
+      rawValue.length >= 2 && (quote === '"' || quote === "'") && rawValue.at(-1) === quote
+        ? rawValue.slice(1, -1)
+        : rawValue;
     if (key && process.env[key] === undefined) {
       process.env[key] = value;
     }

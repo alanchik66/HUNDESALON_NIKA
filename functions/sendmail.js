@@ -10,10 +10,34 @@
  *      SENDPULSE_API_KEY либо SENDPULSE_CLIENT_ID и SENDPULSE_CLIENT_SECRET.
  */
 
-import { assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http-security.js';
+import {
+  assertAllowedOrigin,
+  enforceRateLimit,
+  isRequestBodyTooLarge,
+  jsonResponse,
+  readFormDataBody,
+  readJsonBody,
+} from './_lib/http-security.js';
+
+/**
+ * Structured logging for production functions.
+ * Uses console.error for critical errors but with structured JSON format.
+ */
+function logStructured(level, event, data = {}) {
+  const logEntry = JSON.stringify({
+    level,
+    timestamp: new Date().toISOString(),
+    event,
+    ...data,
+  });
+  if (level === 'error') {
+    console.error(logEntry);
+  } else {
+    console.log(logEntry);
+  }
+}
 import {
   appendGoogleSheetRow,
-  createGoogleCalendarEvent,
   getEnvList,
   getEnvValue,
   hasUsableValue,
@@ -24,21 +48,51 @@ import {
   siteNotificationsEnabled,
 } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
+import { buildBookingConfirmationUrl } from './_lib/booking-confirmation.js';
+import { verifyOneDriveFileReference } from './_lib/onedrive.js';
+import { createDeliveryTracker, pruneDeliveryMetadata } from './_lib/delivery-tracking.js';
 
-const DEFAULT_RECIPIENT = 'support@hundesalon-nika.com';
-const DEFAULT_BOOKING_RECIPIENT = 'booking@hundesalon-nika.com';
-const DEFAULT_SUPPORT = 'support@hundesalon-nika.com';
-const DEFAULT_FROM = 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>';
-const DEFAULT_CLIENT_FROM = 'HUNDESALON_NIKA <support@hundesalon-nika.com>';
+const DEFAULT_RECIPIENT = 'info@hundesalon-nika.com';
+const DEFAULT_BOOKING_RECIPIENT = 'info@hundesalon-nika.com';
+const DEFAULT_SUPPORT = 'info@hundesalon-nika.com';
+const MAX_REQUEST_BODY_BYTES = 64 * 1024;
+const DEFAULT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
+const DEFAULT_CLIENT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const DEFAULT_ADMIN_EMAILS = [];
 const ONLINE_PAYMENTS_HARD_DISABLED = true;
-const SLACK_TIMEOUT_MS = 4500;
 const CLIENT_REGISTRATION_FORM_TYPE = 'client_registration';
 const CLIENT_REGISTRATION_SHEET = 'clients';
 const REGISTRATION_PET_SPECIES = new Set(['dog', 'cat', 'small_animal', 'rabbit', 'guinea_pig', 'other']);
 const BOOKING_CLIENT_TYPES = new Set(['new', 'returning']);
 const BOOKING_COAT_CONDITIONS = new Set(['good', 'slight_mats', 'many_mats', 'severe_matting']);
 const BOOKING_BEHAVIOURS = new Set(['calm', 'restless', 'very_restless', 'aggressive']);
+
+const normalizeOneDriveFileUrl = value => {
+  const raw = sanitizeLimit(value, 1000);
+  if (!raw) return '';
+  try {
+    const url = new URL(raw);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    if (
+      url.protocol !== 'https:' ||
+      url.username ||
+      url.password ||
+      !(
+        host === '1drv.ms' ||
+        host === 'onedrive.live.com' ||
+        host.endsWith('.sharepoint.com') ||
+        host === 'my.microsoftpersonalcontent.com' ||
+        host.endsWith('.microsoftpersonalcontent.com')
+      )
+    ) {
+      return '';
+    }
+    url.hash = '';
+    return url.toString();
+  } catch {
+    return '';
+  }
+};
 const BOOKING_SCHEDULE = Object.freeze({
   workdayStartMinutes: 9 * 60,
   workdayEndMinutes: 18 * 60,
@@ -60,7 +114,16 @@ const BOOKING_BEHAVIOUR_EXTRA_MINUTES = Object.freeze({
   aggressive: 60,
 });
 
-const REVIEW_CHANNELS = new Set(['website', 'google', 'facebook', 'instagram', 'telegram', 'whatsapp', 'viber', 'bing']);
+const REVIEW_CHANNELS = new Set([
+  'website',
+  'google',
+  'facebook',
+  'instagram',
+  'telegram',
+  'whatsapp',
+  'viber',
+  'bing',
+]);
 
 const clampBookingMinutes = (value, fallback, min, max) => {
   const parsed = Number.parseInt(String(value || ''), 10);
@@ -514,120 +577,12 @@ function getAdminEmails(env) {
 }
 
 function getSupportReplyTo(env, fallback = DEFAULT_SUPPORT) {
-  const supportEmail = getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') || getEnvValue(env, 'SUPPORT_EMAIL') || fallback;
-  return isValidEmail(supportEmail) ? supportEmail : fallback;
+  const replyTo = getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') || getEnvValue(env, 'SALON_EMAIL') || fallback;
+  return isValidEmail(replyTo) ? replyTo : fallback;
 }
 
 function getClientEmailFrom(env, fallback = DEFAULT_CLIENT_FROM) {
   return getEnvValue(env, 'CLIENT_EMAIL_FROM') || fallback;
-}
-
-/**
- * Builds a compact, readable Slack payload for website leads.
- * @param {object} data
- * @returns {{ text: string, blocks: object[] }}
- */
-function buildSlackPayload(data) {
-  const lines = [
-    `Форма: ${data.formType}`,
-    `Язык: ${data.lang}`,
-    `Имя: ${data.name}`,
-    `E-mail: ${data.email}`,
-    data.phone ? `Телефон: ${data.phone}` : null,
-    data.service ? `Услуга: ${data.service}` : null,
-    data.date ? `Дата: ${data.date}` : null,
-    data.time ? `Время: ${data.time}` : null,
-    data.bookingStatus ? `Статус: ${data.bookingStatus}` : null,
-    data.clientType ? `Статус клиента: ${data.clientType}` : null,
-    data.coatCondition ? `Состояние шерсти: ${data.coatCondition}` : null,
-    data.behaviour ? `Поведение: ${data.behaviour}` : null,
-    data.estimatedDurationMinutes ? `Ориентировочная длительность: ${data.estimatedDurationMinutes} мин` : null,
-    data.bookingBufferMinutes ? `Внутренний резерв: ${data.bookingBufferMinutes} мин` : null,
-    data.safeBlockMinutes ? `Безопасный блок: ${data.safeBlockMinutes} мин` : null,
-    data.fileUrl ? `Файл: ${data.fileUrl}` : null,
-    data.paymentStatus ? `Оплата: ${data.paymentStatus}` : null,
-    data.promotion ? `Акция: ${data.promotion}` : null,
-    data.petName ? `Питомец: ${data.petName}` : null,
-    data.petBreed ? `Порода: ${data.petBreed}` : null,
-    data.petTagNumber ? `Номер жетона: ${data.petTagNumber}` : null,
-    data.pagePath ? `Страница: ${data.pagePath}` : null,
-  ].filter(line => line !== null);
-
-  const title =
-    data.level === 'error'
-      ? ':rotating_light: Ошибка отправки формы на сайте'
-      : ':dog: Новая заявка с сайта HUNDESALON NIKA';
-
-  const messagePreview = String(data.message || '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 700);
-
-  return {
-    text: `${title}\n${lines.join('\n')}`,
-    blocks: [
-      {
-        type: 'header',
-        text: {
-          type: 'plain_text',
-          text: title.replace(/:[^\s:]+:/g, '').trim(),
-          emoji: true,
-        },
-      },
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: lines.map(line => `• ${line}`).join('\n'),
-        },
-      },
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `*Сообщение:*\n${messagePreview || '—'}`,
-        },
-      },
-      {
-        type: 'context',
-        elements: [
-          {
-            type: 'mrkdwn',
-            text: `Источник: ${data.origin || 'unknown'} | ${new Date().toISOString()}`,
-          },
-        ],
-      },
-    ],
-  };
-}
-
-/**
- * Sends a message to Slack if SLACK_WEBHOOK_URL is configured.
- * @param {any} env
- * @param {object} payload
- */
-async function sendSlackNotification(env, payload) {
-  if (!siteNotificationsEnabled(env)) return false;
-  const webhook = String(env?.SLACK_WEBHOOK_URL || '').trim();
-  if (!webhook) return false;
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), SLACK_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(webhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-    return response.ok;
-  } catch (err) {
-    console.warn('[sendmail] Slack notify failed:', err?.message || err);
-    return false;
-  } finally {
-    clearTimeout(timeout);
-  }
 }
 
 function buildTelegramNotification(data) {
@@ -651,6 +606,37 @@ function buildTelegramNotification(data) {
     `Сообщение: ${data.message || '—'}`,
   ];
   return lines.filter(line => line !== null).join('\n');
+}
+
+async function sendTelegramEmailFailureAlert(env, { formType, requestId, status, lang }) {
+  const copy = {
+    de: 'SendPulse-E-Mailzustellung fehlgeschlagen',
+    en: 'SendPulse email delivery failed',
+    ru: 'Не удалось отправить письмо через SendPulse',
+    uk: 'Не вдалося надіслати лист через SendPulse',
+  };
+  try {
+    const result = await sendTelegramMessage(env, {
+      text: `${copy[lang] || copy.de}\nForm: ${formType}\nRequest ID: ${requestId}\nHTTP status: ${Number(status || 0)}`,
+      category: formType === 'booking' ? 'orders' : 'messages',
+    });
+    console.info(
+      '[sendmail] Telegram email-failure alert',
+      JSON.stringify({
+        request_id: requestId,
+        form_type: formType,
+        ok: result?.ok === true,
+        status: Number(result?.status || 0),
+      })
+    );
+    return result;
+  } catch {
+    console.info(
+      '[sendmail] Telegram email-failure alert',
+      JSON.stringify({ request_id: requestId, form_type: formType, ok: false, status: 0 })
+    );
+    return { ok: false };
+  }
 }
 
 /**
@@ -689,16 +675,52 @@ export async function onRequest(ctx) {
   try {
     const ct = request.headers.get('Content-Type') ?? '';
     if (ct.includes('application/json')) {
-      fields = await request.json();
+      fields = await readJsonBody(request, MAX_REQUEST_BODY_BYTES);
     } else {
-      const fd = await request.formData();
+      const fd = await readFormDataBody(request, MAX_REQUEST_BODY_BYTES);
       fields = Object.fromEntries(fd.entries());
     }
-  } catch {
+  } catch (error) {
+    if (isRequestBodyTooLarge(error)) {
+      return jsonResponse({ success: false, message: 'Payload too large' }, 413, origin);
+    }
     return jsonResponse({ success: false, message: 'Invalid request body' }, 400, origin);
   }
   if (!fields || typeof fields !== 'object' || Array.isArray(fields)) {
     return jsonResponse({ success: false, message: 'Invalid request body' }, 400, origin);
+  }
+
+  /* ── Turnstile verification (bot protection) ───────────────── */
+  const turnstileToken = fields['cf-turnstile-response'] || fields.turnstileToken;
+  if (turnstileToken) {
+    const turnstileSecret = getEnvValue(env, 'TURNSTILE_SECRET_KEY');
+    if (turnstileSecret) {
+      try {
+        const verifyResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            secret: turnstileSecret,
+            response: turnstileToken,
+            remoteip: request.headers.get('CF-Connecting-IP'),
+          }),
+        });
+        const verifyResult = await verifyResponse.json();
+        if (!verifyResult.success) {
+          logStructured('warn', 'turnstile_verification_failed', {
+            error: verifyResult['error-codes'] || ['unknown'],
+            formType: fields.form_type || 'unknown',
+          });
+          return jsonResponse({ success: false, message: 'Verification failed. Please try again.' }, 400, origin);
+        }
+      } catch (error) {
+        logStructured('error', 'turnstile_verification_error', {
+          error: error.message,
+          formType: fields.form_type || 'unknown',
+        });
+        return jsonResponse({ success: false, message: 'Verification service unavailable. Please try again.' }, 503, origin);
+      }
+    }
   }
 
   /* ── Extract and sanitize fields ───────────────────────────── */
@@ -737,7 +759,24 @@ export async function onRequest(ctx) {
     (BOOKING_BEHAVIOUR_EXTRA_MINUTES[behaviour] || 0);
   const safeEstimatedDurationMinutes = Math.max(estimatedDurationMinutes, 15 + minimumRiskDuration);
   const safeBlockMinutes = Math.max(requestedSafeBlockMinutes, safeEstimatedDurationMinutes + bookingBufferMinutes);
-  const uploadedFileUrl = sanitizeLimit(fields.uploaded_file_url || fields.file_url, 500);
+  const rawUploadedFileUrl = sanitizeLimit(fields.uploaded_file_url || fields.file_url, 1000);
+  const uploadedFileUrl = normalizeOneDriveFileUrl(rawUploadedFileUrl);
+  const uploadedFileId = sanitizeLimit(fields.uploaded_file_id, 220);
+  const uploadedFileProof = sanitizeLimit(fields.uploaded_file_proof, 128);
+  const uploadSessionId = sanitizeLimit(fields.upload_session_id, 80);
+  const fileReferenceValid = rawUploadedFileUrl
+    ? await verifyOneDriveFileReference(
+        env,
+        { fileId: uploadedFileId, fileUrl: uploadedFileUrl, sessionId: uploadSessionId },
+        uploadedFileProof
+      )
+    : !uploadedFileId && !uploadedFileProof;
+  if (
+    (rawUploadedFileUrl || uploadedFileId || uploadedFileProof) &&
+    (!uploadedFileUrl || formType !== 'booking' || !fileReferenceValid)
+  ) {
+    return jsonResponse({ success: false, message: 'Invalid OneDrive file reference.' }, 400, origin);
+  }
   const source = sanitizeLimit(fields.source || fields.page || request.headers.get('Referer') || 'website', 500);
   const inquiryType = sanitizeLimit(fields.inquiry_type, 40);
   const paymentChoice = sanitizeLimit(fields.payment_choice || fields.payment_method || '', 40);
@@ -917,34 +956,23 @@ export async function onRequest(ctx) {
     submitted_at: submittedAt,
     request_id: crypto.randomUUID(),
   };
-
-  const slackLeadPayload = buildSlackPayload({
-    level: 'info',
-    formType,
-    lang,
-    name,
-    email,
-    phone,
-    service: canonicalService,
-    date,
-    time,
-    bookingStatus,
-    clientType: formType === 'booking' ? clientTypeLabel : '',
-    coatCondition: formType === 'booking' ? coatCondition : '',
-    behaviour: formType === 'booking' ? behaviour : '',
-    estimatedDurationMinutes: formType === 'booking' ? safeEstimatedDurationMinutes : 0,
-    bookingBufferMinutes: formType === 'booking' ? bookingBufferMinutes : 0,
-    safeBlockMinutes: formType === 'booking' ? safeBlockMinutes : 0,
-    fileUrl: uploadedFileUrl,
-    paymentStatus,
-    promotion: '',
-    petName,
-    petBreed,
-    petTagNumber,
-    message: resolvedMessage,
-    origin,
-    pagePath: requestUrl.pathname,
-  });
+  const track = createDeliveryTracker(env, { requestId: automationEventData.request_id, formType });
+  if (typeof ctx.waitUntil === 'function') ctx.waitUntil(pruneDeliveryMetadata(env));
+  const bookingConfirmationMarkup =
+    formType === 'booking'
+      ? {
+          inline_keyboard: [
+            [
+              {
+                text: '✅ Подтвердить запись в Google Calendar',
+                callback_data: `booking_confirm:${automationEventData.request_id}`,
+              },
+            ],
+          ],
+        }
+      : null;
+  const bookingConfirmationUrl =
+    formType === 'booking' ? await buildBookingConfirmationUrl(env, origin, automationEventData.request_id) : '';
 
   if (resolvedMessage.length > 2000) {
     return jsonResponse({ success: false, message: copy.error }, 400, origin);
@@ -1031,6 +1059,12 @@ export async function onRequest(ctx) {
     formType === 'booking' ? `${bookingMetaCopy.buffer}: ${bookingBufferMinutes} min` : null,
     formType === 'booking' ? `${bookingMetaCopy.safeBlock}: ${safeBlockEndDateTime}` : null,
     formType === 'booking' ? `${bookingMetaCopy.confirmation}: ${bookingStatus}` : null,
+    formType === 'booking' ? `Request ID: ${automationEventData.request_id}` : null,
+    formType === 'booking' && bookingConfirmationUrl
+      ? `Подтвердить запись в Google Calendar: ${bookingConfirmationUrl}`
+      : formType === 'booking'
+        ? 'Подтверждение: нажмите кнопку в служебном Telegram-уведомлении.'
+        : null,
     uploadedFileUrl ? `${emailCopy.field.file}: ${uploadedFileUrl}` : null,
     formType === 'booking' ? `${emailCopy.field.payment}: ${paymentStatus}` : null,
     petName ? `${emailCopy.field.petName}: ${petName}` : null,
@@ -1046,13 +1080,63 @@ export async function onRequest(ctx) {
 
   const textBody = bodyLines.join('\n');
 
-  const runBookingIntegrations = async () => {
-    if (formType !== 'booking') {
-      return [];
-    }
-
+  const persistBookingRequest = async () => {
+    if (formType !== 'booking') return { ok: true, skipped: true };
     const startDateTime = `${date}T${time}:00`;
     const endDateTime = safeBlockEndDateTime;
+    try {
+      return await track('booking_register', () =>
+        appendGoogleSheetRow(env, {
+          spreadsheetId: getEnvValue(env, 'SHEET_ID'),
+          sheetName: 'bookings',
+          values: [
+            new Date().toISOString(),
+            lang,
+            formType,
+            name,
+            email,
+            phone,
+            service,
+            date,
+            time,
+            uploadedFileUrl,
+            paymentStatus,
+            resolvedMessage,
+            clientRegistrationId,
+            petName,
+            petSpecies,
+            petBreed,
+            petAge,
+            petSex,
+            petTagNumber,
+            servicePrice,
+            serviceCategory,
+            bookingStatus,
+            clientType,
+            coatCondition,
+            behaviour,
+            safeEstimatedDurationMinutes,
+            bookingBufferMinutes,
+            safeBlockMinutes,
+            automationEventData.request_id,
+            'pending',
+            '',
+            '',
+            startDateTime,
+            endDateTime,
+          ],
+        })
+      );
+    } catch (error) {
+      logStructured('error', 'booking_sheet_write_failed', {
+        error: error instanceof Error ? error.name : 'Error',
+      });
+      return { ok: false, error: 'booking sheet write failed' };
+    }
+  };
+
+  const runBookingFollowups = async () => {
+    if (formType !== 'booking') return [];
     const bookingSummary = [
       `${emailCopy.field.name}: ${name}`,
       `${emailCopy.field.email}: ${email}`,
@@ -1081,63 +1165,22 @@ export async function onRequest(ctx) {
     ]
       .filter(Boolean)
       .join('\n');
-
     const results = await Promise.allSettled([
-      createGoogleCalendarEvent(env, {
-        calendarId: getEnvValue(env, 'GOOGLE_CALENDAR_ID', 'primary'),
-        summary: `HUNDESALON NIKA: ${service} — ${name}`,
-        description: bookingSummary,
-        startDateTime,
-        endDateTime,
-        status: 'tentative',
-      }),
-      appendGoogleSheetRow(env, {
-        spreadsheetId: getEnvValue(env, 'SHEET_ID'),
-        sheetName: 'bookings',
-        values: [
-          new Date().toISOString(),
-          lang,
-          formType,
-          name,
-          email,
-          phone,
-          service,
-          date,
-          time,
-          uploadedFileUrl,
-          paymentStatus,
-          resolvedMessage,
-          clientRegistrationId,
-          petName,
-          petSpecies,
-          petBreed,
-          petAge,
-          petSex,
-          petTagNumber,
-          servicePrice,
-          serviceCategory,
-          bookingStatus,
-          clientType,
-          coatCondition,
-          behaviour,
-          safeEstimatedDurationMinutes,
-          bookingBufferMinutes,
-          safeBlockMinutes,
-        ],
-      }),
-      sendSendPulseEmail(env, {
-        to: email,
-        subject: emailCopy.bookingSubject,
-        text: `${emailCopy.bookingThanks}\n\n${bookingSummary}`,
-        html: buildBrandedEmail({
-          title: emailCopy.bookingSubject,
-          bodyText: `${emailCopy.bookingThanks}\n\n${bookingSummary}`,
-          lang,
-        }),
-        replyTo: supportReplyTo,
-        from: clientEmailFrom,
-      }),
-      upsertSendPulseContact(env, { email, name, phone, lang, service, source, formType }),
+      track('email_client', () =>
+        sendSendPulseEmail(env, {
+          to: email,
+          subject: emailCopy.bookingSubject,
+          text: `${emailCopy.bookingThanks}\n\n${bookingSummary}`,
+          html: buildBrandedEmail({
+            title: emailCopy.bookingSubject,
+            bodyText: `${emailCopy.bookingThanks}\n\n${bookingSummary}`,
+            lang,
+          }),
+          replyTo: supportReplyTo,
+          from: clientEmailFrom,
+        })
+      ),
+      track('contact_sync', () => upsertSendPulseContact(env, { email, name, phone, lang, service, source, formType })),
     ]);
 
     return results.map(result =>
@@ -1153,45 +1196,44 @@ export async function onRequest(ctx) {
     }
 
     try {
-      const result = await appendGoogleSheetRow(env, {
-        spreadsheetId: getEnvValue(env, 'SHEET_ID'),
-        sheetName: CLIENT_REGISTRATION_SHEET,
-        values: [
-          submittedAt,
-          automationEventData.request_id,
-          lang,
-          formType,
-          canonicalService,
-          servicePrice,
-          serviceCategory,
-          promotionKey,
-          '',
-          '',
-          name,
-          email,
-          phone,
-          petName,
-          petSpecies,
-          petBreed,
-          petAge,
-          petSex,
-          petTagNumber,
-          message,
-          privacyConsent ? 'yes' : 'no',
-          agbConsent ? 'yes' : 'no',
-          source,
-          origin,
-          requestUrl.pathname,
-        ],
-      });
-      return [result];
-    } catch (error) {
-      console.error(
-        JSON.stringify({
-          message: 'client registration sheet write failed',
-          error: error instanceof Error ? error.message : String(error),
+      const result = await track('client_register', () =>
+        appendGoogleSheetRow(env, {
+          spreadsheetId: getEnvValue(env, 'SHEET_ID'),
+          sheetName: CLIENT_REGISTRATION_SHEET,
+          values: [
+            submittedAt,
+            automationEventData.request_id,
+            lang,
+            formType,
+            canonicalService,
+            servicePrice,
+            serviceCategory,
+            promotionKey,
+            '',
+            '',
+            name,
+            email,
+            phone,
+            petName,
+            petSpecies,
+            petBreed,
+            petAge,
+            petSex,
+            petTagNumber,
+            message,
+            privacyConsent ? 'yes' : 'no',
+            agbConsent ? 'yes' : 'no',
+            source,
+            origin,
+            requestUrl.pathname,
+          ],
         })
       );
+      return [result];
+    } catch (error) {
+      logStructured('error', 'client_registration_sheet_write_failed', {
+        error: error instanceof Error ? error.name : 'Error',
+      });
       return [{ ok: false, error: 'client registration sheet write failed' }];
     }
   };
@@ -1221,96 +1263,22 @@ export async function onRequest(ctx) {
   const hasSendPulseCredentials =
     Boolean(getEnvValue(env, 'SENDPULSE_API_KEY')) ||
     Boolean(getEnvValue(env, 'SENDPULSE_CLIENT_ID') && getEnvValue(env, 'SENDPULSE_CLIENT_SECRET'));
-  if (!hasSendPulseCredentials) {
-    console.error('[sendmail] SendPulse credentials not configured');
-    const slackDelivered = await sendSlackNotification(env, slackLeadPayload);
-    const telegramDelivered = await sendTelegramMessage(env, {
-      text: buildTelegramNotification({
-        formType,
-        lang,
-        name,
-        email,
-        phone,
-        service: canonicalService,
-        date,
-        time,
-        paymentStatus,
-        promotion: '',
-        petName,
-        petBreed,
-        petTagNumber,
-        message: resolvedMessage,
-        pagePath: requestUrl.pathname,
-      }),
-      category: formType === 'booking' ? 'orders' : 'messages',
-    });
-    const bookingResults = await runBookingIntegrations();
-    const registrationResults = await runClientRegistrationIntegration();
-    const registrationDelivered = registrationResults.some(result => result?.ok === true);
-    const integrationDelivered = registrationDelivered || bookingResults.some(result => result?.ok === true);
-    const requiredDeliveryCompleted = clientRecordRequired
-      ? registrationDelivered
-      : slackDelivered || telegramDelivered.ok || integrationDelivered;
-    if (requiredDeliveryCompleted) {
-      console.warn('[sendmail] Delivered via fallback because SendPulse is not configured');
-      return jsonResponse(
-        {
-          success: true,
-          message: formType === CLIENT_REGISTRATION_FORM_TYPE ? copy.registrationSuccess : copy.success,
-          ...(formType === CLIENT_REGISTRATION_FORM_TYPE ? { registration_id: automationEventData.request_id } : {}),
-        },
-        200,
-        origin
-      );
-    }
+  const bookingPersistence = await persistBookingRequest();
+  if (formType === 'booking' && bookingPersistence?.ok !== true) {
+    logStructured('error', 'booking_not_stored_in_register');
+    return jsonResponse({ success: false, message: copy.error }, 503, origin);
+  }
+  const registrationResults = await runClientRegistrationIntegration();
+  const registrationDelivered = registrationResults.some(result => result?.ok === true);
+  if (clientRecordRequired && !registrationDelivered) {
+    logStructured('error', 'client_registration_not_stored_in_register');
     return jsonResponse({ success: false, message: copy.error }, 503, origin);
   }
 
-  let sendPulseRes;
-  try {
-    sendPulseRes = await sendSendPulseEmail(env, {
-      from: senderFrom,
-      to: recipient,
-      replyTo: email,
-      subject,
-      text: textBody,
-      html: buildBrandedEmail({ title: subject, bodyText: textBody, lang }),
-    });
-  } catch (err) {
-    console.error('[sendmail] Network error:', err);
-    await sendSlackNotification(
-      env,
-      buildSlackPayload({
-        level: 'error',
-        formType,
-        lang,
-        name,
-        email,
-        phone,
-        service: canonicalService,
-        date,
-        time,
-        message: `Network error while sending via SendPulse: ${err?.message || 'unknown error'}`,
-        origin,
-        pagePath: requestUrl.pathname,
-      })
-    );
-    return jsonResponse({ success: false, message: copy.error }, 502, origin);
-  }
-
-  if (sendPulseRes.ok) {
-    const registrationResults = await runClientRegistrationIntegration();
-    if (clientRecordRequired && !registrationResults.some(result => result?.ok === true)) {
-      console.error(JSON.stringify({ message: 'client registration was not stored in the admin register' }));
-      return jsonResponse({ success: false, message: copy.error }, 503, origin);
-    }
-
-    await Promise.allSettled([
-      sendSendPulseAutomationEvent(env, {
-        eventType: automationEventType,
-        data: automationEventData,
-      }),
-      sendSlackNotification(env, slackLeadPayload),
+  if (!hasSendPulseCredentials) {
+    logStructured('warn', 'sendpulse_credentials_not_configured');
+    await track('email_main', async () => ({ ok: false, skipped: true }));
+    const telegramDelivered = await track('telegram', () =>
       sendTelegramMessage(env, {
         text: buildTelegramNotification({
           formType,
@@ -1330,10 +1298,131 @@ export async function onRequest(ctx) {
           pagePath: requestUrl.pathname,
         }),
         category: formType === 'booking' ? 'orders' : 'messages',
-      }),
-      runBookingIntegrations(),
-      sendAdminNotification(),
+        replyMarkup: bookingConfirmationMarkup,
+      })
+    );
+    const bookingResults = await runBookingFollowups();
+    const integrationDelivered =
+      registrationDelivered || formType === 'booking' || bookingResults.some(result => result?.ok === true);
+    const requiredDeliveryCompleted = clientRecordRequired
+      ? registrationDelivered
+      : telegramDelivered.ok || integrationDelivered;
+    if (requiredDeliveryCompleted) {
+      console.warn('[sendmail] Delivered via fallback because SendPulse is not configured');
+      return jsonResponse(
+        {
+          success: true,
+          message: formType === CLIENT_REGISTRATION_FORM_TYPE ? copy.registrationSuccess : copy.success,
+          ...(formType === CLIENT_REGISTRATION_FORM_TYPE ? { registration_id: automationEventData.request_id } : {}),
+        },
+        200,
+        origin
+      );
+    }
+    return jsonResponse({ success: false, message: copy.error }, 503, origin);
+  }
+
+  let sendPulseRes;
+  try {
+    sendPulseRes = await track('email_main', () =>
+      sendSendPulseEmail(env, {
+        from: senderFrom,
+        to: recipient,
+        replyTo: email,
+        subject,
+        text: textBody,
+        html: buildBrandedEmail({ title: subject, bodyText: textBody, lang }),
+      })
+    );
+  } catch (err) {
+    logStructured('error', 'sendmail_network_error', {
+      error: String(err?.name || 'Error').slice(0, 80),
+    });
+    await track('failure_alert', () =>
+      sendTelegramEmailFailureAlert(env, {
+        formType,
+        requestId: automationEventData.request_id,
+        status: 0,
+        lang,
+      })
+    );
+    return jsonResponse({ success: false, message: copy.error }, 502, origin);
+  }
+
+  if (sendPulseRes.ok) {
+    const notificationResults = await Promise.allSettled([
+      track('automation', () =>
+        sendSendPulseAutomationEvent(env, {
+          eventType: automationEventType,
+          data: automationEventData,
+        })
+      ),
+      track('telegram', () =>
+        sendTelegramMessage(env, {
+          text: buildTelegramNotification({
+            formType,
+            lang,
+            name,
+            email,
+            phone,
+            service: canonicalService,
+            date,
+            time,
+            paymentStatus,
+            promotion: '',
+            petName,
+            petBreed,
+            petTagNumber,
+            message: resolvedMessage,
+            pagePath: requestUrl.pathname,
+          }),
+          category: formType === 'booking' ? 'orders' : 'messages',
+          replyMarkup: bookingConfirmationMarkup,
+        })
+      ),
+      runBookingFollowups(),
+      track('email_admin', sendAdminNotification),
     ]);
+    const telegramNotificationResult = notificationResults[1];
+    const telegramNotification =
+      telegramNotificationResult?.status === 'fulfilled' ? telegramNotificationResult.value : null;
+    console.info(
+      '[sendmail] Telegram notification delivery',
+      JSON.stringify({
+        request_id: automationEventData.request_id,
+        form_type: formType,
+        ok: telegramNotification?.ok === true,
+        status: Number(telegramNotification?.status || 0),
+      })
+    );
+    const adminNotificationResult = notificationResults[3];
+    const adminNotification = adminNotificationResult?.status === 'fulfilled' ? adminNotificationResult.value : null;
+    console.info(
+      '[sendmail] admin notification delivery',
+      JSON.stringify({
+        request_id: automationEventData.request_id,
+        form_type: formType,
+        ok: adminNotification?.ok === true,
+        status: Number(adminNotification?.status || 0),
+      })
+    );
+    const bookingFollowups = notificationResults[2];
+    const clientEmail = bookingFollowups?.status === 'fulfilled' ? bookingFollowups.value?.[0] : null;
+    if (
+      siteNotificationsEnabled(env) &&
+      ((adminRecipients.length > 0 && adminNotification?.ok !== true) ||
+        (formType === 'booking' && clientEmail?.ok !== true))
+    ) {
+      const failedEmail = formType === 'booking' && clientEmail?.ok !== true ? clientEmail : adminNotification;
+      await track('failure_alert', () =>
+        sendTelegramEmailFailureAlert(env, {
+          formType,
+          requestId: automationEventData.request_id,
+          status: Number(failedEmail?.status || 0),
+          lang,
+        })
+      );
+    }
     return jsonResponse(
       {
         success: true,
@@ -1345,23 +1434,15 @@ export async function onRequest(ctx) {
     );
   }
 
-  const errBody = JSON.stringify(sendPulseRes.body || {});
-  console.error('[sendmail] SendPulse error', sendPulseRes.status, errBody);
-  await sendSlackNotification(
-    env,
-    buildSlackPayload({
-      level: 'error',
+  logStructured('error', 'sendmail_provider_error', {
+    status: Number(sendPulseRes.status || 0),
+  });
+  await track('failure_alert', () =>
+    sendTelegramEmailFailureAlert(env, {
       formType,
+      requestId: automationEventData.request_id,
+      status: sendPulseRes.status,
       lang,
-      name,
-      email,
-      phone,
-      service: canonicalService,
-      date,
-      time,
-      message: `SendPulse error ${sendPulseRes.status}: ${errBody.slice(0, 600) || 'no details'}`,
-      origin,
-      pagePath: requestUrl.pathname,
     })
   );
   return jsonResponse({ success: false, message: copy.error }, 502, origin);

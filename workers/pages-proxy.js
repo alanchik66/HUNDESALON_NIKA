@@ -4,10 +4,12 @@
  * Browser Origin stays on the public host (apex/www). Pages Functions must
  * accept those origins via functions/_lib/http-security.js TRUSTED_SITE_ORIGINS.
  */
+import { isProductionSourceOnlyPath } from '../tools/lib/production-assets.mjs';
+
 const PAGES_ORIGIN = 'hundesalon-nika.pages.dev';
 const PUBLIC_HOSTS = new Set(['hundesalon-nika.com', 'www.hundesalon-nika.com']);
 const PERMISSIONS_POLICY =
-  'camera=(), microphone=(), geolocation=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()';
+  'camera=(), microphone=(self), geolocation=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()';
 
 function publicUrlFromPages(location, requestUrl) {
   if (!location) return location;
@@ -30,6 +32,18 @@ export default {
     const requestUrl = new URL(request.url);
 
     if (!PUBLIC_HOSTS.has(requestUrl.hostname)) {
+      return new Response('Not found', {
+        status: 404,
+        headers: {
+          'Cache-Control': 'no-store',
+          'Content-Type': 'text/plain; charset=utf-8',
+          'X-Robots-Tag': 'noindex',
+        },
+      });
+    }
+
+    const relativePath = requestUrl.pathname.replace(/^\/+/, '');
+    if (isProductionSourceOnlyPath(relativePath)) {
       return new Response('Not found', {
         status: 404,
         headers: {

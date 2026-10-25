@@ -3,12 +3,59 @@ import assert from 'node:assert/strict';
 
 import {
   answerTelegramCallbackQuery,
+  appendGoogleSheetRow,
   callGoogleAppsScriptGateway,
   getGoogleCalendarBusyIntervals,
   sendSendPulseAutomationEvent,
   sendSendPulseEmail,
+  sendTelegramDocument,
   sendTelegramMessage,
+  upsertSendPulseContact,
 } from './platform-integrations.js';
+
+test('SendPulse address-book contacts use the documented variable-name map', async () => {
+  const originalFetch = globalThis.fetch;
+  let request;
+  globalThis.fetch = async (url, options) => {
+    request = { url, ...options, payload: JSON.parse(options.body) };
+    // Model the provider contract: the update-variable endpoint uses a different shape.
+    if (Array.isArray(request.payload.emails[0].variables))
+      return Response.json({ error: 'invalid_variables' }, { status: 422 });
+    return Response.json({ result: true });
+  };
+  try {
+    const result = await upsertSendPulseContact(
+      { SENDPULSE_API_KEY: 'unit-test-token', SENDPULSE_ADDRESSBOOK_ID: '123' },
+      {
+        email: ' QA+release@EXAMPLE.COM ',
+        name: 'Grüße — Дякуємо',
+        phone: '+49123456789',
+        lang: 'de',
+        source: '/booking/',
+        formType: 'booking',
+      }
+    );
+    assert.equal(result.ok, true);
+    assert.equal(request.url, 'https://api.sendpulse.com/addressbooks/123/emails');
+    assert.equal(request.method, 'POST');
+    assert.deepEqual(request.payload, {
+      emails: [
+        {
+          email: 'qa+release@example.com',
+          variables: {
+            name: 'Grüße — Дякуємо',
+            phone: '+49123456789',
+            language: 'de',
+            lead_source: '/booking/',
+            form_type: 'booking',
+          },
+        },
+      ],
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
 
 test('SendPulse email encodes UTF-8 HTML and preserves sender and Reply-To', async () => {
   const originalFetch = globalThis.fetch;
@@ -26,8 +73,8 @@ test('SendPulse email encodes UTF-8 HTML and preserves sender and Reply-To', asy
       { SENDPULSE_API_KEY: 'unit-test-token' },
       {
         to: 'customer@example.com',
-        from: 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>',
-        replyTo: 'support@hundesalon-nika.com',
+        from: 'HUNDESALON_NIKA <info@hundesalon-nika.com>',
+        replyTo: 'info@hundesalon-nika.com',
         subject: 'Test',
         text: 'Grüße — Дякуємо',
         html,
@@ -38,8 +85,8 @@ test('SendPulse email encodes UTF-8 HTML and preserves sender and Reply-To', asy
     assert.equal(Buffer.from(payload.email.html, 'base64').toString('utf8'), html);
     assert.equal(payload.email.text, 'Grüße — Дякуємо');
     assert.equal(payload.email.to.length, 1);
-    assert.equal(payload.email.from.email, 'noreply@hundesalon-nika.com');
-    assert.equal(payload.email.reply_to.email, 'support@hundesalon-nika.com');
+    assert.equal(payload.email.from.email, 'info@hundesalon-nika.com');
+    assert.equal(payload.email.reply_to.email, 'info@hundesalon-nika.com');
   } finally {
     globalThis.fetch = originalFetch;
     console.info = originalInfo;
@@ -122,6 +169,57 @@ test('Apps Script HTTP 200 errors remain integration failures', async () => {
   }
 });
 
+for (const [transport, env] of [
+  [
+    'Apps Script',
+    {
+      GOOGLE_APPS_SCRIPT_WEBHOOK_URL: 'https://script.google.com/macros/s/test/exec',
+      GOOGLE_GATEWAY_SECRET: 'unit-test-secret',
+    },
+  ],
+  [
+    'Sheets webhook',
+    {
+      GOOGLE_SHEETS_WEBHOOK_URL: 'https://gateway.example.test/sheets',
+      GOOGLE_GATEWAY_SECRET: 'unit-test-secret',
+    },
+  ],
+  ['Sheets API', { GOOGLE_OAUTH_ACCESS_TOKEN: 'unit-test-token' }],
+]) {
+  test(`${transport} stores formula-like customer input as literal text`, async () => {
+    const originalFetch = globalThis.fetch;
+    const values = ['=1+1', ' \t=SUM(1,2)', 'Name', '+49123456789', 35, false, '2026-10-12'];
+    let calls = 0;
+    globalThis.fetch = async (url, options) => {
+      calls += 1;
+      const payload = JSON.parse(options.body);
+      const row = transport === 'Sheets API' ? payload.values[0] : payload.values;
+      assert.deepEqual(row, ["'=1+1", "' \t=SUM(1,2)", ...values.slice(2)]);
+      if (transport === 'Apps Script') {
+        assert.equal(payload.action, 'sheets');
+      }
+      if (transport === 'Sheets API') {
+        assert.equal(new URL(url).searchParams.get('valueInputOption'), 'USER_ENTERED');
+      }
+      return Response.json({ success: true });
+    };
+
+    try {
+      const result = await appendGoogleSheetRow(env, {
+        spreadsheetId: 'fixture-spreadsheet',
+        sheetName: 'bookings',
+        values,
+      });
+      assert.equal(result.ok, true);
+      assert.equal(calls, 1);
+      assert.equal(values[0], '=1+1');
+      assert.equal(values[1], ' \t=SUM(1,2)');
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+}
+
 test('reads busy intervals through the configured Apps Script gateway', async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (_url, options) => {
@@ -188,6 +286,157 @@ test('Telegram notification posts plain text without logging credentials', async
     assert.equal(result.ok, true);
     assert.match(request.url, /api\.telegram\.org\/bot/);
     assert.equal(JSON.parse(request.options.body).text, 'New request');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Telegram notification retries a temporary provider failure once', async () => {
+  const originalFetch = globalThis.fetch;
+  let attempts = 0;
+  globalThis.fetch = async () => {
+    attempts += 1;
+    return attempts === 1
+      ? Response.json({ ok: false }, { status: 503 })
+      : Response.json({ ok: true, result: { message_id: 4 } });
+  };
+
+  try {
+    const result = await sendTelegramMessage(
+      { SITE_NOTIFICATIONS_ENABLED: 'true', TELEGRAM_BOT_TOKEN: 'unit-test-token', TELEGRAM_CHAT_ID: '-100123' },
+      { text: 'retry test' }
+    );
+    assert.equal(result.ok, true);
+    assert.equal(attempts, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Telegram personal-support notification uses its dedicated forum topic', async () => {
+  const originalFetch = globalThis.fetch;
+  let request = null;
+  globalThis.fetch = async (url, options) => {
+    request = { url: String(url), options };
+    return Response.json({ ok: true, result: { message_id: 2 } });
+  };
+
+  try {
+    const result = await sendTelegramMessage(
+      {
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        TELEGRAM_BOT_TOKEN: 'unit-test-token',
+        TELEGRAM_CHAT_ID: '-100123',
+        TELEGRAM_TOPIC_MESSAGES_ID: '42',
+        TELEGRAM_TOPIC_PERSONAL_ID: '77',
+      },
+      { category: 'personal', text: 'Личная консультация' }
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(JSON.parse(request.options.body).message_thread_id, 77);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Telegram personal-support notification prefers the current D1 forum topic', async () => {
+  const originalFetch = globalThis.fetch;
+  let request = null;
+  globalThis.fetch = async (url, options) => {
+    request = { url: String(url), options };
+    return Response.json({ ok: true, result: { message_id: 3 } });
+  };
+
+  try {
+    const result = await sendTelegramMessage(
+      {
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        TELEGRAM_BOT_TOKEN: 'unit-test-token',
+        TELEGRAM_CHAT_ID: '-100123',
+        TELEGRAM_TOPIC_PERSONAL_ID: '77',
+        CHAT_DB: {
+          prepare() {
+            return {
+              bind() {
+                return { first: async () => ({ message_thread_id: 197 }) };
+              },
+            };
+          },
+        },
+      },
+      { category: 'personal', text: 'Личная консультация' }
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(JSON.parse(request.options.body).message_thread_id, 197);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Telegram document notification sends a short-lived HTTPS file URL to the configured topic', async () => {
+  const originalFetch = globalThis.fetch;
+  let request = null;
+  globalThis.fetch = async (url, options) => {
+    if (String(url) === 'https://public.dm.files.1drv.com/temporary-file') {
+      return new Response('original bytes', {
+        headers: { 'Content-Type': 'image/png', 'Content-Length': '14' },
+      });
+    }
+    request = { url: String(url), options };
+    return Response.json({ ok: true, result: { message_id: 3, document: { file_id: 'telegram-file' } } });
+  };
+
+  try {
+    const result = await sendTelegramDocument(
+      {
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        TELEGRAM_BOT_TOKEN: 'unit-test-token',
+        TELEGRAM_CHAT_ID: '-100123',
+        TELEGRAM_TOPIC_MESSAGES_ID: '42',
+      },
+      {
+        documentUrl: 'https://public.dm.files.1drv.com/temporary-file',
+        fileName: 'фото питомца.png',
+        fileSize: 14,
+        mimeType: 'image/png',
+        caption: 'Оригинал из OneDrive',
+      }
+    );
+
+    assert.equal(result.ok, true);
+    assert.match(request.url, /api\.telegram\.org\/bot.*\/sendDocument$/);
+    assert.match(request.options.headers['Content-Type'], /^multipart\/form-data; boundary=/);
+    const payload = await new Response(request.options.body).text();
+    assert.match(payload, /name="chat_id"\r\n\r\n-100123/);
+    assert.match(payload, /name="caption"\r\n\r\nОригинал из OneDrive/);
+    assert.match(payload, /name="message_thread_id"\r\n\r\n42/);
+    assert.match(
+      payload,
+      /filename\*=UTF-8''%D1%84%D0%BE%D1%82%D0%BE%20%D0%BF%D0%B8%D1%82%D0%BE%D0%BC%D1%86%D0%B0\.png/
+    );
+    assert.match(payload, /Content-Type: image\/png/);
+    assert.match(payload, /original bytes/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Telegram document notification rejects a non-HTTPS file URL', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => assert.fail('Telegram must not be contacted');
+  try {
+    const result = await sendTelegramDocument(
+      {
+        SITE_NOTIFICATIONS_ENABLED: 'true',
+        TELEGRAM_BOT_TOKEN: 'unit-test-token',
+        TELEGRAM_CHAT_ID: '-100123',
+      },
+      { documentUrl: 'http://example.test/file.png', caption: 'unsafe' }
+    );
+    assert.equal(result.ok, false);
+    assert.equal(result.skipped, true);
   } finally {
     globalThis.fetch = originalFetch;
   }

@@ -5,8 +5,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
+import { openBingApiAccess } from './lib/bing-api-access.mjs';
 import { getJson, openBingWebmasterSession } from './lib/browser-cdp.mjs';
 import { BING_INDEXNOW_COVERAGE, hasBingApiKey } from './lib/bing-api.mjs';
+import { SITE_HOST } from './lib/bing-wmt.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -111,22 +113,8 @@ try {
   `);
 
   console.log('4/5 Settings / API…');
-  for (const apiPath of ['settings/apiaccess', 'settings/api', 'settings']) {
-    await s.nav(apiPath);
-    const probe = await s.eval(`return { url: location.href, body: (document.body?.innerText||'').slice(0, 300) };`);
-    if (/api|ключ|key|token/i.test(probe.body) && !/не найдено|not found/i.test(probe.body)) break;
-  }
-  report.apiAccess = await s.eval(`
-    const body = document.body?.innerText || '';
-    const gen = clickMatch('generate|создать|create|новый|add key|добавить');
-    await sleep(2000);
-    return {
-      url: location.href,
-      hasApiSection: /api|ключ|key|token/i.test(body),
-      generateClicked: gen,
-      sample: body.slice(0, 700),
-    };
-  `);
+  report.apiAccess = await openBingApiAccess(s, { expectedHost: SITE_HOST });
+  report.apiAccess.success = Boolean(report.apiAccess.hasApiKeyControl);
 
   report.bingApiKeyInDevVars = hasBingApiKey();
 

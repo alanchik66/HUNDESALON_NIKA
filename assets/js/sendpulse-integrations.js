@@ -2,7 +2,6 @@
   'use strict';
 
   const LIVE_CHAT_ID = '6a89e797b7f95e2b6c0cf199';
-  const POPUP_WIDGET_ID = '49f098e8-81bf-4efa-9842-8f2012257c7b';
   const PUBLIC_HOST_RE = /(^|\.)hundesalon-nika\.com$/i;
   const PUBLIC_PREVIEW_RE = /(^|\.)pages\.dev$/i;
   const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
@@ -143,6 +142,10 @@
 
     :host([data-hundesalon-ai-ready='true']) .widget-fab {
       display: none !important;
+    }
+
+    :host([data-hundesalon-ai-ready='true']) {
+      pointer-events: none !important;
     }
 
     .widget-wrapper .widget {
@@ -604,11 +607,7 @@
       }
 
       .widget-toast {
-        pointer-events: none !important;
-      }
-
-      .widget-toast .button-close {
-        pointer-events: auto !important;
+        display: none !important;
       }
     }
   `;
@@ -1112,9 +1111,6 @@
     });
     watchLiveChatTheme();
 
-    loadScript('https://static.sppopups.com/assets/loader.js', {
-      'data-chats-widget-id': POPUP_WIDGET_ID,
-    });
   };
 
   const runWhenIdle = () => {

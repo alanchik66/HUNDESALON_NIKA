@@ -2,10 +2,37 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { handleMessageDraft } from './draft-service.js';
+import { withResourceQuotaDatabase } from '../../tools/lib/resource-quota-test-db.mjs';
 
 globalThis.caches = {
   default: { match: async () => null, put: async () => {} },
 };
+
+for (const stage of ['network', 'body']) {
+  test(`draft hides sensitive ${stage} errors`, async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => {
+      if (stage === 'network') throw new Error('private-provider-key');
+      return {
+        text: async () => {
+          throw new Error('private-provider-key');
+        },
+      };
+    };
+    try {
+      const response = await handleMessageDraft(
+        context(
+          { messages: [{ role: 'user', content: 'hello' }] },
+          { AI_SERVICE_WEBHOOK_SECRET: 'secret-value', OPENAI_API_KEY: 'key' }
+        )
+      );
+      assert.equal(response.status, 502);
+      assert.doesNotMatch(await response.text(), /private-provider-key/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+}
 
 const origin = 'https://hundesalon-nika.com';
 
@@ -20,7 +47,7 @@ function context(body, env = {}) {
       },
       body: JSON.stringify(body),
     }),
-    env,
+    env: { CHAT_DB: withResourceQuotaDatabase(), ...env },
   };
 }
 
@@ -84,7 +111,7 @@ test('rejects caller-selected providers before any upstream call', async () => {
           messages: [{ role: 'user', content: 'hello' }],
           provider: { only: ['other-provider'] },
         },
-        { AI_SERVICE_WEBHOOK_SECRET: 'secret-value', SERVICE_GATEWAY_API_KEY: 'key' }
+        { AI_SERVICE_WEBHOOK_SECRET: 'secret-value', OPENAI_API_KEY: 'key' }
       )
     );
     assert.equal(response.status, 400);
@@ -94,7 +121,7 @@ test('rejects caller-selected providers before any upstream call', async () => {
   }
 });
 
-test('sends one bounded Gemini request with fallbacks disabled', async () => {
+test('sends one bounded request to the single approved OpenAI model', async () => {
   const originalFetch = globalThis.fetch;
   let captured;
   globalThis.fetch = async (url, options) => {
@@ -107,21 +134,18 @@ test('sends one bounded Gemini request with fallbacks disabled', async () => {
       context(
         {
           messages: [{ role: 'user', content: 'hello' }],
-          model: 'google/gemini-2.5-flash-lite',
+          model: 'gpt-5.6-luna',
           max_tokens: 9999,
           stream: true,
         },
-        { AI_SERVICE_WEBHOOK_SECRET: 'secret-value', SERVICE_GATEWAY_API_KEY: 'key' }
+        { AI_SERVICE_WEBHOOK_SECRET: 'secret-value', OPENAI_API_KEY: 'key' }
       )
     );
     assert.equal(response.status, 200);
-    assert.equal(captured.body.model, 'google/gemini-2.5-flash-lite');
-    assert.deepEqual(captured.body.provider, {
-      only: ['google-ai-studio'],
-      allow_fallbacks: false,
-      require_parameters: true,
-    });
-    assert.equal(captured.body.max_tokens, 320);
+    assert.equal(captured.url, 'https://api.openai.com/v1/chat/completions');
+    assert.equal(captured.body.model, 'gpt-5.6-luna');
+    assert.equal('provider' in captured.body, false);
+    assert.equal(captured.body.max_completion_tokens, 320);
     assert.equal('stream' in captured.body, false);
   } finally {
     globalThis.fetch = originalFetch;

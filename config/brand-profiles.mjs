@@ -3,12 +3,12 @@ export const BRAND_PROFILES = {
   website: 'https://hundesalon-nika.com/',
   // Address pin Leipzig (no GBP place yet). Replace with claimed Business Profile URL after verify.
   googleMaps:
-    'https://www.google.com/maps/search/?api=1&query=HUNDESALON_NIKA%2C+Walter-Markov-Ring+1%2C+04288+Leipzig',
+    'https://www.google.com/maps/search/?api=1&query=HUNDESALON_NIKA%2C+Untere+Eichst%C3%A4dtstra%C3%9Fe+38%2C+04299+Leipzig',
   instagram: 'https://www.instagram.com/hundesalon_nika',
   tiktok: 'https://www.tiktok.com/@hundesalon_nika',
   youtube: 'https://www.youtube.com/@hundesalon_nika',
   telegram: 'https://t.me/hundesalon_nika_support_bot',
-  facebook: 'https://www.facebook.com/profile.php?id=61584574431839',
+  facebook: 'https://www.facebook.com/hundesalonnika/',
   whatsapp: 'https://wa.me/4915172450988',
 };
 
@@ -25,13 +25,13 @@ export const SAME_AS = [
 
 export const NAP = {
   name: 'HUNDESALON_NIKA',
-  street: 'Walter-Markov-Ring 1',
-  postalCode: '04288',
+  street: 'Untere Eichstädtstraße 38',
+  postalCode: '04299',
   locality: 'Leipzig',
   region: 'Sachsen',
   country: 'DE',
   phone: '+49 151 72450988',
-  email: 'support@hundesalon-nika.com',
-  supportEmail: 'support@hundesalon-nika.com',
+  email: 'info@hundesalon-nika.com',
+  supportEmail: 'info@hundesalon-nika.com',
   url: 'https://hundesalon-nika.com/',
 };

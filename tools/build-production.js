@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { transformSync } from 'esbuild';
+import { isProductionSourceOnlyPath } from './lib/production-assets.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -23,6 +24,7 @@ const PRODUCTION_MINIFY_ASSETS = [
   'assets/js/newsletter.js',
   'assets/js/sendpulse-integrations.js',
   'assets/css/ai-chat.css',
+  'assets/css/noto-color-emoji.css',
   'assets/js/ai-chat.js',
   'assets/js/testimonials.js',
 ];
@@ -60,9 +62,34 @@ const copyEntries = [
   'favicon.ico',
   'site.webmanifest',
   'sw.js',
+  'sp-push-worker-fb.js',
   'browserconfig.xml',
   'BingSiteAuth.xml',
 ];
+
+function readIgnoredProductionPaths() {
+  try {
+    const output = execSync(
+      'git ls-files --others -i --exclude-standard -z -- assets 3d-weather-codrops-main/dist-widget',
+      {
+        cwd: root,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      }
+    );
+    return new Set(
+      output
+        .toString('utf8')
+        .split('\0')
+        .filter(Boolean)
+        .map(relativePath => relativePath.replaceAll('\\', '/'))
+    );
+  } catch (error) {
+    throw new Error(`Unable to resolve Git-ignored production inputs: ${error.message}`);
+  }
+}
+
+const ignoredProductionPaths = readIgnoredProductionPaths();
+const skippedProductionPaths = new Set();
 
 function copyRecursive(source, target) {
   if (!fs.existsSync(source)) return;
@@ -77,7 +104,12 @@ function copyRecursive(source, target) {
   }
 
   const relativeSource = path.relative(root, source).replaceAll('\\', '/');
-  if (SKIP_RELATIVE_PATHS.has(relativeSource)) {
+  if (
+    SKIP_RELATIVE_PATHS.has(relativeSource) ||
+    ignoredProductionPaths.has(relativeSource) ||
+    isProductionSourceOnlyPath(relativeSource)
+  ) {
+    skippedProductionPaths.add(relativeSource);
     return;
   }
 
@@ -152,10 +184,33 @@ function assertNoSecretArtifacts(directory) {
 
 ensureLeafletVendorBundle();
 
+// Rebuild maintained weather modules before clearing the previous production bundle.
+// The historical runtime remains a verified vendor/baseline input for rollback.
+const weatherCandidate = path.join(root, 'output', 'weather-production');
+execFileSync(
+  process.execPath,
+  [path.join(root, '3d-weather-codrops-main', 'scripts', 'build.mjs'), '--out-dir', weatherCandidate],
+  { cwd: root, stdio: 'inherit' }
+);
+const weatherManifest = JSON.parse(
+  fs.readFileSync(path.join(root, '3d-weather-codrops-main', 'build-manifest.json'), 'utf8')
+);
+
 emptyDirectory(dist);
 
 for (const entry of copyEntries) {
   copyRecursive(path.join(root, entry), path.join(dist, entry));
+}
+
+for (const entry of weatherManifest.entries) {
+  for (const file of [entry.output, `${entry.output}.map`]) {
+    fs.copyFileSync(path.join(weatherCandidate, file), path.join(dist, '3d-weather-codrops-main', 'dist-widget', file));
+  }
+}
+console.log(`Built ${weatherManifest.entries.length} weather modules from maintained sources.`);
+
+if (skippedProductionPaths.size > 0) {
+  console.log(`Skipped ${skippedProductionPaths.size} local/source-only production asset(s).`);
 }
 
 function minifyProductionAssets(directory) {
@@ -279,7 +334,7 @@ function normalizePublicContact(directory) {
       }
       if (!entry.name.endsWith('.html')) continue;
       const original = fs.readFileSync(fullPath, 'utf8');
-      const next = original.replaceAll('info@hundesalon-nika.com', 'support@hundesalon-nika.com');
+      const next = original.replaceAll('support@hundesalon-nika.com', 'info@hundesalon-nika.com');
       if (next !== original) {
         fs.writeFileSync(fullPath, next, 'utf8');
         htmlFiles += 1;
@@ -330,6 +385,9 @@ function injectSendPulseIntegrations(directory, version) {
   const aiChatStylePattern = /\s*<link\s+[^>]*href="[^"]*ai-chat\.css\?[^"\s]+"[^>]*>/g;
   const liveChatScriptPattern = /\s*<script\s+src="https:\/\/cdn\.pulse\.is\/livechat\/loader\.js"[^>]*><\/script>/g;
   const popupScriptPattern = /\s*<script\s+src="https:\/\/static\.sppopups\.com\/assets\/loader\.js"[^>]*><\/script>/g;
+  const pushScriptPattern =
+    /\s*<script\s+charset="UTF-8"\s+src="(?:https:)?\/\/web\.webpushs\.com\/js\/push\/ad3860c1c56016022bf413f3d7ab36f6_1\.js"\s+async><\/script>/g;
+  const pushHomePages = new Set(['de/index.html', 'en/index.html', 'ru/index.html', 'uk/index.html']);
 
   function walk(dir) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -349,7 +407,8 @@ function injectSendPulseIntegrations(directory, version) {
         .replace(aiChatScriptPattern, '')
         .replace(aiChatStylePattern, '')
         .replace(liveChatScriptPattern, '')
-        .replace(popupScriptPattern, '');
+        .replace(popupScriptPattern, '')
+        .replace(pushScriptPattern, '');
 
       const scriptPrefix = path
         .relative(path.dirname(fullPath), path.join(directory, 'assets/js'))
@@ -357,12 +416,20 @@ function injectSendPulseIntegrations(directory, version) {
       const stylePrefix = path
         .relative(path.dirname(fullPath), path.join(directory, 'assets/css'))
         .replaceAll('\\', '/');
-      const stylesheet = `<link rel="stylesheet" href="${stylePrefix}/ai-chat.css?v=${version}">`;
+      const stylesheet = [
+        `<link rel="stylesheet" href="${stylePrefix}/noto-color-emoji.css?v=${version}">`,
+        `<link rel="stylesheet" href="${stylePrefix}/ai-chat.css?v=${version}">`,
+      ].join('\n');
       const loaders = [
         `<script src="${scriptPrefix}/sendpulse-integrations.js?v=${version}"></script>`,
         `<script src="${scriptPrefix}/ai-chat.js?v=${version}"></script>`,
       ].join('\n');
-      const next = cleaned.replace('</head>', `${stylesheet}\n</head>`).replace('</body>', `\n${loaders}\n</body>`);
+      const pushLoader = pushHomePages.has(relativePath)
+        ? '<script charset="UTF-8" src="//web.webpushs.com/js/push/ad3860c1c56016022bf413f3d7ab36f6_1.js" async></script>'
+        : '';
+      const next = cleaned
+        .replace('</head>', `${stylesheet}${pushLoader ? `\n${pushLoader}` : ''}\n</head>`)
+        .replace('</body>', `\n${loaders}\n</body>`);
       if (next !== original) {
         fs.writeFileSync(fullPath, next, 'utf8');
         htmlFiles += 1;

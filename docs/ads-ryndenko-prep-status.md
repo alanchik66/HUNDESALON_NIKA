@@ -9,18 +9,18 @@ Google re-injected EN copy (incl. *Pet Groomers* / *grooming* / *Pamper*).
 **Purged → soft-save Ctrl+S only → confirmed 0× `/groom/i` in fields + preview.**
 
 ### Final headlines (15)
-Hundesalon Nika · Hundefriseur Leipzig · Hundepflege Leipzig · Fellpflege Leipzig · Katzenfriseur Leipzig · Premium Tierpflege · Online buchen · Walter-Markov-Ring · Hundesalon Leipzig · Tierpflege Leipzig · Katzenpflege Leipzig · Termin buchen · Leipzig Tierpflege · Fellpflege Nika · Salon für Tiere
+Hundesalon Nika · Hundefriseur Leipzig · Hundepflege Leipzig · Fellpflege Leipzig · Katzenfriseur Leipzig · Premium Tierpflege · Online buchen · Untere Eichstädtstraße · Hundesalon Leipzig · Tierpflege Leipzig · Katzenpflege Leipzig · Termin buchen · Leipzig Tierpflege · Fellpflege Nika · Salon für Tiere
 
 ### Long headlines (5)
 - HUNDESALON NIKA – Hundefriseur und Fellpflege in Leipzig. Online buchen.
-- Ruhige Boutique-Pflege für Hunde und Katzen. Walter-Markov-Ring 1.
+- Ruhige Boutique-Pflege für Hunde und Katzen. Untere Eichstädtstraße 38.
 - Premium Tierpflege in Leipzig – Hunde und Katzen. Termin online.
-- Hundesalon Nika: moderne Fellpflege und Baden. Leipzig 04288.
+- Hundesalon Nika: moderne Fellpflege und Baden. Leipzig 04299.
 - Ihr Hundefriseur in Leipzig – ruhig, modern, online buchbar.
 
 ### Descriptions (5)
 - Premium Tierpflege für Hunde und Katzen in Leipzig. Online-Buchung.
-- Hundefriseur und Fellpflege. Walter-Markov-Ring 1, 04288 Leipzig.
+- Hundefriseur und Fellpflege. Untere Eichstädtstraße 38, 04299 Leipzig.
 - Ruhige Boutique-Pflege. Tel. +49 151 72450988.
 - Baden, Fellpflege, moderne Pflege für Hunde und Katzen.
 - HUNDESALON NIKA – Termin online buchen in Leipzig.

@@ -44,6 +44,35 @@ const ENDPOINT_LIMITS = [
     mitigationTimeout: 120,
   },
   {
+    path: '/api/ai-chat',
+    description: `${RULE_PREFIX} POST /api/ai-chat`,
+    requestsPerPeriod: 12,
+    period: 60,
+    mitigationTimeout: 120,
+  },
+  {
+    path: '/api/ai-chat-upload',
+    description: `${RULE_PREFIX} POST /api/ai-chat-upload`,
+    requestsPerPeriod: 4,
+    period: 60,
+    mitigationTimeout: 600,
+  },
+  {
+    path: '/api/ai-chat-gifs',
+    method: 'GET',
+    description: `${RULE_PREFIX} GET /api/ai-chat-gifs`,
+    requestsPerPeriod: 30,
+    period: 60,
+    mitigationTimeout: 60,
+  },
+  {
+    path: '/lg-task',
+    description: `${RULE_PREFIX} POST /lg-task`,
+    requestsPerPeriod: 10,
+    period: 60,
+    mitigationTimeout: 120,
+  },
+  {
     path: '/subscribe',
     description: `${RULE_PREFIX} POST /subscribe`,
     requestsPerPeriod: 5,
@@ -66,7 +95,9 @@ const ENDPOINT_LIMITS = [
   },
 ];
 
-const COMBINED_RULE_DESC = `${RULE_PREFIX} POST protected API endpoints`;
+const COMBINED_RULE_DESC = `${RULE_PREFIX} protected API endpoints`;
+const LEGACY_COMBINED_RULE_PATTERN =
+  /^HUNDESALON: (?:POST )?protected API endpoints(?: \(\d+ req\/\d+s\))?$/;
 const COMBINED_RULE_LIMIT = {
   requestsPerPeriod: 2,
   period: 10,
@@ -91,10 +122,10 @@ async function resolveAuth() {
   return { Authorization: `Bearer ${token}` };
 }
 
-function buildRulePayload({ path, description, requestsPerPeriod, period, mitigationTimeout }) {
+function buildRulePayload({ path, method = 'POST', description, requestsPerPeriod, period, mitigationTimeout }) {
   return {
     description,
-    expression: `(http.request.uri.path eq "${path}" and http.request.method eq "POST")`,
+    expression: `(http.request.uri.path eq "${path}" and http.request.method eq "${method}")`,
     action: 'block',
     action_parameters: {
       response: {
@@ -117,7 +148,7 @@ function buildCombinedRulePayload() {
   return {
     description: COMBINED_RULE_DESC,
     expression:
-      '((http.request.uri.path eq "/sendmail" or http.request.uri.path eq "/message-draft" or http.request.uri.path eq "/seo-generate" or http.request.uri.path eq "/subscribe" or http.request.uri.path eq "/upload" or http.request.uri.path eq "/payment") and http.request.method eq "POST")',
+      '(((http.request.uri.path eq "/sendmail" or http.request.uri.path eq "/message-draft" or http.request.uri.path eq "/seo-generate" or http.request.uri.path eq "/api/ai-chat" or http.request.uri.path eq "/api/ai-chat-upload" or http.request.uri.path eq "/lg-task" or http.request.uri.path eq "/subscribe" or http.request.uri.path eq "/upload" or http.request.uri.path eq "/payment") and http.request.method eq "POST") or (http.request.uri.path eq "/api/ai-chat-gifs" and http.request.method eq "GET"))',
     action: 'block',
     action_parameters: {
       response: {
@@ -138,6 +169,10 @@ function buildCombinedRulePayload() {
 
 function isSingleRulePhaseLimit(error) {
   return /maximum number of rules in the phase .* out of 1/i.test(String(error?.message || error));
+}
+
+function isManagedCombinedRule(rule) {
+  return LEGACY_COMBINED_RULE_PATTERN.test(String(rule?.description || '').trim());
 }
 
 async function getPhaseRuleset(auth, zoneId) {
@@ -163,7 +198,7 @@ async function createPhaseRuleset(auth, zoneId, rules) {
     method: 'POST',
     body: JSON.stringify({
       name: 'HUNDESALON NIKA API rate limits',
-    description: 'Rate limits for Pages Functions (sendmail, subscribe, upload, payment, AI routes)',
+      description: 'Rate limits for Pages Functions (sendmail, subscribe, upload, payment, all paid AI routes)',
       kind: 'zone',
       phase: PHASE,
       rules,
@@ -217,7 +252,7 @@ async function ensureRules(auth, zoneId) {
   const rulesetId = ruleset.id;
   const existingRules = Array.isArray(ruleset.rules) ? ruleset.rules : [];
   const combinedRule = buildCombinedRulePayload();
-  const existingCombined = existingRules.find(rule => rule.description === COMBINED_RULE_DESC);
+  const existingCombined = existingRules.find(isManagedCombinedRule);
   if (existingCombined) {
     if (ruleNeedsUpdate(existingCombined, combinedRule)) {
       await updateRule(auth, zoneId, rulesetId, existingCombined.id, combinedRule);
@@ -297,21 +332,21 @@ function openDashboard() {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const auth = await resolveAuth();
-  const zoneId = await resolveZoneId(auth);
-
-  if (args.status) {
-    await printStatus(auth, zoneId);
-    return;
-  }
-
   try {
+    const auth = await resolveAuth();
+    const zoneId = await resolveZoneId(auth);
+
+    if (args.status) {
+      await printStatus(auth, zoneId);
+      return;
+    }
+
     await ensureRules(auth, zoneId);
     await printStatus(auth, zoneId);
   } catch (error) {
     console.error(`\n${error.message}`);
     console.error('Token needs Zone → WAF Write. Create a custom API token or configure rules in Dashboard.');
-    openDashboard();
+    if (!args.status) openDashboard();
     process.exitCode = 1;
   }
 }

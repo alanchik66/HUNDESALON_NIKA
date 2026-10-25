@@ -7,7 +7,6 @@
 - [[Start_Here]]
 - [[02_Areas/Codex_Control_Center]]
 - [[01_Projects/HUNDESALON_NIKA]]
-- [[01_Projects/HUNDESALON_NIKA_Makler]]
 - [[01_Projects/HUNDESALON_NIKA/Tasks/README]]
 - [[02_Areas/Operations]]
 - [[02_Areas/Codex_Model_Routing]]
@@ -24,8 +23,6 @@
 - [[Templates/decision]]
 - [[Templates/release]]
 - [[Templates/catalog-change]]
-- [[Templates/makler-listing]]
-- [[Templates/makler-conversation]]
 
 ## Intake
 - Use [[00_Inbox/Inbox]] for raw ideas and quick captures.

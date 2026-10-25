@@ -6,7 +6,6 @@ import { exec } from 'node:child_process';
 const site = encodeURIComponent('https://hundesalon-nika.com/');
 const urls = [
   `https://www.bing.com/webmasters/home?siteUrl=${site}`,
-  `https://www.bing.com/webmasters/settings/apiaccess?siteUrl=${site}`,
   `https://www.bing.com/webmasters/urlinspection?siteUrl=${site}`,
   `https://www.bing.com/webmasters/indexnow?siteUrl=${site}`,
 ];
@@ -22,6 +21,7 @@ for (const url of urls) {
   exec(start);
 }
 
-console.log('\nAPI key: Settings → API Access → Generate → npm run bing:set-api-key');
-console.log('Or automated: npm run bing:api:setup (Edge CDP, mail.ru account)');
+console.log('\nAPI key: Settings -> API access -> API Key.');
+console.log('Safe automation: npm run bing:api:setup');
+console.log('Explicit key creation: npm run bing:api:setup -- --generate');
 console.log('Priority: URL Inspection → https://hundesalon-nika.com/de/ → Request indexing');

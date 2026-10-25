@@ -28,7 +28,7 @@ const report = { at: new Date().toISOString(), logoUrls };
 
 report.searchPerformance = await withCdpSession({ port, targetPattern: /bing/i }, async ({ send, evalPage }) => {
   await send('Page.navigate', { url: performanceUrl });
-  await wait(8000);
+  await sleep(8000);
   const page = await evalPage(
     `
     const body = document.body?.innerText || '';
@@ -48,7 +48,7 @@ report.searchPerformance = await withCdpSession({ port, targetPattern: /bing/i }
 
 report.logoSubmit = await withCdpSession({ port, targetPattern: /bing/i }, async ({ send, evalPage }) => {
   await send('Page.navigate', { url: `https://www.bing.com/webmasters/submiturl?siteUrl=${siteQ}` });
-  await wait(7000);
+  await sleep(7000);
   return evalPage(`
     const urls = ${JSON.stringify(logoUrls)};
     const input = document.querySelector('textarea') || document.querySelector('input');
@@ -74,7 +74,7 @@ for (const url of [
     await send('Page.navigate', {
       url: `https://www.bing.com/webmasters/urlinspection?siteUrl=${siteQ}&urlToInspect=${encodeURIComponent(url)}`,
     });
-    await wait(8000);
+    await sleep(8000);
     return evalPage(`
       clickMatch('inspect|провер');
       await sleep(5000);

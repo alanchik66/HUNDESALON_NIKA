@@ -1,12 +1,12 @@
 /**
  * Post-deploy checks: optional CDN purge, then live HTML + GSC audit.
- * Sends deploy notification to Slack via webhook.
+ * Sends deploy notifications to the configured Telegram operations channel.
  */
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { loadDevVars } from './lib/cloudflare-auth.mjs';
-import { siteNotificationsEnabled } from '../functions/_lib/platform-integrations.js';
+import { sendTelegramMessage, siteNotificationsEnabled } from '../functions/_lib/platform-integrations.js';
 import { hasBingApiKey } from './lib/bing-api.mjs';
 
 loadDevVars();
@@ -14,8 +14,6 @@ loadDevVars();
 if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
   delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
 }
-
-const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL || '';
 
 function npmRunner() {
   if (process.env.npm_execpath && existsSync(process.env.npm_execpath)) {
@@ -40,19 +38,19 @@ function childEnv() {
   return env;
 }
 
-async function notifySlack(status, details = '') {
-  if (!SLACK_WEBHOOK_URL || !siteNotificationsEnabled(process.env)) return;
+async function notifyTelegram(status, details = '') {
+  if (!siteNotificationsEnabled(process.env)) return;
   const ok = status === 'success';
-  const emoji = ok ? ':white_check_mark:' : ':x:';
-  const title = ok ? 'Деплой успешно завершен' : 'Ошибка деплоя';
-  const text = `${emoji} *${title}* — hundesalon-nika.com\n${details}\n_${new Date().toISOString()}_`;
+  const title = ok ? '✅ Деплой успешно завершён' : '⚠️ Ошибка post-deploy проверки';
+  const text = `${title} — hundesalon-nika.com\n${details}\n${new Date().toISOString()}`;
   try {
-    await fetch(SLACK_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
-    });
-  } catch { /* silent */ }
+    const result = await sendTelegramMessage(process.env, { text, category: 'messages' });
+    if (!result?.ok) {
+      console.error('[post-deploy] Telegram notification was not accepted', JSON.stringify({ status: result?.status || 0 }));
+    }
+  } catch (error) {
+    console.error('[post-deploy] Telegram notification failed', String(error?.name || 'Error').slice(0, 80));
+  }
 }
 
 function runNpm(script, { optional = false } = {}) {
@@ -86,8 +84,8 @@ try {
   }
   await runNpm('google:gsc:audit');
   await runNpm('check:message-draft', { optional: true });
-  await notifySlack('success', 'CDN очищен, live HTML в норме, IndexNow и аудит GSC выполнены.');
+  await notifyTelegram('success', 'CDN очищен, live HTML в норме, IndexNow и аудит GSC выполнены.');
 } catch (error) {
-  await notifySlack('failed', `Детали: ${error.message}`);
+  await notifyTelegram('failed', `Этап проверки: ${String(error.message || 'неизвестная ошибка').slice(0, 240)}`);
   throw error;
 }

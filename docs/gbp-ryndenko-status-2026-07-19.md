@@ -9,7 +9,7 @@
 |------|--------|
 | Name | **HUNDESALON_NIKA** |
 | Category | Tierfriseur |
-| Address | Walter-Markov-Ring 1, 04288 Leipzig, Deutschland |
+| Address | Untere Eichstädtstraße 38, 04299 Leipzig, Deutschland |
 | Phone | +49 151 72450988 |
 | Website | https://hundesalon-nika.com/ (→ /de/) |
 | Hours | Mo–Fr **09:00–21:00**, Sa–So **geschlossen** |
@@ -31,7 +31,7 @@
 | ↳ Facebook | `https://www.facebook.com/profile.php?id=61584574431839` |
 | ↳ TikTok | `https://www.tiktok.com/@hundesalon_nika` |
 | Leistungen link | `https://hundesalon-nika.com/de/prays-list.html` |
-| Standort | Walter-Markov-Ring 1 |
+| Standort | Untere Eichstädtstraße 38 |
 | Öffnungszeiten | Mo–Fr 09:00–21:00, Sa–So geschlossen |
 | Planung | Nur mit Termin |
 | Serviceoptionen | Vor Ort; Sprachen DE/EN/RU/UK; keine Outdoor-Dienste |

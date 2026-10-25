@@ -14,7 +14,7 @@ const routes = [
 ];
 const reports = [];
 const server = await startStaticTestServer();
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
 
 try {
   for (const route of routes) {
@@ -27,9 +27,8 @@ try {
     await page.goto(`${server.baseUrl}${route}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
     // The universal QR chooser has no locale, so site-shell intentionally omits its localized header.
-    const weatherHostRole = route === '/reviews.html'
-      ? null
-      : await page.locator('.header-weather-widget').getAttribute('role');
+    const weatherHostRole =
+      route === '/reviews.html' ? null : await page.locator('.header-weather-widget').getAttribute('role');
     if (route !== '/reviews.html') {
       assert.equal(weatherHostRole, 'group', `${route}: the named weather widget must expose a group role`);
     }

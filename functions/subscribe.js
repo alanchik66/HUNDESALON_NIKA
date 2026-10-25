@@ -1,4 +1,11 @@
-import { assertAllowedOrigin, enforceRateLimit, jsonResponse } from './_lib/http-security.js';
+import {
+  assertAllowedOrigin,
+  enforceRateLimit,
+  isRequestBodyTooLarge,
+  jsonResponse,
+  readFormDataBody,
+  readJsonBody,
+} from './_lib/http-security.js';
 import {
   appendGoogleSheetRow,
   cleanText,
@@ -12,8 +19,9 @@ import {
 } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
 
-const DEFAULT_FROM = 'HUNDESALON_NIKA <noreply@hundesalon-nika.com>';
+const DEFAULT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const DEFAULT_ADMIN_EMAILS = [];
+const MAX_REQUEST_BODY_BYTES = 16 * 1024;
 
 const COPY = {
   de: 'Danke. Ihre Anmeldung wurde gespeichert.',
@@ -90,9 +98,17 @@ export async function onRequest(context) {
   }
 
   const contentType = request.headers.get('Content-Type') || '';
-  const body = contentType.includes('application/json')
-    ? await request.json().catch(() => ({}))
-    : Object.fromEntries((await request.formData().catch(() => new FormData())).entries());
+  let body;
+  try {
+    body = contentType.includes('application/json')
+      ? await readJsonBody(request, MAX_REQUEST_BODY_BYTES)
+      : Object.fromEntries((await readFormDataBody(request, MAX_REQUEST_BODY_BYTES)).entries());
+  } catch (error) {
+    if (isRequestBodyTooLarge(error)) {
+      return jsonResponse({ success: false, message: 'Payload too large' }, 413, originCheck.origin);
+    }
+    return jsonResponse({ success: false, message: 'Invalid request body' }, 400, originCheck.origin);
+  }
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
     return jsonResponse({ success: false, message: 'Invalid request body' }, 400, originCheck.origin);
   }
@@ -114,8 +130,8 @@ export async function onRequest(context) {
   const createdAt = new Date().toISOString();
   const requestId = crypto.randomUUID();
   const supportReplyTo =
-    getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') || getEnvValue(env, 'SUPPORT_EMAIL') || 'support@hundesalon-nika.com';
-  const clientEmailFrom = getEnvValue(env, 'CLIENT_EMAIL_FROM') || 'HUNDESALON_NIKA <support@hundesalon-nika.com>';
+    getEnvValue(env, 'SUPPORT_REPLY_TO_EMAIL') || getEnvValue(env, 'SALON_EMAIL') || 'info@hundesalon-nika.com';
+  const clientEmailFrom = getEnvValue(env, 'CLIENT_EMAIL_FROM') || 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
   const adminRecipients = uniqueEmailList(getEnvList(env, 'ADMIN_NOTIFICATION_EMAILS', DEFAULT_ADMIN_EMAILS.join(',')));
 
   const sheetResult = await runIntegration('sheet persistence', () =>

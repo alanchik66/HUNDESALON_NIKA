@@ -21,7 +21,7 @@ const expectedCategoryIds = [
   'ru-additional-services',
   'ru-important-information',
 ];
-const expectedCatalogHash = '584f3e425459a923a2c06ca009500f5738ab5db50b1046f4f84175b9f52e99ce';
+const expectedCatalogHash = 'bf1a9da8894b0096b26627d33b846a31f6b410c4a12760dce8d389120859a4a7';
 
 const loadRussianCatalog = () => {
   const context = vm.createContext({ window: {} });
@@ -48,6 +48,26 @@ test('Russian price catalog keeps its public output stable', () => {
   assert.equal(digest, expectedCatalogHash, `Russian price catalog snapshot changed: ${digest}`);
 });
 
+const nailTrimLabels = {
+  ru: 'Подстригание когтей',
+  de: 'Krallenschneiden',
+  en: 'Nail trimming',
+  uk: 'Підстригання кігтів',
+};
+
+test('nail trimming has one transparent 15 euro price in every locale', () => {
+  for (const lang of ['ru', 'de', 'en', 'uk']) {
+    const context = vm.createContext({ window: {} });
+    for (const relativePath of [...sourceFiles, 'assets/js/price-page-locales.js', 'assets/js/price-booking.js']) {
+      vm.runInContext(fs.readFileSync(path.join(root, relativePath), 'utf8'), context, { filename: relativePath });
+    }
+    const category = context.window.PriceBookingCatalog.build(lang).getCategory('ru-additional-services');
+    const nailTrim = category.services[0];
+    assert.equal(nailTrim.label, nailTrimLabels[lang]);
+    assert.equal(Number(nailTrim.price.match(/\d+/u)?.[0]), 15);
+  }
+});
+
 const puppyLabels = {
   ru: 'Первый груминг щенка',
   de: 'Welpen-Eingewöhnung',
@@ -55,6 +75,7 @@ const puppyLabels = {
   uk: 'Перший грумінг цуценяти',
 };
 const puppyPrices = { ru: 'от 50 €', de: 'ab 50 €', en: 'from €50', uk: 'від 50 €' };
+const bathLabels = { ru: 'Купание + гигиенический уход', de: 'Baden + Hygienepflege', en: 'Bath + hygiene care', uk: 'Купання + гігієнічний догляд' };
 const dogIds = expectedCategoryIds.slice(0, 7);
 
 const puppyCarePatterns = {
@@ -99,6 +120,7 @@ for (const lang of ['ru', 'de', 'en', 'uk']) {
 
       for (const breed of category.breeds) {
         const services = catalog.getServices(category.id, breed.id);
+        assert.equal(services.filter(service => service.label.startsWith(bathLabels[lang])).length, 1, `${breed.label}: bath and hygiene care`);
         assert.equal(services.filter(service => service.key === 'puppy-intro').length, 1, breed.label);
         const quote = catalog.resolveQuote(category.id, breed.id, puppy.id);
         assert.equal(quote.price, puppyPrices[lang], breed.label);
@@ -106,7 +128,7 @@ for (const lang of ['ru', 'de', 'en', 'uk']) {
         if (category.id === 'ru-short-coat') {
           const sizeIndex = breed.index < 5 ? 0 : breed.index < 16 ? 1 : breed.index < 24 ? 2 : 3;
           assert.equal(services.length, 2, 'one size-specific care option plus puppy grooming');
-          assert.equal(services[0].label, ['XS', 'S', 'M', 'L'][sizeIndex]);
+          assert.equal(services[0].label, bathLabels[lang]);
           assert.equal(services[0].price, category.services[sizeIndex].price);
         }
       }

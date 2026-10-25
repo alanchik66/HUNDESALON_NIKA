@@ -60,6 +60,7 @@ agent-transcripts/
 .roo/
 
 # Vendored or duplicate repositories that do not belong to this site's graph
+Python/
 Windows-MCP/
 node_modules.bak/
 node_modules.broken/

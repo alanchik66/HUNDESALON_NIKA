@@ -47,7 +47,13 @@
       decidedAt: new Date().toISOString(),
       version: 1,
     };
-    localStorage.setItem(CONSENT_KEY, JSON.stringify(consent));
+    // Keep the choice for this page when browser storage is blocked or full.
+    window.__hundesalonCookieConsent = consent;
+    try {
+      localStorage.setItem(CONSENT_KEY, JSON.stringify(consent));
+    } catch {
+      // The banner and consent event must still respond to the user's choice.
+    }
     window.dispatchEvent(new CustomEvent('hundesalon:cookie-consent', { detail: consent }));
   };
 

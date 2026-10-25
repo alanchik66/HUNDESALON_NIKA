@@ -6,8 +6,8 @@
 
 ```text
 /                    → редирект на /de/ (через index + _redirects)
-/de/  en/  ru/  uk/  → по 19 страниц на локаль = 76 URL в sitemap
-/de/blog/*.html      → 4 статьи × 4 языка
+/de/  en/  ru/  uk/  → страницы четырёх локалей; актуальные URL в sitemap.xml
+/{de,en,ru,uk}/blog/ → локализованные статьи
 assets/              → CSS, JS, изображения, favicon
 functions/           → sendmail, message-draft, seo-generate (Workers)
 ```
@@ -57,14 +57,14 @@ functions/           → sendmail, message-draft, seo-generate (Workers)
 - **Bing**: `msvalidate.01` + `BingSiteAuth.xml`
 - **IndexNow**: `indexnow-key.txt`, sitemap + logo assets (apex + www)
 - **Logo для Bing**: `/favicon.ico`, JSON-LD `search-logo-clear-512.png` — Bing **не** позволяет загрузить лого в панели (глобус в шапке — стандарт Bing); иконка в выдаче берётся с сайта
-- **Bing Performance**: раздел Bing Webmaster для видимости сайта; `npm run bing:ai-performance`
-- **Sitemap**: `sitemap.xml` (76 URL)
+- **Bing Performance**: раздел Bing Webmaster для видимости сайта; `npm run bing:performance`
+- **Sitemap**: `sitemap.xml` — актуальный список индексируемых URL
 
 ## Проверки (регулярно)
 
 ```bash
 npm run check:links        # локальные ссылки в HTML
-npm run check:live-crawl   # все 76 URL на проде
+npm run check:live-crawl   # URL из sitemap на проде
 npm run check:live-html    # favicon, canonical на главных
 npm run validate           # lint + links + project
 ```

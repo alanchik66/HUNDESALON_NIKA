@@ -1,7 +1,7 @@
 (function initPricePage(global) {
   const catalog = global.PricePageCatalog;
   if (!catalog) return;
-
+  const getBreedTokenScore = global.PriceBookingCatalog.tokenScore;
   const root = document.querySelector('[data-price-page]') || document.querySelector('body.price-page .container.page-offset-top');
   const modal = document.querySelector('[data-price-modal]');
 
@@ -15,6 +15,44 @@
   const locale = catalog.locales[lang] || catalog.locales.en;
   const sourceCategories = catalog.categoriesByLocale?.[lang] || catalog.categories;
   const bookingCatalog = global.PriceBookingCatalog?.build?.(lang) || null;
+  const breedPhotoCopy = {
+    de: {
+      loading: 'Foto wird geladen',
+      unavailable: 'Kein eindeutiges Rassefoto gefunden',
+      source: 'Quelle: Wikimedia-Projekte',
+      generated: 'Illustration nach Rassestandard',
+      viewSource: 'Bildquelle und Lizenz',
+      sourceShort: 'Quelle',
+      creditLabel: 'Foto',
+    },
+    en: {
+      loading: 'Loading photo',
+      unavailable: 'No verified breed photo found',
+      source: 'Source: Wikimedia projects',
+      generated: 'Illustration based on the breed standard',
+      viewSource: 'Photo source and licence',
+      sourceShort: 'Source',
+      creditLabel: 'Photo',
+    },
+    ru: {
+      loading: 'Загружаем фотографию',
+      unavailable: 'Точная фотография породы не найдена',
+      source: 'Источник: проекты Wikimedia',
+      generated: 'Иллюстрация по стандарту породы',
+      viewSource: 'Источник и лицензия фото',
+      sourceShort: 'Источник',
+      creditLabel: 'Фото',
+    },
+    uk: {
+      loading: 'Завантажуємо фотографію',
+      unavailable: 'Точне фото породи не знайдено',
+      source: 'Джерело: проєкти Wikimedia',
+      generated: 'Ілюстрація за стандартом породи',
+      viewSource: 'Джерело та ліцензія фото',
+      sourceShort: 'Джерело',
+      creditLabel: 'Фото',
+    },
+  }[lang];
   const escapeHtml = value =>
     String(value)
       .replaceAll('&', '&amp;')
@@ -34,13 +72,11 @@
   };
 
   const sectionGroups = [
-    { key: 'small', sourceKeys: ['small'] },
-    { key: 'medium', sourceKeys: ['medium'] },
-    {
-      key: 'large',
-      sourceKeys: ['large', 'cats', 'smallAnimals'],
-      layout: 'category-row',
-    },
+    { key: 'small', sourceKeys: ['small'], grid: 'five' },
+    { key: 'medium', sourceKeys: ['medium'], grid: 'five' },
+    { key: 'large', sourceKeys: ['large'], grid: 'five' },
+    { key: 'giant', sourceKeys: ['giant'], grid: 'five' },
+    { key: 'cats-animals', sourceKeys: ['cats', 'smallAnimals'], layout: 'category-row', grid: 'four' },
     {
       key: 'additional',
       sourceKeys: ['additional', 'important'],
@@ -49,6 +85,122 @@
     },
     { key: 'other', sourceKeys: ['other'] },
   ];
+  const categoryNavigationKeys = ['small', 'medium', 'large', 'giant', 'cats', 'smallAnimals'];
+  const DOG_SIZE_SECTION_SELECTOR = ':is([data-price-section="small"], [data-price-section="medium"], [data-price-section="large"], [data-price-section="giant"])';
+  const CAT_ANIMALS_SECTION_SELECTOR = '[data-price-section="cats-animals"]';
+  const searchFilterCopy = ({
+    de: {
+      label: 'Suchfilter',
+      animal: 'Tierart',
+      allAnimals: 'Alle Tiere',
+      dog: 'Hunde',
+      cat: 'Katzen',
+      smallAnimals: 'Kleintiere',
+      weight: 'Gewicht',
+      anyWeight: 'Jedes Gewicht',
+      small: 'Bis 6 kg',
+      medium: '6–15 kg',
+      large: '15‑30 kg',
+      giant: 'Ab 30 kg',
+      coat: 'Felltyp',
+      anyCoat: 'Alle Felltypen',
+      long: 'Langhaar',
+      curly: 'Pudel- und Lockenfell',
+      short: 'Kurzhaar',
+      wire: 'Rauhaar',
+      double: 'Doppelfell',
+      special: 'Rex, draht- oder haarlos',
+      results: 'Rassen gefunden',
+      reset: 'Alles zurücksetzen',
+    },
+    en: {
+      label: 'Search filters',
+      animal: 'Animal',
+      allAnimals: 'All animals',
+      dog: 'Dogs',
+      cat: 'Cats',
+      smallAnimals: 'Small animals',
+      weight: 'Weight',
+      anyWeight: 'Any weight',
+      small: 'Up to 6 kg',
+      medium: '6–15 kg',
+      large: '15‑30 kg',
+      giant: '30 kg and over',
+      coat: 'Coat type',
+      anyCoat: 'Any coat',
+      long: 'Long-haired',
+      curly: 'Poodle and curly coats',
+      short: 'Short-haired',
+      wire: 'Wire-haired',
+      double: 'Double coat',
+      special: 'Rex, wire-haired or hairless',
+      results: 'Breeds found',
+      reset: 'Reset all',
+    },
+    ru: {
+      label: 'Фильтры поиска',
+      animal: 'Вид животного',
+      allAnimals: 'Все животные',
+      dog: 'Собаки',
+      cat: 'Кошки',
+      smallAnimals: 'Мелкие животные',
+      weight: 'Вес',
+      anyWeight: 'Любой вес',
+      small: 'До 6 кг',
+      medium: '6–15 кг',
+      large: '15‑30 кг',
+      giant: 'От 30 кг',
+      coat: 'Тип шерсти',
+      anyCoat: 'Любой тип',
+      long: 'Длинношёрстные',
+      curly: 'Пудельная и кудрявая шерсть',
+      short: 'Короткошёрстные',
+      wire: 'Жёсткошёрстные',
+      double: 'Двойная шерсть',
+      special: 'Рексовые, жёсткие или бесшёрстные',
+      results: 'Найдено пород',
+      reset: 'Сбросить всё',
+    },
+    uk: {
+      label: 'Фільтри пошуку',
+      animal: 'Вид тварини',
+      allAnimals: 'Усі тварини',
+      dog: 'Собаки',
+      cat: 'Коти',
+      smallAnimals: 'Дрібні тварини',
+      weight: 'Вага',
+      anyWeight: 'Будь-яка вага',
+      small: 'До 6 кг',
+      medium: '6–15 кг',
+      large: '15‑30 кг',
+      giant: 'Від 30 кг',
+      coat: 'Тип шерсті',
+      anyCoat: 'Будь-який тип',
+      long: 'Довгошерсті',
+      curly: 'Пудельна та кучерява шерсть',
+      short: 'Короткошерсті',
+      wire: 'Жорсткошерсті',
+      double: 'Подвійна шерсть',
+      special: 'Рексові, жорсткі або безшерсті',
+      results: 'Знайдено порід',
+      reset: 'Скинути все',
+    },
+  })[lang];
+  const renderSearchFilterOptions = options => options
+    .map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`)
+    .join('');
+  const getCoatFilterOptions = animalType => {
+    const coatKeys = ({
+      dog: ['short', 'wire', 'long', 'curly', 'double'],
+      cat: ['short', 'long'],
+      smallAnimals: [],
+      all: ['short', 'wire', 'special', 'long', 'curly', 'double'],
+    })[animalType] || [];
+    return [
+      ['all', searchFilterCopy.anyCoat],
+      ...coatKeys.map(key => [key, searchFilterCopy[key]]),
+    ];
+  };
 
   const createCategoryViews = () => {
     const views = [];
@@ -89,6 +241,193 @@
 
   const categoryViews = createCategoryViews();
 
+  const normalizePhotoName = value => String(value || '')
+    .normalize('NFKD')
+    .toLocaleLowerCase()
+    .replace(/\p{M}+/gu, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+  const animalPhotoData = global.AnimalBreedPhotoData || {};
+  const animalPhotoEntries = animalPhotoData.entriesByKey || {};
+  const getAnimalPhotoEntry = key => {
+    const entry = key ? animalPhotoEntries[key] : null;
+    const src = entry?.localAsset || entry?.src;
+    return entry && src ? { key, ...entry, src } : null;
+  };
+  const getAnimalPhotoRecord = (category, displayedName, filteredIndex, sourceIndex) => {
+    const resolvedIndex = Number.isInteger(sourceIndex) ? sourceIndex : filteredIndex;
+    const sourceCategoryId = category.sourceId || category.id;
+    const breedKey = category.breedKeys?.[resolvedIndex] || '';
+    const metadata = category.breedMetadata?.[lang]?.[resolvedIndex]
+      || category.breedMetadata?.[lang]?.[filteredIndex]
+      || null;
+    const lookupKeys = [
+      animalPhotoData.keyByBreedKey?.[breedKey],
+      animalPhotoData.keyByMetadataId?.[metadata?.id],
+      animalPhotoData.keyByMetadataId?.[`cat:${metadata?.id || ''}`],
+      animalPhotoData.keyByCategoryIndex?.[`${sourceCategoryId}:${resolvedIndex}`],
+    ];
+    for (const key of lookupKeys) {
+      const entry = getAnimalPhotoEntry(key);
+      if (entry) return entry;
+    }
+
+    return Object.entries(animalPhotoEntries)
+      .map(([key, entry]) => ({ key, ...entry, src: entry.localAsset || entry.src }))
+      .find(entry => entry.src && (
+        (breedKey && entry.breedKey === breedKey)
+        || (metadata?.id && entry.metadataId === metadata.id)
+        || (entry.categoryId === sourceCategoryId && entry.sourceIndex === resolvedIndex)
+        || (entry.kind === category.animalType && normalizePhotoName(entry.name) === normalizePhotoName(displayedName))
+      )) || null;
+  };
+  const getPhotoAttribution = photo => {
+    if (!photo) return '';
+    if (photo.sourceType === 'generated' || String(photo.exactness || '').startsWith('illustrative')) {
+      return breedPhotoCopy.generated;
+    }
+    return [photo.author, photo.license].filter(Boolean).join(' · ') || breedPhotoCopy.source;
+  };
+  const renderAnimalPhotoThumbnail = (photo, className) => photo
+    ? `<span class="${className}"><img src="${escapeHtml(photo.src)}" alt="" width="72" height="54" loading="lazy" decoding="async" /></span>`
+    : '';
+  const getBreedPhotoSubject = (category, displayedName, filteredIndex, sourceIndex) => {
+    const localPhoto = getAnimalPhotoRecord(category, displayedName, filteredIndex, sourceIndex);
+    if (!localPhoto) return null;
+    return {
+      title: displayedName,
+      language: lang,
+      kind: localPhoto.kind,
+      fciNumber: localPhoto.fciNumber || null,
+      photoKey: localPhoto.key,
+    };
+  };
+  const requestBreedPhoto = async subject => getAnimalPhotoEntry(subject?.photoKey || '');
+
+  const breedPhotoPreview = document.createElement('aside');
+  breedPhotoPreview.className = 'price-breed-photo';
+  breedPhotoPreview.hidden = true;
+  breedPhotoPreview.setAttribute('aria-live', 'polite');
+  breedPhotoPreview.innerHTML = `
+    <div class="price-breed-photo__media">
+      <img class="price-breed-photo__image" alt="" decoding="async" />
+      <span class="price-breed-photo__status"></span>
+    </div>
+    <strong class="price-breed-photo__title"></strong>
+    <span class="price-breed-photo__source">${escapeHtml(breedPhotoCopy.source)}</span>`;
+  document.body.append(breedPhotoPreview);
+  const breedPhotoImage = breedPhotoPreview.querySelector('.price-breed-photo__image');
+  const breedPhotoStatus = breedPhotoPreview.querySelector('.price-breed-photo__status');
+  const breedPhotoTitle = breedPhotoPreview.querySelector('.price-breed-photo__title');
+  const breedPhotoSource = breedPhotoPreview.querySelector('.price-breed-photo__source');
+  let breedPhotoTimer = null;
+  let breedPhotoRequestId = 0;
+  const hideBreedPhoto = () => {
+    window.clearTimeout(breedPhotoTimer);
+    breedPhotoRequestId += 1;
+    breedPhotoPreview.hidden = true;
+    breedPhotoPreview.classList.remove('price-breed-photo--loading');
+    breedPhotoImage?.removeAttribute('src');
+  };
+  const positionBreedPhoto = option => {
+    const menu = option.closest('.price-card__breed-menu');
+    if (!menu) return false;
+    const menuRect = menu.getBoundingClientRect();
+    const previewRect = breedPhotoPreview.getBoundingClientRect();
+    const edge = 12;
+    const gap = 14;
+    const leftSpace = menuRect.left - edge - gap;
+    const rightSpace = window.innerWidth - menuRect.right - edge - gap;
+    if (Math.max(leftSpace, rightSpace) < previewRect.width) return false;
+    const menuOnRight = menuRect.left > window.innerWidth / 2;
+    const left = menuOnRight
+      ? (leftSpace >= previewRect.width ? menuRect.left - previewRect.width - gap : menuRect.right + gap)
+      : (rightSpace >= previewRect.width ? menuRect.right + gap : menuRect.left - previewRect.width - gap);
+    const top = Math.max(edge, Math.min(menuRect.top, window.innerHeight - previewRect.height - edge));
+    breedPhotoPreview.style.left = `${Math.round(left)}px`;
+    breedPhotoPreview.style.top = `${Math.round(top)}px`;
+    return true;
+  };
+  const showBreedPhoto = option => {
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    window.clearTimeout(breedPhotoTimer);
+    breedPhotoTimer = window.setTimeout(async () => {
+      const title = option.dataset.priceBreedPhotoTitle || '';
+      if (!title) return;
+      const subject = {
+        title,
+        language: option.dataset.priceBreedPhotoLanguage || 'en',
+        kind: option.dataset.priceBreedPhotoKind || 'dog',
+        fciNumber: Number(option.dataset.priceBreedPhotoFci) || null,
+        photoKey: option.dataset.priceBreedPhotoKey || '',
+      };
+      const requestId = ++breedPhotoRequestId;
+      const label = option.dataset.priceBreedLabel || option.textContent.trim();
+      breedPhotoTitle.textContent = label;
+      breedPhotoImage.alt = label;
+      breedPhotoSource.textContent = breedPhotoCopy.source;
+      breedPhotoImage.removeAttribute('src');
+      breedPhotoStatus.textContent = breedPhotoCopy.loading;
+      breedPhotoPreview.classList.add('price-breed-photo--loading');
+      breedPhotoPreview.hidden = false;
+      if (!positionBreedPhoto(option)) {
+        hideBreedPhoto();
+        return;
+      }
+      const photo = await requestBreedPhoto(subject);
+      if (requestId !== breedPhotoRequestId || breedPhotoPreview.hidden) return;
+      breedPhotoPreview.classList.remove('price-breed-photo--loading');
+      if (!photo?.src) {
+        breedPhotoStatus.textContent = breedPhotoCopy.unavailable;
+        return;
+      }
+      breedPhotoStatus.textContent = '';
+      breedPhotoSource.textContent = getPhotoAttribution(photo);
+      breedPhotoImage.src = photo.src;
+    }, 180);
+  };
+  breedPhotoImage?.addEventListener('error', () => {
+    if (breedPhotoPreview.hidden) return;
+    breedPhotoPreview.classList.remove('price-breed-photo--loading');
+    breedPhotoStatus.textContent = breedPhotoCopy.unavailable;
+    breedPhotoImage.removeAttribute('src');
+  });
+
+  const syncSelectedBreedServices = (card, category, breedIndex) => {
+    const sourceCategoryId = category?.sourceId || category?.id;
+    if (!card || !Number.isInteger(breedIndex)) return;
+    const bookingCategory = bookingCatalog?.getCategory(sourceCategoryId);
+    if (bookingCategory?.source.breedServiceRows || bookingCategory?.source.breedServicePrices) {
+      const breedId = `${sourceCategoryId}:breed:${breedIndex}`;
+      const services = bookingCatalog.getServices(sourceCategoryId, breedId);
+      card.querySelectorAll('[data-price-service-select]').forEach(button => {
+        const hidden = !services.some(service => service.index === Number(button.dataset.priceServiceIndex));
+        button.hidden = hidden;
+        button.classList.toggle('price-card__service-option--breed-hidden', hidden);
+      });
+      for (const service of services) {
+        const button = card.querySelector(`[data-price-service-index="${service.index}"]`);
+        if (!button) continue;
+        button.querySelector('.price-card__service-option-label').innerHTML = renderCurrencyText(service.label);
+        button.querySelector('.price-card__service-option-price').innerHTML = renderCurrencyText(service.price);
+        button.setAttribute('aria-label', `${service.label} — ${service.price}`);
+      }
+      return;
+    }
+    if (sourceCategoryId !== 'ru-short-coat') return;
+    const serviceIndex = bookingCategory?.breeds.find(breed => breed.index === breedIndex)?.serviceIndex;
+    if (!Number.isInteger(serviceIndex)) return;
+
+    card.querySelectorAll('[data-price-service-select]').forEach(button => {
+      const buttonServiceIndex = Number(button.dataset.priceServiceIndex);
+      if (buttonServiceIndex >= 0 && buttonServiceIndex <= 3) {
+        const hidden = buttonServiceIndex !== serviceIndex;
+        button.hidden = hidden;
+        button.classList.toggle('price-card__service-option--breed-hidden', hidden);
+      }
+    });
+  };
+
   const ensurePageShell = () => {
     if (root.querySelector('[data-price-categories]') && root.querySelector('[data-price-hero]')) {
       return root;
@@ -121,8 +460,8 @@
   let savedPriceModalScrollTop = 0;
 
   const syncBreedMenuScrollIndicator = menu => {
-    const track = menu?.querySelector('[data-price-breed-scrollbar]');
-    const thumb = menu?.querySelector('[data-price-breed-scrollbar-thumb]');
+    const track = menu?.parentElement?.querySelector(':scope > [data-price-breed-scrollbar]');
+    const thumb = track?.querySelector('[data-price-breed-scrollbar-thumb]');
     if (!track || !thumb) return;
 
     const hasOverflow = menu.scrollHeight > menu.clientHeight + 1;
@@ -132,6 +471,10 @@
       thumb.style.transform = 'translateY(0)';
       return;
     }
+
+    track.style.top = `${menu.offsetTop + 14}px`;
+    track.style.left = `${menu.offsetLeft + menu.offsetWidth - 14}px`;
+    track.style.height = `${Math.max(0, menu.clientHeight - 28)}px`;
 
     const trackHeight = track.clientHeight;
     if (!trackHeight) return;
@@ -152,12 +495,17 @@
   const showBreedMenuScrollIndicator = menu => {
     if (!menu) return;
     syncBreedMenuScrollIndicator(menu);
+    const track = menu.nextElementSibling?.matches('[data-price-breed-scrollbar]')
+      ? menu.nextElementSibling
+      : null;
     menu.classList.add('price-breed-menu--scrolling');
+    track?.classList.add('price-card__breed-scrollbar--visible');
     if (breedMenuScrollIndicatorTimer) window.clearTimeout(breedMenuScrollIndicatorTimer);
     breedMenuScrollIndicatorTimer = window.setTimeout(() => {
-      if (breedMenuScrollTarget === menu) menu.classList.remove('price-breed-menu--scrolling');
+      menu.classList.remove('price-breed-menu--scrolling');
+      track?.classList.remove('price-card__breed-scrollbar--visible');
       breedMenuScrollIndicatorTimer = null;
-    }, 900);
+    }, 3000);
   };
 
   const setBreedMenuScrollLock = locked => {
@@ -255,6 +603,7 @@
         if (breedMenuScrollTouchHandler) breedMenuScrollTarget.removeEventListener('touchmove', breedMenuScrollTouchHandler);
         if (breedMenuScrollIndicatorScrollHandler) breedMenuScrollTarget.removeEventListener('scroll', breedMenuScrollIndicatorScrollHandler);
         breedMenuScrollTarget.classList.remove('price-breed-menu--scrolling');
+        breedMenuScrollTarget.nextElementSibling?.classList.remove('price-card__breed-scrollbar--visible');
         breedMenuScrollTarget = null;
         breedMenuScrollWheelHandler = null;
         breedMenuScrollTouchHandler = null;
@@ -380,6 +729,26 @@
   if (!cardsRoot || !heroRoot) return;
 
   if (!cardsRoot.id) cardsRoot.id = 'price-categories';
+  let activePriceSection = '';
+
+  const renderCategoryNavigation = () => `
+    <nav class="price-section-navigation nav-main" aria-label="${escapeHtml(locale.heroCategoriesAction || 'View categories')}">
+      ${categoryNavigationKeys.map(sectionKey => `
+        <button
+          type="button"
+          class="price-section-navigation__action filter-btn${sectionKey === activePriceSection ? ' active' : ''}"
+          data-nav-pill="price-categories-action"
+          data-price-section-action="${escapeHtml(sectionKey)}"
+          aria-controls="price-section-${escapeHtml(sectionKey)}"
+          ${sectionKey === activePriceSection ? 'aria-current="true"' : ''}
+        >
+          <span>${escapeHtml(locale.sizeGroupTitles?.[sectionKey] || sectionKey)}</span>
+          <span class="price-section-navigation__action-icon" aria-hidden="true">
+            <span class="site-icon-arrow site-icon-arrow-right"></span>
+          </span>
+        </button>`).join('')}
+    </nav>
+  `;
 
   const renderHero = () => {
     heroRoot.innerHTML = `
@@ -398,9 +767,44 @@
           <div class="price-breed-search" data-price-breed-search>
             <label class="price-breed-search__label" for="price-breed-search-input">${escapeHtml(locale.searchLabel || 'Поиск породы')}</label>
             <div class="price-breed-search__control">
-              <img class="price-breed-search__icon" src="../assets/images/icons/Lupa.png" alt="" width="64" height="64" decoding="async" aria-hidden="true" />
-              <input id="price-breed-search-input" class="price-breed-search__input" type="search" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="price-breed-search-suggestions" aria-expanded="false" data-price-breed-search-input placeholder="${escapeHtml(locale.searchPlaceholder || 'Например, шпиц или пудель')}" />
+              <img class="price-breed-search__icon" src="../assets/images/icons/search.png" alt="" width="64" height="64" decoding="async" aria-hidden="true" />
+              <input id="price-breed-search-input" class="price-breed-search__input" type="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" aria-controls="price-breed-search-suggestions" aria-expanded="false" data-price-breed-search-input placeholder="${escapeHtml(locale.searchPlaceholder || 'Например, шпиц или пудель')}" />
               <button type="button" class="price-breed-search__clear" data-price-breed-search-clear aria-label="${escapeHtml(locale.searchClear || 'Очистить поиск')}" hidden>&times;</button>
+            </div>
+            <div class="price-breed-search__filters" role="group" aria-label="${escapeHtml(searchFilterCopy.label)}" data-price-search-filters>
+              <label class="price-breed-search__filter">
+                <span class="price-breed-search__filter-label">${escapeHtml(searchFilterCopy.animal)}</span>
+                <select class="price-breed-search__filter-select" data-price-search-filter="animal" aria-controls="price-categories price-breed-search-suggestions">
+                  ${renderSearchFilterOptions([
+                    ['all', searchFilterCopy.allAnimals],
+                    ['dog', searchFilterCopy.dog],
+                    ['cat', searchFilterCopy.cat],
+                    ['smallAnimals', searchFilterCopy.smallAnimals],
+                  ])}
+                </select>
+              </label>
+              <label class="price-breed-search__filter">
+                <span class="price-breed-search__filter-label">${escapeHtml(searchFilterCopy.weight)}</span>
+                <select class="price-breed-search__filter-select" data-price-search-filter="weight" aria-controls="price-categories price-breed-search-suggestions">
+                  ${renderSearchFilterOptions([
+                    ['all', searchFilterCopy.anyWeight],
+                    ['small', searchFilterCopy.small],
+                    ['medium', searchFilterCopy.medium],
+                    ['large', searchFilterCopy.large],
+                    ['giant', searchFilterCopy.giant],
+                  ])}
+                </select>
+              </label>
+              <label class="price-breed-search__filter">
+                <span class="price-breed-search__filter-label">${escapeHtml(searchFilterCopy.coat)}</span>
+                <select class="price-breed-search__filter-select" data-price-search-filter="coat" aria-controls="price-categories price-breed-search-suggestions">
+                  ${renderSearchFilterOptions(getCoatFilterOptions('all'))}
+                </select>
+              </label>
+            </div>
+            <div class="price-breed-search__summary">
+              <p class="price-breed-search__result-count" data-price-search-result-count aria-live="polite" aria-atomic="true"></p>
+              <button type="button" class="price-breed-search__reset" data-price-search-reset hidden>${escapeHtml(searchFilterCopy.reset)}</button>
             </div>
             <div class="price-breed-search__suggestions" data-price-breed-search-suggestions hidden>
               <p class="price-breed-search__suggestions-title" data-price-breed-search-suggestions-title>${escapeHtml(locale.searchSuggestionsLabel || 'Possible breeds')}</p>
@@ -410,20 +814,23 @@
           </div>
         </div>
       </div>
-      <div class="price-page-hero__actions">
-        <button
-          type="button"
-          class="price-page-hero__categories-action online-order-pill"
-          data-nav-pill="price-categories-action"
-          data-price-categories-action
-          aria-controls="price-categories"
-        >
-          <span>${escapeHtml(locale.heroCategoriesAction || 'View categories')}</span>
-          <span class="price-page-hero__categories-action-icon" aria-hidden="true">
-            <span class="site-icon-arrow site-icon-arrow-right"></span>
-          </span>
-        </button>
-      </div>
+      <nav class="price-page-hero__actions nav-main" aria-label="${escapeHtml(locale.heroCategoriesAction || 'View categories')}">
+        ${categoryNavigationKeys.map(sectionKey => `
+          <button
+            type="button"
+            class="price-page-hero__categories-action filter-btn${sectionKey === activePriceSection ? ' active' : ''}"
+            data-nav-pill="price-categories-action"
+            data-price-categories-action
+            data-price-section-action="${escapeHtml(sectionKey)}"
+            aria-controls="price-section-${escapeHtml(sectionKey)}"
+            ${sectionKey === activePriceSection ? 'aria-current="true"' : ''}
+          >
+            <span>${escapeHtml(locale.sizeGroupTitles?.[sectionKey] || sectionKey)}</span>
+            <span class="price-page-hero__categories-action-icon" aria-hidden="true">
+              <span class="site-icon-arrow site-icon-arrow-right"></span>
+            </span>
+          </button>`).join('')}
+      </nav>
     `;
   };
 
@@ -488,14 +895,20 @@
   };
 
   const ADDITIONAL_CATEGORY_ID = 'ru-additional-services';
+  const ADDITIONAL_CATEGORY_PHOTO_KEYS = Object.freeze([
+    'dog:labrador retriever:',
+    'cat:british shorthair:',
+    'small-animal:guinea-pig:short:0',
+    'small-animal:rabbit:short:4',
+  ]);
   const IMPORTANT_CATEGORY_ID = 'ru-important-information';
-  const DENTAL_SERVICE_INDEX = 3;
+  const DENTAL_SERVICE_INDEX = 1;
   const DENTAL_MAX_WEIGHT_KG = 6;
   const DENTAL_GROOMING_DISCOUNT_RATE = 0.3;
   const CURRENCY_MINOR_UNITS = 100;
   const isDentalService = service => service?.index === DENTAL_SERVICE_INDEX;
   const roundCurrencyAmount = amount => Math.round((amount + Number.EPSILON) * CURRENCY_MINOR_UNITS) / CURRENCY_MINOR_UNITS;
-  const calculateQuoteAmounts = ({ selectedPrimaryServices, selectedAdditionalServices, dentalWeightValid }) => {
+  const calculateQuoteAmounts = ({ selectedPrimaryServices, selectedAdditionalServices, dentalWeightValid, breedSurcharge = 0 }) => {
     const selectedServices = [...selectedPrimaryServices, ...selectedAdditionalServices];
     const amounts = selectedServices.map(service => parsePriceAmount(service.price));
     const hasRequestPrice = amounts.some(amount => amount === null);
@@ -511,7 +924,10 @@
     const dentalDiscountAmount = dentalDiscountEligible
       ? roundCurrencyAmount(dentalBaseAmount * DENTAL_GROOMING_DISCOUNT_RATE)
       : 0;
-    const totalAmount = roundCurrencyAmount(subtotalAmount - dentalDiscountAmount);
+    const surchargeAmount = selectedServices.length && !hasRequestPrice && Number.isFinite(Number(breedSurcharge))
+      ? roundCurrencyAmount(Number(breedSurcharge))
+      : 0;
+    const totalAmount = roundCurrencyAmount(subtotalAmount - dentalDiscountAmount + surchargeAmount);
 
     return {
       selectedServices,
@@ -519,6 +935,7 @@
       subtotalAmount,
       dentalBaseAmount,
       dentalDiscountAmount,
+      surchargeAmount,
       totalAmount,
     };
   };
@@ -529,27 +946,45 @@
     'ru-spaniels',
     'ru-wire-coat',
     'ru-short-coat',
+    'ru-short-coat-small',
+    'ru-short-coat-medium',
+    'ru-short-coat-large',
+    'ru-double-coat-medium',
+    'ru-double-coat-large',
     'ru-large-dogs',
+    ...sourceCategories.filter(category => category.animalType === 'dog').map(category => category.id),
   ]);
   const additionalServiceIndexesByGroup = {
-    small: [0, 3, 4, 5],
-    medium: [1, 4, 5],
-    large: [2, 4, 5],
-    mixed: [0, 1, 2, 4, 5],
+    small: [0, 1, 2, 3, 4, 5],
+    medium: [0, 2, 4, 5],
+    large: [0, 2, 4, 5],
+    giant: [0, 2, 4, 5],
   };
+  const DESHEDDING_ADDITIONAL_SERVICE_INDEX = 5;
 
   const getAdditionalServices = category => {
     if (!bookingCatalog || !category) return [];
     const sourceCategoryId = category.sourceId || category.id;
     const services = bookingCatalog.getServices(ADDITIONAL_CATEGORY_ID);
-    if (sourceCategoryId === ADDITIONAL_CATEGORY_ID) return services;
+    if (sourceCategoryId === ADDITIONAL_CATEGORY_ID) {
+      // The standalone additional-services card has no size selection, so it only offers universal services.
+      return services.filter(service => [0, 2, 4].includes(service.index));
+    }
+    if (category.animalType === 'cat'
+      || category.animalType === 'smallAnimal'
+      || sourceCategoryId === 'ru-cats-grooming'
+      || sourceCategoryId === 'ru-small-animals') {
+      return services.filter(service => service.index === 0);
+    }
     if (!DOG_CATEGORY_IDS.has(sourceCategoryId)) return [];
     const serviceGroup = category.additionalServiceGroup || category.groupKey;
-    const allowedIndexes = additionalServiceIndexesByGroup[serviceGroup] || [];
-    return services.filter(service => allowedIndexes.includes(service.index));
+    const allowedIndexes = new Set(additionalServiceIndexesByGroup[serviceGroup] || []);
+    if (category.coatType === 'wire') allowedIndexes.delete(DESHEDDING_ADDITIONAL_SERVICE_INDEX);
+    return services.filter(service => allowedIndexes.has(service.index));
   };
 
   const getAdditionalServiceNotes = category => {
+    if (category?.animalType === 'smallAnimal' || (category?.sourceId || category?.id) === 'ru-small-animals') return [];
     const notes = [locale.additionalServicesGeneralNote];
     const groupNote = locale[`additionalServices${category?.groupKey ? `${category.groupKey[0].toUpperCase()}${category.groupKey.slice(1)}` : ''}Note`];
     if (groupNote) notes.unshift(groupNote);
@@ -593,13 +1028,13 @@
             <span class="price-card__badge-count"><span class="price-card__badge-word">${escapeHtml(breedCountText.word)}:</span><span class="price-card__badge-number price-number">${escapeHtml(breedCountText.value)}</span></span>
             <span class="price-card__badge-icon-motion" aria-hidden="true"><span class="price-card__badge-icon"></span></span>
           </button>
-          <div class="price-card__breed-menu" id="${escapeHtml(breedMenuId)}" hidden>
+          <div class="price-card__breed-menu${isAdditionalCategory ? ' price-card__breed-menu--categories' : ''}" id="${escapeHtml(breedMenuId)}" data-custom-scrollbar-host hidden>
             <p class="price-card__breed-menu-title">${escapeHtml(isAdditionalCategory ? locale.additionalCategoryMenuLabel : locale.chooseBreedLabel || locale.cardCountSuffix)}</p>
             <ul class="price-card__breed-list" id="${escapeHtml(breedListId)}" data-price-breed-list></ul>
-            <span class="price-card__breed-scrollbar" data-price-breed-scrollbar aria-hidden="true">
-              <span class="price-card__breed-scrollbar-thumb" data-price-breed-scrollbar-thumb></span>
-            </span>
           </div>
+          <span class="price-card__breed-scrollbar" data-price-breed-scrollbar aria-hidden="true">
+            <span class="price-card__breed-scrollbar-thumb" data-price-breed-scrollbar-thumb></span>
+          </span>
         </div>`;
     const informationPreview = isInformationCategory
       ? locale.informationCardPreview || locale.serviceConditions?.informationLead || ''
@@ -666,10 +1101,44 @@
     if (!category || !list) return;
 
     const allBreeds = category.breeds?.[lang] || category.breeds?.en || [];
-    list.innerHTML = allBreeds
-      .map((item, index) => {
-        const sourceIndex = category.breedIndexes?.[index] ?? index;
-        return `<li><button type="button" class="price-card__breed-option" data-price-breed-select data-price-breed-index="${escapeHtml(sourceIndex)}">${escapeHtml(item)}</button></li>`;
+    const isAdditionalCategory = (category.sourceId || category.id) === ADDITIONAL_CATEGORY_ID;
+    const breedEntries = allBreeds.map((item, index) => ({
+      item,
+      index,
+      sourceIndex: category.breedIndexes?.[index] ?? index,
+    }));
+    if (searchFilterState.sort !== 'default') {
+      breedEntries.sort((left, right) => {
+        const leftMatch = breedSearchMatchById.get(`${category.id}:${left.sourceIndex}`) || {
+          id: `${category.id}:${left.sourceIndex}`,
+          label: left.item,
+          weightValue: Number.POSITIVE_INFINITY,
+        };
+        const rightMatch = breedSearchMatchById.get(`${category.id}:${right.sourceIndex}`) || {
+          id: `${category.id}:${right.sourceIndex}`,
+          label: right.item,
+          weightValue: Number.POSITIVE_INFINITY,
+        };
+        return compareBreedMatches(leftMatch, rightMatch);
+      });
+    }
+    list.innerHTML = breedEntries
+      .map(({ item, index, sourceIndex }) => {
+        const photoSubject = getBreedPhotoSubject(category, item, index, sourceIndex);
+        const photoKey = isAdditionalCategory ? ADDITIONAL_CATEGORY_PHOTO_KEYS[sourceIndex] : photoSubject?.photoKey;
+        const photo = getAnimalPhotoEntry(photoKey);
+        const displayedPhotoSubject = photoSubject || (photoKey ? {
+          title: item,
+          language: lang,
+          kind: 'category',
+          fciNumber: '',
+          photoKey,
+        } : null);
+        const photoAttributes = displayedPhotoSubject
+          ? ` data-price-breed-photo-title="${escapeHtml(displayedPhotoSubject.title)}" data-price-breed-photo-language="${escapeHtml(displayedPhotoSubject.language)}" data-price-breed-photo-kind="${escapeHtml(displayedPhotoSubject.kind)}" data-price-breed-photo-fci="${escapeHtml(displayedPhotoSubject.fciNumber || '')}" data-price-breed-photo-key="${escapeHtml(displayedPhotoSubject.photoKey || '')}"`
+          : '';
+        const credit = getPhotoAttribution(photo);
+        return `<li><button type="button" class="price-card__breed-option" data-price-breed-select data-price-breed-index="${escapeHtml(sourceIndex)}" data-price-breed-label="${escapeHtml(item)}" aria-label="${escapeHtml(item)}"${photoAttributes}>${renderAnimalPhotoThumbnail(photo, 'price-card__breed-option-media')}<span class="price-card__breed-option-copy"><span class="price-card__breed-option-name">${escapeHtml(item)}</span>${credit ? `<span class="price-card__breed-option-credit">${escapeHtml(credit)}</span>` : ''}</span></button></li>`;
       })
       .join('');
     menu.dataset.priceBreedsPopulated = 'true';
@@ -695,6 +1164,16 @@
         <span>${escapeHtml(locale.breedSelectLabel || 'Choose breed')}</span>
         <select data-price-modal-breed></select>
       </label>
+      <figure class="price-category-modal__breed-photo" data-price-modal-breed-photo hidden>
+        <span class="price-category-modal__breed-photo-media">
+          <img data-price-modal-breed-photo-image alt="" width="720" height="540" decoding="async" />
+        </span>
+        <figcaption class="price-category-modal__breed-photo-caption">
+          <strong data-price-modal-breed-photo-name></strong>
+          <span data-price-modal-breed-photo-credit></span>
+          <a data-price-modal-breed-photo-source data-compact-label="${escapeHtml(breedPhotoCopy.sourceShort)}" target="_blank" rel="noopener noreferrer">${escapeHtml(breedPhotoCopy.viewSource)}</a>
+        </figcaption>
+      </figure>
     </div>
     <div class="price-category-modal__selection-controls" data-price-modal-selection-controls>
       <fieldset class="price-category-modal__service-fieldset" data-price-modal-service-fieldset>
@@ -745,10 +1224,21 @@
       <div data-price-modal-service-conditions-booking-slot></div>
     </section>
   `;
-  modalSummary?.closest('.price-category-modal__hero')?.insertAdjacentElement('afterend', modalSelection);
+  const modalHero = modalSummary?.closest('.price-category-modal__hero');
+  modalHero?.insertAdjacentElement('afterend', modalSelection);
   const modalSelectionControls = modalSelection.querySelector('[data-price-modal-selection-controls]');
   const modalSelectionHeader = modalSelection.querySelector('[data-price-modal-selection-header]');
+  const modalContext = document.createElement('div');
+  modalContext.className = 'price-category-modal__context';
+  modalSelection.prepend(modalContext);
+  if (modalHero) modalContext.append(modalHero);
+  modalContext.append(modalSelectionHeader);
   const modalBreedSelect = modalSelection.querySelector('[data-price-modal-breed]');
+  const modalBreedPhoto = modalSelection.querySelector('[data-price-modal-breed-photo]');
+  const modalBreedPhotoImage = modalSelection.querySelector('[data-price-modal-breed-photo-image]');
+  const modalBreedPhotoName = modalSelection.querySelector('[data-price-modal-breed-photo-name]');
+  const modalBreedPhotoCredit = modalSelection.querySelector('[data-price-modal-breed-photo-credit]');
+  const modalBreedPhotoSource = modalSelection.querySelector('[data-price-modal-breed-photo-source]');
   const modalServiceHint = modalSelection.querySelector('[data-price-modal-service-hint]');
   const modalServiceLegend = modalSelection.querySelector('[data-price-modal-service-legend]');
   const modalServiceFieldset = modalSelection.querySelector('[data-price-modal-service-fieldset]');
@@ -839,8 +1329,10 @@
   registrationModal.setAttribute('aria-hidden', 'true');
   registrationModal.innerHTML = `
     <div class="modal-content client-registration-modal__content">
-      <header class="client-registration-modal__header">
+      <div class="client-registration-modal__controls">
         <button type="button" class="modal-close client-registration-modal__close" data-client-registration-close aria-label="${escapeHtml(locale.closeLabel || 'Close')}" >&times;</button>
+      </div>
+      <header class="client-registration-modal__header">
         <p class="section-kicker" data-client-registration-kicker></p>
         <h2 class="section-title" data-client-registration-title></h2>
         <p class="client-registration-modal__lead" data-client-registration-lead></p>
@@ -1046,12 +1538,12 @@
 
   const getPetSpecies = (category, selectedBreed) => {
     const sourceCategoryId = category?.sourceId || category?.id;
-    let key = 'dog';
+    let key = category?.animalType || 'dog';
     if (sourceCategoryId === 'ru-cats-grooming') key = 'cat';
     else if (sourceCategoryId === 'ru-small-animals') key = 'smallAnimal';
     else if (sourceCategoryId === 'ru-important-information') key = 'other';
     else if (sourceCategoryId === ADDITIONAL_CATEGORY_ID) {
-      key = selectedBreed?.index === 1 ? 'cat' : selectedBreed?.index === 2 ? 'smallAnimal' : 'dog';
+      key = selectedBreed?.index === 1 ? 'cat' : selectedBreed?.index >= 2 ? 'smallAnimal' : 'dog';
     }
     const registration = locale.registration || {};
     return {
@@ -1060,8 +1552,35 @@
       label: registration.petTypes?.[key] || registration.fields?.other || '',
     };
   };
+  const catCoatLabels = {
+    long: { de: 'Langhaar', en: 'Long-haired', ru: 'Длинная шерсть', uk: 'Довга шерсть' },
+    short: { de: 'Kurzhaar', en: 'Short-haired', ru: 'Короткая шерсть', uk: 'Коротка шерсть' },
+    special: { de: 'Rex / Drahthaar / haarlos', en: 'Rex / wire-haired / hairless', ru: 'Рексовая / жёсткая / бесшёрстная', uk: 'Рексова / жорстка / безшерста' },
+    double: { de: 'Doppeltes Fell', en: 'Double coat', ru: 'Двойной тип шерсти', uk: 'Подвійний тип шерсті' },
+  };
+  const animalSizeLabels = {
+    small: { de: 'klein', en: 'small', ru: 'маленький', uk: 'малий' },
+    medium: { de: 'mittel', en: 'medium', ru: 'средний', uk: 'середній' },
+    large: { de: 'groß', en: 'large', ru: 'большой', uk: 'великий' },
+  };
+  const weightUnit = { de: 'kg', en: 'kg', ru: 'кг', uk: 'кг' }[lang] || 'kg';
+  const formatWeight = value => new Intl.NumberFormat(amountNumberLocale, { maximumFractionDigits: 2 }).format(value);
+  const getBreedMetadataSummary = selectedBreed => {
+    const metadata = selectedBreed?.metadata;
+    if (!metadata) return '';
+    const weight = metadata.weightKg?.min && metadata.weightKg?.max
+      ? `${formatWeight(metadata.weightKg.min)}–${formatWeight(metadata.weightKg.max)} ${weightUnit}`
+      : '';
+    const parts = [
+      weight && `${locale.breedWeightLabel || 'Adult weight'}: ${weight}`,
+      metadata.coatType && `${locale.breedCoatLabel || 'Coat type'}: ${catCoatLabels[metadata.coatType]?.[lang] || metadata.coatType}`,
+      metadata.sizeClass && `${locale.breedSizeLabel || 'Size'}: ${animalSizeLabels[metadata.sizeClass]?.[lang] || metadata.sizeClass}`,
+      Number(metadata.surcharge) > 0 && `${locale.breedSurchargeLabel || 'Breed surcharge'}: +${formatExactAmount(Number(metadata.surcharge))}`,
+    ].filter(Boolean);
+    return parts.length ? ` · ${parts.join(', ')}` : '';
+  };
 
-  const getServiceDetails = (category, selectedServices, selectionMode = 'primary') => {
+  const getServiceDetails = (category, selectedServices, selectionMode = 'primary', selectedBreed = null) => {
     if (!category || !selectedServices.length) return [];
     const sourceCategoryId = category.sourceId || category.id;
     if (selectionMode === 'additional' && sourceCategoryId !== ADDITIONAL_CATEGORY_ID) {
@@ -1072,7 +1591,9 @@
         const puppyService = global.PriceCatalog?.build?.(lang)?.services.find(service => service.key === 'puppy-intro');
         if (puppyService) return [puppyService.note, puppyService.description].filter(Boolean);
       }
-      const notes = (category.notes || []).map(note => getText(note)).filter(Boolean);
+      const breedNotes = selectedBreed ? category.breedNotes?.[selectedBreed.index] : null;
+      const notes = (breedNotes || category.notes || []).map(note => getText(note)).filter(Boolean);
+      if (breedNotes) return notes;
       const priceRowCount = (category.priceRows || []).length;
       if (notes.length && notes.length === priceRowCount) {
         const selectedDetails = selectedServices
@@ -1115,14 +1636,14 @@
       ? conditions.informationLead || conditions.lead || ''
       : conditions.lead || '';
     if (modalServiceConditionsBreed) modalServiceConditionsBreed.textContent = !informationMode && selectedBreed?.label
-      ? `${conditions.breedLabel || locale.breedContextLabel || ''}: ${selectedBreed.label}`
+      ? `${conditions.breedLabel || locale.breedContextLabel || ''}: ${selectedBreed.label}${getBreedMetadataSummary(selectedBreed)}`
       : '';
     if (modalServiceConditionsService) modalServiceConditionsService.textContent = !informationMode
       ? `${conditions.serviceLabel || locale.servicesTitle || ''}: ${serviceLabels.join(' + ') || conditions.noService || ''}`
       : '';
     const selectionMode = modalBreedSelect?.dataset.selectionMode || 'primary';
     const primaryDetails = selectedPrimaryServices.length
-      ? getServiceDetails(category, selectedPrimaryServices, selectionMode)
+      ? getServiceDetails(category, selectedPrimaryServices, selectionMode, selectedBreed)
       : [];
     const additionalDetails = selectedAdditionalServices.length
       ? getAdditionalServiceNotes(category)
@@ -1152,7 +1673,7 @@
     return services.filter(service => selectedIds.has(service.id));
   };
 
-  const NAIL_TRIM_SERVICE_INDEXES = new Set([0, 1, 2]);
+  const NAIL_TRIM_SERVICE_INDEXES = new Set([0]);
 
   const getDentalWeight = () => {
     const normalized = String(modalDentalWeightInput?.value || '').replace(',', '.');
@@ -1205,17 +1726,25 @@
     return !dentalSelected || eligible;
   };
 
-  const syncAdditionalNailTrimVisibility = (additionalServices, selectedPrimaryServices) => {
+  const syncIncludedAdditionalServices = (additionalServices, selectedPrimaryServices) => {
     if (!modalAdditionalServiceOptions) return;
     const nailsIncluded = selectedPrimaryServices.some(service => service.includesNailTrim);
+    const fullCareSelected = selectedPrimaryServices.some(service => service.key === 'full-groom');
+    if (modalAdditionalServiceHint) {
+      modalAdditionalServiceHint.textContent = fullCareSelected
+        ? locale.fullCareIncludedHint || locale.additionalServicesHint || ''
+        : locale.additionalServicesHint || '';
+    }
     const additionalServiceById = new Map(additionalServices.map(service => [service.id, service]));
 
     modalAdditionalServiceOptions.querySelectorAll('label.price-category-modal__service-option').forEach(option => {
       const input = option.querySelector('input[type="checkbox"]');
       const service = additionalServiceById.get(input?.value);
       if (!service) return;
-      const shouldHide = nailsIncluded && NAIL_TRIM_SERVICE_INDEXES.has(service.index);
+      const shouldHide = (nailsIncluded && NAIL_TRIM_SERVICE_INDEXES.has(service.index))
+        || (fullCareSelected && [4, DESHEDDING_ADDITIONAL_SERVICE_INDEX].includes(service.index));
       option.hidden = shouldHide;
+      input.disabled = shouldHide;
       if (shouldHide && input.checked) input.checked = false;
     });
   };
@@ -1225,7 +1754,7 @@
     const sourceCategoryId = category.sourceId || category.id;
     const selectedBreed = bookingCatalog.getBreed(modalBreedSelect.value);
     const selectedPrimaryServices = getSelectedServices(primaryServices, modalServiceOptions);
-    syncAdditionalNailTrimVisibility(additionalServices, selectedPrimaryServices);
+    syncIncludedAdditionalServices(additionalServices, selectedPrimaryServices);
     const dentalWeightValid = syncDentalEligibility(additionalServices);
     const selectedAdditionalServices = getSelectedServices(additionalServices, modalAdditionalServiceOptions);
     const {
@@ -1234,13 +1763,21 @@
       subtotalAmount,
       dentalBaseAmount,
       dentalDiscountAmount,
+      surchargeAmount,
       totalAmount,
-    } = calculateQuoteAmounts({ selectedPrimaryServices, selectedAdditionalServices, dentalWeightValid });
+    } = calculateQuoteAmounts({
+      selectedPrimaryServices,
+      selectedAdditionalServices,
+      dentalWeightValid,
+      breedSurcharge: category.animalType === 'cat' || sourceCategoryId === 'ru-cats-grooming'
+        ? Number(selectedBreed?.metadata?.surcharge) || 0
+        : 0,
+    });
     const priceText = !selectedServices.length
       ? locale.chooseServiceLabel || locale.selectServicesLabel || 'Choose a service'
       : hasRequestPrice
         ? locale.priceOnRequestLabel || locale.noPriceLabel
-        : selectedServices.length === 1
+        : selectedServices.length === 1 && !surchargeAmount
           ? selectedServices[0].price
           : formatFromAmount(totalAmount);
 
@@ -1263,11 +1800,15 @@
       const discountRow = dentalDiscountAmount > 0
         ? `<li class="price-category-modal__breakdown-discount" data-price-discount-base="${escapeHtml(dentalBaseAmount)}" data-price-discount-rate="${DENTAL_GROOMING_DISCOUNT_RATE}" data-price-discount-amount="${escapeHtml(dentalDiscountAmount)}"><span><span>${escapeHtml(locale.dentalDiscountLabel || '30% dental discount')}</span><small class="price-category-modal__breakdown-formula">${renderCurrencyText(`${formatExactAmount(dentalBaseAmount)} × ${DENTAL_GROOMING_DISCOUNT_RATE * 100}% = ${formatExactAmount(dentalDiscountAmount)}`)}</small></span><strong>−${renderCurrencyText(formatExactAmount(dentalDiscountAmount))}</strong></li>`
         : '';
-      modalBreakdown.innerHTML = `${serviceRows}${subtotalRow}${discountRow}`;
+      const surchargeRow = surchargeAmount > 0
+        ? `<li class="price-category-modal__breakdown-surcharge" data-price-surcharge-amount="${escapeHtml(surchargeAmount)}"><span>${escapeHtml(locale.breedSurchargeLabel || 'Breed surcharge')}</span><strong>+${renderCurrencyText(formatExactAmount(surchargeAmount))}</strong></li>`
+        : '';
+      modalBreakdown.innerHTML = `${serviceRows}${subtotalRow}${discountRow}${surchargeRow}`;
     }
     if (modalCalculationNote) {
       const calculationNotes = [
         dentalDiscountAmount > 0 ? locale.dentalDiscountTerms : '',
+        surchargeAmount > 0 ? locale.breedSurchargeLabel : '',
         locale.calculationNote,
       ].filter(Boolean);
       modalCalculationNote.textContent = calculationNotes.join(' ');
@@ -1334,17 +1875,56 @@
     });
   };
 
+  const syncModalBreedPhoto = () => {
+    if (!modalBreedPhoto || !modalBreedPhotoImage || !modalBreedSelect) return;
+    const selectedOption = modalBreedSelect.selectedOptions?.[0];
+    const photo = getAnimalPhotoEntry(selectedOption?.dataset.priceBreedPhotoKey || '');
+    if (!selectedOption || !photo) {
+      modalBreedPhoto.hidden = true;
+      modalSelectionHeader?.classList.remove('has-breed-photo');
+      modalBreedPhotoImage.removeAttribute('src');
+      return;
+    }
+
+    const breedName = selectedOption.textContent?.trim() || '';
+    modalBreedPhotoName.textContent = breedName;
+    const attribution = getPhotoAttribution(photo);
+    modalBreedPhotoCredit.textContent = photo.generated
+      ? attribution
+      : `${breedPhotoCopy.creditLabel}: ${attribution}`;
+    modalBreedPhotoImage.alt = breedName;
+    modalBreedPhotoImage.src = photo.src;
+
+    const sourceUrl = photo.sourceUrl || photo.licenseUrl || '';
+    if (modalBreedPhotoSource) {
+      const hasSourceUrl = /^https:\/\//i.test(sourceUrl);
+      modalBreedPhotoSource.hidden = !hasSourceUrl;
+      if (hasSourceUrl) modalBreedPhotoSource.href = sourceUrl;
+      else modalBreedPhotoSource.removeAttribute('href');
+    }
+    modalBreedPhoto.hidden = false;
+    modalSelectionHeader?.classList.add('has-breed-photo');
+  };
+
+  modalBreedPhotoImage?.addEventListener('error', () => {
+    modalBreedPhoto.hidden = true;
+    modalSelectionHeader?.classList.remove('has-breed-photo');
+    modalBreedPhotoImage.removeAttribute('src');
+  });
+
   const updateModalBookingSelection = (category, preferredBreedIndex = null, preferredServiceIndex = null, selectionMode = 'primary') => {
     if (!bookingCatalog || !modalBreedSelect || !modalServiceOptions || !modalSelectedPrice || !modalBooking) return;
     const sourceCategoryId = category.sourceId || category.id;
     const bookingCategory = bookingCatalog.getCategory(sourceCategoryId);
     if (!bookingCategory) return;
     const isAdditionalSelection = selectionMode === 'additional';
-    const shortCoatBreedStarts = [0, 5, 16, 24];
     const resolvedPreferredBreedIndex = Number.isInteger(preferredBreedIndex)
       ? preferredBreedIndex
+      : bookingCategory.source.breedServiceRows && Number.isInteger(preferredServiceIndex)
+        ? bookingCategory.breeds.find(breed => bookingCatalog.getServices(sourceCategoryId, breed.id)
+          .some(service => service.index === preferredServiceIndex))?.index ?? null
       : sourceCategoryId === 'ru-short-coat' && Number.isInteger(preferredServiceIndex)
-        ? shortCoatBreedStarts[preferredServiceIndex] ?? 0
+        ? bookingCategory.breeds.find(breed => breed.serviceIndex === preferredServiceIndex)?.index ?? 0
         : null;
 
     if (modalBreedSelect.dataset.categoryId !== category.id) {
@@ -1355,6 +1935,8 @@
         const option = document.createElement('option');
         option.value = breed.id;
         option.textContent = breed.label;
+        const photo = getAnimalPhotoRecord(category, breed.label, breed.index, breed.index);
+        if (photo) option.dataset.priceBreedPhotoKey = photo.key;
         modalBreedSelect.appendChild(option);
       });
     }
@@ -1366,13 +1948,16 @@
       }
     }
     window.refreshSiteSelect?.(modalBreedSelect);
+    syncModalBreedPhoto();
 
     const serviceIndexes = new Set(category.priceIndexes || bookingCategory.services.map(service => service.index));
     const primaryServices = isAdditionalSelection
       ? []
-      : bookingCatalog
-        .getServices(sourceCategoryId, modalBreedSelect.value)
-        .filter(service => serviceIndexes.has(service.index));
+      : sourceCategoryId === ADDITIONAL_CATEGORY_ID
+        ? getAdditionalServices(category)
+        : bookingCatalog
+          .getServices(sourceCategoryId, modalBreedSelect.value)
+          .filter(service => serviceIndexes.has(service.index));
     const additionalServices = isAdditionalSelection || sourceCategoryId !== ADDITIONAL_CATEGORY_ID
       ? getAdditionalServices(category)
       : [];
@@ -1468,7 +2053,7 @@
       ? []
       : bookingCatalog.getServices(sourceCategoryId, modalBreedSelect.value).filter(service => serviceIndexes.has(service.index));
     const additionalServices = selectionMode === 'additional' || sourceCategoryId !== ADDITIONAL_CATEGORY_ID
-      ? getAdditionalServices(category)
+      ? getAdditionalServices(category, selectedBreed)
       : [];
     const selectedPrimaryServices = getSelectedServices(primaryServices, modalServiceOptions);
     const selectedAdditionalServices = getSelectedServices(additionalServices, modalAdditionalServiceOptions);
@@ -1499,6 +2084,10 @@
     registrationCompletedForSelection = false;
     if (modalDentalWeightInput) modalDentalWeightInput.value = '';
     state.lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    root.querySelectorAll('.is-price-selected').forEach(element => element.classList.remove('is-price-selected'));
+    const selectedCard = state.lastFocus?.closest('.price-card');
+    selectedCard?.classList.add('is-price-selected');
+    state.lastFocus?.closest('.price-card__service-option')?.classList.add('is-price-selected');
     state.activeCategory = category;
     const isAdditionalSelection = selectionMode === 'additional';
     const isInformationSelection = selectionMode === 'information';
@@ -1523,6 +2112,7 @@
     modal.classList.remove('is-closing');
     modal.classList.add('active');
     modal.setAttribute('aria-hidden', 'false');
+    if (modalContent) modalContent.scrollTop = 0;
     setPriceModalScrollLock(true);
 
     window.requestAnimationFrame(() => {
@@ -1531,40 +2121,18 @@
   };
 
   window.HundesalonNavPill?.scan?.(heroRoot);
-  const categoriesAction = heroRoot.querySelector('[data-price-categories-action]');
-  categoriesAction?.addEventListener('click', () => {
-    const target = cardsRoot;
-    if (!target) return;
-
-    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const behavior = reducedMotion ? 'auto' : 'smooth';
-    const scrollRoot = document.querySelector('.site-scroll-root');
-
-    if (scrollRoot) {
-      const rootRect = scrollRoot.getBoundingClientRect();
-      const targetRect = target.getBoundingClientRect();
-      const maxScroll = Math.max(0, scrollRoot.scrollHeight - scrollRoot.clientHeight);
-      const destination = Math.max(
-        0,
-        Math.min(maxScroll, scrollRoot.scrollTop + targetRect.top - rootRect.top - 18)
-      );
-      scrollRoot.scrollTo({ top: destination, behavior });
-    } else {
-      target.scrollIntoView({ behavior, block: 'start' });
-    }
-
-    const firstAction = target.querySelector(
-      '[data-price-breeds-toggle], [data-price-open], [data-price-service-select], [data-price-additional-select]'
-    );
-    if (!firstAction) return;
-    firstAction.focus({ preventScroll: true });
-  });
+  const getCategoryActions = () => Array.from(document.querySelectorAll('[data-price-section-action]'));
+  const heroCategoryActions = Array.from(heroRoot.querySelectorAll('[data-price-section-action]'));
   const searchInput = heroRoot.querySelector('[data-price-breed-search-input]');
   const searchClear = heroRoot.querySelector('[data-price-breed-search-clear]');
   const searchSuggestions = heroRoot.querySelector('[data-price-breed-search-suggestions]');
   const searchSuggestionsList = heroRoot.querySelector('[data-price-breed-search-suggestions-list]');
   const searchStatus = heroRoot.querySelector('[data-price-breed-search-status]');
+  const searchFilterSelects = Array.from(heroRoot.querySelectorAll('[data-price-search-filter]'));
+  const searchResultCount = heroRoot.querySelector('[data-price-search-result-count]');
+  const searchReset = heroRoot.querySelector('[data-price-search-reset]');
   const SEARCH_MIN_CHARS = 2;
+  const searchFilterState = { animal: 'all', weight: 'all', coat: 'all', sort: 'default' };
 
   const normalizeSearch = value => String(value || '')
     .toLocaleLowerCase(lang)
@@ -1573,46 +2141,198 @@
     .trim();
 
   const normalizeBreedTokens = value => normalizeSearch(value).split(/[\s/–—-]+/u).filter(Boolean);
+  const breedSearchCollator = new Intl.Collator(lang, { sensitivity: 'base', numeric: true });
+  const getBreedSearchTokens = label => {
+    const aliases = locale.breedSearchAliases?.[label] || [];
+    return [...new Set([label, ...aliases].flatMap(normalizeBreedTokens))];
+  };
+
+  const getSearchAnimalType = category => {
+    if (category.animalType === 'dog' || ['small', 'medium', 'large', 'giant'].includes(category.groupKey)) return 'dog';
+    if (category.groupKey === 'cats') return 'cat';
+    if (category.groupKey === 'smallAnimals') return 'smallAnimals';
+    return 'other';
+  };
+  const dogWeightRanges = {
+    small: { min: 0, max: 5.99, value: 3 },
+    medium: { min: 6, max: 14.99, value: 10.5 },
+    large: { min: 15, max: 29.99, value: 22.5 },
+    giant: { min: 30, max: 60, value: 30 },
+  };
+  const getWeightBands = (min, max) => {
+    const bands = [];
+    if (min < 6) bands.push('small');
+    if (max >= 6 && min < 15) bands.push('medium');
+    if (max >= 15 && min < 30) bands.push('large');
+    if (max >= 30) bands.push('giant');
+    return bands;
+  };
+  const getBreedWeightProfile = (category, filteredIndex, sourceIndex, animalType) => {
+    if (animalType === 'dog' && dogWeightRanges[category.groupKey]) {
+      const range = dogWeightRanges[category.groupKey];
+      return { ...range, bands: [category.groupKey] };
+    }
+    if (animalType === 'smallAnimals') {
+      return { min: 0, max: 5.99, value: 2, bands: ['small'] };
+    }
+
+    const metadata = category.breedMetadata?.[lang]?.[sourceIndex]
+      || category.breedMetadata?.[lang]?.[filteredIndex]
+      || null;
+    const min = Number(metadata?.weightKg?.min);
+    const max = Number(metadata?.weightKg?.max);
+    if (Number.isFinite(min) && Number.isFinite(max)) {
+      return { min, max, value: (min + max) / 2, bands: getWeightBands(min, max) };
+    }
+    return { min: null, max: null, value: Number.POSITIVE_INFINITY, bands: [] };
+  };
+  const matchesSearchFilters = match => {
+    if (searchFilterState.animal !== 'all' && match.animalType !== searchFilterState.animal) return false;
+    if (searchFilterState.weight !== 'all' && !match.weightBands.includes(searchFilterState.weight)) return false;
+    if (searchFilterState.coat !== 'all' && match.coat !== searchFilterState.coat) return false;
+    return true;
+  };
+  const hasActiveSearchFilters = () => searchFilterState.animal !== 'all'
+    || searchFilterState.weight !== 'all'
+    || searchFilterState.coat !== 'all'
+    || searchFilterState.sort !== 'default';
 
   const breedSearchMatches = categoryViews
-    .filter(category => (category.sourceId || category.id) !== IMPORTANT_CATEGORY_ID)
-    .flatMap(category =>
-    (category.breeds?.[lang] || category.breeds?.en || []).map((label, index) => ({
-      id: `${category.id}:${category.breedIndexes?.[index] ?? index}`,
-      label,
-      normalizedTokens: normalizeBreedTokens(label),
-      categoryId: category.id,
-      breedIndex: category.breedIndexes?.[index] ?? index,
-      categoryLabel: getText(category.title),
-      sectionLabel: locale.sizeGroupTitles?.[category.groupKey] || locale.servicesTitle,
-    }))
-  );
+    .filter(category => getSearchAnimalType(category) !== 'other')
+    .flatMap(category => {
+      const animalType = getSearchAnimalType(category);
+      return (category.breeds?.[lang] || category.breeds?.en || []).map((label, index) => {
+        const breedIndex = category.breedIndexes?.[index] ?? index;
+        const photo = getAnimalPhotoRecord(category, label, index, breedIndex);
+        const weight = getBreedWeightProfile(category, index, breedIndex, animalType);
+        return {
+          id: `${category.id}:${breedIndex}`,
+          label,
+          normalizedTokens: getBreedSearchTokens(label),
+          categoryId: category.id,
+          breedIndex,
+          categoryLabel: getText(category.title),
+          sectionLabel: locale.sizeGroupTitles?.[category.groupKey] || locale.servicesTitle,
+          animalType,
+          weightBands: weight.bands,
+          weightValue: weight.value,
+          coat: category.coatType || '',
+          photoKey: photo?.key || '',
+        };
+      });
+    });
+  const breedSearchMatchById = new Map(breedSearchMatches.map(match => [match.id, match]));
+
+  const compareBreedMatches = (left, right) => {
+    if (searchFilterState.sort === 'weight-asc' || searchFilterState.sort === 'weight-desc') {
+      const direction = searchFilterState.sort === 'weight-desc' ? -1 : 1;
+      const leftWeight = Number.isFinite(left.weightValue) ? left.weightValue : Number.MAX_SAFE_INTEGER;
+      const rightWeight = Number.isFinite(right.weightValue) ? right.weightValue : Number.MAX_SAFE_INTEGER;
+      return direction * (leftWeight - rightWeight)
+        || breedSearchCollator.compare(left.label, right.label)
+        || left.id.localeCompare(right.id);
+    }
+    return left.id.localeCompare(right.id);
+  };
+  const sortBreedMatches = matches => {
+    if (searchFilterState.sort === 'default') return matches;
+    return [...matches].sort(compareBreedMatches);
+  };
 
   const findBreedMatches = query => {
     const normalizedQuery = normalizeSearch(query);
-    if (normalizedQuery.length < SEARCH_MIN_CHARS) return [];
+    if (normalizedQuery.length < SEARCH_MIN_CHARS) {
+      return sortBreedMatches(breedSearchMatches.filter(matchesSearchFilters));
+    }
     const queryTokens = normalizeBreedTokens(query);
-    return breedSearchMatches.filter(match => queryTokens.every(queryToken =>
-      match.normalizedTokens.some(token => token.startsWith(queryToken))
-    ));
+    const scoredMatches = breedSearchMatches
+      .map(match => ({
+        match,
+        score: queryTokens.reduce((total, queryToken) => {
+          const tokenScore = Math.min(
+            ...match.normalizedTokens.map(token => getBreedTokenScore(token, queryToken))
+          );
+          return total + tokenScore;
+        }, 0),
+      }))
+      .filter(result => Number.isFinite(result.score))
+      .filter(result => Number.isFinite(result.score));
+    if (searchFilterState.sort === 'default') {
+      scoredMatches.sort((left, right) =>
+        left.score - right.score
+        || breedSearchCollator.compare(left.match.label, right.match.label)
+        || left.match.id.localeCompare(right.match.id)
+      );
+    } else {
+      scoredMatches.sort((left, right) => compareBreedMatches(left.match, right.match));
+    }
+    return scoredMatches.map(result => result.match).filter(matchesSearchFilters);
+  };
+  const getCategoryWeightValue = categoryId => {
+    const weights = breedSearchMatches
+      .filter(match => match.categoryId === categoryId && Number.isFinite(match.weightValue))
+      .map(match => match.weightValue);
+    return weights.length ? weights.reduce((sum, value) => sum + value, 0) / weights.length : Number.POSITIVE_INFINITY;
+  };
+  const sortCategoryViews = views => {
+    if (searchFilterState.sort === 'default') return views;
+    const sorted = [...views];
+    sorted.sort((left, right) => {
+      const leftTitle = getText(left.title);
+      const rightTitle = getText(right.title);
+      const direction = searchFilterState.sort === 'weight-desc' ? -1 : 1;
+      const leftWeight = getCategoryWeightValue(left.id);
+      const rightWeight = getCategoryWeightValue(right.id);
+      return direction * (leftWeight - rightWeight) || breedSearchCollator.compare(leftTitle, rightTitle);
+    });
+    return sorted;
   };
 
+  let activeSuggestionIndex = -1;
   const closeBreedSuggestions = () => {
     if (searchSuggestions) searchSuggestions.hidden = true;
     searchInput?.setAttribute('aria-expanded', 'false');
+    searchInput?.removeAttribute('aria-activedescendant');
+    activeSuggestionIndex = -1;
+    searchSuggestionsList?.querySelectorAll('[data-price-breed-result]')
+      .forEach(option => option.setAttribute('aria-selected', 'false'));
   };
 
-  const renderBreedSuggestions = query => {
+  const getBreedSuggestionOptions = () => Array.from(
+    searchSuggestionsList?.querySelectorAll('[data-price-breed-result]') || []
+  );
+  const setActiveBreedSuggestion = index => {
+    const options = getBreedSuggestionOptions();
+    if (!options.length) {
+      activeSuggestionIndex = -1;
+      searchInput?.removeAttribute('aria-activedescendant');
+      return;
+    }
+    activeSuggestionIndex = (index + options.length) % options.length;
+    options.forEach((option, optionIndex) => {
+      const selected = optionIndex === activeSuggestionIndex;
+      option.setAttribute('aria-selected', String(selected));
+      if (selected) option.scrollIntoView({ block: 'nearest' });
+    });
+    searchInput?.setAttribute('aria-activedescendant', options[activeSuggestionIndex].id);
+  };
+
+  const renderBreedSuggestions = (query, providedMatches) => {
     const normalizedQuery = normalizeSearch(query);
-    const matches = findBreedMatches(query);
+    const matches = providedMatches || findBreedMatches(query);
+    activeSuggestionIndex = -1;
+    searchInput?.removeAttribute('aria-activedescendant');
     if (searchSuggestionsList) {
       searchSuggestionsList.innerHTML = matches
         .map(
-          match => `
+          (match, index) => `
             <li class="price-breed-search__suggestion-item">
-              <button type="button" class="price-breed-search__suggestion" role="option" data-price-breed-result data-price-breed-result-category="${escapeHtml(match.categoryId)}" data-price-breed-result-index="${escapeHtml(match.breedIndex)}">
-                <span class="price-breed-search__suggestion-name">${escapeHtml(match.label)}</span>
-                <span class="price-breed-search__suggestion-category">${escapeHtml(match.sectionLabel)} · ${escapeHtml(match.categoryLabel)}</span>
+              <button type="button" class="price-breed-search__suggestion" id="price-breed-search-option-${index}" role="option" aria-selected="false" tabindex="-1" data-price-breed-result data-price-breed-result-category="${escapeHtml(match.categoryId)}" data-price-breed-result-index="${escapeHtml(match.breedIndex)}">
+                ${renderAnimalPhotoThumbnail(getAnimalPhotoEntry(match.photoKey), 'price-breed-search__suggestion-media')}
+                <span class="price-breed-search__suggestion-copy">
+                  <span class="price-breed-search__suggestion-name">${escapeHtml(match.label)}</span>
+                  <span class="price-breed-search__suggestion-category">${escapeHtml(match.sectionLabel)} · ${escapeHtml(match.categoryLabel)}</span>
+                </span>
               </button>
             </li>`
         )
@@ -1627,6 +2347,8 @@
 
   const renderSection = (sectionKey, views, options = {}) => {
     const title = locale.sizeGroupTitles?.[sectionKey] || locale.servicesTitle;
+    const weightRange = locale.sizeGroupWeightRanges?.[sectionKey] || '';
+    const gridAttribute = options.grid ? ` data-price-section-grid="${escapeHtml(options.grid)}"` : '';
     if (options.layout === 'category-row') {
       const categorySections = (options.sourceKeys || [])
         .map(categoryKey => {
@@ -1634,7 +2356,7 @@
           if (!categoryViews.length) return '';
           const categoryTitle = locale.sizeGroupTitles?.[categoryKey] || locale.servicesTitle;
           return `
-            <div class="price-size-section__category">
+              <div class="price-size-section__category" id="price-section-${escapeHtml(categoryKey)}" data-price-section-target="${escapeHtml(categoryKey)}">
               <div class="price-size-section__heading">
                 <h2 class="price-size-section__title">${escapeHtml(categoryTitle)}</h2>
               </div>
@@ -1645,33 +2367,39 @@
         })
         .join('');
       return `
-        <section class="price-size-section price-size-section--category-row" data-price-section="${escapeHtml(sectionKey)}">
+        <section class="price-size-section price-size-section--category-row" data-price-section="${escapeHtml(sectionKey)}"${gridAttribute}>
           <div class="price-size-section__category-grid">
             ${categorySections}
           </div>
+          ${renderCategoryNavigation()}
         </section>
       `;
     }
     const sectionClass = options.showHeading === false ? ' price-size-section--cards-only' : '';
-    const gridAttribute = options.grid ? ` data-price-section-grid="${escapeHtml(options.grid)}"` : '';
     return `
-      <section class="price-size-section${sectionClass}" data-price-section="${escapeHtml(sectionKey)}"${gridAttribute}>
+        <section class="price-size-section${sectionClass}" id="price-section-${escapeHtml(sectionKey)}" data-price-section="${escapeHtml(sectionKey)}" data-price-section-target="${escapeHtml(sectionKey)}"${gridAttribute}>
         ${options.showHeading === false ? '' : `
           <div class="price-size-section__heading">
             <h2 class="price-size-section__title">${escapeHtml(title)}</h2>
+            ${weightRange ? `<span class="price-size-section__weight">${escapeHtml(weightRange)}</span>` : ''}
           </div>`}
         <div class="price-size-section__cards">
           ${views.map(renderCard).join('')}
         </div>
+        ${renderCategoryNavigation()}
       </section>
     `;
   };
 
   let cardAlignmentFrame = 0;
-  const alignPriceCardMetaRows = () => {
+  const alignPriceCardRows = () => {
     cardAlignmentFrame = 0;
     const allTops = Array.from(cardsRoot.querySelectorAll('.price-card__top'));
     allTops.forEach(top => top.style.removeProperty('min-height'));
+    cardsRoot.querySelectorAll(`${DOG_SIZE_SECTION_SELECTOR} .price-card__service-option`)
+      .forEach(service => service.style.removeProperty('min-height'));
+    cardsRoot.querySelectorAll(`${CAT_ANIMALS_SECTION_SELECTOR} .price-card`)
+      .forEach(card => card.style.removeProperty('min-height'));
     if (window.matchMedia('(max-width: 720px)').matches) return;
 
     // Measure only after the reset has reached layout, then apply all writes together.
@@ -1686,31 +2414,49 @@
       const updates = [];
 
       alignmentRoots.forEach(root => {
+        const isDogGrid = Boolean(root.closest(DOG_SIZE_SECTION_SELECTOR));
         const rows = new Map();
         root.querySelectorAll('.price-card').forEach(card => {
           const top = card.querySelector('.price-card__top');
           const rect = card.getBoundingClientRect();
           if (!top || rect.width <= 0 || rect.height <= 0) return;
-          const rowKey = Math.round(rect.top);
+          // Hover and entrance transforms must not split a logical grid row.
+          const rowKey = isDogGrid ? card.offsetTop : Math.round(rect.top);
           const row = rows.get(rowKey) || [];
-          row.push(top);
+          row.push({ top, card });
           rows.set(rowKey, row);
         });
 
         rows.forEach(row => {
           if (row.length < 2) return;
-          const maxHeight = Math.ceil(Math.max(...row.map(top => top.getBoundingClientRect().height)));
-          row.forEach(top => updates.push([top, maxHeight]));
+          const maxHeight = Math.ceil(Math.max(...row.map(({ top }) => isDogGrid ? top.offsetHeight : top.getBoundingClientRect().height)));
+          row.forEach(({ top }) => updates.push([top, maxHeight]));
+          if (!isDogGrid) return;
+
+          // Keep only like-for-like dog services level when a longer label or price wraps.
+          const serviceIndexes = new Set(
+            row.flatMap(({ card }) => Array.from(card.querySelectorAll('[data-price-service-select]'))
+              .map(service => service.dataset.priceServiceIndex))
+          );
+          serviceIndexes.forEach(index => {
+            const services = row.map(({ card }) => card.querySelector(`[data-price-service-select][data-price-service-index="${index}"]`));
+            if (services.some(service => !service)) return;
+            const heights = services.map(service => service.offsetHeight);
+            if (heights.some(height => height <= 0)) return;
+            const serviceHeight = Math.ceil(Math.max(...heights));
+            services.forEach(service => updates.push([service, serviceHeight]));
+          });
         });
       });
 
-      updates.forEach(([top, height]) => top.style.setProperty('min-height', `${height}px`));
+      updates.forEach(([element, height]) => element.style.setProperty('min-height', `${height}px`));
+
     });
   };
 
   const schedulePriceCardAlignment = () => {
     window.cancelAnimationFrame(cardAlignmentFrame);
-    cardAlignmentFrame = window.requestAnimationFrame(alignPriceCardMetaRows);
+    cardAlignmentFrame = window.requestAnimationFrame(alignPriceCardRows);
   };
 
   const mobileCardDetailsMedia = window.matchMedia('(max-width: 720px)');
@@ -1761,12 +2507,48 @@
     });
   };
 
+  const resetSearchFilters = () => {
+    searchFilterState.animal = 'all';
+    searchFilterState.weight = 'all';
+    searchFilterState.coat = 'all';
+    searchFilterState.sort = 'default';
+  };
+  const syncSearchFilterControls = () => {
+    searchFilterSelects.forEach(select => {
+      const filterKey = select.dataset.priceSearchFilter;
+      if (!Object.hasOwn(searchFilterState, filterKey)) return;
+      if (filterKey === 'coat') {
+        const coatOptions = getCoatFilterOptions(searchFilterState.animal);
+        const supportedValues = new Set(coatOptions.map(([value]) => value));
+        const isRelevant = coatOptions.length > 1;
+        if (!supportedValues.has(searchFilterState.coat)) searchFilterState.coat = 'all';
+        const optionSignature = coatOptions.map(([value, label]) => `${value}:${label}`).join('|');
+        if (select.dataset.optionSignature !== optionSignature) {
+          select.innerHTML = renderSearchFilterOptions(coatOptions);
+          select.dataset.optionSignature = optionSignature;
+        }
+        const filterLabel = select.closest('label');
+        if (filterLabel) filterLabel.hidden = !isRelevant;
+        select.disabled = !isRelevant;
+      } else {
+        select.disabled = false;
+      }
+      select.value = searchFilterState[filterKey];
+      select.dispatchEvent(new Event('site-select:refresh'));
+    });
+    if (searchReset) {
+      searchReset.hidden = !hasActiveSearchFilters() && !normalizeSearch(searchInput?.value);
+    }
+  };
+
   let cardsHaveRendered = false;
-  const renderCards = query => {
+  const renderCards = (query, providedMatches) => {
     cardsHaveRendered = true;
     const normalizedQuery = normalizeSearch(query);
-    const isSearchActive = normalizedQuery.length >= SEARCH_MIN_CHARS;
-    const matchingBreedIds = new Set(findBreedMatches(query).map(match => match.categoryId));
+    const isTextSearchActive = normalizedQuery.length >= SEARCH_MIN_CHARS;
+    const isSearchActive = isTextSearchActive || hasActiveSearchFilters();
+    const matches = providedMatches || findBreedMatches(query);
+    const matchingBreedIds = new Set(matches.map(match => match.categoryId));
     const visibleCategories = isSearchActive
       ? categoryViews.filter(category => matchingBreedIds.has(category.id))
       : categoryViews;
@@ -1774,7 +2556,7 @@
     const sections = sectionGroups
       .map(group => renderSection(
         group.key,
-        visibleCategories.filter(category => group.sourceKeys.includes(category.groupKey)),
+        sortCategoryViews(visibleCategories.filter(category => group.sourceKeys.includes(category.groupKey))),
         group
       ))
       .filter(section => section.includes('price-card'))
@@ -1791,16 +2573,26 @@
     if (searchStatus) {
       if (!normalizedQuery) {
         searchStatus.textContent = '';
-      } else if (!isSearchActive) {
+      } else if (!isTextSearchActive) {
         searchStatus.textContent = locale.searchMinChars || 'Enter at least 2 letters.';
       } else {
-        const matches = findBreedMatches(query);
-        searchStatus.textContent = matches.length
-          ? `${locale.searchSuggestionsLabel || 'Possible breeds'}: ${matches.length}`
-          : locale.searchEmpty || 'No matching breed found.';
+        searchStatus.textContent = matches.length ? '' : locale.searchEmpty || 'No matching breed found.';
       }
     }
+    if (searchResultCount) {
+      const counts = { dog: 0, cat: 0, smallAnimals: 0 };
+      matches.forEach(match => {
+        if (Object.hasOwn(counts, match.animalType)) counts[match.animalType] += 1;
+      });
+      searchResultCount.innerHTML = [
+        `<span class="price-breed-search__count-total">${escapeHtml(searchFilterCopy.results)}: ${matches.length}</span>`,
+        ...Object.entries(counts).map(([type, count]) =>
+          `<span class="price-breed-search__count-group">${escapeHtml(searchFilterCopy[type])}: ${count}</span>`
+        ),
+      ].join(' ');
+    }
     if (searchClear) searchClear.hidden = !normalizedQuery;
+    syncSearchFilterControls();
     window.HundesalonNavPill?.scan?.(cardsRoot);
     schedulePriceCardAlignment();
   };
@@ -1819,26 +2611,134 @@
   });
   document.fonts?.ready?.then(schedulePriceCardAlignment);
 
+
+  const navigateToPriceSection = action => {
+    const sectionKey = action.dataset.priceSectionAction || '';
+    if (!sectionKey) return;
+    activePriceSection = sectionKey;
+    if (searchInput) searchInput.value = '';
+    resetSearchFilters();
+    closeBreedSuggestions();
+    renderCards('', findBreedMatches(''));
+
+    window.requestAnimationFrame(() => {
+      const target = cardsRoot.querySelector(`[data-price-section-target="${sectionKey}"]`);
+      if (!target) return;
+      getCategoryActions().forEach(button => {
+        const selected = button.dataset.priceSectionAction === activePriceSection;
+        button.classList.toggle('active', selected);
+        if (selected) {
+          button.setAttribute('aria-current', 'true');
+          window.HundesalonNavPill?.activate(button);
+        } else {
+          button.removeAttribute('aria-current');
+          window.HundesalonNavPill?.deactivate(button);
+        }
+      });
+      const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      const behavior = reducedMotion ? 'auto' : 'smooth';
+      const scrollRoot = document.querySelector('.site-scroll-root');
+
+      if (scrollRoot) {
+        const targetRect = target.getBoundingClientRect();
+        // The collapsed navigation hint extends below its 24px reveal rail.
+        // Reserve its footprint even before scrolling makes the hint visible.
+        const navigationHint = document.querySelector('.header-reveal-control__hint');
+        const hintStyle = navigationHint ? getComputedStyle(navigationHint) : null;
+        const navigationInset = hintStyle
+          ? (Number.parseFloat(hintStyle.top) || 0)
+            + Math.max(navigationHint.offsetHeight, Number.parseFloat(hintStyle.minHeight) || 0) + 8
+          : 18;
+        const maxScroll = Math.max(0, scrollRoot.scrollHeight - scrollRoot.clientHeight);
+        const destination = Math.max(
+          0,
+          Math.min(maxScroll, scrollRoot.scrollTop + targetRect.top - Math.max(18, navigationInset))
+        );
+        scrollRoot.scrollTo({ top: destination, behavior });
+      } else {
+        target.scrollIntoView({ behavior, block: 'start' });
+      }
+
+      target.querySelector(
+        '[data-price-breeds-toggle], [data-price-open], [data-price-service-select], [data-price-additional-select]'
+      )?.focus({ preventScroll: true });
+    });
+  };
+  heroCategoryActions.forEach(action => {
+    action.addEventListener('click', () => navigateToPriceSection(action));
+  });
+  cardsRoot.addEventListener('click', event => {
+    const action = event.target.closest('[data-price-section-action]');
+    if (action) navigateToPriceSection(action);
+  });
+
+  searchFilterSelects.forEach(select => {
+    select.addEventListener('change', () => {
+      const filterKey = select.dataset.priceSearchFilter;
+      if (!Object.hasOwn(searchFilterState, filterKey)) return;
+      searchFilterState[filterKey] = select.value;
+
+      syncSearchFilterControls();
+      const query = searchInput?.value || '';
+      const matches = findBreedMatches(query);
+      if (normalizeSearch(query).length >= SEARCH_MIN_CHARS) {
+        renderBreedSuggestions(query, matches);
+      } else {
+        closeBreedSuggestions();
+      }
+      renderCards(query, matches);
+    });
+  });
+
   searchInput?.addEventListener('input', event => {
     const query = event.target.value;
-    renderBreedSuggestions(query);
-    renderCards(query);
+    const matches = findBreedMatches(query);
+    renderBreedSuggestions(query, matches);
+    renderCards(query, matches);
   });
   searchClear?.addEventListener('click', () => {
     if (!searchInput) return;
     searchInput.value = '';
     closeBreedSuggestions();
-    renderCards('');
+    renderCards('', findBreedMatches(''));
     searchInput.focus();
+  });
+  searchReset?.addEventListener('click', () => {
+    if (searchInput) searchInput.value = '';
+    resetSearchFilters();
+    closeBreedSuggestions();
+    renderCards('', findBreedMatches(''));
+    searchInput?.focus();
   });
 
   searchInput?.addEventListener('focus', () => {
     if (normalizeSearch(searchInput.value).length >= SEARCH_MIN_CHARS) {
-      renderBreedSuggestions(searchInput.value);
+      renderBreedSuggestions(searchInput.value, findBreedMatches(searchInput.value));
     }
   });
   searchInput?.addEventListener('keydown', event => {
-    if (event.key === 'Escape') closeBreedSuggestions();
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeBreedSuggestions();
+      return;
+    }
+    if (event.key === 'Enter' && activeSuggestionIndex >= 0) {
+      event.preventDefault();
+      getBreedSuggestionOptions()[activeSuggestionIndex]?.click();
+      return;
+    }
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+    if (normalizeSearch(searchInput.value).length < SEARCH_MIN_CHARS) return;
+
+    const matches = findBreedMatches(searchInput.value);
+    if (!matches.length) return;
+    event.preventDefault();
+    if (searchSuggestions?.hidden) renderBreedSuggestions(searchInput.value, matches);
+    const direction = event.key === 'ArrowDown' ? 1 : -1;
+    const startIndex = activeSuggestionIndex < 0
+      ? (direction > 0 ? 0 : getBreedSuggestionOptions().length - 1)
+      : activeSuggestionIndex + direction;
+    setActiveBreedSuggestion(startIndex);
   });
 
   heroRoot.addEventListener('click', event => {
@@ -1856,11 +2756,13 @@
     window.requestAnimationFrame(() => {
       const targetCard = Array.from(cardsRoot.querySelectorAll('[data-category-id]')).find(card => card.dataset.categoryId === match.categoryId);
       if (!targetCard) return;
+      const targetCategory = categoryViews.find(category => category.id === match.categoryId);
       if (mobileCardDetailsMedia.matches) setCardDetailsExpanded(targetCard, true, true);
       targetCard.dataset.selectedBreedIndex = String(match.breedIndex);
+      syncSelectedBreedServices(targetCard, targetCategory, match.breedIndex);
       targetCard.classList.add('price-card--search-target');
       targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      targetCard.querySelector('[data-price-service-select]')?.focus({ preventScroll: true });
+      targetCard.querySelector('[data-price-service-select]:not([hidden])')?.focus({ preventScroll: true });
       window.setTimeout(() => targetCard.classList.remove('price-card--search-target'), 2200);
     });
 
@@ -1907,7 +2809,7 @@
     const menuTop = menuViewportTop - controlRect.top;
     menu.style.top = `${Math.round(menuTop)}px`;
     menu.dataset.priceMenuAlign = opensToRight ? 'start' : 'end';
-    showBreedMenuScrollIndicator(menu);
+    syncBreedMenuScrollIndicator(menu);
   };
 
   const startBreedArrowCloseAnimation = toggle => {
@@ -1982,6 +2884,7 @@
       const toggle = card?.querySelector('[data-price-breeds-toggle]');
       if (toggle) closeBreedMenu(toggle);
       if (card && Number.isInteger(breedIndex)) card.dataset.selectedBreedIndex = String(breedIndex);
+      syncSelectedBreedServices(card, category, breedIndex);
       if (category && Number.isInteger(breedIndex)) openModal(category, breedIndex);
       return;
     }
@@ -2008,6 +2911,7 @@
         window.HundesalonNavPill?.activate?.(breedsToggle);
         setBreedMenuScrollLock(true);
         positionBreedMenu(breedsToggle);
+        showBreedMenuScrollIndicator(breedMenu);
         window.requestAnimationFrame(() => {
           if (breedsToggle.getAttribute('aria-expanded') === 'true') positionBreedMenu(breedsToggle);
         });
@@ -2018,8 +2922,39 @@
     if (!trigger) return;
     const category = categoryViews.find(item => item.id === trigger.dataset.priceOpen);
     const sourceCategoryId = category?.sourceId || category?.id;
-    openModal(category, null, null, sourceCategoryId === IMPORTANT_CATEGORY_ID ? 'information' : 'primary');
+    const card = trigger.closest('[data-category-id]');
+    const selectedBreedIndex = Number(card?.dataset.selectedBreedIndex);
+    openModal(
+      category,
+      Number.isInteger(selectedBreedIndex) ? selectedBreedIndex : null,
+      null,
+      sourceCategoryId === IMPORTANT_CATEGORY_ID ? 'information' : 'primary'
+    );
   });
+
+  cardsRoot.addEventListener('pointerover', event => {
+    const option = event.target instanceof HTMLElement ? event.target.closest('[data-price-breed-photo-title]') : null;
+    if (option) showBreedPhoto(option);
+  });
+  cardsRoot.addEventListener('pointerout', event => {
+    const option = event.target instanceof HTMLElement ? event.target.closest('[data-price-breed-photo-title]') : null;
+    if (option && !option.contains(event.relatedTarget)) hideBreedPhoto();
+  });
+  cardsRoot.addEventListener('focusin', event => {
+    const option = event.target instanceof HTMLElement ? event.target.closest('[data-price-breed-photo-title]') : null;
+    if (option) showBreedPhoto(option);
+  });
+  cardsRoot.addEventListener('focusout', event => {
+    const option = event.target instanceof HTMLElement ? event.target.closest('[data-price-breed-photo-title]') : null;
+    if (option && !option.contains(event.relatedTarget)) hideBreedPhoto();
+  });
+  cardsRoot.addEventListener('scroll', () => {
+    const focusedOption = document.activeElement instanceof HTMLElement
+      ? document.activeElement.closest('[data-price-breed-photo-title]')
+      : null;
+    if (focusedOption) showBreedPhoto(focusedOption);
+    else hideBreedPhoto();
+  }, true);
 
   const closeBreedMenusOutside = target => {
     if (!(target instanceof Node)) return;
@@ -2034,6 +2969,7 @@
   document.addEventListener('click', event => closeBreedMenusOutside(event.target));
 
   window.addEventListener('resize', () => {
+    hideBreedPhoto();
     syncCardDetails();
     schedulePriceCardAlignment();
     cardsRoot.querySelectorAll('[data-price-breeds-toggle][aria-expanded="true"]').forEach(positionBreedMenu);
