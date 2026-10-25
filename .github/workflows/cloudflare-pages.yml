@@ -1,9 +1,10 @@
 name: Deploy Cloudflare Pages
 
-# Primary production path is Wrangler Direct Upload: `npm run deploy` / `deploy:full`.
-# GitHub Actions is optional and fails when the GitHub account is billing-locked.
-# Keep workflow_dispatch only so push-to-main never depends on Actions billing.
+# Deploys production on every push to main; `npm run deploy` / `deploy:full` (Wrangler
+# Direct Upload) remains the manual fallback if GitHub Actions is billing-locked.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -40,3 +41,14 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_PAGES_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 25e872aeab8cb246c69142ab07cd0fee
         run: npx wrangler pages deploy dist --project-name=hundesalon-nika --commit-dirty=true
+
+      - name: Purge Cloudflare zone cache
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_PAGES_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 25e872aeab8cb246c69142ab07cd0fee
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::warning::No Cloudflare API token is set; zone cache was not purged."
+          elif ! npm run cf:purge-cache; then
+            echo "::warning::Deployment succeeded, but the zone cache purge failed (token needs Zone Read + Cache Purge); cached assets may be stale."
+          fi
