@@ -218,6 +218,7 @@
     "ws": "^8.20.1",
     "sharp": "0.35.5",
     "katex": "0.18.2",
+    "markdown-it": "15.0.2",
     "braces": "https://codeload.github.com/Im-Fran/braces/tar.gz/11568474fd2d330d4a56a3aba63f8f90030ba15e"
   },
   "engines": {
