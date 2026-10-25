@@ -12708,6 +12708,12 @@ body.light .social-icons-toggle.is-open {
     border-radius: 999px;
     white-space: nowrap;
   }
+
+  body:not(.light) .header .top-row > .header-controls .online-order-pill {
+    background:
+      linear-gradient(180deg, rgb(226 190 116 / 9%) 0%, rgb(226 190 116 / 3%) 100%),
+      rgb(6 16 10 / 58%);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════════
