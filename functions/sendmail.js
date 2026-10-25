@@ -690,6 +690,39 @@ export async function onRequest(ctx) {
     return jsonResponse({ success: false, message: 'Invalid request body' }, 400, origin);
   }
 
+  /* ── Turnstile verification (bot protection) ───────────────── */
+  const turnstileToken = fields['cf-turnstile-response'] || fields.turnstileToken;
+  if (turnstileToken) {
+    const turnstileSecret = getEnvValue(env, 'TURNSTILE_SECRET_KEY');
+    if (turnstileSecret) {
+      try {
+        const verifyResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            secret: turnstileSecret,
+            response: turnstileToken,
+            remoteip: request.headers.get('CF-Connecting-IP'),
+          }),
+        });
+        const verifyResult = await verifyResponse.json();
+        if (!verifyResult.success) {
+          logStructured('warn', 'turnstile_verification_failed', {
+            error: verifyResult['error-codes'] || ['unknown'],
+            formType: fields.form_type || 'unknown',
+          });
+          return jsonResponse({ success: false, message: 'Verification failed. Please try again.' }, 400, origin);
+        }
+      } catch (error) {
+        logStructured('error', 'turnstile_verification_error', {
+          error: error.message,
+          formType: fields.form_type || 'unknown',
+        });
+        return jsonResponse({ success: false, message: 'Verification service unavailable. Please try again.' }, 503, origin);
+      }
+    }
+  }
+
   /* ── Extract and sanitize fields ───────────────────────────── */
   const name = sanitizeLimit(fields.name, 160);
   const email = sanitizeLimit(fields.email, 254);

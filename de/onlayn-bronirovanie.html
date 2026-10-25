@@ -218,6 +218,7 @@
             </label>
             <div class="booking-file-preview" data-booking-file-preview hidden></div>
             <div class="booking-summary" data-booking-summary hidden tabindex="-1"></div>
+            <div class="turnstile-widget" id="turnstile-widget-booking"></div>
             <div class="modal-buttons">
               <button type="button" class="btn-modal" id="prev-step-3">Zurück</button>
               <button type="submit" class="btn-modal btn-modal-primary">Buchen</button>
@@ -348,5 +349,20 @@
     <script src="../assets/js/cookie-consent.js?v=20260620-full-stack-upgrade"></script>
     <script src="../assets/js/newsletter.js?v=20260720-prod-v2"></script>
     <script src="../assets/js/pwa.js?v=20260707-sw-dev-fix"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const widgetId = 'turnstile-widget-booking';
+        const widgetElement = document.getElementById(widgetId);
+        if (widgetElement && window.turnstile) {
+          window.turnstile.render(widgetElement, {
+            sitekey: '0x4AAAAAAFXzoDFumjX4h5lx',
+            callback: function(token) {
+              widgetElement.dataset.turnstileToken = token;
+            }
+          });
+        }
+      });
+    </script>
   </body>
 </html>

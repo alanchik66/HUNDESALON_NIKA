@@ -830,6 +830,11 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           const requestData = new FormData(form);
           requestData.delete('pet_photo');
+          // Add Turnstile token if present
+          const turnstileWidget = form.querySelector?.('.turnstile-widget');
+          if (turnstileWidget && turnstileWidget.dataset.turnstileToken) {
+            requestData.append('cf-turnstile-response', turnstileWidget.dataset.turnstileToken);
+          }
           response = await fetch(endpoint, {
             method: 'POST',
             body: requestData,
