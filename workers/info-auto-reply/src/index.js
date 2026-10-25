@@ -134,6 +134,10 @@ export default {
       message.setReject('Routing configuration error.');
       return;
     }
+    if (message.canBeForwarded === false) {
+      console.warn('[info-auto-reply] Message cannot be forwarded; accepting without an auto reply.');
+      return;
+    }
     await Promise.all(destinations.map(destination => message.forward(destination)));
     if (shouldSuppressAutoReply(message)) return;
 

@@ -75,6 +75,39 @@ test('forwards the original to every configured destination', async () => {
   ]);
 });
 
+test('accepts a non-forwardable message without retrying or sending an auto reply', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalWarn = console.warn;
+  let replies = 0;
+  let warning = '';
+  const message = createMessage({
+    canBeForwarded: false,
+    async forward() {
+      throw new Error('forward must not be attempted');
+    },
+  });
+  globalThis.fetch = async () => {
+    replies += 1;
+    return Response.json({ ok: true });
+  };
+  console.warn = (...args) => {
+    warning += args.join(' ');
+  };
+
+  try {
+    await worker.email(message, {
+      INFO_FORWARD_DESTINATION: 'team@example.com',
+      INFO_AUTOREPLY_SECRET: 'test-secret',
+    });
+    assert.deepEqual(message.actions, []);
+    assert.equal(replies, 0);
+    assert.match(warning, /cannot be forwarded/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.warn = originalWarn;
+  }
+});
+
 test('keeps a forwarded message accepted when the optional auto reply fails', async () => {
   const originalFetch = globalThis.fetch;
   const message = createMessage();
