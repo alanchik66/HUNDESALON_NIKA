@@ -1,7 +1,5 @@
 {
-  "github.copilot.chat.askAgent.additionalTools": [
-    "copilot_sessionStoreSql"
-  ],
+  "github.copilot.chat.askAgent.additionalTools": ["copilot_sessionStoreSql"],
   "github.copilot.chat.cli.customAgents.enabled": true,
   "github.copilot.chat.localIndex.enabled": true,
   "github.copilot.chat.agent.autoFix": false,
@@ -12,17 +10,12 @@
   "prettier.requireConfig": true,
   "eslint.format.enable": false,
   "stylelint.format.enable": false,
-  "eslint.validate": [
-    "javascript"
-  ],
-  "stylelint.validate": [
-    "css"
-  ],
+  "eslint.validate": ["javascript"],
+  "stylelint.validate": ["css"],
   "htmlhint.enable": true,
   "chat.agent.enabled": true,
   "chat.agent.maxRequests": 25,
   "chat.mcp.access": "all",
-  "chat.mcp.discovery.enabled": false,
   "chat.mcp.apps.enabled": true,
   "chat.stickyScroll.enabled": true,
   "chat.experimental.stickyScroll.enabled": true,
@@ -33,9 +26,7 @@
   "terminal.integrated.profiles.windows": {
     "PowerShell": {
       "source": "PowerShell",
-      "args": [
-        "-NoProfile"
-      ]
+      "args": ["-NoProfile"]
     }
   },
   "terminal.integrated.defaultProfile.windows": "PowerShell",
