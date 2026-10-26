@@ -58,7 +58,9 @@ credentials, source/tool directories and symlinks that escape the public tree.
 Malformed URLs return 400; form POSTs return 501 so the existing local Functions
 fallback can be used. Use `npm run dev:cf` to test actual Pages Functions.
 
-CI validates pull requests and pushes to `main`. Production deployment is a reusable
-workflow called only after validation, dependency audits, build budgets, browser
-checks and registration recovery checks pass. Manually dispatched deployments repeat
-the quality gates before publishing.
+CI validates pull requests and pushes to `main`, alongside CodeQL/Semgrep analysis.
+The scanners retain their existing configuration identities and alert history.
+Deployment requires analyses for the exact commit and ref and zero open
+code scanning alerts, in addition to dependency audits, validation, build budgets,
+browser checks and registration recovery checks. Manually dispatched deployments
+repeat the quality gates and require the same current-revision security evidence.

@@ -220,7 +220,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`🔍 Настраиваю: ${SITE_URL}\n`);
+  console.log('Configuring website security.');
 
   try {
     const zoneId = await getZoneId();

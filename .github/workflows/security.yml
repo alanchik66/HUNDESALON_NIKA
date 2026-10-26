@@ -1,8 +1,9 @@
 name: Security
 
-# Push-to-main disabled: GitHub billing lock blocks runners and floods Gmail.
-# Re-enable push/schedule after billing is unlocked.
+# Analyze the same revision as CI. The deployment gate requires these results.
 on:
+  push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -54,6 +55,8 @@ jobs:
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4
+        with:
+          category: .github/workflows/security.yml:codeql
 
   semgrep:
     name: Semgrep JavaScript analysis
@@ -79,3 +82,20 @@ jobs:
         with:
           sarif_file: semgrep.sarif
           category: semgrep
+
+  release-gate:
+    name: Require reviewed current-revision security results
+    needs: [dependency-review, codeql, semgrep]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Reject stale analyses and open alerts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/check-code-scanning.mjs

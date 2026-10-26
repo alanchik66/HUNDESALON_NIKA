@@ -18,7 +18,7 @@ test('SendPulse Web Push and PWA share one root-scoped worker', () => {
   assert.match(pwa, /navigator\.serviceWorker\.register\('\/sp-push-worker-fb\.js', \{ updateViaCache: 'none' \}\)/);
   assert.doesNotMatch(pwa, /navigator\.serviceWorker\.register\('\/sw\.js'/);
   assert.match(pwaWorker, /importScripts\('\/sw\.js'\)/);
-  assert.match(pwaWorker, new RegExp(SENDPULSE_WORKER.replace(/[.?]/g, '\\$&')));
+  assert.match(pwaWorker, new RegExp(RegExp.escape(SENDPULSE_WORKER)));
   assert.match(cacheWorker, /key\.startsWith\('hundesalon-nika-static-'\) && key !== CACHE_NAME/);
 });
 
@@ -27,7 +27,7 @@ test('production output has the exact opt-in loader and required CSP permissions
   const headers = read('_headers');
 
   assert.match(build, /'sp-push-worker-fb\.js'/);
-  assert.match(build, new RegExp(SENDPULSE_LOADER.replace(/[.?]/g, '\\$&')));
+  assert.match(build, new RegExp(RegExp.escape(SENDPULSE_LOADER)));
   assert.match(build, /const pushHomePages = new Set\(\['de\/index\.html', 'en\/index\.html', 'ru\/index\.html', 'uk\/index\.html'\]\)/);
   for (const origin of [
     'https://web.webpushs.com',

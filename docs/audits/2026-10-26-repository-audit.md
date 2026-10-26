@@ -37,6 +37,14 @@ the real root and gateway installations, not in that source snapshot.
   RooFlow upstream templates were already current; project customizations remain.
 - Push-to-main CI now gates production deployment. Registration failure/retry
   behavior in all four locales and both viewport sizes is part of CI.
+- Newsletter consent is constructed with text nodes and an allowlisted locale.
+  Chat links explicitly validate the HTTPS site origin, and upload IDs use Web
+  Crypto even without `randomUUID`.
+- Bing submission validates the exact HTTPS origin. Photo metadata decoding
+  performs a single entity pass and rejects out-of-range numeric code points.
+  Backup decryption explicitly requires the existing 16-byte GCM tag.
+- CodeQL/Semgrep analysis and a current-commit, zero-open-alert gate now
+  precede automatic and manually dispatched GitHub deployments.
 
 ## Heuristic findings reviewed
 
@@ -57,6 +65,29 @@ browser origin checks, upload tickets, shared paid-AI quotas, literal spreadshee
 input handling and durable client-registration storage. Scanner output alone does
 not prove security or legal compliance, and it does not certify external accounts.
 
+## Fresh CodeQL and Semgrep review
+
+The previously disabled Security workflow was enabled and run on the updated site.
+It produced 32 findings, which were reviewed in source rather than treated as
+automatic evidence of 32 exploitable vulnerabilities.
+
+Code changes address unsafe entropy fallback, DOM construction, explicit link
+origin validation, URL-origin filtering, regex escaping, single-pass entity
+decoding, environment-derived logging and explicit GCM tag policy. Thirteen focused
+security tests exercise these boundaries and the release gate.
+
+Twenty context-dependent findings were individually triaged with explanations in
+GitHub; their regression coverage or trusted input boundary is recorded here:
+
+| Alerts   | Evidence supporting triage                                                                                                                                                                       |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 737–744  | Assertions and mocked provider dispatch in test files; they do not authorize production requests. The raw upload URL exclusion assertion intentionally searches an opaque token for leaked text. |
+| 735–736  | SHA-256 fingerprints identify API-key cache/rotation and quota state. They are never used for password storage, password verification or authentication.                                         |
+| 723–728  | Private build transformations remove managed loader tags from trusted repository HTML. They are not untrusted-HTML sanitizers.                                                                   |
+| 717      | The frame policy is the literal `SAMEORIGIN`; a regression test verifies that attacker-supplied input cannot replace it.                                                                         |
+| 719      | The loopback-only watcher restricts CORS to exact loopback hostnames. Regression tests reject lookalikes and userinfo tricks.                                                                    |
+| 716, 718 | Plain HTTP is restricted to development loopback metadata. Production hostnames exit the refresh script before any request.                                                                      |
+
 ## Release evidence
 
 Local release checks passed:
@@ -76,7 +107,9 @@ Local release checks passed:
   archive was checked against the upstream SHA-256 digest before execution.
 - Markdown checks for the new documentation: zero issues.
 - Wrangler 4.152.0 compiled the Pages Functions bundle successfully.
-- GitHub open Dependabot, Code Scanning and Secret Scanning alerts: zero at review.
+- Initial GitHub alert lists were empty while the Security workflow was disabled;
+  the fresh scan and subsequent triage are documented above. Release gates check
+  the current commit rather than relying on that older empty state.
 
 Production publication is verified separately against the final commit and its
 deployment; local tests alone are not evidence that a release is live.

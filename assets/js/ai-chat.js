@@ -532,8 +532,14 @@
     let cursor = 0;
     for (const match of value.matchAll(urlPattern)) {
       if (match.index > cursor) container.appendChild(document.createTextNode(value.slice(cursor, match.index)));
+      const url = new URL(match[0]);
+      if (url.protocol !== 'https:' || url.origin !== SITE_ORIGIN) {
+        container.appendChild(document.createTextNode(match[0]));
+        cursor = match.index + match[0].length;
+        continue;
+      }
       const link = document.createElement('a');
-      link.href = match[0];
+      link.href = url.href;
       link.target = '_self';
       link.rel = 'noopener';
       link.textContent = match[0].replace(SITE_ORIGIN, '');

@@ -56,12 +56,30 @@ jobs:
       - name: Check client registration recovery in every locale and viewport
         run: node tools/client-registration-smoke.mjs
 
+  security:
+    name: Require current-revision security results
+    needs: validate-build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Reject stale analyses and open alerts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/check-code-scanning.mjs
+
   deploy:
     name: Deploy validated production revision
-    needs: validate-build
+    needs: [validate-build, security]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
       deployments: write
+      security-events: read
     uses: ./.github/workflows/cloudflare-pages.yml
     secrets: inherit

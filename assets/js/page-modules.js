@@ -1231,8 +1231,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!modal) return;
     const createUploadSessionId = () => {
       if (typeof window.crypto?.randomUUID === 'function') return window.crypto.randomUUID();
-      const randomPart = Array.from({ length: 4 }, () => Math.random().toString(36).slice(2)).join('');
-      return `upload-${Date.now().toString(36)}-${randomPart}`.slice(0, 64);
+      const bytes = new Uint8Array(16);
+      window.crypto.getRandomValues(bytes);
+      return Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('');
     };
 
     if (modal.closest('.site-scroll-root')) {

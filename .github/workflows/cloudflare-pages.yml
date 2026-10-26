@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   deployments: write
+  security-events: read
 
 concurrency:
   group: cloudflare-pages-production
@@ -56,6 +57,11 @@ jobs:
       - name: Verify browser behavior for manual deployment
         if: github.event_name == 'workflow_dispatch'
         run: npm run test:browser && node tools/client-registration-smoke.mjs
+
+      - name: Require reviewed current-revision security results
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/check-code-scanning.mjs
 
       - name: Deploy to Cloudflare Pages
         env:

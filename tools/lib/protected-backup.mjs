@@ -331,7 +331,9 @@ export async function decryptBackupStream({
   try {
     keyData = validateKey(await keyProvider(envelope.header.keyId));
     if (keyData.keyId !== envelope.header.keyId) throw new Error('Incorrect backup key identifier.');
-    const decipher = createDecipheriv('aes-256-gcm', keyData.key, Buffer.from(envelope.header.iv, 'hex'));
+    const decipher = createDecipheriv('aes-256-gcm', keyData.key, Buffer.from(envelope.header.iv, 'hex'), {
+      authTagLength: TAG_BYTES,
+    });
     decipher.setAAD(envelope.aad);
     decipher.setAuthTag(envelope.tag);
     const meter = new ByteLimit(maxBytes);

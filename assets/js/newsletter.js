@@ -5,39 +5,53 @@
       success: 'Danke. Die Begrüßungsmail ist unterwegs.',
       error: 'Die Anmeldung ist gerade nicht möglich. Bitte versuchen Sie es später erneut.',
       consentRequired: 'Bitte bestätigen Sie die Einwilligung zum Newsletter.',
-      consentHtml:
-        'Ich willige in den Erhalt ausgewählter Pflege-Tipps und Angebote per E-Mail ein. Details in der <a href="datenschutz.html">Datenschutzerklärung</a>. Abmeldung jederzeit möglich.',
+      consent: [
+        'Ich willige in den Erhalt ausgewählter Pflege-Tipps und Angebote per E-Mail ein. Details in der ',
+        'Datenschutzerklärung',
+        '. Abmeldung jederzeit möglich.',
+      ],
     },
     ru: {
       sending: 'Отправляем...',
       success: 'Спасибо. Приветственное письмо уже отправляется.',
       error: 'Подписка сейчас недоступна. Попробуйте позже.',
       consentRequired: 'Подтвердите согласие на получение рассылки.',
-      consentHtml:
-        'Я соглашаюсь получать выбранные советы по уходу и предложения по e-mail. Подробности в <a href="datenschutz.html">политике конфиденциальности</a>. Отписка в любое время.',
+      consent: [
+        'Я соглашаюсь получать выбранные советы по уходу и предложения по e-mail. Подробности в ',
+        'политике конфиденциальности',
+        '. Отписка в любое время.',
+      ],
     },
     en: {
       sending: 'Sending...',
       success: 'Thank you. The welcome email is on its way.',
       error: 'Subscription is not available right now. Please try again later.',
       consentRequired: 'Please confirm newsletter consent.',
-      consentHtml:
-        'I agree to receive selected care tips and offers by email. Details in the <a href="datenschutz.html">privacy policy</a>. Unsubscribe anytime.',
+      consent: [
+        'I agree to receive selected care tips and offers by email. Details in the ',
+        'privacy policy',
+        '. Unsubscribe anytime.',
+      ],
     },
     uk: {
       sending: 'Надсилаємо...',
       success: 'Дякуємо. Вітальний лист уже надсилається.',
       error: 'Підписка зараз недоступна. Спробуйте пізніше.',
       consentRequired: 'Підтвердьте згоду на отримання розсилки.',
-      consentHtml:
-        'Я погоджуюся отримувати вибрані поради з догляду та пропозиції електронною поштою. Деталі в <a href="datenschutz.html">політиці конфіденційності</a>. Відписка будь-коли.',
+      consent: [
+        'Я погоджуюся отримувати вибрані поради з догляду та пропозиції електронною поштою. Деталі в ',
+        'політиці конфіденційності',
+        '. Відписка будь-коли.',
+      ],
     },
   };
 
-  const getLang = form =>
-    (form.querySelector('input[name="lang"]')?.value || document.documentElement.lang || 'de')
+  const getLang = form => {
+    const lang = (form.querySelector('input[name="lang"]')?.value || document.documentElement.lang || 'de')
       .toLowerCase()
       .slice(0, 2);
+    return Object.hasOwn(COPY, lang) ? lang : 'de';
+  };
 
   const ensureConsentField = form => {
     if (form.querySelector('input[name="newsletter_consent"]')) {
@@ -53,9 +67,11 @@
     input.required = true;
     input.value = 'on';
     const span = document.createElement('span');
-    span.innerHTML = copy.consentHtml;
-    const privacyLink = span.querySelector('a');
-    if (privacyLink) privacyLink.href = `/${lang}/datenschutz.html`;
+    const [intro, privacyLabel, outro] = copy.consent;
+    const privacyLink = document.createElement('a');
+    privacyLink.href = `/${lang}/datenschutz.html`;
+    privacyLink.textContent = privacyLabel;
+    span.append(document.createTextNode(intro), privacyLink, document.createTextNode(outro));
     label.append(input, span);
     const submit = form.querySelector('[type="submit"]');
     if (submit) {

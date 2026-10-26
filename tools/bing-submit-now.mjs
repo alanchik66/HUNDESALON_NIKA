@@ -14,7 +14,14 @@ const urls = fs
   .readFileSync(listPath, 'utf8')
   .split(/\r?\n/)
   .map(s => s.trim())
-  .filter(s => s.startsWith('https://hundesalon-nika.com'))
+  .filter(value => {
+    try {
+      const url = new URL(value);
+      return url.origin === 'https://hundesalon-nika.com' && !url.username && !url.password;
+    } catch {
+      return false;
+    }
+  })
   .slice(0, 100);
 
 const submit = await withCdpSession({ port, targetPattern: /bing/i }, async ({ send, evalPage }) => {
