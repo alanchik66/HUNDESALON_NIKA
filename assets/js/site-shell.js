@@ -159,6 +159,7 @@
       beforeAfter: 'ДО И ПОСЛЕ',
       beforeAfterHint: 'Интерактивный слайдер сравнения',
       contacts: 'КОНТАКТЫ',
+      shop: 'МАГАЗИН',
       booking: 'ОНЛАЙН ЗАКАЗ',
       blog: 'БЛОГ',
       intro: 'ВВЕДЕНИЕ',
@@ -180,6 +181,7 @@
       galleryAllHint: 'Фото найкращих робіт салону',
       beforeAfterHint: 'Інтерактивний слайдер порівняння',
       contacts: 'КОНТАКТИ',
+      shop: 'МАГАЗИН',
       booking: 'ОНЛАЙН ЗАПИС',
       blog: 'БЛОГ',
       intro: 'ВСТУП',
@@ -201,6 +203,7 @@
       beforeAfter: 'VORHER & NACHHER',
       beforeAfterHint: 'Interaktiver Vorher-Nachher-Slider',
       contacts: 'KONTAKTE',
+      shop: 'SHOP',
       booking: 'ONLINE BUCHEN',
       blog: 'BLOG',
       intro: 'EINFÜHRUNG',
@@ -222,6 +225,7 @@
       beforeAfter: 'BEFORE & AFTER',
       beforeAfterHint: 'Interactive comparison slider',
       contacts: 'CONTACTS',
+      shop: 'SHOP',
       booking: 'BOOK ONLINE',
       blog: 'BLOG',
       intro: 'INTRODUCTION',
@@ -795,10 +799,19 @@
   z-index: 0 !important;
 }
 
-/* No edge masks: clouds must never be clipped. */
-.weather-app--header .weather-app__scene canvas {
-  mask-image: none !important;
-  -webkit-mask-image: none !important;
+/* Fade the overscanned scene into the page; keep weather text and celestial overlays unmasked. */
+:host([data-weather-variant='header']) .weather-header-preview .weather-app__scene--header {
+  -webkit-mask-image:
+    linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%),
+    linear-gradient(180deg, transparent 0%, #000 18%, #000 68%, transparent 100%) !important;
+  mask-image:
+    linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%),
+    linear-gradient(180deg, transparent 0%, #000 18%, #000 68%, transparent 100%) !important;
+  -webkit-mask-composite: source-in !important;
+  mask-composite: intersect !important;
+  -webkit-mask-repeat: no-repeat !important;
+  mask-repeat: no-repeat !important;
+  pointer-events: none !important;
 }
 
 .weather-app--header canvas {
@@ -3608,6 +3621,7 @@
     'o-nas.html',
     'nashi-uslugi.html',
     'prays-list.html',
+    'shop.html',
     'galereya.html',
     'do-i-posle.html',
     'kontakty.html',
@@ -3911,6 +3925,7 @@
       return trimmed.endsWith('.html') ? trimmed : `${trimmed}.html`;
     };
     const currentRouteNormalized = normalizePageRoute(context.currentRoute);
+    const isShopRoute = currentRouteNormalized === 'shop.html';
     const depth = currentRouteNormalized.startsWith('blog/') ? 2 : 1;
     const pathPrefix = depth === 1 ? '' : '../';
     const assetPrefix = depth === 1 ? '../assets' : '../../assets';
@@ -3928,6 +3943,7 @@
       if (currentRouteNormalized === 'galereya.html' || currentRouteNormalized === 'do-i-posle.html') return 'gallery';
       if (currentRouteNormalized === 'blog/blog.html' || currentRouteNormalized.startsWith('blog/')) return 'blog';
       if (currentRouteNormalized === 'kontakty.html') return 'contacts';
+      if (currentRouteNormalized === 'shop.html') return 'shop';
       return '';
     })();
 
@@ -3997,6 +4013,7 @@
   <a href="${pathPrefix}o-nas.html"${mobileLinkAttrs('about')}>${copy.about}</a>
   <a href="${pathPrefix}nashi-uslugi.html"${mobileLinkAttrs('services')}>${copy.services}</a>
   <a href="${pathPrefix}prays-list.html"${mobileLinkAttrs('price')}>${copy.price}</a>
+  <a href="${pathPrefix}shop.html"${mobileLinkAttrs('shop')}>${copy.shop}</a>
   ${galleryMobileNavMarkup}
   <a href="${pathPrefix}blog/blog.html"${mobileLinkAttrs('blog')}>${copy.blog}</a>
   <a href="${pathPrefix}kontakty.html"${mobileLinkAttrs('contacts')}>${copy.contacts}</a>`
@@ -4004,6 +4021,7 @@
   <a href="${pathPrefix}o-nas.html"${mobileLinkAttrs('about')}>${copy.about}</a>
   <a href="${pathPrefix}nashi-uslugi.html"${mobileLinkAttrs('services')}>${copy.services}</a>
   <a href="${pathPrefix}prays-list.html"${mobileLinkAttrs('price')}>${copy.price}</a>
+  <a href="${pathPrefix}shop.html"${mobileLinkAttrs('shop')}>${copy.shop}</a>
   ${galleryMobileNavMarkup}
   <a href="${pathPrefix}blog/blog.html"${mobileLinkAttrs('blog')}>${copy.blog}</a>
   <a href="${pathPrefix}kontakty.html"${mobileLinkAttrs('contacts')}>${copy.contacts}</a>`;
@@ -4015,7 +4033,7 @@
   <a href="${pathPrefix}partnerstvo.html" class="mobile-nav-link--secondary">${copy.partner}</a>
   <a href="${pathPrefix}documents.html" class="mobile-nav-link--secondary">${copy.documents}</a>
   <a href="${pathPrefix}nashi-uslugi.html" class="mobile-nav-link--secondary">${copy.localSeo}</a>
-  <a href="${pathPrefix}onlayn-bronirovanie.html" class="mobile-nav-link--secondary online-order-pill online-order-pill--menu">${copy.booking}</a>`;
+  ${isShopRoute ? '' : `<a href="${pathPrefix}onlayn-bronirovanie.html" class="mobile-nav-link--secondary online-order-pill online-order-pill--menu">${copy.booking}</a>`}`;
 
     return `
 <header class="header">
@@ -4048,6 +4066,7 @@
       <a href="${pathPrefix}o-nas.html" class="btn-neon${activeClass('about')}"${activeAria('about')}>${copy.about}</a>
       <a href="${pathPrefix}nashi-uslugi.html" class="btn-neon${activeClass('services')}"${activeAria('services')}>${copy.services}</a>
       <a href="${pathPrefix}prays-list.html" class="btn-neon${activeClass('price')}"${activeAria('price')}>${copy.price}</a>
+      <a href="${pathPrefix}shop.html" class="btn-neon nav-shop${activeClass('shop')}"${activeAria('shop')}><i class="fas fa-shopping-bag" aria-hidden="true"></i> ${copy.shop}</a>
       ${galleryDesktopNavMarkup}
       <a href="${pathPrefix}kontakty.html" class="btn-neon${activeClass('contacts')}"${activeAria('contacts')}>${copy.contacts}</a>
     </nav>
@@ -4065,7 +4084,7 @@
           <li data-lang="en"><span class="flag">🇬🇧</span> English</li>
         </ul>
       </div>
-      <a href="${pathPrefix}onlayn-bronirovanie.html" class="header-online-btn online-order-pill"><span class="header-online-btn__label">${copy.booking}</span></a>
+      ${isShopRoute ? '' : `<a href="${pathPrefix}onlayn-bronirovanie.html" class="header-online-btn online-order-pill"><span class="header-online-btn__label">${copy.booking}</span></a>`}
       <button id="theme-toggle" class="theme-btn" type="button"></button>
     </div>
   </div>
@@ -6049,6 +6068,17 @@
     );
   }
 
+  function applyHeaderWeatherPressureCopy(host) {
+    if (!host?.shadowRoot || getHeaderWeatherPressureLang(host) !== 'uk') return;
+    host.shadowRoot.querySelectorAll('.weather-header-dropdown__detail-card > span:first-child').forEach(label => {
+      if (label.textContent?.trim().toLowerCase() === 'тиск') {
+        label.textContent = 'Атмосферний тиск';
+        label.style.setProperty('overflow-wrap', 'anywhere');
+        label.style.setProperty('hyphens', 'auto');
+      }
+    });
+  }
+
   function getHeaderWeatherPressureUnitText(host) {
     const lang = getHeaderWeatherPressureLang(host);
     const unitByLang = {
@@ -6365,7 +6395,7 @@
     const triggerNode = root.querySelector('.weather-header-trigger');
     const triggerHeight =
       triggerNode instanceof HTMLElement ? Math.round(triggerNode.getBoundingClientRect().height || 0) : 0;
-    const compactPreview = triggerHeight > 0 && triggerHeight <= 92;
+    const compactPreview = host.dataset.weatherVariant === 'header' || (triggerHeight > 0 && triggerHeight <= 92);
     const previewTempSizePx = compactPreview ? 22 : HEADER_WEATHER_TEMP_VALUE_SIZE_PX;
 
     let changed = false;
@@ -8190,6 +8220,10 @@
     rightColumn.style.setProperty('padding', '0', 'important');
     rightColumn.style.setProperty('box-sizing', 'border-box', 'important');
 
+    // Measure intrinsic content, without adding the previous reserved gap again.
+    rightColumn.style.setProperty('width', 'max-content', 'important');
+    rightColumn.style.setProperty('min-width', '0', 'important');
+    rightColumn.style.setProperty('max-width', 'none', 'important');
     const measuredRightColumnWidth = Math.ceil(rightColumn.getBoundingClientRect().width || 0);
     const reservedRightColumnWidth = Math.max(111, measuredRightColumnWidth) + 12 + Math.max(0, rightEdgeInsetPx);
     host.__weatherRightColumnAnchorWidth = reservedRightColumnWidth;
@@ -8280,6 +8314,25 @@
     });
 
     host.__weatherLayoutObserver = observer;
+
+    if (typeof ResizeObserver === 'function') {
+      let previousWidth = -1;
+      let previousHeight = -1;
+      const sizeObserver = new ResizeObserver(entries => {
+        const { width, height } = entries[0].contentRect;
+        if (width === previousWidth && height === previousHeight) {
+          return;
+        }
+        previousWidth = width;
+        previousHeight = height;
+        // The header grid can settle after window.resize; remeasure the final preview size.
+        resetHeaderWeatherPreviewLayoutState(host);
+        host.__weatherPlacementLockedOnce = false;
+        scheduleHeaderWeatherMenuPlacement(host);
+      });
+      sizeObserver.observe(host);
+      host.__weatherSizeObserver = sizeObserver;
+    }
   }
 
   function resetHeaderWeatherPreviewLayoutState(host) {
@@ -9316,7 +9369,7 @@
     const triggerNode = root.querySelector('.weather-header-trigger');
     const triggerHeight =
       triggerNode instanceof HTMLElement ? Math.round(triggerNode.getBoundingClientRect().height || 0) : 0;
-    const compactPreview = triggerHeight > 0 && triggerHeight <= 92;
+    const compactPreview = host.dataset.weatherVariant === 'header' || (triggerHeight > 0 && triggerHeight <= 92);
     const showMetrics = compactPreview;
     const previewTempSizePx = compactPreview ? 22 : 34;
 
@@ -9438,7 +9491,6 @@
     if (!root || host.__weatherPlacementApplying) {
       return;
     }
-
     const hasCompleteLockedPreview = () => {
       if (!root) {
         return false;
@@ -9508,10 +9560,11 @@
         window.getComputedStyle(host).getPropertyValue('--header-weather-text-inset') || '0'
       );
       const triggerNode = root.querySelector('.weather-header-trigger');
-      const triggerHeight =
-        triggerNode instanceof HTMLElement ? Math.round(triggerNode.getBoundingClientRect().height || 0) : 0;
       const isHeaderVariant =
         host?.dataset?.weatherVariant === 'header' || host?.getAttribute?.('data-weather-variant') === 'header';
+      const triggerHeight = isHeaderVariant
+        ? host.clientHeight
+        : triggerNode instanceof HTMLElement ? Math.round(triggerNode.getBoundingClientRect().height || 0) : 0;
       const measuredInset = Number.isFinite(parsedInset) ? Math.max(0, Math.round(parsedInset)) : 0;
       if (isHeaderVariant && !Number.isFinite(host.__weatherLockedTextInset)) {
         host.__weatherLockedTextInset = 0;
@@ -9859,7 +9912,7 @@
       const locationLines = estimateTextLines(locationLabel);
       const metaLines = estimateTextLines(meta);
       const extraTextLines = Math.max(0, locationLines - 1) + Math.max(0, metaLines - 1);
-      const growthPx = extraTextLines > 0 ? Math.min(12, Math.ceil(extraTextLines * 6 + 2)) : 0;
+      const growthPx = !isHeaderVariant && extraTextLines > 0 ? Math.min(12, Math.ceil(extraTextLines * 6 + 2)) : 0;
 
       if (content instanceof HTMLElement) {
         const nextPadTopPx = baseContentPadTopPx + (growthPx > 0 ? Math.ceil(growthPx / 6) : 0);
@@ -10694,8 +10747,8 @@
           const lang = getHeaderWeatherPressureLang(host);
           const labelByLang = {
             ru: 'ДАВЛЕНИЕ',
-            uk: 'ТИСК',
-            de: 'DRUCK',
+            uk: 'АТМОСФЕРНИЙ ТИСК',
+            de: 'LUFTDRUCK',
             en: 'PRESSURE',
           };
           const fallbackLabel = labelByLang[lang] || 'PRESSURE';
@@ -11085,13 +11138,13 @@
       };
 
       const syncPressureAndHumidityLabels = () => {
+        const metricLang = getHeaderWeatherPressureLang(host);
         const METRIC_ROW_SHIFT_X_PX = 0;
-        const LABEL_COLUMN_WIDTH_PX = 38;
+        const LABEL_COLUMN_WIDTH_PX = metricLang === 'uk' ? 80 : 48;
         const APPROX_COLUMN_PX = 5;
         const VALUE_COLUMN_WIDTH_PX = 24.3;
         const METRIC_COLUMN_GAP_PX = 2.4;
-        const PRESSURE_LABEL_RIGHT_INSET_PX = 2.3;
-        const PRESSURE_META_HEIGHT_PX = 14.4;
+        const PRESSURE_META_HEIGHT_PX = 17;
         const HUMIDITY_LABEL_AND_APPROX_SHIFT_Y_PX = 3.2;
         const METRIC_ROW_WIDTH_PX =
           LABEL_COLUMN_WIDTH_PX + APPROX_COLUMN_PX + VALUE_COLUMN_WIDTH_PX + METRIC_COLUMN_GAP_PX * 2;
@@ -11169,8 +11222,8 @@
             'min-width': `${LABEL_COLUMN_WIDTH_PX}px`,
             'max-width': `${LABEL_COLUMN_WIDTH_PX}px`,
             margin: '0',
-            'font-size': '6px',
-            'line-height': '6px',
+            'font-size': '7.5px',
+            'line-height': '8px',
             'font-weight': '400',
             'letter-spacing': '0',
             'text-transform': 'none',
@@ -11248,11 +11301,11 @@
             'grid-column': '1',
             display: 'inline-flex',
             'flex-direction': 'column',
-            'align-items': 'flex-start',
+            'align-items': 'stretch',
             'justify-content': 'center',
             'row-gap': '0.4px',
-            width: `${LABEL_COLUMN_WIDTH_PX}px`,
-            'min-width': `${LABEL_COLUMN_WIDTH_PX}px`,
+            width: 'max-content',
+            'min-width': '0',
             'max-width': `${LABEL_COLUMN_WIDTH_PX}px`,
             height: `${PRESSURE_META_HEIGHT_PX}px`,
             'min-height': `${PRESSURE_META_HEIGHT_PX}px`,
@@ -11262,21 +11315,30 @@
             'white-space': 'normal',
             transform: 'none',
             'align-self': 'center',
-            'justify-self': 'stretch',
+            'justify-self': 'start',
           });
 
+          const localizedPressureLabel = { de: 'LUFTDRUCK', uk: 'АТМОСФЕРНИЙ ТИСК' }[metricLang];
+          if (localizedPressureLabel && finalPressureMetaLabelNode instanceof HTMLElement) {
+            finalPressureMetaLabelNode.textContent = localizedPressureLabel;
+          }
           setMetricLabelStyles(finalPressureMetaLabelNode);
           setImportantStyles(finalPressureMetaLabelNode, {
-            'letter-spacing': '0.67px',
+            width: 'max-content',
+            'min-width': '0',
+            'max-width': '100%',
           });
           setMetricLabelStyles(finalPressureMetaUnitNode);
           setImportantStyles(finalPressureMetaUnitNode, {
+            width: '100%',
+            'min-width': '0',
+            'max-width': '100%',
             'justify-content': 'flex-end',
             'text-align': 'right',
             'box-sizing': 'border-box',
-            'padding-right': `${PRESSURE_LABEL_RIGHT_INSET_PX}px`,
-            'font-size': '5.8px',
-            'line-height': '6px',
+            padding: '0',
+            'font-size': '7px',
+            'line-height': '7.5px',
             'text-transform': 'none',
             opacity: '0.96',
           });
@@ -12728,6 +12790,7 @@
         mutation => mutation.type === 'childList' || mutation.type === 'characterData'
       );
 
+      if (shouldSync || shouldRestoreLocation) applyHeaderWeatherPressureCopy(host);
       if (shouldSync) {
         syncHeaderWeatherExpandedState(host);
         syncHeaderWeatherToggleArrow(host);
@@ -13319,6 +13382,8 @@
     host.__weatherReadingsObserver = null;
     host.__weatherLayoutObserver?.disconnect?.();
     host.__weatherLayoutObserver = null;
+    host.__weatherSizeObserver?.disconnect?.();
+    host.__weatherSizeObserver = null;
     resetHeaderWeatherPreviewLayoutState(host);
     host.dataset.weatherMounted = 'false';
     host.dataset.weatherMountScheduled = 'false';
@@ -13892,6 +13957,369 @@
     });
   }
 
+  function getVisibleHeaderBottom() {
+    const header = document.querySelector('header.header');
+    if (!header) return 0;
+
+    const headerStyle = window.getComputedStyle(header);
+    const headerRect = header.getBoundingClientRect();
+    const headerVisible =
+      headerRect.height > 0 &&
+      headerRect.bottom > 0 &&
+      headerStyle.display !== 'none' &&
+      headerStyle.visibility !== 'hidden' &&
+      parseFloat(headerStyle.opacity || '1') > 0.02;
+
+    if (!headerVisible) return 0;
+
+    const topRow = header.querySelector('.top-row');
+    let visibleBottom = Math.max(0, headerRect.top);
+
+    if (topRow) {
+      const topRowRect = topRow.getBoundingClientRect();
+      const topRowStyle = window.getComputedStyle(topRow);
+      const topRowVisible =
+        topRowRect.height > 0 &&
+        topRowRect.bottom > 0 &&
+        topRowStyle.display !== 'none' &&
+        topRowStyle.visibility !== 'hidden' &&
+        parseFloat(topRowStyle.opacity || '1') > 0.02;
+
+      if (topRowVisible) {
+        visibleBottom = Math.max(visibleBottom, topRowRect.bottom);
+      }
+    }
+
+    const socialVisible = header.querySelector('.social-bar.show-social');
+
+    if (socialVisible) {
+      const rect = socialVisible.getBoundingClientRect();
+      const style = window.getComputedStyle(socialVisible);
+      const isVisible =
+        rect.height > 0 &&
+        rect.bottom > 0 &&
+        style.display !== 'none' &&
+        style.visibility !== 'hidden' &&
+        parseFloat(style.opacity || '1') > 0.02;
+
+      if (isVisible) {
+        visibleBottom = Math.max(visibleBottom, rect.bottom);
+      }
+    }
+
+    if (visibleBottom <= Math.max(0, headerRect.top)) {
+      visibleBottom = Math.max(0, headerRect.bottom);
+    }
+
+    return Math.min(window.innerHeight, Math.round(visibleBottom));
+  }
+
+  const getHeaderLayoutMode = (viewportWidth, availableWidth, requiredWidth, centeredWeatherWidth, previousMode) => {
+    if (viewportWidth <= 900) return 'mobile';
+    const returnClearance = previousMode === 'inline' ? 0 : 8;
+    if (availableWidth >= requiredWidth + returnClearance) return 'inline';
+    return centeredWeatherWidth >= 280 ? 'stacked' : 'weather-row';
+  };
+
+  const getHeaderNavigationWidth = navigation => {
+    const items = Array.from(navigation.children).filter(item => item.matches('a, .dropdown, .filter-btn'));
+    const gap = parseFloat(getComputedStyle(navigation).columnGap) || 0;
+    return Math.ceil(items.reduce((width, item) => width + item.getBoundingClientRect().width, 0)
+      + Math.max(0, items.length - 1) * gap);
+  };
+
+  function initHeaderAdaptiveLayout({ pageHeader, pageTopRow, pageWeatherShell, pageNavMain, pageHeaderControls, onLayout }) {
+    const clearDesktopHeaderWeatherClearance = () => {
+      [pageNavMain, pageHeaderControls].forEach(element => {
+        element?.style.removeProperty('margin-inline-start');
+      });
+
+      pageHeader?.classList.remove('header--weather-crowded');
+    };
+
+    const getHeaderWeatherVisualRect = () => {
+      if (!pageWeatherShell) {
+        return null;
+      }
+
+      const shellRect = pageWeatherShell.getBoundingClientRect();
+      let left = shellRect.left;
+      let right = shellRect.right;
+      let top = shellRect.top;
+      let bottom = shellRect.bottom;
+
+      const widgetHost = Array.from(pageWeatherShell.querySelectorAll('*')).find(element =>
+        element.shadowRoot?.querySelector?.('.weather-header-preview')
+      );
+      const shadowRoot = widgetHost?.shadowRoot;
+      const previewOverlay = shadowRoot?.querySelector('.weather-orb-overlay--preview');
+      const previewOrbMedia = previewOverlay
+        ? previewOverlay.querySelectorAll(
+            '.weather-orb-overlay__canvas, .weather-orb-overlay__image, .weather-orb-overlay__video'
+          )
+        : [];
+
+      const measuredNodes = [previewOverlay, ...previewOrbMedia].filter(Boolean);
+      measuredNodes.forEach(node => {
+        const rect = node.getBoundingClientRect();
+        if (rect.width < 1 || rect.height < 1) {
+          return;
+        }
+
+        left = Math.min(left, rect.left);
+        right = Math.max(right, rect.right);
+        top = Math.min(top, rect.top);
+        bottom = Math.max(bottom, rect.bottom);
+      });
+
+      return { left, right, top, bottom };
+    };
+
+    const syncDesktopHeaderWeatherClearance = () => {
+      if (pageHeader?.dataset.headerLayout) {
+        clearDesktopHeaderWeatherClearance();
+        return;
+      }
+      if (window.innerWidth <= 899 || !pageHeader || !pageWeatherShell) {
+        clearDesktopHeaderWeatherClearance();
+        return;
+      }
+
+      const weatherRect = getHeaderWeatherVisualRect();
+      if (!weatherRect) {
+        clearDesktopHeaderWeatherClearance();
+        return;
+      }
+
+      const minimumGap = 18;
+      let largestInjectedGap = 0;
+
+      [pageNavMain, pageHeaderControls].forEach(element => {
+        if (!element) {
+          return;
+        }
+
+        const rect = element.getBoundingClientRect();
+        const overlapsWeatherBand = rect.bottom > weatherRect.top + 4 && rect.top < weatherRect.bottom - 4;
+        if (!overlapsWeatherBand) {
+          element.style.removeProperty('margin-inline-start');
+          return;
+        }
+
+        const currentGap = rect.left - weatherRect.right;
+        const injectedGap = Math.max(0, Math.ceil(minimumGap - currentGap));
+        if (injectedGap > 0) {
+          element.style.setProperty('margin-inline-start', `${injectedGap}px`);
+          largestInjectedGap = Math.max(largestInjectedGap, injectedGap);
+        } else {
+          element.style.removeProperty('margin-inline-start');
+        }
+      });
+
+      pageHeader.classList.toggle('header--weather-crowded', largestInjectedGap > 28);
+    };
+
+    const syncDesktopBurgerAxis = () => {
+      const headerRoot = document.querySelector('header.header');
+      if (!headerRoot) {
+        return;
+      }
+
+      const socialBar = headerRoot.querySelector('.social-bar');
+      const socialBarVisible =
+        socialBar?.classList.contains('show-social') || headerRoot.classList.contains('header-social-visible');
+      if (!socialBarVisible) {
+        headerRoot.style.removeProperty('--burger-align-shift');
+        return;
+      }
+
+      const pageBurger = headerRoot.querySelector('.premium-burger');
+      const axisTarget =
+        headerRoot.querySelector('.social-icons-toggle-img') ||
+        headerRoot.querySelector('.social-icons-toggle');
+      if (!pageBurger || !axisTarget) {
+        headerRoot.style.removeProperty('--burger-align-shift');
+        return;
+      }
+
+      const burgerRect = pageBurger.getBoundingClientRect();
+      const targetRect = axisTarget.getBoundingClientRect();
+      if (burgerRect.width < 1 || targetRect.width < 1) {
+        headerRoot.style.removeProperty('--burger-align-shift');
+        return;
+      }
+
+      const burgerCenterX = burgerRect.left + burgerRect.width / 2;
+      const targetCenterX = targetRect.left + targetRect.width / 2;
+      const shift = Math.round(targetCenterX - burgerCenterX);
+      const clampedShift = Math.max(-180, Math.min(180, shift));
+      headerRoot.style.setProperty('--burger-align-shift', `${clampedShift}px`);
+    };
+
+    const syncHomeButtonMaxWidth = () => {
+      const headerRoot = document.querySelector('header.header');
+      if (!headerRoot) {
+        return;
+      }
+
+      const logoWrapper = headerRoot.querySelector('.logo-wrapper');
+      const homeButton = headerRoot.querySelector('.social-home');
+      if (!logoWrapper || !homeButton) {
+        headerRoot.style.removeProperty('--home-max-width');
+        return;
+      }
+
+      const logoRect = logoWrapper.getBoundingClientRect();
+      if (logoRect.width < 1) {
+        headerRoot.style.removeProperty('--home-max-width');
+        return;
+      }
+
+      const maxWidth = Math.max(32, Math.round(logoRect.width));
+      headerRoot.style.setProperty('--home-max-width', `${maxWidth}px`);
+
+      homeButton.style.setProperty('width', `${maxWidth}px`);
+      homeButton.style.setProperty('max-width', `${maxWidth}px`);
+      homeButton.style.setProperty('min-width', '0px');
+
+      const homeLink = homeButton.querySelector('a');
+      if (homeLink instanceof HTMLElement) {
+        homeLink.style.setProperty('width', '100%');
+        homeLink.style.setProperty('max-width', '100%');
+        homeLink.style.setProperty('min-width', '0px');
+      }
+    };
+
+    const syncSocialDividerWithBurger = () => {
+      const headerRoot = document.querySelector('header.header');
+      if (!headerRoot || window.innerWidth <= 900) {
+        headerRoot?.style.removeProperty('--social-divider-shift-x');
+        return;
+      }
+
+      const burger = headerRoot.querySelector('.premium-burger');
+      const divider = headerRoot.querySelector('.social-player-divider');
+      if (!burger || !divider) {
+        headerRoot.style.removeProperty('--social-divider-shift-x');
+        return;
+      }
+
+      const burgerRect = burger.getBoundingClientRect();
+      const dividerRect = divider.getBoundingClientRect();
+      if (burgerRect.width < 1 || dividerRect.width < 1) {
+        headerRoot.style.removeProperty('--social-divider-shift-x');
+        return;
+      }
+
+      const burgerCenterX = burgerRect.left + burgerRect.width / 2;
+      const dividerCenterX = dividerRect.left + dividerRect.width / 2;
+      const currentShift =
+        Number.parseFloat(window.getComputedStyle(headerRoot).getPropertyValue('--social-divider-shift-x')) || 0;
+      const baseDividerCenterX = dividerCenterX - currentShift;
+      const shift = burgerCenterX - baseDividerCenterX;
+      const clampedShift = Math.max(-220, Math.min(220, shift));
+      headerRoot.style.setProperty('--social-divider-shift-x', `${clampedShift.toFixed(2)}px`);
+    };
+
+    const syncHeaderGrid = () => {
+      if (!pageHeader || !pageTopRow || !pageWeatherShell || !pageNavMain || !pageHeaderControls) return;
+      clearDesktopHeaderWeatherClearance();
+      if (window.innerWidth <= 900) {
+        pageHeader.dataset.headerLayout = 'mobile';
+        ['--header-row-height', '--header-weather-inset-left', '--header-weather-inset-right',
+          '--header-nav-inset-left', '--header-nav-inset-right', '--header-inline-weather-width'].forEach(property => {
+          pageHeader.style.removeProperty(property);
+        });
+        return;
+      }
+      const logo = pageTopRow.querySelector('.logo-wrapper');
+      const burger = pageTopRow.querySelector('.premium-burger');
+      if (!logo || !burger) return;
+      const gap = 12;
+      const topStyle = getComputedStyle(pageTopRow);
+      const availableWidth = pageTopRow.clientWidth - parseFloat(topStyle.paddingLeft) - parseFloat(topStyle.paddingRight);
+      const navigationWidth = getHeaderNavigationWidth(pageNavMain);
+      const fixedInlineWidth = logo.offsetWidth + burger.offsetWidth + navigationWidth + pageHeaderControls.offsetWidth + 6 * gap;
+      const requiredWidth = fixedInlineWidth + 280;
+      const reserve = Math.ceil(Math.max(logo.offsetWidth + burger.offsetWidth + 2 * gap, pageHeaderControls.offsetWidth + gap));
+      const mode = getHeaderLayoutMode(window.innerWidth, availableWidth, requiredWidth, availableWidth - 2 * reserve, pageHeader.dataset.headerLayout);
+      // Measure the controls in the new grid, including the first frame after zooming.
+      if (pageHeader.dataset.headerLayout !== mode) pageHeader.dataset.headerLayout = mode;
+      const rowBox = pageTopRow.getBoundingClientRect();
+      const language = pageHeaderControls.querySelector('.lang-dropdown-btn');
+      const openingLeft = burger.getBoundingClientRect().right - rowBox.left;
+      const openingRight = (language || pageHeaderControls).getBoundingClientRect().left - rowBox.left;
+      const openingCenter = (openingLeft + openingRight) / 2;
+      // Keep every navigation label visible when a narrow desktop cannot fit the exact center.
+      const halfNavigation = Math.min(navigationWidth, availableWidth) / 2;
+      const navigationCenter = Math.max(halfNavigation, Math.min(availableWidth - halfNavigation, openingCenter));
+      const weatherLeft = mode === 'weather-row' ? Math.max(0, 2 * navigationCenter - availableWidth) : openingLeft + gap;
+      const weatherRight = mode === 'weather-row' ? Math.max(0, availableWidth - 2 * navigationCenter) : availableWidth - openingRight + gap;
+      const controlsMargin = parseFloat(getComputedStyle(pageHeaderControls).marginTop) || 0;
+      const rowHeight = Math.ceil(Math.max(78, pageHeaderControls.offsetHeight + controlsMargin));
+      const setSize = (property, value) => {
+        if (pageHeader.style.getPropertyValue(property) !== value) pageHeader.style.setProperty(property, value);
+      };
+      setSize('--header-weather-inset-left', `${weatherLeft.toFixed(2)}px`);
+      setSize('--header-weather-inset-right', `${weatherRight.toFixed(2)}px`);
+      setSize('--header-nav-inset-left', `${Math.max(0, 2 * navigationCenter - availableWidth).toFixed(2)}px`);
+      setSize('--header-nav-inset-right', `${Math.max(0, availableWidth - 2 * navigationCenter).toFixed(2)}px`);
+      setSize('--header-inline-weather-width', `${Math.min(480, Math.max(280, availableWidth - fixedInlineWidth)).toFixed(2)}px`);
+      setSize('--header-row-height', `${rowHeight}px`);
+    };
+
+    const applyHeaderAdaptiveLayout = () => {
+      syncHeaderGrid();
+      syncDesktopHeaderWeatherClearance();
+      syncDesktopBurgerAxis();
+      syncHomeButtonMaxWidth();
+      syncSocialDividerWithBurger();
+      onLayout();
+    };
+
+    let headerLayoutFrame = 0;
+    const syncHeaderAdaptiveLayout = () => {
+      if (headerLayoutFrame) return;
+      headerLayoutFrame = requestAnimationFrame(() => {
+        headerLayoutFrame = 0;
+        applyHeaderAdaptiveLayout();
+      });
+    };
+
+    window.addEventListener('site-shell:weather-ready', syncHeaderAdaptiveLayout);
+    window.addEventListener('site-shell:weather-toggle', syncHeaderAdaptiveLayout);
+    window.addEventListener('site-shell:social-ready', syncHeaderAdaptiveLayout);
+    window.addEventListener('site-shell:header-controls-ready', syncHeaderAdaptiveLayout);
+    window.addEventListener('load', syncHeaderAdaptiveLayout);
+    window.addEventListener('resize', syncHeaderAdaptiveLayout, { passive: true });
+    window.visualViewport?.addEventListener('resize', syncHeaderAdaptiveLayout, { passive: true });
+    document.fonts?.ready?.then(syncHeaderAdaptiveLayout);
+    document.fonts?.addEventListener?.('loadingdone', syncHeaderAdaptiveLayout);
+    syncHeaderAdaptiveLayout();
+
+    if (window.ResizeObserver && pageHeader) {
+      const adaptiveHeaderObserver = new ResizeObserver(() => {
+        syncHeaderAdaptiveLayout();
+      });
+
+      adaptiveHeaderObserver.observe(pageHeader);
+      if (pageTopRow) {
+        adaptiveHeaderObserver.observe(pageTopRow);
+      }
+      if (pageWeatherShell) {
+        adaptiveHeaderObserver.observe(pageWeatherShell);
+      }
+      if (pageNavMain) adaptiveHeaderObserver.observe(pageNavMain);
+      if (pageHeaderControls) adaptiveHeaderObserver.observe(pageHeaderControls);
+      pageNavMain?.querySelectorAll(':scope > a, :scope > .dropdown, :scope > .filter-btn').forEach(item => {
+        adaptiveHeaderObserver.observe(item);
+      });
+      pageTopRow?.querySelectorAll(':scope > .logo-wrapper, :scope > .premium-burger').forEach(item => {
+        adaptiveHeaderObserver.observe(item);
+      });
+    }
+  }
+
   function init() {
     const context = resolvePageContext();
 
@@ -13921,6 +14349,8 @@
 
     return {
       ...context,
+      getVisibleHeaderBottom,
+      initHeaderAdaptiveLayout,
       getThemeToggleLabel: isLight => getThemeToggleLabel(context.pageLang, isLight),
       buildLanguageUrl: lang => buildLanguageUrl(context, lang),
       initLanguageDropdown: () => initLanguageDropdown(context),

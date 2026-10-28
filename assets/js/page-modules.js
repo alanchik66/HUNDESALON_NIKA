@@ -1229,6 +1229,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const initBookingModal = () => {
     const modal = document.getElementById('booking-modal');
     if (!modal) return;
+    const isPriceFlow = modal.hasAttribute('data-price-booking-flow');
+    const flowCopy = ({
+      ru: { steps: ['Услуга', 'Питомец', 'Дата и время', 'Контакты'], back: 'Назад', selection: 'Выбранный уход' },
+      uk: { steps: ['Послуга', 'Улюбленець', 'Дата й час', 'Контакти'], back: 'Назад', selection: 'Обраний догляд' },
+      de: { steps: ['Leistung', 'Tier', 'Datum und Uhrzeit', 'Kontakt'], back: 'Zurück', selection: 'Ausgewählte Pflege' },
+      en: { steps: ['Service', 'Pet', 'Date and time', 'Contact'], back: 'Back', selection: 'Selected care' },
+    })[pageLang] || { steps: ['Service', 'Pet', 'Date and time', 'Contact'], back: 'Back', selection: 'Selected care' };
     const createUploadSessionId = () => {
       if (typeof window.crypto?.randomUUID === 'function') return window.crypto.randomUUID();
       const bytes = new Uint8Array(16);
@@ -1257,8 +1264,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const uploadedFileUrlField = modal.querySelector('input[name="uploaded_file_url"]');
     const bookingSummary = modal.querySelector('[data-booking-summary]');
     const bookingFilePreview = modal.querySelector('[data-booking-file-preview]');
+    if (isPriceFlow) {
+      const indicator = modal.querySelector('.step-indicator');
+      if (indicator?.querySelectorAll('.step').length === 3) {
+        const selectionStep = document.createElement('div');
+        selectionStep.className = 'step';
+        indicator.prepend(selectionStep);
+      }
+    }
     const steps = Array.from(modal.querySelectorAll('.step'));
     const panels = {
+      ...(isPriceFlow ? { 0: modal.querySelector('[data-booking-price-selection]') } : {}),
       1: modal.querySelector('#step-1'),
       2: modal.querySelector('#step-2'),
       3: modal.querySelector('#step-3'),
@@ -1283,11 +1299,15 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (bookingCatalog) {
+    if (bookingCatalog && !isPriceFlow) {
       modal.querySelector('.step-indicator .step')?.replaceChildren(bookingCopy.serviceStep);
       panels[1]?.querySelector('h3')?.replaceChildren(bookingCopy.chooseBreed);
       modal.querySelector('.step-indicator .step:nth-child(2)')?.replaceChildren(bookingCopy.datetimeStep);
       panels[2]?.querySelector('h3')?.replaceChildren(bookingCopy.datetimeTitle);
+    }
+    if (isPriceFlow) {
+      steps.forEach((step, index) => step.replaceChildren(`${index + 1}. ${flowCopy.steps[index] || ''}`));
+      panels[1]?.querySelector('h3')?.replaceChildren(flowCopy.steps[1]);
     }
 
     const step2Panel = panels[2];
@@ -1552,6 +1572,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const stepIndicator = modal.querySelector('.step-indicator');
     const modalContent = modal.querySelector('.modal-content');
+    if (isPriceFlow && stepIndicator && panels[0]) panels[0].before(stepIndicator);
     const modalButtonRows = modal.querySelectorAll('.modal-buttons');
     const siteScrollRoot = document.querySelector('.site-scroll-root');
     let savedSiteScrollTop = 0;
@@ -1561,6 +1582,40 @@ document.addEventListener('DOMContentLoaded', () => {
     const BOOKING_STEP_MOTION_MS = 420;
     let stepMotionTimer = null;
     let tiltResetTimer = null;
+    const flowScrollPositions = new Map();
+    const flowFocusTargets = new Map();
+    const resolveBookingFocusTarget = element => {
+      if (!(element instanceof HTMLElement) || element.matches(':disabled, [hidden], .hidden')) return null;
+      let target = element;
+      if (element.matches('select.site-select__native')) {
+        element.tabIndex = -1;
+        target = element.closest('.site-select')?.querySelector('.site-select__trigger');
+      }
+      if (!(target instanceof HTMLElement) || target.matches(':disabled, [hidden], .hidden, .site-select__native') ||
+          target.closest('[hidden], [inert]') || target.getAttribute('aria-disabled') === 'true') return null;
+      const style = window.getComputedStyle(target);
+      return target.getClientRects().length && style.display !== 'none' && style.visibility !== 'hidden' &&
+        Number.parseFloat(style.opacity) !== 0 ? target : null;
+    };
+    const getBookingFocusTargets = container => [...new Set(Array.from(container?.querySelectorAll(
+      'a[href], button, input:not([type="hidden"]), select, textarea, [tabindex="0"]'
+    ) || []).map(resolveBookingFocusTarget).filter(element => element && element.tabIndex >= 0))];
+    let flowBackButton = null;
+    if (isPriceFlow && modalContent) {
+      flowBackButton = document.createElement('button');
+      flowBackButton.type = 'button';
+      flowBackButton.className = 'btn-neon price-booking-flow__back booking-flow-back';
+      flowBackButton.dataset.bookingFlowBack = '';
+      flowBackButton.setAttribute('aria-label', flowCopy.back);
+      flowBackButton.style.minWidth = '44px';
+      flowBackButton.style.minHeight = '44px';
+      flowBackButton.hidden = true;
+      const arrow = document.createElement('span');
+      arrow.setAttribute('aria-hidden', 'true');
+      arrow.textContent = '←';
+      flowBackButton.appendChild(arrow);
+      closeControl?.insertAdjacentElement('beforebegin', flowBackButton);
+    }
 
     const keepBookingModalViewportAtTop = () => {
       modalContent?.scrollTo?.({ top: 0, left: 0, behavior: 'auto' });
@@ -1795,13 +1850,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateStepTabs = () => {
       steps.forEach((item, index) => {
-        const stepNumber = index + 1;
+        const stepNumber = index + (isPriceFlow ? 0 : 1);
         const isActive = stepNumber === state.step;
         const isComplete = stepNumber < state.step;
 
         item.classList.toggle('is-complete', isComplete);
         item.setAttribute('aria-selected', isActive ? 'true' : 'false');
         item.setAttribute('tabindex', isActive ? '0' : '-1');
+        if (isPriceFlow && stepNumber === 0) item.hidden = !state.priceSelectionActive && state.step !== 0;
 
         if (isActive) {
           activateBookingPill(item);
@@ -1820,6 +1876,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (targetStep < state.step) {
         setStep(targetStep);
+        return;
+      }
+      if (isPriceFlow && state.step === 0) {
+        modal.querySelector('[data-price-modal-booking]')?.click();
+        return;
+      }
+      if (isPriceFlow && state.step === 1 && targetStep > 1) {
+        moveToDateStep();
+        if (state.step === 2 && targetStep === 3) moveToContactStep();
         return;
       }
 
@@ -1847,7 +1912,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     steps.forEach((stepEl, index) => {
-      const stepNumber = index + 1;
+      const stepNumber = index + (isPriceFlow ? 0 : 1);
       stepEl.classList.add('filter-btn');
       stepEl.setAttribute('role', 'tab');
       stepEl.dataset.bookingStep = String(stepNumber);
@@ -1900,6 +1965,14 @@ document.addEventListener('DOMContentLoaded', () => {
       selectedPrice: '',
       selectedServiceLabel: '',
       selectedPriceOverride: '',
+      selectedServiceIds: [],
+      priceSelectionSignature: '',
+      priceSelectionActive: false,
+      selectedPetSpecies: '',
+      selectedPetBreedLabel: '',
+      promotionKey: '',
+      promotionLabel: '',
+      promotionPrice: '',
       selectedDate: selectedDateField.value || '',
       selectedTime: selectedTimeField.value || '',
       clientType: '',
@@ -1928,8 +2001,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const getSelectedTiming = () => {
       if (bookingCatalog?.getTiming) {
+        const timingService = state.priceSelectionActive
+          ? bookingCatalog.categories.flatMap(category => category.services).find(service => service.id === state.selectedServiceId)
+          : null;
         const timing = bookingCatalog.getTiming({
-          categoryId: state.selectedCategoryId,
+          categoryId: timingService?.categoryId || state.selectedCategoryId,
           breedId: state.selectedBreedId,
           serviceId: state.selectedServiceId,
           clientType: state.clientType || 'new',
@@ -1993,11 +2069,14 @@ document.addEventListener('DOMContentLoaded', () => {
         guinea_pig: bookingCopy.petRegistration.guineaPig,
         other: bookingCopy.petRegistration.other,
       };
+      if (state.priceSelectionActive && Object.hasOwn(labels, state.selectedPetSpecies)) {
+        key = state.selectedPetSpecies;
+      }
 
       return {
         key,
         label: labels[key] || labels.other,
-        breedLabel: selectedBreed?.label || '',
+        breedLabel: selectedBreed?.label || (state.priceSelectionActive ? state.selectedPetBreedLabel : '') || '',
       };
     };
 
@@ -2035,6 +2114,12 @@ document.addEventListener('DOMContentLoaded', () => {
       injectHiddenValue(form, 'breed', state.selectedBreedId);
       injectHiddenValue(form, 'service_category', state.selectedCategoryId);
       injectHiddenValue(form, 'service_price', state.selectedPrice);
+      if (isPriceFlow) {
+        injectHiddenValue(form, 'service_ids', state.priceSelectionActive ? state.selectedServiceIds.join(',') : '');
+        injectHiddenValue(form, 'promotion_key', state.priceSelectionActive ? state.promotionKey : '');
+        injectHiddenValue(form, 'promotion_label', state.priceSelectionActive ? state.promotionLabel : '');
+        injectHiddenValue(form, 'promotion_price', state.priceSelectionActive ? state.promotionPrice : '');
+      }
       const timing = getSelectedTiming();
       injectHiddenValue(form, 'booking_client_type', state.clientType);
       injectHiddenValue(form, 'coat_condition', state.coatCondition);
@@ -2074,7 +2159,7 @@ document.addEventListener('DOMContentLoaded', () => {
       validationMessage.setAttribute('aria-hidden', 'false');
 
       window.requestAnimationFrame(() => {
-        (focusTarget || validationMessage)?.focus?.({ preventScroll: true });
+        (isPriceFlow ? resolveBookingFocusTarget(focusTarget) || validationMessage : focusTarget || validationMessage)?.focus?.({ preventScroll: true });
       });
     };
 
@@ -2281,14 +2366,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const updateModalLayout = step => {
-      modal.classList.remove('is-booking-step-1-active', 'is-booking-step-2-active', 'is-booking-step-3-active');
+      modal.classList.remove('is-booking-step-0-active', 'is-booking-step-1-active', 'is-booking-step-2-active', 'is-booking-step-3-active');
       modal.classList.add(`is-booking-step-${step}-active`);
 
       if (!modalContent) {
         return;
       }
 
-      modalContent.classList.remove('is-booking-step-1', 'is-booking-step-2', 'is-booking-step-3');
+      modalContent.classList.remove('is-booking-step-0', 'is-booking-step-1', 'is-booking-step-2', 'is-booking-step-3');
       modalContent.classList.add(`is-booking-step-${step}`);
       stepIndicator?.style.setProperty('--booking-progress', String(step));
     };
@@ -2308,6 +2393,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const setStep = step => {
       const prevStep = state.step;
+      const previousPanel = panels[prevStep];
+      if (isPriceFlow && previousPanel) {
+        flowScrollPositions.set(prevStep, modalContent?.scrollTop || 0);
+        if (previousPanel.contains(document.activeElement)) flowFocusTargets.set(prevStep, document.activeElement);
+        if (prevStep !== step && previousPanel.contains(document.activeElement)) document.activeElement.blur?.();
+      }
       state.step = step;
       clearValidationMessage();
 
@@ -2316,21 +2407,53 @@ document.addEventListener('DOMContentLoaded', () => {
         stepMotionTimer = null;
       }
 
-      modal.classList.remove('is-step-forward', 'is-step-back');
-      if (step !== prevStep) {
+      modal.classList.remove('is-step-forward', 'is-step-back', 'is-transitioning');
+      const hasMotion = step !== prevStep && (!isPriceFlow || (
+        modal.classList.contains('active') && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ));
+      if (hasMotion) {
         modal.classList.add(step > prevStep ? 'is-step-forward' : 'is-step-back');
         stepMotionTimer = window.setTimeout(() => {
-          modal.classList.remove('is-step-forward', 'is-step-back');
+          modal.classList.remove('is-step-forward', 'is-step-back', 'is-transitioning');
+          if (isPriceFlow) {
+            Object.entries(panels).forEach(([key, panel]) => {
+              if (!panel) return;
+              panel.classList.remove('is-entering', 'is-leaving');
+              panel.hidden = Number(key) !== state.step;
+            });
+            delete modal.dataset.bookingDirection;
+          }
           stepMotionTimer = null;
         }, BOOKING_STEP_MOTION_MS);
       }
 
       Object.entries(panels).forEach(([key, panel]) => {
-        panel?.classList.toggle('active', Number(key) === step);
+        if (!panel) return;
+        const isActive = Number(key) === step;
+        panel.classList.toggle('active', isActive);
+        if (isPriceFlow) {
+          panel.classList.remove('is-entering', 'is-leaving');
+          panel.hidden = !isActive;
+          panel.inert = !isActive;
+          panel.setAttribute('aria-hidden', String(!isActive));
+        }
       });
+      if (isPriceFlow) {
+        modal.dataset.bookingStep = String(step);
+        if (flowBackButton) flowBackButton.hidden = step === 0 || (step === 1 && !state.priceSelectionActive);
+        if (hasMotion && previousPanel) {
+          modal.dataset.bookingDirection = step > prevStep ? 'forward' : 'back';
+          modal.classList.add('is-transitioning');
+          previousPanel.hidden = false;
+          previousPanel.classList.add('is-leaving');
+          panels[step]?.classList.add('is-entering');
+        } else {
+          delete modal.dataset.bookingDirection;
+        }
+      }
 
       steps.forEach((item, index) => {
-        item.classList.toggle('active', index + 1 === step);
+        item.classList.toggle('active', index + (isPriceFlow ? 0 : 1) === step);
       });
 
       updateStepTabs();
@@ -2350,8 +2473,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       window.requestAnimationFrame(() => {
-        resetStepScroll(step);
-        keepBookingModalViewportAtTop();
+        if (isPriceFlow) {
+          if (state.step !== step || modal.inert) return;
+          const focusable = getBookingFocusTargets(panels[step]);
+          const currentFocus = resolveBookingFocusTarget(document.activeElement);
+          if (currentFocus !== document.activeElement || !panels[step]?.contains(currentFocus)) {
+            if (modalContent) modalContent.scrollTop = flowScrollPositions.get(step) || 0;
+            const previousFocus = resolveBookingFocusTarget(flowFocusTargets.get(step));
+            const focusTarget = previousFocus?.isConnected && panels[step]?.contains(previousFocus) ? previousFocus : focusable[0];
+            (focusTarget || closeControl)?.focus({ preventScroll: true });
+          }
+        } else {
+          resetStepScroll(step);
+          keepBookingModalViewportAtTop();
+        }
         refreshDatetimeScrollState();
         ensureBookingScrollbars();
         refreshBookingScrollbars();
@@ -2359,6 +2494,9 @@ document.addEventListener('DOMContentLoaded', () => {
         scanBookingNavPills(modal);
       });
     };
+    flowBackButton?.addEventListener('click', () => {
+      if (state.step > 0) setStep(state.step - 1);
+    });
 
     const renderServiceList = () => {
       serviceList.innerHTML = '';
@@ -2516,6 +2654,40 @@ document.addEventListener('DOMContentLoaded', () => {
           loadDateAvailability(state.selectedDate);
         }
       };
+
+      if (isPriceFlow && state.priceSelectionActive) {
+        const context = document.createElement('section');
+        context.className = 'booking-selection__context';
+        context.dataset.bookingSelectedContext = '';
+        const heading = document.createElement('h4');
+        heading.textContent = flowCopy.selection;
+        const breed = document.createElement('p');
+        breed.textContent = bookingCatalog.getBreed(state.selectedBreedId)?.label || state.selectedPetBreedLabel;
+        breed.hidden = !breed.textContent;
+        const services = document.createElement('p');
+        services.textContent = state.selectedService;
+        const price = document.createElement('strong');
+        setCurrencyText(price, state.selectedPrice);
+        context.append(heading, breed, services, price);
+        if (state.promotionLabel) {
+          const promotion = document.createElement('p');
+          promotion.dataset.bookingPromotion = state.promotionKey;
+          promotion.textContent = [state.promotionLabel, state.promotionPrice].filter(Boolean).join(' ');
+          context.appendChild(promotion);
+        }
+        const riskFields = selection.querySelector('[data-booking-risk]');
+        selection.replaceChildren(context, riskFields, timingOutput);
+        clientTypeSelect.value = state.clientType;
+        coatConditionSelect.value = state.coatCondition;
+        behaviorSelect.value = state.behavior;
+        [clientTypeSelect, coatConditionSelect, behaviorSelect].forEach(select => {
+          select.addEventListener('change', syncRiskSelection);
+          window.refreshSiteSelect?.(select);
+        });
+        serviceList.appendChild(selection);
+        renderTimingPreview();
+        return;
+      }
 
       bookingCatalog.categories.forEach(category => {
         if (!category.breeds.length) return;
@@ -2882,6 +3054,13 @@ document.addEventListener('DOMContentLoaded', () => {
             calendarConfigured: state.availabilityConfigured,
           })
         : ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
+      // Revalidate a preserved selection only after the calendar lookup has settled.
+      if (state.priceSelectionActive && availabilityStatusEl?.dataset.state !== 'loading'
+        && state.selectedTime && !timeSlots.includes(state.selectedTime)) {
+        state.selectedTime = '';
+        syncHiddenFields();
+        resetSummaryConfirmation();
+      }
       timeSlotsContainer.innerHTML = '';
       const slotButtons = [];
 
@@ -3030,6 +3209,14 @@ document.addEventListener('DOMContentLoaded', () => {
       state.selectedPrice = preset.price || '';
       state.selectedServiceLabel = preset.serviceLabel || '';
       state.selectedPriceOverride = preset.priceOverride || '';
+      state.priceSelectionActive = false;
+      state.priceSelectionSignature = '';
+      state.selectedServiceIds = [];
+      state.selectedPetSpecies = '';
+      state.selectedPetBreedLabel = '';
+      state.promotionKey = '';
+      state.promotionLabel = '';
+      state.promotionPrice = '';
       state.selectedService = bookingCatalog ? '' : preset.serviceName || state.selectedService;
       state.summaryConfirmed = false;
       clearValidationMessage();
@@ -3042,6 +3229,7 @@ document.addEventListener('DOMContentLoaded', () => {
       lockSiteScroll();
       modal.classList.add('active', 'is-opening');
       modal.setAttribute('aria-hidden', 'false');
+      if (isPriceFlow) modal.inert = false;
 
       if (openingTimer) {
         window.clearTimeout(openingTimer);
@@ -3087,6 +3275,13 @@ document.addEventListener('DOMContentLoaded', () => {
       resetBookingTilt();
       modal.classList.add('is-closing');
       modal.setAttribute('aria-hidden', 'true');
+      if (isPriceFlow) {
+        modal.inert = true;
+        if (stepMotionTimer) window.clearTimeout(stepMotionTimer);
+        stepMotionTimer = null;
+        modal.classList.remove('is-transitioning');
+        delete modal.dataset.bookingDirection;
+      }
 
       closingTimer = window.setTimeout(() => {
         modal.classList.remove('active', 'is-closing');
@@ -3095,6 +3290,93 @@ document.addEventListener('DOMContentLoaded', () => {
         lastFocusedElement?.focus();
       }, BOOKING_MODAL_DISMISS_MS);
     };
+
+    if (isPriceFlow) {
+      window.addEventListener('price:selection-open', () => {
+        const alreadyOpen = modal.classList.contains('active') && !modal.classList.contains('is-closing');
+        if (closingTimer) window.clearTimeout(closingTimer);
+        closingTimer = null;
+        if (!alreadyOpen) {
+          savedSiteScrollTop = siteScrollRoot?.scrollTop || 0;
+          lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+          flowScrollPositions.clear();
+          flowFocusTargets.clear();
+        }
+        state.priceSelectionActive = false;
+        state.priceSelectionSignature = '';
+        modal.inert = false;
+        modal.classList.remove('booking-modal-sent', 'is-closing', 'is-tilting');
+        resetBookingTilt();
+        setStep(0);
+        lockSiteScroll();
+        modal.classList.add('active', 'is-alive');
+        modal.setAttribute('aria-hidden', 'false');
+      });
+      window.addEventListener('price:booking-start', event => {
+        const preset = event.detail || {};
+        const serviceIds = [...new Set((Array.isArray(preset.serviceIds)
+          ? preset.serviceIds
+          : String(preset.serviceIds || preset.serviceId || '').split(','))
+          .map(value => String(value).trim()).filter(Boolean))];
+        const allServices = bookingCatalog?.categories.flatMap(category => category.services) || [];
+        const services = serviceIds.map(id => allServices.find(service => service.id === id));
+        if (!serviceIds.length || services.some(service => !service)) {
+          showValidationMessage(bookingCopy.chooseService, modal.querySelector('[data-price-modal-booking]'));
+          return;
+        }
+        const signature = JSON.stringify([
+          preset.categoryId, preset.breedId, [...serviceIds].sort(), preset.priceOverride || preset.price,
+          preset.promotionKey, preset.promotionPrice,
+        ]);
+        const selectionChanged = signature !== state.priceSelectionSignature;
+        if (selectionChanged) {
+          state.selectedDate = '';
+          state.selectedTime = '';
+          state.clientType = '';
+          state.coatCondition = '';
+          state.behavior = '';
+          state.busyIntervals = [];
+          state.availabilityConfigured = false;
+          state.availabilityRequestId += 1;
+          flowScrollPositions.delete(1);
+          flowScrollPositions.delete(2);
+          flowFocusTargets.delete(1);
+          flowFocusTargets.delete(2);
+        }
+        const primaryService = services.find(service => !service.categoryId.endsWith('additional-services')) || services[0];
+        state.priceSelectionActive = true;
+        state.priceSelectionSignature = signature;
+        state.selectedCategoryId = preset.categoryId || bookingCatalog.getBreed(preset.breedId)?.categoryId || primaryService.categoryId;
+        state.selectedBreedId = preset.breedId || '';
+        state.selectedServiceId = primaryService.id;
+        state.selectedServiceIds = serviceIds;
+        state.selectedExtras = services.filter(service => service.id !== primaryService.id);
+        state.selectedServiceLabel = preset.serviceLabel || services.map(service => service.label).join(' + ');
+        state.selectedService = state.selectedServiceLabel;
+        state.selectedPriceOverride = preset.priceOverride || preset.price || '';
+        state.selectedPrice = state.selectedPriceOverride || primaryService.price;
+        state.selectedPetSpecies = preset.petSpecies || '';
+        state.selectedPetBreedLabel = preset.petBreedLabel || '';
+        state.promotionKey = preset.promotionKey || '';
+        state.promotionLabel = preset.promotionLabel || '';
+        state.promotionPrice = preset.promotionPrice || '';
+        if (selectionChanged) resetSummaryConfirmation();
+        syncHiddenFields();
+        renderServiceList();
+        setStep(1);
+      });
+      window.addEventListener('price:close-request', closeModal);
+      modal.addEventListener('keydown', event => {
+        if (event.key !== 'Tab' || !modal.classList.contains('active') || modal.inert) return;
+        const focusable = getBookingFocusTargets(modal);
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (first && (event.shiftKey ? document.activeElement === first : document.activeElement === last)) {
+          event.preventDefault();
+          (event.shiftKey ? last : first).focus({ preventScroll: true });
+        }
+      });
+    }
 
     const moveToDateStep = () => {
       if (!state.selectedService) {
@@ -3150,6 +3432,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     openTriggers.forEach(trigger => {
       trigger.addEventListener('click', event => {
+        if (isPriceFlow && trigger.matches('[data-price-modal-booking]')) return;
         if (trigger.getAttribute('aria-disabled') === 'true') {
           event.preventDefault();
           return;
@@ -3164,7 +3447,13 @@ document.addEventListener('DOMContentLoaded', () => {
     prevStep2?.addEventListener('click', () => setStep(1));
     prevStep3?.addEventListener('click', () => setStep(2));
     closeTriggers.forEach(trigger => {
-      trigger.addEventListener('click', closeModal);
+      trigger.addEventListener('click', () => {
+        if (isPriceFlow && state.priceSelectionActive && trigger.closest('#step-1')) {
+          setStep(0);
+        } else {
+          closeModal();
+        }
+      });
     });
     closeControl?.addEventListener('click', closeModal);
     closeControl?.addEventListener('keydown', event => {

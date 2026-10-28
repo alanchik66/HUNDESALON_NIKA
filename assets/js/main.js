@@ -608,62 +608,7 @@ document.addEventListener('DOMContentLoaded', () => {
     enableInertialScroll(panel, { axis: 'x', intensity: 0.9, easing: 0.18, maxStep: 210 });
   });
 
-  const getVisibleHeaderBottom = () => {
-    const header = document.querySelector('header.header');
-    if (!header) return 0;
-
-    const headerStyle = window.getComputedStyle(header);
-    const headerRect = header.getBoundingClientRect();
-    const headerVisible =
-      headerRect.height > 0 &&
-      headerRect.bottom > 0 &&
-      headerStyle.display !== 'none' &&
-      headerStyle.visibility !== 'hidden' &&
-      parseFloat(headerStyle.opacity || '1') > 0.02;
-
-    if (!headerVisible) return 0;
-
-    const topRow = header.querySelector('.top-row');
-    let visibleBottom = Math.max(0, headerRect.top);
-
-    if (topRow) {
-      const topRowRect = topRow.getBoundingClientRect();
-      const topRowStyle = window.getComputedStyle(topRow);
-      const topRowVisible =
-        topRowRect.height > 0 &&
-        topRowRect.bottom > 0 &&
-        topRowStyle.display !== 'none' &&
-        topRowStyle.visibility !== 'hidden' &&
-        parseFloat(topRowStyle.opacity || '1') > 0.02;
-
-      if (topRowVisible) {
-        visibleBottom = Math.max(visibleBottom, topRowRect.bottom);
-      }
-    }
-
-    const socialVisible = header.querySelector('.social-bar.show-social');
-
-    if (socialVisible) {
-      const rect = socialVisible.getBoundingClientRect();
-      const style = window.getComputedStyle(socialVisible);
-      const isVisible =
-        rect.height > 0 &&
-        rect.bottom > 0 &&
-        style.display !== 'none' &&
-        style.visibility !== 'hidden' &&
-        parseFloat(style.opacity || '1') > 0.02;
-
-      if (isVisible) {
-        visibleBottom = Math.max(visibleBottom, rect.bottom);
-      }
-    }
-
-    if (visibleBottom <= Math.max(0, headerRect.top)) {
-      visibleBottom = Math.max(0, headerRect.bottom);
-    }
-
-    return Math.min(window.innerHeight, Math.round(visibleBottom));
-  };
+  const getVisibleHeaderBottom = siteShell.getVisibleHeaderBottom || (() => 0);
 
   const syncContentTopOffsets = () => {
     const headerBottom = getVisibleHeaderBottom();
@@ -1231,224 +1176,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  const clearDesktopHeaderWeatherClearance = () => {
-    [pageNavMain, pageHeaderControls].forEach(element => {
-      element?.style.removeProperty('margin-inline-start');
-    });
-
-    pageHeader?.classList.remove('header--weather-crowded');
-  };
-
-  const getHeaderWeatherVisualRect = () => {
-    if (!pageWeatherShell) {
-      return null;
-    }
-
-    const shellRect = pageWeatherShell.getBoundingClientRect();
-    let left = shellRect.left;
-    let right = shellRect.right;
-    let top = shellRect.top;
-    let bottom = shellRect.bottom;
-
-    const widgetHost = Array.from(pageWeatherShell.querySelectorAll('*')).find(element =>
-      element.shadowRoot?.querySelector?.('.weather-header-preview')
-    );
-    const shadowRoot = widgetHost?.shadowRoot;
-    const previewOverlay = shadowRoot?.querySelector('.weather-orb-overlay--preview');
-    const previewOrbMedia = previewOverlay
-      ? previewOverlay.querySelectorAll(
-          '.weather-orb-overlay__canvas, .weather-orb-overlay__image, .weather-orb-overlay__video'
-        )
-      : [];
-
-    const measuredNodes = [previewOverlay, ...previewOrbMedia].filter(Boolean);
-    measuredNodes.forEach(node => {
-      const rect = node.getBoundingClientRect();
-      if (rect.width < 1 || rect.height < 1) {
-        return;
+  siteShell.initHeaderAdaptiveLayout?.({
+    pageHeader,
+    pageTopRow,
+    pageWeatherShell,
+    pageNavMain,
+    pageHeaderControls,
+    onLayout: () => {
+      updatePageScrollbarOffset();
+      if (activeMusicPanel?.classList.contains('is-open')) {
+        positionPanel(activeMusicPanel);
       }
-
-      left = Math.min(left, rect.left);
-      right = Math.max(right, rect.right);
-      top = Math.min(top, rect.top);
-      bottom = Math.max(bottom, rect.bottom);
-    });
-
-    return { left, right, top, bottom };
-  };
-
-  const syncDesktopHeaderWeatherClearance = () => {
-    if (window.innerWidth <= 899 || !pageHeader || !pageWeatherShell) {
-      clearDesktopHeaderWeatherClearance();
-      return;
-    }
-
-    const weatherRect = getHeaderWeatherVisualRect();
-    if (!weatherRect) {
-      clearDesktopHeaderWeatherClearance();
-      return;
-    }
-
-    const minimumGap = 18;
-    let largestInjectedGap = 0;
-
-    [pageNavMain, pageHeaderControls].forEach(element => {
-      if (!element) {
-        return;
-      }
-
-      const rect = element.getBoundingClientRect();
-      const overlapsWeatherBand = rect.bottom > weatherRect.top + 4 && rect.top < weatherRect.bottom - 4;
-      if (!overlapsWeatherBand) {
-        element.style.removeProperty('margin-inline-start');
-        return;
-      }
-
-      const currentGap = rect.left - weatherRect.right;
-      const injectedGap = Math.max(0, Math.ceil(minimumGap - currentGap));
-      if (injectedGap > 0) {
-        element.style.setProperty('margin-inline-start', `${injectedGap}px`);
-        largestInjectedGap = Math.max(largestInjectedGap, injectedGap);
-      } else {
-        element.style.removeProperty('margin-inline-start');
-      }
-    });
-
-    pageHeader.classList.toggle('header--weather-crowded', largestInjectedGap > 28);
-  };
-
-  const syncDesktopBurgerAxis = () => {
-    const headerRoot = document.querySelector('header.header');
-    if (!headerRoot) {
-      return;
-    }
-
-    const socialBar = headerRoot.querySelector('.social-bar');
-    const socialBarVisible =
-      socialBar?.classList.contains('show-social') || headerRoot.classList.contains('header-social-visible');
-    if (!socialBarVisible) {
-      headerRoot.style.removeProperty('--burger-align-shift');
-      return;
-    }
-
-    const pageBurger = headerRoot.querySelector('.premium-burger');
-    const axisTarget =
-      headerRoot.querySelector('.social-icons-toggle-img') ||
-      headerRoot.querySelector('.social-icons-toggle');
-    if (!pageBurger || !axisTarget) {
-      headerRoot.style.removeProperty('--burger-align-shift');
-      return;
-    }
-
-    const burgerRect = pageBurger.getBoundingClientRect();
-    const targetRect = axisTarget.getBoundingClientRect();
-    if (burgerRect.width < 1 || targetRect.width < 1) {
-      headerRoot.style.removeProperty('--burger-align-shift');
-      return;
-    }
-
-    const burgerCenterX = burgerRect.left + burgerRect.width / 2;
-    const targetCenterX = targetRect.left + targetRect.width / 2;
-    const shift = Math.round(targetCenterX - burgerCenterX);
-    const clampedShift = Math.max(-180, Math.min(180, shift));
-    headerRoot.style.setProperty('--burger-align-shift', `${clampedShift}px`);
-  };
-
-  const syncHomeButtonMaxWidth = () => {
-    const headerRoot = document.querySelector('header.header');
-    if (!headerRoot) {
-      return;
-    }
-
-    const logoWrapper = headerRoot.querySelector('.logo-wrapper');
-    const homeButton = headerRoot.querySelector('.social-home');
-    if (!logoWrapper || !homeButton) {
-      headerRoot.style.removeProperty('--home-max-width');
-      return;
-    }
-
-    const logoRect = logoWrapper.getBoundingClientRect();
-    if (logoRect.width < 1) {
-      headerRoot.style.removeProperty('--home-max-width');
-      return;
-    }
-
-    const maxWidth = Math.max(32, Math.round(logoRect.width));
-    headerRoot.style.setProperty('--home-max-width', `${maxWidth}px`);
-
-    homeButton.style.setProperty('width', `${maxWidth}px`);
-    homeButton.style.setProperty('max-width', `${maxWidth}px`);
-    homeButton.style.setProperty('min-width', '0px');
-
-    const homeLink = homeButton.querySelector('a');
-    if (homeLink instanceof HTMLElement) {
-      homeLink.style.setProperty('width', '100%');
-      homeLink.style.setProperty('max-width', '100%');
-      homeLink.style.setProperty('min-width', '0px');
-    }
-  };
-
-  const syncSocialDividerWithBurger = () => {
-    const headerRoot = document.querySelector('header.header');
-    if (!headerRoot || window.innerWidth <= 899) {
-      headerRoot?.style.removeProperty('--social-divider-shift-x');
-      return;
-    }
-
-    const burger = headerRoot.querySelector('.premium-burger');
-    const divider = headerRoot.querySelector('.social-player-divider');
-    if (!burger || !divider) {
-      headerRoot.style.removeProperty('--social-divider-shift-x');
-      return;
-    }
-
-    const burgerRect = burger.getBoundingClientRect();
-    const dividerRect = divider.getBoundingClientRect();
-    if (burgerRect.width < 1 || dividerRect.width < 1) {
-      headerRoot.style.removeProperty('--social-divider-shift-x');
-      return;
-    }
-
-    const burgerCenterX = burgerRect.left + burgerRect.width / 2;
-    const dividerCenterX = dividerRect.left + dividerRect.width / 2;
-    const currentShift =
-      Number.parseFloat(window.getComputedStyle(headerRoot).getPropertyValue('--social-divider-shift-x')) || 0;
-    const baseDividerCenterX = dividerCenterX - currentShift;
-    const shift = burgerCenterX - baseDividerCenterX;
-    const clampedShift = Math.max(-220, Math.min(220, shift));
-    headerRoot.style.setProperty('--social-divider-shift-x', `${clampedShift.toFixed(2)}px`);
-  };
-
-  const syncHeaderAdaptiveLayout = () => {
-    syncDesktopHeaderWeatherClearance();
-    syncDesktopBurgerAxis();
-    syncHomeButtonMaxWidth();
-    syncSocialDividerWithBurger();
-    updatePageScrollbarOffset();
-    if (activeMusicPanel?.classList.contains('is-open')) {
-      positionPanel(activeMusicPanel);
-    }
-  };
-
-  window.addEventListener('site-shell:weather-ready', syncHeaderAdaptiveLayout);
-  window.addEventListener('site-shell:weather-toggle', syncHeaderAdaptiveLayout);
-  window.addEventListener('site-shell:social-ready', syncHeaderAdaptiveLayout);
-  window.addEventListener('load', syncHeaderAdaptiveLayout);
-  window.addEventListener('resize', syncHeaderAdaptiveLayout, { passive: true });
-
-  if (window.ResizeObserver && pageHeader) {
-    const adaptiveHeaderObserver = new ResizeObserver(() => {
-      syncHeaderAdaptiveLayout();
-    });
-
-    adaptiveHeaderObserver.observe(pageHeader);
-    if (pageTopRow) {
-      adaptiveHeaderObserver.observe(pageTopRow);
-    }
-    if (pageWeatherShell) {
-      adaptiveHeaderObserver.observe(pageWeatherShell);
-    }
-  }
+    },
+  });
 
   let lastScroll = scrollRoot.scrollTop;
   let ticking = false;
@@ -2419,10 +2159,50 @@ function enhanceSiteSelect(select) {
 
   trigger.append(valueEl, arrow);
 
-  const menu = document.createElement('ul');
+  const searchable = select.dataset.siteSelectSearch !== 'false' && select.matches(
+    '[data-site-select-search], [data-price-modal-breed], [data-booking-breed], select[name="pet_breed"], select[name="pet_species"]'
+  );
+  const selectLang = document.documentElement.lang.split('-')[0];
+  const searchCopy = ({
+    ru: { placeholder: 'Найти породу или вид', empty: 'Ничего не найдено. Измените запрос.' },
+    uk: { placeholder: 'Знайти породу або вид', empty: 'Нічого не знайдено. Змініть запит.' },
+    de: { placeholder: 'Rasse oder Tierart suchen', empty: 'Keine Treffer. Bitte die Suche ändern.' },
+    en: { placeholder: 'Search breed or animal', empty: 'No matches. Try another search.' },
+  })[selectLang] || { placeholder: 'Search breed or animal', empty: 'No matches. Try another search.' };
+  const menu = document.createElement(searchable ? 'div' : 'ul');
   menu.className = 'site-select__menu';
-  menu.setAttribute('role', 'listbox');
   menu.hidden = true;
+  const optionList = searchable ? document.createElement('ul') : menu;
+  optionList.setAttribute('role', 'listbox');
+  enhanceSiteSelect.nextId = (enhanceSiteSelect.nextId || 0) + 1;
+  optionList.id = `site-select-options-${enhanceSiteSelect.nextId}`;
+  trigger.setAttribute('aria-controls', optionList.id);
+  let searchInput = null;
+  let searchEmpty = null;
+  if (searchable) {
+    const searchField = document.createElement('label');
+    searchField.className = 'site-select__search-field';
+    searchInput = document.createElement('input');
+    searchInput.className = 'site-select__search-input';
+    searchInput.type = 'search';
+    searchInput.autocomplete = 'off';
+    searchInput.setAttribute('autocapitalize', 'off');
+    searchInput.spellcheck = false;
+    searchInput.placeholder = select.dataset.siteSelectSearchPlaceholder || searchCopy.placeholder;
+    searchInput.setAttribute('aria-label', searchInput.placeholder);
+    searchInput.setAttribute('role', 'combobox');
+    searchInput.setAttribute('aria-autocomplete', 'list');
+    searchInput.setAttribute('aria-controls', optionList.id);
+    searchInput.setAttribute('aria-expanded', 'false');
+    searchField.append(searchInput);
+    optionList.className = 'site-select__search-results';
+    searchEmpty = document.createElement('p');
+    searchEmpty.className = 'site-select__search-empty';
+    searchEmpty.setAttribute('role', 'status');
+    searchEmpty.textContent = searchCopy.empty;
+    searchEmpty.hidden = true;
+    menu.append(searchField, optionList, searchEmpty);
+  }
 
   wrapper.append(trigger, menu);
 
@@ -2490,6 +2270,7 @@ function enhanceSiteSelect(select) {
   const closeMenu = () => {
     wrapper.classList.remove('is-open');
     trigger.setAttribute('aria-expanded', 'false');
+    searchInput?.setAttribute('aria-expanded', 'false');
     menu.hidden = true;
     unbindMenuPosition();
     resetMenuPosition();
@@ -2499,6 +2280,10 @@ function enhanceSiteSelect(select) {
     if (trigger.disabled) return;
     document.querySelectorAll('.site-select.is-open').forEach(node => {
       if (node !== wrapper) {
+        if (node.closeSiteSelect) {
+          node.closeSiteSelect();
+          return;
+        }
         node.classList.remove('is-open');
         node.querySelector('.site-select__trigger')?.setAttribute('aria-expanded', 'false');
         const otherMenu = node.querySelector('.site-select__menu');
@@ -2510,21 +2295,67 @@ function enhanceSiteSelect(select) {
     });
     wrapper.classList.add('is-open');
     trigger.setAttribute('aria-expanded', 'true');
+    searchInput?.setAttribute('aria-expanded', 'true');
     menu.hidden = false;
-    menu.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
+    if (searchInput) {
+      searchInput.value = '';
+      filterOptions();
+      menu.scrollTop = 0;
+    } else {
+      menu.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
+    }
     requestAnimationFrame(() => {
       positionMenu();
       syncScrollable();
+      if (wrapper.classList.contains('is-open')) searchInput?.focus({ preventScroll: true });
     });
     scrollRoot.addEventListener('scroll', positionMenu, true);
     window.addEventListener('resize', positionMenu);
   };
+  wrapper.closeSiteSelect = closeMenu;
+
+  const getNavigableOptions = () => Array.from(optionList.querySelectorAll('.site-select__option'))
+    .filter(option => !option.hidden && option.getAttribute('aria-disabled') !== 'true');
+  const normalizeSearch = value => String(value || '').toLocaleLowerCase(selectLang || 'en')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  const filterOptions = () => {
+    const query = searchInput?.value.trim() || '';
+    const normalizedQuery = normalizeSearch(query);
+    const scoreBreed = window.PriceBookingCatalog?.breedSearchScore;
+    const sourceOptions = new Map(Array.from(select.options).map(option => [option.value, option]));
+    optionList.querySelectorAll('.site-select__option').forEach(item => {
+      const sourceOption = sourceOptions.get(item.dataset.value);
+      const matches = !normalizedQuery || (scoreBreed
+        ? Number.isFinite(scoreBreed(item.textContent, query, selectLang))
+        : normalizedQuery.split(/\s+/).every(token => normalizeSearch(item.textContent).includes(token)));
+      item.hidden = Boolean(sourceOption?.hidden) || !matches;
+    });
+    optionList.querySelectorAll('.site-select__group').forEach(group => {
+      let sibling = group.nextElementSibling;
+      let hasOptions = false;
+      while (sibling && !sibling.classList.contains('site-select__group')) {
+        if (!sibling.hidden) hasOptions = true;
+        sibling = sibling.nextElementSibling;
+      }
+      group.hidden = !hasOptions;
+    });
+    if (searchEmpty) searchEmpty.hidden = getNavigableOptions().length > 0;
+    syncScrollable();
+  };
+  searchInput?.addEventListener('input', () => {
+    filterOptions();
+    menu.scrollTop = 0;
+  });
 
   const syncFromNative = () => {
+    const focusedValue = optionList.contains(document.activeElement)
+      ? document.activeElement?.dataset.value
+      : undefined;
     const selectedOption = select.options[select.selectedIndex];
     valueEl.textContent = selectedOption?.textContent?.trim() || '';
     trigger.disabled = select.disabled;
-    menu.innerHTML = '';
+    if (searchInput) searchInput.value = '';
+    optionList.replaceChildren();
 
     const appendOption = option => {
       const item = document.createElement('li');
@@ -2536,8 +2367,10 @@ function enhanceSiteSelect(select) {
       item.dataset.value = option.value;
       item.textContent = option.textContent;
       item.setAttribute('aria-selected', option.selected ? 'true' : 'false');
-      item.tabIndex = option.selected ? 0 : -1;
-      menu.append(item);
+      item.setAttribute('aria-disabled', String(option.disabled));
+      item.hidden = option.hidden;
+      item.tabIndex = option.selected && !option.disabled ? 0 : -1;
+      optionList.append(item);
     };
 
     Array.from(select.children).forEach(child => {
@@ -2546,7 +2379,7 @@ function enhanceSiteSelect(select) {
         group.className = 'site-select__group';
         group.setAttribute('role', 'presentation');
         group.textContent = child.label;
-        menu.append(group);
+        optionList.append(group);
         Array.from(child.querySelectorAll('option')).forEach(appendOption);
         return;
       }
@@ -2554,15 +2387,29 @@ function enhanceSiteSelect(select) {
         appendOption(child);
       }
     });
-    syncScrollable();
+    filterOptions();
     if (wrapper.classList.contains('is-open')) {
       requestAnimationFrame(positionMenu);
+      if (focusedValue !== undefined) {
+        const replacement = getNavigableOptions().find(option => option.dataset.value === focusedValue);
+        (replacement || searchInput || trigger).focus({ preventScroll: true });
+      }
     }
+    if (select.disabled) closeMenu();
   };
 
   const chooseValue = value => {
+    const option = Array.from(select.options).find(item => item.value === value);
+    if (select.disabled || !option || option.disabled || option.hidden) return;
+    const focusWasInMenu = menu.contains(document.activeElement);
+    const restoreTriggerFocus = () => {
+      if (focusWasInMenu && (document.activeElement === document.body || wrapper.contains(document.activeElement))) {
+        trigger.focus({ preventScroll: true });
+      }
+    };
     if (select.value === value) {
       closeMenu();
+      restoreTriggerFocus();
       return;
     }
 
@@ -2578,6 +2425,7 @@ function enhanceSiteSelect(select) {
     select.dispatchEvent(new Event('change', { bubbles: true }));
     syncFromNative();
     closeMenu();
+    restoreTriggerFocus();
     restoreParentScroll();
     requestAnimationFrame(restoreParentScroll);
   };
@@ -2588,7 +2436,7 @@ function enhanceSiteSelect(select) {
 
   menu.addEventListener('click', event => {
     const option = event.target.closest('.site-select__option');
-    if (!option) return;
+    if (!option || option.hidden || option.getAttribute('aria-disabled') === 'true') return;
     chooseValue(option.dataset.value || '');
   });
 
@@ -2618,29 +2466,38 @@ function enhanceSiteSelect(select) {
   menu.addEventListener('touchmove', event => event.stopPropagation(), { passive: true });
 
   menu.addEventListener('keydown', event => {
-    const options = Array.from(menu.querySelectorAll('.site-select__option'));
-    const currentIndex = options.findIndex(option => option.getAttribute('aria-selected') === 'true');
+    const options = getNavigableOptions();
+    const currentIndex = options.indexOf(document.activeElement);
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       const next = options[Math.min(options.length - 1, currentIndex + 1)];
-      next?.focus();
+      next?.focus({ preventScroll: true });
+      next?.scrollIntoView({ block: 'nearest' });
     }
     if (event.key === 'ArrowUp') {
       event.preventDefault();
-      const prev = options[Math.max(0, currentIndex - 1)];
-      prev?.focus();
+      if (currentIndex === 0 && searchInput) searchInput.focus({ preventScroll: true });
+      else {
+        const prev = options[currentIndex < 0 ? options.length - 1 : Math.max(0, currentIndex - 1)];
+        prev?.focus({ preventScroll: true });
+        prev?.scrollIntoView({ block: 'nearest' });
+      }
     }
     if (event.key === 'Enter' || event.key === ' ') {
+      if (event.target === searchInput && event.key === ' ') return;
       event.preventDefault();
       const focused = document.activeElement;
-      if (focused?.classList.contains('site-select__option')) {
+      if (focused === searchInput) {
+        if (options[0]) chooseValue(options[0].dataset.value || '');
+      } else if (focused?.classList.contains('site-select__option')) {
         chooseValue(focused.dataset.value || '');
       }
     }
     if (event.key === 'Escape') {
       event.preventDefault();
+      event.stopPropagation();
       closeMenu();
-      trigger.focus();
+      trigger.focus({ preventScroll: true });
     }
   });
 
@@ -2657,18 +2514,22 @@ function enhanceSiteSelect(select) {
     if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       openMenu();
-      menu.querySelector('.site-select__option[aria-selected="true"]')?.focus();
+      if (!searchInput) menu.querySelector('.site-select__option[aria-selected="true"]')?.focus({ preventScroll: true });
     }
     if (event.key === 'Escape') {
+      if (wrapper.classList.contains('is-open')) event.stopPropagation();
       closeMenu();
     }
   });
 
-  document.addEventListener('click', event => {
+  const closeFromOutside = event => {
     if (!wrapper.contains(event.target)) {
       closeMenu();
     }
-  });
+  };
+  document.addEventListener('pointerdown', closeFromOutside, { capture: true });
+  document.addEventListener('touchstart', closeFromOutside, { capture: true, passive: true });
+  document.addEventListener('click', closeFromOutside);
 
   select.addEventListener('change', syncFromNative);
   select.addEventListener('site-select:refresh', syncFromNative);

@@ -130,10 +130,24 @@ test('price sections follow content height without empty viewport reserves', asy
   for (const locale of ['de', 'en', 'ru', 'uk']) {
     const html = await readFile(path.join(root, locale, 'prays-list.html'), 'utf8');
     assert.equal(
-      (html.match(/page-modules\.css\?v=20260920-safe-edge/g) || []).length,
+      (html.match(/page-modules\.css\?v=20261027-search-selects/g) || []).length,
       3,
       `${locale} must load the latest price-page stylesheet version`
     );
+  }
+});
+
+test('every localized price page keeps selection and booking inside one modal', async () => {
+  for (const locale of ['de', 'en', 'ru', 'uk']) {
+    const html = await readFile(path.join(root, locale, 'prays-list.html'), 'utf8');
+    const modals = [...html.matchAll(/<div\b[^>]*class="([^"]*)"[^>]*>/g)]
+      .filter(match => match[1].split(/\s+/).includes('modal'));
+    assert.equal(modals.length, 1, `${locale}: only one booking overlay`);
+    assert.match(modals[0][0], /id="booking-modal"/);
+    assert.match(modals[0][0], /data-price-booking-flow/);
+    assert.equal((html.match(/id="booking-form"/g) || []).length, 1);
+    assert.equal((html.match(/data-booking-price-selection/g) || []).length, 1);
+    assert.match(html, /price-booking-flow\.css\?v=20261027-unified-booking/);
   }
 });
 
@@ -177,11 +191,11 @@ test('price cards equalize within responsive content grids', async () => {
   for (const locale of ['de', 'en', 'ru', 'uk']) {
     const html = await readFile(path.join(root, locale, 'prays-list.html'), 'utf8');
     assert.equal(
-      (html.match(/page-modules\.css\?v=20260920-safe-edge/g) || []).length,
+      (html.match(/page-modules\.css\?v=20261027-search-selects/g) || []).length,
       3,
       `${locale} must load the equal compact card stylesheet version`
     );
-    assert.match(html, /price-page\.js\?v=20260920-compact-modal-context/);
+    assert.match(html, /price-page\.js\?v=20261027-unified-booking/);
   }
 });
 
@@ -384,6 +398,7 @@ test('blocked preference storage does not stop shell setup or language navigatio
     initIndependentEuroMotion() {},
     standardizePageHeader: () => { headerInitialized = true; },
     hardenHeaderA11y() {}, syncHeaderWeatherWidget() {}, normalizeMenuSeparators() {}, fitHomeLabelToLogo() {},
+    getVisibleHeaderBottom() {}, initHeaderAdaptiveLayout() {},
   };
   const initialize = new Function('localStorage', 'window', 'document', ...Object.keys(helpers), `${common}\n${declaration('init')}\nreturn init();`);
   assert.equal(initialize(storage, window, {}, ...Object.values(helpers)).currentLang, 'de');

@@ -39,7 +39,23 @@ try {
     if (route.includes('prays-list')) {
       await page.waitForSelector('[data-price-open]', { timeout: 15000 });
       await page.locator('[data-price-open]').first().click();
-      await page.waitForSelector('#price-category-modal.active', { timeout: 15000 });
+      const bookingModal = page.locator('#booking-modal[data-price-booking-flow].active');
+      await bookingModal.waitFor({ state: 'visible', timeout: 15000 });
+      await page.waitForFunction(() => document.querySelector('#booking-modal')?.dataset.bookingStep === '0');
+      assert.equal(await bookingModal.getAttribute('role'), 'dialog');
+      assert.equal(await bookingModal.getAttribute('aria-modal'), 'true');
+      assert.equal(await bookingModal.getAttribute('aria-hidden'), 'false');
+      assert.equal(await bookingModal.locator('.booking-step.active').count(), 1);
+      assert.equal(await page.locator('#client-registration-modal').count(), 0);
+      const closeButton = bookingModal.locator('.modal-close');
+      assert.ok(await closeButton.getAttribute('aria-label'), 'the close control must have an accessible name');
+      await closeButton.focus();
+      await page.keyboard.press('Shift+Tab');
+      assert.equal(await bookingModal.evaluate(element => element.contains(document.activeElement)), true,
+        'reverse Tab must stay inside the unified dialog');
+      await page.keyboard.press('Tab');
+      assert.equal(await closeButton.evaluate(element => element === document.activeElement), true,
+        'Tab must wrap from the last control back to the close button');
     }
 
     const analysis = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();

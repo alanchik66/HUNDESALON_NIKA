@@ -1,6 +1,6 @@
 # HUNDESALON_NIKA Website Knowledge for the SendPulse AI Agent #
 
-Generated source fingerprint: sha256:f04b2923d32ef4b48e75a7e28c57299b6998842cb2ced59b3ddecd0123378d6e
+Generated source fingerprint: sha256:8d687c79d0eb4227efdde7ce2d094fb6548d590d730547aa0e89f1fc66a2b5e4
 
 This document is the factual knowledge base for the customer-facing SendPulse live-chat AI agent. It covers the public HUNDESALON_NIKA website in German, English, Russian, and Ukrainian.
 

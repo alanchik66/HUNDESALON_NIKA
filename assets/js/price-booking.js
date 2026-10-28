@@ -301,6 +301,7 @@
 
   const tokenScore = (candidate, query) => {
     if (candidate.startsWith(query)) return 0;
+    if (query.length >= 4 && candidate.endsWith(query)) return 1;
     const limit = query.length >= 9 ? 2 : query.length >= 4 ? 1 : 0;
     if (!limit) return Infinity;
     const distance = target => {

@@ -6,6 +6,7 @@
   const modal = document.querySelector('[data-price-modal]');
 
   if (!root || !modal) return;
+  const isPriceBookingFlow = modal.hasAttribute('data-price-booking-flow');
 
   const lang = (() => {
     const value = document.documentElement.lang || 'en';
@@ -13,6 +14,12 @@
   })();
 
   const locale = catalog.locales[lang] || catalog.locales.en;
+  const flowCopy = {
+    de: { next: 'Weiter', species: 'Tierart auswählen' },
+    en: { next: 'Continue', species: 'Choose pet type' },
+    ru: { next: 'Продолжить', species: 'Выберите вид питомца' },
+    uk: { next: 'Продовжити', species: 'Виберіть вид тварини' },
+  }[lang];
   const sourceCategories = catalog.categoriesByLocale?.[lang] || catalog.categories;
   const bookingCatalog = global.PriceBookingCatalog?.build?.(lang) || null;
   const breedPhotoCopy = {
@@ -1151,7 +1158,7 @@
   const modalClose = modal.querySelector('[data-price-modal-close]');
   const modalContent = modal.querySelector('.price-category-modal__content');
   modalContent?.classList.add('price-category-modal--compact');
-  bindModalWheelScroll(modalContent);
+  if (!isPriceBookingFlow) bindModalWheelScroll(modalContent);
 
   const modalSelection = document.createElement('section');
   modalSelection.className = 'price-category-modal__selection';
@@ -1161,7 +1168,7 @@
         <p class="price-category-modal__selection-title">${escapeHtml(locale.selectionTitle || locale.chooseBreedLabel || 'Select a breed and service')}</p>
       </div>
       <label class="price-category-modal__selection-field">
-        <span>${escapeHtml(locale.breedSelectLabel || 'Choose breed')}</span>
+        <span data-price-modal-breed-label>${escapeHtml(locale.breedSelectLabel || 'Choose breed')}</span>
         <select data-price-modal-breed></select>
       </label>
       <figure class="price-category-modal__breed-photo" data-price-modal-breed-photo hidden>
@@ -1383,7 +1390,7 @@
       </section>
     </div>
   `;
-  document.body.appendChild(registrationModal);
+  if (!isPriceBookingFlow) document.body.appendChild(registrationModal);
   window.HundesalonNavPill?.scan?.(registrationModal);
 
   const registrationForm = registrationModal.querySelector('[data-client-registration-form]');
@@ -1545,6 +1552,9 @@
     else if (sourceCategoryId === ADDITIONAL_CATEGORY_ID) {
       key = selectedBreed?.index === 1 ? 'cat' : selectedBreed?.index >= 2 ? 'smallAnimal' : 'dog';
     }
+    const species = selectedBreed?.metadata?.species || category?.species;
+    if (species === 'rabbit') key = 'rabbit';
+    else if (species === 'guinea-pig') key = 'guinea_pig';
     const registration = locale.registration || {};
     return {
       key: key === 'smallAnimal' ? 'small_animal' : key,
@@ -1661,7 +1671,7 @@
         .map(condition => `<li>${renderCurrencyText(condition)}</li>`)
         .join('');
     }
-    if (modalBooking) modalBooking.textContent = conditions.registerLabel || locale.registration?.title || '';
+    if (modalBooking) modalBooking.textContent = isPriceBookingFlow ? flowCopy.next : conditions.registerLabel || locale.registration?.title || '';
   };
 
   const getCheckedServiceIds = container => new Set(
@@ -1822,7 +1832,7 @@
       resetServiceConditionsConsent();
     }
     modalBooking.classList.add('online-order-btn');
-    modalBooking.textContent = locale.bookSelectionLabel || locale.bookingLabel;
+    modalBooking.textContent = isPriceBookingFlow ? flowCopy.next : locale.bookSelectionLabel || locale.bookingLabel;
     modalBooking.dataset.bookingCategory = sourceCategoryId;
     modalBooking.dataset.bookingBreed = selectedBreed?.id || modalBreedSelect.value;
     modalBooking.dataset.bookingService = firstService?.id || '';
@@ -1917,6 +1927,10 @@
     const sourceCategoryId = category.sourceId || category.id;
     const bookingCategory = bookingCatalog.getCategory(sourceCategoryId);
     if (!bookingCategory) return;
+    modalSelection.querySelector('[data-price-modal-breed-label]').textContent =
+      sourceCategoryId === ADDITIONAL_CATEGORY_ID || sourceCategoryId === 'ru-small-animals'
+        ? flowCopy.species
+        : locale.breedSelectLabel || 'Choose breed';
     const isAdditionalSelection = selectionMode === 'additional';
     const resolvedPreferredBreedIndex = Number.isInteger(preferredBreedIndex)
       ? preferredBreedIndex
@@ -2069,6 +2083,10 @@
   };
 
   const closeModal = () => {
+    if (isPriceBookingFlow) {
+      window.dispatchEvent(new Event('price:close-request'));
+      return;
+    }
     if (!modal.classList.contains('active')) return;
     modal.classList.add('is-closing');
     window.setTimeout(() => {
@@ -2109,6 +2127,10 @@
       updateModalBookingSelection(category, preferredBreedIndex, preferredServiceIndex, selectionMode);
     }
 
+    if (isPriceBookingFlow) {
+      window.dispatchEvent(new CustomEvent('price:selection-open', { detail: { trigger: state.lastFocus } }));
+      return;
+    }
     modal.classList.remove('is-closing');
     modal.classList.add('active');
     modal.setAttribute('aria-hidden', 'false');
@@ -2149,9 +2171,38 @@
 
   const getSearchAnimalType = category => {
     if (category.animalType === 'dog' || ['small', 'medium', 'large', 'giant'].includes(category.groupKey)) return 'dog';
-    if (category.groupKey === 'cats') return 'cat';
-    if (category.groupKey === 'smallAnimals') return 'smallAnimals';
+    if (category.animalType === 'cat' || category.groupKey === 'cats') return 'cat';
+    if (category.animalType === 'smallAnimal' || category.groupKey === 'smallAnimals') return 'smallAnimals';
     return 'other';
+  };
+  const getBreedSearchContext = category => {
+    const aliases = ({
+      ru: {
+        dog: 'собака|собаки|собак|пёс|пес|псы', cat: 'кошка|кошки|кошек|кот|коты',
+        smallAnimals: 'мелкие животные|маленькие животные', rabbit: 'кролик|кролики|кроликов',
+        'guinea-pig': 'морская свинка|морские свинки|свинка|свинки',
+      },
+      uk: {
+        dog: 'собака|собаки|собак|пес|пси', cat: 'кішка|кішки|кіт|коти|котів',
+        smallAnimals: 'дрібні тварини|маленькі тварини', rabbit: 'кролик|кролики|кролів',
+        'guinea-pig': 'морська свинка|морські свинки|свинка|свинки',
+      },
+      de: {
+        dog: 'Hund|Hunde|Hunderasse|Hunderassen', cat: 'Katze|Katzen|Katzenrasse|Katzenrassen',
+        smallAnimals: 'Kleintier|Kleintiere', rabbit: 'Kaninchen|Zwergkaninchen',
+        'guinea-pig': 'Meerschweinchen',
+      },
+      en: {
+        dog: 'dog|dogs|dog breed|dog breeds', cat: 'cat|cats|cat breed|cat breeds',
+        smallAnimals: 'small animal|small animals|small pet|small pets', rabbit: 'rabbit|rabbits|bunny|bunnies',
+        'guinea-pig': 'guinea pig|guinea pigs|cavy|cavies',
+      },
+    })[lang] || {};
+    const animalType = getSearchAnimalType(category);
+    return [...new Set([
+      aliases[animalType], aliases[category.species],
+      animalType === 'smallAnimals' ? getText(category.title) : '',
+    ].filter(Boolean).flatMap(value => value.split('|')).map(normalizeSearch))];
   };
   const dogWeightRanges = {
     small: { min: 0, max: 5.99, value: 3 },
@@ -2201,6 +2252,8 @@
     .filter(category => getSearchAnimalType(category) !== 'other')
     .flatMap(category => {
       const animalType = getSearchAnimalType(category);
+      const contextLabels = getBreedSearchContext(category);
+      const contextTokens = [...new Set(contextLabels.flatMap(normalizeBreedTokens))];
       return (category.breeds?.[lang] || category.breeds?.en || []).map((label, index) => {
         const breedIndex = category.breedIndexes?.[index] ?? index;
         const photo = getAnimalPhotoRecord(category, label, index, breedIndex);
@@ -2209,6 +2262,8 @@
           id: `${category.id}:${breedIndex}`,
           label,
           normalizedTokens: getBreedSearchTokens(label),
+          contextLabels,
+          contextTokens,
           categoryId: category.id,
           breedIndex,
           categoryLabel: getText(category.title),
@@ -2245,21 +2300,35 @@
       return sortBreedMatches(breedSearchMatches.filter(matchesSearchFilters));
     }
     const queryTokens = normalizeBreedTokens(query);
-    const scoredMatches = breedSearchMatches
-      .map(match => ({
-        match,
-        score: queryTokens.reduce((total, queryToken) => {
-          const tokenScore = Math.min(
-            ...match.normalizedTokens.map(token => getBreedTokenScore(token, queryToken))
-          );
-          return total + tokenScore;
-        }, 0),
-      }))
-      .filter(result => Number.isFinite(result.score))
+    const exactSpeciesMatches = breedSearchMatches.filter(match => match.contextLabels.includes(normalizedQuery));
+    const scoreTokens = tokens => queryTokens.map(queryToken =>
+      Math.min(...tokens.map(token => getBreedTokenScore(token, queryToken)))
+    );
+    const contextScoreCache = new Map();
+    const scoredMatches = (exactSpeciesMatches.length ? exactSpeciesMatches : breedSearchMatches)
+      .map(match => {
+        const breedScores = scoreTokens(match.normalizedTokens);
+        const breedScore = breedScores.reduce((total, score) => total + score, 0);
+        const contextOnly = !Number.isFinite(breedScore);
+        let score = breedScore;
+        if (contextOnly) {
+          const contextKey = match.contextTokens.join('|');
+          if (!contextScoreCache.has(contextKey)) contextScoreCache.set(contextKey, scoreTokens(match.contextTokens));
+          const contextScores = contextScoreCache.get(contextKey);
+          score = breedScores.reduce((total, breedTokenScore, index) =>
+            total + Math.min(breedTokenScore, contextScores[index]), 0);
+        }
+        return {
+          match,
+          contextOnly,
+          score,
+        };
+      })
       .filter(result => Number.isFinite(result.score));
     if (searchFilterState.sort === 'default') {
       scoredMatches.sort((left, right) =>
-        left.score - right.score
+        Number(left.contextOnly) - Number(right.contextOnly)
+        || left.score - right.score
         || breedSearchCollator.compare(left.match.label, right.match.label)
         || left.match.id.localeCompare(right.match.id)
       );
@@ -2320,10 +2389,23 @@
   const renderBreedSuggestions = (query, providedMatches) => {
     const normalizedQuery = normalizeSearch(query);
     const matches = providedMatches || findBreedMatches(query);
+    const visibleMatches = matches.slice(0, 48);
+    const suggestionsTitle = searchSuggestions?.querySelector('[data-price-breed-search-suggestions-title]');
+    if (suggestionsTitle) {
+      const limitedCopy = ({
+        ru: `Показаны ${visibleMatches.length} из ${matches.length}; уточните запрос`,
+        uk: `Показано ${visibleMatches.length} із ${matches.length}; уточніть запит`,
+        de: `${visibleMatches.length} von ${matches.length} angezeigt; bitte Suche eingrenzen`,
+        en: `Showing ${visibleMatches.length} of ${matches.length}; refine your search`,
+      })[lang];
+      suggestionsTitle.textContent = matches.length > visibleMatches.length
+        ? limitedCopy
+        : locale.searchSuggestionsLabel || 'Possible breeds';
+    }
     activeSuggestionIndex = -1;
     searchInput?.removeAttribute('aria-activedescendant');
     if (searchSuggestionsList) {
-      searchSuggestionsList.innerHTML = matches
+      searchSuggestionsList.innerHTML = visibleMatches
         .map(
           (match, index) => `
             <li class="price-breed-search__suggestion-item">
@@ -3014,6 +3096,27 @@
         event.stopImmediatePropagation();
         modalServiceConditions?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         showServiceConditionsConsentRequired();
+        return;
+      }
+      if (isPriceBookingFlow) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const data = modalBooking.dataset;
+        window.dispatchEvent(new CustomEvent('price:booking-start', {
+          detail: {
+            categoryId: data.bookingCategory,
+            breedId: data.bookingBreed,
+            serviceId: data.bookingService,
+            serviceIds: data.bookingServices.split(','),
+            price: data.bookingPrice,
+            serviceLabel: data.bookingServiceLabel,
+            priceOverride: data.bookingPrice,
+            petSpecies: data.bookingPetSpecies,
+            promotionKey: data.bookingPromotionKey,
+            promotionLabel: data.bookingPromotionLabel,
+            promotionPrice: data.bookingPromotionPrice,
+          },
+        }));
         return;
       }
       if (!registrationCompletedForSelection) {
