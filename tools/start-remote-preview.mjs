@@ -26,7 +26,9 @@ if (emailIndex >= 0 && !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(
   throw new Error('A valid access email is required.');
 const probe = async () => {
   try {
-    const response = await fetch('http://127.0.0.1:5514/__preview_health', { signal: AbortSignal.timeout(2000) });
+    // Fixed loopback-only health check; this HTTP request never leaves the machine.
+    // nosemgrep: typescript.react.security.react-insecure-request.react-insecure-request
+    const response = await fetch('http://127.0.0.1:5514/__preview_health', { redirect: 'error', signal: AbortSignal.timeout(2000) });
     const state = await response.json();
     return state.project === 'HUNDESALON_NIKA' && state.role === 'remote-preview' ? state : null;
   } catch {
@@ -34,7 +36,10 @@ const probe = async () => {
   }
 };
 if (process.argv.includes('--stop')) {
+  // Authenticated control request to a fixed loopback socket; no traffic leaves the machine.
+  // nosemgrep: typescript.react.security.react-insecure-request.react-insecure-request
   const response = await fetch('http://127.0.0.1:5514/__preview_stop', {
+    redirect: 'error',
     method: 'POST',
     headers: { 'X-Preview-Admin': config.key },
   });
@@ -48,7 +53,10 @@ if (
   (publicReadOnly && !config.publicReadOnly)
 ) {
   if (state) {
+    // Authenticated control request to a fixed loopback socket; no traffic leaves the machine.
+    // nosemgrep: typescript.react.security.react-insecure-request.react-insecure-request
     const response = await fetch('http://127.0.0.1:5514/__preview_stop', {
+      redirect: 'error',
       method: 'POST',
       headers: { 'X-Preview-Admin': config.key },
     });

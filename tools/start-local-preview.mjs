@@ -24,7 +24,9 @@ await mkdir(output, { recursive: true });
 await writeFile(filename, source, 'utf8');
 const probe = async () => {
   try {
-    const response = await fetch('http://127.0.0.1:5513/status', { signal: AbortSignal.timeout(2000) });
+    // Fixed loopback-only health check; this HTTP request never leaves the machine.
+    // nosemgrep: typescript.react.security.react-insecure-request.react-insecure-request
+    const response = await fetch('http://127.0.0.1:5513/status', { redirect: 'error', signal: AbortSignal.timeout(2000) });
     const state = await response.json();
     return response.ok && state.project === 'HUNDESALON_NIKA' && state.root === root ? state : null;
   } catch {

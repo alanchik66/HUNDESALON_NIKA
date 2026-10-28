@@ -92,7 +92,9 @@ try {
   });
 } catch (error) {
   if (error.code === 'EADDRINUSE') {
-    const response = await fetch('http://127.0.0.1:5513/status', { signal: AbortSignal.timeout(2000) }).catch(
+    // Fixed loopback-only health check; this HTTP request never leaves the machine.
+    // nosemgrep: typescript.react.security.react-insecure-request.react-insecure-request
+    const response = await fetch('http://127.0.0.1:5513/status', { redirect: 'error', signal: AbortSignal.timeout(2000) }).catch(
       () => null
     );
     const existing = response?.ok ? await response.json().catch(() => null) : null;
