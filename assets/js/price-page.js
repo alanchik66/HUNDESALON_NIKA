@@ -766,6 +766,7 @@
           <div class="price-page-hero__intro-copy">
             <p class="price-page-hero__lead">${escapeHtml(locale.heroLead)}</p>
             <p class="price-page-hero__note">${escapeHtml(locale.heroNote)}</p>
+            <p class="price-page-hero__note" data-price-tax-notice>${escapeHtml(locale.taxNotice)}</p>
           </div>
         </div>
       </div>

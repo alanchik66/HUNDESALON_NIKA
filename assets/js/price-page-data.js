@@ -9,6 +9,7 @@
         'Wählen Sie eine Kategorie, danach Rasse und Leistung. Der Richtpreis wird direkt angezeigt und kann sofort gebucht werden.',
       heroNote:
         'Alle Preise sind Richtpreise „ab“ und hängen vom Zustand des Fells und vom tatsächlichen Arbeitsaufwand ab.',
+      taxNotice: 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
       heroCategoriesAction: 'Zu den Kategorien',
       modalTitle: 'Kategorie im Detail',
       breedsTitle: 'Rassen',
@@ -182,6 +183,7 @@
         'Choose a category, then your breed and service. The estimated price appears immediately and can be booked in a few clicks.',
       heroNote:
         'All prices are estimates starting from the stated amount and depend on coat condition and actual work required.',
+      taxNotice: 'No VAT is charged under the small business exemption pursuant to § 19 UStG.',
       heroCategoriesAction: 'View categories',
       modalTitle: 'Category details',
       breedsTitle: 'Breeds',
@@ -353,6 +355,7 @@
       heroLead:
         'Выберите категорию, затем породу и услугу. Ориентировочная цена появится сразу, после чего можно перейти к онлайн-записи.',
       heroNote: 'Все цены указаны «от» и зависят от состояния шерсти и фактического объёма работы.',
+      taxNotice: 'НДС не начисляется в соответствии с режимом малого предприятия по § 19 UStG.',
       heroCategoriesAction: 'Перейти к категориям',
       modalTitle: 'Подробности категории',
       breedsTitle: 'Породы',
@@ -527,6 +530,7 @@
       heroLead:
         'Оберіть категорію, потім породу та послугу. Орієнтовна вартість з’явиться одразу, після чого можна перейти до онлайн-запису.',
       heroNote: 'Усі ціни вказані «від» і залежать від стану шерсті та фактичного обсягу роботи.',
+      taxNotice: 'ПДВ не нараховується відповідно до режиму малого підприємства за § 19 UStG.',
       heroCategoriesAction: 'Перейти до категорій',
       modalTitle: 'Деталі категорії',
       breedsTitle: 'Породи',
