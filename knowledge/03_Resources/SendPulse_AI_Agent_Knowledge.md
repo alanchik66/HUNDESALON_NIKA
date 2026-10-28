@@ -1,6 +1,6 @@
 # HUNDESALON_NIKA Website Knowledge for the SendPulse AI Agent #
 
-Generated source fingerprint: sha256:8d687c79d0eb4227efdde7ce2d094fb6548d590d730547aa0e89f1fc66a2b5e4
+Generated source fingerprint: sha256:9bfa6d2d68fd99831c75ceecdb7458b7798cabc69c27db94ebf4afb3801bdb25
 
 This document is the factual knowledge base for the customer-facing SendPulse live-chat AI agent. It covers the public HUNDESALON_NIKA website in German, English, Russian, and Ukrainian.
 
@@ -1484,7 +1484,7 @@ This section is generated from the current public salon rules (`agb.html`). When
 - Bei Verspätung dürfen wir den Leistungsumfang kürzen, ändern oder den Termin verschieben.
 - Bei nachgewiesener plötzlicher Erkrankung (Halter oder Tier) finden wir nach Absprache in der Regel einen Ersatztermin ohne Ausfallgebühr.
 - 14. Preise und Zahlung
-- Es gilt die aktuelle Preisliste bzw. die individuell bestätigte Vereinbarung. Preise inkl. MwSt., soweit ausgewiesen. Endpreise können je nach Aufwand abweichen; wesentliche Abweichungen sprechen wir vor Beginn an.
+- Es gilt die aktuelle Preisliste bzw. die individuell bestätigte Vereinbarung. Gemäß § 19 UStG wird keine Umsatzsteuer berechnet. Endpreise können je nach Aufwand abweichen; wesentliche Abweichungen sprechen wir vor Beginn an.
 - 14.1 Zahlung im Salon
 - Bar oder Karte (soweit Terminal verfügbar). Zahlung nach Leistung, sofern nichts anderes vereinbart.
 - 14.2 Online-Zahlung / Anzahlung
@@ -1534,7 +1534,7 @@ This section is generated from the current public salon rules (`agb.html`). When
 - If you arrive late, we may shorten the service, change the procedure or reschedule.
 - For confirmed sudden illness (owner or pet), we usually reschedule without a fee after agreement.
 - 14. Prices and payment
-- The current price list or an individually agreed price applies. Where stated, prices include VAT. The final amount may depend on complexity; major differences are discussed before we start.
+- The current price list or an individually agreed price applies. No VAT is charged under the small business exemption pursuant to § 19 UStG. The final amount may depend on complexity; major differences are discussed before we start.
 - 14.1 Payment at the salon
 - Cash or card (if a terminal is available). Payment after the service unless otherwise agreed.
 - 14.2 Online payment / deposit
@@ -1584,7 +1584,7 @@ This section is generated from the current public salon rules (`agb.html`). When
 - При опоздании мастер вправе сократить объём услуги, изменить процедуру или перенести запись.
 - При подтверждённой внезапной болезни владельца или питомца салон после согласования обычно переносит визит без штрафа.
 - 14. Цены и оплата
-- Действует актуальный прайс или индивидуально согласованная цена. Если это указано, цены включают НДС. Итоговая сумма может зависеть от сложности; существенные отклонения обсуждаем до начала работы.
+- Действует актуальный прайс или индивидуально согласованная цена. НДС не начисляется в соответствии с режимом малого предприятия по § 19 UStG. Итоговая сумма может зависеть от сложности; существенные отклонения обсуждаем до начала работы.
 - 14.1 Оплата в салоне
 - Наличными или картой (при наличии терминала). Оплата производится после оказания услуги, если не согласовано иное.
 - 14.2 Онлайн-оплата / предоплата
@@ -1634,7 +1634,7 @@ This section is generated from the current public salon rules (`agb.html`). When
 - У разі запізнення майстер має право скоротити обсяг послуги, змінити процедуру або перенести запис.
 - У разі підтвердженої раптової хвороби власника чи улюбленця за погодженням ми зазвичай переносимо візит без штрафу.
 - 14. Ціни та оплата
-- Діє актуальний прайс або індивідуально узгоджена ціна. Якщо це зазначено, ціни включають ПДВ. Підсумкова сума може залежати від складності; суттєві відхилення обговорюємо до початку роботи.
+- Діє актуальний прайс або індивідуально узгоджена ціна. ПДВ не нараховується відповідно до режиму малого підприємства за § 19 UStG. Підсумкова сума може залежати від складності; суттєві відхилення обговорюємо до початку роботи.
 - 14.1 Оплата в салоні
 - Готівкою або карткою (за наявності термінала). Оплата після послуги, якщо не домовлено інше.
 - 14.2 Онлайн-оплата / передоплата
