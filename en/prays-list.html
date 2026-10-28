@@ -675,7 +675,13 @@
         </div>
         <div id="step-3" class="booking-step">
           <h3>Your contact details</h3>
-          <form id="booking-form" action="/sendmail" method="POST" enctype="multipart/form-data">
+          <form
+            id="booking-form"
+            action="/sendmail"
+            method="POST"
+            enctype="multipart/form-data"
+            data-booking-turnstile-sitekey="0x4AAAAAAFXzoDFumjX4h5lx"
+          >
             <input type="hidden" name="form_type" value="booking" />
             <input type="hidden" name="lang" value="en" />
             <div class="form-group"><input type="text" name="name" placeholder="Your name" required /></div>

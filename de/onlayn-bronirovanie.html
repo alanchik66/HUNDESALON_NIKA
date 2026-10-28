@@ -11,6 +11,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
     <title>Online-Buchung — HUNDESALON_NIKA</title>
     <meta
       name="twitter:description"
@@ -152,7 +153,13 @@
         </div>
         <div id="step-3" class="booking-step">
           <h3>Ihre Kontaktdaten</h3>
-          <form id="booking-form" action="/sendmail" method="POST" enctype="multipart/form-data">
+          <form
+            id="booking-form"
+            action="/sendmail"
+            method="POST"
+            enctype="multipart/form-data"
+            data-booking-turnstile-sitekey="0x4AAAAAAFXzoDFumjX4h5lx"
+          >
             <input type="hidden" name="form_type" value="booking" />
             <input type="hidden" name="lang" value="de" />
             <div class="form-group"><input type="text" name="name" placeholder="Ihr Name" required /></div>
@@ -181,9 +188,12 @@
                 <input type="radio" name="payment_choice" value="salon_card" />
                 <span>Im Salon mit Karte bezahlen (EC/Kreditkarte)</span>
               </label>
+              <label class="booking-check-label" data-booking-online-option hidden style="display: none">
+                <input type="radio" name="payment_choice" value="online" disabled />
+                <span data-booking-online-label>Anzahlung über Stripe</span>
+              </label>
               <p class="booking-payment-hint">
-                Online-Zahlungen sind noch nicht verfügbar, da der Salon noch nicht eröffnet ist. Bitte bar oder mit
-                Karte im Salon bezahlen. Details:
+                <span data-booking-payment-note>Die Anzahlung wird auf den Endpreis angerechnet. Der Salon bestätigt Datum und Uhrzeit.</span>
                 <a href="agb.html">AGB</a>
                 .
               </p>
@@ -218,7 +228,6 @@
             </label>
             <div class="booking-file-preview" data-booking-file-preview hidden></div>
             <div class="booking-summary" data-booking-summary hidden tabindex="-1"></div>
-            <div class="turnstile-widget" id="turnstile-widget-booking"></div>
             <div class="modal-buttons">
               <button type="button" class="btn-modal" id="prev-step-3">Zurück</button>
               <button type="submit" class="btn-modal btn-modal-primary">Buchen</button>
@@ -349,20 +358,5 @@
     <script src="../assets/js/cookie-consent.js?v=20260620-full-stack-upgrade"></script>
     <script src="../assets/js/newsletter.js?v=20260720-prod-v2"></script>
     <script src="../assets/js/pwa.js?v=20260707-sw-dev-fix"></script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const widgetId = 'turnstile-widget-booking';
-        const widgetElement = document.getElementById(widgetId);
-        if (widgetElement && window.turnstile) {
-          window.turnstile.render(widgetElement, {
-            sitekey: '0x4AAAAAAFXzoDFumjX4h5lx',
-            callback: function(token) {
-              widgetElement.dataset.turnstileToken = token;
-            }
-          });
-        }
-      });
-    </script>
   </body>
 </html>

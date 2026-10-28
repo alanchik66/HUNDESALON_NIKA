@@ -9,6 +9,7 @@ import {
 } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
 import { confirmGoogleBooking } from './_lib/booking-calendar.js';
+import { notifyPaidBookingConfirmed } from './_lib/payment-confirmation.js';
 import { createDeliveryTracker } from './_lib/delivery-tracking.js';
 import { isRequestBodyTooLarge, readJsonBody, timingSafeEqualStrings } from './_lib/http-security.js';
 import {
@@ -306,6 +307,15 @@ async function handleBookingConfirmation(env, callbackQuery, callbackAction, mes
     return json({ ok: true, confirmed: false });
   }
 
+  const confirmationDelivery = await notifyPaidBookingConfirmed(env, callbackAction.requestId, result);
+  if (!confirmationDelivery.ok) {
+    await sendTelegramMessage(env, {
+      chatId: String(message.chat.id),
+      messageThreadId: message.message_thread_id,
+      text: 'Запись сохранена в Google Calendar, но письмо клиенту ещё не доставлено. Повторите эту же кнопку позже: новая запись создана не будет.',
+    });
+    return json({ ok: false, confirmed: true, retryable: true }, 502);
+  }
   const booking = result.booking || {};
   const statusText = result.deduplicated ? 'Запись уже была подтверждена ранее.' : 'Запись подтверждена.';
   let notification;

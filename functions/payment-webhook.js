@@ -1,34 +1,16 @@
-/**
- * Stripe webhook: checkout.session.completed → notify salon (SendPulse / Teams / Sheet).
- * Env: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
- * Binding: PAYMENT_EVENTS (KV; required when online payments are enabled)
- */
+/** Stripe events fulfil durable orders independently of the customer's browser. */
+import { isRequestBodyTooLarge, jsonResponse, readTextBody, timingSafeEqualStrings } from './_lib/http-security.js';
+import { getEnvValue, hasUsableValue } from './_lib/platform-integrations.js';
+import { paymentConfiguration, PAYMENT_ORDER_ID_RE } from './_lib/payment-config.js';
 import {
-  isRequestBodyTooLarge,
-  jsonResponse,
-  readTextBody,
-  timingSafeEqualStrings,
-} from './_lib/http-security.js';
-import {
-  appendGoogleSheetRow,
-  cleanText,
-  getEnvValue,
-  hasUsableValue,
-  sendSendPulseEmail,
-} from './_lib/platform-integrations.js';
-import { buildBrandedEmail } from './_lib/email-template.js';
+  reservePaymentFulfillment,
+  completePaymentFulfillment,
+  releasePaymentFulfillment,
+} from './_lib/payment-orders.js';
+import { fulfillPaidBookingOrder } from './sendmail.js';
 
-const DEFAULT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
-const ONLINE_PAYMENTS_HARD_DISABLED = true;
 const MAX_WEBHOOK_BODY_BYTES = 512 * 1024;
-
-function paymentsOnlineEnabled(env) {
-  if (ONLINE_PAYMENTS_HARD_DISABLED) return false;
-  const raw = String(getEnvValue(env, 'PAYMENTS_ONLINE_ENABLED') || '')
-    .trim()
-    .toLowerCase();
-  return raw === '1' || raw === 'true' || raw === 'on' || raw === 'yes';
-}
+const COMPLETED_EVENTS = new Set(['checkout.session.completed', 'checkout.session.async_payment_succeeded']);
 
 async function hmacSha256Hex(secret, payload) {
   const key = await crypto.subtle.importKey(
@@ -38,162 +20,94 @@ async function hmacSha256Hex(secret, payload) {
     false,
     ['sign']
   );
-  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload));
-  return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
+  const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload));
+  return Array.from(new Uint8Array(signature), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 async function verifyStripeSignature(rawBody, header, secret) {
   if (!header || !secret) return false;
   let timestamp = '';
   const signatures = [];
-  header.split(',').forEach(part => {
+  for (const part of header.split(',')) {
     const [key, ...rest] = part.split('=');
     const value = rest.join('=').trim();
     if (key.trim() === 't') timestamp = value;
-    if (key.trim() === 'v1' && value) signatures.push(value);
-  });
-  if (!timestamp || signatures.length === 0) return false;
-  const age = Math.abs(Date.now() / 1000 - Number(timestamp));
-  if (!Number.isFinite(age) || age > 300) return false;
-  const signed = `${timestamp}.${rawBody}`;
-  const expected = await hmacSha256Hex(secret, signed);
-  const matches = await Promise.all(signatures.map(signature => timingSafeEqualStrings(signature, expected)));
-  return matches.some(Boolean);
+    if (key.trim() === 'v1' && /^[0-9a-f]{64}$/i.test(value)) signatures.push(value);
+  }
+  if (!/^\d{10}$/.test(timestamp) || !signatures.length || Math.abs(Date.now() / 1000 - Number(timestamp)) > 300)
+    return false;
+  const expected = await hmacSha256Hex(secret, timestamp + '.' + rawBody);
+  return (await Promise.all(signatures.map(signature => timingSafeEqualStrings(signature, expected)))).some(Boolean);
 }
 
-async function reservePaymentEvent(env, eventId) {
-  const store = env?.PAYMENT_EVENTS;
-  if (!store || typeof store.get !== 'function' || typeof store.put !== 'function') {
-    return { ok: false, reason: 'payment_event_store_not_configured' };
-  }
-  const key = `stripe:${eventId}`;
-  if (await store.get(key)) return { ok: true, duplicate: true, key, store };
-  await store.put(key, 'processing', { expirationTtl: 60 * 60 * 24 * 7 });
-  return { ok: true, duplicate: false, key, store };
-}
-
-export async function onRequest(context) {
-  const { request, env } = context;
-  if (request.method !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
-  }
-
-  const webhookSecret = getEnvValue(env, 'STRIPE_WEBHOOK_SECRET');
+export async function onRequest(ctx) {
+  const { request, env } = ctx;
+  if (request.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
   let rawBody;
   try {
     rawBody = await readTextBody(request, MAX_WEBHOOK_BODY_BYTES);
   } catch (error) {
     return jsonResponse(
-      {
-        success: false,
-        message: isRequestBodyTooLarge(error) ? 'Payload too large' : 'Invalid request body',
-      },
+      { success: false, message: isRequestBodyTooLarge(error) ? 'Payload too large' : 'Invalid request body' },
       isRequestBodyTooLarge(error) ? 413 : 400
     );
   }
-  const signature = request.headers.get('Stripe-Signature') || '';
-
-  if (!hasUsableValue(webhookSecret)) {
-    return jsonResponse({ success: false, message: 'Webhook is not configured' }, 503);
-  }
-  const signatureValid = await verifyStripeSignature(rawBody, signature, webhookSecret);
-  if (!signatureValid) {
+  const secret = getEnvValue(env, 'STRIPE_WEBHOOK_SECRET');
+  if (!hasUsableValue(secret)) return jsonResponse({ success: false, message: 'Webhook is not configured' }, 503);
+  if (!(await verifyStripeSignature(rawBody, request.headers.get('Stripe-Signature') || '', secret)))
     return jsonResponse({ success: false, message: 'Invalid signature' }, 400);
-  }
-
   let event;
   try {
     event = JSON.parse(rawBody);
   } catch {
     return jsonResponse({ success: false, message: 'Invalid JSON' }, 400);
   }
-
-  if (!['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(event.type)) {
-    return jsonResponse({ success: true, ignored: true }, 200);
-  }
-
-  // Online payments paused until salon opens — acknowledge webhook, do not book/notify.
-  if (!paymentsOnlineEnabled(env)) {
-    return jsonResponse({ success: true, ignored: true, reason: 'payments_online_disabled' }, 200);
-  }
-
-  const session = event.data?.object || {};
-  if (session.payment_status !== 'paid') {
+  if (!COMPLETED_EVENTS.has(event?.type)) return jsonResponse({ success: true, ignored: true }, 200);
+  const config = paymentConfiguration(env);
+  if (event.livemode !== (config.mode === 'live'))
+    return jsonResponse({ success: false, message: 'Payment mode mismatch' }, 400);
+  const session = event.data?.object;
+  if (
+    !session ||
+    session.object !== 'checkout.session' ||
+    session.mode !== 'payment' ||
+    session.livemode !== event.livemode
+  )
+    return jsonResponse({ success: false, message: 'Invalid Checkout Session' }, 400);
+  if (session.payment_status !== 'paid')
     return jsonResponse({ success: true, ignored: true, reason: 'payment_not_paid' }, 200);
-  }
-  const meta = session.metadata || {};
-  if (meta.payment_kind !== 'booking_deposit') {
+  const orderId = session.metadata?.order_id;
+  if (session.metadata?.payment_kind !== 'booking_deposit' || !PAYMENT_ORDER_ID_RE.test(orderId || ''))
     return jsonResponse({ success: true, ignored: true, reason: 'unsupported_payment_kind' }, 200);
+  let claim;
+  try {
+    claim = await reservePaymentFulfillment(env, {
+      orderId,
+      sessionId: session.id,
+      eventId: String(event.id || '').slice(0, 200),
+      amount: session.amount_total,
+      currency: session.currency,
+      mode: config.mode,
+    });
+    if (!claim.ok)
+      return jsonResponse(
+        { success: false, message: claim.busy ? 'Payment processing is in progress' : 'Payment could not be matched' },
+        claim.busy || claim.reason === 'payment_store_unavailable' ? 503 : 400
+      );
+    if (claim.duplicate) return jsonResponse({ success: true, duplicate: true }, 200);
+    // Pausing new Checkout creation must never discard an already paid order.
+    const fulfilled = await fulfillPaidBookingOrder(ctx, claim.order);
+    if (!fulfilled.ok) {
+      await releasePaymentFulfillment(env, { orderId, claimToken: claim.claimToken });
+      return jsonResponse({ success: false, message: 'Booking delivery is pending. Please retry.' }, 503);
+    }
+    const completed = await completePaymentFulfillment(env, { orderId, claimToken: claim.claimToken });
+    if (!completed.ok)
+      return jsonResponse({ success: false, message: 'Payment completion is pending. Please retry.' }, 503);
+    return jsonResponse({ success: true }, 200);
+  } catch {
+    if (claim?.claimToken) await releasePaymentFulfillment(env, { orderId, claimToken: claim.claimToken });
+    console.error(JSON.stringify({ event: 'payment_fulfillment_unavailable' }));
+    return jsonResponse({ success: false, message: 'Booking delivery is temporarily unavailable' }, 503);
   }
-
-  const reservation = await reservePaymentEvent(env, cleanText(event.id || session.id, 160));
-  if (!reservation.ok) {
-    return jsonResponse({ success: false, message: reservation.reason }, 503);
-  }
-  if (reservation.duplicate) {
-    return jsonResponse({ success: true, duplicate: true }, 200);
-  }
-  const summary = [
-    `Stripe Checkout bezahlt`,
-    `Session: ${cleanText(session.id, 120)}`,
-    `Betrag: ${session.amount_total != null ? (session.amount_total / 100).toFixed(2) : '?'} ${(session.currency || 'eur').toUpperCase()}`,
-    `Name: ${cleanText(meta.name, 120)}`,
-    `E-Mail: ${cleanText(meta.email || session.customer_email, 180)}`,
-    `Telefon: ${cleanText(meta.phone, 60)}`,
-    `Leistung: ${cleanText(meta.service, 160)}`,
-    `Datum: ${cleanText(meta.date, 32)} ${cleanText(meta.time, 32)}`,
-    meta.message ? `Hinweis: ${cleanText(meta.message, 400)}` : null,
-  ]
-    .filter(Boolean)
-    .join('\n');
-  const messageLang = ['de', 'en', 'ru', 'uk'].includes(cleanText(meta.lang, 8)) ? cleanText(meta.lang, 8) : 'de';
-
-  const sideEffects = await Promise.allSettled([
-    sendSendPulseEmail(env, {
-      to: (() => {
-        const configured = getEnvValue(env, 'BOOKING_RECIPIENT_EMAIL') || getEnvValue(env, 'SALON_EMAIL');
-        return configured && configured.toLowerCase() !== 'info@hundesalon-nika.com'
-          ? configured
-          : 'booking@hundesalon-nika.com';
-      })(),
-      subject: 'Online-Anzahlung bezahlt — HUNDESALON NIKA',
-      text: summary,
-      html: buildBrandedEmail({
-        title: 'Online-Anzahlung bezahlt — HUNDESALON_NIKA',
-        bodyText: summary,
-        lang: messageLang,
-      }),
-      from: getEnvValue(env, 'SENDPULSE_FROM', DEFAULT_FROM),
-    }),
-    appendGoogleSheetRow(env, {
-      spreadsheetId: getEnvValue(env, 'SHEET_ID'),
-      sheetName: 'payments',
-      values: [
-        new Date().toISOString(),
-        session.id || '',
-        session.payment_status || '',
-        session.amount_total || '',
-        session.currency || '',
-        meta.lang || '',
-        meta.name || '',
-        meta.email || session.customer_email || '',
-        meta.phone || '',
-        meta.service || '',
-        meta.date || '',
-        meta.time || '',
-      ],
-    }),
-  ]);
-
-  // Integration helpers return { ok:false } instead of throwing. Checking only
-  // Promise rejection would mark the event completed when every channel failed
-  // or was skipped — salon never notified, Stripe never retries.
-  const delivered = sideEffects.some(result => result.status === 'fulfilled' && result.value?.ok === true);
-  if (!delivered) {
-    await reservation.store.delete?.(reservation.key);
-    return jsonResponse({ success: false, message: 'Payment notifications failed' }, 502);
-  }
-  await reservation.store.put(reservation.key, 'completed', { expirationTtl: 60 * 60 * 24 * 7 });
-
-  return jsonResponse({ success: true }, 200);
 }

@@ -44,11 +44,42 @@ test('adds security headers to Function responses without changing API or CORS h
   assert.equal(response.headers.get('Content-Type'), 'application/json; charset=utf-8');
   assert.equal(response.headers.get('Vary'), 'Origin');
 
-  const staticHeaders = parseWildcardSecurityHeaders(
-    await readFile(new URL('../_headers', import.meta.url), 'utf8')
-  );
+  const staticHeaders = parseWildcardSecurityHeaders(await readFile(new URL('../_headers', import.meta.url), 'utf8'));
   assert.equal(staticHeaders.size, 10);
   for (const [name, value] of staticHeaders) {
     assert.equal(response.headers.get(name), value, `${name} must match _headers`);
+  }
+});
+
+test('static and Function HTML CSP allow Turnstile resources without broadening script execution', async () => {
+  const staticHeaders = parseWildcardSecurityHeaders(await readFile(new URL('../_headers', import.meta.url), 'utf8'));
+  const response = await onRequest({
+    request: new Request('https://hundesalon-nika.com/de/onlayn-bronirovanie'),
+    next: async () =>
+      new Response('<!doctype html><title>Booking</title>', {
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      }),
+  });
+  const turnstileScript = new URL('https://challenges.cloudflare.com/turnstile/v0/api.js');
+  const turnstileFrame = new URL('https://challenges.cloudflare.com/turnstile/v0/widget');
+  for (const policy of [
+    staticHeaders.get('Content-Security-Policy'),
+    response.headers.get('Content-Security-Policy'),
+  ]) {
+    const directives = new Map(
+      policy.split(';').map(value => {
+        const [name, ...sources] = value.trim().split(/\s+/);
+        return [name, sources];
+      })
+    );
+    assert.ok(directives.get('script-src').includes(turnstileScript.origin));
+    assert.ok(directives.get('frame-src').includes(turnstileFrame.origin));
+    assert.ok(directives.get('connect-src').includes("'self'"), 'Pre-clearance can reach its same-origin endpoint');
+    for (const source of ['*', "'unsafe-inline'", "'unsafe-eval'"]) {
+      assert.equal(directives.get('script-src').includes(source), false);
+    }
+    assert.deepEqual(directives.get('object-src'), ["'none'"]);
+    assert.deepEqual(directives.get('frame-ancestors'), ["'self'"]);
+    assert.deepEqual(directives.get('form-action'), ["'self'"]);
   }
 });

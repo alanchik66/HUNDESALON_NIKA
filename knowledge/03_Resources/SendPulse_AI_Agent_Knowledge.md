@@ -1,6 +1,6 @@
 # HUNDESALON_NIKA Website Knowledge for the SendPulse AI Agent #
 
-Generated source fingerprint: sha256:9bfa6d2d68fd99831c75ceecdb7458b7798cabc69c27db94ebf4afb3801bdb25
+Generated source fingerprint: sha256:7e0af501e907775620a275dbabeb179ebbc7a187310a5e7c51037077a7eadc06
 
 This document is the factual knowledge base for the customer-facing SendPulse live-chat AI agent. It covers the public HUNDESALON_NIKA website in German, English, Russian, and Ukrainian.
 
@@ -1825,7 +1825,8 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Zahlungsart
 - Im Salon bar bezahlen
 - Im Salon mit Karte bezahlen (EC/Kreditkarte)
-- Online-Zahlungen sind noch nicht verfügbar, da der Salon noch nicht eröffnet ist. Bitte bar oder mit Karte im Salon bezahlen. Details: AGB .
+- Anzahlung über Stripe
+- Die Anzahlung wird auf den Endpreis angerechnet. Der Salon bestätigt Datum und Uhrzeit. AGB .
 - Regeln vor dem ersten Besuch
 - Tier vorbereiten · Gesundheit/Verhalten mitteilen · Verfilzungen 1 € /Min. · Parasiten ab 40 € · Halter im Arbeitsbereich nur nach Absprache · rechtzeitig absagen (sonst ggf. Anzahlung bei Folgeterminen).
 - Vollständige Salonregeln
@@ -2117,7 +2118,8 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Payment method
 - Pay cash at the salon
 - Pay by card at the salon
-- Online payment is not available yet because the salon is opening soon. Please pay cash or by card at the salon. See Terms .
+- Deposit through Stripe
+- The deposit is credited toward the final price. The salon confirms the appointment date and time. Terms .
 - Rules before your first visit
 - Prepare your pet · tell us about health/behaviour · mats 1 € /min · parasites from 40 € · owner in work area only by agreement · cancel in advance (otherwise a deposit may be required for future bookings).
 - Full salon rules
@@ -2409,7 +2411,8 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Способ оплаты
 - Оплата наличными в салоне
 - Оплата картой в салоне
-- Онлайн-оплата пока не активна (салон ещё не открыт). Оплата наличными или картой в салоне. См. условия .
+- Предоплата через Stripe
+- Предоплата засчитывается в итоговую стоимость. Дату и время подтверждает салон. условия .
 - Правила перед первым визитом
 - Подготовка питомца · сообщение о здоровье и поведении · колтуны 1 € /мин · паразиты от 40 € · владелец в рабочей зоне только по согласованию · отмена заранее (иначе возможна предоплата при следующих записях).
 - Полные правила салона
@@ -2701,7 +2704,8 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Спосіб оплати
 - Оплата готівкою в салоні
 - Оплата карткою в салоні
-- Онлайн-оплата поки неактивна (салон ще не відкрито). Оплата готівкою або карткою в салоні. Див. умови .
+- Передоплата через Stripe
+- Передоплата зараховується до підсумкової вартості. Дату й час підтверджує салон. умови .
 - Правила перед першим візитом
 - Підготовка улюбленця · повідомлення про здоровʼя та поведінку · ковтуни 1 € /хв · паразити від 40 € · власник у робочій зоні лише за погодженням · скасування заздалегідь (інакше можлива передоплата при наступних записах).
 - Повні правила салону

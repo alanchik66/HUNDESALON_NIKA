@@ -40,7 +40,6 @@ import {
   appendGoogleSheetRow,
   getEnvList,
   getEnvValue,
-  hasUsableValue,
   sendSendPulseAutomationEvent,
   sendSendPulseEmail,
   sendTelegramMessage,
@@ -52,6 +51,9 @@ import { buildBookingConfirmationUrl } from './_lib/booking-confirmation.js';
 import { verifyOneDriveFileReference } from './_lib/onedrive.js';
 import { createDeliveryTracker, pruneDeliveryMetadata } from './_lib/delivery-tracking.js';
 import { storeClientRegistration, syncClientRegistration } from './_lib/client-registrations.js';
+import { paymentSiteOrigin } from './_lib/payment-config.js';
+import { getPaymentOrder, listPaymentJobs } from './_lib/payment-orders.js';
+import { runPaymentJob } from './_lib/payment-jobs.js';
 
 const DEFAULT_RECIPIENT = 'info@hundesalon-nika.com';
 const DEFAULT_BOOKING_RECIPIENT = 'info@hundesalon-nika.com';
@@ -60,7 +62,6 @@ const MAX_REQUEST_BODY_BYTES = 64 * 1024;
 const DEFAULT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const DEFAULT_CLIENT_FROM = 'HUNDESALON_NIKA <info@hundesalon-nika.com>';
 const DEFAULT_ADMIN_EMAILS = [];
-const ONLINE_PAYMENTS_HARD_DISABLED = true;
 const CLIENT_REGISTRATION_FORM_TYPE = 'client_registration';
 const CLIENT_REGISTRATION_SHEET = 'clients';
 const REGISTRATION_PET_SPECIES = new Set(['dog', 'cat', 'small_animal', 'rabbit', 'guinea_pig', 'other']);
@@ -236,6 +237,8 @@ const EMAIL_COPY = {
   de: {
     bookingSubject: 'Ihre Buchungsanfrage bei HUNDESALON_NIKA',
     bookingThanks: 'Vielen Dank für Ihre Buchungsanfrage.',
+    bookingDepositReceived:
+      'Anzahlung erhalten: {amount}. Ihre Buchungsanfrage wartet auf die Bestätigung durch den Salon.',
     field: {
       form: 'Formular',
       direction: 'Thema',
@@ -264,6 +267,7 @@ const EMAIL_COPY = {
   en: {
     bookingSubject: 'Your booking request at HUNDESALON_NIKA',
     bookingThanks: 'Thank you for your booking request.',
+    bookingDepositReceived: 'Deposit received: {amount}. Your booking is awaiting confirmation from the salon.',
     field: {
       form: 'Form',
       direction: 'Topic',
@@ -292,6 +296,7 @@ const EMAIL_COPY = {
   ru: {
     bookingSubject: 'Ваша заявка на запись в HUNDESALON_NIKA',
     bookingThanks: 'Спасибо за вашу заявку на запись.',
+    bookingDepositReceived: 'Предоплата получена: {amount}. Запись ожидает подтверждения салоном.',
     field: {
       form: 'Форма',
       direction: 'Тема',
@@ -320,6 +325,7 @@ const EMAIL_COPY = {
   uk: {
     bookingSubject: 'Ваша заявка на запис у HUNDESALON_NIKA',
     bookingThanks: 'Дякуємо за вашу заявку на запис.',
+    bookingDepositReceived: 'Передоплату отримано: {amount}. Запис очікує підтвердження салоном.',
     field: {
       form: 'Форма',
       direction: 'Тема',
@@ -515,40 +521,6 @@ function isInboundMailbox(email) {
   return isValidEmail(email) && email.toLowerCase() !== 'info@hundesalon-nika.com';
 }
 
-function paymentsOnlineEnabled(env) {
-  if (ONLINE_PAYMENTS_HARD_DISABLED) return false;
-  const raw = String(getEnvValue(env, 'PAYMENTS_ONLINE_ENABLED') || '')
-    .trim()
-    .toLowerCase();
-  return raw === '1' || raw === 'true' || raw === 'on' || raw === 'yes';
-}
-
-async function verifyStripeBookingSession(env, sessionId, booking) {
-  const secret = getEnvValue(env, 'STRIPE_SECRET_KEY') || getEnvValue(env, 'PAYMENT_PROVIDER_KEY');
-  if (!hasUsableValue(secret) || !sessionId.startsWith('cs_')) return false;
-  const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`, {
-    headers: { Authorization: `Bearer ${secret}` },
-  });
-  if (!response.ok) return false;
-  const session = await response.json().catch(() => null);
-  if (!session || session.payment_status !== 'paid' || session.currency !== 'eur') return false;
-
-  const expectedAmount = Number(getEnvValue(env, 'STRIPE_DEPOSIT_AMOUNT_CENTS') || 2000);
-  const metadata = session.metadata || {};
-  const sessionEmail = sanitize(
-    metadata.email || session.customer_details?.email || session.customer_email
-  ).toLowerCase();
-  return (
-    Number.isFinite(expectedAmount) &&
-    session.amount_total === Math.round(expectedAmount) &&
-    metadata.payment_kind === 'booking_deposit' &&
-    sessionEmail === booking.email.toLowerCase() &&
-    sanitize(metadata.service) === booking.service &&
-    sanitize(metadata.date) === booking.date &&
-    sanitize(metadata.time) === booking.time
-  );
-}
-
 function getSalonRecipient(env, formType) {
   const bookingRecipient = getEnvValue(env, 'BOOKING_RECIPIENT_EMAIL');
   const contactRecipient = getEnvValue(env, 'CONTACT_RECIPIENT_EMAIL');
@@ -645,7 +617,48 @@ async function sendTelegramEmailFailureAlert(env, { formType, requestId, status,
  * @param {import('@cloudflare/workers-types').EventContext} ctx
  */
 export async function onRequest(ctx) {
+  return handleSubmission(ctx);
+}
+
+/** Internal-only validation entrypoint; no trusted state is accepted from HTTP headers. */
+export async function preparePaymentBooking(ctx, { existingOrder = null } = {}) {
+  return handleSubmission(ctx, { preparePayment: true, existingOrder });
+}
+
+/** A verified paid D1 order can be fulfilled even if the browser never returns. */
+export async function fulfillPaidBookingOrder(ctx, candidate) {
+  const order = await getPaymentOrder(ctx.env, candidate.id);
+  if (!order || order.paymentStatus !== 'paid' || !order.sessionId) return { ok: false };
+  const origin = paymentSiteOrigin(ctx.env);
+  const request = new Request(origin + '/sendmail', {
+    method: 'POST',
+    headers: { Origin: origin, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ...order.booking,
+      form_type: 'booking',
+      payment_choice: 'online',
+      stripe_session_id: order.sessionId,
+    }),
+  });
+  const response = await handleSubmission(
+    {
+      request,
+      env: ctx.env,
+      ...(typeof ctx.waitUntil === 'function' ? { waitUntil: promise => ctx.waitUntil(promise) } : {}),
+    },
+    { trustedPaymentOrder: order }
+  );
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || result.success !== true) return { ok: false };
+  const jobs = await listPaymentJobs(ctx.env, order.id);
+  const required = ['booking_register', 'email_main', 'email_client'];
+  if (!order.booking.client_registration_id) required.push('client_register');
+  return { ok: required.every(kind => jobs.some(job => job.kind === kind && job.state === 'completed')) };
+}
+
+async function handleSubmission(ctx, options = {}) {
   const { request, env } = ctx;
+  const trustedPaymentOrder = options.trustedPaymentOrder;
 
   /* ── Allow only POST ──────────────────────────────────────── */
   if (request.method !== 'POST') {
@@ -662,11 +675,13 @@ export async function onRequest(ctx) {
   }
   const { origin } = originCheck;
 
-  const rateLimited = await enforceRateLimit(request, {
-    route: 'sendmail',
-    limit: 12,
-    windowSec: 60,
-  });
+  const rateLimited = trustedPaymentOrder
+    ? null
+    : await enforceRateLimit(request, {
+        route: 'sendmail',
+        limit: 12,
+        windowSec: 60,
+      });
   if (rateLimited) {
     return jsonResponse({ success: false, message: 'Too many requests. Please try again later.' }, 429, origin);
   }
@@ -693,7 +708,10 @@ export async function onRequest(ctx) {
 
   /* ── Turnstile verification (bot protection) ───────────────── */
   const turnstileToken = fields['cf-turnstile-response'] || fields.turnstileToken;
-  if (turnstileToken) {
+  if (options.preparePayment && !options.existingOrder && getEnvValue(env, 'TURNSTILE_SECRET_KEY') && !turnstileToken) {
+    return jsonResponse({ success: false, message: 'Verification is required. Please try again.' }, 400, origin);
+  }
+  if (turnstileToken && !trustedPaymentOrder && !options.existingOrder) {
     const turnstileSecret = getEnvValue(env, 'TURNSTILE_SECRET_KEY');
     if (turnstileSecret) {
       try {
@@ -769,13 +787,15 @@ export async function onRequest(ctx) {
   const uploadedFileId = sanitizeLimit(fields.uploaded_file_id, 220);
   const uploadedFileProof = sanitizeLimit(fields.uploaded_file_proof, 128);
   const uploadSessionId = sanitizeLimit(fields.upload_session_id, 80);
-  const fileReferenceValid = rawUploadedFileUrl
-    ? await verifyOneDriveFileReference(
-        env,
-        { fileId: uploadedFileId, fileUrl: uploadedFileUrl, sessionId: uploadSessionId },
-        uploadedFileProof
-      )
-    : !uploadedFileId && !uploadedFileProof;
+  const fileReferenceValid = trustedPaymentOrder
+    ? true
+    : rawUploadedFileUrl
+      ? await verifyOneDriveFileReference(
+          env,
+          { fileId: uploadedFileId, fileUrl: uploadedFileUrl, sessionId: uploadSessionId },
+          uploadedFileProof
+        )
+      : !uploadedFileId && !uploadedFileProof;
   if (
     (rawUploadedFileUrl || uploadedFileId || uploadedFileProof) &&
     (!uploadedFileUrl || formType !== 'booking' || !fileReferenceValid)
@@ -799,25 +819,23 @@ export async function onRequest(ctx) {
   const clientRegistrationId = sanitizeLimit(fields.client_registration_id, 120);
   const clientRecordRequired =
     formType === CLIENT_REGISTRATION_FORM_TYPE || (formType === 'booking' && !clientRegistrationId);
-  const paymentNow = sanitizeLimit(fields.payment_now || fields.pay_now, 10) === 'on' || paymentChoice === 'online';
+  const paymentNow =
+    !options.preparePayment &&
+    (sanitizeLimit(fields.payment_now || fields.pay_now, 10) === 'on' || paymentChoice === 'online');
   const privacyConsent = hasExplicitConsent(fields.privacy_consent);
   const agbConsent = hasExplicitConsent(fields.agb_consent);
   const canonicalService = service;
 
-  let stripePaymentVerified = false;
-  if (paymentNow || stripeSessionId) {
-    if (!paymentsOnlineEnabled(env) || !stripeSessionId) {
-      return jsonResponse({ success: false, message: 'Online payment is unavailable' }, 400, origin);
-    }
-    stripePaymentVerified = await verifyStripeBookingSession(env, stripeSessionId, {
-      email,
-      service,
-      date,
-      time,
-    });
-    if (!stripePaymentVerified) {
-      return jsonResponse({ success: false, message: 'Online payment could not be verified' }, 400, origin);
-    }
+  const stripePaymentVerified = Boolean(trustedPaymentOrder);
+  if (!options.preparePayment && !trustedPaymentOrder && (paymentNow || stripeSessionId)) {
+    return jsonResponse(
+      {
+        success: false,
+        message: 'Online bookings are completed by the signed payment confirmation. Please check your order status.',
+      },
+      400,
+      origin
+    );
   }
 
   const paymentStatus = paymentNow
@@ -851,7 +869,7 @@ export async function onRequest(ctx) {
     if (!service || !date || !time) {
       return jsonResponse({ success: false, message: copy.error }, 400, origin);
     }
-    if (!isValidBookingWindow(date, time)) {
+    if (!trustedPaymentOrder && !isValidBookingWindow(date, time)) {
       return jsonResponse({ success: false, message: copy.error }, 400, origin);
     }
     if (!phone) {
@@ -875,6 +893,56 @@ export async function onRequest(ctx) {
     }
   } else if (!message) {
     return jsonResponse({ success: false, message: copy.error }, 400, origin);
+  }
+
+  if (options.preparePayment) {
+    const localEnd = addLocalMinutes(date, time, safeBlockMinutes);
+    const endMinutes = Number(localEnd.slice(11, 13)) * 60 + Number(localEnd.slice(14, 16));
+    if (!localEnd || localEnd.slice(0, 10) !== date || endMinutes > BOOKING_SCHEDULE.workdayEndMinutes) {
+      return jsonResponse(
+        { success: false, message: 'The selected appointment does not fit the opening hours.' },
+        400,
+        origin
+      );
+    }
+    if (formType !== 'booking') return jsonResponse({ success: false, message: 'Invalid booking' }, 400, origin);
+    return {
+      ok: true,
+      booking: {
+        form_type: 'booking',
+        lang,
+        name,
+        email,
+        phone,
+        message,
+        service,
+        service_price: servicePrice,
+        service_category: serviceCategory,
+        date,
+        time,
+        booking_client_type: clientType,
+        coat_condition: coatCondition,
+        behavior: behaviour,
+        service_duration_minutes: String(safeEstimatedDurationMinutes),
+        booking_buffer_minutes: String(bookingBufferMinutes),
+        booking_safe_block_minutes: String(safeBlockMinutes),
+        client_registration_id: clientRegistrationId,
+        pet_name: petName,
+        pet_species: petSpecies,
+        pet_breed: petBreed,
+        pet_age: petAge,
+        pet_sex: petSex,
+        pet_tag_number: petTagNumber,
+        privacy_consent: 'on',
+        agb_consent: 'on',
+        payment_choice: 'online',
+        uploaded_file_url: uploadedFileUrl,
+        uploaded_file_id: uploadedFileId,
+        uploaded_file_proof: uploadedFileProof,
+        upload_session_id: uploadSessionId,
+        source,
+      },
+    };
   }
 
   const bookingMetaCopy = BOOKING_META_COPY[lang] || BOOKING_META_COPY.en;
@@ -959,9 +1027,12 @@ export async function onRequest(ctx) {
     page_path: requestUrl.pathname,
     site_origin: origin,
     submitted_at: submittedAt,
-    request_id: crypto.randomUUID(),
+    request_id: trustedPaymentOrder?.id || crypto.randomUUID(),
   };
-  const track = createDeliveryTracker(env, { requestId: automationEventData.request_id, formType });
+  const deliveryTrack = createDeliveryTracker(env, { requestId: automationEventData.request_id, formType });
+  const track = trustedPaymentOrder
+    ? (kind, operation) => runPaymentJob(env, trustedPaymentOrder.id, kind, () => deliveryTrack(kind, operation))
+    : deliveryTrack;
   if (typeof ctx.waitUntil === 'function') ctx.waitUntil(pruneDeliveryMetadata(env));
   const bookingConfirmationMarkup =
     formType === 'booking'
@@ -1142,6 +1213,16 @@ export async function onRequest(ctx) {
 
   const runBookingFollowups = async () => {
     if (formType !== 'booking') return [];
+    const depositReceived = trustedPaymentOrder
+      ? emailCopy.bookingDepositReceived.replace(
+          '{amount}',
+          new Intl.NumberFormat(lang, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+            trustedPaymentOrder.amount / 100
+          ) +
+            ' ' +
+            trustedPaymentOrder.currency.toUpperCase()
+        )
+      : '';
     const bookingSummary = [
       `${emailCopy.field.name}: ${name}`,
       `${emailCopy.field.email}: ${email}`,
@@ -1153,10 +1234,8 @@ export async function onRequest(ctx) {
       `${bookingMetaCopy.coatCondition}: ${bookingValueCopy.coat[coatCondition]}`,
       `${bookingMetaCopy.behaviour}: ${bookingValueCopy.behaviour[behaviour]}`,
       `${bookingMetaCopy.estimatedDuration}: ${safeEstimatedDurationMinutes} min`,
-      `${bookingMetaCopy.buffer}: ${bookingBufferMinutes} min`,
-      `${bookingMetaCopy.safeBlock}: ${safeBlockEndDateTime}`,
-      `${bookingMetaCopy.confirmation}: ${bookingStatus}`,
-      `${emailCopy.field.payment}: ${paymentStatus}`,
+      trustedPaymentOrder ? null : `${bookingMetaCopy.confirmation}: ${bookingStatus}`,
+      depositReceived || `${emailCopy.field.payment}: ${paymentStatus}`,
       uploadedFileUrl ? `${emailCopy.field.file}: ${uploadedFileUrl}` : null,
       `${emailCopy.field.petName}: ${petName}`,
       `${emailCopy.field.petSpecies}: ${petSpecies}`,

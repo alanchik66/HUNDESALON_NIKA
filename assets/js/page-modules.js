@@ -64,8 +64,25 @@ document.addEventListener('DOMContentLoaded', () => {
       choosePrivacy: 'Подтвердите согласие на обработку персональных данных',
       chooseAgb: 'Подтвердите ознакомление с правилами салона (AGB)',
       paymentRedirect: 'Переходим к безопасной онлайн-оплате…',
-      paymentUnavailable: 'Онлайн-оплата пока отключена. Выберите оплату в салоне (наличные или карта).',
-      paymentSuccess: 'Онлайн-предоплата получена. Запись отправлена в салон.',
+      paymentUnavailable: "Онлайн-предоплата сейчас недоступна. Можно выбрать оплату в салоне наличными или картой.",
+      paymentSuccess: "Предоплата получена. Салон проверит заявку и отдельно подтвердит дату и время по email.",
+      paymentChecking: "Проверяем доступность предоплаты и статус записи…",
+      paymentVerificationRequired: "Пройдите проверку безопасности перед переходом к оплате.",
+      paymentVerificationUnavailable: "Не удалось загрузить проверку безопасности. Попробуйте ещё раз.",
+      paymentOption: "Предоплата через Stripe — {amount}",
+      paymentContinue: "Перейти к предоплате {amount}",
+      paymentTerms: "Предоплата засчитывается в итоговую стоимость. Дату и время подтверждает салон.",
+      paymentTermsLink: "Условия",
+      paymentStatusTitle: "Оплата и статус записи",
+      paymentRefresh: "Обновить статус",
+      paymentResume: "Продолжить оплату",
+      paymentConfirmed: "Салон подтвердил запись. Подтверждение с датой и временем отправляется на ваш email.",
+      paymentAttention: "Предоплата получена, но запись требует проверки салоном. Мы свяжемся с вами по указанным контактам.",
+      paymentCancelled: "Оплата не завершена. Можно продолжить её по той же ссылке; новую заявку создавать не нужно.",
+      paymentPending: "Ожидаем подтверждение оплаты от Stripe. Не создавайте повторную заявку; обновите статус чуть позже.",
+      paymentExpired: "Срок этой платёжной ссылки истёк. Откройте форму, чтобы оформить новую заявку.",
+      paymentFailed: "Не удалось завершить онлайн-предоплату. Проверьте статус или попробуйте снова.",
+      paymentStatusError: "Сейчас не удалось проверить статус. Обновите его позже или свяжитесь с салоном. Повторно платить не нужно.",
       dateInPast: 'Выберите будущую дату',
       fileType: 'Можно загрузить только JPG или PNG',
       fileSize: 'Файл должен быть не больше 15 МБ',
@@ -152,8 +169,25 @@ document.addEventListener('DOMContentLoaded', () => {
       choosePrivacy: 'Підтвердьте згоду на обробку персональних даних',
       chooseAgb: 'Підтвердьте ознайомлення з правилами салону (AGB)',
       paymentRedirect: 'Переходимо до безпечної онлайн-оплати…',
-      paymentUnavailable: 'Онлайн-оплата поки вимкнена. Оберіть оплату в салоні (готівка або картка).',
-      paymentSuccess: 'Онлайн-передоплату отримано. Запис надіслано в салон.',
+      paymentUnavailable: "Онлайн-передоплата зараз недоступна. Можна обрати оплату в салоні готівкою або карткою.",
+      paymentSuccess: "Передоплату отримано. Салон перевірить заявку та окремо підтвердить дату й час на email.",
+      paymentChecking: "Перевіряємо доступність передоплати та статус запису…",
+      paymentVerificationRequired: "Пройдіть перевірку безпеки перед переходом до оплати.",
+      paymentVerificationUnavailable: "Не вдалося завантажити перевірку безпеки. Спробуйте ще раз.",
+      paymentOption: "Передоплата через Stripe — {amount}",
+      paymentContinue: "Перейти до передоплати {amount}",
+      paymentTerms: "Передоплата зараховується до підсумкової вартості. Дату й час підтверджує салон.",
+      paymentTermsLink: "Умови",
+      paymentStatusTitle: "Оплата і статус запису",
+      paymentRefresh: "Оновити статус",
+      paymentResume: "Продовжити оплату",
+      paymentConfirmed: "Салон підтвердив запис. Підтвердження з датою й часом надсилається на ваш email.",
+      paymentAttention: "Передоплату отримано, але запис потребує перевірки салоном. Ми зв’яжемося з вами за вказаними контактами.",
+      paymentCancelled: "Оплату не завершено. Можна продовжити її за тим самим посиланням; нову заявку створювати не потрібно.",
+      paymentPending: "Очікуємо підтвердження оплати від Stripe. Не створюйте повторну заявку; оновіть статус трохи пізніше.",
+      paymentExpired: "Строк цього платіжного посилання минув. Відкрийте форму, щоб оформити нову заявку.",
+      paymentFailed: "Не вдалося завершити онлайн-передоплату. Перевірте статус або спробуйте знову.",
+      paymentStatusError: "Зараз не вдалося перевірити статус. Оновіть його пізніше або зв’яжіться із салоном. Повторно платити не потрібно.",
       dateInPast: 'Оберіть майбутню дату',
       fileType: 'Можна завантажити лише JPG або PNG',
       fileSize: 'Файл має бути не більше 15 МБ',
@@ -241,8 +275,25 @@ document.addEventListener('DOMContentLoaded', () => {
       choosePrivacy: 'Please confirm personal data processing consent',
       chooseAgb: 'Please confirm you have read the salon rules (AGB)',
       paymentRedirect: 'Redirecting to secure online payment…',
-      paymentUnavailable: 'Online payment is turned off for now. Please choose salon payment (cash or card).',
-      paymentSuccess: 'Online deposit received. Your booking was sent to the salon.',
+      paymentUnavailable: "Online deposits are currently unavailable. You can choose cash or card payment at the salon.",
+      paymentSuccess: "Deposit received. The salon will review your request and separately confirm the date and time by email.",
+      paymentChecking: "Checking deposit availability and booking status…",
+      paymentVerificationRequired: "Complete the security check before continuing to payment.",
+      paymentVerificationUnavailable: "The security check could not load. Please try again.",
+      paymentOption: "Deposit through Stripe — {amount}",
+      paymentContinue: "Continue to deposit of {amount}",
+      paymentTerms: "The deposit is credited toward the final price. The salon confirms the appointment date and time.",
+      paymentTermsLink: "Terms",
+      paymentStatusTitle: "Payment and booking status",
+      paymentRefresh: "Refresh status",
+      paymentResume: "Continue payment",
+      paymentConfirmed: "The salon has confirmed your appointment. A confirmation with the date and time is being sent to your email.",
+      paymentAttention: "Deposit received, but your booking needs the salon’s review. We will contact you using the details you provided.",
+      paymentCancelled: "Payment was not completed. You can continue using the same link; there is no need to create another request.",
+      paymentPending: "Waiting for Stripe to confirm payment. Please do not create another request; refresh the status shortly.",
+      paymentExpired: "This payment link has expired. Open the form to create a new request.",
+      paymentFailed: "Could not complete the online deposit. Check the status or try again.",
+      paymentStatusError: "The status could not be checked right now. Refresh it later or contact the salon. You do not need to pay again.",
       dateInPast: 'Please choose a future date',
       fileType: 'Only JPG or PNG files are allowed',
       fileSize: 'File size must be up to 15 MB',
@@ -330,8 +381,25 @@ document.addEventListener('DOMContentLoaded', () => {
       choosePrivacy: 'Bitte bestätigen Sie die Verarbeitung personenbezogener Daten',
       chooseAgb: 'Bitte bestätigen Sie die Salonregeln (AGB)',
       paymentRedirect: 'Weiterleitung zur sicheren Online-Zahlung…',
-      paymentUnavailable: 'Online-Zahlung ist derzeit deaktiviert. Bitte Zahlung im Salon wählen (bar oder Karte).',
-      paymentSuccess: 'Online-Anzahlung erhalten. Die Buchung wurde an den Salon gesendet.',
+      paymentUnavailable: "Online-Anzahlungen sind derzeit nicht verfügbar. Sie können im Salon bar oder mit Karte bezahlen.",
+      paymentSuccess: "Anzahlung erhalten. Der Salon prüft Ihre Anfrage und bestätigt Datum und Uhrzeit gesondert per E-Mail.",
+      paymentChecking: "Verfügbarkeit der Anzahlung und Buchungsstatus werden geprüft…",
+      paymentVerificationRequired: "Bitte schließen Sie die Sicherheitsprüfung ab, bevor Sie zur Zahlung weitergehen.",
+      paymentVerificationUnavailable: "Die Sicherheitsprüfung konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+      paymentOption: "Anzahlung über Stripe — {amount}",
+      paymentContinue: "Weiter zur Anzahlung von {amount}",
+      paymentTerms: "Die Anzahlung wird auf den Endpreis angerechnet. Der Salon bestätigt Datum und Uhrzeit.",
+      paymentTermsLink: "AGB",
+      paymentStatusTitle: "Zahlung und Buchungsstatus",
+      paymentRefresh: "Status aktualisieren",
+      paymentResume: "Zahlung fortsetzen",
+      paymentConfirmed: "Der Salon hat Ihren Termin bestätigt. Die Bestätigung mit Datum und Uhrzeit wird an Ihre E-Mail-Adresse gesendet.",
+      paymentAttention: "Anzahlung erhalten. Ihre Buchung muss vom Salon geprüft werden. Wir melden uns über Ihre angegebenen Kontaktdaten.",
+      paymentCancelled: "Die Zahlung wurde nicht abgeschlossen. Sie können denselben Link weiterverwenden; eine neue Anfrage ist nicht nötig.",
+      paymentPending: "Wir warten auf die Zahlungsbestätigung von Stripe. Bitte keine weitere Anfrage erstellen; aktualisieren Sie den Status in Kürze.",
+      paymentExpired: "Dieser Zahlungslink ist abgelaufen. Öffnen Sie das Formular, um eine neue Anfrage zu stellen.",
+      paymentFailed: "Die Online-Anzahlung konnte nicht abgeschlossen werden. Prüfen Sie den Status oder versuchen Sie es erneut.",
+      paymentStatusError: "Der Status konnte gerade nicht geprüft werden. Aktualisieren Sie ihn später oder kontaktieren Sie den Salon. Bitte nicht erneut bezahlen.",
       dateInPast: 'Bitte wählen Sie ein zukünftiges Datum',
       fileType: 'Nur JPG- oder PNG-Dateien sind erlaubt',
       fileSize: 'Die Datei darf maximal 15 MB groß sein',
@@ -1226,6 +1294,461 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
+  const initBookingTurnstile = (form, { copy, showValidationMessage }) => {
+    const sitekey = form.dataset.bookingTurnstileSitekey;
+    let widget = null;
+    let widgetId = null;
+    let pending = null;
+    const onlineSelected = () => form.querySelector('input[name="payment_choice"]:checked')?.value === 'online';
+    const responseInputs = () => form.querySelectorAll('input[name="cf-turnstile-response"]');
+    const clearToken = disabled => {
+      const holder = widget || form.querySelector('.turnstile-widget');
+      if (holder) delete holder.dataset.turnstileToken;
+      responseInputs().forEach(input => {
+        input.value = '';
+        input.disabled = disabled;
+      });
+    };
+    const reset = () => {
+      const disabled = Boolean(sitekey) && !onlineSelected();
+      clearToken(disabled);
+      if (widget || form.querySelector('.turnstile-widget')) {
+        try {
+          window.turnstile?.reset?.(widgetId === null ? undefined : widgetId);
+        } catch {
+          /* Widget may not be ready. */
+        }
+      }
+      clearToken(disabled);
+    };
+    if (!sitekey) return { verify: async () => true, reset };
+
+    const ensure = () => {
+      if (widget) {
+        widget.hidden = false;
+        widget.style.display = '';
+        responseInputs().forEach(input => {
+          input.disabled = false;
+        });
+      }
+      if (pending) return pending;
+      if (widgetId !== null) return Promise.resolve();
+      if (!widget) {
+        widget = document.createElement('div');
+        widget.className = 'turnstile-widget';
+        widget.tabIndex = -1;
+        widget.setAttribute('aria-label', copy.paymentVerificationRequired);
+        form.querySelector('.booking-payment-fieldset').after(widget);
+      }
+      widget.hidden = false;
+      widget.style.display = '';
+      pending = (async () => {
+        if (!window.turnstile?.render) {
+          await new Promise((resolve, reject) => {
+            let script = document.querySelector('script[src^="https://challenges.cloudflare.com/turnstile/v0/api.js"]');
+            const created = !script;
+            if (!script) {
+              script = document.createElement('script');
+              script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+              script.async = true;
+              script.defer = true;
+            }
+            const finish = callback => {
+              window.clearTimeout(timeout);
+              script.removeEventListener('load', loaded);
+              script.removeEventListener('error', failed);
+              callback();
+            };
+            const loaded = () => finish(resolve);
+            const failed = () =>
+              finish(() => {
+                if (created) script.remove();
+                reject(new Error(copy.paymentVerificationUnavailable));
+              });
+            const timeout = window.setTimeout(failed, 12000);
+            script.addEventListener('load', loaded, { once: true });
+            script.addEventListener('error', failed, { once: true });
+            if (created) document.head.append(script);
+          });
+        }
+        if (!window.turnstile?.render) throw new Error(copy.paymentVerificationUnavailable);
+        widgetId = window.turnstile.render(widget, {
+          sitekey,
+          callback: token => {
+            if (onlineSelected()) {
+              widget.dataset.turnstileToken = token;
+              responseInputs().forEach(input => {
+                input.disabled = false;
+              });
+            } else clearToken(true);
+          },
+          'expired-callback': () => clearToken(!onlineSelected()),
+          'error-callback': () => clearToken(!onlineSelected()),
+        });
+      })().finally(() => {
+        pending = null;
+      });
+      return pending;
+    };
+    form.addEventListener('change', event => {
+      if (event.target.name !== 'payment_choice') return;
+      if (onlineSelected()) {
+        if (widgetId !== null && !widget?.dataset.turnstileToken) reset();
+        void ensure().catch(() => showValidationMessage(copy.paymentVerificationUnavailable, widget));
+      } else if (widget) {
+        widget.hidden = true;
+        widget.style.display = 'none';
+        reset();
+      } else clearToken(true);
+    });
+    return {
+      reset,
+      verify: async () => {
+        if (!onlineSelected()) return true;
+        try {
+          await ensure();
+        } catch {
+          showValidationMessage(copy.paymentVerificationUnavailable, widget);
+          return false;
+        }
+        if (!onlineSelected()) return false;
+        if (!widget.dataset.turnstileToken) {
+          showValidationMessage(copy.paymentVerificationRequired, widget);
+          return false;
+        }
+        return true;
+      },
+    };
+  };
+
+  const initBookingPayments = (form, { modal, showValidationMessage, resetSummaryConfirmation }) => {
+    const copy = bookingCopy;
+    const verification = initBookingTurnstile(form, { copy, showValidationMessage });
+    const storageKey = 'hundesalon_nika_checkout_v1';
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const tokenPattern = /^[A-Za-z0-9_-]{43}$/;
+    const paymentFieldset = form.querySelector('.booking-payment-fieldset');
+    const paymentHint = paymentFieldset?.querySelector('.booking-payment-hint');
+    let onlineOption = paymentFieldset?.querySelector('[data-booking-online-option]');
+    let enabled = false;
+    let depositLabel = '';
+    let attempt = null;
+    let pollTimer = null;
+    let statusPending = false;
+    let statusAttempts = 0;
+    let resumeCredentials = null;
+    let cancelledReturn = false;
+    let statusPanel = null;
+    let statusMessage = null;
+    let refreshButton = null;
+    let resumeLink = null;
+    let retryCheckoutButton = null;
+
+    const validCredentials = value =>
+      value && uuidPattern.test(value.orderId || '') && tokenPattern.test(value.statusToken || '');
+    const saveCredentials = value => {
+      try {
+        window.sessionStorage.setItem(
+          storageKey,
+          JSON.stringify({ orderId: value.orderId, statusToken: value.statusToken, createdAt: Date.now() })
+        );
+      } catch {
+        /* Storage may be unavailable. The return URL still carries recovery credentials. */
+      }
+    };
+    const readCredentials = () => {
+      try {
+        const value = JSON.parse(window.sessionStorage.getItem(storageKey) || 'null');
+        return validCredentials(value) && Date.now() - value.createdAt < 24 * 60 * 60 * 1000 ? value : null;
+      } catch {
+        return null;
+      }
+    };
+    const safeCheckoutUrl = value => {
+      try {
+        const url = new URL(value);
+        return url.origin === 'https://checkout.stripe.com' && !url.username && !url.password
+          ? url.href
+          : '';
+      } catch {
+        return '';
+      }
+    };
+    const requestCheckout = async payload => {
+      const response = await fetch('/payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || copy.paymentFailed);
+      const checkoutUrl = safeCheckoutUrl(result.url);
+      if (
+        !checkoutUrl ||
+        !validCredentials(result) ||
+        result.orderId !== payload.request_id ||
+        result.statusToken !== payload.statusToken
+      ) {
+        throw new Error(copy.paymentFailed);
+      }
+      saveCredentials(result);
+      window.location.assign(checkoutUrl);
+    };
+    const newAttempt = () => {
+      const bytes = new Uint8Array(32);
+      window.crypto.getRandomValues(bytes);
+      const token = window
+        .btoa(String.fromCharCode(...bytes))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/g, '');
+      const idBytes = new Uint8Array(16);
+      window.crypto.getRandomValues(idBytes);
+      idBytes[6] = (idBytes[6] & 15) | 64;
+      idBytes[8] = (idBytes[8] & 63) | 128;
+      const hex = Array.from(idBytes, value => value.toString(16).padStart(2, '0')).join('');
+      return {
+        orderId: `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`,
+        statusToken: token,
+      };
+    };
+
+    if (paymentFieldset && !onlineOption) {
+      onlineOption = document.createElement('label');
+      onlineOption.className = 'booking-check-label';
+      onlineOption.dataset.bookingOnlineOption = '';
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'payment_choice';
+      input.value = 'online';
+      input.disabled = true;
+      const label = document.createElement('span');
+      label.dataset.bookingOnlineLabel = '';
+      onlineOption.append(input, label);
+      paymentFieldset.insertBefore(onlineOption, paymentHint || null);
+    }
+    if (onlineOption) {
+      onlineOption.hidden = true;
+      onlineOption.style.display = 'none';
+    }
+    let hintText = paymentHint?.querySelector('[data-booking-payment-note]');
+    if (paymentHint) {
+      const termsLink = paymentHint.querySelector('a');
+      if (!hintText) {
+        hintText = document.createElement('span');
+        hintText.dataset.bookingPaymentNote = '';
+      }
+      paymentHint.replaceChildren(hintText);
+      if (termsLink) {
+        termsLink.textContent = copy.paymentTermsLink;
+        paymentHint.append(' ', termsLink, '.');
+      }
+    }
+    if (hintText) hintText.textContent = copy.paymentChecking;
+    const configuration = (async () => {
+      try {
+        const response = await fetch('/payment', {
+          headers: { Accept: 'application/json' },
+          credentials: 'same-origin',
+          cache: 'no-store',
+        });
+        const result = await response.json();
+        enabled =
+          response.ok &&
+          result.success === true &&
+          result.onlineEnabled === true &&
+          Number.isSafeInteger(result.amountCents) &&
+          result.amountCents > 0 &&
+          result.currency === 'eur';
+        if (enabled)
+          depositLabel = new Intl.NumberFormat(bookingLocale, { style: 'currency', currency: 'EUR' }).format(
+            result.amountCents / 100
+          );
+      } catch {
+        enabled = false;
+      }
+      if (onlineOption) {
+        onlineOption.hidden = !enabled;
+        onlineOption.style.display = enabled ? '' : 'none';
+        const input = onlineOption.querySelector('input');
+        if (input) input.disabled = !enabled;
+        const label = onlineOption.querySelector('[data-booking-online-label]') || onlineOption.querySelector('span');
+        if (label) label.textContent = copy.paymentOption.replace('{amount}', depositLabel);
+      }
+      if (hintText) hintText.textContent = enabled ? copy.paymentTerms : copy.paymentUnavailable;
+    })();
+
+    const ensureStatusPanel = () => {
+      if (statusPanel) return;
+      statusPanel = document.createElement('section');
+      statusPanel.className = 'info-card booking-container booking-payment-status';
+      statusPanel.dataset.bookingPaymentStatus = '';
+      statusPanel.setAttribute('aria-labelledby', 'booking-payment-status-title');
+      statusPanel.tabIndex = -1;
+      const title = document.createElement('h2');
+      title.id = 'booking-payment-status-title';
+      title.textContent = copy.paymentStatusTitle;
+      statusMessage = document.createElement('p');
+      statusMessage.setAttribute('role', 'status');
+      statusMessage.setAttribute('aria-live', 'polite');
+      const actions = document.createElement('div');
+      actions.className = 'booking-actions';
+      refreshButton = document.createElement('button');
+      refreshButton.type = 'button';
+      refreshButton.className = 'btn-neon';
+      refreshButton.textContent = copy.paymentRefresh;
+      refreshButton.addEventListener('click', () => {
+        statusAttempts = 0;
+        void refreshStatus();
+      });
+      resumeLink = document.createElement('a');
+      resumeLink.className = 'btn-neon';
+      resumeLink.textContent = copy.paymentResume;
+      resumeLink.referrerPolicy = 'no-referrer';
+      resumeLink.style.display = 'none';
+      retryCheckoutButton = document.createElement('button');
+      retryCheckoutButton.type = 'button';
+      retryCheckoutButton.className = 'btn-neon';
+      retryCheckoutButton.textContent = copy.paymentResume;
+      retryCheckoutButton.style.display = 'none';
+      retryCheckoutButton.addEventListener('click', async () => {
+        if (statusPending || !validCredentials(resumeCredentials)) return;
+        statusPending = true;
+        refreshButton.disabled = true;
+        retryCheckoutButton.disabled = true;
+        statusMessage.textContent = copy.paymentRedirect;
+        try {
+          await requestCheckout({
+            request_id: resumeCredentials.orderId,
+            statusToken: resumeCredentials.statusToken,
+            resume: true,
+          });
+        } catch (error) {
+          statusMessage.textContent = error.message || copy.paymentStatusError;
+        } finally {
+          statusPending = false;
+          refreshButton.disabled = false;
+          retryCheckoutButton.disabled = false;
+        }
+      });
+      actions.append(refreshButton, resumeLink, retryCheckoutButton);
+      statusPanel.append(title, statusMessage, actions);
+      const hero = document.querySelector('.booking-hero');
+      if (hero) hero.before(statusPanel);
+      else modal.before(statusPanel);
+    };
+    const refreshStatus = async () => {
+      if (statusPending || !validCredentials(resumeCredentials)) return;
+      window.clearTimeout(pollTimer);
+      ensureStatusPanel();
+      statusPending = true;
+      refreshButton.disabled = true;
+      statusMessage.textContent = copy.paymentChecking;
+      resumeLink.style.display = 'none';
+      resumeLink.removeAttribute('href');
+      retryCheckoutButton.style.display = 'none';
+      try {
+        const params = new URLSearchParams({ order: resumeCredentials.orderId, token: resumeCredentials.statusToken });
+        const response = await fetch(`/payment-status?${params}`, {
+          headers: { Accept: 'application/json' },
+          credentials: 'same-origin',
+          cache: 'no-store',
+          referrerPolicy: 'no-referrer',
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error('Payment status unavailable');
+        statusPanel.dataset.paymentState = result.paymentStatus;
+        statusPanel.dataset.bookingState = result.bookingStatus;
+        if (result.paymentStatus === 'paid') {
+          statusMessage.textContent =
+            result.bookingStatus === 'confirmed'
+              ? copy.paymentConfirmed
+              : result.bookingStatus === 'requires_attention'
+                ? copy.paymentAttention
+                : copy.paymentSuccess;
+        } else if (result.paymentStatus === 'expired' || result.paymentStatus === 'failed') {
+          statusMessage.textContent = result.paymentStatus === 'expired' ? copy.paymentExpired : copy.paymentFailed;
+        } else {
+          statusMessage.textContent = cancelledReturn ? copy.paymentCancelled : copy.paymentPending;
+          const checkoutUrl = safeCheckoutUrl(result.checkoutUrl);
+          if (checkoutUrl) {
+            resumeLink.href = checkoutUrl;
+            resumeLink.style.display = '';
+          } else if (result.retryable === true) {
+            retryCheckoutButton.style.display = '';
+          }
+          if (!cancelledReturn && ++statusAttempts < 10 && !document.hidden)
+            pollTimer = window.setTimeout(() => {
+              void refreshStatus();
+            }, 3000);
+        }
+      } catch {
+        statusMessage.textContent = copy.paymentStatusError;
+      } finally {
+        statusPending = false;
+        refreshButton.disabled = false;
+      }
+    };
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('payment')) {
+      const returned = { orderId: params.get('order'), statusToken: params.get('token') };
+      cancelledReturn = params.get('payment') === 'cancelled';
+      const cleanUrl = new URL(window.location.href);
+      ['payment', 'order', 'token', 'session_id'].forEach(name => cleanUrl.searchParams.delete(name));
+      window.history.replaceState(window.history.state, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+      ensureStatusPanel();
+      if (validCredentials(returned)) {
+        resumeCredentials = returned;
+        saveCredentials(returned);
+        void refreshStatus();
+      } else statusMessage.textContent = copy.paymentStatusError;
+    } else {
+      resumeCredentials = readCredentials();
+      if (resumeCredentials) void refreshStatus();
+    }
+    window.addEventListener('pagehide', () => window.clearTimeout(pollTimer));
+    form.addEventListener('input', () => {
+      attempt = null;
+    });
+    form.addEventListener('change', event => {
+      attempt = null;
+      if (event.target.name === 'payment_choice') resetSummaryConfirmation();
+    });
+
+    return {
+      label: () => depositLabel,
+      submit: async submitBtn => {
+        await configuration;
+        if (!enabled) {
+          showValidationMessage(copy.paymentUnavailable, submitBtn);
+          return;
+        }
+        if (form.querySelector('input[name="payment_choice"]:checked')?.value !== 'online') return;
+        if (!(await verification.verify())) return;
+        const originalText = submitBtn?.textContent || '';
+        if (submitBtn) submitBtn.textContent = copy.paymentRedirect;
+        attempt ||= newAttempt();
+        saveCredentials(attempt);
+        try {
+          const data = new FormData(form);
+          data.delete('pet_photo');
+          const payload = Object.fromEntries(data.entries());
+          payload.request_id = attempt.orderId;
+          payload.statusToken = attempt.statusToken;
+          const turnstile = form.querySelector('.turnstile-widget')?.dataset.turnstileToken;
+          if (turnstile) payload['cf-turnstile-response'] = turnstile;
+          await requestCheckout(payload);
+        } catch (error) {
+          verification.reset();
+          showValidationMessage(error.message || copy.paymentFailed, submitBtn);
+        } finally {
+          if (submitBtn) submitBtn.textContent = originalText;
+        }
+      },
+    };
+  };
+
   const initBookingModal = () => {
     const modal = document.getElementById('booking-modal');
     if (!modal) return;
@@ -1774,6 +2297,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const candidates = [
           target.closest('#booking-modal .calendar-days-scroll'),
           target.closest('#booking-modal #time-slots-container'),
+          target.closest('#booking-modal .booking-datetime-body'),
           target.closest('#booking-modal .service-list'),
           target.closest('#booking-modal .booking-step.active'),
           target.closest('#booking-modal #booking-form'),
@@ -2307,7 +2831,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const file = bookingFileInput?.files?.[0];
       const choice = getPaymentChoice();
       const paymentLabel =
-        choice === 'online' ? labels.payOnline : choice === 'salon_card' ? labels.paySalonCard : labels.paySalonCash;
+        choice === 'online' ? [labels.payOnline, bookingPayments.label()].filter(Boolean).join(' · ') : choice === 'salon_card' ? labels.paySalonCard : labels.paySalonCash;
       const petSpeciesField = form.querySelector('[name="pet_species"]');
       const petSpeciesDisplay = form.querySelector('[data-booking-pet-species-display]');
       const petSpeciesValue =
@@ -3475,6 +3999,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    const bookingPayments = initBookingPayments(form, { modal, showValidationMessage, resetSummaryConfirmation });
     let bookingSubmissionPending = false;
 
     form.addEventListener('submit', async event => {
@@ -3554,7 +4079,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const submitBtn = form.querySelector('[type="submit"]');
         if (submitBtn) {
           submitBtn.dataset.originalText = submitBtn.dataset.originalText || submitBtn.textContent;
-          submitBtn.textContent = bookingCopy.summaryConfirm;
+          submitBtn.textContent = getPaymentChoice() === 'online'
+            ? bookingCopy.paymentContinue.replace('{amount}', bookingPayments.label())
+            : bookingCopy.summaryConfirm;
         }
         window.requestAnimationFrame(() => bookingSummary?.focus?.({ preventScroll: true }));
         return;
@@ -3575,7 +4102,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const paymentChoice = getPaymentChoice();
         if (paymentChoice === 'online') {
-          showValidationMessage(bookingCopy.paymentUnavailable, submitBtn);
+          await bookingPayments.submit(submitBtn);
           return;
         }
 
@@ -3615,8 +4142,6 @@ document.addEventListener('DOMContentLoaded', () => {
     scanBookingNavPills(modal);
     scanBookingNavPills(document);
 
-    // Stripe return path intentionally inactive while PAYMENTS_ONLINE_ENABLED is off.
-    // Re-enable together with the online payment_choice UI when the salon opens.
   };
 
   const initPriceConfigurator = () => {

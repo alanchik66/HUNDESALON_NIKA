@@ -25,10 +25,10 @@ const deferred = () => {
   return { promise, resolve, reject };
 };
 
-const createHarness = ({ upload = async () => true, send = async () => false } = {}) => {
+const createHarness = ({ upload = async () => true, send = async () => false, checkout = async () => {}, paymentChoice = 'salon_cash' } = {}) => {
   const button = { disabled: false, textContent: 'Confirm booking', dataset: { originalText: 'Book now' } };
   const fields = { name: { value: 'Test' }, email: { value: 'qa@example.test' }, phone: { value: '+490000000' } };
-  const calls = { upload: 0, send: 0, summary: 0 };
+  const calls = { upload: 0, send: 0, checkout: 0, summary: 0 };
   const validation = { message: '', hidden: true, step: null, focusTarget: null };
   const bookingFileInput = {};
   const state = {
@@ -65,7 +65,8 @@ const createHarness = ({ upload = async () => true, send = async () => false } =
       calls.upload += 1;
       return upload();
     },
-    getPaymentChoice: () => 'salon_cash',
+    getPaymentChoice: () => paymentChoice,
+    bookingPayments: { submit: async () => { calls.checkout += 1; await checkout(); } },
     submitSendmailForm: async () => {
       calls.send += 1;
       const originalText = button.textContent;
@@ -105,6 +106,22 @@ const createHarness = ({ upload = async () => true, send = async () => false } =
   return { button, calls, state, validation, bookingFileInput, submit: () => handler({ preventDefault: noop }) };
 };
 
+test('Checkout redirects accept only the exact HTTPS Stripe origin without credentials', () => {
+  const start = source.indexOf('    const safeCheckoutUrl =');
+  const end = source.indexOf('    const requestCheckout =', start);
+  assert.ok(start >= 0 && end > start, 'Checkout URL validation must be present');
+  const normalize = vm.runInNewContext(source.slice(start, end) + '\nsafeCheckoutUrl;', { URL });
+  assert.equal(normalize('https://checkout.stripe.com/c/pay/cs_test_example'), 'https://checkout.stripe.com/c/pay/cs_test_example');
+  for (const candidate of [
+    'http://checkout.stripe.com/c/pay/cs_test_example',
+    'https://checkout.stripe.com.evil.example/c/pay/cs_test_example',
+    'https://checkout.stripe.com:8443/c/pay/cs_test_example',
+    'https://user:password@checkout.stripe.com/c/pay/cs_test_example',
+    'javascript:alert(1)',
+    '//checkout.stripe.com/c/pay/cs_test_example',
+  ]) assert.equal(normalize(candidate), '', candidate);
+});
+
 test('booking ignores repeat submission while the photo upload is pending', async () => {
   const upload = deferred();
   const harness = createHarness({ upload: () => upload.promise });
@@ -118,6 +135,32 @@ test('booking ignores repeat submission while the photo upload is pending', asyn
   await Promise.all([first, repeated]);
   assert.equal(harness.calls.send, 1);
   assert.equal(harness.button.disabled, false);
+});
+
+test('online booking ignores repeated submission while Checkout is being created', async () => {
+  const checkout = deferred();
+  const harness = createHarness({ paymentChoice: 'online', checkout: () => checkout.promise });
+  const first = harness.submit();
+  await setImmediate();
+  await harness.submit();
+  assert.equal(harness.calls.checkout, 1);
+  assert.equal(harness.calls.send, 0);
+  assert.equal(harness.button.disabled, true);
+  checkout.resolve();
+  await first;
+  assert.equal(harness.button.disabled, false);
+  assert.equal(harness.state.selectedService, 'Grooming');
+});
+
+test('an interrupted Checkout creation releases the form for a deliberate retry', async () => {
+  let attempts = 0;
+  const harness = createHarness({ paymentChoice: 'online', checkout: async () => { if (++attempts === 1) throw new Error('Interrupted'); } });
+  await assert.rejects(harness.submit(), /Interrupted/);
+  assert.equal(harness.button.disabled, false);
+  assert.equal(harness.calls.send, 0);
+  await harness.submit();
+  assert.equal(harness.calls.checkout, 2);
+  assert.equal(harness.state.selectedDate, '2030-01-02');
 });
 
 test('booking without a photo ignores repeat submission while sendmail is pending', async () => {
@@ -386,3 +429,213 @@ for (const status of [400, 429, 500]) {
     assert.equal(harness.button.disabled, false);
   });
 }
+
+const createTurnstileHarness = ({ apiLoaded = true, sitekey = 'fixture-sitekey' } = {}) => {
+  const state = {
+    choice: 'salon_cash',
+    widget: null,
+    scripts: [],
+    renders: 0,
+    resets: 0,
+    responses: [],
+    options: null,
+    message: '',
+  };
+  const listeners = new Map();
+  const api = {
+    render(widget, options) {
+      state.renders += 1;
+      state.options = options;
+      state.responses.push({ value: '', disabled: false });
+      return 0;
+    },
+    reset() {
+      state.resets += 1;
+      state.responses.forEach(input => {
+        input.value = '';
+      });
+    },
+  };
+  const form = {
+    dataset: { bookingTurnstileSitekey: sitekey },
+    querySelectorAll() {
+      return state.responses;
+    },
+    querySelector(selector) {
+      if (selector.includes('payment_choice')) return { value: state.choice };
+      if (selector === '.turnstile-widget') return state.widget;
+      if (selector === '.booking-payment-fieldset')
+        return {
+          after(widget) {
+            state.widget = widget;
+          },
+        };
+      return null;
+    },
+    addEventListener(type, handler) {
+      listeners.set(type, handler);
+    },
+  };
+  const window = { turnstile: apiLoaded ? api : null, setTimeout, clearTimeout };
+  const document = {
+    querySelector() {
+      return null;
+    },
+    createElement(tag) {
+      const events = new Map();
+      return {
+        tag,
+        dataset: {},
+        style: {},
+        setAttribute() {},
+        addEventListener(type, callback) {
+          events.set(type, callback);
+        },
+        removeEventListener(type) {
+          events.delete(type);
+        },
+        remove() {
+          this.removed = true;
+        },
+        fire(type) {
+          events.get(type)?.();
+        },
+      };
+    },
+    head: {
+      append(script) {
+        state.scripts.push(script);
+      },
+    },
+  };
+  const start = source.indexOf('  const initBookingTurnstile =');
+  const end = source.indexOf('  const initBookingPayments =', start);
+  assert.ok(start >= 0 && end > start, 'Shared Turnstile renderer must be present');
+  const init = vm.runInNewContext(source.slice(start, end) + '\ninitBookingTurnstile;', {
+    window,
+    document,
+    Promise,
+    Error,
+  });
+  const helper = init(form, {
+    copy: {
+      paymentVerificationRequired: 'Complete security check',
+      paymentVerificationUnavailable: 'Security check unavailable',
+    },
+    showValidationMessage(message) {
+      state.message = message;
+    },
+  });
+  return {
+    state,
+    helper,
+    api,
+    window,
+    choose(value) {
+      state.choice = value;
+      listeners.get('change')?.({ target: { name: 'payment_choice' } });
+    },
+  };
+};
+
+test('price booking loads no Turnstile for cash and reuses the visible online widget after choice changes', async () => {
+  const harness = createTurnstileHarness();
+  assert.equal(await harness.helper.verify(), true);
+  assert.equal(harness.state.widget, null);
+  assert.equal(harness.state.scripts.length, 0);
+  harness.choose('online');
+  await setImmediate();
+  assert.equal(harness.state.renders, 1);
+  assert.equal(await harness.helper.verify(), false);
+  assert.equal(harness.state.message, 'Complete security check');
+  harness.state.options.callback('fixture-token');
+  assert.equal(await harness.helper.verify(), true);
+  harness.choose('salon_cash');
+  assert.equal(harness.state.widget.hidden, true);
+  harness.choose('online');
+  await setImmediate();
+  assert.equal(harness.state.widget.hidden, false);
+  assert.equal(harness.state.renders, 1);
+  harness.state.options['expired-callback']();
+  assert.equal(await harness.helper.verify(), false);
+  harness.state.options.callback('fresh-fixture-token');
+  harness.state.options['error-callback']();
+  assert.equal(await harness.helper.verify(), false);
+});
+
+test('concurrent online verification loads one script and blocks until the user receives a Turnstile token', async () => {
+  const harness = createTurnstileHarness({ apiLoaded: false });
+  harness.choose('online');
+  const first = harness.helper.verify();
+  const repeated = harness.helper.verify();
+  assert.equal(harness.state.scripts.length, 1);
+  harness.window.turnstile = harness.api;
+  harness.state.scripts[0].fire('load');
+  assert.deepEqual(await Promise.all([first, repeated]), [false, false]);
+  assert.equal(harness.state.renders, 1);
+  harness.state.options.callback('fixture-user-token');
+  assert.equal(await harness.helper.verify(), true);
+});
+
+test('failed Turnstile script loading blocks payment and permits an explicit reload attempt', async () => {
+  const harness = createTurnstileHarness({ apiLoaded: false });
+  harness.choose('online');
+  const pending = harness.helper.verify();
+  harness.state.scripts[0].fire('error');
+  assert.equal(await pending, false);
+  assert.equal(harness.state.message, 'Security check unavailable');
+  assert.equal(harness.state.scripts[0].removed, true);
+  const retry = harness.helper.verify();
+  assert.equal(harness.state.scripts.length, 2);
+  harness.window.turnstile = harness.api;
+  harness.state.scripts[1].fire('load');
+  assert.equal(await retry, false);
+  assert.equal(harness.state.renders, 1);
+});
+
+test('existing dedicated booking renderer remains responsible for forms without a shared sitekey', async () => {
+  const harness = createTurnstileHarness({ sitekey: '' });
+  assert.equal(await harness.helper.verify(), true);
+  assert.equal(harness.state.widget, null);
+  assert.equal(harness.state.renders, 0);
+});
+
+test('a consumed payment token is reset after failure and a fresh token can retry without reloading', async () => {
+  const harness = createTurnstileHarness();
+  harness.choose('online');
+  await setImmediate();
+  harness.state.options.callback('used-fixture-token');
+  harness.state.responses[0].value = 'used-fixture-token';
+  assert.equal(await harness.helper.verify(), true);
+  harness.helper.reset();
+  assert.equal(harness.state.widget.dataset.turnstileToken, undefined);
+  assert.equal(harness.state.responses[0].value, '');
+  assert.equal(await harness.helper.verify(), false);
+  harness.state.options.callback('fresh-fixture-token');
+  harness.state.responses[0].value = 'fresh-fixture-token';
+  assert.equal(await harness.helper.verify(), true);
+  assert.equal(harness.state.renders, 1);
+  assert.equal(harness.state.resets, 1);
+});
+
+test('switching an online payment to cash excludes its native CAPTCHA field and clears its dataset token', async () => {
+  const harness = createTurnstileHarness();
+  harness.choose('online');
+  await setImmediate();
+  harness.state.options.callback('used-fixture-token');
+  harness.state.responses[0].value = 'used-fixture-token';
+  harness.choose('salon_cash');
+  assert.equal(harness.state.widget.dataset.turnstileToken, undefined);
+  assert.equal(harness.state.responses[0].value, '');
+  assert.equal(harness.state.responses[0].disabled, true);
+  assert.equal(harness.state.responses.filter(input => !input.disabled).length, 0);
+  harness.state.options.callback('late-fixture-token');
+  assert.equal(harness.state.widget.dataset.turnstileToken, undefined);
+  assert.equal(harness.state.responses[0].disabled, true);
+  const resetsBeforeReturn = harness.state.resets;
+  harness.choose('online');
+  await setImmediate();
+  assert.equal(harness.state.resets, resetsBeforeReturn + 1, 'A solved hidden widget must be reset before returning to online payment');
+  assert.equal(harness.state.responses[0].disabled, false);
+  assert.equal(await harness.helper.verify(), false);
+});

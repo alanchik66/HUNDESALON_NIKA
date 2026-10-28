@@ -130,7 +130,7 @@ function formatBerlinLocal(at) {
   return `${value('year')}-${value('month')}-${value('day')}T${value('hour')}:${value('minute')}:${value('second')}`;
 }
 
-function berlinLocalToUtc(value) {
+export function berlinLocalToUtc(value) {
   if (!LOCAL_DATE_TIME_RE.test(value)) return '';
   const naive = Date.parse(`${value}Z`);
   if (!Number.isFinite(naive)) return '';
