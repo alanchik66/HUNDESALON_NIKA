@@ -15270,25 +15270,12 @@ body.price-page main.page-offset-top {
   height: 44px;
   padding: 0;
   border: 0;
-  border-radius: 50%;
+  border-radius: 0;
   color: #d9ba68;
   background: transparent;
   box-shadow: none;
   cursor: pointer;
   opacity: 1;
-}
-
-.price-scroll-controls .site-icon-arrow::before {
-  opacity: 0.6;
-  content: '';
-  position: absolute;
-  inset: -8px;
-  border-radius: 50%;
-  background: linear-gradient(145deg, rgb(255 255 255 / 0.12), transparent 60%), rgb(10 35 27 / 0.3);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  box-shadow: 0 4px 16px rgb(0 0 0 / 0.108);
-  pointer-events: none;
 }
 
 .price-scroll-controls .site-icon-arrow {
@@ -15299,10 +15286,11 @@ body.price-page main.page-offset-top {
   min-width: 19.2px;
   height: 19.2px;
   background: none;
+  filter: drop-shadow(0 0 3px rgb(0 153 102 / 28%)) drop-shadow(0 0 8px rgb(0 77 55 / 24%)) !important;
   pointer-events: none;
 }
 
-/* Both visual layers share the arrow's bounce and click rotation timeline. */
+/* The glyph and its glow share the arrow's bounce and click rotation timeline. */
 .price-scroll-controls .site-icon-arrow::after {
   content: '';
   position: absolute;
@@ -15314,21 +15302,16 @@ body.price-page main.page-offset-top {
   --arrow-rotate: rotate(180deg);
 }
 
-.price-scroll-controls button:is(:hover, :focus-visible) {
-  color: #ffe5a0;
+.price-scroll-controls button:is(:hover, :focus-visible) .site-icon-arrow {
+  filter: drop-shadow(0 0 3px rgb(0 177 121 / 42%)) drop-shadow(0 0 9px rgb(0 77 55 / 32%)) !important;
 }
 
-.price-scroll-controls button:is(:hover, :focus-visible) .site-icon-arrow::before {
-  background: linear-gradient(145deg, rgb(255 255 255 / 0.18), transparent 60%), rgb(18 67 50 / 0.4);
+.price-scroll-controls button[data-price-scroll]:focus-visible {
+  outline: none;
 }
 
-.price-scroll-controls button:focus-visible {
-  outline: 2px solid #c9a84c;
-  outline-offset: 2px;
-}
-
-.price-scroll-controls button:active .site-icon-arrow::before {
-  background: rgb(27 88 65 / 0.4);
+.price-scroll-controls button:focus-visible .site-icon-arrow {
+  filter: drop-shadow(0 0 1px rgb(137 255 213 / 70%)) drop-shadow(0 0 6px rgb(0 153 102 / 55%)) !important;
 }
 
 /* One visual size for the social strip; keep its controls easy to activate. */
