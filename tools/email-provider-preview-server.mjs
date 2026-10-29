@@ -1,6 +1,6 @@
 import http from 'node:http';
 import { onRequestPost } from '../dist/functions/info-auto-reply.js';
-const messages = {};
+const messages = new Map();
 const realFetch = globalThis.fetch;
 let captured;
 console.log('FIXTURE ONLY: rendering HTML with a stubbed SMTP transport; this server sends no emails.');
@@ -16,26 +16,28 @@ try {
       request: new Request('https://hundesalon-nika.com/info-auto-reply', {
         method: 'POST',
         headers: { authorization: 'Bearer local-fixture', 'content-type': 'application/json' },
-        body: JSON.stringify({ lang, to: 'snaiper1984@gmail.com' }),
+        body: JSON.stringify({ lang, to: 'fixture@example.com' }),
       }),
     });
     if (!response.ok) throw new Error(`Fixture failed: ${lang}`);
-    messages[lang] = Buffer.from(captured.email.html, 'base64').toString('utf8');
+    messages.set(lang, Buffer.from(captured.email.html, 'base64').toString('utf8'));
   }
 } finally {
   globalThis.fetch = realFetch;
 }
-http
+const server = http
   .createServer((req, res) => {
-    const lang = req.url.slice(1);
-    if (!messages[lang]) {
+    const lang = new URL(req.url, 'http://127.0.0.1').pathname.slice(1);
+    const source = messages.get(lang);
+    if (!source) {
       res.writeHead(404);
       res.end();
       return;
     }
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.end(
-      `<title>Email source ${lang}</title><textarea aria-label="Email HTML source" style="width:95vw;height:90vh">${messages[lang].replaceAll('&', '&amp;').replaceAll('<', '&lt;')}</textarea>`
-    );
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.end(source);
   })
-  .listen(4188, '127.0.0.1', () => console.log('Email source preview on loopback port 4188'));
+  .listen(Number(process.env.EMAIL_PREVIEW_PORT || 4188), '127.0.0.1', () =>
+    console.log(`Email source preview on loopback port ${server.address().port}`)
+  );

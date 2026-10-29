@@ -1258,11 +1258,14 @@ test('a non-administrator cannot confirm a booking from the Telegram button', as
     assert.equal(body.confirmed, false);
     assert.equal(body.skipped, true);
     assert.equal(
-      calls.some(call => call.target.includes('googleapis.com/calendar')),
+      calls.some(call => {
+        const target = new URL(call.target);
+        return target.hostname === 'www.googleapis.com' && target.pathname.startsWith('/calendar/');
+      }),
       false
     );
     assert.equal(
-      calls.some(call => call.target.includes('sheets.googleapis.com')),
+      calls.some(call => new URL(call.target).hostname === 'sheets.googleapis.com'),
       false
     );
     const acknowledgement = JSON.parse(calls.find(call => call.target.endsWith('/answerCallbackQuery')).options.body);

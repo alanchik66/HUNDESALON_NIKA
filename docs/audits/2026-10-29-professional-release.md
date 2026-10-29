@@ -34,6 +34,8 @@ Three groups of identical files were found. They are intentional public image al
 
 The masked Git-scope security scan produced 22 heuristic signals. Manual triage found no confirmed source vulnerability: the apparent private key was a PEM-header parsing pattern; other signals concerned test fixtures, browser evaluation helpers, bounded AI calls or separately enforced authorization/rate limits. Cloud-account state is not certified by a code scan.
 
+The first pushed revision passed the application CI gate but was stopped before deployment by two CodeQL alerts. A follow-up replaces substring URL assertions with exact parsed hosts and hardens the loopback email source viewer: fixed locale lookup uses a Map, output is plaintext with nosniff, and URL input is not reflected into HTML. A real isolated HTTP smoke test checks all four locales, prototype/markup paths and query reflection; 21 Telegram tests and ESLint pass. Alerts must close through a fresh analysis of the fix; they are not dismissed or bypassed.
+
 Read-only production inspection confirmed that migration 0012 and its confirmation-delivery lease columns were already applied. Production uses direct Google OAuth; a separate Apps Script deployment is not required for this revision. No live booking, payment, email or Telegram notification was created by these checks.
 
 ## Repeatable procedure
