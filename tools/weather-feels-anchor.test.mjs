@@ -40,6 +40,14 @@ try {
         { timeout: 60_000 }
       );
       await page.evaluate(() => document.fonts.ready);
+      await page.waitForFunction(
+        () => {
+          const host = document.querySelector('.header-weather-widget');
+          return host?.__weatherCurrentMeta && !host.__weatherOrbSyncInFlight;
+        },
+        null,
+        { timeout: 60_000 }
+      );
 
       for (const width of viewports) {
         // City width must never become the alignment reference, even when it
@@ -50,6 +58,11 @@ try {
           if (city) city.textContent = 'Leipzig - Stötteritz';
           // Exercise new readings as well as relayout; neither path may write
           // numbers into the approximation column or flatten the styled value.
+          // Update the source of truth too; live metadata resync would otherwise undo the seeded readings.
+          Object.assign(host.__weatherCurrentMeta, {
+            humidity: 40 + nextWidth % 50,
+            pressureMmHg: 760 + nextWidth % 10,
+          });
           host.__weatherHumidityValue = `${40 + nextWidth % 50}%`;
           host.__weatherReadingsSnapshot = {
             ...host.__weatherReadingsSnapshot,
@@ -60,6 +73,17 @@ try {
         }, width);
         await page.setViewportSize({ width, height: 900 });
         await page.waitForTimeout(350);
+        await page.waitForFunction(
+          ({ pressure, humidity }) => {
+            const root = document.querySelector('.header-weather-widget')?.shadowRoot;
+            return (
+              root?.querySelector('[data-weather-metric="pressure"]')?.lastElementChild?.textContent === pressure &&
+              root?.querySelector('[data-weather-metric="humidity"]')?.lastElementChild?.textContent === humidity
+            );
+          },
+          { pressure: String(760 + width % 10), humidity: `${40 + width % 50}%` },
+          { timeout: 10_000 }
+        );
 
         const geometry = await page.locator('.header-weather-widget').evaluate(host => {
           const root = host.shadowRoot;

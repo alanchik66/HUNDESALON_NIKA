@@ -1,5 +1,33 @@
 # Production release
 
+## Full professional deploy
+
+The request “полный профессиональный deploy” authorizes this complete sequence for the site repository: inventory, cleanup, code review, quality gates, explicit staging, commit, push, deployment and production verification. Preserve unrelated work and credentials. Report concrete blockers instead of publishing a failing revision.
+
+1. Record the current branch, HEAD, remote and dirty files. Fetch origin and review any divergence without force or automatic resets.
+2. Run `node tools/audit-repository.mjs`. It reads every tracked and non-ignored untracked file fully and saves hashes, text coverage and identical-file groups under ignored `output/repository-audit/`. Automated byte coverage and manual code review are separate evidence; do not claim that hashing proves semantic correctness.
+3. Review all release changes, related callers and tests. Inspect security, locale consistency, booking, payments, migrations and deployment configuration. Refactor only confirmed defects or proven unnecessary duplication.
+4. Remove confirmed disposable files and archive unfinished one-off operational experiments outside the published source. Record exact paths and recovery locations. Do not blanket-delete ignored folders, backups, knowledge, dependencies, assets or diagnostic evidence.
+5. Complete the quality gate below and record results, omissions and browser evidence. Review pending migrations and external gateway prerequisites before publication.
+6. Stage reviewed paths explicitly, inspect the staged diff, commit and push. Use the single deployment authority described below, then verify its exact commit and the served production assets.
+7. Save a dated release report with the commit, deployment URL, cleanup manifest, checks, actual review coverage and remaining external actions. Never present a successful build as proof of delivery, account setup or legal compliance.
+
+### Reference methods
+
+The [haraldalder-vibemogger profile](https://github.com/haraldalder-vibemogger) supplies development methods, not runtime website dependencies. Apply them through the site's existing tools:
+
+| Project                                                                      | Application in this repository                                                                                                                                                             |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [vibe-audit](https://github.com/haraldalder-vibemogger/vibe-audit)           | Masked secret scan, dependency audit, manual validation of auth/rate limits and public security headers. Findings require verification.                                                    |
+| [web-audit](https://github.com/haraldalder-vibemogger/web-audit)             | SEO, consent, accessibility, required-page and release checks; distinguish code evidence from unverified external or legal requirements.                                                   |
+| [claude.md](https://github.com/haraldalder-vibemogger/claude.md)             | Small scoped changes, a reproducible verification loop and independent review of consequential changes.                                                                                    |
+| [mcp-diet](https://github.com/haraldalder-vibemogger/mcp-diet)               | Discover only needed tools, batch independent reads and filter large results before returning them to the agent. Use the available native code orchestration.                              |
+| [project-memory](https://github.com/haraldalder-vibemogger/project-memory)   | Maintain this release procedure and dated verified reports; reuse existing project knowledge instead of creating competing sources of truth.                                               |
+| [bayes-gate](https://github.com/haraldalder-vibemogger/bayes-gate)           | Record competing explanations, evidence and a falsifying check for risky decisions. Do not present uncalibrated scoring as measured confidence or replace existing authorization controls. |
+| [market-research](https://github.com/haraldalder-vibemogger/market-research) | Mark facts, estimates and assumptions separately in business/SEO research. Market scraping, advertising and outreach are separate work, not deploy steps.                                  |
+
+Claude-specific hooks and MCP SDK generators are not installed into the website runtime. Review compatibility and permissions before adopting executable third-party tooling. Keep third-party code provenance and licences when copying code.
+
 ## Quality gate
 
 Run `npm run qa:max` and `git diff --check` before committing. The gate includes lint, unit tests, project checks, production build, asset budgets and browser tests.
@@ -10,9 +38,9 @@ Review and stage specific files. Never stage `.dev.vars`, credentials, local OAu
 
 ## Publish
 
-Commit the reviewed changes and push `main` without force. This Pages project uses Direct Upload; a push does not deploy it. The optional GitHub Actions deployment requires `workflow_dispatch`. Confirm that the successful production deployment references the exact pushed commit.
+Commit the reviewed changes and push `main` without force. `.github/workflows/ci.yml` validates the pushed revision, checks current security results and calls the Pages deployment workflow on success. This workflow is the normal deployment authority. Monitor its checks and confirm that the successful production deployment references the exact pushed commit.
 
-For an explicitly authorized manual deployment, rebuild with `npm run build:production` after committing, then run `node tools/deploy-pages.mjs --branch main --commit-dirty=false`. Do not deploy uncommitted Functions or stale build artifacts.
+If that workflow is unavailable and manual deployment is explicitly authorized, first ensure that no automated deployment is running. Rebuild with `npm run build:production` after committing, then run `node tools/deploy-pages.mjs --branch main --commit-dirty=false`. Do not deploy uncommitted Functions or stale build artifacts, or race a manual upload against the CI deployment.
 
 ## Database changes
 

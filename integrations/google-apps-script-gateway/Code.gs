@@ -209,7 +209,9 @@ function findBookingRecord(sheet, requestId) {
 
 function bookingDetails(row) {
   return {
+    lang: String(row[1] || '').trim().toLowerCase(),
     name: String(row[3] || ''),
+    email: String(row[4] || '').trim().toLowerCase(),
     service: String(row[6] || ''),
     date: String(row[7] || ''),
     time: String(row[8] || ''),

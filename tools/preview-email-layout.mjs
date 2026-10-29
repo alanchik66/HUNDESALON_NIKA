@@ -8,8 +8,13 @@ for (const lang of ['de', 'en', 'ru', 'uk']) {
     lang,
     title: 'HUNDESALON NIKA — QA',
     bodyText: 'QA-NIKA: проверка оформления письма.\nLayout verification only.',
-  }).replace('https://hundesalon-nika.com/assets/images/brand/logo.png', '/assets/images/brand/logo.png'));
+  }));
 }
 console.log('Generated four local email previews in .wrangler/email-preview.');
-const logo = await fetch('https://hundesalon-nika.com/assets/images/brand/logo.png');
-console.log({ logoStatus: logo.status, logoType: logo.headers.get('content-type') });
+const logo = await fetch('https://hundesalon-nika.pages.dev/assets/images/email/logo.png');
+const logoType = logo.headers.get('content-type') || '';
+const resourcePolicy = logo.headers.get('cross-origin-resource-policy');
+console.log({ logoStatus: logo.status, logoType, resourcePolicy });
+if (!logo.ok || !logoType.startsWith('image/') || resourcePolicy !== 'cross-origin') {
+  throw new Error('The public email logo is not available for external embedding');
+}

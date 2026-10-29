@@ -4,6 +4,22 @@ import { readFile } from 'node:fs/promises';
 
 import { onRequest } from './_middleware.js';
 
+test('permits external embedding only for the public email image allowlist', async () => {
+  for (const [path, type, expected] of [
+    ['/assets/images/email/logo.png', 'image/png', 'cross-origin'],
+    ['/assets/images/email/whatsapp.png', 'image/png', 'cross-origin'],
+    ['/assets/images/brand/logo.png', 'image/png', 'same-origin'],
+    ['/assets/images/email/private.png', 'image/png', 'same-origin'],
+    ['/assets/images/email/logo.png', 'text/html', 'same-origin'],
+  ]) {
+    const response = await onRequest({
+      request: new Request(`https://hundesalon-nika.com${path}`),
+      next: async () => new Response('fixture', { headers: { 'Content-Type': type } }),
+    });
+    assert.equal(response.headers.get('Cross-Origin-Resource-Policy'), expected, `${path}: ${type}`);
+  }
+});
+
 function parseWildcardSecurityHeaders(source) {
   const lines = String(source).split(/\r?\n/);
   const blockStart = lines.findIndex(line => line.trim() === '/*');

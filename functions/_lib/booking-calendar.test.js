@@ -36,21 +36,21 @@ function bookingRow({ status = 'pending', confirmedAt = '', existingEventId = ''
   return row;
 }
 
-function calendarEvent() {
+function calendarEvent(startHour = '10') {
   return {
     id: eventId,
     status: 'confirmed',
     created: '2030-01-01T00:00:00Z',
-    start: { dateTime: '2030-01-02T10:00:00+01:00' },
+    start: { dateTime: `2030-01-02T${startHour.padStart(2, '0')}:00:00+01:00` },
     end: { dateTime: '2030-01-02T12:00:00+01:00' },
     extendedProperties: { private: { bookingRequestId: requestId } },
   };
 }
 
-for (const { locale, separator } of ['de', 'en', 'ru', 'uk'].flatMap(locale =>
-  ['T', ' '].map(separator => ({ locale, separator }))
+for (const { locale, separator, hour } of ['de', 'en', 'ru', 'uk'].flatMap(locale =>
+  ['T', ' '].flatMap(separator => ['10', '9'].map(hour => ({ locale, separator, hour })))
 )) {
-  test(`confirms ${locale} booking with date separator ${JSON.stringify(separator)}`, async () => {
+  test(`confirms ${locale} booking with date separator ${JSON.stringify(separator)} and hour ${hour}`, async () => {
     const originalFetch = globalThis.fetch;
     const calls = [];
     globalThis.fetch = async (url, options = {}) => {
@@ -59,7 +59,7 @@ for (const { locale, separator } of ['de', 'en', 'ru', 'uk'].flatMap(locale =>
       if (target.includes('/values/bookings!A1%3AAH')) {
         const row = bookingRow();
         row[1] = locale;
-        row[32] = row[32].replace('T', separator);
+        row[32] = row[32].replace('T10:', `${separator}${hour}:`);
         row[33] = row[33].replace('T', separator);
         return Response.json({ values: [[], row] });
       }
@@ -67,8 +67,8 @@ for (const { locale, separator } of ['de', 'en', 'ru', 'uk'].flatMap(locale =>
       if (target.endsWith('/calendar/v3/freeBusy')) {
         return Response.json({ calendars: { 'calendar@example.com': { busy: [] } } });
       }
-      if (target.endsWith('/events') && options.method === 'POST') return Response.json(calendarEvent());
-      if (target.includes('/events?')) return Response.json({ items: [calendarEvent()] });
+      if (target.endsWith('/events') && options.method === 'POST') return Response.json(calendarEvent(hour));
+      if (target.includes('/events?')) return Response.json({ items: [calendarEvent(hour)] });
       if (target.includes('/values/bookings!AD2%3AAF2')) return Response.json({ updatedRange: 'bookings!AD2:AF2' });
       throw new Error(`Unexpected fetch: ${target}`);
     };
@@ -84,7 +84,7 @@ for (const { locale, separator } of ['de', 'en', 'ru', 'uk'].flatMap(locale =>
       assert.equal(event.id, eventId);
       assert.equal(event.status, 'confirmed');
       assert.equal(event.visibility, 'private');
-      assert.deepEqual(event.start, { dateTime: '2030-01-02T10:00:00', timeZone: 'Europe/Berlin' });
+      assert.deepEqual(event.start, { dateTime: `2030-01-02T${hour.padStart(2, '0')}:00:00`, timeZone: 'Europe/Berlin' });
       assert.deepEqual(event.end, { dateTime: '2030-01-02T12:00:00', timeZone: 'Europe/Berlin' });
       assert.equal(event.extendedProperties.private.bookingRequestId, requestId);
       const sheetCall = calls.find(call => call.target.includes('/values/bookings!AD2%3AAF2'));

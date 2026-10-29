@@ -17,7 +17,7 @@ test('page scroll controls belong to the shared entry point, without price-page 
 });
 
 test('shared scroll controls do not depend on the optional page modules stylesheet', () => {
-  const controlStyles = sharedStyles.match(/\.price-scroll-controls\s*\{([^}]+)\}/)?.[1];
+  const controlStyles = sharedStyles.match(/^\.price-scroll-controls\s*\{([^}]+)\}/m)?.[1];
   assert.ok(controlStyles, 'the stylesheet loaded by every page must position the shared controls');
   assert.match(controlStyles, /position:\s*fixed/);
   assert.match(controlStyles, /right:\s*max\(2px, env\(safe-area-inset-right\)\)/);

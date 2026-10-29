@@ -113,11 +113,14 @@ try {
       const aiChat = document.querySelector('#hundesalon-ai-chat');
       const sendPulseChat = document.querySelector('sp-live-chat');
       const rect = nav?.getBoundingClientRect();
+      const viewportTop = window.visualViewport?.offsetTop || 0;
+      const viewportBottom = viewportTop + (window.visualViewport?.height || window.innerHeight);
+      const headerBottom = document.querySelector('.header')?.getBoundingClientRect().bottom || 0;
       const links = nav
         ? [...nav.querySelectorAll(':scope > .mobile-nav-group > a[href]')].filter(link => {
             const linkRect = link.getBoundingClientRect();
             return (
-              linkRect.width > 0 && linkRect.height > 0 && linkRect.top >= 0 && linkRect.bottom <= window.innerHeight
+              linkRect.width > 0 && linkRect.height > 0 && linkRect.top >= rect.top && linkRect.bottom <= rect.bottom
             );
           })
         : [];
@@ -132,10 +135,15 @@ try {
         ariaHidden: nav?.getAttribute('aria-hidden'),
         left: rect?.left ?? -1,
         right: rect?.right ?? -1,
+        top: rect?.top ?? -1,
+        bottom: rect?.bottom ?? -1,
         width: rect?.width ?? 0,
         height: rect?.height ?? 0,
         viewportWidth: window.innerWidth,
         viewportHeight: window.innerHeight,
+        viewportTop,
+        viewportBottom,
+        headerBottom,
         overlayActive: Boolean(overlay?.classList.contains('active') && !overlay.hidden),
         bodyLocked: document.body.classList.contains('nav-open'),
         cookieSuppressed: !cookieConsent || getComputedStyle(cookieConsent).display === 'none',
@@ -150,20 +158,24 @@ try {
 
     assert(`${scenario.name}: drawer opens`, drawerState.active && drawerState.ariaHidden === 'false');
     assert(
-      `${scenario.name}: drawer starts at the left edge`,
-      Math.abs(drawerState.left) <= 1,
+      `${scenario.name}: drawer remains detached from the left edge`,
+      Math.abs(drawerState.left - 12) <= 1,
       JSON.stringify(drawerState)
     );
     assert(
       `${scenario.name}: drawer remains a separate window`,
-      drawerState.width >= 240 &&
-        drawerState.width <= Math.min(420, drawerState.viewportWidth * 0.9) + 2 &&
-        drawerState.right < drawerState.viewportWidth - 12,
+      Math.abs(drawerState.width - Math.min(420, drawerState.viewportWidth - 24)) <= 1 &&
+        drawerState.right <= drawerState.viewportWidth - 11,
       JSON.stringify(drawerState)
     );
     assert(
-      `${scenario.name}: drawer fills the usable height`,
-      drawerState.height >= drawerState.viewportHeight - 2,
+      `${scenario.name}: drawer sits below the complete header`,
+      Math.abs(drawerState.top - Math.max(drawerState.viewportTop, drawerState.headerBottom) - 10) <= 1,
+      JSON.stringify(drawerState)
+    );
+    assert(
+      `${scenario.name}: drawer stays inside the usable viewport`,
+      drawerState.height > 0 && drawerState.bottom <= drawerState.viewportBottom - 9,
       JSON.stringify(drawerState)
     );
     assert(

@@ -63,6 +63,9 @@ function Assert-ReviewedChanges {
 }
 
 try {
+  if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+    throw 'Для контроля CI нужен установленный и авторизованный GitHub CLI (gh).'
+  }
   $branch = Invoke-GitCommand -Arguments @('branch', '--show-current')
   if ($branch -ne 'main') {
     throw "Релиз разрешён только из main (текущая ветка: $branch)."
@@ -81,6 +84,11 @@ try {
   }
 
   Invoke-NpmScript -ScriptName 'qa:max' -StepName 'Полная проверка качества'
+  Write-Step 'Полное чтение файлов и фиксация покрытия репозитория...'
+  & node tools/audit-repository.mjs
+  if ($LASTEXITCODE -ne 0) {
+    throw 'Аудит файлов репозитория не завершён.'
+  }
   Invoke-GitCommand -Arguments @('diff', '--check')
   Invoke-GitCommand -Arguments @('diff', '--cached', '--check')
   $hasStagedChanges = Assert-ReviewedChanges
@@ -100,10 +108,10 @@ try {
   }
   Invoke-NpmScript -ScriptName 'git:push' -StepName 'Пуш в GitHub'
 
-  Write-Step 'Деплой проверенной ревизии на Cloudflare Pages...'
-  & node tools/deploy-pages.mjs --branch main --commit-dirty=false
+  $releaseCommit = Invoke-GitCommand -Arguments @('rev-parse', 'HEAD')
+  & node tools/watch-production-release.mjs $releaseCommit
   if ($LASTEXITCODE -ne 0) {
-    throw "Деплой не удался (код выхода: $LASTEXITCODE)."
+    throw 'CI или проверка production не прошла. Ручной deploy автоматически не запускается.'
   }
   # Live проверки не создают бронирования и не отправляют служебные сообщения.
   Invoke-NpmScript -ScriptName 'check:live-html' -StepName 'Проверка production HTML'

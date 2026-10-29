@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 
 import { onRequest } from './telegram-webhook.js';
+import { notifyBookingConfirmed } from './_lib/payment-confirmation.js';
 
 function telegramUpdate(text = '/start', languageCode = '') {
   return {
@@ -56,9 +59,7 @@ function websiteChatAdminReply(
       chat: { id: -100123, type: 'supergroup' },
       from: { id: 555, first_name: 'Admin' },
       text,
-      ...(repliedMessageId
-        ? { reply_to_message: { message_id: repliedMessageId, text: repliedText } }
-        : {}),
+      ...(repliedMessageId ? { reply_to_message: { message_id: repliedMessageId, text: repliedText } } : {}),
     },
   };
 }
@@ -162,13 +163,15 @@ test('first administrator reply pauses AI and creates a continuation card in the
     assert.match(telegramPayloads[0].text, /AI-ассистент приостановлен/);
     assert.ok(emailPayload);
     const emailHtml = Buffer.from(emailPayload.email.html, 'base64').toString('utf8');
-    assert.match(emailHtml, /assets\/images\/brand\/logo\.png/);
+    assert.match(emailHtml, /assets\/images\/email\/logo\.png/);
     assert.match(emailHtml, /Добрый день, я подключаюсь к диалогу\./);
     assert.match(emailHtml, /<html lang="ru"/);
-    assert.ok(database.sqlCalls.some(sql => sql.includes("SET conversation_mode = ?")));
-    assert.ok(database.boundCalls.some(
-      call => call.sql.includes('INSERT OR REPLACE INTO chat_telegram_deliveries') && call.values[1] === 72
-    ));
+    assert.ok(database.sqlCalls.some(sql => sql.includes('SET conversation_mode = ?')));
+    assert.ok(
+      database.boundCalls.some(
+        call => call.sql.includes('INSERT OR REPLACE INTO chat_telegram_deliveries') && call.values[1] === 72
+      )
+    );
     assert.ok(
       database.boundCalls.some(
         call =>
@@ -221,11 +224,13 @@ test('administrator replies from the personal topic are delivered to the existin
         'Content-Type': 'application/json',
         'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
       },
-      body: JSON.stringify(websiteChatAdminReply('Ваш ответ из личной ветки.', {
-        messageId: 74,
-        threadId: 197,
-        repliedMessageId: 73,
-      })),
+      body: JSON.stringify(
+        websiteChatAdminReply('Ваш ответ из личной ветки.', {
+          messageId: 74,
+          threadId: 197,
+          repliedMessageId: 73,
+        })
+      ),
     }),
     env: {
       CHAT_DB: database,
@@ -241,9 +246,11 @@ test('administrator replies from the personal topic are delivered to the existin
   assert.equal(payload.destination, 'website_chat');
   assert.equal(payload.mode, 'human');
   assert.equal(payload.movedToPersonal, false);
-  assert.ok(database.boundCalls.some(
-    call => call.sql.includes('INSERT OR REPLACE INTO chat_telegram_deliveries') && call.values[1] === 74
-  ));
+  assert.ok(
+    database.boundCalls.some(
+      call => call.sql.includes('INSERT OR REPLACE INTO chat_telegram_deliveries') && call.values[1] === 74
+    )
+  );
 });
 
 test('a plain administrator message in the personal topic is delivered to the latest website chat', async () => {
@@ -255,11 +262,13 @@ test('a plain administrator message in the personal topic is delivered to the la
         'Content-Type': 'application/json',
         'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
       },
-      body: JSON.stringify(websiteChatAdminReply('Ответ без специальной функции Telegram.', {
-        messageId: 75,
-        threadId: 197,
-        repliedMessageId: null,
-      })),
+      body: JSON.stringify(
+        websiteChatAdminReply('Ответ без специальной функции Telegram.', {
+          messageId: 75,
+          threadId: 197,
+          repliedMessageId: null,
+        })
+      ),
     }),
     env: {
       CHAT_DB: database,
@@ -274,12 +283,15 @@ test('a plain administrator message in the personal topic is delivered to the la
   assert.equal(payload.relayed, true);
   assert.equal(payload.destination, 'website_chat');
   assert.equal(payload.mode, 'human');
-  assert.ok(database.boundCalls.some(
-    call => call.sql.includes('d.message_thread_id = ?') && call.values[1] === 197
-  ));
-  assert.ok(database.boundCalls.some(
-    call => call.sql.includes('INSERT OR REPLACE INTO chat_telegram_deliveries') && call.values[1] === 75 && call.values[2] === 197
-  ));
+  assert.ok(database.boundCalls.some(call => call.sql.includes('d.message_thread_id = ?') && call.values[1] === 197));
+  assert.ok(
+    database.boundCalls.some(
+      call =>
+        call.sql.includes('INSERT OR REPLACE INTO chat_telegram_deliveries') &&
+        call.values[1] === 75 &&
+        call.values[2] === 197
+    )
+  );
 });
 
 test('an explicit reply to an unavailable website session cannot use another client in the personal topic', async () => {
@@ -342,12 +354,14 @@ test('the personal website topic never falls back to a Telegram client direct me
           'Content-Type': 'application/json',
           'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
         },
-        body: JSON.stringify(websiteChatAdminReply('Не отправлять в Telegram клиента.', {
-          messageId: 76,
-          threadId: 197,
-          repliedMessageId: 70,
-          repliedText: 'Клиент Telegram ID: 12345',
-        })),
+        body: JSON.stringify(
+          websiteChatAdminReply('Не отправлять в Telegram клиента.', {
+            messageId: 76,
+            threadId: 197,
+            repliedMessageId: 70,
+            repliedText: 'Клиент Telegram ID: 12345',
+          })
+        ),
       }),
       env: {
         CHAT_DB: database,
@@ -385,12 +399,14 @@ test('a reply to a known website card never falls back to a Telegram direct mess
           'Content-Type': 'application/json',
           'X-Telegram-Bot-Api-Secret-Token': 'test-webhook-secret',
         },
-        body: JSON.stringify(websiteChatAdminReply('Ответ предназначен только для сайта.', {
-          messageId: 77,
-          threadId: 42,
-          repliedMessageId: 71,
-          repliedText: 'Клиент Telegram ID: 12345',
-        })),
+        body: JSON.stringify(
+          websiteChatAdminReply('Ответ предназначен только для сайта.', {
+            messageId: 77,
+            threadId: 42,
+            repliedMessageId: 71,
+            repliedText: 'Клиент Telegram ID: 12345',
+          })
+        ),
       }),
       env: {
         CHAT_DB: database,
@@ -589,7 +605,10 @@ test('localizes the branded Web App menu button and removes the legacy keyboard'
       assert.equal(requests[0].chat_id, '12345');
       assert.equal(requests[0].menu_button.type, 'web_app');
       assert.equal(requests[0].menu_button.text, item.menuButton);
-      assert.equal(requests[0].menu_button.web_app.url, `https://hundesalon-nika.com/telegram-menu.html?lang=${item.language}`);
+      assert.equal(
+        requests[0].menu_button.web_app.url,
+        `https://hundesalon-nika.com/telegram-menu.html?lang=${item.language}`
+      );
       assert.equal(requests[1].chat_id, undefined);
       assert.equal(requests[1].menu_button.web_app.url, 'https://hundesalon-nika.com/telegram-menu.html');
       assert.match(requests[3].text, item.text);
@@ -649,8 +668,16 @@ test('public commands return the matching action with the same linked menu', asy
 
   try {
     for (const item of [
-      { command: '/showcase', text: /интерактивное фирменное меню/, webAppUrl: 'https://hundesalon-nika.com/telegram-menu.html?lang=ru' },
-      { command: '/booking', text: /Откройте онлайн-запись/, url: 'https://hundesalon-nika.com/ru/onlayn-bronirovanie' },
+      {
+        command: '/showcase',
+        text: /интерактивное фирменное меню/,
+        webAppUrl: 'https://hundesalon-nika.com/telegram-menu.html?lang=ru',
+      },
+      {
+        command: '/booking',
+        text: /Откройте онлайн-запись/,
+        url: 'https://hundesalon-nika.com/ru/onlayn-bronirovanie',
+      },
       { command: '/services', text: /Цены и услуги/, url: 'https://hundesalon-nika.com/ru/prays-list' },
       { command: '/address', text: /Адрес и часы работы/, url: 'https://hundesalon-nika.com/ru/kontakty' },
       { command: '/support', text: /Запрос передан в поддержку/, url: null },
@@ -832,7 +859,10 @@ test('the previous reply-keyboard labels remain connected to the new menu', asyn
     assert.equal(response.status, 200);
     assert.equal(requests.length, 2);
     assert.match(requests[1].text, /Откройте онлайн-запись кнопкой ниже/);
-    assert.equal(requests[1].reply_markup.inline_keyboard[0][0].url, 'https://hundesalon-nika.com/ru/onlayn-bronirovanie');
+    assert.equal(
+      requests[1].reply_markup.inline_keyboard[0][0].url,
+      'https://hundesalon-nika.com/ru/onlayn-bronirovanie'
+    );
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -979,10 +1009,40 @@ test('a Telegram chat administrator confirms one booking in Google Calendar', as
   const originalFetch = globalThis.fetch;
   const requestId = '12345678-1234-4123-8123-123456789abc';
   const eventId = `booking${requestId.replace(/-/g, '')}`;
+  const sqlite = new DatabaseSync(':memory:');
+  sqlite.exec(readFileSync(new URL('../migrations/0009_delivery_tracking.sql', import.meta.url), 'utf8'));
+  sqlite.exec(readFileSync(new URL('../migrations/0012_booking_confirmation_outbox.sql', import.meta.url), 'utf8'));
+  const confirmationDb = {
+    prepare(sql) {
+      return {
+        bind(...values) {
+          return {
+            async run() {
+              const result = sqlite.prepare(sql).run(...values);
+              return { meta: { changes: Number(result.changes) } };
+            },
+            async first() {
+              return sqlite.prepare(sql).get(...values) || null;
+            },
+          };
+        },
+      };
+    },
+  };
   const row = Array(34).fill('');
   Object.assign(row, {
-    3: 'Test Customer', 6: 'Komplettpflege', 7: '2030-01-02', 8: '10:00', 13: 'Nika', 15: 'Pudel',
-    28: requestId, 29: 'pending', 32: '2030-01-02T10:00:00', 33: '2030-01-02T12:00:00',
+    1: 'de',
+    3: 'Test Customer',
+    4: 'customer@example.test',
+    6: 'Komplettpflege',
+    7: '2030-01-02',
+    8: '10:00',
+    13: 'Nika',
+    15: 'Pudel',
+    28: requestId,
+    29: 'pending',
+    32: '2030-01-02T10:00:00',
+    33: '2030-01-02T12:00:00',
   });
   const calendarEvent = {
     id: eventId,
@@ -1005,6 +1065,7 @@ test('a Telegram chat administrator confirms one booking in Google Calendar', as
     if (target.endsWith('/events') && options.method === 'POST') return Response.json(calendarEvent);
     if (target.includes('/events?')) return Response.json({ items: [calendarEvent] });
     if (target.includes('/values/bookings!AD2%3AAF2')) return Response.json({ updatedRange: 'bookings!AD2:AF2' });
+    if (target.includes('/smtp/emails')) return Response.json({ result: true });
     if (
       target.endsWith('/answerCallbackQuery') ||
       target.endsWith('/sendMessage') ||
@@ -1033,6 +1094,9 @@ test('a Telegram chat administrator confirms one booking in Google Calendar', as
         GOOGLE_OAUTH_ACCESS_TOKEN: 'access-token',
         GOOGLE_CALENDAR_ID: 'calendar@example.com',
         SHEET_ID: 'sheet-id',
+        CHAT_DB: confirmationDb,
+        SENDPULSE_API_KEY: 'sendpulse-test-key',
+        CLIENT_EMAIL_FROM: 'HUNDESALON_NIKA <info@hundesalon-nika.com>',
       },
     });
     const body = await response.json();
@@ -1040,10 +1104,47 @@ test('a Telegram chat administrator confirms one booking in Google Calendar', as
     assert.equal(response.status, 200);
     assert.equal(body.confirmed, true);
     assert.equal(calls.filter(call => call.target.endsWith('/events')).length, 1);
-    assert.equal(calls.some(call => call.target.includes('/values/bookings!AD2%3AAF2')), true);
-    assert.equal(calls.some(call => call.target.endsWith('/answerCallbackQuery')), true);
-    assert.equal(calls.some(call => call.target.endsWith('/sendMessage')), true);
-    assert.equal(calls.some(call => call.target.endsWith('/editMessageReplyMarkup')), true);
+    assert.equal(
+      calls.some(call => call.target.includes('/values/bookings!AD2%3AAF2')),
+      true
+    );
+    assert.equal(
+      calls.some(call => call.target.endsWith('/answerCallbackQuery')),
+      true
+    );
+    assert.equal(
+      calls.some(call => call.target.endsWith('/sendMessage')),
+      true
+    );
+    assert.equal(
+      calls.some(call => call.target.includes('/smtp/emails')),
+      true
+    );
+    assert.equal(
+      calls.some(call => call.target.endsWith('/editMessageReplyMarkup')),
+      true
+    );
+    const acceptedConfirmation = sqlite
+      .prepare('SELECT state, channel FROM delivery_attempts WHERE idempotency_key = ?')
+      .get('booking_confirmation:' + requestId);
+    assert.equal(acceptedConfirmation?.state, 'accepted');
+    assert.equal(acceptedConfirmation?.channel, 'email_client');
+    const replay = await notifyBookingConfirmed({ CHAT_DB: confirmationDb }, requestId, {
+      ok: true,
+      eventId,
+      booking: {
+        lang: 'de',
+        email: 'customer@example.test',
+        name: 'Test Customer',
+        service: 'Komplettpflege',
+        date: '2030-01-02',
+        time: '10:00',
+        petName: 'Nika',
+      },
+    });
+    assert.equal(replay.ok, true);
+    assert.equal(replay.deduplicated, true);
+    assert.equal(calls.filter(call => call.target.includes('/smtp/emails')).length, 1);
     assert.equal(
       calls.findIndex(call => call.target.endsWith('/answerCallbackQuery')) <
         calls.findIndex(call => call.target.includes('/values/bookings!A1%3AAH')),
@@ -1056,6 +1157,7 @@ test('a Telegram chat administrator confirms one booking in Google Calendar', as
     );
   } finally {
     globalThis.fetch = originalFetch;
+    sqlite.close();
   }
 });
 
@@ -1109,7 +1211,10 @@ test('keeps the booking button and returns a retryable response when the final T
     assert.equal(response.status, 502);
     assert.equal(body.retryable, true);
     assert.equal(body.confirmed, true);
-    assert.equal(calls.some(call => call.target.endsWith('/editMessageReplyMarkup')), false);
+    assert.equal(
+      calls.some(call => call.target.endsWith('/editMessageReplyMarkup')),
+      false
+    );
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -1152,8 +1257,14 @@ test('a non-administrator cannot confirm a booking from the Telegram button', as
     assert.equal(response.status, 200);
     assert.equal(body.confirmed, false);
     assert.equal(body.skipped, true);
-    assert.equal(calls.some(call => call.target.includes('googleapis.com/calendar')), false);
-    assert.equal(calls.some(call => call.target.includes('sheets.googleapis.com')), false);
+    assert.equal(
+      calls.some(call => call.target.includes('googleapis.com/calendar')),
+      false
+    );
+    assert.equal(
+      calls.some(call => call.target.includes('sheets.googleapis.com')),
+      false
+    );
     const acknowledgement = JSON.parse(calls.find(call => call.target.endsWith('/answerCallbackQuery')).options.body);
     assert.equal(acknowledgement.show_alert, true);
   } finally {

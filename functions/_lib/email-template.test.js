@@ -1,6 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { buildBrandedEmail, MASTER_EMAIL_TEMPLATE } from './email-template.js';
+
+test('email artwork exists as compact high-density PNG assets', () => {
+  let totalBytes = 0;
+  for (const name of ['logo', 'whatsapp', 'telegram', 'viber', 'phone', 'facebook', 'mail', 'social-links']) {
+    const image = readFileSync(new URL(`../../assets/images/email/${name}.png`, import.meta.url));
+    assert.equal(image.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', name);
+    const limit = name === 'logo' ? 144 : 64;
+    assert.ok(image.readUInt32BE(16) > 0 && image.readUInt32BE(16) <= limit, name);
+    assert.ok(image.readUInt32BE(20) > 0 && image.readUInt32BE(20) <= limit, name);
+    totalBytes += image.length;
+  }
+  assert.ok(totalBytes < 150000, 'Email artwork must stay below the combined image budget');
+});
 
 test('buildBrandedEmail renders a branded, escaped and linkified email shell', () => {
   const html = buildBrandedEmail({
@@ -33,7 +47,8 @@ test('buildBrandedEmail renders a branded, escaped and linkified email shell', (
   assert.match(html, /class="site-footer"/);
   assert.match(html, /ВСЕ СОЦСЕТИ/);
   assert.match(html, /Конфиденциальность/);
-  assert.match(html, /raw\.githubusercontent\.com\/alanchik66\/HUNDESALON_NIKA\/main\/assets\/images\/icons\/whatsapp\.png/);
+  assert.match(html, /https:\/\/hundesalon-nika\.pages\.dev\/assets\/images\/email\/whatsapp\.png/);
+  assert.match(html, /https:\/\/hundesalon-nika\.pages\.dev\/assets\/images\/email\/logo\.png/);
   assert.match(html, /@media \(prefers-color-scheme: light\)/);
 });
 
@@ -72,6 +87,7 @@ for (const lang of ['de', 'en', 'ru', 'uk']) {
     assert.match(html, /class="brand-cell" width="84"/);
     assert.match(html, /class="nav-cell"/);
     assert.match(html, /class="header-navigation"/);
-    assert.match(html, /padding:0 14px 16px/);
+    assert.match(html, /padding:0 0 16px/);
+    assert.doesNotMatch(html, /max-width:680px/);
   });
 }

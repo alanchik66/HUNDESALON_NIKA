@@ -2,7 +2,7 @@ import { enforceRateLimit, isRequestBodyTooLarge, readTextBody } from '../_lib/h
 import { confirmGoogleBooking } from '../_lib/booking-calendar.js';
 import { verifyBookingConfirmationToken } from '../_lib/booking-confirmation.js';
 import { createDeliveryTracker } from '../_lib/delivery-tracking.js';
-import { notifyPaidBookingConfirmed } from '../_lib/payment-confirmation.js';
+import { notifyBookingConfirmed } from '../_lib/payment-confirmation.js';
 
 function escapeHtml(value) {
   return String(value || '')
@@ -120,7 +120,7 @@ export async function onRequest({ request, env }) {
       503
     );
   }
-  const confirmationDelivery = await notifyPaidBookingConfirmed(env, token.requestId, result);
+  const confirmationDelivery = await notifyBookingConfirmed(env, token.requestId, result);
   if (!confirmationDelivery.ok) {
     return page(
       'Запись подтверждена, письмо ожидает доставки',

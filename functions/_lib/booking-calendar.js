@@ -25,6 +25,7 @@ const GATEWAY_REASONS = new Set([
 ]);
 
 const BOOKING_COLUMN = Object.freeze({
+  lang: 1,
   name: 3,
   email: 4,
   phone: 5,
@@ -70,7 +71,9 @@ function bookingValue(row, key, limit = 300) {
 
 function bookingResult(row) {
   return {
+    lang: bookingValue(row, 'lang', 8).toLowerCase(),
     name: bookingValue(row, 'name', 120),
+    email: bookingValue(row, 'email', 254).toLowerCase(),
     service: bookingValue(row, 'service', 180),
     date: bookingValue(row, 'date', 16),
     time: bookingValue(row, 'time', 16),
@@ -263,15 +266,15 @@ export async function confirmGoogleBooking(env, requestId) {
   }
   if (initialStatus !== 'pending') return { ok: false, reason: 'invalid_state' };
 
-  // Sheets USER_ENTERED dates can be rendered with a space instead of ISO's T.
-  // Normalize only that separator; keep strict date/DST validation below.
+  // Sheets USER_ENTERED dates can use a space and an unpadded hour.
+  // Keep strict date/DST validation after normalizing that display format.
   const startDateTime = bookingValue(initialMatch.row, 'calendarStart', 32).replace(
-    /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})$/,
-    '$1T$2'
+    /^(\d{4}-\d{2}-\d{2})[ T](\d{1,2})(:\d{2}:\d{2})$/,
+    (_match, date, hour, rest) => `${date}T${hour.padStart(2, '0')}${rest}`
   );
   const endDateTime = bookingValue(initialMatch.row, 'calendarEnd', 32).replace(
-    /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})$/,
-    '$1T$2'
+    /^(\d{4}-\d{2}-\d{2})[ T](\d{1,2})(:\d{2}:\d{2})$/,
+    (_match, date, hour, rest) => `${date}T${hour.padStart(2, '0')}${rest}`
   );
   const timeMin = berlinLocalToUtc(startDateTime);
   const timeMax = berlinLocalToUtc(endDateTime);

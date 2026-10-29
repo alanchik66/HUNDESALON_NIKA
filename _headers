@@ -86,6 +86,10 @@
   Cache-Control: public, max-age=31536000, immutable
 
 # Защитные заголовки для всех страниц
+# These public email images must load from webmail and image-proxy origins.
+/assets/images/email/*
+  ! Cross-Origin-Resource-Policy
+
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN

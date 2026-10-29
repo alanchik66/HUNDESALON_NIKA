@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 
 import { buildBookingConfirmationUrl } from '../_lib/booking-confirmation.js';
 import { onRequest } from './booking-confirm.js';
@@ -105,9 +107,32 @@ test('opening a signed admin-email link only displays the confirmation button', 
 
 test('submitting the signed admin-email form confirms the matching pending booking', async () => {
   const originalFetch = globalThis.fetch;
+  const sqlite = new DatabaseSync(':memory:');
+  for (const migration of ['0009_delivery_tracking.sql', '0012_booking_confirmation_outbox.sql']) {
+    sqlite.exec(readFileSync(new URL('../../migrations/' + migration, import.meta.url), 'utf8'));
+  }
+  const confirmationDb = {
+    prepare(sql) {
+      return {
+        bind(...values) {
+          return {
+            async run() {
+              const result = sqlite.prepare(sql).run(...values);
+              return { meta: { changes: Number(result.changes) } };
+            },
+            async first() {
+              return sqlite.prepare(sql).get(...values) || null;
+            },
+          };
+        },
+      };
+    },
+  };
+  let emailCount = 0;
   const row = Array(34).fill('');
   Object.assign(row, {
     3: 'Test Customer',
+    4: 'customer@example.test',
     6: 'Komplettpflege',
     7: '2030-01-02',
     8: '10:00',
@@ -134,6 +159,10 @@ test('submitting the signed admin-email form confirms the matching pending booki
     if (target.endsWith('/events') && options.method === 'POST') return Response.json(calendarEvent);
     if (target.includes('/events?')) return Response.json({ items: [calendarEvent] });
     if (target.includes('/values/bookings!AD2%3AAF2')) return Response.json({ updatedRange: 'bookings!AD2:AF2' });
+    if (target.includes('/smtp/emails')) {
+      emailCount++;
+      return Response.json({ result: true });
+    }
     throw new Error(`Unexpected fetch: ${target}`);
   };
 
@@ -149,12 +178,14 @@ test('submitting the signed admin-email form confirms the matching pending booki
         },
         body: signed.searchParams.toString(),
       }),
-      env,
+      env: { ...env, CHAT_DB: confirmationDb, SENDPULSE_API_KEY: 'fixture-only' },
     });
     assert.equal(response.status, 200);
     assert.match(await response.text(), /Запись подтверждена/);
+    assert.equal(emailCount, 1);
   } finally {
     globalThis.fetch = originalFetch;
+    sqlite.close();
   }
 });
 

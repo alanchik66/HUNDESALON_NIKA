@@ -305,5 +305,14 @@ export async function onRequest(context) {
     return withSecurityHeaders(redirectResponse(target.toString(), 302));
   }
 
-  return withSecurityHeaders(await context.next());
+  const response = withSecurityHeaders(await context.next());
+  // Public email artwork must also load inside external webmail clients.
+  if (
+    /^\/assets\/images\/email\/(?:logo|whatsapp|telegram|viber|phone|facebook|mail|social-links)\.png$/.test(url.pathname) &&
+    response.ok &&
+    (response.headers.get('Content-Type') || '').startsWith('image/')
+  ) {
+    response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+  return response;
 }

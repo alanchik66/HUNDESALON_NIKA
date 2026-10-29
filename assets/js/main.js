@@ -676,6 +676,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (burger && mobileNav && overlay) {
     const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const header = burger.closest('.header');
     const getMenuTopOpenThreshold = () => {
       const viewportHeight = window.visualViewport?.height || window.innerHeight || 0;
       return Math.max(96, Math.min(260, Math.round(viewportHeight * 0.24)));
@@ -702,12 +703,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const syncMobileNavLayout = () => {
-      const viewportHeight = window.visualViewport?.height || window.innerHeight;
-      const availableHeight = Math.max(viewportHeight, 0);
-      const contentOffset = Math.max(0, getVisibleHeaderBottom());
-      mobileNav.style.setProperty('--mobile-nav-offset', '0px');
-      mobileNav.style.setProperty('--mobile-nav-height', `${availableHeight}px`);
-      mobileNav.style.setProperty('--mobile-nav-content-offset', `${contentOffset}px`);
+      const viewport = window.visualViewport;
+      const viewportTop = viewport?.offsetTop || 0;
+      const headerBottom = getVisibleHeaderBottom();
+      const offset =
+        Math.max(viewportTop, headerBottom, headerBottom ? header?.getBoundingClientRect().bottom || 0 : 0) + 10;
+      const height = Math.max(0, viewportTop + (viewport?.height || window.innerHeight) - offset - 10);
+      mobileNav.style.setProperty('--mobile-nav-offset', `${offset}px`);
+      mobileNav.style.setProperty('--mobile-nav-height', `${height}px`);
       refreshMobileNavScrollbar();
     };
 
@@ -717,12 +720,11 @@ document.addEventListener('DOMContentLoaded', () => {
       mobileGalleryBtn.setAttribute('aria-expanded', String(isOpen));
       mobileGalleryBtn.setAttribute('aria-label', isOpen ? menuA11y.collapseGallery : menuA11y.expandGallery);
       mobileGalleryMenu.classList.toggle('open', isOpen);
+      mobileGalleryMenu.inert = !isOpen;
       refreshMobileNavScrollbar();
     };
 
     const setMenuState = (isOpen, { restoreFocus = true } = {}) => {
-      syncMobileNavLayout();
-
       burger.classList.toggle('active', isOpen);
       burger.setAttribute('aria-expanded', String(isOpen));
       burger.setAttribute('aria-label', isOpen ? menuA11y.closeMenu : menuA11y.openMenu);
@@ -761,6 +763,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.top = '';
         scrollRoot.scrollTop = savedY;
       }
+
+      syncMobileNavLayout();
 
       if ('inert' in mobileNav) {
         mobileNav.inert = !isOpen;
@@ -870,13 +874,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('site-shell:weather-ready', handleHeaderWeatherLayout);
     window.addEventListener('site-shell:weather-toggle', handleHeaderWeatherLayout);
+    window.addEventListener('site-shell:social-ready', handleHeaderWeatherLayout);
+    window.visualViewport?.addEventListener('resize', syncMobileNavLayout, { passive: true });
+    window.visualViewport?.addEventListener('scroll', syncMobileNavLayout, { passive: true });
+    header?.addEventListener('transitionend', syncMobileNavLayout);
 
     if (window.ResizeObserver) {
       const headerResizeObserver = new ResizeObserver(() => {
         handleHeaderWeatherLayout();
       });
 
-      const header = document.querySelector('header.header');
       if (header) {
         headerResizeObserver.observe(header);
       }
@@ -1126,7 +1133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     socialIconsToggle.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
-      const isOpen = socialIconsList.classList.contains('is-open');
+      const isOpen = !socialIconsList.hidden;
       if (isOpen) {
         closeSocialIconsUI();
       } else {
@@ -1144,7 +1151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.addEventListener('click', event => {
-      if (!socialIconsList.classList.contains('is-open')) return;
+      if (socialIconsList.hidden) return;
       if (socialIconsToggle.contains(event.target)) return;
       if (socialIconsList.contains(event.target)) return;
       closeSocialIconsUI();
@@ -2051,7 +2058,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ========== SOCIAL ICONS — ENTRANCE ANIMATION ON PAGE LOAD ========== */
   requestAnimationFrame(() => {
     const allSocialLinks = document.querySelectorAll(
-      '.social-icon, .header-social-link, .footer-socials .social-link--icon'
+      '.social-icon:not(#social-icons-list .social-icon), .header-social-link, .footer-socials .social-link--icon'
     );
     allSocialLinks.forEach((link, i) => {
       const icon = link.querySelector('i');

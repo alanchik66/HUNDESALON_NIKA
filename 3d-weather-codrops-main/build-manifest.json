@@ -110,7 +110,7 @@
       "source": "src/header-preview.mjs",
       "output": "weather-widget.header-panel-preview.es.js",
       "baselineSha256": "b850b368a2d72b4110c329fed9440dd4c70bea7f6287da6e872986271bb360c2",
-      "canonicalSha256": "d8a36546360fa567e6e15f481c4bf32716c0438f618bf580082d30ae7c8d0cb2",
+      "canonicalSha256": "efb6c1a8e20e8273ecdd7d6b8ca4a87c948fbf9bd0eedf36bd9b6ad4f13f4d88",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -148,7 +148,7 @@
         "N": "mountWeatherWidget",
         "P": "unmountWeatherWidget"
       },
-      "initialEquivalent": true
+      "initialEquivalent": false
     },
     {
       "source": "src/header-dropdown.mjs",

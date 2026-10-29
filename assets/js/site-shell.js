@@ -515,7 +515,7 @@
   -webkit-backdrop-filter: none !important;
 }
 
-/* Restore borders for the spinner ring (it needs a circular ring) */
+/* Header weather rendering tokens. */
 :host([data-weather-variant='header']) {
   --header-weather-menu-toggle-bottom: ${HEADER_WEATHER_MENU_TOGGLE_BOTTOM};
   --header-weather-cloud-rise: 0px;
@@ -533,219 +533,98 @@
   --weather-eyebrow-alpha: 0.78;
   --weather-scene-dim: 1;
   --weather-loader-size: clamp(38px, 7.2vw, 44px);
-  --weather-loader-core-size: clamp(5px, 1.05vw, 6px);
-  --weather-loader-inner-gap: clamp(4px, 0.8vw, 5px);
-  --weather-loader-label-offset: calc(var(--weather-loader-size) + 10px);
 }
 
-.weather-header-state__spinner {
-  position: relative !important;
+/* Both asynchronous phases share one radar, anchored to the preview rather than the overscanned scene. */
+.weather-header-preview:has(.weather-header-state__spinner),
+.weather-header-preview:has(.weather-app__scene-fallback):not(:has(.weather-header-state)) {
+  --weather-sonar-content: '';
+  --weather-sonar-motion: weatherHeaderSonarSweep 2.6s linear infinite;
+}
+
+.weather-header-preview::before,
+.weather-header-preview::after {
+  content: var(--weather-sonar-content, none) !important;
+  display: block !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
   width: var(--weather-loader-size) !important;
   height: var(--weather-loader-size) !important;
+  margin: calc(var(--weather-loader-size) / -2) 0 0 calc(var(--weather-loader-size) / -2) !important;
+  box-sizing: border-box !important;
   border-radius: 50% !important;
-  border: 1px solid rgba(224, 233, 248, 0.16) !important;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 72%)
-    !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 0 8px rgba(138, 183, 246, 0.16) !important;
-  animation: weatherHeaderLoaderBreath 2.8s ease-in-out infinite !important;
+  pointer-events: none !important;
+  z-index: 3 !important;
+  filter: none !important;
 }
 
-.weather-header-state__spinner::before {
-  content: '' !important;
-  position: absolute !important;
-  inset: 0 !important;
-  border-radius: 50% !important;
+.weather-header-preview::before {
+  border: 1px solid rgba(108, 205, 153, 0.4) !important;
+  background:
+    radial-gradient(circle at 50% 50%, #e4cb8c 0 1px, transparent 1.6px),
+    radial-gradient(circle at 72% 32%, rgba(110, 232, 164, 0.9) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 30% 68%, rgba(214, 181, 109, 0.8) 0 0.8px, transparent 1.4px),
+    repeating-radial-gradient(circle at center, transparent 0 6px, rgba(72, 165, 117, 0.32) 6.5px 7px, transparent 7.5px 13px),
+    linear-gradient(90deg, transparent 49%, rgba(67, 150, 107, 0.24) 50%, transparent 51%),
+    linear-gradient(transparent 49%, rgba(67, 150, 107, 0.24) 50%, transparent 51%),
+    radial-gradient(circle, rgba(4, 51, 32, 0.9), rgba(0, 19, 11, 0.65)) !important;
+  box-shadow: 0 0 12px rgba(0, 168, 107, 0.16) !important;
+}
+
+.weather-header-preview::after {
   background: conic-gradient(
     from -90deg,
-    rgba(245, 225, 170, 0) 0deg,
-    rgba(245, 225, 170, 0) 210deg,
-    rgba(245, 225, 170, 0.76) 270deg,
-    rgba(224, 240, 255, 0.92) 302deg,
-    rgba(245, 225, 170, 0) 340deg,
-    rgba(245, 225, 170, 0) 360deg
+    transparent 0deg 285deg,
+    rgba(0, 164, 100, 0.04) 286deg,
+    rgba(35, 187, 119, 0.32) 330deg,
+    rgba(215, 185, 109, 0.78) 358deg,
+    transparent 360deg
   ) !important;
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
-  animation: weatherHeaderLoaderSpin 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite !important;
+  animation: var(--weather-sonar-motion, none) !important;
 }
 
-.weather-header-state__spinner::after {
-  content: '' !important;
+/* Keep the widget's localized status text, but never render its two native spinner layers. */
+.weather-header-state__spinner {
+  display: none !important;
+  animation: none !important;
+}
+
+:host([data-weather-variant='header']) .weather-header-preview .weather-header-state__inner:has(.weather-header-state__spinner) p,
+:host([data-weather-variant='header']) .weather-header-preview .weather-app__scene-fallback .text-sm {
   position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: var(--weather-loader-core-size) !important;
-  height: var(--weather-loader-core-size) !important;
-  margin-left: calc(var(--weather-loader-core-size) / -2) !important;
-  margin-top: calc(var(--weather-loader-core-size) / -2) !important;
-  border-radius: 50% !important;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 249, 236, 0.98) 0%, rgba(240, 217, 160, 0.9) 100%)
-    !important;
-  box-shadow:
-    0 0 8px rgba(252, 226, 173, 0.56),
-    0 0 14px rgba(169, 202, 245, 0.26) !important;
-  transform-origin: center calc((var(--weather-loader-size) / 2) - 1px) !important;
-  animation:
-    weatherHeaderLoaderComet 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite,
-    weatherHeaderLoaderPulse 2s ease-in-out infinite !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
 }
 
-.weather-header-state__inner {
-  display: grid !important;
-  place-items: center !important;
-  gap: 10px !important;
-}
-
-.weather-header-state__inner p {
-  margin: 0 !important;
-  font-size: 0 !important;
-  line-height: 0 !important;
-  color: transparent !important;
-  letter-spacing: 0.12em !important;
-  text-transform: uppercase !important;
-  text-shadow: none !important;
-  opacity: 0 !important;
-}
-
-.weather-header-state__inner p::before,
-.weather-header-state__inner p::after {
-  content: none !important;
-}
-
-/* Scene preload: concise glass-gold loader with readable text. */
-.weather-app__scene-fallback,
-.weather-app__scene-fallback--header {
-  display: grid !important;
-  place-items: center !important;
-  pointer-events: none !important;
-}
-
-.weather-app__scene-fallback .text-sm,
-.weather-app__scene-fallback--header .text-sm,
-.weather-app__scene-fallback [class*='text-sm'],
-.weather-app__scene-fallback--header [class*='text-sm'] {
-  position: relative !important;
-  display: inline-grid !important;
-  place-items: center !important;
-  min-width: var(--weather-loader-size) !important;
-  min-height: var(--weather-loader-size) !important;
-  padding-top: 0 !important;
-  font-size: 0 !important;
-  line-height: 0 !important;
-  color: transparent !important;
-  letter-spacing: 0.12em !important;
-  text-transform: uppercase !important;
-  text-shadow: none !important;
-  opacity: 0.92 !important;
-}
-
+.weather-header-state__spinner::before,
+.weather-header-state__spinner::after,
 .weather-app__scene-fallback .text-sm::before,
-.weather-app__scene-fallback--header .text-sm::before,
-.weather-app__scene-fallback [class*='text-sm']::before,
-.weather-app__scene-fallback--header [class*='text-sm']::before {
-  content: '' !important;
-  position: absolute !important;
-  left: 50% !important;
-  top: 0 !important;
-  width: var(--weather-loader-size) !important;
-  height: var(--weather-loader-size) !important;
-  margin-left: calc(var(--weather-loader-size) / -2) !important;
-  border-radius: 50% !important;
-  border: 1px solid rgba(224, 233, 248, 0.16) !important;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 72%)
-    !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 0 8px rgba(138, 183, 246, 0.16) !important;
-  animation: weatherHeaderLoaderBreath 2.8s ease-in-out infinite !important;
+.weather-app__scene-fallback .text-sm::after {
+  content: none !important;
+  animation: none !important;
 }
 
-.weather-app__scene-fallback .text-sm::after,
-.weather-app__scene-fallback--header .text-sm::after,
-.weather-app__scene-fallback [class*='text-sm']::after,
-.weather-app__scene-fallback--header [class*='text-sm']::after {
-  content: '' !important;
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: var(--weather-loader-core-size) !important;
-  height: var(--weather-loader-core-size) !important;
-  margin-left: calc(var(--weather-loader-core-size) / -2) !important;
-  margin-top: calc(var(--weather-loader-core-size) / -2) !important;
-  border-radius: 50% !important;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 249, 236, 0.98) 0%, rgba(240, 217, 160, 0.9) 100%)
-    !important;
-  box-shadow:
-    0 0 8px rgba(252, 226, 173, 0.56),
-    0 0 14px rgba(169, 202, 245, 0.26) !important;
-  transform-origin: center calc((var(--weather-loader-size) / 2) - 1px) !important;
-  animation:
-    weatherHeaderLoaderComet 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite,
-    weatherHeaderLoaderPulse 2s ease-in-out infinite !important;
-}
-
-@keyframes weatherHeaderLoaderSpin {
+@keyframes weatherHeaderSonarSweep {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-}
-
-@keyframes weatherHeaderLoaderPulse {
-  0%,
-  100% {
-    opacity: 0.72;
-    transform: scale(0.9);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(0.98);
-  }
-}
-
-@keyframes weatherHeaderLoaderComet {
-  from {
-    transform: rotate(0deg) translateY(calc((var(--weather-loader-size) / -2) + 1px));
-  }
-  to {
-    transform: rotate(360deg) translateY(calc((var(--weather-loader-size) / -2) + 1px));
-  }
-}
-
-@keyframes weatherHeaderLoaderBreath {
-  0%,
-  100% {
-    opacity: 0.72;
-    filter: saturate(0.92) brightness(0.94);
-  }
-  50% {
-    opacity: 1;
-    filter: saturate(1.08) brightness(1.08);
-  }
 }
 
 @media (max-width: 899px) {
   :host([data-weather-variant='header']) {
     --weather-loader-size: 34px;
-    --weather-loader-core-size: 5px;
-    --weather-loader-inner-gap: 4px;
-    --weather-loader-label-offset: 42px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .weather-header-state__spinner,
-  .weather-header-state__spinner::before,
-  .weather-app__scene-fallback .text-sm::before,
-  .weather-app__scene-fallback--header .text-sm::before,
-  .weather-app__scene-fallback [class*='text-sm']::before,
-  .weather-app__scene-fallback--header [class*='text-sm']::before,
-  .weather-app__scene-fallback .text-sm::after,
-  .weather-app__scene-fallback--header .text-sm::after,
-  .weather-app__scene-fallback [class*='text-sm']::after,
-  .weather-app__scene-fallback--header [class*='text-sm']::after {
-    animation-duration: 2.2s !important;
+  .weather-header-preview {
+    --weather-sonar-motion: none !important;
   }
 }
 
@@ -2143,7 +2022,7 @@
   min-height: auto !important;
   width: max-content !important;
   max-width: max-content !important;
-  padding: 1px !important;
+  padding: 2px 3px !important;
   color: rgba(255, 238, 207, 0.96) !important;
   font-size: 7px !important;
   line-height: 1 !important;
@@ -6181,6 +6060,7 @@
   const HEADER_WEATHER_FEELS_TEMP_SHRINK_PX = 1;
   const HEADER_WEATHER_FEELS_TEMP_LETTER_SPACING_EM = 0.04;
   const HEADER_WEATHER_FEELS_MUTED_COLOR = 'rgb(255 246 228 / 0.55)';
+  const HEADER_WEATHER_FEELS_LABEL_FONT_SIZE_PX = 5.2;
   const HEADER_WEATHER_FEELS_LABEL_LETTER_SPACING_PX = 1;
 
   /**
@@ -8867,7 +8747,7 @@
     }
 
     const feelsLang = normalizeLangCode(document.documentElement.lang || 'ru');
-    const labelFontPx = 5.2;
+    const labelFontPx = HEADER_WEATHER_FEELS_LABEL_FONT_SIZE_PX;
     const valueColumnGapPx = 'clamp(3px, 1vw, 7px)';
     const isGermanFeels = feelsLang === 'de';
     const feelsRowGapPx = 'clamp(1px, 0.7vw, 4px)';
@@ -11139,15 +11019,14 @@
 
       const syncPressureAndHumidityLabels = () => {
         const metricLang = getHeaderWeatherPressureLang(host);
+        const feelsLabel = root.querySelector('.weather-header-card__feels-label');
+        const labelFontFamily = feelsLabel ? window.getComputedStyle(feelsLabel).fontFamily : 'Inter, sans-serif';
         const METRIC_ROW_SHIFT_X_PX = 0;
-        const LABEL_COLUMN_WIDTH_PX = metricLang === 'uk' ? 80 : 48;
         const APPROX_COLUMN_PX = 5;
         const VALUE_COLUMN_WIDTH_PX = 24.3;
         const METRIC_COLUMN_GAP_PX = 2.4;
         const PRESSURE_META_HEIGHT_PX = 17;
         const HUMIDITY_LABEL_AND_APPROX_SHIFT_Y_PX = 3.2;
-        const METRIC_ROW_WIDTH_PX =
-          LABEL_COLUMN_WIDTH_PX + APPROX_COLUMN_PX + VALUE_COLUMN_WIDTH_PX + METRIC_COLUMN_GAP_PX * 2;
         const conditionNode = root.querySelector('.weather-header-card__right-column .weather-header-card__condition');
         const finalPressureChipNode = root.querySelector(
           '.weather-header-card__chip[data-weather-metric="pressure"], .weather-header-card__chip--pressure-fallback'
@@ -11159,14 +11038,14 @@
         const setMetricRowStyles = (node, order) => {
           setImportantStyles(node, {
             display: 'grid',
-            'grid-template-columns': `${LABEL_COLUMN_WIDTH_PX}px ${APPROX_COLUMN_PX}px ${VALUE_COLUMN_WIDTH_PX}px`,
+            'grid-template-columns': `max-content ${APPROX_COLUMN_PX}px ${VALUE_COLUMN_WIDTH_PX}px`,
             'column-gap': `${METRIC_COLUMN_GAP_PX}px`,
             'align-items': 'center',
             'justify-items': 'stretch',
             'justify-content': 'end',
-            width: `${METRIC_ROW_WIDTH_PX}px`,
-            'min-width': `${METRIC_ROW_WIDTH_PX}px`,
-            'max-width': `${METRIC_ROW_WIDTH_PX}px`,
+            width: 'max-content',
+            'min-width': '0',
+            'max-width': '100%',
             'align-self': 'flex-end',
             position: 'relative',
             inset: 'auto 0 auto auto',
@@ -11215,19 +11094,20 @@
             'grid-column': '1',
             display: 'inline-flex',
             'align-items': 'center',
-            'justify-content': 'flex-start',
-            'justify-self': 'stretch',
+            'justify-content': 'flex-end',
+            'justify-self': 'end',
             'align-self': 'center',
-            width: `${LABEL_COLUMN_WIDTH_PX}px`,
-            'min-width': `${LABEL_COLUMN_WIDTH_PX}px`,
-            'max-width': `${LABEL_COLUMN_WIDTH_PX}px`,
+            width: 'max-content',
+            'min-width': '0',
+            'max-width': '100%',
             margin: '0',
-            'font-size': '7.5px',
-            'line-height': '8px',
+            'font-family': labelFontFamily,
+            'font-size': `${HEADER_WEATHER_FEELS_LABEL_FONT_SIZE_PX}px`,
+            'line-height': `${HEADER_WEATHER_FEELS_LABEL_FONT_SIZE_PX}px`,
             'font-weight': '400',
-            'letter-spacing': '0',
-            'text-transform': 'none',
-            'text-align': 'left',
+            'letter-spacing': `${HEADER_WEATHER_FEELS_LABEL_LETTER_SPACING_PX}px`,
+            'text-transform': 'uppercase',
+            'text-align': 'right',
             'white-space': 'nowrap',
             transform: 'none',
           });
@@ -11306,7 +11186,7 @@
             'row-gap': '0.4px',
             width: 'max-content',
             'min-width': '0',
-            'max-width': `${LABEL_COLUMN_WIDTH_PX}px`,
+            'max-width': '100%',
             height: `${PRESSURE_META_HEIGHT_PX}px`,
             'min-height': `${PRESSURE_META_HEIGHT_PX}px`,
             'max-height': `${PRESSURE_META_HEIGHT_PX}px`,
@@ -11315,7 +11195,7 @@
             'white-space': 'normal',
             transform: 'none',
             'align-self': 'center',
-            'justify-self': 'start',
+            'justify-self': 'end',
           });
 
           const localizedPressureLabel = { de: 'LUFTDRUCK', uk: 'АТМОСФЕРНИЙ ТИСК' }[metricLang];
@@ -11337,8 +11217,7 @@
             'text-align': 'right',
             'box-sizing': 'border-box',
             padding: '0',
-            'font-size': '7px',
-            'line-height': '7.5px',
+            'letter-spacing': '0',
             'text-transform': 'none',
             opacity: '0.96',
           });
@@ -13679,6 +13558,11 @@
   function normalizeMenuSeparators(label) {
     document.querySelectorAll('.menu-separator').forEach(separator => {
       separator.setAttribute('aria-hidden', 'true');
+
+      if (separator.classList.contains('menu-separator--bottom')) {
+        separator.querySelectorAll('span').forEach(caption => caption.remove());
+        return;
+      }
 
       if (!separator.querySelector('span')) {
         const caption = document.createElement('span');

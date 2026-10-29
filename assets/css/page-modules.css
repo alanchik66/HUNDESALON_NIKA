@@ -10136,3 +10136,97 @@ body.price-page .price-size-section:is(
   }
 
 }
+
+/* Booking wizard: keep every step label and action fully readable. */
+#booking-modal .modal-content {
+  width: min(100%, 1080px);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+#booking-modal .modal-content.is-booking-step-1 {
+  width: min(100%, 980px);
+}
+
+#booking-modal .modal-content.is-booking-step-2 {
+  width: min(100%, 1120px);
+}
+
+#booking-modal .modal-content.is-booking-step-3 {
+  width: min(100%, 1080px);
+}
+
+#booking-modal .step-indicator.nav-main > .filter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: auto;
+  min-height: 3.5rem;
+  padding: 0.55rem 0.65rem;
+  overflow: visible;
+  line-height: 1.25;
+  text-align: center;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+#booking-modal .modal-buttons.nav-main > .filter-btn {
+  min-width: 0;
+  min-height: 3.75rem;
+  height: auto;
+  padding: 0.7rem 1rem;
+  overflow: visible;
+  line-height: 1.25;
+  text-align: center;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+#booking-modal .booking-step .modal-buttons.nav-main {
+  width: 100%;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
+@media (max-width: 720px) {
+  #booking-modal .step-indicator.nav-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 0.56rem;
+  }
+
+  #booking-modal .step-indicator.nav-main > .filter-btn {
+    width: 100%;
+    flex: 0 0 auto;
+    height: auto;
+    min-height: 3.5rem;
+  }
+
+  #booking-modal .modal-content {
+    width: 100%;
+  }
+
+  #booking-modal .modal-buttons.nav-main {
+    width: 100%;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  #booking-modal .modal-buttons.nav-main > .filter-btn {
+    width: 100%;
+    flex: 0 1 auto;
+  }
+}
+
+@media (min-width: 721px) and (max-width: 1024px) {
+  #booking-modal .step-indicator.nav-main > .filter-btn {
+    font-size: clamp(0.92rem, 1.7vw, 1.1rem);
+    letter-spacing: 0.01em;
+  }
+}

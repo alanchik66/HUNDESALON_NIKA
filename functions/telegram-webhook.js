@@ -9,7 +9,7 @@ import {
 } from './_lib/platform-integrations.js';
 import { buildBrandedEmail } from './_lib/email-template.js';
 import { confirmGoogleBooking } from './_lib/booking-calendar.js';
-import { notifyPaidBookingConfirmed } from './_lib/payment-confirmation.js';
+import { notifyBookingConfirmed } from './_lib/payment-confirmation.js';
 import { createDeliveryTracker } from './_lib/delivery-tracking.js';
 import { isRequestBodyTooLarge, readJsonBody, timingSafeEqualStrings } from './_lib/http-security.js';
 import {
@@ -307,7 +307,7 @@ async function handleBookingConfirmation(env, callbackQuery, callbackAction, mes
     return json({ ok: true, confirmed: false });
   }
 
-  const confirmationDelivery = await notifyPaidBookingConfirmed(env, callbackAction.requestId, result);
+  const confirmationDelivery = await notifyBookingConfirmed(env, callbackAction.requestId, result);
   if (!confirmationDelivery.ok) {
     await sendTelegramMessage(env, {
       chatId: String(message.chat.id),

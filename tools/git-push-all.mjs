@@ -34,4 +34,4 @@ if (remoteSha !== local) {
   process.exit(1);
 }
 console.log(`origin/main: ${remoteSha.slice(0, 7)} OK`);
-console.log('\nDone. GitHub main is up-to-date. Deploy with: npm run deploy:full');
+console.log(`\nGitHub main is up-to-date. Wait for its CI deployment: node tools/watch-production-release.mjs ${local}`);

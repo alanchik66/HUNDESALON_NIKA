@@ -730,6 +730,12 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const formCopy = {
+    bookingEmailHint: {
+      ru: 'Проверьте папку «Входящие». Если письмо по вашей заявке не пришло в течение нескольких минут, загляните в папку «Спам». Если оно оказалось там, отметьте его как «Не спам» и добавьте info@hundesalon-nika.com в контакты или список доверенных отправителей. Это поможет получать наши следующие письма во «Входящие».',
+      uk: 'Перевірте папку «Вхідні». Якщо лист щодо вашої заявки не надійшов протягом кількох хвилин, загляньте до папки «Спам». Якщо він опинився там, позначте його як «Не спам» і додайте info@hundesalon-nika.com до контактів або списку довірених відправників. Це допоможе отримувати наші наступні листи у «Вхідні».',
+      en: 'Please check your inbox. If the email about your booking request has not arrived within a few minutes, check your spam or junk folder too. If you find it there, mark it as “Not spam” and add info@hundesalon-nika.com to your contacts or safe senders list. This helps future emails from us reach your inbox.',
+      de: 'Bitte prüfen Sie Ihren Posteingang. Falls die E-Mail zu Ihrer Buchungsanfrage nach einigen Minuten noch nicht da ist, sehen Sie bitte auch im Spam-Ordner nach. Falls sie dort liegt, markieren Sie sie als „Kein Spam“ und fügen Sie info@hundesalon-nika.com Ihren Kontakten oder der Liste sicherer Absender hinzu. So helfen Sie dabei, dass unsere nächsten E-Mails im Posteingang ankommen.',
+    },
     success: {
       ru: 'Сообщение отправлено! Мы свяжемся с вами в ближайшее время.',
       uk: "Повідомлення надіслано! Ми зв'яжемося з вами найближчим часом.",
@@ -925,6 +931,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (response.ok && result.success) {
           statusEl.classList.add('form-status--success');
           statusEl.textContent = result.message || (formCopy.success[pageLang] ?? formCopy.success.de);
+          if (form.id === 'booking-form') {
+            statusEl.textContent += ` ${formCopy.bookingEmailHint[pageLang] ?? formCopy.bookingEmailHint.de}`;
+          }
           try {
             window.hundesalonTrackConversion?.({ currency: 'EUR' });
           } catch {

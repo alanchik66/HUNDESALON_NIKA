@@ -332,7 +332,10 @@ var React = toInteropDefault(getReact()),
   DEFAULT_LOCATION = `Leipzig`,
   REFRESH_INTERVAL_MS = 300 * 1e3,
   Scene3D = (0, React.lazy)(() =>
-    preloadDependencies(() => import(`./scene.mjs?v=20260728-weather-geo-v8`), [], import.meta.url)
+    // Optional decoration must not unmount weather data when its chunk is unavailable.
+    preloadDependencies(() => import(`./scene.mjs?v=20260728-weather-geo-v8`), [], import.meta.url).catch(() => ({
+      default: () => null,
+    }))
   ),
   localeCopy = {
     ru: {

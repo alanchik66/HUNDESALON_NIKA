@@ -26,6 +26,7 @@
     de: Object.freeze({
       assistant: 'KI-Assistent für Hundepflege',
       launcher: 'HUNDESALON_NIKA Assistent öffnen',
+      launcherBadge: 'Hilfe',
       welcome:
         'Guten Tag. Ich beantworte Fragen zu Leistungen, Preisen, Vorbereitung und Terminablauf anhand unserer aktuellen Website.',
       placeholder: 'Ihre Frage an HUNDESALON_NIKA ...',
@@ -95,6 +96,7 @@
     en: Object.freeze({
       assistant: 'AI pet-care assistant',
       launcher: 'Open the HUNDESALON_NIKA assistant',
+      launcherBadge: 'Help',
       welcome:
         'Hello. I answer questions about services, prices, preparation, and appointments using our current website information.',
       placeholder: 'Ask HUNDESALON_NIKA ...',
@@ -163,6 +165,7 @@
     ru: Object.freeze({
       assistant: 'AI-ассистент по уходу за питомцами',
       launcher: 'Открыть ассистента HUNDESALON_NIKA',
+      launcherBadge: 'Помощь',
       welcome:
         'Здравствуйте. Я отвечаю на вопросы об услугах, ценах, подготовке и записи по актуальной информации нашего сайта.',
       placeholder: 'Ваш вопрос HUNDESALON_NIKA ...',
@@ -231,6 +234,7 @@
     uk: Object.freeze({
       assistant: 'AI-асистент з догляду за улюбленцями',
       launcher: 'Відкрити асистента HUNDESALON_NIKA',
+      launcherBadge: 'Допомога',
       welcome:
         'Вітаю. Я відповідаю на запитання про послуги, ціни, підготовку та запис за актуальною інформацією нашого сайту.',
       placeholder: 'Ваше запитання HUNDESALON_NIKA ...',
@@ -678,7 +682,7 @@
     launcherLogo.height = 56;
     launcherLogo.decoding = 'async';
     const launcherText = document.createElement('span');
-    launcherText.textContent = 'AI';
+    launcherText.textContent = copy.launcherBadge;
     launcher.append(launcherLogo, launcherText);
 
     const panel = document.createElement('div');

@@ -1,6 +1,7 @@
 const SITE_URL = 'https://hundesalon-nika.com';
-const LOGO_URL = `${SITE_URL}/assets/images/brand/logo.png`;
-const ICON_URL = 'https://raw.githubusercontent.com/alanchik66/HUNDESALON_NIKA/main/assets/images/icons';
+const EMAIL_ASSET_URL = 'https://hundesalon-nika.pages.dev/assets/images/email';
+const LOGO_URL = `${EMAIL_ASSET_URL}/logo.png`;
+const ICON_URL = EMAIL_ASSET_URL;
 
 // Cloudflare routing and SendPulse sender authorization are configured separately.
 // Keep this list as the canonical set of business aliases, not as a permission bypass.
@@ -193,8 +194,8 @@ export function buildBrandedEmail({ title, bodyText, preheader = 'HUNDESALON_NIK
       :root { color-scheme: light dark; }
       body { margin:0; background:#010301; color:#ece8df; font-family:Arial,Helvetica,sans-serif; line-height:1.6; }
       table { border-collapse:collapse; }
-      .email-bg { background-color:#010301; background-image:linear-gradient(145deg,#041006 0%,#010301 48%,#020806 100%); }
-      .shell { width:100%; max-width:680px; margin:0 auto; }
+      .email-bg { width:100%; background-color:#010301; background-image:linear-gradient(145deg,#041006 0%,#010301 48%,#020806 100%); }
+      .shell { width:100%; max-width:none; margin:0; }
       .card { background:#060b09; border:1px solid #d6e7dc1f; border-radius:22px; overflow:hidden; }
       .hero { padding:12px 20px 18px; background:#07150d; color:#f5f0e6; text-align:left; }
       .logo { display:block; width:72px; height:72px; max-height:72px; object-fit:contain; margin:0; }
@@ -215,7 +216,10 @@ export function buildBrandedEmail({ title, bodyText, preheader = 'HUNDESALON_NIK
       .footer a { color:#e4bd63; font-weight:700; }
       .site-footer { padding:22px 24px 20px; background:#17140d; background-image:linear-gradient(90deg,#17140d 0%,#2b2112 52%,#17140d 100%); border-top:1px solid #5f4c29; color:#9d9178; text-align:center; }
       @media screen and (max-width:600px) {
-        .email-pad { padding:0 8px 12px !important; }
+        .site-footer table { width:100% !important; }
+        .site-footer table tbody, .site-footer table tr { display:block !important; }
+        .site-footer table td { display:inline-block !important; padding:4px !important; }
+        .email-pad { padding:0 0 12px !important; }
         .hero { padding:10px 14px 16px !important; }
         .brand-cell { width:84px !important; text-align:left !important; }
         .nav-cell { text-align:right !important; }
@@ -251,8 +255,8 @@ export function buildBrandedEmail({ title, bodyText, preheader = 'HUNDESALON_NIK
   <body style="margin:0;padding:0;background-color:#010301;color:#ece8df;">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0">${escapeHtml(preheader)}</div>
     <table role="presentation" class="email-bg" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#010301" style="width:100%;background-color:#010301;background-image:linear-gradient(145deg,#041006 0%,#010301 48%,#020806 100%);">
-      <tr><td class="email-bg email-pad" align="center" valign="top" bgcolor="#010301" style="padding:0 14px 16px;background-color:#010301;">
-        <table role="presentation" class="shell card" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#060b09" style="width:100%;max-width:680px;background-color:#060b09;border:1px solid #d6e7dc1f;border-radius:22px;overflow:hidden;">
+      <tr><td class="email-bg email-pad" align="center" valign="top" bgcolor="#010301" style="width:100%;padding:0 0 16px;background-color:#010301;">
+        <table role="presentation" class="shell card" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#060b09" style="width:100%;max-width:none;background-color:#060b09;border:1px solid #d6e7dc1f;border-radius:0;overflow:hidden;">
           <tr><td class="hero" bgcolor="#07150d" style="padding:12px 20px 18px;background-color:#07150d;color:#f5f0e6;text-align:left;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;"><tr>
               <td class="brand-cell" width="84" valign="middle" style="width:84px;vertical-align:middle;"><img class="logo" src="${LOGO_URL}" width="72" height="72" alt="HUNDESALON_NIKA" style="display:block;width:72px;height:72px;max-height:72px;object-fit:contain;margin:0;"></td>
