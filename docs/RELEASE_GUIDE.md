@@ -41,7 +41,16 @@ Review and stage specific files. Never stage `.dev.vars`, credentials, local OAu
 
 ## Publish
 
-Commit the reviewed changes and push `main` without force. `.github/workflows/ci.yml` validates the pushed revision, checks current security results and calls the Pages deployment workflow on success. This workflow is the normal deployment authority. Deploy the exact artifact that passed the browser gate, with its recorded SHA and asset hashes, instead of rebuilding a different artifact after validation. Monitor the checks and confirm that the successful production deployment and publicly served assets reference the exact pushed commit.
+Commit the reviewed changes and push `main` without force. `.github/workflows/ci.yml` validates the pushed revision, checks current security results and calls the Pages deployment workflow on success. This workflow is the normal deployment authority. Deploy the exact artifact that passed the browser gate, with its recorded SHA and asset hashes, instead of rebuilding a different artifact after validation.
+
+Complete both mandatory verification phases:
+
+1. CI verifies the exact immutable Pages deployment against the tested artifact receipt. Its origin comes only from the successful current upload's validated Wrangler NDJSON records: the expected project, production/main, full commit and deployment ID must agree. The four HTML canonical URLs still point to `https://hundesalon-nika.com`, and all receipt digests remain required.
+2. Run `node tools/watch-production-release.mjs FULL_COMMIT_SHA` from a network that can reach the main domain. The watcher requires the exact successful CI run and downloads its tested artifact, verifies that artifact locally, then verifies `https://hundesalon-nika.com` against the same receipt. It has no alternate-domain fallback. A failed or missing canonical check means the full release is incomplete even when GitHub CI is green.
+
+GitHub runners returned persistent HTTP 403 from the main domain on 2026-11-04 while the independent canonical verification succeeded. This is a network-specific access result, not proof of the particular WAF rule responsible. Do not disable WAF or alter account permissions to turn the gate green. CI success certifies the deployed Pages artifact; only both phases certify the complete release. A standalone push without the watcher is not a completed full release.
+
+Wrangler's [structured output](https://developers.cloudflare.com/workers/wrangler/system-environment-variables/) is used instead of parsing a human-readable deployment banner. Keep its per-run output outside the published bundle.
 
 If that workflow is unavailable and manual deployment is explicitly authorized, run `node tools/deploy-pages.mjs --branch main --commit-dirty=false` from a clean, committed `main` matching the live GitHub revision. Its guard rejects active CI/Pages workflows, runs the full quality and current-revision security gates, builds and verifies that artifact, then rechecks the revision and workflow state before authentication and upload. The uploaded revision is verified publicly afterwards. Both `npm run deploy` and `deploy:full` use this guarded path; they do not create API tokens or send post-deploy messages. Do not deploy uncommitted Functions or stale build artifacts, or race a manual upload against the CI deployment.
 
@@ -53,7 +62,7 @@ Deploy compatible readers before changing the schema. Review unapplied D1 migrat
 
 ## Verify
 
-- Require the shared production verifier after deployment and in the release watcher: the expected commit/stamp, all four locales (`de`, `en`, `ru`, `uk`), matching `html lang`, exact canonical URLs and the served local JS/CSS. Allow only bounded propagation retries and record failure if the expected version never arrives.
+- Require the shared production verifier after deployment and in the release watcher: the expected commit/stamp, all four locales (`de`, `en`, `ru`, `uk`), matching `html lang`, exact canonical URLs and the served local JS/CSS. CI checks the validated immutable Pages origin; the watcher separately checks the main domain against the exact CI artifact receipt. Allow only bounded propagation retries and record failure if the expected version never arrives.
 - Open navigation and the booking dialog in a real browser; check desktop and mobile layout.
 - Run `node tools/audit-cloudflare-security.mjs --public-only` for public response headers.
 - Use the local, read-only register audit to confirm Calendar availability without creating bookings or sending notifications.

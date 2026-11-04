@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Build and deploy
+    name: Build and deploy (Pages host; canonical watcher pending)
     runs-on: ubuntu-latest
     env:
       RELEASE_COMMIT: ${{ inputs.release_commit || github.sha }}
@@ -101,7 +101,10 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_PAGES_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 25e872aeab8cb246c69142ab07cd0fee
-        run: node node_modules/wrangler/bin/wrangler.js pages deploy dist --project-name=hundesalon-nika --branch main --commit-hash "$RELEASE_COMMIT" --commit-dirty=false
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/pages-deployment-${{ github.run_id }}-${{ github.run_attempt }}.ndjson
+        run: |
+          test ! -e "$WRANGLER_OUTPUT_FILE_PATH" || { echo 'The deployment output file must be fresh.' >&2; exit 1; }
+          node node_modules/wrangler/bin/wrangler.js pages deploy dist --project-name=hundesalon-nika --branch main --commit-hash "$RELEASE_COMMIT" --commit-dirty=false
 
       - name: Purge Cloudflare zone cache
         env:
@@ -114,5 +117,7 @@ jobs:
             echo "::warning::Deployment succeeded, but the zone cache purge failed (token needs Zone Read + Cache Purge); cached assets may be stale."
           fi
 
-      - name: Verify the published revision and all four locales
-        run: node tools/verify-production-release.mjs --commit "$RELEASE_COMMIT" --manifest dist/config/release-manifest.json
+      - name: Verify Pages deployment host (canonical watcher pending)
+        env:
+          DEPLOYMENT_OUTPUT_PATH: ${{ runner.temp }}/pages-deployment-${{ github.run_id }}-${{ github.run_attempt }}.ndjson
+        run: node tools/verify-production-release.mjs --commit "$RELEASE_COMMIT" --manifest dist/config/release-manifest.json --wrangler-output "$DEPLOYMENT_OUTPUT_PATH"

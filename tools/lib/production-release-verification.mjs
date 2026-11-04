@@ -7,7 +7,46 @@ export const PRODUCTION_ORIGIN = 'https://hundesalon-nika.com';
 export const RELEASE_LOCALES = ['de', 'en', 'ru', 'uk'];
 export const RELEASE_MANIFEST_PATH = '/config/release-manifest.json';
 const STAMP_PATH = '/config/deploy-asset-version.txt';
+const PAGES_PROJECT = 'hundesalon-nika';
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
+
+export function parseWranglerPagesDeploymentOutput(output, { commit } = {}) {
+  if (!/^[a-f0-9]{40}$/u.test(commit || '')) throw new Error('Pass the full reviewed commit SHA.');
+  let records;
+  try {
+    if (typeof output !== 'string' || !output.trim()) throw new Error('Missing output.');
+    records = output.trim().split(/\r?\n/u).filter(line => line.trim()).map(line => JSON.parse(line));
+    if (records.some(record => !record || typeof record !== 'object' || Array.isArray(record))) throw new Error('Invalid record.');
+  } catch {
+    throw new Error('Invalid Wrangler deployment NDJSON output.');
+  }
+  const basic = records.filter(record => record.type === 'pages-deploy');
+  const detailed = records.filter(record => record.type === 'pages-deploy-detailed');
+  if (basic.length !== 1 || detailed.length !== 1 || records.some(record => record.type === 'command-failed')) {
+    throw new Error('Expected one successful Wrangler Pages deployment record pair.');
+  }
+  const deployment = detailed[0];
+  if (basic[0].version !== 1 || deployment.version !== 1 ||
+      basic[0].pages_project !== PAGES_PROJECT || deployment.pages_project !== PAGES_PROJECT ||
+      basic[0].deployment_id !== deployment.deployment_id || basic[0].url !== deployment.url ||
+      !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/u.test(deployment.deployment_id || '')) {
+    throw new Error('Wrangler Pages deployment identity mismatch.');
+  }
+  if (deployment.environment !== 'production' || deployment.production_branch !== 'main' ||
+      deployment.deployment_trigger?.metadata?.commit_hash !== commit ||
+      [[basic[0].environment, 'production'], [basic[0].production_branch, 'main'],
+        [basic[0].deployment_trigger?.metadata?.commit_hash, commit]].some(([actual, expected]) => actual !== undefined && actual !== expected)) {
+    throw new Error('Wrangler Pages deployment does not match the reviewed production main revision.');
+  }
+  let url;
+  try { url = new URL(deployment.url); } catch { throw new Error('Invalid Wrangler Pages deployment URL.'); }
+  if (url.protocol !== 'https:' || url.username || url.password || url.port || url.pathname !== '/' || url.search || url.hash ||
+      url.hostname !== `${deployment.deployment_id.slice(0, 8)}.${PAGES_PROJECT}.pages.dev` ||
+      (deployment.url !== url.origin && deployment.url !== `${url.origin}/`)) {
+    throw new Error('Use the unique hashed HTTPS Pages deployment origin, not an alias or another host.');
+  }
+  return { deploymentId: deployment.deployment_id, baseUrl: url.origin, commit };
+}
 
 function origin(value) {
   const url = new URL(value);

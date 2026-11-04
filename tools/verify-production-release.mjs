@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   prepareProductionRelease, verifyProductionArtifact, verifyProductionRelease, resolveWeatherReleaseAssets,
+  parseWranglerPagesDeploymentOutput,
 } from './lib/production-release-verification.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -21,6 +22,12 @@ async function main() {
   const stamp = option('--stamp');
   const directory = path.resolve(root, option('--dist') || 'dist');
   const manifestFile = option('--manifest');
+  const wranglerOutput = option('--wrangler-output');
+  const baseUrl = option('--base-url');
+  if (wranglerOutput && baseUrl) throw new Error('--wrangler-output cannot be combined with --base-url.');
+  if (wranglerOutput && (args.includes('--prepare') || args.includes('--verify-artifact'))) {
+    throw new Error('--wrangler-output is only valid for public deployment verification.');
+  }
   if (args.includes('--prepare')) {
     const extraAssets = resolveWeatherReleaseAssets(root);
     const manifest = prepareProductionRelease({ directory, commit, extraAssets });
@@ -36,7 +43,14 @@ async function main() {
     console.log(JSON.stringify({ commit, stamp: manifest.stamp, artifactVerified: true }));
     return;
   }
-  console.log(JSON.stringify(await verifyProductionRelease({ commit, stamp, manifest, baseUrl: option('--base-url') })));
+  if (wranglerOutput && !manifest) throw new Error('--wrangler-output requires the validated --manifest.');
+  const deployment = wranglerOutput
+    ? parseWranglerPagesDeploymentOutput(readFileSync(path.resolve(root, wranglerOutput), 'utf8'), { commit }) : undefined;
+  const result = await verifyProductionRelease({ commit, stamp, manifest, baseUrl: deployment?.baseUrl || baseUrl });
+  console.log(JSON.stringify(deployment ? {
+    ...result, deploymentId: deployment.deploymentId, verificationScope: 'deployment-host',
+    canonicalDomainVerified: false, canonicalDomainVerification: 'pending-watcher',
+  } : result));
 }
 
 main().catch(error => {

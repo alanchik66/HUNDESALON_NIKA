@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -8,6 +9,7 @@ import {
   PRODUCTION_ORIGIN, RELEASE_LOCALES, RELEASE_MANIFEST_PATH,
   prepareProductionRelease, verifyProductionArtifact, verifyProductionRelease, verifyLocaleSmoke,
   resolveWeatherReleaseAssets,
+  parseWranglerPagesDeploymentOutput,
 } from './lib/production-release-verification.mjs';
 
 const COMMIT = 'a'.repeat(40);
@@ -16,6 +18,89 @@ const SCRIPT = `/assets/js/app.js?v=${STAMP}`;
 const STYLESHEET = `/assets/css/app.css?v=${STAMP}`;
 const VENDOR_STYLESHEET = '/assets/fonts/fontawesome/all.min.css?v=20260329-0192';
 const WEATHER = '/weather/runtime.mjs?v=weather-v6';
+const DEPLOYMENT_ID = '1234abcd-1234-1234-1234-123456789abc';
+const DEPLOYMENT_ORIGIN = 'https://1234abcd.hundesalon-nika.pages.dev';
+
+const wranglerRecords = () => [
+  { type: 'wrangler-session', version: 1, command_line_args: ['pages', 'deploy', 'dist'] },
+  { type: 'pages-deploy', version: 1, pages_project: 'hundesalon-nika', deployment_id: DEPLOYMENT_ID, url: DEPLOYMENT_ORIGIN },
+  {
+    type: 'pages-deploy-detailed', version: 1, pages_project: 'hundesalon-nika', deployment_id: DEPLOYMENT_ID,
+    url: DEPLOYMENT_ORIGIN, alias: 'https://main.hundesalon-nika.pages.dev', environment: 'production', production_branch: 'main',
+    deployment_trigger: { metadata: { commit_hash: COMMIT } },
+  },
+];
+const ndjson = records => `${records.map(record => JSON.stringify(record)).join('\n')}\n`;
+
+test('Wrangler deployment output selects the exact reviewed deployment origin rather than its alias', () => {
+  assert.deepEqual(parseWranglerPagesDeploymentOutput(ndjson(wranglerRecords()), { commit: COMMIT }), {
+    deploymentId: DEPLOYMENT_ID, baseUrl: DEPLOYMENT_ORIGIN, commit: COMMIT,
+  });
+});
+
+test('Wrangler output rejects malformed, failed, missing or ambiguous deployment record pairs', () => {
+  for (const output of ['', 'private malformed output', 'null\n', '[]\n', '{}\n']) {
+    assert.throws(() => parseWranglerPagesDeploymentOutput(output, { commit: COMMIT }), /Wrangler/u);
+  }
+  for (const records of [
+    wranglerRecords().slice(0, 2), wranglerRecords().slice(2),
+    [...wranglerRecords(), wranglerRecords()[1]], [...wranglerRecords(), wranglerRecords()[2]],
+    [...wranglerRecords(), { type: 'command-failed', message: 'private command output' }],
+  ]) {
+    assert.throws(() => parseWranglerPagesDeploymentOutput(ndjson(records), { commit: COMMIT }), /one successful Wrangler Pages deployment record pair/u);
+  }
+  assert.throws(() => parseWranglerPagesDeploymentOutput(ndjson(wranglerRecords()), { commit: COMMIT.slice(0, 7) }), /full reviewed commit/u);
+});
+
+test('Wrangler output binds both deployment records to this production project and the full main SHA', () => {
+  const cases = [
+    ['basic project', records => { records[1].pages_project = 'another-project'; }],
+    ['detailed project', records => { records[2].pages_project = 'another-project'; }],
+    ['basic version', records => { records[1].version = 2; }],
+    ['detailed version', records => { records[2].version = 2; }],
+    ['mismatched ID', records => { records[1].deployment_id = '8765abcd-1234-1234-1234-123456789abc'; }],
+    ['invalid ID', records => { records[1].deployment_id = records[2].deployment_id = '1234abcd'; }],
+    ['mismatched URL', records => { records[1].url = 'https://8765abcd.hundesalon-nika.pages.dev'; }],
+    ['preview environment', records => { records[2].environment = 'preview'; }],
+    ['non-main branch', records => { records[2].production_branch = 'staging'; }],
+    ['same short SHA prefix', records => { records[2].deployment_trigger.metadata.commit_hash = COMMIT.slice(0, 7) + 'b'.repeat(33); }],
+    ['missing SHA', records => { delete records[2].deployment_trigger; }],
+    ['contradictory basic environment', records => { records[1].environment = 'preview'; }],
+    ['contradictory basic branch', records => { records[1].production_branch = 'staging'; }],
+    ['contradictory basic SHA', records => { records[1].deployment_trigger = { metadata: { commit_hash: 'b'.repeat(40) } }; }],
+  ];
+  for (const [name, change] of cases) {
+    const records = wranglerRecords();
+    change(records);
+    assert.throws(() => parseWranglerPagesDeploymentOutput(ndjson(records), { commit: COMMIT }), /deployment (?:identity mismatch|does not match)/u, name);
+  }
+});
+
+test('Wrangler output rejects aliases and URLs with another host, ID prefix, credentials, port or suffix', () => {
+  for (const url of [
+    'https://main.hundesalon-nika.pages.dev', 'https://hundesalon-nika.pages.dev',
+    'https://1234abcd.other-project.pages.dev', 'https://8765abcd.hundesalon-nika.pages.dev',
+    `${DEPLOYMENT_ORIGIN}.example.com`, DEPLOYMENT_ORIGIN.replace('https:', 'http:'),
+    DEPLOYMENT_ORIGIN.replace('https://', 'https://user:password@'),
+    `${DEPLOYMENT_ORIGIN}:443`, `${DEPLOYMENT_ORIGIN}:8443`,
+    `${DEPLOYMENT_ORIGIN}/de/`, `${DEPLOYMENT_ORIGIN}?commit=${COMMIT}`, `${DEPLOYMENT_ORIGIN}#fragment`, 'invalid-url',
+  ]) {
+    const records = wranglerRecords();
+    records[1].url = records[2].url = url;
+    assert.throws(() => parseWranglerPagesDeploymentOutput(ndjson(records), { commit: COMMIT }), /Pages deployment (?:URL|origin)/u, url);
+  }
+});
+
+test('the deployment CLI requires its validated manifest and rejects competing origins or verification modes before reading files', () => {
+  for (const extra of [[], ['--base-url', PRODUCTION_ORIGIN], ['--prepare'], ['--verify-artifact']]) {
+    const child = spawnSync(process.execPath, [
+      path.resolve('tools/verify-production-release.mjs'), '--commit', COMMIT, '--wrangler-output', 'missing-fixture.ndjson', ...extra,
+    ], { encoding: 'utf8', windowsHide: true });
+    assert.equal(child.status, 1);
+    assert.match(child.stderr, /--wrangler-output (?:cannot be combined|is only valid|requires the validated --manifest)/u);
+    assert.doesNotMatch(child.stderr, /ENOENT/u);
+  }
+});
 
 async function fixture(t, intercept = () => null, { includeVendor = false } = {}) {
   const directory = mkdtempSync(path.join(tmpdir(), 'nika-release-verification-'));
@@ -86,6 +171,41 @@ async function fixture(t, intercept = () => null, { includeVendor = false } = {}
 }
 
 const verification = f => ({ commit: COMMIT, manifest: f.manifest, baseUrl: f.baseUrl, attempts: 1 });
+
+test('Pages-host verification preserves the canonical domain and exact artifact hashes for all four locales', async t => {
+  const f = await fixture(t);
+  const deployment = parseWranglerPagesDeploymentOutput(ndjson(wranglerRecords()), { commit: COMMIT });
+  const options = {
+    ...verification(f), baseUrl: deployment.baseUrl,
+    fetcher: (url, request) => {
+      assert.equal(url.origin, DEPLOYMENT_ORIGIN);
+      return fetch(new URL(url.pathname + url.search, f.baseUrl), request);
+    },
+  };
+  const result = await verifyProductionRelease(options);
+  assert.equal(result.baseUrl, DEPLOYMENT_ORIGIN);
+  assert.equal(result.verified, true);
+  assert.equal(result.assets, 3);
+  assert.deepEqual(result.locales, RELEASE_LOCALES);
+  assert.equal(f.manifest.canonicalOrigin, PRODUCTION_ORIGIN);
+
+  const ukrainian = path.join(f.directory, 'uk/index.html');
+  const original = readFileSync(ukrainian, 'utf8');
+  writeFileSync(ukrainian, original.replace(`${PRODUCTION_ORIGIN}/uk/`, `${DEPLOYMENT_ORIGIN}/uk/`));
+  await assert.rejects(verifyProductionRelease(options), /uk: incorrect or missing canonical/u);
+  writeFileSync(ukrainian, original);
+  writeFileSync(path.join(f.directory, 'assets/js/app.js'), 'console.log("changed deployment");');
+  await assert.rejects(verifyProductionRelease(options), /Served asset mismatch/u);
+});
+
+test('Pages-host verification rejects a root redirect to the canonical host instead of its own translated root', async t => {
+  const f = await fixture(t, ({ url }) => url.pathname === '/'
+    ? { status: 301, headers: { Location: `${PRODUCTION_ORIGIN}/de/` }, type: 'text/plain', body: '' } : null);
+  await assert.rejects(verifyProductionRelease({
+    ...verification(f), baseUrl: DEPLOYMENT_ORIGIN,
+    fetcher: (url, request) => fetch(new URL(url.pathname + url.search, f.baseUrl), request),
+  }), /Production root does not redirect to \/de\//u);
+});
 
 test('the exact reviewed artifact serves all four translated pages and matching core/weather bytes', async t => {
   const f = await fixture(t);
