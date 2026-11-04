@@ -12,6 +12,74 @@ const SUN_ROTATION_SECONDS = 30 * 60;
 const SUN_START_ANGLE = THREE.MathUtils.degToRad(-34);
 const WARM_SUN_COLOR = 0xffffe6;
 
+function mountSunProminences(corona) {
+  if (!corona?.ownerDocument) return () => {};
+  const doc = corona.ownerDocument;
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const root = corona.getRootNode?.();
+  const styleHost = root?.host ? root : doc.head || corona;
+  if (!styleHost.querySelector?.('style[data-weather-sun-prominences]')) {
+    const style = doc.createElement('style');
+    style.setAttribute('data-weather-sun-prominences', '');
+    style.textContent = `
+.weather-orb-overlay.is-sun.is-header-sun .weather-sun-prominences {
+  display: block !important; position: absolute !important; inset: 0 !important;
+  width: 100% !important; height: 100% !important; overflow: visible !important;
+  pointer-events: none !important;
+}
+.weather-sun-prominences .weather-sun-prominence {
+  transform-box: view-box; transform-origin: 50px 17px;
+  animation: weatherSunProminenceLift var(--prominence-period) ease-in-out var(--prominence-delay) infinite;
+}
+.weather-sun-prominences path {
+  fill: none !important; stroke-linecap: round; vector-effect: non-scaling-stroke;
+}
+.weather-sun-prominences .weather-sun-prominence__glow {
+  stroke: #ffad38; stroke-width: 2.2; opacity: .65;
+  filter: blur(.35px) drop-shadow(0 0 1.5px #ff9b2ccc);
+}
+.weather-sun-prominences .weather-sun-prominence__filament {
+  stroke: #fff2b4; stroke-width: .65; stroke-dasharray: 32 68;
+  animation: weatherSunProminenceFlow 2.2s linear var(--prominence-delay) infinite;
+}
+@keyframes weatherSunProminenceLift {
+  0%, 100% { transform: scaleY(.55); opacity: .15; }
+  30% { transform: scaleY(1.16); opacity: .95; }
+  65% { transform: scaleY(.86); opacity: .72; }
+}
+@keyframes weatherSunProminenceFlow {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}`;
+    // The root owns this shared stylesheet; rerenders may replace either orb.
+    styleHost.appendChild(style);
+  }
+  const svg = doc.createElementNS(svgNS, 'svg');
+  svg.setAttribute('class', 'weather-sun-prominences');
+  svg.setAttribute('viewBox', '0 0 100 100');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+  for (const [index, angle] of [9, 67, 132, 194, 254, 317].entries()) {
+    const orbit = doc.createElementNS(svgNS, 'g');
+    orbit.setAttribute('transform', `rotate(${angle} 50 50)`);
+    const loop = doc.createElementNS(svgNS, 'g');
+    loop.setAttribute('class', 'weather-sun-prominence');
+    loop.style.setProperty('--prominence-period', `${4.2 + index * .31}s`);
+    loop.style.setProperty('--prominence-delay', `${-index * .87}s`);
+    for (const layer of ['glow', 'filament']) {
+      const path = doc.createElementNS(svgNS, 'path');
+      path.setAttribute('class', `weather-sun-prominence__${layer}`);
+      path.setAttribute('d', index % 2 ? 'M45 17C39 2 59 10 55 17' : 'M44 17C37 7 63 4 56 17');
+      path.setAttribute('pathLength', '100');
+      loop.appendChild(path);
+    }
+    orbit.appendChild(loop);
+    svg.appendChild(orbit);
+  }
+  corona.appendChild(svg);
+  return () => svg.remove();
+}
+
 function loadTexture(url, textures, renderer) {
   if (!url) {
     return Promise.resolve(null);
@@ -61,6 +129,7 @@ export class HeaderWeatherSunScene {
     this.sunGroup = null;
     this.sunMesh = null;
     this.textures = [];
+    this.disposeProminences = null;
     this.disposed = false;
     this.contextLost = false;
     this.onContextLost = event => {
@@ -153,6 +222,7 @@ export class HeaderWeatherSunScene {
     this.renderer = renderer;
     this.sunGroup = sunGroup;
     this.sunMesh = sunMesh;
+    this.disposeProminences = mountSunProminences(this.canvas.parentElement?.querySelector('.weather-orb-overlay__corona'));
     this.resize();
     this.updateAnimation(0);
     // One small material: prepare it synchronously so context loss cannot strand
@@ -230,6 +300,8 @@ export class HeaderWeatherSunScene {
   dispose() {
     this.disposed = true;
     this.stop();
+    this.disposeProminences?.();
+    this.disposeProminences = null;
     this.canvas.removeEventListener('webglcontextlost', this.onContextLost);
     this.canvas.removeEventListener('webglcontextrestored', this.onContextRestored);
     if (this.sunMesh) {

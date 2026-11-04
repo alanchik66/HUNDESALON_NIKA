@@ -356,7 +356,7 @@
     objectPosition: '50% 50%',
   });
   /** Warm-white lift for the self-illuminated 5778 K Sun surface. */
-  const HEADER_WEATHER_SUN_BRIGHTNESS = 1.5;
+  const HEADER_WEATHER_SUN_BRIGHTNESS = 1.85;
   const HEADER_WEATHER_SUN_MEDIA_SCALE = 1;
   const HEADER_WEATHER_SUN_SIZE_FACTOR = 1;
 
@@ -1373,9 +1373,9 @@
   position: relative !important;
   z-index: 1;
   filter:
+    contrast(.14)
     brightness(${HEADER_WEATHER_SUN_BRIGHTNESS})
     saturate(.82)
-    contrast(1.02)
     drop-shadow(0 0 3px rgba(255, 239, 198, .48)) !important;
   mix-blend-mode: normal !important;
 }
@@ -1406,13 +1406,14 @@
   clip-path: circle(50%) !important;
   object-fit: cover !important;
   background: radial-gradient(circle at 35% 32%, #fff8cd, #ffc356 60%, #e87b28);
+  filter: contrast(.14) brightness(${HEADER_WEATHER_SUN_BRIGHTNESS}) saturate(.82) !important;
   box-shadow: 0 0 12px #ffd28280, 0 0 24px #ffab4833;
   animation: weatherSunRecoveryGlow 6.4s ease-in-out infinite;
 }
 
 @keyframes weatherSunRecoveryGlow {
-  0%, 100% { filter: brightness(1.12); }
-  50% { filter: brightness(1.3); }
+  0%, 100% { box-shadow: 0 0 12px #ffd28280, 0 0 24px #ffab4833; }
+  50% { box-shadow: 0 0 15px #ffd28299, 0 0 28px #ffab4840; }
 }
 
 /* Moon — MP4 fallback: off-screen decode + canvas chroma-key (Safari / no WebM). */

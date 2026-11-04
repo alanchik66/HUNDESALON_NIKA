@@ -200,7 +200,7 @@ test('weather dropdown clears the complete navigation on mobile and desktop and 
   }
 });
 
-async function solarRecoveryHarness({ textureFailure = false, networkFailure = false, decodeFailure = false, decodeWait = Promise.resolve() } = {}) {
+async function solarRecoveryHarness({ textureFailure = false, networkFailure = false, decodeFailure = false, decodeWait = Promise.resolve(), corona = null } = {}) {
   const source = await readFile(new URL('../assets/js/header-weather-sun-scene.js', import.meta.url), 'utf8');
   const program = parse(source, { ecmaVersion: 'latest', sourceType: 'module', range: true });
   const code = program.body.filter(node => node.type !== 'ImportDeclaration').map(node => {
@@ -211,7 +211,7 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
   const frames = new Map();
   let nextFrame = 0;
   const stats = { renders: 0, disposed: 0, texturesDisposed: 0, failRender: false, contextLost: false, events: [] };
-  const canvas = { clientWidth: 96, clientHeight: 96,
+  const canvas = { clientWidth: 96, clientHeight: 96, parentElement: corona ? { querySelector: () => corona } : null,
     addEventListener: (name, callback) => listeners.set(name, callback),
     removeEventListener: name => listeners.delete(name),
   };
@@ -413,4 +413,85 @@ test('solar loading keeps every solar layer hidden and the finished corona has i
       .map(decl => ({ media: rule.parent.params || 'all', value: decl.value, important: Boolean(decl.important) })));
     assert.deepEqual(anchors(sun), anchors(moon), 'both bodies must share every base and responsive anchor');
   }
+});
+
+function coronaElement(styleHost = null) {
+  class Element {
+    constructor(tag) {
+      this.tag = tag;
+      this.attributes = new Map();
+      this.values = new Map();
+      this.style = { setProperty: (name, value) => this.values.set(name, value) };
+      this.children = [];
+    }
+    setAttribute(name, value) { this.attributes.set(name, value); }
+    querySelector(selector) {
+      return selector === 'style[data-weather-sun-prominences]'
+        ? this.children.find(child => child.tag === 'style' && child.attributes.has('data-weather-sun-prominences')) || null
+        : null;
+    }
+    appendChild(child) { this.children.push(child); child.parentElement = this; }
+    remove() {
+      if (this.parentElement) this.parentElement.children = this.parentElement.children.filter(child => child !== this);
+      this.parentElement = null;
+    }
+  }
+  const corona = new Element('span');
+  corona.ownerDocument = { createElement: tag => new Element(tag), createElementNS: (_, tag) => new Element(tag) };
+  corona.styleHost = styleHost || new Element('shadow-root');
+  corona.styleHost.host = {};
+  corona.getRootNode = () => corona.styleHost;
+  return corona;
+}
+
+test('solar prominences have staggered anchored loops and flowing filaments without entering the layout or accessibility tree', async () => {
+  const corona = coronaElement();
+  const h = await solarRecoveryHarness({ corona });
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  const [style] = corona.styleHost.children;
+  const [svg] = corona.children;
+  assert.equal(svg.attributes.get('aria-hidden'), 'true');
+  assert.equal(svg.attributes.get('focusable'), 'false');
+  assert.equal(svg.children.length, 6);
+  const loops = svg.children.map(orbit => orbit.children[0]);
+  assert.equal(new Set(loops.map(loop => loop.values.get('--prominence-delay'))).size, 6);
+  assert.ok(loops.every(loop => loop.children.length === 2 && loop.children.every(path => path.attributes.get('pathLength') === '100')));
+  const css = postcss.parse(style.textContent);
+  const root = matchingRules(css, selector => selector.endsWith(' .weather-sun-prominences'));
+  assert.equal(lastDeclaration(root, 'position').value, 'absolute');
+  assert.equal(lastDeclaration(root, 'pointer-events').value, 'none');
+  const anchored = matchingRules(css, selector => selector.endsWith(' .weather-sun-prominence'));
+  assert.equal(lastDeclaration(anchored, 'transform-origin').value, '50px 17px', 'the loop bases must remain attached to the photosphere');
+  for (const [name, property] of [['weatherSunProminenceLift', 'transform'], ['weatherSunProminenceFlow', 'stroke-dashoffset']]) {
+    const values = [];
+    keyframes(css, name).walkDecls(property, decl => values.push(decl.value));
+    assert.ok(new Set(values).size > 1, `${name} must visibly move`);
+  }
+  scene.dispose();
+  assert.equal(corona.children.length, 0);
+  assert.equal(corona.styleHost.children.length, 1, 'the shared stylesheet belongs to the root rather than an individual solar scene');
+});
+
+test('solar scenes share one root stylesheet through disposal, rerender and remount without duplicating animations', async () => {
+  const first = coronaElement();
+  const second = coronaElement(first.styleHost);
+  const a = await solarRecoveryHarness({ corona: first });
+  const b = await solarRecoveryHarness({ corona: second });
+  const sceneA = await a.mount(a.canvas, { sunTextureUrl: '/solar.jpg' });
+  const sceneB = await b.mount(b.canvas, { sunTextureUrl: '/solar.jpg' });
+  assert.equal(first.styleHost.children.length, 1);
+  sceneA.dispose();
+  sceneA.dispose();
+  assert.equal(first.children.length, 0);
+  assert.equal(second.children.length, 1, 'the second overlay retains its own SVG');
+  assert.equal(first.styleHost.children.length, 1, 'disposing one scene preserves the shared stylesheet');
+  sceneB.dispose();
+  assert.equal(second.children.length, 0);
+  const c = await solarRecoveryHarness({ corona: first });
+  const sceneC = await c.mount(c.canvas, { sunTextureUrl: '/solar.jpg' });
+  assert.equal(first.styleHost.children.length, 1, 'a remount must reuse the root stylesheet');
+  assert.equal(first.children.length, 1);
+  sceneC.dispose();
+  assert.equal(first.children.length, 0);
+  assert.equal(first.styleHost.children.length, 1);
 });
