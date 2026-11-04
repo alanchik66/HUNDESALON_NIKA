@@ -1345,6 +1345,12 @@
   visibility: hidden !important;
 }
 
+.weather-orb-overlay.is-sun.is-header-sun[data-sun-surface='ready']:is([data-sun-scene='failed'], [data-sun-scene='lost']) {
+  filter: drop-shadow(0 0 4px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .3))
+    drop-shadow(0 0 9px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .12));
+  animation: weatherSunRecoveryGlow 6.4s ease-in-out infinite;
+}
+
 .weather-orb-overlay.is-sun.is-header-sun[data-sun-surface='ready']:is([data-sun-scene='failed'], [data-sun-scene='lost']) .weather-orb-overlay__image {
   display: block !important;
   visibility: visible !important;
@@ -1363,13 +1369,11 @@
   background: radial-gradient(circle at 35% 32%, #fff8cd, #ffc356 60%, #e87b28);
   filter: var(--orb-sun-recovery-filter, grayscale(1) contrast(0.12) brightness(1.8)) !important;
   transition: filter 3s ease-in-out;
-  box-shadow: 0 0 5px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .25), 0 0 10px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .08);
-  animation: weatherSunRecoveryGlow 6.4s ease-in-out infinite;
 }
 
 @keyframes weatherSunRecoveryGlow {
-  0%, 100% { box-shadow: 0 0 5px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .25), 0 0 10px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .08); }
-  50% { box-shadow: 0 0 6px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .3), 0 0 12px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .1); }
+  0%, 100% { filter: drop-shadow(0 0 4px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .3)) drop-shadow(0 0 9px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .12)); }
+  50% { filter: drop-shadow(0 0 5px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .38)) drop-shadow(0 0 11px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .16)); }
 }
 
 /* Moon — MP4 fallback: off-screen decode + canvas chroma-key (Safari / no WebM). */

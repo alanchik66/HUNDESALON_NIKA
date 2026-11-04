@@ -98,8 +98,9 @@ function resolveSolarPixelRatio(width, height, dpr = 1, zoom = 1, maxSide = 1024
 }
 
 function createSolarLensFlareMaterial(solarColorUniform) {
-  // Compact optical ghosts, adapted from the maintained scene's LensFlare
-  // aperture/axis model. These are camera reflections, not solar plasma.
+  // One transparent light layer: illustrative limb details plus optical ghosts
+  // adapted from the maintained scene's LensFlare aperture/axis model. The
+  // camera reflections remain separate from the modelled solar plasma below.
   return new THREE.ShaderMaterial({
     uniforms: {
       uOpticalCenter: { value: new THREE.Vector2(0.22, 0.32) },
@@ -123,13 +124,29 @@ uniform vec3 uSolarColor;
 varying vec2 vSolarFlareUv;
 
 float apertureGhost(vec2 p, float sides, float radius) {
-  float angle = atan(p.y, p.x) + 0.78539816339;
+  float angle = (length(p) > 0.00001 ? atan(p.y, p.x) : 0.0) + 0.78539816339;
   float sector = 6.28318530718 / sides;
   float edge = cos(floor(0.5 + angle / sector) * sector - angle) * length(p) / radius;
   float feather = max(fwidth(edge) * 1.3, 0.12);
   float body = 1.0 - smoothstep(1.0 - feather, 1.0 + feather, edge);
   float rim = exp(-pow((edge - 0.86) / 0.16, 2.0));
   return body * (0.3 + 0.7 * rim);
+}
+
+float limbPlasma(vec2 p, float angle, float width, float height, float phase) {
+  // Tiny illustrative limb structures, not a live H-alpha observation. Keep
+  // their roots behind the original photosphere and deform them independently.
+  vec2 normal = vec2(cos(angle), sin(angle));
+  vec2 tangent = vec2(-normal.y, normal.x);
+  float x = dot(p, tangent) / width;
+  float y = dot(p, normal) - 0.247;
+  float arch = height * (1.0 - x * x) * (0.92 + 0.08 * sin(uTime * 0.17 + phase));
+  arch += height * 0.07 * sin(x * 5.0 + uTime * 0.23 + phase);
+  float feather = max(fwidth(y) * 0.7, 0.001);
+  float strand = exp(-pow((y - arch) / feather, 2.0));
+  float base = exp(-abs(y) / 0.004) * 0.22;
+  return (strand + base) * (1.0 - smoothstep(0.65, 1.0, abs(x)))
+    * smoothstep(0.247, 0.25, length(p)) * (0.82 + 0.18 * sin(uTime * 0.31 + phase));
 }
 
 void main() {
@@ -139,24 +156,45 @@ void main() {
   float axisLength = length(lensAxis);
   vec2 direction = lensAxis / max(axisLength, 0.0001);
   float offAxis = smoothstep(0.02, 0.18, axisLength);
-  float shimmer = 0.94 + 0.06 * sin(uTime * 0.24);
+  float shimmer = 0.97 + 0.03 * sin(uTime * 0.24);
 
   // The sphere occupies radius ~0.247 of this canvas. Keep all added light
   // outside its photosphere so the original texture cannot be washed out.
   float outsideDisc = smoothstep(0.248, 0.258, radial);
-  float halo = exp(-pow((radial - 0.254) / 0.026, 2.0)) * 0.12;
+  float aboveLimb = max(radial - 0.247, 0.0);
+  float angle = radial > 0.00001 ? atan(p.y, p.x) : 0.0;
+  // Unequal streamers: light travels along short tapered rays. Each angular
+  // band changes independently; there is no rotating crown of regular spokes.
+  float structure = 0.48 + 0.18 * sin(angle * 3.0 + 0.7)
+    + 0.14 * sin(angle * 7.0 - 1.3) + 0.11 * cos(angle * 13.0 + 2.1)
+    + 0.07 * sin(angle * 23.0 - 0.8);
+  float fineStrands = 0.5 + 0.5 * sin(angle * 41.0 + sin(angle * 11.0) * 1.7);
+  float filaments = pow(clamp(structure, 0.0, 1.0), 1.9) * (0.55 + 0.45 * pow(fineStrands, 3.0));
+  float pulse = 0.68 + 0.22 * sin(uTime * 0.63 - aboveLimb * 52.0 + angle * 3.0)
+    + 0.1 * sin(uTime * 0.39 - aboveLimb * 84.0 - angle * 7.0);
+  float rayLength = 0.018 + 0.046 * filaments;
+  float rays = filaments * pulse * exp(-aboveLimb / rayLength)
+    * (1.0 - smoothstep(rayLength * 1.3, rayLength * 2.1, aboveLimb));
+  float halo = exp(-aboveLimb / 0.025) * 0.25
+    + exp(-pow(aboveLimb / 0.062, 2.0)) * 0.045;
+  float plasma = limbPlasma(p, 0.61, 0.017, 0.012, 0.4)
+    + limbPlasma(p, 2.43, 0.021, 0.0135, 2.7)
+    + limbPlasma(p, -1.24, 0.014, 0.010, 4.3);
   vec2 glint = mat2(0.70710678, -0.70710678, 0.70710678, 0.70710678) * p;
   float diffraction = exp(-abs(glint.x) * 230.0 - abs(glint.y) * 12.0)
     + exp(-abs(glint.y) * 230.0 - abs(glint.x) * 12.0);
   float diamond = apertureGhost(p - direction * 0.345, 4.0, 0.034);
   float softGhost = exp(-pow(length(p - direction * 0.438) / 0.021, 2.0));
   float paleGhost = apertureGhost(p + direction * 0.322, 6.0, 0.018);
-  vec3 light = vec3(1.0) * (halo + diffraction * 0.38)
-    + offAxis * (diamond * vec3(0.42, 0.75, 0.57) * 0.27
-      + softGhost * vec3(1.0, 0.61, 0.39) * 0.22
-      + paleGhost * vec3(0.65, 0.75, 1.0) * 0.09);
+  float opticalRing = exp(-pow((length(p - direction * 0.365) - 0.043) / 0.007, 2.0));
+  vec3 light = vec3(1.0, 0.97, 0.87) * (halo + rays * 0.9 + diffraction * 0.65)
+    + vec3(1.0, 0.5, 0.24) * plasma * 0.6
+    + offAxis * (diamond * vec3(0.42, 0.75, 0.57) * 0.43
+      + softGhost * vec3(1.0, 0.61, 0.39) * 0.34
+      + paleGhost * vec3(0.65, 0.75, 1.0) * 0.16
+      + opticalRing * vec3(0.69, 0.82, 0.6) * 0.13);
   light *= uSolarColor * outsideDisc * shimmer * (1.0 - smoothstep(0.475, 0.5, radial));
-  float alpha = clamp(max(light.r, max(light.g, light.b)), 0.0, 0.32);
+  float alpha = clamp(max(light.r, max(light.g, light.b)), 0.0, 0.7);
   gl_FragColor = vec4(light / max(alpha, 0.0001), alpha);
   #include <colorspace_fragment>
 }`,

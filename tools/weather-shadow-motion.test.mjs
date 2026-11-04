@@ -349,8 +349,16 @@ test('solar recovery preserves the canvas layout size and remounts a failed rend
   assert.equal(lastDeclaration(solarImage, 'clip-path').value, 'circle(50%)');
   assert.equal(lastDeclaration(solarImage, 'clip-path').important, true, 'the solar texture cannot escape its circular silhouette under broad transparency styles');
   assert.match(lastDeclaration(solarImage, 'filter').value, /var\(--orb-sun-recovery-filter/);
-  assert.match(lastDeclaration(solarImage, 'box-shadow').value, /var\(--orb-sun-glow-rgb, 255 255 255\)/, 'native recovery must not retain a permanent yellow halo');
-  keyframes(root, 'weatherSunRecoveryGlow').walkDecls('box-shadow', declaration => {
+  assert.equal(lastDeclaration(solarImage, 'box-shadow'), undefined, 'the clipped image cannot own its external glow');
+  assert.equal(lastDeclaration(solarImage, 'animation'), undefined);
+  const nativeGlow = matchingRules(root, selector => selector === ".weather-orb-overlay.is-sun.is-header-sun[data-sun-surface='ready']:is([data-sun-scene='failed'], [data-sun-scene='lost'])");
+  assert.match(lastDeclaration(nativeGlow, 'filter').value, /drop-shadow\([^]*var\(--orb-sun-glow-rgb, 255 255 255\)/, 'native recovery glow must be rendered outside the clipped image on its parent');
+  assert.match(lastDeclaration(nativeGlow, 'animation').value, /weatherSunRecoveryGlow/);
+  const parentClip = lastDeclaration(nativeGlow, 'clip-path')?.value;
+  assert.ok(!parentClip || parentClip === 'none', 'the recovery parent must not clip its own glow');
+  const orb = matchingRules(root, selector => selector === '.weather-orb-overlay');
+  assert.equal(lastDeclaration(nativeGlow, 'overflow')?.value || lastDeclaration(orb, 'overflow').value, 'visible');
+  keyframes(root, 'weatherSunRecoveryGlow').walkDecls('filter', declaration => {
     assert.match(declaration.value, /var\(--orb-sun-glow-rgb, 255 255 255\)/, 'every recovery pulse must use the same astronomical phase color');
   });
   const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
@@ -938,6 +946,127 @@ test('solar recovery keeps reddening below the geometric horizon until the final
     assert.equal(appearances.length, stoppedCount, 'below the final -0.833 degree stop a constant color must not trigger repeated style mutations');
     assert.equal(appearances.at(-1).glowRgb, stoppedGlow);
     assert.equal(appearances.at(-1).recoveryFilter, stoppedFilter);
+  }
+  scene.dispose();
+});
+
+const solarShaderMath = {
+  sin: Math.sin, cos: Math.cos, atan: Math.atan2, pow: Math.pow, exp: Math.exp,
+  abs: Math.abs, max: Math.max,
+  clamp: (value, low, high) => Math.max(low, Math.min(high, value)),
+  smoothstep: (low, high, value) => {
+    const t = Math.max(0, Math.min(1, (value - low) / (high - low)));
+    return t * t * (3 - 2 * t);
+  },
+  vec2: (x, y) => ({ x, y }),
+  dot: (a, b) => a.x * b.x + a.y * b.y,
+  length: p => Math.hypot(p.x, p.y),
+};
+
+function solarShaderFloat(body, name) {
+  const expression = body.match(new RegExp(`\\bfloat\\s+${name}\\s*=\\s*([^;]+);`))?.[1];
+  assert.ok(expression, `the actual solar shader must declare ${name}`);
+  return `const ${name} = ${expression};`;
+}
+
+test('actual solar ray light travels independently across the limb while retaining the original photosphere and texture', async () => {
+  const h = await solarRecoveryHarness();
+  h.setNow(h.epoch + 100000);
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  const material = scene.flareMesh.material;
+  const body = material.fragmentShader.match(/void main\(\)\s*\{([\s\S]*)\}/)?.[1];
+  assert.ok(body);
+  const rayBlock = body.match(/\bfloat outsideDisc\s*=[\s\S]*?(?=\bfloat plasma\s*=)/)?.[0];
+  assert.ok(rayBlock, 'the actual ray field must precede the separate limb plasma composition');
+  const fields = [...rayBlock.matchAll(/\bfloat\s+(\w+)\s*=/g)].map(match => match[1]);
+  const lightAt = new Function('p', 'radial', 'uTime', 'math', `
+    const { sin, cos, atan, pow, exp, max, clamp, smoothstep } = math;
+    ${fields.map(name => solarShaderFloat(body, name)).join('\n')}
+    return { outsideDisc, pulse, rayLength, rays, halo };
+  `);
+  const firstTime = material.uniforms.uTime.value;
+  const originalMap = scene.sunMesh.material.map;
+  const initialRotation = scene.sunMesh.rotation.y;
+  h.setNow(h.epoch + 103000);
+  scene.renderFrame();
+  const secondTime = material.uniforms.uTime.value;
+  assert.equal(secondTime - firstTime, 3, 'the live UTC clock must advance the optical shader');
+  const ratios = [];
+  let maximumChange = 0;
+  for (let i = 0; i < 72; i += 1) {
+    const angle = i * Math.PI / 36;
+    for (const radial of [.262, .275, .29, .31]) {
+      const point = { x: Math.cos(angle) * radial, y: Math.sin(angle) * radial };
+      const first = lightAt(point, radial, firstTime, solarShaderMath);
+      const second = lightAt(point, radial, secondTime, solarShaderMath);
+      for (const sample of [first, second]) {
+        assert.ok([sample.rays, sample.pulse, sample.halo].every(value => Number.isFinite(value) && value >= 0));
+      }
+      maximumChange = Math.max(maximumChange, Math.abs(first.rays - second.rays));
+      if (first.rays > .0001 && second.rays > .0001) ratios.push(second.rays / first.rays);
+      assert.equal(first.halo, second.halo, 'moving light must not merely pulse the whole halo uniformly');
+    }
+  }
+  assert.ok(maximumChange > .01, 'light along visible short rays must change perceptibly in three seconds');
+  assert.ok(ratios.length > 10 && Math.max(...ratios) - Math.min(...ratios) > .15, 'different ray positions must change independently rather than share one global shimmer');
+  const radius = scene.sunMesh.geometry.parameters.radius;
+  const distance = scene.camera.position.z;
+  const photosphere = radius / Math.sqrt(distance ** 2 - radius ** 2) / (2 * Math.tan(scene.camera.fov * Math.PI / 360));
+  for (const time of [firstTime, secondTime]) {
+    for (const radial of [0, photosphere / 2, photosphere]) {
+      assert.equal(lightAt({ x: radial, y: 0 }, radial, time, solarShaderMath).outsideDisc, 0, 'animated atmospheric light cannot cover the original solar disc');
+    }
+  }
+  assert.equal(scene.sunMesh.material.map, originalMap);
+  assert.equal(h.stats.textures.length, 1);
+  assert.ok(Math.abs(scene.sunMesh.rotation.y - initialRotation) < .00001, 'the photographic surface keeps its physical slow rotation while optical light moves');
+  scene.dispose();
+});
+
+test('actual limb plasma stays below six percent of the solar radius and contributes no opposite-side spokes', async () => {
+  const h = await solarRecoveryHarness();
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  const shader = scene.flareMesh.material.fragmentShader;
+  const body = shader.match(/float limbPlasma\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1];
+  assert.ok(body, 'the shader must expose its small limb structures for bounded numerical verification');
+  const plasmaAt = new Function('p', 'angle', 'width', 'height', 'phase', 'uTime', 'math', `
+    const { sin, cos, pow, exp, abs, max, smoothstep, vec2, dot, length, fwidth } = math;
+    ${body.replace(/\b(?:vec2|float)\s+(\w+)\s*=/g, 'let $1 =')}
+  `);
+  const arch = body.match(/float arch\s*=[^;]+;\s*arch\s*\+=\s*[^;]+;/)?.[0];
+  assert.ok(arch, 'the actual deforming arch expression must be measured');
+  const archAt = new Function('x', 'height', 'phase', 'uTime', 'sin', `${arch.replace(/\bfloat\b/, 'let')} return arch;`);
+  const limbRadius = Number(body.match(/float y\s*=\s*dot\(p, normal\)\s*-\s*([\d.]+)/)?.[1]);
+  assert.ok(Number.isFinite(limbRadius));
+  const structures = [...shader.matchAll(/limbPlasma\(p,\s*([-\d.]+),\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\)/g)]
+    .map(match => match.slice(1).map(Number));
+  assert.equal(structures.length, 3, 'the limb must retain a small, bounded number of independent structures');
+  const radius = scene.sunMesh.geometry.parameters.radius;
+  const distance = scene.camera.position.z;
+  const photosphere = radius / Math.sqrt(distance ** 2 - radius ** 2) / (2 * Math.tan(scene.camera.fov * Math.PI / 360));
+  for (const [angle, width, height, phase] of structures) {
+    let maximumRadius = 0;
+    for (let time = 0; time < 86400; time += 37) {
+      assert.ok(limbRadius + archAt(0, height, phase, time, Math.sin) > photosphere, 'each microplasma apex must remain outside the photosphere');
+      for (let i = -20; i <= 20; i += 1) {
+        const x = i / 20;
+        maximumRadius = Math.max(maximumRadius, Math.hypot(limbRadius + archAt(x, height, phase, time, Math.sin), x * width));
+      }
+    }
+    assert.ok(maximumRadius <= photosphere * 1.06, 'deformation and tangent width must not grow a microstructure beyond six percent of the solar radius');
+    const normal = { x: Math.cos(angle), y: Math.sin(angle) };
+    for (const canvasPixels of [68, 96, 288, 1024]) {
+      const math = { ...solarShaderMath, fwidth: () => 1 / canvasPixels };
+      for (const time of [0, 1, 7, 60, 3600]) {
+        const peakRadius = limbRadius + archAt(0, height, phase, time, Math.sin);
+        const peak = plasmaAt({ x: normal.x * peakRadius, y: normal.y * peakRadius }, angle, width, height, phase, time, math);
+        assert.ok(Number.isFinite(peak) && peak > .1, 'the intended limb structure must emit light at its own apex');
+        for (const radial of [photosphere + .005, photosphere + .02, photosphere + .08]) {
+          const opposite = plasmaAt({ x: -normal.x * radial, y: -normal.y * radial }, angle, width, height, phase, time, math);
+          assert.ok(Number.isFinite(opposite) && Math.abs(opposite) < 1e-8, 'a microstructure must not create a long bright strip on the opposite side of the Sun');
+        }
+      }
+    }
   }
   scene.dispose();
 });
