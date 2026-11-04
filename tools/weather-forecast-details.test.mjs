@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { resolveForecastCloudCover } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
+import { buildForecastSlots, hasCompleteForecast, createWeatherController, resolveForecastCloudCover } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
 
 const sourceDirectory = new URL('../3d-weather-codrops-main/src/', import.meta.url);
 const readSource = name => readFile(new URL(name, sourceDirectory), 'utf8');
@@ -56,7 +56,9 @@ test('weather requests and normalization retain four distinct forecast days', as
   const requests = [];
   const axios = { get: async (url, options) => {
     requests.push({ url, ...options });
-    return { data: { current: {}, daily: { time: dates } } };
+    return { data: { current: {}, daily: {
+      time: dates, temperature_2m_max: [10, 11, 12, 13, 14], temperature_2m_min: [4, 5, 6, 7, 8], weather_code: [0, 1, 2, 3, 0],
+    } } };
   } };
   const location = { latitude: 51.34, longitude: 12.37, name: 'Leipzig' };
   const direct = new Function('axios', 'fn', 'pn', `return (${binding(source, 'Jn', 'Yn')});`)(axios, 'https://weather.test', 'fixture');
@@ -82,12 +84,185 @@ test('weather requests and normalization retain four distinct forecast days', as
   assert.equal(new Set(normalized.forecast.forecastday.map(day => day.date)).size, 4);
 });
 
+test('fallback daily normalization preserves unknown temperatures and conditions without inventing zero degrees', async () => {
+  const source = await readSource('weather-service.mjs');
+  const daily = new Function('J', 'Y', 'Cn', 'Tn', 'Bn', 'zn', `return (${binding(source, 'Gn', 'Kn')});`)(
+    value => Math.round(Number(value) * 10) / 10, Number, Number, Number,
+    code => ({ code, text: 'Actual condition' }), Date.parse
+  );
+  const date = '2026-11-04';
+  for (const value of [undefined, null, '', ' ', [], {}, false, NaN, Infinity]) {
+    const normalized = daily({ time: [date], temperature_2m_max: [value], temperature_2m_min: [value] }, 0);
+    assert.equal(normalized.day.maxtemp_c, null);
+    assert.equal(normalized.day.mintemp_c, null);
+    assert.equal(normalized.day.avgtemp_c, null);
+    assert.equal(normalized.day.maxtemp_f, null);
+    assert.equal(normalized.day.condition.code, null);
+    assert.equal(hasCompleteForecast({ current: {}, location: { tz_id: 'UTC' }, forecast: { forecastday: [normalized] } }, Date.parse(`${date}T12:00:00Z`)), false);
+  }
+  const zero = daily({ time: [date], temperature_2m_max: [0], temperature_2m_min: [0], weather_code: [0] }, 0);
+  assert.equal(zero.day.maxtemp_c, 0);
+  assert.equal(zero.day.mintemp_c, 0);
+  assert.equal(zero.day.condition.code, 0);
+  assert.equal(daily({ temperature_2m_max: [10], temperature_2m_min: [5] }, 0).date, '', 'a missing provider date must not become today');
+});
+
+const forecastDay = (date, maximum = 10, minimum = 5) => ({
+  date, day: { maxtemp_c: maximum, mintemp_c: minimum, condition: { text: `Weather for ${date}` } },
+});
+
+test('forecast slots keep four dated positions without inventing unavailable weather', () => {
+  const actual = forecastDay('2026-11-04', 0, -2);
+  const data = { current: { temp_c: 8 }, location: { tz_id: 'Europe/Berlin' }, forecast: { forecastday: [actual] } };
+  const original = structuredClone(data);
+  const slots = buildForecastSlots(data, Date.parse('2026-11-04T12:00:00Z'));
+  assert.deepEqual(slots.map(day => day.date), ['2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07']);
+  assert.equal(slots[0].available, true, 'actual zero degrees remains valid');
+  assert.equal(slots[0].day, actual.day, 'actual forecast details are retained');
+  assert.deepEqual(slots.slice(1), slots.slice(1).map(({ date }) => ({ date, available: false })));
+  assert.deepEqual(data, original, 'render slots must not pad or alter the provider payload');
+  assert.equal(data.forecast.forecastday.length, 1);
+  for (const forecast of [undefined, { forecastday: [] }, { forecastday: null }]) {
+    const empty = buildForecastSlots({ ...data, forecast }, Date.parse('2026-11-04T12:00:00Z'));
+    assert.equal(empty.length, 4);
+    assert.ok(empty.every(day => day.available === false && !('day' in day)));
+  }
+  assert.deepEqual(buildForecastSlots(null), []);
+  assert.deepEqual(buildForecastSlots({ forecast: data.forecast }), [], 'no forecast UI before current weather exists');
+});
+
+test('forecast slots validate temperatures and dates, deduplicate and order actual days', () => {
+  const fourth = forecastDay('2026-11-07', 13, 4);
+  const first = forecastDay('2026-11-04', 9, 0);
+  const second = forecastDay('2026-11-05', '11', '-1');
+  const data = { current: {}, location: { localtime: '2026-11-04 23:55' }, forecast: { forecastday: [
+    fourth, forecastDay('2026-11-04', null), first, forecastDay('2026-11-04', 99),
+    forecastDay('2026-11-03'), forecastDay('2026-11-08'), forecastDay('2026-02-30'),
+    forecastDay('2026-11-06', ''), forecastDay('2026-11-06', Infinity),
+    forecastDay('2026-11-06', NaN), forecastDay('2026-11-06', true),
+    forecastDay('2026-11-06', []), forecastDay('2026-11-06', {}),
+    { ...forecastDay('2026-11-06'), available: false }, second,
+  ] } };
+  const original = structuredClone(data);
+  const slots = buildForecastSlots(data, Date.parse('2026-11-05T08:00:00Z'));
+  assert.deepEqual(slots.map(day => day.date), ['2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07']);
+  assert.equal(new Set(slots.map(day => day.date)).size, 4);
+  assert.equal(slots[0].day, first.day, 'first valid duplicate wins');
+  assert.equal(slots[1].day, second.day);
+  assert.deepEqual(slots[2], { date: '2026-11-06', available: false });
+  assert.equal(slots[3].day, fourth.day);
+  assert.deepEqual(data, original);
+});
+
+test('forecast dates follow the location timezone across midnight, DST and leap days', () => {
+  const slotsAt = (timeZone, time, localtime = '2026-01-01 00:00') => buildForecastSlots({
+    current: {}, location: { tz_id: timeZone, localtime }, forecast: { forecastday: [] },
+  }, Date.parse(time)).map(day => day.date);
+  assert.deepEqual(slotsAt('Europe/Berlin', '2026-11-04T22:59:59Z'), ['2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07']);
+  assert.deepEqual(slotsAt('Europe/Berlin', '2026-11-04T23:00:00Z'), ['2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08']);
+  assert.deepEqual(slotsAt('Europe/Berlin', '2026-03-28T23:30:00Z'), ['2026-03-29', '2026-03-30', '2026-03-31', '2026-04-01']);
+  assert.deepEqual(slotsAt('Europe/Berlin', '2026-10-24T22:30:00Z'), ['2026-10-25', '2026-10-26', '2026-10-27', '2026-10-28']);
+  assert.deepEqual(slotsAt('UTC', '2028-02-28T23:30:00Z'), ['2028-02-28', '2028-02-29', '2028-03-01', '2028-03-02']);
+  assert.equal(slotsAt('Pacific/Kiritimati', '2026-11-04T10:30:00Z')[0], '2026-11-05');
+  assert.equal(slotsAt('America/Los_Angeles', '2026-11-04T10:30:00Z')[0], '2026-11-04');
+  assert.equal(slotsAt('Invalid/Zone', '2026-11-04T10:30:00Z', '2026-11-03 23:59')[0], '2026-11-03');
+  assert.equal(slotsAt(null, '2026-11-04T10:30:00Z', '2026-02-30 23:59')[0], '2026-11-04');
+});
+
+test('complete forecasts require four actual days covering the location calendar', () => {
+  const now = Date.parse('2026-11-04T12:00:00Z');
+  const days = ['2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07'].map(date => forecastDay(date));
+  const data = { current: {}, location: { tz_id: 'Europe/Berlin' }, forecast: { forecastday: days } };
+  assert.equal(hasCompleteForecast(data, now), true);
+  assert.equal(hasCompleteForecast({ ...data, forecast: { forecastday: [...days].reverse() } }, now), true);
+  assert.equal(hasCompleteForecast({ ...data, forecast: { forecastday: [days[0], days[0], days[1], days[2]] } }, now), false);
+  assert.equal(hasCompleteForecast({ ...data, forecast: { forecastday: days.slice(0, 3) } }, now), false);
+  assert.equal(hasCompleteForecast(data, Date.parse('2026-11-04T23:00:00Z')), false, 'a newly missing fourth local date invalidates completeness at midnight');
+  assert.equal(hasCompleteForecast(null, now), false);
+  assert.equal(hasCompleteForecast({ forecast: data.forecast }, now), false);
+});
+
+test('a partial forecast preserves current weather and retries once per 30 seconds until complete', async () => {
+  const now = Date.parse('2026-11-04T12:00:00Z');
+  const days = ['2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07'].map(date => forecastDay(date));
+  const partial = { current: { temp_c: 8 }, location: { tz_id: 'Europe/Berlin' }, forecast: { forecastday: days.slice(0, 1) } };
+  const complete = { ...partial, current: { temp_c: 9 }, forecast: { forecastday: days } };
+  const timers = new Map();
+  let nextTimer = 0;
+  let calls = 0;
+  const controller = createWeatherController({
+    initialLocation: 'Location', now: () => now,
+    service: { getCurrentWeather: async () => (++calls < 3 ? partial : complete) },
+    schedule: (callback, delay) => { timers.set(++nextTimer, { callback, delay }); return nextTimer; },
+    cancelSchedule: id => timers.delete(id),
+  });
+  const tick = async () => { for (let turn = 0; turn < 8; turn += 1) await Promise.resolve(); };
+  try {
+    assert.equal(await controller.refresh(), partial);
+    assert.equal(controller.getState().weather, partial);
+    assert.equal(controller.getState().error, null, 'missing forecast days are not a current weather failure');
+    for (let retry = 0; retry < 2; retry += 1) {
+      assert.equal(timers.size, 1, 'at most one retry is scheduled');
+      const [id, timer] = [...timers][0];
+      assert.equal(timer.delay, 30000);
+      timers.delete(id);
+      timer.callback();
+      await tick();
+      assert.equal(calls, retry + 2);
+    }
+    assert.equal(controller.getState().weather, complete);
+    assert.equal(timers.size, 0, 'complete four-day forecasts keep the existing normal refresh schedule');
+  } finally { controller.dispose(); }
+});
+
+test('partial retry cleanup rejects old location callbacks and follows request, cancel and dispose', async () => {
+  const now = Date.parse('2026-11-04T12:00:00Z');
+  const timers = new Map();
+  let nextTimer = 0;
+  let calls = 0;
+  const controller = createWeatherController({
+    initialLocation: 'A', now: () => now,
+    service: {
+      getCurrentWeather: async location => {
+        calls += 1;
+        return { current: {}, location: { name: location, tz_id: 'UTC' }, forecast: { forecastday: [] } };
+      },
+      getCurrentLocation: async () => 'C',
+    },
+    schedule: (callback, delay) => { timers.set(++nextTimer, { callback, delay }); return nextTimer; },
+    cancelSchedule: id => timers.delete(id),
+  });
+  try {
+    await controller.refresh();
+    const stale = [...timers.values()][0].callback;
+    const moving = controller.setLocation('B');
+    assert.equal(timers.size, 0, 'new requests clear the old retry immediately');
+    await moving;
+    stale();
+    assert.equal(calls, 2, 'an already queued callback cannot return to the previous location');
+    assert.equal(timers.size, 1, 'an old callback must not erase the new timer ownership');
+    controller.cancel();
+    assert.equal(timers.size, 0);
+    await controller.refresh();
+    assert.equal(timers.size, 1);
+    const locating = controller.currentLocation();
+    assert.equal(timers.size, 0, 'starting device geolocation clears the selected place retry');
+    await locating;
+    assert.equal(controller.getState().weather.location.name, 'C');
+    const disposed = [...timers.values()][0].callback;
+    controller.dispose();
+    assert.equal(timers.size, 0);
+    disposed();
+    assert.equal(calls, 4, 'disposed controllers cannot fetch from a queued retry');
+  } finally { controller.dispose(); }
+});
+
 for (const filename of ['widget.mjs', 'header-preview.mjs', 'header-dropdown.mjs']) {
   test(`${filename}: the fourth forecast tile selects its own date and weather`, async () => {
     const source = await readSource(filename);
-    const listExpression = source.match(/\bae = (d\?\.forecast\?\.forecastday\?\.slice\([^\n]+),\n/)[1];
+    const listExpression = source.match(/\bae = ([^\n]+),\n/)[1];
     const selectedExpression = source.match(/\bQ = (B === null[^\n]+),\n/)[1];
-    const select = new Function('d', 'B', `const ae = ${listExpression}; const Q = ${selectedExpression}; return { days: ae, selected: Q };`);
+    const select = new Function('buildForecastSlots', 'd', 'B', `const ae = ${listExpression}; const Q = ${selectedExpression}; return { days: ae, selected: Q };`).bind(null, data => buildForecastSlots(data, Date.parse('2026-11-03T12:00:00Z')));
     const forecastDay = new Function('resolveForecastCloudCover', `return (${binding(source, 'weatherForForecastDay', 'weatherStatistics')});`)(resolveForecastCloudCover);
     const dates = ['2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07'];
     const data = {
@@ -106,7 +281,55 @@ for (const filename of ['widget.mjs', 'header-preview.mjs', 'header-dropdown.mjs
     assert.equal(selectedWeather.current.condition.text, 'Day 3');
     assert.equal(select(data, null).selected, null);
     assert.equal(forecastDay(data, null), data, 'current weather remains available');
-    assert.deepEqual(select({ forecast: { forecastday: days.slice(0, 3) } }, 3).selected, null, 'a shorter fallback must not invent a fourth day');
+    const partial = { ...data, forecast: { forecastday: data.forecast.forecastday.slice(0, 3) } };
+    const incomplete = select(partial, 3);
+    assert.equal(incomplete.days.length, 4);
+    assert.deepEqual(incomplete.days[3], { date: '2026-11-06', available: false });
+    assert.equal(incomplete.selected, null, 'a missing forecast must not be selected for details');
+    assert.equal(forecastDay(partial, incomplete.days[3]), partial, 'placeholder selection keeps current details');
+    assert.equal(partial.forecast.forecastday.length, 3, 'a shorter fallback must not invent provider weather');
+  });
+
+  test(`${filename}: four localized cards keep unavailable weather empty and non-selectable`, async () => {
+    const source = await readSource(filename);
+    const copy = new Function(`return (${binding(source, 'localeCopy', 'conditionCodeLabels')});`)();
+    const localeTags = new Function(`return (${binding(source, 'localeTags', 'formatCountry')});`)();
+    const formatDate = new Function('localeTags', `return (${binding(source, 'formatForecastDate', 'translateCondition')});`)(localeTags);
+    const translate = new Function('conditionCodeLabels', 'conditionTextLabels', `return (${binding(source, 'translateCondition', 'weatherForForecastDay')});`)(
+      new Function(`return (${binding(source, 'conditionCodeLabels', 'conditionTextLabels')});`)(),
+      new Function(`return (${binding(source, 'conditionTextLabels', 'localeTags')});`)()
+    );
+    const start = source.indexOf('                        ae.map(');
+    const end = source.indexOf('\n                      ],', start);
+    assert.ok(start >= 0 && end > start, 'forecast card rendering must be present');
+    const render = new Function('ae', 'u', 'U', 'B', 'V', 'jsxRuntime', 'formatForecastDate', 'translateCondition',
+      `return (${source.slice(start, end).trim().replace(/,$/, '')});`);
+    const jsx = (type, props, key) => ({ type, props, key });
+    const actual = forecastDay('2026-11-04', 0, -2);
+    actual.day.condition = { code: 1000, text: 'Sunny' };
+    const data = { current: {}, location: { localtime: '2026-11-04 12:00' }, forecast: { forecastday: [actual] } };
+    const slots = buildForecastSlots(data);
+    for (const [locale, unavailable] of [['ru', 'Прогноз недоступен'], ['uk', 'Прогноз недоступний'], ['de', 'Vorhersage nicht verfügbar'], ['en', 'Forecast unavailable']]) {
+      const selections = [];
+      const cards = render(slots, locale, copy[locale], 1, index => selections.push(index), { jsx, jsxs: jsx }, formatDate, translate);
+      assert.equal(cards.length, 4, locale);
+      assert.equal(new Set(cards.map(card => card.key)).size, 4);
+      assert.deepEqual(cards.map(card => card.props['data-forecast-date']), slots.map(day => day.date));
+      assert.deepEqual(cards.map(card => card.props.children[0].props.children), slots.map(day => formatDate(day.date, locale)));
+      assert.deepEqual(cards[0].props.children[1].props.children, [0, '° / ', -2, '°']);
+      assert.equal(cards[0].props.children[2].props.children, translate(actual.day.condition, locale));
+      cards[0].props.onClick();
+      assert.deepEqual(selections, [0]);
+      for (const card of cards.slice(1)) {
+        assert.equal(card.props.disabled, true);
+        assert.equal(card.props['aria-disabled'], true);
+        assert.equal(card.props.children[1].props.children, '— / —');
+        assert.equal(card.props.children[2].props.children, unavailable);
+        assert.ok(!card.props.className.includes('is-active'));
+        card.props.onClick();
+      }
+      assert.deepEqual(selections, [0], 'unavailable cards cannot change the selected detail day');
+    }
   });
 
   test(`${filename}: pressure is converted to localized millimetres of mercury`, async () => {

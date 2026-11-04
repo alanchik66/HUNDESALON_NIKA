@@ -6161,7 +6161,7 @@
   function isHeaderWeatherDropdownForecastSelected(host) {
     const root = host?.shadowRoot;
     const active = root?.querySelector('.weather-header-dropdown__forecast-pill.is-active');
-    return Boolean(active && Array.from(root.querySelectorAll('.weather-header-dropdown__forecast-pill')).indexOf(active) > 0);
+    return Boolean(active?.dataset?.forecastDate && !active.disabled);
   }
 
   function applyHeaderWeatherDropdownReadings(host, readings) {
@@ -7331,10 +7331,12 @@
 
   function resolveHeaderWeatherDropdownAtmosphere(host, currentAtmosphere) {
     const dropdown = host?.shadowRoot?.querySelector('.weather-header-dropdown');
-    const forecastIndex = Array.from(dropdown?.querySelectorAll('.weather-header-dropdown__forecast-pill') || [])
-      .indexOf(dropdown?.querySelector('.weather-header-dropdown__forecast-pill.is-active')) - 1;
+    const active = dropdown?.querySelector('.weather-header-dropdown__forecast-pill.is-active');
+    const forecastDate = active?.disabled ? null : active?.dataset?.forecastDate;
     const forecastData = host?.__weatherWidgetInstance?.getState?.()?.weather || host?.__weatherWidgetData;
-    const selectedForecast = forecastIndex >= 0 ? forecastData?.forecast?.forecastday?.[forecastIndex] : null;
+    const selectedForecast = forecastDate
+      ? host?.__weatherWidgetInstance?.getForecastSlots?.(forecastData)?.find(day => day.date === forecastDate && day.available)
+      : null;
     const forecastDay = selectedForecast?.day ? {
       ...selectedForecast.day,
       cloud: host.__weatherWidgetInstance?.getForecastCloudCover?.(selectedForecast) ?? null,

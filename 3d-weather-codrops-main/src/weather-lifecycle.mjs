@@ -1,5 +1,44 @@
 export const WEATHER_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 
+export function buildForecastSlots(data, nowMs = Date.now()) {
+  if (!data?.current) return [];
+  const validDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+    Number.isFinite(Date.parse(`${value}T00:00:00Z`)) && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
+  const time = Number.isFinite(nowMs) && Number.isFinite(new Date(nowMs).getTime()) ? nowMs : Date.now();
+  let today;
+  const timeZone = data.location?.tz_id || data.location?.timezone;
+  if (timeZone) {
+    try {
+      const parts = new Intl.DateTimeFormat('en', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(time);
+      const part = type => parts.find(value => value.type === type)?.value;
+      const date = `${part('year')}-${part('month')}-${part('day')}`;
+      if (validDate(date)) today = date;
+    } catch { /* A provider without a valid IANA zone still supplies its local calendar date. */ }
+  }
+  if (!today) {
+    const localDate = String(data.location?.localtime || '').match(/^(\d{4}-\d{2}-\d{2})(?:[T ]|$)/)?.[1];
+    today = validDate(localDate) ? localDate : new Date(time).toISOString().slice(0, 10);
+  }
+  const finiteTemperature = value => (typeof value === 'number' || (typeof value === 'string' && value.trim() !== '')) &&
+    Number.isFinite(Number(value));
+  const actualDays = new Map();
+  for (const day of Array.isArray(data.forecast?.forecastday) ? data.forecast.forecastday : []) {
+    if (!validDate(day?.date) || day.available === false || !finiteTemperature(day.day?.maxtemp_c) || !finiteTemperature(day.day?.mintemp_c)) continue;
+    if (!actualDays.has(day.date)) actualDays.set(day.date, day);
+  }
+  const firstDay = Date.parse(`${today}T00:00:00Z`);
+  return Array.from({ length: 4 }, (_, offset) => {
+    const date = new Date(firstDay + offset * 86400000).toISOString().slice(0, 10);
+    const actual = actualDays.get(date);
+    return actual ? { ...actual, available: true } : { date, available: false };
+  });
+}
+
+export function hasCompleteForecast(data, nowMs = Date.now()) {
+  const slots = buildForecastSlots(data, nowMs);
+  return slots.length === 4 && slots.every(day => day.available);
+}
+
 export function resolveForecastCloudCover(forecastDay) {
   const percent = value => value === null || value === undefined || (typeof value === 'string' && !value.trim()) || !Number.isFinite(Number(value))
     ? null : Math.max(0, Math.min(100, Number(value)));
@@ -126,12 +165,17 @@ const locationKey = location => typeof location === 'string'
   ? location.trim()
   : `${Number(location?.latitude)},${Number(location?.longitude)}`;
 
-export function createWeatherController({ service, locale = 'en', initialLocation = '', fallbackLocation = 'Leipzig', useGeolocation = false, requireLocation = false, now = Date.now }) {
+export function createWeatherController({ service, locale = 'en', initialLocation = '', fallbackLocation = 'Leipzig', useGeolocation = false, requireLocation = false, now = Date.now, schedule = setTimeout, cancelSchedule = clearTimeout }) {
   let location = initialLocation || null;
   let generation = 0;
   let pending = null;
   let locating = null;
   let disposed = false;
+  let partialRetry = null;
+  const clearPartialRetry = () => {
+    if (partialRetry !== null) cancelSchedule(partialRetry);
+    partialRetry = null;
+  };
   const listeners = new Set();
   let state = { weather: null, location, lastUpdatedAt: 0, loading: false, error: null, geoStatus: requireLocation && !location ? 'pending' : null };
   const publish = patch => {
@@ -140,6 +184,7 @@ export function createWeatherController({ service, locale = 'en', initialLocatio
   };
   const request = target => {
     if (disposed) return Promise.reject(new Error('Weather widget is unmounted.'));
+    clearPartialRetry();
     const key = locationKey(target);
     if (pending?.key === key) return pending.promise;
     location = target;
@@ -153,6 +198,14 @@ export function createWeatherController({ service, locale = 'en', initialLocatio
         throw new Error('Only stale weather is available.');
       }
       publish({ weather, location: target, lastUpdatedAt: now(), error: null });
+      if (!disposed && token === generation && !hasCompleteForecast(weather, now())) {
+        partialRetry = schedule(() => {
+          if (disposed || token !== generation) return;
+          partialRetry = null;
+          request(target).catch(() => {});
+        }, 30000);
+        partialRetry?.unref?.();
+      }
       return weather;
     }).catch(error => {
       if (disposed || token !== generation) return false;
@@ -168,6 +221,7 @@ export function createWeatherController({ service, locale = 'en', initialLocatio
   const currentLocation = () => {
     if (disposed) return Promise.reject(new Error('Weather widget is unmounted.'));
     if (locating) return locating;
+    clearPartialRetry();
     const token = ++generation;
     pending = null;
     publish({ loading: true, error: null, geoStatus: 'pending' });
@@ -208,11 +262,13 @@ export function createWeatherController({ service, locale = 'en', initialLocatio
       return () => listeners.delete(listener);
     },
     cancel() {
+      clearPartialRetry();
       generation += 1;
       pending = null;
       locating = null;
     },
     dispose() {
+      clearPartialRetry();
       disposed = true;
       generation += 1;
       pending = null;

@@ -7,7 +7,7 @@
 import { r as toInteropDefault } from '../dist-widget/rolldown-runtime-CwX0HnDi.mjs';
 import { n as getJsxRuntime, r as getReact, t as getReactDOM } from '../dist-widget/react-vendor-DdSZTPSL.mjs';
 import { i as weatherService } from './weather-service.mjs?v=20261103-weather-parity-v6';
-import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveForecastCloudCover } from './weather-lifecycle.mjs?v=20261103-weather-parity-v6';
+import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveForecastCloudCover, buildForecastSlots } from './weather-lifecycle.mjs?v=20261103-weather-parity-v6';
 var React = toInteropDefault(getReact()),
   jsxRuntime = getJsxRuntime(),
   LocationSearch = ({
@@ -348,6 +348,7 @@ var React = toInteropDefault(getReact()),
       openDetails: `Меню погоды`,
       closeDetails: `Свернуть`,
       forecast: `Прогноз`,
+      forecastUnavailable: `Прогноз недоступен`,
       now: `Сейчас`,
       details: `Детали`,
       visibility: `Видимость`,
@@ -384,6 +385,7 @@ var React = toInteropDefault(getReact()),
       openDetails: `Відкрити меню`,
       closeDetails: `Згорнути`,
       forecast: `Прогноз`,
+      forecastUnavailable: `Прогноз недоступний`,
       now: `Зараз`,
       details: `Деталі`,
       visibility: `Видимість`,
@@ -420,6 +422,7 @@ var React = toInteropDefault(getReact()),
       openDetails: `Menü öffnen`,
       closeDetails: `Schließen`,
       forecast: `Vorhersage`,
+      forecastUnavailable: `Vorhersage nicht verfügbar`,
       now: `Jetzt`,
       details: `Details`,
       visibility: `Sichtweite`,
@@ -456,6 +459,7 @@ var React = toInteropDefault(getReact()),
       openDetails: `Open menu`,
       closeDetails: `Collapse`,
       forecast: `Forecast`,
+      forecastUnavailable: `Forecast unavailable`,
       now: `Now`,
       details: `Details`,
       visibility: `Visibility`,
@@ -552,7 +556,7 @@ var React = toInteropDefault(getReact()),
         e.text)) ||
     ``,
   weatherForForecastDay = (e, t) => {
-    if (!e || !t) return e;
+    if (!e || !t || t.available === false) return e;
     let n = t.day.avgtemp_c ?? t.day.maxtemp_c,
       r = t.day.avgtemp_f ?? t.day.maxtemp_f;
     return {
@@ -705,8 +709,8 @@ function WeatherApp({
         children: U.loadingScene,
       }),
     }),
-    ae = d?.forecast?.forecastday?.slice(0, 4) || [],
-    Q = B === null ? null : ae[B] || null,
+    ae = buildForecastSlots(d),
+    Q = B === null || !ae[B]?.available ? null : ae[B],
     $ = (0, React.useMemo)(() => weatherForForecastDay(d, Q), [d, Q]),
     oe = $ ? weatherStatistics($, U) : [],
     se = d ? translateCondition(d.current.condition, u) : ``,
@@ -1029,15 +1033,18 @@ function WeatherApp({
                             `button`,
                             {
                               type: `button`,
-                              className: `weather-header-dropdown__forecast-pill${B === t ? ` is-active` : ``}`,
-                              onClick: () => V(t),
+                              className: `weather-header-dropdown__forecast-pill${B === t && e.available ? ` is-active` : ``}`,
+                              'data-forecast-date': e.date,
+                              disabled: !e.available,
+                              'aria-disabled': !e.available,
+                              onClick: () => { if (e.available) V(t); },
                               children: [
                                 (0, jsxRuntime.jsx)(`span`, { children: formatForecastDate(e.date, u) }),
                                 (0, jsxRuntime.jsxs)(`strong`, {
-                                  children: [Math.round(e.day.maxtemp_c), `° / `, Math.round(e.day.mintemp_c), `°`],
+                                  children: e.available ? [Math.round(e.day.maxtemp_c), `° / `, Math.round(e.day.mintemp_c), `°`] : `— / —`,
                                 }),
                                 (0, jsxRuntime.jsx)(`em`, {
-                                  children: translateCondition(e.day.condition, u),
+                                  children: e.available ? translateCondition(e.day.condition, u) : U.forecastUnavailable,
                                 }),
                               ],
                             },
@@ -1433,6 +1440,7 @@ var ReactDOM = toInteropDefault(getReactDOM()),
       setLocation: runtimeController.setLocation,
       getState: runtimeController.getState,
       getForecastCloudCover: resolveForecastCloudCover,
+      getForecastSlots: buildForecastSlots,
       setLocationStatus: runtimeController.setLocationStatus,
       unmount: () => {
         (runtimeController.dispose(), c.unmount(), delete n.dataset.weatherVariant, mountedWidgets.delete(n));

@@ -5,6 +5,7 @@
  * Existing dependency runtimes remain explicitly vendored build inputs.
  */
 import { n as e } from '../dist-widget/rolldown-runtime-CwX0HnDi.mjs';
+import { hasCompleteForecast } from './weather-lifecycle.mjs?v=20261103-weather-parity-v6';
 function t(e, t) {
   return function () {
     return e.apply(t, arguments);
@@ -2395,25 +2396,27 @@ var compiledWeatherConfiguration = {
     }
   },
   Gn = (e, t) => {
-    let n = Number(e.temperature_2m_max?.[t] ?? 0),
-      r = Number(e.temperature_2m_min?.[t] ?? 0),
-      i = J((n + r) / 2),
+    const temperature = value => (typeof value === 'number' || (typeof value === 'string' && value.trim())) && Number.isFinite(Number(value)) ? Number(value) : null;
+    const weatherCode = temperature(e.weather_code?.[t]);
+    let n = temperature(e.temperature_2m_max?.[t]),
+      r = temperature(e.temperature_2m_min?.[t]),
+      i = n === null || r === null ? null : J((n + r) / 2),
       a = Number(e.precipitation_sum?.[t] ?? 0),
       o = Number(e.snowfall_sum?.[t] ?? 0),
       s = Number(e.wind_speed_10m_max?.[t] ?? 0),
       c = Number(e.uv_index_max?.[t] ?? 0),
       l = Number(e.precipitation_probability_max?.[t] ?? 0),
-      u = Bn(Number(e.weather_code?.[t] ?? 3), 1);
+      u = weatherCode === null ? { text: '', code: null, icon: '' } : Bn(weatherCode, 1);
     return {
-      date: e.time?.[t] || new Date().toISOString().slice(0, 10),
-      date_epoch: zn(`${e.time?.[t] || new Date().toISOString().slice(0, 10)}T12:00`),
+      date: e.time?.[t] || '',
+      date_epoch: e.time?.[t] ? zn(`${e.time[t]}T12:00`) : null,
       day: {
-        maxtemp_c: J(n),
-        maxtemp_f: Y(n),
-        mintemp_c: J(r),
-        mintemp_f: Y(r),
+        maxtemp_c: n === null ? null : J(n),
+        maxtemp_f: n === null ? null : Y(n),
+        mintemp_c: r === null ? null : J(r),
+        mintemp_f: r === null ? null : Y(r),
         avgtemp_c: i,
-        avgtemp_f: Y(i),
+        avgtemp_f: i === null ? null : Y(i),
         maxwind_mph: Cn(s),
         maxwind_kph: J(s),
         totalprecip_mm: J(a),
@@ -2493,7 +2496,7 @@ var compiledWeatherConfiguration = {
     );
   },
   qn = async e => {
-    let t = (await axios.get(`${dn}/weather`, { params: { location: e }, timeout: 15e3 })).data;
+    let t = (await axios.get(`${dn}/weather`, { params: { location: e, forecast_contract: `four-day-v2` }, timeout: 15e3 })).data;
     return t?.rateLimited || t?.serviceUnavailable ? null : t;
   },
   Jn = async e =>
@@ -2552,12 +2555,13 @@ var compiledWeatherConfiguration = {
       let n = Pn(e),
         r = n.query,
         i = Z(t.locale),
-        a = `hn_weather_resilience_v1:${i}:${r}`,
+        a = `hn_weather_resilience_v2:${i}:${r}`,
         o = (e, t = !1) => {
           if (!e?.data?.current || !e.data.location || !Array.isArray(e.data.forecast?.forecastday)) return null;
           let n = Date.now(),
             r = Number(e.expiresAt),
             i = Number(e.savedAt);
+          if (!Number.isFinite(i) || i > n || !hasCompleteForecast(e.data, i)) return null;
           if (Number.isFinite(r) && r > n && Number.isFinite(i) && n - i < 6e5)
             return e.data ? { ...e.data, cached: true, fromCache: true, stale: false, cacheSavedAt: i } : null;
           if (t && Number.isFinite(i) && n - i < 1728e5) return e.data || null;
@@ -2575,7 +2579,8 @@ var compiledWeatherConfiguration = {
           }
         },
         c = e => {
-          if (!e || e.stale || typeof localStorage > `u`) return e;
+          // A partial response can update current readings without replacing the last complete forecast.
+          if (!e || e.stale || !hasCompleteForecast(e, Date.now()) || typeof localStorage > `u`) return e;
           try {
             localStorage.setItem(a, JSON.stringify({ savedAt: Date.now(), expiresAt: Date.now() + 6e5, data: e }));
           } catch {}

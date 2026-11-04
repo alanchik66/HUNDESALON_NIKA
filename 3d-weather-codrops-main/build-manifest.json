@@ -50,7 +50,7 @@
       "source": "src/weather-service.mjs",
       "output": "weatherService-iG8lrujy.mjs",
       "baselineSha256": "4e1172083c348cf56f9bdd659495b1b81dec38872815cfe549763192504a1310",
-      "canonicalSha256": "01e7563d4b4cf2725f2788d10da0ab94c67160db11acee95ba33d33d5d5d1325",
+      "canonicalSha256": "3f7d1710671f2ba387f4d403a3137f51b38566ae46b6666f64e99986337aef8a",
       "recoveredNames": {
         "Xn": "weatherService",
         "Qn": "isPartlyCloudy",
@@ -66,7 +66,7 @@
       "source": "src/widget.mjs",
       "output": "weather-widget.es.js",
       "baselineSha256": "11a30d167a9b9a21724da59e07a94ddfcc2dff2186c7946af7294c1bb3609cf7",
-      "canonicalSha256": "e1c2ae913a04ce524336abd1754276095a773b75fecec23c246b721734613aee",
+      "canonicalSha256": "64fb6a82d0347a96d22e5c5f4907c8e020b8ab2ed3eaae271563b3da2e51df85",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -110,7 +110,7 @@
       "source": "src/header-preview.mjs",
       "output": "weather-widget.header-panel-preview.es.js",
       "baselineSha256": "b850b368a2d72b4110c329fed9440dd4c70bea7f6287da6e872986271bb360c2",
-      "canonicalSha256": "a8339287062e1aa5771da10fd6016e3e12709fa606557daab6cb6159826867b0",
+      "canonicalSha256": "63a5c232074d0fdf2f2ddf52bc5018cea6f96343a75ba9c81268413a60154538",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -154,7 +154,7 @@
       "source": "src/header-dropdown.mjs",
       "output": "weather-widget.header-panel-dropdown-scene.es.js",
       "baselineSha256": "6336c75ab083aafd574ec0ae1344ac7ac515782231d1658dfe950e2a032175f7",
-      "canonicalSha256": "f706886c6d1357ef3407337ce60e0b39a3564f97e249c384e90d4122e529f14c",
+      "canonicalSha256": "bc4e2c9e4fec2ce4629888499998dda2b75be60107edc6d53cabea6c582dd96a",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -206,7 +206,7 @@
       "source": "src/weather-lifecycle.mjs",
       "output": "weather-lifecycle.mjs",
       "baselineSha256": null,
-      "canonicalSha256": "18b8cb02ad1418ca7120cfba8d3396f9d7b8414cc8f562aff85868564483f956",
+      "canonicalSha256": "0e73b4267abd1b35e367a8ff46c03a024cd05be2d81b4d928b7547825964cb7a",
       "recoveredNames": {},
       "initialEquivalent": false
     }

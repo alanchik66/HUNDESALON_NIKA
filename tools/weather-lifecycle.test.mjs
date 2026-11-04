@@ -61,7 +61,7 @@ function readingsHarness(locale) {
   const hero = { temperature: new ReadingNode('6,4'), condition: new ReadingNode('Renderer condition'), updated: new ReadingNode('') };
   hero.updated.setParts(['Updated', ':', ' ', '12:30']);
   hero.updated.matches = selector => selector.includes('.weather-header-dropdown__hero-copy > span');
-  const pills = [{}, {}, {}];
+  const pills = [{}, { dataset: { forecastDate: '2026-11-04' } }, { dataset: { forecastDate: '2026-11-05' } }];
   let active = 0;
   const cacheWrites = [];
   const previews = [];
