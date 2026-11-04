@@ -216,7 +216,8 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
   const events = map => ({ addEventListener: (name, handler) => map.set(name, handler), removeEventListener: name => map.delete(name) });
   const viewport = { scale: 1, ...events(viewportListeners) };
   const window = { devicePixelRatio: 3, visualViewport: viewport, ...events(windowListeners) };
-  const stats = { renders: 0, disposed: 0, texturesDisposed: 0, failRender: false, contextLost: false, events: [], sizes: [], textures: [] };
+  const stats = { renders: 0, disposed: 0, texturesDisposed: 0, failRender: false, contextLost: false,
+    events: [], sizes: [], textures: [], materialsDisposed: [], geometriesDisposed: [] };
   const canvas = { clientWidth: 96, clientHeight: 96,
     addEventListener: (name, callback) => listeners.set(name, callback),
     removeEventListener: name => listeners.delete(name),
@@ -254,7 +255,11 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
     Clock: class { getElapsedTime() { return 0; } },
     ShaderChunk: { map_fragment: mapFragment },
     Scene: class { children = []; background = null; add(child) { this.children.push(child); } },
-    PerspectiveCamera: class { position = { set() {} }; lookAt() {} updateProjectionMatrix() {} },
+    PerspectiveCamera: class {
+      constructor(fov) { this.fov = fov; }
+      position = { set(x, y, z) { Object.assign(this, { x, y, z }); } };
+      lookAt() {} updateProjectionMatrix() {}
+    },
     WebGLRenderer: Renderer,
     TextureLoader: class { load(url, success, progress, failure) {
       if (textureFailure) throw new Error('Texture request failed');
@@ -264,8 +269,14 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
       success(texture);
     } },
     Color: class { setRGB() {} },
-    MeshBasicMaterial: class { constructor(options) { Object.assign(this, options); } dispose() {} },
-    SphereGeometry: class { dispose() {} },
+    Vector2: class { constructor(x = 0, y = 0) { this.set(x, y); } set(x, y) { this.x = x; this.y = y; return this; } },
+    ShaderMaterial: class { constructor(options) { Object.assign(this, options); } dispose() { stats.materialsDisposed.push(this); } },
+    MeshBasicMaterial: class { constructor(options) { Object.assign(this, options); } dispose() { stats.materialsDisposed.push(this); } },
+    SphereGeometry: class {
+      constructor(radius, widthSegments, heightSegments) { this.parameters = { radius, widthSegments, heightSegments }; }
+      dispose() { stats.geometriesDisposed.push(this); }
+    },
+    PlaneGeometry: class { constructor(width, height) { this.parameters = { width, height }; } dispose() { stats.geometriesDisposed.push(this); } },
     Mesh: class { constructor(geometry, material) { this.geometry = geometry; this.material = material; this.rotation = {}; } },
     Group: class { position = {}; rotation = {}; children = []; add(child) { this.children.push(child); } },
   };
@@ -558,4 +569,131 @@ test('native retina and pinch zoom retain CSS dimensions, coalesce backing resiz
   assert.equal(h.listeners.size, 0);
   assert.equal(h.windowListeners.size, 0);
   assert.equal(h.viewportListeners.size, 0);
+});
+
+test('the solar lens flare shares the transparent renderer and releases its own GPU resources', async () => {
+  const h = await solarRecoveryHarness();
+  const states = [];
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg', onStateChange: state => states.push(state) });
+  const flare = scene.flareMesh;
+  assert.ok(flare?.material?.vertexShader && flare.material.fragmentShader, 'the optical effect must be a renderer-owned shader plane');
+  assert.deepEqual(flare.geometry.parameters, { width: 2, height: 2 });
+  assert.equal(flare.renderOrder, 2);
+  assert.equal(flare.frustumCulled, false);
+  assert.equal(scene.scene.children.filter(node => node === flare).length, 1);
+  assert.equal(scene.sunMesh.material.map, h.stats.textures[0], 'the flare must not replace or reload the original solar surface');
+  assert.equal(h.stats.textures.length, 1);
+  assert.equal(scene.scene.background, null);
+  assert.equal(h.stats.clear.alpha, 0, 'the optical effect must preserve the transparent header');
+  h.listeners.get('webglcontextlost')({ preventDefault() {} });
+  h.listeners.get('webglcontextrestored')();
+  assert.deepEqual(states, ['ready', 'lost', 'ready']);
+  assert.equal(scene.flareMesh, flare, 'restoration must reuse one optical layer rather than accumulate planes');
+  scene.dispose();
+  assert.equal(h.stats.materialsDisposed.filter(material => material === flare.material).length, 1);
+  assert.equal(h.stats.geometriesDisposed.filter(geometry => geometry === flare.geometry).length, 1);
+  assert.equal(h.stats.texturesDisposed, 1);
+  assert.equal(h.frames.size, 0);
+  assert.equal(h.listeners.size, 0);
+  assert.equal(h.windowListeners.size, 0);
+  assert.equal(h.viewportListeners.size, 0);
+});
+
+test('the solar lens flare axis follows the host callback while its optical phase follows absolute UTC', async () => {
+  const h = await solarRecoveryHarness();
+  let center = { x: .18, y: .73 };
+  let samples = 0;
+  h.setNow(h.epoch + 12345);
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg', getOpticalCenter() { samples += 1; return center; } });
+  const uniforms = scene.flareMesh.material.uniforms;
+  assert.equal(uniforms.uOpticalCenter.value.x, center.x);
+  assert.equal(uniforms.uOpticalCenter.value.y, center.y);
+  assert.equal(uniforms.uTime.value, 12.345);
+  const initialSamples = samples;
+  const axis = uniforms.uOpticalCenter.value;
+  center = { x: .83, y: .27 };
+  scene.resize();
+  assert.ok(samples > initialSamples, 'layout changes must resample the optical center');
+  assert.equal(uniforms.uOpticalCenter.value, axis, 'resizing updates the existing GPU uniform without recreating a material');
+  assert.equal(axis.x, center.x);
+  assert.equal(axis.y, center.y);
+  h.setNow(h.epoch + 86400000 + 9876);
+  scene.renderFrame();
+  assert.equal(uniforms.uTime.value, 9.876, 'an optical phase wraps by UTC day rather than resetting with each mount');
+  const phase = uniforms.uTime.value;
+  scene.dispose();
+  const remounted = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  assert.equal(remounted.flareMesh.material.uniforms.uTime.value, phase);
+  assert.equal(remounted.flareMesh.material.uniforms.uOpticalCenter.value.x, .22);
+  assert.equal(remounted.flareMesh.material.uniforms.uOpticalCenter.value.y, .32);
+  remounted.dispose();
+});
+
+test('the actual solar flare shader excludes the original photosphere and fades before the canvas edge', async () => {
+  const h = await solarRecoveryHarness();
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  const material = scene.flareMesh.material;
+  assert.equal(material.transparent, true);
+  assert.equal(material.depthTest, false);
+  assert.equal(material.depthWrite, false);
+  assert.equal(material.toneMapped, false);
+  assert.match(material.vertexShader, /gl_Position\s*=\s*vec4\(position\.xy,\s*0\.0,\s*1\.0\)/, 'the optical plane must use screen UV coordinates rather than the sphere camera projection');
+  const maskExpression = material.fragmentShader.match(/float\s+outsideDisc\s*=\s*([^;]+);/)?.[1];
+  assert.ok(maskExpression, 'the flare must declare an explicit photosphere exclusion mask');
+  const smoothstep = (low, high, value) => {
+    const t = Math.min(1, Math.max(0, (value - low) / (high - low)));
+    return t * t * (3 - 2 * t);
+  };
+  const discMask = new Function('smoothstep', 'radial', `return (${maskExpression});`).bind(null, smoothstep);
+  const radius = scene.sunMesh.geometry.parameters.radius;
+  const distance = scene.camera.position.z;
+  const projectedRadius = radius / Math.sqrt(distance ** 2 - radius ** 2) / (2 * Math.tan(scene.camera.fov * Math.PI / 360));
+  for (const fraction of [0, .25, .5, .75, 1]) {
+    assert.equal(discMask(projectedRadius * fraction), 0, 'no shader light can wash over any part of the original solar disc');
+  }
+  assert.ok(discMask(projectedRadius + .02) > .9, 'optical light remains available immediately outside the photosphere');
+  const attenuation = material.fragmentShader.match(/light\s*\*=\s*([^;]+);\s*float\s+alpha\s*=/)?.[1];
+  assert.ok(attenuation, 'the exclusion mask must attenuate RGB before its alpha is calculated');
+  assert.match(attenuation, /outsideDisc/);
+  const attenuate = new Function('outsideDisc', 'shimmer', 'smoothstep', 'radial', `return (${attenuation});`);
+  assert.equal(attenuate(0, 1, smoothstep, projectedRadius), 0);
+  assert.equal(attenuate(1, 1, smoothstep, .5), 0, 'all optical light must fade completely before reaching the square canvas edge');
+  assert.ok(attenuate(1, 1, smoothstep, .48) > attenuate(1, 1, smoothstep, .49));
+  assert.match(material.fragmentShader, /lensAxis\s*=\s*uOpticalCenter\s*-\s*vec2\(0\.5\)/);
+  assert.match(material.fragmentShader, /direction\s*=\s*lensAxis\s*\/\s*max\(axisLength,\s*0\.0001\)/, 'a centered optical axis cannot divide by zero');
+  scene.dispose();
+});
+
+test('the shell derives the optical axis from the live header or dropdown rectangle with the correct UV vertical direction', async () => {
+  const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
+  const pending = [parse(source, { ecmaVersion: 'latest', sourceType: 'script' })];
+  let callback;
+  while (pending.length) {
+    const node = pending.pop();
+    if (node.type === 'Property' && node.key?.name === 'getOpticalCenter') {
+      callback = node.value;
+      break;
+    }
+    for (const value of Object.values(node)) {
+      if (Array.isArray(value)) pending.push(...value.filter(item => item?.type));
+      else if (value?.type) pending.push(value);
+    }
+  }
+  assert.ok(callback, 'the solar mount must supply a geometry-based getOpticalCenter callback');
+  const canvasBounds = { left: 240, top: 50, width: 100, height: 100 };
+  let region = { left: 0, top: 20, width: 430, height: 180 };
+  const canvas = { getBoundingClientRect: () => canvasBounds };
+  const overlay = { closest(selector) {
+    assert.ok(selector.includes('.weather-header-preview') && selector.includes('.weather-header-dropdown__hero'), 'both solar variants must derive an optical axis');
+    return region && { getBoundingClientRect: () => region };
+  } };
+  const getCenter = new Function('canvas', 'overlay', `return (${source.slice(callback.start, callback.end)});`)(canvas, overlay);
+  assert.deepEqual(getCenter(), { x: -.25, y: .4 }, 'the optical axis points toward the weather region center, with UV Y growing upward');
+  region = { left: 20, top: 0, width: 600, height: 140 };
+  assert.deepEqual(getCenter(), { x: .8, y: .8 }, 'the callback must sample current bounds after responsive repositioning');
+  canvasBounds.width = 0;
+  assert.equal(getCenter(), null, 'an unmeasurable canvas must keep the safe default axis');
+  canvasBounds.width = 100;
+  region = null;
+  assert.equal(getCenter(), null);
 });

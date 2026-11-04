@@ -12597,6 +12597,15 @@
       const scene = await module.mountHeaderWeatherSunScene(canvas, {
         sunTextureUrl: assetConfig.sunTextureUrl,
         geoState: assetConfig.geoState,
+        getOpticalCenter: () => {
+          const bounds = canvas.getBoundingClientRect();
+          const region = overlay.closest('.weather-header-preview, .weather-header-dropdown__hero')?.getBoundingClientRect();
+          if (!region || !bounds.width || !bounds.height) return null;
+          return {
+            x: (region.left + region.width / 2 - bounds.left) / bounds.width,
+            y: 1 - (region.top + region.height / 2 - bounds.top) / bounds.height,
+          };
+        },
         onStateChange: state => {
           if (overlay.__sunSceneMountToken !== mountToken) return;
           overlay.dataset.sunScene = state;

@@ -42,6 +42,70 @@ function resolveSolarPixelRatio(width, height, dpr = 1, zoom = 1, maxSide = 1024
   return Math.min(nativeDpr * viewportZoom, limit / side);
 }
 
+function createSolarLensFlareMaterial() {
+  // Compact optical ghosts, adapted from the maintained scene's LensFlare
+  // aperture/axis model. These are camera reflections, not solar plasma.
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uOpticalCenter: { value: new THREE.Vector2(0.22, 0.32) },
+      uTime: { value: 0 },
+    },
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+    toneMapped: false,
+    vertexShader: `
+varying vec2 vSolarFlareUv;
+void main() {
+  vSolarFlareUv = uv;
+  gl_Position = vec4(position.xy, 0.0, 1.0);
+}`,
+    fragmentShader: `
+uniform vec2 uOpticalCenter;
+uniform float uTime;
+varying vec2 vSolarFlareUv;
+
+float apertureGhost(vec2 p, float sides, float radius) {
+  float angle = atan(p.y, p.x) + 0.78539816339;
+  float sector = 6.28318530718 / sides;
+  float edge = cos(floor(0.5 + angle / sector) * sector - angle) * length(p) / radius;
+  float feather = max(fwidth(edge) * 1.3, 0.12);
+  float body = 1.0 - smoothstep(1.0 - feather, 1.0 + feather, edge);
+  float rim = exp(-pow((edge - 0.86) / 0.16, 2.0));
+  return body * (0.3 + 0.7 * rim);
+}
+
+void main() {
+  vec2 p = vSolarFlareUv - vec2(0.5);
+  float radial = length(p);
+  vec2 lensAxis = uOpticalCenter - vec2(0.5);
+  float axisLength = length(lensAxis);
+  vec2 direction = lensAxis / max(axisLength, 0.0001);
+  float offAxis = smoothstep(0.02, 0.18, axisLength);
+  float shimmer = 0.94 + 0.06 * sin(uTime * 0.24);
+
+  // The sphere occupies radius ~0.247 of this canvas. Keep all added light
+  // outside its photosphere so the original texture cannot be washed out.
+  float outsideDisc = smoothstep(0.248, 0.258, radial);
+  float halo = exp(-pow((radial - 0.254) / 0.026, 2.0)) * 0.12;
+  vec2 glint = mat2(0.70710678, -0.70710678, 0.70710678, 0.70710678) * p;
+  float diffraction = exp(-abs(glint.x) * 230.0 - abs(glint.y) * 12.0)
+    + exp(-abs(glint.y) * 230.0 - abs(glint.x) * 12.0);
+  float diamond = apertureGhost(p - direction * 0.345, 4.0, 0.034);
+  float softGhost = exp(-pow(length(p - direction * 0.438) / 0.021, 2.0));
+  float paleGhost = apertureGhost(p + direction * 0.322, 6.0, 0.018);
+  vec3 light = vec3(1.0, 0.87, 0.63) * (halo + diffraction * 0.38)
+    + offAxis * (diamond * vec3(0.42, 0.75, 0.57) * 0.27
+      + softGhost * vec3(1.0, 0.61, 0.39) * 0.22
+      + paleGhost * vec3(0.65, 0.75, 1.0) * 0.09);
+  light *= outsideDisc * shimmer * (1.0 - smoothstep(0.475, 0.5, radial));
+  float alpha = clamp(max(light.r, max(light.g, light.b)), 0.0, 0.32);
+  gl_FragColor = vec4(light / max(alpha, 0.0001), alpha);
+  #include <colorspace_fragment>
+}`,
+  });
+}
+
 function loadTexture(url, textures, renderer) {
   if (!url) {
     return Promise.resolve(null);
@@ -91,6 +155,7 @@ export class HeaderWeatherSunScene {
     this.renderer = null;
     this.sunGroup = null;
     this.sunMesh = null;
+    this.flareMesh = null;
     this.textures = [];
     this.disposed = false;
     this.contextLost = false;
@@ -196,6 +261,11 @@ ${mapChunk}`);
     sunGroup.add(sunMesh);
     scene.add(sunGroup);
 
+    const flareMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), createSolarLensFlareMaterial());
+    flareMesh.renderOrder = 2;
+    flareMesh.frustumCulled = false;
+    scene.add(flareMesh);
+
     camera.position.set(0, 0, SUN_CAMERA_DISTANCE);
     camera.lookAt(0, 0, 0);
 
@@ -204,6 +274,7 @@ ${mapChunk}`);
     this.renderer = renderer;
     this.sunGroup = sunGroup;
     this.sunMesh = sunMesh;
+    this.flareMesh = flareMesh;
     this.resize();
     this.updateAnimation(Date.now());
     // One small material: prepare it synchronously so context loss cannot strand
@@ -226,6 +297,10 @@ ${mapChunk}`);
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
+    const opticalCenter = this.options.getOpticalCenter?.();
+    if (Number.isFinite(opticalCenter?.x) && Number.isFinite(opticalCenter?.y)) {
+      this.flareMesh?.material.uniforms.uOpticalCenter.value.set(opticalCenter.x, opticalCenter.y);
+    }
   }
 
   updateAnimation(timeMs = Date.now()) {
@@ -235,6 +310,9 @@ ${mapChunk}`);
 
     this.sunMesh.rotation.y = solarRotationAngle(timeMs);
     this.solarDaysUniform.value = (timeMs - SOLAR_MODEL_EPOCH_MS) / SOLAR_DAY_MS;
+    if (this.flareMesh) {
+      this.flareMesh.material.uniforms.uTime.value = ((timeMs % SOLAR_DAY_MS) + SOLAR_DAY_MS) % SOLAR_DAY_MS / 1000;
+    }
   }
 
   renderFrame() {
@@ -292,6 +370,8 @@ ${mapChunk}`);
       this.sunMesh.geometry?.dispose();
       this.sunMesh.material?.dispose();
     }
+    this.flareMesh?.geometry.dispose();
+    this.flareMesh?.material.dispose();
     this.textures.forEach(texture => texture.dispose());
     this.textures = [];
     this.renderer?.dispose();
@@ -300,6 +380,7 @@ ${mapChunk}`);
     this.renderer = null;
     this.sunGroup = null;
     this.sunMesh = null;
+    this.flareMesh = null;
   }
 }
 

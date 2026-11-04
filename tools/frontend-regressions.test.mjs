@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
+import { parse } from 'espree';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -1076,8 +1077,39 @@ test('cookie choices remain usable when browser storage rejects writes', async (
 
 test('header Sun and Moon retain their fixed scales and shared CSS anchors in both variants', async () => {
   const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
-  const declaration = name => source.match(new RegExp(`  function ${name}\\([^)]*\\) \\{[\\s\\S]*?\\n  \\}`))[0];
-  const constants = source.slice(source.indexOf('  const HEADER_WEATHER_MOON_DISPLAY_SCALE'), source.indexOf('  /** Warm-white lift'));
+  const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'script' });
+  const bootstrap = ast.body.find(node =>
+    node.type === 'ExpressionStatement' &&
+    node.expression.type === 'CallExpression' &&
+    node.expression.callee.type === 'FunctionExpression' &&
+    node.expression.callee.id?.name === 'siteShellBootstrap'
+  )?.expression.callee;
+  assert.ok(bootstrap, 'site-shell.js must declare the siteShellBootstrap IIFE');
+  const declarations = bootstrap.body.body;
+  const declaration = name => {
+    const node = declarations.find(item => item.type === 'FunctionDeclaration' && item.id?.name === name);
+    assert.ok(node, `siteShellBootstrap must declare function ${name}`);
+    return source.slice(node.start, node.end);
+  };
+  const constants = [
+    'HEADER_WEATHER_MOON_DISPLAY_SCALE',
+    'HEADER_WEATHER_MOON_SIZE_REDUCTION',
+    'HEADER_WEATHER_MOON_SIZE_BOOST',
+    'HEADER_WEATHER_ORB_PREVIEW_ANCHOR',
+    'HEADER_WEATHER_MOON_PREVIEW_ANCHOR',
+    'HEADER_WEATHER_SUN_PREVIEW_ANCHOR',
+    'HEADER_WEATHER_MOON_PREVIEW_LAYOUT',
+    'HEADER_WEATHER_MOON_DROPDOWN_LAYOUT',
+    'HEADER_WEATHER_SUN_PREVIEW_LAYOUT',
+    'HEADER_WEATHER_SUN_DROPDOWN_LAYOUT',
+  ].map(name => {
+    const node = declarations
+      .filter(item => item.type === 'VariableDeclaration' && item.kind === 'const')
+      .flatMap(item => item.declarations)
+      .find(item => item.id.type === 'Identifier' && item.id.name === name);
+    assert.ok(node, `siteShellBootstrap must declare const ${name}`);
+    return `const ${source.slice(node.start, node.end)};`;
+  }).join('\n');
   const { apply, fixed } = new Function(`${constants}\n${declaration('resolveHeaderWeatherOrbFixedLayout')}\n${declaration('applyHeaderWeatherOrbLayout')}\nreturn { apply: applyHeaderWeatherOrbLayout, fixed: resolveHeaderWeatherOrbFixedLayout };`)();
   const positions = ['--orb-left', '--orb-top', '--orb-offset-x', '--orb-offset-y'];
   const createOrb = (variant, kind) => {
