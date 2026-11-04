@@ -249,7 +249,7 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
     getContext() { return { isContextLost: () => stats.contextLost }; }
     render() {
       if (stats.failRender) throw new Error('GPU unavailable');
-      const color = stats.shader?.uniforms.uSolarColor?.value;
+      const color = stats.shader?.uniforms.uSolarSurfaceColor?.value;
       if (color) stats.colorsAtRender.push({ r: color.r, g: color.g, b: color.b });
       stats.events.push('render'); stats.renders += 1;
     }
@@ -289,7 +289,7 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
     Group: class { position = {}; rotation = {}; children = []; add(child) { this.children.push(child); } },
   };
   class ClockDate extends Date { static now() { return nowMs; } }
-  const api = new Function('THREE', 'window', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date', `${code}; return { mount: mountHeaderWeatherSunScene, rate: solarRotationRateDegPerDay, offset: solarTextureOffsetTurns, angle: solarRotationAngle, pixelRatio: resolveSolarPixelRatio, epoch: SOLAR_MODEL_EPOCH_MS, elevation: solarElevationDegrees, color: solarColorForElevation };`)(
+  const api = new Function('THREE', 'window', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date', `${code}; return { mount: mountHeaderWeatherSunScene, rate: solarRotationRateDegPerDay, offset: solarTextureOffsetTurns, angle: solarRotationAngle, pixelRatio: resolveSolarPixelRatio, epoch: SOLAR_MODEL_EPOCH_MS, elevation: solarElevationDegrees, color: solarColorForElevation, surfaceColor: solarSurfaceColorForElevation };`)(
     THREE, window, callback => { frames.set(++nextFrame, callback); return nextFrame; }, id => frames.delete(id), ClockDate
   );
   return { ...api, canvas, listeners, windowListeners, viewportListeners, window, viewport, frames, stats, setNow: value => { nowMs = value; } };
@@ -779,6 +779,70 @@ test('the solar elevation palette changes smoothly from horizon red through oran
   }
 });
 
+test('the separate photosphere palette remains seamless and pale above the horizon while retaining a red low endpoint', async () => {
+  const h = await solarRecoveryHarness();
+  const target = { r: 0, g: 0, b: 0 };
+  assert.equal(h.surfaceColor(3, target), target, 'surface updates must reuse their own color object');
+  const previous = { r: 0, g: 0, b: 0 };
+  for (const elevation of [-.833, 0, 1, 3, 6, 12]) {
+    const surface = h.surfaceColor(elevation);
+    for (const channel of ['r', 'g', 'b']) {
+      assert.ok(Number.isFinite(surface[channel]) && surface[channel] >= 0 && surface[channel] <= 1);
+      assert.ok(surface[channel] >= previous[channel], 'the surface must warm continuously as its elevation decreases');
+      previous[channel] = surface[channel];
+    }
+    const left = h.surfaceColor(elevation - .0001);
+    const right = h.surfaceColor(elevation + .0001);
+    assert.ok(Math.max(...['r', 'g', 'b'].map(channel => Math.abs(left[channel] - right[channel]))) < .001, 'the independent surface calibration cannot create a color jump at a palette knot');
+  }
+  for (const elevation of [12, 45, 90, NaN]) assert.deepEqual(h.surfaceColor(elevation), { r: 1, g: 1, b: 1 });
+  const low = h.surfaceColor(-.833);
+  assert.ok(low.r > low.g * 3 && low.g > low.b, 'a very low solar disc must still become red rather than remain white forever');
+  assert.deepEqual(h.surfaceColor(-5), low);
+  assert.ok(h.surfaceColor(1).g > h.surfaceColor(0).g && h.surfaceColor(1).b > h.surfaceColor(0).b);
+  assert.ok(h.surfaceColor(3).b > h.color(3).b * 5, 'the pale photosphere cannot inherit the already orange halo tint');
+});
+
+test('the two Düsseldorf reference times retain a luminous disc while the halo changes from gold to orange', async () => {
+  const srgb = linear => linear <= .0031308 ? linear * 12.92 : 1.055 * linear ** (1 / 2.4) - .055;
+  const references = [
+    { localTime: '2026-11-04T15:51:00+01:00', expectedElevation: 8.9 },
+    { localTime: '2026-11-04T16:33:00+01:00', expectedElevation: 3.4 },
+  ];
+  let previousHalo;
+  for (const { localTime, expectedElevation } of references) {
+    const h = await solarRecoveryHarness();
+    const now = Date.parse(localTime);
+    // A public city-center fixture, not the visitor's precise geolocation.
+    const geoState = { latitude: 51.22, longitude: 6.78 };
+    const elevation = h.elevation(now, geoState.latitude, geoState.longitude);
+    assert.ok(Math.abs(elevation - expectedElevation) < .25, 'the photographic reference must use its real CET-to-UTC instant and geographical elevation');
+    h.setNow(now);
+    const appearances = [];
+    const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg', geoState, onAppearanceChange: appearance => appearances.push(appearance) });
+    const surface = h.surfaceColor(elevation);
+    const halo = h.color(elevation);
+    const surfaceLuminance = surface.r * .2126 + surface.g * .7152 + surface.b * .0722;
+    assert.ok(surfaceLuminance > .9 && srgb(surface.g) > .97 && srgb(surface.b) > .85, 'at both reference elevations the calibrated body must remain luminous and pale');
+    assert.ok(srgb(surface.b) - srgb(halo.b) > .1, 'the surrounding halo must be visibly warmer than the disc');
+    assert.ok(halo.r > halo.g && halo.g > halo.b);
+    if (previousHalo) assert.ok(halo.b < previousHalo.b && halo.g < previousHalo.g, 'the later reference must progress from golden to orange surroundings');
+    previousHalo = halo;
+    assert.deepEqual({ ...scene.solarSurfaceColorUniform.value }, surface);
+    assert.deepEqual({ ...scene.solarColorUniform.value }, halo);
+    assert.deepEqual(h.stats.colorsAtRender[0], surface, 'the very first textured frame must use the pale body calibration');
+    assert.equal(h.stats.shader.uniforms.uSolarSurfaceColor, scene.solarSurfaceColorUniform);
+    assert.equal(scene.flareMesh.material.uniforms.uSolarColor, scene.solarColorUniform);
+    const appearance = appearances.at(-1);
+    assert.deepEqual(appearance.glowRgb.split(' ').map(Number), ['r', 'g', 'b'].map(channel => Math.round(255 * srgb(halo[channel]))));
+    const recoveryWarmth = Number(appearance.recoveryFilter.match(/sepia\(([\d.]+)\)/)?.[1]);
+    assert.ok(Math.abs(recoveryWarmth - (1 - srgb(surface.b)) / .93) < .00051, 'native image recovery must follow the pale surface rather than the stronger atmospheric tint');
+    assert.ok(recoveryWarmth < .2, 'the pale reference disc cannot become a saturated orange fallback image');
+    assert.equal(scene.sunMesh.material.map, h.stats.textures[0]);
+    scene.dispose();
+  }
+});
+
 test('solar initialization uses the requested coordinates before the first frame and geographic changes retain the same original texture and phase', async () => {
   const h = await solarRecoveryHarness();
   const now = Date.parse('2026-03-20T12:00:00Z');
@@ -786,17 +850,18 @@ test('solar initialization uses the requested coordinates before the first frame
   const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg', geoState: { latitude: 0, longitude: 0, timeMs: now } });
   assert.equal(scene.geoState.latitude, 0, 'the first mount must apply an equatorial latitude rather than the former Leipzig default');
   assert.equal(scene.geoState.longitude, 0, 'the Greenwich meridian is a valid zero coordinate');
-  assert.deepEqual(h.stats.colorsAtRender[0], h.color(h.elevation(now, 0, 0)), 'the hidden warmup frame must already have the correct geographic solar color');
+  assert.deepEqual(h.stats.colorsAtRender[0], h.surfaceColor(h.elevation(now, 0, 0)), 'the hidden warmup frame must already have the correct geographic solar surface color');
   const phase = scene.sunMesh.rotation.y;
   const material = scene.sunMesh.material;
   const map = material.map;
-  const uniform = scene.solarColorUniform;
+  const uniform = scene.solarSurfaceColorUniform;
+  const atmosphereUniform = scene.solarColorUniform;
   const compilationCount = h.stats.events.filter(event => event === 'compile').length;
   scene.setGeoState({ latitude: 0, longitude: 90, timeMs: now });
   scene.renderFrame();
   assert.equal(scene.geoState.latitude, 0);
   assert.equal(scene.geoState.longitude, 90);
-  assert.deepEqual(h.stats.colorsAtRender.at(-1), h.color(h.elevation(now, 0, 90)));
+  assert.deepEqual(h.stats.colorsAtRender.at(-1), h.surfaceColor(h.elevation(now, 0, 90)));
   assert.ok(uniform.value.r > uniform.value.g, 'the same UTC time must become warmer near a different local horizon');
   scene.setGeoState({ latitude: NaN, longitude: Infinity });
   scene.setGeoState({ latitude: 91, longitude: -181 });
@@ -810,8 +875,11 @@ test('solar initialization uses the requested coordinates before the first frame
   assert.equal(material.map, map);
   assert.equal(h.stats.textures.length, 1);
   assert.equal(h.stats.events.filter(event => event === 'compile').length, compilationCount);
-  assert.equal(scene.solarColorUniform, uniform);
-  assert.equal(scene.flareMesh.material.uniforms.uSolarColor, uniform, 'photosphere and optical flare must share one mutable color uniform');
+  assert.equal(scene.solarSurfaceColorUniform, uniform);
+  assert.equal(h.stats.shader.uniforms.uSolarSurfaceColor, uniform);
+  assert.equal(scene.solarColorUniform, atmosphereUniform);
+  assert.equal(scene.flareMesh.material.uniforms.uSolarColor, atmosphereUniform, 'the optical flare must retain its own stable atmospheric color uniform');
+  assert.notEqual(uniform, atmosphereUniform, 'a golden halo must not force the luminous photosphere to the same saturated color');
   scene.dispose();
 });
 
@@ -831,36 +899,42 @@ test('surface and flare tint use one server-corrected live UTC clock rather than
     assert.equal(scene.solarDaysUniform.value, (correctedTime - preview.epoch) / 86400000);
     assert.equal(scene.flareMesh.material.uniforms.uTime.value, 6 * 3600);
     assert.deepEqual({ ...scene.solarColorUniform.value }, preview.color(preview.elevation(correctedTime, 0, 90)));
+    assert.deepEqual({ ...scene.solarSurfaceColorUniform.value }, preview.surfaceColor(preview.elevation(correctedTime, 0, 90)));
   }
   correctedTime = rawTime;
   scenes.forEach(scene => scene.renderFrame());
   assert.deepEqual({ ...scenes[0].solarColorUniform.value }, { ...scenes[1].solarColorUniform.value }, 'both views follow one current astronomical phase, while forecast cloud cover remains independent');
+  assert.deepEqual({ ...scenes[0].solarSurfaceColorUniform.value }, { ...scenes[1].solarSurfaceColorUniform.value }, 'the pale photosphere must use the same live UTC phase in both views');
   assert.ok(scenes[0].solarColorUniform.value.g < 1, 'the same location must warm as the server clock approaches its horizon');
   assert.equal(scenes[0].sunMesh.rotation.y, preview.angle(correctedTime));
   const color = { ...scenes[0].solarColorUniform.value };
+  const surfaceColor = { ...scenes[0].solarSurfaceColorUniform.value };
   scenes[0].dispose();
   const remounted = await preview.mount(preview.canvas, options);
   assert.deepEqual({ ...remounted.solarColorUniform.value }, color);
+  assert.deepEqual({ ...remounted.solarSurfaceColorUniform.value }, surfaceColor);
   assert.equal(remounted.sunMesh.rotation.y, preview.angle(correctedTime));
   for (const invalidTime of [NaN, Infinity, undefined]) {
     correctedTime = invalidTime;
     remounted.renderFrame();
     assert.equal(remounted.sunMesh.rotation.y, preview.angle(rawTime), 'an unavailable server clock must fall back to finite native UTC');
     assert.deepEqual({ ...remounted.solarColorUniform.value }, preview.color(preview.elevation(rawTime, 0, 90)));
+    assert.deepEqual({ ...remounted.solarSurfaceColorUniform.value }, preview.surfaceColor(preview.elevation(rawTime, 0, 90)));
   }
   remounted.dispose();
   scenes[1].dispose();
 });
 
-test('the actual solar material preserves photographic luminance and applies atmospheric color after tone mapping', async () => {
+test('the actual solar material preserves photographic luminance and applies its distinct surface color after tone mapping', async () => {
   const h = await solarRecoveryHarness();
   const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg', geoState: { latitude: 0, longitude: 90 } });
   const shader = h.stats.shader;
-  assert.equal(shader.uniforms.uSolarColor, scene.solarColorUniform);
+  assert.equal(shader.uniforms.uSolarSurfaceColor, scene.solarSurfaceColorUniform);
   assert.equal(scene.flareMesh.material.uniforms.uSolarColor, scene.solarColorUniform);
+  assert.notEqual(shader.uniforms.uSolarSurfaceColor, scene.flareMesh.material.uniforms.uSolarColor);
   assert.equal(scene.sunMesh.material.map, h.stats.textures[0]);
-  assert.equal(scene.sunMesh.material.customProgramCacheKey(), 'header-solar-atmosphere-v2');
-  assert.match(shader.fragmentShader, /#include <tonemapping_fragment>\s*gl_FragColor\.rgb\s*\*=\s*uSolarColor\s*;/, 'the atmosphere must tint already tone-mapped light rather than be neutralized by ACES');
+  assert.equal(scene.sunMesh.material.customProgramCacheKey(), 'header-solar-atmosphere-v3');
+  assert.match(shader.fragmentShader, /#include <tonemapping_fragment>\s*gl_FragColor\.rgb\s*\*=\s*uSolarSurfaceColor\s*;/, 'the pale surface color must tint already tone-mapped light rather than inherit the saturated atmospheric color');
   const weights = shader.fragmentShader.match(/float solarLuminance\s*=\s*dot\(diffuseColor\.rgb,\s*vec3\(([^)]+)\)\)/)?.[1].split(',').map(Number);
   assert.ok(weights?.length === 3 && weights.every(Number.isFinite), 'the shader must derive brightness from the original texture sample');
   assert.ok(Math.abs(weights.reduce((sum, weight) => sum + weight, 0) - 1) < 1e-12);

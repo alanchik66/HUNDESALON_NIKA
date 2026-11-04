@@ -13,15 +13,29 @@ const WARM_SUN_COLOR = 0xffffe6;
 const SOLAR_DAY_MS = 86400000;
 const SOLAR_MODEL_EPOCH_MS = Date.UTC(2026, 10, 4);
 const EARTH_ORBIT_DEG_PER_DAY = 360 / 365.256;
-const SOLAR_COLOR_STOPS = [
+const SOLAR_COLOR_STOPS = linearSolarColorStops([
   [-0.833, 1, 0.22, 0.06],
   [0, 1, 0.34, 0.09],
   [3, 1, 0.64, 0.24],
   [6, 1, 0.89, 0.59],
   [12, 1, 1, 1],
-].map(([height, ...rgb]) => [height, ...rgb.map(channel =>
-  channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
-)]);
+]);
+// Display calibration: a luminous photosphere remains pale while its optical
+// surroundings are already golden. These are not spectra measured from photos.
+const SOLAR_SURFACE_COLOR_STOPS = linearSolarColorStops([
+  [-0.833, 1, 0.28, 0.07],
+  [0, 1, 0.62, 0.18],
+  [1, 1, 0.87, 0.48],
+  [3, 1, 0.975, 0.86],
+  [6, 1, 0.995, 0.96],
+  [12, 1, 1, 1],
+]);
+
+function linearSolarColorStops(stops) {
+  return stops.map(([height, ...rgb]) => [height, ...rgb.map(channel =>
+    channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
+  )]);
+}
 
 // NOAA fractional-year approximation: UTC, east-positive longitude, geometric
 // elevation in degrees. No network, timezone guess or constant refraction offset.
@@ -53,10 +67,18 @@ export function solarElevationDegrees(timeMs, latitude, longitude) {
 // Atmospheric colour is an illustrative display calibration, not a measured
 // spectrum. Interpolate linear RGB smoothly; the high Sun is neutral white.
 export function solarColorForElevation(elevationDeg, target = { r: 1, g: 1, b: 1 }) {
+  return interpolateSolarColor(elevationDeg, SOLAR_COLOR_STOPS, target);
+}
+
+export function solarSurfaceColorForElevation(elevationDeg, target = { r: 1, g: 1, b: 1 }) {
+  return interpolateSolarColor(elevationDeg, SOLAR_SURFACE_COLOR_STOPS, target);
+}
+
+function interpolateSolarColor(elevationDeg, stops, target) {
   const height = Number.isFinite(elevationDeg) ? elevationDeg : 90;
-  let low = SOLAR_COLOR_STOPS[0];
+  let low = stops[0];
   let high = low;
-  for (const stop of SOLAR_COLOR_STOPS) {
+  for (const stop of stops) {
     high = stop;
     if (height <= stop[0]) break;
     low = stop;
@@ -246,6 +268,7 @@ export class HeaderWeatherSunScene {
     this.resizeRafId = 0;
     this.solarDaysUniform = { value: 0 };
     this.solarColorUniform = { value: new THREE.Color(0xffffff) };
+    this.solarSurfaceColorUniform = { value: new THREE.Color(0xffffff) };
     this.appearanceKey = null;
     this.scene = null;
     this.camera = null;
@@ -308,6 +331,7 @@ export class HeaderWeatherSunScene {
   updateSolarAppearance(timeMs) {
     const elevationDeg = solarElevationDegrees(timeMs, this.geoState.latitude, this.geoState.longitude);
     solarColorForElevation(elevationDeg, this.solarColorUniform.value);
+    solarSurfaceColorForElevation(elevationDeg, this.solarSurfaceColorUniform.value);
     const low = SOLAR_COLOR_STOPS[0][0];
     const high = SOLAR_COLOR_STOPS[SOLAR_COLOR_STOPS.length - 1][0];
     const warmth = Number.isFinite(elevationDeg)
@@ -315,7 +339,9 @@ export class HeaderWeatherSunScene {
     const key = Math.round(warmth * 200);
     if (key !== this.appearanceKey) {
       this.appearanceKey = key;
-      const recoveryWarmth = warmth ** 1.5;
+      const surfaceBlue = this.solarSurfaceColorUniform.value.b;
+      const srgbBlue = surfaceBlue <= 0.0031308 ? surfaceBlue * 12.92 : 1.055 * surfaceBlue ** (1 / 2.4) - 0.055;
+      const recoveryWarmth = Math.max(0, Math.min(1, (1 - srgbBlue) / 0.93));
       const color = this.solarColorUniform.value;
       const glowRgb = [color.r, color.g, color.b].map(channel => Math.round(255 *
         (channel <= 0.0031308 ? channel * 12.92 : 1.055 * channel ** (1 / 2.4) - 0.055)
@@ -370,9 +396,9 @@ export class HeaderWeatherSunScene {
     });
     sunMaterial.onBeforeCompile = shader => {
       shader.uniforms.uSolarDays = this.solarDaysUniform;
-      shader.uniforms.uSolarColor = this.solarColorUniform;
+      shader.uniforms.uSolarSurfaceColor = this.solarSurfaceColorUniform;
       const mapChunk = THREE.ShaderChunk.map_fragment.replace(/\bvMapUv\b/g, 'solarMapUv');
-      shader.fragmentShader = 'uniform float uSolarDays;\nuniform vec3 uSolarColor;\n' + shader.fragmentShader.replace('#include <map_fragment>', `
+      shader.fragmentShader = 'uniform float uSolarDays;\nuniform vec3 uSolarSurfaceColor;\n' + shader.fragmentShader.replace('#include <map_fragment>', `
 #ifdef USE_MAP
   vec2 solarMapUv = vMapUv;
   float solarSinLatitude = sin((vMapUv.y - 0.5) * 3.141592653589793);
@@ -383,9 +409,9 @@ ${mapChunk}
 #ifdef USE_MAP
   float solarLuminance = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
   diffuseColor.rgb = vec3(pow(clamp(solarLuminance, 0.0, 1.0), 0.28));
-#endif`).replace('#include <tonemapping_fragment>', '#include <tonemapping_fragment>\ngl_FragColor.rgb *= uSolarColor;');
+#endif`).replace('#include <tonemapping_fragment>', '#include <tonemapping_fragment>\ngl_FragColor.rgb *= uSolarSurfaceColor;');
     };
-    sunMaterial.customProgramCacheKey = () => 'header-solar-atmosphere-v2';
+    sunMaterial.customProgramCacheKey = () => 'header-solar-atmosphere-v3';
     const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(SUN_RADIUS, 96, 72), sunMaterial);
     sunMesh.renderOrder = 1;
 
