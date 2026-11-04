@@ -1296,51 +1296,69 @@ test('weather menu arrow stays inside its pill and animates only actual expanded
   });
 });
 
-test('header sun uses one device-pixel scaling pass', async () => {
+test('header Sun preserves CSS geometry while rendering native retina and pinch-zoom pixels in one scaling pass', async () => {
   const source = await readFile(path.join(root, 'assets/js/header-weather-sun-scene.js'), 'utf8');
   const runnable = source.replace(/^import .+;$/m, '').replace(/^export /gm, '');
   const context = {
     THREE: { MathUtils: { degToRad: value => value * Math.PI / 180 }, Clock: class {} },
-    window: { devicePixelRatio: 2, matchMedia: () => ({ matches: false }) },
+    window: { devicePixelRatio: 3, visualViewport: { scale: 1, addEventListener() {}, removeEventListener() {} }, matchMedia: () => ({ matches: false }), addEventListener() {}, removeEventListener() {} },
+    requestAnimationFrame: () => 1, cancelAnimationFrame() {},
   };
   const Scene = runInNewContext(`${runnable}\nHeaderWeatherSunScene;`, context);
 
-  for (const dpr of [1, 2, 3]) {
+  for (const [dpr, zoom] of [[1, 1], [2, 1], [3, 1], [3, 2], [3, 5]]) {
     context.window.devicePixelRatio = dpr;
+    context.window.visualViewport.scale = zoom;
     const canvas = { clientWidth: 100, clientHeight: 60 };
     const scene = new Scene(canvas);
     let pixelRatio;
+    let cssDimensions;
     scene.renderer = {
       setPixelRatio: value => { pixelRatio = value; },
-      setSize: (width, height) => {
+      getPixelRatio: () => pixelRatio,
+      setSize: (width, height, updateStyle) => {
+        cssDimensions = [width, height, updateStyle];
         canvas.width = Math.floor(width * pixelRatio);
         canvas.height = Math.floor(height * pixelRatio);
       },
     };
     scene.camera = { updateProjectionMatrix() {} };
     scene.resize();
-    assert.equal(canvas.width, 100 * Math.min(dpr, 2));
-    assert.equal(canvas.height, 60 * Math.min(dpr, 2));
+    const expectedRatio = Math.min(dpr * zoom, 1024 / 100);
+    assert.equal(pixelRatio, expectedRatio);
+    assert.deepEqual(cssDimensions, [100, 60, false], 'setSize must receive CSS dimensions rather than already multiplied backing dimensions');
+    assert.equal(canvas.width, Math.floor(100 * expectedRatio));
+    assert.equal(canvas.height, Math.floor(60 * expectedRatio));
     assert.equal(scene.camera.aspect, 100 / 60);
   }
 });
 
-test('header sun keeps rotating through its full period regardless of a stale reduced-motion flag', async () => {
+test('header Sun advances at physical hourly speed from absolute UTC and retains phase after remount', async () => {
   const source = await readFile(path.join(root, 'assets/js/header-weather-sun-scene.js'), 'utf8');
-  const constants = ['TAU', 'SUN_ROTATION_SECONDS', 'SUN_START_ANGLE']
-    .map(name => source.match(new RegExp(`^const ${name} = .+;$`, 'm'))[0]).join('\n');
-  const method = source.match(/  updateAnimation\(elapsedSeconds\) \{([\s\S]*?)\n  \}/)[1];
-  const update = new Function('THREE', `${constants}\nreturn function(elapsedSeconds) {${method}\n};`)(
-    { MathUtils: { degToRad: value => value * Math.PI / 180 } }
-  );
-  const scene = { reducedMotion: true, sunMesh: { rotation: { y: 0 } } };
-  update.call(scene, 0);
+  const runnable = source.replace(/^import .+;$/m, '').replace(/^export /gm, '');
+  const context = {
+    THREE: { MathUtils: { degToRad: value => value * Math.PI / 180 }, Clock: class {} },
+    window: { visualViewport: { addEventListener() {}, removeEventListener() {} }, addEventListener() {}, removeEventListener() {} },
+    requestAnimationFrame: () => 1, cancelAnimationFrame() {},
+  };
+  const { Scene, epoch, rate } = runInNewContext(`${runnable}\n({ Scene: HeaderWeatherSunScene, epoch: SOLAR_MODEL_EPOCH_MS, rate: solarRotationRateDegPerDay });`, context);
+  const scene = new Scene({});
+  scene.reducedMotion = true;
+  scene.sunMesh = { rotation: { y: 0 } };
+  scene.updateAnimation(epoch);
   const start = scene.sunMesh.rotation.y;
-  update.call(scene, 900);
-  assert.ok(Math.abs(scene.sunMesh.rotation.y - start - Math.PI) < 1e-10);
-  update.call(scene, 1800);
-  assert.ok(Math.abs(scene.sunMesh.rotation.y - start - Math.PI * 2) < 1e-10);
-  assert.doesNotThrow(() => update.call({ sunMesh: null }, 1800));
+  const later = epoch + 3600000;
+  scene.updateAnimation(later);
+  const expected = rate(0) * Math.PI / 180 / 24;
+  assert.ok(Math.abs(scene.sunMesh.rotation.y - start - expected) < 1e-10);
+  assert.ok(expected > 0.009 && expected < 0.01, 'an hour is about half a degree rather than two artificial full turns');
+  assert.equal(scene.solarDaysUniform.value, 1 / 24);
+  const remounted = new Scene({});
+  remounted.sunMesh = { rotation: {} };
+  remounted.updateAnimation(later);
+  assert.equal(remounted.sunMesh.rotation.y, scene.sunMesh.rotation.y);
+  assert.equal(remounted.solarDaysUniform.value, scene.solarDaysUniform.value);
+  assert.doesNotThrow(() => Scene.prototype.updateAnimation.call({ sunMesh: null }, later));
 });
 
 test('weather locale animation retains its requested timing under system reduced motion', async () => {

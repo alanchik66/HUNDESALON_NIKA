@@ -355,8 +355,8 @@
     scale: 1,
     objectPosition: '50% 50%',
   });
-  /** Warm-white lift for the self-illuminated 5778 K Sun surface. */
-  const HEADER_WEATHER_SUN_BRIGHTNESS = 1.85;
+  /** Gentle display gain; retain detail and colour from the original solar map. */
+  const HEADER_WEATHER_SUN_BRIGHTNESS = 1.06;
   const HEADER_WEATHER_SUN_MEDIA_SCALE = 1;
   const HEADER_WEATHER_SUN_SIZE_FACTOR = 1;
 
@@ -1319,49 +1319,6 @@
   opacity: 0 !important;
 }
 
-.weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__corona {
-  display: block !important;
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: 72% !important;
-  height: 72% !important;
-  transform: translate(-50%, -50%) !important;
-  pointer-events: none !important;
-  z-index: 0;
-  background: radial-gradient(circle, transparent 45%, #fff3c54d 51%, #ffd37924 59%, #ffb45b08 68%, transparent 76%);
-}
-
-.weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__corona::before,
-.weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__corona::after {
-  content: '';
-  position: absolute !important;
-  inset: 0;
-  border-radius: 50%;
-  background: repeating-conic-gradient(from 9deg, transparent 0deg 4deg, #ffe9a6a6 5deg 7deg, transparent 9deg 12deg);
-  -webkit-mask-image: radial-gradient(circle, transparent 46%, #000 51%, #0009 59%, transparent 73%) !important;
-  mask-image: radial-gradient(circle, transparent 46%, #000 51%, #0009 59%, transparent 73%) !important;
-  filter: blur(.55px);
-  opacity: .52;
-  animation: weatherSolarCoronaOrbit 42s linear infinite, weatherSolarCoronaBreath 6.8s ease-in-out infinite alternate;
-}
-
-.weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__corona::after {
-  background: repeating-conic-gradient(from 3deg, transparent 0deg 7deg, #fff5d691 8deg 10deg, transparent 12deg 18deg);
-  animation-duration: 67s, 9.4s;
-  animation-direction: reverse, alternate-reverse;
-}
-
-@keyframes weatherSolarCoronaOrbit {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes weatherSolarCoronaBreath {
-  from { opacity: .34; }
-  to { opacity: .6; }
-}
-
 .weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__canvas {
   display: block !important;
   visibility: visible !important;
@@ -1373,10 +1330,8 @@
   position: relative !important;
   z-index: 1;
   filter:
-    contrast(.14)
     brightness(${HEADER_WEATHER_SUN_BRIGHTNESS})
-    saturate(.82)
-    drop-shadow(0 0 3px rgba(255, 239, 198, .48)) !important;
+    drop-shadow(0 0 2px rgba(255, 239, 198, .24)) !important;
   mix-blend-mode: normal !important;
 }
 
@@ -1406,14 +1361,14 @@
   clip-path: circle(50%) !important;
   object-fit: cover !important;
   background: radial-gradient(circle at 35% 32%, #fff8cd, #ffc356 60%, #e87b28);
-  filter: contrast(.14) brightness(${HEADER_WEATHER_SUN_BRIGHTNESS}) saturate(.82) !important;
-  box-shadow: 0 0 12px #ffd28280, 0 0 24px #ffab4833;
+  filter: brightness(${HEADER_WEATHER_SUN_BRIGHTNESS}) !important;
+  box-shadow: 0 0 5px #ffd28240, 0 0 10px #ffab4814;
   animation: weatherSunRecoveryGlow 6.4s ease-in-out infinite;
 }
 
 @keyframes weatherSunRecoveryGlow {
-  0%, 100% { box-shadow: 0 0 12px #ffd28280, 0 0 24px #ffab4833; }
-  50% { box-shadow: 0 0 15px #ffd28299, 0 0 28px #ffab4840; }
+  0%, 100% { box-shadow: 0 0 5px #ffd28240, 0 0 10px #ffab4814; }
+  50% { box-shadow: 0 0 6px #ffd2824d, 0 0 12px #ffab481a; }
 }
 
 /* Moon — MP4 fallback: off-screen decode + canvas chroma-key (Safari / no WebM). */
@@ -11972,12 +11927,6 @@
     image.hidden = true;
 
     overlay.appendChild(video);
-    if (role === 'sun') {
-      const corona = document.createElement('span');
-      corona.className = 'weather-orb-overlay__corona';
-      corona.setAttribute('aria-hidden', 'true');
-      overlay.appendChild(corona);
-    }
     overlay.appendChild(canvas);
     overlay.appendChild(image);
     return overlay;

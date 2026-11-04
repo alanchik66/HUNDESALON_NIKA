@@ -1,6 +1,7 @@
 # Index
 
 ## Current
+
 - [[Dashboard]]
 - [[README]]
 - [[Daily/2026-08-24]]
@@ -10,7 +11,9 @@
 - [[01_Projects/HUNDESALON_NIKA/Tasks/README]]
 - [[02_Areas/Operations]]
 - [[02_Areas/Codex_Model_Routing]]
+- [[03_Resources/Resources]]
 - [[03_Resources/Brand_Assets]]
+- [[03_Resources/Astronomy_and_Weather_Visualization]]
 - [[04_Decisions/Decisions]]
 - [[04_Decisions/2026-08-27-Model_Routing_and_Obsidian_Workflow]]
 - [[05_Code_Map]]
@@ -18,6 +21,7 @@
 - [[07_Release]]
 
 ## Templates
+
 - [[Templates/daily]]
 - [[Templates/bug]]
 - [[Templates/decision]]
@@ -25,4 +29,5 @@
 - [[Templates/catalog-change]]
 
 ## Intake
+
 - Use [[00_Inbox/Inbox]] for raw ideas and quick captures.

@@ -8,76 +8,38 @@ const TAU = Math.PI * 2;
 const SUN_RADIUS = 0.7;
 const SUN_CAMERA_DISTANCE = 4.55;
 const SUN_AXIAL_TILT = THREE.MathUtils.degToRad(7.25);
-const SUN_ROTATION_SECONDS = 30 * 60;
 const SUN_START_ANGLE = THREE.MathUtils.degToRad(-34);
 const WARM_SUN_COLOR = 0xffffe6;
+const SOLAR_DAY_MS = 86400000;
+const SOLAR_MODEL_EPOCH_MS = Date.UTC(2026, 10, 4);
+const EARTH_ORBIT_DEG_PER_DAY = 360 / 365.256;
 
-function mountSunProminences(corona) {
-  if (!corona?.ownerDocument) return () => {};
-  const doc = corona.ownerDocument;
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const root = corona.getRootNode?.();
-  const styleHost = root?.host ? root : doc.head || corona;
-  if (!styleHost.querySelector?.('style[data-weather-sun-prominences]')) {
-    const style = doc.createElement('style');
-    style.setAttribute('data-weather-sun-prominences', '');
-    style.textContent = `
-.weather-orb-overlay.is-sun.is-header-sun .weather-sun-prominences {
-  display: block !important; position: absolute !important; inset: 0 !important;
-  width: 100% !important; height: 100% !important; overflow: visible !important;
-  pointer-events: none !important;
+// Mean Earth-view rotation, NASA Sun Fact Sheet. The unchanged source image is
+// an illustration, not a live observation of the Sun's current active regions.
+function solarRotationRateDegPerDay(latitudeDeg) {
+  const latitude = Math.max(-90, Math.min(90, Number(latitudeDeg) || 0));
+  const sin2 = Math.sin(latitude * Math.PI / 180) ** 2;
+  return 14.37 - 2.33 * sin2 - 1.56 * sin2 ** 2 - EARTH_ORBIT_DEG_PER_DAY;
 }
-.weather-sun-prominences .weather-sun-prominence {
-  transform-box: view-box; transform-origin: 50px 17px;
-  animation: weatherSunProminenceLift var(--prominence-period) ease-in-out var(--prominence-delay) infinite;
+
+function solarRotationAngle(timeMs) {
+  const days = (timeMs - SOLAR_MODEL_EPOCH_MS) / SOLAR_DAY_MS;
+  const phase = days * solarRotationRateDegPerDay(0) * Math.PI / 180;
+  return SUN_START_ANGLE + ((phase % TAU) + TAU) % TAU;
 }
-.weather-sun-prominences path {
-  fill: none !important; stroke-linecap: round; vector-effect: non-scaling-stroke;
+
+export function solarTextureOffsetTurns(timeMs, latitudeDeg) {
+  const days = (timeMs - SOLAR_MODEL_EPOCH_MS) / SOLAR_DAY_MS;
+  // Positive sampling-U moves a texture feature opposite to positive mesh-Y.
+  return (solarRotationRateDegPerDay(0) - solarRotationRateDegPerDay(latitudeDeg)) * days / 360;
 }
-.weather-sun-prominences .weather-sun-prominence__glow {
-  stroke: #ffad38; stroke-width: 2.2; opacity: .65;
-  filter: blur(.35px) drop-shadow(0 0 1.5px #ff9b2ccc);
-}
-.weather-sun-prominences .weather-sun-prominence__filament {
-  stroke: #fff2b4; stroke-width: .65; stroke-dasharray: 32 68;
-  animation: weatherSunProminenceFlow 2.2s linear var(--prominence-delay) infinite;
-}
-@keyframes weatherSunProminenceLift {
-  0%, 100% { transform: scaleY(.55); opacity: .15; }
-  30% { transform: scaleY(1.16); opacity: .95; }
-  65% { transform: scaleY(.86); opacity: .72; }
-}
-@keyframes weatherSunProminenceFlow {
-  from { stroke-dashoffset: 100; }
-  to { stroke-dashoffset: 0; }
-}`;
-    // The root owns this shared stylesheet; rerenders may replace either orb.
-    styleHost.appendChild(style);
-  }
-  const svg = doc.createElementNS(svgNS, 'svg');
-  svg.setAttribute('class', 'weather-sun-prominences');
-  svg.setAttribute('viewBox', '0 0 100 100');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.setAttribute('focusable', 'false');
-  for (const [index, angle] of [9, 67, 132, 194, 254, 317].entries()) {
-    const orbit = doc.createElementNS(svgNS, 'g');
-    orbit.setAttribute('transform', `rotate(${angle} 50 50)`);
-    const loop = doc.createElementNS(svgNS, 'g');
-    loop.setAttribute('class', 'weather-sun-prominence');
-    loop.style.setProperty('--prominence-period', `${4.2 + index * .31}s`);
-    loop.style.setProperty('--prominence-delay', `${-index * .87}s`);
-    for (const layer of ['glow', 'filament']) {
-      const path = doc.createElementNS(svgNS, 'path');
-      path.setAttribute('class', `weather-sun-prominence__${layer}`);
-      path.setAttribute('d', index % 2 ? 'M45 17C39 2 59 10 55 17' : 'M44 17C37 7 63 4 56 17');
-      path.setAttribute('pathLength', '100');
-      loop.appendChild(path);
-    }
-    orbit.appendChild(loop);
-    svg.appendChild(orbit);
-  }
-  corona.appendChild(svg);
-  return () => svg.remove();
+
+function resolveSolarPixelRatio(width, height, dpr = 1, zoom = 1, maxSide = 1024) {
+  const nativeDpr = Number.isFinite(dpr) && dpr > 0 ? dpr : 1;
+  const viewportZoom = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
+  const side = Math.max(8, Number(width) || 8, Number(height) || 8);
+  const limit = Math.max(8, Math.min(Number(maxSide) || 1024, 1024));
+  return Math.min(nativeDpr * viewportZoom, limit / side);
 }
 
 function loadTexture(url, textures, renderer) {
@@ -98,7 +60,7 @@ function loadTexture(url, textures, renderer) {
           texture.wrapT = THREE.ClampToEdgeWrapping;
           texture.minFilter = THREE.LinearMipmapLinearFilter;
           texture.magFilter = THREE.LinearFilter;
-          texture.anisotropy = Math.min(renderer?.capabilities?.getMaxAnisotropy?.() || 1, 8);
+          texture.anisotropy = Math.min(renderer?.capabilities?.getMaxAnisotropy?.() || 1, 16);
           texture.needsUpdate = true;
           resolve(texture);
         } catch (error) {
@@ -122,16 +84,25 @@ export class HeaderWeatherSunScene {
     };
     this.running = false;
     this.rafId = 0;
-    this.clock = new THREE.Clock();
+    this.resizeRafId = 0;
+    this.solarDaysUniform = { value: 0 };
     this.scene = null;
     this.camera = null;
     this.renderer = null;
     this.sunGroup = null;
     this.sunMesh = null;
     this.textures = [];
-    this.disposeProminences = null;
     this.disposed = false;
     this.contextLost = false;
+    this.onResize = () => {
+      if (this.disposed || this.contextLost || this.resizeRafId) return;
+      this.resizeRafId = requestAnimationFrame(() => {
+        this.resizeRafId = 0;
+        if (this.disposed || this.contextLost) return;
+        this.resize();
+        if (this.running) this.renderFrame();
+      });
+    };
     this.onContextLost = event => {
       event.preventDefault();
       this.contextLost = true;
@@ -178,34 +149,45 @@ export class HeaderWeatherSunScene {
       premultipliedAlpha: true,
       powerPreference: 'high-performance',
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setClearColor(0x000000, 0);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.NoToneMapping;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.6;
 
     // Retain the renderer immediately so a failed async initialization can dispose it.
     this.renderer = renderer;
     this.canvas.addEventListener('webglcontextlost', this.onContextLost);
     this.canvas.addEventListener('webglcontextrestored', this.onContextRestored);
+    window.addEventListener?.('resize', this.onResize, { passive: true });
+    window.visualViewport?.addEventListener?.('resize', this.onResize, { passive: true });
 
     const sunTexture = await loadTexture(this.options.sunTextureUrl, this.textures, renderer);
     if (this.disposed) return;
     if (this.contextLost) throw new Error('Solar graphics context was lost during preparation.');
     if (sunTexture) renderer.initTexture(sunTexture);
 
-    const surfaceColor = new THREE.Color(WARM_SUN_COLOR);
-    if (sunTexture) {
-      // Warm-white gain approximates the visible 5778 K solar photosphere.
-      surfaceColor.setRGB(1.26, 1.14, 1.02);
-    }
+    const surfaceColor = new THREE.Color(sunTexture ? 0xffffff : WARM_SUN_COLOR);
     const sunMaterial = new THREE.MeshBasicMaterial({
       map: sunTexture || null,
       color: surfaceColor,
-      toneMapped: false,
+      toneMapped: true,
       transparent: false,
       depthWrite: true,
     });
-    const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(SUN_RADIUS, 64, 48), sunMaterial);
+    sunMaterial.onBeforeCompile = shader => {
+      shader.uniforms.uSolarDays = this.solarDaysUniform;
+      const mapChunk = THREE.ShaderChunk.map_fragment.replace(/\bvMapUv\b/g, 'solarMapUv');
+      shader.fragmentShader = 'uniform float uSolarDays;\n' + shader.fragmentShader.replace('#include <map_fragment>', `
+#ifdef USE_MAP
+  vec2 solarMapUv = vMapUv;
+  float solarSinLatitude = sin((vMapUv.y - 0.5) * 3.141592653589793);
+  float solarSin2 = solarSinLatitude * solarSinLatitude;
+  solarMapUv.x += uSolarDays * (2.33 * solarSin2 + 1.56 * solarSin2 * solarSin2) / 360.0;
+#endif
+${mapChunk}`);
+    };
+    sunMaterial.customProgramCacheKey = () => 'header-solar-differential-v1';
+    const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(SUN_RADIUS, 96, 72), sunMaterial);
     sunMesh.renderOrder = 1;
 
     const sunGroup = new THREE.Group();
@@ -222,9 +204,8 @@ export class HeaderWeatherSunScene {
     this.renderer = renderer;
     this.sunGroup = sunGroup;
     this.sunMesh = sunMesh;
-    this.disposeProminences = mountSunProminences(this.canvas.parentElement?.querySelector('.weather-orb-overlay__corona'));
     this.resize();
-    this.updateAnimation(0);
+    this.updateAnimation(Date.now());
     // One small material: prepare it synchronously so context loss cannot strand
     // a third-party compileAsync polling loop. The first frame stays hidden.
     renderer.compile(scene, camera);
@@ -233,33 +214,34 @@ export class HeaderWeatherSunScene {
   }
 
   resize() {
-    if (!this.renderer || !this.camera || !this.canvas) {
+    if (!this.renderer || !this.camera || !this.canvas || this.contextLost) {
       return;
     }
-    const width = Math.max(8, this.canvas.clientWidth);
-    const height = Math.max(8, this.canvas.clientHeight);
-    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    const width = Math.max(8, Math.round(this.canvas.clientWidth));
+    const height = Math.max(8, Math.round(this.canvas.clientHeight));
+    const pixelRatio = resolveSolarPixelRatio(width, height, window.devicePixelRatio || 1,
+      window.visualViewport?.scale || 1, this.renderer.capabilities?.maxTextureSize || 1024);
     this.renderer.setPixelRatio(pixelRatio);
     // WebGLRenderer applies its pixel ratio to these CSS dimensions itself.
-    this.renderer.setSize(Math.round(width), Math.round(height), false);
+    this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
   }
 
-  updateAnimation(elapsedSeconds) {
+  updateAnimation(timeMs = Date.now()) {
     if (!this.sunMesh) {
       return;
     }
 
-    const sunSpin = SUN_START_ANGLE + (elapsedSeconds / SUN_ROTATION_SECONDS) * TAU;
-    this.sunMesh.rotation.y = sunSpin;
+    this.sunMesh.rotation.y = solarRotationAngle(timeMs);
+    this.solarDaysUniform.value = (timeMs - SOLAR_MODEL_EPOCH_MS) / SOLAR_DAY_MS;
   }
 
   renderFrame() {
     if (!this.renderer || !this.scene || !this.camera) {
       return;
     }
-    this.updateAnimation(this.clock.getElapsedTime());
+    this.updateAnimation(Date.now());
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -300,8 +282,10 @@ export class HeaderWeatherSunScene {
   dispose() {
     this.disposed = true;
     this.stop();
-    this.disposeProminences?.();
-    this.disposeProminences = null;
+    if (this.resizeRafId) cancelAnimationFrame(this.resizeRafId);
+    this.resizeRafId = 0;
+    window.removeEventListener?.('resize', this.onResize);
+    window.visualViewport?.removeEventListener?.('resize', this.onResize);
     this.canvas.removeEventListener('webglcontextlost', this.onContextLost);
     this.canvas.removeEventListener('webglcontextrestored', this.onContextRestored);
     if (this.sunMesh) {

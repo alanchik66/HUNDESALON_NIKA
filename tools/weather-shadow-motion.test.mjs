@@ -200,7 +200,7 @@ test('weather dropdown clears the complete navigation on mobile and desktop and 
   }
 });
 
-async function solarRecoveryHarness({ textureFailure = false, networkFailure = false, decodeFailure = false, decodeWait = Promise.resolve(), corona = null } = {}) {
+async function solarRecoveryHarness({ textureFailure = false, networkFailure = false, decodeFailure = false, decodeWait = Promise.resolve() } = {}) {
   const source = await readFile(new URL('../assets/js/header-weather-sun-scene.js', import.meta.url), 'utf8');
   const program = parse(source, { ecmaVersion: 'latest', sourceType: 'module', range: true });
   const code = program.body.filter(node => node.type !== 'ImportDeclaration').map(node => {
@@ -208,17 +208,43 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
     return source.slice(...declaration.range);
   }).join('\n');
   const listeners = new Map();
+  const windowListeners = new Map();
+  const viewportListeners = new Map();
   const frames = new Map();
   let nextFrame = 0;
-  const stats = { renders: 0, disposed: 0, texturesDisposed: 0, failRender: false, contextLost: false, events: [] };
-  const canvas = { clientWidth: 96, clientHeight: 96, parentElement: corona ? { querySelector: () => corona } : null,
+  let nowMs = Date.UTC(2026, 10, 4, 12);
+  const events = map => ({ addEventListener: (name, handler) => map.set(name, handler), removeEventListener: name => map.delete(name) });
+  const viewport = { scale: 1, ...events(viewportListeners) };
+  const window = { devicePixelRatio: 3, visualViewport: viewport, ...events(windowListeners) };
+  const stats = { renders: 0, disposed: 0, texturesDisposed: 0, failRender: false, contextLost: false, events: [], sizes: [], textures: [] };
+  const canvas = { clientWidth: 96, clientHeight: 96,
     addEventListener: (name, callback) => listeners.set(name, callback),
     removeEventListener: name => listeners.delete(name),
   };
+  const mapFragment = '#ifdef USE_MAP\n vec4 sampledDiffuseColor = texture2D( map, vMapUv );\n #ifdef DECODE_VIDEO_TEXTURE\n sampledDiffuseColor = sRGBTransferEOTF( sampledDiffuseColor );\n #endif\n diffuseColor *= sampledDiffuseColor;\n#endif';
   class Renderer {
-    setPixelRatio() {} setClearColor() {} setSize() {}
+    constructor(options) { stats.rendererOptions = options; }
+    setPixelRatio(value) { this.pixelRatio = value; stats.pixelRatio = value; }
+    getPixelRatio() { return this.pixelRatio; }
+    setClearColor(color, alpha) { stats.clear = { color, alpha }; }
+    setSize(width, height, updateStyle) {
+      canvas.width = Math.floor(width * this.pixelRatio);
+      canvas.height = Math.floor(height * this.pixelRatio);
+      stats.sizes.push({ width, height, updateStyle });
+    }
     initTexture() { stats.events.push('upload'); }
-    compile() { stats.events.push('compile'); }
+    compile(scene) {
+      stats.events.push('compile');
+      const visit = node => {
+        if (node.material?.onBeforeCompile) {
+          const shader = { uniforms: {}, vertexShader: '#include <common>\n#include <uv_vertex>', fragmentShader: '#include <common>\nvoid main() {\n#include <map_fragment>\n}' };
+          node.material.onBeforeCompile(shader, this);
+          stats.shader = shader;
+        }
+        node.children?.forEach(visit);
+      };
+      visit(scene);
+    }
     getContext() { return { isContextLost: () => stats.contextLost }; }
     render() { if (stats.failRender) throw new Error('GPU unavailable'); stats.events.push('render'); stats.renders += 1; }
     dispose() { stats.disposed += 1; }
@@ -226,24 +252,28 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
   const THREE = {
     MathUtils: { degToRad: degrees => degrees * Math.PI / 180 },
     Clock: class { getElapsedTime() { return 0; } },
-    Scene: class { add() {} },
+    ShaderChunk: { map_fragment: mapFragment },
+    Scene: class { children = []; background = null; add(child) { this.children.push(child); } },
     PerspectiveCamera: class { position = { set() {} }; lookAt() {} updateProjectionMatrix() {} },
     WebGLRenderer: Renderer,
     TextureLoader: class { load(url, success, progress, failure) {
       if (textureFailure) throw new Error('Texture request failed');
       if (networkFailure) { failure(); return; }
-      success({ image: { decode() { stats.events.push('decode'); return decodeFailure ? Promise.reject(new Error('Decode failed')) : decodeWait; } }, dispose() { stats.texturesDisposed += 1; } });
+      const texture = { image: { decode() { stats.events.push('decode'); return decodeFailure ? Promise.reject(new Error('Decode failed')) : decodeWait; } }, dispose() { stats.texturesDisposed += 1; } };
+      stats.textures.push(texture);
+      success(texture);
     } },
     Color: class { setRGB() {} },
-    MeshBasicMaterial: class { dispose() {} },
+    MeshBasicMaterial: class { constructor(options) { Object.assign(this, options); } dispose() {} },
     SphereGeometry: class { dispose() {} },
     Mesh: class { constructor(geometry, material) { this.geometry = geometry; this.material = material; this.rotation = {}; } },
-    Group: class { position = {}; rotation = {}; add() {} },
+    Group: class { position = {}; rotation = {}; children = []; add(child) { this.children.push(child); } },
   };
-  const mount = new Function('THREE', 'window', 'requestAnimationFrame', 'cancelAnimationFrame', `${code}; return mountHeaderWeatherSunScene;`)(
-    THREE, { devicePixelRatio: 3 }, callback => { frames.set(++nextFrame, callback); return nextFrame; }, id => frames.delete(id)
+  class ClockDate extends Date { static now() { return nowMs; } }
+  const api = new Function('THREE', 'window', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date', `${code}; return { mount: mountHeaderWeatherSunScene, rate: solarRotationRateDegPerDay, offset: solarTextureOffsetTurns, angle: solarRotationAngle, pixelRatio: resolveSolarPixelRatio, epoch: SOLAR_MODEL_EPOCH_MS };`)(
+    THREE, window, callback => { frames.set(++nextFrame, callback); return nextFrame; }, id => frames.delete(id), ClockDate
   );
-  return { mount, canvas, listeners, frames, stats };
+  return { ...api, canvas, listeners, windowListeners, viewportListeners, window, viewport, frames, stats, setNow: value => { nowMs = value; } };
 }
 
 test('solar context loss shows recovery, resumes rendering after restoration and releases listeners on disposal', async () => {
@@ -389,22 +419,25 @@ test('missing or undecodable solar textures fail instead of showing a plain read
   }
 });
 
-test('solar loading keeps every solar layer hidden and the finished corona has independent gentle ray motion', async () => {
+test('the original solar surface stays hidden until ready and adds no SVG or rotating synthetic spokes', async () => {
   const root = await styles;
   const loading = matchingRules(root, selector => selector === ".weather-orb-overlay.is-sun.is-header-sun[data-sun-scene='loading']");
   assert.equal(lastDeclaration(loading, 'opacity').value, '0');
   assert.equal(lastDeclaration(loading, 'opacity').important, true);
   const visible = matchingRules(root, selector => selector === '.weather-orb-overlay.is-sun.is-header-sun.is-visible');
-  assert.match(lastDeclaration(visible, 'opacity').value, /--orb-sun-transmission/, 'disc, halo and rays must attenuate together behind clouds');
-  const orbit = [];
-  keyframes(root, 'weatherSolarCoronaOrbit').walkDecls('transform', decl => orbit.push(decl.value));
-  assert.ok(new Set(orbit).size > 1);
-  const corona = matchingRules(root, selector => selector === '.weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__corona::before');
-  assert.match(lastDeclaration(corona, 'animation').value, /weatherSolarCoronaOrbit.*weatherSolarCoronaBreath/);
-  assert.equal(lastDeclaration(corona, 'mask-image').important, true, 'the rays stay outside the photosphere under shared transparency rules');
-  const halo = matchingRules(root, selector => selector === '.weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__corona');
-  assert.equal(lastDeclaration(halo, 'left').value, '50%');
-  assert.equal(lastDeclaration(halo, 'top').value, '50%', 'corona and the centered 3D disc must share one center');
+  assert.match(lastDeclaration(visible, 'opacity').value, /--orb-sun-transmission/, 'the complete solar surface retains its live cloud attenuation');
+  const canvas = matchingRules(root, selector => selector === '.weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__canvas');
+  assert.doesNotMatch(lastDeclaration(canvas, 'filter').value, /contrast|saturate/, 'the original photographic detail must not be flattened or recolored');
+  const shell = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
+  const scene = await readFile(new URL('../assets/js/header-weather-sun-scene.js', import.meta.url), 'utf8');
+  const brightness = Number(shell.match(/HEADER_WEATHER_SUN_BRIGHTNESS = ([\d.]+)/)?.[1]);
+  assert.ok(brightness > 1 && brightness <= 1.2, 'the original texture receives only a gentle exposure lift');
+  assert.doesNotMatch(shell, /weather-orb-overlay__corona|weatherSolarCoronaOrbit|weatherSolarCoronaBreath/);
+  assert.doesNotMatch(scene, /function mountSunProminences|createElementNS|weather-sun-prominence/);
+  root.walkRules(rule => {
+    if (!rule.selector.includes('.is-sun')) return;
+    rule.walkDecls(decl => assert.doesNotMatch(decl.value, /repeating-conic-gradient/, 'Sun rules cannot reintroduce rotating spoke layers'));
+  });
   for (const property of ['left', 'top']) {
     const moon = matchingRules(root, selector => selector === '.weather-orb-overlay--dropdown.is-moon');
     const sun = matchingRules(root, selector => selector === '.weather-orb-overlay--dropdown.is-sun');
@@ -415,83 +448,114 @@ test('solar loading keeps every solar layer hidden and the finished corona has i
   }
 });
 
-function coronaElement(styleHost = null) {
-  class Element {
-    constructor(tag) {
-      this.tag = tag;
-      this.attributes = new Map();
-      this.values = new Map();
-      this.style = { setProperty: (name, value) => this.values.set(name, value) };
-      this.children = [];
-    }
-    setAttribute(name, value) { this.attributes.set(name, value); }
-    querySelector(selector) {
-      return selector === 'style[data-weather-sun-prominences]'
-        ? this.children.find(child => child.tag === 'style' && child.attributes.has('data-weather-sun-prominences')) || null
-        : null;
-    }
-    appendChild(child) { this.children.push(child); child.parentElement = this; }
-    remove() {
-      if (this.parentElement) this.parentElement.children = this.parentElement.children.filter(child => child !== this);
-      this.parentElement = null;
-    }
-  }
-  const corona = new Element('span');
-  corona.ownerDocument = { createElement: tag => new Element(tag), createElementNS: (_, tag) => new Element(tag) };
-  corona.styleHost = styleHost || new Element('shadow-root');
-  corona.styleHost.host = {};
-  corona.getRootNode = () => corona.styleHost;
-  return corona;
-}
-
-test('solar prominences have staggered anchored loops and flowing filaments without entering the layout or accessibility tree', async () => {
-  const corona = coronaElement();
-  const h = await solarRecoveryHarness({ corona });
-  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
-  const [style] = corona.styleHost.children;
-  const [svg] = corona.children;
-  assert.equal(svg.attributes.get('aria-hidden'), 'true');
-  assert.equal(svg.attributes.get('focusable'), 'false');
-  assert.equal(svg.children.length, 6);
-  const loops = svg.children.map(orbit => orbit.children[0]);
-  assert.equal(new Set(loops.map(loop => loop.values.get('--prominence-delay'))).size, 6);
-  assert.ok(loops.every(loop => loop.children.length === 2 && loop.children.every(path => path.attributes.get('pathLength') === '100')));
-  const css = postcss.parse(style.textContent);
-  const root = matchingRules(css, selector => selector.endsWith(' .weather-sun-prominences'));
-  assert.equal(lastDeclaration(root, 'position').value, 'absolute');
-  assert.equal(lastDeclaration(root, 'pointer-events').value, 'none');
-  const anchored = matchingRules(css, selector => selector.endsWith(' .weather-sun-prominence'));
-  assert.equal(lastDeclaration(anchored, 'transform-origin').value, '50px 17px', 'the loop bases must remain attached to the photosphere');
-  for (const [name, property] of [['weatherSunProminenceLift', 'transform'], ['weatherSunProminenceFlow', 'stroke-dashoffset']]) {
-    const values = [];
-    keyframes(css, name).walkDecls(property, decl => values.push(decl.value));
-    assert.ok(new Set(values).size > 1, `${name} must visibly move`);
-  }
-  scene.dispose();
-  assert.equal(corona.children.length, 0);
-  assert.equal(corona.styleHost.children.length, 1, 'the shared stylesheet belongs to the root rather than an individual solar scene');
+test('the solar model uses latitude-dependent Earth-view rotation rather than a thirty-minute animation', async () => {
+  const h = await solarRecoveryHarness();
+  assert.equal(h.epoch, Date.UTC(2026, 10, 4));
+  const earthRate = 360 / 365.256;
+  assert.ok(Math.abs(h.rate(0) - (14.37 - earthRate)) < 1e-12);
+  assert.ok(Math.abs(h.rate(30) - (14.37 - 2.33 / 4 - 1.56 / 16 - earthRate)) < 1e-12);
+  assert.ok(h.rate(0) > h.rate(16) && h.rate(16) > h.rate(30) && h.rate(30) > h.rate(60));
+  assert.equal(h.rate(-30), h.rate(30));
+  const hour = h.epoch + 3600000;
+  const delta = (h.angle(hour) - h.angle(h.epoch)) * 180 / Math.PI;
+  assert.ok(Math.abs(delta - h.rate(0) / 24) < 1e-10);
+  assert.ok(delta > .55 && delta < .56, 'physical hourly drift is small and cannot be accelerated for visual effect');
+  assert.equal(h.offset(hour, 0), 0);
 });
 
-test('solar scenes share one root stylesheet through disposal, rerender and remount without duplicating animations', async () => {
-  const first = coronaElement();
-  const second = coronaElement(first.styleHost);
-  const a = await solarRecoveryHarness({ corona: first });
-  const b = await solarRecoveryHarness({ corona: second });
-  const sceneA = await a.mount(a.canvas, { sunTextureUrl: '/solar.jpg' });
-  const sceneB = await b.mount(b.canvas, { sunTextureUrl: '/solar.jpg' });
-  assert.equal(first.styleHost.children.length, 1);
-  sceneA.dispose();
-  sceneA.dispose();
-  assert.equal(first.children.length, 0);
-  assert.equal(second.children.length, 1, 'the second overlay retains its own SVG');
-  assert.equal(first.styleHost.children.length, 1, 'disposing one scene preserves the shared stylesheet');
-  sceneB.dispose();
-  assert.equal(second.children.length, 0);
-  const c = await solarRecoveryHarness({ corona: first });
-  const sceneC = await c.mount(c.canvas, { sunTextureUrl: '/solar.jpg' });
-  assert.equal(first.styleHost.children.length, 1, 'a remount must reuse the root stylesheet');
-  assert.equal(first.children.length, 1);
-  sceneC.dispose();
-  assert.equal(first.children.length, 0);
-  assert.equal(first.styleHost.children.length, 1);
+test('differential texture sampling moves a spherical feature at its latitude rate without reversing or doubling its speed', async () => {
+  const h = await solarRecoveryHarness();
+  const later = h.epoch + 3600000;
+  const rotation = h.angle(later) - h.angle(h.epoch);
+  // Installed SphereGeometry uses x=-cos(2πu)cos(latitude), z=sin(2πu)cos(latitude).
+  // A texture feature at u=.25 is drawn at geometry u=.25-samplingOffset.
+  for (const latitude of [0, 16, 30, 60]) {
+    const offset = h.offset(later, latitude);
+    const featureU = .25 - offset;
+    const radius = Math.cos(latitude * Math.PI / 180);
+    const x = -Math.cos(2 * Math.PI * featureU) * radius;
+    const z = Math.sin(2 * Math.PI * featureU) * radius;
+    const renderedX = Math.cos(rotation) * x + Math.sin(rotation) * z;
+    const renderedZ = -Math.sin(rotation) * x + Math.cos(rotation) * z;
+    const renderedDegrees = Math.atan2(renderedX, renderedZ) * 180 / Math.PI;
+    assert.ok(Math.abs(renderedDegrees - h.rate(latitude) / 24) < 1e-10, 'latitude ' + latitude + ': base rotation minus sampled UV residual must equal the physical rate');
+    assert.ok(renderedX > 0, 'visible features continue in the mesh rotation direction');
+    assert.ok(Math.abs(offset - (h.rate(0) - h.rate(latitude)) / 24 / 360) < 1e-14);
+    assert.equal(h.offset(h.epoch, latitude), 0);
+  }
+});
+
+test('absolute UTC advances one material uniform without reloading or recompiling the original solar texture', async () => {
+  const h = await solarRecoveryHarness();
+  h.setNow(h.epoch);
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  const material = scene.sunMesh.material;
+  const uniform = scene.solarDaysUniform;
+  const cacheKey = material.customProgramCacheKey();
+  const start = scene.sunMesh.rotation.y;
+  const compileCount = h.stats.events.filter(event => event === 'compile').length;
+  assert.equal(material.map, h.stats.textures[0], 'the original decoded map remains the only surface source');
+  assert.ok(Object.values(h.stats.shader.uniforms).includes(uniform));
+  assert.ok(h.stats.shader.fragmentShader.includes('texture2D( map,'));
+  assert.ok(h.stats.shader.fragmentShader.includes('diffuseColor *= sampledDiffuseColor'));
+  assert.ok(h.stats.shader.fragmentShader.includes('DECODE_VIDEO_TEXTURE'), 'the original Three map chunk stays intact around the changed UV');
+  const uvName = h.stats.shader.fragmentShader.match(/texture2D\(\s*map,\s*(\w+)\s*\)/)?.[1];
+  assert.ok(uvName && uvName !== 'vMapUv', 'the texture must sample the latitude-adjusted coordinates');
+  const residual = h.stats.shader.fragmentShader.match(new RegExp(uvName + '\\.x\\s*\\+=\\s*([^;]+);'))?.[1];
+  assert.ok(residual, 'the compiled material must add the positive residual sampling offset');
+  const sampleOffset = new Function('uSolarDays', 'solarSin2', 'return (' + residual + ');');
+  for (const latitude of [0, 16, 30, 60]) {
+    const actual = sampleOffset(1 / 24, Math.sin(latitude * Math.PI / 180) ** 2);
+    assert.ok(Math.abs(actual - h.offset(h.epoch + 3600000, latitude)) < 1e-14, 'the actual injected shader must use the same latitude rate and sign as the spherical feature model');
+  }
+  h.setNow(h.epoch + 3600000);
+  scene.renderFrame();
+  assert.ok(Math.abs(scene.sunMesh.rotation.y - start - h.rate(0) / 24 * Math.PI / 180) < 1e-10, 'renderFrame must use wall-clock UTC rather than a fresh session clock');
+  assert.equal(scene.solarDaysUniform, uniform);
+  assert.equal(uniform.value, 1 / 24);
+  assert.equal(material.customProgramCacheKey(), cacheKey);
+  assert.equal(h.stats.events.filter(event => event === 'compile').length, compileCount);
+  assert.equal(h.stats.textures.length, 1);
+  assert.equal(h.stats.rendererOptions.alpha, true);
+  assert.equal(h.stats.clear.alpha, 0);
+  assert.equal(scene.scene.background, null, 'the Sun renderer cannot introduce a daytime sky into the header');
+  scene.dispose();
+  const restored = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  assert.equal(restored.sunMesh.rotation.y, h.angle(h.epoch + 3600000), 'remounting the renderer cannot reset astronomical phase');
+  assert.equal(restored.solarDaysUniform.value, 1 / 24);
+  restored.dispose();
+});
+
+test('native retina and pinch zoom retain CSS dimensions, coalesce backing resize and release all resize work', async () => {
+  const h = await solarRecoveryHarness();
+  assert.equal(h.pixelRatio(100, 60, 3, 1), 3);
+  assert.equal(h.pixelRatio(100, 60, 3, 2), 6);
+  assert.ok(Math.abs(h.pixelRatio(900, 600, 3, 2) - 1024 / 900) < 1e-12);
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  assert.equal(h.canvas.width, 96 * 3);
+  assert.equal(h.canvas.height, 96 * 3);
+  const priorFrames = new Set(h.frames.keys());
+  const priorSizes = h.stats.sizes.length;
+  h.viewport.scale = 2;
+  h.windowListeners.get('resize')();
+  h.viewportListeners.get('resize')();
+  h.viewportListeners.get('resize')();
+  const resizeFrames = [...h.frames].filter(([id]) => !priorFrames.has(id));
+  assert.equal(resizeFrames.length, 1, 'multiple viewport signals must allocate one resize frame');
+  const [id, callback] = resizeFrames[0];
+  h.frames.delete(id);
+  callback();
+  assert.equal(h.stats.sizes.length, priorSizes + 1);
+  assert.deepEqual(h.stats.sizes.at(-1), { width: 96, height: 96, updateStyle: false });
+  assert.equal(h.canvas.width, 96 * 6);
+  assert.equal(h.canvas.height, 96 * 6);
+  h.viewport.scale = 30;
+  scene.resize();
+  assert.ok(Math.max(h.canvas.width, h.canvas.height) <= 1024, 'pinch zoom cannot exceed the bounded backing store');
+  h.windowListeners.get('resize')();
+  scene.dispose();
+  assert.equal(h.frames.size, 0);
+  assert.equal(h.listeners.size, 0);
+  assert.equal(h.windowListeners.size, 0);
+  assert.equal(h.viewportListeners.size, 0);
 });
