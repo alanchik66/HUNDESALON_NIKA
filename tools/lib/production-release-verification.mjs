@@ -85,7 +85,12 @@ export function validateReleaseManifest(manifest, { commit, stamp, canonicalOrig
     if (!entry || entry.path !== `/${locale}/` || !Array.isArray(entry.assets) || !entry.assets.length || entry.assets.some(asset => !paths.has(asset))) {
       throw new Error(`Release manifest is missing ${locale} assets.`);
     }
-    if (entry.assets.some(asset => new URL(asset, PRODUCTION_ORIGIN).searchParams.get('v') !== manifest.stamp)) {
+    // Match build-production.js: authored CSS/JS get the release stamp; vendor CSS keeps its pinned version.
+    // Both groups remain covered by the manifest digest and public-byte checks.
+    if (entry.assets.some(asset => {
+      const url = new URL(asset, PRODUCTION_ORIGIN);
+      return /^\/assets\/(?:css|js)\//u.test(url.pathname) && url.searchParams.get('v') !== manifest.stamp;
+    })) {
       throw new Error(`${locale}: release asset references do not use the expected stamp.`);
     }
   }
