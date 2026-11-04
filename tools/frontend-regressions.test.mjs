@@ -1074,7 +1074,7 @@ test('cookie choices remain usable when browser storage rejects writes', async (
   }
 });
 
-test('header moon keeps matching fixed scale without replacing either CSS anchor', async () => {
+test('header Sun and Moon retain their fixed scales and shared CSS anchors in both variants', async () => {
   const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
   const declaration = name => source.match(new RegExp(`  function ${name}\\([^)]*\\) \\{[\\s\\S]*?\\n  \\}`))[0];
   const constants = source.slice(source.indexOf('  const HEADER_WEATHER_MOON_DISPLAY_SCALE'), source.indexOf('  /** Warm-white lift'));
@@ -1113,13 +1113,18 @@ test('header moon keeps matching fixed scale without replacing either CSS anchor
     for (const name of positions) assert.equal(moon.values.has(name), false, 'cached layouts must still remove stale inline positions');
   }
 
-  const sun = createOrb('dropdown', 'sun');
-  apply(sun, { left: 23, top: 41, scale: 0.7, offsetX: 4, offsetY: -2 });
-  assert.equal(sun.values.get('--orb-left'), '23.00%');
-  assert.equal(sun.values.get('--orb-top'), '41.00px');
-  assert.equal(sun.values.get('--orb-scale-visible'), '0.700');
-  assert.equal(sun.values.get('--orb-offset-x'), '4px');
-  assert.equal(sun.values.get('--orb-offset-y'), '-2px');
+  for (const variant of ['preview', 'dropdown']) {
+    const sun = createOrb(variant, 'sun');
+    const expectedSunScale = fixed('sun', variant).scale.toFixed(3);
+    apply(sun, { left: 23, top: 41, scale: 0.7, offsetX: 4, offsetY: -2 });
+    assert.equal(sun.values.get('--orb-scale-visible'), expectedSunScale);
+    assert.equal(sun.dataset.orbPositionLocked, variant);
+    for (const name of positions) assert.equal(sun.values.has(name), false, `${variant}: Sun must keep the Moon's CSS anchor`);
+    positions.forEach(name => sun.values.set(name, 'stale-again'));
+    apply(sun, null);
+    assert.equal(sun.values.get('--orb-scale-visible'), expectedSunScale, 'missing model coordinates must not reset the rendered solar scale');
+    for (const name of positions) assert.equal(sun.values.has(name), false);
+  }
 });
 
 test('header moon readability matches in preview and dropdown without changing the sun', async () => {

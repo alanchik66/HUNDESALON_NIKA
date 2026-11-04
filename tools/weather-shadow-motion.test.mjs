@@ -368,6 +368,7 @@ test('solar readiness waits for texture decoding, GPU upload and hidden first re
   assert.equal(h.stats.renders, 0);
   finishDecode();
   const scene = await pending;
+  assert.equal(scene.sunGroup.position.y, 0, 'the solar disc must project onto the shared canvas center');
   for (const [earlier, later] of [['decode', 'upload'], ['upload', 'compile'], ['compile', 'render'], ['render', 'ready']]) {
     assert.ok(h.stats.events.indexOf(earlier) < h.stats.events.indexOf(later), `${earlier} must precede ${later}`);
   }
@@ -401,4 +402,15 @@ test('solar loading keeps every solar layer hidden and the finished corona has i
   const corona = matchingRules(root, selector => selector === '.weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__corona::before');
   assert.match(lastDeclaration(corona, 'animation').value, /weatherSolarCoronaOrbit.*weatherSolarCoronaBreath/);
   assert.equal(lastDeclaration(corona, 'mask-image').important, true, 'the rays stay outside the photosphere under shared transparency rules');
+  const halo = matchingRules(root, selector => selector === '.weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__corona');
+  assert.equal(lastDeclaration(halo, 'left').value, '50%');
+  assert.equal(lastDeclaration(halo, 'top').value, '50%', 'corona and the centered 3D disc must share one center');
+  for (const property of ['left', 'top']) {
+    const moon = matchingRules(root, selector => selector === '.weather-orb-overlay--dropdown.is-moon');
+    const sun = matchingRules(root, selector => selector === '.weather-orb-overlay--dropdown.is-sun');
+    const anchors = rules => rules.flatMap(rule => rule.nodes
+      .filter(node => node.type === 'decl' && node.prop === property)
+      .map(decl => ({ media: rule.parent.params || 'all', value: decl.value, important: Boolean(decl.important) })));
+    assert.deepEqual(anchors(sun), anchors(moon), 'both bodies must share every base and responsive anchor');
+  }
 });

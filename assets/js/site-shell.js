@@ -352,11 +352,11 @@
     left: HEADER_WEATHER_SUN_PREVIEW_ANCHOR.left,
     offsetX: HEADER_WEATHER_SUN_PREVIEW_ANCHOR.offsetX,
     offsetY: HEADER_WEATHER_SUN_PREVIEW_ANCHOR.offsetY,
-    scale: 0.88,
+    scale: 1,
     objectPosition: '50% 50%',
   });
   /** Warm-white lift for the self-illuminated 5778 K Sun surface. */
-  const HEADER_WEATHER_SUN_BRIGHTNESS = 1.2;
+  const HEADER_WEATHER_SUN_BRIGHTNESS = 1.5;
   const HEADER_WEATHER_SUN_MEDIA_SCALE = 1;
   const HEADER_WEATHER_SUN_SIZE_FACTOR = 1;
 
@@ -951,16 +951,19 @@
   height: clamp(72px, 15vw, 96px) !important;
 }
 
-.weather-orb-overlay--dropdown.is-moon {
-  left: ${HEADER_WEATHER_MOON_PREVIEW_ANCHOR.left}% !important;
+.weather-orb-overlay--dropdown.is-moon,
+.weather-orb-overlay--dropdown.is-sun {
+  left: ${HEADER_WEATHER_ORB_PREVIEW_ANCHOR.left}% !important;
   top: 35% !important;
 }
 
-.weather-orb-overlay--dropdown.is-moon.is-visible {
+.weather-orb-overlay--dropdown.is-moon.is-visible,
+.weather-orb-overlay--dropdown.is-sun.is-visible {
   transform: translate(-50%, -50%) scale(var(--orb-scale-visible, 1)) !important;
 }
 
-.weather-orb-overlay--dropdown.is-moon:not(.is-visible) {
+.weather-orb-overlay--dropdown.is-moon:not(.is-visible),
+.weather-orb-overlay--dropdown.is-sun:not(.is-visible) {
   transform: translate(-50%, -50%) scale(var(--orb-scale-hidden, 0.94)) !important;
 }
 
@@ -1320,7 +1323,7 @@
   display: block !important;
   position: absolute !important;
   left: 50% !important;
-  top: 52% !important;
+  top: 50% !important;
   width: 72% !important;
   height: 72% !important;
   transform: translate(-50%, -50%) !important;
@@ -3539,7 +3542,8 @@
 }
 
 @media (max-width: 420px) {
-  .weather-orb-overlay--dropdown.is-moon {
+  .weather-orb-overlay--dropdown.is-moon,
+  .weather-orb-overlay--dropdown.is-sun {
     top: 26% !important;
   }
 }
@@ -7743,14 +7747,15 @@
         orbKind === 'sun' ||
         overlay.classList.contains('is-moon') ||
         overlay.classList.contains('is-sun'));
-    const isDropdownMoon =
+    const isDropdownOrb =
       overlay.classList.contains('weather-orb-overlay--dropdown') &&
-      (orbKind === 'moon' || overlay.classList.contains('is-moon'));
-    const isCssAnchoredOrb = isPreviewOrb || isDropdownMoon;
+      (orbKind === 'moon' || orbKind === 'sun' || overlay.classList.contains('is-moon') || overlay.classList.contains('is-sun'));
+    const isCssAnchoredOrb = isPreviewOrb || isDropdownOrb;
 
-    if ((isPreviewOrb && (orbKind === 'moon' || orbKind === 'sun')) || isDropdownMoon) {
-      layout = resolveHeaderWeatherOrbFixedLayout(isDropdownMoon ? 'moon' : orbKind, isDropdownMoon ? 'dropdown' : 'preview');
-      overlay.dataset.orbPositionLocked = isDropdownMoon ? 'dropdown' : 'preview';
+    if ((isPreviewOrb && (orbKind === 'moon' || orbKind === 'sun')) || isDropdownOrb) {
+      const fixedKind = orbKind === 'sun' || overlay.classList.contains('is-sun') ? 'sun' : 'moon';
+      layout = resolveHeaderWeatherOrbFixedLayout(fixedKind, isDropdownOrb ? 'dropdown' : 'preview');
+      overlay.dataset.orbPositionLocked = isDropdownOrb ? 'dropdown' : 'preview';
       overlay.style.removeProperty('--orb-left');
       overlay.style.removeProperty('--orb-top');
       overlay.style.removeProperty('--orb-offset-x');

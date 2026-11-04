@@ -140,7 +140,7 @@ export class HeaderWeatherSunScene {
     sunMesh.renderOrder = 1;
 
     const sunGroup = new THREE.Group();
-    sunGroup.position.y = -0.07;
+    sunGroup.position.y = 0;
     sunGroup.rotation.z = SUN_AXIAL_TILT;
     sunGroup.add(sunMesh);
     scene.add(sunGroup);
