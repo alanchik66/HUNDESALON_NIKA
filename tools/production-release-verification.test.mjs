@@ -209,6 +209,40 @@ test('bounded propagation retries wait for the expected manifest and then verify
   assert.deepEqual(pauses, [0]);
 });
 
+test('default retries accept the exact release after twelve transient unavailable manifest reads', async t => {
+  let reads = 0;
+  const f = await fixture(t, ({ url }) => url.pathname === RELEASE_MANIFEST_PATH && ++reads <= 12
+    ? { status: 503, type: 'text/html', body: 'Temporarily unavailable' } : null);
+  const pauses = [];
+  const result = await verifyProductionRelease({
+    commit: COMMIT, manifest: f.manifest, baseUrl: f.baseUrl, pause: async ms => pauses.push(ms),
+  });
+  assert.equal(result.attempts, 13);
+  assert.equal(result.commit, COMMIT);
+  assert.equal(result.stamp, STAMP);
+  assert.equal(result.assets, 3);
+  assert.deepEqual(result.locales, RELEASE_LOCALES);
+  assert.equal(reads, 13);
+  assert.deepEqual(pauses, Array(12).fill(5000));
+  for (const asset of [SCRIPT, STYLESHEET, WEATHER]) assert.ok(f.requests.includes(asset));
+});
+
+test('persistent unavailable manifests stop at the default bound and report only HTTP diagnostics', async t => {
+  const f = await fixture(t, ({ url }) => url.pathname === RELEASE_MANIFEST_PATH
+    ? { status: 503, type: 'text/html; charset=utf-8', headers: { 'Set-Cookie': 'private-session=fixture-secret' }, body: 'private response body' } : null);
+  const pauses = [];
+  await assert.rejects(verifyProductionRelease({
+    commit: COMMIT, manifest: f.manifest, baseUrl: f.baseUrl, pause: async ms => pauses.push(ms),
+  }), error => {
+    assert.match(error.message, /HTTP 503; Content-Type: text\/html; charset=utf-8; attempt 30\/30/u);
+    assert.doesNotMatch(error.message, /private|fixture-secret|Set-Cookie/iu);
+    return true;
+  });
+  assert.equal(f.requests.length, 30);
+  assert.ok(f.requests.every(request => request === `${RELEASE_MANIFEST_PATH}?commit=${COMMIT}`));
+  assert.deepEqual(pauses, Array(29).fill(5000));
+});
+
 test('a stalled server cannot keep verification running beyond its bounded request budget', async t => {
   const f = await fixture(t, ({ url }) => url.pathname === RELEASE_MANIFEST_PATH ? { hang: true } : null);
   const started = Date.now();

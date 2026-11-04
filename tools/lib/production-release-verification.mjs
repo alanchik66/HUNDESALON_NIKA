@@ -178,7 +178,7 @@ export async function verifyLocaleSmoke({ baseUrl = PRODUCTION_ORIGIN, canonical
 
 export async function verifyProductionRelease({
   commit, stamp, manifest: expectedManifest, baseUrl = PRODUCTION_ORIGIN,
-  attempts = 8, delayMs = 5000, timeoutMs = 10000, maxDurationMs = 180000, fetcher = fetch, pause = sleep,
+  attempts = 30, delayMs = 5000, timeoutMs = 10000, maxDurationMs = 180000, fetcher = fetch, pause = sleep,
 } = {}) {
   if (!/^[a-f0-9]{40}$/u.test(commit || '')) throw new Error('Pass the full reviewed commit SHA.');
   if (!Number.isInteger(attempts) || attempts < 1 || attempts > 30 || !Number.isFinite(delayMs) || delayMs < 0 || delayMs > 60000 ||
@@ -190,7 +190,10 @@ export async function verifyProductionRelease({
   for (let attempt = 1; attempt <= attempts && Date.now() < context.deadline; attempt++) {
     try {
       const published = await resource(new URL(`${RELEASE_MANIFEST_PATH}?commit=${commit}`, baseUrl), context);
-      if (published.response.status !== 200 || !/application\/json/iu.test(published.response.headers.get('content-type') || '')) throw new Error('Published release manifest is unavailable.');
+      const contentType = published.response.headers.get('content-type') || '';
+      if (published.response.status !== 200 || !/application\/json/iu.test(contentType)) {
+        throw new Error(`Published release manifest is unavailable (HTTP ${published.response.status}; Content-Type: ${contentType || 'missing'}; attempt ${attempt}/${attempts}).`);
+      }
       const manifest = validateReleaseManifest(JSON.parse(published.bytes.toString('utf8')), { commit, stamp });
       if (expectedManifest && JSON.stringify(manifest) !== JSON.stringify(expectedManifest)) throw new Error('Published manifest differs from the validated artifact.');
       const liveStamp = await resource(new URL(`${STAMP_PATH}?commit=${commit}`, baseUrl), context);
