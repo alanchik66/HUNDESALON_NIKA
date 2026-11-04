@@ -7,7 +7,7 @@
 import { r as toInteropDefault } from '../dist-widget/rolldown-runtime-CwX0HnDi.mjs';
 import { n as getJsxRuntime, r as getReact, t as getReactDOM } from '../dist-widget/react-vendor-DdSZTPSL.mjs';
 import { i as weatherService } from './weather-service.mjs?v=20261103-weather-parity-v6';
-import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice } from './weather-lifecycle.mjs?v=20261103-weather-parity-v6';
+import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveForecastCloudCover } from './weather-lifecycle.mjs?v=20261103-weather-parity-v6';
 var React = toInteropDefault(getReact()),
   jsxRuntime = getJsxRuntime(),
   LocationSearch = ({
@@ -574,6 +574,7 @@ var React = toInteropDefault(getReact()),
         vis_miles: t.day.avgvis_miles || e.current.vis_miles,
         uv: t.day.uv ?? e.current.uv,
         condition: t.day.condition,
+        cloud: resolveForecastCloudCover(t),
         is_day: 1,
       },
       location: { ...e.location, localtime: `${t.date} 12:00` },
@@ -1431,6 +1432,7 @@ var ReactDOM = toInteropDefault(getReactDOM()),
       refresh: runtimeController.refresh,
       setLocation: runtimeController.setLocation,
       getState: runtimeController.getState,
+      getForecastCloudCover: resolveForecastCloudCover,
       setLocationStatus: runtimeController.setLocationStatus,
       unmount: () => {
         (runtimeController.dispose(), c.unmount(), delete n.dataset.weatherVariant, mountedWidgets.delete(n));

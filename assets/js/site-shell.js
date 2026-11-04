@@ -1308,7 +1308,55 @@
 }
 
 .weather-orb-overlay.is-sun.is-header-sun.is-visible {
-  opacity: var(--orb-crossfade-opacity, 1) !important;
+  opacity: calc(var(--orb-crossfade-opacity, 1) * var(--orb-sun-transmission, 1)) !important;
+}
+
+.weather-orb-overlay.is-sun.is-header-sun[data-sun-scene='loading'],
+.weather-orb-overlay.is-sun.is-header-sun:not([data-sun-scene='ready']):not([data-sun-surface='ready']) {
+  opacity: 0 !important;
+}
+
+.weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__corona {
+  display: block !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 52% !important;
+  width: 72% !important;
+  height: 72% !important;
+  transform: translate(-50%, -50%) !important;
+  pointer-events: none !important;
+  z-index: 0;
+  background: radial-gradient(circle, transparent 45%, #fff3c54d 51%, #ffd37924 59%, #ffb45b08 68%, transparent 76%);
+}
+
+.weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__corona::before,
+.weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__corona::after {
+  content: '';
+  position: absolute !important;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 9deg, transparent 0deg 4deg, #ffe9a6a6 5deg 7deg, transparent 9deg 12deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 46%, #000 51%, #0009 59%, transparent 73%) !important;
+  mask-image: radial-gradient(circle, transparent 46%, #000 51%, #0009 59%, transparent 73%) !important;
+  filter: blur(.55px);
+  opacity: .52;
+  animation: weatherSolarCoronaOrbit 42s linear infinite, weatherSolarCoronaBreath 6.8s ease-in-out infinite alternate;
+}
+
+.weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__corona::after {
+  background: repeating-conic-gradient(from 3deg, transparent 0deg 7deg, #fff5d691 8deg 10deg, transparent 12deg 18deg);
+  animation-duration: 67s, 9.4s;
+  animation-direction: reverse, alternate-reverse;
+}
+
+@keyframes weatherSolarCoronaOrbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes weatherSolarCoronaBreath {
+  from { opacity: .34; }
+  to { opacity: .6; }
 }
 
 .weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__canvas {
@@ -1319,12 +1367,13 @@
   height: calc(100% * ${HEADER_WEATHER_SUN_MEDIA_SCALE}) !important;
   margin: auto !important;
   background: transparent !important;
+  position: relative !important;
+  z-index: 1;
   filter:
     brightness(${HEADER_WEATHER_SUN_BRIGHTNESS})
-    saturate(1.06)
+    saturate(.82)
     contrast(1.02)
-    drop-shadow(0 0 10px rgba(255, 239, 198, 0.76))
-    drop-shadow(0 0 24px rgba(255, 171, 72, 0.38)) !important;
+    drop-shadow(0 0 3px rgba(255, 239, 198, .48)) !important;
   mix-blend-mode: normal !important;
 }
 
@@ -1333,18 +1382,19 @@
   opacity: 0.36 !important;
 }
 
-/* Keep the same solar surface visible while WebGL loads or recovers. */
+/* During normal loading reveal only the finished, textured 3D surface. */
 .weather-orb-overlay.is-header-sun:not([data-sun-scene='ready']) .weather-orb-overlay__canvas {
   visibility: hidden !important;
 }
 
-.weather-orb-overlay.is-sun.is-header-sun:not([data-sun-scene='ready']) .weather-orb-overlay__image {
+.weather-orb-overlay.is-sun.is-header-sun[data-sun-surface='ready']:is([data-sun-scene='failed'], [data-sun-scene='lost']) .weather-orb-overlay__image {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
   width: 50% !important;
   height: 50% !important;
   position: absolute !important;
+  z-index: 1;
   left: 25% !important;
   top: 25% !important;
   margin: 0 !important;
@@ -4276,6 +4326,7 @@
       return;
     }
     overlay.__sunSceneMountToken = null;
+    overlay.__sunSurfaceToken = null;
     if (overlay.__sunSceneResume) {
       window.removeEventListener('online', overlay.__sunSceneResume);
       document.removeEventListener('visibilitychange', overlay.__sunSceneResume);
@@ -7050,10 +7101,12 @@
     host.style.setProperty('--weather-scene-dim', '1');
   }
 
-  function resolveHeaderWeatherOrbAtmosphere(host) {
-    const conditionText = getHeaderWeatherConditionText(host);
-    const conditionCode = getHeaderWeatherConditionCode(host);
-    const cloudCover = getHeaderWeatherCloudCover(host);
+  function resolveHeaderWeatherOrbAtmosphere(host, forecastDay = null) {
+    const conditionText = forecastDay ? String(forecastDay.condition?.text || '').toLowerCase() : getHeaderWeatherConditionText(host);
+    const conditionCode = forecastDay ? getHeaderWeatherFiniteNumber(forecastDay.condition?.code) : getHeaderWeatherConditionCode(host);
+    const cloudCover = forecastDay
+      ? getHeaderWeatherFiniteNumber(forecastDay.cloud ?? forecastDay.cloud_cover ?? forecastDay.avgcloud)
+      : getHeaderWeatherCloudCover(host);
     const normalizedCloudCover = cloudCover === null ? null : clampHeaderWeatherValue(cloudCover / 100, 0, 1);
     const isClearCode = conditionCode === 1000 || conditionCode === 0 || conditionCode === 1;
     const isPartlyCloudyCode = conditionCode === 1003 || conditionCode === 2;
@@ -7069,7 +7122,7 @@
       (conditionCode >= 95 && conditionCode <= 99);
 
     if (!conditionText && normalizedCloudCover === null && conditionCode === null) {
-      return { alpha: 0 };
+      return { alpha: 0, sunTransmission: 1 };
     }
 
     const isClearText = /(clear|sunny|mostly clear|mainly clear|ясно|солнеч|klar|sonnig|bezchmurn|безхмар)/.test(
@@ -7080,16 +7133,25 @@
         conditionText
       );
     const isPrecipitationText =
-      /(rain|drizzle|shower|storm|snow|sleet|thunder|дожд|лив|гроз|снег|морось|regen|schauer|gewitter|schnee|niesel|hagel)/.test(
+      /(rain|drizzle|shower|storm|snow|sleet|thunder|дожд|дощ|лив|гроз|снег|сніг|морось|мряк|regen|schauer|gewitter|schnee|niesel|hagel)/.test(
         conditionText
       );
-    const isOvercastText = /(overcast|пасмур|bedeckt)/.test(conditionText);
+    const isOvercastText = /(overcast|пасмур|похмур|bedeckt)/.test(conditionText);
     const isCloudyText = /(cloud|облач|хмар|bewölkt)/.test(conditionText);
     const isFogText = /(fog|mist|туман|nebel)/.test(conditionText);
+
+    const inferredCloudCover = isPrecipitationCode || isFogCode || isOvercastCode ? 0.95
+      : isCloudyCode ? 0.8 : isPartlyCloudyCode ? 0.4 : isClearCode ? 0
+        : isPrecipitationText || isFogText || isOvercastText ? 0.95
+          : isPartlyCloudyText ? 0.4 : isCloudyText ? 0.8 : isClearText ? 0 : 0.5;
+    // Direct light follows the squared open-sky fraction, with a faint diffuse floor.
+    // A measured zero stays clear even if a cached condition label disagrees.
+    const sunTransmission = 0.015 + 0.985 * (1 - (normalizedCloudCover ?? inferredCloudCover)) ** 2;
 
     if (isClearCode || isClearText) {
       return {
         alpha: normalizedCloudCover !== null ? clampHeaderWeatherValue(normalizedCloudCover * 0.05, 0, 0.06) : 0,
+        sunTransmission,
       };
     }
 
@@ -7274,6 +7336,7 @@
 
     return {
       mode,
+      sunTransmission,
       alpha: clampHeaderWeatherValue(alpha, 0, 0.5),
       blur,
       stretchX,
@@ -7284,6 +7347,27 @@
       depthAlpha,
       highlightAlpha,
     };
+  }
+
+  function resolveHeaderWeatherDropdownAtmosphere(host, currentAtmosphere) {
+    const dropdown = host?.shadowRoot?.querySelector('.weather-header-dropdown');
+    const forecastIndex = Array.from(dropdown?.querySelectorAll('.weather-header-dropdown__forecast-pill') || [])
+      .indexOf(dropdown?.querySelector('.weather-header-dropdown__forecast-pill.is-active')) - 1;
+    const forecastData = host?.__weatherWidgetInstance?.getState?.()?.weather || host?.__weatherWidgetData;
+    const selectedForecast = forecastIndex >= 0 ? forecastData?.forecast?.forecastday?.[forecastIndex] : null;
+    const forecastDay = selectedForecast?.day ? {
+      ...selectedForecast.day,
+      cloud: host.__weatherWidgetInstance?.getForecastCloudCover?.(selectedForecast) ?? null,
+    } : null;
+    return forecastDay ? resolveHeaderWeatherOrbAtmosphere(host, forecastDay) : currentAtmosphere;
+  }
+
+  function syncHeaderWeatherDropdownAtmosphere(host) {
+    if (!host?.isConnected || host.dataset.weatherMounted !== 'true') return;
+    const sun = host.shadowRoot?.querySelector('.weather-header-dropdown .weather-orb-overlay.is-sun');
+    if (!sun) return;
+    const currentAtmosphere = host.__weatherOrbAtmosphere || resolveHeaderWeatherOrbAtmosphere(host);
+    applyHeaderWeatherOrbAtmosphere(sun, resolveHeaderWeatherDropdownAtmosphere(host, currentAtmosphere));
   }
 
   async function resolveHeaderWeatherLocationMeta(locationLabel) {
@@ -8029,6 +8113,13 @@
   function applyHeaderWeatherOrbAtmosphere(overlay, atmosphere) {
     if (!overlay) {
       return;
+    }
+
+    if (overlay.classList.contains('is-sun')) {
+      const transmission = Number.isFinite(atmosphere?.sunTransmission) ? atmosphere.sunTransmission : 1;
+      overlay.style.setProperty('--orb-sun-transmission', clampHeaderWeatherValue(transmission, 0, 1).toFixed(3));
+    } else {
+      overlay.style.removeProperty('--orb-sun-transmission');
     }
 
     if (overlay.classList.contains('weather-orb-overlay--preview')) {
@@ -11875,6 +11966,12 @@
     image.hidden = true;
 
     overlay.appendChild(video);
+    if (role === 'sun') {
+      const corona = document.createElement('span');
+      corona.className = 'weather-orb-overlay__corona';
+      corona.setAttribute('aria-hidden', 'true');
+      overlay.appendChild(corona);
+    }
     overlay.appendChild(canvas);
     overlay.appendChild(image);
     return overlay;
@@ -12511,7 +12608,9 @@
 
     const mountToken = `${Date.now()}:${Math.random()}`;
     overlay.__sunSceneMountToken = mountToken;
+    overlay.__sunSurfaceToken = mountToken;
     overlay.dataset.sunScene = 'loading';
+    overlay.dataset.sunSurface = 'loading';
     overlay.__sunSceneResume = () => {
       if (!overlay.isConnected || document.hidden || !['failed', 'lost'].includes(overlay.dataset.sunScene)) return;
       overlay.__sunSceneRetryAfter = 0;
@@ -12520,8 +12619,18 @@
     window.addEventListener('online', overlay.__sunSceneResume);
     document.addEventListener('visibilitychange', overlay.__sunSceneResume);
     if (image) {
+      image.hidden = true;
       image.src = assetConfig.sunTextureUrl;
-      image.hidden = false;
+      const surfaceReady = () => {
+        if (overlay.__sunSurfaceToken !== mountToken) return;
+        overlay.dataset.sunSurface = 'ready';
+        image.hidden = !['failed', 'lost'].includes(overlay.dataset.sunScene);
+      };
+      if (typeof image.decode === 'function') image.decode().then(surfaceReady).catch(() => {});
+      else {
+        image.onload = surfaceReady;
+        if (image.complete && image.naturalWidth) surfaceReady();
+      }
     }
 
     try {
@@ -12537,7 +12646,7 @@
           if (overlay.__sunSceneMountToken !== mountToken) return;
           overlay.dataset.sunScene = state;
           if (state === 'failed' || state === 'lost') overlay.__sunSceneRetryAfter = Date.now() + 30000;
-          if (image) image.hidden = state === 'ready';
+          if (image) image.hidden = state === 'ready' || overlay.dataset.sunSurface !== 'ready';
         },
       });
 
@@ -12564,7 +12673,7 @@
         }
       }
       canvas.hidden = false;
-      if (image) image.hidden = overlay.dataset.sunScene === 'ready';
+      if (image) image.hidden = overlay.dataset.sunScene === 'ready' || overlay.dataset.sunSurface !== 'ready';
       scene.resize();
     } catch (error) {
       console.error('Header weather Sun scene failed:', error);
@@ -12572,7 +12681,7 @@
         overlay.__sunSceneMountToken = null;
         overlay.__sunSceneRetryAfter = Date.now() + 30000;
         overlay.dataset.sunScene = 'failed';
-        if (image) image.hidden = false;
+        if (image) image.hidden = overlay.dataset.sunSurface !== 'ready';
       }
     }
   }
@@ -12656,7 +12765,7 @@
         if (canvas) {
           canvas.hidden = false;
         }
-        if (image) image.hidden = overlay.dataset.sunScene === 'ready';
+        if (image) image.hidden = overlay.dataset.sunScene === 'ready' || overlay.dataset.sunSurface !== 'ready';
         return;
       }
       if (overlay.__sunSceneMountToken) {
@@ -12666,7 +12775,7 @@
         if (canvas) {
           canvas.hidden = false;
         }
-        if (image) image.hidden = overlay.dataset.sunScene === 'ready';
+        if (image) image.hidden = overlay.dataset.sunScene === 'ready' || overlay.dataset.sunSurface !== 'ready';
         return;
       }
       if (Date.now() < (overlay.__sunSceneRetryAfter || 0)) return;
@@ -12981,7 +13090,7 @@
             }
           : null;
 
-      const applyOrbStack = (stack, variantActive, layoutKey = 'preview') => {
+      const applyOrbStack = (stack, variantActive, layoutKey = 'preview', atmosphere = orbAtmosphere) => {
         if (!stack) {
           return;
         }
@@ -12999,7 +13108,7 @@
           applyHeaderWeatherOrbLayout(stack.moon, moonAllowed ? moonLayout : null);
           if (moonAllowed && variantActive && moonPart?.active) {
             setHeaderWeatherOrbSource(stack.moon, 'moon', moonAssetConfig);
-            applyHeaderWeatherOrbAtmosphere(stack.moon, orbAtmosphere);
+            applyHeaderWeatherOrbAtmosphere(stack.moon, atmosphere);
           } else {
             setHeaderWeatherOrbSource(stack.moon, null, null);
             applyHeaderWeatherOrbAtmosphere(stack.moon, 0);
@@ -13011,7 +13120,7 @@
           applyHeaderWeatherOrbLayout(stack.sun, sunLayout);
           if (variantActive && sunPart?.active) {
             setHeaderWeatherOrbSource(stack.sun, 'sun', sunAssetConfig);
-            applyHeaderWeatherOrbAtmosphere(stack.sun, orbAtmosphere);
+            applyHeaderWeatherOrbAtmosphere(stack.sun, atmosphere);
             if (sunAssetConfig?.type === 'header-sun') {
               updateHeaderWeatherSunSceneGeo(stack.sun, geoState);
             }
@@ -13074,8 +13183,9 @@
       const dropdownMenu = host.shadowRoot.querySelector('.weather-header-dropdown');
       const dropdownHero = dropdownMenu?.querySelector('.weather-header-dropdown__hero');
       const dropdownMenuScene = dropdownHero?.querySelector('.weather-header-dropdown__scene');
+      const dropdownAtmosphere = resolveHeaderWeatherDropdownAtmosphere(host, orbAtmosphere);
       if (dropdownMenu) {
-        const cloudAlpha = Number(orbAtmosphere?.alpha) || 0;
+        const cloudAlpha = Number(dropdownAtmosphere?.alpha) || 0;
         const showNightStars = resolveHeaderWeatherShowNightStars(host, presentation, astroData);
         const starOpacity = showNightStars ? clampHeaderWeatherValue(1.06 - cloudAlpha * 0.52, 0.78, 1) : 0;
         const dropdownStarsBack = ensureHeaderWeatherDropdownStarsBackLayer(dropdownMenu);
@@ -13094,7 +13204,7 @@
       }
       if (dropdownHero) {
         const dropdownStack = ensureHeaderWeatherOrbStack(dropdownHero, 'dropdown');
-        applyOrbStack(dropdownStack, isExpanded, 'dropdown');
+        applyOrbStack(dropdownStack, isExpanded, 'dropdown', dropdownAtmosphere);
       }
 
       enforceHeaderWeatherToggleArrow(host);
@@ -13323,6 +13433,15 @@
       const shouldRestoreLocation = mutations.some(
         mutation => mutation.type === 'childList' || mutation.type === 'characterData'
       );
+      const shouldSyncForecast = mutations.some(mutation =>
+        mutation.type === 'attributes' && mutation.attributeName === 'class' &&
+        mutation.target?.matches?.('.weather-header-dropdown__forecast-pill')
+      );
+
+      if (shouldSyncForecast) {
+        syncHeaderWeatherDropdownAtmosphere(host);
+        scheduleHeaderWeatherOrbSync(host);
+      }
 
       if (shouldSync || shouldRestoreLocation) applyHeaderWeatherPressureCopy(host);
       if (shouldSync) {
@@ -13344,7 +13463,7 @@
       childList: true,
       characterData: true,
       subtree: true,
-      attributeFilter: ['aria-expanded'],
+      attributeFilter: ['aria-expanded', 'class'],
     });
 
     host.__weatherStateObserver = observer;

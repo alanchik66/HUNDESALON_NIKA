@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { resolveForecastCloudCover } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
 
 const sourceDirectory = new URL('../3d-weather-codrops-main/src/', import.meta.url);
 const readSource = name => readFile(new URL(name, sourceDirectory), 'utf8');
@@ -87,7 +88,7 @@ for (const filename of ['widget.mjs', 'header-preview.mjs', 'header-dropdown.mjs
     const listExpression = source.match(/\bae = (d\?\.forecast\?\.forecastday\?\.slice\([^\n]+),\n/)[1];
     const selectedExpression = source.match(/\bQ = (B === null[^\n]+),\n/)[1];
     const select = new Function('d', 'B', `const ae = ${listExpression}; const Q = ${selectedExpression}; return { days: ae, selected: Q };`);
-    const forecastDay = new Function(`return (${binding(source, 'weatherForForecastDay', 'weatherStatistics')});`)();
+    const forecastDay = new Function('resolveForecastCloudCover', `return (${binding(source, 'weatherForForecastDay', 'weatherStatistics')});`)(resolveForecastCloudCover);
     const dates = ['2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07'];
     const data = {
       current: { temp_c: 8, pressure_mb: 1013.25 },

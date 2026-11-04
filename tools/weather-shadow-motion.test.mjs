@@ -200,7 +200,7 @@ test('weather dropdown clears the complete navigation on mobile and desktop and 
   }
 });
 
-async function solarRecoveryHarness({ textureFailure = false } = {}) {
+async function solarRecoveryHarness({ textureFailure = false, networkFailure = false, decodeFailure = false, decodeWait = Promise.resolve() } = {}) {
   const source = await readFile(new URL('../assets/js/header-weather-sun-scene.js', import.meta.url), 'utf8');
   const program = parse(source, { ecmaVersion: 'latest', sourceType: 'module', range: true });
   const code = program.body.filter(node => node.type !== 'ImportDeclaration').map(node => {
@@ -210,14 +210,17 @@ async function solarRecoveryHarness({ textureFailure = false } = {}) {
   const listeners = new Map();
   const frames = new Map();
   let nextFrame = 0;
-  const stats = { renders: 0, disposed: 0, failRender: false };
+  const stats = { renders: 0, disposed: 0, texturesDisposed: 0, failRender: false, contextLost: false, events: [] };
   const canvas = { clientWidth: 96, clientHeight: 96,
     addEventListener: (name, callback) => listeners.set(name, callback),
     removeEventListener: name => listeners.delete(name),
   };
   class Renderer {
     setPixelRatio() {} setClearColor() {} setSize() {}
-    render() { if (stats.failRender) throw new Error('GPU unavailable'); stats.renders += 1; }
+    initTexture() { stats.events.push('upload'); }
+    compile() { stats.events.push('compile'); }
+    getContext() { return { isContextLost: () => stats.contextLost }; }
+    render() { if (stats.failRender) throw new Error('GPU unavailable'); stats.events.push('render'); stats.renders += 1; }
     dispose() { stats.disposed += 1; }
   }
   const THREE = {
@@ -226,7 +229,11 @@ async function solarRecoveryHarness({ textureFailure = false } = {}) {
     Scene: class { add() {} },
     PerspectiveCamera: class { position = { set() {} }; lookAt() {} updateProjectionMatrix() {} },
     WebGLRenderer: Renderer,
-    TextureLoader: class { load(url, success, progress, failure) { if (textureFailure) throw new Error('Texture request failed'); failure(); } },
+    TextureLoader: class { load(url, success, progress, failure) {
+      if (textureFailure) throw new Error('Texture request failed');
+      if (networkFailure) { failure(); return; }
+      success({ image: { decode() { stats.events.push('decode'); return decodeFailure ? Promise.reject(new Error('Decode failed')) : decodeWait; } }, dispose() { stats.texturesDisposed += 1; } });
+    } },
     Color: class { setRGB() {} },
     MeshBasicMaterial: class { dispose() {} },
     SphereGeometry: class { dispose() {} },
@@ -245,6 +252,7 @@ test('solar context loss shows recovery, resumes rendering after restoration and
   const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg', onStateChange: state => states.push(state) });
   assert.deepEqual(states, ['ready']);
   assert.equal(h.frames.size, 1);
+  const renderedBeforeLoss = h.stats.renders;
   let prevented = false;
   h.listeners.get('webglcontextlost')({ preventDefault() { prevented = true; } });
   assert.equal(prevented, true, 'context restoration remains permitted');
@@ -252,7 +260,7 @@ test('solar context loss shows recovery, resumes rendering after restoration and
   assert.deepEqual(states, ['ready', 'lost']);
   h.listeners.get('webglcontextrestored')();
   assert.deepEqual(states, ['ready', 'lost', 'ready']);
-  assert.equal(h.stats.renders, 2);
+  assert.ok(h.stats.renders > renderedBeforeLoss);
   assert.equal(h.frames.size, 1);
   scene.dispose();
   assert.equal(h.frames.size, 0);
@@ -286,7 +294,7 @@ test('solar recovery preserves the canvas layout size and remounts a failed rend
   const hiddenCanvas = matchingRules(root, selector => selector === ".weather-orb-overlay.is-header-sun:not([data-sun-scene='ready']) .weather-orb-overlay__canvas");
   assert.equal(lastDeclaration(hiddenCanvas, 'visibility').value, 'hidden');
   assert.notEqual(lastDeclaration(hiddenCanvas, 'display')?.value, 'none', 'restoration must retain the CSS dimensions rather than shrink the backing store to 8px');
-  const solarImage = matchingRules(root, selector => selector === ".weather-orb-overlay.is-sun.is-header-sun:not([data-sun-scene='ready']) .weather-orb-overlay__image");
+  const solarImage = matchingRules(root, selector => selector === ".weather-orb-overlay.is-sun.is-header-sun[data-sun-surface='ready']:is([data-sun-scene='failed'], [data-sun-scene='lost']) .weather-orb-overlay__image");
   assert.equal(lastDeclaration(solarImage, 'position').value, 'absolute');
   assert.equal(lastDeclaration(solarImage, 'position').important, true, 'the recovery image must overlay the hidden canvas rather than follow it in document flow');
   assert.equal(lastDeclaration(solarImage, 'clip-path').value, 'circle(50%)');
@@ -322,7 +330,8 @@ test('returning online immediately retries a failed solar import and disposal re
   const events = listeners => ({ addEventListener: (name, handler) => listeners.set(name, handler), removeEventListener: name => listeners.delete(name) });
   const window = events(online);
   const document = { ...events(visibility), hidden: false };
-  const image = {};
+  let finishSurface;
+  const image = { decode: () => new Promise(resolve => { finishSurface = resolve; }) };
   const overlay = { isConnected: true, dataset: {}, querySelector: tag => tag === 'img' ? image : {} };
   let retries = 0;
   const { mount, stop } = new Function('window', 'document', 'stopHeaderWeatherOrbRender', 'loadHeaderWeatherSunSceneModule', 'setHeaderWeatherOrbSource', 'console',
@@ -333,6 +342,11 @@ test('returning online immediately retries a failed solar import and disposal re
   );
   await mount(overlay, { assetsModuleBase: '/assets', sunTextureUrl: '/solar.jpg' });
   assert.equal(overlay.dataset.sunScene, 'failed');
+  assert.equal(overlay.dataset.sunSurface, 'loading');
+  finishSurface();
+  await Promise.resolve();
+  assert.equal(overlay.dataset.sunSurface, 'ready', 'a late fallback decode remains valid after the failed mount token is cleared');
+  assert.equal(image.hidden, false);
   online.get('online')();
   assert.equal(retries, 1, 'network restoration must not wait for the minute clock or the retry throttle');
   document.hidden = true;
@@ -341,4 +355,50 @@ test('returning online immediately retries a failed solar import and disposal re
   stop(overlay);
   assert.equal(online.size, 0);
   assert.equal(visibility.size, 0);
+});
+
+test('solar readiness waits for texture decoding, GPU upload and hidden first render', async () => {
+  let finishDecode;
+  const decodeWait = new Promise(resolve => { finishDecode = resolve; });
+  const h = await solarRecoveryHarness({ decodeWait });
+  const states = [];
+  const pending = h.mount(h.canvas, { sunTextureUrl: '/solar.jpg', onStateChange: state => { states.push(state); h.stats.events.push(state); } });
+  await Promise.resolve();
+  assert.deepEqual(states, [], 'an untextured solar disc must never be revealed');
+  assert.equal(h.stats.renders, 0);
+  finishDecode();
+  const scene = await pending;
+  for (const [earlier, later] of [['decode', 'upload'], ['upload', 'compile'], ['compile', 'render'], ['render', 'ready']]) {
+    assert.ok(h.stats.events.indexOf(earlier) < h.stats.events.indexOf(later), `${earlier} must precede ${later}`);
+  }
+  assert.deepEqual(states, ['ready']);
+  scene.dispose();
+  assert.equal(h.stats.texturesDisposed, 1);
+});
+
+test('missing or undecodable solar textures fail instead of showing a plain ready sphere', async () => {
+  for (const options of [{ networkFailure: true }, { decodeFailure: true }]) {
+    const h = await solarRecoveryHarness(options);
+    const states = [];
+    await assert.rejects(h.mount(h.canvas, { sunTextureUrl: '/solar.jpg', onStateChange: state => states.push(state) }), /texture could not load|Decode failed/);
+    assert.deepEqual(states, []);
+    assert.equal(h.stats.renders, 0);
+    assert.equal(h.stats.disposed, 1);
+    assert.equal(h.listeners.size, 0);
+  }
+});
+
+test('solar loading keeps every solar layer hidden and the finished corona has independent gentle ray motion', async () => {
+  const root = await styles;
+  const loading = matchingRules(root, selector => selector === ".weather-orb-overlay.is-sun.is-header-sun[data-sun-scene='loading']");
+  assert.equal(lastDeclaration(loading, 'opacity').value, '0');
+  assert.equal(lastDeclaration(loading, 'opacity').important, true);
+  const visible = matchingRules(root, selector => selector === '.weather-orb-overlay.is-sun.is-header-sun.is-visible');
+  assert.match(lastDeclaration(visible, 'opacity').value, /--orb-sun-transmission/, 'disc, halo and rays must attenuate together behind clouds');
+  const orbit = [];
+  keyframes(root, 'weatherSolarCoronaOrbit').walkDecls('transform', decl => orbit.push(decl.value));
+  assert.ok(new Set(orbit).size > 1);
+  const corona = matchingRules(root, selector => selector === '.weather-orb-overlay.is-sun.is-header-sun .weather-orb-overlay__corona::before');
+  assert.match(lastDeclaration(corona, 'animation').value, /weatherSolarCoronaOrbit.*weatherSolarCoronaBreath/);
+  assert.equal(lastDeclaration(corona, 'mask-image').important, true, 'the rays stay outside the photosphere under shared transparency rules');
 });

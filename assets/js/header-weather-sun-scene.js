@@ -17,23 +17,28 @@ function loadTexture(url, textures, renderer) {
     return Promise.resolve(null);
   }
 
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     const loader = new THREE.TextureLoader();
     loader.load(
       url,
-      texture => {
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.ClampToEdgeWrapping;
-        texture.minFilter = THREE.LinearMipmapLinearFilter;
-        texture.magFilter = THREE.LinearFilter;
-        texture.anisotropy = Math.min(renderer?.capabilities?.getMaxAnisotropy?.() || 1, 8);
-        texture.needsUpdate = true;
+      async texture => {
         textures?.push?.(texture);
-        resolve(texture);
+        try {
+          await texture.image?.decode?.();
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.wrapS = THREE.RepeatWrapping;
+          texture.wrapT = THREE.ClampToEdgeWrapping;
+          texture.minFilter = THREE.LinearMipmapLinearFilter;
+          texture.magFilter = THREE.LinearFilter;
+          texture.anisotropy = Math.min(renderer?.capabilities?.getMaxAnisotropy?.() || 1, 8);
+          texture.needsUpdate = true;
+          resolve(texture);
+        } catch (error) {
+          reject(error);
+        }
       },
       undefined,
-      () => resolve(null)
+      () => reject(new Error('The solar surface texture could not load.'))
     );
   });
 }
@@ -116,6 +121,8 @@ export class HeaderWeatherSunScene {
 
     const sunTexture = await loadTexture(this.options.sunTextureUrl, this.textures, renderer);
     if (this.disposed) return;
+    if (this.contextLost) throw new Error('Solar graphics context was lost during preparation.');
+    if (sunTexture) renderer.initTexture(sunTexture);
 
     const surfaceColor = new THREE.Color(WARM_SUN_COLOR);
     if (sunTexture) {
@@ -148,6 +155,11 @@ export class HeaderWeatherSunScene {
     this.sunMesh = sunMesh;
     this.resize();
     this.updateAnimation(0);
+    // One small material: prepare it synchronously so context loss cannot strand
+    // a third-party compileAsync polling loop. The first frame stays hidden.
+    renderer.compile(scene, camera);
+    if (renderer.getContext().isContextLost()) throw new Error('Solar graphics context was lost before the first frame.');
+    this.renderFrame();
   }
 
   resize() {

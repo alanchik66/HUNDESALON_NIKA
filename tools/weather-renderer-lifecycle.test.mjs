@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
 import postcss from 'postcss';
-import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveWeatherSceneFallback, renderWeatherSceneFallback } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
+import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveWeatherSceneFallback, renderWeatherSceneFallback, resolveForecastCloudCover } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
 
 test('the complete authored weather module graph shares the shell cache revision', async () => {
   const shell = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
@@ -22,6 +22,175 @@ const sourceDirectory = new URL('../3d-weather-codrops-main/src/', import.meta.u
 const payload = name => ({ current: { temp_c: 7 }, location: { name }, forecast: { forecastday: [{ date: '2026-11-03' }] } });
 const deferred = () => { let resolve; let reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
 const settle = () => new Promise(resolve => setImmediate(resolve));
+
+async function solarAtmosphereHarness() {
+  const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
+  const names = ['getHeaderWeatherFiniteNumber', 'getHeaderWeatherCloudCover', 'getHeaderWeatherConditionCode', 'resolveHeaderWeatherOrbAtmosphere', 'applyHeaderWeatherOrbAtmosphere'];
+  const declarations = names.map(name => {
+    const declaration = source.match(new RegExp(`  function ${name}\\([^]*?\\n  \\}`));
+    assert.ok(declaration, name);
+    return declaration[0];
+  }).join('\n');
+  return new Function('clampHeaderWeatherValue', 'getHeaderWeatherConditionText', 'HEADER_WEATHER_CLOUDS_ENABLED', `${declarations}; return { resolveHeaderWeatherOrbAtmosphere, applyHeaderWeatherOrbAtmosphere };`)(
+    (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value)), host => (host.text || '').toLowerCase(), false
+  );
+}
+
+test('live cloud cover monotonically attenuates the complete solar light even when the condition label disagrees', async () => {
+  const { resolveHeaderWeatherOrbAtmosphere: resolve } = await solarAtmosphereHarness();
+  let previous = 1;
+  for (let cloudCover = 0; cloudCover <= 100; cloudCover += 1) {
+    const atmosphere = resolve({ __weatherCurrentMeta: { cloudCover, weatherCode: 1000 }, text: 'Sunny' });
+    assert.ok(atmosphere.sunTransmission >= 0 && atmosphere.sunTransmission <= previous, `cover ${cloudCover}`);
+    previous = atmosphere.sunTransmission;
+  }
+  for (const [cloudCover, minimum, maximum] of [[0, 0.999, 1], [80, 0.05, 0.1], [90, 0.02, 0.04], [100, 0.01, 0.02]]) {
+    const transmission = resolve({ __weatherCurrentMeta: { cloudCover, weatherCode: 3 }, text: 'Overcast' }).sunTransmission;
+    assert.ok(transmission >= minimum && transmission <= maximum, `${cloudCover}% cover -> ${transmission}`);
+  }
+});
+
+test('unknown cloud cover uses weather codes or localized labels while observed zero remains authoritative', async () => {
+  const { resolveHeaderWeatherOrbAtmosphere: resolve } = await solarAtmosphereHarness();
+  for (const code of [3, 1009, 45, 48, 1030, 61, 95, 1183]) {
+    assert.ok(resolve({ __weatherCurrentMeta: { cloudCover: null, weatherCode: code } }).sunTransmission < 0.03, `code ${code}`);
+  }
+  for (const text of ['Overcast', 'Bedeckt', 'Пасмурно', 'Похмуро', 'Rain', 'Regen', 'Дождь', 'Дощ', 'Fog', 'Nebel', 'Туман']) {
+    assert.ok(resolve({ text }).sunTransmission < 0.03, text);
+  }
+  const observedClear = resolve({ __weatherCurrentMeta: { cloudCover: 0, weatherCode: 3 }, dataset: { weatherCloud: '100' }, text: 'Overcast' });
+  assert.equal(observedClear.sunTransmission, 1);
+  assert.equal(resolve({ __weatherCurrentMeta: { cloudCover: null, weatherCode: 0 } }).sunTransmission, 1);
+});
+
+test('solar transmission reaches both orb variants and never attenuates the Moon', async () => {
+  const { applyHeaderWeatherOrbAtmosphere: apply } = await solarAtmosphereHarness();
+  for (const variant of ['preview', 'dropdown']) {
+    const classes = new Set([`weather-orb-overlay--${variant}`, 'is-sun']);
+    const values = new Map();
+    const overlay = {
+      classList: { contains: value => classes.has(value), remove: value => classes.delete(value), toggle: (value, enabled) => enabled ? classes.add(value) : classes.delete(value) },
+      style: { setProperty: (key, value) => values.set(key, value), removeProperty: key => values.delete(key) },
+    };
+    apply(overlay, { alpha: 0, sunTransmission: 0.02485 });
+    assert.equal(values.get('--orb-sun-transmission'), '0.025');
+    apply(overlay, { alpha: 0, sunTransmission: 0 });
+    assert.equal(values.get('--orb-sun-transmission'), '0.000', 'zero transmission cannot fall back to one');
+    classes.delete('is-sun');
+    classes.add('is-moon');
+    apply(overlay, { alpha: 0.4, sunTransmission: 0.015 });
+    assert.equal(values.has('--orb-sun-transmission'), false);
+  }
+});
+
+test('selected forecast solar atmosphere is independent of current cloud cover without changing the live data', async () => {
+  const { resolveHeaderWeatherOrbAtmosphere: resolve } = await solarAtmosphereHarness();
+  const current = { __weatherCurrentMeta: { cloudCover: 100, weatherCode: 3 }, text: 'Overcast' };
+  const before = JSON.stringify(current);
+  assert.equal(resolve(current).sunTransmission, 0.015);
+  assert.equal(resolve(current, { condition: { code: 1000, text: 'Sunny' } }).sunTransmission, 1);
+  assert.ok(resolve(current, { condition: { code: 1009, text: 'Overcast' } }).sunTransmission < 0.03);
+  assert.equal(resolve(current, { cloud: 0, condition: { code: 1009 } }).sunTransmission, 1, 'measured forecast zero is retained');
+  assert.equal(resolve(current, { avgcloud: 100, condition: { code: 1000 } }).sunTransmission, 0.015, 'forecast cloud cover wins over its condition label');
+  assert.equal(JSON.stringify(current), before, 'forecast presentation cannot mutate current observations or text');
+});
+
+test('forecast cloud observations preserve zero, prefer day data and average only valid hourly observations', () => {
+  assert.equal(resolveForecastCloudCover({ day: { cloud: 0, avgcloud: 80 }, hour: [{ cloud: 100 }] }), 0);
+  assert.equal(resolveForecastCloudCover({ day: { avgcloud: 80 } }), 80);
+  assert.equal(resolveForecastCloudCover({ day: {}, hour: [{ cloud: 0 }, { cloud: 80 }, { cloud: null }, { cloud: '' }, { cloud: 'invalid' }] }), 40);
+  assert.equal(resolveForecastCloudCover({ day: { condition: { code: 1009 } }, hour: [{ cloud: null }] }), null, 'conditions are not cloud measurements');
+});
+
+test('all forecast scene projections stop inheriting current cloud cover', async () => {
+  for (const entry of ['header-preview', 'header-dropdown', 'widget']) {
+    const source = await readFile(new URL(`../3d-weather-codrops-main/src/${entry}.mjs`, import.meta.url), 'utf8');
+    const declaration = source.match(/weatherForForecastDay = ([^]*?),\n  weatherStatistics =/);
+    assert.ok(declaration, entry);
+    const project = new Function('resolveForecastCloudCover', `return (${declaration[1]});`)(resolveForecastCloudCover);
+    const current = { current: { cloud: 100, condition: { code: 1009 } }, location: { localtime: '2026-11-04 10:00' } };
+    const clearDay = { date: '2026-11-05', day: { avgtemp_c: 12, condition: { code: 1000 } } };
+    assert.equal(project(current, clearDay).current.cloud, null, entry);
+    assert.equal(project(current, { ...clearDay, day: { ...clearDay.day, cloud: 0 } }).current.cloud, 0, entry);
+    assert.equal(project(current, { ...clearDay, day: { ...clearDay.day, avgcloud: 80 } }).current.cloud, 80, entry);
+    assert.equal(project(current, { ...clearDay, hour: [{ cloud: 20 }, { cloud: 80 }] }).current.cloud, 50, entry);
+    assert.equal(current.current.cloud, 100, 'current measurements are untouched');
+  }
+});
+
+test('the dropdown selects its forecast atmosphere through the mounted pure helper and keeps preview observations intact', async () => {
+  const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
+  const declaration = source.match(/  function resolveHeaderWeatherDropdownAtmosphere\([^]*?\n  \}/);
+  assert.ok(declaration);
+  const { resolveHeaderWeatherOrbAtmosphere: resolve, applyHeaderWeatherOrbAtmosphere: apply } = await solarAtmosphereHarness();
+  const selectAtmosphere = new Function('resolveHeaderWeatherOrbAtmosphere', `${declaration[0]}; return resolveHeaderWeatherDropdownAtmosphere;`)(resolve);
+  const current = { __weatherCurrentMeta: { cloudCover: 100, weatherCode: 3 }, text: 'Overcast' };
+  const days = [{ day: { condition: { code: 1000 } } }, { day: { condition: { code: 1009 } } }, { day: { condition: { code: 1000 } }, hour: [{ cloud: 20 }, { cloud: 80 }] }];
+  current.__weatherWidgetInstance = { getState: () => ({ weather: { forecast: { forecastday: days } } }), getForecastCloudCover: resolveForecastCloudCover };
+  const pills = [{}, {}, {}, {}];
+  let selected = pills[0];
+  const dropdown = { querySelectorAll: () => pills, querySelector: () => selected };
+  current.shadowRoot = { querySelector: () => dropdown };
+  const observations = resolve(current);
+  assert.equal(selectAtmosphere(current, observations), observations, 'Now reuses live observations');
+  selected = pills[1];
+  assert.equal(selectAtmosphere(current, observations).sunTransmission, 1, 'clear forecast does not inherit current 100% cloud');
+  selected = pills[2];
+  assert.ok(selectAtmosphere(current, observations).sunTransmission < 0.03);
+  selected = pills[3];
+  assert.equal(selectAtmosphere(current, observations).sunTransmission, 0.26125, 'hourly average drives the same solar model');
+  assert.equal(current.__weatherCurrentMeta.cloudCover, 100);
+  assert.equal(current.text, 'Overcast');
+  const syncDeclaration = source.match(/  function syncHeaderWeatherDropdownAtmosphere\([^]*?\n  \}/);
+  assert.ok(syncDeclaration);
+  const sync = new Function('resolveHeaderWeatherOrbAtmosphere', 'resolveHeaderWeatherDropdownAtmosphere', 'applyHeaderWeatherOrbAtmosphere', `${syncDeclaration[0]}; return syncHeaderWeatherDropdownAtmosphere;`)(resolve, selectAtmosphere, apply);
+  const values = new Map();
+  const sun = {
+    classList: { contains: name => name === 'is-sun', remove() {}, toggle() {} },
+    style: { setProperty: (key, value) => values.set(key, value), removeProperty: key => values.delete(key) },
+  };
+  current.isConnected = true;
+  current.dataset = { weatherMounted: 'true' };
+  current.__weatherOrbAtmosphere = observations;
+  current.shadowRoot.querySelector = selector => selector.endsWith('.is-sun') ? sun : dropdown;
+  selected = pills[0];
+  sync(current);
+  assert.equal(values.get('--orb-sun-transmission'), '0.015');
+  selected = pills[1];
+  sync(current);
+  assert.equal(values.get('--orb-sun-transmission'), '1.000', 'the existing solar DOM is updated synchronously');
+  selected = pills[2];
+  sync(current);
+  assert.ok(Number(values.get('--orb-sun-transmission')) < 0.03);
+});
+
+test('forecast class changes immediately update solar atmosphere through the existing observed lifecycle', async () => {
+  const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
+  const start = source.indexOf('    const observer = new MutationObserver', source.indexOf('  function bindHeaderWeatherState('));
+  const marker = '    host.__weatherStateObserver = observer;';
+  const end = source.indexOf(marker, start) + marker.length;
+  assert.ok(start > 0 && end > start);
+  const calls = [];
+  let callback;
+  let observed;
+  class Observer {
+    constructor(handler) { callback = handler; }
+    observe(target, options) { observed = { target, options }; }
+  }
+  const host = { shadowRoot: {} };
+  const names = ['applyHeaderWeatherPressureCopy', 'syncHeaderWeatherExpandedState', 'syncHeaderWeatherToggleArrow', 'scheduleHeaderWeatherOrbSync', 'scheduleHeaderWeatherReadingsSync', 'syncHeaderWeatherAttribution', 'applyHeaderWeatherLocationSearchCopy', 'bindHeaderWeatherDropdownScrollState', 'scheduleHeaderWeatherAreaLocationLabelRestore', 'syncHeaderWeatherDropdownAtmosphere'];
+  const functions = Object.fromEntries(names.map(name => [name, () => calls.push(name)]));
+  new Function('environment', `const { host, MutationObserver, ${names.join(', ')} } = environment; ${source.slice(start, end)}`)({ host, MutationObserver: Observer, ...functions });
+  assert.equal(observed.target, host.shadowRoot);
+  assert.ok(observed.options.attributeFilter.includes('class'));
+  assert.ok(observed.options.attributeFilter.includes('aria-expanded'));
+  assert.equal(host.__weatherStateObserver instanceof Observer, true, 'existing unmount cleanup owns this observer');
+  callback([{ type: 'attributes', attributeName: 'class', target: { matches: selector => selector === '.weather-header-dropdown__forecast-pill' } }]);
+  assert.deepEqual(calls, ['syncHeaderWeatherDropdownAtmosphere', 'scheduleHeaderWeatherOrbSync'], 'the pure update runs before any asynchronous astro refresh');
+  calls.length = 0;
+  callback([{ type: 'attributes', attributeName: 'class', target: { matches: () => false } }]);
+  assert.deepEqual(calls, [], 'solar classes and arrow animations cannot trigger an observer loop');
+});
 
 test('weather controller refreshes full data, deduplicates and preserves the last successful payload on failure', async () => {
   const requests = [];
@@ -337,14 +506,15 @@ for (const filename of ['header-preview.mjs', 'header-dropdown.mjs', 'widget.mjs
     const calls = [];
     const host = { dataset: {}, shadowRoot: {} };
     const root = { render: tree => { renders += 1; rendered = tree; }, unmount: () => { disposed += 1; } };
-    const mount = new Function('createWeatherController', 'weatherService', 'resolveHost', 'prepareShadowRoot', 'mountedWidgets', 'ReactDOM', 'jsxRuntime', 'React', 'WeatherApp', `return (${source.slice(start, end)});`)(
+    const mount = new Function('createWeatherController', 'weatherService', 'resolveHost', 'prepareShadowRoot', 'mountedWidgets', 'ReactDOM', 'jsxRuntime', 'React', 'WeatherApp', 'resolveForecastCloudCover', `return (${source.slice(start, end)});`)(
       createWeatherController,
       { getCurrentWeather: async (location, options) => { calls.push({ location, options }); return payload(String(calls.length)); } },
       () => host, () => ({}), new WeakMap(), { createRoot: () => root },
-      { jsx: (type, props) => ({ type, props }) }, { StrictMode: 'StrictMode' }, () => {}
+      { jsx: (type, props) => ({ type, props }) }, { StrictMode: 'StrictMode' }, () => {}, resolveForecastCloudCover
     );
     const initial = { latitude: 48.1, longitude: 11.6 };
     const api = mount(host, { initialLocation: initial, managedRefresh: true });
+    assert.equal(api.getForecastCloudCover, resolveForecastCloudCover, 'mounted consumers share the exact pure forecast cloud resolver');
     assert.equal(rendered.props.children.props.managedRefresh, true);
     assert.equal(api.getState().lastUpdatedAt, 0, 'mount itself is not evidence of fresh weather');
     const full = await api.refresh();

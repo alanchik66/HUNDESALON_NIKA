@@ -1,5 +1,17 @@
 export const WEATHER_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 
+export function resolveForecastCloudCover(forecastDay) {
+  const percent = value => value === null || value === undefined || (typeof value === 'string' && !value.trim()) || !Number.isFinite(Number(value))
+    ? null : Math.max(0, Math.min(100, Number(value)));
+  for (const value of [forecastDay?.day?.cloud, forecastDay?.day?.cloud_cover, forecastDay?.day?.avgcloud]) {
+    const cloud = percent(value);
+    if (cloud !== null) return cloud;
+  }
+  const hours = Array.isArray(forecastDay?.hour) ? forecastDay.hour : [];
+  const clouds = hours.map(hour => percent(hour?.cloud ?? hour?.cloud_cover)).filter(value => value !== null);
+  return clouds.length ? clouds.reduce((sum, cloud) => sum + cloud, 0) / clouds.length : null;
+}
+
 export const HEADER_WEATHER_RECOVERY_STYLES = `
 :host([data-weather-variant='header']) .weather-header-preview .weather-header-state--recovery {
   position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important;
