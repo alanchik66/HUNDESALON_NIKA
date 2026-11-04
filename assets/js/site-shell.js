@@ -13060,7 +13060,7 @@
         timeMs: getHeaderWeatherNowMs(),
       };
       const moonVideoSources = widgetBasePath
-        ? HEADER_WEATHER_MOON_VIDEO_FILES.map(file => `${widgetBasePath}/assets/Moon/${file}`)
+        ? HEADER_WEATHER_MOON_VIDEO_FILES.map(file => `${widgetBasePath}/assets/Moon/${file}?v=${WEATHER_WIDGET_ASSET_VERSION}`)
         : [];
       const moonAssetConfig = moonVideoSources.length
         ? {

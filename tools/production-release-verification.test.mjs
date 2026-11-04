@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -18,6 +19,12 @@ const SCRIPT = `/assets/js/app.js?v=${STAMP}`;
 const STYLESHEET = `/assets/css/app.css?v=${STAMP}`;
 const VENDOR_STYLESHEET = '/assets/fonts/fontawesome/all.min.css?v=20260329-0192';
 const WEATHER = '/weather/runtime.mjs?v=weather-v6';
+const MOON_PATH = '/3d-weather-codrops-main/dist-widget/assets/Moon/mission_2160p30_fallback.mp4';
+const MOON = `${MOON_PATH}?v=${STAMP}`;
+// Container-signature fixture only; codec playback is verified separately in browser QA.
+const MP4 = Buffer.from('000000186674797069736f6d0000020069736f6d617663310000000c6d64617400000000', 'hex');
+const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
+const LFS_POINTER = `version https://git-lfs.github.com/spec/v1\noid sha256:${sha256(MP4)}\nsize ${MP4.length}\n`;
 const DEPLOYMENT_ID = '1234abcd-1234-1234-1234-123456789abc';
 const DEPLOYMENT_ORIGIN = 'https://1234abcd.hundesalon-nika.pages.dev';
 
@@ -102,7 +109,7 @@ test('the deployment CLI requires its validated manifest and rejects competing o
   }
 });
 
-async function fixture(t, intercept = () => null, { includeVendor = false } = {}) {
+async function fixture(t, intercept = () => null, { includeVendor = false, includeMoon = false } = {}) {
   const directory = mkdtempSync(path.join(tmpdir(), 'nika-release-verification-'));
   for (const name of ['config', 'assets', 'assets/css', 'assets/js', 'weather', ...RELEASE_LOCALES]) mkdirSync(path.join(directory, name));
   writeFileSync(path.join(directory, 'config/deploy-asset-version.txt'), `${STAMP}\n`);
@@ -114,6 +121,11 @@ async function fixture(t, intercept = () => null, { includeVendor = false } = {}
     writeFileSync(vendorFile, '.fa{font-family:FontAwesome}\n');
   }
   writeFileSync(path.join(directory, 'weather/runtime.mjs'), 'export const weather = "reviewed";\n');
+  const moonFile = path.join(directory, MOON_PATH.slice(1));
+  if (includeMoon) {
+    mkdirSync(path.dirname(moonFile), { recursive: true });
+    writeFileSync(moonFile, MP4);
+  }
   for (const locale of RELEASE_LOCALES) {
     writeFileSync(path.join(directory, locale, 'index.html'), `<!doctype html><html lang="${locale}"><head>
       <link href="${PRODUCTION_ORIGIN}/${locale}/" rel="canonical"><link rel="icon" href="/favicon.ico">
@@ -121,7 +133,7 @@ async function fixture(t, intercept = () => null, { includeVendor = false } = {}
       ${includeVendor ? `<link rel="stylesheet" href="${VENDOR_STYLESHEET}">` : ''}
       <script src="https://third-party.example/external.js"></script></head><body>${locale}</body></html>`);
   }
-  const manifest = prepareProductionRelease({ directory, commit: COMMIT, extraAssets: [WEATHER] });
+  const manifest = prepareProductionRelease({ directory, commit: COMMIT, extraAssets: [WEATHER, ...(includeMoon ? [MOON] : [])] });
   const routes = new Map([
     [RELEASE_MANIFEST_PATH, path.join(directory, 'config/release-manifest.json')],
     ['/config/deploy-asset-version.txt', path.join(directory, 'config/deploy-asset-version.txt')],
@@ -131,6 +143,7 @@ async function fixture(t, intercept = () => null, { includeVendor = false } = {}
     ...RELEASE_LOCALES.map(locale => [`/${locale}/`, path.join(directory, locale, 'index.html')]),
   ]);
   if (includeVendor) routes.set('/assets/fonts/fontawesome/all.min.css', vendorFile);
+  if (includeMoon) routes.set(MOON_PATH, moonFile);
   const requests = [];
   const server = createServer((request, response) => {
     const url = new URL(request.url, 'http://fixture.invalid');
@@ -139,7 +152,7 @@ async function fixture(t, intercept = () => null, { includeVendor = false } = {}
     if (overridden?.hang) return;
     if (overridden) {
       response.writeHead(overridden.status ?? 200, { 'Content-Type': overridden.type || 'application/json', ...overridden.headers });
-      response.end(typeof overridden.body === 'string' ? overridden.body : JSON.stringify(overridden.body));
+      response.end(typeof overridden.body === 'string' || Buffer.isBuffer(overridden.body) ? overridden.body : JSON.stringify(overridden.body));
       return;
     }
     if (url.pathname === '/') {
@@ -151,7 +164,7 @@ async function fixture(t, intercept = () => null, { includeVendor = false } = {}
     try {
       if (!local) throw new Error('Unknown fixture route.');
       const bytes = readFileSync(local);
-      const type = /\.html$/u.test(local) ? 'text/html' : /\.css$/u.test(local) ? 'text/css' : /\.m?js$/u.test(local) ? 'application/javascript' : /\.json$/u.test(local) ? 'application/json' : 'text/plain';
+      const type = /\.html$/u.test(local) ? 'text/html' : /\.css$/u.test(local) ? 'text/css' : /\.m?js$/u.test(local) ? 'application/javascript' : /\.mp4$/u.test(local) ? 'video/mp4' : /\.json$/u.test(local) ? 'application/json' : 'text/plain';
       response.writeHead(200, { 'Content-Type': type });
       response.end(bytes);
     } catch {
@@ -167,7 +180,7 @@ async function fixture(t, intercept = () => null, { includeVendor = false } = {}
     assert.ok(path.basename(directory).startsWith('nika-release-verification-'));
     rmSync(directory, { recursive: true, force: true });
   });
-  return { directory, manifest, requests, baseUrl: `http://127.0.0.1:${server.address().port}` };
+  return { directory, manifest, requests, moonFile, baseUrl: `http://127.0.0.1:${server.address().port}` };
 }
 
 const verification = f => ({ commit: COMMIT, manifest: f.manifest, baseUrl: f.baseUrl, attempts: 1 });
@@ -227,6 +240,47 @@ test('artifact validation rejects changed bytes before a deployment starts', asy
   assert.equal(f.requests.length, 0);
 });
 
+test('a versioned Moon MP4 is covered by its exact bytes and video MIME in the artifact and public receipt', async t => {
+  const f = await fixture(t, () => null, { includeMoon: true });
+  assert.deepEqual(f.manifest.assets.find(asset => asset.path === MOON), {
+    path: MOON, sha256: sha256(MP4), contentType: 'video/mp4',
+  });
+  assert.equal(verifyProductionArtifact({ directory: f.directory, manifest: f.manifest, commit: COMMIT }), f.manifest);
+  const result = await verifyProductionRelease(verification(f));
+  assert.equal(result.assets, 4);
+  assert.ok(f.requests.includes(MOON));
+  for (const invalidate of [asset => { delete asset.contentType; }, asset => { asset.path = MOON_PATH; },
+    asset => { asset.path = `${MOON_PATH}?v=weather-v6`; }]) {
+    const invalid = structuredClone(f.manifest);
+    invalidate(invalid.assets.find(asset => asset.path === MOON));
+    assert.throws(() => verifyProductionArtifact({ directory: f.directory, manifest: invalid, commit: COMMIT }), /Invalid release video metadata/u);
+  }
+});
+
+test('receipt preparation and local artifact verification reject even a correctly hashed Git LFS media pointer', async t => {
+  const f = await fixture(t, () => null, { includeMoon: true });
+  writeFileSync(f.moonFile, LFS_POINTER);
+  assert.throws(() => prepareProductionRelease({ directory: f.directory, commit: COMMIT, extraAssets: [WEATHER, MOON] }), /unresolved Git LFS pointer/u);
+  f.manifest.assets.find(asset => asset.path === MOON).sha256 = sha256(LFS_POINTER);
+  assert.throws(() => verifyProductionArtifact({ directory: f.directory, manifest: f.manifest, commit: COMMIT }), /unresolved Git LFS pointer/u);
+  assert.equal(f.requests.length, 0);
+});
+
+test('HTTP 200 and a matching receipt hash cannot bless an LFS pointer or HTML response as Moon video', async t => {
+  for (const body of [LFS_POINTER, '<!doctype html><title>Not a video</title>']) {
+    const f = await fixture(t, ({ url }) => url.pathname === MOON_PATH ? { type: 'video/mp4', body } : null, { includeMoon: true });
+    f.manifest.assets.find(asset => asset.path === MOON).sha256 = sha256(body);
+    writeFileSync(path.join(f.directory, RELEASE_MANIFEST_PATH.slice(1)), JSON.stringify(f.manifest));
+    await assert.rejects(verifyProductionRelease(verification(f)), /Invalid MP4 content/u);
+  }
+});
+
+test('matching Moon video bytes still fail when served under the wrong MIME type', async t => {
+  const f = await fixture(t, ({ url }) => url.pathname === MOON_PATH
+    ? { type: 'text/plain', body: MP4 } : null, { includeMoon: true });
+  await assert.rejects(verifyProductionRelease(verification(f)), /Served asset mismatch/u);
+});
+
 test('CI and manual preparation share maintained weather output URLs and the shell cache version', async t => {
   const f = await fixture(t);
   mkdirSync(path.join(f.directory, '3d-weather-codrops-main'));
@@ -238,6 +292,17 @@ test('CI and manual preparation share maintained weather output URLs and the she
   assert.deepEqual(resolveWeatherReleaseAssets(f.directory), [
     '/3d-weather-codrops-main/dist-widget/weather-widget.iife.js?v=20261104-weather-v7',
     '/3d-weather-codrops-main/dist-widget/Scene3D.mjs?v=20261104-weather-v7',
+    '/3d-weather-codrops-main/dist-widget/assets/Moon/mission_2160p30_fallback.mp4?v=20261104-weather-v7',
+  ]);
+  const runtimeRoot = path.join(f.directory, 'minified-runtime');
+  mkdirSync(path.join(runtimeRoot, 'config'), { recursive: true });
+  mkdirSync(path.join(runtimeRoot, 'assets/js'), { recursive: true });
+  writeFileSync(path.join(runtimeRoot, 'config/deploy-asset-version.txt'), `${STAMP}\n`);
+  writeFileSync(path.join(runtimeRoot, 'assets/js/site-shell.js'), `(()=>{const e="${STAMP}";window.fixtureVersion=e})();`);
+  assert.deepEqual(resolveWeatherReleaseAssets(f.directory, runtimeRoot), [
+    `/3d-weather-codrops-main/dist-widget/weather-widget.iife.js?v=${STAMP}`,
+    `/3d-weather-codrops-main/dist-widget/Scene3D.mjs?v=${STAMP}`,
+    `${MOON_PATH}?v=${STAMP}`,
   ]);
   writeFileSync(path.join(f.directory, 'assets/js/site-shell.js'), 'const unrelated = true;');
   assert.throws(() => resolveWeatherReleaseAssets(f.directory), /Missing maintained weather module manifest or version/u);

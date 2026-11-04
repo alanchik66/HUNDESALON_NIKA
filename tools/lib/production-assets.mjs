@@ -52,3 +52,16 @@ export function assertProductionSourcePath(root, source) {
   }
   return stat;
 }
+
+export function assertProductionAssetContent(file) {
+  const descriptor = fs.openSync(file, 'r');
+  try {
+    const prefix = Buffer.alloc(256);
+    const bytesRead = fs.readSync(descriptor, prefix, 0, prefix.length, 0);
+    if (prefix.subarray(0, bytesRead).toString('utf8').startsWith('version https://git-lfs.github.com/spec/v1')) {
+      throw new Error(`Refusing unresolved Git LFS pointer in production asset: ${normalizePath(file)}`);
+    }
+  } finally {
+    fs.closeSync(descriptor);
+  }
+}

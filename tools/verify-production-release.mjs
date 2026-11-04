@@ -29,7 +29,7 @@ async function main() {
     throw new Error('--wrangler-output is only valid for public deployment verification.');
   }
   if (args.includes('--prepare')) {
-    const extraAssets = resolveWeatherReleaseAssets(root);
+    const extraAssets = resolveWeatherReleaseAssets(root, directory);
     const manifest = prepareProductionRelease({ directory, commit, extraAssets });
     verifyProductionArtifact({ directory, manifest, commit, stamp });
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `asset_stamp=${manifest.stamp}\nrelease_commit=${manifest.commit}\n`);

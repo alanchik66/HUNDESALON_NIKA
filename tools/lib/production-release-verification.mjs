@@ -2,13 +2,16 @@ import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { assertProductionAssetContent } from './production-assets.mjs';
 
 export const PRODUCTION_ORIGIN = 'https://hundesalon-nika.com';
 export const RELEASE_LOCALES = ['de', 'en', 'ru', 'uk'];
 export const RELEASE_MANIFEST_PATH = '/config/release-manifest.json';
 const STAMP_PATH = '/config/deploy-asset-version.txt';
 const PAGES_PROJECT = 'hundesalon-nika';
+const MOON_VIDEO_PATH = '/3d-weather-codrops-main/dist-widget/assets/Moon/mission_2160p30_fallback.mp4';
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
+const isMp4Asset = asset => /\.mp4$/iu.test(new URL(asset, PRODUCTION_ORIGIN).pathname);
 
 export function parseWranglerPagesDeploymentOutput(output, { commit } = {}) {
   if (!/^[a-f0-9]{40}$/u.test(commit || '')) throw new Error('Pass the full reviewed commit SHA.');
@@ -73,6 +76,21 @@ function artifactFile(directory, requestPath) {
   return target;
 }
 
+function assertMediaContent(requestPath, bytes) {
+  if (isMp4Asset(requestPath) && (bytes.length < 16 || bytes.toString('ascii', 4, 8) !== 'ftyp' ||
+      bytes.readUInt32BE(0) < 16 || bytes.readUInt32BE(0) > bytes.length)) {
+    throw new Error(`Invalid MP4 content: ${requestPath}`);
+  }
+}
+
+function readReleaseAsset(directory, requestPath) {
+  const file = artifactFile(directory, requestPath);
+  assertProductionAssetContent(file);
+  const bytes = readFileSync(file);
+  assertMediaContent(requestPath, bytes);
+  return bytes;
+}
+
 function attributes(tag) {
   return Object.fromEntries([...tag.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gu)]
     .map(match => [match[1].toLowerCase(), (match[2] ?? match[3] ?? match[4]).replace(/&(?:amp|#38|#x26);/giu, '&')]));
@@ -115,8 +133,11 @@ export function validateReleaseManifest(manifest, { commit, stamp, canonicalOrig
   const paths = new Set();
   for (const asset of manifest.assets) {
     publicPath(asset.path);
-    if (!/\.(?:css|m?js)$/iu.test(new URL(asset.path, PRODUCTION_ORIGIN).pathname) ||
+    if (!/\.(?:css|m?js|mp4)$/iu.test(new URL(asset.path, PRODUCTION_ORIGIN).pathname) ||
         !/^[a-f0-9]{64}$/u.test(asset.sha256 || '') || paths.has(asset.path)) throw new Error('Invalid release asset digest.');
+    if (isMp4Asset(asset.path) && (asset.contentType !== 'video/mp4' || new URL(asset.path, PRODUCTION_ORIGIN).searchParams.get('v') !== manifest.stamp)) {
+      throw new Error('Invalid release video metadata.');
+    }
     paths.add(asset.path);
   }
   for (const locale of RELEASE_LOCALES) {
@@ -143,18 +164,20 @@ export function prepareProductionRelease({ directory, commit, canonicalOrigin = 
     locale, baseUrl: canonicalOrigin, canonicalOrigin,
   }));
   const assets = [...new Set([...locales.flatMap(locale => locale.assets), ...extraAssets.map(publicPath)])].sort()
-    .map(asset => ({ path: asset, sha256: digest(readFileSync(artifactFile(directory, asset))) }));
+    .map(asset => ({ path: asset, sha256: digest(readReleaseAsset(directory, asset)), ...(isMp4Asset(asset) ? { contentType: 'video/mp4' } : {}) }));
   const manifest = validateReleaseManifest({ schema: 1, commit, stamp, canonicalOrigin: origin(canonicalOrigin), locales, assets }, { commit, canonicalOrigin });
   writeFileSync(path.join(directory, RELEASE_MANIFEST_PATH.slice(1)), `${JSON.stringify(manifest, null, 2)}\n`);
   return manifest;
 }
 
-export function resolveWeatherReleaseAssets(projectRoot) {
+export function resolveWeatherReleaseAssets(projectRoot, runtimeRoot) {
   const buildManifest = JSON.parse(readFileSync(path.join(projectRoot, '3d-weather-codrops-main/build-manifest.json'), 'utf8'));
-  const shell = readFileSync(path.join(projectRoot, 'assets/js/site-shell.js'), 'utf8');
-  const version = shell.match(/WEATHER_WIDGET_ASSET_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1];
+  const version = runtimeRoot
+    ? readFileSync(path.join(runtimeRoot, STAMP_PATH.slice(1)), 'utf8').trim()
+    : readFileSync(path.join(projectRoot, 'assets/js/site-shell.js'), 'utf8').match(/WEATHER_WIDGET_ASSET_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1];
   if (!version || !Array.isArray(buildManifest.entries) || !buildManifest.entries.length) throw new Error('Missing maintained weather module manifest or version.');
-  return buildManifest.entries.map(entry => publicPath(`/3d-weather-codrops-main/dist-widget/${entry.output}?v=${encodeURIComponent(version)}`));
+  return [...buildManifest.entries.map(entry => publicPath(`/3d-weather-codrops-main/dist-widget/${entry.output}?v=${encodeURIComponent(version)}`)),
+    publicPath(`${MOON_VIDEO_PATH}?v=${encodeURIComponent(version)}`)];
 }
 
 export function verifyProductionArtifact({ directory, manifest, commit, stamp }) {
@@ -166,7 +189,7 @@ export function verifyProductionArtifact({ directory, manifest, commit, stamp })
     });
     if (JSON.stringify(actual) !== JSON.stringify(manifest.locales.find(item => item.locale === locale))) throw new Error(`${locale}: artifact HTML asset mismatch.`);
   }
-  for (const asset of manifest.assets) if (digest(readFileSync(artifactFile(directory, asset.path))) !== asset.sha256) throw new Error(`Artifact digest mismatch: ${asset.path}`);
+  for (const asset of manifest.assets) if (digest(readReleaseAsset(directory, asset.path)) !== asset.sha256) throw new Error(`Artifact digest mismatch: ${asset.path}`);
   return manifest;
 }
 
@@ -201,8 +224,10 @@ async function localePages({ baseUrl, canonicalOrigin, manifest, context }) {
     await Promise.all(assets.slice(offset, offset + 4).map(async asset => {
       const result = await resource(new URL(asset.path, baseUrl), context);
       const type = result.response.headers.get('content-type') || '';
-      const validType = /\.css$/iu.test(new URL(asset.path, baseUrl).pathname) ? /text\/css/iu.test(type) : /(?:java|ecma)script/iu.test(type);
+      const validType = isMp4Asset(asset.path) ? type.split(';')[0].trim().toLowerCase() === 'video/mp4'
+        : /\.css$/iu.test(new URL(asset.path, baseUrl).pathname) ? /text\/css/iu.test(type) : /(?:java|ecma)script/iu.test(type);
       if (result.response.status !== 200 || !validType || (asset.sha256 && digest(result.bytes) !== asset.sha256)) throw new Error(`Served asset mismatch: ${asset.path}`);
+      assertMediaContent(asset.path, result.bytes);
     }));
   }
   return assets.length;

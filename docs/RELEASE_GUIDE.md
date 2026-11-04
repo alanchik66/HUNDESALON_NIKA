@@ -54,7 +54,9 @@ Wrangler's [structured output](https://developers.cloudflare.com/workers/wrangle
 
 If that workflow is unavailable and manual deployment is explicitly authorized, run `node tools/deploy-pages.mjs --branch main --commit-dirty=false` from a clean, committed `main` matching the live GitHub revision. Its guard rejects active CI/Pages workflows, runs the full quality and current-revision security gates, builds and verifies that artifact, then rechecks the revision and workflow state before authentication and upload. The uploaded revision is verified publicly afterwards. Both `npm run deploy` and `deploy:full` use this guarded path; they do not create API tokens or send post-deploy messages. Do not deploy uncommitted Functions or stale build artifacts, or race a manual upload against the CI deployment.
 
-The content receipt covers the homepage JS/CSS references and seven maintained weather modules; homepage HTML is checked for locale, canonical and asset references. It is not a hash of every image or HTML byte. The normal CI path additionally protects the complete tested `dist` with its immutable artifact ID and download digest. Record this distinction in release evidence.
+The content receipt covers the homepage JS/CSS references, seven maintained weather modules and the active Moon MP4; homepage HTML is checked for locale, canonical and asset references. The Moon bytes must be a real MP4 and match the receipt on both the Pages host and the canonical domain. It is not a hash of every image or HTML byte. The normal CI path additionally protects the complete tested `dist` with its immutable artifact ID and download digest. Record this distinction in release evidence.
+
+Both build-capable checkouts fetch Git LFS media. Production copying rejects unresolved LFS pointers instead of publishing them as media. The 2026-11-04 Moon incident served a 131-byte pointer with `video/mp4` and HTTP 200; response status, MIME and a successful module-only receipt were insufficient. Keep the Moon URL release-stamped so browsers replace previously cached pointer responses.
 
 ## Database changes
 

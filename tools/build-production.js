@@ -4,7 +4,7 @@ import { execFileSync, execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { transformSync } from 'esbuild';
-import { assertProductionSourcePath, isProductionSourceOnlyPath } from './lib/production-assets.mjs';
+import { assertProductionAssetContent, assertProductionSourcePath, isProductionSourceOnlyPath } from './lib/production-assets.mjs';
 import { minifyHeaderWeatherStyleTemplate } from './lib/production-style-template.mjs';
 import { stampWeatherRuntimeVersions } from './lib/weather-asset-versions.mjs';
 
@@ -124,6 +124,7 @@ function copyRecursive(source, target) {
   }
 
   fs.mkdirSync(path.dirname(target), { recursive: true });
+  assertProductionAssetContent(source);
   fs.copyFileSync(source, target);
 }
 

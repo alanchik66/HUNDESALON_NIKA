@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import fs from 'node:fs';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { assertProductionSourcePath, isProductionSourceOnlyPath } from './lib/production-assets.mjs';
+import { assertProductionAssetContent, assertProductionSourcePath, isProductionSourceOnlyPath } from './lib/production-assets.mjs';
 import { stampWeatherModuleReferences, stampWeatherRuntimeVersions } from './lib/weather-asset-versions.mjs';
 import { deployedModulePaths } from '../3d-weather-codrops-main/scripts/module-source.mjs';
 import { transformSync } from 'esbuild';
@@ -49,6 +50,81 @@ test('production copy refuses external inputs and symbolic directories', t => {
   assert.equal(assertProductionSourcePath(root, path.join(root, 'index.html')).isFile(), true);
   assert.throws(() => assertProductionSourcePath(root, outside), /outside the project root/);
   assert.throws(() => assertProductionSourcePath(root, path.join(root, 'linked')), /symbolic production input/);
+});
+
+test('production content rejects Git LFS pointers regardless of asset extension or malformed pointer metadata', t => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'nika-production-lfs-'));
+  t.after(() => rmSync(fixture, { recursive: true, force: true }));
+  const version = 'version https://git-lfs.github.com/spec/v1';
+  const contents = [
+    ['moon.mp4', `${version}\noid sha256:${'a'.repeat(64)}\nsize 843873\n`],
+    ['image.jpg', `${version}\r\noid invalid\r\nsize invalid\r\n`],
+    ['module.js', version],
+  ];
+  for (const [name, content] of contents) {
+    const file = path.join(fixture, name);
+    writeFileSync(file, content);
+    assert.throws(() => assertProductionAssetContent(file), error => {
+      assert.match(error.message, /unresolved Git LFS pointer/);
+      assert.ok(error.message.includes(file.replaceAll('\\', '/')), 'a failed gate must identify the exact artifact');
+      return true;
+    });
+  }
+});
+
+test('production content permits binary media and nonleading textual mentions of Git LFS', t => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'nika-production-content-'));
+  t.after(() => rmSync(fixture, { recursive: true, force: true }));
+  const contents = [
+    ['moon.mp4', Buffer.from([0, 0, 0, 24, ...Buffer.from('ftypisom'), 0, 0, 2, 0])],
+    ['image.jpg', Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 16, ...Buffer.from('JFIF')])],
+    ['module.js', 'const example = "version https://git-lfs.github.com/spec/v1";\n'],
+    ['notes.txt', 'Example pointer:\nversion https://git-lfs.github.com/spec/v1\n'],
+    ['empty.txt', ''],
+  ];
+  for (const [name, content] of contents) {
+    const file = path.join(fixture, name);
+    writeFileSync(file, content);
+    assert.equal(assertProductionAssetContent(file), undefined);
+  }
+});
+
+test('production content reads only a bounded prefix and closes descriptors after success, rejection and I/O failure', t => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'nika-production-content-io-'));
+  t.after(() => rmSync(fixture, { recursive: true, force: true }));
+  const media = path.join(fixture, 'large.mp4');
+  const pointer = path.join(fixture, 'pointer.mp4');
+  writeFileSync(media, Buffer.alloc(1024 * 1024, 0x61));
+  writeFileSync(pointer, 'version https://git-lfs.github.com/spec/v1\n');
+  const open = fs.openSync;
+  const read = fs.readSync;
+  const close = fs.closeSync;
+  const opened = [];
+  const closed = [];
+  const reads = [];
+  let readFailure = false;
+  t.mock.method(fs, 'openSync', (...args) => {
+    const descriptor = open(...args);
+    opened.push(descriptor);
+    return descriptor;
+  });
+  t.mock.method(fs, 'readSync', (descriptor, buffer, offset, length, position) => {
+    reads.push({ offset, length, position });
+    if (readFailure) throw new Error('Fixture read failure');
+    return read(descriptor, buffer, offset, length, position);
+  });
+  t.mock.method(fs, 'closeSync', descriptor => {
+    closed.push(descriptor);
+    return close(descriptor);
+  });
+  assert.doesNotThrow(() => assertProductionAssetContent(media));
+  assert.throws(() => assertProductionAssetContent(pointer), /unresolved Git LFS pointer/);
+  readFailure = true;
+  assert.throws(() => assertProductionAssetContent(media), /Fixture read failure/);
+  assert.equal(reads.length, 3);
+  assert.ok(reads.every(item => item.offset === 0 && item.position === 0 && item.length <= 256));
+  assert.deepEqual(closed, opened, 'every opened asset descriptor must close even when content or I/O fails');
+  for (const descriptor of closed) assert.throws(() => fs.fstatSync(descriptor), { code: 'EBADF' });
 });
 
 test('weather cache versions follow the release across emitted static, dynamic and URL-based module references', t => {
