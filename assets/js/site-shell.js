@@ -1367,7 +1367,7 @@
   clip-path: circle(50%) !important;
   object-fit: cover !important;
   background: radial-gradient(circle at 35% 32%, #fff8cd, #ffc356 60%, #e87b28);
-  filter: var(--orb-sun-recovery-filter, grayscale(1) contrast(0.12) brightness(1.8)) !important;
+  filter: var(--orb-sun-recovery-filter, grayscale(1) contrast(0.04) brightness(1.9)) !important;
   transition: filter 3s ease-in-out;
 }
 

@@ -348,7 +348,10 @@ test('solar recovery preserves the canvas layout size and remounts a failed rend
   assert.equal(lastDeclaration(solarImage, 'position').important, true, 'the recovery image must overlay the hidden canvas rather than follow it in document flow');
   assert.equal(lastDeclaration(solarImage, 'clip-path').value, 'circle(50%)');
   assert.equal(lastDeclaration(solarImage, 'clip-path').important, true, 'the solar texture cannot escape its circular silhouette under broad transparency styles');
-  assert.match(lastDeclaration(solarImage, 'filter').value, /var\(--orb-sun-recovery-filter/);
+  const recoveryFilter = lastDeclaration(solarImage, 'filter').value;
+  assert.match(recoveryFilter, /var\(--orb-sun-recovery-filter/);
+  const defaultContrast = Number(recoveryFilter.match(/contrast\(([\d.]+)\)/)?.[1]);
+  assert.ok(defaultContrast > 0 && defaultContrast <= .05, 'recovery before a renderer callback must also keep original spots subtle');
   assert.equal(lastDeclaration(solarImage, 'box-shadow'), undefined, 'the clipped image cannot own its external glow');
   assert.equal(lastDeclaration(solarImage, 'animation'), undefined);
   const nativeGlow = matchingRules(root, selector => selector === ".weather-orb-overlay.is-sun.is-header-sun[data-sun-surface='ready']:is([data-sun-scene='failed'], [data-sun-scene='lost'])");
@@ -651,7 +654,7 @@ test('the solar lens flare axis follows the host callback while its optical phas
   remounted.dispose();
 });
 
-test('the actual solar flare shader excludes the original photosphere and fades before the canvas edge', async () => {
+test('the actual solar flare shader joins the limb without a dark gap, excludes the photosphere and fades before the canvas edge', async () => {
   const h = await solarRecoveryHarness();
   const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
   const material = scene.flareMesh.material;
@@ -670,9 +673,11 @@ test('the actual solar flare shader excludes the original photosphere and fades 
   const radius = scene.sunMesh.geometry.parameters.radius;
   const distance = scene.camera.position.z;
   const projectedRadius = radius / Math.sqrt(distance ** 2 - radius ** 2) / (2 * Math.tan(scene.camera.fov * Math.PI / 360));
-  for (const fraction of [0, .25, .5, .75, 1]) {
-    assert.equal(discMask(projectedRadius * fraction), 0, 'no shader light can wash over any part of the original solar disc');
+  for (let i = 0; i <= 128; i += 1) {
+    assert.equal(discMask(projectedRadius * i / 128), 0, 'no shader light can wash over any part of the original solar disc');
   }
+  assert.ok(discMask(projectedRadius + .001) > .15, 'the halo must begin at the limb rather than leave a fully transparent dark ring');
+  assert.ok(discMask(projectedRadius + .002) > .65, 'the halo must already be strong within a subpixel distance outside the native-sized solar disc');
   assert.ok(discMask(projectedRadius + .02) > .9, 'optical light remains available immediately outside the photosphere');
   const attenuation = material.fragmentShader.match(/light\s*\*=\s*([^;]+);\s*float\s+alpha\s*=/)?.[1];
   assert.ok(attenuation, 'the exclusion mask must attenuate RGB before its alpha is calculated');
@@ -933,16 +938,34 @@ test('the actual solar material preserves photographic luminance and applies its
   assert.equal(scene.flareMesh.material.uniforms.uSolarColor, scene.solarColorUniform);
   assert.notEqual(shader.uniforms.uSolarSurfaceColor, scene.flareMesh.material.uniforms.uSolarColor);
   assert.equal(scene.sunMesh.material.map, h.stats.textures[0]);
-  assert.equal(scene.sunMesh.material.customProgramCacheKey(), 'header-solar-atmosphere-v3');
+  assert.equal(scene.sunMesh.material.customProgramCacheKey(), 'header-solar-atmosphere-v4');
   assert.match(shader.fragmentShader, /#include <tonemapping_fragment>\s*gl_FragColor\.rgb\s*\*=\s*uSolarSurfaceColor\s*;/, 'the pale surface color must tint already tone-mapped light rather than inherit the saturated atmospheric color');
   const weights = shader.fragmentShader.match(/float solarLuminance\s*=\s*dot\(diffuseColor\.rgb,\s*vec3\(([^)]+)\)\)/)?.[1].split(',').map(Number);
   assert.ok(weights?.length === 3 && weights.every(Number.isFinite), 'the shader must derive brightness from the original texture sample');
   assert.ok(Math.abs(weights.reduce((sum, weight) => sum + weight, 0) - 1) < 1e-12);
-  const gamma = Number(shader.fragmentShader.match(/diffuseColor\.rgb\s*=\s*vec3\(pow\(clamp\(solarLuminance,\s*0\.0,\s*1\.0\),\s*([\d.]+)\)\)/)?.[1]);
+  const expression = shader.fragmentShader.match(/diffuseColor\.rgb\s*=\s*vec3\(([^;]+)\);/)?.[1];
+  assert.ok(expression?.includes('solarLuminance'), 'the lifted brightness must still be computed from the actual sampled photographic luminance');
+  const gamma = Number(expression.match(/pow\(clamp\(solarLuminance,\s*0\.0,\s*1\.0\),\s*([\d.]+)\)/)?.[1]);
   assert.ok(gamma > 0 && gamma < 1, 'a finite luminance lift retains spot structure while raising the original dark map');
-  const brightness = rgb => Math.pow(Math.max(0, Math.min(1, rgb.reduce((sum, channel, i) => sum + channel * weights[i], 0))), gamma);
-  assert.ok(brightness([.8, .5, .2]) > brightness([.4, .2, .1]), 'the same photographic bright and dark features remain spatially distinct');
-  assert.equal(brightness([0, 0, 0]), 0);
+  const lifted = new Function('solarLuminance', 'mix', 'pow', 'clamp', `return (${expression});`);
+  const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+  const mix = (low, high, weight) => low + (high - low) * weight;
+  const luminance = rgb => rgb.reduce((sum, channel, i) => sum + channel * weights[i], 0);
+  const brightness = rgb => lifted(luminance(rgb), mix, Math.pow, clamp);
+  const floor = brightness([0, 0, 0]);
+  assert.ok(floor >= .45 && floor <= .6, 'the darkest original spots must be lifted without flattening almost the whole brightness range to white');
+  let previous = -1;
+  for (const value of [0, .001, .01, .05, .1, .25, .5, .75, 1]) {
+    const actual = brightness([value, value, value]);
+    assert.ok(Number.isFinite(actual) && actual >= floor && actual <= 1);
+    assert.ok(actual > previous, 'every distinct sampled brightness must retain its ordering and photographic detail');
+    previous = actual;
+  }
+  const bright = [.8, .5, .2];
+  const dark = [.4, .2, .1];
+  const contrast = brightness(bright) - brightness(dark);
+  assert.ok(contrast > .01, 'the same photographic bright and dark features must remain spatially distinct');
+  assert.ok(contrast < Math.pow(luminance(bright), gamma) - Math.pow(luminance(dark), gamma), 'the retained spot pattern must be subtler than the unlifted map');
   assert.equal(brightness([1, 1, 1]), 1);
   scene.dispose();
 });
@@ -968,6 +991,15 @@ test('solar recovery appearance updates are quantized without emitting repeated 
     const channels = appearance.glowRgb.split(' ').map(Number);
     assert.ok(channels.length === 3 && channels.every(channel => Number.isInteger(channel) && channel >= 0 && channel <= 255), 'CSS glow channels must be finite bounded sRGB integers');
     assert.doesNotMatch(appearance.recoveryFilter, /hue-rotate|NaN|Infinity/);
+    const contrast = Number(appearance.recoveryFilter.match(/contrast\(([\d.]+)\)/)?.[1]);
+    assert.ok(contrast > 0 && contrast <= .05, 'the native recovery map must retain faint nonzero detail rather than harsh dark spots');
+    const brightness = [...appearance.recoveryFilter.matchAll(/brightness\(([\d.]+)\)/g)].map(match => Number(match[1]));
+    assert.equal(brightness.length, 2);
+    assert.ok(brightness[0] >= .45 && brightness[0] <= 1.9);
+    assert.ok(brightness[1] >= 1 && brightness[1] <= 1.2);
+    const sepia = Number(appearance.recoveryFilter.match(/sepia\(([\d.]+)\)/)?.[1]);
+    const saturation = Number(appearance.recoveryFilter.match(/saturate\(([\d.]+)\)/)?.[1]);
+    assert.ok(sepia >= 0 && sepia <= 1 && saturation >= 1 && saturation <= 20, 'native phase filters must remain bounded finite CSS values');
   }
   const expectedGlow = ['r', 'g', 'b'].map(channel => {
     const linear = scene.solarColorUniform.value[channel];
@@ -1013,6 +1045,8 @@ test('solar recovery keeps reddening below the geometric horizon until the final
   const stoppedCount = appearances.length;
   const stoppedGlow = appearances.at(-1).glowRgb;
   const stoppedFilter = appearances.at(-1).recoveryFilter;
+  const endpointBrightness = [...stoppedFilter.matchAll(/brightness\(([\d.]+)\)/g)].map(match => Number(match[1]));
+  assert.deepEqual(endpointBrightness, [.45, 1.2], 'the lifted native detail must preserve the established warm horizon endpoint');
   for (const elevation of [-1.2, -2, -6]) {
     h.setNow(timeAtElevation(elevation));
     scene.renderFrame();

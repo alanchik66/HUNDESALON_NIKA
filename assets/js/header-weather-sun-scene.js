@@ -182,7 +182,7 @@ void main() {
 
   // The sphere occupies radius ~0.247 of this canvas. Keep all added light
   // outside its photosphere so the original texture cannot be washed out.
-  float outsideDisc = smoothstep(0.248, 0.258, radial);
+  float outsideDisc = smoothstep(0.247, 0.250, radial);
   float aboveLimb = max(radial - 0.247, 0.0);
   float angle = radial > 0.00001 ? atan(p.y, p.x) : 0.0;
   // Unequal streamers: light travels along short tapered rays. Each angular
@@ -350,7 +350,7 @@ export class HeaderWeatherSunScene {
       this.options.onAppearanceChange?.({
         elevationDeg,
         glowRgb,
-        recoveryFilter: `grayscale(1) contrast(0.12) brightness(${(1.8 - recoveryWarmth * 1.35).toFixed(3)}) sepia(${recoveryWarmth.toFixed(3)}) saturate(${(1 + recoveryWarmth ** 2 * 19).toFixed(3)}) brightness(${(1 + recoveryWarmth * 0.2).toFixed(3)})`,
+        recoveryFilter: `grayscale(1) contrast(0.04) brightness(${(1.9 - recoveryWarmth * 1.45).toFixed(3)}) sepia(${recoveryWarmth.toFixed(3)}) saturate(${(1 + recoveryWarmth ** 2 * 19).toFixed(3)}) brightness(${(1 + recoveryWarmth * 0.2).toFixed(3)})`,
       });
     }
   }
@@ -408,10 +408,12 @@ export class HeaderWeatherSunScene {
 ${mapChunk}
 #ifdef USE_MAP
   float solarLuminance = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-  diffuseColor.rgb = vec3(pow(clamp(solarLuminance, 0.0, 1.0), 0.28));
+  // Lift the original shadows without adding a second disc or flattening the
+  // map: its spatial features and latitude-dependent motion remain intact.
+  diffuseColor.rgb = vec3(mix(0.5, 1.0, pow(clamp(solarLuminance, 0.0, 1.0), 0.28)));
 #endif`).replace('#include <tonemapping_fragment>', '#include <tonemapping_fragment>\ngl_FragColor.rgb *= uSolarSurfaceColor;');
     };
-    sunMaterial.customProgramCacheKey = () => 'header-solar-atmosphere-v3';
+    sunMaterial.customProgramCacheKey = () => 'header-solar-atmosphere-v4';
     const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(SUN_RADIUS, 96, 72), sunMaterial);
     sunMesh.renderOrder = 1;
 
