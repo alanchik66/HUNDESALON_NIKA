@@ -311,7 +311,9 @@ for (const filename of ['widget.mjs', 'header-preview.mjs', 'header-dropdown.mjs
     const slots = buildForecastSlots(data);
     for (const [locale, unavailable] of [['ru', 'Прогноз недоступен'], ['uk', 'Прогноз недоступний'], ['de', 'Vorhersage nicht verfügbar'], ['en', 'Forecast unavailable']]) {
       const selections = [];
-      const cards = render(slots, locale, copy[locale], 1, index => selections.push(index), { jsx, jsxs: jsx }, formatDate, translate);
+      let selectedIndex = 1;
+      const select = updater => { selectedIndex = updater(selectedIndex); selections.push(selectedIndex); };
+      const cards = render(slots, locale, copy[locale], selectedIndex, select, { jsx, jsxs: jsx }, formatDate, translate);
       assert.equal(cards.length, 4, locale);
       assert.equal(new Set(cards.map(card => card.key)).size, 4);
       assert.deepEqual(cards.map(card => card.props['data-forecast-date']), slots.map(day => day.date));
@@ -330,6 +332,50 @@ for (const filename of ['widget.mjs', 'header-preview.mjs', 'header-dropdown.mjs
       }
       assert.deepEqual(selections, [0], 'unavailable cards cannot change the selected detail day');
     }
+  });
+
+  test(`${filename}: selecting a daily tile again returns to current weather without another control`, async () => {
+    const source = await readSource(filename);
+    const start = source.indexOf('                        ae.map(');
+    const end = source.indexOf('\n                      ],', start);
+    assert.ok(start >= 0 && end > start, 'forecast card rendering must be present');
+    const render = new Function('ae', 'B', 'V', 'U', 'u', 'jsxRuntime', 'formatForecastDate', 'translateCondition',
+      `return (${source.slice(start, end).trim().replace(/,$/, '')});`);
+    const jsx = (type, props, key) => ({ type, props, key });
+    const data = { current: {}, location: { localtime: '2026-11-04 22:39' }, forecast: {
+      forecastday: ['2026-11-04', '2026-11-06', '2026-11-07'].map(date => forecastDay(date)),
+    } };
+    const slots = buildForecastSlots(data, Date.parse('2026-11-04T21:39:00Z'));
+    let selected = null;
+    const queued = [];
+    const select = updater => {
+      assert.equal(typeof updater, 'function', 'selection must use React functional state so batched taps see the latest state');
+      queued.push(updater);
+    };
+    const flush = () => { for (const updater of queued.splice(0)) selected = updater(selected); };
+    const cards = render(slots, selected, select, { forecastUnavailable: 'Unavailable' }, 'en',
+      { jsx, jsxs: jsx }, date => date, condition => condition.text);
+    cards[0].props.onClick();
+    flush();
+    assert.equal(selected, 0, 'a first tap selects the real daily forecast');
+    cards[0].props.onClick();
+    flush();
+    assert.equal(selected, null, 'a second tap returns to current weather');
+    cards[2].props.onClick();
+    flush();
+    assert.equal(selected, 2);
+    cards[3].props.onClick();
+    flush();
+    assert.equal(selected, 3, 'another available tile selects its own date');
+    cards[0].props.onClick();
+    cards[0].props.onClick();
+    assert.equal(queued.length, 2);
+    flush();
+    assert.equal(selected, null, 'rapid repeated taps toggle correctly before React renders again');
+    cards[1].props.onClick();
+    assert.equal(queued.length, 0, 'an unavailable tile must not call the state setter');
+    assert.equal(selected, null);
+    assert.equal(data.forecast.forecastday.length, 3);
   });
 
   test(`${filename}: pressure is converted to localized millimetres of mercury`, async () => {

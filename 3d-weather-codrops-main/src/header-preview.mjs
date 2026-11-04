@@ -7,7 +7,7 @@
 import { r as toInteropDefault } from '../dist-widget/rolldown-runtime-CwX0HnDi.mjs';
 import { n as getJsxRuntime, r as getReact, t as getReactDOM } from '../dist-widget/react-vendor-DdSZTPSL.mjs';
 import { i as weatherService } from './weather-service.mjs?v=20261103-weather-parity-v6';
-import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveForecastCloudCover, buildForecastSlots } from './weather-lifecycle.mjs?v=20261103-weather-parity-v6';
+import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveForecastCloudCover, resolveForecastNoonMs, buildForecastSceneContext, buildForecastSlots } from './weather-lifecycle.mjs?v=20261103-weather-parity-v6';
 var React = toInteropDefault(getReact()),
   jsxRuntime = getJsxRuntime(),
   LocationSearch = ({
@@ -539,11 +539,13 @@ var React = toInteropDefault(getReact()),
           minute: `2-digit`,
         }).format(n);
   },
-  formatForecastDate = (e, t) => {
+  formatForecastDate = (e, t, full = !1) => {
     if (!e) return ``;
     let [n, r, i] = e.split(`-`),
       a = new Date(Number(n), Number(r) - 1, Number(i));
-    return new Intl.DateTimeFormat(localeTags[t] || localeTags.en, { weekday: `short` }).format(a);
+    return new Intl.DateTimeFormat(localeTags[t] || localeTags.en, full
+      ? { weekday: `long`, day: `numeric`, month: `long`, year: `numeric` }
+      : { weekday: `short` }).format(a);
   },
   translateCondition = (e, t) =>
     (e &&
@@ -919,14 +921,14 @@ function WeatherApp({
                           children: [
                             (0, jsxRuntime.jsx)(`span`, {
                               className: `weather-header-dropdown__eyebrow`,
-                              children: U.headerLabel,
+                              children: Q ? U.forecast : U.headerLabel,
                             }),
                             (0, jsxRuntime.jsx)(`strong`, { children: $.location.name }),
                             (0, jsxRuntime.jsxs)(`span`, {
                               className: `weather-header-dropdown__hero-meta`,
                               children: [
-                                formatLocalTime($.location.localtime, u),
-                                de && (0, jsxRuntime.jsxs)(jsxRuntime.Fragment, { children: [` `, `· `, de] }),
+                                Q ? formatForecastDate(Q.date, u, !0) : formatLocalTime($.location.localtime, u),
+                                !Q && de && (0, jsxRuntime.jsxs)(jsxRuntime.Fragment, { children: [` `, `· `, de] }),
                               ],
                             }),
                           ],
@@ -956,7 +958,8 @@ function WeatherApp({
                           children: [
                             (0, jsxRuntime.jsx)(`strong`, { children: ce }),
                             (0, jsxRuntime.jsxs)(`span`, {
-                              children: [U.updated, `:`, ` `, formatLocalTime($.location.localtime, u)],
+                              hidden: Boolean(Q),
+                              children: Q ? `` : [U.updated, `:`, ` `, formatLocalTime($.location.localtime, u)],
                             }),
                           ],
                         }),
@@ -1037,7 +1040,7 @@ function WeatherApp({
                               'data-forecast-date': e.date,
                               disabled: !e.available,
                               'aria-disabled': !e.available,
-                              onClick: () => { if (e.available) V(t); },
+                              onClick: () => { if (e.available) V(previous => previous === t ? null : t); },
                               children: [
                                 (0, jsxRuntime.jsx)(`span`, { children: formatForecastDate(e.date, u) }),
                                 (0, jsxRuntime.jsxs)(`strong`, {
@@ -1440,7 +1443,10 @@ var ReactDOM = toInteropDefault(getReactDOM()),
       setLocation: runtimeController.setLocation,
       getState: runtimeController.getState,
       getForecastCloudCover: resolveForecastCloudCover,
+      getForecastNoonMs: resolveForecastNoonMs,
+      getForecastSceneContext: buildForecastSceneContext,
       getForecastSlots: buildForecastSlots,
+      getForecastWeather: weatherForForecastDay,
       setLocationStatus: runtimeController.setLocationStatus,
       unmount: () => {
         (runtimeController.dispose(), c.unmount(), delete n.dataset.weatherVariant, mountedWidgets.delete(n));

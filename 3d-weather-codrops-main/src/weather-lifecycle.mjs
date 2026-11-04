@@ -51,6 +51,45 @@ export function resolveForecastCloudCover(forecastDay) {
   return clouds.length ? clouds.reduce((sum, cloud) => sum + cloud, 0) / clouds.length : null;
 }
 
+export function resolveForecastNoonMs(date, timeZone) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) return null;
+  const targetMs = Date.parse(`${date}T12:00:00Z`);
+  if (!Number.isFinite(targetMs) || new Date(targetMs).toISOString().slice(0, 10) !== date) return null;
+  try {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+    });
+    let result = targetMs;
+    for (let index = 0; index < 3; index += 1) {
+      const parts = Object.fromEntries(formatter.formatToParts(new Date(result)).map(part => [part.type, part.value]));
+      const observed = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day),
+        Number(parts.hour), Number(parts.minute), Number(parts.second));
+      if (observed === targetMs) return result;
+      result += targetMs - observed;
+    }
+  } catch {
+    // An invalid timezone must not invent a forecast scene time.
+  }
+  return null;
+}
+
+export function buildForecastSceneContext(projected, date, presentation, geoState, timeZone) {
+  const appearanceTimeMs = projected ? resolveForecastNoonMs(date, timeZone) : null;
+  if (!Number.isFinite(appearanceTimeMs)) return { presentation, geoState, forecast: false };
+  const isDay = projected.current?.is_day === 1;
+  return {
+    forecast: true,
+    geoState: { ...geoState, appearanceTimeMs },
+    presentation: {
+      ...presentation,
+      dominantKind: isDay ? 'sun' : 'moon',
+      sun: { ...presentation?.sun, active: isDay, opacity: isDay ? 1 : 0 },
+      moon: { ...presentation?.moon, active: !isDay, opacity: isDay ? 0 : 1 },
+    },
+  };
+}
+
 export const HEADER_WEATHER_RECOVERY_STYLES = `
 :host([data-weather-variant='header']) .weather-header-preview .weather-header-state--recovery {
   position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important;

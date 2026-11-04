@@ -768,7 +768,7 @@
 
 :host([data-weather-variant='header']) .weather-header-preview .weather-orb-stack--preview-back .weather-orb-overlay.is-moon.is-visible,
 .weather-header-preview .weather-orb-stack--preview-back .weather-orb-overlay.is-moon.is-visible {
-  opacity: var(--orb-crossfade-opacity, 1) !important;
+  opacity: calc(var(--orb-crossfade-opacity, 1) * var(--orb-moon-transmission, 1)) !important;
   visibility: visible !important;
 }
 
@@ -1312,6 +1312,10 @@
 
 .weather-orb-overlay.is-sun.is-header-sun.is-visible {
   opacity: calc(var(--orb-crossfade-opacity, 1) * var(--orb-sun-transmission, 1)) !important;
+}
+
+.weather-orb-overlay.is-moon.is-visible {
+  opacity: calc(var(--orb-crossfade-opacity, 1) * var(--orb-moon-transmission, 1)) !important;
 }
 
 .weather-orb-overlay.is-sun.is-header-sun[data-sun-scene='loading'],
@@ -4292,6 +4296,7 @@
     }
     overlay.__sunSceneMountToken = null;
     overlay.__sunSurfaceToken = null;
+    delete overlay.__sunLatestAssetConfig;
     if (overlay.__sunSceneResume) {
       window.removeEventListener('online', overlay.__sunSceneResume);
       document.removeEventListener('visibilitychange', overlay.__sunSceneResume);
@@ -4343,9 +4348,13 @@
   }
 
   function updateHeaderWeatherSunSceneGeo(overlay, geoState) {
-    if (!overlay?.__sunScene || !geoState) {
+    if (!overlay || !geoState) {
       return;
     }
+    if (overlay.__sunLatestAssetConfig) {
+      overlay.__sunLatestAssetConfig = { ...overlay.__sunLatestAssetConfig, geoState };
+    }
+    if (!overlay.__sunScene) return;
     overlay.__sunScene.setGeoState(geoState);
     overlay.__sunScene.resize();
   }
@@ -7126,7 +7135,11 @@
           : isPartlyCloudyText ? 0.4 : isCloudyText ? 0.8 : isClearText ? 0 : 0.5;
     // Direct light follows the squared open-sky fraction, with a faint diffuse floor.
     // A measured zero stays clear even if a cached condition label disagrees.
-    const sunTransmission = 0.015 + 0.985 * (1 - (normalizedCloudCover ?? inferredCloudCover)) ** 2;
+    // A daily cloud mean can be lower than the cover of its representative condition.
+    const lightCloudCover = forecastDay && normalizedCloudCover !== 0
+      ? Math.max(normalizedCloudCover ?? 0, inferredCloudCover)
+      : normalizedCloudCover ?? inferredCloudCover;
+    const sunTransmission = 0.015 + 0.985 * (1 - lightCloudCover) ** 2;
 
     if (isClearCode || isClearText) {
       return {
@@ -7329,14 +7342,17 @@
     };
   }
 
-  function resolveHeaderWeatherDropdownAtmosphere(host, currentAtmosphere) {
-    const dropdown = host?.shadowRoot?.querySelector('.weather-header-dropdown');
-    const active = dropdown?.querySelector('.weather-header-dropdown__forecast-pill.is-active');
+  function resolveHeaderWeatherSelectedForecast(host) {
+    const active = host?.shadowRoot?.querySelector('.weather-header-dropdown__forecast-pill.is-active');
     const forecastDate = active?.disabled ? null : active?.dataset?.forecastDate;
     const forecastData = host?.__weatherWidgetInstance?.getState?.()?.weather || host?.__weatherWidgetData;
-    const selectedForecast = forecastDate
+    return forecastDate
       ? host?.__weatherWidgetInstance?.getForecastSlots?.(forecastData)?.find(day => day.date === forecastDate && day.available)
       : null;
+  }
+
+  function resolveHeaderWeatherDropdownAtmosphere(host, currentAtmosphere) {
+    const selectedForecast = resolveHeaderWeatherSelectedForecast(host);
     const forecastDay = selectedForecast?.day ? {
       ...selectedForecast.day,
       cloud: host.__weatherWidgetInstance?.getForecastCloudCover?.(selectedForecast) ?? null,
@@ -7346,10 +7362,22 @@
 
   function syncHeaderWeatherDropdownAtmosphere(host) {
     if (!host?.isConnected || host.dataset.weatherMounted !== 'true') return;
-    const sun = host.shadowRoot?.querySelector('.weather-header-dropdown .weather-orb-overlay.is-sun');
-    if (!sun) return;
-    const currentAtmosphere = host.__weatherOrbAtmosphere || resolveHeaderWeatherOrbAtmosphere(host);
-    applyHeaderWeatherOrbAtmosphere(sun, resolveHeaderWeatherDropdownAtmosphere(host, currentAtmosphere));
+    const atmosphere = resolveHeaderWeatherDropdownAtmosphere(host,
+      host.__weatherOrbAtmosphere || resolveHeaderWeatherOrbAtmosphere(host));
+    host.shadowRoot?.querySelectorAll('.weather-header-dropdown .weather-orb-overlay')
+      .forEach(overlay => applyHeaderWeatherOrbAtmosphere(overlay, atmosphere));
+  }
+
+  function resolveHeaderWeatherDropdownSceneContext(host, presentation, geoState) {
+    const current = { presentation, geoState, forecast: false };
+    const selected = resolveHeaderWeatherSelectedForecast(host);
+    if (!selected) return current;
+    const instance = host.__weatherWidgetInstance;
+    const data = instance?.getState?.()?.weather || host.__weatherWidgetData;
+    const projected = instance?.getForecastWeather?.(data, selected);
+    return projected !== data
+      ? instance?.getForecastSceneContext?.(projected, selected.date, presentation, geoState, resolveHeaderWeatherTimeZone(host)) ?? current
+      : current;
   }
 
   async function resolveHeaderWeatherLocationMeta(locationLabel) {
@@ -7700,17 +7728,6 @@
     }
 
     return presentation?.dominantKind === 'moon';
-  }
-
-  function resolveHeaderWeatherOrbModel(host, astroData) {
-    const presentation = resolveHeaderWeatherOrbPresentation(host, astroData);
-    const kind = presentation.dominantKind;
-    return {
-      kind,
-      previewLayout: kind === 'moon' ? presentation.moon.previewLayout : presentation.sun.previewLayout,
-      dropdownLayout: kind === 'moon' ? presentation.moon.dropdownLayout : presentation.sun.dropdownLayout,
-      presentation,
-    };
   }
 
   function applyHeaderWeatherOrbLayout(overlay, layout) {
@@ -8103,6 +8120,13 @@
       overlay.style.setProperty('--orb-sun-transmission', clampHeaderWeatherValue(transmission, 0, 1).toFixed(3));
     } else {
       overlay.style.removeProperty('--orb-sun-transmission');
+    }
+
+    if (overlay.classList.contains('is-moon')) {
+      const transmission = Number.isFinite(atmosphere?.sunTransmission) ? atmosphere.sunTransmission : 1;
+      overlay.style.setProperty('--orb-moon-transmission', clampHeaderWeatherValue(transmission, 0, 1).toFixed(3));
+    } else {
+      overlay.style.removeProperty('--orb-moon-transmission');
     }
 
     if (overlay.classList.contains('weather-orb-overlay--preview')) {
@@ -12570,8 +12594,6 @@
     renderFrame();
   }
 
-  // (Removed unused optional fallback renderer `startHeaderWeatherOrbTextureRender`)
-
   async function mountHeaderWeatherSunScene(overlay, assetConfig) {
     const canvas = overlay?.querySelector('canvas');
     const video = overlay?.querySelector('video');
@@ -12582,6 +12604,7 @@
 
     stopHeaderWeatherOrbRender(overlay);
     stopHeaderWeatherSunScene(overlay);
+    overlay.__sunLatestAssetConfig = assetConfig;
 
     const mountToken = `${Date.now()}:${Math.random()}`;
     overlay.__sunSceneMountToken = mountToken;
@@ -12590,8 +12613,10 @@
     overlay.dataset.sunSurface = 'loading';
     overlay.__sunSceneResume = () => {
       if (!overlay.isConnected || document.hidden || !['failed', 'lost'].includes(overlay.dataset.sunScene)) return;
+      const latestConfig = overlay.__sunLatestAssetConfig;
+      if (!latestConfig) return;
       overlay.__sunSceneRetryAfter = 0;
-      setHeaderWeatherOrbSource(overlay, 'sun', assetConfig);
+      setHeaderWeatherOrbSource(overlay, 'sun', latestConfig);
     };
     window.addEventListener('online', overlay.__sunSceneResume);
     document.addEventListener('visibilitychange', overlay.__sunSceneResume);
@@ -12618,7 +12643,7 @@
 
       const scene = await module.mountHeaderWeatherSunScene(canvas, {
         sunTextureUrl: assetConfig.sunTextureUrl,
-        geoState: assetConfig.geoState,
+        geoState: overlay.__sunLatestAssetConfig?.geoState || assetConfig.geoState,
         getTimeMs: getHeaderWeatherNowMs,
         onAppearanceChange: appearance => {
           if (overlay.__sunSceneMountToken !== mountToken) return;
@@ -12650,6 +12675,7 @@
       }
 
       overlay.__sunScene = scene;
+      scene.setGeoState(overlay.__sunLatestAssetConfig?.geoState || assetConfig.geoState);
       if (!overlay.__sunSceneResizeObserver && typeof ResizeObserver === 'function') {
         overlay.__sunSceneResizeObserver = new ResizeObserver(() => {
           overlay.__sunScene?.resize();
@@ -12747,6 +12773,7 @@
     delete overlay.dataset.fallbackSrc;
 
     if (isHeaderSun) {
+      overlay.__sunLatestAssetConfig = assetConfig;
       if (overlay.__sunScene && (overlay.dataset.sunScene === 'failed' || overlay.dataset.sunScene === 'lost')) {
         if (Date.now() < (overlay.__sunSceneRetryAfter || 0)) return;
         stopHeaderWeatherSunScene(overlay);
@@ -13031,7 +13058,7 @@
       try {
         astroData = await resolveHeaderWeatherAstro(host);
       } catch {
-        // console.warn('Header weather astro sync failed:', error);
+        // Keep the last valid sky.
       }
 
       if (!isCurrent()) return;
@@ -13042,15 +13069,14 @@
         if (!isCurrent()) return;
         if (currentMeta) host.__weatherCurrentMeta = currentMeta;
       } catch {
-        // console.warn('Header weather current sync failed:', error);
+        // Keep the last valid sky.
       }
 
       if (!isCurrent()) {
         return;
       }
 
-      const orbModel = resolveHeaderWeatherOrbModel(host, astroData);
-      const presentation = orbModel?.presentation || null;
+      const presentation = resolveHeaderWeatherOrbPresentation(host, astroData);
       const orbAtmosphere = resolveHeaderWeatherOrbAtmosphere(host);
       host.__weatherOrbAtmosphere = orbAtmosphere;
       applyHeaderWeatherTextReadability(host, orbAtmosphere);
@@ -13060,6 +13086,7 @@
         latitude: getHeaderWeatherFiniteNumber(astroData?.locationMeta?.latitude) ?? deviceCoordinates.latitude,
         longitude: getHeaderWeatherFiniteNumber(astroData?.locationMeta?.longitude) ?? deviceCoordinates.longitude,
         timeMs: getHeaderWeatherNowMs(),
+        appearanceTimeMs: null,
       };
       const moonVideoSources = widgetBasePath
         ? HEADER_WEATHER_MOON_VIDEO_FILES.map(file => `${widgetBasePath}/assets/Moon/${file}?v=${WEATHER_WIDGET_ASSET_VERSION}`)
@@ -13084,23 +13111,24 @@
             }
           : null;
 
-      const applyOrbStack = (stack, variantActive, layoutKey = 'preview', atmosphere = orbAtmosphere) => {
+      const applyOrbStack = (stack, variantActive, layoutKey = 'preview', atmosphere = orbAtmosphere,
+        sceneContext = { presentation, geoState }) => {
         if (!stack) {
           return;
         }
 
-        const moonPart = presentation?.moon;
-        const sunPart = presentation?.sun;
+        const moonPart = sceneContext.presentation?.moon;
+        const sunPart = sceneContext.presentation?.sun;
+        const sceneSunAssetConfig = sunAssetConfig ? { ...sunAssetConfig, geoState: sceneContext.geoState } : null;
         const moonLayout =
           layoutKey === 'dropdown' ? moonPart?.dropdownLayout : resolveHeaderWeatherOrbFixedLayout('moon', 'preview');
         const sunLayout =
           layoutKey === 'dropdown' ? sunPart?.dropdownLayout : resolveHeaderWeatherOrbFixedLayout('sun', 'preview');
 
         if (stack.moon) {
-          const moonAllowed = true;
-          applyHeaderWeatherOrbCrossfade(stack.moon, moonAllowed ? moonPart : null);
-          applyHeaderWeatherOrbLayout(stack.moon, moonAllowed ? moonLayout : null);
-          if (moonAllowed && variantActive && moonPart?.active) {
+          applyHeaderWeatherOrbCrossfade(stack.moon, moonPart);
+          applyHeaderWeatherOrbLayout(stack.moon, moonLayout);
+          if (variantActive && moonPart?.active) {
             setHeaderWeatherOrbSource(stack.moon, 'moon', moonAssetConfig);
             applyHeaderWeatherOrbAtmosphere(stack.moon, atmosphere);
           } else {
@@ -13113,10 +13141,10 @@
           applyHeaderWeatherOrbCrossfade(stack.sun, sunPart);
           applyHeaderWeatherOrbLayout(stack.sun, sunLayout);
           if (variantActive && sunPart?.active) {
-            setHeaderWeatherOrbSource(stack.sun, 'sun', sunAssetConfig);
+            setHeaderWeatherOrbSource(stack.sun, 'sun', sceneSunAssetConfig);
             applyHeaderWeatherOrbAtmosphere(stack.sun, atmosphere);
-            if (sunAssetConfig?.type === 'header-sun') {
-              updateHeaderWeatherSunSceneGeo(stack.sun, geoState);
+            if (sceneSunAssetConfig?.type === 'header-sun') {
+              updateHeaderWeatherSunSceneGeo(stack.sun, sceneContext.geoState);
             }
           } else {
             stopHeaderWeatherSunScene(stack.sun);
@@ -13178,9 +13206,12 @@
       const dropdownHero = dropdownMenu?.querySelector('.weather-header-dropdown__hero');
       const dropdownMenuScene = dropdownHero?.querySelector('.weather-header-dropdown__scene');
       const dropdownAtmosphere = resolveHeaderWeatherDropdownAtmosphere(host, orbAtmosphere);
+      const dropdownContext = resolveHeaderWeatherDropdownSceneContext(host, presentation, geoState);
       if (dropdownMenu) {
         const cloudAlpha = Number(dropdownAtmosphere?.alpha) || 0;
-        const showNightStars = resolveHeaderWeatherShowNightStars(host, presentation, astroData);
+        const showNightStars = dropdownContext.forecast
+          ? dropdownContext.presentation.dominantKind === 'moon'
+          : resolveHeaderWeatherShowNightStars(host, presentation, astroData);
         const starOpacity = showNightStars ? clampHeaderWeatherValue(1.06 - cloudAlpha * 0.52, 0.78, 1) : 0;
         const dropdownStarsBack = ensureHeaderWeatherDropdownStarsBackLayer(dropdownMenu);
         if (dropdownStarsBack) {
@@ -13198,7 +13229,7 @@
       }
       if (dropdownHero) {
         const dropdownStack = ensureHeaderWeatherOrbStack(dropdownHero, 'dropdown');
-        applyOrbStack(dropdownStack, isExpanded, 'dropdown', dropdownAtmosphere);
+        applyOrbStack(dropdownStack, isExpanded, 'dropdown', dropdownAtmosphere, dropdownContext);
       }
 
       enforceHeaderWeatherToggleArrow(host);

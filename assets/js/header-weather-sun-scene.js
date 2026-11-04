@@ -320,6 +320,7 @@ export class HeaderWeatherSunScene {
       if (Number.isFinite(value) && Math.abs(value) <= limit) this.geoState[name] = value;
     }
     if (Number.isFinite(next.timeMs)) this.geoState.timeMs = next.timeMs;
+    this.geoState.appearanceTimeMs = Number.isFinite(next.appearanceTimeMs) ? next.appearanceTimeMs : null;
     this.updateSolarAppearance(this.getTimeMs());
   }
 
@@ -329,7 +330,10 @@ export class HeaderWeatherSunScene {
   }
 
   updateSolarAppearance(timeMs) {
-    const elevationDeg = solarElevationDegrees(timeMs, this.geoState.latitude, this.geoState.longitude);
+    // A daily forecast samples its daytime colour without changing the live
+    // animation clock used by rotation, surface features and optical effects.
+    const appearanceTimeMs = Number.isFinite(this.geoState.appearanceTimeMs) ? this.geoState.appearanceTimeMs : timeMs;
+    const elevationDeg = solarElevationDegrees(appearanceTimeMs, this.geoState.latitude, this.geoState.longitude);
     solarColorForElevation(elevationDeg, this.solarColorUniform.value);
     solarSurfaceColorForElevation(elevationDeg, this.solarSurfaceColorUniform.value);
     const low = SOLAR_COLOR_STOPS[0][0];

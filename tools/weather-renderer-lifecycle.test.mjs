@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
+import { parse } from 'espree';
 import postcss from 'postcss';
-import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveWeatherSceneFallback, renderWeatherSceneFallback, resolveForecastCloudCover, buildForecastSlots, hasCompleteForecast } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
+import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveWeatherSceneFallback, renderWeatherSceneFallback, resolveForecastCloudCover, buildForecastSlots, hasCompleteForecast, resolveForecastNoonMs, buildForecastSceneContext } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
 
 test('the complete authored weather module graph shares the shell cache revision', async () => {
   const shell = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
@@ -69,7 +70,7 @@ test('unknown cloud cover uses weather codes or localized labels while observed 
   assert.equal(resolve({ __weatherCurrentMeta: { cloudCover: null, weatherCode: 0 } }).sunTransmission, 1);
 });
 
-test('solar transmission reaches both orb variants and never attenuates the Moon', async () => {
+test('cloud transmission reaches both Sun and Moon without sharing stale CSS variables', async () => {
   const { applyHeaderWeatherOrbAtmosphere: apply } = await solarAtmosphereHarness();
   for (const variant of ['preview', 'dropdown']) {
     const classes = new Set([`weather-orb-overlay--${variant}`, 'is-sun']);
@@ -86,7 +87,161 @@ test('solar transmission reaches both orb variants and never attenuates the Moon
     classes.add('is-moon');
     apply(overlay, { alpha: 0.4, sunTransmission: 0.015 });
     assert.equal(values.has('--orb-sun-transmission'), false);
+    assert.equal(values.get('--orb-moon-transmission'), '0.015', 'overcast must also obscure moonlight');
+    apply(overlay, { alpha: 0, sunTransmission: 1 });
+    assert.equal(values.get('--orb-moon-transmission'), '1.000', 'a clear Moon retains its original opacity and detail');
   }
+});
+
+test('the specific preview Moon opacity retains cloud transmission instead of overriding the shared rule', async () => {
+  const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
+  const pending = [parse(source, { ecmaVersion: 'latest', sourceType: 'script' })];
+  let template;
+  while (pending.length) {
+    const node = pending.pop();
+    if (node.type === 'VariableDeclarator' && node.id?.name === 'HEADER_WEATHER_TRANSPARENT_STYLES') {
+      template = node.init;
+      break;
+    }
+    for (const value of Object.values(node)) {
+      if (Array.isArray(value)) pending.push(...value.filter(item => item?.type));
+      else if (value?.type) pending.push(value);
+    }
+  }
+  assert.equal(template?.type, 'TemplateLiteral');
+  const css = postcss.parse(template.quasis.map(quasi => quasi.value.cooked).join('0'));
+  const selectors = [
+    '.weather-orb-overlay.is-moon.is-visible',
+    '.weather-header-preview .weather-orb-stack--preview-back .weather-orb-overlay.is-moon.is-visible',
+    ":host([data-weather-variant='header']) .weather-header-preview .weather-orb-stack--preview-back .weather-orb-overlay.is-moon.is-visible",
+  ];
+  for (const selector of selectors) {
+    let opacity;
+    css.walkRules(rule => {
+      if (rule.selectors.includes(selector)) rule.walkDecls('opacity', declaration => { opacity = declaration; });
+    });
+    assert.ok(opacity?.important, selector);
+    assert.match(opacity.value, /var\(--orb-crossfade-opacity, 1\)/);
+    assert.match(opacity.value, /var\(--orb-moon-transmission, 1\)/, 'a higher specificity preview rule must not restore full moonlight');
+    const evaluate = transmission => new Function(`return ${opacity.value
+      .replace(/var\(--orb-crossfade-opacity, 1\)/g, '0.62')
+      .replace(/var\(--orb-moon-transmission, 1\)/g, String(transmission))
+      .replace(/^calc\((.*)\)$/, '$1')};`)();
+    assert.equal(evaluate(1), 0.62, 'clear skies preserve the original lunar opacity');
+    assert.ok(evaluate(0.015) < 0.01, 'dense cloud cover obscures the Moon in both selector contexts');
+  }
+});
+
+async function solarBootstrapHarness(loadModule) {
+  const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
+  const names = ['stopHeaderWeatherSunScene', 'updateHeaderWeatherSunSceneGeo', 'mountHeaderWeatherSunScene', 'setHeaderWeatherOrbSource'];
+  const declarations = names.map(name => {
+    const found = source.match(new RegExp(`  (?:async )?function ${name}\\([^]*?\\n  \\}`));
+    assert.ok(found, name);
+    return found[0];
+  }).join('\n');
+  const online = new Map();
+  const visibility = new Map();
+  const target = listeners => ({ addEventListener: (name, callback) => listeners.set(name, callback), removeEventListener: name => listeners.delete(name) });
+  const events = [];
+  const canvas = {};
+  Object.defineProperty(canvas, 'hidden', { get: () => canvas.isHidden, set: value => { canvas.isHidden = value; events.push(['canvas-hidden', value]); } });
+  const video = { dataset: {}, pause() {} };
+  const image = { decode: async () => {}, hidden: true };
+  const classes = new Set();
+  const overlay = {
+    isConnected: true, dataset: {},
+    classList: { toggle: (name, enabled) => enabled ? classes.add(name) : classes.delete(name), add: name => classes.add(name), remove: name => classes.delete(name) },
+    style: { setProperty() {}, removeProperty() {} },
+    querySelector: tag => ({ canvas, video, img: image })[tag],
+  };
+  const api = new Function('window', 'document', 'stopHeaderWeatherOrbRender', 'loadHeaderWeatherSunSceneModule', 'getHeaderWeatherNowMs', 'console',
+    `${declarations}; return { mount: mountHeaderWeatherSunScene, setSource: setHeaderWeatherOrbSource, update: updateHeaderWeatherSunSceneGeo, stop: stopHeaderWeatherSunScene };`)(
+    target(online), { ...target(visibility), hidden: false }, () => {}, loadModule, () => 1793828340000, { error() {} }
+  );
+  const scene = {
+    setGeoState: value => events.push(['geo', value]), resize: () => events.push(['resize']),
+    stop: () => events.push(['stop']), dispose: () => events.push(['dispose']),
+  };
+  return { ...api, overlay, canvas, scene, events, online, visibility };
+}
+
+test('solar loading applies the latest forecast or Now appearance after delayed import and texture readiness', async () => {
+  const imported = deferred();
+  const ready = deferred();
+  const calls = [];
+  const h = await solarBootstrapHarness(() => imported.promise);
+  const configuration = geoState => ({ type: 'header-sun', assetsModuleBase: '/assets', sunTextureUrl: '/sun.jpg', geoState });
+  const first = { latitude: 51, longitude: 6, timeMs: 1000, appearanceTimeMs: 10000 };
+  const second = { ...first, appearanceTimeMs: 20000 };
+  const third = { ...first, appearanceTimeMs: 30000 };
+  const current = { ...first, timeMs: 2000, appearanceTimeMs: null };
+  const mounting = h.mount(h.overlay, configuration(first));
+  h.setSource(h.overlay, 'sun', configuration(second));
+  h.update(h.overlay, third);
+  assert.equal(h.overlay.__sunScene, undefined);
+  assert.equal(h.overlay.__sunLatestAssetConfig.geoState, third, 'pending scenes retain direct coordinate/context updates');
+  imported.resolve({ mountHeaderWeatherSunScene: (canvas, options) => { calls.push({ canvas, options }); return ready.promise; } });
+  await settle();
+  assert.equal(calls[0].options.geoState, third, 'the import must start the renderer with the newest available context');
+  h.setSource(h.overlay, 'sun', configuration(current));
+  h.update(h.overlay, current);
+  assert.equal(h.overlay.dataset.sunScene, 'loading');
+  calls[0].options.onStateChange('ready');
+  ready.resolve(h.scene);
+  await mounting;
+  assert.deepEqual(h.events.filter(event => event[0] === 'geo'), [['geo', current]], 'returning to Now during texture loading cannot keep an old forecast noon');
+  const applied = h.events.findIndex(event => event[0] === 'geo');
+  const revealed = h.events.findLastIndex(event => event[0] === 'canvas-hidden' && event[1] === false);
+  assert.ok(applied >= 0 && applied < revealed, 'the latest context is applied before the ready canvas is revealed');
+  h.stop(h.overlay);
+  assert.equal(h.overlay.__sunLatestAssetConfig, undefined);
+});
+
+test('solar import recovery uses the latest context and disposal prevents a queued resume from reviving it', async () => {
+  const calls = [];
+  let loads = 0;
+  let h;
+  h = await solarBootstrapHarness(async () => {
+    loads += 1;
+    if (loads === 1) throw Error('Temporary import failure');
+    return { mountHeaderWeatherSunScene: async (canvas, options) => { calls.push({ canvas, options }); return h.scene; } };
+  });
+  const first = { type: 'header-sun', assetsModuleBase: '/assets', sunTextureUrl: '/sun.jpg',
+    geoState: { latitude: 51, longitude: 6, timeMs: 1000, appearanceTimeMs: 10000 } };
+  const current = { ...first, geoState: { ...first.geoState, timeMs: 2000, appearanceTimeMs: null } };
+  await h.mount(h.overlay, first);
+  assert.equal(h.overlay.dataset.sunScene, 'failed');
+  h.setSource(h.overlay, 'sun', current);
+  assert.equal(loads, 1, 'the normal failure cooldown remains active');
+  h.online.get('online')();
+  await settle();
+  assert.equal(loads, 2);
+  assert.equal(calls[0].options.geoState, current.geoState, 'online recovery must not close over the original forecast config');
+  assert.equal(h.events.findLast(event => event[0] === 'geo')[1], current.geoState);
+  const queuedResume = h.online.get('online');
+  h.overlay.dataset.sunScene = 'failed';
+  h.stop(h.overlay);
+  assert.equal(h.online.size, 0);
+  assert.equal(h.visibility.size, 0);
+  queuedResume();
+  await settle();
+  assert.equal(loads, 2, 'a stopped overlay has no retained asset config for a late resume');
+});
+
+test('a solar scene resolving after cancellation is disposed without retaining a previous daily appearance', async () => {
+  const ready = deferred();
+  const h = await solarBootstrapHarness(async () => ({ mountHeaderWeatherSunScene: () => ready.promise }));
+  const pending = h.mount(h.overlay, { type: 'header-sun', assetsModuleBase: '/assets', sunTextureUrl: '/sun.jpg',
+    geoState: { latitude: 51, longitude: 6, appearanceTimeMs: 10000 } });
+  await settle();
+  h.stop(h.overlay);
+  ready.resolve(h.scene);
+  await pending;
+  assert.equal(h.overlay.__sunScene, undefined);
+  assert.equal(h.overlay.__sunLatestAssetConfig, undefined);
+  assert.deepEqual(h.events.filter(event => event[0] === 'dispose'), [['dispose']]);
+  assert.equal(h.events.some(event => event[0] === 'geo'), false);
 });
 
 test('selected forecast solar atmosphere is independent of current cloud cover without changing the live data', async () => {
@@ -96,6 +251,8 @@ test('selected forecast solar atmosphere is independent of current cloud cover w
   assert.equal(resolve(current).sunTransmission, 0.015);
   assert.equal(resolve(current, { condition: { code: 1000, text: 'Sunny' } }).sunTransmission, 1);
   assert.ok(resolve(current, { condition: { code: 1009, text: 'Overcast' } }).sunTransmission < 0.03);
+  assert.ok(resolve(current, { avgcloud: 8, condition: { code: 1009, text: 'Overcast' } }).sunTransmission < 0.03,
+    'a low daily mean cannot expose a bright solar disc in the selected overcast scene');
   assert.equal(resolve(current, { cloud: 0, condition: { code: 1009 } }).sunTransmission, 1, 'measured forecast zero is retained');
   assert.equal(resolve(current, { avgcloud: 100, condition: { code: 1000 } }).sunTransmission, 0.015, 'forecast cloud cover wins over its condition label');
   assert.equal(JSON.stringify(current), before, 'forecast presentation cannot mutate current observations or text');
@@ -127,9 +284,11 @@ test('all forecast scene projections stop inheriting current cloud cover', async
 test('the dropdown selects its forecast atmosphere through the mounted pure helper and keeps preview observations intact', async () => {
   const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
   const declaration = source.match(/  function resolveHeaderWeatherDropdownAtmosphere\([^]*?\n  \}/);
+  const selectedDeclaration = source.match(/  function resolveHeaderWeatherSelectedForecast\([^]*?\n  \}/);
   assert.ok(declaration);
+  assert.ok(selectedDeclaration);
   const { resolveHeaderWeatherOrbAtmosphere: resolve, applyHeaderWeatherOrbAtmosphere: apply } = await solarAtmosphereHarness();
-  const selectAtmosphere = new Function('resolveHeaderWeatherOrbAtmosphere', `${declaration[0]}; return resolveHeaderWeatherDropdownAtmosphere;`)(resolve);
+  const selectAtmosphere = new Function('resolveHeaderWeatherOrbAtmosphere', `${selectedDeclaration[0]}; ${declaration[0]}; return resolveHeaderWeatherDropdownAtmosphere;`)(resolve);
   const current = { __weatherCurrentMeta: { cloudCover: 100, weatherCode: 3 }, text: 'Overcast' };
   const days = [null, { date: '2026-11-04', day: { maxtemp_c: null, mintemp_c: 3, cloud: 100 } }, { date: '2026-11-05', day: { maxtemp_c: 8, mintemp_c: 3, condition: { code: 1009 } } }, { date: '2026-11-06', day: { maxtemp_c: 10, mintemp_c: 4, condition: { code: 1000 } }, hour: [{ cloud: 20 }, { cloud: 80 }] }, { date: '2026-11-04', day: { maxtemp_c: 9, mintemp_c: 3, condition: { code: 1000 } } }];
   current.__weatherWidgetInstance = {
@@ -140,7 +299,7 @@ test('the dropdown selects its forecast atmosphere through the mounted pure help
   const pills = [{}, ...['2026-11-04', '2026-11-05', '2026-11-06'].map(forecastDate => ({ dataset: { forecastDate } }))];
   let selected = pills[0];
   const dropdown = { querySelectorAll: () => pills, querySelector: () => selected };
-  current.shadowRoot = { querySelector: () => dropdown };
+  current.shadowRoot = { querySelector: selector => selector === '.weather-header-dropdown__forecast-pill.is-active' ? selected : dropdown };
   const observations = resolve(current);
   assert.equal(selectAtmosphere(current, observations), observations, 'Now reuses live observations');
   selected = pills[1];
@@ -164,7 +323,8 @@ test('the dropdown selects its forecast atmosphere through the mounted pure help
   current.isConnected = true;
   current.dataset = { weatherMounted: 'true' };
   current.__weatherOrbAtmosphere = observations;
-  current.shadowRoot.querySelector = selector => selector.endsWith('.is-sun') ? sun : dropdown;
+  current.shadowRoot.querySelector = selector => selector === '.weather-header-dropdown__forecast-pill.is-active' ? selected : dropdown;
+  current.shadowRoot.querySelectorAll = () => [sun];
   selected = pills[0];
   sync(current);
   assert.equal(values.get('--orb-sun-transmission'), '0.015');
@@ -518,16 +678,20 @@ for (const filename of ['header-preview.mjs', 'header-dropdown.mjs', 'widget.mjs
     const calls = [];
     const host = { dataset: {}, shadowRoot: {} };
     const root = { render: tree => { renders += 1; rendered = tree; }, unmount: () => { disposed += 1; } };
-    const mount = new Function('createWeatherController', 'weatherService', 'resolveHost', 'prepareShadowRoot', 'mountedWidgets', 'ReactDOM', 'jsxRuntime', 'React', 'WeatherApp', 'resolveForecastCloudCover', 'buildForecastSlots', `return (${source.slice(start, end)});`)(
+    const forecastProjection = (data, day) => ({ data, day });
+    const mount = new Function('createWeatherController', 'weatherService', 'resolveHost', 'prepareShadowRoot', 'mountedWidgets', 'ReactDOM', 'jsxRuntime', 'React', 'WeatherApp', 'resolveForecastCloudCover', 'buildForecastSlots', 'weatherForForecastDay', 'resolveForecastNoonMs', 'buildForecastSceneContext', `return (${source.slice(start, end)});`)(
       createWeatherController,
       { getCurrentWeather: async (location, options) => { calls.push({ location, options }); return payload(String(calls.length)); } },
       () => host, () => ({}), new WeakMap(), { createRoot: () => root },
-      { jsx: (type, props) => ({ type, props }) }, { StrictMode: 'StrictMode' }, () => {}, resolveForecastCloudCover, buildForecastSlots
+      { jsx: (type, props) => ({ type, props }) }, { StrictMode: 'StrictMode' }, () => {}, resolveForecastCloudCover, buildForecastSlots, forecastProjection, resolveForecastNoonMs, buildForecastSceneContext
     );
     const initial = { latitude: 48.1, longitude: 11.6 };
     const api = mount(host, { initialLocation: initial, managedRefresh: true });
     assert.equal(api.getForecastCloudCover, resolveForecastCloudCover, 'mounted consumers share the exact pure forecast cloud resolver');
     assert.equal(api.getForecastSlots, buildForecastSlots, 'the shell and cards must resolve the same valid forecast day');
+    assert.equal(api.getForecastWeather, forecastProjection, 'the scene and labels share the same forecast projection');
+    assert.equal(api.getForecastNoonMs, resolveForecastNoonMs, 'the shell uses the same timezone-safe forecast sampling time');
+    assert.equal(api.getForecastSceneContext, buildForecastSceneContext, 'the shell reuses the shared forecast presentation contract');
     assert.equal(rendered.props.children.props.managedRefresh, true);
     assert.equal(api.getState().lastUpdatedAt, 0, 'mount itself is not evidence of fresh weather');
     const full = await api.refresh();
