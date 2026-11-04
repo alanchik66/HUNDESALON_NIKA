@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
 import postcss from 'postcss';
-import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
+import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveWeatherSceneFallback, renderWeatherSceneFallback } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
 
 test('the complete authored weather module graph shares the shell cache revision', async () => {
   const shell = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
@@ -158,7 +158,46 @@ test('header status styles contain the notice and do not style or intercept any 
   assert.equal(state.get('height'), '100%');
   assert.equal(state.get('pointer-events'), 'none');
   assert.equal([...rules.keys()].some(selector => selector.includes('weather-location-selector')), false);
-  assert.ok([...rules.keys()].every(selector => selector.includes(':host([data-weather-variant=\'header\']) .weather-header-preview .weather-header-state--recovery')));
+  assert.ok([...rules.keys()].filter(selector => selector.includes('weather-header-state')).every(selector => selector.includes(':host([data-weather-variant=\'header\']) .weather-header-preview .weather-header-state--recovery')));
+});
+
+test('the visual recovery model uses condition codes across locales and parses local time without Safari Date parsing', () => {
+  const weather = (code, text = 'Локализованное условие', is_day) => ({ current: { condition: { code, text }, is_day }, location: { localtime: '2026-11-04 21:30' } });
+  assert.equal(resolveWeatherSceneFallback(null), null, 'loading must not invent weather');
+  for (const [code, kind] of [[1000, 'clear'], [1009, 'cloudy'], [1030, 'foggy'], [1195, 'rainy'], [1225, 'snowy'], [1276, 'stormy']]) {
+    const model = resolveWeatherSceneFallback(weather(code));
+    assert.equal(model.kind, kind);
+    assert.equal(model.night, true);
+    assert.equal(model.clouds, kind !== 'clear');
+  }
+  assert.equal(resolveWeatherSceneFallback(weather(1000, 'Clear', 1)).night, false, 'API day/night wins over the clock');
+  assert.equal(resolveWeatherSceneFallback(weather(1000, 'Clear', '0')).night, true);
+  assert.equal(resolveWeatherSceneFallback(weather(1003)).orb, true, 'partly cloudy keeps the celestial body');
+  assert.equal(resolveWeatherSceneFallback(weather(undefined, 'Light rain', 1)).kind, 'rainy');
+});
+
+test('recovery renders current weather without controls and retains only one header celestial overlay', () => {
+  const jsx = (type, props, key) => ({ type, props, key });
+  const loading = { type: 'sonar' };
+  assert.equal(renderWeatherSceneFallback(jsx, {}, loading), loading);
+  const weatherData = { current: { condition: { code: 1003 }, is_day: 1 } };
+  const header = renderWeatherSceneFallback(jsx, { weatherData, embedded: true, variant: 'header-panel' }, loading);
+  assert.equal(header.props['aria-hidden'], true);
+  assert.equal(header.props.children.length, 1);
+  assert.equal(header.props.children[0].key, 'clouds');
+  assert.equal(header.props.children[0].props.children.length, 3);
+  const standalone = renderWeatherSceneFallback(jsx, { weatherData, variant: 'default' }, loading);
+  assert.deepEqual(standalone.props.children.map(child => child.key), ['orb', 'clouds']);
+  weatherData.current.condition.code = 1195;
+  const rain = renderWeatherSceneFallback(jsx, { weatherData }, loading);
+  assert.deepEqual(rain.props.children.map(child => child.key), ['clouds', 'precipitation']);
+  assert.equal(rain.props['data-weather-fallback-kind'], 'rainy');
+  assert.equal(rain.props.children.some(child => ['button', 'input', 'a'].includes(child.type)), false);
+  const css = postcss.parse(HEADER_WEATHER_RECOVERY_STYLES);
+  const keyframes = [];
+  css.walkAtRules('keyframes', rule => keyframes.push(rule.params));
+  for (const effect of ['CloudDrift', 'Rain', 'Snow', 'Lightning', 'OrbGlow']) assert.ok(keyframes.includes(`weatherRecovery${effect}`));
+  assert.match(HEADER_WEATHER_RECOVERY_STYLES, /url\('\/assets\/images\/weather\/cloud-9225a9f1\.png'\)/);
 });
 
 for (const filename of ['header-preview.mjs', 'header-dropdown.mjs', 'widget.mjs']) {
@@ -542,11 +581,11 @@ test('scene errors isolate the fallback, retry with a new lazy type and retain w
   const previous = h.boundary.state.Scene;
   h.boundary.setState(h.Boundary.getDerivedStateFromError(new Error('GL failed')));
   h.boundary.componentDidCatch();
-  assert.equal(h.boundary.render().props.children, h.fallback);
+  assert.equal(h.boundary.render().props.children.props['data-weather-fallback-kind'], 'cloudy');
   assert.equal(h.boundary.props.weatherData, h.weather);
   h.fire(1000);
   assert.notEqual(h.boundary.state.Scene, previous);
-  assert.equal(h.boundary.render().props.children.props.children.props.weatherData, h.weather);
+  assert.equal(h.boundary.render().props.children[0].props.children.props.weatherData, h.weather);
   h.boundary.componentWillUnmount();
   assert.equal(h.timers.size, 0);
   assert.equal(h.listeners.size, 0);
@@ -555,13 +594,17 @@ test('scene errors isolate the fallback, retry with a new lazy type and retain w
 test('context restoration gets time to recover, while a persistently lost context triggers bounded recovery', () => {
   const h = recoveryHarness();
   const canvas = {};
-  h.boundary.lost({ target: canvas });
+  let restorationAllowed = false;
+  h.boundary.lost({ target: canvas, preventDefault: () => { restorationAllowed = true; } });
+  assert.equal(restorationAllowed, true);
+  assert.equal(h.boundary.render().props.children[1].props['data-weather-fallback-kind'], 'cloudy', 'a lost context must show weather immediately without unmounting its recovering canvas');
   h.boundary.restored({ target: canvas });
   assert.equal(h.timers.size, 0);
   assert.equal(h.boundary.state.error, null);
+  assert.equal(h.boundary.state.contextLost, false);
   h.boundary.lost({ target: canvas });
   h.fire(5000);
-  assert.equal(h.boundary.render().props.children, h.fallback);
+  assert.equal(h.boundary.render().props.children.props['data-weather-fallback-kind'], 'cloudy');
   h.fire(1000);
   for (const delay of [4000, 12000]) {
     h.boundary.setState({ error: new Error('Still unavailable') });
@@ -574,4 +617,98 @@ test('context restoration gets time to recover, while a persistently lost contex
   h.listeners.get('online')();
   assert.equal(h.boundary.state.error, null);
   h.boundary.componentWillUnmount();
+});
+
+test('lazy suspension and permanent GPU failure retain animated current weather after bounded retries', () => {
+  const h = recoveryHarness();
+  const pending = h.boundary.render().props.children[0];
+  assert.equal(pending.type, 'Suspense');
+  assert.equal(pending.props.fallback, null, 'a single DOM recovery layer covers nested asset suspension');
+  assert.equal(h.boundary.render().props.children[1].props['data-weather-fallback-kind'], 'cloudy');
+  for (const delay of [1000, 4000, 12000]) {
+    h.boundary.setState({ error: new Error('WebGL unavailable') });
+    h.boundary.componentDidCatch();
+    h.fire(delay);
+  }
+  h.boundary.setState({ error: new Error('Still unavailable') });
+  h.boundary.componentDidCatch();
+  h.boundary.props.weatherData = { current: { condition: { code: 1225 }, is_day: 1 } };
+  assert.equal(h.boundary.render().props.children.props['data-weather-fallback-kind'], 'snowy', 'fallback follows refreshed weather instead of retaining its first condition');
+  assert.equal(h.timers.size, 0);
+  h.boundary.componentWillUnmount();
+});
+
+test('a delayed scene stays mounted under weather recovery until the current frame is ready', () => {
+  const h = recoveryHarness();
+  const initial = h.boundary.render().props.children;
+  const lazy = initial[0].props.children.type;
+  const ready = initial[0].props.children.props.onSceneReady;
+  assert.equal(initial[1].props['data-weather-fallback-kind'], 'cloudy');
+  assert.equal(h.boundary.render().props.children[0].props.children.type, lazy, 'waiting must not remount the suspended Canvas');
+  ready(h.weather);
+  assert.equal(h.boundary.render().props.children.type, 'Suspense', 'a healthy first frame hides the recovery layer');
+  const canvas = {};
+  h.boundary.lost({ target: canvas });
+  ready(h.weather);
+  assert.equal(h.boundary.state.readyWeather, null, 'pre-loss readiness cannot hide recovery');
+  h.boundary.restored({ target: canvas });
+  ready(h.weather);
+  assert.equal(h.boundary.state.readyWeather, null, 'the previous context generation is stale after restoration');
+  h.boundary.render().props.children[0].props.children.props.onSceneReady(h.weather);
+  assert.equal(h.boundary.render().props.children.type, 'Suspense');
+  h.boundary.props.weatherData = null;
+  h.boundary.props.weatherData = { current: { condition: { code: 1195 } } };
+  assert.equal(h.boundary.render().props.children[1].props['data-weather-fallback-kind'], 'rainy', 'new weather needs its own ready frame');
+  ready(h.weather);
+  assert.notEqual(h.boundary.state.readyWeather, h.boundary.props.weatherData);
+  h.boundary.componentWillUnmount();
+});
+
+test('scene readiness comes from a rendered frame inside asset Suspense and never a lost context', async () => {
+  const source = await readFile(new URL('scene.mjs', sourceDirectory), 'utf8');
+  const start = source.indexOf('  SceneReady = ') + '  SceneReady = '.length;
+  const end = source.indexOf(',\n  useVisibleSun', start);
+  assert.ok(end > start);
+  let frameCallback;
+  const React = { useRef: value => ({ current: value }), useEffect: callback => callback() };
+  const Ready = new Function('React', 'P', `return (${source.slice(start, end)});`)(React, callback => { frameCallback = callback; });
+  const weatherData = { current: { condition: { code: 1009 } } };
+  const calls = [];
+  Ready({ weatherData, onSceneReady: value => calls.push(value), recoveryVersion: 0 });
+  let lost = true;
+  let invalidations = 0;
+  const state = { gl: { getContext: () => ({ isContextLost: () => lost }), info: { render: { frame: 0 } } }, invalidate: () => { invalidations += 1; } };
+  frameCallback(state);
+  assert.equal(calls.length, 0);
+  lost = false;
+  frameCallback(state);
+  assert.equal(calls.length, 0, 'mounting assets alone is not proof of a rendered frame');
+  assert.equal(invalidations, 1, 'demand mode must be guaranteed one following frame without replacing its render loop');
+  state.gl.info.render.frame = 1;
+  frameCallback(state);
+  frameCallback(state);
+  assert.deepEqual(calls, [weatherData]);
+  const suspense = source.slice(source.indexOf('fallback: null,', source.indexOf('  Scene3D = ')));
+  assert.match(suspense, /children: \[\s*\(0, jsxRuntime\.jsx\)\(SceneReady,/);
+});
+
+test('header panels retain their established cloud composition on mobile and desktop', async () => {
+  const source = await readFile(new URL('scene.mjs', sourceDirectory), 'utf8');
+  const start = source.indexOf('  WeatherIcon = ') + '  WeatherIcon = '.length;
+  const end = source.indexOf('\nj(k);', start);
+  assert.ok(end > start);
+  const jsx = (type, props) => ({ type, props });
+  const Icon = new Function('jsxRuntime', 'weatherConditionType', 'isPartlyCloudy', 'WeatherClouds', 'WeatherRain', 'WeatherSnow', 'WeatherLightning', 'LegacySunPlaceholder', 'LegacyMoonPlaceholder', 'y', `return ${source.slice(start, end)}`)(
+    { jsx, jsxs: jsx, Fragment: 'Fragment' }, () => 'rainy', () => false, 'Clouds', 'Rain', 'Snow', 'Lightning', 'Sun', 'Moon', 'Text'
+  );
+  const previous = globalThis.window;
+  try {
+    for (const [width, variant, compact, rainCount] of [[430, 'header-panel', false, 800], [899, 'header-panel', false, 800], [900, 'header-panel', false, 800], [1440, 'header-panel', false, 800], [430, 'default', false, 800], [1440, 'header', true, 220]]) {
+      globalThis.window = { innerWidth: width };
+      const tree = Icon({ weatherData: { current: { condition: { text: 'Rain' } }, location: { localtime: '2026-11-04T09:00' } }, variant, showConditionLabel: false });
+      const children = tree.props.children[0].props.children;
+      assert.equal(children[0].props.compact, compact, `${width}/${variant} clouds`);
+      assert.equal(children[1].props.count, rainCount, `${width}/${variant} rain`);
+    }
+  } finally { globalThis.window = previous; }
 });

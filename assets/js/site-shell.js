@@ -1333,6 +1333,35 @@
   opacity: 0.36 !important;
 }
 
+/* Keep the same solar surface visible while WebGL loads or recovers. */
+.weather-orb-overlay.is-header-sun:not([data-sun-scene='ready']) .weather-orb-overlay__canvas {
+  visibility: hidden !important;
+}
+
+.weather-orb-overlay.is-sun.is-header-sun:not([data-sun-scene='ready']) .weather-orb-overlay__image {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 50% !important;
+  height: 50% !important;
+  position: absolute !important;
+  left: 25% !important;
+  top: 25% !important;
+  margin: 0 !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  clip-path: circle(50%) !important;
+  object-fit: cover !important;
+  background: radial-gradient(circle at 35% 32%, #fff8cd, #ffc356 60%, #e87b28);
+  box-shadow: 0 0 12px #ffd28280, 0 0 24px #ffab4833;
+  animation: weatherSunRecoveryGlow 6.4s ease-in-out infinite;
+}
+
+@keyframes weatherSunRecoveryGlow {
+  0%, 100% { filter: brightness(1.12); }
+  50% { filter: brightness(1.3); }
+}
+
 /* Moon — MP4 fallback: off-screen decode + canvas chroma-key (Safari / no WebM). */
 .weather-orb-overlay.is-moon:not(.is-native-alpha) .weather-orb-overlay__video {
   display: none !important;
@@ -4247,6 +4276,11 @@
       return;
     }
     overlay.__sunSceneMountToken = null;
+    if (overlay.__sunSceneResume) {
+      window.removeEventListener('online', overlay.__sunSceneResume);
+      document.removeEventListener('visibilitychange', overlay.__sunSceneResume);
+      overlay.__sunSceneResume = null;
+    }
     if (overlay.__sunScene) {
       overlay.__sunScene.stop();
       overlay.__sunScene.dispose();
@@ -4259,6 +4293,7 @@
   }
 
   let headerWeatherSunSceneModulePromise = null;
+  let headerWeatherSunSceneModuleRetry = 0;
 
   function resolveHeaderWeatherSunSceneModuleUrl() {
     const shellScript = document.querySelector('script[src*="site-shell.js"]');
@@ -4280,7 +4315,13 @@
   function loadHeaderWeatherSunSceneModule() {
     if (!headerWeatherSunSceneModulePromise) {
       const moduleUrl = resolveHeaderWeatherSunSceneModuleUrl();
-      headerWeatherSunSceneModulePromise = import(/* webpackIgnore: true */ moduleUrl);
+      const target = new URL(moduleUrl, window.location.href);
+      if (headerWeatherSunSceneModuleRetry) target.searchParams.set('weather-retry', String(headerWeatherSunSceneModuleRetry));
+      headerWeatherSunSceneModulePromise = import(/* webpackIgnore: true */ target.href).catch(error => {
+        headerWeatherSunSceneModulePromise = null;
+        headerWeatherSunSceneModuleRetry += 1;
+        throw error;
+      });
     }
     return headerWeatherSunSceneModulePromise;
   }
@@ -12470,6 +12511,18 @@
 
     const mountToken = `${Date.now()}:${Math.random()}`;
     overlay.__sunSceneMountToken = mountToken;
+    overlay.dataset.sunScene = 'loading';
+    overlay.__sunSceneResume = () => {
+      if (!overlay.isConnected || document.hidden || !['failed', 'lost'].includes(overlay.dataset.sunScene)) return;
+      overlay.__sunSceneRetryAfter = 0;
+      setHeaderWeatherOrbSource(overlay, 'sun', assetConfig);
+    };
+    window.addEventListener('online', overlay.__sunSceneResume);
+    document.addEventListener('visibilitychange', overlay.__sunSceneResume);
+    if (image) {
+      image.src = assetConfig.sunTextureUrl;
+      image.hidden = false;
+    }
 
     try {
       const module = await loadHeaderWeatherSunSceneModule();
@@ -12480,6 +12533,12 @@
       const scene = await module.mountHeaderWeatherSunScene(canvas, {
         sunTextureUrl: assetConfig.sunTextureUrl,
         geoState: assetConfig.geoState,
+        onStateChange: state => {
+          if (overlay.__sunSceneMountToken !== mountToken) return;
+          overlay.dataset.sunScene = state;
+          if (state === 'failed' || state === 'lost') overlay.__sunSceneRetryAfter = Date.now() + 30000;
+          if (image) image.hidden = state === 'ready';
+        },
       });
 
       if (overlay.__sunSceneMountToken !== mountToken) {
@@ -12505,14 +12564,15 @@
         }
       }
       canvas.hidden = false;
-      if (image) {
-        image.hidden = true;
-      }
+      if (image) image.hidden = overlay.dataset.sunScene === 'ready';
       scene.resize();
     } catch (error) {
       console.error('Header weather Sun scene failed:', error);
       if (overlay.__sunSceneMountToken === mountToken) {
         overlay.__sunSceneMountToken = null;
+        overlay.__sunSceneRetryAfter = Date.now() + 30000;
+        overlay.dataset.sunScene = 'failed';
+        if (image) image.hidden = false;
       }
     }
   }
@@ -12584,6 +12644,10 @@
     delete overlay.dataset.fallbackSrc;
 
     if (isHeaderSun) {
+      if (overlay.__sunScene && (overlay.dataset.sunScene === 'failed' || overlay.dataset.sunScene === 'lost')) {
+        if (Date.now() < (overlay.__sunSceneRetryAfter || 0)) return;
+        stopHeaderWeatherSunScene(overlay);
+      }
       if (overlay.__sunScene) {
         updateHeaderWeatherSunSceneGeo(overlay, assetConfig.geoState);
         if (video) {
@@ -12592,9 +12656,7 @@
         if (canvas) {
           canvas.hidden = false;
         }
-        if (image) {
-          image.hidden = true;
-        }
+        if (image) image.hidden = overlay.dataset.sunScene === 'ready';
         return;
       }
       if (overlay.__sunSceneMountToken) {
@@ -12604,11 +12666,10 @@
         if (canvas) {
           canvas.hidden = false;
         }
-        if (image) {
-          image.hidden = true;
-        }
+        if (image) image.hidden = overlay.dataset.sunScene === 'ready';
         return;
       }
+      if (Date.now() < (overlay.__sunSceneRetryAfter || 0)) return;
       mountHeaderWeatherSunScene(overlay, assetConfig);
       return;
     }
@@ -13835,6 +13896,7 @@
         '.weather-app--header, .weather-app--header .weather-header-preview, .weather-app--header .weather-app__scene, .weather-app--header .weather-app__scene--header, .weather-app--header .weather-app__scene div, .weather-app--header .weather-app__scene--header div, .weather-header-dropdown__hero, .weather-header-dropdown__hero .weather-header-dropdown__scene'
       )
       .forEach(node => {
+        if (node.closest?.('.weather-scene-recovery')) return;
         node.style.setProperty('overflow', 'visible', 'important');
         node.style.setProperty('clip-path', 'none', 'important');
         node.style.setProperty('contain', 'none', 'important');

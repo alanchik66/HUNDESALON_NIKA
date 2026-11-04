@@ -12,7 +12,7 @@
       "source": "src/scene.mjs",
       "output": "Scene3D-Cdhk74W6.mjs",
       "baselineSha256": "2bd48be805f56933124942a8164d7708543dccb268b5eccbd6525601e6fae09d",
-      "canonicalSha256": "6be6fd63c81119d81d2d04a8366e721ba2e24d8d1af3d8698ae729851e0a27c1",
+      "canonicalSha256": "48252f38b31ebf68179acfeaa1571d0a94514bba2b120c77d35bb31852674d20",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -206,7 +206,7 @@
       "source": "src/weather-lifecycle.mjs",
       "output": "weather-lifecycle.mjs",
       "baselineSha256": null,
-      "canonicalSha256": "01df67709c9dc58eff74deb2d12b1a7bd1e21bae570750697b501abe716868c4",
+      "canonicalSha256": "432795fe946d29cc5d50642eccb277b1795a7390ae3919abc19a39cc70f0ef6d",
       "recoveredNames": {},
       "initialEquivalent": false
     }

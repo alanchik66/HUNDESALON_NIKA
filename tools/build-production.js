@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { transformSync } from 'esbuild';
 import { assertProductionSourcePath, isProductionSourceOnlyPath } from './lib/production-assets.mjs';
 import { minifyHeaderWeatherStyleTemplate } from './lib/production-style-template.mjs';
+import { stampWeatherRuntimeVersions } from './lib/weather-asset-versions.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -234,8 +235,6 @@ function minifyProductionAssets(directory) {
   }
 }
 
-minifyProductionAssets(dist);
-
 function deployAssetVersion() {
   if (process.env.DEPLOY_ASSET_VERSION?.trim()) {
     return process.env.DEPLOY_ASSET_VERSION.trim();
@@ -255,6 +254,9 @@ function deployAssetVersion() {
   }
 
   collect(path.join(dist, 'assets'));
+  for (const entry of weatherManifest.entries) {
+    files.push(path.join(dist, '3d-weather-codrops-main', 'dist-widget', entry.output));
+  }
   const contentHash = createHash('sha256');
   for (const file of files.sort()) {
     contentHash.update(path.relative(dist, file).replaceAll('\\', '/'));
@@ -447,6 +449,8 @@ function injectSendPulseIntegrations(directory, version) {
 }
 
 const assetVersion = deployAssetVersion();
+const versionedWeather = stampWeatherRuntimeVersions(dist, weatherManifest, assetVersion);
+minifyProductionAssets(dist);
 const stamped = stampDistAssetVersions(dist, assetVersion);
 assertNoSecretArtifacts(dist);
 const publicContactFiles = normalizePublicContact(dist);
@@ -456,6 +460,7 @@ assertLocalAssetVersions(dist, assetVersion);
 
 console.log('Production bundle created in dist/.');
 console.log(`Asset cache version: ${assetVersion} (${stamped} HTML files stamped).`);
+console.log(`Weather runtime versioned: ${versionedWeather.files} maintained modules, ${versionedWeather.references} references.`);
 console.log(`Public contact normalized in ${publicContactFiles} HTML files.`);
 console.log(`Deferred non-critical scripts in ${deferredScriptFiles} HTML files.`);
 console.log(`Injected SendPulse integrations in ${sendPulseFiles} HTML files.`);

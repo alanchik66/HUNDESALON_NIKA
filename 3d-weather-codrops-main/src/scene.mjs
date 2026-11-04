@@ -1490,6 +1490,21 @@ var ForecastPortal = ({ position: e, dayData: t, index: n, isActive: r, isFullsc
       null
     );
   },
+  SceneReady = ({ weatherData, onSceneReady, recoveryVersion }) => {
+    const firstFrame = React.useRef(null);
+    const announced = React.useRef(false);
+    React.useEffect(() => { firstFrame.current = null; announced.current = false; }, [weatherData, recoveryVersion]);
+    // Inside the asset Suspense boundary: acknowledge only after a real, healthy rendered frame.
+    P(({ gl, invalidate }) => {
+      if (!weatherData?.current || gl.getContext().isContextLost()) return;
+      const frame = gl.info.render.frame;
+      if (firstFrame.current === null) { firstFrame.current = frame; invalidate(); return; }
+      if (announced.current || frame <= firstFrame.current) return;
+      announced.current = true;
+      onSceneReady?.(weatherData);
+    });
+    return null;
+  },
   useVisibleSun = (e, t) => React.useMemo(() => (t || !e ? !1 : shouldShowSun(e)), [t, e]),
   ScenePostprocessing = ({ showLensFlare: e, isPortalMode: t = !1, variant: n = `default` }) => {
     let r = n === `header`,
@@ -1612,6 +1627,8 @@ var ForecastPortal = ({ position: e, dayData: t, index: n, isActive: r, isFullsc
     onPortalModeChange: i,
     onSetExitPortalFunction: a,
     onPortalWeatherDataChange: o,
+    onSceneReady,
+    sceneRecoveryVersion,
   }) => {
     let s = n && r === `header`,
       c = n && r === `header-panel`,
@@ -1736,6 +1753,7 @@ var ForecastPortal = ({ position: e, dayData: t, index: n, isActive: r, isFullsc
             (0, jsxRuntime.jsxs)(React.Suspense, {
               fallback: null,
               children: [
+                (0, jsxRuntime.jsx)(SceneReady, { weatherData: e, onSceneReady, recoveryVersion: sceneRecoveryVersion }),
                 O &&
                   D &&
                   (0, jsxRuntime.jsx)(

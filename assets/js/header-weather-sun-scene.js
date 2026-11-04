@@ -56,6 +56,27 @@ export class HeaderWeatherSunScene {
     this.sunGroup = null;
     this.sunMesh = null;
     this.textures = [];
+    this.disposed = false;
+    this.contextLost = false;
+    this.onContextLost = event => {
+      event.preventDefault();
+      this.contextLost = true;
+      this.resumeAfterRestore = this.running;
+      this.stop();
+      this.setState('lost');
+    };
+    this.onContextRestored = () => {
+      if (this.disposed) return;
+      this.contextLost = false;
+      this.resize();
+      if (this.resumeAfterRestore) this.start();
+    };
+  }
+
+  setState(state) {
+    if (this.state === state) return;
+    this.state = state;
+    this.options.onStateChange?.(state);
   }
 
   setGeoState(next) {
@@ -88,7 +109,13 @@ export class HeaderWeatherSunScene {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.NoToneMapping;
 
+    // Retain the renderer immediately so a failed async initialization can dispose it.
+    this.renderer = renderer;
+    this.canvas.addEventListener('webglcontextlost', this.onContextLost);
+    this.canvas.addEventListener('webglcontextrestored', this.onContextRestored);
+
     const sunTexture = await loadTexture(this.options.sunTextureUrl, this.textures, renderer);
+    if (this.disposed) return;
 
     const surfaceColor = new THREE.Color(WARM_SUN_COLOR);
     if (sunTexture) {
@@ -155,7 +182,11 @@ export class HeaderWeatherSunScene {
   }
 
   start() {
-    if (this.running) {
+    if (this.disposed || this.running) {
+      return;
+    }
+    if (this.contextLost) {
+      this.resumeAfterRestore = true;
       return;
     }
     this.running = true;
@@ -163,7 +194,14 @@ export class HeaderWeatherSunScene {
       if (!this.running) {
         return;
       }
-      this.renderFrame();
+      try {
+        this.renderFrame();
+        this.setState('ready');
+      } catch {
+        this.stop();
+        this.setState('failed');
+        return;
+      }
       this.rafId = requestAnimationFrame(tick);
     };
     tick();
@@ -178,7 +216,10 @@ export class HeaderWeatherSunScene {
   }
 
   dispose() {
+    this.disposed = true;
     this.stop();
+    this.canvas.removeEventListener('webglcontextlost', this.onContextLost);
+    this.canvas.removeEventListener('webglcontextrestored', this.onContextRestored);
     if (this.sunMesh) {
       this.sunMesh.geometry?.dispose();
       this.sunMesh.material?.dispose();
@@ -196,9 +237,14 @@ export class HeaderWeatherSunScene {
 
 export async function mountHeaderWeatherSunScene(canvas, options) {
   const scene = new HeaderWeatherSunScene(canvas, options);
-  await scene.init();
-  scene.start();
-  return scene;
+  try {
+    await scene.init();
+    scene.start();
+    return scene;
+  } catch (error) {
+    scene.dispose();
+    throw error;
+  }
 }
 
 export function unmountHeaderWeatherSunScene(scene) {
