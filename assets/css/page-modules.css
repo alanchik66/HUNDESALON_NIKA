@@ -357,12 +357,6 @@ body.services-page .service-card .price {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  body.services-page .service-card {
-    transition: none;
-  }
-}
-
 .cta-pill-link {
   display: flex;
   align-items: center;
@@ -665,18 +659,6 @@ body.light .direct-booking-btn:focus-visible {
     width: 220px;
     right: -96px;
     bottom: -126px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .booking-highlights li,
-  .direct-booking-btn,
-  .booking-secondary-link {
-    transition: none;
-  }
-
-  .booking-highlights li:hover {
-    transform: none;
   }
 }
 
@@ -1112,17 +1094,6 @@ body.light .price-configurator__result {
 
   70% {
     transform: translate(-1px, 2px) rotate(-4deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .price-breed-search__icon {
-    animation: none;
-    transition: none;
-  }
-
-  .price-breed-search__control:focus-within .price-breed-search__icon {
-    scale: 1;
   }
 }
 
@@ -3563,31 +3534,6 @@ body.booking-modal-open {
 #booking-modal .modal-content.is-booking-step-1 .modal-buttons {
   margin-top: 0.75rem;
   padding-top: 0.8rem;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #booking-modal.active,
-  #booking-modal.is-closing,
-  #booking-modal.active .modal-content,
-  #booking-modal.is-closing .modal-content,
-  #booking-modal .booking-step.active,
-  #booking-modal.is-opening #step-1.booking-step.active > h3,
-  #booking-modal.is-opening #step-1.booking-step.active .service-option,
-  #booking-modal.is-step-forward #step-2.booking-step.active .calendar-day,
-  #booking-modal.is-step-forward #step-2.booking-step.active .time-slot,
-  #booking-modal .modal-content::before,
-  #booking-modal .modal-content::after,
-  #booking-modal .booking-glass-lens,
-  #booking-modal .booking-glass-caustic,
-  #booking-modal.is-alive .booking-glass-lens {
-    animation: none;
-  }
-
-  #booking-modal .modal-content,
-  #booking-modal .step-indicator::after,
-  #booking-modal .step-indicator .step {
-    transition: none;
-  }
 }
 
 #booking-modal #step-2.booking-step.active {
@@ -7845,13 +7791,6 @@ body.price-page .price-card__breed-menu:not(.price-breed-menu--has-overflow) + .
   display: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  body.price-page .price-card__breed-scrollbar,
-  body.price-page .price-card__breed-scrollbar-thumb {
-    transition: none;
-  }
-}
-
 body.price-page .price-card__badge--button .price-card__badge-icon {
   --arrow-rotate: rotate(90deg);
   transform: var(--arrow-rotate);
@@ -7869,23 +7808,6 @@ body.price-page .price-card--breeds-open .price-card__badge--button .price-card_
   --site-arrow-motion-peak-x: var(--site-arrow-bounce-peak);
   --site-arrow-motion-settle-x: var(--site-arrow-bounce-settle);
   --site-arrow-motion-return-x: var(--site-arrow-bounce-return);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body.price-page .price-card__badge--button .price-card__badge-icon-motion {
-    animation: none;
-    transform: none;
-  }
-
-  body.price-page .price-card__badge--button[aria-expanded='true'] .price-card__badge-icon {
-    animation: none;
-    transform: rotate(-90deg);
-  }
-
-  body.price-page .price-card__badge--button.price-breed-arrow--closing .price-card__badge-icon {
-    animation: none;
-    transform: rotate(90deg);
-  }
 }
 
 body.price-page main[data-price-page] .price-card {
@@ -8114,24 +8036,6 @@ body.light.price-page main[data-price-page] .price-card__promotion-button {
   box-shadow: 0 8px 22px rgb(83 65 44 / 0.08), 0 0 18px rgb(50 150 111 / 0.04), inset 0 1px 0 rgb(50 150 111 / 0.1);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  body.price-page main[data-price-page] .price-card,
-  body.price-page main[data-price-page] .price-card__service-option,
-  body.price-page main[data-price-page] .price-card__promotion-button,
-  body.price-page main[data-price-page] .price-card__chip {
-    transform: none;
-    transition: none;
-  }
-
-  body.price-page main[data-price-page] .price-card::before,
-  body.price-page main[data-price-page] .price-card::after,
-  body.price-page main[data-price-page] .price-card__service-option::after,
-  body.price-page main[data-price-page] .price-card__promotion-button::after,
-  body.price-page main[data-price-page] .price-card__chip::after {
-    display: none;
-  }
-}
-
 /* Variable booking duration and safe-window guidance */
 #booking-modal .booking-selection__risk {
   display: grid;
@@ -8266,12 +8170,6 @@ body.light.price-page main[data-price-page] .price-card__promotion-button {
   #booking-modal .booking-selection__risk legend,
   #booking-modal .booking-selection__risk-hint {
     grid-column: 1 / -1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #booking-modal .booking-availability-status[data-state='loading'] {
-    animation: none;
   }
 }
 
@@ -9712,14 +9610,6 @@ body.price-page :is(
   transform: none;
   pointer-events: none;
   animation: price-hero-search-gradient 8s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body.price-page .is-price-selected::after,
-  body.price-page .price-card__service-option:focus-visible::after,
-  body.price-page .price-category-modal__service-option:has(input:checked)::after {
-    animation: none;
-  }
 }
 
 body.price-modal-open .price-scroll-controls {

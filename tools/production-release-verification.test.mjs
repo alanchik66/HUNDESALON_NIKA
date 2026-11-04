@@ -1,0 +1,206 @@
+import assert from 'node:assert/strict';
+import { createServer } from 'node:http';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import test from 'node:test';
+import {
+  PRODUCTION_ORIGIN, RELEASE_LOCALES, RELEASE_MANIFEST_PATH,
+  prepareProductionRelease, verifyProductionArtifact, verifyProductionRelease, verifyLocaleSmoke,
+  resolveWeatherReleaseAssets,
+} from './lib/production-release-verification.mjs';
+
+const COMMIT = 'a'.repeat(40);
+const STAMP = `20261104-prod-${COMMIT.slice(0, 7)}-1234abcd`;
+const SCRIPT = `/assets/app.js?v=${STAMP}`;
+const STYLESHEET = `/assets/app.css?v=${STAMP}`;
+const WEATHER = '/weather/runtime.mjs?v=weather-v6';
+
+async function fixture(t, intercept = () => null) {
+  const directory = mkdtempSync(path.join(tmpdir(), 'nika-release-verification-'));
+  for (const name of ['config', 'assets', 'weather', ...RELEASE_LOCALES]) mkdirSync(path.join(directory, name));
+  writeFileSync(path.join(directory, 'config/deploy-asset-version.txt'), `${STAMP}\n`);
+  writeFileSync(path.join(directory, 'assets/app.js'), 'console.log("reviewed");\n');
+  writeFileSync(path.join(directory, 'assets/app.css'), 'body{color:#fff}\n');
+  writeFileSync(path.join(directory, 'weather/runtime.mjs'), 'export const weather = "reviewed";\n');
+  for (const locale of RELEASE_LOCALES) {
+    writeFileSync(path.join(directory, locale, 'index.html'), `<!doctype html><html lang="${locale}"><head>
+      <link href="${PRODUCTION_ORIGIN}/${locale}/" rel="canonical"><link rel="icon" href="/favicon.ico">
+      <link href="${STYLESHEET}" rel="stylesheet"><script src="${SCRIPT}"></script>
+      <script src="https://third-party.example/external.js"></script></head><body>${locale}</body></html>`);
+  }
+  const manifest = prepareProductionRelease({ directory, commit: COMMIT, extraAssets: [WEATHER] });
+  const routes = new Map([
+    [RELEASE_MANIFEST_PATH, path.join(directory, 'config/release-manifest.json')],
+    ['/config/deploy-asset-version.txt', path.join(directory, 'config/deploy-asset-version.txt')],
+    ['/assets/app.js', path.join(directory, 'assets/app.js')],
+    ['/assets/app.css', path.join(directory, 'assets/app.css')],
+    ['/weather/runtime.mjs', path.join(directory, 'weather/runtime.mjs')],
+    ...RELEASE_LOCALES.map(locale => [`/${locale}/`, path.join(directory, locale, 'index.html')]),
+  ]);
+  const requests = [];
+  const server = createServer((request, response) => {
+    const url = new URL(request.url, 'http://fixture.invalid');
+    requests.push(url.pathname + url.search);
+    const overridden = intercept({ url, requests, manifest });
+    if (overridden?.hang) return;
+    if (overridden) {
+      response.writeHead(overridden.status ?? 200, { 'Content-Type': overridden.type || 'application/json', ...overridden.headers });
+      response.end(typeof overridden.body === 'string' ? overridden.body : JSON.stringify(overridden.body));
+      return;
+    }
+    if (url.pathname === '/') {
+      response.writeHead(302, { Location: '/de/' });
+      response.end();
+      return;
+    }
+    const local = routes.get(url.pathname);
+    try {
+      if (!local) throw new Error('Unknown fixture route.');
+      const bytes = readFileSync(local);
+      const type = /\.html$/u.test(local) ? 'text/html' : /\.css$/u.test(local) ? 'text/css' : /\.m?js$/u.test(local) ? 'application/javascript' : /\.json$/u.test(local) ? 'application/json' : 'text/plain';
+      response.writeHead(200, { 'Content-Type': type });
+      response.end(bytes);
+    } catch {
+      response.writeHead(404, { 'Content-Type': 'text/plain' });
+      response.end('Not found');
+    }
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => {
+    server.closeAllConnections();
+    await new Promise(resolve => server.close(resolve));
+    assert.equal(path.dirname(directory), tmpdir());
+    assert.ok(path.basename(directory).startsWith('nika-release-verification-'));
+    rmSync(directory, { recursive: true, force: true });
+  });
+  return { directory, manifest, requests, baseUrl: `http://127.0.0.1:${server.address().port}` };
+}
+
+const verification = f => ({ commit: COMMIT, manifest: f.manifest, baseUrl: f.baseUrl, attempts: 1 });
+
+test('the exact reviewed artifact serves all four translated pages and matching core/weather bytes', async t => {
+  const f = await fixture(t);
+  assert.equal(verifyProductionArtifact({ directory: f.directory, manifest: f.manifest, commit: COMMIT, stamp: STAMP }), f.manifest);
+  const result = await verifyProductionRelease(verification(f));
+  assert.deepEqual(result.locales, RELEASE_LOCALES);
+  assert.equal(result.commit, COMMIT);
+  assert.equal(result.stamp, STAMP);
+  assert.equal(result.assets, 3);
+  for (const locale of RELEASE_LOCALES) assert.ok(f.requests.includes(`/${locale}/`));
+  for (const asset of [SCRIPT, STYLESHEET, WEATHER]) assert.ok(f.requests.includes(asset));
+  assert.ok(f.requests.every(request => !request.includes('third-party.example')));
+});
+
+test('artifact validation rejects changed bytes before a deployment starts', async t => {
+  const f = await fixture(t);
+  writeFileSync(path.join(f.directory, 'assets/app.js'), 'console.log("unreviewed");');
+  assert.throws(() => verifyProductionArtifact({ directory: f.directory, manifest: f.manifest, commit: COMMIT }), /Artifact digest mismatch/u);
+  assert.equal(f.requests.length, 0);
+});
+
+test('CI and manual preparation share maintained weather output URLs and the shell cache version', async t => {
+  const f = await fixture(t);
+  mkdirSync(path.join(f.directory, '3d-weather-codrops-main'));
+  mkdirSync(path.join(f.directory, 'assets/js'));
+  writeFileSync(path.join(f.directory, '3d-weather-codrops-main/build-manifest.json'), JSON.stringify({
+    entries: [{ source: 'src/loader.mjs', output: 'weather-widget.iife.js' }, { source: 'src/scene.mjs', output: 'Scene3D.mjs' }],
+  }));
+  writeFileSync(path.join(f.directory, 'assets/js/site-shell.js'), "const WEATHER_WIDGET_ASSET_VERSION = '20261104-weather-v7';\n");
+  assert.deepEqual(resolveWeatherReleaseAssets(f.directory), [
+    '/3d-weather-codrops-main/dist-widget/weather-widget.iife.js?v=20261104-weather-v7',
+    '/3d-weather-codrops-main/dist-widget/Scene3D.mjs?v=20261104-weather-v7',
+  ]);
+  writeFileSync(path.join(f.directory, 'assets/js/site-shell.js'), 'const unrelated = true;');
+  assert.throws(() => resolveWeatherReleaseAssets(f.directory), /Missing maintained weather module manifest or version/u);
+});
+
+test('an English page with the wrong lang fails even when German and Russian are correct', async t => {
+  const f = await fixture(t);
+  const file = path.join(f.directory, 'en/index.html');
+  writeFileSync(file, readFileSync(file, 'utf8').replace('lang="en"', 'lang="de"'));
+  await assert.rejects(verifyProductionRelease(verification(f)), /en: incorrect or missing html lang/u);
+});
+
+test('an incorrect Ukrainian canonical fails instead of accepting any canonical tag', async t => {
+  const f = await fixture(t);
+  const file = path.join(f.directory, 'uk/index.html');
+  writeFileSync(file, readFileSync(file, 'utf8').replace(`${PRODUCTION_ORIGIN}/uk/`, `${PRODUCTION_ORIGIN}/ru/`));
+  await assert.rejects(verifyProductionRelease(verification(f)), /uk: incorrect or missing canonical/u);
+});
+
+test('stale HTML asset references fail before a cached older release can look successful', async t => {
+  const f = await fixture(t);
+  const file = path.join(f.directory, 'de/index.html');
+  writeFileSync(file, readFileSync(file, 'utf8').replaceAll(STAMP, 'old-stamp'));
+  await assert.rejects(verifyProductionRelease(verification(f)), /de: served asset references differ/u);
+});
+
+test('a successful asset response with stale content fails its digest', async t => {
+  const f = await fixture(t, ({ url }) => url.pathname === '/assets/app.js'
+    ? { type: 'application/javascript', body: 'console.log("stale");' } : null);
+  await assert.rejects(verifyProductionRelease(verification(f)), /Served asset mismatch: \/assets\/app.js/u);
+});
+
+test('redirected assets are rejected without following an unverified destination', async t => {
+  const f = await fixture(t, ({ url }) => url.pathname === '/assets/app.js'
+    ? { status: 302, headers: { Location: '/unexpected/' }, body: '' } : null);
+  await assert.rejects(verifyProductionRelease(verification(f)), /Served asset mismatch/u);
+  assert.ok(!f.requests.includes('/unexpected/'));
+});
+
+test('a short stamp prefix cannot substitute another full commit', async t => {
+  const otherCommit = COMMIT.slice(0, 7) + 'b'.repeat(33);
+  const f = await fixture(t, ({ url, manifest }) => url.pathname === RELEASE_MANIFEST_PATH
+    ? { body: { ...manifest, commit: otherCommit } } : null);
+  await assert.rejects(verifyProductionRelease({ ...verification(f), manifest: undefined }), /full expected commit/u);
+});
+
+test('the public receipt cannot redefine the expected canonical domain', async t => {
+  const f = await fixture(t, ({ url, manifest }) => url.pathname === RELEASE_MANIFEST_PATH
+    ? { body: { ...manifest, canonicalOrigin: 'https://incorrect.example' } } : null);
+  await assert.rejects(verifyProductionRelease({ ...verification(f), manifest: undefined }), /canonical origin mismatch/u);
+});
+
+test('a receipt cannot bless unversioned or differently stamped page asset URLs', async t => {
+  const f = await fixture(t);
+  const manifest = structuredClone(f.manifest);
+  manifest.assets[0].path = manifest.assets[0].path.split('?')[0];
+  manifest.locales.forEach(locale => { locale.assets[0] = locale.assets[0].split('?')[0]; });
+  await assert.rejects(verifyProductionRelease({ ...verification(f), manifest }), /expected stamp/u);
+  assert.equal(f.requests.length, 0);
+});
+
+test('bounded propagation retries wait for the expected manifest and then verify its bytes', async t => {
+  let reads = 0;
+  const f = await fixture(t, ({ url, manifest }) => url.pathname === RELEASE_MANIFEST_PATH && reads++ === 0
+    ? { body: { ...manifest, commit: 'b'.repeat(40) } } : null);
+  const pauses = [];
+  const result = await verifyProductionRelease({ ...verification(f), attempts: 2, delayMs: 0, pause: async ms => pauses.push(ms) });
+  assert.equal(result.attempts, 2);
+  assert.deepEqual(pauses, [0]);
+});
+
+test('a stalled server cannot keep verification running beyond its bounded request budget', async t => {
+  const f = await fixture(t, ({ url }) => url.pathname === RELEASE_MANIFEST_PATH ? { hang: true } : null);
+  const started = Date.now();
+  await assert.rejects(verifyProductionRelease({ ...verification(f), attempts: 2, delayMs: 0, timeoutMs: 80, maxDurationMs: 240 }), /verification failed/u);
+  assert.ok(Date.now() - started < 1500);
+  assert.ok(f.requests.length >= 1 && f.requests.length <= 2);
+});
+
+test('ordinary live HTML smoke includes EN/UK and local assets without requiring a new release', async t => {
+  const f = await fixture(t);
+  const result = await verifyLocaleSmoke({ baseUrl: f.baseUrl });
+  assert.deepEqual(result.locales, RELEASE_LOCALES);
+  assert.equal(result.assets, 2);
+  assert.ok(!f.requests.some(request => request.startsWith(RELEASE_MANIFEST_PATH)));
+});
+
+test('unsafe artifact paths are rejected before any HTTP request', async t => {
+  const f = await fixture(t);
+  const malformed = structuredClone(f.manifest);
+  malformed.assets[0].path = '/../outside.js';
+  await assert.rejects(verifyProductionRelease({ ...verification(f), manifest: malformed }), /Invalid release asset path/u);
+  assert.equal(f.requests.length, 0);
+});

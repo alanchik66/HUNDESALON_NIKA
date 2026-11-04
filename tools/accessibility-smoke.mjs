@@ -37,8 +37,11 @@ try {
     if (await cookieAccept.count()) await cookieAccept.first().click();
 
     if (route.includes('prays-list')) {
-      await page.waitForSelector('[data-price-open]', { timeout: 15000 });
-      await page.locator('[data-price-open]').first().click();
+      const card = page.locator('[data-price-categories] .price-card:visible').first();
+      await card.locator('[data-price-open]:visible, [data-price-card-toggle]:visible').first().waitFor({ timeout: 15000 });
+      const open = card.locator('[data-price-open]');
+      if (!(await open.isVisible())) await card.locator('[data-price-card-toggle]').click();
+      await open.click();
       const bookingModal = page.locator('#booking-modal[data-price-booking-flow].active');
       await bookingModal.waitFor({ state: 'visible', timeout: 15000 });
       await page.waitForFunction(() => document.querySelector('#booking-modal')?.dataset.bookingStep === '0');

@@ -8,8 +8,10 @@ const budgets = [
   // Minified September 2026 baseline: 33.8 KB gzip, including shared booking
   // controls, responsive price cards and page scroll navigation. Keep 1.2 KB headroom.
   { file: 'dist/assets/css/page-modules.css', gzip: 35_000 },
-  { file: 'dist/assets/js/site-shell.js', gzip: 75_000 },
-  { file: 'dist/assets/js/main.js', gzip: 15_000 },
+  // Keep the combined JS allowance at 90 KB: weather CSS compression funds
+  // 500 bytes for the reviewed icon-motion lifecycle in main.js.
+  { file: 'dist/assets/js/site-shell.js', gzip: 74_500 },
+  { file: 'dist/assets/js/main.js', gzip: 15_500 },
   { file: 'dist/assets/images/brand/hero-dog.webp', raw: 50_000 },
 ];
 

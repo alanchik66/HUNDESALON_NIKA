@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { transformSync } from 'esbuild';
 import { assertProductionSourcePath, isProductionSourceOnlyPath } from './lib/production-assets.mjs';
+import { minifyHeaderWeatherStyleTemplate } from './lib/production-style-template.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -219,7 +220,10 @@ function minifyProductionAssets(directory) {
     const target = path.join(directory, relativePath);
     if (!fs.existsSync(target)) continue;
     const loader = path.extname(target).toLowerCase() === '.css' ? 'css' : 'js';
-    const source = fs.readFileSync(target, 'utf8');
+    let source = fs.readFileSync(target, 'utf8');
+    if (relativePath === 'assets/js/site-shell.js') {
+      source = minifyHeaderWeatherStyleTemplate(source).code;
+    }
     const result = transformSync(source, {
       loader,
       minify: true,

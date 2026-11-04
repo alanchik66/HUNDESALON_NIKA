@@ -2384,6 +2384,7 @@ var compiledWeatherConfiguration = {
         },
   Wn = async (e, t, n = `en`) => {
     if (!e?.location) return e;
+    if (t?.explicitMeta?.name) return Un(e, t.explicitMeta);
     let r = Number(e.location.lat),
       i = Number(e.location.lon);
     if (Number.isFinite(r) && Number.isFinite(i)) return Un(e, await $({ latitude: r, longitude: i }, n));
@@ -2441,11 +2442,11 @@ var compiledWeatherConfiguration = {
       u = Number(r.visibility ?? 0) / 1e3,
       d = Number(r.pressure_msl ?? 0),
       f = Number(r.relative_humidity_2m ?? 0),
-      p = Number(r.cloud_cover ?? 0),
+      p = r.cloud_cover == null || !Number.isFinite(Number(r.cloud_cover)) ? null : Number(r.cloud_cover),
       m = Number(r.precipitation ?? 0),
       h = Bn(Number(r.weather_code ?? i.weather_code?.[0] ?? 3), a),
       g = r.time || `${i.time?.[0] || new Date().toISOString().slice(0, 10)}T12:00`,
-      _ = Array.from({ length: Math.min(i.time?.length || 0, 3) }, (e, t) => Gn(i, t)),
+      _ = Array.from({ length: Math.min(i.time?.length || 0, 4) }, (e, t) => Gn(i, t)),
       v = _[0]?.day;
     return (
       v && ((v.avgvis_km = J(u)), (v.avgvis_miles = wn(u)), (v.avghumidity = Math.round(f))),
@@ -2477,7 +2478,7 @@ var compiledWeatherConfiguration = {
           precip_mm: J(m),
           precip_in: Tn(m),
           humidity: Math.round(f),
-          cloud: Math.round(p),
+          cloud: p === null ? null : Math.round(p),
           feelslike_c: J(s),
           feelslike_f: Y(s),
           vis_km: J(u),
@@ -2492,7 +2493,7 @@ var compiledWeatherConfiguration = {
     );
   },
   qn = async e => {
-    let t = (await axios.get(`${dn}/weather`, { params: { location: e }, timeout: 1e4 })).data;
+    let t = (await axios.get(`${dn}/weather`, { params: { location: e }, timeout: 15e3 })).data;
     return t?.rateLimited || t?.serviceUnavailable ? null : t;
   },
   Jn = async e =>
@@ -2501,7 +2502,7 @@ var compiledWeatherConfiguration = {
         params: {
           key: pn,
           q: e,
-          days: 3,
+          days: 4,
           aqi: `no`,
           alerts: `no`,
           tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -2539,7 +2540,7 @@ var compiledWeatherConfiguration = {
             `wind_speed_10m_max`,
             `uv_index_max`,
           ].join(`,`),
-          forecast_days: 3,
+          forecast_days: 4,
           timezone: `auto`,
         },
         timeout: 1e4,
@@ -2553,16 +2554,17 @@ var compiledWeatherConfiguration = {
         i = Z(t.locale),
         a = `hn_weather_resilience_v1:${i}:${r}`,
         o = (e, t = !1) => {
-          if (!e) return null;
+          if (!e?.data?.current || !e.data.location || !Array.isArray(e.data.forecast?.forecastday)) return null;
           let n = Date.now(),
             r = Number(e.expiresAt),
             i = Number(e.savedAt);
-          if (Number.isFinite(r) && r >= n) return e.data || null;
+          if (Number.isFinite(r) && r > n && Number.isFinite(i) && n - i < 6e5)
+            return e.data ? { ...e.data, cached: true, fromCache: true, stale: false, cacheSavedAt: i } : null;
           if (t && Number.isFinite(i) && n - i < 1728e5) return e.data || null;
           return null;
         },
         s = e => {
-          if (!e || typeof localStorage > `u`) return null;
+          if (typeof localStorage > `u`) return null;
           try {
             let t = localStorage.getItem(a);
             if (!t) return null;
@@ -2573,9 +2575,9 @@ var compiledWeatherConfiguration = {
           }
         },
         c = e => {
-          if (!e || typeof localStorage > `u`) return e;
+          if (!e || e.stale || typeof localStorage > `u`) return e;
           try {
-            localStorage.setItem(a, JSON.stringify({ savedAt: Date.now(), expiresAt: Date.now() + 18e5, data: e }));
+            localStorage.setItem(a, JSON.stringify({ savedAt: Date.now(), expiresAt: Date.now() + 6e5, data: e }));
           } catch {}
           return e;
         },
@@ -2605,10 +2607,11 @@ var compiledWeatherConfiguration = {
             }
           throw e;
         };
+      if (l && !t.forceRefresh) return l;
       if (un)
         try {
           let e = await qn(r);
-          if (e) return c(Wn(e, n, i));
+          if (e) return c(await Wn(e, n, i));
         } catch (e) {
           if (On(e)) {
             let t = d(e);
@@ -2623,7 +2626,7 @@ var compiledWeatherConfiguration = {
         }
       if (pn)
         try {
-          return c(Wn(await Jn(r), n, i));
+          return c(await Wn(await Jn(r), n, i));
         } catch (e) {
           if (On(e)) {
             let t = d(e);

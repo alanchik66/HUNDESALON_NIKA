@@ -15,7 +15,24 @@
         return new URL(`./header-preview.mjs`, window.location.href).href;
       })(),
       t,
-      n = () => ((t ||= import(e)), t);
+      retry = 0,
+      n = () => {
+        if (t) return t;
+        t = (async () => {
+          for (let attempt = 0; attempt < 3; attempt += 1) {
+            const target = new URL(e);
+            if (retry) target.searchParams.set('weather-retry', String(retry));
+            try {
+              return await import(target.href);
+            } catch (error) {
+              retry += 1;
+              if (attempt === 2) throw error;
+              await new Promise(resolve => window.setTimeout(resolve, 300 * 2 ** attempt));
+            }
+          }
+        })().catch(error => { t = null; throw error; });
+        return t;
+      };
     window.Weather3DWidget = {
       load: n,
       mountWeatherWidget: async (...e) => (await n()).mountWeatherWidget(...e),

@@ -6,7 +6,8 @@
  */
 import { r as toInteropDefault } from '../dist-widget/rolldown-runtime-CwX0HnDi.mjs';
 import { n as getJsxRuntime, r as getReact, t as getReactDOM } from '../dist-widget/react-vendor-DdSZTPSL.mjs';
-import { i as weatherService } from './weather-service.mjs?v=20260728-weather-geo-v8';
+import { i as weatherService } from './weather-service.mjs?v=20261103-weather-parity-v6';
+import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice } from './weather-lifecycle.mjs?v=20261103-weather-parity-v6';
 var React = toInteropDefault(getReact()),
   jsxRuntime = getJsxRuntime(),
   LocationSearch = ({
@@ -26,6 +27,7 @@ var React = toInteropDefault(getReact()),
       [y, b] = (0, React.useState)(!1),
       x = (0, React.useRef)(null),
       S = (0, React.useRef)(0),
+      mounted = (0, React.useRef)(true),
       C = s.searchPlaceholder || `Search...`,
       w = s.searchNoResults || `No matching cities`,
       T = s.searchResultsLabel || `Choose a city`,
@@ -34,9 +36,6 @@ var React = toInteropDefault(getReact()),
       O = s.locationPermissionDenied || D,
       k = s.locationTimeout || D,
       A = s.locationBlockedInBrowser || D,
-      j = async () => {
-        await e(await weatherService.getApproximateLocationByIp({ locale: u }));
-      },
       M = c ? `w-full min-w-0` : `w-32 md:w-48`,
       N = c
         ? `weather-location-selector weather-location-selector--compact`
@@ -48,6 +47,9 @@ var React = toInteropDefault(getReact()),
         ? `weather-location-selector__current weather-location-selector__current--compact`
         : `weather-location-selector__current weather-location-selector__current--stacked`;
     ((0, React.useEffect)(() => {
+      mounted.current = true;
+      return () => { mounted.current = false; S.current += 1; };
+    }, []), (0, React.useEffect)(() => {
       if (typeof window > `u`) return;
       let e = d.trim();
       if (e.length < 2) {
@@ -91,9 +93,10 @@ var React = toInteropDefault(getReact()),
       L = async t => {
         m(!0);
         try {
-          (await e(t), I());
+          await e(t);
+          if (mounted.current) I();
         } finally {
-          m(!1);
+          if (mounted.current) m(!1);
         }
       },
       R = async e => {
@@ -207,34 +210,24 @@ var React = toInteropDefault(getReact()),
             if (!n) {
               m(!0);
               try {
-                if (!navigator.geolocation) {
-                  await j();
-                  return;
-                }
-                if (!window.isSecureContext) {
-                  await j();
-                  return;
-                }
+                if (!navigator.geolocation) throw Error(D);
+                if (!window.isSecureContext) throw Error(A);
                 let { latitude: t, longitude: n } = (
                   await new Promise((e, t) => {
                     navigator.geolocation.getCurrentPosition(e, t, {
                       enableHighAccuracy: !0,
                       timeout: 1e4,
-                      maximumAge: 6e5,
+                      maximumAge: 0,
                     });
                   })
                 ).coords;
-                await e({ latitude: t, longitude: n });
+                if (mounted.current) await e({ latitude: t, longitude: n });
               } catch (e) {
+                if (!mounted.current) return;
                 console.error(`Error getting current location:`, e);
-                try {
-                  await j();
-                } catch (t) {
-                  (console.error(`Error getting approximate location:`, t),
-                    e?.code === 1 ? l?.(O) : e?.code === 3 ? l?.(k) : window.isSecureContext ? l?.(D) : l?.(A));
-                }
+                e?.code === 1 ? l?.(O) : e?.code === 3 ? l?.(k) : window.isSecureContext ? l?.(D) : l?.(A);
               } finally {
-                m(!1);
+                if (mounted.current) m(!1);
               }
             }
           },
@@ -330,20 +323,19 @@ var React = toInteropDefault(getReact()),
     });
   },
   DEFAULT_LOCATION = `Leipzig`,
-  REFRESH_INTERVAL_MS = 300 * 1e3,
-  Scene3D = (0, React.lazy)(() =>
-    // Optional decoration must not unmount weather data when its chunk is unavailable.
-    preloadDependencies(() => import(`./scene.mjs?v=20260728-weather-geo-v8`), [], import.meta.url).catch(() => ({
-      default: () => null,
-    }))
-  ),
+  REFRESH_INTERVAL_MS = WEATHER_REFRESH_INTERVAL_MS,
+  Scene3D = createRecoverableScene(React, jsxRuntime.jsx, createRetryableModuleLoader(new URL('./scene.mjs?v=20261103-weather-parity-v6', import.meta.url).href)),
   localeCopy = {
     ru: {
+      locationDeniedStatus: `Нет доступа к геопозиции`,
+      locationTimeoutStatus: `Время определения геопозиции истекло`,
+      locationUnavailableStatus: `Геопозиция недоступна`,
       headerLabel: `Ваша геолокация`,
       wind: `Ветер`,
       humidity: `Влажность`,
       feels: `Ощущается`,
       loading: `Загрузка погоды`,
+      locating: `Определяем геопозицию`,
       unavailable: `Погода временно недоступна`,
       searchPlaceholder: `Искать место: страна, город, индекс`,
       searchResultsLabel: `Выберите место`,
@@ -360,6 +352,7 @@ var React = toInteropDefault(getReact()),
       details: `Детали`,
       visibility: `Видимость`,
       pressure: `Давление`,
+      pressureUnit: `мм рт. ст.`,
       gusts: `Порывы`,
       updated: `Обновлено`,
       loadError: `Не удалось загрузить погоду. Попробуйте ввести город вручную.`,
@@ -370,11 +363,15 @@ var React = toInteropDefault(getReact()),
       enterCityName: `Введите страну, город, село или район...`,
     },
     uk: {
+      locationDeniedStatus: `Немає доступу до геолокації`,
+      locationTimeoutStatus: `Час визначення геолокації минув`,
+      locationUnavailableStatus: `Геолокація недоступна`,
       headerLabel: `Ваша геолокація`,
       wind: `Вітер`,
       humidity: `Вологість`,
       feels: `Відчувається`,
       loading: `Завантаження погоди`,
+      locating: `Визначаємо геолокацію`,
       unavailable: `Погода тимчасово недоступна`,
       searchPlaceholder: `Шукати місце: країна, місто, село, район...`,
       searchResultsLabel: `Оберіть місце`,
@@ -391,6 +388,7 @@ var React = toInteropDefault(getReact()),
       details: `Деталі`,
       visibility: `Видимість`,
       pressure: `Тиск`,
+      pressureUnit: `мм рт. ст.`,
       gusts: `Пориви`,
       updated: `Оновлено`,
       loadError: `Не вдалося завантажити погоду. Спробуйте ввести місто вручну.`,
@@ -401,11 +399,15 @@ var React = toInteropDefault(getReact()),
       enterCityName: `Введіть країну, місто, село або район...`,
     },
     de: {
+      locationDeniedStatus: `Standortzugriff nicht erlaubt`,
+      locationTimeoutStatus: `Standortermittlung hat zu lange gedauert`,
+      locationUnavailableStatus: `Standort nicht verfügbar`,
       headerLabel: `Ihre Geolokation`,
       wind: `Wind`,
       humidity: `Luftfeuchte`,
       feels: `Gefühlt`,
       loading: `Wetter wird geladen`,
+      locating: `Standort wird ermittelt`,
       unavailable: `Wetter ist vorübergehend nicht verfügbar`,
       searchPlaceholder: `Ort suchen: Land, Stadt, Dorf, Region...`,
       searchResultsLabel: `Ort wählen`,
@@ -422,6 +424,7 @@ var React = toInteropDefault(getReact()),
       details: `Details`,
       visibility: `Sichtweite`,
       pressure: `Druck`,
+      pressureUnit: `mmHg`,
       gusts: `Böen`,
       updated: `Aktualisiert`,
       loadError: `Wetterdaten konnten nicht geladen werden. Bitte gib eine Stadt manuell ein.`,
@@ -432,11 +435,15 @@ var React = toInteropDefault(getReact()),
       enterCityName: `Stadt eingeben...`,
     },
     en: {
+      locationDeniedStatus: `Location access is not allowed`,
+      locationTimeoutStatus: `Location request timed out`,
+      locationUnavailableStatus: `Location is unavailable`,
       headerLabel: `Your geolocation`,
       wind: `Wind`,
       humidity: `Humidity`,
       feels: `Feels like`,
       loading: `Loading weather`,
+      locating: `Determining your location`,
       unavailable: `Weather is temporarily unavailable`,
       searchPlaceholder: `Search place: country, city, village, region...`,
       searchResultsLabel: `Choose a place`,
@@ -453,6 +460,7 @@ var React = toInteropDefault(getReact()),
       details: `Details`,
       visibility: `Visibility`,
       pressure: `Pressure`,
+      pressureUnit: `mmHg`,
       gusts: `Gusts`,
       updated: `Updated`,
       loadError: `Unable to load weather data. Please try entering a city manually.`,
@@ -576,7 +584,7 @@ var React = toInteropDefault(getReact()),
     { label: t.wind, value: `${Math.round(Number(e.current.wind_kph || 0))} km/h` },
     { label: t.humidity, value: `${Math.round(Number(e.current.humidity || 0))}%` },
     { label: t.visibility, value: `${Math.round(Number(e.current.vis_km || 0))} km` },
-    { label: t.pressure, value: `${Math.round(Number(e.current.pressure_mb || 0))} hPa` },
+    { label: t.pressure, value: `${Math.round(Number(e.current.pressure_mb || 0) * 0.750061683)} ${t.pressureUnit}` },
     { label: t.gusts, value: `${Math.round(Number(e.current.gust_kph || e.current.wind_kph || 0))} km/h` },
   ];
 function WeatherApp({
@@ -587,10 +595,13 @@ function WeatherApp({
   minHeight: c = `420px`,
   variant: l = `default`,
   locale: u = `en`,
+  managedRefresh = false,
+  runtimeController = null,
 }) {
   let [d, g] = (0, React.useState)(null),
     [_, v] = (0, React.useState)(!1),
     [y, D] = (0, React.useState)(null),
+    [geoPending, setGeoPending] = (0, React.useState)(managedRefresh && !t),
     [O, k] = (0, React.useState)(``),
     [A, j] = (0, React.useState)(!1),
     [M, N] = (0, React.useState)(null),
@@ -601,75 +612,46 @@ function WeatherApp({
     ee = (0, React.useRef)(null),
     te = (0, React.useRef)(null),
     H = (0, React.useRef)(null),
+    initialLocationRef = (0, React.useRef)(t),
+    controllerRef = (0, React.useRef)(null),
+    controller = (controllerRef.current ||= runtimeController || createWeatherController({ service: weatherService, locale: u, initialLocation: t, fallbackLocation: n, useGeolocation: r, requireLocation: managedRefresh })),
     U = localeCopy[u] || localeCopy.en,
     W = e && l === `header`,
-    G = async () => {
-      (v(!0), D(null));
-      try {
-        let e = await weatherService.getCurrentLocation(),
-          t = await weatherService.getCurrentWeather(e, { locale: u });
-        (g(t), k(formatLocation(t.location, u)));
-      } catch (e) {
-        (console.error(`Error loading weather:`, e), D(U.loadError));
-      } finally {
-        v(!1);
-      }
-    },
-    K = async e => {
-      (v(!0), D(null));
-      try {
-        let t = await weatherService.getCurrentWeather(e, { locale: u });
-        (g(t), k(formatLocation(t.location, u)));
-      } catch (e) {
-        (console.error(`Error loading weather for location:`, e), D(U.searchError));
-      } finally {
-        v(!1);
-      }
-    },
+    G = () => controller.currentLocation().catch(error => { console.error(`Error loading weather:`, error); return false; }),
+    K = location => controller.setLocation(location).catch(error => { console.error(`Error loading weather for location:`, error); return false; }),
     q = e => {
-      e && D(e);
+      if (e) { D(e); setGeoPending(false); v(false); }
     };
   ((0, React.useEffect)(() => {
-    (async () => {
-      if (t) {
-        await K(t);
-        return;
-      }
-      if (r) {
-        await G();
-        return;
-      }
-      await K(n);
-    })();
-  }, [t, n, r]),
+    const unsubscribe = controller.subscribe(state => {
+      g(state.weather);
+      v(state.loading || state.geoStatus === `pending`);
+      setGeoPending(state.geoStatus === `pending`);
+      D(resolveWeatherLocationNotice(state, U));
+      if (!state.weather && (state.loading || state.geoStatus === `pending`)) z(false);
+      if (state.weather) k(formatLocation(state.weather.location, u));
+    });
+    if (!managedRefresh || controller.getState().location) controller.refresh().catch(() => {});
+    return () => { unsubscribe(); controller.cancel(); };
+  }, [controller]),
     (0, React.useEffect)(() => {
-      if (typeof window > `u`) return;
-      let e = window.setInterval(() => {
-        if (_) return;
-        let e = d?.location?.lat,
-          i = d?.location?.lon;
-        if (e != null && i != null) {
-          K(`${e},${i}`);
-          return;
-        }
-        if (O) {
-          K(O);
-          return;
-        }
-        if (t) {
-          K(t);
-          return;
-        }
-        if (r && !d) {
-          G();
-          return;
-        }
-        K(n);
-      }, REFRESH_INTERVAL_MS);
+      if (initialLocationRef.current === t) return;
+      initialLocationRef.current = t;
+      if (t) controller.setLocation(t).catch(() => {});
+    }, [controller, t]),
+    (0, React.useEffect)(() => {
+      if (managedRefresh || typeof window > `u`) return;
+      const refresh = () => { if (!document.hidden) controller.refresh().catch(() => {}); };
+      const resume = () => { if (Date.now() - controller.getState().lastUpdatedAt >= REFRESH_INTERVAL_MS) refresh(); };
+      const timer = window.setInterval(refresh, REFRESH_INTERVAL_MS);
+      window.addEventListener(`online`, refresh);
+      document.addEventListener(`visibilitychange`, resume);
       return () => {
-        window.clearInterval(e);
+        window.clearInterval(timer);
+        window.removeEventListener(`online`, refresh);
+        document.removeEventListener(`visibilitychange`, resume);
       };
-    }, [d?.location?.lat, d?.location?.lon, O, t, n, r, _, u]),
+    }, [controller, managedRefresh]),
     (0, React.useEffect)(() => {
       V(null);
     }, [d?.location?.name, d?.current?.last_updated_epoch]),
@@ -722,7 +704,7 @@ function WeatherApp({
         children: U.loadingScene,
       }),
     }),
-    ae = d?.forecast?.forecastday?.slice(0, 3) || [],
+    ae = d?.forecast?.forecastday?.slice(0, 4) || [],
     Q = B === null ? null : ae[B] || null,
     $ = (0, React.useMemo)(() => weatherForForecastDay(d, Q), [d, Q]),
     oe = $ ? weatherStatistics($, U) : [],
@@ -731,7 +713,8 @@ function WeatherApp({
     le = J ? translateCondition(J.current.condition, u) : ``,
     ue = d ? formatRegion(d.location, u) : ``,
     de = $ ? formatRegion($.location, u) : ``,
-    fe = J ? formatRegion(J.location, u) : ``;
+    fe = J ? formatRegion(J.location, u) : ``,
+    canRecover = !d && !(_ || geoPending) && Boolean(y);
   return W
     ? (0, jsxRuntime.jsxs)(`div`, {
         ref: ee,
@@ -746,8 +729,9 @@ function WeatherApp({
                 children: (0, jsxRuntime.jsx)(React.Suspense, {
                   fallback: Z,
                   children: (0, jsxRuntime.jsx)(Scene3D, {
+                    fallback: Z,
                     weatherData: d,
-                    isLoading: _,
+                    isLoading: _ && !d,
                     embedded: !0,
                     variant: `header-panel`,
                     onPortalModeChange: j,
@@ -756,7 +740,7 @@ function WeatherApp({
                   }),
                 }),
               }),
-              d &&
+              (d || canRecover) &&
                 (0, jsxRuntime.jsx)(`button`, {
                   ref: te,
                   type: `button`,
@@ -765,7 +749,7 @@ function WeatherApp({
                   'aria-expanded': R,
                   'aria-controls': `weatherHeaderDropdown`,
                   'aria-label': R ? U.closeDetails : U.openDetails,
-                  children: (0, jsxRuntime.jsx)(`div`, {
+                  children: d ? (0, jsxRuntime.jsx)(`div`, {
                     className: `weather-header-card absolute inset-0 z-20`,
                     children: (0, jsxRuntime.jsxs)(`div`, {
                       className: `weather-header-card__content`,
@@ -869,32 +853,31 @@ function WeatherApp({
                         }),
                       ],
                     }),
-                  }),
-                }),
-              _ &&
-                !d &&
-                (0, jsxRuntime.jsx)(`div`, {
-                  className: `weather-header-state absolute inset-0 z-50`,
-                  children: (0, jsxRuntime.jsxs)(`div`, {
-                    className: `weather-header-state__inner`,
+                  }) : (0, jsxRuntime.jsxs)(`div`, {
+                    className: `weather-header-card__toggle`,
                     children: [
-                      (0, jsxRuntime.jsx)(`div`, { className: `weather-header-state__spinner` }),
-                      (0, jsxRuntime.jsx)(`p`, { children: U.loading }),
+                      (0, jsxRuntime.jsx)(`span`, { children: R ? U.closeDetails : U.openDetails }),
+                      (0, jsxRuntime.jsx)(`span`, {
+                        className: `weather-header-card__toggle-icon${R ? ` is-open` : ``}`,
+                        children: `⌄`,
+                      }),
                     ],
                   }),
                 }),
-              y &&
-                !d &&
+              !d && (_ || y || managedRefresh) &&
                 (0, jsxRuntime.jsx)(`div`, {
-                  className: `weather-header-state absolute inset-0 z-50`,
-                  children: (0, jsxRuntime.jsx)(`div`, {
-                    className: `weather-header-state__inner weather-header-state__inner--error`,
-                    children: (0, jsxRuntime.jsx)(`p`, { children: U.unavailable }),
+                  className: `weather-header-state weather-header-state--recovery absolute inset-0 z-50`,
+                  children: (0, jsxRuntime.jsxs)(`div`, {
+                    className: `weather-header-state__inner${y ? ` weather-header-state__inner--error` : ``}`,
+                    children: [
+                      (_ || geoPending) && !y && (0, jsxRuntime.jsx)(`div`, { className: `weather-header-state__spinner` }),
+                      (0, jsxRuntime.jsx)(`p`, { className: `weather-header-state__notice`, role: `status`, children: y || (geoPending ? U.locating : U.loading) }),
+                    ],
                   }),
                 }),
             ],
           }),
-          d &&
+          (d || canRecover) &&
             R &&
             (0, jsxRuntime.jsxs)(`div`, {
               ref: H,
@@ -903,7 +886,7 @@ function WeatherApp({
               role: `dialog`,
               'aria-label': U.headerLabel,
               children: [
-                (0, jsxRuntime.jsxs)(`div`, {
+                $ && (0, jsxRuntime.jsxs)(`div`, {
                   className: `weather-header-dropdown__hero`,
                   children: [
                     (0, jsxRuntime.jsx)(`div`, {
@@ -911,6 +894,7 @@ function WeatherApp({
                       children: (0, jsxRuntime.jsx)(React.Suspense, {
                         fallback: Z,
                         children: (0, jsxRuntime.jsx)(Scene3D, {
+                    fallback: Z,
                           weatherData: $,
                           isLoading: _,
                           embedded: !0,
@@ -926,6 +910,7 @@ function WeatherApp({
                       children: [
                         (0, jsxRuntime.jsxs)(`div`, {
                           className: `weather-header-dropdown__hero-title`,
+                          key: B === null ? `hero-title-now` : `hero-title-${B}`,
                           children: [
                             (0, jsxRuntime.jsx)(`span`, {
                               className: `weather-header-dropdown__eyebrow`,
@@ -952,6 +937,7 @@ function WeatherApp({
                     }),
                     (0, jsxRuntime.jsxs)(`div`, {
                       className: `weather-header-dropdown__hero-bottom`,
+                      key: B === null ? `hero-bottom-now` : `hero-bottom-${B}`,
                       children: [
                         (0, jsxRuntime.jsxs)(`div`, {
                           className: `weather-header-dropdown__hero-temp`,
@@ -993,9 +979,18 @@ function WeatherApp({
                     (0, jsxRuntime.jsxs)(`div`, {
                       className: `weather-header-dropdown__toolbar`,
                       children: [
-                        (0, jsxRuntime.jsx)(`div`, {
+                        (0, jsxRuntime.jsxs)(`div`, {
                           className: `weather-header-dropdown__section-title`,
-                          children: U.forecast,
+                          children: [
+                            U.forecast,
+                            !d && (0, jsxRuntime.jsx)(`button`, {
+                              type: `button`,
+                              className: `weather-header-dropdown__close`,
+                              onClick: () => z(!1),
+                              'aria-label': U.closeDetails,
+                              children: `×`,
+                            }),
+                          ],
                         }),
                         (0, jsxRuntime.jsx)(LocationSearch, {
                           onLocationChange: K,
@@ -1014,7 +1009,7 @@ function WeatherApp({
                         className: `weather-header-dropdown__notice`,
                         children: y,
                       }),
-                    (0, jsxRuntime.jsxs)(`div`, {
+                    d && (0, jsxRuntime.jsxs)(`div`, {
                       className: `weather-header-dropdown__forecast-list`,
                       children: [
                         (0, jsxRuntime.jsxs)(`button`, {
@@ -1050,15 +1045,16 @@ function WeatherApp({
                         ),
                       ],
                     }),
-                    (0, jsxRuntime.jsxs)(`div`, {
+                    $ && (0, jsxRuntime.jsxs)(`div`, {
                       className: `weather-header-dropdown__details-head`,
                       children: [
                         (0, jsxRuntime.jsx)(`span`, { children: U.details }),
                         Q && (0, jsxRuntime.jsx)(`strong`, { children: formatForecastDate(Q.date, u) }),
                       ],
                     }),
-                    (0, jsxRuntime.jsx)(`div`, {
+                    $ && (0, jsxRuntime.jsx)(`div`, {
                       className: `weather-header-dropdown__details-grid`,
+                      key: B === null ? `details-now` : `details-${B}`,
                       children: oe.map(e =>
                         (0, jsxRuntime.jsxs)(
                           `button`,
@@ -1089,8 +1085,9 @@ function WeatherApp({
             children: (0, jsxRuntime.jsx)(React.Suspense, {
               fallback: Z,
               children: (0, jsxRuntime.jsx)(Scene3D, {
+                    fallback: Z,
                 weatherData: d,
-                isLoading: _,
+                isLoading: _ && !d,
                 embedded: e,
                 variant: l,
                 onPortalModeChange: j,
@@ -1282,7 +1279,7 @@ function WeatherApp({
                 }),
               ],
             }),
-          _ &&
+          _ && !d &&
             (0, jsxRuntime.jsx)(`div`, {
               className: `absolute inset-0 z-50 ${W ? `weather-header-state` : `flex flex-col items-center justify-center text-white`}`,
               children: W
@@ -1305,7 +1302,7 @@ function WeatherApp({
                     ],
                   }),
             }),
-          y &&
+          y && !d &&
             (W
               ? (0, jsxRuntime.jsx)(`div`, {
                   className: `weather-header-state absolute inset-0 z-50`,
@@ -1388,7 +1385,7 @@ var ReactDOM = toInteropDefault(getReactDOM()),
     let r = e.shadowRoot || e.attachShadow({ mode: `open` });
     if (!r.querySelector(`style[data-weather-widget-styles]`)) {
       let e = document.createElement(`style`);
-      ((e.dataset.weatherWidgetStyles = `true`), (e.textContent = widgetStyles), r.appendChild(e));
+      ((e.dataset.weatherWidgetStyles = `true`), (e.textContent = widgetStyles + HEADER_WEATHER_RECOVERY_STYLES), r.appendChild(e));
     }
     let i = r.querySelector(`[data-weather-widget-root]`);
     return (
@@ -1409,8 +1406,9 @@ var ReactDOM = toInteropDefault(getReactDOM()),
       r = t.variant || `default`,
       i = t.minHeight || (r === `header` ? `132px` : `420px`),
       s = prepareShadowRoot(n, i, r);
-    ((n.dataset.weatherVariant = r), mountedWidgets.get(n)?.root.unmount());
+    ((n.dataset.weatherVariant = r), mountedWidgets.get(n)?.unmount());
     let c = (0, ReactDOM.createRoot)(s);
+    const runtimeController = createWeatherController({ service: weatherService, locale: t.locale || `en`, initialLocation: t.initialLocation || ``, fallbackLocation: t.fallbackLocation || `Leipzig`, useGeolocation: t.useGeolocation ?? false, requireLocation: t.managedRefresh ?? false });
     c.render(
       (0, jsxRuntime.jsx)(React.StrictMode, {
         children: (0, jsxRuntime.jsx)(WeatherApp, {
@@ -1421,6 +1419,8 @@ var ReactDOM = toInteropDefault(getReactDOM()),
           initialLocation: t.initialLocation || ``,
           fallbackLocation: t.fallbackLocation || `Leipzig`,
           useGeolocation: t.useGeolocation ?? !1,
+          managedRefresh: t.managedRefresh ?? false,
+          runtimeController,
         }),
       })
     );
@@ -1428,8 +1428,12 @@ var ReactDOM = toInteropDefault(getReactDOM()),
       host: n,
       shadowRoot: n.shadowRoot,
       root: c,
+      refresh: runtimeController.refresh,
+      setLocation: runtimeController.setLocation,
+      getState: runtimeController.getState,
+      setLocationStatus: runtimeController.setLocationStatus,
       unmount: () => {
-        (c.unmount(), delete n.dataset.weatherVariant, mountedWidgets.delete(n));
+        (runtimeController.dispose(), c.unmount(), delete n.dataset.weatherVariant, mountedWidgets.delete(n));
       },
     };
     return (mountedWidgets.set(n, l), l);

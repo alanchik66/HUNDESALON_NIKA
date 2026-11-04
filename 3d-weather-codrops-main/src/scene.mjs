@@ -6,7 +6,7 @@
  */
 import { r as toInteropDefault } from '../dist-widget/rolldown-runtime-CwX0HnDi.mjs';
 import { n as getJsxRuntime, r as getReact } from '../dist-widget/react-vendor-DdSZTPSL.mjs';
-import { n as isPartlyCloudy, r as shouldShowSun, t as weatherConditionType } from './weather-service.mjs';
+import { n as isPartlyCloudy, r as shouldShowSun, t as weatherConditionType } from './weather-service.mjs?v=20261103-weather-parity-v6';
 import {
   C as o,
   D as s,
@@ -38,6 +38,8 @@ import {
   x as N,
   y as P,
 } from '../dist-widget/weather-3d-CKX6ob-m.mjs?v=20260728-weather-geo-v8';
+const cloudTextureUrl = new URL(`/assets/images/weather/cloud-9225a9f1.png`, import.meta.url);
+cloudTextureUrl.search = new URL(import.meta.url).search;
 var React = toInteropDefault(getReact()),
   createEffectComponent = (e, t = b.NORMAL) =>
     (0, React.forwardRef)(function ({ blendFunction: n, opacity: r, ...i }, a) {
@@ -370,6 +372,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
           scale: [1, 1, 1],
           children: (0, jsxRuntime.jsxs)(h, {
             material: d,
+                texture: cloudTextureUrl.href,
             children: [
               (0, jsxRuntime.jsx)(O, {
                 segments: 18,
@@ -410,6 +413,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
             renderOrder: 2,
             children: (0, jsxRuntime.jsxs)(h, {
               material: d,
+                texture: cloudTextureUrl.href,
               children: [
                 (0, jsxRuntime.jsx)(O, {
                   segments: 26,
@@ -450,6 +454,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
               renderOrder: 2,
               children: (0, jsxRuntime.jsxs)(h, {
                 material: d,
+                texture: cloudTextureUrl.href,
                 children: [
                   (0, jsxRuntime.jsx)(O, {
                     segments: 40,
@@ -478,6 +483,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
               renderOrder: 2,
               children: (0, jsxRuntime.jsxs)(h, {
                 material: d,
+                texture: cloudTextureUrl.href,
                 children: [
                   (0, jsxRuntime.jsx)(O, {
                     segments: 80,

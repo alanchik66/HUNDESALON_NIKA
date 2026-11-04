@@ -12,6 +12,9 @@ const NOMINATIM_SEARCH_ENDPOINT = 'https://nominatim.openstreetmap.org/search';
 const WEATHER_CACHE_TTL_SECONDS = 5 * 60;
 const CLIENT_CACHE_TTL_SECONDS = 60;
 const PROVIDER_TIMEOUT_MS = 8500;
+// Allow hourly reports and normal publication lag, but never present old reports as current.
+const CURRENT_MAX_AGE_MS = 2 * 60 * 60 * 1000;
+const CURRENT_FUTURE_TOLERANCE_MS = 10 * 60 * 1000;
 const DEFAULT_TIME_ZONE = 'Europe/Berlin';
 const PROVIDER_USER_AGENT =
   'HundesalonNikaWeather/1.0 (+https://hundesalon-nika.com/kontakty.html)';
@@ -60,7 +63,8 @@ export function parseWeatherCoordinates(latitudeValue, longitudeValue) {
     latitude < -90 ||
     latitude > 90 ||
     longitude < -180 ||
-    longitude > 180
+    longitude > 180 ||
+    (latitude === 0 && longitude === 0)
   ) {
     return null;
   }
@@ -97,7 +101,7 @@ function normalizeTimeZone(value) {
   }
 }
 
-async function fetchJson(url, options = {}) {
+async function fetchJson(url, options = {}, includeExpiry = false) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
   try {
@@ -113,7 +117,10 @@ async function fetchJson(url, options = {}) {
     if (!response.ok) {
       throw new Error(`Provider returned ${response.status}`);
     }
-    return await response.json();
+    const payload = await response.json();
+    return includeExpiry
+      ? { payload, expiresAt: Date.parse(response.headers.get('Expires') || '') }
+      : payload;
   } finally {
     clearTimeout(timeoutId);
   }
@@ -316,10 +323,19 @@ function nearestBrightSkySource(payload, sourceId) {
   return sources.find(source => Number(source?.id) === Number(sourceId)) || sources[0] || null;
 }
 
+function currentTimestamp(value, nowMs) {
+  const timestamp = typeof value === 'string' ? Date.parse(value) : NaN;
+  return Number.isFinite(timestamp) &&
+    timestamp >= nowMs - CURRENT_MAX_AGE_MS &&
+    timestamp <= nowMs + CURRENT_FUTURE_TOLERANCE_MS
+    ? timestamp : null;
+}
+
 export function normalizeBrightSkyCurrent(payload, coordinates, timeZone, nowMs = Date.now()) {
   const current = payload?.weather;
   const temperature = finiteNumber(current?.temperature);
-  if (!current || temperature === null) {
+  const observedAt = currentTimestamp(current?.timestamp, nowMs);
+  if (!current || temperature === null || observedAt === null) {
     return null;
   }
 
@@ -345,7 +361,8 @@ export function normalizeBrightSkyCurrent(payload, coordinates, timeZone, nowMs 
     source: 'dwd-bright-sky',
     providerLabel: 'DWD via Bright Sky',
     attributionUrl: 'https://brightsky.dev/',
-    time: typeof current.timestamp === 'string' ? current.timestamp : new Date(nowMs).toISOString(),
+    time: current.timestamp,
+    observedAt,
     fetchedAt: nowMs,
     timezone: timeZone,
     latitude: coordinates.latitude,
@@ -385,7 +402,14 @@ function getMetSymbol(entry) {
 }
 
 export function normalizeMetCurrent(payload, coordinates, timeZone, nowMs = Date.now()) {
-  const entry = getMetTimeseries(payload)[0];
+  const entry = getMetTimeseries(payload).reduce((nearest, candidate) => {
+    const timestamp = currentTimestamp(candidate?.time, nowMs);
+    if (timestamp === null || finiteNumber(candidate?.data?.instant?.details?.air_temperature) === null) {
+      return nearest;
+    }
+    return !nearest || Math.abs(timestamp - nowMs) < Math.abs(Date.parse(nearest.time) - nowMs)
+      ? candidate : nearest;
+  }, null);
   const details = entry?.data?.instant?.details || {};
   const temperature = finiteNumber(details.air_temperature);
   if (!entry || temperature === null) {
@@ -403,7 +427,9 @@ export function normalizeMetCurrent(payload, coordinates, timeZone, nowMs = Date
     source: 'met-norway-locationforecast',
     providerLabel: 'MET Norway',
     attributionUrl: 'https://api.met.no/weatherapi/locationforecast/2.0/documentation',
-    time: typeof entry.time === 'string' ? entry.time : new Date(nowMs).toISOString(),
+    time: entry.time,
+    validAt: Date.parse(entry.time),
+    forecastUpdatedAt: firstText(payload?.properties?.meta?.updated_at) || null,
     fetchedAt: nowMs,
     timezone: timeZone,
     latitude: coordinates.latitude,
@@ -478,7 +504,7 @@ function buildMetForecastDays(payload, timeZone, currentMeta) {
 
   const forecastDays = [];
   for (const [date, entries] of groups) {
-    if (forecastDays.length >= 3) break;
+    if (forecastDays.length >= 4) break;
 
     const temperatures = [];
     const humidities = [];
@@ -581,7 +607,7 @@ function currentMetaToWeatherApi(meta) {
     precip_mm: round(precipitation),
     precip_in: millimetresToInches(precipitation),
     humidity: Math.round(finiteNumber(meta.humidity) ?? 0),
-    cloud: Math.round(finiteNumber(meta.cloudCover) ?? 0),
+    cloud: finiteNumber(meta.cloudCover) === null ? null : Math.round(meta.cloudCover),
     feelslike_c: round(apparentTemperature),
     feelslike_f: celsiusToFahrenheit(apparentTemperature),
     vis_km: round(visibilityKm),
@@ -666,11 +692,25 @@ async function fetchBrightSkyCurrent(coordinates, timeZone) {
   return fetchJson(url);
 }
 
-async function fetchMetForecast(coordinates) {
+async function fetchMetForecast(context, cache, coordinates) {
+  const cacheKey = new Request(
+    `https://met-forecast-cache.hundesalon-nika.internal/v1/${coordinates.latitude.toFixed(4)}/${coordinates.longitude.toFixed(4)}`
+  );
+  const cached = await readCachedPayload(cache, cacheKey);
+  if (cached?.expiresAt > Date.now() && cached?.payload) return cached.payload;
+
   const url = new URL(MET_LOCATIONFORECAST_ENDPOINT);
   url.searchParams.set('lat', coordinates.latitude.toFixed(4));
   url.searchParams.set('lon', coordinates.longitude.toFixed(4));
-  return fetchJson(url);
+  const result = await fetchJson(url, {}, true);
+  // Reuse MET forecasts until their advertised expiry instead of polling every five minutes.
+  const expiresAt = Number.isFinite(result.expiresAt)
+    ? result.expiresAt : Date.now() + WEATHER_CACHE_TTL_SECONDS * 1000;
+  const ttl = Math.floor((expiresAt - Date.now()) / 1000);
+  if (ttl > 0) {
+    storeCachedPayload(context, cache, cacheKey, { payload: result.payload, expiresAt }, ttl);
+  }
+  return result.payload;
 }
 
 function apiResponse(payload, { status = 200, cacheStatus = 'MISS', method = 'GET' } = {}) {
@@ -692,20 +732,24 @@ function getDefaultCache() {
 
 async function readCachedPayload(cache, cacheKey) {
   if (!cache) return null;
-  const response = await cache.match(cacheKey);
-  if (!response) return null;
-  return response.json().catch(() => null);
+  try {
+    const response = await cache.match(cacheKey);
+    return response ? await response.json() : null;
+  } catch {
+    return null;
+  }
 }
 
-function storeCachedPayload(context, cache, cacheKey, payload) {
+function storeCachedPayload(context, cache, cacheKey, payload, ttl = WEATHER_CACHE_TTL_SECONDS) {
   if (!cache) return;
   const cacheResponse = new Response(JSON.stringify(payload), {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': `max-age=${WEATHER_CACHE_TTL_SECONDS}`,
+      'Cache-Control': `max-age=${ttl}`,
     },
   });
-  const operation = cache.put(cacheKey, cacheResponse);
+  // Cache availability must not invalidate an otherwise successful provider response.
+  const operation = Promise.resolve().then(() => cache.put(cacheKey, cacheResponse)).catch(() => {});
   if (typeof context.waitUntil === 'function') {
     context.waitUntil(operation);
   }
@@ -737,7 +781,7 @@ export async function onRequest(context) {
     location = parseWeatherLocation(locationQuery);
     if (!location && locationQuery && locationQuery.length <= 160) {
       // Named locations already contact an upstream provider before the weather cache lookup.
-      const rateLimitResponse = await enforceRateLimit(request, rateLimitOptions);
+      const rateLimitResponse = await enforceRateLimit(request, rateLimitOptions).catch(() => null);
       if (rateLimitResponse) {
         return respond(rateLimitResponse);
       }
@@ -752,16 +796,16 @@ export async function onRequest(context) {
 
   const cache = getDefaultCache();
   const cacheKey = new Request(
-    `https://weather-cache.hundesalon-nika.internal/v2/${location.latitude.toFixed(4)}/${location.longitude.toFixed(4)}/${encodeURIComponent(timeZone)}/${language}`
+    `https://weather-cache.hundesalon-nika.internal/v4/${location.latitude.toFixed(4)}/${location.longitude.toFixed(4)}/${encodeURIComponent(timeZone)}/${language}`
   );
   const cachedPayload = await readCachedPayload(cache, cacheKey);
-  if (cachedPayload) {
+  if (cachedPayload && currentTimestamp(cachedPayload.weatherMeta?.time, Date.now()) !== null) {
     cachedPayload.cached = true;
     return respond(apiResponse(cachedPayload, { cacheStatus: 'HIT', method: request.method }));
   }
 
   if (!rateLimitChecked) {
-    const rateLimitResponse = await enforceRateLimit(request, rateLimitOptions);
+    const rateLimitResponse = await enforceRateLimit(request, rateLimitOptions).catch(() => null);
     if (rateLimitResponse) {
       return respond(rateLimitResponse);
     }
@@ -769,17 +813,24 @@ export async function onRequest(context) {
 
   const [brightSkyResult, metResult] = await Promise.allSettled([
     fetchBrightSkyCurrent(location, timeZone),
-    fetchMetForecast(location),
+    fetchMetForecast(context, cache, location),
   ]);
   const brightSkyPayload = brightSkyResult.status === 'fulfilled' ? brightSkyResult.value : null;
   const metPayload = metResult.status === 'fulfilled' ? metResult.value : null;
   const nowMs = Date.now();
-  const currentMeta =
-    normalizeBrightSkyCurrent(brightSkyPayload, location, timeZone, nowMs) ||
-    normalizeMetCurrent(metPayload, location, timeZone, nowMs);
+  const brightSkyCurrent = normalizeBrightSkyCurrent(brightSkyPayload, location, timeZone, nowMs);
+  const metCurrent = normalizeMetCurrent(metPayload, location, timeZone, nowMs);
+  const currentMeta = brightSkyCurrent || metCurrent;
 
   if (!currentMeta) {
     return respond(jsonResponse({ error: 'Weather providers are temporarily unavailable' }, 502));
+  }
+
+  if (brightSkyCurrent?.cloudCover === null && metCurrent && metCurrent.cloudCover !== null) {
+    currentMeta.cloudCover = metCurrent.cloudCover;
+    currentMeta.fieldSources = {
+      cloudCover: { source: metCurrent.source, time: metCurrent.time },
+    };
   }
 
   const payload = buildWeatherPayload(location, currentMeta, metPayload, timeZone);

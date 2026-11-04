@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout } from 'node:timers/promises';
+import { verifyProductionRelease } from './lib/production-release-verification.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const commit = process.argv[2];
@@ -54,13 +55,5 @@ if (
 ) {
   throw new Error('The expected production deployment job did not succeed.');
 }
-const response = await fetch(`https://hundesalon-nika.com/config/deploy-asset-version.txt?commit=${commit}`, {
-  cache: 'no-store',
-  signal: AbortSignal.timeout(20000),
-});
-const stamp = (await response.text()).trim();
-const stampCommit = stamp.match(/^\d{8}-prod-([a-f0-9]{7,40})-[a-f0-9]{8}$/)?.[1];
-if (!response.ok || !stampCommit || !commit.startsWith(stampCommit)) {
-  throw new Error('Production asset stamp does not match the pushed revision.');
-}
-console.log(JSON.stringify({ commit, run: run.url, stamp, verified: true }));
+const verification = await verifyProductionRelease({ commit });
+console.log(JSON.stringify({ ...verification, run: run.url }));

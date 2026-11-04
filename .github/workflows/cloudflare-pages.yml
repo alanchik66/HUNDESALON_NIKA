@@ -3,9 +3,20 @@ name: Deploy Cloudflare Pages
 # Called only after the CI quality gates pass. Manual runs repeat those gates.
 on:
   workflow_call:
+    inputs:
+      artifact_id:
+        required: true
+        type: string
+      asset_stamp:
+        required: true
+        type: string
+      release_commit:
+        required: true
+        type: string
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
   deployments: write
   security-events: read
@@ -18,10 +29,24 @@ jobs:
   deploy:
     name: Build and deploy
     runs-on: ubuntu-latest
+    env:
+      RELEASE_COMMIT: ${{ inputs.release_commit || github.sha }}
 
     steps:
+      - name: Require the exact main revision
+        env:
+          ARTIFACT_ID: ${{ inputs.artifact_id }}
+        run: |
+          test "$GITHUB_REF" = 'refs/heads/main' || { echo 'Production deployment requires main.' >&2; exit 1; }
+          [[ "$RELEASE_COMMIT" =~ ^[a-f0-9]{40}$ ]] && test "$RELEASE_COMMIT" = "$GITHUB_SHA" || { echo 'Release commit differs from this workflow revision.' >&2; exit 1; }
+          if [ "$GITHUB_EVENT_NAME" != 'workflow_dispatch' ]; then
+            [[ "$ARTIFACT_ID" =~ ^[0-9]+$ ]] || { echo 'The validated artifact ID is required.' >&2; exit 1; }
+          fi
+
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.release_commit || github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -36,38 +61,47 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: npm --prefix integrations/google-gateway ci
 
-      - name: Audit dependencies for manual deployment
-        if: github.event_name == 'workflow_dispatch'
-        run: npm run audit:all
-
-      - name: Validate manual deployment
-        if: github.event_name == 'workflow_dispatch'
-        run: npm run validate
-
-      - name: Build production bundle
-        run: npm run build:production
-
-      - name: Enforce production asset budgets
-        run: npm run check:budgets
-
       - name: Install Chromium for manual browser checks
         if: github.event_name == 'workflow_dispatch'
         run: npx playwright install --with-deps chromium
 
-      - name: Verify browser behavior for manual deployment
+      - name: Run the complete manual release quality gate
         if: github.event_name == 'workflow_dispatch'
-        run: npm run test:browser && node tools/client-registration-smoke.mjs
+        run: npm run qa:max && node tools/client-registration-smoke.mjs
+
+      - name: Record the manually tested production artifact
+        id: release-manifest
+        if: github.event_name == 'workflow_dispatch'
+        run: node tools/verify-production-release.mjs --prepare --commit "$RELEASE_COMMIT"
+
+      - name: Download the exact CI-validated production bundle
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          artifact-ids: ${{ inputs.artifact_id }}
+          path: dist/
+          digest-mismatch: error
+
+      - name: Verify the production artifact before upload
+        env:
+          EXPECTED_STAMP: ${{ inputs.asset_stamp || steps.release-manifest.outputs.asset_stamp }}
+        run: node tools/verify-production-release.mjs --verify-artifact --commit "$RELEASE_COMMIT" --stamp "$EXPECTED_STAMP" --manifest dist/config/release-manifest.json
 
       - name: Require reviewed current-revision security results
         env:
           GH_TOKEN: ${{ github.token }}
         run: node tools/check-code-scanning.mjs
 
+      - name: Reject superseded or changed source revisions
+        run: |
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$RELEASE_COMMIT" || { echo 'A newer main revision exists; deployment stopped.' >&2; exit 1; }
+          test -z "$(git status --porcelain)" || { echo 'The workspace changed after validation.' >&2; exit 1; }
+
       - name: Deploy to Cloudflare Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_PAGES_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 25e872aeab8cb246c69142ab07cd0fee
-        run: npx wrangler pages deploy dist --project-name=hundesalon-nika --commit-dirty=true
+        run: node node_modules/wrangler/bin/wrangler.js pages deploy dist --project-name=hundesalon-nika --branch main --commit-hash "$RELEASE_COMMIT" --commit-dirty=false
 
       - name: Purge Cloudflare zone cache
         env:
@@ -79,3 +113,6 @@ jobs:
           elif ! npm run cf:purge-cache; then
             echo "::warning::Deployment succeeded, but the zone cache purge failed (token needs Zone Read + Cache Purge); cached assets may be stale."
           fi
+
+      - name: Verify the published revision and all four locales
+        run: node tools/verify-production-release.mjs --commit "$RELEASE_COMMIT" --manifest dist/config/release-manifest.json

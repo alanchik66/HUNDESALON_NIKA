@@ -1277,6 +1277,17 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const initSmoothHashLinks = () => {
+    const restorePromotionsHash = () => {
+      if (window.location.hash !== '#promotions' || !/\/social(?:\.html)?\/?$/.test(window.location.pathname)) return;
+      const target = resolveHashTarget(window.location.hash);
+      if (!target) return;
+      target.scrollIntoView({ behavior: 'instant', block: 'start', inline: 'nearest' });
+    };
+
+    // The shared shell moves page content into its scroll root during DOMContentLoaded.
+    window.requestAnimationFrame(restorePromotionsHash);
+    window.addEventListener('hashchange', () => window.requestAnimationFrame(restorePromotionsHash));
+
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       const targetId = anchor.getAttribute('href');
       if (!targetId || targetId === '#') return;
@@ -1287,9 +1298,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         event.preventDefault();
 
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         target.scrollIntoView({
-          behavior: prefersReducedMotion ? 'auto' : 'smooth',
+          behavior: 'smooth',
           block: 'start',
           inline: 'nearest',
         });
@@ -2941,9 +2951,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       modal.classList.remove('is-step-forward', 'is-step-back', 'is-transitioning');
-      const hasMotion = step !== prevStep && (!isPriceFlow || (
-        modal.classList.contains('active') && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      ));
+      const hasMotion = step !== prevStep && (!isPriceFlow || modal.classList.contains('active'));
       if (hasMotion) {
         modal.classList.add(step > prevStep ? 'is-step-forward' : 'is-step-back');
         stepMotionTimer = window.setTimeout(() => {

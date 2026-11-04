@@ -61,10 +61,10 @@ test('missing Google destination is hidden, not replaced with a fabricated link'
   assert.equal(page.googleLink.href, undefined);
 });
 
-test('follow-up respects reduced-motion preference', () => {
+test('follow-up keeps smooth scrolling regardless of system motion preference', () => {
   const page = mountReview({ reducedMotion: true });
   page.handlers.get('sendmail:success')({ detail: { values: { review_rating: '1' } } });
-  assert.equal(page.followup.scrollOptions.behavior, 'auto');
+  assert.equal(page.followup.scrollOptions.behavior, 'smooth');
 });
 
 test('production build includes the universal review QR landing page', () => {

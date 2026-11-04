@@ -675,6 +675,8 @@
     root.setAttribute('aria-label', 'HUNDESALON_NIKA AI');
 
     const launcher = button({ className: 'hn-ai-launcher', label: copy.launcher });
+    const launcherSurface = document.createElement('span');
+    launcherSurface.className = 'hn-ai-launcher-surface';
     const launcherLogo = document.createElement('img');
     launcherLogo.src = BRAND_LOGO;
     launcherLogo.alt = '';
@@ -682,8 +684,125 @@
     launcherLogo.height = 56;
     launcherLogo.decoding = 'async';
     const launcherText = document.createElement('span');
+    launcherText.className = 'hn-ai-launcher-label';
     launcherText.textContent = copy.launcherBadge;
-    launcher.append(launcherLogo, launcherText);
+    launcherSurface.append(launcherLogo, launcherText);
+    const svgNamespace = 'http://www.w3.org/2000/svg';
+    const launcherRim = document.createElementNS(svgNamespace, 'svg');
+    launcherRim.classList.add('hn-ai-launcher-rim');
+    launcherRim.setAttribute('viewBox', '0 0 100 100');
+    launcherRim.setAttribute('aria-hidden', 'true');
+    launcherRim.setAttribute('focusable', 'false');
+    launcherRim.setAttribute('color-interpolation', 'sRGB');
+    const rimDefinitions = document.createElementNS(svgNamespace, 'defs');
+    const rimGradient = document.createElementNS(svgNamespace, 'linearGradient');
+    const rimGradientId = `${CHAT_ID}-rim-gradient`;
+    rimGradient.setAttribute('id', rimGradientId);
+    Object.entries({ gradientUnits: 'userSpaceOnUse', x1: '98.42', y1: '60.29', x2: '50', y2: '99.5' })
+      .forEach(([name, value]) => rimGradient.setAttribute(name, value));
+    const rimColors = [
+      'rgb(255, 64, 95)', 'rgb(255, 102, 55)', 'rgb(255, 160, 48)',
+      'rgb(255, 211, 67)', 'rgb(228, 255, 94)', 'rgb(128, 245, 116)',
+      'rgb(56, 234, 163)', 'rgb(45, 232, 213)', 'rgb(62, 212, 255)',
+      'rgb(80, 166, 255)', 'rgb(111, 122, 255)', 'rgb(164, 99, 255)',
+      'rgb(213, 91, 248)', 'rgb(255, 87, 210)', 'rgb(255, 105, 161)',
+    ];
+    rimColors.forEach((color, index) => {
+      const stop = document.createElementNS(svgNamespace, 'stop');
+      stop.setAttribute('offset', `${index * 100 / (rimColors.length - 1)}%`);
+      stop.setAttribute('stop-color', color);
+      rimGradient.appendChild(stop);
+    });
+    const rimClip = document.createElementNS(svgNamespace, 'clipPath');
+    const rimClipId = `${CHAT_ID}-rim-clip`;
+    rimClip.setAttribute('id', rimClipId);
+    rimClip.setAttribute('clipPathUnits', 'userSpaceOnUse');
+    const rimClipArea = document.createElementNS(svgNamespace, 'rect');
+    Object.entries({ x: '0', y: '0', width: '50', height: '100' })
+      .forEach(([name, value]) => rimClipArea.setAttribute(name, value));
+    rimClip.appendChild(rimClipArea);
+    const rimFlashGradient = document.createElementNS(svgNamespace, 'radialGradient');
+    const rimFlashGradientId = `${CHAT_ID}-rim-flash`;
+    Object.entries({ id: rimFlashGradientId, gradientUnits: 'userSpaceOnUse', cx: '50', cy: '0.5', r: '14' })
+      .forEach(([name, value]) => rimFlashGradient.setAttribute(name, value));
+    [
+      ['0%', '#f8fff6', '1'], ['12%', '#dbffef', '0.95'],
+      ['36%', '#53ffb5', '0.65'], ['68%', '#00ce87', '0.2'],
+      ['100%', '#008759', '0'],
+    ].forEach(([offset, color, opacity]) => {
+      const stop = document.createElementNS(svgNamespace, 'stop');
+      Object.entries({ offset, 'stop-color': color, 'stop-opacity': opacity })
+        .forEach(([name, value]) => stop.setAttribute(name, value));
+      rimFlashGradient.appendChild(stop);
+    });
+    rimDefinitions.append(rimGradient, rimClip, rimFlashGradient);
+    launcherRim.appendChild(rimDefinitions);
+    // A filled ribbon tapers to zero at both ends; a round stroke cannot make needle tips.
+    const rimEdges = [[], []];
+    for (let step = 0; step <= 32; step += 1) {
+      const progress = step / 32;
+      const angle = (12 + 78 * progress) * Math.PI / 180;
+      const width = step === 0 || step === 32 ? 0 : 0.48 * Math.sin(progress * Math.PI) ** 1.5;
+      [1, -1].forEach((direction, edge) => {
+        const radius = 49.5 + direction * width;
+        const x = (50 + Math.cos(angle) * radius).toFixed(4);
+        const y = (50 + Math.sin(angle) * radius).toFixed(4);
+        rimEdges[edge].push(`${x},${y}`);
+      });
+    }
+    const rimPath = `M${rimEdges[0].join(' L')} L${rimEdges[1].reverse().join(' L')} Z`;
+    [false, true].forEach(mirrored => {
+      const side = document.createElementNS(svgNamespace, 'g');
+      if (mirrored) side.setAttribute('transform', 'translate(100 0) scale(-1 1)');
+      const clippedSide = document.createElementNS(svgNamespace, 'g');
+      clippedSide.setAttribute('clip-path', `url(#${rimClipId})`);
+      const trace = document.createElementNS(svgNamespace, 'path');
+      trace.classList.add('hn-ai-launcher-rim-trace');
+      trace.setAttribute('d', rimPath);
+      trace.setAttribute('fill', `url(#${rimGradientId})`);
+      const trailOffset = document.createElementNS(svgNamespace, 'g');
+      trailOffset.setAttribute('transform', 'rotate(-18 50 50)');
+      const trail = trace.cloneNode(false);
+      trail.setAttribute('class', 'hn-ai-launcher-rim-trail');
+      trail.setAttribute('fill', '#00e897');
+      trailOffset.appendChild(trail);
+      clippedSide.appendChild(trailOffset);
+      clippedSide.appendChild(trace);
+      side.appendChild(clippedSide);
+      launcherRim.appendChild(side);
+    });
+    const createRimFlash = (origin = false) => {
+      const star = document.createElementNS(svgNamespace, 'g');
+      star.classList.add('hn-ai-launcher-rim-star');
+      if (origin) star.classList.add('hn-ai-launcher-rim-star--origin');
+      const corona = document.createElementNS(svgNamespace, 'ellipse');
+      Object.entries({
+        cx: '50', cy: origin ? '-2' : '0.5', rx: '10', ry: origin ? '3.5' : '10',
+        fill: `url(#${rimFlashGradientId})`, opacity: origin ? '0.32' : '0.45',
+      }).forEach(([name, value]) => corona.setAttribute(name, value));
+      const rays = document.createElementNS(svgNamespace, 'path');
+      rays.setAttribute('d', origin
+        ? 'M44 -5.5 L50 0.5 L56 -5.5'
+        : 'M44 -5.5 L56 6.5 M56 -5.5 L44 6.5');
+      rays.setAttribute('stroke', `url(#${rimFlashGradientId})`);
+      rays.setAttribute('stroke-width', '0.3');
+      const light = document.createElementNS(svgNamespace, 'path');
+      light.setAttribute('d', origin
+        ? 'M50 -13.5 C50.3 -1 51 -0.2 60 0.5 C51 1.1 50.3 1.5 50 2.5 C49.7 1.5 49 1.1 40 0.5 C49 -0.2 49.7 -1 50 -13.5 Z'
+        : 'M50 -14.5 C50.3 -1.2 51 -0.2 63 0.5 C51 1.2 50.3 1.8 50 11.5 C49.7 1.8 49 1.2 37 0.5 C49 -0.2 49.7 -1.2 50 -14.5 Z');
+      light.setAttribute('fill', `url(#${rimFlashGradientId})`);
+      const core = document.createElementNS(svgNamespace, 'circle');
+      Object.entries({ cx: '50', cy: '0.5', r: '0.85', fill: '#f6fff9' })
+        .forEach(([name, value]) => core.setAttribute(name, value));
+      star.append(corona, rays, light, core);
+      return star;
+    };
+    launcherRim.appendChild(createRimFlash());
+    const rimOrigin = document.createElementNS(svgNamespace, 'g');
+    rimOrigin.setAttribute('transform', 'translate(0 99)');
+    rimOrigin.appendChild(createRimFlash(true));
+    launcherRim.appendChild(rimOrigin);
+    launcher.append(launcherSurface, launcherRim);
 
     const panel = document.createElement('div');
     panel.className = 'hn-ai-panel';

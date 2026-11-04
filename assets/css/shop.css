@@ -297,7 +297,7 @@
   animation: price-hero-search-gradient 8s ease-in-out infinite;
 }
 
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+@media (hover: hover) {
   .shop-page :is(.shop-collection, .shop-product):is(:hover, :focus-within),
   html.site-perf-lite .shop-page :is(.shop-collection, .shop-product):is(:hover, :focus-within) {
     transform: translateY(-6px) perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) !important;
@@ -922,18 +922,5 @@ body.light.shop-page .shop-main .shop-advice :is(h2, h3) {
   }
   .shop-footer nav {
     gap: 14px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .shop-collection::after,
-  .shop-product::after {
-    animation: none;
-  }
-  .shop-page *,
-  .shop-page *::before,
-  .shop-page *::after {
-    scroll-behavior: auto !important;
-    transition: none !important;
   }
 }

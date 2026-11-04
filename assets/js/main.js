@@ -16,26 +16,17 @@ document.addEventListener('DOMContentLoaded', () => {
     chatScript.src = '/assets/js/ai-chat.js';
     document.head.appendChild(chatScript);
   }
-  const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
   const isCoarsePointer = window.matchMedia?.('(hover: none), (pointer: coarse)')?.matches ?? false;
   const isLowPowerDevice =
     (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
     (navigator.deviceMemory && navigator.deviceMemory <= 4);
   document.documentElement.classList.add('site-perf-balanced');
 
-  const sitePerfLite =
-    prefersReducedMotion ||
-    isCoarsePointer ||
-    isLowPowerDevice ||
-    window.innerWidth < 1280;
+  const sitePerfLite = isCoarsePointer || isLowPowerDevice || window.innerWidth < 1280;
 
   if (sitePerfLite) {
     document.documentElement.classList.add('site-perf-lite');
   }
-
-  /* Keep legacy parallax/plasma effects disabled; the full emerald scene now
-     moves in CSS on its own compositor layer and needs no scroll RAF loop. */
-  const sitePerfHeavy = !prefersReducedMotion;
 
   const siteShell = window.SiteShell?.init?.() || {};
   const preloaderNotice = siteShell.preloaderNotice || {
@@ -225,12 +216,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!scroller) return;
     scroller.scrollTo({
       top: button.dataset.priceScroll === 'top' ? 0 : scroller.scrollHeight,
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      behavior: 'smooth',
     });
   });
 
   const scrollActivityTimers = new WeakMap();
-  const scrollActivityFadeDelay = prefersReducedMotion ? 220 : 900;
+  const scrollActivityFadeDelay = 900;
   const markScrollActivity = target => {
     const scrollTarget = target instanceof Element ? target : target === document ? scrollRoot : null;
     if (!scrollTarget) return;
@@ -280,6 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const burger = getByAnyId('burgerBtn', 'burger-btn');
   const mobileNav = getByAnyId('mobile-nav', 'mobileNav');
+  const mobileNavScroll = mobileNav?.querySelector('.mobile-nav__content') || mobileNav;
   const overlay = getByAnyId('mobile-nav-overlay', 'mobileNavOverlay');
   const mobileGalleryBtn = getByAnyId('mobileGalleryBtn', 'mobile-gallery-btn');
   const mobileGalleryMenu = getByAnyId('mobileGalleryMenu', 'mobile-gallery-menu');
@@ -459,7 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const mobileNavScrollbar = mobileNav
     ? createLiquidScrollbar({
-        scrollTarget: mobileNav,
+        scrollTarget: mobileNavScroll,
         thumbParent: mobileNav,
         thumbClass: 'custom-scrollbar-thumb--nav',
         viewportPadding: 0,
@@ -504,7 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollTarget,
     { axis = 'y', intensity = 0.92, easing = 0.14, threshold = 0.45, maxStep = axis === 'x' ? 220 : 280 } = {}
   ) => {
-    if (!scrollTarget || prefersReducedMotion || !hasFinePointer) return;
+    if (!scrollTarget || !hasFinePointer) return;
     if (scrollTarget.dataset.inertialScrollBound === 'true') return;
     scrollTarget.dataset.inertialScrollBound = 'true';
 
@@ -600,7 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   enableInertialScroll(scrollRoot, { axis: 'y', intensity: 0.94, easing: 0.12, maxStep: 300 });
-  enableInertialScroll(mobileNav, { axis: 'y', intensity: 0.9, easing: 0.16, maxStep: 220 });
+  enableInertialScroll(mobileNavScroll, { axis: 'y', intensity: 0.9, easing: 0.16, maxStep: 220 });
   document.querySelectorAll('.service-list').forEach(panel => {
     enableInertialScroll(panel, { axis: 'y', intensity: 0.88, easing: 0.17, maxStep: 180 });
   });
@@ -960,22 +952,108 @@ document.addEventListener('DOMContentLoaded', () => {
   const hero = document.querySelector('.hero');
 
   let activeMusicPanel = null;
-  let socialPickerOpenFrame = null;
   let socialPanelOpenFrame = null;
-  let socialIconsOpenFrame = null;
-
-  const closeSocialIconsUI = () => {
-    if (socialIconsOpenFrame !== null) {
-      cancelAnimationFrame(socialIconsOpenFrame);
-      socialIconsOpenFrame = null;
-    }
-    if (!socialIconsToggle || !socialIconsList) return;
-    socialIconsToggle.setAttribute('aria-expanded', 'false');
-    socialIconsToggle.classList.remove('is-open');
-    socialIconsList.hidden = true;
-    socialIconsList.setAttribute('aria-hidden', 'true');
-    socialIconsList.classList.remove('is-open');
+  const socialMobileMedia = window.matchMedia('(max-width: 900px)');
+  const isMobileIconRollout = () => socialMobileMedia.matches;
+  const createIconRolloutController = (toggle, list, childSelector) => {
+    let openFrame = null;
+    let closeToken = 0;
+    let closingAnimations = [];
+    const setPlaybackRate = (animation, rate) => {
+      if (typeof animation.updatePlaybackRate === 'function') animation.updatePlaybackRate(rate);
+      else animation.playbackRate = rate;
+    };
+    const close = () => {
+      closeToken += 1;
+      closingAnimations.forEach(animation => animation.cancel());
+      closingAnimations = [];
+      if (openFrame !== null) cancelAnimationFrame(openFrame);
+      openFrame = null;
+      toggle?.setAttribute('aria-expanded', 'false');
+      toggle?.classList.remove('is-open');
+      if (!list) return;
+      list.hidden = true;
+      list.inert = true;
+      list.setAttribute('aria-hidden', 'true');
+      list.classList.remove('is-open');
+    };
+    const reverse = () => {
+      if (!isMobileIconRollout()) return false;
+      const animations = Array.from(list.querySelectorAll(childSelector))
+        .flatMap(link => link.getAnimations?.() || [])
+        .filter(animation => animation.animationName === 'social-icon-rollout');
+      if (!animations.length || animations.some(animation =>
+        typeof animation.play !== 'function' ||
+        typeof animation.cancel !== 'function' || !Number.isFinite(animation.currentTime) ||
+        !Number.isFinite(animation.effect?.getComputedTiming().endTime)
+      )) return false;
+      // Finished CSS animations keep different end times because of their staggered delays.
+      const commonTime = Math.min(
+        Math.max(...animations.map(animation => animation.currentTime)),
+        Math.max(...animations.map(animation => animation.effect.getComputedTiming().endTime))
+      );
+      if (commonTime <= 0) return false;
+      const token = ++closeToken;
+      closingAnimations = animations;
+      toggle.setAttribute('aria-expanded', 'false');
+      list.setAttribute('aria-hidden', 'true');
+      list.inert = true;
+      try {
+        animations.forEach(animation => {
+          setPlaybackRate(animation, -1);
+          animation.play();
+          animation.currentTime = commonTime;
+        });
+      } catch {
+        return false;
+      }
+      Promise.allSettled(animations.map(animation => animation.finished)).then(() => {
+        if (token !== closeToken || toggle.getAttribute('aria-expanded') !== 'false') return;
+        close();
+      });
+      return true;
+    };
+    const dismiss = () => {
+      if (!toggle || !list || list.hidden || toggle.getAttribute('aria-expanded') !== 'true') return;
+      if (!reverse()) close();
+    };
+    const open = () => {
+      if (!toggle || !list) return;
+      closeToken += 1;
+      const animations = closingAnimations;
+      closingAnimations = [];
+      toggle.setAttribute('aria-expanded', 'true');
+      toggle.classList.add('is-open');
+      list.hidden = false;
+      list.inert = false;
+      list.setAttribute('aria-hidden', 'false');
+      if (animations.length) {
+        try {
+          animations.forEach(animation => {
+            const currentTime = animation.currentTime;
+            setPlaybackRate(animation, 1);
+            animation.play();
+            animation.currentTime = currentTime;
+          });
+        } catch {
+          close();
+        }
+        return;
+      }
+      // Commit the reset state so WebKit restarts a fresh rollout after a rapid reopen.
+      void list.offsetWidth;
+      openFrame = requestAnimationFrame(() => {
+        openFrame = null;
+        if (list.hidden || toggle.getAttribute('aria-expanded') !== 'true') return;
+        list.classList.add('is-open');
+      });
+    };
+    return { close, dismiss, open };
   };
+  const socialIconsUI = createIconRolloutController(socialIconsToggle, socialIconsList, ':scope > .social-icon');
+  const musicPickerUI = createIconRolloutController(socialPlayerToggle, socialServicePicker, ':scope > .social-service-btn');
+  const closeSocialIconsUI = socialIconsUI.close;
+  const dismissSocialIconsUI = socialIconsUI.dismiss;
 
   /* Panel is positioned via CSS (position:absolute inside .social-player-wrap,
        slides to the right). JS positioning is no longer needed. */
@@ -987,23 +1065,10 @@ document.addEventListener('DOMContentLoaded', () => {
     panel.style.removeProperty('--spotify-origin-x');
   };
 
-  const closeAllMusicUI = () => {
-    if (socialPickerOpenFrame !== null) {
-      cancelAnimationFrame(socialPickerOpenFrame);
-      socialPickerOpenFrame = null;
-    }
+  const closeMusicPanelsUI = () => {
     if (socialPanelOpenFrame !== null) {
       cancelAnimationFrame(socialPanelOpenFrame);
       socialPanelOpenFrame = null;
-    }
-    if (socialPlayerToggle) {
-      socialPlayerToggle.classList.remove('is-open');
-      socialPlayerToggle.setAttribute('aria-expanded', 'false');
-    }
-    if (socialServicePicker) {
-      socialServicePicker.classList.remove('is-open');
-      socialServicePicker.hidden = true;
-      socialServicePicker.setAttribute('aria-hidden', 'true');
     }
     if (socialMusicMenu) {
       socialMusicMenu.classList.remove('is-open');
@@ -1020,6 +1085,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     activeMusicPanel = null;
     document.body.dataset.spotifyPanelOpen = 'false';
+  };
+  const closeAllMusicUI = () => {
+    musicPickerUI.close();
+    closeMusicPanelsUI();
+  };
+  const dismissMusicUI = () => {
+    if (isMobileIconRollout() && socialServicePicker && !socialServicePicker.hidden) {
+      musicPickerUI.dismiss();
+      closeMusicPanelsUI();
+    } else {
+      closeAllMusicUI();
+    }
   };
 
   /* Lazily set iframe src only on first open to avoid loading Spotify/Apple
@@ -1068,21 +1145,13 @@ document.addEventListener('DOMContentLoaded', () => {
     socialPlayerToggle.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
-      closeSocialIconsUI();
-      const pickerOpen = socialServicePicker?.classList.contains('is-open');
+      dismissSocialIconsUI();
+      const pickerOpen = socialPlayerToggle.getAttribute('aria-expanded') === 'true';
       const panelOpen = activeMusicPanel?.classList.contains('is-open');
       if (pickerOpen || panelOpen) {
-        closeAllMusicUI();
+        dismissMusicUI();
       } else if (socialServicePicker) {
-        socialServicePicker.hidden = false;
-        socialServicePicker.setAttribute('aria-hidden', 'false');
-        socialPlayerToggle.setAttribute('aria-expanded', 'true');
-        socialPlayerToggle.classList.add('is-open');
-        socialPickerOpenFrame = requestAnimationFrame(() => {
-          socialPickerOpenFrame = null;
-          if (socialServicePicker.hidden || socialPlayerToggle.getAttribute('aria-expanded') !== 'true') return;
-          socialServicePicker.classList.add('is-open');
-        });
+        musicPickerUI.open();
       } else {
         openServicePanel(socialSpotifyPanel);
       }
@@ -1092,32 +1161,33 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
-        closeSocialIconsUI();
+        dismissSocialIconsUI();
         const panelId = btn.dataset.panel;
         const panel = document.getElementById(panelId);
-        if (socialServicePicker) {
-          socialServicePicker.classList.remove('is-open');
-          socialServicePicker.hidden = true;
-          socialServicePicker.setAttribute('aria-hidden', 'true');
-        }
-        socialPlayerToggle.classList.remove('is-open');
+        musicPickerUI.dismiss();
         openServicePanel(panel);
       });
     });
 
-    document.addEventListener('click', event => {
-      const pickerOpen = socialServicePicker?.classList.contains('is-open');
+    const dismissMusicFromOutside = event => {
+      const pickerOpen = socialServicePicker && !socialServicePicker.hidden;
       const panelOpen = activeMusicPanel?.classList.contains('is-open');
       if (!pickerOpen && !panelOpen) return;
       if (socialPlayerToggle.contains(event.target)) return;
       if (socialServicePicker?.contains(event.target)) return;
       if (activeMusicPanel?.contains(event.target)) return;
-      closeAllMusicUI();
+      dismissMusicUI();
+    };
+    document.addEventListener('click', event => {
+      if (isMobileIconRollout()) dismissMusicFromOutside(event);
+    }, true);
+    document.addEventListener('click', event => {
+      if (!isMobileIconRollout()) dismissMusicFromOutside(event);
     });
 
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape') {
-        closeAllMusicUI();
+        dismissMusicUI();
       }
     });
 
@@ -1133,32 +1203,23 @@ document.addEventListener('DOMContentLoaded', () => {
     socialIconsToggle.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
-      const isOpen = !socialIconsList.hidden;
+      const isOpen = socialIconsToggle.getAttribute('aria-expanded') === 'true';
       if (isOpen) {
-        closeSocialIconsUI();
+        dismissSocialIconsUI();
       } else {
-        closeAllMusicUI();
-        socialIconsToggle.setAttribute('aria-expanded', 'true');
-        socialIconsToggle.classList.add('is-open');
-        socialIconsList.hidden = false;
-        socialIconsList.setAttribute('aria-hidden', 'false');
-        socialIconsOpenFrame = requestAnimationFrame(() => {
-          socialIconsOpenFrame = null;
-          if (socialIconsList.hidden || socialIconsToggle.getAttribute('aria-expanded') !== 'true') return;
-          socialIconsList.classList.add('is-open');
-        });
+        dismissMusicUI();
+        socialIconsUI.open();
       }
     });
 
     document.addEventListener('click', event => {
-      if (socialIconsList.hidden) return;
       if (socialIconsToggle.contains(event.target)) return;
       if (socialIconsList.contains(event.target)) return;
-      closeSocialIconsUI();
-    });
+      dismissSocialIconsUI();
+    }, true);
 
     document.addEventListener('keydown', event => {
-      if (event.key === 'Escape') closeSocialIconsUI();
+      if (event.key === 'Escape') dismissSocialIconsUI();
     });
   }
 
@@ -1167,11 +1228,11 @@ document.addEventListener('DOMContentLoaded', () => {
      social links can place an invisible animated layer over later pointer
      targets at some viewport widths. */
   const socialPlayerWrap = socialPlayerToggle?.closest('.social-player-wrap');
-  socialPlayerWrap?.addEventListener('pointerenter', closeSocialIconsUI);
-  socialPlayerWrap?.addEventListener('focusin', closeSocialIconsUI);
+  socialPlayerWrap?.addEventListener('pointerenter', dismissSocialIconsUI);
+  socialPlayerWrap?.addEventListener('focusin', dismissSocialIconsUI);
   document.querySelectorAll('.social-icons-wrap, .social-icons--desktop, #social-icons-list').forEach(region => {
-    region.addEventListener('pointerenter', closeAllMusicUI);
-    region.addEventListener('focusin', closeAllMusicUI);
+    region.addEventListener('pointerenter', dismissMusicUI);
+    region.addEventListener('focusin', dismissMusicUI);
   });
 
   [pageHeader, pageTopRow, socialBar].filter(Boolean).forEach(element => {
@@ -1272,16 +1333,11 @@ document.addEventListener('DOMContentLoaded', () => {
       pageHeader?.classList.remove('header-social-visible');
     }
 
-    /* Hero parallax — only in full perf mode (scroll + transform = extra paint) */
+    /* Hero parallax follows the page's actual scroll position. */
     if (hero) {
-      if (sitePerfHeavy) {
-        const offset = Math.min(current * 0.15, 80);
-        hero.style.transform = `translateY(${offset}px)`;
-        hero.style.filter = 'none';
-      } else {
-        hero.style.transform = '';
-        hero.style.filter = '';
-      }
+      const offset = Math.min(current * 0.15, 80);
+      hero.style.transform = `translateY(${offset}px)`;
+      hero.style.filter = 'none';
     }
 
     if (navProgressBar) {
@@ -1321,7 +1377,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const revealVisibleContent = () => {
       revealElements.filter(isNearViewport).forEach(activateReveal);
     };
-    if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+    if (!('IntersectionObserver' in window)) {
       revealElements.forEach(activateReveal);
     } else {
       const revealObserver = new IntersectionObserver(
@@ -1343,7 +1399,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ========== POINTER GLOW ==========
        Runs only while the pointer is active — no idle RAF loop. */
-  if (sitePerfHeavy && !isCoarsePointer) {
+  if (!isCoarsePointer) {
     const pointerGlow = document.createElement('div');
     pointerGlow.className = 'pointer-glow is-idle';
     document.body.appendChild(pointerGlow);
@@ -1416,11 +1472,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ========== 3D TILT + GLOW FOR ALL TILES ========== */
-  const tiltCards = sitePerfHeavy
-    ? document.querySelectorAll(
-        '.service-card, .promo-card, .review-card, .gallery-item, .before-after-card, .social-card, .news-card, .winner-card'
-      )
-    : [];
+  const tiltCards = document.querySelectorAll(
+    '.service-card, .promo-card, .review-card, .gallery-item, .before-after-card, .social-card, .news-card, .winner-card'
+  );
   const TILT_MAX = 12;
 
   tiltCards.forEach(card => {
@@ -1455,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ========== SVG TURBULENCE FILTER FOR PLASMA ========== */
-  if (sitePerfHeavy && !document.getElementById('plasma-filters')) {
+  if (!document.getElementById('plasma-filters')) {
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNS, 'svg');
     svg.setAttribute('id', 'plasma-filters');
@@ -1694,8 +1748,6 @@ document.addEventListener('DOMContentLoaded', () => {
     activePlasma.setAttribute('aria-hidden', 'true');
     link.appendChild(activePlasma);
 
-    if (!sitePerfHeavy) return;
-
     const syncTouchBounds = (width, height) => {
       activePlasma._touchWidth = width;
       activePlasma._touchHeight = height;
@@ -1860,7 +1912,7 @@ document.addEventListener('DOMContentLoaded', () => {
       mountActivePlasma(link);
     }
 
-    if (!prefersReducedMotion && (!isCoarsePointer || window.innerWidth >= 768)) {
+    if (!isCoarsePointer || window.innerWidth >= 768) {
       link.addEventListener('mouseenter', event => {
         if (!link.querySelector('.nav-plasma--active')) {
           mountActivePlasma(link, { cta: isOnlineOrderPill, pointerEvent: event });
@@ -1956,7 +2008,7 @@ document.addEventListener('DOMContentLoaded', () => {
     arrow.dispatchEvent(new window.AnimationEvent('animationend', { animationName: 'priceBreedArrowClose' }));
   };
   const playSiteArrowActivation = (control, state = {}) => {
-    if (prefersReducedMotion || !control) return;
+    if (!control) return;
     const settings = getSiteArrowActivationSettings();
     const isBreedToggle = control.matches('[data-price-breeds-toggle]');
     const arrows = control.querySelectorAll(
@@ -2076,7 +2128,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ========== SOCIAL ICON CLICK — PLAY FLIP + NAVIGATE ========== */
-  const animatedSocialClickMedia = window.matchMedia('(width <= 900px)');
+  const animatedSocialClickMedia = window.matchMedia('(max-width: 900px)');
   document.querySelectorAll('.social-icon, .header-social-link, .footer-socials .social-link--icon').forEach(link => {
     let clicking = false;
     link.addEventListener('click', e => {

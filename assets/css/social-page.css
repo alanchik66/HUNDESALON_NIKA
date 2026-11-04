@@ -837,18 +837,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .social-page :is(a, i, svg, img, .social-icon, [class*="icon"]) {
-    animation: none !important;
-    transition: none !important;
-  }
-
-  .social-reel-modal__video,
-  .social-reel-modal__navigation {
-    transition: none !important;
-  }
-}
-
 body.social-reel-modal-open {
   overflow: hidden;
 }

@@ -22,6 +22,7 @@ if (!/^[A-Za-z0-9_-]{43}$/.test(config.key || '')) throw new Error('Invalid loca
 const emailIndex = process.argv.indexOf('--email');
 const requestedEmail = emailIndex < 0 ? null : process.argv[emailIndex + 1];
 const publicReadOnly = process.argv.includes('--public-read-only');
+const openHome = process.argv.includes('--home');
 if (emailIndex >= 0 && !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(requestedEmail || ''))
   throw new Error('A valid access email is required.');
 const probe = async () => {
@@ -95,7 +96,7 @@ if (!state) {
       )
     );
   }
-  const command = `"${process.execPath}" "${path.join(root, 'tools/dev-remote-preview.mjs')}"`;
+  const command = `"${process.execPath}" "${path.join(root, 'tools/lib/remote-preview-supervisor.mjs')}"${openHome ? ' --home' : ''}`;
   const vbs = text => `"${text.replaceAll('"', '""')}"`;
   const launcher = path.join(output, 'remote-preview.vbs');
   await writeFile(
@@ -121,8 +122,10 @@ for (let attempt = 0; attempt < 120; attempt++) {
 if (!state?.publicUrl) throw new Error('Tunnel URL is not ready; inspect output/local-preview/tunnel.log.');
 const url =
   config.allowedEmail || config.publicReadOnly
-    ? `${state.publicUrl}/ru/prays-list.html`
-    : `${state.publicUrl}/__preview_login?key=${config.key}`;
+    ? `${state.publicUrl}${openHome ? '/ru/' : '/ru/prays-list.html'}`
+    : openHome
+      ? `${state.publicUrl}/ru/?__preview_key=${config.key}`
+      : `${state.publicUrl}/__preview_login?key=${config.key}`;
 await writeFile(
   path.join(output, 'iphone-link.json'),
   JSON.stringify({ url, publicUrl: state.publicUrl, updatedAt: new Date().toISOString() }, null, 2),

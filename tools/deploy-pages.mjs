@@ -9,6 +9,8 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { ACCOUNT_ID, loadWranglerOAuth, refreshWranglerOAuth } from './lib/cloudflare-auth.mjs';
+import { assertManualReleaseState, prepareManualRelease, runManualReleaseCommand } from './lib/manual-release-guard.mjs';
+import { prepareProductionRelease, resolveWeatherReleaseAssets, verifyProductionArtifact, verifyProductionRelease } from './lib/production-release-verification.mjs';
 import {
   DEFAULT_PAGES_PROJECT,
   TOKEN_NAME,
@@ -113,27 +115,28 @@ const isMain =
   process.argv[1] &&
   path.resolve(fileURLToPath(import.meta.url)) === path.resolve(process.argv[1]);
 
-async function deployPages(argv = process.argv.slice(2)) {
-  const auth = await ensureDeployCredentials();
-  if (!auth) return 1;
-
-  if (!existsSync(path.join(root, distDir))) {
-    console.error(`Missing ${distDir}/. Run: npm run build`);
+async function deployPages(argv = process.argv.slice(2), {
+  run = runManualReleaseCommand, authenticate = ensureDeployCredentials, upload = runWrangler,
+  prepareRelease = prepareProductionRelease, verifyArtifact = verifyProductionArtifact, resolveAssets = resolveWeatherReleaseAssets,
+  verifyPublished = verifyProductionRelease,
+} = {}) {
+  try {
+    const release = prepareManualRelease({ root, argv, run, prepareRelease, verifyArtifact, resolveAssets });
+    const auth = await authenticate();
+    if (!auth) return 1;
+    // Credentials may take time to refresh; reject changes or a CI race before uploading.
+    assertManualReleaseState({ root, run, commit: release.commit });
+    verifyArtifact({ directory: release.directory, manifest: release.manifest, commit: release.commit, stamp: release.stamp });
+    const wranglerArgs = ['pages', 'deploy', distDir, '--project-name', projectName,
+      '--branch', 'main', '--commit-hash', release.commit, '--commit-dirty=false'];
+    const result = upload(wranglerArgs, pagesDeployEnv(process.env, auth.token));
+    if (result.status !== 0) return result.status ?? 1;
+    await verifyPublished({ commit: release.commit, manifest: release.manifest });
+    return 0;
+  } catch (error) {
+    console.error(error.message);
     return 1;
   }
-
-  const wranglerArgs = ['pages', 'deploy', distDir, '--project-name', projectName];
-  if (!argv.some(arg => arg.startsWith('--commit-dirty'))) {
-    wranglerArgs.push('--commit-dirty=true');
-  }
-  wranglerArgs.push(...argv);
-
-  const result = runWrangler(wranglerArgs, pagesDeployEnv(process.env, auth.token));
-  if (result.status === 0 && auth.mode === 'wrangler-oauth') {
-    console.log('');
-    console.log(`Tip: npm run cf:open-unified-token → cf:set-api-token for stable ${TOKEN_NAME}.`);
-  }
-  return result.status ?? 1;
 }
 
 if (isMain) {

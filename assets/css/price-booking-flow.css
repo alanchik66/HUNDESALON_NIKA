@@ -224,10 +224,3 @@
     left: 12px;
   }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  #booking-modal[data-price-booking-flow] .booking-step.is-entering,
-  #booking-modal[data-price-booking-flow] .booking-step.is-leaving {
-    animation: none !important;
-  }
-}

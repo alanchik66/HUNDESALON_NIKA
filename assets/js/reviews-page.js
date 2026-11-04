@@ -69,7 +69,6 @@
     }
 
     syncRatingSummary();
-    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    followup?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+    followup?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 })();

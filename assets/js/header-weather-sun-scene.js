@@ -47,7 +47,6 @@ export class HeaderWeatherSunScene {
       longitude: 12.42,
       timeMs: Date.now(),
     };
-    this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.running = false;
     this.rafId = 0;
     this.clock = new THREE.Clock();
@@ -143,9 +142,7 @@ export class HeaderWeatherSunScene {
       return;
     }
 
-    const sunSpin = this.reducedMotion
-      ? SUN_START_ANGLE
-      : SUN_START_ANGLE + (elapsedSeconds / SUN_ROTATION_SECONDS) * TAU;
+    const sunSpin = SUN_START_ANGLE + (elapsedSeconds / SUN_ROTATION_SECONDS) * TAU;
     this.sunMesh.rotation.y = sunSpin;
   }
 

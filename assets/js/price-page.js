@@ -2718,8 +2718,7 @@
           window.HundesalonNavPill?.deactivate(button);
         }
       });
-      const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-      const behavior = reducedMotion ? 'auto' : 'smooth';
+      const behavior = 'smooth';
       const scrollRoot = document.querySelector('.site-scroll-root');
 
       if (scrollRoot) {
@@ -2897,7 +2896,7 @@
 
   const startBreedArrowCloseAnimation = toggle => {
     const icon = toggle.querySelector('.price-card__badge-icon');
-    if (!icon || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!icon) return;
 
     toggle.classList.remove('price-breed-arrow--closing');
     void toggle.offsetWidth;

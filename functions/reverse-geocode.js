@@ -266,9 +266,12 @@ function getDefaultCache() {
 
 async function readCachedPayload(cache, cacheKey) {
   if (!cache) return null;
-  const response = await cache.match(cacheKey);
-  if (!response) return null;
-  return response.json().catch(() => null);
+  try {
+    const response = await cache.match(cacheKey);
+    return response ? await response.json() : null;
+  } catch {
+    return null;
+  }
 }
 
 function storeCachedPayload(context, cache, cacheKey, payload) {
@@ -279,7 +282,7 @@ function storeCachedPayload(context, cache, cacheKey, payload) {
       'Cache-Control': `max-age=${REVERSE_CACHE_TTL_SECONDS}`,
     },
   });
-  const operation = cache.put(cacheKey, response);
+  const operation = Promise.resolve().then(() => cache.put(cacheKey, response)).catch(() => {});
   if (typeof context.waitUntil === 'function') {
     context.waitUntil(operation);
   }
@@ -318,7 +321,7 @@ export async function onRequest(context) {
     route: 'reverse-geocode',
     limit: 18,
     windowSec: 60,
-  });
+  }).catch(() => null);
   if (rateLimitResponse) {
     return respond(rateLimitResponse);
   }

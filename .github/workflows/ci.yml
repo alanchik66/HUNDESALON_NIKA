@@ -18,6 +18,9 @@ jobs:
   validate-build:
     name: Validate and build
     runs-on: ubuntu-latest
+    outputs:
+      artifact_id: ${{ steps.production-artifact.outputs.artifact-id }}
+      asset_stamp: ${{ steps.release-manifest.outputs.asset_stamp }}
 
     steps:
       - name: Checkout
@@ -38,23 +41,25 @@ jobs:
       - name: Install Google gateway dependencies
         run: npm --prefix integrations/google-gateway ci
 
-      - name: Audit dependencies
-        run: npm run audit:all
-
-      - name: Validate
-        run: npm run validate
-
-      - name: Build production bundle
-        run: npm run build:production
-
-      - name: Enforce production asset budgets
-        run: npm run check:budgets
-
-      - name: Run visual and accessibility smoke tests
-        run: npm run test:browser
+      - name: Run the complete release quality gate
+        run: npm run qa:max
 
       - name: Check client registration recovery in every locale and viewport
         run: node tools/client-registration-smoke.mjs
+
+      - name: Record the tested production artifact
+        id: release-manifest
+        run: node tools/verify-production-release.mjs --prepare --commit "$GITHUB_SHA"
+
+      - name: Preserve the exact tested production bundle
+        id: production-artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: production-dist-${{ github.sha }}-${{ github.run_attempt }}
+          path: dist/
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 7
 
   security:
     name: Require current-revision security results
@@ -78,8 +83,13 @@ jobs:
     needs: [validate-build, security]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
+      actions: read
       contents: read
       deployments: write
       security-events: read
     uses: ./.github/workflows/cloudflare-pages.yml
+    with:
+      artifact_id: ${{ needs.validate-build.outputs.artifact_id }}
+      asset_stamp: ${{ needs.validate-build.outputs.asset_stamp }}
+      release_commit: ${{ github.sha }}
     secrets: inherit

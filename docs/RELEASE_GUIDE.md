@@ -2,8 +2,9 @@
 
 ## Full professional deploy
 
-The request “полный профессиональный deploy” authorizes this complete sequence for the site repository: inventory, cleanup, code review, quality gates, explicit staging, commit, push, deployment and production verification. Preserve unrelated work and credentials. Report concrete blockers instead of publishing a failing revision.
+The request “полный профессиональный deploy” authorizes this complete sequence for the site repository: inventory, cleanup, code review, quality gates, explicit staging, commit, push, deployment and production verification. Sending the [haraldalder-vibemogger profile](https://github.com/haraldalder-vibemogger) for this project is the same standing release command, as requested by the user on 2026-11-04, unless that message explicitly limits the task to reading or another purpose. Preserve unrelated work and credentials. Report concrete blockers instead of publishing a failing revision.
 
+0. Run `npm run release:references`. This discovers the current public repository catalog and default-branch HEADs without installing or executing upstream code. Compare the saved discovery report with `config/release-reference-methods.json`; review new or changed sources and record the pinned SHA, applicable method, existing checks and exclusions before updating the manifest. Do not assume the catalog will always contain seven projects. An incomplete discovery or unreviewed change is not a passing review.
 1. Record the current branch, HEAD, remote and dirty files. Fetch origin and review any divergence without force or automatic resets.
 2. Run `node tools/audit-repository.mjs`. It reads every tracked and non-ignored untracked file fully and saves hashes, text coverage and identical-file groups under ignored `output/repository-audit/`. Automated byte coverage and manual code review are separate evidence; do not claim that hashing proves semantic correctness.
 3. Review all release changes, related callers and tests. Inspect security, locale consistency, booking, payments, migrations and deployment configuration. Refactor only confirmed defects or proven unnecessary duplication.
@@ -16,6 +17,8 @@ The request “полный профессиональный deploy” authorize
 
 The [haraldalder-vibemogger profile](https://github.com/haraldalder-vibemogger) supplies development methods, not runtime website dependencies. Apply them through the site's existing tools:
 
+The dated, commit-pinned review and integration boundaries are in [release-reference-methods.json](../config/release-reference-methods.json). The 2026-11-04 review covers all seven currently public projects. `npm run check:release-references` validates this local manifest during every quality gate; the profile-triggered discovery separately verifies that its catalog and HEADs are still current. A method marked `adapted` records a reviewed integration decision, not a claim that a particular release has passed its checks. Save actual command results and deployment evidence in the dated release report.
+
 | Project                                                                      | Application in this repository                                                                                                                                                             |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [vibe-audit](https://github.com/haraldalder-vibemogger/vibe-audit)           | Masked secret scan, dependency audit, manual validation of auth/rate limits and public security headers. Findings require verification.                                                    |
@@ -26,11 +29,11 @@ The [haraldalder-vibemogger profile](https://github.com/haraldalder-vibemogger) 
 | [bayes-gate](https://github.com/haraldalder-vibemogger/bayes-gate)           | Record competing explanations, evidence and a falsifying check for risky decisions. Do not present uncalibrated scoring as measured confidence or replace existing authorization controls. |
 | [market-research](https://github.com/haraldalder-vibemogger/market-research) | Mark facts, estimates and assumptions separately in business/SEO research. Market scraping, advertising and outreach are separate work, not deploy steps.                                  |
 
-Claude-specific hooks and MCP SDK generators are not installed into the website runtime. Review compatibility and permissions before adopting executable third-party tooling. Keep third-party code provenance and licences when copying code.
+Claude-specific hooks and MCP SDK generators are not installed into the website runtime. Review compatibility and permissions before adopting executable third-party tooling. Keep third-party code provenance and licences when copying code. The current integration copies no upstream executable code. In particular, do not adopt upstream suggestions to disable TLS verification or break system package protections. `bayes-gate` claims MIT in its README but had no separate root LICENSE at the reviewed revision; reuse its evidence discipline without copying its engine.
 
 ## Quality gate
 
-Run `npm run qa:max` and `git diff --check` before committing. The gate includes lint, unit tests, project checks, production build, asset budgets and browser tests.
+Run `npm run qa:max` and `git diff --check` before committing. The gate includes the reference manifest, strict dependency audits for both root and Google gateway, lint, unit tests, project checks, production build, asset budgets and browser tests. A failed or missing required result blocks publication; never relabel it PASS or silently skip it.
 
 If the Playwright browser download is unavailable, use an already installed browser: in PowerShell, set `$env:PLAYWRIGHT_CHANNEL = 'chrome'` before running the gate. The default remains Playwright's bundled Chromium. Record which browser was used and clear the temporary environment variable afterwards.
 
@@ -38,9 +41,11 @@ Review and stage specific files. Never stage `.dev.vars`, credentials, local OAu
 
 ## Publish
 
-Commit the reviewed changes and push `main` without force. `.github/workflows/ci.yml` validates the pushed revision, checks current security results and calls the Pages deployment workflow on success. This workflow is the normal deployment authority. Monitor its checks and confirm that the successful production deployment references the exact pushed commit.
+Commit the reviewed changes and push `main` without force. `.github/workflows/ci.yml` validates the pushed revision, checks current security results and calls the Pages deployment workflow on success. This workflow is the normal deployment authority. Deploy the exact artifact that passed the browser gate, with its recorded SHA and asset hashes, instead of rebuilding a different artifact after validation. Monitor the checks and confirm that the successful production deployment and publicly served assets reference the exact pushed commit.
 
-If that workflow is unavailable and manual deployment is explicitly authorized, first ensure that no automated deployment is running. Rebuild with `npm run build:production` after committing, then run `node tools/deploy-pages.mjs --branch main --commit-dirty=false`. Do not deploy uncommitted Functions or stale build artifacts, or race a manual upload against the CI deployment.
+If that workflow is unavailable and manual deployment is explicitly authorized, run `node tools/deploy-pages.mjs --branch main --commit-dirty=false` from a clean, committed `main` matching the live GitHub revision. Its guard rejects active CI/Pages workflows, runs the full quality and current-revision security gates, builds and verifies that artifact, then rechecks the revision and workflow state before authentication and upload. The uploaded revision is verified publicly afterwards. Both `npm run deploy` and `deploy:full` use this guarded path; they do not create API tokens or send post-deploy messages. Do not deploy uncommitted Functions or stale build artifacts, or race a manual upload against the CI deployment.
+
+The content receipt covers the homepage JS/CSS references and seven maintained weather modules; homepage HTML is checked for locale, canonical and asset references. It is not a hash of every image or HTML byte. The normal CI path additionally protects the complete tested `dist` with its immutable artifact ID and download digest. Record this distinction in release evidence.
 
 ## Database changes
 
@@ -48,7 +53,7 @@ Deploy compatible readers before changing the schema. Review unapplied D1 migrat
 
 ## Verify
 
-- Check the production asset version and all four locales: `de`, `en`, `ru`, `uk`.
+- Require the shared production verifier after deployment and in the release watcher: the expected commit/stamp, all four locales (`de`, `en`, `ru`, `uk`), matching `html lang`, exact canonical URLs and the served local JS/CSS. Allow only bounded propagation retries and record failure if the expected version never arrives.
 - Open navigation and the booking dialog in a real browser; check desktop and mobile layout.
 - Run `node tools/audit-cloudflare-security.mjs --public-only` for public response headers.
 - Use the local, read-only register audit to confirm Calendar availability without creating bookings or sending notifications.
@@ -58,9 +63,11 @@ Account settings, access permissions and live notification tests require separat
 
 ## Dependency security
 
-`npm run check:security-dependencies` runs the full `npm audit`, including development dependencies. Both this check and `check:security-production` are part of `qa:max`; findings are not suppressed.
+`npm run check:security-dependencies` runs strict full `npm audit` checks for the root and Google gateway, including development dependencies. Both this check and the root `check:security-production` are part of `qa:max`; findings are not suppressed or ignored by severity to make a release pass.
 
-As of 2026-10-08, full and production audits report zero vulnerabilities. The official `braces` release remains affected by [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm). The development toolchain temporarily uses the reviewed [Im-Fran/braces security fork](https://github.com/Im-Fran/braces/releases/tag/3.0.4), pinned to commit `11568474fd2d330d4a56a3aba63f8f90030ba15e`, not a mutable branch or tag. Its downloaded archive integrity is recorded in the lockfile. This is not an official upstream release.
+The 2026-11-04 dependency remediation pins `glob` 14.0.3 under HTMLHint and `minimatch` 11.0.4 under ESLint through scoped overrides, without changing direct dependency ranges. Parent selectors match those declared ranges so npm can resolve them without `EOVERRIDE`. Re-run both strict audits for each release; a dated result does not replace the gate.
+
+The official `braces` release remains affected by [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm). The development toolchain temporarily uses the reviewed [Im-Fran/braces security fork](https://github.com/Im-Fran/braces/releases/tag/3.0.4), pinned to commit `11568474fd2d330d4a56a3aba63f8f90030ba15e`, not a mutable branch or tag. Its downloaded archive integrity is recorded in the lockfile. This is not an official upstream release.
 
 The fork limits parser nesting to 100, rejecting deeper input with `SyntaxError` before recursive walkers run. `test:security-braces` checks that all consumers resolve this snapshot, malicious deep patterns are rejected and ordinary lint globs remain compatible. Hand-built ASTs bypass the parser: never feed an untrusted AST to the compile or expand entry points.
 

@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "profile": "https://github.com/haraldalder-vibemogger",
+  "reviewedAt": "2026-11-04",
+  "integration": "Methods adapted to the existing stack; no upstream executable code or runtime dependencies copied.",
+  "repositories": [
+    {
+      "name": "vibe-audit",
+      "sha": "a74e7cd0252267c23cbb848d7ecf45874d2c874a",
+      "license": "MIT",
+      "source": "https://github.com/haraldalder-vibemogger/vibe-audit/blob/a74e7cd0252267c23cbb848d7ecf45874d2c874a/skills/vibe-audit/SKILL.md",
+      "method": "Masked security findings, dependency and server-boundary review, public security headers.",
+      "commands": [
+        "npm run check:security-dependencies",
+        "npm run test:security-tools",
+        "node tools/audit-cloudflare-security.mjs --public-only"
+      ],
+      "exclusions": ["Account access, recovery and delivery need separate observed evidence."],
+      "status": "adapted"
+    },
+    {
+      "name": "web-audit",
+      "sha": "6359ae321861c1575f5ed77afef301f53fc5267d",
+      "license": "MIT",
+      "source": "https://github.com/haraldalder-vibemogger/web-audit/blob/6359ae321861c1575f5ed77afef301f53fc5267d/reference/checklist.md",
+      "method": "Four-locale SEO, accessibility, responsive/browser checks and deployed HTML/assets.",
+      "commands": ["npm run check:links", "npm run test:browser", "node tools/verify-production-release.mjs"],
+      "exclusions": [
+        "Legal references are not a legal certification; physical devices and mail delivery are separate checks."
+      ],
+      "status": "adapted"
+    },
+    {
+      "name": "claude.md",
+      "sha": "ab61460b44b5b44c459b4fdf915e5cb53d32d228",
+      "license": "MIT",
+      "source": "https://github.com/haraldalder-vibemogger/claude.md/blob/ab61460b44b5b44c459b4fdf915e5cb53d32d228/CLAUDE.md",
+      "method": "Scoped changes, independent review, real verification and explicit staging without force push.",
+      "commands": ["git diff --check", "npm run lint", "npm run test:unit", "npm run qa:max"],
+      "exclusions": [
+        "Reuse AGENTS.md and existing Flow instructions; do not install Claude hooks or model-specific rules."
+      ],
+      "status": "adapted"
+    },
+    {
+      "name": "mcp-diet",
+      "sha": "c9eab3daf45b11c17ab1bb592ed7e895c51b1ece",
+      "license": "MIT",
+      "source": "https://github.com/haraldalder-vibemogger/mcp-diet/blob/c9eab3daf45b11c17ab1bb592ed7e895c51b1ece/README.md",
+      "method": "Discover only needed tools, batch independent reads and filter outputs using native orchestration and lean-ctx.",
+      "commands": [],
+      "exclusions": ["Do not disable TLS verification or use --break-system-packages; no extra SDK is needed."],
+      "status": "adapted"
+    },
+    {
+      "name": "project-memory",
+      "sha": "2a2e55c403f6ee99b55b97bc4c44211a23ddca6e",
+      "license": "MIT",
+      "source": "https://github.com/haraldalder-vibemogger/project-memory/blob/2a2e55c403f6ee99b55b97bc4c44211a23ddca6e/skills/memory-update/SKILL.md",
+      "method": "Persist the profile trigger, one release procedure and dated evidence without competing memory stores.",
+      "commands": [],
+      "exclusions": [
+        "Reuse project instructions and reports; no unverified Windows hooks, credentials or personal data in memory."
+      ],
+      "status": "adapted"
+    },
+    {
+      "name": "bayes-gate",
+      "sha": "197931263a07c9540145879a8bdb4f6841d49655",
+      "license": null,
+      "source": "https://github.com/haraldalder-vibemogger/bayes-gate/blob/197931263a07c9540145879a8bdb4f6841d49655/skills/bayes/SKILL.md",
+      "method": "Distinguish observed facts from hypotheses, use falsifying checks and fail closed on missing required evidence.",
+      "commands": ["npm run qa:max", "node tools/verify-production-release.mjs"],
+      "exclusions": [
+        "README claims MIT but no root LICENSE was found; adopt methods only, copy no engine code or approval hooks."
+      ],
+      "status": "adapted"
+    },
+    {
+      "name": "market-research",
+      "sha": "e0240819363fac68e50a1f11579269d2158467eb",
+      "license": "MIT",
+      "source": "https://github.com/haraldalder-vibemogger/market-research/blob/e0240819363fac68e50a1f11579269d2158467eb/scripts/common/evidence.py",
+      "method": "Attribute facts to dated sources and keep estimates, assumptions, unknowns and negative results explicit.",
+      "commands": [],
+      "exclusions": ["No market crawler, paid API, advertising or outreach runs as a technical release step."],
+      "status": "adapted"
+    }
+  ]
+}

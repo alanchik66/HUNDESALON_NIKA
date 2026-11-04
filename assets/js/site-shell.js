@@ -164,6 +164,7 @@
       blog: 'БЛОГ',
       intro: 'ВВЕДЕНИЕ',
       socials: 'НАШИ СОЦИАЛЬНЫЕ СЕТИ',
+      promotions: 'АКЦИИ',
       rating: 'РЕЙТИНГ',
       partner: 'ПАРТНЕРСКОЕ ПРЕДЛОЖЕНИЕ',
       documents: 'ДОКУМЕНТЫ',
@@ -186,6 +187,7 @@
       blog: 'БЛОГ',
       intro: 'ВСТУП',
       socials: 'СОЦІАЛЬНІ МЕРЕЖІ',
+      promotions: 'АКЦІЇ',
       rating: 'РЕЙТИНГ І ВІДГУКИ',
       partner: 'ПАРТНЕРСЬКА ПРОПОЗИЦІЯ',
       documents: 'ДОКУМЕНТИ',
@@ -208,6 +210,7 @@
       blog: 'BLOG',
       intro: 'EINFÜHRUNG',
       socials: 'SOZIALE MEDIEN',
+      promotions: 'AKTIONEN',
       rating: 'BEWERTUNGEN',
       partner: 'PARTNERSCHAFT',
       documents: 'DOKUMENTE',
@@ -230,6 +233,7 @@
       blog: 'BLOG',
       intro: 'INTRODUCTION',
       socials: 'SOCIAL MEDIA',
+      promotions: 'PROMOTIONS',
       rating: 'RATING',
       partner: 'PARTNERSHIP OFFER',
       documents: 'DOCUMENTS',
@@ -336,13 +340,7 @@
     scale: 0.46 * HEADER_WEATHER_MOON_SIZE_BOOST,
     objectPosition: '50% 48%',
   });
-  const HEADER_WEATHER_MOON_DROPDOWN_LAYOUT = Object.freeze({
-    left: HEADER_WEATHER_MOON_PREVIEW_ANCHOR.left,
-    offsetX: HEADER_WEATHER_MOON_PREVIEW_ANCHOR.offsetX,
-    offsetY: HEADER_WEATHER_MOON_PREVIEW_ANCHOR.offsetY,
-    scale: 0.38 * HEADER_WEATHER_MOON_SIZE_BOOST,
-    objectPosition: '50% 50%',
-  });
+  const HEADER_WEATHER_MOON_DROPDOWN_LAYOUT = HEADER_WEATHER_MOON_PREVIEW_LAYOUT;
   const HEADER_WEATHER_SUN_PREVIEW_LAYOUT = Object.freeze({
     left: HEADER_WEATHER_SUN_PREVIEW_ANCHOR.left,
     offsetX: HEADER_WEATHER_SUN_PREVIEW_ANCHOR.offsetX,
@@ -622,12 +620,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .weather-header-preview {
-    --weather-sonar-motion: none !important;
-  }
-}
-
 .weather-header-preview {
   position: relative !important;
   z-index: 1 !important;
@@ -849,7 +841,7 @@
 }
 
 /* Opaque backplate so CSS/3D stars never show through moon alpha on the night disk. */
-.weather-orb-overlay--preview.is-moon.is-visible::before {
+.weather-orb-overlay.is-moon.is-visible::before {
   content: '' !important;
   display: block !important;
   position: absolute !important;
@@ -893,9 +885,13 @@
   height: clamp(82px, 19vw, 118px) !important;
 }
 
-.weather-orb-overlay--preview.is-moon {
+.weather-orb-overlay--preview.is-moon,
+.weather-orb-overlay--dropdown.is-moon {
   width: clamp(${82 * HEADER_WEATHER_MOON_SIZE_FACTOR}px, ${19 * HEADER_WEATHER_MOON_SIZE_FACTOR}vw, ${118 * HEADER_WEATHER_MOON_SIZE_FACTOR}px) !important;
   height: clamp(${82 * HEADER_WEATHER_MOON_SIZE_FACTOR}px, ${19 * HEADER_WEATHER_MOON_SIZE_FACTOR}vw, ${118 * HEADER_WEATHER_MOON_SIZE_FACTOR}px) !important;
+}
+
+.weather-orb-overlay--preview.is-moon {
   left: ${HEADER_WEATHER_MOON_PREVIEW_ANCHOR.left}% !important;
   top: 50% !important;
   right: auto !important;
@@ -956,8 +952,16 @@
 }
 
 .weather-orb-overlay--dropdown.is-moon {
-  width: clamp(80px, 16vw, 108px) !important;
-  height: clamp(80px, 16vw, 108px) !important;
+  left: ${HEADER_WEATHER_MOON_PREVIEW_ANCHOR.left}% !important;
+  top: 35% !important;
+}
+
+.weather-orb-overlay--dropdown.is-moon.is-visible {
+  transform: translate(-50%, -50%) scale(var(--orb-scale-visible, 1)) !important;
+}
+
+.weather-orb-overlay--dropdown.is-moon:not(.is-visible) {
+  transform: translate(-50%, -50%) scale(var(--orb-scale-hidden, 0.94)) !important;
 }
 
 .weather-orb-overlay--dropdown.is-sun {
@@ -1047,7 +1051,7 @@
     ) !important;
   transform:
     translate3d(calc(var(--orb-cloud-drift, 1) * -2%), calc(var(--orb-cloud-lift, 0px) * 0.5), 0)
-    skewX(-8deg) !important;
+    skewX(-8deg);
   animation: headerWeatherSunVeilA 11.8s ease-in-out infinite !important;
 }
 
@@ -1069,7 +1073,7 @@
     ) !important;
   transform:
     translate3d(calc(var(--orb-cloud-drift, 1) * 2%), calc(var(--orb-cloud-lift, 0px) * 0.2), 0)
-    skewX(7deg) !important;
+    skewX(7deg);
   animation: headerWeatherSunVeilB 14.6s ease-in-out infinite !important;
 }
 
@@ -1151,21 +1155,13 @@
   opacity: calc(var(--orb-cloud-alpha, 0) * 0.7) !important;
 }
 
-.weather-orb-overlay--preview.is-moon .weather-orb-overlay__canvas,
-.weather-orb-overlay--preview.is-moon .weather-orb-overlay__image,
-.weather-orb-overlay--preview.is-moon .weather-orb-overlay__video {
+.weather-orb-overlay.is-moon .weather-orb-overlay__canvas,
+.weather-orb-overlay.is-moon .weather-orb-overlay__image,
+.weather-orb-overlay.is-moon .weather-orb-overlay__video {
   position: relative;
   z-index: 1 !important;
   isolation: isolate !important;
   object-position: ${HEADER_WEATHER_MOON_PREVIEW_LAYOUT.objectPosition} !important;
-}
-
-.weather-orb-overlay--dropdown.is-moon .weather-orb-overlay__canvas,
-.weather-orb-overlay--dropdown.is-moon .weather-orb-overlay__image,
-.weather-orb-overlay--dropdown.is-moon .weather-orb-overlay__video {
-  position: relative;
-  z-index: 1 !important;
-  object-position: ${HEADER_WEATHER_MOON_DROPDOWN_LAYOUT.objectPosition} !important;
 }
 
 .weather-orb-overlay--preview.is-sun .weather-orb-overlay__canvas,
@@ -1403,7 +1399,7 @@
   inset: 0 !important;
   pointer-events: none !important;
   z-index: 0 !important;
-  opacity: var(--preview-stars-opacity, 0.82) !important;
+  opacity: var(--preview-stars-opacity, 0.82);
   mix-blend-mode: normal !important;
   background-color: transparent !important;
   border: none !important;
@@ -1448,7 +1444,7 @@
 
 :host([data-weather-variant='header']) .weather-header-preview__stars-back.is-night-sky::after,
 .weather-header-preview__stars-back.is-night-sky::after {
-  opacity: calc(var(--preview-stars-opacity, 0.82) * 0.72) !important;
+  opacity: calc(var(--preview-stars-opacity, 0.82) * 0.72);
   filter: none !important;
   background-image:
     ${HEADER_WEATHER_STARFIELD_TILE_B},
@@ -1494,7 +1490,7 @@
   inset: 0 !important;
   pointer-events: none !important;
   z-index: 0 !important;
-  opacity: var(--dropdown-stars-opacity, 0.82) !important;
+  opacity: var(--dropdown-stars-opacity, 0.82);
   mix-blend-mode: normal !important;
   background-color: transparent !important;
   border: none !important;
@@ -1547,7 +1543,7 @@
 
 :host([data-weather-variant='header']) .weather-header-dropdown__stars-back.is-night-sky::after,
 .weather-header-dropdown__stars-back.is-night-sky::after {
-  opacity: calc(var(--dropdown-stars-opacity, 0.82) * 0.5) !important;
+  opacity: calc(var(--dropdown-stars-opacity, 0.82) * 0.5);
   background-image:
     ${HEADER_WEATHER_STARFIELD_TILE_B},
     radial-gradient(circle at 20px 16px, rgba(255, 255, 255, 0.44) 0 0.44px, transparent 0.78px) 0 0 / 36px 36px,
@@ -1990,17 +1986,6 @@
     0 0 calc(10px + var(--weather-readability-glow, 0) * 12px) rgb(6 16 22 / calc(0.28 + var(--weather-readability-glow, 0) * 0.42)) !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  :host([data-weather-variant='header']) .weather-header-card__title-block,
-  :host([data-weather-variant='header']) .weather-header-card__bottom,
-  :host([data-weather-variant='header']) .weather-header-card__chip,
-  :host([data-weather-variant='header']) .weather-header-card__temperature,
-  :host([data-weather-variant='header']) .weather-header-card__location,
-  :host([data-weather-variant='header']) .weather-header-card__meta {
-    transition-duration: 0.01ms !important;
-  }
-}
-
 .weather-header-card__location,
 .weather-header-card__location-row,
 .weather-header-card__eyebrow,
@@ -2016,9 +2001,9 @@
   pointer-events: auto !important;
   cursor: pointer !important;
   display: inline-flex !important;
-  align-items: flex-end !important;
+  align-items: center !important;
   justify-content: center !important;
-  gap: 0 !important;
+  gap: 4px !important;
   min-height: auto !important;
   width: max-content !important;
   max-width: max-content !important;
@@ -2051,24 +2036,27 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 5.082px !important;
-  height: 5.082px !important;
-  position: absolute !important;
-  right: -7.082px !important;
+  width: 7.906px !important;
+  height: 7.906px !important;
+  flex: 0 0 7.906px !important;
+  align-self: center !important;
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
   top: auto !important;
-  bottom: -1px !important;
-  margin-top: 0 !important;
-  opacity: 0.9 !important;
+  bottom: auto !important;
+  margin: 0 !important;
+  opacity: 0.9;
   visibility: visible !important;
   font-size: 0 !important;
   line-height: 0 !important;
   background: url('/assets/images/icons/chevron-down.png') center/contain no-repeat !important;
   --arrow-rotate: ${HEADER_WEATHER_TOGGLE_ARROW_CLOSED};
   --arrow-shift-x: 0px;
-  transform: var(--arrow-rotate) translateX(var(--arrow-shift-x)) !important;
+  transform: var(--arrow-rotate) translateX(var(--arrow-shift-x));
   will-change: transform !important;
   transition: transform 0.44s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.32s ease !important;
-  transform-origin: 50% 100% !important;
+  transform-origin: 50% 50% !important;
   animation: siteArrowDirectionalBounce 2.35s ease-in-out infinite !important;
 }
 
@@ -3170,17 +3158,6 @@
   transform: translate(-50%, -50%) scale(0.94) rotate(-45deg) !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  :host([data-weather-variant='header']) .weather-header-dropdown__close:active::before,
-  :host([data-weather-variant='header']) .weather-header-dropdown__close:active::after {
-    transform: translate(-50%, -50%) rotate(45deg) !important;
-  }
-
-  :host([data-weather-variant='header']) .weather-header-dropdown__close:active::after {
-    transform: translate(-50%, -50%) rotate(-45deg) !important;
-  }
-}
-
 .weather-header-dropdown {
   z-index: 10000 !important;
   position: absolute !important;
@@ -3353,7 +3330,8 @@
     height: 102px !important;
   }
 
-  .weather-orb-overlay--preview.is-moon {
+  .weather-orb-overlay--preview.is-moon,
+  .weather-orb-overlay--dropdown.is-moon {
     width: ${102 * HEADER_WEATHER_MOON_SIZE_FACTOR}px !important;
     height: ${102 * HEADER_WEATHER_MOON_SIZE_FACTOR}px !important;
   }
@@ -3366,11 +3344,6 @@
   .weather-orb-overlay--dropdown {
     width: clamp(68px, 18vw, 88px) !important;
     height: clamp(68px, 18vw, 88px) !important;
-  }
-
-  .weather-orb-overlay--dropdown.is-moon {
-    width: clamp(76px, 19vw, 96px) !important;
-    height: clamp(76px, 19vw, 96px) !important;
   }
 
   .weather-header-card__toggle span:first-child {
@@ -3485,9 +3458,175 @@
   z-index: 130 !important;
   pointer-events: auto !important;
 }
+
+@media (max-width: 420px) {
+  .weather-orb-overlay--dropdown.is-moon {
+    top: 26% !important;
+  }
+}
+
+.weather-header-shooting-star {
+  display: block;
+  position: absolute;
+  width: var(--shooting-star-length, 76px);
+  height: 18px;
+  z-index: 1;
+  transform-origin: 90% 50%;
+  background:
+    radial-gradient(ellipse 2.2px 1.7px at 90% 50%, rgba(255, 250, 232, 0.98), transparent),
+    linear-gradient(90deg, transparent 4%, rgba(31, 178, 126, 0.06) 22%, rgba(96, 218, 170, 0.36) 60%, rgba(202, 242, 219, 0.7) 83%, rgba(255, 241, 200, 0.92) 90%, transparent 94%) center / 100% 1px no-repeat,
+    radial-gradient(ellipse at 90% 50%, rgba(65, 212, 157, 0.28), transparent 30%);
+  filter: blur(0.3px) drop-shadow(0 0 4px rgba(31, 199, 137, 0.5));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.weather-header-shooting-star::before {
+  content: '';
+  position: absolute;
+  left: 90%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background:
+    linear-gradient(90deg, transparent 36%, rgba(255, 245, 218, 0.9) 50%, transparent 64%),
+    linear-gradient(0deg, transparent 38%, rgba(193, 240, 218, 0.8) 50%, transparent 62%);
+  filter: blur(0.2px);
+  pointer-events: none;
+  animation: weatherShootingStarGlint 700ms ease-in-out infinite alternate;
+}
+
+.weather-header-shooting-star::after {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 10%;
+  top: calc(50% - 2px);
+  height: 4px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent 8%, rgba(31, 178, 126, 0.08) 42%, rgba(168, 231, 204, 0.3));
+  transform-origin: right center;
+  filter: blur(1.2px);
+  pointer-events: none;
+  animation: weatherShootingStarTrail 1100ms ease-in-out infinite alternate;
+}
+
+@keyframes weatherShootingStarGlint {
+  from { opacity: 0.55; transform: translate(-50%, -50%) rotate(45deg) scale(0.65); }
+  to { opacity: 0.95; transform: translate(-50%, -50%) rotate(45deg) scale(1.05); }
+}
+
+@keyframes weatherShootingStarTrail {
+  from { opacity: 0.45; transform: scaleX(0.86) scaleY(0.65); }
+  to { opacity: 0.7; transform: scaleX(1) scaleY(1); }
+}
+
+.weather-header-card__toggle {
+  --weather-menu-matte: 0.5;
+  --weather-menu-surface-opacity: 0.25;
+
+  align-items: center !important;
+  min-height: 18px !important;
+  padding: 3px 8px !important;
+  border: 0 !important;
+  outline: none !important;
+  background: rgb(8 20 15 / var(--weather-menu-surface-opacity)) !important;
+  backdrop-filter: blur(calc(16px * var(--weather-menu-matte))) saturate(0.5) !important;
+  -webkit-backdrop-filter: blur(calc(16px * var(--weather-menu-matte))) saturate(0.5) !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08) !important;
+  isolation: isolate;
+}
+
+/* Only a fine stellar glint traces the button edge on every screen. */
+:host([data-weather-variant='header']) .weather-header-preview .weather-header-card__toggle::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 0.5px;
+  border-radius: inherit;
+  background: linear-gradient(
+    110deg,
+    transparent 28%,
+    rgba(31, 178, 126, 0.08) 38%,
+    rgba(74, 201, 153, 0.24) 46%,
+    rgba(173, 231, 200, 0.52) 49%,
+    rgba(255, 237, 192, 0.88) 50%,
+    rgba(173, 231, 200, 0.24) 51%,
+    transparent 53%
+  );
+  background-size: 250% 100%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
+  -webkit-mask-composite: xor !important;
+  mask-composite: exclude !important;
+  pointer-events: none;
+  animation: weatherHeaderMenuRimFlow 12.8s ease-in-out infinite;
+}
+
+@media (max-width: 900px) {
+  :host([data-weather-variant='header']) .weather-header-card__toggle {
+    touch-action: manipulation;
+  }
+
+  :host([data-weather-variant='header']) .weather-header-card__toggle::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: calc(100% + 24px);
+    min-width: 44px;
+    height: 44px;
+    transform: translateX(-50%);
+    background: transparent;
+    pointer-events: auto;
+  }
+}
+
+.weather-header-dropdown__body {
+  padding: 14px !important;
+  gap: 12px !important;
+}
+
+.weather-header-dropdown__forecast-list,
+.weather-header-dropdown__details-grid {
+  gap: 9px !important;
+}
+
+.weather-header-dropdown__forecast-list {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+@media (max-width: 640px) {
+  .weather-header-dropdown__forecast-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+.weather-header-dropdown__forecast-pill,
+.weather-header-dropdown__detail-card {
+  padding: 10px 9px !important;
+  gap: 6px !important;
+  overflow-wrap: anywhere;
+}
+
+.weather-header-dropdown .weather-location-selector__input {
+  padding-block: 8px !important;
+}
+
+.weather-location-selector__current--compact {
+  min-height: 42px !important;
+  padding-inline: 16px !important;
+}
+
+@keyframes weatherHeaderMenuRimFlow {
+  0%, 100% { background-position: 20% 50%; opacity: 0.9; }
+  50% { background-position: 80% 50%; opacity: 1; }
+}
+
 `;
 
-  const WEATHER_WIDGET_ASSET_VERSION = '20260801-location-single-line-v14';
+  const WEATHER_WIDGET_ASSET_VERSION = '20261103-weather-parity-v6';
   /** Full mission_2160p30.mp4 timeline (7:38) mapped to each local night window. */
   const HEADER_WEATHER_MOON_VIDEO_DURATION_SEC = 458.233333;
   /** Fallback duration used by the shared orb timeline model. */
@@ -3529,8 +3668,8 @@
   const HEADER_WEATHER_ASTRO_ENDPOINT = 'https://api.sunrise-sunset.org/json';
   const HEADER_WEATHER_REVERSE_GEOCODE_PROXY_ENDPOINT = resolveHeaderWeatherPublicEndpoint('/reverse-geocode');
   const HEADER_WEATHER_ASTRO_REFRESH_INTERVAL = 60000;
-  const HEADER_WEATHER_WIDGET_REFRESH_INTERVAL = 5 * 60 * 1000;
-  const HEADER_WEATHER_GEO_REFRESH_INTERVAL = 60 * 1000;
+  const HEADER_WEATHER_WIDGET_REFRESH_INTERVAL = 10 * 60 * 1000;
+  const HEADER_WEATHER_GEO_REFRESH_INTERVAL = 5 * 60 * 1000;
   const HEADER_WEATHER_TIME_SYNC_INTERVAL = 30 * 60 * 1000;
   const HEADER_WEATHER_LIVE_CLOCK_INTERVAL = 1000; // Update live clock every 1 second
   const HEADER_WEATHER_TIME_SYNC_TIMEOUT = 4500;
@@ -3542,15 +3681,16 @@
   const HEADER_WEATHER_CURRENT_META_MAX_AGE = 10 * 60 * 1000;
   const HEADER_WEATHER_CURRENT_MODEL_MAX_AGE = 2 * 60 * 60 * 1000;
   const HEADER_WEATHER_ASTRO_CACHE_TTL = 12 * 60 * 60 * 1000;
-  const HEADER_WEATHER_GEO_CACHE_TTL = 45 * 1000;
+  const HEADER_WEATHER_GEO_CACHE_TTL = HEADER_WEATHER_GEO_REFRESH_INTERVAL;
+  const HEADER_WEATHER_GEO_STALE_MAX_AGE = 30 * 60 * 1000;
   const HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS = 10;
   let headerWeatherGeoCache = null;
+  let headerWeatherGeoPermissionDenied = false;
   const HEADER_WEATHER_READINGS_STORAGE_KEY = 'header_weather_readings_v1';
   const HEADER_WEATHER_READINGS_CACHE_TTL = 12 * 60 * 60 * 1000;
   let headerWeatherReverseGeoProxyUnavailable = false;
   const HEADER_WEATHER_GEO_TIMEOUT = 12000;
   const HEADER_WEATHER_GEO_MOUNT_WAIT = 1500;
-  const HEADER_WEATHER_FALLBACK_LOCATION = '51.340632, 12.374733';
   const HEADER_WEATHER_STRICT_STYLE_LOCK = true;
   const HEADER_WEATHER_BERLIN_LABEL = 'Ber' + 'lin';
   const HEADER_WEATHER_BERLIN_ALIAS_KEY = ('ber' + 'lin').toLowerCase();
@@ -3908,11 +4048,11 @@
 
     const secondaryLinks = `
   <a href="${pathPrefix}social.html" class="mobile-nav-link--secondary">${copy.socials}</a>
+  <a href="${pathPrefix}social.html#promotions" class="mobile-nav-link--secondary">${copy.promotions}</a>
   <a href="${pathPrefix}reyting.html" class="mobile-nav-link--secondary">${copy.rating}</a>
   <a href="${pathPrefix}partnerstvo.html" class="mobile-nav-link--secondary">${copy.partner}</a>
   <a href="${pathPrefix}documents.html" class="mobile-nav-link--secondary">${copy.documents}</a>
-  <a href="${pathPrefix}nashi-uslugi.html" class="mobile-nav-link--secondary">${copy.localSeo}</a>
-  ${isShopRoute ? '' : `<a href="${pathPrefix}onlayn-bronirovanie.html" class="mobile-nav-link--secondary online-order-pill online-order-pill--menu">${copy.booking}</a>`}`;
+  <a href="${pathPrefix}nashi-uslugi.html" class="mobile-nav-link--secondary">${copy.localSeo}</a>`;
 
     return `
 <header class="header">
@@ -4027,14 +4167,16 @@
 </header>
 <div id="mobile-nav-overlay" hidden aria-hidden="true"></div>
 <nav id="mobile-nav" aria-hidden="true">
-  <div class="mobile-nav-group mobile-nav-group--primary">
-    ${primaryLinks}
+  <div class="mobile-nav__content">
+    <div class="mobile-nav-group mobile-nav-group--primary">
+      ${primaryLinks}
+    </div>
+    <div class="menu-separator" aria-hidden="true"><span>${context.menuSections.more}</span></div>
+    <div class="mobile-nav-group mobile-nav-group--secondary">
+      ${secondaryLinks}
+    </div>
+    <div class="menu-separator menu-separator--bottom" aria-hidden="true"></div>
   </div>
-  <div class="menu-separator" aria-hidden="true"><span>${context.menuSections.more}</span></div>
-  <div class="mobile-nav-group mobile-nav-group--secondary">
-    ${secondaryLinks}
-  </div>
-  <div class="menu-separator menu-separator--bottom" aria-hidden="true"></div>
 </nav>`;
   }
 
@@ -4195,6 +4337,96 @@
     return { latitude, longitude };
   }
 
+  function getHeaderWeatherGeoAccuracy(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const accuracy = Number(value);
+    return Number.isFinite(accuracy) && accuracy >= 0 ? accuracy : null;
+  }
+
+  function setHeaderWeatherGeoStatus(host, status) {
+    if (!host?.dataset) return;
+    if (!['pending', 'none', 'denied', 'timeout', 'unavailable', 'aborted', 'unsupported', 'insecure', 'unknown'].includes(status)) {
+      status = 'unknown';
+    }
+    host.dataset.weatherGeoPending = status === 'pending' ? 'true' : 'false';
+    host.dataset.weatherGeoError = status === 'pending' ? 'none' : status;
+    if (status === 'none' || status === 'aborted') {
+      host.__weatherWidgetInstance?.setLocationStatus?.({ status });
+      return;
+    }
+    const code = status === 'denied' || status === 'insecure' ? 1 : status === 'timeout' ? 3 : 2;
+    host.__weatherWidgetInstance?.setLocationStatus?.({
+      status: status === 'pending' || status === 'denied' || status === 'timeout' ? status : 'unavailable',
+      ...(status === 'pending' ? {} : { code }),
+    });
+  }
+
+  function observeHeaderWeatherGeoPermission(host, onGranted) {
+    if (!host?.dataset || typeof navigator.permissions?.query !== 'function') return () => {};
+    let disposed = false;
+    let permission = null;
+    let previousState = null;
+    let refreshPromise = null;
+    let recoveryPending = false;
+    const sync = () => {
+      if (disposed || !host.isConnected) return;
+      const state = permission?.state;
+      if (!['granted', 'denied', 'prompt'].includes(state)) return;
+      host.dataset.weatherGeoPermission = state;
+      if (state === 'granted' && previousState !== 'granted' && headerWeatherGeoPermissionDenied) {
+        headerWeatherGeoPermissionDenied = false;
+        recoveryPending = true;
+      }
+      previousState = state;
+      if (state !== 'granted' || host.dataset.weatherManualLocation === 'true') recoveryPending = false;
+      if (!recoveryPending || document.hidden || host.dataset.weatherMounted !== 'true') return;
+      recoveryPending = false;
+      void Promise.resolve().then(() => {
+        if (disposed || !host.isConnected || host.dataset.weatherMounted !== 'true' || host.dataset.weatherManualLocation === 'true') return;
+        if (document.hidden) {
+          recoveryPending = true;
+          return;
+        }
+        return onGranted?.();
+      }).catch(() => {});
+    };
+    const detach = () => {
+      if (typeof permission?.removeEventListener === 'function') permission.removeEventListener('change', sync);
+      else if (permission?.onchange === sync) permission.onchange = null;
+    };
+    const refresh = () => {
+      if (disposed || !host.isConnected || document.hidden || refreshPromise) return;
+      try {
+        refreshPromise = Promise.resolve(navigator.permissions.query({ name: 'geolocation' }))
+          .then(status => {
+            if (disposed || !host.isConnected) return;
+            if (permission !== status) {
+              detach();
+              permission = status;
+              if (typeof permission?.addEventListener === 'function') permission.addEventListener('change', sync);
+              else if (permission) permission.onchange = sync;
+            }
+            sync();
+          })
+          .catch(() => {})
+          .finally(() => { refreshPromise = null; });
+      } catch {
+        refreshPromise = null;
+      }
+    };
+    window.addEventListener('focus', refresh);
+    window.addEventListener('pageshow', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    refresh();
+    return () => {
+      disposed = true;
+      detach();
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('pageshow', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }
+
   function readHeaderWeatherStoredGeo(allowExpired = false) {
     if (!headerWeatherGeoCache) {
       return null;
@@ -4202,10 +4434,16 @@
 
     const latitude = Number(headerWeatherGeoCache.latitude);
     const longitude = Number(headerWeatherGeoCache.longitude);
-    const accuracy = Number(headerWeatherGeoCache.accuracy);
+    const accuracy = getHeaderWeatherGeoAccuracy(headerWeatherGeoCache.accuracy);
     const updatedAt = Number(headerWeatherGeoCache.updatedAt);
     const expiresAt = Number(headerWeatherGeoCache.expiresAt);
-    if (!hasValidHeaderWeatherCoordinates(latitude, longitude) || !Number.isFinite(expiresAt)) {
+    if (
+      !hasValidHeaderWeatherCoordinates(latitude, longitude) ||
+      !Number.isFinite(updatedAt) ||
+      !Number.isFinite(expiresAt) ||
+      updatedAt > Date.now() + 60000 ||
+      Date.now() - updatedAt > HEADER_WEATHER_GEO_STALE_MAX_AGE
+    ) {
       headerWeatherGeoCache = null;
       return null;
     }
@@ -4217,20 +4455,20 @@
     return {
       latitude,
       longitude,
-      accuracy: Number.isFinite(accuracy) && accuracy >= 0 ? accuracy : null,
-      updatedAt: Number.isFinite(updatedAt) ? updatedAt : null,
+      accuracy,
+      updatedAt,
       expiresAt,
     };
   }
 
   function storeHeaderWeatherGeo(coords) {
-    const now = Date.now();
+    const updatedAt = Number.isFinite(coords.updatedAt) ? coords.updatedAt : Date.now();
     headerWeatherGeoCache = {
       latitude: coords.latitude,
       longitude: coords.longitude,
-      accuracy: Number.isFinite(coords.accuracy) ? coords.accuracy : null,
-      updatedAt: now,
-      expiresAt: now + HEADER_WEATHER_GEO_CACHE_TTL,
+      accuracy: getHeaderWeatherGeoAccuracy(coords.accuracy),
+      updatedAt,
+      expiresAt: updatedAt + HEADER_WEATHER_GEO_CACHE_TTL,
     };
   }
 
@@ -4248,11 +4486,13 @@
     return 6371000 * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
   }
 
-  function requestHeaderWeatherHighAccuracyPosition() {
+  function requestHeaderWeatherHighAccuracyPosition(signal) {
     return new Promise((resolve, reject) => {
       let bestCandidate = null;
       let watchId = null;
       let settled = false;
+      let timeoutId = 0;
+      let watchStarted = false;
 
       const finish = error => {
         if (settled) {
@@ -4260,10 +4500,11 @@
         }
         settled = true;
         window.clearTimeout(timeoutId);
+        signal?.removeEventListener('abort', onAbort);
         if (watchId !== null && typeof navigator.geolocation.clearWatch === 'function') {
           navigator.geolocation.clearWatch(watchId);
         }
-        if (bestCandidate) {
+        if (bestCandidate && error?.name !== 'AbortError') {
           resolve(bestCandidate);
         } else {
           reject(error || new Error('Browser geolocation did not return a valid position.'));
@@ -4273,15 +4514,23 @@
       const onPosition = position => {
         const latitude = Number(position?.coords?.latitude);
         const longitude = Number(position?.coords?.longitude);
-        const accuracy = Number(position?.coords?.accuracy);
-        if (!hasValidHeaderWeatherCoordinates(latitude, longitude)) {
+        const accuracy = getHeaderWeatherGeoAccuracy(position?.coords?.accuracy);
+        const updatedAt = Number(position?.timestamp);
+        if (
+          settled ||
+          !hasValidHeaderWeatherCoordinates(latitude, longitude) ||
+          !Number.isFinite(updatedAt) ||
+          updatedAt > Date.now() + 60000 ||
+          Date.now() - updatedAt > HEADER_WEATHER_GEO_CACHE_TTL
+        ) {
           return;
         }
 
         const candidate = {
           latitude,
           longitude,
-          accuracy: Number.isFinite(accuracy) && accuracy >= 0 ? accuracy : null,
+          accuracy,
+          updatedAt,
         };
         if (
           !bestCandidate ||
@@ -4293,52 +4542,91 @@
 
         if (Number.isFinite(candidate.accuracy) && candidate.accuracy <= HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS) {
           finish();
+        } else if (!timeoutId) {
+          if (typeof navigator.geolocation.watchPosition !== 'function') {
+            finish();
+            return;
+          }
+          // Native timeout starts after permission. Limit only refinement here;
+          // a wall timer from the initial request would cancel the permission UI.
+          timeoutId = window.setTimeout(() => finish(), HEADER_WEATHER_GEO_TIMEOUT);
+          if (!watchStarted) startWatch();
         }
       };
 
-      const timeoutId = window.setTimeout(
-        () => finish(new Error('Browser geolocation timed out.')),
-        HEADER_WEATHER_GEO_TIMEOUT
-      );
+      const onAbort = () => {
+        const error = new Error('Geolocation request cancelled.');
+        error.name = 'AbortError';
+        finish(error);
+      };
+      if (signal?.aborted) {
+        onAbort();
+        return;
+      }
+      signal?.addEventListener('abort', onAbort, { once: true });
       const options = {
         enableHighAccuracy: true,
         timeout: HEADER_WEATHER_GEO_TIMEOUT,
         maximumAge: 0,
       };
+      const startWatch = () => {
+        watchStarted = true;
+        try {
+          watchId = navigator.geolocation.watchPosition(onPosition, finish, options);
+          // Some browser wrappers can invoke a cached callback synchronously.
+          if (settled) navigator.geolocation.clearWatch?.(watchId);
+        } catch (error) {
+          finish(error);
+        }
+      };
 
-      if (typeof navigator.geolocation.watchPosition === 'function') {
-        watchId = navigator.geolocation.watchPosition(onPosition, finish, options);
-      } else {
-        navigator.geolocation.getCurrentPosition(onPosition, finish, options);
+      try {
+        // Ask for the current fix immediately, including inside a trusted tap.
+        // Continuous tracking is needed only to refine a coarse first result.
+        if (typeof navigator.geolocation.getCurrentPosition === 'function') {
+          navigator.geolocation.getCurrentPosition(onPosition, finish, options);
+        } else {
+          startWatch();
+        }
+      } catch (error) {
+        finish(error);
       }
     });
   }
 
-  async function resolveHeaderWeatherBrowserGeoCoords({ force = false } = {}) {
+  async function resolveHeaderWeatherBrowserGeoCoords({ force = false, retryDenied = false, signal, onStatus } = {}) {
     const cachedGeo = readHeaderWeatherStoredGeo();
     if (!force && cachedGeo) {
+      onStatus?.('none');
       return { ...cachedGeo, source: 'cache' };
     }
 
-    if (window.isSecureContext && navigator.geolocation) {
+    if (retryDenied) headerWeatherGeoPermissionDenied = false;
+    if (window.isSecureContext && navigator.geolocation && !headerWeatherGeoPermissionDenied) {
+      onStatus?.('pending');
       try {
-        const coords = await requestHeaderWeatherHighAccuracyPosition();
+        const coords = await requestHeaderWeatherHighAccuracyPosition(signal);
         storeHeaderWeatherGeo(coords);
+        onStatus?.('none');
         return {
           ...coords,
           source: 'gps',
-          updatedAt: Date.now(),
-          expiresAt: Date.now() + HEADER_WEATHER_GEO_CACHE_TTL,
+          expiresAt: coords.updatedAt + HEADER_WEATHER_GEO_CACHE_TTL,
         };
-      } catch {
-        const lastKnownGeo = readHeaderWeatherStoredGeo(true);
-        if (lastKnownGeo) {
-          return { ...lastKnownGeo, source: 'stale-cache' };
+      } catch (error) {
+        if (error?.name === 'AbortError') {
+          onStatus?.('aborted');
+          return null;
         }
+        if (error?.code === 1) headerWeatherGeoPermissionDenied = true;
+        onStatus?.(error?.code === 1 ? 'denied' : error?.code === 3 ? 'timeout' : error?.code === 2 ? 'unavailable' : 'unknown');
       }
+    } else {
+      onStatus?.(!window.isSecureContext ? 'insecure' : !navigator.geolocation ? 'unsupported' : 'denied');
     }
 
-    return null;
+    const lastKnownGeo = readHeaderWeatherStoredGeo(true);
+    return lastKnownGeo ? { ...lastKnownGeo, source: 'stale-cache' } : null;
   }
 
   function shouldApplyHeaderWeatherGeo(host, coords) {
@@ -4348,15 +4636,13 @@
     }
 
     const distanceMeters = getHeaderWeatherDistanceMeters(previous, coords);
-    const previousAccuracy = Number(host.dataset.weatherGeoAccuracy);
-    const nextAccuracy = Number(coords.accuracy);
-    const previousAccuracyValue = Number.isFinite(previousAccuracy) && previousAccuracy >= 0 ? previousAccuracy : null;
-    const nextAccuracyValue = Number.isFinite(nextAccuracy) && nextAccuracy >= 0 ? nextAccuracy : null;
+    const previousAccuracyValue = getHeaderWeatherGeoAccuracy(host.dataset.weatherGeoAccuracy);
+    const nextAccuracyValue = getHeaderWeatherGeoAccuracy(coords.accuracy);
     const uncertainty = Math.max(
       previousAccuracyValue ?? HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS,
       nextAccuracyValue ?? HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS
     );
-    const movementThreshold = Math.max(HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS, Math.min(50, uncertainty * 0.5));
+    const movementThreshold = Math.max(HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS, uncertainty);
     const reachedTarget =
       nextAccuracyValue !== null &&
       nextAccuracyValue <= HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS &&
@@ -4379,36 +4665,64 @@
       return host.__weatherGeoResolvePromise;
     }
 
+    const generation = host.__weatherLocationGeneration || 0;
+    const lifecycle = host.__weatherLifecycleGeneration || 0;
+    const controller = new window.AbortController();
+    host.__weatherGeoAbortController = controller;
     const operation = (async () => {
       if (!host.dataset.weatherResolvedLocationLabel) {
         host.dataset.weatherAreaState = 'resolving';
         syncHeaderWeatherPublicLocationLabel(host);
       }
 
-      const coords = await resolveHeaderWeatherBrowserGeoCoords({ force });
-      if (host.dataset.weatherManualLocation === 'true') {
+      const coords = await resolveHeaderWeatherBrowserGeoCoords({
+        force,
+        signal: controller.signal,
+        onStatus: status => {
+          if (
+            host.isConnected && host.__weatherGeoAbortController === controller &&
+            (host.__weatherLifecycleGeneration || 0) === lifecycle &&
+            (host.__weatherLocationGeneration || 0) === generation
+          ) setHeaderWeatherGeoStatus(host, status);
+        },
+      });
+      if (
+        !host.isConnected ||
+        controller.signal.aborted ||
+        (host.__weatherLifecycleGeneration || 0) !== lifecycle ||
+        (host.__weatherLocationGeneration || 0) !== generation ||
+        host.dataset.weatherManualLocation === 'true'
+      ) {
         return { changed: false, coords: null, distanceMeters: 0 };
       }
       host.dataset.weatherGeoCheckedAt = String(Date.now());
       if (!coords) {
-        delete host.dataset.weatherLocation;
-        host.dataset.weatherGeoSource = 'unavailable';
-        host.dataset.weatherGeoResolved = 'unavailable';
-        if (!host.dataset.weatherResolvedLocationLabel) {
+        const hasPreviousPosition = Boolean(parseHeaderWeatherCoordinates(host.dataset.weatherLocation));
+        host.dataset.weatherGeoSource = hasPreviousPosition ? 'stale-cache' : 'unavailable';
+        host.dataset.weatherGeoResolved = hasPreviousPosition ? 'true' : 'unavailable';
+        if (!hasPreviousPosition) {
+          delete host.dataset.weatherResolvedLocationLabel;
+          delete host.dataset.weatherRegionLabel;
           host.dataset.weatherAreaState = 'unavailable';
           syncHeaderWeatherPublicLocationLabel(host);
         }
-        delete host.dataset.weatherGeoAccuracy;
-        delete host.dataset.weatherGeoTargetMet;
+        if (!hasPreviousPosition) {
+          delete host.dataset.weatherGeoAccuracy;
+          delete host.dataset.weatherGeoTargetMet;
+        }
         return { changed: false, coords: null, distanceMeters: 0 };
       }
 
       const decision = shouldApplyHeaderWeatherGeo(host, coords);
-      const accuracy = Number(coords.accuracy);
-      if (Number.isFinite(accuracy) && accuracy >= 0) {
+      const accuracy = getHeaderWeatherGeoAccuracy(coords.accuracy);
+      if (accuracy !== null) {
         host.dataset.weatherGeoAccuracy = accuracy.toFixed(1);
         host.dataset.weatherGeoTargetMet = accuracy <= HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS ? 'true' : 'false';
+      } else {
+        delete host.dataset.weatherGeoAccuracy;
+        delete host.dataset.weatherGeoTargetMet;
       }
+      host.dataset.weatherGeoUpdatedAt = String(coords.updatedAt);
 
       if (!decision.changed) {
         host.dataset.weatherGeoResolved = 'true';
@@ -4419,7 +4733,6 @@
       host.dataset.weatherLocation = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
       host.dataset.weatherGeoResolved = 'true';
       host.dataset.weatherGeoSource = coords.source || 'unknown';
-      host.dataset.weatherGeoUpdatedAt = String(Date.now());
       host.dataset.weatherAreaState = 'resolving';
 
       return { changed: true, coords, distanceMeters: decision.distanceMeters };
@@ -4429,7 +4742,8 @@
     try {
       return await operation;
     } finally {
-      host.__weatherGeoResolvePromise = null;
+      if (host.__weatherGeoResolvePromise === operation) host.__weatherGeoResolvePromise = null;
+      if (host.__weatherGeoAbortController === controller) host.__weatherGeoAbortController = null;
     }
   }
 
@@ -4450,7 +4764,23 @@
     if (isHeaderWeatherTextManualLocation(host)) {
       return locationLabel || '';
     }
-    return host?.dataset?.weatherLocation || host?.dataset?.weatherFallbackLocation || locationLabel || '';
+    // A rendered default city is not evidence of the device's position.
+    return host?.dataset?.weatherLocation || '';
+  }
+
+  function isHeaderWeatherCoordinateSelectionApplied(host) {
+    const state = host?.__weatherWidgetInstance?.getState?.();
+    if (!state?.weather) return true;
+    const selected = parseHeaderWeatherCoordinates(host?.dataset?.weatherLocation);
+    const applied = typeof state.location === 'string'
+      ? parseHeaderWeatherCoordinates(state.location)
+      : state.location;
+    return Boolean(
+      selected && Number.isFinite(applied?.latitude) && Number.isFinite(applied?.longitude) &&
+      Math.abs(selected.latitude - applied.latitude) <= 0.000001 &&
+      Math.abs(selected.longitude - applied.longitude) <= 0.000001 &&
+      !isHeaderWeatherTextManualLocation(host)
+    );
   }
 
   function formatHeaderWeatherCityDistrictDisplayLabel(value) {
@@ -4513,26 +4843,6 @@
     );
     const copy = HEADER_WEATHER_LOCATION_STATUS_BY_LANG[language] || HEADER_WEATHER_LOCATION_STATUS_BY_LANG.en;
     return copy[state] || copy.resolving;
-  }
-
-  function isHeaderWeatherTechnicalLocationLabel(value) {
-    const normalized = String(value || '')
-      .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
-      .replace(/\u00A0/g, ' ')
-      .trim();
-    if (!normalized) {
-      return true;
-    }
-
-    if (parseHeaderWeatherCoordinates(normalized)) {
-      return true;
-    }
-
-    return Object.values(HEADER_WEATHER_LOCATION_STATUS_BY_LANG).some(copy =>
-      Object.values(copy).some(
-        label => normalizeHeaderWeatherLocationKey(label) === normalizeHeaderWeatherLocationKey(normalized)
-      )
-    );
   }
 
   function buildHeaderWeatherDistrictLabel(address) {
@@ -4701,7 +5011,7 @@
       try {
         const proxyResponse = await fetch(proxyUrl.toString(), {
           mode: 'cors',
-          credentials: 'omit',
+          credentials: 'same-origin',
           headers: {
             Accept: 'application/json',
           },
@@ -5071,11 +5381,21 @@
     const liveWeekday = formatHeaderWeatherLiveWeekday(timeZone);
     const forcedRegionLabel = String(host?.dataset?.weatherRegionLabel || '').trim();
     const timeNodes = root.querySelectorAll(
-      '.weather-header-card__meta, .weather-header-dropdown__hero-meta, .weather-header-dropdown__hero-copy span'
+      '.weather-header-card__meta, .weather-header-dropdown__hero-meta, .weather-header-dropdown__hero-copy > span'
     );
 
     timeNodes.forEach(node => {
       if (!node) {
+        return;
+      }
+
+      if (node.matches?.('.weather-header-dropdown__hero-meta, .weather-header-dropdown__hero-copy > span')) {
+        if (isHeaderWeatherDropdownForecastSelected(host)) return;
+        Array.from(node.childNodes).forEach(part => {
+          if (part.nodeType !== 3 || !/\d{1,2}:\d{2}/.test(part.nodeValue || '')) return;
+          const nextPart = rewriteHeaderWeatherTimeText(part.nodeValue, liveWeekday ? `${liveTime} · ${liveWeekday}` : liveTime, timeZone);
+          if (nextPart !== part.nodeValue) part.nodeValue = nextPart;
+        });
         return;
       }
 
@@ -5281,7 +5601,7 @@
   }
 
   function getHeaderWeatherConditionCode(host) {
-    const conditionCode = Number(
+    const conditionCode = getHeaderWeatherFiniteNumber(
       host?.__weatherCurrentMeta?.weatherCode ??
         host?.dataset?.weatherCode ??
         host?.__weatherWidgetData?.current?.condition?.code
@@ -5411,6 +5731,9 @@
   }
 
   function getHeaderWeatherFiniteNumber(value) {
+    if (value === null || value === undefined || (typeof value === 'string' && value.trim() === '')) {
+      return null;
+    }
     const number = Number(value);
     return Number.isFinite(number) ? number : null;
   }
@@ -5610,6 +5933,9 @@
       return null;
     }
 
+    const current = host.__weatherWidgetInstance?.getState?.()?.weather?.current || host.__weatherWidgetData?.current;
+    const visibility = getHeaderWeatherFiniteNumber(current?.vis_km);
+    const gusts = getHeaderWeatherFiniteNumber(current?.gust_kph);
     const tempNode = root.querySelector('.weather-header-card__temperature-value');
     const temp = parseHeaderWeatherNumericToken(tempNode?.textContent);
     const condition = getHeaderWeatherConditionPlainText(root.querySelector('.weather-header-card__condition'));
@@ -5643,6 +5969,8 @@
       feels: feelsValue === null ? null : formatHeaderWeatherCelsiusText(feelsValue),
       wind: windMatch ? `${Math.round(Number(windMatch[1].replace(',', '.')))} ${windMatch[2] || 'km/h'}` : null,
       humidity: humidityMatch ? `${humidityMatch[1]}%` : null,
+      visibility: visibility !== null && visibility >= 0 ? `${Math.round(visibility)} km` : null,
+      gusts: gusts !== null && gusts >= 0 ? `${Math.round(gusts)} km/h` : null,
       pressure:
         pressureToken === null || !Number.isFinite(pressureToken) || Math.abs(pressureToken) <= 0
           ? null
@@ -5660,6 +5988,8 @@
     const temp = getHeaderWeatherFiniteNumber(meta.temperature);
     const feels = getHeaderWeatherFiniteNumber(meta.apparentTemperature);
     const wind = getHeaderWeatherFiniteNumber(meta.windSpeedKph);
+    const visibility = getHeaderWeatherFiniteNumber(meta.visibilityMeters);
+    const gusts = getHeaderWeatherFiniteNumber(meta.gustKph);
     const humidityRaw = getHeaderWeatherFiniteNumber(meta.humidity);
     const humidity = humidityRaw !== null && humidityRaw >= 0 && humidityRaw <= 100 ? humidityRaw : null;
     const pressureMmHg =
@@ -5685,6 +6015,8 @@
       feels: Number.isFinite(feels) ? formatHeaderWeatherCelsiusText(feels) : null,
       wind: Number.isFinite(wind) ? `${Math.round(wind)} km/h` : null,
       humidity: Number.isFinite(humidity) ? `${Math.round(humidity)}%` : null,
+      visibility: visibility !== null && visibility >= 0 ? `${Math.round(visibility / 1000)} km` : null,
+      gusts: gusts !== null && gusts >= 0 ? `${Math.round(gusts)} km/h` : null,
       pressure: pressureMmHg === null ? null : formatHeaderWeatherPressureValue(host, pressureMmHg),
       source: meta.source || 'weather-provider-meta',
     };
@@ -5701,6 +6033,8 @@
       ? {
           ...(widgetReadings || {}),
           ...apiReadings,
+          visibility: apiReadings.visibility ?? widgetReadings?.visibility ?? null,
+          gusts: apiReadings.gusts ?? widgetReadings?.gusts ?? null,
           meta: widgetReadings?.meta || apiReadings.meta || '',
           source: apiReadings.source,
         }
@@ -5713,6 +6047,8 @@
             wind: widgetReadings.wind || apiReadings?.wind || null,
             pressure: widgetReadings.pressure || apiReadings?.pressure || null,
             humidity: widgetReadings.humidity || apiReadings?.humidity || null,
+            visibility: widgetReadings.visibility ?? apiReadings?.visibility ?? null,
+            gusts: widgetReadings.gusts ?? apiReadings?.gusts ?? null,
           }
         : apiReadings;
 
@@ -5735,9 +6071,30 @@
     return resolvedReadings;
   }
 
+  function updateHeaderWeatherTextParts(node, parts) {
+    const textNodes = Array.from(node?.childNodes || []);
+    if (!textNodes.length || textNodes.some(part => part.nodeType !== 3)) return false;
+    const values = textNodes.length === parts.length ? parts : textNodes.length === 1 ? [parts.join('')] : null;
+    if (!values) return false;
+    let changed = false;
+    textNodes.forEach((part, index) => {
+      if (part.nodeValue !== values[index]) {
+        part.nodeValue = values[index];
+        changed = true;
+      }
+    });
+    return changed;
+  }
+
+  function isHeaderWeatherDropdownForecastSelected(host) {
+    const root = host?.shadowRoot;
+    const active = root?.querySelector('.weather-header-dropdown__forecast-pill.is-active');
+    return Boolean(active && Array.from(root.querySelectorAll('.weather-header-dropdown__forecast-pill')).indexOf(active) > 0);
+  }
+
   function applyHeaderWeatherDropdownReadings(host, readings) {
     const root = host?.shadowRoot;
-    if (!root || !readings) {
+    if (!root || !readings || isHeaderWeatherDropdownForecastSelected(host)) {
       return false;
     }
 
@@ -5764,15 +6121,12 @@
       }
     }
 
-    const updatedNode = root.querySelector('.weather-header-dropdown__hero-copy span');
-    if (updatedNode && readings.meta && updatedNode.textContent?.trim() !== readings.meta) {
+    const updatedNode = root.querySelector('.weather-header-dropdown__hero-copy > span');
+    if (updatedNode && readings.meta) {
       const updatedPrefix = `${copy.updated}:`;
-      if (readings.meta.toLowerCase().includes(copy.updated.toLowerCase())) {
-        updatedNode.textContent = readings.meta;
-      } else {
-        updatedNode.textContent = `${updatedPrefix} ${readings.meta}`;
-      }
-      changed = true;
+      const nextMeta = readings.meta.toLowerCase().startsWith(updatedPrefix.toLowerCase())
+        ? readings.meta.slice(updatedPrefix.length).trimStart() : readings.meta;
+      changed = updateHeaderWeatherTextParts(updatedNode, [copy.updated, ':', ' ', nextMeta]) || changed;
     }
 
     const dropdownChips = Array.from(root.querySelectorAll('.weather-header-dropdown__hero-chips span'));
@@ -5786,16 +6140,32 @@
         return;
       }
 
-      const nextText = `${label}: ${value}`;
-      if (chip.textContent?.trim() !== nextText) {
-        chip.textContent = nextText;
-        changed = true;
-      }
+      const valueParts = String(value).match(/^(-?\d+(?:[.,]\d+)?)(.*)$/u);
+      if (!valueParts) return;
+      changed = updateHeaderWeatherTextParts(chip, [label, ': ', valueParts[1], valueParts[2]]) || changed;
     };
 
     applyChip(/gef|ощущ|feels|відчува|apparent/i, readings.feels, copy.feels);
     applyChip(/wind|ветер|вітер/i, readings.wind, copy.wind);
     applyChip(/humid|влаж|feucht|волог|umid|humedad/i, readings.humidity, copy.humidity);
+
+    const detailValues = [
+      [/gef|ощущ|feels|відчува|apparent/i, readings.feels],
+      [/wind|ветер|вітер/i, readings.wind],
+      [/humid|влаж|feucht|волог|umid|humedad/i, readings.humidity],
+      [/visibility|видим|sicht/i, readings.visibility],
+      [/pressure|давлен|тиск|druck|presion/i, readings.pressure],
+      [/gust|порыв|порив|bö|boe/i, readings.gusts],
+    ];
+    root.querySelectorAll('.weather-header-dropdown__detail-card').forEach(card => {
+      const label = card.querySelector('span')?.textContent || '';
+      const value = detailValues.find(([pattern]) => pattern.test(label))?.[1];
+      const valueNode = card.querySelector('strong');
+      if (value && valueNode && valueNode.textContent?.trim() !== value) {
+        valueNode.textContent = value;
+        changed = true;
+      }
+    });
 
     return changed;
   }
@@ -5836,7 +6206,7 @@
   }
 
   function syncHeaderWeatherUnifiedReadings(host) {
-    if (!host?.shadowRoot) {
+    if (!host?.shadowRoot || !isHeaderWeatherCoordinateSelectionApplied(host)) {
       return;
     }
 
@@ -5850,7 +6220,7 @@
     applyHeaderWeatherPreviewReadings(host, readings);
     syncHeaderWeatherAttribution(host);
     const dropdownConditionNode = host.shadowRoot?.querySelector('.weather-header-dropdown__hero-copy strong');
-    if (dropdownConditionNode instanceof HTMLElement && readings.condition) {
+    if (dropdownConditionNode instanceof HTMLElement && readings.condition && !isHeaderWeatherDropdownForecastSelected(host)) {
       applyHeaderWeatherDropdownConditionTypography(dropdownConditionNode, readings.condition);
     }
     normalizeHeaderWeatherCelsiusUnits(host);
@@ -6427,15 +6797,17 @@
       }
     }
 
-    const previewMoon = root.querySelector('.weather-orb-overlay--preview.is-moon');
-    if (previewMoon instanceof HTMLElement) {
-      previewMoon.style.setProperty('opacity', '0.62', 'important');
-      previewMoon.style.setProperty(
+    root.querySelectorAll('.weather-orb-overlay--preview.is-moon, .weather-orb-overlay--dropdown.is-moon').forEach(moon => {
+      if (!(moon instanceof HTMLElement)) {
+        return;
+      }
+      moon.style.setProperty('opacity', '0.62', 'important');
+      moon.style.setProperty(
         'filter',
         'brightness(1.18) saturate(1.08) drop-shadow(0 0 12px rgba(232, 212, 139, 0.36))',
         'important'
       );
-    }
+    });
 
     return changed;
   }
@@ -6586,10 +6958,10 @@
   }
 
   function getHeaderWeatherCloudCover(host) {
-    const cloudCover = Number(
+    const cloudCover = getHeaderWeatherFiniteNumber(
       host?.__weatherCurrentMeta?.cloudCover ?? host?.dataset?.weatherCloud ?? host?.__weatherWidgetData?.current?.cloud
     );
-    return Number.isFinite(cloudCover) ? clampHeaderWeatherValue(cloudCover, 0, 100) : null;
+    return cloudCover === null ? null : clampHeaderWeatherValue(cloudCover, 0, 100);
   }
 
   function resolveHeaderWeatherTextReadability(host, orbAtmosphere) {
@@ -7246,10 +7618,14 @@
         orbKind === 'sun' ||
         overlay.classList.contains('is-moon') ||
         overlay.classList.contains('is-sun'));
+    const isDropdownMoon =
+      overlay.classList.contains('weather-orb-overlay--dropdown') &&
+      (orbKind === 'moon' || overlay.classList.contains('is-moon'));
+    const isCssAnchoredOrb = isPreviewOrb || isDropdownMoon;
 
-    if (isPreviewOrb && (orbKind === 'moon' || orbKind === 'sun')) {
-      layout = resolveHeaderWeatherOrbFixedLayout(orbKind, 'preview');
-      overlay.dataset.orbPositionLocked = 'preview';
+    if ((isPreviewOrb && (orbKind === 'moon' || orbKind === 'sun')) || isDropdownMoon) {
+      layout = resolveHeaderWeatherOrbFixedLayout(isDropdownMoon ? 'moon' : orbKind, isDropdownMoon ? 'dropdown' : 'preview');
+      overlay.dataset.orbPositionLocked = isDropdownMoon ? 'dropdown' : 'preview';
       overlay.style.removeProperty('--orb-left');
       overlay.style.removeProperty('--orb-top');
       overlay.style.removeProperty('--orb-offset-x');
@@ -7257,7 +7633,7 @@
     }
 
     if (!layout) {
-      if (!isPreviewOrb) {
+      if (!isCssAnchoredOrb) {
         overlay.style.removeProperty('--orb-left');
         overlay.style.removeProperty('--orb-top');
         overlay.style.removeProperty('--orb-offset-x');
@@ -7277,12 +7653,12 @@
     layout = {
       ...layout,
       scale: Number.isFinite(Number(layout.scale)) ? Number(layout.scale) : Number(fallbackLayout?.scale) || 1,
-      left: isPreviewOrb
+      left: isCssAnchoredOrb
         ? Number(layout.left)
         : Number.isFinite(Number(layout.left))
           ? Number(layout.left)
           : Number(fallbackLayout?.left),
-      top: isPreviewOrb
+      top: isCssAnchoredOrb
         ? Number(layout.top)
         : Number.isFinite(Number(layout.top))
           ? Number(layout.top)
@@ -7301,7 +7677,7 @@
             : layout.offsetY,
     };
 
-    if (!isPreviewOrb && (!Number.isFinite(layout.left) || !Number.isFinite(layout.top))) {
+    if (!isCssAnchoredOrb && (!Number.isFinite(layout.left) || !Number.isFinite(layout.top))) {
       overlay.style.removeProperty('--orb-left');
       overlay.style.removeProperty('--orb-top');
       overlay.style.removeProperty('--orb-offset-x');
@@ -7313,7 +7689,7 @@
       return;
     }
 
-    const layoutKey = isPreviewOrb
+    const layoutKey = isCssAnchoredOrb
       ? String(layout.scale ?? 1)
       : [layout.left, layout.top, layout.scale, layout.offsetX ?? '', layout.offsetY ?? ''].join('|');
     if (overlay.dataset.orbLayoutKey === layoutKey) {
@@ -7325,7 +7701,7 @@
     overlay.style.setProperty('--orb-scale-visible', visibleScale.toFixed(3));
     overlay.style.setProperty('--orb-scale-hidden', Math.max(0.88, visibleScale - 0.08).toFixed(3));
 
-    if (isPreviewOrb) {
+    if (isCssAnchoredOrb) {
       return;
     }
 
@@ -7371,7 +7747,7 @@
 
     const response = await fetch(url.toString(), {
       mode: 'cors',
-      credentials: 'omit',
+      credentials: 'same-origin',
       cache: 'no-store',
       headers: { Accept: 'application/json' },
     });
@@ -7436,7 +7812,7 @@
       return;
     }
 
-    if (isHeaderWeatherTextManualLocation(host)) {
+    if (isHeaderWeatherTextManualLocation(host) || !isHeaderWeatherCoordinateSelectionApplied(host)) {
       return;
     }
 
@@ -7447,6 +7823,7 @@
       !locationMeta ||
       host.__weatherWidgetInstance !== widgetInstance ||
       isHeaderWeatherTextManualLocation(host) ||
+      !isHeaderWeatherCoordinateSelectionApplied(host) ||
       getHeaderWeatherLocationLabel(host) !== locationQuery
     ) {
       return;
@@ -7524,20 +7901,19 @@
       return;
     }
 
-    if (host.dataset.weatherResolvedLocationLabel) {
+    if (!isHeaderWeatherCoordinateSelectionApplied(host)) return;
+
+    const hasDeviceCoordinates = Boolean(parseHeaderWeatherCoordinates(host.dataset.weatherLocation));
+    if (hasDeviceCoordinates && host.dataset.weatherResolvedLocationLabel) {
       restoreHeaderWeatherAreaLocationLabel(host);
       return;
     }
 
     const state = host.dataset.weatherAreaState === 'unavailable' ? 'unavailable' : 'resolving';
     const statusText = getHeaderWeatherLocationStatusCopy(host, state);
-    const hasDeviceCoordinates = Boolean(parseHeaderWeatherCoordinates(host.dataset.weatherLocation));
     let locationLabelChanged = false;
     root.querySelectorAll('.weather-header-card__location, .weather-location-selector__city').forEach(node => {
       const currentText = node.textContent?.trim() || '';
-      if (!hasDeviceCoordinates && !isHeaderWeatherTechnicalLocationLabel(currentText)) {
-        return;
-      }
       if (currentText !== statusText) {
         node.textContent = statusText;
         locationLabelChanged = true;
@@ -7761,11 +8137,12 @@
 
   function ensureHeaderWeatherToggleArrowBase(host) {
     const toggleIcon = host?.shadowRoot?.querySelector('.weather-header-card__toggle-icon');
-    if (!toggleIcon || toggleIcon.dataset.arrowBaseReady === 'true') {
+    if (!toggleIcon || toggleIcon.dataset.arrowBaseReady === 'inline-v2') {
       return toggleIcon;
     }
 
-    toggleIcon.dataset.arrowBaseReady = 'true';
+    stopHeaderWeatherToggleArrowAnimation(host);
+    toggleIcon.dataset.arrowBaseReady = 'inline-v2';
     toggleIcon.textContent = '';
     toggleIcon.setAttribute('aria-hidden', 'true');
     toggleIcon.style.setProperty('background-image', "url('/assets/images/icons/chevron-down.png')", 'important');
@@ -7774,14 +8151,17 @@
     toggleIcon.style.setProperty('background-size', 'contain', 'important');
     toggleIcon.style.setProperty('width', '7.906px', 'important');
     toggleIcon.style.setProperty('height', '7.906px', 'important');
-    toggleIcon.style.setProperty('position', 'absolute', 'important');
-    toggleIcon.style.setProperty('right', '-9.906px', 'important');
+    toggleIcon.style.setProperty('flex', '0 0 7.906px', 'important');
+    toggleIcon.style.setProperty('align-self', 'center', 'important');
+    toggleIcon.style.setProperty('position', 'relative', 'important');
+    toggleIcon.style.setProperty('left', 'auto', 'important');
+    toggleIcon.style.setProperty('right', 'auto', 'important');
     toggleIcon.style.setProperty('top', 'auto', 'important');
-    toggleIcon.style.setProperty('bottom', '-1px', 'important');
-    toggleIcon.style.setProperty('margin-top', '0', 'important');
-    toggleIcon.style.setProperty('opacity', '0.9', 'important');
+    toggleIcon.style.setProperty('bottom', 'auto', 'important');
+    toggleIcon.style.setProperty('margin', '0', 'important');
+    toggleIcon.style.setProperty('opacity', '0.9');
     toggleIcon.style.setProperty('visibility', 'visible', 'important');
-    toggleIcon.style.setProperty('transform-origin', '50% 100%', 'important');
+    toggleIcon.style.setProperty('transform-origin', '50% 50%', 'important');
     toggleIcon.style.setProperty('font-size', '0', 'important');
     toggleIcon.style.setProperty('line-height', '0', 'important');
     toggleIcon.style.setProperty('--arrow-shift-x', '0px', 'important');
@@ -7793,6 +8173,40 @@
     );
 
     return toggleIcon;
+  }
+
+  function stopHeaderWeatherToggleArrowAnimation(host) {
+    const animation = host?.__weatherToggleArrowAnimation;
+    if (host) host.__weatherToggleArrowAnimation = null;
+    animation?.cancel();
+  }
+
+  function playHeaderWeatherToggleArrowAnimation(host, toggleIcon, expanded) {
+    stopHeaderWeatherToggleArrowAnimation(host);
+    if (document.hidden || !host.isConnected || host.dataset.weatherMounted !== 'true' ||
+      typeof toggleIcon.animate !== 'function') return;
+
+    const styles = getComputedStyle(host);
+    const durationText = styles.getPropertyValue('--site-arrow-activation-duration').trim().toLowerCase();
+    const amount = Number.parseFloat(durationText);
+    const duration = Number.isFinite(amount) && amount > 0
+      ? amount * (durationText.endsWith('s') && !durationText.endsWith('ms') ? 1000 : 1) : 1800;
+    const configuredTurns = Number.parseFloat(styles.getPropertyValue('--site-arrow-activation-turn-count'));
+    const turns = Number.isFinite(configuredTurns) && configuredTurns > 0 ? configuredTurns : 3;
+    const easing = styles.getPropertyValue('--site-arrow-activation-easing').trim() || 'cubic-bezier(0.65, 0.05, 0.15, 1)';
+    try {
+      const animation = toggleIcon.animate(
+        [{ rotate: '0deg' }, { rotate: `${(expanded ? 1 : -1) * turns * 360}deg` }],
+        { duration, easing }
+      );
+      host.__weatherToggleArrowAnimation = animation;
+      const release = () => {
+        if (host.__weatherToggleArrowAnimation === animation) host.__weatherToggleArrowAnimation = null;
+      };
+      animation.finished.then(release, release);
+    } catch {
+      // The CSS bounce and expanded-state orientation remain when WAAPI is unavailable.
+    }
   }
 
   function syncHeaderWeatherToggleArrow(host) {
@@ -7808,6 +8222,8 @@
     }
 
     const expanded = trigger?.getAttribute('aria-expanded') === 'true' || host.dataset.weatherExpanded === 'true';
+    const previousExpanded = toggleIcon.dataset.arrowExpanded;
+    toggleIcon.dataset.arrowExpanded = String(expanded);
 
     toggleIcon.classList.toggle('is-open', expanded);
     toggleIcon.style.setProperty(
@@ -7816,6 +8232,11 @@
       'important'
     );
     toggleIcon.style.removeProperty('transform');
+    if (document.hidden || !host.isConnected || host.dataset.weatherMounted !== 'true') {
+      stopHeaderWeatherToggleArrowAnimation(host);
+    } else if (previousExpanded !== undefined && previousExpanded !== String(expanded)) {
+      playHeaderWeatherToggleArrowAnimation(host, toggleIcon, expanded);
+    }
   }
 
   function enforceHeaderWeatherToggleArrow(host) {
@@ -8176,12 +8597,46 @@
     });
   }
 
+  function syncHeaderWeatherDropdownPlacement(host) {
+    const dropdown = host?.shadowRoot?.querySelector('.weather-header-dropdown');
+    const header = host?.closest('header.header');
+    const parent = dropdown?.offsetParent;
+    if (!dropdown || !header || !parent) return;
+
+    const visibleBottoms = [header, ...header.querySelectorAll('.top-row, .nav-main, .social-bar')]
+      .filter(node => {
+        const rect = node.getBoundingClientRect();
+        const style = window.getComputedStyle(node);
+        return rect.height > 0 && rect.width > 0 && style.display !== 'none' &&
+          style.visibility !== 'hidden' && Number.parseFloat(style.opacity || '1') > 0.02;
+      })
+      .map(node => node.getBoundingClientRect().bottom);
+    if (!visibleBottoms.length) return;
+
+    const gap = 10;
+    const viewportTop = window.visualViewport?.offsetTop || 0;
+    const viewportBottom = viewportTop + (window.visualViewport?.height || window.innerHeight);
+    const top = Math.max(viewportTop, ...visibleBottoms) + gap;
+    const parentRect = parent.getBoundingClientRect();
+    const scale = parent.offsetHeight > 0 ? parentRect.height / parent.offsetHeight : 1;
+    if (!Number.isFinite(scale) || scale <= 0) return;
+    const localTop = (top - parentRect.top) / scale - (parent.clientTop || 0) + (parent.scrollTop || 0);
+    const availableHeight = Math.max(0, (viewportBottom - top - gap) / scale);
+    for (const [property, value] of Object.entries({
+      top: `${localTop.toFixed(2)}px`,
+      'max-height': `min(78dvh, ${availableHeight.toFixed(2)}px)`,
+    })) {
+      if (dropdown.style.getPropertyValue(property) !== value) dropdown.style.setProperty(property, value, 'important');
+    }
+  }
+
   function bindHeaderWeatherLayoutObserver(host) {
     if (!host?.shadowRoot || host.__weatherLayoutObserver) {
       return;
     }
 
     const observer = new MutationObserver(() => {
+      syncHeaderWeatherDropdownPlacement(host);
       if (host.__weatherPlacementApplying) {
         return;
       }
@@ -9298,7 +9753,7 @@
     }
 
     const dropdownCondition = root.querySelector('.weather-header-dropdown__hero-copy strong');
-    if (dropdownCondition instanceof HTMLElement) {
+    if (dropdownCondition instanceof HTMLElement && !isHeaderWeatherDropdownForecastSelected(host)) {
       const dropdownConditionText =
         host?.__weatherReadingsSnapshot?.condition ||
         getHeaderWeatherConditionPlainText(condition) ||
@@ -9371,6 +9826,7 @@
     if (!root || host.__weatherPlacementApplying) {
       return;
     }
+    syncHeaderWeatherDropdownPlacement(host);
     const hasCompleteLockedPreview = () => {
       if (!root) {
         return false;
@@ -11383,6 +11839,128 @@
     return overlay;
   }
 
+  function syncHeaderWeatherShootingStars(host) {
+    if (!host?.shadowRoot) return;
+    if (host.dataset.weatherMounted !== 'true') {
+      host.__weatherShootingStars?.dispose();
+      host.__weatherShootingStars = null;
+      return;
+    }
+    if (!host.__weatherShootingStars) {
+      let timer = null;
+      let active = null;
+      let disposed = false;
+      let firstPass = true;
+      let generation = 0;
+      const eligibleLayers = () => {
+        if (disposed || !host.isConnected || host.dataset.weatherMounted !== 'true' ||
+          document.hidden) return [];
+        return [
+          host.shadowRoot.querySelector('.weather-header-preview__stars-back'),
+          host.dataset.weatherExpanded === 'true'
+            ? host.shadowRoot.querySelector('.weather-header-dropdown__stars-back') : null,
+        ].filter(layer => layer?.isConnected && layer.classList.contains('is-night-sky') && layer.style.display !== 'none');
+      };
+      const stop = () => {
+        generation += 1;
+        if (timer !== null) window.clearTimeout(timer);
+        timer = null;
+        const previous = active;
+        active = null;
+        previous?.animation.cancel();
+        previous?.element.remove();
+      };
+      const schedule = () => {
+        if (timer !== null || active || !eligibleLayers().length) return;
+        timer = window.setTimeout(spawn, randomBetween(firstPass ? 2000 : 7000, firstPass ? 5000 : 20000));
+      };
+      const spawn = () => {
+        timer = null;
+        const layers = eligibleLayers();
+        if (!layers.length) return;
+        firstPass = false;
+        const layer = layers[Math.min(layers.length - 1, Math.floor(randomBetween(0, layers.length)))];
+        const rect = layer.getBoundingClientRect();
+        const container = layer.closest('.weather-header-dropdown') || document.querySelector('.header');
+        const bounds = container?.getBoundingClientRect();
+        if (!bounds) return;
+        const viewport = window.visualViewport;
+        const left = Math.max(rect.left, bounds.left, viewport?.offsetLeft || 0);
+        const top = Math.max(rect.top, bounds.top, viewport?.offsetTop || 0);
+        const right = Math.min(rect.right, bounds.right, (viewport?.offsetLeft || 0) + (viewport?.width || window.innerWidth));
+        const bottom = Math.min(rect.bottom, bounds.bottom, (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight));
+        const length = Math.min(randomBetween(54, 86), (right - left) * 0.3);
+        const angle = randomBetween(0, 360);
+        const radians = angle * Math.PI / 180;
+        const cosine = Math.cos(radians);
+        const sine = Math.sin(radians);
+        const corners = [-0.9 * length, 0.1 * length].flatMap(x =>
+          [-9, 9].map(y => ({ x: x * cosine - y * sine, y: x * sine + y * cosine }))
+        );
+        const minX = left - Math.min(...corners.map(point => point.x)) + 6;
+        const maxX = right - Math.max(...corners.map(point => point.x)) - 6;
+        const minY = top - Math.min(...corners.map(point => point.y)) + 6;
+        const maxY = bottom - Math.max(...corners.map(point => point.y)) - 6;
+        const distance = Math.min(
+          (maxX - minX) / Math.max(Math.abs(cosine), 0.001),
+          (maxY - minY) / Math.max(Math.abs(sine), 0.001)
+        ) * randomBetween(0.45, 0.9);
+        if (length <= 0 || maxX <= minX || maxY <= minY || distance < 12) {
+          schedule();
+          return;
+        }
+        const dx = cosine * distance;
+        const dy = sine * distance;
+        const x = randomBetween(minX - Math.min(dx, 0), maxX - Math.max(dx, 0));
+        const y = randomBetween(minY - Math.min(dy, 0), maxY - Math.max(dy, 0));
+        const element = document.createElement('span');
+        element.className = 'weather-header-shooting-star';
+        element.setAttribute('aria-hidden', 'true');
+        element.style.setProperty('--shooting-star-length', `${length.toFixed(2)}px`);
+        element.style.left = `${(x - rect.left - length * 0.9).toFixed(2)}px`;
+        element.style.top = `${(y - rect.top - 9).toFixed(2)}px`;
+        layer.appendChild(element);
+        const transform = progress => `translate3d(${(dx * progress).toFixed(2)}px, ${(dy * progress).toFixed(2)}px, 0) rotate(${angle.toFixed(2)}deg) scale(${(1 - 0.8 * progress).toFixed(3)})`;
+        let animation;
+        try {
+          animation = element.animate([
+            // Opacity eases independently; transform endpoints preserve constant travel speed.
+            { transform: transform(0), offset: 0, easing: 'linear' },
+            { opacity: 0, offset: 0, easing: 'ease-in-out' },
+            { opacity: 0.8, offset: 0.18, easing: 'ease-in-out' },
+            { opacity: 0.18, offset: 0.7, easing: 'ease-in-out' },
+            { transform: transform(1), opacity: 0, offset: 1 },
+          ], { duration: randomBetween(2000, 3000), easing: 'linear', fill: 'forwards' });
+        } catch {
+          element.remove();
+          return;
+        }
+        const token = ++generation;
+        active = { layer, element, animation };
+        const finish = () => {
+          element.remove();
+          if (token !== generation || disposed) return;
+          active = null;
+          schedule();
+        };
+        animation.finished.then(finish, finish);
+      };
+      const sync = (restart = false) => {
+        const layers = eligibleLayers();
+        if (restart || !layers.length || (active && !layers.includes(active.layer))) stop();
+        if (layers.length) schedule();
+      };
+      host.__weatherShootingStars = {
+        sync,
+        dispose() {
+          disposed = true;
+          stop();
+        },
+      };
+    }
+    host.__weatherShootingStars.sync();
+  }
+
   function ensureHeaderWeatherStarsBackLayer(container) {
     if (!container) {
       return null;
@@ -12241,7 +12819,6 @@
       host.__weatherOrbSyncFrameScheduled = false;
       void syncHeaderWeatherOrbOverlay(host).finally(() => {
         if (host.isConnected && host.dataset.weatherMounted === 'true') {
-          host.dataset.weatherDataUpdatedAt = String(Date.now());
           syncHeaderWeatherAttribution(host);
         }
       });
@@ -12249,7 +12826,7 @@
   }
 
   async function syncHeaderWeatherOrbOverlay(host) {
-    if (!host?.shadowRoot) {
+    if (!host?.shadowRoot || !isHeaderWeatherCoordinateSelectionApplied(host)) {
       return;
     }
 
@@ -12270,9 +12847,21 @@
 
     const syncToken = `${Date.now()}:${Math.random()}`;
     host.__weatherOrbSyncToken = syncToken;
+    const lifecycle = host.__weatherLifecycleGeneration || 0;
+    const generation = host.__weatherLocationGeneration || 0;
+    const location = host.dataset.weatherLocation;
+    const isCurrent = () =>
+      host.isConnected &&
+      host.dataset.weatherMounted === 'true' &&
+      host.__weatherOrbSyncToken === syncToken &&
+      (host.__weatherLifecycleGeneration || 0) === lifecycle &&
+      (host.__weatherLocationGeneration || 0) === generation &&
+      host.dataset.weatherLocation === location &&
+      isHeaderWeatherCoordinateSelectionApplied(host);
 
     try {
       await syncHeaderWeatherClockWithServers();
+      if (!isCurrent()) return;
 
       let astroData = null;
       try {
@@ -12281,16 +12870,18 @@
         // console.warn('Header weather astro sync failed:', error);
       }
 
+      if (!isCurrent()) return;
       host.__weatherTimeZone = resolveHeaderWeatherTimeZone(host, astroData?.locationMeta || null);
 
       try {
-        host.__weatherCurrentMeta = await resolveHeaderWeatherCurrent(host);
+        const currentMeta = await resolveHeaderWeatherCurrent(host);
+        if (!isCurrent()) return;
+        if (currentMeta) host.__weatherCurrentMeta = currentMeta;
       } catch {
-        host.__weatherCurrentMeta = null;
         // console.warn('Header weather current sync failed:', error);
       }
 
-      if (host.__weatherOrbSyncToken !== syncToken) {
+      if (!isCurrent()) {
         return;
       }
 
@@ -12447,13 +13038,14 @@
 
       enforceHeaderWeatherToggleArrow(host);
       scheduleHeaderWeatherMenuPlacement(host);
+      syncHeaderWeatherShootingStars(host);
       syncHeaderWeatherUnifiedReadings(host);
       scheduleHeaderWeatherReadingsSync(host);
       syncHeaderWeatherLiveClock(host);
       syncHeaderWeatherCloudBandLayout(host);
     } finally {
       host.__weatherOrbSyncInFlight = false;
-      if (host.__weatherOrbSyncPending) {
+      if (host.__weatherOrbSyncPending && host.isConnected && host.dataset.weatherMounted === 'true') {
         host.__weatherOrbSyncPending = false;
         scheduleHeaderWeatherOrbSync(host);
       }
@@ -12466,6 +13058,7 @@
       emitHeaderWeatherEvent('site-shell:weather-toggle', false);
       return;
     }
+    syncHeaderWeatherDropdownPlacement(host);
 
     const trigger = host.shadowRoot?.querySelector('.weather-header-trigger');
     const expanded = trigger?.getAttribute('aria-expanded') === 'true';
@@ -12483,6 +13076,7 @@
       document.body?.classList.toggle('header-weather-expanded', expanded);
     }
 
+    syncHeaderWeatherShootingStars(host);
     syncHeaderWeatherToggleArrow(host);
   }
 
@@ -12722,10 +13316,11 @@
           host.__weatherCurrentLocationPassthrough = false;
           return;
         }
-        if (currentLocationButton && host.dataset.weatherManualLocation === 'true') {
+        if (currentLocationButton) {
           event.preventDefault();
           event.stopPropagation();
-          void restoreHeaderWeatherDeviceLocation(host, currentLocationButton);
+          event.stopImmediatePropagation();
+          void restoreHeaderWeatherDeviceLocation(host);
           return;
         }
         const selectsSuggestion =
@@ -12737,6 +13332,7 @@
         if (!selectsSuggestion && !submitsSearch) {
           return;
         }
+        invalidateHeaderWeatherLocationRequest(host);
         const suggestion = selectsSuggestion
           ? target.closest('button.weather-location-selector__suggestion')
           : findHeaderWeatherSubmittedSuggestion(target);
@@ -12801,17 +13397,9 @@
       }
     }, HEADER_WEATHER_TIME_SYNC_INTERVAL);
 
-    host.__weatherGeoRefreshId = window.setInterval(() => {
-      if (!document.hidden) {
-        void refreshHeaderWeatherGeoLocation(host);
-      }
-    }, HEADER_WEATHER_GEO_REFRESH_INTERVAL);
-
     host.__weatherDataRefreshId = window.setInterval(() => {
-      if (!document.hidden) {
-        void refreshHeaderWeatherWidgetData(host);
-      }
-    }, HEADER_WEATHER_WIDGET_REFRESH_INTERVAL);
+      void refreshHeaderWeatherLifecycle(host);
+    }, HEADER_WEATHER_GEO_REFRESH_INTERVAL);
 
     host.__weatherAstroRefreshId = window.setInterval(() => {
       if (!document.hidden) {
@@ -12819,20 +13407,17 @@
       }
     }, HEADER_WEATHER_ASTRO_REFRESH_INTERVAL);
     host.__weatherAstroVisibilityHandler = () => {
+      host.__weatherShootingStars?.sync(true);
+      if (document.hidden) stopHeaderWeatherToggleArrowAnimation(host);
       if (!document.hidden) {
         syncHeaderWeatherClockWithServers().catch(() => null);
         syncHeaderWeatherLiveClock(host);
         scheduleHeaderWeatherOrbSync(host);
-        const now = Date.now();
-        if (now - Number(host.dataset.weatherGeoCheckedAt || 0) >= HEADER_WEATHER_GEO_REFRESH_INTERVAL) {
-          void refreshHeaderWeatherGeoLocation(host);
-        }
-        if (now - Number(host.dataset.weatherDataUpdatedAt || 0) >= HEADER_WEATHER_WIDGET_REFRESH_INTERVAL) {
-          void refreshHeaderWeatherWidgetData(host);
-        }
+        void refreshHeaderWeatherLifecycle(host);
       }
     };
     host.__weatherViewportSyncHandler = () => {
+      host.__weatherShootingStars?.sync(true);
       releaseHeaderWeatherSceneClip(host);
       host.__weatherPlacementLockedOnce = false;
       scheduleHeaderWeatherMenuPlacement(host);
@@ -12841,9 +13426,12 @@
       scheduleHeaderWeatherOrbSync(host);
     };
     document.addEventListener('visibilitychange', host.__weatherAstroVisibilityHandler);
+    window.addEventListener('pageshow', host.__weatherAstroVisibilityHandler);
+    window.addEventListener('online', host.__weatherAstroVisibilityHandler);
     window.addEventListener('resize', host.__weatherViewportSyncHandler, { passive: true });
     window.addEventListener('orientationchange', host.__weatherViewportSyncHandler, { passive: true });
     bindHeaderWeatherReadingsObserver(host);
+    host.__weatherGeoPermissionCleanup = observeHeaderWeatherGeoPermission(host, () => restoreHeaderWeatherDeviceLocation(host));
 
     syncHeaderWeatherExpandedState(host);
     syncHeaderWeatherToggleArrow(host);
@@ -12880,11 +13468,20 @@
     );
   }
 
+  function invalidateHeaderWeatherLocationRequest(host) {
+    host.__weatherLocationGeneration = (host.__weatherLocationGeneration || 0) + 1;
+    if (host.__weatherGeoAbortController) setHeaderWeatherGeoStatus(host, 'aborted');
+    host.__weatherGeoAbortController?.abort();
+    host.__weatherGeoAbortController = null;
+    host.__weatherGeoResolvePromise = null;
+  }
+
   async function selectHeaderWeatherManualCoordinates(host, coords) {
     if (!host?.isConnected || host.dataset.weatherMounted !== 'true') {
       return;
     }
 
+    invalidateHeaderWeatherLocationRequest(host);
     headerWeatherCurrentCache.clear();
     host.__weatherCurrentMeta = null;
     host.__weatherManualLocationLabel = '';
@@ -12898,7 +13495,7 @@
     delete host.dataset.weatherFallbackLocation;
     delete host.dataset.weatherResolvedLocationLabel;
     delete host.dataset.weatherRegionLabel;
-    await remountHeaderWeatherWidgetForGeo(host);
+    await updateHeaderWeatherWidgetLocation(host);
   }
 
   async function selectHeaderWeatherManualQuery(host, form, query) {
@@ -12907,8 +13504,16 @@
     }
 
     const widgetInstance = host.__weatherWidgetInstance;
+    invalidateHeaderWeatherLocationRequest(host);
+    const generation = host.__weatherLocationGeneration;
+    host.dataset.weatherManualLocation = 'true';
     const locationMeta = await resolveHeaderWeatherLocationMeta(query).catch(() => null);
-    if (!host.isConnected || host.dataset.weatherMounted !== 'true' || host.__weatherWidgetInstance !== widgetInstance) {
+    if (
+      !host.isConnected ||
+      host.dataset.weatherMounted !== 'true' ||
+      host.__weatherWidgetInstance !== widgetInstance ||
+      host.__weatherLocationGeneration !== generation
+    ) {
       return;
     }
 
@@ -12929,33 +13534,53 @@
     }
   }
 
-  async function restoreHeaderWeatherDeviceLocation(host, currentLocationButton) {
+  async function restoreHeaderWeatherDeviceLocation(host) {
     if (!host?.isConnected || host.dataset.weatherMounted !== 'true') {
       return;
     }
 
     const widgetInstance = host.__weatherWidgetInstance;
-    const coords = await resolveHeaderWeatherBrowserGeoCoords({ force: true }).catch(() => null);
+    invalidateHeaderWeatherLocationRequest(host);
+    const generation = host.__weatherLocationGeneration;
+    const controller = new window.AbortController();
+    host.__weatherGeoAbortController = controller;
+    const coords = await resolveHeaderWeatherBrowserGeoCoords({
+      force: true,
+      retryDenied: true,
+      signal: controller.signal,
+      onStatus: status => {
+        if (
+          host.isConnected && host.__weatherGeoAbortController === controller &&
+          host.__weatherWidgetInstance === widgetInstance && host.__weatherLocationGeneration === generation
+        ) setHeaderWeatherGeoStatus(host, status);
+      },
+    }).catch(() => null);
+    if (host.__weatherGeoAbortController === controller) host.__weatherGeoAbortController = null;
     if (
       !host.isConnected ||
       host.dataset.weatherMounted !== 'true' ||
       host.__weatherWidgetInstance !== widgetInstance ||
-      host.dataset.weatherManualLocation !== 'true'
+      host.__weatherLocationGeneration !== generation ||
+      controller.signal.aborted
     ) {
       return;
     }
 
-    if (!coords) {
-      if (currentLocationButton?.isConnected) {
-        host.__weatherCurrentLocationPassthrough = true;
-        currentLocationButton.click();
-        host.__weatherCurrentLocationPassthrough = false;
+    if (!coords || coords.source === 'stale-cache') {
+      host.dataset.weatherGeoCheckedAt = String(Date.now());
+      if (!parseHeaderWeatherCoordinates(host.dataset.weatherLocation) && host.dataset.weatherManualLocation !== 'true') {
+        host.dataset.weatherGeoSource = 'unavailable';
+        host.dataset.weatherGeoResolved = 'unavailable';
+        host.dataset.weatherAreaState = 'unavailable';
+        delete host.dataset.weatherResolvedLocationLabel;
+        delete host.dataset.weatherRegionLabel;
+        syncHeaderWeatherPublicLocationLabel(host);
       }
       return;
     }
 
     const now = String(Date.now());
-    const accuracy = Number(coords.accuracy);
+    const accuracy = getHeaderWeatherGeoAccuracy(coords.accuracy);
     headerWeatherCurrentCache.clear();
     host.__weatherCurrentMeta = null;
     host.__weatherManualLocationLabel = '';
@@ -12963,9 +13588,10 @@
     host.dataset.weatherLocation = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
     host.dataset.weatherGeoSource = coords.source || 'gps';
     host.dataset.weatherGeoCheckedAt = now;
-    host.dataset.weatherGeoUpdatedAt = now;
+    host.dataset.weatherGeoUpdatedAt = String(coords.updatedAt);
+    host.dataset.weatherGeoResolved = 'true';
     host.dataset.weatherAreaState = 'resolving';
-    if (Number.isFinite(accuracy) && accuracy >= 0) {
+    if (accuracy !== null) {
       host.dataset.weatherGeoAccuracy = accuracy.toFixed(1);
       host.dataset.weatherGeoTargetMet = accuracy <= HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS ? 'true' : 'false';
     } else {
@@ -12974,13 +13600,18 @@
     }
     delete host.dataset.weatherResolvedLocationLabel;
     delete host.dataset.weatherRegionLabel;
-    await remountHeaderWeatherWidgetForGeo(host);
+    await updateHeaderWeatherWidgetLocation(host);
   }
 
-  async function remountHeaderWeatherWidgetForGeo(host) {
+  async function updateHeaderWeatherWidgetLocation(host) {
+    if (!host?.isConnected || host.dataset.weatherMounted !== 'true') return false;
     const weatherLocation = String(host?.dataset?.weatherLocation || '').trim();
     if (!host || !parseHeaderWeatherCoordinates(weatherLocation)) {
       return;
+    }
+
+    if (typeof host.__weatherWidgetInstance?.setLocation === 'function') {
+      return refreshHeaderWeatherWidgetData(host, { coords: parseHeaderWeatherCoordinates(weatherLocation) });
     }
 
     const pageLang = normalizeLangCode(host.__weatherLocale || host.dataset.weatherLocale || 'en');
@@ -13026,61 +13657,114 @@
     if (result.changed) {
       headerWeatherCurrentCache.clear();
       host.__weatherCurrentMeta = null;
-      await remountHeaderWeatherWidgetForGeo(host);
+      await updateHeaderWeatherWidgetLocation(host);
       return;
     }
 
     await syncHeaderWeatherPreciseLocationMeta(host).catch(() => null);
   }
 
-  async function refreshHeaderWeatherWidgetData(host) {
-    if (!host || host.dataset.weatherMounted !== 'true') {
-      return;
+  async function refreshHeaderWeatherLifecycle(host) {
+    if (!host?.isConnected || host.dataset.weatherMounted !== 'true' || document.hidden || navigator.onLine === false) {
+      return false;
     }
-
-    if (host.__weatherRefreshInFlight) {
-      host.__weatherRefreshPending = true;
-      return;
-    }
-
-    host.__weatherRefreshInFlight = true;
-    host.dataset.weatherRefreshing = 'true';
-
-    try {
-      const widgetApi = host.__weatherWidgetInstance;
-      const refreshMethod =
-        (typeof widgetApi?.refresh === 'function' && widgetApi.refresh.bind(widgetApi)) ||
-        (typeof widgetApi?.reload === 'function' && widgetApi.reload.bind(widgetApi)) ||
-        (typeof widgetApi?.update === 'function' && widgetApi.update.bind(widgetApi)) ||
-        null;
-
-      if (refreshMethod) {
-        await Promise.resolve(refreshMethod());
+    if (host.__weatherLifecyclePromise) return host.__weatherLifecyclePromise;
+    const lifecycle = host.__weatherLifecycleGeneration || 0;
+    const generation = host.__weatherLocationGeneration || 0;
+    const operation = (async () => {
+      if (Date.now() - Number(host.dataset.weatherGeoCheckedAt || 0) >= HEADER_WEATHER_GEO_REFRESH_INTERVAL) {
+        await refreshHeaderWeatherGeoLocation(host);
       }
-
-      headerWeatherCurrentCache.clear();
-      await syncHeaderWeatherOrbOverlay(host);
-      await syncHeaderWeatherPreciseLocationMeta(host);
-      syncHeaderWeatherUnifiedReadings(host);
-      scheduleHeaderWeatherReadingsSync(host);
-      syncHeaderWeatherAttribution(host);
-      syncHeaderWeatherLiveClock(host);
-      syncHeaderWeatherExpandedState(host);
-      releaseHeaderWeatherSceneClip(host);
-      host.dataset.weatherDataUpdatedAt = String(Date.now());
-    } catch {
-      scheduleHeaderWeatherOrbSync(host);
+      if (
+        !host.isConnected ||
+        host.dataset.weatherMounted !== 'true' ||
+        (host.__weatherLifecycleGeneration || 0) !== lifecycle ||
+        (host.__weatherLocationGeneration || 0) !== generation
+      ) return false;
+      // React finishes the initial request after mountWeatherWidget returns.
+      // Adopt its successful timestamp only for this same coordinate selection.
+      const state = host.__weatherWidgetInstance?.getState?.();
+      const currentCoords = parseHeaderWeatherCoordinates(host.dataset.weatherLocation);
+      const loadedCoords = typeof state?.location === 'string'
+        ? parseHeaderWeatherCoordinates(state.location)
+        : state?.location;
+      const updatedAt = Number(state?.lastUpdatedAt);
+      if (
+        state?.weather && !state.weather.stale &&
+        currentCoords && Number.isFinite(loadedCoords?.latitude) && Number.isFinite(loadedCoords?.longitude) &&
+        Math.abs(currentCoords.latitude - loadedCoords.latitude) <= 0.000001 &&
+        Math.abs(currentCoords.longitude - loadedCoords.longitude) <= 0.000001 &&
+        (host.dataset.weatherManualLocation !== 'true' || host.dataset.weatherGeoSource === 'manual') &&
+        updatedAt > Number(host.dataset.weatherDataUpdatedAt || 0) && updatedAt <= Date.now()
+      ) {
+        host.dataset.weatherDataUpdatedAt = String(updatedAt);
+      }
+      if (Date.now() - Number(host.dataset.weatherDataUpdatedAt || 0) >= HEADER_WEATHER_WIDGET_REFRESH_INTERVAL) {
+        return refreshHeaderWeatherWidgetData(host);
+      }
+      return false;
+    })();
+    host.__weatherLifecyclePromise = operation;
+    try {
+      return await operation;
     } finally {
-      releaseHeaderWeatherSceneClip(host);
-      window.setTimeout(() => {
-        if (host?.dataset) {
+      if (host.__weatherLifecyclePromise === operation) host.__weatherLifecyclePromise = null;
+    }
+  }
+
+  async function refreshHeaderWeatherWidgetData(host, { coords = null } = {}) {
+    if (!host?.isConnected || host.dataset.weatherMounted !== 'true') return false;
+    if (!coords && host.__weatherRefreshInFlight) return host.__weatherRefreshInFlight;
+    const widgetApi = host.__weatherWidgetInstance;
+    const method = coords ? widgetApi?.setLocation : widgetApi?.refresh;
+    if (typeof method !== 'function') return false;
+    const generation = host.__weatherLocationGeneration || 0;
+    const lifecycle = host.__weatherLifecycleGeneration || 0;
+    const location = host.dataset.weatherLocation;
+    const isCurrent = () =>
+      host.isConnected &&
+      host.dataset.weatherMounted === 'true' &&
+      host.__weatherWidgetInstance === widgetApi &&
+      (host.__weatherLocationGeneration || 0) === generation &&
+      (host.__weatherLifecycleGeneration || 0) === lifecycle &&
+      host.dataset.weatherLocation === location;
+    host.dataset.weatherRefreshing = 'true';
+    const operation = (async () => {
+      try {
+        const result = await method.call(widgetApi, ...(coords ? [coords] : []));
+        if (!result || !isCurrent()) return false;
+        // Only a successful full current + forecast request advances freshness.
+        host.dataset.weatherDataUpdatedAt = String(Date.now());
+        headerWeatherCurrentCache.clear();
+        await syncHeaderWeatherOrbOverlay(host);
+        if (!isCurrent()) return false;
+        await syncHeaderWeatherPreciseLocationMeta(host);
+        if (!isCurrent()) return false;
+        syncHeaderWeatherUnifiedReadings(host);
+        scheduleHeaderWeatherReadingsSync(host);
+        syncHeaderWeatherAttribution(host);
+        syncHeaderWeatherLiveClock(host);
+        syncHeaderWeatherExpandedState(host);
+        return true;
+      } catch {
+        return false;
+      }
+    })();
+    host.__weatherRefreshInFlight = operation;
+    try {
+      return await operation;
+    } finally {
+      if (host.__weatherRefreshInFlight === operation) {
+        host.__weatherRefreshInFlight = null;
+        if (
+          host.isConnected &&
+          host.dataset.weatherMounted === 'true' &&
+          host.__weatherWidgetInstance === widgetApi &&
+          (host.__weatherLifecycleGeneration || 0) === lifecycle
+        ) {
           host.dataset.weatherRefreshing = 'false';
+          releaseHeaderWeatherSceneClip(host);
         }
-      }, 240);
-      host.__weatherRefreshInFlight = false;
-      if (host.__weatherRefreshPending) {
-        host.__weatherRefreshPending = false;
-        void refreshHeaderWeatherWidgetData(host);
       }
     }
   }
@@ -13210,6 +13894,16 @@
       return;
     }
 
+    host.__weatherLifecycleGeneration = (host.__weatherLifecycleGeneration || 0) + 1;
+    host.__weatherGeoPermissionCleanup?.();
+    host.__weatherGeoPermissionCleanup = null;
+    invalidateHeaderWeatherLocationRequest(host);
+    host.__weatherLifecyclePromise = null;
+    host.__weatherRefreshInFlight = null;
+    delete host.dataset.weatherRefreshing;
+    host.__weatherShootingStars?.dispose();
+    host.__weatherShootingStars = null;
+    stopHeaderWeatherToggleArrowAnimation(host);
     host.__weatherWidgetInstance?.unmount?.();
     host.__weatherWidgetInstance = null;
     host.__weatherCurrentMeta = null;
@@ -13237,6 +13931,8 @@
     }
     if (host.__weatherAstroVisibilityHandler) {
       document.removeEventListener('visibilitychange', host.__weatherAstroVisibilityHandler);
+      window.removeEventListener('pageshow', host.__weatherAstroVisibilityHandler);
+      window.removeEventListener('online', host.__weatherAstroVisibilityHandler);
       host.__weatherAstroVisibilityHandler = null;
     }
     if (host.__weatherViewportSyncHandler) {
@@ -13286,6 +13982,29 @@
     emitHeaderWeatherEvent('site-shell:weather-toggle', false);
   }
 
+  function prepareHeaderWeatherLoadingState(host) {
+    const root = host.shadowRoot || host.attachShadow({ mode: 'open' });
+    host.dataset.weatherVariant = 'header';
+    if (!root.querySelector('style[data-header-weather-transparent="true"]')) {
+      const style = document.createElement('style');
+      style.dataset.headerWeatherTransparent = 'true';
+      style.textContent = HEADER_WEATHER_TRANSPARENT_STYLES;
+      root.appendChild(style);
+    }
+    let container = root.querySelector('[data-weather-widget-root]');
+    if (!container) {
+      container = document.createElement('div');
+      container.dataset.weatherWidgetRoot = 'true';
+      container.style.width = '100%';
+      container.style.height = '100%';
+      root.appendChild(container);
+    }
+    if (!container.querySelector('.weather-header-preview')) {
+      // React replaces this existing sonar markup in the same mount container.
+      container.innerHTML = '<div class="weather-header-preview" role="status" aria-busy="true"><div class="weather-header-state"><div class="weather-header-state__inner"><div class="weather-header-state__spinner"></div></div></div></div>';
+    }
+  }
+
   async function mountHeaderWeatherWidget(pageLang) {
     const host = getHeaderWeatherHost();
     if (!host) {
@@ -13297,6 +14016,11 @@
     }
 
     host.dataset.weatherMounted = 'loading';
+    const lifecycle = host.__weatherLifecycleGeneration || 0;
+    const isCurrentMount = () =>
+      host.isConnected &&
+      host.dataset.weatherMounted === 'loading' &&
+      (host.__weatherLifecycleGeneration || 0) === lifecycle;
 
     // On mobile: always start collapsed (ignore persisted expanded state)
     if (window.innerWidth <= 899) {
@@ -13305,44 +14029,51 @@
     }
 
     try {
+      prepareHeaderWeatherLoadingState(host);
       const geoResolution = applyHeaderWeatherAutoGeoLocation(host).catch(() => null);
+      const widgetResolution = loadHeaderWeatherWidgetLoader(host.dataset.widgetSrc);
       const geoPendingMarker = {};
       let geoWaitTimeoutId = 0;
-      const geoResult = await Promise.race([
-        geoResolution,
-        new Promise(resolve => {
-          geoWaitTimeoutId = window.setTimeout(() => resolve(geoPendingMarker), HEADER_WEATHER_GEO_MOUNT_WAIT);
-        }),
-      ]);
-      window.clearTimeout(geoWaitTimeoutId);
+      const [geoResult, weatherWidget] = await Promise.all([
+        Promise.race([
+          geoResolution,
+          new Promise(resolve => {
+            geoWaitTimeoutId = window.setTimeout(() => resolve(geoPendingMarker), HEADER_WEATHER_GEO_MOUNT_WAIT);
+          }),
+        ]),
+        widgetResolution,
+      ]).finally(() => window.clearTimeout(geoWaitTimeoutId));
+      if (!isCurrentMount()) return;
       const geoPending = geoResult === geoPendingMarker;
 
-      const weatherWidget = await loadHeaderWeatherWidgetLoader(host.dataset.widgetSrc);
       const requestedLocation = parseHeaderWeatherCoordinates(host.dataset.weatherLocation)
         ? host.dataset.weatherLocation
         : '';
-      // Geolocation was already requested above. If the visitor denied it, has not
-      // answered the permission prompt yet, or it is still resolving, render the
-      // Leipzig fallback now instead of prompting a second time; a late position
-      // remounts the widget below.
-      const useDeviceGeolocation =
-        !geoPending && !requestedLocation && host.dataset.weatherGeoResolved !== 'unavailable';
-      if (requestedLocation) {
-        delete host.dataset.weatherFallbackLocation;
-      } else {
-        host.dataset.weatherFallbackLocation = HEADER_WEATHER_FALLBACK_LOCATION;
-      }
+      // The shell alone requests geolocation; an unresolved position keeps the
+      // existing location status instead of presenting a default city as GPS.
+      delete host.dataset.weatherFallbackLocation;
 
       const widgetApi = await weatherWidget.mountWeatherWidget(host, {
         variant: 'header',
         locale: host.dataset.weatherLocale || pageLang,
         initialLocation: requestedLocation,
         fallbackLocation: '',
-        useGeolocation: useDeviceGeolocation,
+        useGeolocation: false,
+        managedRefresh: true,
         minHeight: host.dataset.weatherMinHeight || '100%',
       });
+      if (!isCurrentMount()) {
+        widgetApi?.unmount?.();
+        return;
+      }
 
       host.__weatherWidgetInstance = widgetApi;
+      if (host.dataset.weatherGeoPending === 'true') setHeaderWeatherGeoStatus(host, 'pending');
+      else if (host.dataset.weatherGeoError) setHeaderWeatherGeoStatus(host, host.dataset.weatherGeoError);
+      const initialState = widgetApi?.getState?.();
+      if (initialState?.weather && Number(initialState.lastUpdatedAt) > 0) {
+        host.dataset.weatherDataUpdatedAt = String(initialState.lastUpdatedAt);
+      }
       host.__weatherLocale = normalizeLangCode(host.dataset.weatherLocale || pageLang);
       host.dataset.weatherMounted = 'true';
       host.dataset.weatherMountScheduled = 'false';
@@ -13441,11 +14172,12 @@
             delete host.dataset.weatherResolvedLocationLabel;
             delete host.dataset.weatherRegionLabel;
             host.dataset.weatherAreaState = 'resolving';
-            return remountHeaderWeatherWidgetForGeo(host);
+            return updateHeaderWeatherWidgetLocation(host);
           })
           .catch(() => null);
       }
     } catch {
+      if (!isCurrentMount()) return;
       // console.error('Header weather widget failed to mount:', error);
       host.dataset.weatherMounted = 'false';
       host.dataset.weatherMountScheduled = 'false';
@@ -13494,65 +14226,9 @@
 
     host.dataset.weatherMountScheduled = 'true';
 
-    /* Defer heavy 3D widget startup until after main content settles.
-       On mobile, delay a bit more to keep first paint and scrolling smooth. */
-    const scheduleIdle = cb => {
-      if (window.requestIdleCallback) {
-        window.requestIdleCallback(cb, { timeout: 900 });
-      } else {
-        window.setTimeout(cb, 80);
-      }
-    };
+    // Start the native location request and module loading while the sonar is visible.
+    void mountHeaderWeatherWidget(pageLang);
 
-    const startMount = () => {
-      if (host.dataset.weatherMounted === 'true' || host.dataset.weatherMounted === 'loading') {
-        return;
-      }
-      scheduleIdle(() => {
-        mountHeaderWeatherWidget(pageLang);
-      });
-    };
-
-    const startAfterLoad = () => {
-      const postLoadDelay = window.innerWidth <= 899 ? 1100 : 320;
-      window.setTimeout(startMount, postLoadDelay);
-    };
-
-    // Start mount immediately after shell init; deferred hooks below act as backup retries.
-    startMount();
-
-    if (document.readyState === 'complete') {
-      startAfterLoad();
-      return;
-    }
-
-    const onLoad = () => {
-      window.removeEventListener('load', onLoad);
-      startAfterLoad();
-    };
-
-    window.addEventListener('load', onLoad, { once: true });
-
-    // Fallback: if `load` is delayed by third-party/network resources, still mount weather widget.
-    const maxWaitBeforeForcedMount = window.innerWidth <= 899 ? 2200 : 1200;
-    window.setTimeout(() => {
-      if (host.dataset.weatherMounted === 'true' || host.dataset.weatherMounted === 'loading') {
-        return;
-      }
-      window.removeEventListener('load', onLoad);
-      startMount();
-    }, maxWaitBeforeForcedMount);
-
-    const onFirstInteraction = () => {
-      window.removeEventListener('pointerdown', onFirstInteraction, true);
-      window.removeEventListener('keydown', onFirstInteraction, true);
-      window.removeEventListener('touchstart', onFirstInteraction, true);
-      startMount();
-    };
-
-    window.addEventListener('pointerdown', onFirstInteraction, { once: true, capture: true, passive: true });
-    window.addEventListener('keydown', onFirstInteraction, { once: true, capture: true });
-    window.addEventListener('touchstart', onFirstInteraction, { once: true, capture: true, passive: true });
   }
 
   function normalizeMenuSeparators(label) {
@@ -13756,9 +14432,6 @@
         return;
       }
 
-      const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-      const effectiveDuration = prefersReducedMotion ? Math.min(durationMs, 140) : durationMs;
-
       if (typeof host.animate === 'function') {
         try {
           const animation = host.animate(
@@ -13768,7 +14441,7 @@
               { opacity: 1, filter: 'blur(0px) saturate(1)', transform: 'translateY(0px)' },
             ],
             {
-              duration: effectiveDuration,
+              duration: durationMs,
               easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
               fill: 'both',
             }
@@ -13781,7 +14454,7 @@
       }
 
       host.classList.add('is-locale-switching');
-      await wait(effectiveDuration);
+      await wait(durationMs);
       host.classList.remove('is-locale-switching');
     };
 
@@ -14158,6 +14831,7 @@
       syncDesktopBurgerAxis();
       syncHomeButtonMaxWidth();
       syncSocialDividerWithBurger();
+      syncHeaderWeatherDropdownPlacement(getHeaderWeatherHost());
       onLayout();
     };
 
@@ -14177,6 +14851,7 @@
     window.addEventListener('load', syncHeaderAdaptiveLayout);
     window.addEventListener('resize', syncHeaderAdaptiveLayout, { passive: true });
     window.visualViewport?.addEventListener('resize', syncHeaderAdaptiveLayout, { passive: true });
+    window.visualViewport?.addEventListener('scroll', syncHeaderAdaptiveLayout, { passive: true });
     document.fonts?.ready?.then(syncHeaderAdaptiveLayout);
     document.fonts?.addEventListener?.('loadingdone', syncHeaderAdaptiveLayout);
     syncHeaderAdaptiveLayout();

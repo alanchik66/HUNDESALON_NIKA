@@ -473,12 +473,3 @@
     transform: translateX(130%);
   }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .reviews-page *,
-  .reviews-page *::before,
-  .reviews-page *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}
