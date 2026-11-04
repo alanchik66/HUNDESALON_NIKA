@@ -1332,7 +1332,7 @@ test('header Sun preserves CSS geometry while rendering native retina and pinch-
   const source = await readFile(path.join(root, 'assets/js/header-weather-sun-scene.js'), 'utf8');
   const runnable = source.replace(/^import .+;$/m, '').replace(/^export /gm, '');
   const context = {
-    THREE: { MathUtils: { degToRad: value => value * Math.PI / 180 }, Clock: class {} },
+    THREE: { MathUtils: { degToRad: value => value * Math.PI / 180 }, Clock: class {}, Color: class {} },
     window: { devicePixelRatio: 3, visualViewport: { scale: 1, addEventListener() {}, removeEventListener() {} }, matchMedia: () => ({ matches: false }), addEventListener() {}, removeEventListener() {} },
     requestAnimationFrame: () => 1, cancelAnimationFrame() {},
   };
@@ -1369,7 +1369,7 @@ test('header Sun advances at physical hourly speed from absolute UTC and retains
   const source = await readFile(path.join(root, 'assets/js/header-weather-sun-scene.js'), 'utf8');
   const runnable = source.replace(/^import .+;$/m, '').replace(/^export /gm, '');
   const context = {
-    THREE: { MathUtils: { degToRad: value => value * Math.PI / 180 }, Clock: class {} },
+    THREE: { MathUtils: { degToRad: value => value * Math.PI / 180 }, Clock: class {}, Color: class {} },
     window: { visualViewport: { addEventListener() {}, removeEventListener() {} }, addEventListener() {}, removeEventListener() {} },
     requestAnimationFrame: () => 1, cancelAnimationFrame() {},
   };
@@ -1391,6 +1391,135 @@ test('header Sun advances at physical hourly speed from absolute UTC and retains
   assert.equal(remounted.sunMesh.rotation.y, scene.sunMesh.rotation.y);
   assert.equal(remounted.solarDaysUniform.value, scene.solarDaysUniform.value);
   assert.doesNotThrow(() => Scene.prototype.updateAnimation.call({ sunMesh: null }, later));
+});
+
+test('the shared Sun bootstrap passes the live server clock without reading cached observations or artificial forecast noon', async () => {
+  const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
+  const pending = [parse(source, { ecmaVersion: 'latest', sourceType: 'script' })];
+  const clocks = [];
+  let appearanceCallback;
+  while (pending.length) {
+    const node = pending.pop();
+    if (node.type === 'Property' && node.key?.name === 'getTimeMs') clocks.push(node.value);
+    if (node.type === 'Property' && node.key?.name === 'onAppearanceChange') appearanceCallback = node.value;
+    for (const value of Object.values(node)) {
+      if (Array.isArray(value)) pending.push(...value.filter(item => item?.type));
+      else if (value?.type) pending.push(value);
+    }
+  }
+  assert.equal(clocks.length, 1, 'preview and dropdown must use one common solar mount clock');
+  assert.equal(clocks[0].type, 'Identifier');
+  assert.equal(clocks[0].name, 'getHeaderWeatherNowMs');
+  let correctedTime = Date.parse('2026-03-20T06:00:00Z');
+  const liveClock = () => correctedTime;
+  const rendererClock = new Function('getHeaderWeatherNowMs', `return (${source.slice(clocks[0].start, clocks[0].end)});`)(liveClock);
+  assert.equal(rendererClock, liveClock, 'the renderer receives a live callback rather than a sampled weather timestamp');
+  assert.equal(rendererClock(), correctedTime);
+  correctedTime += 3600000;
+  assert.equal(rendererClock(), correctedTime);
+  assert.ok(appearanceCallback, 'the shared mount must synchronize native image recovery and its halo');
+  const writes = new Map();
+  const mountToken = {};
+  const overlay = { __sunSceneMountToken: mountToken, dataset: {}, style: { setProperty: (name, value) => writes.set(name, value) } };
+  const applyAppearance = new Function('overlay', 'mountToken', `return (${source.slice(appearanceCallback.start, appearanceCallback.end)});`)(overlay, mountToken);
+  const appearance = { recoveryFilter: 'grayscale(1)', glowRgb: '255 255 255', elevationDeg: 14.8081 };
+  applyAppearance(appearance);
+  assert.equal(writes.get('--orb-sun-recovery-filter'), 'grayscale(1)');
+  assert.equal(writes.get('--orb-sun-glow-rgb'), '255 255 255');
+  assert.equal(overlay.dataset.sunElevation, '14.808', 'the DOM diagnostic must expose finite geometric elevation in degrees');
+  for (const elevationDeg of [undefined, NaN, Infinity]) {
+    applyAppearance({ ...appearance, elevationDeg });
+    assert.equal(overlay.dataset.sunElevation, 'unknown', 'missing astronomy must not expose a misleading numeric diagnostic');
+  }
+  applyAppearance(appearance);
+  overlay.__sunSceneMountToken = null;
+  applyAppearance({ recoveryFilter: 'stale', glowRgb: 'stale', elevationDeg: -.8 });
+  assert.equal(writes.get('--orb-sun-recovery-filter'), 'grayscale(1)', 'a disposed renderer cannot write recovery styles after remount');
+  assert.equal(writes.get('--orb-sun-glow-rgb'), '255 255 255');
+  assert.equal(overlay.dataset.sunElevation, '14.808', 'a stale callback cannot overwrite the current renderer diagnostic');
+});
+
+test('weather server time preserves UTC across browser timezones and avoids the localized root redirect', async () => {
+  const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
+  const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'script' });
+  const bootstrap = ast.body.find(node => node.type === 'ExpressionStatement' &&
+    node.expression.type === 'CallExpression' && node.expression.callee.id?.name === 'siteShellBootstrap')?.expression.callee;
+  assert.ok(bootstrap, 'the clock helpers must remain in the shared site shell');
+  const declaration = name => {
+    const node = bootstrap.body.body.find(item => item.type === 'FunctionDeclaration' && item.id?.name === name);
+    assert.ok(node, `siteShellBootstrap must declare clock helper ${name}`);
+    return source.slice(node.start, node.end);
+  };
+  const expected = Date.UTC(2026, 10, 4, 15, 6, 39, 771);
+  const naive = '2026-11-04T15:06:39.7718954';
+  let clientNow;
+  const requests = [];
+  const parsedInputs = [];
+  class ClientDate extends Date {
+    static now() { return clientNow; }
+    static parse(value) {
+      // Model strict portable input support, without assuming an observed
+      // parsing failure in any particular browser engine.
+      parsedInputs.push(value);
+      const fraction = value.match(/\.(\d+)/)?.[1];
+      if ((fraction && fraction.length !== 3) || /[+-]\d{4}$/.test(value)) return NaN;
+      return Date.parse(value);
+    }
+  }
+  const helpers = new Function('window', 'fetch', 'Date', `
+    ${declaration('parseHeaderWeatherServerTimestamp')}
+    ${declaration('getHeaderWeatherTimeSources')}
+    ${declaration('fetchHeaderWeatherSourceTimeMs')}
+    return { parse: parseHeaderWeatherServerTimestamp, sources: getHeaderWeatherTimeSources, fetchTime: fetchHeaderWeatherSourceTimeMs };
+  `)({ location: { origin: 'https://example.com' } }, async (url, options) => {
+    requests.push({ url: new URL(url), options });
+    clientNow = expected + 100;
+    return { ok: true, headers: { get: name => name === 'date' ? new Date(expected).toUTCString() : null },
+      json: async () => ({ dateTime: naive, utc_datetime: '2026-11-04T15:06:39.7718954+00:00' }) };
+  }, ClientDate);
+  const sources = helpers.sources();
+  assert.equal(sources[0].id, 'origin-date-header');
+  assert.equal(sources[0].url, 'https://example.com/site.webmanifest', 'same-origin time must use a static route without the root language redirect');
+  assert.equal(sources[0].mode, 'same-origin');
+  for (const item of sources.filter(item => item.type === 'json-field')) assert.equal(item.timeZone, 'UTC');
+  const previousTimeZone = process.env.TZ;
+  try {
+    for (const timeZone of ['UTC', 'Europe/Berlin', 'America/New_York']) {
+      process.env.TZ = timeZone;
+      if (timeZone === 'Europe/Berlin') assert.notEqual(Date.parse(naive), expected, 'the fixture must reproduce the former one-hour CET parsing error');
+      assert.equal(helpers.parse(naive, 'UTC'), expected, `${timeZone}: a timezone-less TimeAPI UTC value must remain UTC`);
+      assert.equal(helpers.parse('2026-11-04T15:06', 'UTC'), Date.UTC(2026, 10, 4, 15, 6));
+      assert.equal(helpers.parse('2026-11-04T15:06:39.1', 'UTC'), Date.UTC(2026, 10, 4, 15, 6, 39, 100));
+      assert.equal(helpers.parse('2026-11-04T15:06:39.12', 'UTC'), Date.UTC(2026, 10, 4, 15, 6, 39, 120));
+      for (const explicit of ['2026-11-04T15:06:39.771Z', '2026-11-04T16:06:39.771+01:00', '2026-11-04T11:06:39.771-0400']) {
+        assert.equal(helpers.parse(explicit, 'UTC'), expected, 'explicit zone offsets must not receive a second UTC suffix');
+      }
+      assert.equal(helpers.parse(naive), Date.parse(naive), 'UTC normalization must apply only to a source explicitly marked UTC');
+      for (const item of sources) {
+        clientNow = expected - 100;
+        const offset = await helpers.fetchTime(item);
+        assert.equal(offset, item.type === 'date-header' ? -771 : 0, `${timeZone}: the actual fetch helper must pass source UTC metadata to its parser`);
+        const request = requests.at(-1);
+        assert.ok(request.url.searchParams.has('_ts'));
+        assert.equal(request.options.cache, 'no-store');
+        assert.equal(request.options.credentials, 'omit');
+      }
+    }
+  } finally {
+    if (previousTimeZone === undefined) delete process.env.TZ;
+    else process.env.TZ = previousTimeZone;
+  }
+  assert.equal(helpers.parse(expected, 'UTC'), expected);
+  assert.equal(helpers.parse(Math.floor(expected / 1000), 'UTC'), Math.floor(expected / 1000) * 1000);
+  assert.equal(helpers.parse(0, 'UTC'), 0);
+  assert.equal(helpers.parse(new Date(expected).toUTCString(), 'UTC'), expected - 771);
+  assert.ok(parsedInputs.includes('2026-11-04T15:06:39.771Z'), 'extended API precision must be truncated to portable milliseconds before Date.parse');
+  assert.ok(parsedInputs.includes('2026-11-04T15:06:39.100Z'));
+  assert.ok(parsedInputs.includes('2026-11-04T15:06:39.120Z'), 'short fractional values must preserve their instant while being padded');
+  assert.ok(parsedInputs.includes('2026-11-04T11:06:39.771-04:00'), 'basic numeric offsets must become the portable colonized form');
+  for (const invalid of [null, undefined, NaN, Infinity, '', 'not-a-time', '04/11/2026 15:06:39', '2026-11-04', {}, []]) {
+    assert.ok(Number.isNaN(helpers.parse(invalid, 'UTC')), 'unsupported timestamps must fail rather than silently shift the solar clock');
+  }
 });
 
 test('weather locale animation retains its requested timing under system reduced motion', async () => {

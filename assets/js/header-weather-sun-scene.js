@@ -13,6 +13,61 @@ const WARM_SUN_COLOR = 0xffffe6;
 const SOLAR_DAY_MS = 86400000;
 const SOLAR_MODEL_EPOCH_MS = Date.UTC(2026, 10, 4);
 const EARTH_ORBIT_DEG_PER_DAY = 360 / 365.256;
+const SOLAR_COLOR_STOPS = [
+  [-0.833, 1, 0.22, 0.06],
+  [0, 1, 0.34, 0.09],
+  [3, 1, 0.64, 0.24],
+  [6, 1, 0.89, 0.59],
+  [12, 1, 1, 1],
+].map(([height, ...rgb]) => [height, ...rgb.map(channel =>
+  channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
+)]);
+
+// NOAA fractional-year approximation: UTC, east-positive longitude, geometric
+// elevation in degrees. No network, timezone guess or constant refraction offset.
+export function solarElevationDegrees(timeMs, latitude, longitude) {
+  if (!Number.isFinite(timeMs) || !Number.isFinite(latitude) || !Number.isFinite(longitude)
+    || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return NaN;
+  const date = new Date(timeMs);
+  const year = date.getUTCFullYear();
+  if (!Number.isFinite(year)) return NaN;
+  const start = Date.UTC(year, 0, 1);
+  const yearDays = (Date.UTC(year + 1, 0, 1) - start) / SOLAR_DAY_MS;
+  const dayOfYear = Math.floor((timeMs - start) / SOLAR_DAY_MS) + 1;
+  const minutes = date.getUTCHours() * 60 + date.getUTCMinutes()
+    + date.getUTCSeconds() / 60 + date.getUTCMilliseconds() / 60000;
+  const gamma = TAU / yearDays * (dayOfYear - 1 + (minutes / 60 - 12) / 24);
+  const equationMinutes = 229.18 * (0.000075 + 0.001868 * Math.cos(gamma) - 0.032077 * Math.sin(gamma)
+    - 0.014615 * Math.cos(2 * gamma) - 0.040849 * Math.sin(2 * gamma));
+  const declination = 0.006918 - 0.399912 * Math.cos(gamma) + 0.070257 * Math.sin(gamma)
+    - 0.006758 * Math.cos(2 * gamma) + 0.000907 * Math.sin(2 * gamma)
+    - 0.002697 * Math.cos(3 * gamma) + 0.00148 * Math.sin(3 * gamma);
+  const solarMinutes = ((minutes + equationMinutes + 4 * longitude) % 1440 + 1440) % 1440;
+  const hourAngle = (solarMinutes / 4 - 180) * Math.PI / 180;
+  const latitudeRad = latitude * Math.PI / 180;
+  const sineElevation = Math.sin(latitudeRad) * Math.sin(declination)
+    + Math.cos(latitudeRad) * Math.cos(declination) * Math.cos(hourAngle);
+  return Math.asin(Math.max(-1, Math.min(1, sineElevation))) * 180 / Math.PI;
+}
+
+// Atmospheric colour is an illustrative display calibration, not a measured
+// spectrum. Interpolate linear RGB smoothly; the high Sun is neutral white.
+export function solarColorForElevation(elevationDeg, target = { r: 1, g: 1, b: 1 }) {
+  const height = Number.isFinite(elevationDeg) ? elevationDeg : 90;
+  let low = SOLAR_COLOR_STOPS[0];
+  let high = low;
+  for (const stop of SOLAR_COLOR_STOPS) {
+    high = stop;
+    if (height <= stop[0]) break;
+    low = stop;
+  }
+  const raw = high[0] === low[0] ? 0 : Math.max(0, Math.min(1, (height - low[0]) / (high[0] - low[0])));
+  const weight = raw * raw * (3 - 2 * raw);
+  target.r = low[1] + (high[1] - low[1]) * weight;
+  target.g = low[2] + (high[2] - low[2]) * weight;
+  target.b = low[3] + (high[3] - low[3]) * weight;
+  return target;
+}
 
 // Mean Earth-view rotation, NASA Sun Fact Sheet. The unchanged source image is
 // an illustration, not a live observation of the Sun's current active regions.
@@ -42,13 +97,14 @@ function resolveSolarPixelRatio(width, height, dpr = 1, zoom = 1, maxSide = 1024
   return Math.min(nativeDpr * viewportZoom, limit / side);
 }
 
-function createSolarLensFlareMaterial() {
+function createSolarLensFlareMaterial(solarColorUniform) {
   // Compact optical ghosts, adapted from the maintained scene's LensFlare
   // aperture/axis model. These are camera reflections, not solar plasma.
   return new THREE.ShaderMaterial({
     uniforms: {
       uOpticalCenter: { value: new THREE.Vector2(0.22, 0.32) },
       uTime: { value: 0 },
+      uSolarColor: solarColorUniform,
     },
     transparent: true,
     depthTest: false,
@@ -63,6 +119,7 @@ void main() {
     fragmentShader: `
 uniform vec2 uOpticalCenter;
 uniform float uTime;
+uniform vec3 uSolarColor;
 varying vec2 vSolarFlareUv;
 
 float apertureGhost(vec2 p, float sides, float radius) {
@@ -94,11 +151,11 @@ void main() {
   float diamond = apertureGhost(p - direction * 0.345, 4.0, 0.034);
   float softGhost = exp(-pow(length(p - direction * 0.438) / 0.021, 2.0));
   float paleGhost = apertureGhost(p + direction * 0.322, 6.0, 0.018);
-  vec3 light = vec3(1.0, 0.87, 0.63) * (halo + diffraction * 0.38)
+  vec3 light = vec3(1.0) * (halo + diffraction * 0.38)
     + offAxis * (diamond * vec3(0.42, 0.75, 0.57) * 0.27
       + softGhost * vec3(1.0, 0.61, 0.39) * 0.22
       + paleGhost * vec3(0.65, 0.75, 1.0) * 0.09);
-  light *= outsideDisc * shimmer * (1.0 - smoothstep(0.475, 0.5, radial));
+  light *= uSolarColor * outsideDisc * shimmer * (1.0 - smoothstep(0.475, 0.5, radial));
   float alpha = clamp(max(light.r, max(light.g, light.b)), 0.0, 0.32);
   gl_FragColor = vec4(light / max(alpha, 0.0001), alpha);
   #include <colorspace_fragment>
@@ -142,14 +199,16 @@ export class HeaderWeatherSunScene {
     this.canvas = canvas;
     this.options = options;
     this.geoState = {
-      latitude: 51.32,
-      longitude: 12.42,
+      latitude: null,
+      longitude: null,
       timeMs: Date.now(),
     };
     this.running = false;
     this.rafId = 0;
     this.resizeRafId = 0;
     this.solarDaysUniform = { value: 0 };
+    this.solarColorUniform = { value: new THREE.Color(0xffffff) };
+    this.appearanceKey = null;
     this.scene = null;
     this.camera = null;
     this.renderer = null;
@@ -181,6 +240,8 @@ export class HeaderWeatherSunScene {
       this.resize();
       if (this.resumeAfterRestore) this.start();
     };
+    this.setGeoState(options.geoState);
+    this.updateSolarAppearance(this.getTimeMs());
   }
 
   setState(state) {
@@ -193,11 +254,41 @@ export class HeaderWeatherSunScene {
     if (!next) {
       return;
     }
-    this.geoState = {
-      latitude: Number(next.latitude) || this.geoState.latitude,
-      longitude: Number(next.longitude) || this.geoState.longitude,
-      timeMs: Number(next.timeMs) || Date.now(),
-    };
+    for (const [name, limit] of [['latitude', 90], ['longitude', 180]]) {
+      const value = next[name] == null || next[name] === '' ? NaN : Number(next[name]);
+      if (Number.isFinite(value) && Math.abs(value) <= limit) this.geoState[name] = value;
+    }
+    if (Number.isFinite(next.timeMs)) this.geoState.timeMs = next.timeMs;
+    this.updateSolarAppearance(this.getTimeMs());
+  }
+
+  getTimeMs() {
+    const now = this.options.getTimeMs?.();
+    return Number.isFinite(now) ? now : Date.now();
+  }
+
+  updateSolarAppearance(timeMs) {
+    const elevationDeg = solarElevationDegrees(timeMs, this.geoState.latitude, this.geoState.longitude);
+    solarColorForElevation(elevationDeg, this.solarColorUniform.value);
+    const low = SOLAR_COLOR_STOPS[0][0];
+    const high = SOLAR_COLOR_STOPS[SOLAR_COLOR_STOPS.length - 1][0];
+    const warmth = Number.isFinite(elevationDeg)
+      ? Math.max(0, Math.min(1, (high - elevationDeg) / (high - low))) : 0;
+    const key = Math.round(warmth * 200);
+    if (key !== this.appearanceKey) {
+      this.appearanceKey = key;
+      const recoveryWarmth = warmth ** 1.5;
+      const color = this.solarColorUniform.value;
+      const glowRgb = [color.r, color.g, color.b].map(channel => Math.round(255 *
+        (channel <= 0.0031308 ? channel * 12.92 : 1.055 * channel ** (1 / 2.4) - 0.055)
+      )).join(' ');
+      // Native image recovery remains phase-aware when WebGL is unavailable.
+      this.options.onAppearanceChange?.({
+        elevationDeg,
+        glowRgb,
+        recoveryFilter: `grayscale(1) contrast(0.12) brightness(${(1.8 - recoveryWarmth * 1.35).toFixed(3)}) sepia(${recoveryWarmth.toFixed(3)}) saturate(${(1 + recoveryWarmth ** 2 * 19).toFixed(3)}) brightness(${(1 + recoveryWarmth * 0.2).toFixed(3)})`,
+      });
+    }
   }
 
   async init() {
@@ -241,17 +332,22 @@ export class HeaderWeatherSunScene {
     });
     sunMaterial.onBeforeCompile = shader => {
       shader.uniforms.uSolarDays = this.solarDaysUniform;
+      shader.uniforms.uSolarColor = this.solarColorUniform;
       const mapChunk = THREE.ShaderChunk.map_fragment.replace(/\bvMapUv\b/g, 'solarMapUv');
-      shader.fragmentShader = 'uniform float uSolarDays;\n' + shader.fragmentShader.replace('#include <map_fragment>', `
+      shader.fragmentShader = 'uniform float uSolarDays;\nuniform vec3 uSolarColor;\n' + shader.fragmentShader.replace('#include <map_fragment>', `
 #ifdef USE_MAP
   vec2 solarMapUv = vMapUv;
   float solarSinLatitude = sin((vMapUv.y - 0.5) * 3.141592653589793);
   float solarSin2 = solarSinLatitude * solarSinLatitude;
   solarMapUv.x += uSolarDays * (2.33 * solarSin2 + 1.56 * solarSin2 * solarSin2) / 360.0;
 #endif
-${mapChunk}`);
+${mapChunk}
+#ifdef USE_MAP
+  float solarLuminance = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+  diffuseColor.rgb = vec3(pow(clamp(solarLuminance, 0.0, 1.0), 0.28));
+#endif`).replace('#include <tonemapping_fragment>', '#include <tonemapping_fragment>\ngl_FragColor.rgb *= uSolarColor;');
     };
-    sunMaterial.customProgramCacheKey = () => 'header-solar-differential-v1';
+    sunMaterial.customProgramCacheKey = () => 'header-solar-atmosphere-v2';
     const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(SUN_RADIUS, 96, 72), sunMaterial);
     sunMesh.renderOrder = 1;
 
@@ -261,7 +357,7 @@ ${mapChunk}`);
     sunGroup.add(sunMesh);
     scene.add(sunGroup);
 
-    const flareMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), createSolarLensFlareMaterial());
+    const flareMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), createSolarLensFlareMaterial(this.solarColorUniform));
     flareMesh.renderOrder = 2;
     flareMesh.frustumCulled = false;
     scene.add(flareMesh);
@@ -276,7 +372,7 @@ ${mapChunk}`);
     this.sunMesh = sunMesh;
     this.flareMesh = flareMesh;
     this.resize();
-    this.updateAnimation(Date.now());
+    this.updateAnimation(this.getTimeMs());
     // One small material: prepare it synchronously so context loss cannot strand
     // a third-party compileAsync polling loop. The first frame stays hidden.
     renderer.compile(scene, camera);
@@ -310,6 +406,7 @@ ${mapChunk}`);
 
     this.sunMesh.rotation.y = solarRotationAngle(timeMs);
     this.solarDaysUniform.value = (timeMs - SOLAR_MODEL_EPOCH_MS) / SOLAR_DAY_MS;
+    this.updateSolarAppearance(timeMs);
     if (this.flareMesh) {
       this.flareMesh.material.uniforms.uTime.value = ((timeMs % SOLAR_DAY_MS) + SOLAR_DAY_MS) % SOLAR_DAY_MS / 1000;
     }
@@ -319,7 +416,7 @@ ${mapChunk}`);
     if (!this.renderer || !this.scene || !this.camera) {
       return;
     }
-    this.updateAnimation(Date.now());
+    this.updateAnimation(this.getTimeMs());
     this.renderer.render(this.scene, this.camera);
   }
 

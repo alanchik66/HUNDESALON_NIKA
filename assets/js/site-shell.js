@@ -1331,7 +1331,7 @@
   z-index: 1;
   filter:
     brightness(${HEADER_WEATHER_SUN_BRIGHTNESS})
-    drop-shadow(0 0 2px rgba(255, 239, 198, .24)) !important;
+    drop-shadow(0 0 2px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .24)) !important;
   mix-blend-mode: normal !important;
 }
 
@@ -1361,14 +1361,15 @@
   clip-path: circle(50%) !important;
   object-fit: cover !important;
   background: radial-gradient(circle at 35% 32%, #fff8cd, #ffc356 60%, #e87b28);
-  filter: brightness(${HEADER_WEATHER_SUN_BRIGHTNESS}) !important;
-  box-shadow: 0 0 5px #ffd28240, 0 0 10px #ffab4814;
+  filter: var(--orb-sun-recovery-filter, grayscale(1) contrast(0.12) brightness(1.8)) !important;
+  transition: filter 3s ease-in-out;
+  box-shadow: 0 0 5px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .25), 0 0 10px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .08);
   animation: weatherSunRecoveryGlow 6.4s ease-in-out infinite;
 }
 
 @keyframes weatherSunRecoveryGlow {
-  0%, 100% { box-shadow: 0 0 5px #ffd28240, 0 0 10px #ffab4814; }
-  50% { box-shadow: 0 0 6px #ffd2824d, 0 0 12px #ffab481a; }
+  0%, 100% { box-shadow: 0 0 5px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .25), 0 0 10px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .08); }
+  50% { box-shadow: 0 0 6px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .3), 0 0 12px rgb(var(--orb-sun-glow-rgb, 255 255 255) / .1); }
 }
 
 /* Moon — MP4 fallback: off-screen decode + canvas chroma-key (Safari / no WebM). */
@@ -5166,7 +5167,7 @@
     return [
       {
         id: 'origin-date-header',
-        url: `${window.location.origin}/`,
+        url: `${window.location.origin}/site.webmanifest`,
         method: 'GET',
         mode: 'same-origin',
         type: 'date-header',
@@ -5178,6 +5179,7 @@
         mode: 'cors',
         type: 'json-field',
         field: 'utc_datetime',
+        timeZone: 'UTC',
       },
       {
         id: 'timeapiio-utc',
@@ -5186,6 +5188,7 @@
         mode: 'cors',
         type: 'json-field',
         field: 'dateTime',
+        timeZone: 'UTC',
       },
     ];
   }
@@ -5207,6 +5210,23 @@
         }
       );
     });
+  }
+
+  function parseHeaderWeatherServerTimestamp(rawValue, timeZone) {
+    if (typeof rawValue === 'number') {
+      return Number.isFinite(rawValue) ? (rawValue > 1e12 ? rawValue : rawValue * 1000) : NaN;
+    }
+    if (typeof rawValue !== 'string' || !rawValue.trim()) return NaN;
+    let value = rawValue.trim();
+    // Use the portable ECMAScript millisecond/offset form, including in WebKit.
+    value = value.replace(/\.(\d+)(?=(?:Z|[+-]\d{2}:?\d{2})?$)/i,
+      (_, fraction) => `.${fraction.slice(0, 3).padEnd(3, '0')}`);
+    value = value.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
+    if (timeZone === 'UTC' && !/(?:Z|[+-]\d{2}:?\d{2}|GMT)$/i.test(value)) {
+      if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(value)) return NaN;
+      value += 'Z';
+    }
+    return Date.parse(value);
   }
 
   async function fetchHeaderWeatherSourceTimeMs(source) {
@@ -5237,11 +5257,7 @@
     } else if (source.type === 'json-field') {
       const payload = await response.json();
       const rawValue = payload?.[source.field];
-      if (typeof rawValue === 'number') {
-        serverTimeMs = rawValue > 1e12 ? rawValue : rawValue * 1000;
-      } else if (typeof rawValue === 'string') {
-        serverTimeMs = Date.parse(rawValue);
-      }
+      serverTimeMs = parseHeaderWeatherServerTimestamp(rawValue, source.timeZone);
     }
 
     if (!Number.isFinite(serverTimeMs)) {
@@ -12597,6 +12613,14 @@
       const scene = await module.mountHeaderWeatherSunScene(canvas, {
         sunTextureUrl: assetConfig.sunTextureUrl,
         geoState: assetConfig.geoState,
+        getTimeMs: getHeaderWeatherNowMs,
+        onAppearanceChange: appearance => {
+          if (overlay.__sunSceneMountToken !== mountToken) return;
+          overlay.style.setProperty('--orb-sun-recovery-filter', appearance.recoveryFilter);
+          overlay.style.setProperty('--orb-sun-glow-rgb', appearance.glowRgb);
+          overlay.dataset.sunElevation = Number.isFinite(appearance.elevationDeg)
+            ? appearance.elevationDeg.toFixed(3) : 'unknown';
+        },
         getOpticalCenter: () => {
           const bounds = canvas.getBoundingClientRect();
           const region = overlay.closest('.weather-header-preview, .weather-header-dropdown__hero')?.getBoundingClientRect();
