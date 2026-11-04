@@ -117,7 +117,7 @@ try {
       const viewportBottom = viewportTop + (window.visualViewport?.height || window.innerHeight);
       const headerBottom = document.querySelector('.header')?.getBoundingClientRect().bottom || 0;
       const links = nav
-        ? [...nav.querySelectorAll(':scope > .mobile-nav-group > a[href]')].filter(link => {
+        ? [...nav.querySelectorAll(':scope > .mobile-nav__content > .mobile-nav-group > a[href]')].filter(link => {
             const linkRect = link.getBoundingClientRect();
             return (
               linkRect.width > 0 && linkRect.height > 0 && linkRect.top >= rect.top && linkRect.bottom <= rect.bottom
