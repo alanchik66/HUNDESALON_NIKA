@@ -8,8 +8,10 @@ export const MENU_CONTOUR_COLORS = Object.freeze([
   'rgb(213, 91, 248)', 'rgb(255, 87, 210)', 'rgb(255, 105, 161)',
 ]);
 export const MENU_CONTOUR_TIMING = Object.freeze({ cycleMs: 6400, hueMs: 12800 });
+export const MENU_CONTOUR_FILTER = 'drop-shadow(0 0 0.7px rgba(213,255,235,.92)) drop-shadow(0 0 2.4px rgba(0,201,130,.85)) drop-shadow(0 0 4px rgba(0,138,95,.45))';
 const TAIL = 78 / 180;
 const PAD = 16;
+const FALLBACK_SCALE = 0.325 / 0.48;
 const WEATHER_HOST = '.header-weather-widget[data-weather-widget]';
 const instances = new WeakMap();
 const clamp = (value, low = 0, high = 1) => Math.max(low, Math.min(high, value));
@@ -48,8 +50,8 @@ export function capsulePoint(width, height, fraction, side = -1) {
   return shape && Number.isFinite(fraction) ? pointOnCapsule(shape, fraction, side) : null;
 }
 
-export function contourHalfWidth(progress) {
-  return progress <= 0 || progress >= 1 ? 0 : 0.325 * Math.sin(progress * Math.PI) ** 1.5;
+export function contourHalfWidth(progress, halfWidth = 0.325) {
+  return progress <= 0 || progress >= 1 ? 0 : halfWidth * Math.sin(progress * Math.PI) ** 1.5;
 }
 
 function ease(value) {
@@ -73,7 +75,12 @@ function flash(phase, stops) {
   return { opacity: alpha + (nextAlpha - alpha) * progress, scale: scale + (nextScale - scale) * progress };
 }
 
-function ribbon(shape, head, side) {
+function unclippedPoint(shape, fraction, side) {
+  return fraction < 0 ? pointOnCapsule(shape, -fraction, -side)
+    : fraction > 1 ? pointOnCapsule(shape, 2 - fraction, -side) : pointOnCapsule(shape, fraction, side);
+}
+
+function ribbon(shape, head, side, halfWidth) {
   const first = Math.max(0, (TAIL - head) / TAIL);
   const last = Math.min(1, (1 + TAIL - head) / TAIL);
   if (first >= last) return [];
@@ -81,14 +88,14 @@ function ribbon(shape, head, side) {
   for (let index = 0; index <= 32; index += 1) {
     const progress = first + (last - first) * index / 32;
     const point = pointOnCapsule(shape, head - TAIL + TAIL * progress, side);
-    const width = contourHalfWidth(progress);
+    const width = contourHalfWidth(progress, halfWidth);
     outer.push([point.x + point.nx * width, point.y + point.ny * width]);
     inner.push([point.x - point.nx * width, point.y - point.ny * width]);
   }
   return outer.concat(inner.reverse());
 }
 
-export function buildContourFrame(width, height, timeMs, timing = MENU_CONTOUR_TIMING) {
+export function buildContourFrame(width, height, timeMs, timing = MENU_CONTOUR_TIMING, halfWidth = 0.325) {
   const shape = geometry(width, height);
   if (!shape) return null;
   const time = Number.isFinite(timeMs) ? timeMs : 0;
@@ -100,7 +107,8 @@ export function buildContourFrame(width, height, timeMs, timing = MENU_CONTOUR_T
     halo: 1 + Math.sin(phase * Math.PI) ** 2 * 0.25,
     origin: flash(phase, [[0, 0, 0.15], [0.02, 1, 0.75], [0.08, 0.32, 0.95], [0.18, 0, 1.1], [1, 0, 1.1]]),
     meeting: flash(phase, [[0, 0, 0.2], [0.84, 0, 0.2], [0.87, 1, 1], [0.92, 0.42, 1.25], [1, 0, 1.6]]),
-    branches: [-1, 1].map(side => ({ side, polygon: ribbon(shape, head, side), trail: ribbon(shape, head - 0.1, side) })),
+    branches: [-1, 1].map(side => ({ side, polygon: ribbon(shape, head, side, halfWidth), trail: ribbon(shape, head - 0.1, side, halfWidth),
+      gradient: { start: unclippedPoint(shape, head - TAIL, side), end: unclippedPoint(shape, head, side) } })),
   };
 }
 
@@ -114,22 +122,58 @@ export function readContourReference(document, window) {
   const colors = stops.map(stop => stop.getAttribute('stop-color'));
   const trace = document.querySelector('#hundesalon-ai-chat .hn-ai-launcher-rim-trace');
   const durations = trace && String(window.getComputedStyle(trace).animationDuration || '').split(',');
+  const rim = document.querySelector('#hundesalon-ai-chat .hn-ai-launcher-rim');
+  const style = rim && window.getComputedStyle(rim);
+  // Computed width excludes the launcher's hover transform and still works when
+  // it is hidden. View-box lengths become CSS pixels through this scale only.
+  const pixels = value => typeof value === 'string' && value.trim().endsWith('px') ? Number.parseFloat(value) : NaN;
+  let width = pixels(style?.width);
+  if (!(width > 0) && rim?.parentElement) {
+    // display:none can leave the SVG's percentage width unresolved. The parent
+    // has a definite CSS width and the same absolute gap at both SVG edges.
+    const parentWidth = pixels(window.getComputedStyle(rim.parentElement).width), left = pixels(style?.left);
+    if (parentWidth > 0 && Number.isFinite(left)) width = parentWidth - 2 * left;
+  }
+  const scale = positive(width / positive(rim?.viewBox?.baseVal?.width, 100), FALLBACK_SCALE);
   return {
     colors: colors.length === 15 && colors.every(Boolean) ? colors : MENU_CONTOUR_COLORS,
     cycleMs: milliseconds(durations?.[0], 6400), hueMs: milliseconds(durations?.[1], 12800),
+    scale, halfWidth: 0.48 * scale, filter: style?.filter && style.filter !== 'none' ? style.filter : MENU_CONTOUR_FILTER,
   };
 }
 
-function hueColor(color, degrees) {
+function rotateColor(color, degrees) {
   const rgb = color.match(/[\d.]+/g)?.slice(0, 3).map(Number);
-  if (rgb?.length !== 3 || rgb.some(value => !Number.isFinite(value))) return color;
-  const [r, g, b] = rgb.map(value => value / 255);
-  const maximum = Math.max(r, g, b), minimum = Math.min(r, g, b), delta = maximum - minimum;
-  let hue = delta === 0 ? 0 : maximum === r ? ((g - b) / delta) % 6 : maximum === g ? (b - r) / delta + 2 : (r - g) / delta + 4;
-  hue = (hue * 60 + degrees + 360) % 360;
-  const lightness = (maximum + minimum) / 2;
-  const saturation = delta === 0 ? 0 : delta / (1 - Math.abs(2 * lightness - 1));
-  return `hsl(${hue} ${saturation * 100}% ${lightness * 100}%)`;
+  if (rgb?.length !== 3 || rgb.some(value => !Number.isFinite(value))) return null;
+  const angle = degrees * Math.PI / 180, c = Math.cos(angle), s = Math.sin(angle);
+  // CSS hue-rotate is an sRGB colour matrix, not HSL hue substitution.
+  return [
+    [.213 + .787 * c - .213 * s, .715 - .715 * c - .715 * s, .072 - .072 * c + .928 * s],
+    [.213 - .213 * c + .143 * s, .715 + .285 * c + .140 * s, .072 - .072 * c - .283 * s],
+    [.213 - .213 * c - .787 * s, .715 - .715 * c + .715 * s, .072 + .928 * c + .072 * s],
+  ].map(row => row.reduce((sum, coefficient, index) => sum + coefficient * rgb[index], 0));
+}
+
+export function contourGradientStops(colors, degrees) {
+  const denominator = Math.max(1, colors.length - 1);
+  const rotated = colors.map(color => rotateColor(color, Number.isFinite(degrees) ? degrees : 0));
+  if (rotated.some(color => !color)) return colors.map((color, index) => ({ offset: index / denominator, color }));
+  const stops = [];
+  for (let index = 0; index < rotated.length - 1; index += 1) {
+    const from = rotated[index], to = rotated[index + 1], cuts = new Set([0, 1]);
+    // Clamping only the original stops changes interpolation. Split at every
+    // gamut crossing so this equals hue-rotate after the complete gradient.
+    for (let channel = 0; channel < 3; channel += 1) for (const boundary of [0, 255]) {
+      const crossing = (boundary - from[channel]) / (to[channel] - from[channel]);
+      if (crossing > 0 && crossing < 1) cuts.add(crossing);
+    }
+    for (const progress of [...cuts].sort((a, b) => a - b)) {
+      if (index && progress === 0) continue;
+      const rgb = from.map((value, channel) => clamp(value + (to[channel] - value) * progress, 0, 255));
+      stops.push({ offset: (index + progress) / denominator, color: `rgb(${rgb.join(' ')})` });
+    }
+  }
+  return stops;
 }
 
 function polygon(context, points) {
@@ -164,10 +208,11 @@ function drawFlash(context, x, y, pulse, size, ratio) {
 
 function draw(record, elapsed, reference) {
   const { context, width, height, ratio } = record;
-  const frame = buildContourFrame(width - 1, height - 1, elapsed, record.timing);
+  const frame = buildContourFrame(width - 1, height - 1, elapsed, record.timing, reference.halfWidth);
   context.setTransform(ratio, 0, 0, ratio, 0, 0);
   context.clearRect(0, 0, width + PAD * 2, height + PAD * 2);
   context.save();
+  context.globalCompositeOperation = 'source-over';
   context.translate(PAD + 0.5, PAD + 0.5);
   const outline = [];
   for (let index = 0; index <= 48; index += 1) { const point = capsulePoint(width - 1, height - 1, index / 48); outline.push([point.x, point.y]); }
@@ -178,25 +223,34 @@ function draw(record, elapsed, reference) {
   context.shadowColor = `rgba(0,220,150,${0.22 * frame.halo})`;
   context.shadowBlur = 5 * ratio;
   context.stroke();
-  context.globalCompositeOperation = 'lighter';
-  const gradient = context.createLinearGradient(0, height, width, 0);
-  reference.colors.forEach((color, index) => gradient.addColorStop(index / 14, hueColor(color, frame.hue)));
+  context.shadowColor = 'transparent';
+  context.shadowBlur = 0;
+  if (reference.colorTime !== frame.hue) {
+    reference.colorTime = frame.hue;
+    reference.colorStops = contourGradientStops(reference.colors, frame.hue);
+  }
   for (const branch of frame.branches) {
-    if (polygon(context, branch.trail)) {
+    if (branch.trail.length) {
+      // Paint only the native Gaussian shadow. The solid source is off-canvas;
+      // shadowBlur=2*sigma and offsets use backing pixels, independent of CTM.
+      const shift = width + PAD * 2;
+      context.save();
+      context.translate(-shift, 0);
       context.globalAlpha = frame.trailOpacity;
       context.fillStyle = '#00e897';
-      context.shadowColor = '#00c982';
-      context.shadowBlur = 4 * ratio;
+      context.shadowColor = '#00e897';
+      context.shadowOffsetX = shift * ratio;
+      context.shadowBlur = 2 * 1.3 * reference.scale * ratio;
+      polygon(context, branch.trail);
       context.fill();
+      context.restore();
     }
     if (polygon(context, branch.polygon)) {
+      const { start, end } = branch.gradient;
+      const gradient = context.createLinearGradient(start.x, start.y, end.x, end.y);
+      reference.colorStops.forEach(stop => gradient.addColorStop(stop.offset, stop.color));
       context.globalAlpha = 1;
       context.fillStyle = gradient;
-      context.shadowColor = 'rgba(0,201,130,.85)';
-      context.shadowBlur = 2.4 * ratio;
-      context.fill();
-      context.shadowColor = 'rgba(213,255,235,.92)';
-      context.shadowBlur = 0.7 * ratio;
       context.fill();
     }
   }
@@ -216,7 +270,7 @@ export const MENU_CONTOUR_STYLES = `
   min-width:0!important; min-height:0!important; max-width:none!important; max-height:none!important;
   border:0!important; border-radius:0!important; background:transparent!important;
   clip-path:none!important; -webkit-mask:none!important; mask:none!important;
-  transform:none!important; filter:none!important; opacity:1!important; pointer-events:none!important; z-index:2;
+  transform:none!important; filter:var(--menu-contour-filter,${MENU_CONTOUR_FILTER})!important; opacity:1!important; pointer-events:none!important; z-index:2;
 }
 [data-menu-contour='ready']::before { display:none!important; }
 `;
@@ -230,7 +284,7 @@ export function initMenuContours(environment = globalThis) {
   const Intersection = environment.IntersectionObserver || window.IntersectionObserver;
   const Resize = environment.ResizeObserver || window.ResizeObserver;
   const bindings = new WeakMap(), failed = new WeakSet(), records = new Set(), roots = new Map();
-  const reference = readContourReference(document, window);
+  let reference = readContourReference(document, window);
   let disposed = false, suspended = false, frameId = 0, scanPending = false, origin = null;
   const addStyle = root => {
     const container = root === document ? document.head : root;
@@ -257,6 +311,7 @@ export function initMenuContours(environment = globalThis) {
     record.timing = { cycleMs: milliseconds(style.getPropertyValue('--menu-contour-cycle'), reference.cycleMs), hueMs: reference.hueMs };
     record.canvas.width = Math.ceil((width + PAD * 2) * ratio);
     record.canvas.height = Math.ceil((height + PAD * 2) * ratio);
+    record.canvas.style.setProperty('--menu-contour-filter', reference.filter);
     for (const [name, value] of Object.entries({
       left: -PAD - (Number.parseFloat(style.borderLeftWidth) || 0), top: -PAD - (Number.parseFloat(style.borderTopWidth) || 0),
       width: width + PAD * 2, height: height + PAD * 2,
@@ -296,6 +351,7 @@ export function initMenuContours(environment = globalThis) {
     run();
   });
   const resize = Resize && new Resize(entries => {
+    refreshReference();
     for (const entry of entries) {
       const record = bindings.get(entry.target);
       if (record) { record.dirty = true; if (!intersection) record.visible = inView(record.target); }
@@ -323,8 +379,16 @@ export function initMenuContours(environment = globalThis) {
     scanPending = true;
     Promise.resolve().then(() => { scanPending = false; if (!disposed) scan(); });
   };
+  const refreshReference = () => {
+    const next = readContourReference(document, window);
+    if (next.scale === reference.scale && next.filter === reference.filter && next.cycleMs === reference.cycleMs
+      && next.hueMs === reference.hueMs && next.colors.join('|') === reference.colors.join('|')) return;
+    reference = next;
+    for (const record of records) record.dirty = true;
+  };
   const scan = () => {
     if (disposed) return;
+    refreshReference();
     for (const record of [...records]) if (!record.target.isConnected || record.canvas.parentNode !== record.target) remove(record);
     for (const record of records) {
       if (!intersection) record.visible = inView(record.target);
@@ -349,7 +413,7 @@ export function initMenuContours(environment = globalThis) {
   const visibility = () => { if (document.hidden) pause(); else { scan(); run(); } };
   const pageHide = event => { suspended = true; pause(); if (!event.persisted) api.dispose(); };
   const pageShow = () => { suspended = false; scan(); run(); };
-  const viewport = () => { for (const record of records) record.dirty = true; if (!intersection) scan(); else run(); };
+  const viewport = () => { refreshReference(); for (const record of records) record.dirty = true; if (!intersection) scan(); else run(); };
   const api = {
     refresh: scan,
     getDiagnostics: () => ({ bound: records.size, visible: [...records].filter(record => record.visible).length, running: Boolean(frameId),
