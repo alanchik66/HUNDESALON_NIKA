@@ -2501,6 +2501,7 @@ body.light .premium-burger span {
 /* ===== ONLINE ORDER CTA — premium nav pill everywhere ===== */
 
 .online-order-pill {
+  --online-order-radius: var(--nav-pill-radius);
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -2518,7 +2519,7 @@ body.light .premium-burger span {
   text-transform: uppercase;
   min-height: 42px;
   padding: var(--nav-pill-pad-y) calc(var(--nav-pill-pad-x) + 4px);
-  border-radius: var(--nav-pill-radius);
+  border-radius: var(--online-order-radius);
   color: #fff0c8ff;
   background:
     linear-gradient(180deg, rgb(226 190 116 / 7%) 0%, rgb(226 190 116 / 2.5%) 100%), #ffffff0c;
@@ -2547,6 +2548,7 @@ body.light .premium-burger span {
   position: absolute;
   inset: 0;
   border-radius: inherit;
+  clip-path: inset(0 round var(--online-order-radius));
   background: radial-gradient(ellipse at 30% 0%, rgb(255 255 255 / 8%) 0%, transparent 62%);
   opacity: 0.28;
   animation: navLiquidMatteBreath var(--motion-sync-breath) ease-in-out infinite;
@@ -2557,22 +2559,28 @@ body.light .premium-burger span {
 .online-order-pill::after {
   content: '';
   position: absolute;
-  top: -30%;
-  bottom: -30%;
-  left: -30%;
-  width: 50%;
+  inset: 0;
   border-radius: inherit;
+  clip-path: inset(0 round var(--online-order-radius));
   background: linear-gradient(
     105deg,
     rgb(255 255 255 / 0%) 0%,
     rgb(255 255 255 / 4%) 30%,
     rgb(255 244 210 / 14%) 50%,
     rgb(255 255 255 / 0%) 70%
-  );
+  ) 0 50% / 50% 100% no-repeat;
   opacity: 0.14;
   mix-blend-mode: overlay;
   pointer-events: none;
-  animation: navLiquidRefraction 10.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  animation: onlineOrderRefraction 10.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+/* Clip light to the face, without clipping the control's outer aura or focus. */
+.online-order-pill > :is(.nav-plasma, .nav-plasma--active) {
+  inset: 0;
+  border-radius: inherit;
+  clip-path: inset(0 round var(--online-order-radius));
+  transform: none !important;
 }
 
 .online-order-pill:hover,
@@ -2637,6 +2645,27 @@ body.light .premium-burger span {
       0 0 28px rgb(226 190 116 / 14%),
       0 0 52px rgb(226 190 116 / 7%),
       inset 0 0.5px 0 rgb(255 255 255 / 8%);
+  }
+}
+
+@keyframes onlineOrderRefraction {
+  0% {
+    background-position: -76% 50%;
+    opacity: 0.08;
+  }
+
+  20% {
+    opacity: 0.16;
+  }
+
+  52% {
+    background-position: 66% 50%;
+    opacity: 0.42;
+  }
+
+  100% {
+    background-position: 178% 50%;
+    opacity: 0.1;
   }
 }
 
@@ -7342,7 +7371,6 @@ body.light .currency-inline {
 /* ::after - бликовая полоса с анимацией */
 
 .btn-neon::after,
-.header-online-btn::after,
 .btn-map::after,
 .map-nav-control::after,
 #mobile-nav a::after,
@@ -10867,7 +10895,7 @@ body.light .nika-tooltip--visible {
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.09em;
-  border-radius: var(--nav-pill-radius);
+  border-radius: var(--online-order-radius);
   color: var(--gold-face);
   background: #ffffff05;
   -webkit-backdrop-filter: blur(18px) saturate(1.2);
@@ -10891,8 +10919,9 @@ body.light .nika-tooltip--visible {
     rgb(255 255 255 / 3%) 30%,
     rgb(255 255 255 / 1.5%) 50%,
     rgb(255 255 255 / 0%) 70%
-  );
+  ) 0 50% / 50% 100% no-repeat;
   opacity: 0.1;
+  filter: blur(6px);
   mix-blend-mode: normal;
 }
 
@@ -11957,12 +11986,12 @@ body.light .social-icons-toggle.is-open {
 /* Mobile header booking pill — compact, same premium system */
 @media (width <= 900px) {
   .header .top-row > .header-controls .online-order-pill {
+    --online-order-radius: 999px;
     min-height: var(--header-mobile-control-size);
     height: var(--header-mobile-control-size);
     padding: 0 12px;
     font-size: 10px;
     letter-spacing: 0.06em;
-    border-radius: 999px;
     white-space: nowrap;
   }
 

@@ -209,7 +209,7 @@ function draw(record, elapsed, reference) {
 }
 
 export const MENU_CONTOUR_STYLES = `
-[data-menu-contour] { position:relative; overflow:visible!important; isolation:isolate; }
+[data-menu-contour] { position:relative; overflow:visible!important; isolation:isolate; border-radius:999px!important; }
 [data-menu-contour] > canvas.site-menu-contour,
 .weather-header-preview [data-menu-contour] > canvas.site-menu-contour {
   position:absolute!important; inset:auto!important; display:block!important;
