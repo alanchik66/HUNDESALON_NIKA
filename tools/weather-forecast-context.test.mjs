@@ -329,6 +329,7 @@ function solarScene(h, options) {
     solarDaysUniform: { value: 0 },
     solarColorUniform: { value: { r: 1, g: 1, b: 1 } },
     solarSurfaceColorUniform: { value: { r: 1, g: 1, b: 1 } },
+    solarSpotStrengthUniform: { value: 0 },
     flareMesh: { material: { uniforms: { uTime: { value: 0 } } } },
   });
   scene.setGeoState(options.geoState);
@@ -361,7 +362,10 @@ test('actual solar methods use forecast noon only for colour while rotation, spo
   assert.notDeepEqual(scene.solarColorUniform.value, preview.solarColorUniform.value);
   assert.equal(appearances.at(-1).elevationDeg, expectedElevation);
   assert.equal(appearances.at(-1).glowRgb, '255 255 255', 'CSS glow follows the same representative daylight');
-  assert.match(appearances.at(-1).recoveryFilter, /sepia\(0\.000\)/);
+  const blue = h.surfaceColor(expectedElevation).b;
+  const srgbBlue = blue <= .0031308 ? blue * 12.92 : 1.055 * blue ** (1 / 2.4) - .055;
+  const recoveryWarmth = Math.max(0, Math.min(1, (1 - srgbBlue) / .93));
+  assert.equal(Number(appearances.at(-1).recoveryFilter.match(/sepia\(([\d.]+)\)/)[1]), Number(recoveryWarmth.toFixed(3)), 'forecast recovery uses the same calibrated cream daylight as its actual surface');
   const firstRotation = scene.sunMesh.rotation.y;
   const firstFlareTime = scene.flareMesh.material.uniforms.uTime.value;
   const colorUniform = scene.solarColorUniform;

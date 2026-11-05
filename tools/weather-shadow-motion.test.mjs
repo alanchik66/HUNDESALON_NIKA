@@ -289,7 +289,7 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
     Group: class { position = {}; rotation = {}; children = []; add(child) { this.children.push(child); } },
   };
   class ClockDate extends Date { static now() { return nowMs; } }
-  const api = new Function('THREE', 'window', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date', `${code}; return { mount: mountHeaderWeatherSunScene, rate: solarRotationRateDegPerDay, offset: solarTextureOffsetTurns, angle: solarRotationAngle, pixelRatio: resolveSolarPixelRatio, epoch: SOLAR_MODEL_EPOCH_MS, elevation: solarElevationDegrees, color: solarColorForElevation, surfaceColor: solarSurfaceColorForElevation };`)(
+  const api = new Function('THREE', 'window', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date', `${code}; return { mount: mountHeaderWeatherSunScene, rate: solarRotationRateDegPerDay, offset: solarTextureOffsetTurns, angle: solarRotationAngle, pixelRatio: resolveSolarPixelRatio, epoch: SOLAR_MODEL_EPOCH_MS, elevation: solarElevationDegrees, position: solarPosition, color: solarColorForElevation, surfaceColor: solarSurfaceColorForElevation };`)(
     THREE, window, callback => { frames.set(++nextFrame, callback); return nextFrame; }, id => frames.delete(id), ClockDate
   );
   return { ...api, canvas, listeners, windowListeners, viewportListeners, window, viewport, frames, stats, setNow: value => { nowMs = value; } };
@@ -654,7 +654,7 @@ test('the solar lens flare axis follows the host callback while its optical phas
   remounted.dispose();
 });
 
-test('the actual solar flare shader joins the limb without a dark gap, excludes the photosphere and fades before the canvas edge', async () => {
+test('the actual solar flare shader overlaps only the antialiased limb without a dark gap and fades before the canvas edge', async () => {
   const h = await solarRecoveryHarness();
   const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
   const material = scene.flareMesh.material;
@@ -674,7 +674,14 @@ test('the actual solar flare shader joins the limb without a dark gap, excludes 
   const distance = scene.camera.position.z;
   const projectedRadius = radius / Math.sqrt(distance ** 2 - radius ** 2) / (2 * Math.tan(scene.camera.fov * Math.PI / 360));
   for (let i = 0; i <= 128; i += 1) {
-    assert.equal(discMask(projectedRadius * i / 128), 0, 'no shader light can wash over any part of the original solar disc');
+    assert.equal(discMask((projectedRadius - .0025) * i / 128), 0, 'the original solar map stays untouched before its narrow antialiased limb');
+  }
+  assert.ok(discMask(projectedRadius) > .99, 'the optical light must already meet the sphere at its geometric edge, not start outside its antialias coverage');
+  for (const [size, dpr] of [[92, 3], [111, 3], [384, 2.5]]) {
+    const halfPixel = .5 / (size * dpr);
+    assert.ok(discMask(projectedRadius - halfPixel) > .1, `${size}px canvas needs light beneath its inner antialiased edge`);
+    assert.ok(discMask(projectedRadius + halfPixel) > .99, 'the outer antialiased edge cannot contain a transparent seam');
+    assert.ok(.0025 * size < 1, 'the overlap must remain below one CSS pixel at the real and enlarged proof sizes');
   }
   assert.ok(discMask(projectedRadius + .001) > .15, 'the halo must begin at the limb rather than leave a fully transparent dark ring');
   assert.ok(discMask(projectedRadius + .002) > .65, 'the halo must already be strong within a subpixel distance outside the native-sized solar disc');
@@ -789,7 +796,7 @@ test('the separate photosphere palette remains seamless and pale above the horiz
   const target = { r: 0, g: 0, b: 0 };
   assert.equal(h.surfaceColor(3, target), target, 'surface updates must reuse their own color object');
   const previous = { r: 0, g: 0, b: 0 };
-  for (const elevation of [-.833, 0, 1, 3, 6, 12]) {
+  for (const elevation of [-.833, 0, 1, 3, 6, 12, 45]) {
     const surface = h.surfaceColor(elevation);
     for (const channel of ['r', 'g', 'b']) {
       assert.ok(Number.isFinite(surface[channel]) && surface[channel] >= 0 && surface[channel] <= 1);
@@ -800,12 +807,63 @@ test('the separate photosphere palette remains seamless and pale above the horiz
     const right = h.surfaceColor(elevation + .0001);
     assert.ok(Math.max(...['r', 'g', 'b'].map(channel => Math.abs(left[channel] - right[channel]))) < .001, 'the independent surface calibration cannot create a color jump at a palette knot');
   }
-  for (const elevation of [12, 45, 90, NaN]) assert.deepEqual(h.surfaceColor(elevation), { r: 1, g: 1, b: 1 });
+  for (const elevation of [12, 45, 90]) {
+    const surface = h.surfaceColor(elevation);
+    assert.ok(surface.r === 1 && surface.g < 1 && surface.g > .98 && surface.b < surface.g && surface.b > .86, 'known daylight remains luminous with a slight cream-gold tint');
+  }
+  assert.deepEqual(h.surfaceColor(NaN), { r: 1, g: 1, b: 1 }, 'unknown geography must remain neutral rather than invent a daytime phase');
   const low = h.surfaceColor(-.833);
   assert.ok(low.r > low.g * 3 && low.g > low.b, 'a very low solar disc must still become red rather than remain white forever');
   assert.deepEqual(h.surfaceColor(-5), low);
   assert.ok(h.surfaceColor(1).g > h.surfaceColor(0).g && h.surfaceColor(1).b > h.surfaceColor(0).b);
   assert.ok(h.surfaceColor(3).b > h.color(3).b * 5, 'the pale photosphere cannot inherit the already orange halo tint');
+});
+
+test('morning, apparent noon and evening follow local solar hour angle without wall-clock phase switches', async () => {
+  const h = await solarRecoveryHarness();
+  const day = Date.UTC(2026, 2, 20);
+  const timeAtAngle = target => {
+    let low = day + 1800000, high = day + 84600000;
+    for (let index = 0; index < 45; index += 1) {
+      const midpoint = (low + high) / 2;
+      if (h.position(midpoint, 0, 0).hourAngleDeg < target) low = midpoint;
+      else high = midpoint;
+    }
+    return high;
+  };
+  h.setNow(timeAtAngle(-80));
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg', geoState: { latitude: 0, longitude: 0 } });
+  const morning = scene.solarSpotStrengthUniform.value;
+  assert.ok(morning > 0 && morning < .35);
+  h.setNow(timeAtAngle(0)); scene.renderFrame();
+  assert.equal(scene.solarSpotStrengthUniform.value, 0, 'the brightest local noon retains very delicate original detail');
+  h.setNow(timeAtAngle(80)); scene.renderFrame();
+  assert.ok(scene.solarSpotStrengthUniform.value > morning * 2, 'low setting light may reveal slightly more original detail as an explicit display calibration');
+  assert.equal(h.stats.shader.uniforms.uSolarSpotStrength, scene.solarSpotStrengthUniform);
+  const sameUtc = timeAtAngle(0);
+  assert.ok(h.position(sameUtc, 0, -80).hourAngleDeg < 0 && h.position(sameUtc, 0, 80).hourAngleDeg > 0, 'one UTC instant must be morning or evening according to longitude');
+  assert.ok(Math.abs(timeAtAngle(.001) - timeAtAngle(-.001)) < 1000, 'phase remains continuous across apparent noon');
+  scene.dispose();
+});
+
+test('polar-day original spot contrast stays continuous across apparent solar midnight', async () => {
+  const h = await solarRecoveryHarness();
+  const geoState = { latitude: 70, longitude: 0 };
+  let low = Date.UTC(2026, 5, 20, 23, 30), high = Date.UTC(2026, 5, 21, 0, 30);
+  for (let index = 0; index < 45; index += 1) {
+    const midpoint = (low + high) / 2;
+    if (h.position(midpoint, geoState.latitude, geoState.longitude).hourAngleDeg > 0) low = midpoint;
+    else high = midpoint;
+  }
+  h.setNow(low - 100);
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg', geoState });
+  const before = scene.solarSpotStrengthUniform.value;
+  assert.ok(h.elevation(low, geoState.latitude, geoState.longitude) > 3, 'the polar-day fixture must keep the Sun visible at its lowest altitude');
+  assert.ok(before > .1, 'this low Sun must exercise nonzero original detail contrast');
+  h.setNow(high + 100); scene.renderFrame();
+  const after = scene.solarSpotStrengthUniform.value;
+  assert.ok(Math.abs(after - before) < .00001, 'the wrapped +180/-180 hour angle cannot cause a visible contrast reset');
+  scene.dispose();
 });
 
 test('the two Düsseldorf reference times retain a luminous disc while the halo changes from gold to orange', async () => {
@@ -938,20 +996,20 @@ test('the actual solar material preserves photographic luminance and applies its
   assert.equal(scene.flareMesh.material.uniforms.uSolarColor, scene.solarColorUniform);
   assert.notEqual(shader.uniforms.uSolarSurfaceColor, scene.flareMesh.material.uniforms.uSolarColor);
   assert.equal(scene.sunMesh.material.map, h.stats.textures[0]);
-  assert.equal(scene.sunMesh.material.customProgramCacheKey(), 'header-solar-atmosphere-v5');
+  assert.equal(scene.sunMesh.material.customProgramCacheKey(), 'header-solar-atmosphere-v7');
   assert.match(shader.fragmentShader, /#include <tonemapping_fragment>\s*gl_FragColor\.rgb\s*\*=\s*uSolarSurfaceColor\s*;/, 'the pale surface color must tint already tone-mapped light rather than inherit the saturated atmospheric color');
   const weights = shader.fragmentShader.match(/float solarLuminance\s*=\s*dot\(diffuseColor\.rgb,\s*vec3\(([^)]+)\)\)/)?.[1].split(',').map(Number);
   assert.ok(weights?.length === 3 && weights.every(Number.isFinite), 'the shader must derive brightness from the original texture sample');
   assert.ok(Math.abs(weights.reduce((sum, weight) => sum + weight, 0) - 1) < 1e-12);
   const expression = shader.fragmentShader.match(/diffuseColor\.rgb\s*=\s*vec3\(([^;]+)\);/)?.[1];
   assert.ok(expression?.includes('solarLuminance'), 'the lifted brightness must still be computed from the actual sampled photographic luminance');
-  const gamma = Number(expression.match(/pow\(clamp\(solarLuminance,\s*0\.0,\s*1\.0\),\s*([\d.]+)\)/)?.[1]);
+  const gamma = Number(expression.match(/pow\(clamp\(solarLuminance,\s*0\.0,\s*1\.0\),\s*([\d.]+)/)?.[1]);
   assert.ok(gamma > 0 && gamma < 1, 'a finite luminance lift retains spot structure while raising the original dark map');
-  const lifted = new Function('solarLuminance', 'mix', 'pow', 'clamp', `return (${expression});`);
+  const lifted = new Function('solarLuminance', 'mix', 'pow', 'clamp', 'uSolarSpotStrength', `return (${expression});`);
   const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
   const mix = (low, high, weight) => low + (high - low) * weight;
   const luminance = rgb => rgb.reduce((sum, channel, i) => sum + channel * weights[i], 0);
-  const brightness = rgb => lifted(luminance(rgb), mix, Math.pow, clamp);
+  const brightness = rgb => lifted(luminance(rgb), mix, Math.pow, clamp, 0);
   const floor = brightness([0, 0, 0]);
   assert.ok(floor >= .45 && floor <= .6, 'the darkest original spots must be lifted without flattening almost the whole brightness range to white');
   let previous = -1;
@@ -974,7 +1032,7 @@ test('solar photographic detail remains faint but perceptible after the actual A
   const h = await solarRecoveryHarness();
   const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
   const expression = h.stats.shader.fragmentShader.match(/diffuseColor\.rgb\s*=\s*vec3\(([^;]+)\);/)?.[1];
-  const lift = new Function('solarLuminance', 'mix', 'pow', 'clamp', `return (${expression});`);
+  const lift = new Function('solarLuminance', 'mix', 'pow', 'clamp', 'uSolarSpotStrength', `return (${expression});`);
   const engine = await readFile(new URL('../3d-weather-codrops-main/dist-widget/weather-3d-CKX6ob-m.mjs', import.meta.url), 'utf8');
   const fit = engine.match(/vec3 RRTAndODTFit\( vec3 v \) \{([\s\S]*?)\n\}/)?.[1];
   const exposureDivisor = Number(engine.match(/color \*= toneMappingExposure \/ ([\d.]+);/)?.[1]);
@@ -984,8 +1042,8 @@ test('solar photographic detail remains faint but perceptible after the actual A
   const displayGain = Number(shell.match(/const HEADER_WEATHER_SUN_BRIGHTNESS\s*=\s*([\d.]+);/)?.[1]);
   assert.ok(displayGain > 0);
   const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
-  const display = luminance => {
-    const lifted = lift(luminance, (a, b, amount) => a + (b - a) * amount, Math.pow, clamp);
+  const display = (luminance, strength = 0) => {
+    const lifted = lift(luminance, (a, b, amount) => a + (b - a) * amount, Math.pow, clamp, strength);
     const linear = clamp(toneMap(lifted * scene.renderer.toneMappingExposure / exposureDivisor), 0, 1);
     const srgb = linear <= .0031308 ? linear * 12.92 : 1.055 * linear ** (1 / 2.4) - .055;
     return clamp(srgb * displayGain, 0, 1);
@@ -994,6 +1052,9 @@ test('solar photographic detail remains faint but perceptible after the actual A
   assert.ok(contrast > 4.5 && contrast < 9, `original midtone detail must survive display mapping gently; got ${contrast} RGB levels`);
   assert.ok(display(0) > .85, 'even the darkest original sample remains luminous rather than creating a black outline');
   assert.ok(display(1) > .98, 'the unclouded white photosphere stays bright');
+  const eveningContrast = (display(.25, 1) - display(.1, 1)) * 255;
+  assert.ok(eveningContrast > contrast && eveningContrast < 12, 'warm evening detail becomes a little clearer while preserving soft original spots');
+  assert.ok(display(0, 1) > .82, 'the evening shadow lift cannot create a dark limb');
   scene.dispose();
 });
 
@@ -1104,21 +1165,26 @@ function solarShaderFloat(body, name) {
   return `const ${name} = ${expression};`;
 }
 
-test('actual solar ray light travels independently across the limb while retaining the original photosphere and texture', async () => {
-  const h = await solarRecoveryHarness();
-  h.setNow(h.epoch + 100000);
-  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
-  const material = scene.flareMesh.material;
+function solarRaySampler(material) {
   const body = material.fragmentShader.match(/void main\(\)\s*\{([\s\S]*)\}/)?.[1];
   assert.ok(body);
   const rayBlock = body.match(/\bfloat outsideDisc\s*=[\s\S]*?(?=\bfloat plasma\s*=)/)?.[0];
   assert.ok(rayBlock, 'the actual ray field must precede the separate limb plasma composition');
   const fields = [...rayBlock.matchAll(/\bfloat\s+(\w+)\s*=/g)].map(match => match[1]);
-  const lightAt = new Function('p', 'radial', 'uTime', 'math', `
+  const sample = new Function('p', 'radial', 'uTime', 'math', `
     const { sin, cos, atan, pow, exp, max, clamp, smoothstep } = math;
     ${fields.map(name => solarShaderFloat(body, name)).join('\n')}
     return { outsideDisc, pulse, rayLength, rays, halo };
   `);
+  return { body, sample };
+}
+
+test('actual solar ray light travels independently across the limb while retaining the original photosphere and texture', async () => {
+  const h = await solarRecoveryHarness();
+  h.setNow(h.epoch + 100000);
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  const material = scene.flareMesh.material;
+  const { body, sample: lightAt } = solarRaySampler(material);
   const firstTime = material.uniforms.uTime.value;
   const originalMap = scene.sunMesh.material.map;
   const initialRotation = scene.sunMesh.rotation.y;
@@ -1154,13 +1220,69 @@ test('actual solar ray light travels independently across the limb while retaini
   const distance = scene.camera.position.z;
   const photosphere = radius / Math.sqrt(distance ** 2 - radius ** 2) / (2 * Math.tan(scene.camera.fov * Math.PI / 360));
   for (const time of [firstTime, secondTime]) {
-    for (const radial of [0, photosphere / 2, photosphere]) {
+    for (const radial of [0, photosphere / 2, photosphere - .0025]) {
       assert.equal(lightAt({ x: radial, y: 0 }, radial, time, solarShaderMath).outsideDisc, 0, 'animated atmospheric light cannot cover the original solar disc');
     }
   }
   assert.equal(scene.sunMesh.material.map, originalMap);
   assert.equal(h.stats.textures.length, 1);
   assert.ok(Math.abs(scene.sunMesh.rotation.y - initialRotation) < .00001, 'the photographic surface keeps its physical slow rotation while optical light moves');
+  scene.dispose();
+});
+
+test('mobile rays keep several CSS pixels of soft shape after alpha, sRGB and display gain rather than only numeric shader motion', async () => {
+  const h = await solarRecoveryHarness();
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  const material = scene.flareMesh.material;
+  const { body, sample } = solarRaySampler(material);
+  const gain = Number(body.match(/\brays\s*\*\s*([\d.]+)/)?.[1]);
+  const shell = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
+  const displayGain = Number(shell.match(/const HEADER_WEATHER_SUN_BRIGHTNESS\s*=\s*([\d.]+);/)?.[1]);
+  const clamp = (value, low = 0, high = 1) => Math.max(low, Math.min(high, value));
+  const srgb = value => value <= .0031308 ? value * 12.92 : 1.055 * value ** (1 / 2.4) - .055;
+  const composite = (light, transmission) => {
+    const alpha = clamp(light, 0, .7);
+    // The actual toneMapped=false layer divides light by alpha, encodes sRGB,
+    // then normal source-over compositing and the shared CSS brightness apply.
+    return (clamp(srgb(light / Math.max(alpha, .0001)) * alpha * displayGain) * transmission + .03 * (1 - alpha * transmission)) * 255;
+  };
+  assert.equal(material.toneMapped, false);
+  assert.equal(material.depthWrite, false);
+  assert.equal(material.transparent, true);
+  for (const size of [92, 111]) {
+    const reach = [], angular = [], movements = [];
+    let clearMaximum = 0, cloudMaximum = 0;
+    for (let index = 0; index < 360; index += 1) {
+      const angle = index * Math.PI / 180;
+      let length = 0;
+      for (let pixels = 1; pixels <= 13; pixels += .5) {
+        const radial = .247 + pixels / size;
+        const point = { x: Math.cos(angle) * radial, y: Math.sin(angle) * radial };
+        const values = [100, 103].map(time => {
+          const value = sample(point, radial, time, solarShaderMath);
+          const light = (value.halo + gain * value.rays) * value.outsideDisc;
+          const base = value.halo * value.outsideDisc;
+          const clear = composite(light, 1) - composite(base, 1);
+          const cloud = composite(light, .015) - composite(base, .015);
+          clearMaximum = Math.max(clearMaximum, clear); cloudMaximum = Math.max(cloudMaximum, cloud);
+          return clear;
+        });
+        if (values[0] > 10) length = pixels;
+        if (pixels === 4) { angular.push(values[0]); movements.push(Math.abs(values[1] - values[0])); }
+      }
+      reach.push(length);
+    }
+    reach.sort((a, b) => a - b);
+    const extent = reach[Math.floor(reach.length * .9)];
+    assert.ok(extent >= 6 && extent <= 12, `${size}px canvas needs a visible soft radial extent, received ${extent}px`);
+    assert.ok(Math.max(...angular) - Math.min(...angular) > 18, 'unequal streamers must retain an angular silhouette instead of becoming a uniform ring');
+    let longest = 0, run = 0;
+    for (const light of angular.concat(angular)) { run = light > 18 ? run + 1 : 0; longest = Math.max(longest, Math.min(run, angular.length)); }
+    const arcWidth = longest * Math.PI / 180 * (.247 * size + 4);
+    assert.ok(arcWidth > 3, `${size}px canvas needs multi-pixel broad light, received ${arcWidth}px`);
+    assert.ok(movements.filter(change => change > 6).length > 25, 'many visible angular positions must change smoothly across three seconds');
+    assert.ok(cloudMaximum < clearMaximum * .016, 'thick clouds attenuate the complete luminous ray output, not just the photosphere');
+  }
   scene.dispose();
 });
 

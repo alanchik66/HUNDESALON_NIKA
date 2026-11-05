@@ -27,8 +27,9 @@ const SOLAR_SURFACE_COLOR_STOPS = linearSolarColorStops([
   [0, 1, 0.62, 0.18],
   [1, 1, 0.87, 0.48],
   [3, 1, 0.975, 0.86],
-  [6, 1, 0.995, 0.96],
-  [12, 1, 1, 1],
+  [6, 1, 0.988, 0.92],
+  [12, 1, 0.992, 0.94],
+  [45, 1, 0.997, 0.97],
 ]);
 
 function linearSolarColorStops(stops) {
@@ -40,11 +41,16 @@ function linearSolarColorStops(stops) {
 // NOAA fractional-year approximation: UTC, east-positive longitude, geometric
 // elevation in degrees. No network, timezone guess or constant refraction offset.
 export function solarElevationDegrees(timeMs, latitude, longitude) {
+  return solarPosition(timeMs, latitude, longitude).elevationDeg;
+}
+
+function solarPosition(timeMs, latitude, longitude) {
+  const unavailable = { elevationDeg: NaN, hourAngleDeg: NaN };
   if (!Number.isFinite(timeMs) || !Number.isFinite(latitude) || !Number.isFinite(longitude)
-    || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return NaN;
+    || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return unavailable;
   const date = new Date(timeMs);
   const year = date.getUTCFullYear();
-  if (!Number.isFinite(year)) return NaN;
+  if (!Number.isFinite(year)) return unavailable;
   const start = Date.UTC(year, 0, 1);
   const yearDays = (Date.UTC(year + 1, 0, 1) - start) / SOLAR_DAY_MS;
   const dayOfYear = Math.floor((timeMs - start) / SOLAR_DAY_MS) + 1;
@@ -57,11 +63,12 @@ export function solarElevationDegrees(timeMs, latitude, longitude) {
     - 0.006758 * Math.cos(2 * gamma) + 0.000907 * Math.sin(2 * gamma)
     - 0.002697 * Math.cos(3 * gamma) + 0.00148 * Math.sin(3 * gamma);
   const solarMinutes = ((minutes + equationMinutes + 4 * longitude) % 1440 + 1440) % 1440;
-  const hourAngle = (solarMinutes / 4 - 180) * Math.PI / 180;
+  const hourAngleDeg = solarMinutes / 4 - 180;
+  const hourAngle = hourAngleDeg * Math.PI / 180;
   const latitudeRad = latitude * Math.PI / 180;
   const sineElevation = Math.sin(latitudeRad) * Math.sin(declination)
     + Math.cos(latitudeRad) * Math.cos(declination) * Math.cos(hourAngle);
-  return Math.asin(Math.max(-1, Math.min(1, sineElevation))) * 180 / Math.PI;
+  return { elevationDeg: Math.asin(Math.max(-1, Math.min(1, sineElevation))) * 180 / Math.PI, hourAngleDeg };
 }
 
 // Atmospheric colour is an illustrative display calibration, not a measured
@@ -71,7 +78,7 @@ export function solarColorForElevation(elevationDeg, target = { r: 1, g: 1, b: 1
 }
 
 export function solarSurfaceColorForElevation(elevationDeg, target = { r: 1, g: 1, b: 1 }) {
-  return interpolateSolarColor(elevationDeg, SOLAR_SURFACE_COLOR_STOPS, target);
+  return interpolateSolarColor(elevationDeg, Number.isFinite(elevationDeg) ? SOLAR_SURFACE_COLOR_STOPS : SOLAR_COLOR_STOPS, target);
 }
 
 function interpolateSolarColor(elevationDeg, stops, target) {
@@ -178,27 +185,29 @@ void main() {
   float axisLength = length(lensAxis);
   vec2 direction = lensAxis / max(axisLength, 0.0001);
   float offAxis = smoothstep(0.02, 0.18, axisLength);
-  float shimmer = 0.97 + 0.03 * sin(uTime * 0.24);
+  float shimmer = 0.99 + 0.01 * sin(uTime * 0.24);
 
-  // The sphere occupies radius ~0.247 of this canvas. Keep all added light
-  // outside its photosphere so the original texture cannot be washed out.
-  float outsideDisc = smoothstep(0.247, 0.250, radial);
+  // Meet the sphere's antialiased edge with a subpixel overlap. The central
+  // original map stays untouched; an outward-only ramp leaves a dark seam.
+  float outsideDisc = smoothstep(0.2445, 0.2465, radial);
   float aboveLimb = max(radial - 0.247, 0.0);
   float angle = radial > 0.00001 ? atan(p.y, p.x) : 0.0;
   // Unequal streamers: light travels along short tapered rays. Each angular
   // band changes independently; there is no rotating crown of regular spokes.
-  float structure = 0.48 + 0.18 * sin(angle * 3.0 + 0.7)
-    + 0.14 * sin(angle * 7.0 - 1.3) + 0.11 * cos(angle * 13.0 + 2.1)
-    + 0.07 * sin(angle * 23.0 - 0.8);
-  float fineStrands = 0.5 + 0.5 * sin(angle * 41.0 + sin(angle * 11.0) * 1.7 + 0.18 * sin(uTime * 0.19 + angle * 3.0));
-  float filaments = pow(clamp(structure, 0.0, 1.0), 1.9) * (0.55 + 0.45 * pow(fineStrands, 3.0));
-  float pulse = 0.72 + 0.36 * sin(uTime * 0.63 - aboveLimb * 52.0 + angle * 3.0)
-    + 0.12 * sin(uTime * 0.39 - aboveLimb * 84.0 - angle * 7.0);
-  float rayLength = 0.018 + 0.046 * filaments;
+  float structure = 0.5 + 0.2 * sin(angle * 3.0 + 0.7)
+    + 0.12 * sin(angle * 5.0 - 1.3) + 0.1 * cos(angle * 9.0 + 2.1);
+  // At a 45px disc, the old 41-strand field reduced to subpixel glints. Broader
+  // unequal streamers keep a soft visible silhouette at the actual mobile size.
+  float fineStrands = 0.5 + 0.5 * sin(angle * 17.0 + sin(angle * 7.0) * 1.1 + 0.3 * sin(uTime * 0.17 + angle * 2.0));
+  float filaments = pow(clamp(structure, 0.0, 1.0), 1.25) * (0.72 + 0.28 * pow(fineStrands, 2.0));
+  float pulse = 0.82 + 0.18 * sin(uTime * 0.43 - aboveLimb * 34.0 + angle * 3.0)
+    + 0.1 * sin(uTime * 0.27 - aboveLimb * 53.0 - angle * 5.0);
+  float rayLength = 0.035 + 0.045 * filaments + 0.01 * sin(uTime * 0.31 + angle * 3.0)
+    + 0.005 * sin(uTime * 0.19 - angle * 7.0);
   float rays = filaments * pulse * exp(-aboveLimb / rayLength)
-    * (1.0 - smoothstep(rayLength * 1.3, rayLength * 2.1, aboveLimb));
-  float halo = exp(-aboveLimb / 0.025) * 0.22
-    + exp(-pow(aboveLimb / 0.062, 2.0)) * 0.045;
+    * (1.0 - smoothstep(rayLength * 0.9, rayLength * 1.8, aboveLimb));
+  float halo = exp(-aboveLimb / 0.03) * 0.16
+    + exp(-pow(aboveLimb / 0.08, 2.0)) * 0.025;
   float plasma = limbPlasma(p, 0.61, 0.017, 0.012, 0.4)
     + limbPlasma(p, 2.43, 0.021, 0.0135, 2.7)
     + limbPlasma(p, -1.24, 0.014, 0.010, 4.3);
@@ -209,7 +218,7 @@ void main() {
   float softGhost = exp(-pow(length(p - direction * 0.438) / 0.021, 2.0));
   float paleGhost = apertureGhost(p + direction * 0.322, 6.0, 0.018);
   float opticalRing = exp(-pow((length(p - direction * 0.365) - 0.043) / 0.007, 2.0));
-  vec3 light = vec3(1.0, 0.97, 0.87) * (halo + rays * 1.15 + diffraction * 0.65)
+  vec3 light = vec3(1.0, 0.97, 0.87) * (halo + rays * 1.3 + diffraction * 0.65)
     + vec3(1.0, 0.5, 0.24) * plasma * 0.6
     + offAxis * (diamond * vec3(0.42, 0.75, 0.57) * 0.43
       + softGhost * vec3(1.0, 0.61, 0.39) * 0.34
@@ -269,6 +278,7 @@ export class HeaderWeatherSunScene {
     this.solarDaysUniform = { value: 0 };
     this.solarColorUniform = { value: new THREE.Color(0xffffff) };
     this.solarSurfaceColorUniform = { value: new THREE.Color(0xffffff) };
+    this.solarSpotStrengthUniform = { value: 0 };
     this.appearanceKey = null;
     this.scene = null;
     this.camera = null;
@@ -333,14 +343,18 @@ export class HeaderWeatherSunScene {
     // A daily forecast samples its daytime colour without changing the live
     // animation clock used by rotation, surface features and optical effects.
     const appearanceTimeMs = Number.isFinite(this.geoState.appearanceTimeMs) ? this.geoState.appearanceTimeMs : timeMs;
-    const elevationDeg = solarElevationDegrees(appearanceTimeMs, this.geoState.latitude, this.geoState.longitude);
+    const { elevationDeg, hourAngleDeg } = solarPosition(appearanceTimeMs, this.geoState.latitude, this.geoState.longitude);
     solarColorForElevation(elevationDeg, this.solarColorUniform.value);
     solarSurfaceColorForElevation(elevationDeg, this.solarSurfaceColorUniform.value);
     const low = SOLAR_COLOR_STOPS[0][0];
     const high = SOLAR_COLOR_STOPS[SOLAR_COLOR_STOPS.length - 1][0];
     const warmth = Number.isFinite(elevationDeg)
       ? Math.max(0, Math.min(1, (high - elevationDeg) / (high - low))) : 0;
-    const key = Math.round(warmth * 200);
+    // A display contrast preference, not physical changes to magnetic regions.
+    // Solar hour angle follows local apparent noon, never the device's wall clock.
+    const setting = Math.max(0, Math.min(1, Math.sin(hourAngleDeg * Math.PI / 180) * 4)) || 0;
+    this.solarSpotStrengthUniform.value = warmth * (0.35 + 0.65 * setting * setting * (3 - 2 * setting));
+    const key = `${Math.round(warmth * 200)}:${Math.round(this.solarSurfaceColorUniform.value.b * 255)}`;
     if (key !== this.appearanceKey) {
       this.appearanceKey = key;
       const surfaceBlue = this.solarSurfaceColorUniform.value.b;
@@ -401,8 +415,9 @@ export class HeaderWeatherSunScene {
     sunMaterial.onBeforeCompile = shader => {
       shader.uniforms.uSolarDays = this.solarDaysUniform;
       shader.uniforms.uSolarSurfaceColor = this.solarSurfaceColorUniform;
+      shader.uniforms.uSolarSpotStrength = this.solarSpotStrengthUniform;
       const mapChunk = THREE.ShaderChunk.map_fragment.replace(/\bvMapUv\b/g, 'solarMapUv');
-      shader.fragmentShader = 'uniform float uSolarDays;\nuniform vec3 uSolarSurfaceColor;\n' + shader.fragmentShader.replace('#include <map_fragment>', `
+      shader.fragmentShader = 'uniform float uSolarDays;\nuniform vec3 uSolarSurfaceColor;\nuniform float uSolarSpotStrength;\n' + shader.fragmentShader.replace('#include <map_fragment>', `
 #ifdef USE_MAP
   vec2 solarMapUv = vMapUv;
   float solarSinLatitude = sin((vMapUv.y - 0.5) * 3.141592653589793);
@@ -414,10 +429,10 @@ ${mapChunk}
   float solarLuminance = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
   // Retain faint original detail after ACES and the shared CSS display gain;
   // no extra spot layer, disc or dark limb is introduced.
-  diffuseColor.rgb = vec3(mix(0.45, 1.0, pow(clamp(solarLuminance, 0.0, 1.0), 0.75)));
+  diffuseColor.rgb = vec3(mix(0.45 - 0.08 * uSolarSpotStrength, 1.0, pow(clamp(solarLuminance, 0.0, 1.0), 0.75 + 0.1 * uSolarSpotStrength)));
 #endif`).replace('#include <tonemapping_fragment>', '#include <tonemapping_fragment>\ngl_FragColor.rgb *= uSolarSurfaceColor;');
     };
-    sunMaterial.customProgramCacheKey = () => 'header-solar-atmosphere-v5';
+    sunMaterial.customProgramCacheKey = () => 'header-solar-atmosphere-v7';
     const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(SUN_RADIUS, 96, 72), sunMaterial);
     sunMesh.renderOrder = 1;
 
