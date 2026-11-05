@@ -466,15 +466,18 @@
   z-index: 0 !important;
   pointer-events: none !important;
   overflow: visible !important;
-  opacity: 1 !important;
+  opacity: var(--preview-stars-opacity, 0) !important;
   visibility: visible !important;
   transform: translateX(var(--header-stars-scene-shift-x, 0px)) !important;
 }
 
 .weather-header-preview__stars-back.is-night-sky .weather-app__stars-scene--header-panel {
   display: block !important;
-  opacity: 1 !important;
   visibility: visible !important;
+}
+
+.weather-header-dropdown .weather-app__stars-scene--header-panel {
+  opacity: var(--dropdown-stars-opacity, 0) !important;
 }
 
 .weather-header-preview__stars-back .weather-app__stars-scene--header-panel canvas {
@@ -1456,7 +1459,7 @@
 
 :host([data-weather-variant='header']) .weather-header-preview__stars-back.is-night-sky::before,
 .weather-header-preview__stars-back.is-night-sky::before {
-  background-image:
+  background:
     ${HEADER_WEATHER_STARFIELD_TILE_A},
     ${HEADER_WEATHER_STARFIELD_TILE_B},
     radial-gradient(circle at 4% 3%, rgba(255, 255, 255, 0.9) 0 0.62px, transparent 1px),
@@ -1491,7 +1494,7 @@
 .weather-header-preview__stars-back.is-night-sky::after {
   opacity: calc(var(--preview-stars-opacity, 0.82) * 0.72);
   filter: none !important;
-  background-image:
+  background:
     ${HEADER_WEATHER_STARFIELD_TILE_B},
     radial-gradient(circle at 18px 14px, rgba(255, 255, 255, 0.46) 0 0.44px, transparent 0.78px) 0 0 / 38px 38px,
     radial-gradient(circle at 14% 18%, rgba(255, 255, 255, 0.96) 0 1.05px, transparent 1.55px),
@@ -1547,7 +1550,7 @@
 
 :host([data-weather-variant='header']) .weather-header-dropdown__stars-back.is-night-sky::before,
 .weather-header-dropdown__stars-back.is-night-sky::before {
-  background-image:
+  background:
     ${HEADER_WEATHER_STARFIELD_TILE_A},
     ${HEADER_WEATHER_STARFIELD_TILE_B},
     radial-gradient(circle at 5% 2%, rgba(255, 255, 255, 0.9) 0 0.62px, transparent 1px),
@@ -1589,7 +1592,7 @@
 :host([data-weather-variant='header']) .weather-header-dropdown__stars-back.is-night-sky::after,
 .weather-header-dropdown__stars-back.is-night-sky::after {
   opacity: calc(var(--dropdown-stars-opacity, 0.82) * 0.5);
-  background-image:
+  background:
     ${HEADER_WEATHER_STARFIELD_TILE_B},
     radial-gradient(circle at 20px 16px, rgba(255, 255, 255, 0.44) 0 0.44px, transparent 0.78px) 0 0 / 36px 36px,
     radial-gradient(circle at 14% 18%, rgba(255, 255, 255, 0.96) 0 1.05px, transparent 1.55px),
@@ -1624,7 +1627,7 @@
 .weather-header-dropdown__forecast-list,
 .weather-header-dropdown__detail-card,
 .weather-header-dropdown__forecast-pill {
-  background-color: rgb(5 10 9) !important;
+  background-color: transparent !important;
   background-image: none !important;
 }
 
@@ -3710,7 +3713,7 @@
   const HEADER_WEATHER_REVERSE_GEOCODE_PROXY_ENDPOINT = resolveHeaderWeatherPublicEndpoint('/reverse-geocode');
   const HEADER_WEATHER_ASTRO_REFRESH_INTERVAL = 60000;
   const HEADER_WEATHER_SOLAR_PHASE_REFRESH_INTERVAL = 5000;
-  const HEADER_WEATHER_WIDGET_REFRESH_INTERVAL = 10 * 60 * 1000;
+  const HEADER_WEATHER_WIDGET_REFRESH_INTERVAL = 5 * 60 * 1000;
   const HEADER_WEATHER_GEO_REFRESH_INTERVAL = 5 * 60 * 1000;
   const HEADER_WEATHER_TIME_SYNC_INTERVAL = 30 * 60 * 1000;
   const HEADER_WEATHER_LIVE_CLOCK_INTERVAL = 1000; // Update live clock every 1 second
@@ -5473,7 +5476,7 @@
     const liveWeekday = formatHeaderWeatherLiveWeekday(timeZone);
     const forcedRegionLabel = String(host?.dataset?.weatherRegionLabel || '').trim();
     const timeNodes = root.querySelectorAll(
-      '.weather-header-card__meta, .weather-header-dropdown__hero-meta, .weather-header-dropdown__hero-copy > span'
+      '.weather-header-card__meta, .weather-header-dropdown__hero-meta'
     );
 
     timeNodes.forEach(node => {
@@ -5481,7 +5484,7 @@
         return;
       }
 
-      if (node.matches?.('.weather-header-dropdown__hero-meta, .weather-header-dropdown__hero-copy > span')) {
+      if (node.matches?.('.weather-header-dropdown__hero-meta')) {
         if (isHeaderWeatherDropdownForecastSelected(host)) return;
         Array.from(node.childNodes).forEach(part => {
           if (part.nodeType !== 3 || !/\d{1,2}:\d{2}/.test(part.nodeValue || '')) return;
@@ -5990,6 +5993,13 @@
     }
   }
 
+  function getHeaderWeatherObservationTime(host, meta) {
+    const instance = host?.__weatherWidgetInstance;
+    return instance?.observationTime?.(meta
+      ? { weatherMeta: meta, location: { tz_id: resolveHeaderWeatherTimeZone(host) } }
+      : instance.getState?.()?.weather || host.__weatherWidgetData, getHeaderWeatherPressureLang(host)) || '';
+  }
+
   function extractHeaderWeatherReadingsFromHost(host) {
     const root = host?.shadowRoot;
     if (!root) {
@@ -6002,7 +6012,7 @@
     const tempNode = root.querySelector('.weather-header-card__temperature-value');
     const temp = parseHeaderWeatherNumericToken(tempNode?.textContent);
     const condition = getHeaderWeatherConditionPlainText(root.querySelector('.weather-header-card__condition'));
-    const meta = root.querySelector('.weather-header-card__meta')?.textContent?.trim() || '';
+    const meta = getHeaderWeatherObservationTime(host);
     const chipNodes = Array.from(root.querySelectorAll('.weather-header-card__chip'));
     const findChip = pattern => chipNodes.find(chip => pattern.test((chip.textContent || '').replace(/\s+/g, ' ')));
 
@@ -6074,7 +6084,7 @@
     return {
       temp: Number.isFinite(temp) ? Math.round(temp) : null,
       condition: condition || '',
-      meta: '',
+      meta: getHeaderWeatherObservationTime(host, meta),
       feels: Number.isFinite(feels) ? formatHeaderWeatherCelsiusText(feels) : null,
       wind: Number.isFinite(wind) ? `${Math.round(wind)} km/h` : null,
       humidity: Number.isFinite(humidity) ? `${Math.round(humidity)}%` : null,
@@ -6098,7 +6108,7 @@
           ...apiReadings,
           visibility: apiReadings.visibility ?? widgetReadings?.visibility ?? null,
           gusts: apiReadings.gusts ?? widgetReadings?.gusts ?? null,
-          meta: widgetReadings?.meta || apiReadings.meta || '',
+          meta: apiReadings.meta,
           source: apiReadings.source,
         }
       : widgetReadings
@@ -6185,11 +6195,12 @@
     }
 
     const updatedNode = root.querySelector('.weather-header-dropdown__hero-copy > span');
-    if (updatedNode && readings.meta) {
-      const updatedPrefix = `${copy.updated}:`;
-      const nextMeta = readings.meta.toLowerCase().startsWith(updatedPrefix.toLowerCase())
-        ? readings.meta.slice(updatedPrefix.length).trimStart() : readings.meta;
-      changed = updateHeaderWeatherTextParts(updatedNode, [copy.updated, ':', ' ', nextMeta]) || changed;
+    if (updatedNode) {
+      if (updatedNode.hidden !== !readings.meta) {
+        updatedNode.hidden = !readings.meta;
+        changed = true;
+      }
+      if (readings.meta) changed = updateHeaderWeatherTextParts(updatedNode, [copy.updated, ':', ' ', readings.meta]) || changed;
     }
 
     const dropdownChips = Array.from(root.querySelectorAll('.weather-header-dropdown__hero-chips span'));
@@ -12962,10 +12973,9 @@
 
     const previewContainer = host.shadowRoot.querySelector('.weather-header-preview');
     if (previewContainer) {
-      const cloudAlpha = Number(orbAtmosphere?.alpha) || 0;
       const starWeight = resolveHeaderWeatherStarOpacity(presentation);
-      const showNightStars = starWeight > 0.02;
-      const starOpacity = starWeight * clampHeaderWeatherValue(1.08 - cloudAlpha * 0.52, 0.78, 1);
+      const starOpacity = starWeight * (orbAtmosphere?.sunTransmission ?? 1);
+      const showNightStars = starOpacity > 0.02;
       const starsBack = ensureHeaderWeatherStarsBackLayer(previewContainer);
       if (starsBack) {
         const syncExistingStarsToHeader = () => {
@@ -13015,12 +13025,12 @@
     const dropdownAtmosphere = resolveHeaderWeatherDropdownAtmosphere(host, orbAtmosphere);
     const dropdownContext = resolveHeaderWeatherDropdownSceneContext(host, presentation, geoState);
     if (dropdownMenu) {
-      const cloudAlpha = Number(dropdownAtmosphere?.alpha) || 0;
       const starWeight = dropdownContext.forecast
         ? (dropdownContext.presentation.dominantKind === 'moon' ? 1 : 0)
         : resolveHeaderWeatherStarOpacity(presentation);
-      const showNightStars = starWeight > 0.02;
-      const starOpacity = starWeight * clampHeaderWeatherValue(1.06 - cloudAlpha * 0.52, 0.78, 1);
+      const starOpacity = starWeight * (dropdownAtmosphere?.sunTransmission ?? 1);
+      const showNightStars = starOpacity > 0.02;
+      dropdownMenu.style.setProperty('--dropdown-stars-opacity', `${starOpacity.toFixed(3)}`);
       const dropdownStarsBack = ensureHeaderWeatherDropdownStarsBackLayer(dropdownMenu);
       if (dropdownStarsBack) {
         dropdownStarsBack.classList.toggle('is-night-sky', showNightStars);
@@ -14147,6 +14157,8 @@
         fallbackLocation: '',
         useGeolocation: false,
         managedRefresh: true,
+        now: getHeaderWeatherNowMs,
+        getSolarPhase: () => host.__weatherSolarPresentation,
         minHeight: host.dataset.weatherMinHeight || '100%',
       });
       if (!isCurrentMount()) {

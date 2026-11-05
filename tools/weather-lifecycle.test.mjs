@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
-import { createWeatherController } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
+import { createWeatherController, formatWeatherObservationTime } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
 
 const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
 const declaration = name => {
@@ -60,6 +60,8 @@ function readingsHarness(locale) {
     chip.setParts([labels[index], ': ', number, unitPart]);
   });
   const hero = { temperature: new ReadingNode('6,4'), condition: new ReadingNode('Renderer condition'), updated: new ReadingNode('') };
+  const liveMeta = new ReadingNode('12:30');
+  let liveTime = '22:05';
   hero.updated.setParts(['Updated', ':', ' ', '12:30']);
   hero.updated.matches = selector => selector.includes('.weather-header-dropdown__hero-copy > span');
   const pills = [{}, { dataset: { forecastDate: '2026-11-04' } }, { dataset: { forecastDate: '2026-11-05' } }];
@@ -69,7 +71,7 @@ function readingsHarness(locale) {
   const h = harness([
     'getHeaderWeatherPressureLang', 'getHeaderWeatherPressureUnitText', 'formatHeaderWeatherPressureValue',
     'getHeaderWeatherReadingCopy', 'getHeaderWeatherFiniteNumber', 'parseHeaderWeatherNumericToken',
-    'formatHeaderWeatherCelsiusText', 'convertHeaderWeatherHpaToMmHg', 'buildHeaderWeatherReadingsFromMeta',
+    'formatHeaderWeatherCelsiusText', 'convertHeaderWeatherHpaToMmHg', 'getHeaderWeatherObservationTime', 'buildHeaderWeatherReadingsFromMeta',
     'resolveHeaderWeatherReadings', 'isHeaderWeatherDropdownForecastSelected',
     'updateHeaderWeatherTextParts', 'applyHeaderWeatherDropdownReadings', 'syncHeaderWeatherUnifiedReadings',
     'refreshHeaderWeatherPreviewValues', 'rewriteHeaderWeatherTimeText', 'syncHeaderWeatherLiveClock',
@@ -89,13 +91,14 @@ function readingsHarness(locale) {
     normalizeHeaderWeatherCelsiusUnits() {}, applyHeaderWeatherTextReadability() {},
     applyHeaderWeatherFeelsLikePreview() {}, ensureHeaderWeatherCollapsedFeelsFallback() {},
     ensureHeaderWeatherPreviewMetricsVisible() {}, syncHeaderWeatherMetaWidthToEyebrow() {},
-    resolveHeaderWeatherTimeZone: () => 'UTC', formatHeaderWeatherLiveTime: () => '22:45',
+    resolveHeaderWeatherTimeZone: () => 'Europe/Berlin', formatHeaderWeatherLiveTime: () => liveTime,
     formatHeaderWeatherLiveWeekday: () => '', stripHeaderWeatherWeekdayTokens: text => text,
   });
   h.host.__weatherLocale = locale;
+  h.host.__weatherWidgetInstance = { observationTime: formatWeatherObservationTime };
   h.host.__weatherCurrentMeta = {
     temperature: 6.4, apparentTemperature: 3.2, windSpeedKph: 7.4, humidity: 63,
-    visibilityMeters: 4500, gustKph: 10.2, pressureMmHg: 754.2, surfacePressure: 1005.4, source: 'observed-provider',
+    visibilityMeters: 4500, gustKph: 10.2, pressureMmHg: 754.2, surfacePressure: 1005.4, source: 'observed-provider', observedAt: Date.parse('2026-11-05T20:30:00Z'),
   };
   h.host.shadowRoot = {
     querySelector: selector => ({
@@ -105,13 +108,13 @@ function readingsHarness(locale) {
       '.weather-header-dropdown__hero-copy span': hero.condition,
       '.weather-header-dropdown__hero-copy > span': hero.updated,
     })[selector] || null,
-    querySelectorAll: selector => selector.startsWith('.weather-header-card__meta,') ? [hero.updated] : ({
+    querySelectorAll: selector => selector.startsWith('.weather-header-card__meta,') ? [liveMeta] : ({
       '.weather-header-dropdown__forecast-pill': pills,
       '.weather-header-dropdown__hero-chips span': chips,
       '.weather-header-dropdown__detail-card': cards,
     })[selector] || [],
   };
-  return { ...h, cards, chips, hero, unit, cacheWrites, previews, select: index => { active = index; } };
+  return { ...h, cards, chips, hero, liveMeta, unit, cacheWrites, previews, select: index => { active = index; }, setLiveTime: value => { liveTime = value; } };
 }
 
 for (const locale of ['ru', 'uk', 'de', 'en']) {
@@ -138,6 +141,15 @@ for (const locale of ['ru', 'uk', 'de', 'en']) {
     assert.equal(h.hero.updated.childNodes[3], timestampNode, 'the mixed updated label and timestamp must remain React-owned');
     assert.equal(timestampNode.nodeValue, '13:10');
     assert.equal(h.hero.condition.textContent, 'Observed condition', 'timestamp selection must not select a nested condition span');
+    assert.equal(h.hero.updated.hidden, false);
+    const unknownTime = { ...h.host.__weatherReadingsSnapshot, meta: '' };
+    assert.equal(h.context.applyHeaderWeatherDropdownReadings(h.host, unknownTime), true);
+    assert.equal(h.hero.updated.hidden, true, 'missing source time must hide the previous Updated label');
+    assert.equal(h.context.applyHeaderWeatherDropdownReadings(h.host, unknownTime), false, 'hiding the same missing timestamp is idempotent');
+    h.context.applyHeaderWeatherDropdownReadings(h.host, h.host.__weatherReadingsSnapshot);
+    assert.equal(h.hero.updated.hidden, false, 'a valid provider timestamp restores the label');
+    assert.equal(h.hero.updated.childNodes[3], timestampNode);
+    assert.equal(timestampNode.nodeValue, '21:30');
 
     const forecast = ['6°C', '21 km/h', '74%', '10 km', `757 ${h.unit}`, '28 km/h'];
     h.select(2);
@@ -162,7 +174,12 @@ for (const locale of ['ru', 'uk', 'de', 'en']) {
     assert.equal(h.hero.condition.textContent, 'Observed condition');
     h.context.syncHeaderWeatherLiveClock(h.host);
     assert.equal(h.hero.updated.childNodes[3], timestampNode);
-    assert.equal(timestampNode.nodeValue, '22:45');
+    assert.equal(timestampNode.nodeValue, '21:30', 'Updated remains the source observation time');
+    assert.equal(h.liveMeta.textContent, '22:05');
+    h.setLiveTime('22:06');
+    h.context.syncHeaderWeatherLiveClock(h.host);
+    assert.equal(h.liveMeta.textContent, '22:06', 'the navigation wall clock continues to advance independently');
+    assert.equal(timestampNode.nodeValue, '21:30', 'a clock tick cannot make an old observation look newly measured');
     assert.equal(h.host.__weatherPressureMmHg, 754, 'forecast pressure must never replace or reconvert the current pressure cache');
     h.cards.forEach((card, index) => {
       assert.equal(card.label, labels[index]);
@@ -685,14 +702,14 @@ test('a late device fix cannot overwrite a manual selection or a disposed lifecy
   }
 });
 
-test('full weather refresh occurs at ten minutes, deduplicates overlap, and preserves timestamp after error', async () => {
+test('full weather refresh occurs at five minutes, deduplicates overlap, and preserves timestamp after error', async () => {
   const pending = deferred();
   const h = harness([], { refreshHeaderWeatherGeoLocation: async () => {} });
   h.host.dataset.weatherGeoCheckedAt = String(h.clock.now());
   h.host.dataset.weatherDataUpdatedAt = String(h.clock.now());
   let requests = 0;
   h.host.__weatherWidgetInstance = { refresh: () => { requests += 1; return pending.promise; } };
-  await h.clock.advance(599999);
+  await h.clock.advance(299999);
   await h.context.refreshHeaderWeatherLifecycle(h.host);
   assert.equal(requests, 0);
   await h.clock.advance(1);
@@ -704,7 +721,7 @@ test('full weather refresh occurs at ten minutes, deduplicates overlap, and pres
   assert.equal(await first, true);
   assert.equal(await second, true);
   const successfulAt = h.host.dataset.weatherDataUpdatedAt;
-  await h.clock.advance(600000);
+  await h.clock.advance(300000);
   h.host.__weatherWidgetInstance.refresh = async () => { throw new Error('offline'); };
   assert.equal(await h.context.refreshHeaderWeatherLifecycle(h.host), false);
   assert.equal(h.host.dataset.weatherDataUpdatedAt, successfulAt);
@@ -728,7 +745,7 @@ test('missing refresh API and superseded payloads do not claim fresh weather', a
   assert.equal(h.host.dataset.weatherDataUpdatedAt, undefined);
 });
 
-test('an asynchronous initial load waits ten minutes before refresh and another location cannot borrow its timestamp', async () => {
+test('an asynchronous initial load waits five minutes before refresh and another location cannot borrow its timestamp', async () => {
   const h = harness([], { refreshHeaderWeatherGeoLocation: async () => {} });
   const initialAt = h.clock.now();
   let requests = 0;
@@ -740,12 +757,12 @@ test('an asynchronous initial load waits ten minutes before refresh and another 
   // mount returned with no payload; React's initial request succeeds afterwards.
   await h.clock.advance(1000);
   state = { weather: { current: {}, forecast: {} }, location: '51.34, 12.37', lastUpdatedAt: h.clock.now() };
-  await h.clock.advance(300000);
+  await h.clock.advance(299999);
   h.host.dataset.weatherGeoCheckedAt = String(h.clock.now());
   await h.context.refreshHeaderWeatherLifecycle(h.host);
   assert.equal(requests, 0);
   assert.equal(h.host.dataset.weatherDataUpdatedAt, String(initialAt + 1000));
-  await h.clock.advance(300000);
+  await h.clock.advance(1);
   await h.context.refreshHeaderWeatherLifecycle(h.host);
   assert.equal(requests, 1);
   // The old initial payload cannot mark a new, failed coordinate selection fresh.

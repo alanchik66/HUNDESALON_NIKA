@@ -7,6 +7,7 @@
 import { r as toInteropDefault } from '../dist-widget/rolldown-runtime-CwX0HnDi.mjs';
 import { n as getJsxRuntime, r as getReact } from '../dist-widget/react-vendor-DdSZTPSL.mjs';
 import { n as isPartlyCloudy, r as shouldShowSun, t as weatherConditionType } from './weather-service.mjs?v=20261103-weather-parity-v6';
+import { solarPhase } from '../../assets/js/weather-solar-time.js?v=20261103-weather-parity-v6';
 import {
   C as o,
   D as s,
@@ -40,6 +41,21 @@ import {
 } from '../dist-widget/weather-3d-CKX6ob-m.mjs?v=20260728-weather-geo-v8';
 const cloudTextureUrl = new URL(`/assets/images/weather/cloud-9225a9f1.png`, import.meta.url);
 cloudTextureUrl.search = new URL(import.meta.url).search;
+
+// The rendered sky uses the solar clock, independently of the observation age.
+function resolveWeatherScenePhase(weather, nowMs = Date.now(), syncedPhase) {
+  const coordinate = value => value === null || value === undefined ||
+    (typeof value === 'string' && !value.trim()) ? NaN : Number(value);
+  const appearanceTime = weather?.weatherMeta?.appearanceTimeMs;
+  if (!Number.isFinite(appearanceTime) && syncedPhase?.phase && syncedPhase.phase !== 'unavailable') return syncedPhase;
+  const phase = solarPhase(Number.isFinite(appearanceTime) ? appearanceTime : nowMs, null,
+    coordinate(weather?.location?.lat ?? weather?.weatherMeta?.latitude),
+    coordinate(weather?.location?.lon ?? weather?.weatherMeta?.longitude));
+  if (phase.phase !== 'unavailable') return phase;
+  const night = weather?.current?.is_day === 0;
+  return { phase: night ? 'night' : 'day', starOpacity: night ? 1 : 0 };
+}
+
 var React = toInteropDefault(getReact()),
   createEffectComponent = (e, t = b.NORMAL) =>
     (0, React.forwardRef)(function ({ blendFunction: n, opacity: r, ...i }, a) {
@@ -1629,6 +1645,8 @@ var ForecastPortal = ({ position: e, dayData: t, index: n, isActive: r, isFullsc
     onPortalWeatherDataChange: o,
     onSceneReady,
     sceneRecoveryVersion,
+    now = Date.now,
+    getSolarPhase,
   }) => {
     let s = n && r === `header`,
       c = n && r === `header-panel`,
@@ -1667,18 +1685,7 @@ var ForecastPortal = ({ position: e, dayData: t, index: n, isActive: r, isFullsc
     React.useEffect(() => {
       a?.(() => h);
     }, [a, h]);
-    let _ = () => {
-        if (!e?.location?.localtime) return `day`;
-        let t = e.location.localtime,
-          n = new Date(t).getHours();
-        return n >= 19 || n <= 6 ? `night` : n >= 6 && n < 8 ? `dawn` : n >= 17 && n < 19 ? `dusk` : `day`;
-      },
-      v = () => {
-        if (!e?.location?.localtime) return !1;
-        let t = e.location.localtime,
-          n = new Date(t).getHours();
-        return n >= 19 || n <= 6;
-      },
+    let phase = resolveWeatherScenePhase(e, now(), getSolarPhase?.()),
       b = (0, React.useMemo)(() => {
         if (!m) {
           let e = new Date().getHours();
@@ -1698,8 +1705,8 @@ var ForecastPortal = ({ position: e, dayData: t, index: n, isActive: r, isFullsc
         }
         return [0, -30, 50];
       }, [m]),
-      x = v(),
-      C = _(),
+      x = phase.starOpacity > 0.02,
+      C = phase.phase === 'sunset' ? 'dusk' : phase.phase,
       w = useVisibleSun(e, x),
       T = useVisibleSun(d, !1),
       D = !s && !c && l,

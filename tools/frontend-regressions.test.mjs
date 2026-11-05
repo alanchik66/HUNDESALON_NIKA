@@ -82,6 +82,175 @@ test('the header retains sunset light and the end-of-day surface timeline until 
   assert.equal(api.stars(unavailable), 0, 'an unavailable model must not invent night stars');
 });
 
+test('header star visibility follows current and selected-forecast cloud transmission without replacing Moon assets', async t => {
+  const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
+  const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'script' });
+  const shell = ast.body.find(node => node.expression?.callee?.id?.name === 'siteShellBootstrap').expression.callee.body.body;
+  const constants = ['HEADER_WEATHER_MOON_VIDEO_FILES', 'HEADER_WEATHER_MOON_VIDEO_DURATION_SEC', 'WEATHER_WIDGET_ASSET_VERSION']
+    .map(name => {
+      const node = shell.filter(item => item.type === 'VariableDeclaration').flatMap(item => item.declarations)
+        .find(item => item.id.name === name);
+      assert.ok(node, `Missing Moon asset constant ${name}`);
+      return `const ${source.slice(node.start, node.end)};`;
+    }).join('\n');
+  const declarations = await solarShellDeclarations([
+    'renderHeaderWeatherOrbOverlay', 'resolveHeaderWeatherStarOpacity', 'resolveHeaderWeatherOrbAtmosphere',
+    'resolveHeaderWeatherDropdownAtmosphere', 'resolveHeaderWeatherSelectedForecast', 'getHeaderWeatherConditionCode',
+    'getHeaderWeatherCloudCover', 'getHeaderWeatherFiniteNumber', 'clampHeaderWeatherValue',
+  ]);
+  const initialize = new Function('deps', `
+    const { resolveHeaderWeatherOrbPresentation, getHeaderWeatherConditionText, applyHeaderWeatherTextReadability,
+      getHeaderWeatherWidgetBasePath, getHeaderWeatherAssetsBasePath, getHeaderWeatherNowMs,
+      resolveHeaderWeatherOrbFixedLayout, applyHeaderWeatherOrbCrossfade, applyHeaderWeatherOrbLayout,
+      setHeaderWeatherOrbSource, applyHeaderWeatherOrbAtmosphere, ensureHeaderWeatherStarsBackLayer,
+      ensureHeaderWeatherOrbStack, syncHeaderWeatherPreviewLayerOrder, resolveHeaderWeatherDropdownSceneContext,
+      ensureHeaderWeatherDropdownStarsBackLayer, enforceHeaderWeatherToggleArrow, scheduleHeaderWeatherMenuPlacement,
+      syncHeaderWeatherShootingStars, syncHeaderWeatherUnifiedReadings, scheduleHeaderWeatherReadingsSync,
+      syncHeaderWeatherLiveClock, syncHeaderWeatherCloudBandLayout, document, window } = deps;
+    ${constants}\n${declarations}; return renderHeaderWeatherOrbOverlay;
+  `);
+  const noop = () => {};
+  const createHarness = ({ cloud = 0, code = 1000, starOpacity = 1, selectedForecast = null, forecastKind = 'moon' } = {}) => {
+    const element = () => {
+      const properties = new Map(), classes = new Set();
+      return {
+        properties, classes, isConnected: false,
+        style: { setProperty: (name, value) => properties.set(name, value), removeProperty: name => properties.delete(name) },
+        classList: {
+          toggle(name, active) { if (active) classes.add(name); else classes.delete(name); },
+          remove(...names) { names.forEach(name => classes.delete(name)); },
+        },
+      };
+    };
+    const container = () => ({ ...element(), stars: element(), stack: { moon: {} } });
+    const preview = container(), hero = container(), scene = element();
+    hero.querySelector = () => scene;
+    const dropdown = { ...element(), stars: element(), querySelector: () => hero };
+    const timeline = { nightProgress: 0.4, videoDurationSec: 458.233333 };
+    const presentation = { starOpacity, dominantKind: 'moon', moon: { active: true, timeline, dropdownLayout: { variant: 'dropdown' } } };
+    const host = {
+      dataset: { weatherCloud: String(cloud), weatherCode: String(code) }, presentation, selectedForecast,
+      shadowRoot: { querySelector: selector => ({
+        '.weather-header-preview': preview, '.weather-header-dropdown': dropdown,
+        '.weather-header-trigger': { getAttribute: () => 'true' },
+        '.weather-header-dropdown__forecast-pill.is-active': host.selectedForecast
+          ? { dataset: { forecastDate: host.selectedForecast.date } } : null,
+      })[selector] || null },
+      __weatherWidgetInstance: {
+        getState: () => ({ weather: {} }), getForecastSlots: () => host.selectedForecast ? [host.selectedForecast] : [],
+        getForecastCloudCover: day => day.cloudCover,
+      },
+    };
+    const render = initialize({
+      resolveHeaderWeatherOrbPresentation: () => presentation, getHeaderWeatherConditionText: () => '',
+      applyHeaderWeatherTextReadability: noop, getHeaderWeatherWidgetBasePath: () => '/3d-weather-codrops-main',
+      getHeaderWeatherAssetsBasePath: () => '/assets/js', getHeaderWeatherNowMs: () => 1000,
+      resolveHeaderWeatherOrbFixedLayout: (kind, variant) => ({ kind, variant }),
+      applyHeaderWeatherOrbCrossfade: (orb, part) => { orb.part = part; },
+      applyHeaderWeatherOrbLayout: (orb, layout) => { orb.layout = layout; },
+      setHeaderWeatherOrbSource: (orb, kind, config) => { orb.kind = kind; orb.config = config; },
+      applyHeaderWeatherOrbAtmosphere: (orb, atmosphere) => { orb.atmosphere = atmosphere; },
+      ensureHeaderWeatherStarsBackLayer: box => box.stars, ensureHeaderWeatherOrbStack: box => box.stack,
+      syncHeaderWeatherPreviewLayerOrder: noop,
+      resolveHeaderWeatherDropdownSceneContext: () => ({
+        forecast: !!host.selectedForecast,
+        presentation: host.selectedForecast ? { ...presentation, dominantKind: forecastKind } : presentation,
+      }),
+      ensureHeaderWeatherDropdownStarsBackLayer: box => box.stars, enforceHeaderWeatherToggleArrow: noop,
+      scheduleHeaderWeatherMenuPlacement: noop, syncHeaderWeatherShootingStars: noop, syncHeaderWeatherUnifiedReadings: noop,
+      scheduleHeaderWeatherReadingsSync: noop, syncHeaderWeatherLiveClock: noop, syncHeaderWeatherCloudBandLayout: noop,
+      document: { querySelector: () => null }, window: { addEventListener: noop },
+    });
+    return { host, preview, dropdown, hero, timeline, render: () => render(host, null, { latitude: 51.2, longitude: 6.8 }) };
+  };
+  const assertLayer = (layer, variant, opacity, visible) => {
+    assert.equal(layer.properties.get(`--${variant}-stars-opacity`), opacity);
+    assert.equal(layer.properties.get('display'), visible ? 'block' : 'none');
+    assert.equal(layer.classes.has('is-night-sky'), visible);
+    assert.equal(layer.classes.has('is-day-sky'), false);
+  };
+  const assertDropdown = (ui, opacity, visible) => {
+    assertLayer(ui.dropdown.stars, 'dropdown', opacity, visible);
+    assert.equal(ui.dropdown.properties.get('--dropdown-stars-opacity'), opacity,
+      'native stars in the sibling hero must inherit opacity from the common dropdown ancestor');
+  };
+  await t.test('native star scenes consume the renderer opacity through their CSS cascade', () => {
+    const template = shell.filter(item => item.type === 'VariableDeclaration').flatMap(item => item.declarations)
+      .find(item => item.id.name === 'HEADER_WEATHER_TRANSPARENT_STYLES')?.init;
+    assert.equal(template?.type, 'TemplateLiteral');
+    const styles = postcss.parse(template.quasis.map(quasi => quasi.value.cooked).join('0'));
+    for (const [ancestor, variable] of [
+      ['.weather-header-preview__stars-back', '--preview-stars-opacity'],
+      ['.weather-header-dropdown', '--dropdown-stars-opacity'],
+    ]) {
+      const selector = `${ancestor} .weather-app__stars-scene--header-panel`;
+      const bindings = [];
+      styles.walkRules(rule => {
+        if (!rule.selectors.some(value => value.includes(ancestor) && value.endsWith('.weather-app__stars-scene--header-panel'))) return;
+        rule.walkDecls('opacity', declaration => {
+          assert.equal(declaration.value, `var(${variable}, 0)`, `${rule.selector} must not override live star attenuation`);
+          assert.equal(declaration.important, true, 'native canvas inline opacity must not bypass the weather state');
+          if (rule.selectors.includes(selector)) bindings.push(declaration);
+        });
+      });
+      assert.equal(bindings.length, 1, `${selector} must bind its native star scene to the renderer opacity`);
+    }
+  });
+  await t.test('a clear night keeps both star layers fully visible and leaves the original Moon source and timeline intact', () => {
+    const ui = createHarness();
+    ui.render();
+    assertLayer(ui.preview.stars, 'preview', '1.000', true);
+    assertDropdown(ui, '1.000', true);
+    assert.equal(ui.preview.stack.moon.config, ui.hero.stack.moon.config, 'both Moon renderers retain the same original source configuration');
+    for (const moon of [ui.preview.stack.moon, ui.hero.stack.moon]) {
+      assert.equal(moon.kind, 'moon');
+      assert.equal(moon.config.type, 'video-keyed');
+      assert.equal(moon.config.sources.length, 1);
+      const moonSource = new URL(moon.config.sources[0], 'https://hundesalon-nika.com');
+      assert.equal(moonSource.pathname, '/3d-weather-codrops-main/assets/Moon/mission_2160p30_fallback.mp4');
+      assert.ok(moonSource.searchParams.get('v'), 'the original Moon asset keeps its release cache version');
+      assert.equal(moon.config.timelineBase, ui.timeline, 'star updates must not reset the Moon phase playback');
+      assert.equal(moon.part.active, true);
+    }
+  });
+  await t.test('measured cloud cover dims stars and dense overcast hides both layers rather than retaining a bright opacity floor', () => {
+    const partial = createHarness({ cloud: 50, code: 1006 });
+    partial.render();
+    assertLayer(partial.preview.stars, 'preview', '0.261', true);
+    assertDropdown(partial, '0.261', true);
+    const dense = createHarness({ cloud: 100, code: 1009 });
+    dense.render();
+    assertLayer(dense.preview.stars, 'preview', '0.015', false);
+    assertDropdown(dense, '0.015', false);
+    assert.equal(dense.preview.stack.moon.kind, 'moon', 'clouds attenuate the existing Moon renderer instead of replacing its asset');
+    assert.equal(dense.preview.stack.moon.atmosphere.sunTransmission, 0.015);
+  });
+  await t.test('twilight preserves the solar model weight and applies the visibility threshold after cloud attenuation', () => {
+    const dusk = createHarness({ starOpacity: 0.4 });
+    dusk.render();
+    assertLayer(dusk.preview.stars, 'preview', '0.400', true);
+    assertDropdown(dusk, '0.400', true);
+    const attenuated = createHarness({ cloud: 90, code: 1009, starOpacity: 0.4 });
+    attenuated.render();
+    assertLayer(attenuated.preview.stars, 'preview', '0.010', false);
+    assertDropdown(attenuated, '0.010', false);
+  });
+  await t.test('selected forecasts use their own cloud atmosphere without changing current-night stars', () => {
+    const selectedForecast = { date: '2026-11-06', available: true, cloudCover: 100, day: { condition: { code: 1009 } } };
+    const ui = createHarness({ selectedForecast });
+    ui.render();
+    assertLayer(ui.preview.stars, 'preview', '1.000', true);
+    assertDropdown(ui, '0.015', false);
+    ui.host.selectedForecast = { ...selectedForecast, cloudCover: 0, day: { condition: { code: 1000 } } };
+    ui.render();
+    assertDropdown(ui, '1.000', true);
+    const day = createHarness({ selectedForecast: ui.host.selectedForecast, forecastKind: 'sun' });
+    day.render();
+    assertLayer(day.preview.stars, 'preview', '1.000', true);
+    assertDropdown(day, '0.000', false);
+  });
+});
+
 test('an adjacent-day service failure preserves authoritative events for today and retries the calculated fallback', async () => {
   const declaration = await solarShellDeclarations(['resolveHeaderWeatherAstro']);
   const cache = new Map(), fetched = [], calculated = [];

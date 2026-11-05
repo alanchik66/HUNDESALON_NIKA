@@ -159,7 +159,7 @@ test('missing DWD cloud cover uses real fresh MET with field attribution while r
   const payload = await (await harness.request()).json();
   assert.equal(payload.current.temp_c, 7);
   assert.equal(payload.current.cloud, 75);
-  assert.equal(payload.current.condition.text, 'Overcast');
+  assert.equal(payload.current.condition.text, 'Partly cloudy');
   assert.equal(payload.weatherMeta.cloudCover, 75);
   assert.deepEqual(payload.weatherMeta.fieldSources.cloudCover, { source: 'met-norway-locationforecast', time: new Date(CURRENT_TIME).toISOString() });
 });
@@ -170,6 +170,33 @@ test('unknown cloud cover stays null when no fresh fallback exists, rather than 
   assert.equal(payload.current.cloud, null);
   assert.equal(payload.weatherMeta.cloudCover, null);
   assert.equal(payload.current.condition.text, 'Overcast');
+});
+
+test('merged cloud measurements update only sky conditions and retain precipitation or visibility hazards', async t => {
+  for (const [icon, cloud, code] of [['clear-night', 100, 3], ['cloudy', 0, 0], ['partly-cloudy-day', 75, 2],
+    ['rain', 100, 63], ['fog', 0, 45], ['thunderstorm', 0, 95]]) {
+    await t.test(`${icon} with ${cloud}% fallback cloud`, async t => {
+      const harness = weatherHarness(t, {
+        bright: brightSkyFixture({ cloud_cover: null, icon }),
+        met: metFixture(Array.from({ length: 4 }, (_, index) => ({
+          time: new Date(CURRENT_TIME + index * 86400000).toISOString(), temperature: 8, cloud,
+        }))),
+      });
+      const payload = await (await harness.request()).json();
+      assert.equal(payload.weatherMeta.weatherCode, code);
+      assert.equal(payload.current.cloud, cloud);
+      assert.equal(payload.current.temp_c, 7, 'merging the sky must preserve the DWD observation');
+      assert.equal(payload.current.last_updated_epoch, (CURRENT_TIME - 30 * 60_000) / 1000);
+      assert.deepEqual(payload.weatherMeta.fieldSources.cloudCover, {
+        source: 'met-norway-locationforecast', time: new Date(CURRENT_TIME).toISOString(),
+      });
+      if (code <= 3) {
+        assert.deepEqual(payload.weatherMeta.fieldSources.weatherCode, {
+          source: 'met-norway-locationforecast', time: new Date(CURRENT_TIME).toISOString(), derivedFrom: 'cloudCover',
+        });
+      } else assert.equal(payload.weatherMeta.fieldSources.weatherCode, undefined, 'hazards retain their original source');
+    });
+  }
 });
 
 test('unusable provider timestamps return a temporary error instead of invented current weather', async t => {

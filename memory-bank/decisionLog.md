@@ -1,5 +1,12 @@
 # Decision Log
 
+## 2026-11-05 22:39:33 - Weather freshness and sky share explicit time semantics
+
+- Poll the site API and expire local weather cache after five minutes; preserve the actual provider observation/validity timestamp and upstream forecast cache policy.
+- Keep current UI time, time of retrieval, provider observation time, and forecast appearance time separate. Never refresh the observation label from a live clock or invent an absent timestamp.
+- Apply star visibility to both CSS and native WebGL layers, using the same solar phase and cloud transmission. Share the shell clock/presentation with the maintained 3D scene; retain an explicit local-noon projection for forecast previews.
+- Original Moon/Sun media, source attribution and unrelated glass/button effects are outside this repair.
+
 ## 2026-11-05 - Scoped web glass for homepage service tiles
 
 - Apply the material only to the four homepage cards marked by `data-service-glass` in de/en/ru/uk. Keep weather, booking and breed controls outside this change.

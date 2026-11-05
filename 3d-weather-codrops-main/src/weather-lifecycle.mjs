@@ -1,4 +1,53 @@
-export const WEATHER_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
+export const WEATHER_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+
+export function weatherCurrentTimestamp(data) {
+  const number = value => (typeof value === 'number' || typeof value === 'string' && value.trim() !== '') &&
+    Number.isFinite(Number(value)) ? Number(value) : null;
+  for (const value of [data?.weatherMeta?.observedAt, data?.weatherMeta?.validAt]) {
+    const timestamp = number(value);
+    if (timestamp !== null) return timestamp;
+  }
+  const epoch = number(data?.current?.last_updated_epoch);
+  return epoch === null ? parseWeatherCurrentTime(data?.weatherMeta?.time) : epoch * 1000;
+}
+
+export function formatWeatherObservationTime(data, locale = 'en') {
+  const timestamp = weatherCurrentTimestamp(data);
+  if (timestamp === null) return null;
+  const timeZone = data?.location?.tz_id || data?.location?.timezone || data?.weatherMeta?.timezone || 'UTC';
+  try {
+    return new Intl.DateTimeFormat(locale, { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(timestamp);
+  } catch { return null; }
+}
+
+export function isCurrentWeatherFresh(data, nowMs = Date.now()) {
+  const timestamp = weatherCurrentTimestamp(data);
+  return timestamp !== null && Number.isFinite(nowMs) && timestamp >= nowMs - 2 * 60 * 60 * 1000 &&
+    timestamp <= nowMs + 10 * 60 * 1000;
+}
+
+// Open-Meteo's timezone=auto ISO values have no zone suffix. Use its explicit
+// utc_offset_seconds, never the browser's timezone or the time of retrieval.
+export function parseWeatherCurrentTime(value, offsetSeconds) {
+  if (typeof value !== 'string') return null;
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,9}))?)?(Z|[+-]\d{2}:\d{2})?$/);
+  if (!match) return null;
+  const [, year, month, day, hour, minute, second = '0', fraction = '', zone] = match;
+  const utc = Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second), Number((fraction + '000').slice(0, 3)));
+  const calendar = new Date(utc);
+  if (calendar.getUTCFullYear() !== Number(year) || calendar.getUTCMonth() !== Number(month) - 1 ||
+    calendar.getUTCDate() !== Number(day) || calendar.getUTCHours() !== Number(hour) ||
+    calendar.getUTCMinutes() !== Number(minute) || calendar.getUTCSeconds() !== Number(second)) return null;
+  let offset;
+  if (zone === 'Z') offset = 0;
+  else if (zone) {
+    const hours = Number(zone.slice(1, 3)), minutes = Number(zone.slice(4));
+    if (hours > 23 || minutes > 59) return null;
+    offset = (hours * 3600 + minutes * 60) * (zone[0] === '-' ? -1 : 1);
+  } else if (typeof offsetSeconds === 'number' && Number.isFinite(offsetSeconds) && Math.abs(offsetSeconds) <= 86400) offset = offsetSeconds;
+  else return null;
+  return utc - offset * 1000;
+}
 
 export function buildForecastSlots(data, nowMs = Date.now()) {
   if (!data?.current) return [];

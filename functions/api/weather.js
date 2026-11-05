@@ -888,8 +888,13 @@ export async function onRequest(context) {
   if (brightSkyCurrent?.cloudCover === null && metCurrent && metCurrent.cloudCover !== null) {
     currentMeta.cloudCover = metCurrent.cloudCover;
     currentMeta.fieldSources = {
+      ...currentMeta.fieldSources,
       cloudCover: { source: metCurrent.source, time: metCurrent.time },
     };
+    if (currentMeta.weatherCode >= 0 && currentMeta.weatherCode <= 3) {
+      currentMeta.weatherCode = weatherCodeFromBrightSky('', currentMeta.cloudCover);
+      currentMeta.fieldSources.weatherCode = { ...currentMeta.fieldSources.cloudCover, derivedFrom: 'cloudCover' };
+    }
   }
 
   const metDays = buildMetForecastDays(metPayload, timeZone, currentMeta);

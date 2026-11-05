@@ -12,7 +12,7 @@
       "source": "src/scene.mjs",
       "output": "Scene3D-Cdhk74W6.mjs",
       "baselineSha256": "2bd48be805f56933124942a8164d7708543dccb268b5eccbd6525601e6fae09d",
-      "canonicalSha256": "48252f38b31ebf68179acfeaa1571d0a94514bba2b120c77d35bb31852674d20",
+      "canonicalSha256": "d5217915db0c9988d7412fb0989833017902c1650612bd16687699483ed6d33a",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -50,7 +50,7 @@
       "source": "src/weather-service.mjs",
       "output": "weatherService-iG8lrujy.mjs",
       "baselineSha256": "4e1172083c348cf56f9bdd659495b1b81dec38872815cfe549763192504a1310",
-      "canonicalSha256": "3f7d1710671f2ba387f4d403a3137f51b38566ae46b6666f64e99986337aef8a",
+      "canonicalSha256": "673fa3b9a004e49a1a307f249b223663b50483131dc41ab11c2c1191bfcec214",
       "recoveredNames": {
         "Xn": "weatherService",
         "Qn": "isPartlyCloudy",
@@ -66,7 +66,7 @@
       "source": "src/widget.mjs",
       "output": "weather-widget.es.js",
       "baselineSha256": "11a30d167a9b9a21724da59e07a94ddfcc2dff2186c7946af7294c1bb3609cf7",
-      "canonicalSha256": "1f840bfff0a8cef9e2e15f08126303ea1f473921dccd0968d669e3df016edeea",
+      "canonicalSha256": "b03cc82430d4ebd1622c29b26109daaea9c5382c1b6c2fc5c4fc49b3d5061d6b",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -110,7 +110,7 @@
       "source": "src/header-preview.mjs",
       "output": "weather-widget.header-panel-preview.es.js",
       "baselineSha256": "b850b368a2d72b4110c329fed9440dd4c70bea7f6287da6e872986271bb360c2",
-      "canonicalSha256": "acf9f5af3806da71f1114091b004f1eed431307af8dc6419063a3e52ebadb455",
+      "canonicalSha256": "d19e217a238136910186cd5f1d948dccebaf63c7b461dc171f971d74eb3c26f5",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -154,7 +154,7 @@
       "source": "src/header-dropdown.mjs",
       "output": "weather-widget.header-panel-dropdown-scene.es.js",
       "baselineSha256": "6336c75ab083aafd574ec0ae1344ac7ac515782231d1658dfe950e2a032175f7",
-      "canonicalSha256": "b4410f6eb5d15ac96a03b006d1ab7b81be53a109735e6156bc9fa0a2b513a843",
+      "canonicalSha256": "ebfabff838b167da08af01126e8a131d0b499d5284537459ae004c5580285ffa",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -206,7 +206,7 @@
       "source": "src/weather-lifecycle.mjs",
       "output": "weather-lifecycle.mjs",
       "baselineSha256": null,
-      "canonicalSha256": "f390e0e0c8d67fd2f36693eccb5b6e9e0e208cde138fe2bda65202a96279eac8",
+      "canonicalSha256": "2063f0ac425211c5cd1c3698aa3207425546e04af273e0d20627e877c74c12f1",
       "recoveredNames": {},
       "initialEquivalent": false
     }

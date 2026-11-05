@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
 import { parse } from 'espree';
 import postcss from 'postcss';
-import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveWeatherSceneFallback, renderWeatherSceneFallback, resolveForecastCloudCover, buildForecastSlots, hasCompleteForecast, resolveForecastNoonMs, buildForecastSceneContext } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
+import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveWeatherSceneFallback, renderWeatherSceneFallback, resolveForecastCloudCover, buildForecastSlots, hasCompleteForecast, resolveForecastNoonMs, buildForecastSceneContext, weatherCurrentTimestamp, isCurrentWeatherFresh, parseWeatherCurrentTime, formatWeatherObservationTime } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
 
 test('the complete authored weather module graph shares the shell cache revision', async () => {
   const shell = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
@@ -23,12 +23,56 @@ const sourceDirectory = new URL('../3d-weather-codrops-main/src/', import.meta.u
 const payload = (name, timeMs = Date.now()) => {
   const dates = Array.from({ length: 4 }, (_, index) => new Date(timeMs + index * 86400000).toISOString().slice(0, 10));
   return {
-    current: { temp_c: 7 }, location: { name, tz_id: 'UTC', localtime: `${dates[0]} 00:00` },
+    current: { temp_c: 7, last_updated_epoch: Math.floor(timeMs / 1000) }, location: { name, tz_id: 'UTC', localtime: `${dates[0]} 00:00` },
     forecast: { forecastday: dates.map((date, index) => ({ date, day: { maxtemp_c: 9 + index, mintemp_c: 4 + index, condition: { code: 1000, text: 'Clear' } } })) },
   };
 };
 const deferred = () => { let resolve; let reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
 const settle = () => new Promise(resolve => setImmediate(resolve));
+
+test('current freshness follows observation or model valid time, never retrieval time or cache age alone', () => {
+  const now = Date.parse('2026-11-05T21:05:00Z');
+  const data = minutes => ({ current: { last_updated_epoch: (now - minutes * 60000) / 1000 },
+    weatherMeta: { fetchedAt: now }, cacheSavedAt: now });
+  assert.equal(isCurrentWeatherFresh(data(31), now), true, 'normal station publication lag is not a five-minute expiry');
+  assert.equal(isCurrentWeatherFresh(data(120), now), true);
+  assert.equal(isCurrentWeatherFresh(data(120 + 1 / 60000), now), false);
+  assert.equal(isCurrentWeatherFresh(data(-10), now), true);
+  assert.equal(isCurrentWeatherFresh(data(-10 - 1 / 60000), now), false);
+  assert.equal(isCurrentWeatherFresh({ current: {}, weatherMeta: { fetchedAt: now } }, now), false);
+  assert.equal(isCurrentWeatherFresh({ current: { last_updated_epoch: true } }, now), false);
+  assert.equal(weatherCurrentTimestamp({ weatherMeta: { observedAt: 0, fetchedAt: now } }), 0);
+  assert.equal(weatherCurrentTimestamp({ weatherMeta: { validAt: now - 60000, fetchedAt: now } }), now - 60000);
+  assert.equal(weatherCurrentTimestamp({ weatherMeta: { time: '2026-11-05T22:00:00+01:00' } }), Date.parse('2026-11-05T21:00:00Z'));
+});
+
+test('provider wall times use the supplied offset and reject invalid timestamps instead of inventing now or noon', () => {
+  assert.equal(parseWeatherCurrentTime('2026-11-05T21:30', 3600), Date.parse('2026-11-05T20:30:00Z'));
+  assert.equal(parseWeatherCurrentTime('2026-11-05T21:30Z'), Date.parse('2026-11-05T21:30:00Z'));
+  assert.equal(parseWeatherCurrentTime('2026-11-05T21:30:00.1234567+01:00'), Date.parse('2026-11-05T20:30:00.123Z'));
+  assert.equal(parseWeatherCurrentTime('2026-10-25T02:30', 7200), Date.parse('2026-10-25T00:30:00Z'));
+  assert.equal(parseWeatherCurrentTime('2026-10-25T02:30', 3600), Date.parse('2026-10-25T01:30:00Z'));
+  for (const value of [undefined, null, '', false, 123, 'invalid', '2026-11-05', '2026-02-30T12:00', '2026-11-05T24:00', '2026-11-05T12:00+25:00']) {
+    assert.equal(parseWeatherCurrentTime(value, 3600), null, String(value));
+  }
+  assert.equal(parseWeatherCurrentTime('2026-11-05T21:30'), null, 'a missing zone and offset cannot silently use the browser zone');
+  assert.equal(parseWeatherCurrentTime('2026-11-05T21:30', true), null);
+});
+
+test('the observation label remains fixed across fetch clock changes in each locale and uses the source IANA zone', () => {
+  const observedAt = Date.parse('2026-11-05T20:30:00Z');
+  for (const locale of ['ru', 'uk', 'de', 'en']) {
+    const weather = { current: { last_updated_epoch: observedAt / 1000 }, location: { tz_id: 'Europe/Berlin', localtime: '2026-11-05 22:05' } };
+    assert.equal(formatWeatherObservationTime(weather, locale), '21:30');
+    weather.location.localtime = '2026-11-05 22:06';
+    weather.weatherMeta = { fetchedAt: Date.parse('2026-11-05T21:06:00Z') };
+    assert.equal(formatWeatherObservationTime(weather, locale), '21:30');
+    weather.location.tz_id = 'Asia/Tokyo';
+    assert.equal(formatWeatherObservationTime(weather, locale), '05:30');
+  }
+  assert.equal(formatWeatherObservationTime({ location: { localtime: '2026-11-05 22:05' }, weatherMeta: { fetchedAt: Date.now() } }), null);
+  assert.equal(formatWeatherObservationTime({ current: { last_updated_epoch: observedAt / 1000 }, location: { tz_id: 'Invalid/Zone' } }), null);
+});
 
 async function solarAtmosphereHarness() {
   const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
@@ -270,7 +314,7 @@ test('all forecast scene projections stop inheriting current cloud cover', async
     const source = await readFile(new URL(`../3d-weather-codrops-main/src/${entry}.mjs`, import.meta.url), 'utf8');
     const declaration = source.match(/weatherForForecastDay = ([^]*?),\n  weatherStatistics =/);
     assert.ok(declaration, entry);
-    const project = new Function('resolveForecastCloudCover', `return (${declaration[1]});`)(resolveForecastCloudCover);
+    const project = new Function('resolveForecastCloudCover', 'resolveForecastNoonMs', `return (${declaration[1]});`)(resolveForecastCloudCover, resolveForecastNoonMs);
     const current = { current: { cloud: 100, condition: { code: 1009 } }, location: { localtime: '2026-11-04 10:00' } };
     const clearDay = { date: '2026-11-05', day: { avgtemp_c: 12, condition: { code: 1000 } } };
     assert.equal(project(current, clearDay).current.cloud, null, entry);
@@ -436,7 +480,7 @@ test('a slow device lookup cannot replace a manual choice and stale startup neve
   await assert.rejects(staleController.refresh(), /stale/);
   assert.equal(staleController.getState().weather.location.name, 'Cache');
   assert.equal(staleController.getState().lastUpdatedAt, 0);
-  assert.equal(WEATHER_REFRESH_INTERVAL_MS, 600000);
+  assert.equal(WEATHER_REFRESH_INTERVAL_MS, 300000);
 });
 
 test('module imports retry with unique URLs and a rejected batch can recover on a later call', async () => {
@@ -576,9 +620,9 @@ for (const filename of ['header-preview.mjs', 'header-dropdown.mjs', 'widget.mjs
         };
       } } });
       const jsx = (type, props) => ({ type, props });
-      const App = new Function('React', 'jsxRuntime', 'localeCopy', 'resolveWeatherLocationNotice', 'Scene3D', 'LocationSearch', 'weatherForForecastDay', 'weatherStatistics', 'translateCondition', 'formatRegion', 'formatLocation', 'formatLocalTime', 'formatForecastDate', 'buildForecastSlots', `return (${source.slice(start, end)});`)(
+      const App = new Function('React', 'jsxRuntime', 'localeCopy', 'resolveWeatherLocationNotice', 'Scene3D', 'LocationSearch', 'weatherForForecastDay', 'weatherStatistics', 'translateCondition', 'formatRegion', 'formatLocation', 'formatLocalTime', 'formatForecastDate', 'buildForecastSlots', 'formatWeatherObservationTime', 'localeTags', `return (${source.slice(start, end)});`)(
         React, { jsx, jsxs: jsx, Fragment: 'Fragment' }, copy, resolveWeatherLocationNotice, 'Scene', 'Search', value => value,
-        () => [], () => 'Cloudy', () => '', location => location.name, () => '08:00', value => value, buildForecastSlots
+        () => [], () => 'Cloudy', () => '', location => location.name, () => '08:00', value => value, buildForecastSlots, formatWeatherObservationTime, { de: 'de-DE', en: 'en-GB', ru: 'ru-RU', uk: 'uk-UA' }
       );
       const render = () => {
         stateIndex = 0; refIndex = 0;
@@ -679,11 +723,11 @@ for (const filename of ['header-preview.mjs', 'header-dropdown.mjs', 'widget.mjs
     const host = { dataset: {}, shadowRoot: {} };
     const root = { render: tree => { renders += 1; rendered = tree; }, unmount: () => { disposed += 1; } };
     const forecastProjection = (data, day) => ({ data, day });
-    const mount = new Function('createWeatherController', 'weatherService', 'resolveHost', 'prepareShadowRoot', 'mountedWidgets', 'ReactDOM', 'jsxRuntime', 'React', 'WeatherApp', 'resolveForecastCloudCover', 'buildForecastSlots', 'weatherForForecastDay', 'resolveForecastNoonMs', 'buildForecastSceneContext', `return (${source.slice(start, end)});`)(
+    const mount = new Function('createWeatherController', 'weatherService', 'resolveHost', 'prepareShadowRoot', 'mountedWidgets', 'ReactDOM', 'jsxRuntime', 'React', 'WeatherApp', 'resolveForecastCloudCover', 'buildForecastSlots', 'weatherForForecastDay', 'resolveForecastNoonMs', 'buildForecastSceneContext', 'formatWeatherObservationTime', `return (${source.slice(start, end)});`)(
       createWeatherController,
       { getCurrentWeather: async (location, options) => { calls.push({ location, options }); return payload(String(calls.length)); } },
       () => host, () => ({}), new WeakMap(), { createRoot: () => root },
-      { jsx: (type, props) => ({ type, props }) }, { StrictMode: 'StrictMode' }, () => {}, resolveForecastCloudCover, buildForecastSlots, forecastProjection, resolveForecastNoonMs, buildForecastSceneContext
+      { jsx: (type, props) => ({ type, props }) }, { StrictMode: 'StrictMode' }, () => {}, resolveForecastCloudCover, buildForecastSlots, forecastProjection, resolveForecastNoonMs, buildForecastSceneContext, formatWeatherObservationTime
     );
     const initial = { latitude: 48.1, longitude: 11.6 };
     const api = mount(host, { initialLocation: initial, managedRefresh: true });
@@ -692,6 +736,7 @@ for (const filename of ['header-preview.mjs', 'header-dropdown.mjs', 'widget.mjs
     assert.equal(api.getForecastWeather, forecastProjection, 'the scene and labels share the same forecast projection');
     assert.equal(api.getForecastNoonMs, resolveForecastNoonMs, 'the shell uses the same timezone-safe forecast sampling time');
     assert.equal(api.getForecastSceneContext, buildForecastSceneContext, 'the shell reuses the shared forecast presentation contract');
+    assert.equal(api.observationTime, formatWeatherObservationTime, 'all entrypoints expose the same provider timestamp formatter');
     assert.equal(rendered.props.children.props.managedRefresh, true);
     assert.equal(api.getState().lastUpdatedAt, 0, 'mount itself is not evidence of fresh weather');
     const full = await api.refresh();
@@ -763,38 +808,71 @@ for (const filename of ['header-preview.mjs', 'header-dropdown.mjs', 'widget.mjs
   });
 }
 
-test('service cache is fresh for ten minutes and stale fallback never gains a new timestamp', async () => {
+test('service cache is fresh for five minutes and stale fallback never gains a new timestamp', async () => {
   const source = await readFile(new URL('weather-service.mjs', sourceDirectory), 'utf8');
   const marker = '    getCurrentWeather: ';
   const start = source.indexOf(marker) + marker.length;
   const end = source.indexOf(',\n    searchLocations:', start);
   let clock = 1000000;
   let calls = 0;
+  const requestOptions = [];
   let offline = false;
   const storage = new Map();
   const weather = payload('Actual location', clock);
-  const getWeather = new Function('Pn', 'Z', 'localStorage', 'Date', 'un', 'qn', 'Wn', 'pn', 'Jn', 'Yn', 'kn', 'On', 'X', 'hasCompleteForecast', `return (${source.slice(start, end)});`)(
+  const getWeather = new Function('Pn', 'Z', 'localStorage', 'Date', 'un', 'qn', 'Wn', 'pn', 'Jn', 'Yn', 'kn', 'On', 'X', 'hasCompleteForecast', 'isCurrentWeatherFresh', 'WEATHER_REFRESH_INTERVAL_MS', `return (${source.slice(start, end)});`)(
     query => ({ query }), value => value || 'en',
     { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value) }, { now: () => clock }, true,
-    async () => { calls += 1; if (offline) throw Error('Offline'); return weather; }, async value => value,
-    false, null, null, () => false, () => false, () => Error('Unavailable'), hasCompleteForecast
+    async (location, options) => { calls += 1; requestOptions.push(options); if (offline) throw Error('Offline'); return weather; }, async value => value,
+    false, null, null, () => false, () => false, () => Error('Unavailable'), hasCompleteForecast, isCurrentWeatherFresh, WEATHER_REFRESH_INTERVAL_MS
   );
   await getWeather('48.1,11.6');
   const saved = [...storage.values()][0];
   assert.deepEqual(JSON.parse(saved).data.forecast, weather.forecast);
-  assert.equal(JSON.parse(saved).expiresAt - JSON.parse(saved).savedAt, 600000);
-  clock += 599999;
+  assert.equal(JSON.parse(saved).expiresAt - JSON.parse(saved).savedAt, 300000);
+  clock += 299999;
   assert.equal((await getWeather('48.1,11.6')).stale, false);
   assert.equal(calls, 1);
   await getWeather('48.1,11.6', { forceRefresh: true });
   assert.equal(calls, 2, 'explicit refresh must bypass a fresh local cache');
+  assert.equal(requestOptions.at(-1).forceRefresh, true, 'the HTTP adapter must receive the explicit revalidation flag');
   const lastSaved = [...storage.values()][0];
-  clock += 600001;
+  clock += 300001;
   offline = true;
   assert.equal((await getWeather('48.1,11.6')).stale, true);
   assert.equal([...storage.values()][0], lastSaved);
   clock += 172800000;
   await assert.rejects(getWeather('48.1,11.6'), /Offline/);
+});
+
+test('a recently saved cache cannot rejuvenate an expired observation and invalid network data cannot replace it', async () => {
+  const source = await readFile(new URL('weather-service.mjs', sourceDirectory), 'utf8');
+  const marker = '    getCurrentWeather: ';
+  const start = source.indexOf(marker) + marker.length;
+  const end = source.indexOf(',\n    searchLocations:', start);
+  let clock = Date.parse('2026-11-05T21:05:00Z');
+  let calls = 0;
+  let response = payload('Real place', clock);
+  response.current.last_updated_epoch = (clock - 119 * 60000) / 1000;
+  response.weatherMeta = { fetchedAt: clock };
+  const storage = new Map();
+  const getWeather = new Function('Pn', 'Z', 'localStorage', 'Date', 'un', 'qn', 'Wn', 'pn', 'Jn', 'Yn', 'kn', 'On', 'X', 'hasCompleteForecast', 'isCurrentWeatherFresh', 'WEATHER_REFRESH_INTERVAL_MS', `return (${source.slice(start, end)});`)(
+    query => ({ query }), value => value || 'en',
+    { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value) }, { now: () => clock }, true,
+    async () => { calls += 1; return response; }, async value => value,
+    false, null, null, () => false, () => false, () => Error('Unavailable'), hasCompleteForecast, isCurrentWeatherFresh, WEATHER_REFRESH_INTERVAL_MS
+  );
+  assert.notEqual((await getWeather('48.1,11.6')).stale, true);
+  const saved = [...storage.values()][0];
+  clock += 120000;
+  const expired = await getWeather('48.1,11.6');
+  assert.equal(calls, 2, 'observation expiry forces a request before the five-minute local cache TTL');
+  assert.equal(expired.stale, true, 'an old server response can only leave the existing offline snapshot visible as stale');
+  assert.equal(expired.current.last_updated_epoch, response.current.last_updated_epoch);
+  assert.equal([...storage.values()][0], saved, 'fetching an expired observation must not rewrite savedAt or expiresAt');
+  response = payload('Recovered place', clock);
+  assert.notEqual((await getWeather('48.1,11.6')).stale, true);
+  assert.equal(calls, 3);
+  assert.equal(JSON.parse([...storage.values()][0]).savedAt, clock);
 });
 
 test('partial forecasts update current weather without poisoning the last complete cache and recover on refresh', async () => {
@@ -806,16 +884,16 @@ test('partial forecasts update current weather without poisoning the last comple
   let response = payload('Current place', clock);
   let offline = false;
   const storage = new Map();
-  const getWeather = new Function('Pn', 'Z', 'localStorage', 'Date', 'un', 'qn', 'Wn', 'pn', 'Jn', 'Yn', 'kn', 'On', 'X', 'hasCompleteForecast', `return (${source.slice(start, end)});`)(
+  const getWeather = new Function('Pn', 'Z', 'localStorage', 'Date', 'un', 'qn', 'Wn', 'pn', 'Jn', 'Yn', 'kn', 'On', 'X', 'hasCompleteForecast', 'isCurrentWeatherFresh', 'WEATHER_REFRESH_INTERVAL_MS', `return (${source.slice(start, end)});`)(
     query => ({ query }), value => value || 'en',
     { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value) }, { now: () => clock }, true,
     async () => { if (offline) throw Error('Offline'); return response; }, async value => value,
-    false, null, null, () => false, () => false, () => Error('Unavailable'), hasCompleteForecast
+    false, null, null, () => false, () => false, () => Error('Unavailable'), hasCompleteForecast, isCurrentWeatherFresh, WEATHER_REFRESH_INTERVAL_MS
   );
   await getWeather('48.1,11.6');
   const [key, completeSnapshot] = [...storage.entries()][0];
   assert.ok(key.startsWith('hn_weather_resilience_v2:'));
-  const partial = { ...response, current: { temp_c: 11 }, forecast: { forecastday: response.forecast.forecastday.slice(0, 1) }, forecastStatus: 'partial' };
+  const partial = { ...response, current: { ...response.current, temp_c: 11 }, forecast: { forecastday: response.forecast.forecastday.slice(0, 1) }, forecastStatus: 'partial' };
   response = partial;
   const actual = await getWeather('48.1,11.6', { forceRefresh: true });
   assert.equal(actual.current.temp_c, 11, 'fresh current observations remain usable during forecast failure');
@@ -840,11 +918,11 @@ test('a complete cache saved before midnight retains real remaining days offline
   const weather = payload('Same place', clock);
   const storage = new Map();
   let offline = false;
-  const getWeather = new Function('Pn', 'Z', 'localStorage', 'Date', 'un', 'qn', 'Wn', 'pn', 'Jn', 'Yn', 'kn', 'On', 'X', 'hasCompleteForecast', `return (${source.slice(start, end)});`)(
+  const getWeather = new Function('Pn', 'Z', 'localStorage', 'Date', 'un', 'qn', 'Wn', 'pn', 'Jn', 'Yn', 'kn', 'On', 'X', 'hasCompleteForecast', 'isCurrentWeatherFresh', 'WEATHER_REFRESH_INTERVAL_MS', `return (${source.slice(start, end)});`)(
     query => ({ query }), value => value || 'en',
     { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value) }, { now: () => clock }, true,
     async () => { if (offline) throw Error('Offline'); return weather; }, async value => value,
-    false, null, null, () => false, () => false, () => Error('Unavailable'), hasCompleteForecast
+    false, null, null, () => false, () => false, () => Error('Unavailable'), hasCompleteForecast, isCurrentWeatherFresh, WEATHER_REFRESH_INTERVAL_MS
   );
   await getWeather('48.1,11.6');
   const [key, saved] = [...storage.entries()][0];
@@ -871,11 +949,11 @@ for (const provider of ['same-origin', 'weatherapi']) {
     let offline = false;
     let requests = 0;
     const request = async () => { requests += 1; if (offline) throw Error('Offline'); return weather; };
-    const createService = () => new Function('Pn', 'Z', 'localStorage', 'Date', 'un', 'qn', 'Wn', 'pn', 'Jn', 'Yn', 'kn', 'On', 'X', 'hasCompleteForecast', `return (${source.slice(start, end)});`)(
+    const createService = () => new Function('Pn', 'Z', 'localStorage', 'Date', 'un', 'qn', 'Wn', 'pn', 'Jn', 'Yn', 'kn', 'On', 'X', 'hasCompleteForecast', 'isCurrentWeatherFresh', 'WEATHER_REFRESH_INTERVAL_MS', `return (${source.slice(start, end)});`)(
       query => ({ query }), value => value || 'en',
       { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value) }, { now: () => clock },
       provider === 'same-origin', request, async value => { await Promise.resolve(); return { ...value, normalized: true }; },
-      provider === 'weatherapi', request, null, () => false, () => false, () => Error('Unavailable'), hasCompleteForecast
+      provider === 'weatherapi', request, null, () => false, () => false, () => Error('Unavailable'), hasCompleteForecast, isCurrentWeatherFresh, WEATHER_REFRESH_INTERVAL_MS
     );
     const initial = await createService()('48.1,11.6', { forceRefresh: true });
     assert.equal(initial.normalized, true);
@@ -885,7 +963,7 @@ for (const provider of ['same-origin', 'weatherapi']) {
     assert.deepEqual(cached.data.forecast, weather.forecast);
     assert.equal(cached.data.normalized, true);
     offline = true;
-    clock += 600001;
+    clock += 300001;
     const afterReload = await createService()('48.1,11.6');
     assert.equal(afterReload.stale, true);
     assert.equal(afterReload.fromCache, true);
@@ -922,21 +1000,65 @@ test('normalization uses a supplied location label and exact coordinates without
   assert.equal(reverseCalls, 1, 'unlabelled coordinates retain the existing lookup path');
 });
 
-test('normalization preserves an unknown cloud percentage and the provider condition', async () => {
+async function openMeteoNormalizer() {
   const source = await readFile(new URL('weather-service.mjs', sourceDirectory), 'utf8');
   const marker = '  Kn = ';
   const start = source.indexOf(marker) + marker.length;
   const end = source.indexOf(',\n  qn = ', start);
   const condition = { text: 'Cloudy', code: 1006 };
   const number = value => Number(value);
-  const normalize = new Function('Gn', 'J', 'Y', 'Cn', 'Tn', 'wn', 'Bn', 'zn', 'Rn', 'Dn', 'En', `return (${source.slice(start, end)});`)(
-    () => null, number, number, number, number, number, () => condition, Date.parse, value => value, () => 'N', number
+  return new Function('Gn', 'J', 'Y', 'Cn', 'Tn', 'wn', 'Bn', 'zn', 'Rn', 'Dn', 'En', 'parseWeatherCurrentTime', `return (${source.slice(start, end)});`)(
+    () => null, number, number, number, number, number, () => condition, Date.parse, value => value, () => 'N', number, parseWeatherCurrentTime
   );
+}
+
+test('normalization preserves an unknown cloud percentage and the provider condition', async () => {
+  const normalize = await openMeteoNormalizer();
   for (const cloud of [null, undefined, 0, 77.4]) {
-    const weather = normalize('Device', { latitude: 48.1, longitude: 11.6 }, { current: { cloud_cover: cloud, weather_code: 3, time: '2026-11-03T08:00' } });
+    const weather = normalize('Device', { latitude: 48.1, longitude: 11.6 }, { utc_offset_seconds: 3600,
+      current: { temperature_2m: 7, cloud_cover: cloud, weather_code: 3, time: '2026-11-03T08:00' } });
     assert.equal(weather.current.cloud, cloud == null ? null : Math.round(cloud));
-    assert.equal(weather.current.condition, condition);
+    assert.equal(weather.current.condition.text, 'Cloudy');
   }
+});
+
+test('the direct model fallback retains validAt and rejects malformed current reports without synthetic values', async () => {
+  const normalize = await openMeteoNormalizer();
+  const current = { temperature_2m: 7, weather_code: 3, time: '2026-11-05T21:30' };
+  const weather = normalize('Public city', { latitude: 51.23, longitude: 6.78 }, {
+    utc_offset_seconds: 3600, timezone: 'Europe/Berlin', current,
+  });
+  assert.equal(weather.current.last_updated_epoch, Date.parse('2026-11-05T20:30:00Z') / 1000);
+  assert.equal(weather.weatherMeta.validAt, Date.parse('2026-11-05T20:30:00Z'));
+  assert.equal(weather.weatherMeta.observedAt, undefined, 'model validity is not a station observation');
+  assert.equal(weather.weatherMeta.source, 'open-meteo');
+  for (const time of [undefined, '', 'invalid', '2026-02-30T12:00']) {
+    assert.throws(() => normalize('Public city', {}, { utc_offset_seconds: 3600, current: { ...current, time },
+      daily: { time: ['2026-11-05'] } }), /Invalid current weather/, 'daily noon cannot substitute for current time');
+  }
+  for (const temperature_2m of [undefined, null, '', true, {}]) {
+    assert.throws(() => normalize('Public city', {}, { utc_offset_seconds: 3600, current: { ...current, temperature_2m } }), /Invalid current weather/);
+  }
+  for (const weather_code of [undefined, null, '', false, []]) {
+    assert.throws(() => normalize('Public city', {}, { utc_offset_seconds: 3600, current: { ...current, weather_code },
+      daily: { time: ['2026-11-05'], weather_code: [3] } }), /Invalid current weather/, 'a daily code cannot substitute for a missing current condition');
+  }
+  const zero = normalize('Public city', {}, { utc_offset_seconds: 3600, current: { ...current, temperature_2m: 0, weather_code: 0 } });
+  assert.equal(zero.current.temp_c, 0, 'real zero is not missing data');
+});
+
+test('forced same-origin requests require HTTP revalidation instead of accepting a stale-while-revalidate answer', async () => {
+  const source = await readFile(new URL('weather-service.mjs', sourceDirectory), 'utf8');
+  const marker = '  qn = ', start = source.indexOf(marker) + marker.length, end = source.indexOf(',\n  Jn = ', start);
+  const calls = [];
+  const request = new Function('axios', 'dn', `return (${source.slice(start, end)});`)(
+    { get: async (url, options) => { calls.push({ url, options }); return { data: { current: {} } }; } }, '/api'
+  );
+  await request('51.23,6.78', { forceRefresh: true });
+  assert.equal(calls[0].options.headers['Cache-Control'], 'no-cache');
+  assert.equal(calls[0].options.params.location, '51.23,6.78');
+  await request('51.23,6.78');
+  assert.equal(calls[1].options.headers, undefined, 'ordinary requests retain normal HTTP caching');
 });
 
 test('public loader retries the first failed import instead of keeping its rejected promise', async () => {

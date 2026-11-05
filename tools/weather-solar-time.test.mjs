@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { runInNewContext } from 'node:vm';
+import { parse } from 'espree';
 import { solarPosition, normalizeSolarDay, calculateSolarDay, solarPhase, solarNightWindow, solarPresentation } from '../assets/js/weather-solar-time.js';
 
 const date = '2026-11-05';
@@ -21,6 +24,13 @@ const provider = {
 const day = normalizeSolarDay(provider, date, zone);
 const phaseAt = time => solarPhase(time, day, latitude, longitude);
 const minute = 60000;
+
+const sceneClock = readFile(new URL('../3d-weather-codrops-main/src/scene.mjs', import.meta.url), 'utf8').then(source => {
+  const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module', range: true });
+  const declaration = ast.body.find(node => node.type === 'FunctionDeclaration' && node.id?.name === 'resolveWeatherScenePhase');
+  assert.ok(declaration, 'The maintained 3D scene must resolve its solar clock.');
+  return runInNewContext(`${source.slice(...declaration.range)}; resolveWeatherScenePhase;`, { solarPhase });
+});
 
 function bounded(phase) {
   for (const key of ['sunOpacity', 'moonOpacity', 'starOpacity', 'dayProgress']) {
@@ -278,4 +288,65 @@ test('invalid inputs remain unavailable with finite weights; zero coordinates ar
   assert.ok(Number.isNaN(solarPosition(Date.now(), 91, 0).elevationDeg));
   const equator = calculateSolarDay(date, 'UTC', 0, 0);
   assert.ok(Number.isFinite(equator.sunrise) && Number.isFinite(equator.sunset));
+});
+
+test('3D stars follow winter and summer solar time rather than a fixed 19:00 boundary', async () => {
+  const resolve = await sceneClock;
+  const weather = { location: { lat: latitude, lon: longitude }, current: { is_day: 1 } };
+  const winter = resolve(weather, Date.parse('2026-11-05T18:00:00+01:00'));
+  assert.equal(winter.phase, 'night', 'winter night begins before 19:00');
+  assert.equal(winter.starOpacity, 1);
+  const summer = resolve(weather, Date.parse('2026-06-21T20:30:00+02:00'));
+  assert.equal(summer.phase, 'day', 'summer daylight continues after 19:00');
+  assert.equal(summer.starOpacity, 0);
+});
+
+test('3D star visibility follows twilight smoothly and ignores an older observation clock', async () => {
+  const resolve = await sceneClock;
+  const weather = {
+    location: { localtime: '2026-11-05 12:00', lat: latitude, lon: longitude },
+    current: { is_day: 1, last_updated_epoch: Date.parse('2026-11-05T12:00:00+01:00') / 1000 },
+  };
+  const values = ['17:00', '17:10', '17:20', '17:30', '17:40'].map(time =>
+    resolve(weather, Date.parse(`2026-11-05T${time}:00+01:00`)).starOpacity);
+  assert.equal(values[0], 0);
+  assert.equal(values.at(-1), 1);
+  assert.ok(values.some(value => value > 0 && value < 1));
+  assert.ok(values.every((value, index) => index === 0 || value >= values[index - 1]));
+  assert.equal(resolve(weather, Date.parse('2026-11-05T22:00:00+01:00')).phase, 'night');
+});
+
+test('3D forecast appearance uses its explicit projection time without relabelling the observation', async () => {
+  const resolve = await sceneClock;
+  const observedAt = Date.parse('2026-11-05T21:30:00+01:00');
+  const weather = {
+    location: { lat: latitude, lon: longitude },
+    current: { is_day: 0, last_updated_epoch: observedAt / 1000 },
+    weatherMeta: { observedAt, appearanceTimeMs: Date.parse('2026-11-06T12:00:00+01:00') },
+  };
+  const phase = resolve(weather, Date.parse('2026-11-05T22:00:00+01:00'));
+  assert.equal(phase.phase, 'day');
+  assert.equal(phase.starOpacity, 0);
+  assert.equal(weather.weatherMeta.observedAt, observedAt);
+  assert.equal(weather.current.last_updated_epoch, observedAt / 1000);
+});
+
+test('3D sky accepts numeric coordinates but does not turn missing coordinates into zero', async () => {
+  const resolve = await sceneClock;
+  const now = Date.parse('2026-06-21T20:30:00+02:00');
+  assert.equal(resolve({ weatherMeta: { latitude: '51.23', longitude: '6.78' } }, now).phase, 'day');
+  const unknown = resolve({ location: { lat: null, lon: '' }, current: { is_day: 0 } }, now);
+  assert.equal(unknown.phase, 'night', 'with no coordinates use the explicit provider flag, not Greenwich');
+  assert.equal(resolve({ current: { is_day: 1 } }, now).starOpacity, 0);
+});
+
+test('3D uses the synchronized primary solar presentation when the device clock is wrong', async () => {
+  const resolve = await sceneClock;
+  const weather = { location: { lat: latitude, lon: longitude }, current: { is_day: 1 } };
+  const wrongDeviceTime = Date.parse('2026-11-05T16:00:00+01:00');
+  const synchronized = phaseAt(Date.parse('2026-11-05T18:00:00+01:00'));
+  assert.equal(resolve(weather, wrongDeviceTime).phase, 'day');
+  assert.equal(resolve(weather, wrongDeviceTime, synchronized), synchronized);
+  const forecast = { ...weather, weatherMeta: { appearanceTimeMs: Date.parse('2026-11-06T12:00:00+01:00') } };
+  assert.equal(resolve(forecast, wrongDeviceTime, synchronized).phase, 'day', 'an explicit forecast projection stays independent of the current night');
 });

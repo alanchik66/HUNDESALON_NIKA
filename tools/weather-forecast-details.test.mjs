@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { buildForecastSlots, hasCompleteForecast, createWeatherController, resolveForecastCloudCover } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
+import { buildForecastSlots, hasCompleteForecast, createWeatherController, resolveForecastCloudCover, resolveForecastNoonMs, parseWeatherCurrentTime, isCurrentWeatherFresh } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
 
 const sourceDirectory = new URL('../3d-weather-codrops-main/src/', import.meta.url);
 const readSource = name => readFile(new URL(name, sourceDirectory), 'utf8');
@@ -56,7 +56,7 @@ test('weather requests and normalization retain four distinct forecast days', as
   const requests = [];
   const axios = { get: async (url, options) => {
     requests.push({ url, ...options });
-    return { data: { current: {}, daily: {
+    return { data: { current: { time: new Date().toISOString(), temperature_2m: 7, weather_code: 0 }, daily: {
       time: dates, temperature_2m_max: [10, 11, 12, 13, 14], temperature_2m_min: [4, 5, 6, 7, 8], weather_code: [0, 1, 2, 3, 0],
     } } };
   } };
@@ -72,8 +72,8 @@ test('weather requests and normalization retain four distinct forecast days', as
   const daily = new Function('J', 'Y', 'Cn', 'Tn', 'Bn', 'zn', `return (${binding(source, 'Gn', 'Kn')});`)(
     round, convert, convert, convert, condition, Date.parse
   );
-  const normalize = new Function('Gn', 'J', 'Y', 'Cn', 'Tn', 'wn', 'Bn', 'zn', 'Rn', 'Dn', 'En', `return (${binding(source, 'Kn', 'qn')});`)(
-    daily, round, convert, convert, convert, convert, condition, Date.parse, value => value.replace('T', ' '), () => 'N', convert
+  const normalize = new Function('Gn', 'J', 'Y', 'Cn', 'Tn', 'wn', 'Bn', 'zn', 'Rn', 'Dn', 'En', 'parseWeatherCurrentTime', 'isCurrentWeatherFresh', `return (${binding(source, 'Kn', 'qn')});`)(
+    daily, round, convert, convert, convert, convert, condition, Date.parse, value => value.replace('T', ' '), () => 'N', convert, parseWeatherCurrentTime, isCurrentWeatherFresh
   );
   const openMeteo = new Function('axios', 'Hn', 'Z', 'gn', 'Kn', `return (${binding(source, 'Yn', 'weatherService')});`)(
     axios, async () => location, value => value, 'https://open-meteo.test', normalize
@@ -263,7 +263,7 @@ for (const filename of ['widget.mjs', 'header-preview.mjs', 'header-dropdown.mjs
     const listExpression = source.match(/\bae = ([^\n]+),\n/)[1];
     const selectedExpression = source.match(/\bQ = (B === null[^\n]+),\n/)[1];
     const select = new Function('buildForecastSlots', 'd', 'B', `const ae = ${listExpression}; const Q = ${selectedExpression}; return { days: ae, selected: Q };`).bind(null, data => buildForecastSlots(data, Date.parse('2026-11-03T12:00:00Z')));
-    const forecastDay = new Function('resolveForecastCloudCover', `return (${binding(source, 'weatherForForecastDay', 'weatherStatistics')});`)(resolveForecastCloudCover);
+    const forecastDay = new Function('resolveForecastCloudCover', 'resolveForecastNoonMs', `return (${binding(source, 'weatherForForecastDay', 'weatherStatistics')});`)(resolveForecastCloudCover, resolveForecastNoonMs);
     const dates = ['2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07'];
     const data = {
       current: { temp_c: 8, pressure_mb: 1013.25 },

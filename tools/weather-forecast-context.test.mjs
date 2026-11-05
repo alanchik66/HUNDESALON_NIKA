@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { buildForecastSlots, resolveForecastCloudCover, resolveForecastNoonMs, buildForecastSceneContext } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
+import { parse } from 'espree';
+import { buildForecastSlots, resolveForecastCloudCover, resolveForecastNoonMs, buildForecastSceneContext, formatWeatherObservationTime } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
 import { solarPosition } from '../assets/js/weather-solar-time.js';
 
 const filenames = ['widget.mjs', 'header-preview.mjs', 'header-dropdown.mjs'];
@@ -36,26 +37,29 @@ async function harness(filename) {
   const localeTags = new Function(`return (${binding(source, 'localeTags', 'formatCountry')});`)();
   const formatDate = new Function('localeTags', `return (${binding(source, 'formatForecastDate', 'translateCondition')});`)(localeTags);
   const formatTime = new Function('localeTags', `return (${binding(source, 'formatLocalTime', 'formatForecastDate')});`)(localeTags);
-  const project = new Function('resolveForecastCloudCover', `return (${binding(source, 'weatherForForecastDay', 'weatherStatistics')});`)(resolveForecastCloudCover);
+  const project = new Function('resolveForecastCloudCover', 'resolveForecastNoonMs', `return (${binding(source, 'weatherForForecastDay', 'weatherStatistics')});`)(resolveForecastCloudCover, resolveForecastNoonMs);
   const title = jsxBlock(source, 'weather-header-dropdown__hero-title', 'weather-header-dropdown__close');
   const condition = jsxBlock(source, 'weather-header-dropdown__hero-copy', 'weather-header-dropdown__hero-chips');
-  const render = new Function('Q', '$', 'u', 'U', 'B', 'de', 'ce', 'jsxRuntime', 'formatForecastDate', 'formatLocalTime',
-    `return { title: (${title}), condition: (${condition}) };`);
+  const observedTime = source.match(/observedTime = (.+),\r?\n\s+le = /)?.[1];
+  assert.ok(observedTime, 'observation time binding must be present');
+  const render = new Function('Q', '$', 'u', 'U', 'B', 'de', 'ce', 'jsxRuntime', 'formatForecastDate', 'formatLocalTime', 'formatWeatherObservationTime', 'localeTags',
+    `const observedTime = (${observedTime}); return { title: (${title}), condition: (${condition}) };`);
   const jsx = (type, props, key) => ({ type, props, key });
   return {
     source, copy, localeTags, formatDate, formatTime, project,
     render(data, selected, locale) {
       const weather = project(data, selected);
       return render(selected, weather, locale, copy[locale], selected ? 3 : null, 'Region', weather.current.condition.text,
-        { jsx, jsxs: jsx, Fragment: 'Fragment' }, formatDate, formatTime);
+        { jsx, jsxs: jsx, Fragment: 'Fragment' }, formatDate, formatTime, formatWeatherObservationTime, localeTags);
     },
   };
 }
 
 function weather() {
   return {
-    current: { temp_c: 7, is_day: 0, condition: { code: 1000, text: 'Current clear' } },
+    current: { temp_c: 7, is_day: 0, last_updated_epoch: Date.parse('2026-11-04T20:30:00Z') / 1000, condition: { code: 1000, text: 'Current clear' } },
     location: { name: 'Current place', tz_id: 'Europe/Berlin', localtime: '2026-11-04 22:39' },
+    weatherMeta: { observedAt: Date.parse('2026-11-04T20:30:00Z'), fetchedAt: Date.parse('2026-11-04T21:39:00Z') },
     forecast: { forecastday: ['2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07'].map((date, index) => ({
       date, day: { maxtemp_c: 10 + index, mintemp_c: 3, condition: { code: 1009, text: `Forecast ${date}` } },
     })) },
@@ -63,6 +67,18 @@ function weather() {
 }
 
 for (const filename of filenames) {
+  test(`${filename}: all localized current clocks stay 24-hour through midnight without a stale AM/PM marker`, async () => {
+    const h = await harness(filename);
+    for (const locale of locales) {
+      assert.equal(h.formatTime('2026-11-04 22:05', locale), '22:05', locale);
+      assert.equal(h.formatTime('2026-11-05 00:05', locale), '00:05', locale);
+      const data = weather();
+      data.location.localtime = '2026-11-04 22:05';
+      assert.ok(text(h.render(data, null, locale).title.props.children[2]).startsWith('22:05'), locale);
+      assert.doesNotMatch(text(h.render(data, null, locale).title), /\b(?:AM|PM)\b/u, locale);
+    }
+  });
+
   test(`${filename}: daily hero identifies the selected full date in all four languages without a fake update time`, async () => {
     const h = await harness(filename);
     const data = weather();
@@ -90,7 +106,11 @@ for (const filename of filenames) {
       assert.equal(current.title.props.children[0].props.children, h.copy[locale].headerLabel);
       assert.ok(text(current.title.props.children[2]).startsWith(h.formatTime(data.location.localtime, locale)));
       assert.equal(current.condition.props.children[1].props.hidden, false);
-      assert.equal(text(current.condition.props.children[1]), `${h.copy[locale].updated}: ${h.formatTime(data.location.localtime, locale)}`);
+      assert.equal(text(current.condition.props.children[1]), `${h.copy[locale].updated}: 21:30`, 'Updated uses the observation, not the live local clock');
+      const later = structuredClone(data);
+      later.location.localtime = '2026-11-04 22:40';
+      later.weatherMeta.fetchedAt += 60000;
+      assert.equal(text(h.render(later, null, locale).condition.props.children[1]), text(current.condition.props.children[1]), 'a new clock or fetch time is not a new observation');
     }
     assert.deepEqual(data, original, 'display context must not alter current observations or the provider forecast');
   });
@@ -101,23 +121,90 @@ for (const filename of filenames) {
     const start = h.source.indexOf('    let l = {', mount);
     const end = h.source.indexOf('    return (mountedWidgets.set', start);
     assert.ok(mount >= 0 && start > mount && end > start, 'mounted API must be present');
-    const api = new Function('n', 'c', 'runtimeController', 'resolveForecastCloudCover', 'resolveForecastNoonMs', 'buildForecastSceneContext', 'buildForecastSlots', 'weatherForForecastDay', 'mountedWidgets',
+    const api = new Function('n', 'c', 'runtimeController', 'resolveForecastCloudCover', 'resolveForecastNoonMs', 'buildForecastSceneContext', 'buildForecastSlots', 'weatherForForecastDay', 'formatWeatherObservationTime', 'mountedWidgets',
       `${h.source.slice(start, end)}; return l;`)(
-      { shadowRoot: {}, dataset: {} }, {}, {}, resolveForecastCloudCover, resolveForecastNoonMs, buildForecastSceneContext, buildForecastSlots, h.project, new WeakMap()
+      { shadowRoot: {}, dataset: {} }, {}, {}, resolveForecastCloudCover, resolveForecastNoonMs, buildForecastSceneContext, buildForecastSlots, h.project, formatWeatherObservationTime, new WeakMap()
     );
     assert.equal(api.getForecastSlots, buildForecastSlots);
     assert.equal(api.getForecastWeather, h.project);
     assert.equal(api.getForecastNoonMs, resolveForecastNoonMs);
     assert.equal(api.getForecastSceneContext, buildForecastSceneContext);
+    assert.equal(api.observationTime, formatWeatherObservationTime);
     assert.equal(api.getForecastNoonMs('2026-11-07', 'Europe/Berlin'), Date.parse('2026-11-07T11:00:00Z'));
     const data = weather();
     const selected = api.getForecastSlots(data, Date.parse('2026-11-04T21:39:00Z'))[3];
     const projected = api.getForecastWeather(data, selected);
+    assert.equal(api.observationTime(data, 'ru-RU'), '21:30');
     assert.equal(projected.current.condition, selected.day.condition);
     assert.equal(projected.current.temp_c, selected.day.maxtemp_c);
     assert.equal(api.getForecastWeather(data, null), data);
     assert.equal(api.getForecastWeather(data, { date: selected.date, available: false }), data);
     assert.equal(data.current.condition.text, 'Current clear');
+  });
+
+  test(`${filename}: missing observation time stays hidden instead of presenting the fetch or current clock`, async () => {
+    const h = await harness(filename);
+    const data = weather();
+    delete data.weatherMeta.observedAt;
+    delete data.current.last_updated_epoch;
+    for (const locale of locales) {
+      const updated = h.render(data, null, locale).condition.props.children[1];
+      assert.equal(updated.props.hidden, true, locale);
+      assert.equal(text(updated), '', locale);
+    }
+  });
+}
+
+for (const filename of filenames.filter(name => name !== 'widget.mjs')) {
+  test(`${filename}: forecast appearance uses selected local noon while retaining the real observation metadata`, async () => {
+    const h = await harness(filename);
+    const data = weather();
+    const original = structuredClone(data);
+    const selected = buildForecastSlots(data, Date.parse('2026-11-04T21:39:00Z'))[3];
+    const projected = h.project(data, selected);
+    assert.equal(projected.weatherMeta.appearanceTimeMs, Date.parse('2026-11-07T11:00:00Z'));
+    assert.equal(projected.weatherMeta.observedAt, data.weatherMeta.observedAt);
+    assert.equal(projected.current.last_updated_epoch, data.current.last_updated_epoch);
+    assert.deepEqual(data, original);
+  });
+}
+
+for (const filename of filenames) {
+  test(`${filename}: every 3D scene receives the corrected clock and shared solar phase through mount and app props`, async () => {
+    const { source } = await harness(filename);
+    const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module' });
+    const app = ast.body.find(node => node.type === 'FunctionDeclaration' && node.id.name === 'WeatherApp');
+    const calls = [];
+    const pending = [ast];
+    while (pending.length) {
+      const node = pending.pop();
+      if (node.type === 'CallExpression' && ['WeatherApp', 'Scene3D'].includes(node.arguments[0]?.name)) calls.push(node);
+      for (const value of Object.values(node)) {
+        if (Array.isArray(value)) pending.push(...value.filter(child => child && typeof child.type === 'string'));
+        else if (value && typeof value.type === 'string') pending.push(value);
+      }
+    }
+    const correctedClock = () => Date.parse('2026-11-04T21:39:00Z');
+    const sharedPhase = { dominantKind: 'moon', starOpacity: 1 };
+    const getSolarPhase = () => sharedPhase;
+    const mountCall = calls.find(node => node.arguments[0].name === 'WeatherApp');
+    const mountProps = new Function('t', 'i', 'r', 'runtimeController', `return (${source.slice(mountCall.arguments[1].start, mountCall.arguments[1].end)});`)(
+      { now: correctedClock, getSolarPhase }, '100%', 'header', {}
+    );
+    const bindApp = new Function('options', 'DEFAULT_LOCATION', `const ${source.slice(app.params[0].start, app.params[0].end)} = options; return { now, getSolarPhase };`);
+    const appProps = bindApp(mountProps, 'Leipzig');
+    assert.equal(appProps.now, correctedClock);
+    assert.equal(appProps.getSolarPhase, getSolarPhase);
+    assert.equal(bindApp({}, 'Leipzig').now, Date.now, 'standalone mounting keeps a working native-clock default');
+    const sceneCalls = calls.filter(node => node.arguments[0].name === 'Scene3D');
+    assert.equal(sceneCalls.length, 3, 'header, dropdown and standalone scenes must all share the clock path');
+    for (const call of sceneCalls) {
+      const props = new Function('Z', 'd', '$', '_', 'e', 'l', 'j', 'N', 'F', 'now', 'getSolarPhase', `return (${source.slice(call.arguments[1].start, call.arguments[1].end)});`)(
+        null, weather(), weather(), false, true, 'header-panel', () => {}, () => {}, () => {}, appProps.now, appProps.getSolarPhase
+      );
+      assert.equal(props.now(), correctedClock());
+      assert.equal(props.getSolarPhase(), sharedPhase);
+    }
   });
 }
 
@@ -137,6 +224,38 @@ function sourceBlock(source, startMarker, endMarker) {
   assert.ok(start >= 0 && end > start, `Cannot extract ${startMarker.trim()}`);
   return source.slice(start, end);
 }
+
+test('shell shares the observation formatter and retains fresh API time instead of the widget clock', async () => {
+  const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
+  const observation = sourceBlock(source, '  function getHeaderWeatherObservationTime(', '\n  function extractHeaderWeatherReadingsFromHost(');
+  const readings = sourceBlock(source, '  function buildHeaderWeatherReadingsFromMeta(', '\n  function updateHeaderWeatherTextParts(');
+  const h = new Function('resolveHeaderWeatherTimeZone', 'getHeaderWeatherPressureLang', 'getHeaderWeatherFiniteNumber',
+    'convertHeaderWeatherHpaToMmHg', 'resolveHeaderWeatherConditionLabel', 'formatHeaderWeatherCelsiusText',
+    'formatHeaderWeatherPressureValue', 'hydrateHeaderWeatherReadingsFromCache', 'isHeaderWeatherTextManualLocation',
+    'extractHeaderWeatherReadingsFromHost', 'isHeaderWeatherCurrentMetaFresh', 'normalizeHeaderWeatherHumidityValue',
+    `${observation}\n${readings}; return { time: getHeaderWeatherObservationTime, readings: resolveHeaderWeatherReadings };`)(
+    host => host.timeZone, () => 'ru', value => value === undefined ? null : Number(value),
+    () => null, () => 'Clear', value => `${value}°C`, (_host, value) => String(value),
+    () => {}, () => false, host => host.widgetReadings, () => true, () => null
+  );
+  const data = weather();
+  const host = {
+    timeZone: 'Europe/Berlin',
+    __weatherWidgetInstance: { getState: () => ({ weather: data }), observationTime: formatWeatherObservationTime },
+    __weatherCurrentMeta: { ...data.weatherMeta, temperature: 5 },
+    widgetReadings: { temp: 7, meta: '22:39', humidity: '75%' },
+  };
+  assert.equal(h.time(host), '21:30');
+  assert.equal(h.readings(host).meta, '21:30');
+  assert.equal(h.readings(host).temp, 5, 'the timestamp describes the same API readings as the displayed temperature');
+  host.__weatherCurrentMeta.observedAt = Date.parse('2026-11-04T20:45:00Z');
+  assert.equal(h.readings(host).meta, '21:45', 'a new observation can advance Updated independently of the widget clock');
+  delete host.__weatherCurrentMeta.observedAt;
+  assert.equal(h.readings(host).meta, '', 'fetch time must not supply an observation label');
+  const fallback = { __weatherWidgetInstance: { observationTime: formatWeatherObservationTime }, __weatherWidgetData: data };
+  assert.equal(h.time(fallback), '21:30', 'mounted consumers may use their real cached weather data');
+  assert.equal(h.time({}), '', 'an unmounted widget must not invent a current time');
+});
 
 async function shellContextHarness() {
   const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');

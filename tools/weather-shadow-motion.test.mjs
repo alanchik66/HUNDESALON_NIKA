@@ -3,15 +3,21 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { parse } from 'espree';
 import postcss from 'postcss';
+import { generate, lexer, parse as parseCss } from 'css-tree';
 
 const styles = readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8').then(source => {
   const pending = [parse(source, { ecmaVersion: 'latest', sourceType: 'script' })];
+  const starfieldNames = new Set(['HEADER_WEATHER_STARFIELD_TILE_A', 'HEADER_WEATHER_STARFIELD_TILE_B']);
+  const starfieldLiterals = new Map();
   let template;
   while (pending.length) {
     const node = pending.pop();
     if (node.type === 'VariableDeclarator' && node.id?.name === 'HEADER_WEATHER_TRANSPARENT_STYLES') {
       template = node.init;
-      break;
+    } else if (node.type === 'VariableDeclarator' && starfieldNames.has(node.id?.name)) {
+      assert.equal(node.init?.type, 'Literal', `${node.id.name} must remain a literal CSS tile`);
+      assert.equal(typeof node.init.value, 'string');
+      starfieldLiterals.set(node.id.name, node.init.value);
     }
     for (const value of Object.values(node)) {
       if (Array.isArray(value)) pending.push(...value.filter(item => item?.type));
@@ -19,9 +25,14 @@ const styles = readFile(new URL('../assets/js/site-shell.js', import.meta.url), 
     }
   }
   assert.equal(template?.type, 'TemplateLiteral');
+  assert.equal(starfieldLiterals.size, starfieldNames.size);
   // Read template quasis through the JavaScript AST; never execute source or use brace regexes.
   assert.ok(template.quasis.every(quasi => typeof quasi.value.cooked === 'string'));
-  return postcss.parse(template.quasis.map(quasi => quasi.value.cooked).join('0'));
+  return postcss.parse(template.quasis.map((quasi, index) => {
+    const expression = template.expressions[index];
+    const value = expression ? starfieldLiterals.get(expression.name) ?? '0' : '';
+    return quasi.value.cooked + value;
+  }).join(''));
 });
 
 const matchingRules = (root, matches) => {
@@ -128,6 +139,48 @@ test('night stars can twinkle while day hiding and the moon oval guard remain in
   const ovalGuard = matchingRules(root, selector => /^\.weather-orb-overlay\.has-cloud-veil::(?:before|after)$/.test(selector));
   assert.equal(lastDeclaration(ovalGuard, 'display').value, 'none');
   assert.equal(lastDeclaration(ovalGuard, 'content').value, 'none');
+});
+
+test('night star fields use valid CSS grammar with the actual interpolated tiles', async () => {
+  const root = await styles;
+  for (const area of ['preview', 'dropdown']) {
+    for (const pseudo of ['before', 'after']) {
+      const rules = matchingRules(root, selector => selector.endsWith(`.weather-header-${area}__stars-back.is-night-sky::${pseudo}`));
+      const backgrounds = rules.flatMap(rule => rule.nodes.filter(node => node.type === 'decl' && ['background', 'background-image'].includes(node.prop)));
+      assert.equal(backgrounds.length, 1, `${area}::${pseudo} must have one starfield background`);
+      const declaration = backgrounds[0];
+      assert.match(declaration.value, /12px 8px\s*\/\s*34px 34px/, 'the actual B tile must be interpolated, not a placeholder');
+      if (pseudo === 'before') assert.match(declaration.value, /0 0\s*\/\s*30px 30px/, 'the actual A tile must be interpolated');
+      // Long background lists exceed the lexer's bounded iteration guard. Split
+      // only top-level AST commas; overlapping pairs also enforce that a color
+      // can occur only in the final layer. Commas inside gradients stay intact.
+      const groups = [[]];
+      parseCss(declaration.value, { context: 'value' }).children.forEach(node => {
+        if (node.type === 'Operator' && node.value === ',') groups.push([]);
+        else groups.at(-1).push(node);
+      });
+      assert.ok(groups.every(nodes => nodes.length > 0), 'starfield layers must not be empty');
+      const layers = groups.map(nodes => nodes.map(node => generate(node)).join(' '));
+      for (let index = 0; index < layers.length; index += 1) {
+        const value = index ? `${layers[index - 1]}, ${layers[index]}` : layers[index];
+        const result = lexer.matchProperty(declaration.prop, value);
+        assert.ok(!result.error, `${area}::${pseudo} ${declaration.prop} layer ${index}: ${result.error?.message.split('\n')[0]}`);
+        assert.ok(result.matched, `${area}::${pseudo} layer ${index} must match the declared CSS property grammar`);
+      }
+    }
+  }
+});
+
+test('dropdown foreground surfaces leave the stars visible above the opaque outer menu', async () => {
+  const root = await styles;
+  for (const part of ['hero', 'body', 'forecast-list', 'detail-card', 'forecast-pill']) {
+    const rules = matchingRules(root, selector => selector === `.weather-header-dropdown__${part}`);
+    const paint = rules.flatMap(rule => rule.nodes.filter(node => node.type === 'decl' && ['background', 'background-color'].includes(node.prop))).at(-1);
+    assert.match(paint.value, /^(?:transparent|none)$/, part);
+    assert.equal(lastDeclaration(rules, 'background-image').value, 'none', part);
+  }
+  const menu = matchingRules(root, selector => selector === '.weather-header-dropdown');
+  assert.equal(lastDeclaration(menu, 'background-color').value, 'rgb(5 10 9)', 'the outer menu retains its readable opaque backdrop');
 });
 
 test('the fine weather menu rim keeps its 12.8 second glint and animated properties unlocked', async () => {

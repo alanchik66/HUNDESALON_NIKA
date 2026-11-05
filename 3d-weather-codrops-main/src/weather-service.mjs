@@ -5,7 +5,7 @@
  * Existing dependency runtimes remain explicitly vendored build inputs.
  */
 import { n as e } from '../dist-widget/rolldown-runtime-CwX0HnDi.mjs';
-import { hasCompleteForecast } from './weather-lifecycle.mjs?v=20261103-weather-parity-v6';
+import { hasCompleteForecast, WEATHER_REFRESH_INTERVAL_MS, isCurrentWeatherFresh, parseWeatherCurrentTime } from './weather-lifecycle.mjs?v=20261103-weather-parity-v6';
 function t(e, t) {
   return function () {
     return e.apply(t, arguments);
@@ -2435,8 +2435,11 @@ var compiledWeatherConfiguration = {
     };
   },
   Kn = (e, t, n) => {
-    let r = n.current || {},
-      i = n.daily || {},
+    const r = n.current || {};
+    const validAt = parseWeatherCurrentTime(r.time, n.utc_offset_seconds);
+    const numeric = value => (typeof value === 'number' || typeof value === 'string' && value.trim() !== '') && Number.isFinite(Number(value));
+    if (validAt === null || !numeric(r.temperature_2m) || !numeric(r.weather_code)) throw Error('Invalid current weather observation.');
+    let i = n.daily || {},
       a = Number(r.is_day ?? 1),
       o = Number(r.temperature_2m ?? 0),
       s = Number(r.apparent_temperature ?? o),
@@ -2447,8 +2450,8 @@ var compiledWeatherConfiguration = {
       f = Number(r.relative_humidity_2m ?? 0),
       p = r.cloud_cover == null || !Number.isFinite(Number(r.cloud_cover)) ? null : Number(r.cloud_cover),
       m = Number(r.precipitation ?? 0),
-      h = Bn(Number(r.weather_code ?? i.weather_code?.[0] ?? 3), a),
-      g = r.time || `${i.time?.[0] || new Date().toISOString().slice(0, 10)}T12:00`,
+      h = Bn(Number(r.weather_code), a),
+      g = r.time,
       _ = Array.from({ length: Math.min(i.time?.length || 0, 4) }, (e, t) => Gn(i, t)),
       v = _[0]?.day;
     return (
@@ -2462,11 +2465,11 @@ var compiledWeatherConfiguration = {
           lat: t.latitude,
           lon: t.longitude,
           tz_id: n.timezone || t.timezone || ``,
-          localtime_epoch: zn(g),
+          localtime_epoch: Math.floor(validAt / 1000),
           localtime: Rn(g),
         },
         current: {
-          last_updated_epoch: zn(g),
+          last_updated_epoch: Math.floor(validAt / 1000),
           last_updated: Rn(g),
           temp_c: J(o),
           temp_f: Y(o),
@@ -2491,12 +2494,15 @@ var compiledWeatherConfiguration = {
           gust_kph: J(l),
         },
         forecast: { forecastday: _ },
+        weatherMeta: { source: 'open-meteo', providerLabel: 'Open-Meteo', attributionUrl: 'https://open-meteo.com/',
+          time: g, validAt, fetchedAt: Date.now(), timezone: n.timezone || t.timezone || '' },
         cached: !1,
       }
     );
   },
-  qn = async e => {
-    let t = (await axios.get(`${dn}/weather`, { params: { location: e, forecast_contract: `four-day-v2` }, timeout: 15e3 })).data;
+  qn = async (e, options = {}) => {
+    let t = (await axios.get(`${dn}/weather`, { params: { location: e, forecast_contract: `four-day-v2` },
+      ...(options.forceRefresh ? { headers: { 'Cache-Control': 'no-cache' } } : {}), timeout: 15e3 })).data;
     return t?.rateLimited || t?.serviceUnavailable ? null : t;
   },
   Jn = async e =>
@@ -2562,7 +2568,8 @@ var compiledWeatherConfiguration = {
             r = Number(e.expiresAt),
             i = Number(e.savedAt);
           if (!Number.isFinite(i) || i > n || !hasCompleteForecast(e.data, i)) return null;
-          if (Number.isFinite(r) && r > n && Number.isFinite(i) && n - i < 6e5)
+          if (Number.isFinite(r) && r > n && n - i < WEATHER_REFRESH_INTERVAL_MS &&
+            isCurrentWeatherFresh(e.data, n) && hasCompleteForecast(e.data, n))
             return e.data ? { ...e.data, cached: true, fromCache: true, stale: false, cacheSavedAt: i } : null;
           if (t && Number.isFinite(i) && n - i < 1728e5) return e.data || null;
           return null;
@@ -2579,10 +2586,11 @@ var compiledWeatherConfiguration = {
           }
         },
         c = e => {
+          if (!isCurrentWeatherFresh(e, Date.now())) throw Error('Current weather timestamp is stale or invalid.');
           // A partial response can update current readings without replacing the last complete forecast.
           if (!e || e.stale || !hasCompleteForecast(e, Date.now()) || typeof localStorage > `u`) return e;
           try {
-            localStorage.setItem(a, JSON.stringify({ savedAt: Date.now(), expiresAt: Date.now() + 6e5, data: e }));
+            localStorage.setItem(a, JSON.stringify({ savedAt: Date.now(), expiresAt: Date.now() + WEATHER_REFRESH_INTERVAL_MS, data: e }));
           } catch {}
           return e;
         },
@@ -2615,7 +2623,7 @@ var compiledWeatherConfiguration = {
       if (l && !t.forceRefresh) return l;
       if (un)
         try {
-          let e = await qn(r);
+          let e = await qn(r, t);
           if (e) return c(await Wn(e, n, i));
         } catch (e) {
           if (On(e)) {

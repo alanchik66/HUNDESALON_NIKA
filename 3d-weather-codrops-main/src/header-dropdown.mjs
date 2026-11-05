@@ -7,7 +7,7 @@
 import { r as toInteropDefault } from '../dist-widget/rolldown-runtime-CwX0HnDi.mjs';
 import { n as getJsxRuntime, r as getReact, t as getReactDOM } from '../dist-widget/react-vendor-DdSZTPSL.mjs';
 import { i as weatherService } from './weather-service.mjs?v=20261103-weather-parity-v6';
-import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveForecastCloudCover, resolveForecastNoonMs, buildForecastSceneContext, buildForecastSlots } from './weather-lifecycle.mjs?v=20261103-weather-parity-v6';
+import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveForecastCloudCover, resolveForecastNoonMs, buildForecastSceneContext, buildForecastSlots, formatWeatherObservationTime } from './weather-lifecycle.mjs?v=20261103-weather-parity-v6';
 var React = toInteropDefault(getReact()),
   jsxRuntime = getJsxRuntime(),
   LocationSearch = ({
@@ -537,6 +537,7 @@ var React = toInteropDefault(getReact()),
       : new Intl.DateTimeFormat(localeTags[t] || localeTags.en, {
           hour: `2-digit`,
           minute: `2-digit`,
+          hourCycle: `h23`,
         }).format(n);
   },
   formatForecastDate = (e, t, full = !1) => {
@@ -584,6 +585,7 @@ var React = toInteropDefault(getReact()),
         is_day: 1,
       },
       location: { ...e.location, localtime: `${t.date} 12:00` },
+      weatherMeta: { ...e.weatherMeta, appearanceTimeMs: resolveForecastNoonMs(t.date, e.location?.tz_id || e.location?.timezone) },
     };
   },
   weatherStatistics = (e, t) => [
@@ -604,6 +606,8 @@ function WeatherApp({
   locale: u = `en`,
   managedRefresh = false,
   runtimeController = null,
+  now = Date.now,
+  getSolarPhase,
 }) {
   let [d, g] = (0, React.useState)(null),
     [_, v] = (0, React.useState)(!1),
@@ -717,6 +721,7 @@ function WeatherApp({
     oe = $ ? weatherStatistics($, U) : [],
     se = d ? translateCondition(d.current.condition, u) : ``,
     ce = $ ? translateCondition($.current.condition, u) : ``,
+    observedTime = !Q && $ ? formatWeatherObservationTime($, localeTags[u] || localeTags.en) : null,
     le = J ? translateCondition(J.current.condition, u) : ``,
     ue = d ? formatRegion(d.location, u) : ``,
     de = $ ? formatRegion($.location, u) : ``,
@@ -738,6 +743,8 @@ function WeatherApp({
                   children: (0, jsxRuntime.jsx)(Scene3D, {
                     fallback: Z,
                     weatherData: d,
+                    now,
+                    getSolarPhase,
                     isLoading: _ && !d,
                     embedded: !0,
                     variant: `header-panel`,
@@ -903,6 +910,8 @@ function WeatherApp({
                         children: (0, jsxRuntime.jsx)(Scene3D, {
                     fallback: Z,
                           weatherData: $,
+                          now,
+                          getSolarPhase,
                           isLoading: _,
                           embedded: !0,
                           variant: `header-panel`,
@@ -958,8 +967,8 @@ function WeatherApp({
                           children: [
                             (0, jsxRuntime.jsx)(`strong`, { children: ce }),
                             (0, jsxRuntime.jsxs)(`span`, {
-                              hidden: Boolean(Q),
-                              children: Q ? `` : [U.updated, `:`, ` `, formatLocalTime($.location.localtime, u)],
+                              hidden: Boolean(Q) || !observedTime,
+                              children: observedTime ? [U.updated, `:`, ` `, observedTime] : ``,
                             }),
                           ],
                         }),
@@ -1098,6 +1107,8 @@ function WeatherApp({
               children: (0, jsxRuntime.jsx)(Scene3D, {
                     fallback: Z,
                 weatherData: d,
+                now,
+                getSolarPhase,
                 isLoading: _ && !d,
                 embedded: e,
                 variant: l,
@@ -1432,6 +1443,8 @@ var ReactDOM = toInteropDefault(getReactDOM()),
           useGeolocation: t.useGeolocation ?? !1,
           managedRefresh: t.managedRefresh ?? false,
           runtimeController,
+          now: t.now,
+          getSolarPhase: t.getSolarPhase,
         }),
       })
     );
@@ -1442,6 +1455,7 @@ var ReactDOM = toInteropDefault(getReactDOM()),
       refresh: runtimeController.refresh,
       setLocation: runtimeController.setLocation,
       getState: runtimeController.getState,
+      observationTime: formatWeatherObservationTime,
       getForecastCloudCover: resolveForecastCloudCover,
       getForecastNoonMs: resolveForecastNoonMs,
       getForecastSceneContext: buildForecastSceneContext,
