@@ -196,10 +196,10 @@ void main() {
   // band changes independently; there is no rotating crown of regular spokes.
   float structure = 0.5 + 0.2 * sin(angle * 3.0 + 0.7)
     + 0.12 * sin(angle * 5.0 - 1.3) + 0.1 * cos(angle * 9.0 + 2.1);
-  // At a 45px disc, the old 41-strand field reduced to subpixel glints. Broader
-  // unequal streamers keep a soft visible silhouette at the actual mobile size.
+  // Separate narrow streamers from the steady halo. A strong diffuse floor
+  // merges them into cloudy lobes at mobile size instead of visible rays.
   float fineStrands = 0.5 + 0.5 * sin(angle * 17.0 + sin(angle * 7.0) * 1.1 + 0.3 * sin(uTime * 0.17 + angle * 2.0));
-  float filaments = pow(clamp(structure, 0.0, 1.0), 1.25) * (0.72 + 0.28 * pow(fineStrands, 2.0));
+  float filaments = pow(clamp(structure, 0.0, 1.0), 1.25) * (0.06 + 0.94 * pow(fineStrands, 8.0));
   float pulse = 0.82 + 0.18 * sin(uTime * 0.43 - aboveLimb * 34.0 + angle * 3.0)
     + 0.1 * sin(uTime * 0.27 - aboveLimb * 53.0 - angle * 5.0);
   float rayLength = 0.035 + 0.045 * filaments + 0.01 * sin(uTime * 0.31 + angle * 3.0)

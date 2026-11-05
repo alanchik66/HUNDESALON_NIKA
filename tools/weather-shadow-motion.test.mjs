@@ -1230,7 +1230,7 @@ test('actual solar ray light travels independently across the limb while retaini
   scene.dispose();
 });
 
-test('mobile rays keep several CSS pixels of soft shape after alpha, sRGB and display gain rather than only numeric shader motion', async () => {
+test('mobile rays stay distinct from the halo at the shared 68px size after compositing', async () => {
   const h = await solarRecoveryHarness();
   const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
   const material = scene.flareMesh.material;
@@ -1249,7 +1249,7 @@ test('mobile rays keep several CSS pixels of soft shape after alpha, sRGB and di
   assert.equal(material.toneMapped, false);
   assert.equal(material.depthWrite, false);
   assert.equal(material.transparent, true);
-  for (const size of [92, 111]) {
+  for (const size of [68, 92]) {
     const reach = [], angular = [], movements = [];
     let clearMaximum = 0, cloudMaximum = 0;
     for (let index = 0; index < 360; index += 1) {
@@ -1274,12 +1274,16 @@ test('mobile rays keep several CSS pixels of soft shape after alpha, sRGB and di
     }
     reach.sort((a, b) => a - b);
     const extent = reach[Math.floor(reach.length * .9)];
-    assert.ok(extent >= 6 && extent <= 12, `${size}px canvas needs a visible soft radial extent, received ${extent}px`);
+    assert.ok(extent >= size * .06 && extent <= size * .13, `${size}px canvas needs visible short rays, received ${extent}px`);
     assert.ok(Math.max(...angular) - Math.min(...angular) > 18, 'unequal streamers must retain an angular silhouette instead of becoming a uniform ring');
+    const sorted = [...angular].sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+    const peak = sorted.at(-1);
+    assert.ok(median < peak * .12, `rays must have dark gaps instead of merging into broad cloudy lobes: median ${median}, peak ${peak}`);
     let longest = 0, run = 0;
-    for (const light of angular.concat(angular)) { run = light > 18 ? run + 1 : 0; longest = Math.max(longest, Math.min(run, angular.length)); }
+    for (const light of angular.concat(angular)) { run = light > peak * .5 ? run + 1 : 0; longest = Math.max(longest, Math.min(run, angular.length)); }
     const arcWidth = longest * Math.PI / 180 * (.247 * size + 4);
-    assert.ok(arcWidth > 3, `${size}px canvas needs multi-pixel broad light, received ${arcWidth}px`);
+    assert.ok(arcWidth > .6 && arcWidth < 3, `${size}px canvas needs a narrow antialiased ray at half maximum, received ${arcWidth}px`);
     assert.ok(movements.filter(change => change > 6).length > 25, 'many visible angular positions must change smoothly across three seconds');
     assert.ok(cloudMaximum < clearMaximum * .016, 'thick clouds attenuate the complete luminous ray output, not just the photosphere');
   }

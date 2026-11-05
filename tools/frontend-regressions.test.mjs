@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { parse } from 'espree';
+import postcss from 'postcss';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -1075,7 +1076,7 @@ test('cookie choices remain usable when browser storage rejects writes', async (
   }
 });
 
-test('header Sun and Moon retain their fixed scales and shared CSS anchors in both variants', async () => {
+test('header Sun matches menu size with its own preview offset while Moon and menu anchors remain fixed', async () => {
   const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
   const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'script' });
   const bootstrap = ast.body.find(node =>
@@ -1086,6 +1087,22 @@ test('header Sun and Moon retain their fixed scales and shared CSS anchors in bo
   )?.expression.callee;
   assert.ok(bootstrap, 'site-shell.js must declare the siteShellBootstrap IIFE');
   const declarations = bootstrap.body.body;
+  const styleTemplate = declarations
+    .filter(item => item.type === 'VariableDeclaration')
+    .flatMap(item => item.declarations)
+    .find(item => item.id?.name === 'HEADER_WEATHER_TRANSPARENT_STYLES')?.init;
+  assert.equal(styleTemplate?.type, 'TemplateLiteral');
+  const styles = postcss.parse(styleTemplate.quasis.map(quasi => quasi.value.cooked).join('0'));
+  const sunSizeRules = [];
+  styles.walkRules(rule => {
+    if (rule.selectors.some(selector => /^\.weather-orb-overlay--(?:preview|dropdown)\.is-sun$/.test(selector)) &&
+      rule.nodes.some(node => node.type === 'decl' && ['width', 'height'].includes(node.prop))) sunSizeRules.push(rule);
+  });
+  assert.equal(sunSizeRules.length, 1, 'a mobile override must not enlarge only the preview Sun');
+  assert.deepEqual(sunSizeRules[0].selectors, ['.weather-orb-overlay--preview.is-sun', '.weather-orb-overlay--dropdown.is-sun']);
+  for (const property of ['width', 'height']) {
+    assert.equal(sunSizeRules[0].nodes.find(node => node.prop === property)?.value, 'clamp(68px, 14vw, 92px)');
+  }
   const declaration = name => {
     const node = declarations.find(item => item.type === 'FunctionDeclaration' && item.id?.name === name);
     assert.ok(node, `siteShellBootstrap must declare function ${name}`);
@@ -1128,6 +1145,13 @@ test('header Sun and Moon retain their fixed scales and shared CSS anchors in bo
   const expectedScale = fixed('moon', 'preview').scale.toFixed(3);
   assert.equal(fixed('moon', 'dropdown').scale, fixed('moon', 'preview').scale);
   assert.equal(fixed('moon', 'dropdown').objectPosition, fixed('moon', 'preview').objectPosition);
+  const anchor = layout => ({ left: layout.left, offsetX: layout.offsetX, offsetY: layout.offsetY });
+  const originalAnchor = { left: 68, offsetX: -3, offsetY: -4 };
+  assert.deepEqual(anchor(fixed('moon', 'preview')), originalAnchor);
+  assert.deepEqual(anchor(fixed('moon', 'dropdown')), originalAnchor);
+  assert.deepEqual(anchor(fixed('sun', 'dropdown')), originalAnchor);
+  assert.deepEqual(anchor(fixed('sun', 'preview')), { left: 68, offsetX: 3, offsetY: -8 });
+  assert.equal(fixed('sun', 'preview').scale, fixed('sun', 'dropdown').scale, 'equal CSS sizes must produce equal rendered solar sizes');
 
   for (const variant of ['preview', 'dropdown']) {
     const moon = createOrb(variant, 'moon');
@@ -1151,7 +1175,7 @@ test('header Sun and Moon retain their fixed scales and shared CSS anchors in bo
     apply(sun, { left: 23, top: 41, scale: 0.7, offsetX: 4, offsetY: -2 });
     assert.equal(sun.values.get('--orb-scale-visible'), expectedSunScale);
     assert.equal(sun.dataset.orbPositionLocked, variant);
-    for (const name of positions) assert.equal(sun.values.has(name), false, `${variant}: Sun must keep the Moon's CSS anchor`);
+    for (const name of positions) assert.equal(sun.values.has(name), false, `${variant}: Sun must retain its own fixed CSS anchor`);
     positions.forEach(name => sun.values.set(name, 'stale-again'));
     apply(sun, null);
     assert.equal(sun.values.get('--orb-scale-visible'), expectedSunScale, 'missing model coordinates must not reset the rendered solar scale');

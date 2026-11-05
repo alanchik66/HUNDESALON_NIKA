@@ -332,7 +332,7 @@
     offsetY: -4,
   });
   const HEADER_WEATHER_MOON_PREVIEW_ANCHOR = HEADER_WEATHER_ORB_PREVIEW_ANCHOR;
-  const HEADER_WEATHER_SUN_PREVIEW_ANCHOR = HEADER_WEATHER_ORB_PREVIEW_ANCHOR;
+  const HEADER_WEATHER_SUN_PREVIEW_ANCHOR = Object.freeze({ left: 68, offsetX: 3, offsetY: -8 });
   const HEADER_WEATHER_MOON_PREVIEW_LAYOUT = Object.freeze({
     left: HEADER_WEATHER_MOON_PREVIEW_ANCHOR.left,
     offsetX: HEADER_WEATHER_MOON_PREVIEW_ANCHOR.offsetX,
@@ -345,20 +345,19 @@
     left: HEADER_WEATHER_SUN_PREVIEW_ANCHOR.left,
     offsetX: HEADER_WEATHER_SUN_PREVIEW_ANCHOR.offsetX,
     offsetY: HEADER_WEATHER_SUN_PREVIEW_ANCHOR.offsetY,
-    scale: 0.94,
+    scale: 1,
     objectPosition: '50% 50%',
   });
   const HEADER_WEATHER_SUN_DROPDOWN_LAYOUT = Object.freeze({
-    left: HEADER_WEATHER_SUN_PREVIEW_ANCHOR.left,
-    offsetX: HEADER_WEATHER_SUN_PREVIEW_ANCHOR.offsetX,
-    offsetY: HEADER_WEATHER_SUN_PREVIEW_ANCHOR.offsetY,
+    left: HEADER_WEATHER_ORB_PREVIEW_ANCHOR.left,
+    offsetX: HEADER_WEATHER_ORB_PREVIEW_ANCHOR.offsetX,
+    offsetY: HEADER_WEATHER_ORB_PREVIEW_ANCHOR.offsetY,
     scale: 1,
     objectPosition: '50% 50%',
   });
   /** Gentle display gain; retain detail and colour from the original solar map. */
   const HEADER_WEATHER_SUN_BRIGHTNESS = 1.06;
   const HEADER_WEATHER_SUN_MEDIA_SCALE = 1;
-  const HEADER_WEATHER_SUN_SIZE_FACTOR = 1;
 
   const HEADER_WEATHER_TRANSPARENT_STYLES = `
 :host([data-weather-variant='header']),
@@ -919,8 +918,6 @@
 }
 
 .weather-orb-overlay--preview.is-sun {
-  width: clamp(${82 * HEADER_WEATHER_SUN_SIZE_FACTOR}px, ${19 * HEADER_WEATHER_SUN_SIZE_FACTOR}vw, ${118 * HEADER_WEATHER_SUN_SIZE_FACTOR}px) !important;
-  height: clamp(${82 * HEADER_WEATHER_SUN_SIZE_FACTOR}px, ${19 * HEADER_WEATHER_SUN_SIZE_FACTOR}vw, ${118 * HEADER_WEATHER_SUN_SIZE_FACTOR}px) !important;
   left: ${HEADER_WEATHER_SUN_PREVIEW_ANCHOR.left}% !important;
   top: 50% !important;
   right: auto !important;
@@ -967,6 +964,7 @@
   transform: translate(-50%, -50%) scale(var(--orb-scale-hidden, 0.94)) !important;
 }
 
+.weather-orb-overlay--preview.is-sun,
 .weather-orb-overlay--dropdown.is-sun {
   width: clamp(68px, 14vw, 92px) !important;
   height: clamp(68px, 14vw, 92px) !important;
@@ -3381,11 +3379,6 @@
   .weather-orb-overlay--dropdown.is-moon {
     width: ${102 * HEADER_WEATHER_MOON_SIZE_FACTOR}px !important;
     height: ${102 * HEADER_WEATHER_MOON_SIZE_FACTOR}px !important;
-  }
-
-  .weather-orb-overlay--preview.is-sun {
-    width: ${Math.round(102 * HEADER_WEATHER_SUN_SIZE_FACTOR)}px !important;
-    height: ${Math.round(102 * HEADER_WEATHER_SUN_SIZE_FACTOR)}px !important;
   }
 
   .weather-orb-overlay--dropdown {
