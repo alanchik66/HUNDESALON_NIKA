@@ -7915,6 +7915,77 @@ body.price-page .price-card.price-card--breeds-open .price-card__breed-menu {
     rgb(4 17 11);
 }
 
+/* Match the weather-menu material and continuous rim without changing the
+   breed counter's typography, layout or shared open/close arrow lifecycle. */
+body.price-page button.price-card__badge--button[data-price-breeds-toggle][aria-expanded] {
+  border-color: transparent;
+  background: rgb(8 20 15 / 0.25);
+  box-shadow: 0 3px 10px rgb(0 0 0 / 0.08);
+  -webkit-backdrop-filter: blur(8px) saturate(0.5);
+  backdrop-filter: blur(8px) saturate(0.5);
+  animation: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.price-page button.price-card__badge--button[data-price-breeds-toggle][aria-expanded]::before {
+  inset: 0;
+  padding: 0.5px;
+  background: linear-gradient(
+    110deg,
+    transparent 28%,
+    rgb(31 178 126 / 0.08) 38%,
+    rgb(74 201 153 / 0.24) 46%,
+    rgb(173 231 200 / 0.52) 49%,
+    rgb(255 237 192 / 0.88) 50%,
+    rgb(173 231 200 / 0.24) 51%,
+    transparent 53%
+  );
+  background-size: 250% 100%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: priceBreedMenuRimFlow 12.8s ease-in-out infinite;
+  animation-delay: 0s;
+  animation-play-state: running;
+}
+
+body.price-page button.price-card__badge--button[data-price-breeds-toggle][aria-expanded]::after,
+body.price-page button.price-card__badge--button[data-price-breeds-toggle][aria-expanded] > :is(.nav-plasma, .nav-plasma--active) {
+  display: none;
+}
+
+body.price-page button.price-card__badge--button[data-price-breeds-toggle][aria-expanded] .price-card__badge-icon-motion {
+  --site-arrow-motion-peak-x: -4px;
+  --site-arrow-motion-settle-x: -1px;
+  --site-arrow-motion-return-x: -2.5px;
+}
+
+body.price-page button.price-card__badge--button[data-price-breeds-toggle][aria-expanded='true'] .price-card__badge-icon-motion {
+  --site-arrow-motion-peak-x: 4px;
+  --site-arrow-motion-settle-x: 1px;
+  --site-arrow-motion-return-x: 2.5px;
+}
+
+@media (pointer: coarse), (max-width: 720px) {
+  body.price-page button.price-card__badge--button[data-price-breeds-toggle][aria-expanded] {
+    min-height: 44px;
+  }
+}
+
+@keyframes priceBreedMenuRimFlow {
+  0%, 100% {
+    background-position: 20% 50%;
+    opacity: 0.9;
+  }
+
+  50% {
+    background-position: 80% 50%;
+    opacity: 1;
+  }
+}
+
 body.price-page main[data-price-page] .price-card__service-option,
 body.price-page main[data-price-page] .price-card__promotion-button,
 body.price-page main[data-price-page] .price-card__chip {

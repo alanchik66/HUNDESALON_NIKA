@@ -2866,6 +2866,7 @@
     const edge = 20;
     const controlRect = control.getBoundingClientRect();
     const toggleRect = toggle.getBoundingClientRect();
+    const scale = controlRect.height / control.offsetHeight || 1;
     const cardRect = card.getBoundingClientRect();
     const rowRect = row?.getBoundingClientRect() || cardRect;
     const rowWidth = Math.max(0, rowRect.width - edge * 2);
@@ -2876,21 +2877,28 @@
     const menuWidth = opensToRight ? Math.min(preferredWidth, availableRight) : preferredWidth;
     const rowRight = rowRect.right - edge - menuWidth - controlRect.left;
     const left = opensToRight ? preferredLeft : rowRight;
-    menu.style.left = `${left}px`;
+    menu.style.left = `${left / scale}px`;
     menu.style.right = 'auto';
-    menu.style.width = `${Math.max(0, menuWidth)}px`;
-    const maxMenuHeight = Math.min(480, Math.max(220, window.innerHeight - edge * 2));
-    menu.style.maxHeight = `${Math.round(maxMenuHeight)}px`;
+    menu.style.width = `${Math.max(0, menuWidth) / scale}px`;
+    const spaceBelow = window.innerHeight - edge - toggleRect.bottom - gap;
+    const spaceAbove = toggleRect.top - edge - gap;
+    const opensBelow = spaceBelow >= Math.min(220, spaceAbove);
+    const maxMenuHeight = Math.min(480, Math.max(0, window.innerHeight - edge * 2), Math.max(0,
+      opensToRight ? window.innerHeight - edge * 2 : opensBelow ? spaceBelow : spaceAbove
+    ));
+    menu.style.maxHeight = `${Math.floor(maxMenuHeight / scale)}px`;
     // The revealed menu gains its final scrollbar gutter after layout. Reserve a
     // small amount of vertical space so its final box cannot cross the viewport edge.
     const menuHeight = Math.min((menu.getBoundingClientRect().height || menu.scrollHeight || maxMenuHeight) + 20, maxMenuHeight);
+    const preferredTop = opensToRight ? controlRect.top
+      : opensBelow ? toggleRect.bottom + gap : toggleRect.top - gap - menuHeight;
     const menuViewportTop = Math.max(
       edge,
-      Math.min(controlRect.top, window.innerHeight - edge - menuHeight)
+      Math.min(preferredTop, window.innerHeight - edge - menuHeight)
     );
-    const menuTop = menuViewportTop - controlRect.top;
+    const menuTop = (menuViewportTop - controlRect.top) / scale;
     menu.style.top = `${Math.round(menuTop)}px`;
-    menu.dataset.priceMenuAlign = opensToRight ? 'start' : 'end';
+    menu.dataset.priceMenuAlign = opensToRight ? 'start' : opensBelow ? 'below' : 'above';
     syncBreedMenuScrollIndicator(menu);
   };
 
