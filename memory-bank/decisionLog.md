@@ -1,5 +1,12 @@
 # Decision Log
 
+## 2026-11-05 - Scoped web glass for homepage service tiles
+
+- Apply the material only to the four homepage cards marked by `data-service-glass` in de/en/ru/uk. Keep weather, booking and breed controls outside this change.
+- Use native backdrop blur, a thin masked rim, and a slightly magnified copy of the known CSS background at the bevel. This is a web adaptation, not arbitrary DOM refraction or the native Apple compositor.
+- Reuse existing pointer coordinates; update from the actual site scroll root. Pause offscreen/hidden and respect reduced motion/transparency/contrast. No sensors, permissions, dependencies or whole-card transforms.
+- Preserve sharp text; use solid dark gold on light glass where the shared pale gradient loses contrast. Track the two isolated assets with their own gzip budgets.
+
 ## 2026-08-28 - Separate Roo Code and VS Code Flow Layers
 
 ### Decision

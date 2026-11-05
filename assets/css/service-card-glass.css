@@ -1,0 +1,231 @@
+/* Homepage service tiles only. Content and layout remain in the shared styles. */
+.services-grid[data-service-glass] > .service-card {
+  --service-glass-radius: clamp(28px, 2.5vw, 32px);
+  --service-glass-inner-radius: calc(var(--service-glass-radius) - 1px);
+  --service-glass-bevel: clamp(8px, 1.2vw, 11px);
+  --service-glass-fill: rgb(7 23 16 / 88%);
+  --service-glass-rim: rgb(232 251 240 / 58%);
+  --service-glass-rim-soft: rgb(174 207 188 / 12%);
+  --service-glass-rim-warm: rgb(233 224 189 / 32%);
+  --service-glass-light-x: var(--glass-light-x, 50%);
+  --service-glass-light-y: var(--glass-light-y, 24%);
+  --service-glass-angle: var(--glass-angle, 135deg);
+
+  position: relative;
+  overflow: hidden;
+  border-color: transparent;
+  border-radius: var(--service-glass-radius);
+  background:
+    linear-gradient(145deg, rgb(216 239 222 / 16%), rgb(34 65 45 / 8%) 44%, rgb(6 32 21 / 13%)),
+    var(--service-glass-fill);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: 0 16px 36px rgb(0 0 0 / 22%);
+  transform: none;
+  transform-style: flat;
+  transition: box-shadow 280ms ease;
+  will-change: auto;
+}
+
+.services-grid[data-service-glass] > .service-card::before,
+.services-grid[data-service-glass] > .service-card::after,
+.services-grid[data-service-glass] > .service-card > .service-glass__lens {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border-radius: var(--service-glass-inner-radius);
+  pointer-events: none;
+}
+
+/* One inset rim also works when composited masks are unavailable. */
+.services-grid[data-service-glass] > .service-card::before {
+  content: '';
+  z-index: 3;
+  width: auto;
+  height: auto;
+  border: 1px solid var(--service-glass-rim-soft);
+  background: none;
+  opacity: 1;
+  transition: none;
+}
+
+/* Broad, quiet reflections follow scroll light, then pointer or touch light. */
+.services-grid[data-service-glass] > .service-card::after {
+  content: '';
+  z-index: 1;
+  background:
+    radial-gradient(
+      ellipse 105% 88% at var(--service-glass-light-x) var(--service-glass-light-y),
+      rgb(225 249 235 / 18%),
+      rgb(189 226 205 / 6%) 32%,
+      transparent 66%
+    ),
+    linear-gradient(
+      var(--service-glass-angle),
+      rgb(246 248 226 / 3%),
+      transparent 34% 62%,
+      rgb(185 222 202 / 4%)
+    );
+  opacity: 0.8;
+}
+
+/* The JS supplies a registered, magnified copy of the actual page background. */
+.services-grid[data-service-glass] > .service-card > .service-glass__lens {
+  z-index: 0;
+  display: none;
+  padding: var(--service-glass-bevel);
+  background-repeat: no-repeat;
+  background-position: var(--glass-scene-x, 0px) var(--glass-scene-y, 0px);
+  background-size: var(--glass-scene-width, 100vw) var(--glass-scene-height, 100vh);
+  opacity: 0.38;
+}
+
+.services-grid[data-service-glass] > .service-card > :is(h3, p, .price) {
+  position: relative;
+  z-index: 2;
+  filter: none;
+  transform: none;
+  text-shadow: none;
+}
+
+/* Keep the darkest gold stop readable over a moving reflection at small sizes. */
+.services-grid[data-service-glass] > .service-card > h3 {
+  background-image: linear-gradient(180deg, #fffdf2, #e4bd63 28%, #fff8d5 48%, #e4bd63 76%, #ffeba0);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .services-grid[data-service-glass] > .service-card {
+    --service-glass-fill: rgb(7 23 16 / 28%);
+
+    -webkit-backdrop-filter: blur(14px) saturate(1.25);
+    backdrop-filter: blur(14px) saturate(1.25);
+  }
+}
+
+@supports ((mask-composite: exclude) or (-webkit-mask-composite: xor)) {
+  .services-grid[data-service-glass] > .service-card::before {
+    padding: 1px;
+    border: 0;
+    background: conic-gradient(
+      from var(--service-glass-angle),
+      var(--service-glass-rim) 0deg,
+      var(--service-glass-rim-soft) 48deg 108deg,
+      var(--service-glass-rim-warm) 151deg,
+      var(--service-glass-rim-soft) 188deg 252deg,
+      var(--service-glass-rim) 309deg,
+      var(--service-glass-rim-soft) 343deg,
+      var(--service-glass-rim) 360deg
+    );
+  }
+
+  .services-grid[data-service-glass] > .service-card > .service-glass__lens {
+    display: block;
+  }
+
+  .services-grid[data-service-glass] > .service-card::before,
+  .services-grid[data-service-glass] > .service-card > .service-glass__lens {
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .services-grid[data-service-glass] > .service-card:hover {
+    --service-glass-light-x: calc(var(--glass-light-x, 50%) * 0.4 + var(--glow-x, 50%) * 0.6);
+    --service-glass-light-y: calc(var(--glass-light-y, 24%) * 0.4 + var(--glow-y, 50%) * 0.6);
+
+    box-shadow: 0 20px 42px rgb(0 0 0 / 27%);
+    transform: none;
+  }
+}
+
+.services-grid[data-service-glass] > .service-card.is-glass-touch {
+  --service-glass-light-x: calc(var(--glass-light-x, 50%) * 0.35 + var(--glass-touch-x, 50%) * 0.65);
+  --service-glass-light-y: calc(var(--glass-light-y, 24%) * 0.35 + var(--glass-touch-y, 50%) * 0.65);
+}
+
+body.light .services-grid[data-service-glass] > .service-card {
+  --service-glass-fill: rgb(246 244 235 / 90%);
+  --service-glass-rim: rgb(255 255 246 / 88%);
+  --service-glass-rim-soft: rgb(74 104 88 / 17%);
+  --service-glass-rim-warm: rgb(171 148 98 / 38%);
+
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 20%), rgb(163 187 171 / 6%) 68%),
+    var(--service-glass-fill);
+  box-shadow: 0 14px 32px rgb(57 73 57 / 12%);
+}
+
+body.light .services-grid[data-service-glass] > .service-card > .service-glass__lens {
+  opacity: 0.3;
+}
+
+/* The gold text gradient has pale stops that disappear on clear, light glass. */
+body.light .services-grid[data-service-glass] > .service-card > :is(h3, .price) {
+  background: none;
+  -webkit-text-fill-color: currentcolor;
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  body.light .services-grid[data-service-glass] > .service-card {
+    --service-glass-fill: rgb(246 244 235 / 40%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .services-grid[data-service-glass] > .service-card,
+  .services-grid[data-service-glass] > .service-card:is(:hover, .is-glass-touch) {
+    --service-glass-light-x: 50%;
+    --service-glass-light-y: 24%;
+    --service-glass-angle: 135deg;
+
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .services-grid[data-service-glass] > .service-card {
+    background: #081b12;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  body.light .services-grid[data-service-glass] > .service-card {
+    background: #f6f4eb;
+  }
+
+  .services-grid[data-service-glass] > .service-card::after,
+  .services-grid[data-service-glass] > .service-card > .service-glass__lens {
+    display: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .services-grid[data-service-glass] > .service-card,
+  body.light .services-grid[data-service-glass] > .service-card {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  .services-grid[data-service-glass] > .service-card::before,
+  .services-grid[data-service-glass] > .service-card::after,
+  .services-grid[data-service-glass] > .service-card > .service-glass__lens {
+    display: none;
+  }
+
+  .services-grid[data-service-glass] > .service-card > :is(h3, p, .price) {
+    background: none;
+    -webkit-text-fill-color: CanvasText;
+    color: CanvasText;
+  }
+}

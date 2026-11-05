@@ -12,6 +12,9 @@ const budgets = [
   // 500 bytes for the reviewed icon-motion lifecycle in main.js.
   { file: 'dist/assets/js/site-shell.js', gzip: 74_500 },
   { file: 'dist/assets/js/main.js', gzip: 15_500 },
+  // Homepage-only glass: keep the isolated material and lifecycle controller small.
+  { file: 'dist/assets/css/service-card-glass.css', gzip: 2_000 },
+  { file: 'dist/assets/js/service-card-glass.js', gzip: 3_000 },
   { file: 'dist/assets/images/brand/hero-dog.webp', raw: 50_000 },
 ];
 

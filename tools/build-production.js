@@ -19,9 +19,11 @@ const LOCAL_ASSET_REFERENCE =
 const PRODUCTION_MINIFY_ASSETS = [
   'assets/css/style.css',
   'assets/css/page-modules.css',
+  'assets/css/service-card-glass.css',
   'assets/js/site-shell.js',
   'assets/js/main.js',
   'assets/js/page-modules.js',
+  'assets/js/service-card-glass.js',
   'assets/js/tooltip.js',
   'assets/js/newsletter.js',
   'assets/js/sendpulse-integrations.js',
