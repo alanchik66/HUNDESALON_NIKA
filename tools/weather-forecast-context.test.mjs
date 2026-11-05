@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { buildForecastSlots, resolveForecastCloudCover, resolveForecastNoonMs, buildForecastSceneContext } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
+import { solarPosition } from '../assets/js/weather-solar-time.js';
 
 const filenames = ['widget.mjs', 'header-preview.mjs', 'header-dropdown.mjs'];
 const locales = ['ru', 'uk', 'de', 'en'];
@@ -315,10 +316,10 @@ async function solarContextHarness() {
   const math = sourceBlock(source, 'const TAU = ', '\nfunction resolveSolarPixelRatio(').replace(/export /g, '');
   const state = sourceBlock(source, '  setGeoState(next) {', '\n  async init() {');
   const animation = sourceBlock(source, '  updateAnimation(', '\n  renderFrame() {');
-  return new Function('THREE', `${math}\nclass SolarContext { ${state}\n${animation} }
+  return new Function('THREE', 'solarPosition', `${math}\nclass SolarContext { ${state}\n${animation} }
     return { Scene: SolarContext, elevation: solarElevationDegrees, color: solarColorForElevation,
       surfaceColor: solarSurfaceColorForElevation, angle: solarRotationAngle, epoch: SOLAR_MODEL_EPOCH_MS };`)(
-    { MathUtils: { degToRad: degrees => degrees * Math.PI / 180 } }
+    { MathUtils: { degToRad: degrees => degrees * Math.PI / 180 } }, solarPosition
   );
 }
 

@@ -3709,6 +3709,7 @@
   const HEADER_WEATHER_ASTRO_ENDPOINT = 'https://api.sunrise-sunset.org/json';
   const HEADER_WEATHER_REVERSE_GEOCODE_PROXY_ENDPOINT = resolveHeaderWeatherPublicEndpoint('/reverse-geocode');
   const HEADER_WEATHER_ASTRO_REFRESH_INTERVAL = 60000;
+  const HEADER_WEATHER_SOLAR_PHASE_REFRESH_INTERVAL = 5000;
   const HEADER_WEATHER_WIDGET_REFRESH_INTERVAL = 10 * 60 * 1000;
   const HEADER_WEATHER_GEO_REFRESH_INTERVAL = 5 * 60 * 1000;
   const HEADER_WEATHER_TIME_SYNC_INTERVAL = 30 * 60 * 1000;
@@ -4338,6 +4339,23 @@
       });
     }
     return headerWeatherSunSceneModulePromise;
+  }
+
+  let headerWeatherSolarClockModulePromise = null;
+  let headerWeatherSolarClockModuleRetry = 0;
+
+  function loadHeaderWeatherSolarClockModule() {
+    if (!headerWeatherSolarClockModulePromise) {
+      const target = new URL(resolveHeaderWeatherSunSceneModuleUrl(), window.location.href);
+      target.pathname = target.pathname.replace(/header-weather-sun-scene\.js$/, 'weather-solar-time.js');
+      if (headerWeatherSolarClockModuleRetry) target.searchParams.set('weather-retry', String(headerWeatherSolarClockModuleRetry));
+      headerWeatherSolarClockModulePromise = import(/* webpackIgnore: true */ target.href).catch(error => {
+        headerWeatherSolarClockModulePromise = null;
+        headerWeatherSolarClockModuleRetry += 1;
+        throw error;
+      });
+    }
+    return headerWeatherSolarClockModulePromise;
   }
 
   function updateHeaderWeatherSunSceneGeo(overlay, geoState) {
@@ -5518,35 +5536,6 @@
     }
 
     return null;
-  }
-
-  function getHeaderWeatherFallbackOrbKind(host) {
-    const hour = getHeaderWeatherHour(host);
-    const fallbackHour = typeof hour === 'number' ? hour : new Date(getHeaderWeatherNowMs()).getHours();
-    return fallbackHour >= 19 || fallbackHour < 6 ? 'moon' : 'sun';
-  }
-
-  function getHeaderWeatherFallbackOrbProgress(host, kind) {
-    const hour = getHeaderWeatherHour(host);
-    const fallbackHour = typeof hour === 'number' ? hour : new Date(getHeaderWeatherNowMs()).getHours();
-
-    if (kind === 'sun') {
-      return clampHeaderWeatherValue((fallbackHour - 6) / 12, 0, 1);
-    }
-
-    const nightHour = fallbackHour >= 19 ? fallbackHour - 19 : fallbackHour + 5;
-    return clampHeaderWeatherValue(nightHour / 11, 0, 1);
-  }
-
-  function getHeaderWeatherHour(host) {
-    const metaText = host?.shadowRoot?.querySelector('.weather-header-card__meta')?.textContent || '';
-    const match = metaText.match(/(\d{1,2}):(\d{2})/);
-    if (!match) {
-      return null;
-    }
-
-    const hour = Number(match[1]);
-    return Number.isFinite(hour) ? hour : null;
   }
 
   function getHeaderWeatherConditionPlainText(conditionEl) {
@@ -7502,7 +7491,7 @@
     return promise;
   }
 
-  async function fetchHeaderWeatherAstroDay(locationMeta, dateString) {
+  async function fetchHeaderWeatherAstroDay(locationMeta, dateString, solarClock) {
     const url = new URL(HEADER_WEATHER_ASTRO_ENDPOINT);
     url.searchParams.set('lat', String(locationMeta.latitude));
     url.searchParams.set('lng', String(locationMeta.longitude));
@@ -7512,39 +7501,34 @@
       url.searchParams.set('tzid', locationMeta.timezone);
     }
 
-    const response = await fetch(url.toString(), {
-      mode: 'cors',
-      credentials: 'omit',
-      headers: { Accept: 'application/json' },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Astronomical lookup failed with status ${response.status}.`);
+    const controller = new window.AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
+      const response = await fetch(url.toString(), {
+        mode: 'cors', credentials: 'omit', signal: controller.signal,
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok) throw new Error(`Astronomical lookup failed with status ${response.status}.`);
+      const day = solarClock.normalizeSolarDay(await response.json(), dateString, locationMeta.timezone || 'UTC');
+      if (!day) throw new Error('Astronomical lookup returned invalid events.');
+      return day;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const payload = await response.json();
-    const results = payload?.results;
-    if (!results?.sunrise || !results?.sunset) {
-      throw new Error('Astronomical lookup returned incomplete data.');
-    }
-
-    return {
-      date: dateString,
-      sunrise: Date.parse(results.sunrise),
-      sunset: Date.parse(results.sunset),
-      solarNoon: Date.parse(results.solar_noon),
-    };
   }
 
   async function resolveHeaderWeatherAstro(host) {
+    const solarClock = host.__weatherSolarClock || await loadHeaderWeatherSolarClockModule();
+    host.__weatherSolarClock = solarClock;
     const locationLabel = getHeaderWeatherLocationLabel(host);
     const locationMeta = await resolveHeaderWeatherLocationMeta(locationLabel);
     if (!locationMeta) {
       return null;
     }
 
-    const dateString = getHeaderWeatherDateInTimeZone(resolveHeaderWeatherTimeZone(host, locationMeta));
-    const cacheKey = `${locationMeta.latitude.toFixed(4)},${locationMeta.longitude.toFixed(4)}:${dateString}`;
+    const timeZone = resolveHeaderWeatherTimeZone(host, locationMeta);
+    const dateString = getHeaderWeatherDateInTimeZone(timeZone);
+    const cacheKey = `${locationMeta.latitude.toFixed(4)},${locationMeta.longitude.toFixed(4)}:${dateString}:${timeZone}`;
     const cachedEntry = headerWeatherAstroCache.get(cacheKey);
 
     if (cachedEntry?.value && cachedEntry.expiresAt > Date.now()) {
@@ -7555,22 +7539,18 @@
       return cachedEntry.promise;
     }
 
-    const promise = Promise.all([
-      fetchHeaderWeatherAstroDay(locationMeta, shiftHeaderWeatherDate(dateString, -1)),
-      fetchHeaderWeatherAstroDay(locationMeta, dateString),
-      fetchHeaderWeatherAstroDay(locationMeta, shiftHeaderWeatherDate(dateString, 1)),
-    ])
-      .then(([yesterday, today, tomorrow]) => {
-        const value = {
-          locationMeta,
-          yesterday,
-          today,
-          tomorrow,
-        };
+    const dates = [-1, 0, 1].map(offset => shiftHeaderWeatherDate(dateString, offset));
+    const astroLocation = { ...locationMeta, timezone: timeZone };
+    const promise = Promise.allSettled(dates.map(date => fetchHeaderWeatherAstroDay(astroLocation, date, solarClock)))
+      .then(results => {
+        const days = results.map((result, index) => result.status === 'fulfilled' ? result.value
+          : solarClock.calculateSolarDay(dates[index], timeZone, locationMeta.latitude, locationMeta.longitude));
+        const [yesterday, today, tomorrow] = days;
+        const value = { locationMeta, yesterday, today, tomorrow };
 
         headerWeatherAstroCache.set(cacheKey, {
           value,
-          expiresAt: Date.now() + HEADER_WEATHER_ASTRO_CACHE_TTL,
+          expiresAt: Date.now() + (days.every(day => day?.source === 'api') ? HEADER_WEATHER_ASTRO_CACHE_TTL : 5 * 60 * 1000),
         });
 
         return value;
@@ -7584,143 +7564,24 @@
     return promise;
   }
 
-  function resolveHeaderWeatherNightWindow(astroData, nowMs) {
-    if (!astroData?.today?.sunrise || !astroData?.today?.sunset) {
-      return null;
-    }
-
-    const beforeSunrise = nowMs < astroData.today.sunrise;
-    const nightStart = beforeSunrise ? astroData.yesterday?.sunset : astroData.today.sunset;
-    const nightEnd = beforeSunrise ? astroData.today.sunrise : astroData.tomorrow?.sunrise;
-    if (!Number.isFinite(nightStart) || !Number.isFinite(nightEnd) || nightEnd <= nightStart) {
-      return null;
-    }
-
-    const nightDuration = nightEnd - nightStart;
-    const nightProgress = clampHeaderWeatherValue((nowMs - nightStart) / Math.max(nightDuration, 1), 0, 1);
-
-    return { nightStart, nightEnd, nightDuration, nightProgress };
-  }
-
-  function resolveHeaderWeatherOrbCrossfadeWeights(nowMs, sunrise, sunset, nightWindow) {
-    if (nowMs >= sunrise && nowMs < sunset) {
-      return { moonOpacity: 0, sunOpacity: 1 };
-    }
-
-    if (!nightWindow) {
-      return { moonOpacity: 1, sunOpacity: 0 };
-    }
-
-    return { moonOpacity: 1, sunOpacity: 0 };
-  }
-
   function resolveHeaderWeatherOrbPresentation(host, astroData) {
-    const fallbackKind = getHeaderWeatherFallbackOrbKind(host);
     const nowMs = getHeaderWeatherNowMs();
-
-    if (!astroData?.today?.sunrise || !astroData?.today?.sunset) {
-      const fallbackProgress = getHeaderWeatherFallbackOrbProgress(host, fallbackKind);
-      const moonOpacity = fallbackKind === 'moon' ? 1 : 0;
-      const sunOpacity = fallbackKind === 'sun' ? 1 : 0;
-      return {
-        moon: {
-          active: moonOpacity > 0.02,
-          opacity: moonOpacity,
-          previewLayout: resolveHeaderWeatherOrbFixedLayout('moon', 'preview'),
-          dropdownLayout: resolveHeaderWeatherOrbFixedLayout('moon', 'dropdown'),
-          timeline: {
-            nightProgress: fallbackProgress,
-            videoDurationSec: HEADER_WEATHER_MOON_VIDEO_DURATION_SEC,
-          },
-        },
-        sun: {
-          active: sunOpacity > 0.02,
-          opacity: sunOpacity,
-          previewLayout: resolveHeaderWeatherOrbFixedLayout('sun', 'preview'),
-          dropdownLayout: resolveHeaderWeatherOrbFixedLayout('sun', 'dropdown'),
-          timeline: {
-            dayProgress: fallbackProgress,
-            videoDurationSec: HEADER_WEATHER_SUN_VIDEO_DURATION_SEC,
-          },
-        },
-        dominantKind: fallbackKind,
-      };
-    }
-
-    const nightWindow = resolveHeaderWeatherNightWindow(astroData, nowMs);
-    const { moonOpacity, sunOpacity } = resolveHeaderWeatherOrbCrossfadeWeights(
-      nowMs,
-      astroData.today.sunrise,
-      astroData.today.sunset,
-      nightWindow
-    );
-
-    const moonProgress = nightWindow?.nightProgress ?? 0;
-    const sunDayProgress =
-      nowMs >= astroData.today.sunrise && nowMs < astroData.today.sunset
-        ? clampHeaderWeatherValue(
-            (nowMs - astroData.today.sunrise) / Math.max(astroData.today.sunset - astroData.today.sunrise, 1),
-            0,
-            1
-          )
-        : 0;
-
-    const dominantKind = sunOpacity >= moonOpacity ? 'sun' : 'moon';
-
-    return {
-      moon: {
-        active: moonOpacity > 0.02,
-        opacity: moonOpacity,
-        previewLayout: resolveHeaderWeatherOrbFixedLayout('moon', 'preview'),
-        dropdownLayout: resolveHeaderWeatherOrbFixedLayout('moon', 'dropdown'),
-        timeline: nightWindow
-          ? {
-              nightStart: nightWindow.nightStart,
-              nightEnd: nightWindow.nightEnd,
-              nightProgress: nightWindow.nightProgress,
-              videoDurationSec: HEADER_WEATHER_MOON_VIDEO_DURATION_SEC,
-            }
-          : {
-              nightProgress: moonProgress,
-              videoDurationSec: HEADER_WEATHER_MOON_VIDEO_DURATION_SEC,
-            },
-      },
-      sun: {
-        active: sunOpacity > 0.02,
-        opacity: sunOpacity,
-        previewLayout: resolveHeaderWeatherOrbFixedLayout('sun', 'preview'),
-        dropdownLayout: resolveHeaderWeatherOrbFixedLayout('sun', 'dropdown'),
-        timeline:
-          nowMs >= astroData.today.sunrise && nowMs < astroData.today.sunset
-            ? {
-                dayStart: astroData.today.sunrise,
-                dayEnd: astroData.today.sunset,
-                dayProgress: sunDayProgress,
-                videoDurationSec: HEADER_WEATHER_SUN_VIDEO_DURATION_SEC,
-              }
-            : {
-                dayProgress: sunDayProgress,
-                videoDurationSec: HEADER_WEATHER_SUN_VIDEO_DURATION_SEC,
-              },
-      },
-
-      dominantKind,
-    };
+    const coordinates = astroData?.locationMeta || parseHeaderWeatherCoordinates(host?.dataset?.weatherLocation);
+    const phase = host.__weatherSolarClock?.solarPhase(nowMs, astroData?.today, coordinates?.latitude, coordinates?.longitude)
+      || { phase: 'unavailable', sunOpacity: 0, moonOpacity: 0, starOpacity: 0, dayProgress: 0 };
+    if (phase.phase === 'unavailable' && host.__weatherSolarPresentation) return host.__weatherSolarPresentation;
+    host.dataset.weatherSolarPhase = phase.phase;
+    host.dataset.weatherSolarSource = phase.source || 'unavailable';
+    const presentation = host.__weatherSolarClock?.solarPresentation(phase, astroData, nowMs,
+      resolveHeaderWeatherOrbFixedLayout, HEADER_WEATHER_MOON_VIDEO_DURATION_SEC, HEADER_WEATHER_SUN_VIDEO_DURATION_SEC)
+      || { phase: 'unavailable', starOpacity: 0, dominantKind: 'sun',
+        moon: { active: false, opacity: 0 }, sun: { active: false, opacity: 0 } };
+    if (phase.phase !== 'unavailable') host.__weatherSolarPresentation = presentation;
+    return presentation;
   }
 
-  function resolveHeaderWeatherShowNightStars(host, presentation, astroData) {
-    if ((presentation?.moon?.opacity ?? 0) > 0.02) {
-      return true;
-    }
-
-    const nowMs = getHeaderWeatherNowMs();
-    const sunrise = astroData?.today?.sunrise;
-    const sunset = astroData?.today?.sunset;
-    if (Number.isFinite(sunrise) && Number.isFinite(sunset)) {
-      return nowMs < sunrise || nowMs >= sunset;
-    }
-
-    return presentation?.dominantKind === 'moon';
+  function resolveHeaderWeatherStarOpacity(presentation) {
+    return clampHeaderWeatherValue(presentation?.starOpacity ?? (presentation?.dominantKind === 'moon' ? 1 : 0), 0, 1);
   }
 
   function applyHeaderWeatherOrbLayout(overlay, layout) {
@@ -13009,6 +12870,185 @@
     });
   }
 
+  // This path only applies cached data; it remains independent of network refreshes.
+  function syncHeaderWeatherCachedOrbPhase(host) {
+    if (!host?.isConnected || host.dataset.weatherMounted !== 'true' || !host.shadowRoot
+      || !host.__weatherSolarClock || !isHeaderWeatherCoordinateSelectionApplied(host)) return;
+    const deviceCoordinates = parseHeaderWeatherCoordinates(host.dataset.weatherLocation);
+    if (!deviceCoordinates) return;
+    const snapshot = host.__weatherAstroSnapshot;
+    const astroData = snapshot?.location === host.dataset.weatherLocation ? snapshot.data : null;
+    renderHeaderWeatherOrbOverlay(host, astroData, deviceCoordinates);
+  }
+
+  function renderHeaderWeatherOrbOverlay(host, astroData, deviceCoordinates) {
+    const presentation = resolveHeaderWeatherOrbPresentation(host, astroData);
+    const orbAtmosphere = resolveHeaderWeatherOrbAtmosphere(host);
+    host.__weatherOrbAtmosphere = orbAtmosphere;
+    applyHeaderWeatherTextReadability(host, orbAtmosphere);
+    const widgetBasePath = getHeaderWeatherWidgetBasePath(host);
+    const assetsModuleBase = getHeaderWeatherAssetsBasePath(host);
+    const geoState = {
+      latitude: getHeaderWeatherFiniteNumber(astroData?.locationMeta?.latitude) ?? deviceCoordinates.latitude,
+      longitude: getHeaderWeatherFiniteNumber(astroData?.locationMeta?.longitude) ?? deviceCoordinates.longitude,
+      timeMs: getHeaderWeatherNowMs(),
+      appearanceTimeMs: null,
+    };
+    const moonVideoSources = widgetBasePath
+      ? HEADER_WEATHER_MOON_VIDEO_FILES.map(file => `${widgetBasePath}/assets/Moon/${file}?v=${WEATHER_WIDGET_ASSET_VERSION}`)
+      : [];
+    const moonAssetConfig = moonVideoSources.length
+      ? {
+          type: 'video-keyed',
+          sources: moonVideoSources,
+          timelineBase: presentation?.moon?.timeline || {
+            videoDurationSec: HEADER_WEATHER_MOON_VIDEO_DURATION_SEC,
+            nightProgress: 0,
+          },
+        }
+      : null;
+    const sunAssetConfig =
+      widgetBasePath && assetsModuleBase
+        ? {
+            type: 'header-sun',
+            assetsModuleBase,
+            sunTextureUrl: `${widgetBasePath}/assets/sun_2k-sc1guPlV.jpg?v=${WEATHER_WIDGET_ASSET_VERSION}`,
+            geoState,
+          }
+        : null;
+
+    const applyOrbStack = (stack, variantActive, layoutKey = 'preview', atmosphere = orbAtmosphere,
+      sceneContext = { presentation, geoState }) => {
+      if (!stack) {
+        return;
+      }
+
+      const moonPart = sceneContext.presentation?.moon;
+      const sunPart = sceneContext.presentation?.sun;
+      const sceneSunAssetConfig = sunAssetConfig ? { ...sunAssetConfig, geoState: sceneContext.geoState } : null;
+      const moonLayout =
+        layoutKey === 'dropdown' ? moonPart?.dropdownLayout : resolveHeaderWeatherOrbFixedLayout('moon', 'preview');
+      const sunLayout =
+        layoutKey === 'dropdown' ? sunPart?.dropdownLayout : resolveHeaderWeatherOrbFixedLayout('sun', 'preview');
+
+      if (stack.moon) {
+        applyHeaderWeatherOrbCrossfade(stack.moon, moonPart);
+        applyHeaderWeatherOrbLayout(stack.moon, moonLayout);
+        if (variantActive && moonPart?.active) {
+          setHeaderWeatherOrbSource(stack.moon, 'moon', moonAssetConfig);
+          applyHeaderWeatherOrbAtmosphere(stack.moon, atmosphere);
+        } else {
+          setHeaderWeatherOrbSource(stack.moon, null, null);
+          applyHeaderWeatherOrbAtmosphere(stack.moon, 0);
+        }
+      }
+
+      if (stack.sun) {
+        applyHeaderWeatherOrbCrossfade(stack.sun, sunPart);
+        applyHeaderWeatherOrbLayout(stack.sun, sunLayout);
+        if (variantActive && sunPart?.active) {
+          setHeaderWeatherOrbSource(stack.sun, 'sun', sceneSunAssetConfig);
+          applyHeaderWeatherOrbAtmosphere(stack.sun, atmosphere);
+          if (sceneSunAssetConfig?.type === 'header-sun') {
+            updateHeaderWeatherSunSceneGeo(stack.sun, sceneContext.geoState);
+          }
+        } else {
+          stopHeaderWeatherSunScene(stack.sun);
+          setHeaderWeatherOrbSource(stack.sun, null, null);
+          applyHeaderWeatherOrbAtmosphere(stack.sun, 0);
+        }
+      }
+    };
+
+    const previewContainer = host.shadowRoot.querySelector('.weather-header-preview');
+    if (previewContainer) {
+      const cloudAlpha = Number(orbAtmosphere?.alpha) || 0;
+      const starWeight = resolveHeaderWeatherStarOpacity(presentation);
+      const showNightStars = starWeight > 0.02;
+      const starOpacity = starWeight * clampHeaderWeatherValue(1.08 - cloudAlpha * 0.52, 0.78, 1);
+      const starsBack = ensureHeaderWeatherStarsBackLayer(previewContainer);
+      if (starsBack) {
+        const syncExistingStarsToHeader = () => {
+          const siteHeader = document.querySelector('.header');
+          if (!siteHeader?.isConnected || !previewContainer.isConnected || !starsBack.isConnected) return;
+          const headerRect = siteHeader.getBoundingClientRect();
+          const previewRect = previewContainer.getBoundingClientRect();
+          const headerCenter = headerRect.left + headerRect.width / 2;
+          const previewCenter = previewRect.left + previewRect.width / 2;
+          const sceneShift = clampHeaderWeatherValue((previewCenter - headerCenter) * 0.75, -360, 360);
+          starsBack.style.setProperty('--header-stars-left', `${(headerRect.left - previewRect.left).toFixed(2)}px`);
+          starsBack.style.setProperty('--header-stars-top', `${(headerRect.top - previewRect.top).toFixed(2)}px`);
+          starsBack.style.setProperty('--header-stars-width', `${headerRect.width.toFixed(2)}px`);
+          starsBack.style.setProperty('--header-stars-height', `${headerRect.height.toFixed(2)}px`);
+          starsBack.style.setProperty('--header-stars-scene-shift-x', `${sceneShift.toFixed(2)}px`);
+        };
+        syncExistingStarsToHeader();
+        if (!starsBack.__headerBoundsSyncBound) {
+          starsBack.__headerBoundsSyncBound = true;
+          window.addEventListener('resize', syncExistingStarsToHeader, { passive: true });
+          if (typeof ResizeObserver === 'function') {
+            starsBack.__headerBoundsObserver = new ResizeObserver(syncExistingStarsToHeader);
+            const siteHeader = document.querySelector('.header');
+            if (siteHeader) starsBack.__headerBoundsObserver.observe(siteHeader);
+          }
+        }
+        starsBack.classList.toggle('is-night-sky', showNightStars);
+        starsBack.classList.remove('is-day-sky');
+        starsBack.style.setProperty('--preview-stars-opacity', `${starOpacity.toFixed(3)}`);
+        starsBack.style.removeProperty('--preview-day-stars-opacity');
+        starsBack.style.setProperty('display', showNightStars ? 'block' : 'none');
+      }
+      previewContainer.classList.remove('is-night-sky', 'is-day-sky');
+      previewContainer.style.removeProperty('--preview-stars-opacity');
+      previewContainer.style.removeProperty('--preview-day-stars-opacity');
+      const previewStack = ensureHeaderWeatherOrbStack(previewContainer, 'preview');
+      syncHeaderWeatherPreviewLayerOrder(previewContainer);
+      applyOrbStack(previewStack, true);
+      syncHeaderWeatherPreviewLayerOrder(previewContainer);
+    }
+
+    const isExpanded =
+      host.shadowRoot.querySelector('.weather-header-trigger')?.getAttribute('aria-expanded') === 'true';
+    const dropdownMenu = host.shadowRoot.querySelector('.weather-header-dropdown');
+    const dropdownHero = dropdownMenu?.querySelector('.weather-header-dropdown__hero');
+    const dropdownMenuScene = dropdownHero?.querySelector('.weather-header-dropdown__scene');
+    const dropdownAtmosphere = resolveHeaderWeatherDropdownAtmosphere(host, orbAtmosphere);
+    const dropdownContext = resolveHeaderWeatherDropdownSceneContext(host, presentation, geoState);
+    if (dropdownMenu) {
+      const cloudAlpha = Number(dropdownAtmosphere?.alpha) || 0;
+      const starWeight = dropdownContext.forecast
+        ? (dropdownContext.presentation.dominantKind === 'moon' ? 1 : 0)
+        : resolveHeaderWeatherStarOpacity(presentation);
+      const showNightStars = starWeight > 0.02;
+      const starOpacity = starWeight * clampHeaderWeatherValue(1.06 - cloudAlpha * 0.52, 0.78, 1);
+      const dropdownStarsBack = ensureHeaderWeatherDropdownStarsBackLayer(dropdownMenu);
+      if (dropdownStarsBack) {
+        dropdownStarsBack.classList.toggle('is-night-sky', showNightStars);
+        dropdownStarsBack.classList.remove('is-day-sky');
+        dropdownStarsBack.style.setProperty('--dropdown-stars-opacity', `${starOpacity.toFixed(3)}`);
+        dropdownStarsBack.style.removeProperty('--dropdown-day-stars-opacity');
+        dropdownStarsBack.style.setProperty('display', showNightStars ? 'block' : 'none');
+      }
+      if (dropdownMenuScene) {
+        dropdownMenuScene.classList.remove('is-night-sky', 'is-day-sky');
+        dropdownMenuScene.style.removeProperty('--dropdown-stars-opacity');
+        dropdownMenuScene.style.removeProperty('--dropdown-day-stars-opacity');
+      }
+    }
+    if (dropdownHero) {
+      const dropdownStack = ensureHeaderWeatherOrbStack(dropdownHero, 'dropdown');
+      applyOrbStack(dropdownStack, isExpanded, 'dropdown', dropdownAtmosphere, dropdownContext);
+    }
+
+    enforceHeaderWeatherToggleArrow(host);
+    scheduleHeaderWeatherMenuPlacement(host);
+    syncHeaderWeatherShootingStars(host);
+    syncHeaderWeatherUnifiedReadings(host);
+    scheduleHeaderWeatherReadingsSync(host);
+    syncHeaderWeatherLiveClock(host);
+    syncHeaderWeatherCloudBandLayout(host);
+  }
+
   async function syncHeaderWeatherOrbOverlay(host) {
     if (!host?.shadowRoot || !isHeaderWeatherCoordinateSelectionApplied(host)) {
       return;
@@ -13047,7 +13087,8 @@
       await syncHeaderWeatherClockWithServers();
       if (!isCurrent()) return;
 
-      let astroData = null;
+      const snapshot = host.__weatherAstroSnapshot;
+      let astroData = snapshot?.location === location ? snapshot.data : null;
       try {
         astroData = await resolveHeaderWeatherAstro(host);
       } catch {
@@ -13055,6 +13096,7 @@
       }
 
       if (!isCurrent()) return;
+      if (astroData) host.__weatherAstroSnapshot = { location, data: astroData };
       host.__weatherTimeZone = resolveHeaderWeatherTimeZone(host, astroData?.locationMeta || null);
 
       try {
@@ -13069,169 +13111,7 @@
         return;
       }
 
-      const presentation = resolveHeaderWeatherOrbPresentation(host, astroData);
-      const orbAtmosphere = resolveHeaderWeatherOrbAtmosphere(host);
-      host.__weatherOrbAtmosphere = orbAtmosphere;
-      applyHeaderWeatherTextReadability(host, orbAtmosphere);
-      const widgetBasePath = getHeaderWeatherWidgetBasePath(host);
-      const assetsModuleBase = getHeaderWeatherAssetsBasePath(host);
-      const geoState = {
-        latitude: getHeaderWeatherFiniteNumber(astroData?.locationMeta?.latitude) ?? deviceCoordinates.latitude,
-        longitude: getHeaderWeatherFiniteNumber(astroData?.locationMeta?.longitude) ?? deviceCoordinates.longitude,
-        timeMs: getHeaderWeatherNowMs(),
-        appearanceTimeMs: null,
-      };
-      const moonVideoSources = widgetBasePath
-        ? HEADER_WEATHER_MOON_VIDEO_FILES.map(file => `${widgetBasePath}/assets/Moon/${file}?v=${WEATHER_WIDGET_ASSET_VERSION}`)
-        : [];
-      const moonAssetConfig = moonVideoSources.length
-        ? {
-            type: 'video-keyed',
-            sources: moonVideoSources,
-            timelineBase: presentation?.moon?.timeline || {
-              videoDurationSec: HEADER_WEATHER_MOON_VIDEO_DURATION_SEC,
-              nightProgress: 0,
-            },
-          }
-        : null;
-      const sunAssetConfig =
-        widgetBasePath && assetsModuleBase
-          ? {
-              type: 'header-sun',
-              assetsModuleBase,
-              sunTextureUrl: `${widgetBasePath}/assets/sun_2k-sc1guPlV.jpg?v=${WEATHER_WIDGET_ASSET_VERSION}`,
-              geoState,
-            }
-          : null;
-
-      const applyOrbStack = (stack, variantActive, layoutKey = 'preview', atmosphere = orbAtmosphere,
-        sceneContext = { presentation, geoState }) => {
-        if (!stack) {
-          return;
-        }
-
-        const moonPart = sceneContext.presentation?.moon;
-        const sunPart = sceneContext.presentation?.sun;
-        const sceneSunAssetConfig = sunAssetConfig ? { ...sunAssetConfig, geoState: sceneContext.geoState } : null;
-        const moonLayout =
-          layoutKey === 'dropdown' ? moonPart?.dropdownLayout : resolveHeaderWeatherOrbFixedLayout('moon', 'preview');
-        const sunLayout =
-          layoutKey === 'dropdown' ? sunPart?.dropdownLayout : resolveHeaderWeatherOrbFixedLayout('sun', 'preview');
-
-        if (stack.moon) {
-          applyHeaderWeatherOrbCrossfade(stack.moon, moonPart);
-          applyHeaderWeatherOrbLayout(stack.moon, moonLayout);
-          if (variantActive && moonPart?.active) {
-            setHeaderWeatherOrbSource(stack.moon, 'moon', moonAssetConfig);
-            applyHeaderWeatherOrbAtmosphere(stack.moon, atmosphere);
-          } else {
-            setHeaderWeatherOrbSource(stack.moon, null, null);
-            applyHeaderWeatherOrbAtmosphere(stack.moon, 0);
-          }
-        }
-
-        if (stack.sun) {
-          applyHeaderWeatherOrbCrossfade(stack.sun, sunPart);
-          applyHeaderWeatherOrbLayout(stack.sun, sunLayout);
-          if (variantActive && sunPart?.active) {
-            setHeaderWeatherOrbSource(stack.sun, 'sun', sceneSunAssetConfig);
-            applyHeaderWeatherOrbAtmosphere(stack.sun, atmosphere);
-            if (sceneSunAssetConfig?.type === 'header-sun') {
-              updateHeaderWeatherSunSceneGeo(stack.sun, sceneContext.geoState);
-            }
-          } else {
-            stopHeaderWeatherSunScene(stack.sun);
-            setHeaderWeatherOrbSource(stack.sun, null, null);
-            applyHeaderWeatherOrbAtmosphere(stack.sun, 0);
-          }
-        }
-      };
-
-      const previewContainer = host.shadowRoot.querySelector('.weather-header-preview');
-      if (previewContainer) {
-        const cloudAlpha = Number(orbAtmosphere?.alpha) || 0;
-        const showNightStars = resolveHeaderWeatherShowNightStars(host, presentation, astroData);
-        const starOpacity = showNightStars ? clampHeaderWeatherValue(1.08 - cloudAlpha * 0.52, 0.78, 1) : 0;
-        const starsBack = ensureHeaderWeatherStarsBackLayer(previewContainer);
-        if (starsBack) {
-          const syncExistingStarsToHeader = () => {
-            const siteHeader = document.querySelector('.header');
-            if (!siteHeader?.isConnected || !previewContainer.isConnected || !starsBack.isConnected) return;
-            const headerRect = siteHeader.getBoundingClientRect();
-            const previewRect = previewContainer.getBoundingClientRect();
-            const headerCenter = headerRect.left + headerRect.width / 2;
-            const previewCenter = previewRect.left + previewRect.width / 2;
-            const sceneShift = clampHeaderWeatherValue((previewCenter - headerCenter) * 0.75, -360, 360);
-            starsBack.style.setProperty('--header-stars-left', `${(headerRect.left - previewRect.left).toFixed(2)}px`);
-            starsBack.style.setProperty('--header-stars-top', `${(headerRect.top - previewRect.top).toFixed(2)}px`);
-            starsBack.style.setProperty('--header-stars-width', `${headerRect.width.toFixed(2)}px`);
-            starsBack.style.setProperty('--header-stars-height', `${headerRect.height.toFixed(2)}px`);
-            starsBack.style.setProperty('--header-stars-scene-shift-x', `${sceneShift.toFixed(2)}px`);
-          };
-          syncExistingStarsToHeader();
-          if (!starsBack.__headerBoundsSyncBound) {
-            starsBack.__headerBoundsSyncBound = true;
-            window.addEventListener('resize', syncExistingStarsToHeader, { passive: true });
-            if (typeof ResizeObserver === 'function') {
-              starsBack.__headerBoundsObserver = new ResizeObserver(syncExistingStarsToHeader);
-              const siteHeader = document.querySelector('.header');
-              if (siteHeader) starsBack.__headerBoundsObserver.observe(siteHeader);
-            }
-          }
-          starsBack.classList.toggle('is-night-sky', showNightStars);
-          starsBack.classList.remove('is-day-sky');
-          starsBack.style.setProperty('--preview-stars-opacity', `${starOpacity.toFixed(3)}`);
-          starsBack.style.removeProperty('--preview-day-stars-opacity');
-          starsBack.style.setProperty('display', showNightStars ? 'block' : 'none');
-        }
-        previewContainer.classList.remove('is-night-sky', 'is-day-sky');
-        previewContainer.style.removeProperty('--preview-stars-opacity');
-        previewContainer.style.removeProperty('--preview-day-stars-opacity');
-        const previewStack = ensureHeaderWeatherOrbStack(previewContainer, 'preview');
-        syncHeaderWeatherPreviewLayerOrder(previewContainer);
-        applyOrbStack(previewStack, true);
-        syncHeaderWeatherPreviewLayerOrder(previewContainer);
-      }
-
-      const isExpanded =
-        host.shadowRoot.querySelector('.weather-header-trigger')?.getAttribute('aria-expanded') === 'true';
-      const dropdownMenu = host.shadowRoot.querySelector('.weather-header-dropdown');
-      const dropdownHero = dropdownMenu?.querySelector('.weather-header-dropdown__hero');
-      const dropdownMenuScene = dropdownHero?.querySelector('.weather-header-dropdown__scene');
-      const dropdownAtmosphere = resolveHeaderWeatherDropdownAtmosphere(host, orbAtmosphere);
-      const dropdownContext = resolveHeaderWeatherDropdownSceneContext(host, presentation, geoState);
-      if (dropdownMenu) {
-        const cloudAlpha = Number(dropdownAtmosphere?.alpha) || 0;
-        const showNightStars = dropdownContext.forecast
-          ? dropdownContext.presentation.dominantKind === 'moon'
-          : resolveHeaderWeatherShowNightStars(host, presentation, astroData);
-        const starOpacity = showNightStars ? clampHeaderWeatherValue(1.06 - cloudAlpha * 0.52, 0.78, 1) : 0;
-        const dropdownStarsBack = ensureHeaderWeatherDropdownStarsBackLayer(dropdownMenu);
-        if (dropdownStarsBack) {
-          dropdownStarsBack.classList.toggle('is-night-sky', showNightStars);
-          dropdownStarsBack.classList.remove('is-day-sky');
-          dropdownStarsBack.style.setProperty('--dropdown-stars-opacity', `${starOpacity.toFixed(3)}`);
-          dropdownStarsBack.style.removeProperty('--dropdown-day-stars-opacity');
-          dropdownStarsBack.style.setProperty('display', showNightStars ? 'block' : 'none');
-        }
-        if (dropdownMenuScene) {
-          dropdownMenuScene.classList.remove('is-night-sky', 'is-day-sky');
-          dropdownMenuScene.style.removeProperty('--dropdown-stars-opacity');
-          dropdownMenuScene.style.removeProperty('--dropdown-day-stars-opacity');
-        }
-      }
-      if (dropdownHero) {
-        const dropdownStack = ensureHeaderWeatherOrbStack(dropdownHero, 'dropdown');
-        applyOrbStack(dropdownStack, isExpanded, 'dropdown', dropdownAtmosphere, dropdownContext);
-      }
-
-      enforceHeaderWeatherToggleArrow(host);
-      scheduleHeaderWeatherMenuPlacement(host);
-      syncHeaderWeatherShootingStars(host);
-      syncHeaderWeatherUnifiedReadings(host);
-      scheduleHeaderWeatherReadingsSync(host);
-      syncHeaderWeatherLiveClock(host);
-      syncHeaderWeatherCloudBandLayout(host);
+      renderHeaderWeatherOrbOverlay(host, astroData, deviceCoordinates);
     } finally {
       host.__weatherOrbSyncInFlight = false;
       if (host.__weatherOrbSyncPending && host.isConnected && host.dataset.weatherMounted === 'true') {
@@ -13604,6 +13484,9 @@
         scheduleHeaderWeatherOrbSync(host);
       }
     }, HEADER_WEATHER_ASTRO_REFRESH_INTERVAL);
+    host.__weatherSolarPhaseRefreshId = window.setInterval(() => {
+      if (!document.hidden) syncHeaderWeatherCachedOrbPhase(host);
+    }, HEADER_WEATHER_SOLAR_PHASE_REFRESH_INTERVAL);
     host.__weatherAstroVisibilityHandler = () => {
       host.__weatherShootingStars?.sync(true);
       if (document.hidden) stopHeaderWeatherToggleArrowAnimation(host);
@@ -14106,11 +13989,16 @@
     host.__weatherWidgetInstance?.unmount?.();
     host.__weatherWidgetInstance = null;
     host.__weatherCurrentMeta = null;
+    host.__weatherAstroSnapshot = null;
     host.__weatherStateObserver?.disconnect?.();
     host.__weatherStateObserver = null;
     if (host.__weatherAstroRefreshId) {
       window.clearInterval(host.__weatherAstroRefreshId);
       host.__weatherAstroRefreshId = null;
+    }
+    if (host.__weatherSolarPhaseRefreshId) {
+      window.clearInterval(host.__weatherSolarPhaseRefreshId);
+      host.__weatherSolarPhaseRefreshId = null;
     }
     if (host.__weatherTimeSyncId) {
       window.clearInterval(host.__weatherTimeSyncId);

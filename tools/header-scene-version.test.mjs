@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { parse } from 'espree';
 
 const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
 const body = source.match(/function resolveHeaderWeatherSunSceneModuleUrl\(\) \{([\s\S]*?)\n  \}/)?.[1];
@@ -27,5 +28,21 @@ test('unversioned and missing shell scripts keep the standalone scene fallback',
     const url = new URL(resolve({ querySelector: () => shellScript }, { location }, 'legacy-scene'));
     assert.equal(url.pathname, '/assets/js/header-weather-sun-scene.js');
     assert.equal(url.searchParams.get('v'), 'legacy-scene');
+  }
+});
+
+test('the Sun renderer inherits its complete module query when importing the shared solar clock', async () => {
+  const scene = await readFile(new URL('../assets/js/header-weather-sun-scene.js', import.meta.url), 'utf8');
+  const program = parse(scene, { ecmaVersion: 'latest', sourceType: 'module', range: true });
+  const imported = program.body.filter(node => node.type === 'VariableDeclaration')
+    .flatMap(node => node.declarations).find(node => node.init?.type === 'AwaitExpression')?.init.argument;
+  assert.equal(imported?.type, 'ImportExpression');
+  const expression = scene.slice(...imported.source.range).replaceAll('import.meta.url', 'sceneModuleUrl');
+  const clockUrl = new Function('sceneModuleUrl', 'URL', `return ${expression};`);
+  for (const query of ['?v=release-one', '?v=release%26variant&weather-retry=2', '?qa=local&dpr=3']) {
+    const original = new URL(`https://hundesalon-nika.com/assets/js/header-weather-sun-scene.js${query}`);
+    const clock = new URL(clockUrl(original.href, URL));
+    assert.equal(clock.pathname, '/assets/js/weather-solar-time.js');
+    assert.equal(clock.search, original.search, 'an immutable cached clock must follow the scene version and retry');
   }
 });

@@ -3,6 +3,7 @@
  * The canvas stays transparent; the Moon continues to use its separate overlay.
  */
 import { Z as THREE } from '../../3d-weather-codrops-main/dist-widget/weather-3d-CKX6ob-m.mjs?v=20260728-weather-geo-v8';
+const { solarPosition } = await import(new URL(`./weather-solar-time.js${new URL(import.meta.url).search}`, import.meta.url).href);
 
 const TAU = Math.PI * 2;
 const SUN_RADIUS = 0.7;
@@ -42,33 +43,6 @@ function linearSolarColorStops(stops) {
 // elevation in degrees. No network, timezone guess or constant refraction offset.
 export function solarElevationDegrees(timeMs, latitude, longitude) {
   return solarPosition(timeMs, latitude, longitude).elevationDeg;
-}
-
-function solarPosition(timeMs, latitude, longitude) {
-  const unavailable = { elevationDeg: NaN, hourAngleDeg: NaN };
-  if (!Number.isFinite(timeMs) || !Number.isFinite(latitude) || !Number.isFinite(longitude)
-    || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return unavailable;
-  const date = new Date(timeMs);
-  const year = date.getUTCFullYear();
-  if (!Number.isFinite(year)) return unavailable;
-  const start = Date.UTC(year, 0, 1);
-  const yearDays = (Date.UTC(year + 1, 0, 1) - start) / SOLAR_DAY_MS;
-  const dayOfYear = Math.floor((timeMs - start) / SOLAR_DAY_MS) + 1;
-  const minutes = date.getUTCHours() * 60 + date.getUTCMinutes()
-    + date.getUTCSeconds() / 60 + date.getUTCMilliseconds() / 60000;
-  const gamma = TAU / yearDays * (dayOfYear - 1 + (minutes / 60 - 12) / 24);
-  const equationMinutes = 229.18 * (0.000075 + 0.001868 * Math.cos(gamma) - 0.032077 * Math.sin(gamma)
-    - 0.014615 * Math.cos(2 * gamma) - 0.040849 * Math.sin(2 * gamma));
-  const declination = 0.006918 - 0.399912 * Math.cos(gamma) + 0.070257 * Math.sin(gamma)
-    - 0.006758 * Math.cos(2 * gamma) + 0.000907 * Math.sin(2 * gamma)
-    - 0.002697 * Math.cos(3 * gamma) + 0.00148 * Math.sin(3 * gamma);
-  const solarMinutes = ((minutes + equationMinutes + 4 * longitude) % 1440 + 1440) % 1440;
-  const hourAngleDeg = solarMinutes / 4 - 180;
-  const hourAngle = hourAngleDeg * Math.PI / 180;
-  const latitudeRad = latitude * Math.PI / 180;
-  const sineElevation = Math.sin(latitudeRad) * Math.sin(declination)
-    + Math.cos(latitudeRad) * Math.cos(declination) * Math.cos(hourAngle);
-  return { elevationDeg: Math.asin(Math.max(-1, Math.min(1, sineElevation))) * 180 / Math.PI, hourAngleDeg };
 }
 
 // Atmospheric colour is an illustrative display calibration, not a measured
@@ -199,7 +173,7 @@ void main() {
   // Separate narrow streamers from the steady halo. A strong diffuse floor
   // merges them into cloudy lobes at mobile size instead of visible rays.
   float fineStrands = 0.5 + 0.5 * sin(angle * 17.0 + sin(angle * 7.0) * 1.1 + 0.3 * sin(uTime * 0.17 + angle * 2.0));
-  float filaments = pow(clamp(structure, 0.0, 1.0), 1.25) * (0.06 + 0.94 * pow(fineStrands, 8.0));
+  float filaments = pow(clamp(structure, 0.0, 1.0), 1.25) * (0.06 + 0.94 * pow(fineStrands, 6.0));
   float pulse = 0.82 + 0.18 * sin(uTime * 0.43 - aboveLimb * 34.0 + angle * 3.0)
     + 0.1 * sin(uTime * 0.27 - aboveLimb * 53.0 - angle * 5.0);
   float rayLength = 0.035 + 0.045 * filaments + 0.01 * sin(uTime * 0.31 + angle * 3.0)
@@ -218,7 +192,7 @@ void main() {
   float softGhost = exp(-pow(length(p - direction * 0.438) / 0.021, 2.0));
   float paleGhost = apertureGhost(p + direction * 0.322, 6.0, 0.018);
   float opticalRing = exp(-pow((length(p - direction * 0.365) - 0.043) / 0.007, 2.0));
-  vec3 light = vec3(1.0, 0.97, 0.87) * (halo + rays * 1.3 + diffraction * 0.65)
+  vec3 light = vec3(1.0, 0.97, 0.87) * (halo + rays * 1.6 + diffraction * 0.65)
     + vec3(1.0, 0.5, 0.24) * plasma * 0.6
     + offAxis * (diamond * vec3(0.42, 0.75, 0.57) * 0.43
       + softGhost * vec3(1.0, 0.61, 0.39) * 0.34

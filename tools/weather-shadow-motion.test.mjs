@@ -201,11 +201,17 @@ test('weather dropdown clears the complete navigation on mobile and desktop and 
 });
 
 async function solarRecoveryHarness({ textureFailure = false, networkFailure = false, decodeFailure = false, decodeWait = Promise.resolve() } = {}) {
-  const source = await readFile(new URL('../assets/js/header-weather-sun-scene.js', import.meta.url), 'utf8');
-  const program = parse(source, { ecmaVersion: 'latest', sourceType: 'module', range: true });
-  const code = program.body.filter(node => node.type !== 'ImportDeclaration').map(node => {
-    const declaration = node.type === 'ExportNamedDeclaration' ? node.declaration : node;
-    return source.slice(...declaration.range);
+  const [clock, sceneSource] = await Promise.all([
+    readFile(new URL('../assets/js/weather-solar-time.js', import.meta.url), 'utf8'),
+    readFile(new URL('../assets/js/header-weather-sun-scene.js', import.meta.url), 'utf8'),
+  ]);
+  const code = [clock, sceneSource].flatMap(source => {
+    const program = parse(source, { ecmaVersion: 'latest', sourceType: 'module', range: true });
+    return program.body.filter(node => node.type !== 'ImportDeclaration' &&
+      !(node.type === 'VariableDeclaration' && node.declarations.some(declaration => declaration.init?.type === 'AwaitExpression'))).map(node => {
+      const declaration = node.type === 'ExportNamedDeclaration' ? node.declaration : node;
+      return source.slice(...declaration.range);
+    });
   }).join('\n');
   const listeners = new Map();
   const windowListeners = new Map();
@@ -1283,7 +1289,9 @@ test('mobile rays stay distinct from the halo at the shared 68px size after comp
     let longest = 0, run = 0;
     for (const light of angular.concat(angular)) { run = light > peak * .5 ? run + 1 : 0; longest = Math.max(longest, Math.min(run, angular.length)); }
     const arcWidth = longest * Math.PI / 180 * (.247 * size + 4);
-    assert.ok(arcWidth > .6 && arcWidth < 3, `${size}px canvas needs a narrow antialiased ray at half maximum, received ${arcWidth}px`);
+    // The readable ray stays below 4% of its canvas (about 8% of the disc),
+    // while the dark-gap check above prevents the old broad cloudy lobes.
+    assert.ok(arcWidth > .6 && arcWidth < size * .04, `${size}px canvas needs a narrow antialiased ray at half maximum, received ${arcWidth}px`);
     assert.ok(movements.filter(change => change > 6).length > 25, 'many visible angular positions must change smoothly across three seconds');
     assert.ok(cloudMaximum < clearMaximum * .016, 'thick clouds attenuate the complete luminous ray output, not just the photosphere');
   }

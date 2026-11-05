@@ -6,8 +6,239 @@ import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { parse } from 'espree';
 import postcss from 'postcss';
+import { calculateSolarDay, solarPhase, solarPosition, solarPresentation } from '../assets/js/weather-solar-time.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+async function solarShellDeclarations(names) {
+  const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
+  const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'script' });
+  const body = ast.body.find(node => node.expression?.callee?.id?.name === 'siteShellBootstrap')?.expression.callee.body.body;
+  return names.map(name => {
+    const node = body?.find(item => item.type === 'FunctionDeclaration' && item.id.name === name);
+    assert.ok(node, `Missing solar integration function ${name}`);
+    return source.slice(node.start, node.end);
+  }).join('\n');
+}
+
+test('solar clock imports share the deployed version, coalesce, and retry a failed module URL', async () => {
+  const declaration = (await solarShellDeclarations(['loadHeaderWeatherSolarClockModule']))
+    .replace('import(/* webpackIgnore: true */ target.href)', 'importModule(target.href)');
+  const create = new Function('resolveHeaderWeatherSunSceneModuleUrl', 'window', 'importModule', `
+    let headerWeatherSolarClockModulePromise = null, headerWeatherSolarClockModuleRetry = 0;
+    ${declaration}; return loadHeaderWeatherSolarClockModule;
+  `);
+  const urls = [], module = { solarPhase };
+  const load = create(() => 'https://hundesalon-nika.com/assets/js/header-weather-sun-scene.js?v=release%26one',
+    { location: { href: 'https://hundesalon-nika.com/ru/' } }, url => {
+      urls.push(new URL(url));
+      return urls.length === 1 ? Promise.reject(new Error('temporary network failure')) : Promise.resolve(module);
+    });
+  await assert.rejects(load(), /temporary network failure/);
+  const second = load(), coalesced = load();
+  assert.equal(second, coalesced);
+  assert.equal(await second, module);
+  assert.equal(urls.length, 2);
+  assert.equal(urls[1].pathname, '/assets/js/weather-solar-time.js');
+  assert.equal(urls[1].searchParams.get('v'), 'release&one');
+  assert.equal(urls[1].searchParams.get('weather-retry'), '1');
+});
+
+test('the header retains sunset light and the end-of-day surface timeline until civil twilight ends', async () => {
+  const declarations = await solarShellDeclarations([
+    'resolveHeaderWeatherOrbPresentation', 'resolveHeaderWeatherStarOpacity',
+  ]);
+  let now = Date.parse('2026-11-05T17:07:00+01:00');
+  const api = new Function('parseHeaderWeatherCoordinates', 'getHeaderWeatherNowMs', 'resolveHeaderWeatherOrbFixedLayout',
+    'clampHeaderWeatherValue', 'HEADER_WEATHER_MOON_VIDEO_DURATION_SEC', 'HEADER_WEATHER_SUN_VIDEO_DURATION_SEC', `
+    ${declarations}; return { presentation: resolveHeaderWeatherOrbPresentation, stars: resolveHeaderWeatherStarOpacity };
+  `)(value => value ? { latitude: 51.23, longitude: 6.78 } : null, () => now,
+    (kind, variant) => ({ kind, variant }), (value, low, high) => Math.max(low, Math.min(high, value)), 100, 100);
+  const today = {
+    date: '2026-11-05', source: 'api', sunrise: Date.parse('2026-11-05T07:32:44+01:00'),
+    sunset: Date.parse('2026-11-05T17:00:11+01:00'), civilTwilightBegin: Date.parse('2026-11-05T06:57:27+01:00'),
+    civilTwilightEnd: Date.parse('2026-11-05T17:35:28+01:00'),
+  };
+  const host = { dataset: { weatherLocation: '51.23,6.78' }, __weatherSolarClock: { solarPhase, solarPresentation } };
+  const astro = { locationMeta: { latitude: 51.23, longitude: 6.78 }, today,
+    yesterday: { sunset: today.sunset - 86400000 }, tomorrow: { sunrise: today.sunrise + 86400000 } };
+  const sunset = api.presentation(host, astro);
+  assert.equal(host.dataset.weatherSolarPhase, 'sunset');
+  assert.equal(sunset.sun.active, true);
+  assert.ok(sunset.sun.opacity > .9);
+  assert.equal(sunset.moon.active, false, 'seven minutes after sunset is still the early civil-twilight scene');
+  assert.equal(api.stars(sunset), 0);
+  assert.equal(sunset.sun.timeline.dayProgress, 1, 'afterglow must not reset the solar surface to its sunrise endpoint');
+  now = today.civilTwilightEnd + 1;
+  const night = api.presentation(host, astro);
+  assert.equal(night.sun.active, false);
+  assert.equal(night.moon.active, true);
+  assert.equal(api.stars(night), 1);
+  host.__weatherSolarClock = null;
+  assert.equal(api.presentation(host, astro), night, 'a transient module failure keeps the last validated presentation');
+  const unavailable = api.presentation({ dataset: {} }, null);
+  assert.equal(unavailable.phase, 'unavailable');
+  assert.equal(unavailable.sun.active || unavailable.moon.active, false, 'unknown astronomy must not invent a fixed-hour day or night');
+  assert.equal(api.stars(unavailable), 0, 'an unavailable model must not invent night stars');
+});
+
+test('an adjacent-day service failure preserves authoritative events for today and retries the calculated fallback', async () => {
+  const declaration = await solarShellDeclarations(['resolveHeaderWeatherAstro']);
+  const cache = new Map(), fetched = [], calculated = [];
+  const today = { date: '2026-11-05', source: 'api', sunrise: 100, sunset: 200 };
+  const clock = { calculateSolarDay: (...args) => { calculated.push(args); return calculateSolarDay(...args); } };
+  const now = Date.parse('2026-11-05T16:07:00Z');
+  const resolve = new Function('deps', `
+    const { loadHeaderWeatherSolarClockModule, getHeaderWeatherLocationLabel, resolveHeaderWeatherLocationMeta,
+      resolveHeaderWeatherTimeZone, getHeaderWeatherDateInTimeZone, headerWeatherAstroCache,
+      fetchHeaderWeatherAstroDay, shiftHeaderWeatherDate, Date, HEADER_WEATHER_ASTRO_CACHE_TTL } = deps;
+    ${declaration}; return resolveHeaderWeatherAstro;
+  `)({
+    loadHeaderWeatherSolarClockModule: async () => clock, getHeaderWeatherLocationLabel: () => '51.23,6.78',
+    resolveHeaderWeatherLocationMeta: async () => ({ latitude: 51.23, longitude: 6.78, timezone: 'Europe/Berlin' }),
+    resolveHeaderWeatherTimeZone: () => 'Europe/Berlin', getHeaderWeatherDateInTimeZone: () => '2026-11-05',
+    headerWeatherAstroCache: cache,
+    fetchHeaderWeatherAstroDay: async (meta, date, module) => {
+      fetched.push({ meta, date, module });
+      if (date !== today.date) throw new Error('adjacent day unavailable');
+      return today;
+    },
+    shiftHeaderWeatherDate: (date, shift) => new globalThis.Date(globalThis.Date.parse(date) + shift * 86400000).toISOString().slice(0, 10),
+    Date: { now: () => now }, HEADER_WEATHER_ASTRO_CACHE_TTL: 12 * 60 * 60 * 1000,
+  });
+  const host = {};
+  const result = await resolve(host);
+  assert.equal(result.today, today, 'a failed neighboring request must not discard the valid provider response');
+  assert.equal(result.yesterday.source, 'calculated');
+  assert.equal(result.tomorrow.source, 'calculated');
+  assert.equal(calculated.length, 2);
+  assert.equal(fetched.length, 3);
+  assert.ok(fetched.every(call => call.module === clock && call.meta.timezone === 'Europe/Berlin'));
+  assert.equal([...cache.values()][0].expiresAt, now + 5 * 60 * 1000, 'transient fallbacks must retry sooner than the normal twelve-hour astronomy cache');
+  assert.equal(await resolve(host), result);
+  assert.equal(fetched.length, 3, 'the short fallback cache still coalesces identical requests');
+});
+
+test('cached solar phases advance through failed or pending network refreshes without retrying services', async () => {
+  const declarations = await solarShellDeclarations([
+    'syncHeaderWeatherCachedOrbPhase', 'syncHeaderWeatherOrbOverlay',
+    'resolveHeaderWeatherOrbPresentation',
+  ]);
+  let now = Date.parse('2026-11-05T17:07:00+01:00');
+  let gate = null, release;
+  const calls = { clock: 0, astro: 0, current: 0, scheduled: 0 }, rendered = [];
+  const today = {
+    source: 'api', sunrise: Date.parse('2026-11-05T07:32:44+01:00'),
+    sunset: Date.parse('2026-11-05T17:00:11+01:00'),
+    civilTwilightEnd: Date.parse('2026-11-05T17:35:28+01:00'),
+  };
+  const astro = { locationMeta: { latitude: 51.23, longitude: 6.78 }, today };
+  let api;
+  const coordinates = value => value === '51.23,6.78' ? astro.locationMeta
+    : value === '0,0' ? { latitude: 0, longitude: 0 } : null;
+  api = new Function('deps', `
+    const { isHeaderWeatherCoordinateSelectionApplied, parseHeaderWeatherCoordinates,
+      syncHeaderWeatherClockWithServers, resolveHeaderWeatherAstro, resolveHeaderWeatherCurrent,
+      resolveHeaderWeatherTimeZone, renderHeaderWeatherOrbOverlay, scheduleHeaderWeatherOrbSync,
+      getHeaderWeatherNowMs, resolveHeaderWeatherOrbFixedLayout, clampHeaderWeatherValue } = deps;
+    const HEADER_WEATHER_MOON_VIDEO_DURATION_SEC = 100, HEADER_WEATHER_SUN_VIDEO_DURATION_SEC = 10;
+    ${declarations};
+    return { full: syncHeaderWeatherOrbOverlay, cached: syncHeaderWeatherCachedOrbPhase,
+      presentation: resolveHeaderWeatherOrbPresentation };
+  `)({
+    isHeaderWeatherCoordinateSelectionApplied: host => host.applied !== false,
+    parseHeaderWeatherCoordinates: coordinates,
+    syncHeaderWeatherClockWithServers: async () => { calls.clock++; if (gate) await gate; },
+    resolveHeaderWeatherAstro: async () => { calls.astro++; throw new Error('astronomy unavailable'); },
+    resolveHeaderWeatherCurrent: async () => { calls.current++; throw new Error('weather unavailable'); },
+    resolveHeaderWeatherTimeZone: () => 'Europe/Berlin',
+    renderHeaderWeatherOrbOverlay: (host, events, geo) => {
+      rendered.push({ presentation: api.presentation(host, events), events, geo });
+    },
+    scheduleHeaderWeatherOrbSync: () => { calls.scheduled++; },
+    getHeaderWeatherNowMs: () => now,
+    resolveHeaderWeatherOrbFixedLayout: () => ({}),
+    clampHeaderWeatherValue: (value, low, high) => Math.max(low, Math.min(high, value)),
+  });
+  const host = { isConnected: true, shadowRoot: {}, __weatherSolarClock: { solarPhase, solarPresentation },
+    dataset: { weatherMounted: 'true', weatherLocation: '51.23,6.78' },
+    __weatherAstroSnapshot: { location: '51.23,6.78', data: astro } };
+  await api.full(host);
+  assert.deepEqual(calls, { clock: 1, astro: 1, current: 1, scheduled: 0 });
+  assert.equal(rendered.at(-1).events, astro, 'failed refreshes retain the last astronomy for this location');
+  const initialOpacity = rendered.at(-1).presentation.sun.opacity;
+  for (let tick = 0; tick < 12; tick++) {
+    now += 5000;
+    api.cached(host);
+  }
+  assert.ok(rendered.at(-1).presentation.sun.opacity < initialOpacity, 'sunset opacity follows time between network refreshes');
+  assert.deepEqual(calls, { clock: 1, astro: 1, current: 1, scheduled: 0 }, 'cached ticks never retry failed services');
+
+  gate = new Promise(resolve => { release = resolve; });
+  const pending = api.full(host);
+  assert.equal(host.__weatherOrbSyncInFlight, true);
+  now = today.civilTwilightEnd + 1;
+  api.cached(host);
+  assert.equal(rendered.at(-1).presentation.phase, 'night', 'a pending network request cannot freeze the local sky transition');
+  assert.equal(rendered.at(-1).presentation.moon.active, true);
+  assert.equal(host.__weatherOrbSyncPending, undefined, 'cached rendering must not queue a second network refresh');
+  release();
+  await pending;
+  assert.deepEqual(calls, { clock: 2, astro: 2, current: 2, scheduled: 0 });
+
+  host.dataset.weatherLocation = '0,0';
+  api.cached(host);
+  assert.equal(rendered.at(-1).events, null, 'old-location astronomy must not leak into a new location');
+  assert.deepEqual(rendered.at(-1).geo, { latitude: 0, longitude: 0 });
+  const count = rendered.length;
+  host.isConnected = false;
+  api.cached(host);
+  host.isConnected = true;
+  host.dataset.weatherMounted = 'false';
+  api.cached(host);
+  host.dataset.weatherMounted = 'true';
+  host.applied = false;
+  api.cached(host);
+  host.applied = true;
+  host.__weatherSolarClock = null;
+  api.cached(host);
+  assert.equal(rendered.length, count, 'detached, unmounted, unready and unapplied hosts do not render');
+  assert.deepEqual(calls, { clock: 2, astro: 2, current: 2, scheduled: 0 });
+});
+
+test('the five-second phase timer pauses when hidden and is cleaned up independently of the minute refresh', async () => {
+  const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
+  const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'script' });
+  const body = ast.body.find(node => node.expression?.callee?.id?.name === 'siteShellBootstrap').expression.callee.body.body;
+  const constant = name => body.flatMap(node => node.declarations || []).find(node => node.id.name === name)?.init.value;
+  assert.equal(constant('HEADER_WEATHER_ASTRO_REFRESH_INTERVAL'), 60000, 'the full network refresh retains its original minute cadence');
+  assert.equal(constant('HEADER_WEATHER_SOLAR_PHASE_REFRESH_INTERVAL'), 5000);
+  const begin = source.indexOf('    host.__weatherSolarPhaseRefreshId = window.setInterval(');
+  const endToken = '    }, HEADER_WEATHER_SOLAR_PHASE_REFRESH_INTERVAL);';
+  const end = source.indexOf(endToken, begin);
+  assert.ok(begin >= 0 && end > begin, 'the independent phase timer must be installed');
+  let tick, cadence, rendered = 0;
+  const host = {}, document = { hidden: true }, cleared = [];
+  const window = { setInterval: (callback, interval) => { tick = callback; cadence = interval; return 42; },
+    clearInterval: id => cleared.push(id) };
+  new Function('window', 'document', 'host', 'syncHeaderWeatherCachedOrbPhase', `
+    const HEADER_WEATHER_SOLAR_PHASE_REFRESH_INTERVAL = 5000;
+    ${source.slice(begin, end + endToken.length)};
+  `)(window, document, host, () => { rendered++; });
+  assert.equal(cadence, 5000);
+  tick();
+  assert.equal(rendered, 0);
+  document.hidden = false;
+  tick();
+  assert.equal(rendered, 1);
+  const cleanup = body.find(node => node.id?.name === 'unmountHeaderWeatherWidget').body.body
+    .find(node => node.type === 'IfStatement' && node.test.type === 'MemberExpression'
+      && node.test.property.name === '__weatherSolarPhaseRefreshId');
+  assert.ok(cleanup, 'unmount must clear the independently installed phase timer');
+  new Function('window', 'host', source.slice(cleanup.start, cleanup.end))(window, host);
+  assert.deepEqual(cleared, [42]);
+  assert.equal(host.__weatherSolarPhaseRefreshId, null);
+});
 
 test('mobile social and music icons reverse their rollout without losing toggle state', async t => {
   const source = await readFile(path.join(root, 'assets/js/main.js'), 'utf8');
@@ -1354,8 +1585,9 @@ test('weather menu arrow stays inside its pill and animates only actual expanded
 
 test('header Sun preserves CSS geometry while rendering native retina and pinch-zoom pixels in one scaling pass', async () => {
   const source = await readFile(path.join(root, 'assets/js/header-weather-sun-scene.js'), 'utf8');
-  const runnable = source.replace(/^import .+;$/m, '').replace(/^export /gm, '');
+  const runnable = source.replace(/^(?:import .+|const \{ solarPosition \} = await import.+);$/gm, '').replace(/^export /gm, '');
   const context = {
+    solarPosition,
     THREE: { MathUtils: { degToRad: value => value * Math.PI / 180 }, Clock: class {}, Color: class {} },
     window: { devicePixelRatio: 3, visualViewport: { scale: 1, addEventListener() {}, removeEventListener() {} }, matchMedia: () => ({ matches: false }), addEventListener() {}, removeEventListener() {} },
     requestAnimationFrame: () => 1, cancelAnimationFrame() {},
@@ -1391,8 +1623,9 @@ test('header Sun preserves CSS geometry while rendering native retina and pinch-
 
 test('header Sun advances at physical hourly speed from absolute UTC and retains phase after remount', async () => {
   const source = await readFile(path.join(root, 'assets/js/header-weather-sun-scene.js'), 'utf8');
-  const runnable = source.replace(/^import .+;$/m, '').replace(/^export /gm, '');
+  const runnable = source.replace(/^(?:import .+|const \{ solarPosition \} = await import.+);$/gm, '').replace(/^export /gm, '');
   const context = {
+    solarPosition,
     THREE: { MathUtils: { degToRad: value => value * Math.PI / 180 }, Clock: class {}, Color: class {} },
     window: { visualViewport: { addEventListener() {}, removeEventListener() {} }, addEventListener() {}, removeEventListener() {} },
     requestAnimationFrame: () => 1, cancelAnimationFrame() {},

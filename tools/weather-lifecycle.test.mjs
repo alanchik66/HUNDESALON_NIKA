@@ -26,6 +26,7 @@ const constants = [
   'HEADER_WEATHER_GEO_TIMEOUT', 'HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS',
   'HEADER_WEATHER_GEO_MOUNT_WAIT',
   'HEADER_WEATHER_LIVE_CLOCK_INTERVAL', 'HEADER_WEATHER_TIME_SYNC_INTERVAL', 'HEADER_WEATHER_ASTRO_REFRESH_INTERVAL',
+  'HEADER_WEATHER_SOLAR_PHASE_REFRESH_INTERVAL',
 ];
 const settle = async () => { for (let i = 0; i < 12; i += 1) await Promise.resolve(); };
 
@@ -883,7 +884,7 @@ test('visible, bfcache and online resume refresh overdue data once and unmount r
   const noops = Object.fromEntries([
     'applyHeaderWeatherLocationSearchCopy', 'bindHeaderWeatherOutsideDismiss', 'bindHeaderWeatherDropdownScrollState',
     'bindHeaderWeatherScrollContainment', 'syncHeaderWeatherToggleArrow', 'bindHeaderWeatherReadingsObserver',
-    'scheduleHeaderWeatherOrbSync', 'stopHeaderWeatherToggleArrowAnimation', 'resetHeaderWeatherPreviewLayoutState', 'emitHeaderWeatherEvent',
+    'scheduleHeaderWeatherOrbSync', 'syncHeaderWeatherCachedOrbPhase', 'stopHeaderWeatherToggleArrowAnimation', 'resetHeaderWeatherPreviewLayoutState', 'emitHeaderWeatherEvent',
   ].map(name => [name, () => {}]));
   const h = harness(['bindHeaderWeatherState', 'unmountHeaderWeatherWidget'], {
     ...noops, MutationObserver: class { observe() {} disconnect() {} },
