@@ -21,6 +21,8 @@
   const SUPPORTED_LOCALES = new Set(['de', 'en', 'ru', 'uk']);
   const BRAND_LOGO = '/assets/images/brand/logo.png';
   const SITE_ORIGIN = 'https://hundesalon-nika.com';
+  const contourModuleUrl = new URL('./menu-contour.js', document.currentScript?.src || new URL('/assets/js/ai-chat.js', window.location.href));
+  contourModuleUrl.search = new URL(document.currentScript?.src || contourModuleUrl, window.location.href).search;
 
   const COPY = Object.freeze({
     de: Object.freeze({
@@ -2203,6 +2205,14 @@
     nativeObserver.observe(document.documentElement, { childList: true, subtree: true });
     setTimeout(() => nativeObserver.disconnect(), 20_000);
   }
+
+  const startMenuContours = () => {
+    void import(contourModuleUrl.href).then(module => module.initMenuContours()).catch(() => {
+      // Keep the existing CSS rim if this optional decoration cannot load.
+    });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startMenuContours, { once: true });
+  else startMenuContours();
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initAiChat, { once: true });

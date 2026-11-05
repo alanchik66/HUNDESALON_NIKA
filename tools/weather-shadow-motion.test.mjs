@@ -938,7 +938,7 @@ test('the actual solar material preserves photographic luminance and applies its
   assert.equal(scene.flareMesh.material.uniforms.uSolarColor, scene.solarColorUniform);
   assert.notEqual(shader.uniforms.uSolarSurfaceColor, scene.flareMesh.material.uniforms.uSolarColor);
   assert.equal(scene.sunMesh.material.map, h.stats.textures[0]);
-  assert.equal(scene.sunMesh.material.customProgramCacheKey(), 'header-solar-atmosphere-v4');
+  assert.equal(scene.sunMesh.material.customProgramCacheKey(), 'header-solar-atmosphere-v5');
   assert.match(shader.fragmentShader, /#include <tonemapping_fragment>\s*gl_FragColor\.rgb\s*\*=\s*uSolarSurfaceColor\s*;/, 'the pale surface color must tint already tone-mapped light rather than inherit the saturated atmospheric color');
   const weights = shader.fragmentShader.match(/float solarLuminance\s*=\s*dot\(diffuseColor\.rgb,\s*vec3\(([^)]+)\)\)/)?.[1].split(',').map(Number);
   assert.ok(weights?.length === 3 && weights.every(Number.isFinite), 'the shader must derive brightness from the original texture sample');
@@ -967,6 +967,33 @@ test('the actual solar material preserves photographic luminance and applies its
   assert.ok(contrast > .01, 'the same photographic bright and dark features must remain spatially distinct');
   assert.ok(contrast < Math.pow(luminance(bright), gamma) - Math.pow(luminance(dark), gamma), 'the retained spot pattern must be subtler than the unlifted map');
   assert.equal(brightness([1, 1, 1]), 1);
+  scene.dispose();
+});
+
+test('solar photographic detail remains faint but perceptible after the actual ACES and CSS display transforms', async () => {
+  const h = await solarRecoveryHarness();
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  const expression = h.stats.shader.fragmentShader.match(/diffuseColor\.rgb\s*=\s*vec3\(([^;]+)\);/)?.[1];
+  const lift = new Function('solarLuminance', 'mix', 'pow', 'clamp', `return (${expression});`);
+  const engine = await readFile(new URL('../3d-weather-codrops-main/dist-widget/weather-3d-CKX6ob-m.mjs', import.meta.url), 'utf8');
+  const fit = engine.match(/vec3 RRTAndODTFit\( vec3 v \) \{([\s\S]*?)\n\}/)?.[1];
+  const exposureDivisor = Number(engine.match(/color \*= toneMappingExposure \/ ([\d.]+);/)?.[1]);
+  assert.ok(fit && exposureDivisor > 0, 'use the real vendored Three tone mapper rather than a pre-tone contrast proxy');
+  const toneMap = new Function('v', fit.replace(/\bvec3\b/g, 'const'));
+  const shell = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
+  const displayGain = Number(shell.match(/const HEADER_WEATHER_SUN_BRIGHTNESS\s*=\s*([\d.]+);/)?.[1]);
+  assert.ok(displayGain > 0);
+  const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+  const display = luminance => {
+    const lifted = lift(luminance, (a, b, amount) => a + (b - a) * amount, Math.pow, clamp);
+    const linear = clamp(toneMap(lifted * scene.renderer.toneMappingExposure / exposureDivisor), 0, 1);
+    const srgb = linear <= .0031308 ? linear * 12.92 : 1.055 * linear ** (1 / 2.4) - .055;
+    return clamp(srgb * displayGain, 0, 1);
+  };
+  const contrast = (display(.25) - display(.1)) * 255;
+  assert.ok(contrast > 4.5 && contrast < 9, `original midtone detail must survive display mapping gently; got ${contrast} RGB levels`);
+  assert.ok(display(0) > .85, 'even the darkest original sample remains luminous rather than creating a black outline');
+  assert.ok(display(1) > .98, 'the unclouded white photosphere stays bright');
   scene.dispose();
 });
 
@@ -1100,6 +1127,9 @@ test('actual solar ray light travels independently across the limb while retaini
   const secondTime = material.uniforms.uTime.value;
   assert.equal(secondTime - firstTime, 3, 'the live UTC clock must advance the optical shader');
   const ratios = [];
+  const rayGain = Number(body.match(/\brays\s*\*\s*([\d.]+)/)?.[1]);
+  const displayChanges = [];
+  assert.ok(rayGain > 0);
   let maximumChange = 0;
   for (let i = 0; i < 72; i += 1) {
     const angle = i * Math.PI / 36;
@@ -1111,11 +1141,14 @@ test('actual solar ray light travels independently across the limb while retaini
         assert.ok([sample.rays, sample.pulse, sample.halo].every(value => Number.isFinite(value) && value >= 0));
       }
       maximumChange = Math.max(maximumChange, Math.abs(first.rays - second.rays));
+      displayChanges.push(Math.abs(first.rays - second.rays) * rayGain * 255 * 1.06);
       if (first.rays > .0001 && second.rays > .0001) ratios.push(second.rays / first.rays);
       assert.equal(first.halo, second.halo, 'moving light must not merely pulse the whole halo uniformly');
     }
   }
   assert.ok(maximumChange > .01, 'light along visible short rays must change perceptibly in three seconds');
+  const displayRms = Math.sqrt(displayChanges.reduce((sum, change) => sum + change ** 2, 0) / displayChanges.length);
+  assert.ok(displayRms > 8 && displayRms < 18, `local moving light must remain visible beside the steady halo without flashing the whole crown; got ${displayRms}`);
   assert.ok(ratios.length > 10 && Math.max(...ratios) - Math.min(...ratios) > .15, 'different ray positions must change independently rather than share one global shimmer');
   const radius = scene.sunMesh.geometry.parameters.radius;
   const distance = scene.camera.position.z;

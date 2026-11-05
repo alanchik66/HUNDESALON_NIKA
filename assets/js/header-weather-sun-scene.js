@@ -190,14 +190,14 @@ void main() {
   float structure = 0.48 + 0.18 * sin(angle * 3.0 + 0.7)
     + 0.14 * sin(angle * 7.0 - 1.3) + 0.11 * cos(angle * 13.0 + 2.1)
     + 0.07 * sin(angle * 23.0 - 0.8);
-  float fineStrands = 0.5 + 0.5 * sin(angle * 41.0 + sin(angle * 11.0) * 1.7);
+  float fineStrands = 0.5 + 0.5 * sin(angle * 41.0 + sin(angle * 11.0) * 1.7 + 0.18 * sin(uTime * 0.19 + angle * 3.0));
   float filaments = pow(clamp(structure, 0.0, 1.0), 1.9) * (0.55 + 0.45 * pow(fineStrands, 3.0));
-  float pulse = 0.68 + 0.22 * sin(uTime * 0.63 - aboveLimb * 52.0 + angle * 3.0)
-    + 0.1 * sin(uTime * 0.39 - aboveLimb * 84.0 - angle * 7.0);
+  float pulse = 0.72 + 0.36 * sin(uTime * 0.63 - aboveLimb * 52.0 + angle * 3.0)
+    + 0.12 * sin(uTime * 0.39 - aboveLimb * 84.0 - angle * 7.0);
   float rayLength = 0.018 + 0.046 * filaments;
   float rays = filaments * pulse * exp(-aboveLimb / rayLength)
     * (1.0 - smoothstep(rayLength * 1.3, rayLength * 2.1, aboveLimb));
-  float halo = exp(-aboveLimb / 0.025) * 0.25
+  float halo = exp(-aboveLimb / 0.025) * 0.22
     + exp(-pow(aboveLimb / 0.062, 2.0)) * 0.045;
   float plasma = limbPlasma(p, 0.61, 0.017, 0.012, 0.4)
     + limbPlasma(p, 2.43, 0.021, 0.0135, 2.7)
@@ -209,7 +209,7 @@ void main() {
   float softGhost = exp(-pow(length(p - direction * 0.438) / 0.021, 2.0));
   float paleGhost = apertureGhost(p + direction * 0.322, 6.0, 0.018);
   float opticalRing = exp(-pow((length(p - direction * 0.365) - 0.043) / 0.007, 2.0));
-  vec3 light = vec3(1.0, 0.97, 0.87) * (halo + rays * 0.9 + diffraction * 0.65)
+  vec3 light = vec3(1.0, 0.97, 0.87) * (halo + rays * 1.15 + diffraction * 0.65)
     + vec3(1.0, 0.5, 0.24) * plasma * 0.6
     + offAxis * (diamond * vec3(0.42, 0.75, 0.57) * 0.43
       + softGhost * vec3(1.0, 0.61, 0.39) * 0.34
@@ -412,12 +412,12 @@ export class HeaderWeatherSunScene {
 ${mapChunk}
 #ifdef USE_MAP
   float solarLuminance = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-  // Lift the original shadows without adding a second disc or flattening the
-  // map: its spatial features and latitude-dependent motion remain intact.
-  diffuseColor.rgb = vec3(mix(0.5, 1.0, pow(clamp(solarLuminance, 0.0, 1.0), 0.28)));
+  // Retain faint original detail after ACES and the shared CSS display gain;
+  // no extra spot layer, disc or dark limb is introduced.
+  diffuseColor.rgb = vec3(mix(0.45, 1.0, pow(clamp(solarLuminance, 0.0, 1.0), 0.75)));
 #endif`).replace('#include <tonemapping_fragment>', '#include <tonemapping_fragment>\ngl_FragColor.rgb *= uSolarSurfaceColor;');
     };
-    sunMaterial.customProgramCacheKey = () => 'header-solar-atmosphere-v4';
+    sunMaterial.customProgramCacheKey = () => 'header-solar-atmosphere-v5';
     const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(SUN_RADIUS, 96, 72), sunMaterial);
     sunMesh.renderOrder = 1;
 
