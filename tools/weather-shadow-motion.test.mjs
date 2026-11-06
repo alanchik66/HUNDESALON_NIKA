@@ -253,7 +253,7 @@ test('weather dropdown clears the complete navigation on mobile and desktop and 
   }
 });
 
-async function solarRecoveryHarness({ textureFailure = false, networkFailure = false, decodeFailure = false, decodeWait = Promise.resolve(), rendererFailure = false, uploadFailure = false } = {}) {
+async function solarRecoveryHarness({ textureFailure = false, networkFailure = false, decodeFailure = false, decodeWait = Promise.resolve(), rendererFailure = false, uploadFailure = false, contextMode = 'preferred' } = {}) {
   const [clock, sceneSource] = await Promise.all([
     readFile(new URL('../assets/js/weather-solar-time.js', import.meta.url), 'utf8'),
     readFile(new URL('../assets/js/header-weather-sun-scene.js', import.meta.url), 'utf8'),
@@ -275,15 +275,26 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
   const events = map => ({ addEventListener: (name, handler) => map.set(name, handler), removeEventListener: name => map.delete(name) });
   const viewport = { scale: 1, ...events(viewportListeners) };
   const window = { devicePixelRatio: 3, visualViewport: viewport, ...events(windowListeners) };
-  const stats = { renders: 0, disposed: 0, texturesDisposed: 0, failRender: false, contextLost: false,
-    events: [], sizes: [], textures: [], materialsDisposed: [], geometriesDisposed: [], colorsAtRender: [] };
-  const canvas = { clientWidth: 96, clientHeight: 96, dataset: {},
+  const stats = { renders: 0, disposed: 0, texturesDisposed: 0, failRender: false, contextLost: false, forcedLoss: 0,
+    events: [], sizes: [], textures: [], materialsDisposed: [], geometriesDisposed: [], colorsAtRender: [], contextRequests: [], observers: [], rendererCreations: 0 };
+  const context = { isContextLost: () => stats.contextLost, getContextAttributes: () => ({ antialias: contextMode !== 'compatible' }) };
+  const canvas = { clientWidth: 96, clientHeight: 96, dataset: {}, isConnected: true, ownerDocument: {},
+    getRootNode: () => ({}),
+    getContext: (kind, attributes) => {
+      stats.contextRequests.push({ kind, attributes: { ...attributes } });
+      if (contextMode === 'none' || contextMode === 'compatible' && attributes.antialias) {
+        listeners.get('webglcontextcreationerror')?.({ statusMessage: 'WebGL context creation failed.' });
+        return null;
+      }
+      return context;
+    },
     addEventListener: (name, callback) => listeners.set(name, callback),
     removeEventListener: name => listeners.delete(name),
   };
   const mapFragment = '#ifdef USE_MAP\n vec4 sampledDiffuseColor = texture2D( map, vMapUv );\n #ifdef DECODE_VIDEO_TEXTURE\n sampledDiffuseColor = sRGBTransferEOTF( sampledDiffuseColor );\n #endif\n diffuseColor *= sampledDiffuseColor;\n#endif';
   class Renderer {
     constructor(options) {
+      stats.rendererCreations++;
       stats.rendererOptions = options;
       if (rendererFailure) {
         listeners.get('webglcontextcreationerror')?.({ statusMessage: 'WebGL context creation failed.' });
@@ -314,7 +325,7 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
       };
       visit(scene);
     }
-    getContext() { return { isContextLost: () => stats.contextLost }; }
+    getContext() { return context; }
     render() {
       if (stats.failRender) throw new Error('GPU unavailable');
       const color = stats.shader?.uniforms.uSolarSurfaceColor?.value;
@@ -322,6 +333,7 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
       stats.events.push('render'); stats.renders += 1;
     }
     dispose() { stats.disposed += 1; }
+    forceContextLoss() { stats.forcedLoss++; stats.contextLost = true; }
   }
   const THREE = {
     MathUtils: { degToRad: degrees => degrees * Math.PI / 180 },
@@ -357,10 +369,15 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
     Group: class { position = {}; rotation = {}; children = []; add(child) { this.children.push(child); } },
   };
   class ClockDate extends Date { static now() { return nowMs; } }
-  const api = new Function('THREE', 'window', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date', `${code}; return { mount: mountHeaderWeatherSunScene, rate: solarRotationRateDegPerDay, offset: solarTextureOffsetTurns, angle: solarRotationAngle, pixelRatio: resolveSolarPixelRatio, epoch: SOLAR_MODEL_EPOCH_MS, elevation: solarElevationDegrees, position: solarPosition, color: solarColorForElevation, surfaceColor: solarSurfaceColorForElevation };`)(
-    THREE, window, callback => { frames.set(++nextFrame, callback); return nextFrame; }, id => frames.delete(id), ClockDate
+  class Observer {
+    constructor(callback) { this.callback = callback; this.targets = []; stats.observers.push(this); }
+    observe(target) { this.active = true; this.targets.push(target); }
+    disconnect() { this.active = false; }
+  }
+  const api = new Function('THREE', 'window', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date', 'MutationObserver', `${code}; return { mount: mountHeaderWeatherSunScene, rate: solarRotationRateDegPerDay, offset: solarTextureOffsetTurns, angle: solarRotationAngle, pixelRatio: resolveSolarPixelRatio, epoch: SOLAR_MODEL_EPOCH_MS, elevation: solarElevationDegrees, position: solarPosition, color: solarColorForElevation, surfaceColor: solarSurfaceColorForElevation };`)(
+    THREE, window, callback => { frames.set(++nextFrame, callback); return nextFrame; }, id => frames.delete(id), ClockDate, Observer
   );
-  return { ...api, canvas, listeners, windowListeners, viewportListeners, window, viewport, frames, stats, setNow: value => { nowMs = value; } };
+  return { ...api, canvas, context, listeners, windowListeners, viewportListeners, window, viewport, frames, stats, setNow: value => { nowMs = value; } };
 }
 
 test('solar context loss shows recovery, resumes rendering after restoration and releases listeners on disposal', async () => {
@@ -571,6 +588,89 @@ test('a superseded solar decode cannot overwrite the stage of a failed newer att
   assert.equal(h.stats.disposed, 1);
   assert.equal(h.stats.texturesDisposed, 1);
   assert.equal(h.listeners.size, 0);
+  assert.equal(h.frames.size, 0);
+});
+
+test('solar context selection preserves the preferred path and retries unsupported MSAA once with supersampling', async () => {
+  for (const compatible of [false, true]) {
+    const h = await solarRecoveryHarness({ contextMode: compatible ? 'compatible' : 'preferred' });
+    const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+    assert.equal(h.stats.contextRequests.length, compatible ? 2 : 1);
+    assert.deepEqual(h.stats.contextRequests.map(request => request.attributes.antialias), compatible ? [true, false] : [true]);
+    assert.deepEqual(h.stats.contextRequests.map(request => request.attributes.powerPreference), compatible ? ['high-performance', 'default'] : ['high-performance']);
+    for (const request of h.stats.contextRequests) {
+      assert.equal(request.kind, 'webgl2');
+      assert.equal(request.attributes.alpha, true);
+      assert.equal(request.attributes.premultipliedAlpha, true);
+      assert.equal(request.attributes.depth, true);
+    }
+    assert.equal(h.stats.rendererCreations, 1, 'the acquired context must be passed to one renderer');
+    assert.equal(h.stats.rendererOptions.context, h.context);
+    assert.equal(h.canvas.dataset.sunContextProfile, compatible ? 'compatible' : 'preferred');
+    assert.equal(h.canvas.__sunContextCreationError, undefined, 'a successful retry does not report an active creation error');
+    assert.equal(h.stats.pixelRatio, compatible ? 6 : 3);
+    assert.equal(h.canvas.width, compatible ? 576 : 288);
+    assert.equal(scene.sunMesh.material.map, h.stats.textures[0]);
+    scene.dispose();
+  }
+});
+
+test('complete WebGL denial performs two bounded probes without allocating a Three renderer', async () => {
+  const h = await solarRecoveryHarness({ contextMode: 'none' });
+  await assert.rejects(h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' }), /Error creating WebGL context/);
+  assert.equal(h.stats.contextRequests.length, 2);
+  assert.equal(h.stats.rendererCreations, 0);
+  assert.equal(h.canvas.dataset.sunContextProfile, 'unavailable');
+  assert.equal(h.canvas.dataset.sunInitStage, 'renderer-create');
+  assert.equal(h.canvas.__sunContextCreationError, 'WebGL context creation failed.');
+  assert.equal(h.stats.textures.length, 0);
+  assert.equal(h.listeners.size, 0);
+  assert.equal(h.windowListeners.size, 0);
+});
+
+test('a reused non-MSAA context retains compatibility supersampling even if the preferred request returns it', async () => {
+  const h = await solarRecoveryHarness({ contextMode: 'compatible' });
+  h.canvas.getContext = (kind, attributes) => {
+    h.stats.contextRequests.push({ kind, attributes: { ...attributes } });
+    return h.context;
+  };
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  assert.equal(h.stats.contextRequests.length, 1);
+  assert.equal(h.canvas.dataset.sunContextProfile, 'compatible');
+  assert.equal(h.stats.pixelRatio, 6);
+  scene.dispose();
+});
+
+test('detached pending initialization releases its owned context and every observer before decode finishes', async () => {
+  let finishDecode;
+  const h = await solarRecoveryHarness({ decodeWait: new Promise(resolve => { finishDecode = resolve; }) });
+  const pending = h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  const observer = h.stats.observers.find(item => item.active);
+  assert.ok(observer);
+  assert.equal(observer.targets.length, 2, 'watch shadow removal and removal of the complete host');
+  h.canvas.isConnected = false;
+  observer.callback();
+  assert.equal(h.stats.disposed, 1);
+  assert.equal(h.stats.forcedLoss, 1);
+  assert.equal(observer.active, false);
+  assert.equal(h.listeners.size, 0);
+  assert.equal(h.windowListeners.size, 0);
+  finishDecode();
+  const scene = await pending;
+  assert.equal(scene.disposed, true);
+  assert.equal(h.stats.renders, 0);
+  assert.equal(h.stats.forcedLoss, 1, 'repeated disposal is idempotent');
+});
+
+test('disposing an obsolete detached scene cannot lose the newer owner context', async () => {
+  const h = await solarRecoveryHarness();
+  const old = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  const current = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  h.canvas.isConnected = false;
+  old.dispose();
+  assert.equal(h.stats.forcedLoss, 0);
+  current.dispose();
+  assert.equal(h.stats.forcedLoss, 1);
   assert.equal(h.frames.size, 0);
 });
 

@@ -345,6 +345,24 @@ test('initialization stages are explicit and native creation status is bounded a
   dispose2();
 });
 
+test('context profiles expose only the three public outcomes without reading requested options or creating contexts', async () => {
+  for (const value of ['preferred', 'compatible', 'unavailable', undefined, null, 'preferred ', 'private-chat-message-unique', { private: 'private-storage-unique' }]) {
+    const h = diagnosticHarness(); h.canvas.dataset.sunContextProfile = value;
+    h.canvas.__sunContextOptions = h.secrets;
+    Object.defineProperty(h.canvas, '__sunRequestedContextAttributes', { get() { throw Error('Raw context options must not be inspected.'); } });
+    const dispose = h.mount(), report = h.json();
+    assert.equal(report.sun[0].contextProfile, ['preferred', 'compatible', 'unavailable'].includes(value) ? value : null);
+    assert.equal(report.sun[0].readback.valid, true);
+    assert.equal(report.sun[0].readback.exterior.samples, 28);
+    assert.equal(report.sun[0].readback.exterior.nonzero, 2);
+    assert.equal(h.metrics.canvasContexts, 0); assert.equal(h.metrics.network, 0);
+    await h.node('copy').fire('click');
+    for (const secret of Object.values(h.secrets)) assert.equal(h.metrics.copies[0].includes(String(secret)), false);
+    assert.equal(h.metrics.privateReads, 0);
+    dispose();
+  }
+});
+
 test('loading overlays are awaited, while a missing header stops polling at the thirty-second deadline', async () => {
   const loading = diagnosticHarness({ state: 'loading' });
   loading.mount();

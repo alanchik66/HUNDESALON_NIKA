@@ -4301,7 +4301,6 @@
       overlay.__sunSceneResume = null;
     }
     if (overlay.__sunScene) {
-      overlay.__sunScene.stop();
       overlay.__sunScene.dispose();
       overlay.__sunScene = null;
     }
@@ -12467,7 +12466,6 @@
     }
 
     stopHeaderWeatherOrbRender(overlay);
-    stopHeaderWeatherSunScene(overlay);
     overlay.__sunLatestAssetConfig = assetConfig;
 
     const mountToken = `${Date.now()}:${Math.random()}`;
@@ -12583,6 +12581,7 @@
           : [];
     const isHeaderSun = kind === 'sun' && assetConfig?.type === 'header-sun';
     if (!video) {
+      stopHeaderWeatherOrbRender(overlay);
       return;
     }
 
@@ -13328,12 +13327,23 @@
     host.shadowRoot.addEventListener('touchcancel', resetTouch, true);
   }
 
+  function clearHeaderWeatherOrbResources(root) {
+    for (const orb of [root, ...(root.querySelectorAll?.('.weather-orb-overlay') || [])]) {
+      if (orb.matches?.('.weather-orb-overlay')) setHeaderWeatherOrbSource(orb, null, null);
+    }
+  }
+
   function bindHeaderWeatherState(host) {
     if (!host || host.__weatherStateObserver || !host.shadowRoot) {
       return;
     }
 
     const observer = new MutationObserver(mutations => {
+      for (const mutation of mutations) {
+        for (const node of mutation.removedNodes || []) {
+          if (!node.isConnected) clearHeaderWeatherOrbResources(node);
+        }
+      }
       const shouldSync = mutations.some(
         mutation => mutation.type === 'attributes' && mutation.attributeName === 'aria-expanded'
       );
@@ -14000,7 +14010,9 @@
     host.__weatherShootingStars?.dispose();
     host.__weatherShootingStars = null;
     stopHeaderWeatherToggleArrowAnimation(host);
+    const orbs = [...(host.shadowRoot?.querySelectorAll?.('.weather-orb-overlay') || [])];
     host.__weatherWidgetInstance?.unmount?.();
+    for (const orb of orbs) clearHeaderWeatherOrbResources(orb);
     host.__weatherWidgetInstance = null;
     host.__weatherCurrentMeta = null;
     host.__weatherAstroSnapshot = null;

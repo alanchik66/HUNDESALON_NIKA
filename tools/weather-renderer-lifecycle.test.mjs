@@ -178,7 +178,7 @@ test('the specific preview Moon opacity retains cloud transmission instead of ov
 
 async function solarBootstrapHarness(loadModule) {
   const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
-  const names = ['stopHeaderWeatherSunScene', 'updateHeaderWeatherSunSceneGeo', 'mountHeaderWeatherSunScene', 'setHeaderWeatherOrbSource'];
+  const names = ['stopHeaderWeatherSunScene', 'stopHeaderWeatherMoonTimelineSync', 'stopHeaderWeatherOrbRender', 'updateHeaderWeatherSunSceneGeo', 'mountHeaderWeatherSunScene', 'setHeaderWeatherOrbSource'];
   const declarations = names.map(name => {
     const found = source.match(new RegExp(`  (?:async )?function ${name}\\([^]*?\\n  \\}`));
     assert.ok(found, name);
@@ -199,9 +199,9 @@ async function solarBootstrapHarness(loadModule) {
     style: { setProperty() {}, removeProperty() {} },
     querySelector: tag => ({ canvas, video, img: image })[tag],
   };
-  const api = new Function('window', 'document', 'stopHeaderWeatherOrbRender', 'loadHeaderWeatherSunSceneModule', 'getHeaderWeatherNowMs', 'console',
+  const api = new Function('window', 'document', 'loadHeaderWeatherSunSceneModule', 'getHeaderWeatherNowMs', 'console',
     `${declarations}; return { mount: mountHeaderWeatherSunScene, setSource: setHeaderWeatherOrbSource, update: updateHeaderWeatherSunSceneGeo, stop: stopHeaderWeatherSunScene };`)(
-    target(online), { ...target(visibility), hidden: false }, () => {}, loadModule, () => 1793828340000, { error() {} }
+    target(online), { ...target(visibility), hidden: false }, loadModule, () => 1793828340000, { error() {} }
   );
   const scene = {
     setGeoState: value => events.push(['geo', value]), resize: () => events.push(['resize']),
@@ -488,6 +488,119 @@ test('forecast class changes immediately update solar atmosphere through the exi
   calls.length = 0;
   callback([{ type: 'attributes', attributeName: 'class', target: { matches: () => false } }]);
   assert.deepEqual(calls, [], 'solar classes and arrow animations cannot trigger an observer loop');
+});
+
+async function removedOrbHarness() {
+  const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
+  const names = ['clearHeaderWeatherOrbResources', 'setHeaderWeatherOrbSource', 'stopHeaderWeatherOrbRender', 'stopHeaderWeatherMoonTimelineSync', 'stopHeaderWeatherSunScene', 'unmountHeaderWeatherWidget'];
+  const declarations = names.map(name => {
+    const found = source.match(new RegExp(`  function ${name}\\([^]*?\\n  \\}`));
+    assert.ok(found, name);
+    return found[0];
+  }).join('\n');
+  const start = source.indexOf('    const observer = new MutationObserver', source.indexOf('  function bindHeaderWeatherState('));
+  const marker = '    host.__weatherStateObserver = observer;';
+  const end = source.indexOf(marker, start) + marker.length;
+  const live = new Set(), online = new Set(), visibility = new Set(), cancelled = [];
+  let callback, connected = [];
+  const host = { dataset: {}, classList: { remove() {} }, shadowRoot: { querySelectorAll: () => connected } };
+  const noops = ['applyHeaderWeatherPressureCopy', 'syncHeaderWeatherExpandedState', 'syncHeaderWeatherToggleArrow', 'scheduleHeaderWeatherOrbSync', 'scheduleHeaderWeatherReadingsSync', 'syncHeaderWeatherAttribution', 'applyHeaderWeatherLocationSearchCopy', 'bindHeaderWeatherDropdownScrollState', 'scheduleHeaderWeatherAreaLocationLabelRestore', 'syncHeaderWeatherDropdownAtmosphere', 'invalidateHeaderWeatherLocationRequest', 'stopHeaderWeatherToggleArrowAnimation', 'resetHeaderWeatherPreviewLayoutState', 'emitHeaderWeatherEvent'];
+  const environment = {
+    host, getHeaderWeatherHost: () => host,
+    window: { removeEventListener: (type, handler) => online.delete(handler) },
+    document: { removeEventListener: (type, handler) => visibility.delete(handler), body: { classList: { remove() {} } } },
+    cancelAnimationFrame: value => cancelled.push(value), clearHeaderWeatherOrbCanvas() {},
+    MutationObserver: class { constructor(handler) { callback = handler; } observe() {} disconnect() { this.disconnected = true; } },
+    ...Object.fromEntries(noops.map(name => [name, () => {}])),
+  };
+  const api = new Function('environment', `const { ${Object.keys(environment).join(', ')} } = environment; ${declarations}
+    ${source.slice(start, end)} return { clear: clearHeaderWeatherOrbResources, unmount: unmountHeaderWeatherWidget };`)(environment);
+  const orb = (role = 'sun') => {
+    const classes = new Set(['weather-orb-overlay']);
+    const canvas = { hidden: false };
+    const image = { dataset: {}, hidden: false };
+    const video = { dataset: { currentSrc: '/orb.webm' }, pause() { this.paused = true; }, removeAttribute() {}, load() {}, cancelVideoFrameCallback(value) { cancelled.push(value); } };
+    const node = { isConnected: true, dataset: { orbKind: role }, hidden: false,
+      matches: selector => selector === '.weather-orb-overlay', querySelectorAll: () => [],
+      querySelector: selector => ({ video, canvas, img: image })[selector],
+      classList: { remove: name => classes.delete(name), toggle: (name, enabled) => enabled ? classes.add(name) : classes.delete(name) },
+      style: { removeProperty() {} }, __orbFrameScheduler: 'video', __orbFrameHandle: 42,
+    };
+    if (role === 'sun') {
+      const scene = { running: true, disposed: 0, dispose() { this.running = false; this.disposed++; live.delete(this); } };
+      node.__sunScene = scene;
+      node.__sunSceneMountToken = 'current';
+      node.__sunSceneResume = () => {};
+      online.add(node.__sunSceneResume); visibility.add(node.__sunSceneResume); live.add(scene);
+      node.__sunSceneResizeObserver = { disconnect() { this.disconnected = true; } };
+      node.scene = scene;
+    } else node.__moonTimelineRaf = 41;
+    connected.push(node);
+    return node;
+  };
+  return { ...api, host, orb, live, online, visibility, cancelled,
+    mutate: mutations => callback(mutations), detachAll() { for (const node of connected) node.isConnected = false; connected = []; } };
+}
+
+test('removed root and nested celestial overlays release their actual solar, lunar and video lifecycles once', async () => {
+  const h = await removedOrbHarness();
+  const rootSun = h.orb(), nestedMoon = h.orb('moon');
+  rootSun.isConnected = nestedMoon.isConnected = false;
+  const removed = { isConnected: false, querySelectorAll: () => [nestedMoon] };
+  h.mutate([{ type: 'childList', removedNodes: [rootSun, removed, { isConnected: false }] }]);
+  assert.equal(h.live.size, 0);
+  assert.equal(rootSun.scene.running, false);
+  assert.equal(rootSun.scene.disposed, 1);
+  assert.equal(rootSun.__sunScene, null);
+  assert.equal(rootSun.__sunSceneMountToken, null);
+  assert.equal(h.online.size, 0);
+  assert.equal(h.visibility.size, 0, 'detached scenes cannot remain reachable through window/document resume listeners');
+  assert.equal(nestedMoon.__moonTimelineRaf, null);
+  assert.ok(h.cancelled.includes(41));
+  assert.ok(h.cancelled.includes(42));
+  assert.equal(nestedMoon.querySelector('video').paused, true);
+  h.clear(rootSun); h.clear(removed);
+  assert.equal(rootSun.scene.disposed, 1, 'duplicate removal records and unmount cleanup stay idempotent');
+  const emptied = h.orb();
+  emptied.isConnected = false;
+  emptied.querySelector = () => null;
+  h.mutate([{ type: 'childList', removedNodes: [emptied] }]);
+  assert.equal(emptied.scene.disposed, 1, 'React may remove the media children before the recorded orb subtree is cleaned');
+  assert.equal(h.live.size, 0);
+});
+
+test('connected overlays moved within the document keep running while subsequent real removals do not accumulate contexts', async () => {
+  const h = await removedOrbHarness();
+  const moved = h.orb();
+  h.mutate([{ type: 'childList', removedNodes: [moved, { isConnected: true, querySelectorAll: () => [moved] }] }]);
+  assert.equal(moved.scene.running, true);
+  assert.equal(h.live.size, 1);
+  moved.isConnected = false;
+  h.mutate([{ type: 'childList', removedNodes: [moved] }]);
+  for (let index = 0; index < 4; index++) {
+    const next = h.orb();
+    assert.equal(h.live.size, 1, 'only the current menu owns a live solar scene');
+    next.isConnected = false;
+    h.mutate([{ type: 'childList', removedNodes: [next] }]);
+    assert.equal(h.live.size, 0);
+  }
+});
+
+test('widget unmount snapshots celestial overlays before React removes them and cleans them after the observer disconnects', async () => {
+  const h = await removedOrbHarness();
+  const sun = h.orb(), moon = h.orb('moon');
+  const observer = h.host.__weatherStateObserver;
+  h.host.__weatherWidgetInstance = { unmount() { observer.disconnect(); h.detachAll(); } };
+  h.unmount();
+  assert.equal(observer.disconnected, true);
+  assert.equal(h.host.shadowRoot.querySelectorAll('.weather-orb-overlay').length, 0);
+  assert.equal(h.live.size, 0, 'captured references release the detached renderer even without mutation delivery');
+  assert.equal(sun.scene.disposed, 1);
+  assert.equal(moon.__moonTimelineRaf, null);
+  assert.equal(h.online.size, 0);
+  assert.equal(h.visibility.size, 0);
+  h.unmount();
+  assert.equal(sun.scene.disposed, 1);
 });
 
 test('weather controller refreshes full data, deduplicates and preserves the last successful payload on failure', async () => {

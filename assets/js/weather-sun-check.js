@@ -75,6 +75,7 @@ function inspectSun(overlay) {
   const initializationStage = INIT_STAGES.has(canvas?.dataset.sunInitStage) ? canvas.dataset.sunInitStage : retainedError && scene == null ? 'module' : null;
   const report = { role: overlay.classList.contains('weather-orb-overlay--dropdown') ? 'dropdown' : 'preview',
     sunScene: overlay.dataset.sunScene || null, sunSurface: overlay.dataset.sunSurface || null,
+    contextProfile: ['preferred', 'compatible', 'unavailable'].includes(canvas?.dataset.sunContextProfile) ? canvas.dataset.sunContextProfile : null,
     initializationStage, failure: failureDetails(retainedError, initializationStage), contextCreationStatus: creationStatus(canvas?.__sunContextCreationError),
     scene: scene ? { state: scene.state, running: !!scene.running, disposed: !!scene.disposed, contextLost: !!scene.contextLost } : null,
     canvas: canvas ? { hidden: canvas.hidden, css: [canvas.clientWidth, canvas.clientHeight], backing: [canvas.width, canvas.height], appearance: appearance(canvas) } : null,

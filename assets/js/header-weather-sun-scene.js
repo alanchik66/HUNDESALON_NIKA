@@ -266,6 +266,8 @@ export class HeaderWeatherSunScene {
     this.scene = null;
     this.camera = null;
     this.renderer = null;
+    this.renderScale = 1;
+    this.pendingRemovalObserver = null;
     this.sunGroup = null;
     this.sunMesh = null;
     this.flareMesh = null;
@@ -305,7 +307,8 @@ export class HeaderWeatherSunScene {
   }
 
   ownsInitialization() {
-    return !this.disposed && this.canvas.__sunInitializationOwner === this.initializationOwner;
+    return !this.disposed && this.canvas.isConnected !== false &&
+      this.canvas.__sunInitializationOwner === this.initializationOwner;
   }
 
   setInitializationStage(stage) {
@@ -383,12 +386,28 @@ export class HeaderWeatherSunScene {
     this.canvas.addEventListener('webglcontextcreationerror', onCreationError);
     let renderer;
     try {
+      const attributes = { alpha: true, depth: true, stencil: false, antialias: true,
+        premultipliedAlpha: true, preserveDrawingBuffer: false,
+        powerPreference: 'high-performance', failIfMajorPerformanceCaveat: false };
+      this.canvas.dataset.sunContextProfile = 'unavailable';
+      let context = this.canvas.getContext('webgl2', attributes);
+      let compatible = false;
+      if (!context) {
+        attributes.antialias = false;
+        attributes.powerPreference = 'default';
+        context = this.canvas.getContext('webgl2', attributes);
+        compatible = true;
+      }
+      if (!context) throw new Error('Error creating WebGL context.');
+      if (context.isContextLost()) throw new Error('Solar graphics context was lost during preparation.');
+      const noMsaa = context.getContextAttributes()?.antialias === false;
+      this.renderScale = noMsaa ? 2 : 1;
+      this.canvas.dataset.sunContextProfile = compatible || noMsaa ? 'compatible' : 'preferred';
+      delete this.canvas.__sunContextCreationError;
       renderer = new THREE.WebGLRenderer({
+        ...attributes,
         canvas: this.canvas,
-        alpha: true,
-        antialias: true,
-        premultipliedAlpha: true,
-        powerPreference: 'high-performance',
+        context,
       });
     } finally {
       this.canvas.removeEventListener('webglcontextcreationerror', onCreationError);
@@ -404,10 +423,23 @@ export class HeaderWeatherSunScene {
     this.canvas.addEventListener('webglcontextrestored', this.onContextRestored);
     window.addEventListener?.('resize', this.onResize, { passive: true });
     window.visualViewport?.addEventListener?.('resize', this.onResize, { passive: true });
+    const root = this.canvas.getRootNode?.();
+    if (root && typeof MutationObserver === 'function') {
+      this.pendingRemovalObserver = new MutationObserver(() => {
+        if (this.canvas.isConnected === false) this.dispose();
+      });
+      this.pendingRemovalObserver.observe(root, { childList: true, subtree: true });
+      const document = this.canvas.ownerDocument;
+      if (document && document !== root) {
+        this.pendingRemovalObserver.observe(document, { childList: true, subtree: true });
+      }
+    }
 
     this.setInitializationStage('texture-load');
     const sunTexture = await loadTexture(this.options.sunTextureUrl, this.textures, renderer,
       phase => { this.setInitializationStage(phase); });
+    this.pendingRemovalObserver?.disconnect();
+    this.pendingRemovalObserver = null;
     if (!this.ownsInitialization()) {
       this.dispose();
       return;
@@ -488,7 +520,7 @@ ${mapChunk}
     }
     const width = Math.max(8, Math.round(this.canvas.clientWidth));
     const height = Math.max(8, Math.round(this.canvas.clientHeight));
-    const pixelRatio = resolveSolarPixelRatio(width, height, window.devicePixelRatio || 1,
+    const pixelRatio = resolveSolarPixelRatio(width, height, (window.devicePixelRatio || 1) * this.renderScale,
       window.visualViewport?.scale || 1, this.renderer.capabilities?.maxTextureSize || 1024);
     this.renderer.setPixelRatio(pixelRatio);
     // WebGLRenderer applies its pixel ratio to these CSS dimensions itself.
@@ -532,6 +564,10 @@ ${mapChunk}
     }
     this.running = true;
     const tick = () => {
+      if (this.canvas.isConnected === false) {
+        this.dispose();
+        return;
+      }
       if (!this.running) {
         return;
       }
@@ -557,8 +593,13 @@ ${mapChunk}
   }
 
   dispose() {
+    if (this.disposed) return;
+    const releaseContext = this.canvas.isConnected === false &&
+      this.canvas.__sunInitializationOwner === this.initializationOwner;
     this.disposed = true;
     this.stop();
+    this.pendingRemovalObserver?.disconnect();
+    this.pendingRemovalObserver = null;
     if (this.resizeRafId) cancelAnimationFrame(this.resizeRafId);
     this.resizeRafId = 0;
     window.removeEventListener?.('resize', this.onResize);
@@ -574,6 +615,7 @@ ${mapChunk}
     this.textures.forEach(texture => texture.dispose());
     this.textures = [];
     this.renderer?.dispose();
+    if (releaseContext) this.renderer?.forceContextLoss?.();
     this.scene = null;
     this.camera = null;
     this.renderer = null;

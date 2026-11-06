@@ -8,9 +8,9 @@ const budgets = [
   // Minified September 2026 baseline: 33.8 KB gzip, including shared booking
   // controls, responsive price cards and page scroll navigation. Keep 1.2 KB headroom.
   { file: 'dist/assets/css/page-modules.css', gzip: 35_000 },
-  // Keep the combined JS allowance at 90 KB: weather CSS compression funds
-  // 500 bytes for the reviewed icon-motion lifecycle in main.js.
-  { file: 'dist/assets/js/site-shell.js', gzip: 74_500 },
+  // Orb teardown adds 109 B gzip while releasing closed-menu GPU resources.
+  // Allow that per-file growth while enforcing the shared 90 KB limit below.
+  { file: 'dist/assets/js/site-shell.js', gzip: 74_700 },
   { file: 'dist/assets/js/main.js', gzip: 15_500 },
   // Homepage-only glass: keep the isolated material and lifecycle controller small.
   { file: 'dist/assets/css/service-card-glass.css', gzip: 2_000 },
@@ -43,6 +43,10 @@ for (const budget of budgets) {
   const ok = (budget.raw === undefined || raw <= budget.raw) && (budget.gzip === undefined || gzip <= budget.gzip);
   results.push({ ...budget, raw, gzip, ok });
 }
+
+const shellFiles = ['dist/assets/js/site-shell.js', 'dist/assets/js/main.js'];
+const shellGzip = results.filter(item => shellFiles.includes(item.file)).reduce((total, item) => total + item.gzip, 0);
+results.push({ check: 'combined shell and main gzip', gzip: shellGzip, limit: 90_000, ok: shellGzip <= 90_000 });
 
 for (const budget of directoryBudgets) {
   const files = await walkFiles(budget.directory);
