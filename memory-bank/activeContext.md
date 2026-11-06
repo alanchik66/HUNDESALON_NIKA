@@ -17,4 +17,10 @@
 
 ## Open Questions
 
-- Await the physical iPhone report: fallback state, shader compilation/linking, exterior light pixels, and ancestor clipping. Do not assume a cause from the screenshot or treat `sunScene=ready` alone as render proof.
+- Capture the specific initialization failure on the physical iPhone. Do not assume a cause from the screenshot or treat `sunScene=ready` alone as render proof.
+
+## 2026-11-06 11:03:28 UTC — physical device evidence
+
+- The user's `02bf393` report confirms `sunScene=failed`, no retained scene or shader programs, original texture ready, and the unresized canvas backing `300x150`. The visible white disc is the recovery image, not the working 3D Sun.
+- This localizes the failure before the first resize: import/evaluation, constructor, WebGL creation, texture load/decode/upload, or scene setup. Ancestor clipping and the `site-perf-lite` class do not explain this result. Windows WebKit/Chromium cannot reproduce the initialization failure.
+- The first diagnostic omitted the caught exception. Add stage and safe failure details before changing rendering. The prior Netlify 404 was reported for the correct URL but was not reproduced; current canonical asset/locale checks passed, and the subsequent physical report proves the diagnostic page loaded.

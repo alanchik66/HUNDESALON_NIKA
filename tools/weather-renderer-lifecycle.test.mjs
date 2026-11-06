@@ -188,7 +188,7 @@ async function solarBootstrapHarness(loadModule) {
   const visibility = new Map();
   const target = listeners => ({ addEventListener: (name, callback) => listeners.set(name, callback), removeEventListener: name => listeners.delete(name) });
   const events = [];
-  const canvas = {};
+  const canvas = { dataset: {} };
   Object.defineProperty(canvas, 'hidden', { get: () => canvas.isHidden, set: value => { canvas.isHidden = value; events.push(['canvas-hidden', value]); } });
   const video = { dataset: {}, pause() {} };
   const image = { decode: async () => {}, hidden: true };
@@ -207,7 +207,7 @@ async function solarBootstrapHarness(loadModule) {
     setGeoState: value => events.push(['geo', value]), resize: () => events.push(['resize']),
     stop: () => events.push(['stop']), dispose: () => events.push(['dispose']),
   };
-  return { ...api, overlay, canvas, scene, events, online, visibility };
+  return { ...api, overlay, canvas, image, scene, events, online, visibility };
 }
 
 test('solar loading applies the latest forecast or Now appearance after delayed import and texture readiness', async () => {
@@ -286,6 +286,88 @@ test('a solar scene resolving after cancellation is disposed without retaining a
   assert.equal(h.overlay.__sunLatestAssetConfig, undefined);
   assert.deepEqual(h.events.filter(event => event[0] === 'dispose'), [['dispose']]);
   assert.equal(h.events.some(event => event[0] === 'geo'), false);
+});
+
+test('the active solar import retains the exact thrown error until stopped', async () => {
+  const imported = deferred();
+  const h = await solarBootstrapHarness(() => imported.promise);
+  const pending = h.mount(h.overlay, { assetsModuleBase: '/assets', sunTextureUrl: '/sun.jpg' });
+  const failure = new SyntaxError('Module evaluation failed');
+  imported.reject(failure);
+  await pending;
+  assert.equal(h.overlay.__sunSceneError, failure, 'diagnostics need the original native error rather than a replacement message');
+  assert.equal(h.overlay.dataset.sunScene, 'failed');
+  h.stop(h.overlay);
+  assert.equal(h.overlay.__sunSceneError, undefined);
+});
+
+test('a new solar attempt clears its preceding error before importing and leaves a successful retry clean', async () => {
+  const retryImport = deferred();
+  const failure = new Error('Temporary module failure');
+  let attempts = 0;
+  const h = await solarBootstrapHarness(() => ++attempts === 1 ? Promise.reject(failure) : retryImport.promise);
+  const configuration = { assetsModuleBase: '/assets', sunTextureUrl: '/sun.jpg' };
+  await h.mount(h.overlay, configuration);
+  assert.equal(h.overlay.__sunSceneError, failure);
+  const retry = h.mount(h.overlay, configuration);
+  assert.equal(h.overlay.__sunSceneError, undefined, 'a pending retry cannot display the preceding attempt error');
+  retryImport.resolve({ mountHeaderWeatherSunScene: async () => h.scene });
+  await retry;
+  assert.equal(h.overlay.__sunScene, h.scene);
+  assert.equal(h.overlay.__sunSceneError, undefined);
+  h.stop(h.overlay);
+});
+
+test('obsolete and disposed solar failures cannot replace the current diagnostic error', async () => {
+  const oldImport = deferred(), currentImport = deferred();
+  let attempts = 0;
+  const h = await solarBootstrapHarness(() => ++attempts === 1 ? oldImport.promise : currentImport.promise);
+  const configuration = { assetsModuleBase: '/assets', sunTextureUrl: '/sun.jpg' };
+  const old = h.mount(h.overlay, configuration);
+  const current = h.mount(h.overlay, configuration);
+  const currentFailure = new Error('Current module failure');
+  currentImport.reject(currentFailure);
+  await current;
+  oldImport.reject(new Error('Obsolete module failure'));
+  await old;
+  assert.equal(h.overlay.__sunSceneError, currentFailure, 'an old failed import must not overwrite a later failure');
+  assert.equal(h.overlay.dataset.sunScene, 'failed');
+  h.stop(h.overlay);
+  assert.equal(h.overlay.__sunSceneError, undefined);
+  const disposedImport = deferred();
+  const disposed = await solarBootstrapHarness(() => disposedImport.promise);
+  const pending = disposed.mount(disposed.overlay, configuration);
+  disposed.stop(disposed.overlay);
+  disposedImport.reject(new Error('Failure after disposal'));
+  await pending;
+  assert.equal(disposed.overlay.__sunSceneError, undefined, 'a stopped attempt cannot repopulate the cleared error');
+});
+
+test('solar state and surface readiness exclusively preserve the recovery image before and after mount resolves', async () => {
+  for (const state of ['ready', 'lost', 'failed']) {
+    for (const surfaceFirst of [false, true]) {
+      const imported = deferred(), decoded = deferred();
+      const h = await solarBootstrapHarness(() => imported.promise);
+      h.image.decode = () => decoded.promise;
+      const pending = h.mount(h.overlay, { assetsModuleBase: '/assets', sunTextureUrl: '/sun.jpg' });
+      if (surfaceFirst) {
+        decoded.resolve();
+        await settle();
+        assert.equal(h.image.hidden, true, 'the recovery image stays hidden while the renderer is loading');
+      }
+      imported.resolve({ mountHeaderWeatherSunScene: async (canvas, options) => {
+        options.onStateChange(state);
+        return h.scene;
+      } });
+      await pending;
+      assert.equal(h.overlay.dataset.sunScene, state);
+      assert.equal(h.image.hidden, state === 'ready' || !surfaceFirst, `${state}: mount completion preserves the latest callback visibility`);
+      decoded.resolve();
+      await settle();
+      assert.equal(h.image.hidden, state === 'ready', `${state}: a delayed original texture is visible only for recovery`);
+      h.stop(h.overlay);
+    }
+  }
 });
 
 test('selected forecast solar atmosphere is independent of current cloud cover without changing the live data', async () => {
@@ -497,6 +579,43 @@ test('module imports retry with unique URLs and a rejected batch can recover on 
   assert.deepEqual(await load(), { default: 'Scene' });
   assert.equal(new Set(urls).size, 4, 'a browser-cached failed module URL must not be reused');
   assert.equal(new URL(urls[3]).searchParams.get('v'), 'release');
+});
+
+test('the actual Sun and clock loaders retain absolute versioned URLs, failed retries and fulfilled promise caching', async () => {
+  const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
+  const block = source.slice(source.indexOf('  let headerWeatherSunSceneModulePromise'), source.indexOf('  function updateHeaderWeatherSunSceneGeo'));
+  const importExpression = 'import(/* webpackIgnore: true */ target.href)';
+  assert.equal(block.split(importExpression).length - 1, 2, 'only the actual dynamic import boundary is mocked');
+  for (const shellScript of [null, { src: 'https://site.test/assets/js/site-shell.js?v=release%26variant' }]) {
+    const requests = [], attempts = new Map();
+    const api = new Function('document', 'window', 'WEATHER_WIDGET_ASSET_VERSION', 'importModule', `${block.replaceAll(importExpression, 'importModule(target.href)')}
+      return [loadHeaderWeatherSunSceneModule, loadHeaderWeatherSolarClockModule];`)(
+      { querySelector: () => shellScript }, { location: { href: 'https://site.test/ru/nashi-uslugi' } }, 'fallback-version', async value => {
+        const url = new URL(value);
+        requests.push(url);
+        const count = (attempts.get(url.pathname) || 0) + 1;
+        attempts.set(url.pathname, count);
+        if (count === 1) throw new TypeError('Temporary module load failure');
+        return { path: url.pathname };
+      });
+    for (const [index, load] of api.entries()) {
+      const failed = load();
+      assert.equal(load(), failed, 'concurrent callers share the actual pending import');
+      await assert.rejects(failed, /Temporary module load failure/);
+      const fulfilled = load();
+      const value = await fulfilled;
+      assert.equal(load(), fulfilled, 'an imported module remains cached for subsequent mounts');
+      const first = requests[index * 2], retry = requests[index * 2 + 1];
+      const pathname = `/assets/js/${index ? 'weather-solar-time' : 'header-weather-sun-scene'}.js`;
+      assert.equal(value.path, pathname);
+      assert.equal(first.pathname, pathname);
+      assert.equal(retry.origin, 'https://site.test');
+      assert.equal(retry.searchParams.get('v'), shellScript ? 'release&variant' : 'fallback-version');
+      assert.equal(first.searchParams.has('weather-retry'), false);
+      assert.equal(retry.searchParams.get('weather-retry'), '1', 'native URLSearchParams serializes the integer retry');
+    }
+    assert.equal(requests.length, 4);
+  }
 });
 
 test('a managed header requires a real location instead of fetching the default city', async () => {

@@ -4293,6 +4293,7 @@
     }
     overlay.__sunSceneMountToken = null;
     overlay.__sunSurfaceToken = null;
+    delete overlay.__sunSceneError;
     delete overlay.__sunLatestAssetConfig;
     if (overlay.__sunSceneResume) {
       window.removeEventListener('online', overlay.__sunSceneResume);
@@ -4333,8 +4334,8 @@
   function loadHeaderWeatherSunSceneModule() {
     if (!headerWeatherSunSceneModulePromise) {
       const moduleUrl = resolveHeaderWeatherSunSceneModuleUrl();
-      const target = new URL(moduleUrl, window.location.href);
-      if (headerWeatherSunSceneModuleRetry) target.searchParams.set('weather-retry', String(headerWeatherSunSceneModuleRetry));
+      const target = new URL(moduleUrl);
+      if (headerWeatherSunSceneModuleRetry) target.searchParams.set('weather-retry', headerWeatherSunSceneModuleRetry);
       headerWeatherSunSceneModulePromise = import(/* webpackIgnore: true */ target.href).catch(error => {
         headerWeatherSunSceneModulePromise = null;
         headerWeatherSunSceneModuleRetry += 1;
@@ -4349,9 +4350,9 @@
 
   function loadHeaderWeatherSolarClockModule() {
     if (!headerWeatherSolarClockModulePromise) {
-      const target = new URL(resolveHeaderWeatherSunSceneModuleUrl(), window.location.href);
+      const target = new URL(resolveHeaderWeatherSunSceneModuleUrl());
       target.pathname = target.pathname.replace(/header-weather-sun-scene\.js$/, 'weather-solar-time.js');
-      if (headerWeatherSolarClockModuleRetry) target.searchParams.set('weather-retry', String(headerWeatherSolarClockModuleRetry));
+      if (headerWeatherSolarClockModuleRetry) target.searchParams.set('weather-retry', headerWeatherSolarClockModuleRetry);
       headerWeatherSolarClockModulePromise = import(/* webpackIgnore: true */ target.href).catch(error => {
         headerWeatherSolarClockModulePromise = null;
         headerWeatherSolarClockModuleRetry += 1;
@@ -12556,11 +12557,11 @@
         }
       }
       canvas.hidden = false;
-      if (image) image.hidden = overlay.dataset.sunScene === 'ready' || overlay.dataset.sunSurface !== 'ready';
       scene.resize();
     } catch (error) {
       console.error('Header weather Sun scene failed:', error);
       if (overlay.__sunSceneMountToken === mountToken) {
+        overlay.__sunSceneError = error;
         overlay.__sunSceneMountToken = null;
         overlay.__sunSceneRetryAfter = Date.now() + 30000;
         overlay.dataset.sunScene = 'failed';

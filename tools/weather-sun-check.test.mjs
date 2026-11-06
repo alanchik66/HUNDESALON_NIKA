@@ -216,6 +216,135 @@ test('actual readback counts only exterior alpha and copies the privacy-limited 
   dispose(); assert.equal(h.node(''), null); assert.equal(h.timers.size, 0);
 });
 
+test('a pre-mount WebGL failure exposes its stage and native creation status without creating a context', () => {
+  const h = diagnosticHarness({ state: 'failed', renderer: false });
+  h.overlay.__sunScene = null;
+  h.canvas.dataset.sunInitStage = 'renderer-create';
+  h.canvas.__sunContextCreationError = 'Could not create a WebGL context, VENDOR = 0xffff';
+  h.overlay.__sunSceneError = Error('Error creating WebGL context with your selected attributes.');
+  const dispose = h.mount(), report = h.json().sun[0];
+  assert.equal(report.initializationStage, 'renderer-create');
+  assert.deepEqual(report.failure, { name: 'Error', reason: 'webgl-context', message: 'Error creating WebGL context with your selected attributes.', resource: null });
+  assert.equal(report.contextCreationStatus, h.canvas.__sunContextCreationError);
+  assert.equal(report.scene, null);
+  assert.equal(report.readback.valid, false);
+  assert.equal(h.metrics.canvasContexts, 0); assert.equal(h.metrics.network, 0);
+  assert.match(h.node('status').textContent, /renderer-create.*webgl-context/u);
+  dispose();
+});
+
+test('caught Sun failures distinguish module, TDZ, texture and context errors with public resource paths only', () => {
+  const fixtures = [
+    ['module', 'TypeError', 'Failed to fetch dynamically imported module: https://site.test/assets/js/header-weather-sun-scene.js?v=release&latitude=51.234567#private', 'module-load', '/assets/js/header-weather-sun-scene.js'],
+    ['module', 'TypeError', 'error loading dynamically imported module: https://site.test/3d-weather-codrops-main/dist-widget/react-vendor-DdSZTPSL.mjs?chat=private-chat-message-unique', 'module-load', '/3d-weather-codrops-main/dist-widget/react-vendor-DdSZTPSL.mjs'],
+    ['module', 'TypeError', 'Importing a module script failed.', 'module-load', null],
+    ['module', 'ReferenceError', "Cannot access 'private-chat-message-unique' before initialization", 'module-evaluation', null],
+    ['module', 'ReferenceError', 'Cannot access uninitialized variable.', 'module-evaluation', null],
+    ['module', 'SyntaxError', "Unexpected identifier 'private-storage-unique'", 'module-evaluation', null],
+    ['texture-load', 'Error', 'The solar surface texture could not load.', 'texture-load', null],
+    ['texture-decode', 'EncodingError', 'The source image cannot be decoded.', 'texture-decode', null],
+    ['texture-upload', 'SecurityError', 'The operation is insecure.', 'texture-upload', null],
+    ['texture-upload', 'Error', 'WebGL: INVALID_VALUE: texImage2D: width or height out of range', 'texture-upload', null],
+    ['texture-upload', 'Error', 'Solar graphics context was lost during preparation.', 'context-lost', null],
+  ];
+  for (const [stage, name, message, reason, resource] of fixtures) {
+    const h = diagnosticHarness({ state: 'failed', renderer: false });
+    if (stage === 'module') h.overlay.__sunScene = null;
+    else h.canvas.dataset.sunInitStage = stage;
+    h.overlay.__sunSceneError = Object.assign(Error(message), { name });
+    const dispose = h.mount(), report = h.json().sun[0], failure = report.failure;
+    assert.equal(report.initializationStage, stage, 'pre-factory import failures infer the absent module marker');
+    assert.equal(failure.name, name); assert.equal(failure.reason, reason, message);
+    assert.equal(failure.resource, resource, message);
+    assert.ok(failure.message && failure.message.length <= 300);
+    const payload = JSON.stringify(h.json());
+    for (const value of Object.values(h.secrets)) assert.equal(payload.includes(String(value)), false, `private value in failure: ${name}`);
+    assert.equal(payload.includes('https://site.test'), false);
+    assert.equal(payload.includes('?v='), false);
+    dispose();
+  }
+});
+
+test('a missing module stage is inferred only from a retained caught error with no retained scene', () => {
+  for (const [scene, stage, error, expected] of [
+    [null, undefined, undefined, null],
+    [undefined, undefined, Error('Load failed'), 'module'],
+    [null, 'private-storage-unique', Error('Load failed'), 'module'],
+    [{}, undefined, Error('Load failed'), null],
+    [false, undefined, Error('Load failed'), null],
+    [null, 'renderer-create', Error('Load failed'), 'renderer-create'],
+  ]) {
+    const h = diagnosticHarness({ state: error ? 'failed' : 'ready', renderer: false });
+    h.overlay.__sunScene = scene; h.overlay.__sunSceneError = error;
+    h.canvas.dataset.sunInitStage = stage;
+    const dispose = h.mount();
+    assert.equal(h.json().sun[0].initializationStage, expected);
+    assert.equal(JSON.stringify(h.json()).includes(h.secrets.storage), false);
+    dispose();
+  }
+});
+
+test('unrecognized Sun exceptions and non-public URL paths cannot disclose arbitrary caught data', async () => {
+  for (const message of ['private-chat-message-unique private-storage-unique 51.234567',
+    'Failed to fetch dynamically imported module: https://private.invalid/private-storage-unique?latitude=51.234567']) {
+    const h = diagnosticHarness({ state: 'failed', renderer: false });
+    h.canvas.dataset.sunInitStage = 'private-storage-unique';
+    h.canvas.__sunContextCreationError = 'private-chat-message-unique';
+    const error = { name: 'private-storage-unique', message, extra: h.secrets, options: h.secrets };
+    if (message.startsWith('private-')) error.name = { toString() { throw Error('Caught fields must not be coerced.'); } };
+    Object.defineProperty(error, 'stack', { get() { throw Error('Stack must never be read.'); } });
+    Object.defineProperty(error, 'location', { get() { h.metrics.privateReads++; throw Error('Extra caught fields must never be read.'); } });
+    h.overlay.__sunSceneError = error;
+    const dispose = h.mount(), report = h.json().sun[0];
+    assert.equal(report.initializationStage, null); assert.equal(report.contextCreationStatus, null);
+    assert.equal(report.failure.name, 'UnknownError'); assert.equal(report.failure.resource, null);
+    if (!message.startsWith('Failed to fetch')) { assert.equal(report.failure.reason, 'unknown'); assert.equal(report.failure.message, null); }
+    await h.node('copy').fire('click');
+    for (const value of Object.values(h.secrets)) assert.equal(h.metrics.copies[0].includes(String(value)), false);
+    assert.equal(h.metrics.privateReads, 0); assert.equal(h.metrics.canvasContexts, 0); assert.equal(h.metrics.network, 0);
+    dispose();
+  }
+});
+
+test('module TypeErrors distinguish exact network messages from ambiguous failures without guessing evaluation', () => {
+  for (const [stage, name, message, reason, safeMessage] of [
+    ['module', 'TypeError', 'Load failed', 'module-load', true],
+    ['module', 'TypeError', 'Failed to fetch', 'module-load', true],
+    ['module', 'TypeError', 'private-chat-message-unique', 'module-failure', false],
+    ['module', 'ReferenceError', 'private-chat-message-unique', 'module-evaluation', false],
+    ['texture-decode', 'TypeError', 'Load failed', 'texture-decode', false],
+  ]) {
+    const h = diagnosticHarness({ state: 'failed', renderer: false });
+    h.canvas.dataset.sunInitStage = stage; h.overlay.__sunSceneError = { name, message };
+    const dispose = h.mount(), failure = h.json().sun[0].failure;
+    assert.equal(failure.reason, reason);
+    assert.equal(failure.message !== null, safeMessage);
+    assert.equal(JSON.stringify(h.json()).includes(h.secrets.chat), false);
+    dispose();
+  }
+});
+
+test('initialization stages are explicit and native creation status is bounded and strips URL queries', () => {
+  for (const stage of ['module', 'constructor', 'renderer-create', 'texture-load', 'texture-decode', 'texture-upload', 'scene-setup', 'resize', 'shader-compile', 'first-frame', 'running']) {
+    const h = diagnosticHarness(); h.canvas.dataset.sunInitStage = stage;
+    const dispose = h.mount();
+    assert.equal(h.json().sun[0].initializationStage, stage); assert.equal(h.json().sun[0].failure, null);
+    dispose();
+  }
+  const h = diagnosticHarness({ state: 'failed', renderer: false });
+  h.canvas.__sunContextCreationError = 'Could not create a WebGL context: https://site.test/assets/js/header-weather-sun-scene.js?chat=private-chat-message-unique ' + 'x'.repeat(400);
+  const dispose = h.mount(), status = h.json().sun[0].contextCreationStatus;
+  assert.equal(status.length, 300);
+  assert.match(status, /\/assets\/js\/header-weather-sun-scene\.js/u);
+  assert.equal(status.includes('https://'), false); assert.equal(status.includes('?'), false); assert.equal(status.includes(h.secrets.chat), false);
+  dispose();
+  const webgl2 = diagnosticHarness({ state: 'failed', renderer: false });
+  webgl2.canvas.__sunContextCreationError = 'WebGL2 context creation failed.';
+  const dispose2 = webgl2.mount();
+  assert.equal(webgl2.json().sun[0].contextCreationStatus, 'WebGL2 context creation failed.');
+  dispose2();
+});
+
 test('loading overlays are awaited, while a missing header stops polling at the thirty-second deadline', async () => {
   const loading = diagnosticHarness({ state: 'loading' });
   loading.mount();

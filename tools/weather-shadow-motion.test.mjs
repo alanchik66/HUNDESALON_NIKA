@@ -253,7 +253,7 @@ test('weather dropdown clears the complete navigation on mobile and desktop and 
   }
 });
 
-async function solarRecoveryHarness({ textureFailure = false, networkFailure = false, decodeFailure = false, decodeWait = Promise.resolve() } = {}) {
+async function solarRecoveryHarness({ textureFailure = false, networkFailure = false, decodeFailure = false, decodeWait = Promise.resolve(), rendererFailure = false, uploadFailure = false } = {}) {
   const [clock, sceneSource] = await Promise.all([
     readFile(new URL('../assets/js/weather-solar-time.js', import.meta.url), 'utf8'),
     readFile(new URL('../assets/js/header-weather-sun-scene.js', import.meta.url), 'utf8'),
@@ -277,13 +277,19 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
   const window = { devicePixelRatio: 3, visualViewport: viewport, ...events(windowListeners) };
   const stats = { renders: 0, disposed: 0, texturesDisposed: 0, failRender: false, contextLost: false,
     events: [], sizes: [], textures: [], materialsDisposed: [], geometriesDisposed: [], colorsAtRender: [] };
-  const canvas = { clientWidth: 96, clientHeight: 96,
+  const canvas = { clientWidth: 96, clientHeight: 96, dataset: {},
     addEventListener: (name, callback) => listeners.set(name, callback),
     removeEventListener: name => listeners.delete(name),
   };
   const mapFragment = '#ifdef USE_MAP\n vec4 sampledDiffuseColor = texture2D( map, vMapUv );\n #ifdef DECODE_VIDEO_TEXTURE\n sampledDiffuseColor = sRGBTransferEOTF( sampledDiffuseColor );\n #endif\n diffuseColor *= sampledDiffuseColor;\n#endif';
   class Renderer {
-    constructor(options) { stats.rendererOptions = options; }
+    constructor(options) {
+      stats.rendererOptions = options;
+      if (rendererFailure) {
+        listeners.get('webglcontextcreationerror')?.({ statusMessage: 'WebGL context creation failed.' });
+        throw new Error('Error creating WebGL context.');
+      }
+    }
     setPixelRatio(value) { this.pixelRatio = value; stats.pixelRatio = value; }
     getPixelRatio() { return this.pixelRatio; }
     setClearColor(color, alpha) { stats.clear = { color, alpha }; }
@@ -292,7 +298,10 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
       canvas.height = Math.floor(height * this.pixelRatio);
       stats.sizes.push({ width, height, updateStyle });
     }
-    initTexture() { stats.events.push('upload'); }
+    initTexture() {
+      stats.events.push('upload');
+      if (uploadFailure) throw new Error('Texture upload failed');
+    }
     compile(scene) {
       stats.events.push('compile');
       const visit = node => {
@@ -511,6 +520,58 @@ test('missing or undecodable solar textures fail instead of showing a plain read
     assert.equal(h.stats.disposed, 1);
     assert.equal(h.listeners.size, 0);
   }
+});
+
+test('solar failures preserve the initialization stage and native context refusal after cleanup', async () => {
+  for (const [options, phase, message] of [
+    [{ rendererFailure: true }, 'renderer-create', /creating WebGL context/],
+    [{ networkFailure: true }, 'texture-load', /texture could not load/],
+    [{ decodeFailure: true }, 'texture-decode', /Decode failed/],
+    [{ uploadFailure: true }, 'texture-upload', /Texture upload failed/],
+  ]) {
+    const h = await solarRecoveryHarness(options);
+    await assert.rejects(h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' }), message);
+    assert.equal(h.canvas.dataset.sunInitStage, phase);
+    assert.equal(h.canvas.__sunContextCreationError, options.rendererFailure ? 'WebGL context creation failed.' : undefined);
+    assert.equal(h.listeners.size, 0, 'temporary creation and lifecycle listeners must be removed');
+    assert.equal(h.windowListeners.size, 0);
+    assert.equal(h.frames.size, 0);
+    assert.equal(h.stats.disposed, options.rendererFailure ? 0 : 1);
+    assert.equal(h.stats.renders, 0);
+  }
+});
+
+test('successful solar initialization clears a previous context refusal and exposes its completed stage', async () => {
+  const h = await solarRecoveryHarness();
+  h.canvas.__sunContextCreationError = 'Old context refusal';
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  assert.equal(h.canvas.dataset.sunInitStage, 'running');
+  assert.equal(h.canvas.__sunContextCreationError, undefined);
+  assert.equal(h.listeners.has('webglcontextcreationerror'), false);
+  assert.ok(h.stats.renders > 0);
+  scene.dispose();
+});
+
+test('a superseded solar decode cannot overwrite the stage of a failed newer attempt or render late', async () => {
+  let finishDecode;
+  const decodeWait = new Promise(resolve => { finishDecode = resolve; });
+  const h = await solarRecoveryHarness({ decodeWait });
+  const pending = h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  assert.equal(h.canvas.dataset.sunInitStage, 'texture-decode');
+  await assert.rejects(h.mount(h.canvas, {
+    sunTextureUrl: '/solar.jpg',
+    onAppearanceChange() { throw new Error('New construction failed'); },
+  }), /New construction failed/);
+  assert.equal(h.canvas.dataset.sunInitStage, 'constructor');
+  finishDecode();
+  const obsolete = await pending;
+  assert.equal(obsolete.disposed, true);
+  assert.equal(h.canvas.dataset.sunInitStage, 'constructor', 'late old work must leave the current failure stage intact');
+  assert.equal(h.stats.renders, 0);
+  assert.equal(h.stats.disposed, 1);
+  assert.equal(h.stats.texturesDisposed, 1);
+  assert.equal(h.listeners.size, 0);
+  assert.equal(h.frames.size, 0);
 });
 
 test('the original solar surface stays hidden until ready and adds no SVG or rotating synthetic spokes', async () => {

@@ -1766,7 +1766,7 @@ test('header Sun preserves CSS geometry while rendering native retina and pinch-
   for (const [dpr, zoom] of [[1, 1], [2, 1], [3, 1], [3, 2], [3, 5]]) {
     context.window.devicePixelRatio = dpr;
     context.window.visualViewport.scale = zoom;
-    const canvas = { clientWidth: 100, clientHeight: 60 };
+    const canvas = { clientWidth: 100, clientHeight: 60, dataset: {} };
     const scene = new Scene(canvas);
     let pixelRatio;
     let cssDimensions;
@@ -1800,7 +1800,7 @@ test('header Sun advances at physical hourly speed from absolute UTC and retains
     requestAnimationFrame: () => 1, cancelAnimationFrame() {},
   };
   const { Scene, epoch, rate } = runInNewContext(`${runnable}\n({ Scene: HeaderWeatherSunScene, epoch: SOLAR_MODEL_EPOCH_MS, rate: solarRotationRateDegPerDay });`, context);
-  const scene = new Scene({});
+  const scene = new Scene({ dataset: {} });
   scene.reducedMotion = true;
   scene.sunMesh = { rotation: { y: 0 } };
   scene.updateAnimation(epoch);
@@ -1811,7 +1811,7 @@ test('header Sun advances at physical hourly speed from absolute UTC and retains
   assert.ok(Math.abs(scene.sunMesh.rotation.y - start - expected) < 1e-10);
   assert.ok(expected > 0.009 && expected < 0.01, 'an hour is about half a degree rather than two artificial full turns');
   assert.equal(scene.solarDaysUniform.value, 1 / 24);
-  const remounted = new Scene({});
+  const remounted = new Scene({ dataset: {} });
   remounted.sunMesh = { rotation: {} };
   remounted.updateAnimation(later);
   assert.equal(remounted.sunMesh.rotation.y, scene.sunMesh.rotation.y);

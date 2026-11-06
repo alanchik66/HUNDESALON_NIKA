@@ -210,7 +210,7 @@ void main() {
   });
 }
 
-function loadTexture(url, textures, renderer) {
+function loadTexture(url, textures, renderer, onPhase) {
   if (!url) {
     return Promise.resolve(null);
   }
@@ -222,6 +222,7 @@ function loadTexture(url, textures, renderer) {
       async texture => {
         textures?.push?.(texture);
         try {
+          onPhase?.('texture-decode');
           await texture.image?.decode?.();
           texture.colorSpace = THREE.SRGBColorSpace;
           texture.wrapS = THREE.RepeatWrapping;
@@ -244,6 +245,10 @@ function loadTexture(url, textures, renderer) {
 export class HeaderWeatherSunScene {
   constructor(canvas, options = {}) {
     this.canvas = canvas;
+    this.initializationOwner = Symbol();
+    canvas.__sunInitializationOwner = this.initializationOwner;
+    canvas.dataset.sunInitStage = 'constructor';
+    delete canvas.__sunContextCreationError;
     this.options = options;
     this.geoState = {
       latitude: null,
@@ -299,6 +304,14 @@ export class HeaderWeatherSunScene {
     this.options.onStateChange?.(state);
   }
 
+  ownsInitialization() {
+    return !this.disposed && this.canvas.__sunInitializationOwner === this.initializationOwner;
+  }
+
+  setInitializationStage(stage) {
+    if (this.ownsInitialization()) this.canvas.dataset.sunInitStage = stage;
+  }
+
   setGeoState(next) {
     if (!next) {
       return;
@@ -352,36 +365,58 @@ export class HeaderWeatherSunScene {
   }
 
   async init() {
+    if (!this.ownsInitialization()) {
+      this.dispose();
+      return;
+    }
     if (this.renderer) {
       return;
     }
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 20);
-    const renderer = new THREE.WebGLRenderer({
-      canvas: this.canvas,
-      alpha: true,
-      antialias: true,
-      premultipliedAlpha: true,
-      powerPreference: 'high-performance',
-    });
+    this.setInitializationStage('renderer-create');
+    const onCreationError = event => {
+      const message = event.statusMessage;
+      this.canvas.__sunContextCreationError = typeof message === 'string' ? message.slice(0, 300) : '';
+    };
+    this.canvas.addEventListener('webglcontextcreationerror', onCreationError);
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas: this.canvas,
+        alpha: true,
+        antialias: true,
+        premultipliedAlpha: true,
+        powerPreference: 'high-performance',
+      });
+    } finally {
+      this.canvas.removeEventListener('webglcontextcreationerror', onCreationError);
+    }
+    // Retain immediately so every later initialization failure can dispose it.
+    this.renderer = renderer;
     renderer.setClearColor(0x000000, 0);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.6;
 
-    // Retain the renderer immediately so a failed async initialization can dispose it.
-    this.renderer = renderer;
     this.canvas.addEventListener('webglcontextlost', this.onContextLost);
     this.canvas.addEventListener('webglcontextrestored', this.onContextRestored);
     window.addEventListener?.('resize', this.onResize, { passive: true });
     window.visualViewport?.addEventListener?.('resize', this.onResize, { passive: true });
 
-    const sunTexture = await loadTexture(this.options.sunTextureUrl, this.textures, renderer);
-    if (this.disposed) return;
+    this.setInitializationStage('texture-load');
+    const sunTexture = await loadTexture(this.options.sunTextureUrl, this.textures, renderer,
+      phase => { this.setInitializationStage(phase); });
+    if (!this.ownsInitialization()) {
+      this.dispose();
+      return;
+    }
     if (this.contextLost) throw new Error('Solar graphics context was lost during preparation.');
+    this.setInitializationStage('texture-upload');
     if (sunTexture) renderer.initTexture(sunTexture);
 
+    this.setInitializationStage('scene-setup');
     const surfaceColor = new THREE.Color(sunTexture ? 0xffffff : WARM_SUN_COLOR);
     const sunMaterial = new THREE.MeshBasicMaterial({
       map: sunTexture || null,
@@ -434,13 +469,17 @@ ${mapChunk}
     this.sunGroup = sunGroup;
     this.sunMesh = sunMesh;
     this.flareMesh = flareMesh;
+    this.setInitializationStage('resize');
     this.resize();
     this.updateAnimation(this.getTimeMs());
     // One small material: prepare it synchronously so context loss cannot strand
     // a third-party compileAsync polling loop. The first frame stays hidden.
+    this.setInitializationStage('shader-compile');
     renderer.compile(scene, camera);
     if (renderer.getContext().isContextLost()) throw new Error('Solar graphics context was lost before the first frame.');
+    this.setInitializationStage('first-frame');
     this.renderFrame();
+    this.setInitializationStage('running');
   }
 
   resize() {
