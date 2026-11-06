@@ -259,7 +259,7 @@ test('caught Sun failures distinguish module, TDZ, texture and context errors wi
     assert.ok(failure.message && failure.message.length <= 300);
     const payload = JSON.stringify(h.json());
     for (const value of Object.values(h.secrets)) assert.equal(payload.includes(String(value)), false, `private value in failure: ${name}`);
-    assert.equal(payload.includes('https://site.test'), false);
+    assert.doesNotMatch(payload, /https?:\/\//u);
     assert.equal(payload.includes('?v='), false);
     dispose();
   }
