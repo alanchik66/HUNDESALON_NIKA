@@ -126,13 +126,17 @@ uniform float uTime;
 uniform vec3 uSolarColor;
 varying vec2 vSolarFlareUv;
 
+float solarGaussian(float q) {
+  return exp(-(q * q));
+}
+
 float apertureGhost(vec2 p, float sides, float radius) {
   float angle = (length(p) > 0.00001 ? atan(p.y, p.x) : 0.0) + 0.78539816339;
   float sector = 6.28318530718 / sides;
   float edge = cos(floor(0.5 + angle / sector) * sector - angle) * length(p) / radius;
   float feather = max(fwidth(edge) * 1.3, 0.12);
   float body = 1.0 - smoothstep(1.0 - feather, 1.0 + feather, edge);
-  float rim = exp(-pow((edge - 0.86) / 0.16, 2.0));
+  float rim = solarGaussian((edge - 0.86) / 0.16);
   return body * (0.3 + 0.7 * rim);
 }
 
@@ -146,7 +150,7 @@ float limbPlasma(vec2 p, float angle, float width, float height, float phase) {
   float arch = height * (1.0 - x * x) * (0.92 + 0.08 * sin(uTime * 0.17 + phase));
   arch += height * 0.07 * sin(x * 5.0 + uTime * 0.23 + phase);
   float feather = max(fwidth(y) * 0.7, 0.001);
-  float strand = exp(-pow((y - arch) / feather, 2.0));
+  float strand = solarGaussian((y - arch) / feather);
   float base = exp(-abs(y) / 0.004) * 0.22;
   return (strand + base) * (1.0 - smoothstep(0.65, 1.0, abs(x)))
     * smoothstep(0.247, 0.25, length(p)) * (0.82 + 0.18 * sin(uTime * 0.31 + phase));
@@ -191,7 +195,7 @@ void main() {
   float diamond = apertureGhost(p - direction * 0.345, 4.0, 0.034);
   float softGhost = exp(-pow(length(p - direction * 0.438) / 0.021, 2.0));
   float paleGhost = apertureGhost(p + direction * 0.322, 6.0, 0.018);
-  float opticalRing = exp(-pow((length(p - direction * 0.365) - 0.043) / 0.007, 2.0));
+  float opticalRing = solarGaussian((length(p - direction * 0.365) - 0.043) / 0.007);
   vec3 light = vec3(1.0, 0.97, 0.87) * (halo + rays * 1.6 + diffraction * 0.65)
     + vec3(1.0, 0.5, 0.24) * plasma * 0.6
     + offAxis * (diamond * vec3(0.42, 0.75, 0.57) * 0.43

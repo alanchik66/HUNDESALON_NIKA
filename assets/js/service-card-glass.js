@@ -1,4 +1,4 @@
-/* Optical edge and moving light for the four homepage service tiles. */
+/* Optical edge and moving light for opted-in service tiles. */
 (function () {
   'use strict';
 

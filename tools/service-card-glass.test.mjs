@@ -8,6 +8,28 @@ const script = readFileSync(new URL('../assets/js/service-card-glass.js', import
 const stylesheet = postcss.parse(readFileSync(new URL('../assets/css/style.css', import.meta.url), 'utf8'));
 const preferenceNames = ['prefers-reduced-motion', 'prefers-reduced-transparency', 'prefers-contrast', 'forced-colors'];
 
+test('homepage and services pages in every locale connect one shared glass material after the legacy styles', async t => {
+  for (const locale of ['de', 'en', 'ru', 'uk']) {
+    for (const [page, cardCount] of [['index.html', 4], ['nashi-uslugi.html', 8]]) {
+      await t.test(`${locale}/${page}`, () => {
+        const html = readFileSync(new URL(`../${locale}/${page}`, import.meta.url), 'utf8');
+        const links = [...html.matchAll(/<link\b[^>]*>/giu)].map(match => match[0]);
+        const material = links.filter(tag => /\brel="stylesheet"/u.test(tag) && /\bhref="\.\.\/assets\/css\/service-card-glass\.css(?:\?[^"\s]*)?"/u.test(tag));
+        assert.equal(material.length, 1, 'the rendered page must load the shared material once');
+        assert.ok(html.indexOf(material[0]) > html.lastIndexOf('assets/css/page-modules.css'), 'glass must override the legacy opaque card surface');
+        const grid = html.match(/<div\b[^>]*\bclass="[^"]*\bservices-grid\b[^"]*"[^>]*>/u)?.[0];
+        assert.match(grid || '', /\bdata-service-glass(?:\s|=|>)/u, 'the actual service grid must opt into the effect');
+        assert.equal([...html.matchAll(/\bclass="service-card"/gu)].length, cardCount, 'all existing service cards must remain present');
+        const scripts = [...html.matchAll(/<script\b[^>]*>/giu)].map(match => match[0]);
+        const effect = scripts.filter(tag => /\bsrc="\.\.\/assets\/js\/service-card-glass\.js(?:\?[^"\s]*)?"/u.test(tag));
+        assert.equal(effect.length, 1, 'the page must initialize the shared effect once');
+        assert.match(effect[0], /\bdefer(?:\s|=|>)/u);
+        assert.ok(html.indexOf(effect[0]) > html.indexOf('assets/js/main.js'), 'the effect must retain the main scroller initialization order');
+      });
+    }
+  }
+});
+
 function backgroundFor(theme = 'dark') {
   const variables = new Map();
   stylesheet.walkRules(rule => {
@@ -217,6 +239,26 @@ test('deferred interactive boot waits for an earlier DOMContentLoaded listener t
   h.window.dispatch('load');
   assert.equal(h.observers.intersection.length, 1, 'the load fallback must not reinitialize an already mounted effect');
   assert.equal(h.cards[0].children.length, 1);
+});
+
+test('the eight-card services overview receives registered lenses and scroll reflections on every tile', () => {
+  const h = harness({ cardCount: 8 });
+  assert.equal(h.cards.length, 8);
+  assert.equal(h.observers.intersection[0].targets.size, 8);
+  h.settle();
+  for (const card of h.cards) {
+    assert.equal(card.children.length, 1);
+    assert.equal(card.children[0].className, 'service-glass__lens');
+    assert.equal(card.children[0].style.backgroundImage, backgroundFor());
+    assert.ok(card.values.get('--glass-scene-x'));
+  }
+  const last = h.cards[7];
+  const before = last.values.get('--glass-light-y');
+  last.rect.top = 120;
+  h.scrollRoot.dispatch('scroll');
+  h.settle();
+  assert.notEqual(last.values.get('--glass-light-y'), before, 'the additional four services must keep the same moving reflection');
+  assert.equal(h.metrics.maxFrames, 1, 'all eight cards share one animation queue');
 });
 
 test('complete documents initialize immediately while the load fallback is once-only and idempotent with DOMContentLoaded', () => {

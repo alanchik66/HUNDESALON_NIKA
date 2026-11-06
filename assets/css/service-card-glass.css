@@ -1,4 +1,4 @@
-/* Homepage service tiles only. Content and layout remain in the shared styles. */
+/* Opt-in service tiles. Content and layout remain in the shared styles. */
 .services-grid[data-service-glass] > .service-card {
   --service-glass-radius: clamp(28px, 2.5vw, 32px);
   --service-glass-inner-radius: calc(var(--service-glass-radius) - 1px);
@@ -140,6 +140,7 @@
     --service-glass-light-x: calc(var(--glass-light-x, 50%) * 0.4 + var(--glow-x, 50%) * 0.6);
     --service-glass-light-y: calc(var(--glass-light-y, 24%) * 0.4 + var(--glow-y, 50%) * 0.6);
 
+    border-color: transparent;
     box-shadow: 0 20px 42px rgb(0 0 0 / 27%);
     transform: none;
   }
@@ -208,6 +209,7 @@ body.light .services-grid[data-service-glass] > .service-card > :is(h3, .price) 
 
 @media (forced-colors: active) {
   .services-grid[data-service-glass] > .service-card,
+  .services-grid[data-service-glass] > .service-card:hover,
   body.light .services-grid[data-service-glass] > .service-card {
     border-color: CanvasText;
     background: Canvas;

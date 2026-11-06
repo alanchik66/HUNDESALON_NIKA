@@ -1206,7 +1206,10 @@ test('solar recovery keeps reddening below the geometric horizon until the final
 });
 
 const solarShaderMath = {
-  sin: Math.sin, cos: Math.cos, atan: Math.atan2, pow: Math.pow, exp: Math.exp,
+  sin: Math.sin, cos: Math.cos, atan: Math.atan2,
+  // GLSL ES pow has an undefined result for a negative base, even for y=2.
+  pow: (base, exponent) => base < 0 || base === 0 && exponent <= 0 ? NaN : Math.pow(base, exponent),
+  exp: Math.exp,
   abs: Math.abs, max: Math.max,
   clamp: (value, low, high) => Math.max(low, Math.min(high, value)),
   smoothstep: (low, high, value) => {
@@ -1223,6 +1226,80 @@ function solarShaderFloat(body, name) {
   assert.ok(expression, `the actual solar shader must declare ${name}`);
   return `const ${name} = ${expression};`;
 }
+
+function solarGaussianSource(shader) {
+  const match = shader.match(/float solarGaussian\(float (\w+)\)\s*\{([\s\S]*?)\n\}/);
+  assert.ok(match, 'the actual shader must expose its signed-distance Gaussian');
+  return `function solarGaussian(${match[1]}) { ${match[2]} }`;
+}
+
+test('actual solar Gaussian callers stay finite for signed distances under the strict GLSL pow domain', async () => {
+  const h = await solarRecoveryHarness();
+  const scene = await h.mount(h.canvas, { sunTextureUrl: '/solar.jpg' });
+  const shader = scene.flareMesh.material.fragmentShader;
+  const lift = name => {
+    const body = shader.match(new RegExp(`float ${name}\\([^)]*\\)\\s*\\{([\\s\\S]*?)\\n\\}`))?.[1];
+    assert.ok(body, `the actual ${name} shader body must be present`);
+    return body.replace(/\b(?:vec2|float)\s+(\w+)\s*=/g, 'let $1 =');
+  };
+  const main = shader.match(/void main\(\)\s*\{([\s\S]*)\}/)?.[1];
+  const ring = solarShaderFloat(main, 'opticalRing');
+  const dimensions = ring.match(/length\(p\s*-\s*direction\s*\*\s*([\d.]+)\)\s*-\s*([\d.]+)\)\s*\/\s*([\d.]+)/);
+  assert.ok(dimensions, 'the actual optical ring must retain its axis, radius and width');
+  const invalidPow = [];
+  const math = { ...solarShaderMath, floor: Math.floor, fwidth: () => 1 / (68 * 3),
+    pow(base, exponent) {
+      const value = solarShaderMath.pow(base, exponent);
+      if (!Number.isFinite(value)) invalidPow.push({ base, exponent });
+      return value;
+    },
+  };
+  assert.ok(Number.isNaN(math.pow(-1, 2)), 'Math.pow(-1,2)=1 must not mask GLSL undefined arithmetic');
+  invalidPow.length = 0;
+  const api = new Function('math', `
+    const { sin, cos, atan, floor, pow, exp, abs, max, smoothstep, vec2, dot, length, fwidth } = math;
+    ${solarGaussianSource(shader)}
+    function ghost(p, sides, radius) { ${lift('apertureGhost')} }
+    function plasma(p, angle, width, height, phase, uTime) { ${lift('limbPlasma')} }
+    function ring(p, direction) {
+      ${ring.replace(/p\s*-\s*direction\s*\*\s*([\d.]+)/g, 'vec2(p.x - direction.x * $1, p.y - direction.y * $1)')}
+      return opticalRing;
+    }
+    return { gaussian: solarGaussian, ghost, plasma, ring };
+  `)(math);
+  let previous = Infinity;
+  for (const distance of [0, 1e-6, .1, .5, 1, 5, 50, 1000]) {
+    const positive = api.gaussian(distance), negative = api.gaussian(-distance);
+    assert.ok(Number.isFinite(positive) && Number.isFinite(negative));
+    assert.equal(positive, negative, 'the same signed distance on either side must have identical Gaussian intensity');
+    assert.ok(positive >= 0 && positive <= 1 && positive <= previous);
+    previous = positive;
+  }
+  assert.equal(api.gaussian(0), 1);
+  for (const sides of [4, 6]) for (const x of [-.04, -.01, 0, .01, .04]) for (const y of [-.04, 0, .04]) {
+    const point = { x, y };
+    const value = api.ghost(point, sides, .034);
+    assert.ok(Number.isFinite(value) && value >= 0 && value <= 1);
+    assert.ok(Math.abs(value - api.ghost({ x: -x, y: -y }, sides, .034)) < 1e-10);
+  }
+  assert.ok(api.ghost({ x: 0, y: 0 }, 4, .034) > 0, 'negative ghost-rim distance must leave a visible aperture centre');
+  const structures = [...shader.matchAll(/limbPlasma\(p,\s*([-\d.]+),\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\)/g)];
+  assert.equal(structures.length, 3);
+  for (const entry of structures) {
+    const [angle, width, height, phase] = entry.slice(1).map(Number);
+    for (const time of [0, 100, 86399]) {
+      const value = api.plasma({ x: -Math.cos(angle) * .3, y: -Math.sin(angle) * .3 }, angle, width, height, phase, time);
+      assert.ok(Number.isFinite(value) && Math.abs(value) < 1e-8, 'negative opposite-side distance must stay dark rather than poison the light sum');
+    }
+  }
+  const [offset, radius, width] = dimensions.slice(1).map(Number);
+  const direction = { x: .6, y: .8 }, center = { x: .6 * offset, y: .8 * offset };
+  assert.ok(Number.isFinite(api.ring(center, direction)), 'the negative ring-centre distance must stay finite');
+  assert.ok(Math.abs(api.ring({ x: center.x + radius - width / 2, y: center.y }, direction) -
+    api.ring({ x: center.x + radius + width / 2, y: center.y }, direction)) < 1e-10);
+  assert.deepEqual(invalidPow, [], 'actual ghost, plasma and ring callers must never rely on undefined GLSL pow inputs');
+  scene.dispose();
+});
 
 function solarRaySampler(material) {
   const body = material.fragmentShader.match(/void main\(\)\s*\{([\s\S]*)\}/)?.[1];
@@ -1359,6 +1436,7 @@ test('actual limb plasma stays below six percent of the solar radius and contrib
   assert.ok(body, 'the shader must expose its small limb structures for bounded numerical verification');
   const plasmaAt = new Function('p', 'angle', 'width', 'height', 'phase', 'uTime', 'math', `
     const { sin, cos, pow, exp, abs, max, smoothstep, vec2, dot, length, fwidth } = math;
+    ${solarGaussianSource(shader)}
     ${body.replace(/\b(?:vec2|float)\s+(\w+)\s*=/g, 'let $1 =')}
   `);
   const arch = body.match(/float arch\s*=[^;]+;\s*arch\s*\+=\s*[^;]+;/)?.[0];

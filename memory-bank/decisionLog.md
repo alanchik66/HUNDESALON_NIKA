@@ -1,5 +1,11 @@
 # Decision Log
 
+## 2026-11-06 - Service-page glass coverage and portable solar arithmetic
+
+- The four localized service pages lacked the glass stylesheet, script and opt-in grid attribute that were present on the homepages. Connect the existing material to all eight service cards per locale; preserve content, prices, links and layout. Include these exact pages in integration and browser coverage.
+- The solar flare shader evaluated three signed Gaussian distances with `pow(distance, 2.0)`. GLSL ES defines negative bases as undefined even for this exponent. Use explicit multiplication for the Gaussian square; preserve the original texture, light strength, geometry and colour calibration. Regression references must follow GLSL domains rather than JavaScript `Math.pow` behaviour.
+- Windows Playwright WebKit and Chromium measurements are separate from physical iPhone/Safari verification. A successful shader link alone does not prove finite fragment arithmetic or visible optical effects; retain source hashes, ordinary DOM screenshots and separately labelled GPU diagnostics.
+
 ## 2026-11-06 - Dispatch scheduled weather before geolocation preflight
 
 - The published e895685 trace showed a 314.05-second controller interval: a five-minute heartbeat awaited approximately 14 seconds of location/metadata work before starting the full weather request. The current and forecast request must start immediately after lifecycle validity checks, independently of that preflight.
