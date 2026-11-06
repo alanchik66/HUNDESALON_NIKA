@@ -1,5 +1,11 @@
 # Decision Log
 
+## 2026-11-06 - Dispatch scheduled weather before geolocation preflight
+
+- The published e895685 trace showed a 314.05-second controller interval: a five-minute heartbeat awaited approximately 14 seconds of location/metadata work before starting the full weather request. The current and forecast request must start immediately after lifecycle validity checks, independently of that preflight.
+- Use the existing weather refresh helper so duplicate requests remain coalesced and responses for replaced coordinates, widget instances or lifecycle generations are ignored. Retain the forced request Promise through the preflight so a fast success or failure does not trigger another request in the same heartbeat.
+- Reuse the already downloaded CI receipt for unchanged-release control checks. Repeat the required release gate only after this confirmed source correction; verify automatic request dispatch and network responses on the resulting publication.
+
 ## 2026-11-06 - Verify weather cadence through real network events
 
 - A periodic five-minute heartbeat must request full current/forecast data even when the initial asynchronous response completed after timer setup. Keep the age guard for incidental visibility/resume checks, not as a reason to skip the scheduled heartbeat.

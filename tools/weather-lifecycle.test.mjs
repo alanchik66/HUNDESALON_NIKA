@@ -912,8 +912,9 @@ function timerLifecycleHarness(overrides = {}) {
   return h;
 }
 
-test('the five-minute heartbeat refreshes full data even when the initial response completed twelve seconds after the timer was armed', async () => {
-  const h = timerLifecycleHarness();
+test('the five-minute heartbeat starts full data before a fourteen-second geolocation preflight and never duplicates it afterwards', async () => {
+  const metadata = deferred();
+  const h = timerLifecycleHarness({ refreshHeaderWeatherGeoLocation: () => metadata.promise });
   const initial = deferred();
   const periodic = deferred();
   const requestTimes = [];
@@ -942,28 +943,38 @@ test('the five-minute heartbeat refreshes full data even when the initial respon
   await h.clock.advance(287999);
   assert.equal(requestTimes.length, 1);
   await h.clock.advance(1);
-  assert.deepEqual(requestTimes, [armedAt, armedAt + 300000], 'the heartbeat must not wait until the ten-minute tick');
+  assert.deepEqual(requestTimes, [armedAt, armedAt + 300000], 'the heartbeat must start before geolocation resolves');
   periodic.resolve(weather());
   await settle();
+  assert.equal(h.host.dataset.weatherDataUpdatedAt, String(armedAt + 300000), 'current weather can complete while geolocation still waits');
+  await h.clock.advance(14000);
+  h.host.dataset.weatherGeoCheckedAt = String(h.clock.now());
+  metadata.resolve();
+  await settle();
+  assert.deepEqual(requestTimes, [armedAt, armedAt + 300000], 'the same coordinate preflight must not repeat the completed weather request');
   controller.dispose();
   h.context.unmountHeaderWeatherWidget();
   assert.equal(h.clock.timers.size, 0);
 });
 
-test('forced periodic refresh waits for metadata preflight and duplicate ticks produce one full request', async () => {
+test('forced periodic refresh starts during metadata preflight and duplicate ticks produce one full request', async () => {
   const metadata = deferred();
+  const response = deferred();
   const h = harness([], { refreshHeaderWeatherGeoLocation: () => metadata.promise });
   h.host.dataset.weatherDataUpdatedAt = String(h.clock.now());
   let requests = 0;
-  h.host.__weatherWidgetInstance = { refresh: async () => { requests += 1; return { current: {}, forecast: {} }; } };
+  h.host.__weatherWidgetInstance = { refresh: () => { requests += 1; return response.promise; } };
   const resume = h.context.refreshHeaderWeatherLifecycle(h.host);
   const tick = h.context.refreshHeaderWeatherLifecycle(h.host, true);
   const duplicate = h.context.refreshHeaderWeatherLifecycle(h.host, true);
-  assert.equal(requests, 0, 'preflight owns the current lifecycle until it completes');
+  assert.equal(requests, 1, 'current weather starts immediately while metadata still waits');
+  response.resolve({ current: {}, forecast: {} });
+  await Promise.all([tick, duplicate]);
+  assert.ok(h.host.__weatherLifecyclePromise, 'metadata remains pending after the independent full request completes');
   h.host.dataset.weatherGeoCheckedAt = String(h.clock.now());
   metadata.resolve();
   await Promise.all([resume, tick, duplicate]);
-  assert.equal(requests, 1, 'the forced pass must survive a pending age-guarded preflight without duplicating itself');
+  assert.equal(requests, 1, 'finishing a same-coordinate preflight must not duplicate the completed request');
 });
 
 test('forced periodic ticks coalesce with an actual weather request already in flight', async () => {
@@ -981,6 +992,57 @@ test('forced periodic ticks coalesce with an actual weather request already in f
   assert.equal(requests, 1, 'completion of the shared request must not trigger an extra forced request');
 });
 
+test('a failed forced request is not repeated when the same heartbeat geolocation preflight later completes', async () => {
+  const metadata = deferred();
+  let response = deferred();
+  const h = timerLifecycleHarness({ refreshHeaderWeatherGeoLocation: () => metadata.promise });
+  const originalTimestamp = String(h.clock.now());
+  h.host.dataset.weatherDataUpdatedAt = originalTimestamp;
+  h.host.dataset.weatherGeoCheckedAt = originalTimestamp;
+  let requests = 0;
+  h.host.__weatherWidgetInstance = { refresh: () => { requests += 1; return response.promise; }, unmount() {} };
+  h.context.bindHeaderWeatherState(h.host);
+  await h.clock.advance(300000);
+  assert.equal(requests, 1);
+  response.reject(new Error('offline during full request'));
+  await settle();
+  await h.clock.advance(14000);
+  h.host.dataset.weatherGeoCheckedAt = String(h.clock.now());
+  metadata.resolve();
+  await settle();
+  assert.equal(requests, 1, 'a failed full request belongs to this heartbeat and must not be retried by its metadata completion');
+  assert.equal(h.host.dataset.weatherDataUpdatedAt, originalTimestamp, 'failure cannot advance freshness');
+  response = deferred();
+  const retry = h.context.refreshHeaderWeatherLifecycle(h.host, true);
+  assert.equal(requests, 2, 'a later explicit refresh can retry after the failed heartbeat');
+  response.resolve({ current: {}, forecast: {} });
+  await retry;
+  assert.equal(h.host.dataset.weatherDataUpdatedAt, String(h.clock.now()));
+  h.context.unmountHeaderWeatherWidget();
+  assert.equal(h.clock.timers.size, 0);
+});
+
+test('an unforced metadata lifecycle remembers a failed parallel forced request instead of retrying it after geolocation', async () => {
+  const metadata = deferred();
+  const response = deferred();
+  const h = harness([], { refreshHeaderWeatherGeoLocation: () => metadata.promise });
+  const originalTimestamp = String(h.clock.now() - 300000);
+  h.host.dataset.weatherDataUpdatedAt = originalTimestamp;
+  let requests = 0;
+  h.host.__weatherWidgetInstance = { refresh: () => { requests += 1; return response.promise; } };
+  const resume = h.context.refreshHeaderWeatherLifecycle(h.host);
+  const tick = h.context.refreshHeaderWeatherLifecycle(h.host, true);
+  assert.equal(requests, 1, 'the forced call starts without waiting for the existing geolocation lifecycle');
+  response.reject(new Error('temporary full weather failure'));
+  assert.equal(await tick, false);
+  assert.equal(h.host.dataset.weatherDataUpdatedAt, originalTimestamp);
+  h.host.dataset.weatherGeoCheckedAt = String(h.clock.now());
+  metadata.resolve();
+  await resume;
+  assert.equal(requests, 1, 'a settled failed forced promise must suppress a duplicate age-based request in the same lifecycle');
+  assert.equal(h.host.dataset.weatherDataUpdatedAt, originalTimestamp, 'the failed parallel request cannot bless the old payload');
+});
+
 test('a periodic weather refresh preserves a previous geolocation denial without requesting permission again', async () => {
   const h = harness(['refreshHeaderWeatherGeoLocation']);
   const denied = h.context.resolveHeaderWeatherBrowserGeoCoords({ force: true });
@@ -994,28 +1056,51 @@ test('a periodic weather refresh preserves a previous geolocation denial without
   assert.equal(h.requests.length, 1, 'the heartbeat must not repeat a denied native permission request');
 });
 
-test('pending and queued forced refreshes cannot survive disposal, a changed selection, offline state or a hidden page', async () => {
-  for (const [name, change] of [
-    ['unmounted', h => { h.host.dataset.weatherMounted = 'false'; }],
-    ['disconnected', h => { h.host.isConnected = false; }],
-    ['disposed generation', h => { h.host.__weatherLifecycleGeneration = 1; }],
-    ['manual selection', h => { h.host.__weatherLocationGeneration = 1; h.host.dataset.weatherManualLocation = 'true'; }],
-    ['changed coordinates', h => { h.host.dataset.weatherLocation = '48.85, 2.35'; }],
-    ['offline', h => { h.context.navigator.onLine = false; }],
-    ['hidden', h => { h.document.hidden = true; }],
+test('forced requests respect entry visibility and identity guards while superseded responses cannot update freshness', async () => {
+  for (const change of [
+    h => { h.host.dataset.weatherMounted = 'false'; },
+    h => { h.host.isConnected = false; },
+    h => { h.context.navigator.onLine = false; },
+    h => { h.document.hidden = true; },
+  ]) {
+    let requests = 0;
+    let metadataRequests = 0;
+    const h = harness([], { refreshHeaderWeatherGeoLocation: async () => { metadataRequests += 1; } });
+    h.host.__weatherWidgetInstance = { refresh: async () => { requests += 1; return { current: {}, forecast: {} }; } };
+    change(h);
+    assert.equal(await h.context.refreshHeaderWeatherLifecycle(h.host, true), false);
+    assert.equal(requests, 0, 'an inactive entry cannot start a full request');
+    assert.equal(metadataRequests, 0, 'an inactive entry cannot start geolocation preflight');
+  }
+  for (const [name, change, supersedes] of [
+    ['unmounted', h => { h.host.dataset.weatherMounted = 'false'; }, true],
+    ['disconnected', h => { h.host.isConnected = false; }, true],
+    ['disposed generation', h => { h.host.__weatherLifecycleGeneration = 1; }, true],
+    ['manual selection', h => { h.host.__weatherLocationGeneration = 1; h.host.dataset.weatherManualLocation = 'true'; }, true],
+    ['changed coordinates', h => { h.host.dataset.weatherLocation = '48.85, 2.35'; }, true],
+    ['offline', h => { h.context.navigator.onLine = false; }, false],
+    ['hidden', h => { h.document.hidden = true; }, false],
   ]) {
     for (const initialForce of [false, true]) {
       const metadata = deferred();
-      const h = harness([], { refreshHeaderWeatherGeoLocation: () => metadata.promise });
-      h.host.dataset.weatherDataUpdatedAt = String(h.clock.now());
+      const response = deferred();
+      let applied = 0;
+      const h = harness([], { refreshHeaderWeatherGeoLocation: () => metadata.promise, syncHeaderWeatherUnifiedReadings: () => { applied += 1; } });
+      const originalTimestamp = String(h.clock.now() - 1000);
+      h.host.dataset.weatherDataUpdatedAt = originalTimestamp;
       let requests = 0;
-      h.host.__weatherWidgetInstance = { refresh: async () => { requests += 1; return { current: {}, forecast: {} }; } };
+      h.host.__weatherWidgetInstance = { refresh: () => { requests += 1; return response.promise; } };
       const resume = h.context.refreshHeaderWeatherLifecycle(h.host, initialForce);
-      const queued = h.context.refreshHeaderWeatherLifecycle(h.host, true);
+      const tick = h.context.refreshHeaderWeatherLifecycle(h.host, true);
+      const duplicate = h.context.refreshHeaderWeatherLifecycle(h.host, true);
+      assert.equal(requests, 1, 'the full request legitimately starts before the selection changes');
       change(h);
       metadata.resolve();
-      await Promise.all([resume, queued]);
-      assert.equal(requests, 0, `${name}: pending work must remain bound to the same visible online selection (force=${initialForce})`);
+      response.resolve({ current: {}, forecast: {} });
+      await Promise.all([resume, tick, duplicate]);
+      assert.equal(requests, 1, `${name}: stale preflight must not start another full request (force=${initialForce})`);
+      assert.equal(h.host.dataset.weatherDataUpdatedAt, supersedes ? originalTimestamp : String(h.clock.now()), `${name}: only the retained selection may advance freshness`);
+      assert.equal(applied, supersedes ? 0 : 1, `${name}: a superseded response cannot overwrite readings`);
     }
   }
 });

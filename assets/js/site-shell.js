@@ -13764,12 +13764,12 @@
       (host.__weatherLifecycleGeneration || 0) === lifecycle &&
       (host.__weatherLocationGeneration || 0) === generation && data.weatherLocation === location;
     if (!isCurrent()) return false;
-    const pending = host.__weatherLifecyclePromise;
-    if (pending) {
-      pending.force ||= force;
-      return pending;
+    const refresh = force && refreshHeaderWeatherWidgetData(host);
+    let operation = host.__weatherLifecyclePromise;
+    if (operation) {
+      if (refresh) operation.refresh = refresh;
+      return refresh || operation;
     }
-    let operation = null;
     operation = (async () => {
       if (Date.now() - Number(data.weatherGeoCheckedAt || 0) >= HEADER_WEATHER_GEO_REFRESH_INTERVAL) {
         await refreshHeaderWeatherGeoLocation(host);
@@ -13793,10 +13793,10 @@
       ) {
         data.weatherDataUpdatedAt = String(updatedAt);
       }
-      if (force || operation?.force || Date.now() - Number(data.weatherDataUpdatedAt || 0) >= HEADER_WEATHER_WIDGET_REFRESH_INTERVAL) {
-        return refreshHeaderWeatherWidgetData(host);
-      }
-      return false;
+      return refresh || operation?.refresh || (
+        Date.now() - Number(data.weatherDataUpdatedAt || 0) >= HEADER_WEATHER_WIDGET_REFRESH_INTERVAL &&
+        refreshHeaderWeatherWidgetData(host)
+      );
     })();
     host.__weatherLifecyclePromise = operation;
     try {
