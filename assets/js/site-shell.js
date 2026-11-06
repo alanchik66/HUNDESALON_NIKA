@@ -319,9 +319,9 @@
   const HEADER_WEATHER_MOON_SIZE_FACTOR = 3 * HEADER_WEATHER_MOON_SIZE_BOOST;
   /** Tiled CSS starfield — fills full trigger/dropdown height (avoids mid-band-only clusters). */
   const HEADER_WEATHER_STARFIELD_TILE_A =
-    'radial-gradient(circle, rgba(255, 255, 255, 0.54) 0 0.48px, transparent 0.84px) 0 0 / 30px 30px';
+    'radial-gradient(circle,rgba(255,255,255,.54) 0 .48px,transparent .84px) 0 0/30px 30px';
   const HEADER_WEATHER_STARFIELD_TILE_B =
-    'radial-gradient(circle, rgba(214, 229, 252, 0.38) 0 0.42px, transparent 0.8px) 12px 8px / 34px 34px';
+    'radial-gradient(circle,rgba(214,229,252,.38) 0 .42px,transparent .8px) 12px 8px/34px 34px';
   /**
    * Red-cross slot (owner screenshot): vertical line under the header lightbulb (~68%),
    * horizontal mid-line of the weather band; geometric center on the intersection.
@@ -6104,12 +6104,10 @@
     const apiReadingsAreFresh = apiReadings && isHeaderWeatherCurrentMetaFresh(host?.__weatherCurrentMeta);
     const resolvedReadings = apiReadingsAreFresh
       ? {
-          ...(widgetReadings || {}),
+          ...widgetReadings,
           ...apiReadings,
           visibility: apiReadings.visibility ?? widgetReadings?.visibility ?? null,
           gusts: apiReadings.gusts ?? widgetReadings?.gusts ?? null,
-          meta: apiReadings.meta,
-          source: apiReadings.source,
         }
       : widgetReadings
         ? {
@@ -13486,7 +13484,7 @@
     }, HEADER_WEATHER_TIME_SYNC_INTERVAL);
 
     host.__weatherDataRefreshId = window.setInterval(() => {
-      void refreshHeaderWeatherLifecycle(host);
+      void refreshHeaderWeatherLifecycle(host, true);
     }, HEADER_WEATHER_GEO_REFRESH_INTERVAL);
 
     host.__weatherAstroRefreshId = window.setInterval(() => {
@@ -13755,27 +13753,32 @@
     await syncHeaderWeatherPreciseLocationMeta(host).catch(() => null);
   }
 
-  async function refreshHeaderWeatherLifecycle(host) {
-    if (!host?.isConnected || host.dataset.weatherMounted !== 'true' || document.hidden || navigator.onLine === false) {
-      return false;
-    }
-    if (host.__weatherLifecyclePromise) return host.__weatherLifecyclePromise;
+  async function refreshHeaderWeatherLifecycle(host, force) {
+    if (!host) return false;
+    const data = host.dataset;
     const lifecycle = host.__weatherLifecycleGeneration || 0;
     const generation = host.__weatherLocationGeneration || 0;
-    const operation = (async () => {
-      if (Date.now() - Number(host.dataset.weatherGeoCheckedAt || 0) >= HEADER_WEATHER_GEO_REFRESH_INTERVAL) {
+    const location = data.weatherLocation;
+    const isCurrent = () => host.isConnected && data.weatherMounted === 'true' &&
+      !document.hidden && navigator.onLine !== false &&
+      (host.__weatherLifecycleGeneration || 0) === lifecycle &&
+      (host.__weatherLocationGeneration || 0) === generation && data.weatherLocation === location;
+    if (!isCurrent()) return false;
+    const pending = host.__weatherLifecyclePromise;
+    if (pending) {
+      pending.force ||= force;
+      return pending;
+    }
+    let operation = null;
+    operation = (async () => {
+      if (Date.now() - Number(data.weatherGeoCheckedAt || 0) >= HEADER_WEATHER_GEO_REFRESH_INTERVAL) {
         await refreshHeaderWeatherGeoLocation(host);
       }
-      if (
-        !host.isConnected ||
-        host.dataset.weatherMounted !== 'true' ||
-        (host.__weatherLifecycleGeneration || 0) !== lifecycle ||
-        (host.__weatherLocationGeneration || 0) !== generation
-      ) return false;
+      if (!isCurrent()) return false;
       // React finishes the initial request after mountWeatherWidget returns.
       // Adopt its successful timestamp only for this same coordinate selection.
       const state = host.__weatherWidgetInstance?.getState?.();
-      const currentCoords = parseHeaderWeatherCoordinates(host.dataset.weatherLocation);
+      const currentCoords = parseHeaderWeatherCoordinates(data.weatherLocation);
       const loadedCoords = typeof state?.location === 'string'
         ? parseHeaderWeatherCoordinates(state.location)
         : state?.location;
@@ -13785,12 +13788,12 @@
         currentCoords && Number.isFinite(loadedCoords?.latitude) && Number.isFinite(loadedCoords?.longitude) &&
         Math.abs(currentCoords.latitude - loadedCoords.latitude) <= 0.000001 &&
         Math.abs(currentCoords.longitude - loadedCoords.longitude) <= 0.000001 &&
-        (host.dataset.weatherManualLocation !== 'true' || host.dataset.weatherGeoSource === 'manual') &&
-        updatedAt > Number(host.dataset.weatherDataUpdatedAt || 0) && updatedAt <= Date.now()
+        (data.weatherManualLocation !== 'true' || data.weatherGeoSource === 'manual') &&
+        updatedAt > Number(data.weatherDataUpdatedAt || 0) && updatedAt <= Date.now()
       ) {
-        host.dataset.weatherDataUpdatedAt = String(updatedAt);
+        data.weatherDataUpdatedAt = String(updatedAt);
       }
-      if (Date.now() - Number(host.dataset.weatherDataUpdatedAt || 0) >= HEADER_WEATHER_WIDGET_REFRESH_INTERVAL) {
+      if (force || operation?.force || Date.now() - Number(data.weatherDataUpdatedAt || 0) >= HEADER_WEATHER_WIDGET_REFRESH_INTERVAL) {
         return refreshHeaderWeatherWidgetData(host);
       }
       return false;
