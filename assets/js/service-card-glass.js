@@ -2,6 +2,22 @@
 (function () {
   'use strict';
 
+  const solarCheckScript = document.currentScript?.src;
+  if (solarCheckScript && window.location?.search) {
+    try {
+      if (new URLSearchParams(window.location.search).get('solar-check') === '1') {
+        const sourceUrl = new URL(solarCheckScript, window.location.href);
+        const moduleUrl = new URL('./weather-sun-check.js', sourceUrl);
+        if (moduleUrl.origin === window.location.origin) {
+          if (sourceUrl.searchParams.has('v')) moduleUrl.searchParams.set('v', sourceUrl.searchParams.get('v'));
+          import(moduleUrl.href).then(module => module.mountWeatherSunCheck()).catch(() => {});
+        }
+      }
+    } catch {
+      // Optional diagnostics must never interrupt the service cards.
+    }
+  }
+
   function initServiceGlass() {
     const grid = document.querySelector('.services-grid[data-service-glass]');
     if (!grid || grid.dataset.serviceGlass === 'ready') return;

@@ -74,7 +74,7 @@ export default [
     },
   },
   {
-    files: ['assets/js/header-weather-sun-scene.js', 'assets/js/weather-solar-time.js', 'assets/js/menu-contour.js', 'assets/js/shop.js', 'assets/js/shop-model.js', 'assets/js/shop-catalog.js'],
+    files: ['assets/js/header-weather-sun-scene.js', 'assets/js/weather-solar-time.js', 'assets/js/weather-sun-check.js', 'assets/js/menu-contour.js', 'assets/js/shop.js', 'assets/js/shop-model.js', 'assets/js/shop-catalog.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
