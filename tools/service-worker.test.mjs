@@ -5,25 +5,30 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
 
-function fetchEvent({ cached, response, writeError, fetchError, destination = 'image' } = {}) {
+function fetchEvent({ cached, response, writeError, fetchError, destination = 'image', path = '/asset.png', cache = 'default', headers = {} } = {}) {
   const handlers = new Map();
   const pending = [];
   const writes = [];
+  const calls = { match: 0, open: 0, fetch: 0, respondWith: 0 };
   let respondWith;
-  const request = { method: 'GET', url: 'https://example.com/asset.png', destination, mode: 'cors' };
+  const request = { method: 'GET', url: new URL(path, 'https://example.com').href, destination, mode: 'cors', cache, headers };
   vm.runInNewContext(source, {
     URL,
     self: { location: { origin: 'https://example.com' }, addEventListener: (type, fn) => handlers.set(type, fn) },
     caches: {
-      match: async () => cached,
-      open: async () => ({
-        put: async (key, value) => {
-          if (writeError) throw writeError;
-          writes.push([key, value]);
-        },
-      }),
+      match: async () => { calls.match += 1; return cached; },
+      open: async () => {
+        calls.open += 1;
+        return {
+          put: async (key, value) => {
+            if (writeError) throw writeError;
+            writes.push([key, value]);
+          },
+        };
+      },
     },
     fetch: async () => {
+      calls.fetch += 1;
       if (fetchError) throw fetchError;
       return response;
     },
@@ -32,11 +37,30 @@ function fetchEvent({ cached, response, writeError, fetchError, destination = 'i
     request,
     waitUntil: promise => pending.push(promise),
     respondWith: promise => {
+      calls.respondWith += 1;
       respondWith = promise;
     },
   });
-  return { request, pending, writes, response: respondWith };
+  return { request, pending, writes, calls, response: respondWith };
 }
+
+test('current and metadata weather requests use the browser network without service-worker interception or cache access', async t => {
+  for (const [name, options] of [
+    ['current conditions', { path: '/api/weather?location=51.23%2C6.78&forecast_contract=four-day-v2' }],
+    ['forced current refresh', { path: '/api/weather?location=51.23%2C6.78', headers: { 'Cache-Control': 'no-cache' } }],
+    ['metadata refresh', { path: '/api/weather?location=51.23%2C6.78&meta_only=1', cache: 'no-store' }],
+    ['bare endpoint', { path: '/api/weather' }],
+  ]) {
+    await t.test(name, async () => {
+      const event = fetchEvent({ ...options, destination: '', cached: { current: { temp_c: 1 }, stale: true },
+        response: { ok: true, clone: () => ({ current: { temp_c: 7 } }) } });
+      assert.equal(event.response, undefined, 'the browser must retain the default network path');
+      assert.deepEqual(event.calls, { match: 0, open: 0, fetch: 0, respondWith: 0 });
+      assert.equal(event.pending.length, 0, 'the worker must not start a background weather refresh');
+      assert.equal(event.writes.length, 0, 'even an existing stale weather cache entry must remain unused');
+    });
+  }
+});
 
 test('cached assets keep the refresh and cache write alive', async () => {
   const cached = { cached: true };

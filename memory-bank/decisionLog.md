@@ -5,6 +5,7 @@
 - A periodic five-minute heartbeat must request full current/forecast data even when the initial asynchronous response completed after timer setup. Keep the age guard for incidental visibility/resume checks, not as a reason to skip the scheduled heartbeat.
 - Coalesce an existing data request; if geolocation metadata is still pending, retain the heartbeat signal on that native operation until its post-await freshness check. Recheck connection, mount, exact coordinate selection, lifecycle generation, visibility and online state before requesting weather.
 - Preserve the observed failing network trace and require a new published controller-request interval before declaring the repair verified. Revision58e4632 restored the sky/timestamps but was superseded for this scheduler correction.
+- The next live pass on a89c3ee confirmed a timely full request but exposed the service worker's generic stale-while-revalidate response for `/api/weather` (HTTP 200 marked fromServiceWorker/fromDiskCache). Exclude that dynamic endpoint from static offline caching so its request cache policy reaches the network. Preserve this failing trace separately and verify the next published response, not only request timing.
 
 ## 2026-11-05 22:39:33 - Weather freshness and sky share explicit time semantics
 

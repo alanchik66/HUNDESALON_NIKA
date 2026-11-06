@@ -65,6 +65,11 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Weather freshness and its offline fallback are managed by the weather service.
+  if (url.pathname === '/api/weather') {
+    return;
+  }
+
   if (isNetworkFirstRequest(request, url)) {
     event.respondWith(
       fetch(request)
