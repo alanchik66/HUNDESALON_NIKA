@@ -68,8 +68,13 @@ function lunarBodyAxes(timeMs, distanceKm) {
  * measured lunar radiance. The renderer chooses its small ambient strength.
  */
 export function lunarLighting(timeMs, latitude, longitude) {
-  const moon = moonPosition(timeMs, latitude, longitude);
-  if (!Number.isFinite(moon.distanceKm)) return { valid: false };
+  return lunarLightingFromPosition(timeMs, latitude, longitude, moonPosition(timeMs, latitude, longitude));
+}
+
+/** Calculate physical lunar appearance from a topocentric orbit sample. */
+export function lunarLightingFromPosition(timeMs, latitude, longitude, moon) {
+  if (!moon || !Number.isFinite(moon.distanceKm) || moon.distanceKm <= 0 ||
+      !Number.isFinite(moon.elevationDeg) || !Number.isFinite(moon.azimuthDeg)) return { valid: false };
   const days = timeMs / DAY + 2440587.5 - 2451543.5;
   const jd2000 = timeMs / DAY + 2440587.5 - 2451545, t = jd2000 / 36525;
   const sidereal = wrap(280.46061837 + 360.98564736629 * jd2000 + .000387933 * t * t - t ** 3 / 38710000 + longitude) * RAD;

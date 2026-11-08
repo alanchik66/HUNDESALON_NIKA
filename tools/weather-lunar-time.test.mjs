@@ -2,33 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { parse } from 'espree';
-import { lunarLighting } from '../assets/js/weather-lunar-time.js';
+import { lunarLighting, lunarLightingFromPosition } from '../assets/js/weather-lunar-time.js';
 import { moonPosition } from '../assets/js/weather-solar-time.js';
 
-function withMoonPosition(source, position) {
-  const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module', range: true });
-  const targets = ast.body.filter(node => {
-    const declaration = node.declarations?.[0], binding = declaration?.id;
-    const property = binding?.properties?.[0];
-    return node.type === 'VariableDeclaration' && node.kind === 'const' && node.declarations.length === 1 &&
-      binding.type === 'ObjectPattern' && binding.properties.length === 1 &&
-      property.type === 'Property' && !property.computed &&
-      property.key.name === 'moonPosition' && property.value.name === 'moonPosition' &&
-      declaration.init?.type === 'AwaitExpression' && declaration.init.argument.type === 'ImportExpression';
-  });
-  assert.equal(targets.length, 1, 'expected one parsed moonPosition dependency');
-  const [start, end] = targets[0].range;
-  return source.slice(0, start) + `const moonPosition = () => (${JSON.stringify(position)});` + source.slice(end);
-}
-
-test('the lunar orbit fixture replaces one dependency and rejects missing or duplicate targets', () => {
-  const dependency = "const { moonPosition } = await import('orbit');";
-  const before = '// retained prefix\n', after = '\nexport const retained = 1;';
-  const position = { elevationDeg: 90, azimuthDeg: 17, distanceKm: 384400 };
-  assert.equal(withMoonPosition(before + dependency + after, position),
-    `${before}const moonPosition = () => (${JSON.stringify(position)});${after}`);
-  for (const source of [before + after, dependency.replace('moonPosition', 'otherPosition'), `${dependency}\n${dependency}`]) {
-    assert.throws(() => withMoonPosition(source, position), 'an unverified code transform cannot silently proceed');
+test('lunar lighting rejects invalid topocentric orbit samples', () => {
+  for (const position of [null, {}, { elevationDeg: 0, azimuthDeg: 0, distanceKm: 0 },
+    { elevationDeg: NaN, azimuthDeg: 0, distanceKm: 384400 },
+    { elevationDeg: 0, azimuthDeg: Infinity, distanceKm: 384400 }]) {
+    assert.equal(lunarLightingFromPosition(Date.parse('2026-11-06T11:00:00Z'), 51.23, 6.78, position).valid, false);
   }
 });
 
@@ -167,16 +148,13 @@ test('dome portrait-up follows a finite difference of the stereographic sky at a
   assert.ok(above > 0 && below > 0, 'exercise both visible portraits and below-horizon markers');
 });
 
-test('dome roll uses the nonsingular celestial-north basis at the exact zenith', async () => {
-  const source = await readFile(new URL('../assets/js/weather-lunar-time.js', import.meta.url), 'utf8');
+test('dome roll uses the nonsingular celestial-north basis at the exact zenith', () => {
   let reference;
   for (const azimuthDeg of [0, 90, 180, 270]) {
     // At the zenith every azimuth denotes the same direction. Inject only the
     // orbit boundary value, leaving the actual observer/body/light transforms intact.
     const position = { elevationDeg: 90, azimuthDeg, distanceKm: 384400 };
-    const fixture = withMoonPosition(source, position);
-    const { lunarLighting: lighting } = await import(`data:text/javascript;base64,${Buffer.from(fixture).toString('base64')}`);
-    const state = lighting(Date.parse('2026-11-06T11:00:00Z'), 0, 0);
+    const state = lunarLightingFromPosition(Date.parse('2026-11-06T11:00:00Z'), 0, 0, position);
     assert.equal(state.orientationMode, 'celestial-north');
     assert.ok(Math.abs(state.skyDomeRollRad) < 1e-12);
     const portraitAngle = Math.atan2(state.northDirection.x, state.northDirection.y) + state.skyDomeRollRad;
