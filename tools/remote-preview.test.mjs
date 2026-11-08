@@ -113,11 +113,15 @@ test('authenticated phone preview serves current weather modules without exposin
   const candidate = path.join(root, 'output', 'weather-local');
   await mkdir(runtime, { recursive: true });
   await mkdir(candidate, { recursive: true });
-  await writeFile(path.join(weather, 'build-manifest.json'), JSON.stringify({ entries: [{ output: 'widget.mjs' }] }));
+  await writeFile(path.join(weather, 'build-manifest.json'), JSON.stringify({
+    entries: [{ output: 'widget.mjs' }], vendorInputs: [{ file: 'patched-vendor.mjs' }],
+  }));
   await writeFile(path.join(runtime, 'widget.mjs'), 'baseline weather');
   await writeFile(path.join(runtime, 'vendor.mjs'), 'unchanged vendor');
+  await writeFile(path.join(runtime, 'patched-vendor.mjs'), 'baseline vendor');
   await writeFile(path.join(candidate, 'widget.mjs'), 'current four-day weather');
   await writeFile(path.join(candidate, 'widget.mjs.map'), '{}');
+  await writeFile(path.join(candidate, 'patched-vendor.mjs'), 'generated recovery correction');
   const key = 'c'.repeat(43);
   const gateway = await createRemoteGateway({ root, key, weatherModuleDirectory: candidate });
   const request = (url, options) => fetch(`${gateway.baseUrl}${url}`, { redirect: 'manual', ...options });
@@ -131,6 +135,9 @@ test('authenticated phone preview serves current weather modules without exposin
     assert.match(response.headers.get('content-type'), /javascript/);
     assert.equal(await (await request('/3d-weather-codrops-main/dist-widget/widget.mjs.map', { headers })).text(), '{}');
     assert.equal(await (await request('/3d-weather-codrops-main/dist-widget/vendor.mjs', { headers })).text(), 'unchanged vendor');
+    const vendorUrl = '/3d-weather-codrops-main/dist-widget/patched-vendor.mjs';
+    assert.equal((await request(vendorUrl)).status, 403, 'generated vendor still requires authentication');
+    assert.equal(await (await request(vendorUrl, { headers })).text(), 'generated recovery correction');
     for (const url of ['/output/weather-local/widget.mjs', '/3d-weather-codrops-main/build-manifest.json', '/.git/config']) {
       assert.equal((await request(url, { headers })).status, 403, url);
     }
@@ -347,7 +354,7 @@ test('full Pages preview serves video ranges from actual dist files while keepin
   }
 });
 
-test('public full preview exposes only weather APIs and public files without cookies', async () => {
+test('public full preview exposes only weather and maps configuration APIs and public files without cookies', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'nika-public-pages-'));
   const mediaRoot = path.join(root, 'dist');
   await mkdir(path.join(mediaRoot, 'assets'), { recursive: true });
@@ -358,7 +365,8 @@ test('public full preview exposes only weather APIs and public files without coo
     const pathname = new URL(request.url, 'http://localhost').pathname;
     const type = pathname === '/ru/' ? 'text/html' : pathname.endsWith('.js') ? 'text/javascript' : 'application/json';
     const body = type === 'text/html' ? '<!doctype html><script src="/assets/site.js"></script>'
-      : type === 'text/javascript' ? 'window.publicPreview = true;' : '{"weather":true}';
+      : type === 'text/javascript' ? 'window.publicPreview = true;'
+        : pathname === '/api/maps-config' ? '{"enabled":true,"apiKey":"test-public-maps-key"}' : '{"weather":true}';
     response.writeHead(200, { 'Content-Type': type, 'Content-Length': Buffer.byteLength(body) }).end(body);
   });
   await new Promise((resolve, reject) => {
@@ -381,15 +389,22 @@ test('public full preview exposes only weather APIs and public files without coo
       assert.equal(head.status, 200);
       assert.equal(await head.text(), '');
     }
+    assert.deepEqual(await (await request('/api/maps-config')).json(), {
+      enabled: true, apiKey: 'test-public-maps-key',
+    });
+    const mapsHead = await request('/api/maps-config', { method: 'HEAD' });
+    assert.equal(mapsHead.status, 200);
+    assert.equal(await mapsHead.text(), '');
     const allowedCalls = calls.length;
     for (const route of [
       '/api/', '/api/internal/status', '/api/booking/status', '/api/weather/current', '/api/weather/', '/api/%77eather',
       '/reverse-geocode/private', '/.dev.vars', '/.git/config', '/output/local-preview/remote-config.json',
+      '/api/maps-config/private', '/api/maps-config/', '/api/%6daps-config',
     ]) {
       assert.equal((await request(route)).status, 403, route);
       assert.equal((await request(route, { method: 'HEAD' })).status, 403, `HEAD ${route}`);
     }
-    for (const route of ['/ru/', '/assets/site.js', '/assets/clip.mp4', '/api/weather', '/reverse-geocode', '/api/internal/status']) {
+    for (const route of ['/ru/', '/assets/site.js', '/assets/clip.mp4', '/api/weather', '/reverse-geocode', '/api/maps-config', '/api/internal/status']) {
       assert.equal((await request(route, { method: 'POST', body: 'test' })).status, 405, route);
     }
     assert.equal(calls.length, allowedCalls, 'private APIs, private files and every POST must be blocked before contacting Pages');

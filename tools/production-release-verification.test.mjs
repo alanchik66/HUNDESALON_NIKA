@@ -10,6 +10,7 @@ import {
   PRODUCTION_ORIGIN, RELEASE_LOCALES, RELEASE_MANIFEST_PATH,
   prepareProductionRelease, verifyProductionArtifact, verifyProductionRelease, verifyLocaleSmoke,
   resolveWeatherReleaseAssets,
+  validateReleaseManifest,
   parseWranglerPagesDeploymentOutput,
 } from './lib/production-release-verification.mjs';
 
@@ -306,6 +307,39 @@ test('CI and manual preparation share maintained weather output URLs and the she
   ]);
   writeFileSync(path.join(f.directory, 'assets/js/site-shell.js'), 'const unrelated = true;');
   assert.throws(() => resolveWeatherReleaseAssets(f.directory), /Missing maintained weather module manifest or version/u);
+});
+
+test('weather receipt coverage includes generated vendors and public importers with the artifact stamp', async t => {
+  const f = await fixture(t);
+  mkdirSync(path.join(f.directory, '3d-weather-codrops-main'), { recursive: true });
+  writeFileSync(path.join(f.directory, '3d-weather-codrops-main/build-manifest.json'), JSON.stringify({
+    entries: [{ output: 'scene.mjs' }], vendorInputs: [{ file: 'vendor.mjs' }],
+  }));
+  writeFileSync(path.join(f.directory, 'assets/js/site-shell.js'), `const WEATHER_WIDGET_ASSET_VERSION="${STAMP}";`);
+  writeFileSync(path.join(f.directory, 'assets/js/sun.js'), 'import "../../3d-weather-codrops-main/dist-widget/vendor.mjs?v=old";');
+  const required = resolveWeatherReleaseAssets(f.directory, f.directory);
+  assert.ok(required.includes(`/3d-weather-codrops-main/dist-widget/vendor.mjs?v=${STAMP}`));
+  assert.ok(required.includes(`/assets/js/sun.js?v=${STAMP}`));
+});
+
+test('artifact and public verification reject a receipt missing a required generated vendor before any upload or network', async t => {
+  const f = await fixture(t);
+  const requiredAssets = [`/3d-weather-codrops-main/dist-widget/vendor.mjs?v=${STAMP}`];
+  assert.throws(() => validateReleaseManifest(f.manifest, { commit: COMMIT, requiredAssets }), /missing required release asset/iu);
+  assert.throws(() => verifyProductionArtifact({ directory: f.directory, manifest: f.manifest, commit: COMMIT, requiredAssets }), /missing required release asset/iu);
+  let requests = 0;
+  await assert.rejects(verifyProductionRelease({ ...verification(f), requiredAssets, fetcher: () => { requests++; throw Error('network should not start'); } }), /missing required release asset/iu);
+  assert.equal(requests, 0);
+});
+
+test('a generated vendor covered by the receipt rejects digest drift in the artifact and the served response', async t => {
+  const f = await fixture(t);
+  const file = path.join(f.directory, 'weather/runtime.mjs');
+  const requiredAssets = [WEATHER];
+  assert.equal(verifyProductionArtifact({ directory: f.directory, manifest: f.manifest, commit: COMMIT, requiredAssets }), f.manifest);
+  writeFileSync(file, 'export const oldVendor=true;');
+  assert.throws(() => verifyProductionArtifact({ directory: f.directory, manifest: f.manifest, commit: COMMIT, requiredAssets }), /Artifact digest mismatch/u);
+  await assert.rejects(verifyProductionRelease({ ...verification(f), requiredAssets }), /Served asset mismatch/u);
 });
 
 test('an English page with the wrong lang fails even when German and Russian are correct', async t => {

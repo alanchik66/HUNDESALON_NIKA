@@ -156,7 +156,7 @@ export async function createRemoteGateway({
       return;
     }
     const isPagesApi = websiteOrigin && (publicReadOnly
-      ? ['/api/weather', '/reverse-geocode'].includes(url.pathname)
+      ? ['/api/weather', '/reverse-geocode', '/api/maps-config'].includes(url.pathname)
       : relative.startsWith(`api${path.sep}`) || relative === 'reverse-geocode');
     if (relative.startsWith('..') || path.isAbsolute(relative) || (!isPublicPath(relative) && !isPagesApi)) {
       response.writeHead(403).end('Forbidden');
@@ -175,7 +175,8 @@ export async function createRemoteGateway({
         method: request.method,
         headers: requestHeaders,
         redirect: 'manual',
-        signal: AbortSignal.timeout(30000),
+        // Static streams need room for phone backpressure after headers have been sent.
+        signal: AbortSignal.timeout(isPagesApi ? 30000 : 120000),
       });
       const responseHeaders = {
         'Content-Type': upstream.headers.get('content-type') ||

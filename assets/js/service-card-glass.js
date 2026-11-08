@@ -37,7 +37,7 @@
       lens.className = 'service-glass__lens';
       lens.setAttribute('aria-hidden', 'true');
       card.prepend(lens);
-      return { card, lens, visible: true, x: 50, y: 24, angle: 135 };
+      return { card, lens, visible: true, x: 50, y: 24, angle: 135, pointer: null };
     });
     let frame = 0;
     let timer = 0;
@@ -53,8 +53,16 @@
       timer = 0;
       previousTime = 0;
     };
-    const releaseTouch = () => {
-      states.forEach(({ card }) => card.classList.remove('is-glass-touch'));
+    const releaseTouch = event => {
+      const pointerRelease = event?.type === 'pointerup' || event?.type === 'pointercancel';
+      let changed = false;
+      states.forEach(state => {
+        if (pointerRelease && state.pointer?.pointerId !== event.pointerId) return;
+        changed ||= state.pointer !== null;
+        state.pointer = null;
+        state.card.classList.remove('is-glass-touch');
+      });
+      if (changed) schedule();
     };
 
     function schedule() {
@@ -109,12 +117,21 @@
       const surface = readSurface();
       let settling = false;
       measured.forEach(({ state, rect }) => {
-        const targetX = clamp((window.innerWidth * 0.28 - rect.left) / rect.width * 100, 8, 92);
-        const targetY = clamp(100 - (rect.top + rect.height / 2) / window.innerHeight * 100, 6, 94);
+        let targetX = clamp((window.innerWidth * 0.28 - rect.left) / rect.width * 100, 8, 92);
+        let targetY = clamp(100 - (rect.top + rect.height / 2) / window.innerHeight * 100, 6, 94);
+        if (state.pointer) {
+          const touchX = clamp((state.pointer.clientX - rect.left) / rect.width * 100, 0, 100);
+          const touchY = clamp((state.pointer.clientY - rect.top) / rect.height * 100, 0, 100);
+          targetX = targetX * 0.35 + touchX * 0.65;
+          targetY = targetY * 0.35 + touchY * 0.65;
+        }
         const targetAngle = 120 + clamp((rect.top + rect.height / 2) / window.innerHeight, 0, 1) * 55;
         state.x += (targetX - state.x) * easing;
         state.y += (targetY - state.y) * easing;
         state.angle += (targetAngle - state.angle) * easing;
+        if (Math.abs(targetX - state.x) <= 0.1) state.x = targetX;
+        if (Math.abs(targetY - state.y) <= 0.1) state.y = targetY;
+        if (Math.abs(targetAngle - state.angle) <= 0.1) state.angle = targetAngle;
         settling ||= Math.abs(targetY - state.y) > 0.1 || Math.abs(targetX - state.x) > 0.1 ||
           Math.abs(targetAngle - state.angle) > 0.1;
         const style = state.card.style;
@@ -124,14 +141,17 @@
         write('--glass-light-x', `${state.x.toFixed(2)}%`);
         write('--glass-light-y', `${state.y.toFixed(2)}%`);
         write('--glass-angle', `${state.angle.toFixed(2)}deg`);
-        // A slight magnification lives only in the masked bevel, not beneath glyphs.
-        const magnification = 1.035;
+        // Only the decorative background bends in the bevel; glyphs stay untouched.
+        // A moving focal point changes the sample rather than sliding a painted glow.
+        const magnification = 1.1 + state.y * 0.0007;
+        const focusX = (rect.width - 2) * state.x / 100;
+        const focusY = (rect.height - 2) * state.y / 100;
         write('--glass-scene-width', `${(surface.width * magnification).toFixed(2)}px`);
         write('--glass-scene-height', `${(surface.height * magnification).toFixed(2)}px`);
         write('--glass-scene-x', `${(magnification * (surface.left - rect.left - 1) +
-          (1 - magnification) * (rect.width - 2) / 2).toFixed(2)}px`);
+          (1 - magnification) * focusX).toFixed(2)}px`);
         write('--glass-scene-y', `${(magnification * (surface.top - rect.top - 1) +
-          (1 - magnification) * (rect.height - 2) / 2).toFixed(2)}px`);
+          (1 - magnification) * focusY).toFixed(2)}px`);
         if (state.image !== surface.image) {
           state.lens.style.backgroundImage = surface.image;
           state.image = surface.image;
@@ -162,14 +182,18 @@
     scrollRoot.addEventListener('scroll', schedule, { passive: true });
     window.addEventListener('resize', schedule, { passive: true });
     window.visualViewport?.addEventListener('resize', schedule, { passive: true });
-    states.forEach(({ card }) => {
-      card.addEventListener('pointerdown', event => {
+    states.forEach(state => {
+      const { card } = state;
+      const track = event => {
         if (event.pointerType === 'mouse' || !enabled()) return;
-        const rect = card.getBoundingClientRect();
-        card.style.setProperty('--glass-touch-x', `${clamp((event.clientX - rect.left) / rect.width * 100, 0, 100)}%`);
-        card.style.setProperty('--glass-touch-y', `${clamp((event.clientY - rect.top) / rect.height * 100, 0, 100)}%`);
+        if (state.pointer && state.pointer.pointerId !== event.pointerId) return;
+        if (event.type === 'pointermove' && !state.pointer) return;
+        state.pointer = { clientX: event.clientX, clientY: event.clientY, pointerId: event.pointerId };
         card.classList.add('is-glass-touch');
-      }, { passive: true });
+        schedule();
+      };
+      card.addEventListener('pointerdown', track, { passive: true });
+      card.addEventListener('pointermove', track, { passive: true });
     });
     window.addEventListener('pointerup', releaseTouch, { passive: true });
     window.addEventListener('pointercancel', releaseTouch, { passive: true });

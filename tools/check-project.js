@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hasOutdatedBusinessCity } from './lib/project-city-content.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outdatedCityPattern = new RegExp('\\b' + 'Ber' + 'lin' + '\\b', 'i');
 const requiredFiles = [
   'index.html',
   'de/index.html',
@@ -396,9 +396,7 @@ for (const file of walk(root)) {
   if (!/\.(?:html|xml|txt|js|css|md|json|toml|cjs|mjs)$/i.test(relativePath)) continue;
 
   const content = fs.readFileSync(file, 'utf8');
-  const contentForCityCheck = content.replaceAll('Europe/Berlin', 'Europe/Timezone');
-  const isInternalReference = relativePath.startsWith('docs/') || relativePath.startsWith('knowledge/');
-  if (!isInternalReference && outdatedCityPattern.test(contentForCityCheck)) {
+  if (hasOutdatedBusinessCity(relativePath, content)) {
     failures.push(`${relativePath}: contains outdated city name`);
   }
 

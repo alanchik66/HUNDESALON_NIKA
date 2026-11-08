@@ -31,7 +31,7 @@ async function main() {
   if (args.includes('--prepare')) {
     const extraAssets = resolveWeatherReleaseAssets(root, directory);
     const manifest = prepareProductionRelease({ directory, commit, extraAssets });
-    verifyProductionArtifact({ directory, manifest, commit, stamp });
+    verifyProductionArtifact({ directory, manifest, commit, stamp, requiredAssets: extraAssets });
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `asset_stamp=${manifest.stamp}\nrelease_commit=${manifest.commit}\n`);
     console.log(JSON.stringify({ commit: manifest.commit, stamp: manifest.stamp, assets: manifest.assets.length, prepared: true }));
     return;
@@ -39,14 +39,15 @@ async function main() {
   const manifest = manifestFile ? JSON.parse(readFileSync(path.resolve(root, manifestFile), 'utf8')) : undefined;
   if (args.includes('--verify-artifact')) {
     if (!manifest) throw new Error('--verify-artifact requires --manifest.');
-    verifyProductionArtifact({ directory, manifest, commit, stamp });
+    verifyProductionArtifact({ directory, manifest, commit, stamp, requiredAssets: resolveWeatherReleaseAssets(root, directory) });
     console.log(JSON.stringify({ commit, stamp: manifest.stamp, artifactVerified: true }));
     return;
   }
   if (wranglerOutput && !manifest) throw new Error('--wrangler-output requires the validated --manifest.');
   const deployment = wranglerOutput
     ? parseWranglerPagesDeploymentOutput(readFileSync(path.resolve(root, wranglerOutput), 'utf8'), { commit }) : undefined;
-  const result = await verifyProductionRelease({ commit, stamp, manifest, baseUrl: deployment?.baseUrl || baseUrl });
+  const result = await verifyProductionRelease({ commit, stamp, manifest, baseUrl: deployment?.baseUrl || baseUrl,
+    requiredAssets: resolveWeatherReleaseAssets(root, directory) });
   console.log(JSON.stringify(deployment ? {
     ...result, deploymentId: deployment.deploymentId, verificationScope: 'deployment-host',
     canonicalDomainVerified: false, canonicalDomainVerification: 'pending-watcher',

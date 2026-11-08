@@ -74,7 +74,7 @@ export default [
     },
   },
   {
-    files: ['assets/js/header-weather-sun-scene.js', 'assets/js/weather-solar-time.js', 'assets/js/weather-sun-check.js', 'assets/js/menu-contour.js', 'assets/js/shop.js', 'assets/js/shop-model.js', 'assets/js/shop-catalog.js'],
+    files: ['assets/js/header-weather-sun-scene.js', 'assets/js/header-weather-sun-recovery.js', 'assets/js/header-weather-sun-software-scene.js', 'assets/js/header-weather-moon-scene.js', 'assets/js/header-weather-moon-work.js', 'assets/js/header-weather-moon-worker.js', 'assets/js/header-weather-rain-layer.js', 'assets/js/header-weather-rain-integration.js', 'assets/js/header-weather-sky-motion.js', 'assets/js/header-weather-fog-layer.js', 'assets/js/weather-cloud-motion.js', 'assets/js/weather-solar-time.js', 'assets/js/weather-lunar-time.js', 'assets/js/weather-sun-check.js', 'assets/js/menu-contour.js', 'assets/js/shop.js', 'assets/js/shop-model.js', 'assets/js/shop-catalog.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',

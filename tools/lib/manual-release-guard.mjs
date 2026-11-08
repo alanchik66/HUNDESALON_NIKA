@@ -84,8 +84,9 @@ export function prepareManualRelease({ root, argv = [], run = runManualReleaseCo
       GITHUB_REF: 'refs/heads/main', GITHUB_REPOSITORY: state.repository },
   }, 'Current-revision security gate');
   const directory = path.join(root, 'dist');
-  const manifest = prepareRelease({ directory, commit: state.commit, extraAssets: resolveAssets(root) });
-  verifyArtifact({ directory, manifest, commit: state.commit, stamp: manifest.stamp });
+  const requiredAssets = resolveAssets(root, directory);
+  const manifest = prepareRelease({ directory, commit: state.commit, extraAssets: requiredAssets });
+  verifyArtifact({ directory, manifest, commit: state.commit, stamp: manifest.stamp, requiredAssets });
   assertManualReleaseState({ root, run, commit: state.commit });
-  return { ...state, directory, manifest, stamp: manifest.stamp };
+  return { ...state, directory, manifest, stamp: manifest.stamp, requiredAssets };
 }

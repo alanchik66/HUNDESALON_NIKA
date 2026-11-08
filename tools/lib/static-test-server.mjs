@@ -97,6 +97,12 @@ export async function startStaticTestServer(root = process.cwd(), { port = 0, we
         weatherModules.set(path.join(weatherDirectory, 'dist-widget', filename), path.join(weatherModuleRoot, filename));
       }
     }
+    for (const { file } of manifest.vendorInputs || []) {
+      if (path.basename(file) !== file || !/\.(?:mjs|js)$/.test(file)) {
+        throw new Error('Invalid weather vendor output.');
+      }
+      weatherModules.set(path.join(weatherDirectory, 'dist-widget', file), path.join(weatherModuleRoot, file));
+    }
   }
   const server = createServer(async (request, response) => {
     if (!['GET', 'HEAD'].includes(request.method)) {

@@ -9,6 +9,8 @@ import { assertProductionAssetContent, assertProductionSourcePath, isProductionS
 import { stampWeatherModuleReferences, stampWeatherRuntimeVersions } from './lib/weather-asset-versions.mjs';
 import { deployedModulePaths } from '../3d-weather-codrops-main/scripts/module-source.mjs';
 import { transformSync } from 'esbuild';
+import { stripLocalDevRefreshBootstrap } from './lib/production-dev-refresh.mjs';
+import { startStaticTestServer } from './lib/static-test-server.mjs';
 
 test('blocks local advertising and source-only brand assets from production', () => {
   assert.equal(isProductionSourceOnlyPath('assets/video/ads/promo.mp4'), true);
@@ -136,7 +138,7 @@ test('weather cache versions follow the release across emitted static, dynamic a
   mkdirSync(shellDirectory, { recursive: true });
   mkdirSync(modulesDirectory, { recursive: true });
   const manifest = JSON.parse(readFileSync(new URL('../3d-weather-codrops-main/build-manifest.json', import.meta.url), 'utf8'));
-  const outputs = new Set(manifest.entries.map(entry => entry.output));
+  const outputs = new Set([...manifest.entries.map(entry => entry.output), ...manifest.vendorInputs.map(entry => entry.file)]);
   const shell = 'const WEATHER_WIDGET_ASSET_VERSION = "old-release"; const loader = `weather-widget.iife.js?v=${WEATHER_WIDGET_ASSET_VERSION}`;';
   const shellFile = path.join(shellDirectory, 'site-shell.js');
   writeFileSync(shellFile, shell);
@@ -150,13 +152,13 @@ test('weather cache versions follow the release across emitted static, dynamic a
   }
   const vendor = Buffer.from('export const revision = "vendor-unchanged";\n');
   const vendorFile = path.join(modulesDirectory, manifest.vendorInputs[0].file);
-  writeFileSync(vendorFile, vendor);
+  for (const item of manifest.vendorInputs) writeFileSync(path.join(modulesDirectory, item.file), vendor);
   const version = '20261104-prod-next&variant';
   const result = stampWeatherRuntimeVersions(directory, manifest, version);
-  assert.equal(result.files, manifest.entries.length);
+  assert.equal(result.files, outputs.size);
   assert.ok(result.references > 10, 'the actual transitive weather graph is covered');
   assert.match(readFileSync(shellFile, 'utf8'), /WEATHER_WIDGET_ASSET_VERSION = "20261104-prod-next&variant"/);
-  assert.deepEqual(readFileSync(vendorFile), vendor, 'vendor bytes must not be rewritten');
+  assert.deepEqual(readFileSync(vendorFile), vendor, 'opaque vendor code without weather imports is unchanged');
   const referencePattern = new RegExp(`\\./(?:${[...outputs].map(output => output.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})(?:\\?[^"'\x60\\s)]*)?`, 'g');
   let references = 0;
   for (const entry of manifest.entries) {
@@ -183,6 +185,37 @@ test('weather versioning preserves vendor and unrelated URL literals', () => {
   assert.ok(result.code.includes('`uniform float v;`'));
 });
 
+test('a generated vendor invalidates cached imports in weather modules and every public JS importer using one URI', t => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'nika-weather-vendor-cache-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const runtime = path.join(directory, '3d-weather-codrops-main/dist-widget');
+  const assets = path.join(directory, 'assets/js');
+  mkdirSync(runtime, { recursive: true });
+  mkdirSync(assets, { recursive: true });
+  const manifest = { entries: [{ output: 'scene.mjs' }], vendorInputs: [{ file: 'vendor.mjs' }, { file: 'interop.mjs' }] };
+  writeFileSync(path.join(assets, 'site-shell.js'), 'const WEATHER_WIDGET_ASSET_VERSION="old";');
+  writeFileSync(path.join(runtime, 'scene.mjs'), 'import "./vendor.mjs?v=old";');
+  writeFileSync(path.join(runtime, 'vendor.mjs'), 'import "./interop.mjs";export const patched=true;');
+  writeFileSync(path.join(runtime, 'interop.mjs'), 'export const interop=true;');
+  for (const file of ['header-weather-sun-scene.js', 'future-rain.js']) {
+    writeFileSync(path.join(assets, file), 'import "../../3d-weather-codrops-main/dist-widget/vendor.mjs?v=old";');
+  }
+  const unrelated = 'import "../../unrelated/vendor.mjs?v=pinned";';
+  writeFileSync(path.join(assets, 'software.js'), unrelated);
+  const version = '20261108-prod-reviewed-vendor';
+  const result = stampWeatherRuntimeVersions(directory, manifest, version);
+  const specifier = file => readFileSync(file, 'utf8').match(/import\s+["']([^"']+)/u)?.[1];
+  const sceneURI = new URL(specifier(path.join(runtime, 'scene.mjs')), 'https://site.test/3d-weather-codrops-main/dist-widget/scene.mjs').href;
+  assert.equal(new URL(sceneURI).searchParams.get('v'), version, 'old browser vendor URI must be invalidated');
+  for (const file of ['header-weather-sun-scene.js', 'future-rain.js']) {
+    const uri = new URL(specifier(path.join(assets, file)), `https://site.test/assets/js/${file}`).href;
+    assert.equal(uri, sceneURI, 'all importers share one Three/React module namespace');
+  }
+  assert.equal(new URL(specifier(path.join(runtime, 'vendor.mjs')), 'https://site.test/3d-weather-codrops-main/dist-widget/vendor.mjs').searchParams.get('v'), version);
+  assert.equal(readFileSync(path.join(assets, 'software.js'), 'utf8'), unrelated);
+  assert.deepEqual(result.publicImporters, ['assets/js/future-rain.js', 'assets/js/header-weather-sun-scene.js']);
+});
+
 test('weather versioning rejects missing or ambiguous shell constants and escaping output paths', t => {
   const fixture = mkdtempSync(path.join(tmpdir(), 'nika-weather-binding-'));
   t.after(() => rmSync(fixture, { recursive: true, force: true }));
@@ -194,4 +227,65 @@ test('weather versioning rejects missing or ambiguous shell constants and escapi
     assert.equal(readFileSync(shellFile, 'utf8'), source, 'a failed precondition cannot mutate the shell');
   }
   assert.throws(() => stampWeatherRuntimeVersions(fixture, { entries: [{ output: '../outside.mjs' }] }, 'release'), /Invalid maintained/);
+});
+
+const localRefreshIf = [
+  "if (['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)) {",
+  "  const refreshScript = document.createElement('script');",
+  '  refreshScript.src = `/assets/js/local-dev-refresh.js?boot=${Date.now()}`;',
+  '  document.head.appendChild(refreshScript);',
+  '}',
+].join('\n');
+const refreshFixture = body => `(function siteShellBootstrap() {\n${body}\nconst WEATHER_WIDGET_ASSET_VERSION = 'literal-release';\nwindow.keepBusinessLogic();\n})();`;
+
+test('the production shell removes only the exact local refresh AST range from the actual source', () => {
+  const source = readFileSync(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
+  const result = stripLocalDevRefreshBootstrap(source);
+  assert.equal(result.code.includes('local-dev-refresh.js'), false, 'production must not load the dev refresh helper');
+  assert.ok(result.removedRange, 'the dev hook must be removed, not only minified');
+  const [start, end] = result.removedRange;
+  assert.equal(result.code, source.slice(0, start) + source.slice(end), 'all bytes outside the targeted IfStatement stay unchanged');
+  assert.match(result.code, /const WEATHER_WIDGET_ASSET_VERSION\s*=/u);
+  assert.match(result.code, /const SUPPORTED_LANGS\s*=/u);
+  assert.doesNotThrow(() => transformSync(result.code, { loader: 'js', target: 'es2022' }));
+});
+
+test('production refresh stripping fails closed on missing, duplicate or changed bootstrap structure', () => {
+  for (const source of [
+    refreshFixture('window.keepBusinessLogic();'),
+    refreshFixture(`${localRefreshIf}\n${localRefreshIf}`),
+    refreshFixture(localRefreshIf.replace("'127.0.0.1'", "'other-host'")),
+    refreshFixture(localRefreshIf).replace('siteShellBootstrap', 'anotherBootstrap'),
+    `${refreshFixture(localRefreshIf)}\n${refreshFixture(localRefreshIf)}`,
+    refreshFixture(`function nested(){${localRefreshIf}}`),
+  ]) assert.throws(() => stripLocalDevRefreshBootstrap(source), /Expected exactly one/u);
+});
+
+test('production refresh stripping preserves unrelated statements and the weather version binding', () => {
+  const before = 'window.before = "unchanged";\n';
+  const after = '\nwindow.after = "unchanged";';
+  const source = before + refreshFixture(localRefreshIf) + after;
+  const result = stripLocalDevRefreshBootstrap(source);
+  assert.equal(result.code, before + refreshFixture('') + after);
+});
+
+test('the dev refresh asset is excluded from production while the isolated local static server still serves its exact bytes', async t => {
+  const relative = 'assets/js/local-dev-refresh.js';
+  assert.equal(isProductionSourceOnlyPath(relative), true);
+  const fixture = mkdtempSync(path.join(tmpdir(), 'nika-dev-refresh-boundary-'));
+  let server;
+  t.after(async () => {
+    await server?.close();
+    assert.equal(path.dirname(fixture), tmpdir());
+    assert.ok(path.basename(fixture).startsWith('nika-dev-refresh-boundary-'));
+    rmSync(fixture, { recursive: true, force: true });
+  });
+  const bytes = readFileSync(new URL(`../${relative}`, import.meta.url));
+  mkdirSync(path.dirname(path.join(fixture, relative)), { recursive: true });
+  writeFileSync(path.join(fixture, relative), bytes);
+  server = await startStaticTestServer(fixture);
+  const response = await fetch(`${server.baseUrl}/${relative}`);
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('content-type'), /javascript/u);
+  assert.deepEqual(Buffer.from(await response.arrayBuffer()), bytes);
 });

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { transformSync } from 'esbuild';
 import { assertProductionAssetContent, assertProductionSourcePath, isProductionSourceOnlyPath } from './lib/production-assets.mjs';
 import { minifyHeaderWeatherStyleTemplate } from './lib/production-style-template.mjs';
+import { stripLocalDevRefreshBootstrap } from './lib/production-dev-refresh.mjs';
 import { stampWeatherRuntimeVersions } from './lib/weather-asset-versions.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -208,10 +209,18 @@ for (const entry of copyEntries) {
   copyRecursive(path.join(root, entry), path.join(dist, entry));
 }
 
+// A production artifact stays independent of the workstation's localhost refresh watcher.
+// Strip before content-version computation, leaving source/local preview behavior intact.
+const productionShellFile = path.join(dist, 'assets/js/site-shell.js');
+fs.writeFileSync(productionShellFile, stripLocalDevRefreshBootstrap(fs.readFileSync(productionShellFile, 'utf8')).code);
+
 for (const entry of weatherManifest.entries) {
   for (const file of [entry.output, `${entry.output}.map`]) {
     fs.copyFileSync(path.join(weatherCandidate, file), path.join(dist, '3d-weather-codrops-main', 'dist-widget', file));
   }
+}
+for (const { file } of weatherManifest.vendorInputs) {
+  fs.copyFileSync(path.join(weatherCandidate, file), path.join(dist, '3d-weather-codrops-main', 'dist-widget', file));
 }
 console.log(`Built ${weatherManifest.entries.length} weather modules from maintained sources.`);
 
@@ -259,6 +268,9 @@ function deployAssetVersion() {
   collect(path.join(dist, 'assets'));
   for (const entry of weatherManifest.entries) {
     files.push(path.join(dist, '3d-weather-codrops-main', 'dist-widget', entry.output));
+  }
+  for (const vendor of weatherManifest.vendorInputs) {
+    files.push(path.join(dist, '3d-weather-codrops-main', 'dist-widget', vendor.file));
   }
   const contentHash = createHash('sha256');
   for (const file of files.sort()) {

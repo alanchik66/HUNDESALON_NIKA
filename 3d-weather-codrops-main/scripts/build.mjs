@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { transformSync, version as esbuildVersion } from 'esbuild';
 import { deployedModulePaths, canonicalRecoveredModule } from './module-source.mjs';
+import { patchWeatherVendorRecovery } from './vendor-recovery-patch.mjs';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repositoryRoot = path.dirname(projectRoot);
@@ -43,7 +44,7 @@ for (const vendor of manifest.vendorInputs) {
   if (sha256(bytes) !== vendor.sha256) {
     throw new Error(`Vendored input changed without a provenance review: ${vendor.file}`);
   }
-  generated.push({ name: vendor.file, bytes });
+  generated.push({ name: vendor.file, bytes: Buffer.from(patchWeatherVendorRecovery(bytes.toString('utf8'), vendor.file)) });
 }
 
 for (const entry of manifest.entries) {

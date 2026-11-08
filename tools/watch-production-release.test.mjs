@@ -52,7 +52,8 @@ function fixture(t, { patchRun, downloadFailure = false, alterArtifact, canonica
     return { status: 0, stdout: result === undefined ? '' : JSON.stringify(result) };
   };
   const verifyPublished = options => {
-    assert.deepEqual(Object.keys(options).sort(), ['commit', 'manifest']);
+    assert.deepEqual(Object.keys(options).sort(), ['commit', 'manifest', 'requiredAssets']);
+    assert.deepEqual(options.requiredAssets, []);
     assert.equal(options.commit, COMMIT);
     assert.deepEqual(options.manifest, manifest);
     return verifyProductionRelease({ ...options, attempts: 1, fetcher: async input => {
@@ -72,7 +73,9 @@ function fixture(t, { patchRun, downloadFailure = false, alterArtifact, canonica
       return new Response(readFileSync(path.join(source, file)), { headers: { 'Content-Type': type } });
     } });
   };
-  return { options: { root, commit: COMMIT, run, verifyPublished, log: value => logs.push(value) }, calls, requests, logs, manifest };
+  return { options: { root, commit: COMMIT, run, verifyPublished,
+    resolveAssets: (projectRoot, runtimeRoot) => { assert.equal(projectRoot, root); assert.ok(runtimeRoot.startsWith(path.join(root, 'output', 'release-receipts'))); return []; },
+    log: value => logs.push(value) }, calls, requests, logs, manifest };
 }
 
 test('the exact successful run artifact is locally verified before canonical completion', async t => {
@@ -136,5 +139,12 @@ test('a missing exact artifact cannot fall back to another artifact or the publi
 test('changed artifact bytes fail before any canonical request', async t => {
   const f = fixture(t, { alterArtifact: directory => writeFileSync(path.join(directory, 'assets/js/app.js'), 'changed') });
   await assert.rejects(watchProductionRelease(f.options), /Artifact digest mismatch/u);
+  assert.equal(f.requests.length, 0);
+});
+
+test('the watcher rejects missing generated vendor coverage before canonical requests', async t => {
+  const f = fixture(t);
+  f.options.resolveAssets = () => [`/3d-weather-codrops-main/dist-widget/vendor.mjs?v=${STAMP}`];
+  await assert.rejects(watchProductionRelease(f.options), /missing required release asset/iu);
   assert.equal(f.requests.length, 0);
 });

@@ -10,7 +10,7 @@ test('current weather metadata works behind the personal preview session', async
   const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
   const declaration = source.match(/  async function fetchHeaderWeatherCurrent\([^)]*\) \{[\s\S]*?\n  \}/)[0];
   const initialize = new Function('environment', `
-    const { window, fetch, URL, HEADER_WEATHER_CURRENT_ENDPOINT, resolveHeaderWeatherTimeZone,
+    const { window, fetch, URL, HEADER_WEATHER_CURRENT_ENDPOINT, resolveHeaderWeatherTimeZone, normalizeHeaderWeatherTimeZone,
       getHeaderWeatherPressureLang, getHeaderWeatherTimestampMs, getHeaderWeatherNowMs,
       getHeaderWeatherFiniteNumber } = environment;
     ${declaration}
@@ -22,6 +22,7 @@ test('current weather metadata works behind the personal preview session', async
     window: { location: { origin: 'https://preview.example' } },
     URL, HEADER_WEATHER_CURRENT_ENDPOINT: '/api/weather',
     resolveHeaderWeatherTimeZone: () => 'Europe/Berlin',
+    normalizeHeaderWeatherTimeZone: value => value || null,
     getHeaderWeatherPressureLang: () => 'ru',
     getHeaderWeatherTimestampMs: () => null,
     getHeaderWeatherNowMs: () => 123456,
@@ -39,6 +40,7 @@ test('current weather metadata works behind the personal preview session', async
   assert.equal(requests[0].url.origin, 'https://preview.example');
   assert.equal(requests[0].url.pathname, '/api/weather');
   assert.equal(requests[0].url.searchParams.get('lang'), 'ru');
+  assert.equal(requests[0].url.searchParams.get('timezone'), 'auto');
   assert.equal(requests[0].options.cache, 'no-store');
 });
 
@@ -318,7 +320,7 @@ for (const filename of ['widget.mjs', 'header-preview.mjs', 'header-dropdown.mjs
       assert.equal(new Set(cards.map(card => card.key)).size, 4);
       assert.deepEqual(cards.map(card => card.props['data-forecast-date']), slots.map(day => day.date));
       assert.deepEqual(cards.map(card => card.props.children[0].props.children), slots.map(day => formatDate(day.date, locale)));
-      assert.deepEqual(cards[0].props.children[1].props.children, [0, '° / ', -2, '°']);
+      assert.deepEqual(cards[0].props.children[1].props.children, [0, '°C / ', -2, '°C']);
       assert.equal(cards[0].props.children[2].props.children, translate(actual.day.condition, locale));
       cards[0].props.onClick();
       assert.deepEqual(selections, [0]);

@@ -126,12 +126,13 @@ async function deployPages(argv = process.argv.slice(2), {
     if (!auth) return 1;
     // Credentials may take time to refresh; reject changes or a CI race before uploading.
     assertManualReleaseState({ root, run, commit: release.commit });
-    verifyArtifact({ directory: release.directory, manifest: release.manifest, commit: release.commit, stamp: release.stamp });
+    verifyArtifact({ directory: release.directory, manifest: release.manifest, commit: release.commit, stamp: release.stamp,
+      requiredAssets: release.requiredAssets });
     const wranglerArgs = ['pages', 'deploy', distDir, '--project-name', projectName,
       '--branch', 'main', '--commit-hash', release.commit, '--commit-dirty=false'];
     const result = upload(wranglerArgs, pagesDeployEnv(process.env, auth.token));
     if (result.status !== 0) return result.status ?? 1;
-    await verifyPublished({ commit: release.commit, manifest: release.manifest });
+    await verifyPublished({ commit: release.commit, manifest: release.manifest, requiredAssets: release.requiredAssets });
     return 0;
   } catch (error) {
     console.error(error.message);

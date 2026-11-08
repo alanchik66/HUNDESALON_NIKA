@@ -4,7 +4,8 @@ import { readFile } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
 import { parse } from 'espree';
 import postcss from 'postcss';
-import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveWeatherSceneFallback, renderWeatherSceneFallback, resolveForecastCloudCover, buildForecastSlots, hasCompleteForecast, resolveForecastNoonMs, buildForecastSceneContext, weatherCurrentTimestamp, isCurrentWeatherFresh, parseWeatherCurrentTime, formatWeatherObservationTime } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
+import * as cloudMotion from '../assets/js/weather-cloud-motion.js';
+import { createWeatherController, createRetryableModuleLoader, createRecoverableScene, WEATHER_REFRESH_INTERVAL_MS, HEADER_WEATHER_RECOVERY_STYLES, resolveWeatherLocationNotice, resolveWeatherSceneFallback, renderWeatherSceneFallback, resolveForecastCloudCover, buildForecastSlots, hasCompleteForecast, resolveForecastNoonMs, buildForecastSceneContext, weatherCurrentTimestamp, isCurrentWeatherFresh, parseWeatherCurrentTime, formatWeatherObservationTime, weatherSceneSolarReady } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
 
 test('the complete authored weather module graph shares the shell cache revision', async () => {
   const shell = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
@@ -114,7 +115,7 @@ test('unknown cloud cover uses weather codes or localized labels while observed 
   assert.equal(resolve({ __weatherCurrentMeta: { cloudCover: null, weatherCode: 0 } }).sunTransmission, 1);
 });
 
-test('cloud transmission reaches both Sun and Moon without sharing stale CSS variables', async () => {
+test('foreground clouds obscure locally without fading the complete Sun or Moon in clear gaps', async () => {
   const { applyHeaderWeatherOrbAtmosphere: apply } = await solarAtmosphereHarness();
   for (const variant of ['preview', 'dropdown']) {
     const classes = new Set([`weather-orb-overlay--${variant}`, 'is-sun']);
@@ -124,16 +125,16 @@ test('cloud transmission reaches both Sun and Moon without sharing stale CSS var
       style: { setProperty: (key, value) => values.set(key, value), removeProperty: key => values.delete(key) },
     };
     apply(overlay, { alpha: 0, sunTransmission: 0.02485 });
-    assert.equal(values.get('--orb-sun-transmission'), '0.025');
+    assert.equal(values.get('--orb-sun-transmission'), '1');
     apply(overlay, { alpha: 0, sunTransmission: 0 });
-    assert.equal(values.get('--orb-sun-transmission'), '0.000', 'zero transmission cannot fall back to one');
+    assert.equal(values.get('--orb-sun-transmission'), '1', 'sky coverage is not a measurement of opacity at the disc');
     classes.delete('is-sun');
     classes.add('is-moon');
     apply(overlay, { alpha: 0.4, sunTransmission: 0.015 });
     assert.equal(values.has('--orb-sun-transmission'), false);
-    assert.equal(values.get('--orb-moon-transmission'), '0.015', 'overcast must also obscure moonlight');
+    assert.equal(values.get('--orb-moon-transmission'), '1', 'foreground cloud pixels provide the lunar occlusion');
     apply(overlay, { alpha: 0, sunTransmission: 1 });
-    assert.equal(values.get('--orb-moon-transmission'), '1.000', 'a clear Moon retains its original opacity and detail');
+    assert.equal(values.get('--orb-moon-transmission'), '1', 'a clear Moon retains its original opacity and detail');
   }
 });
 
@@ -453,13 +454,13 @@ test('the dropdown selects its forecast atmosphere through the mounted pure help
   current.shadowRoot.querySelectorAll = () => [sun];
   selected = pills[0];
   sync(current);
-  assert.equal(values.get('--orb-sun-transmission'), '0.015');
+  assert.equal(values.get('--orb-sun-transmission'), '1');
   selected = pills[1];
   sync(current);
-  assert.equal(values.get('--orb-sun-transmission'), '1.000', 'the existing solar DOM is updated synchronously');
+  assert.equal(values.get('--orb-sun-transmission'), '1', 'the existing solar DOM is updated synchronously');
   selected = pills[2];
   sync(current);
-  assert.ok(Number(values.get('--orb-sun-transmission')) < 0.03);
+  assert.equal(values.get('--orb-sun-transmission'), '1', 'forecast cloud pixels provide local occlusion without globally erasing the disc');
 });
 
 test('forecast class changes immediately update solar atmosphere through the existing observed lifecycle', async () => {
@@ -507,6 +508,7 @@ async function removedOrbHarness() {
   const noops = ['applyHeaderWeatherPressureCopy', 'syncHeaderWeatherExpandedState', 'syncHeaderWeatherToggleArrow', 'scheduleHeaderWeatherOrbSync', 'scheduleHeaderWeatherReadingsSync', 'syncHeaderWeatherAttribution', 'applyHeaderWeatherLocationSearchCopy', 'bindHeaderWeatherDropdownScrollState', 'scheduleHeaderWeatherAreaLocationLabelRestore', 'syncHeaderWeatherDropdownAtmosphere', 'invalidateHeaderWeatherLocationRequest', 'stopHeaderWeatherToggleArrowAnimation', 'resetHeaderWeatherPreviewLayoutState', 'emitHeaderWeatherEvent'];
   const environment = {
     host, getHeaderWeatherHost: () => host,
+    headerWeatherRainIntegration: undefined,
     window: { removeEventListener: (type, handler) => online.delete(handler) },
     document: { removeEventListener: (type, handler) => visibility.delete(handler), body: { classList: { remove() {} } } },
     cancelAnimationFrame: value => cancelled.push(value), clearHeaderWeatherOrbCanvas() {},
@@ -697,11 +699,11 @@ test('module imports retry with unique URLs and a rejected batch can recover on 
 test('the actual Sun and clock loaders retain absolute versioned URLs, failed retries and fulfilled promise caching', async () => {
   const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
   const block = source.slice(source.indexOf('  let headerWeatherSunSceneModulePromise'), source.indexOf('  function updateHeaderWeatherSunSceneGeo'));
-  const importExpression = 'import(/* webpackIgnore: true */ target.href)';
-  assert.equal(block.split(importExpression).length - 1, 2, 'only the actual dynamic import boundary is mocked');
+  const importExpression = 'import(/* webpackIgnore: true */ ';
+  assert.equal(block.split(importExpression).length - 1, 4, 'actual import boundaries include the separate optional rain helper without invoking it from the astronomy loader');
   for (const shellScript of [null, { src: 'https://site.test/assets/js/site-shell.js?v=release%26variant' }]) {
     const requests = [], attempts = new Map();
-    const api = new Function('document', 'window', 'WEATHER_WIDGET_ASSET_VERSION', 'importModule', `${block.replaceAll(importExpression, 'importModule(target.href)')}
+    const api = new Function('document', 'window', 'WEATHER_WIDGET_ASSET_VERSION', 'importModule', `${block.replaceAll(importExpression, 'importModule(')}
       return [loadHeaderWeatherSunSceneModule, loadHeaderWeatherSolarClockModule];`)(
       { querySelector: () => shellScript }, { location: { href: 'https://site.test/ru/nashi-uslugi' } }, 'fallback-version', async value => {
         const url = new URL(value);
@@ -709,7 +711,8 @@ test('the actual Sun and clock loaders retain absolute versioned URLs, failed re
         const count = (attempts.get(url.pathname) || 0) + 1;
         attempts.set(url.pathname, count);
         if (count === 1) throw new TypeError('Temporary module load failure');
-        return { path: url.pathname };
+        return url.pathname.endsWith('/header-weather-sky-motion.js')
+          ? { skyClock: { path: url.pathname } } : { path: url.pathname };
       });
     for (const [index, load] of api.entries()) {
       const failed = load();
@@ -718,8 +721,8 @@ test('the actual Sun and clock loaders retain absolute versioned URLs, failed re
       const fulfilled = load();
       const value = await fulfilled;
       assert.equal(load(), fulfilled, 'an imported module remains cached for subsequent mounts');
-      const first = requests[index * 2], retry = requests[index * 2 + 1];
-      const pathname = `/assets/js/${index ? 'weather-solar-time' : 'header-weather-sun-scene'}.js`;
+      const pathname = `/assets/js/${index ? 'header-weather-sky-motion' : 'header-weather-sun-scene'}.js`;
+      const [first, retry] = requests.filter(request => request.pathname === pathname);
       assert.equal(value.path, pathname);
       assert.equal(first.pathname, pathname);
       assert.equal(retry.origin, 'https://site.test');
@@ -727,8 +730,27 @@ test('the actual Sun and clock loaders retain absolute versioned URLs, failed re
       assert.equal(first.searchParams.has('weather-retry'), false);
       assert.equal(retry.searchParams.get('weather-retry'), '1', 'native URLSearchParams serializes the integer retry');
     }
-    assert.equal(requests.length, 4);
+    assert.equal(requests.length, 5);
+    assert.ok(requests.some(request => request.pathname === '/assets/js/weather-solar-time.js'),
+      'a failed sky helper still attempts the shared clock fallback');
   }
+});
+
+test('the shared astronomical clock remains available when the optional sky module cannot load', async () => {
+  const source = await readFile(new URL('../assets/js/site-shell.js', import.meta.url), 'utf8');
+  const block = source.slice(source.indexOf('  let headerWeatherSunSceneModulePromise'), source.indexOf('  function updateHeaderWeatherSunSceneGeo'));
+  const requests = [], clock = { solarPosition: () => ({ elevationDeg: 12 }) };
+  const load = new Function('document', 'window', 'WEATHER_WIDGET_ASSET_VERSION', 'importModule', `
+    ${block.replaceAll('import(/* webpackIgnore: true */ ', 'importModule(')}
+    return loadHeaderWeatherSolarClockModule;`)(
+    { querySelector: () => null }, { location: { href: 'https://site.test/ru/' } }, 'release', async value => {
+      requests.push(value);
+      if (value.includes('header-weather-sky-motion.js')) throw new TypeError('Sky helper unavailable');
+      return clock;
+    });
+  assert.equal(await load(), clock);
+  assert.equal(await load(), clock);
+  assert.equal(requests.length, 2, 'a fulfilled fallback clock stays usable without a request loop');
 });
 
 test('a managed header requires a real location instead of fetching the default city', async () => {
@@ -774,20 +796,23 @@ test('header status styles contain the notice and do not style or intercept any 
   assert.equal(state.get('overflow'), 'hidden');
   assert.equal(state.get('height'), '100%');
   assert.equal(state.get('pointer-events'), 'none');
+  const deviceAction = [...rules].find(([selector]) => selector.endsWith('.weather-header-state__geolocation'))[1];
+  assert.equal(deviceAction.get('pointer-events'), 'auto', 'only the explicit recovery action is interactive');
+  assert.equal(deviceAction.get('min-height'), '24px');
   assert.equal([...rules.keys()].some(selector => selector.includes('weather-location-selector')), false);
   assert.ok([...rules.keys()].filter(selector => selector.includes('weather-header-state')).every(selector => selector.includes(':host([data-weather-variant=\'header\']) .weather-header-preview .weather-header-state--recovery')));
 });
 
-test('the visual recovery model uses condition codes across locales and parses local time without Safari Date parsing', () => {
+test('the visual recovery model uses condition codes across locales and leaves missing astronomy/day flags neutral', () => {
   const weather = (code, text = 'Локализованное условие', is_day) => ({ current: { condition: { code, text }, is_day }, location: { localtime: '2026-11-04 21:30' } });
   assert.equal(resolveWeatherSceneFallback(null), null, 'loading must not invent weather');
   for (const [code, kind] of [[1000, 'clear'], [1009, 'cloudy'], [1030, 'foggy'], [1195, 'rainy'], [1225, 'snowy'], [1276, 'stormy']]) {
     const model = resolveWeatherSceneFallback(weather(code));
     assert.equal(model.kind, kind);
-    assert.equal(model.night, true);
+    assert.equal(model.night, null, 'a local time string alone cannot determine the day or night across Earth');
     assert.equal(model.clouds, kind !== 'clear');
   }
-  assert.equal(resolveWeatherSceneFallback(weather(1000, 'Clear', 1)).night, false, 'API day/night wins over the clock');
+  assert.equal(resolveWeatherSceneFallback(weather(1000, 'Clear', 1)).night, false, 'a valid provider flag remains usable without astronomy');
   assert.equal(resolveWeatherSceneFallback(weather(1000, 'Clear', '0')).night, true);
   assert.equal(resolveWeatherSceneFallback(weather(1003)).orb, true, 'partly cloudy keeps the celestial body');
   assert.equal(resolveWeatherSceneFallback(weather(undefined, 'Light rain', 1)).kind, 'rainy');
@@ -813,7 +838,9 @@ test('recovery renders current weather without controls and retains only one hea
   const css = postcss.parse(HEADER_WEATHER_RECOVERY_STYLES);
   const keyframes = [];
   css.walkAtRules('keyframes', rule => keyframes.push(rule.params));
-  for (const effect of ['CloudDrift', 'Rain', 'Snow', 'Lightning', 'OrbGlow']) assert.ok(keyframes.includes(`weatherRecovery${effect}`));
+  for (const effect of ['Rain', 'Snow', 'Lightning', 'OrbGlow']) assert.ok(keyframes.includes(`weatherRecovery${effect}`));
+  assert.equal(keyframes.includes('weatherRecoveryCloudDrift'), false, 'cloud drift uses the shared continuous field');
+  assert.equal(typeof header.props.children[0].props.ref, 'function', 'fallback cloud movement follows the mounted element lifecycle');
   assert.match(HEADER_WEATHER_RECOVERY_STYLES, /url\('\/assets\/images\/weather\/cloud-9225a9f1\.png'\)/);
 });
 
@@ -866,6 +893,7 @@ for (const filename of ['header-preview.mjs', 'header-dropdown.mjs', 'widget.mjs
         for (const child of [tree.props?.children].flat(Infinity)) { const found = find(child, predicate); if (found) return found; }
         return null;
       };
+      const isDeviceAction = node => node.type === 'button' && node.props?.className?.split(' ').includes('weather-header-state__geolocation');
       const previousWindow = globalThis.window;
       globalThis.window = { addEventListener() {}, removeEventListener() {} };
       try {
@@ -878,15 +906,35 @@ for (const filename of ['header-preview.mjs', 'header-dropdown.mjs', 'widget.mjs
         assert.equal(controller.getState().error, null);
         assert.equal(find(tree, node => node.props?.className === 'weather-header-state__notice').props.children, copy[locale].locating);
         assert.equal(find(tree, node => node.type === 'Search'), null, 'pending front header must contain no search or GPS form');
+        assert.equal(find(tree, isDeviceAction), null, 'pending acquisition must not offer another request');
         assert.ok(find(tree, node => node.props?.className === 'weather-header-state__spinner'), 'the existing spinner marker must activate the existing sonar');
         for (const [status, key] of [['denied', 'locationDeniedStatus'], ['timeout', 'locationTimeoutStatus'], ['unavailable', 'locationUnavailableStatus']]) {
           controller.setLocationStatus({ status });
           tree = render();
-          assert.equal(find(tree, node => node.props?.className === 'weather-header-state__notice').props.children, copy[locale][key]);
+          const notice = find(tree, node => node.props?.className === 'weather-header-state__notice').props.children;
+          assert.equal(notice, copy[locale][key]);
+          if (status === 'denied') {
+            const menuGuidance = {
+              de: /Ort suchen/u,
+              en: /choose a place/u,
+              ru: /выберите город/u,
+              uk: /виберіть місто/u,
+            };
+            assert.match(notice, menuGuidance[locale], 'a denied header must explain the available manual location action');
+            assert.ok(notice.includes(copy[locale].currentLocation), 'denied guidance names the visible device action');
+          }
           assert.ok(find(tree, node => node.props?.className?.includes('weather-header-state--recovery')));
           assert.equal(find(tree, node => node.type === 'Search'), null, 'terminal status must not add a front header form');
+          const deviceAction = find(tree, isDeviceAction);
+          assert.ok(deviceAction, 'terminal GPS status offers an immediate explicit request');
+          assert.equal(deviceAction.props.type, 'button');
+          assert.equal(deviceAction.props.children, copy[locale].currentLocation);
+          assert.equal(deviceAction.props.title, copy[locale].locationPermissionDenied);
+          assert.equal(typeof deviceAction.props.onClick, 'function');
+          assert.ok(deviceAction.props.className.split(' ').includes('weather-location-selector__current'), 'the managed shell reuses its native device action');
           const recoveryTrigger = find(tree, node => node.props?.className?.startsWith('weather-header-trigger'));
           assert.ok(recoveryTrigger, 'the existing weather menu must remain reachable before the first successful weather load');
+          assert.equal(find(recoveryTrigger, isDeviceAction), null, 'the device action must not be nested in or blocked by the weather menu trigger');
           assert.equal(recoveryTrigger.props['aria-expanded'], false);
           assert.equal(recoveryTrigger.props['aria-label'], copy[locale].openDetails);
           recoveryTrigger.props.onClick();
@@ -904,6 +952,7 @@ for (const filename of ['header-preview.mjs', 'header-dropdown.mjs', 'widget.mjs
           controller.setLocationStatus({ status: 'pending' });
           tree = render();
           assert.equal(find(tree, node => node.type === 'Search'), null, 'a new location attempt collapses the menu back to sonar');
+          assert.equal(find(tree, isDeviceAction), null, 'a native request in progress removes the retry action');
           assert.equal(find(tree, node => node.props?.className?.startsWith('weather-header-trigger')), null);
           assert.ok(find(tree, node => node.props?.className === 'weather-header-state__spinner'));
         }
@@ -933,6 +982,7 @@ for (const filename of ['header-preview.mjs', 'header-dropdown.mjs', 'widget.mjs
           assert.ok(find(tree, node => node.props?.className === className), `${className} is retained after successful weather loading`);
         }
         assert.equal(find(tree, node => node.props?.className?.includes('weather-header-state--recovery')), null);
+        assert.equal(find(tree, isDeviceAction), null, 'successful weather has no redundant recovery button');
         for (const cleanup of cleanups) cleanup?.();
       } finally {
         if (previousWindow === undefined) delete globalThis.window;
@@ -1310,7 +1360,7 @@ test('public loader retries the first failed import instead of keeping its rejec
   assert.deepEqual(await window.Weather3DWidget.mountWeatherWidget('host', { managedRefresh: true }), ['host', { managedRefresh: true }]);
 });
 
-function recoveryHarness() {
+function recoveryHarness(props = {}) {
   const timers = new Map();
   const listeners = new Map();
   let next = 0;
@@ -1328,7 +1378,7 @@ function recoveryHarness() {
   const Boundary = createRecoverableScene(React, (type, props, key) => ({ type, props, key }), async () => ({ default: 'Scene' }), environment);
   const weather = payload('Retained city');
   const fallback = { type: 'existing-scene-fallback' };
-  const boundary = new Boundary({ fallback, weatherData: weather });
+  const boundary = new Boundary({ fallback, weatherData: weather, ...props });
   boundary.node = events;
   boundary.componentDidMount();
   const fire = delay => {
@@ -1339,6 +1389,116 @@ function recoveryHarness() {
   return { boundary, Boundary, timers, listeners, environment, weather, fallback, fire };
 }
 
+function recoveryVisuals(boundary) {
+  const tree = boundary.render(), children = [tree.props.children].flat();
+  const primary = children.find(child => child?.props?.['data-weather-renderer'] === 'primary');
+  return { tree, primary, fallback: children.find(child => child?.props?.['data-weather-fallback-kind']),
+    scene: primary?.props.children.props.children };
+}
+
+test('header startup paints no placeholder cloud and keeps only a healthy renderer generation visible across weather updates', () => {
+  const h = recoveryHarness({ embedded: true, variant: 'header-panel' });
+  const initial = recoveryVisuals(h.boundary);
+  assert.equal(initial.tree.props['data-weather-scene-owner'], 'loading');
+  assert.equal(initial.fallback, undefined);
+  assert.equal(initial.primary.props['data-weather-visible'], 'false');
+  assert.equal(initial.primary.props.style.opacity, 0);
+  const sceneType = initial.scene.type;
+  initial.scene.props.onSceneReady(h.weather);
+  const ready = recoveryVisuals(h.boundary);
+  assert.equal(ready.tree.props['data-weather-scene-owner'], 'primary');
+  assert.equal(ready.primary.props.style.opacity, 1); assert.equal(ready.fallback, undefined);
+  const refreshed = payload('Refreshed city'); h.boundary.props.weatherData = refreshed;
+  const update = recoveryVisuals(h.boundary);
+  assert.equal(update.primary.props.style.opacity, 1, 'an ordinary weather-object update retains the healthy canvas');
+  assert.equal(update.scene.type, sceneType); assert.equal(update.fallback, undefined);
+  initial.scene.props.onSceneReady(h.weather);
+  assert.equal(h.boundary.state.readyWeather, h.weather, 'stale weather cannot claim readiness for the refreshed report');
+  update.scene.props.onSceneReady(refreshed);
+  assert.equal(h.boundary.state.readyWeather, refreshed);
+  h.boundary.componentWillUnmount(); assert.equal(h.timers.size, 0); assert.equal(h.listeners.size, 0);
+});
+
+test('context loss and retry retain one visible recovery owner until a new healthy generation is ready', () => {
+  const h = recoveryHarness({ embedded: true, variant: 'header-panel' });
+  const initialReady = recoveryVisuals(h.boundary).scene.props.onSceneReady;
+  initialReady(h.weather); const canvas = {};
+  h.boundary.lost({ target: canvas }); h.boundary.restored({ target: canvas });
+  let view = recoveryVisuals(h.boundary);
+  assert.equal(view.tree.props['data-weather-scene-owner'], 'fallback');
+  assert.equal(view.primary.props.style.opacity, 0); assert.ok(view.fallback);
+  initialReady(h.weather); assert.equal(recoveryVisuals(h.boundary).primary.props.style.opacity, 0);
+  view.scene.props.onSceneReady(h.weather);
+  assert.equal(recoveryVisuals(h.boundary).tree.props['data-weather-scene-owner'], 'primary');
+  h.boundary.setState(h.Boundary.getDerivedStateFromError(new Error('GPU failed'))); h.boundary.componentDidCatch();
+  assert.equal(recoveryVisuals(h.boundary).tree.props['data-weather-scene-owner'], 'fallback');
+  h.fire(1000); view = recoveryVisuals(h.boundary);
+  assert.ok(view.fallback, 'retry must not clear its native image before a healthy frame');
+  assert.equal(view.primary.props.style.opacity, 0);
+  view.scene.props.onSceneReady(h.weather);
+  assert.equal(recoveryVisuals(h.boundary).fallback, undefined);
+  h.boundary.componentWillUnmount(); assert.equal(h.timers.size, 0); assert.equal(h.listeners.size, 0);
+});
+
+test('native recovery prioritizes the astronomical clock over stale API day flags and never invents fixed local hours', () => {
+  const weather = { current: { condition: { code: 1009 }, is_day: 1 }, location: { localtime: '2026-11-07 21:32' } };
+  assert.equal(resolveWeatherSceneFallback(weather, { getSolarPhase: () => ({ phase: 'night', starOpacity: 1 }), now: () => 123 }).night, true);
+  weather.current.is_day = 0;
+  assert.equal(resolveWeatherSceneFallback(weather, { getSolarPhase: () => ({ phase: 'day', starOpacity: 0 }) }).night, false);
+  delete weather.current.is_day;
+  assert.equal(resolveWeatherSceneFallback(weather, { getSolarPhase: () => ({ phase: 'unavailable' }) }).night, null);
+  assert.match(HEADER_WEATHER_RECOVERY_STYLES, /weather-scene-recovery--night \.weather-scene-recovery__cloud\s*\{/);
+});
+
+test('native recovery calculates selected polar and antimeridian skies from their own UTC time and valid coordinates', async () => {
+  assert.equal(await weatherSceneSolarReady, true);
+  const weather = { current: { condition: { code: 1009 }, is_day: 1 }, location: { lat: '78.2232', lon: '15.6469' },
+    weatherMeta: { appearanceTimeMs: Date.parse('2026-12-21T12:00:00Z') } };
+  assert.equal(resolveWeatherSceneFallback(weather, { getSolarPhase: () => ({ phase: 'day', starOpacity: 0 }) }).night, true,
+    'a forecast noon during polar night cannot inherit the current callback or its projected forced-day flag');
+  weather.location = { lat: 0, lon: 179.9 }; weather.current.is_day = 0;
+  weather.weatherMeta.appearanceTimeMs = Date.parse('2026-06-21T00:00:00Z');
+  assert.equal(resolveWeatherSceneFallback(weather).night, false, 'UTC midnight at the antimeridian is local solar daytime');
+  delete weather.weatherMeta.appearanceTimeMs;
+  assert.equal(resolveWeatherSceneFallback(weather, { now: () => Date.parse('2026-06-21T00:00:00Z') }).night, false,
+    'the existing clock calculator handles current weather when no callback is available');
+  weather.weatherMeta.appearanceTimeMs = Date.parse('2026-12-21T12:00:00Z');
+  for (const lat of [null, '', false, [], 91, Infinity]) {
+    weather.location = { lat, lon: 15 };
+    assert.equal(resolveWeatherSceneFallback(weather).night, null, 'malformed coordinates cannot create a fictional forecast day');
+  }
+});
+
+test('non-header loading retains its native image while the mounted primary is instantly hidden, including context loss', () => {
+  const h = recoveryHarness(), initial = recoveryVisuals(h.boundary);
+  assert.ok(initial.fallback); assert.equal(initial.primary.props.style.opacity, 0);
+  assert.equal(initial.primary.props.style.display, undefined, 'Canvas keeps layout while hidden');
+  const rules = postcss.parse(HEADER_WEATHER_RECOVERY_STYLES), hidden = [];
+  rules.walkRules(rule => { if (rule.selector.includes("[data-weather-visible='false']")) rule.walkDecls(decl => hidden.push(decl)); });
+  assert.ok(hidden.some(decl => decl.prop === 'opacity' && decl.value === '0' && decl.important));
+  assert.ok(hidden.some(decl => decl.prop === 'transition' && decl.value === 'none' && decl.important), 'loss must hide immediately rather than crossfade two cloud renderers');
+  initial.scene.props.onSceneReady(h.weather);
+  assert.equal(recoveryVisuals(h.boundary).fallback, undefined);
+  h.boundary.lost({ target: {} });
+  const lost = recoveryVisuals(h.boundary); assert.ok(lost.fallback); assert.equal(lost.primary.props.style.opacity, 0);
+  h.boundary.componentWillUnmount(); assert.equal(h.timers.size, 0); assert.equal(h.listeners.size, 0);
+});
+
+test('optional solar-clock settlement refreshes only mounted recovery and leaves healthy/disposed owners alone', async () => {
+  const pending = recoveryHarness(), disposed = recoveryHarness(), healthy = recoveryHarness();
+  let pendingRefresh = 0, disposedRefresh = 0, healthyRefresh = 0;
+  pending.boundary.forceUpdate = () => { pendingRefresh++; };
+  disposed.boundary.forceUpdate = () => { disposedRefresh++; };
+  healthy.boundary.forceUpdate = () => { healthyRefresh++; };
+  disposed.boundary.componentWillUnmount();
+  recoveryVisuals(healthy.boundary).scene.props.onSceneReady(healthy.weather);
+  await weatherSceneSolarReady; await Promise.resolve();
+  assert.equal(pendingRefresh, 1, 'late astronomy corrects a mounted native recovery once without polling');
+  assert.equal(disposedRefresh, 0); assert.equal(healthyRefresh, 0);
+  pending.boundary.componentWillUnmount(); healthy.boundary.componentWillUnmount();
+  for (const owner of [pending, disposed, healthy]) { assert.equal(owner.timers.size, 0); assert.equal(owner.listeners.size, 0); }
+});
+
 test('scene errors isolate the fallback, retry with a new lazy type and retain weather data', () => {
   const h = recoveryHarness();
   const previous = h.boundary.state.Scene;
@@ -1348,7 +1508,7 @@ test('scene errors isolate the fallback, retry with a new lazy type and retain w
   assert.equal(h.boundary.props.weatherData, h.weather);
   h.fire(1000);
   assert.notEqual(h.boundary.state.Scene, previous);
-  assert.equal(h.boundary.render().props.children[0].props.children.props.weatherData, h.weather);
+  assert.equal(recoveryVisuals(h.boundary).scene.props.weatherData, h.weather);
   h.boundary.componentWillUnmount();
   assert.equal(h.timers.size, 0);
   assert.equal(h.listeners.size, 0);
@@ -1384,7 +1544,7 @@ test('context restoration gets time to recover, while a persistently lost contex
 
 test('lazy suspension and permanent GPU failure retain animated current weather after bounded retries', () => {
   const h = recoveryHarness();
-  const pending = h.boundary.render().props.children[0];
+  const pending = recoveryVisuals(h.boundary).primary.props.children;
   assert.equal(pending.type, 'Suspense');
   assert.equal(pending.props.fallback, null, 'a single DOM recovery layer covers nested asset suspension');
   assert.equal(h.boundary.render().props.children[1].props['data-weather-fallback-kind'], 'cloudy');
@@ -1403,13 +1563,13 @@ test('lazy suspension and permanent GPU failure retain animated current weather 
 
 test('a delayed scene stays mounted under weather recovery until the current frame is ready', () => {
   const h = recoveryHarness();
-  const initial = h.boundary.render().props.children;
-  const lazy = initial[0].props.children.type;
-  const ready = initial[0].props.children.props.onSceneReady;
-  assert.equal(initial[1].props['data-weather-fallback-kind'], 'cloudy');
-  assert.equal(h.boundary.render().props.children[0].props.children.type, lazy, 'waiting must not remount the suspended Canvas');
+  const initial = recoveryVisuals(h.boundary);
+  const lazy = initial.scene.type;
+  const ready = initial.scene.props.onSceneReady;
+  assert.equal(initial.fallback.props['data-weather-fallback-kind'], 'cloudy');
+  assert.equal(recoveryVisuals(h.boundary).scene.type, lazy, 'waiting must not remount the suspended Canvas');
   ready(h.weather);
-  assert.equal(h.boundary.render().props.children.type, 'Suspense', 'a healthy first frame hides the recovery layer');
+  assert.equal(recoveryVisuals(h.boundary).fallback, undefined, 'a healthy first frame hides the recovery layer');
   const canvas = {};
   h.boundary.lost({ target: canvas });
   ready(h.weather);
@@ -1417,11 +1577,12 @@ test('a delayed scene stays mounted under weather recovery until the current fra
   h.boundary.restored({ target: canvas });
   ready(h.weather);
   assert.equal(h.boundary.state.readyWeather, null, 'the previous context generation is stale after restoration');
-  h.boundary.render().props.children[0].props.children.props.onSceneReady(h.weather);
-  assert.equal(h.boundary.render().props.children.type, 'Suspense');
+  recoveryVisuals(h.boundary).scene.props.onSceneReady(h.weather);
+  assert.equal(recoveryVisuals(h.boundary).fallback, undefined);
   h.boundary.props.weatherData = null;
   h.boundary.props.weatherData = { current: { condition: { code: 1195 } } };
-  assert.equal(h.boundary.render().props.children[1].props['data-weather-fallback-kind'], 'rainy', 'new weather needs its own ready frame');
+  assert.equal(recoveryVisuals(h.boundary).fallback, undefined, 'new weather retains its already healthy renderer without a native placeholder');
+  assert.equal(recoveryVisuals(h.boundary).primary.props.style.opacity, 1);
   ready(h.weather);
   assert.notEqual(h.boundary.state.readyWeather, h.boundary.props.weatherData);
   h.boundary.componentWillUnmount();
@@ -1461,17 +1622,213 @@ test('header panels retain their established cloud composition on mobile and des
   const end = source.indexOf('\nj(k);', start);
   assert.ok(end > start);
   const jsx = (type, props) => ({ type, props });
-  const Icon = new Function('jsxRuntime', 'weatherConditionType', 'isPartlyCloudy', 'WeatherClouds', 'WeatherRain', 'WeatherSnow', 'WeatherLightning', 'LegacySunPlaceholder', 'LegacyMoonPlaceholder', 'y', `return ${source.slice(start, end)}`)(
-    { jsx, jsxs: jsx, Fragment: 'Fragment' }, () => 'rainy', () => false, 'Clouds', 'Rain', 'Snow', 'Lightning', 'Sun', 'Moon', 'Text'
+  const Icon = new Function('jsxRuntime', 'weatherConditionType', 'isPartlyCloudy', 'WeatherClouds', 'WeatherRain', 'WeatherSnow', 'WeatherLightning', 'LegacySunPlaceholder', 'LegacyMoonPlaceholder', 'y', 'CloudMotionContext', 'cloudMotion', `return ${source.slice(start, end)}`)(
+    { jsx, jsxs: jsx, Fragment: 'Fragment' }, () => 'rainy', () => false, 'Clouds', 'Rain', 'Snow', 'Lightning', 'Sun', 'Moon', 'Text', { Provider: 'WindProvider' }, cloudMotion
   );
   const previous = globalThis.window;
   try {
     for (const [width, variant, compact, rainCount] of [[430, 'header-panel', false, 800], [899, 'header-panel', false, 800], [900, 'header-panel', false, 800], [1440, 'header-panel', false, 800], [430, 'default', false, 800], [1440, 'header', true, 220]]) {
       globalThis.window = { innerWidth: width };
       const tree = Icon({ weatherData: { current: { condition: { text: 'Rain' } }, location: { localtime: '2026-11-04T09:00' } }, variant, showConditionLabel: false });
-      const children = tree.props.children[0].props.children;
+      assert.equal(tree.type, 'WindProvider');
+      const children = tree.props.children.props.children[0].props.children;
       assert.equal(children[0].props.compact, compact, `${width}/${variant} clouds`);
       assert.equal(children[1].props.count, rainCount, `${width}/${variant} rain`);
     }
   } finally { globalThis.window = previous; }
+});
+
+test('cloud compositions retain their layers within the shared renderer instance budget', async () => {
+  const source = await readFile(new URL('scene.mjs', sourceDirectory), 'utf8');
+  const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module', range: true });
+  const declarations = ast.body.filter(node => node.type === 'VariableDeclaration').flatMap(node => node.declarations);
+  const component = name => {
+    const declaration = declarations.find(node => node.id.name === name);
+    assert.ok(declaration, name);
+    return new Function('jsxRuntime', 'h', 'd', 'cloudTextureUrl', 'WeatherCloudLayer', 'React', 'P', 'WeatherRain', `return (${source.slice(...declaration.init.range)});`)(
+      { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }, 'CloudRenderer', 'Lambert', { href: 'cloud.png' }, 'CloudLayer', { useRef: () => ({ current: null }) }, () => {}, 'Rain'
+    );
+  };
+  const Clouds = component('WeatherClouds'), Lightning = component('WeatherLightning');
+  const layers = tree => !tree || typeof tree !== 'object' ? [] : tree.type === 'CloudLayer' ? [tree] : [tree.props?.children].flat().flatMap(child => layers(child));
+  const previous = globalThis.window;
+  try {
+    for (const width of [375, 1440]) {
+      globalThis.window = { innerWidth: width };
+      const full = layers(Clouds({}));
+      assert.equal(full.length, 6);
+      assert.equal(full.reduce((total, layer) => total + layer.props.segments, 0), 132);
+      assert.deepEqual(full.map(layer => layer.props.position), [[-5, 4, -2], [6, 3.5, -1], [0, 5.5, -3], [-8, 3, -4], [8, 6, -2], [-2, 2.5, -5]]);
+      const storm = layers(Lightning({}));
+      assert.equal(storm.length, 9);
+      assert.equal(storm.reduce((total, layer) => total + layer.props.segments, 0), 180);
+    }
+  } finally { globalThis.window = previous; }
+});
+
+async function locationSearchHarness(filename) {
+  const source = await readFile(new URL(filename, sourceDirectory), 'utf8');
+  const marker = '  LocationSearch = ', start = source.indexOf(marker) + marker.length;
+  const end = source.indexOf(',\n  installModulePreloadPolyfill = ', start);
+  const states = [], refs = [], effects = [], timers = new Map(), changes = [], errors = [];
+  let stateIndex, refIndex, effectIndex, timerId = 0, success, failure;
+  const results = new Map();
+  const React = {
+    useState(initial) { const index = stateIndex++; if (!(index in states)) states[index] = initial; return [states[index], value => { states[index] = value; }]; },
+    useRef(initial) { const index = refIndex++; return refs[index] ||= { current: initial }; },
+    useEffect(callback) { effects[effectIndex++] = callback; },
+  };
+  const jsx = (type, props) => ({ type, props });
+  const Search = new Function('React', 'jsxRuntime', 'weatherService', 'window', 'navigator', 'console', `return (${source.slice(start, end)});`)(
+    React, { jsx, jsxs: jsx }, { searchLocations: async query => results.get(query) || [] },
+    { isSecureContext: true, setTimeout(callback) { const id = ++timerId; timers.set(id, callback); return id; }, clearTimeout: id => timers.delete(id) },
+    { geolocation: { getCurrentPosition(yes, no) { success = yes; failure = no; } } }, { error() {} }
+  );
+  let tree;
+  function render() { stateIndex = refIndex = effectIndex = 0; tree = Search({ onLocationChange: value => changes.push(value), onLocationError: value => errors.push(value), isLoading: false }); return tree; }
+  const find = predicate => {
+    const visit = node => { if (!node || typeof node !== 'object') return; if (predicate(node)) return node; for (const child of [node.props?.children].flat(Infinity)) { const found = visit(child); if (found) return found; } };
+    const found = visit(tree); assert.ok(found, 'expected location control'); return found;
+  };
+  render(); effects[0]();
+  return { changes, errors, results, render, find,
+    async input(value) { find(node => node.type === 'input').props.onChange({ target: { value } }); render(); effects[1](); },
+    async flush() { const pending = [...timers.values()]; timers.clear(); await Promise.all(pending.map(callback => callback())); render(); },
+    gps: () => find(node => node.type === 'button' && node.props.className?.includes('__current')).props.onClick(),
+    resolveGps: coords => success({ coords }), rejectGps: error => failure(error),
+  };
+}
+
+for (const filename of ['header-preview.mjs', 'header-dropdown.mjs', 'widget.mjs']) {
+  test(`${filename}: a new query cannot submit an old suggestion and its own results keep exact coordinates/timezone`, async () => {
+    const h = await locationSearchHarness(filename);
+    const berlin = { name: 'Berlin', label: 'Berlin, Germany', query: 'Berlin, Germany', latitude: 52.52, longitude: 13.405, timezone: 'Europe/Berlin' };
+    const sydney = { name: 'Sydney', label: 'Sydney, Australia', query: 'Sydney, Australia', latitude: -33.8688, longitude: 151.2093, timezone: 'Australia/Sydney' };
+    h.results.set('Berlin', [berlin]); await h.input('Berlin'); await h.flush();
+    h.results.set('Sydney', [sydney]); await h.input('Sydney');
+    await h.find(node => node.type === 'form').props.onSubmit({ preventDefault() {} });
+    assert.equal(h.changes[0], 'Sydney', 'pending search submits its current text instead of the previous city');
+    await h.input('Sydney'); await h.flush();
+    await h.find(node => node.type === 'form').props.onSubmit({ preventDefault() {} });
+    assert.equal(h.changes[1], sydney, 'matching fetched results preserve their full selected metadata');
+  });
+
+  test(`${filename}: manual selection invalidates late GPS results and permission errors`, async () => {
+    for (const denied of [false, true]) {
+      const h = await locationSearchHarness(filename), city = { name: 'Tokyo', label: 'Tokyo, Japan', query: 'Tokyo, Japan', latitude: 35.6762, longitude: 139.6503, timezone: 'Asia/Tokyo' };
+      h.results.set('Tokyo', [city]); await h.input('Tokyo'); await h.flush();
+      const gps = h.gps(); h.render();
+      await h.find(node => node.type === 'button' && node.props.className === 'weather-location-selector__suggestion').props.onClick();
+      if (denied) h.rejectGps({ code: 1 }); else h.resolveGps({ latitude: 51.16, longitude: 6.87 });
+      await gps;
+      assert.deepEqual(h.changes, [city]); assert.deepEqual(h.errors, []);
+    }
+  });
+
+  test(`${filename}: provider wall-clock hours do not depend on the browser timezone or its DST gaps`, async () => {
+    const source = await readFile(new URL(filename, sourceDirectory), 'utf8');
+    const marker = '  formatLocalTime = ', start = source.indexOf(marker) + marker.length, end = source.indexOf(',\n  formatForecastDate = ', start);
+    const format = new Function('localeTags', `return (${source.slice(start, end)});`)({ en: 'en', de: 'de', ru: 'ru', uk: 'uk' });
+    const oldZone = process.env.TZ;
+    try {
+      for (const zone of ['Europe/Berlin', 'America/Los_Angeles', 'Australia/Sydney', 'Pacific/Kiritimati']) {
+        process.env.TZ = zone;
+        for (const locale of ['en', 'de', 'ru', 'uk']) {
+          assert.equal(format('2026-03-29T02:30:00', locale), '02:30', `${zone}/${locale} DST gap`);
+          assert.equal(format('2026-11-07 00:05', locale), '00:05');
+        }
+      }
+      for (const value of [null, '', 'bad', '2026-11-07 24:00', '2026-11-07 23:60']) assert.equal(format(value, 'en'), '');
+    } finally { if (oldZone === undefined) delete process.env.TZ; else process.env.TZ = oldZone; }
+  });
+}
+
+async function globalWeatherBindings() {
+  const source = await readFile(new URL('weather-service.mjs', sourceDirectory), 'utf8');
+  const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module', range: true });
+  const declarations = ast.body.filter(node => node.type === 'VariableDeclaration').flatMap(node => node.declarations);
+  const code = name => { const node = declarations.find(node => node.id.name === name); assert.ok(node, name); return source.slice(...node.init.range); };
+  const fail = () => Object.assign(Error('Location not found'), { code: 'LOCATION_NOT_FOUND' });
+  const coordinateNumber = new Function(`return (${code('coordinateNumber')});`)();
+  const Fn = new Function('coordinateNumber', 'xn', 'X', `return (${code('Fn')});`)(coordinateNumber, new Function(`return (${code('xn')});`)(), fail);
+  const Pn = new Function('coordinateNumber', 'Fn', 'Nn', 'jn', 'X', `return (${code('Pn')});`)(coordinateNumber, Fn, value => value.trim(), () => '', fail);
+  const method = name => {
+    const property = declarations.find(node => node.id.name === 'weatherService').init.properties.find(node => node.key.name === name);
+    assert.ok(property, name); return source.slice(...property.value.range);
+  };
+  return { source, code, method, Pn, Fn };
+}
+
+test('global coordinate inputs reject missing and out-of-range values before network while retaining zero, poles and the antimeridian', async () => {
+  const { Pn, Fn } = await globalWeatherBindings();
+  for (const bad of [null, '', ' ', false, true, [], {}, NaN, Infinity]) {
+    assert.throws(() => Pn({ latitude: bad, longitude: 0 }), /Location/);
+    assert.throws(() => Pn({ latitude: 0, longitude: bad }), /Location/);
+  }
+  for (const [latitude, longitude] of [[0, 0], [90, 180], [-90, -180], [0, -180], [0, 180]]) {
+    assert.deepEqual(Fn(`${latitude},${longitude}`), { latitude, longitude });
+    const state = Pn({ latitude: String(latitude), longitude, timezone: 'UTC' });
+    assert.equal(state.query, `${latitude},${longitude}`); assert.equal(state.explicitMeta.latitude, latitude); assert.equal(state.explicitMeta.longitude, longitude);
+  }
+  assert.deepEqual(Fn('+90,+180'), { latitude: 90, longitude: 180 });
+  for (const input of ['91,0', '0,181', '-91,-181', '90.001,180', '-90,-180.001']) assert.throws(() => Pn(input), /Location/);
+  assert.equal(Pn('Sydney').query, 'Sydney');
+});
+
+test('the weather request uses only the selected IANA hint and preserves the server coordinate timezone', async () => {
+  const { code, method, Pn } = await globalWeatherBindings(), requests = [];
+  const axios = { get: async (url, options) => { requests.push({ url, options }); return { data: { current: true } }; } };
+  const qn = new Function('axios', 'dn', `return (${code('qn')});`)(axios, '/api');
+  await qn('35.6762,139.6503', { timezone: 'Asia/Tokyo', forceRefresh: true });
+  assert.equal(requests[0].options.params.timezone, 'Asia/Tokyo');
+  await qn('0,0'); assert.equal('timezone' in requests[1].options.params, false);
+  const Jn = new Function('axios', 'fn', 'pn', 'Intl', `return (${code('Jn')});`)(axios, 'https://weather.example', 'public-key', { DateTimeFormat() { throw Error('browser timezone must not be read'); } });
+  await Jn('35.6762,139.6503'); assert.equal('tz' in requests[2].options.params, false);
+  const merge = new Function(`return (${code('Un')});`)();
+  const weather = { location: { lat: 1, lon: 1, tz_id: 'Australia/Sydney' }, weatherMeta: { timezone: 'Australia/Sydney' } };
+  const actual = merge(weather, { latitude: 0, longitude: 0, timezone: 'Asia/Tokyo' });
+  assert.equal(actual.location.lat, 0); assert.equal(actual.location.lon, 0);
+  assert.equal(actual.location.tz_id, 'Australia/Sydney'); assert.equal(actual.weatherMeta.timezone, 'Australia/Sydney');
+  const calls = [];
+  const request = new Function('Pn', 'Z', 'localStorage', 'Date', 'un', 'qn', 'Wn', 'pn', 'Jn', 'Yn', 'kn', 'On', 'X', 'hasCompleteForecast', 'isCurrentWeatherFresh', 'WEATHER_REFRESH_INTERVAL_MS', `return (${method('getCurrentWeather')});`)(
+    Pn, value => value, undefined, Date, true,
+    async (query, options) => { calls.push({ query, options }); return payload('Selected place'); }, async value => value,
+    false, null, null, () => false, () => false, () => Error('location'), hasCompleteForecast, isCurrentWeatherFresh, WEATHER_REFRESH_INTERVAL_MS
+  );
+  await request({ latitude: 35.6762, longitude: 139.6503, timezone: 'Asia/Tokyo' }, { locale: 'en', forceRefresh: true, timezone: 'Europe/Berlin' });
+  assert.equal(calls[0].options.timezone, 'Asia/Tokyo');
+  await request({ latitude: 0, longitude: 0 }, { locale: 'en', forceRefresh: true, timezone: 'Europe/Berlin' });
+  assert.equal(calls[1].options.timezone, '', 'coordinates without a selected IANA hint request server auto-timezone');
+  await assert.rejects(request('91,181'), /Location/);
+  assert.equal(calls.length, 2, 'invalid coordinate literals cannot reach the network');
+});
+
+test('all geocoder rows reject absent or invalid coordinates and retain real zero/pole/antimeridian results', async () => {
+  const { code } = await globalWeatherBindings();
+  const coordinateNumber = new Function(`return (${code('coordinateNumber')});`)();
+  const label = new Function(`return (${code('An')});`)(), query = new Function(`return (${code('jn')});`)();
+  const firstText = new Function(`return (${code('Q')});`)();
+  const openMeteo = new Function('coordinateNumber', 'An', 'jn', `return (${code('_mapOpenMeteoSearchRow')});`)(coordinateNumber, label, query);
+  const photon = new Function('coordinateNumber', `return (${code('_mapPhotonSearchRow')});`)(coordinateNumber);
+  const nominatim = new Function('coordinateNumber', 'Q', `return (${code('_mapNominatimSearchRow')});`)(coordinateNumber, firstText);
+  const maps = [
+    (latitude, longitude) => openMeteo({ latitude, longitude, name: 'Place' }, 'Place'),
+    (latitude, longitude) => photon({ geometry: { coordinates: [longitude, latitude] }, properties: { name: 'Place' } }),
+    (latitude, longitude) => nominatim({ lat: latitude, lon: longitude, address: { city: 'Place' } }),
+  ];
+  for (const map of maps) {
+    for (const bad of [undefined, null, '', ' ', false, true, [], {}, NaN, Infinity]) {
+      assert.equal(map(bad, 0), null); assert.equal(map(0, bad), null);
+    }
+    for (const [latitude, longitude] of [[91, 0], [-91, 0], [0, 181], [0, -181]]) assert.equal(map(latitude, longitude), null);
+    for (const [latitude, longitude] of [[0, 0], [90, 180], [-90, -180]]) {
+      const row = map(String(latitude), String(longitude));
+      assert.equal(row.latitude, latitude); assert.equal(row.longitude, longitude);
+    }
+  }
+  const fetch = new Function('_searchLanguages', 'axios', 'mn', '_mapOpenMeteoSearchRow', `return (${code('_fetchOpenMeteoSearch')});`)(
+    () => ['en'], { get: async () => ({ data: { results: [{ name: 'Invalid', latitude: null, longitude: null }, { name: 'Zero', latitude: 0, longitude: 0, timezone: 'Etc/GMT' }] } }) }, 'https://geocoder.example', openMeteo
+  );
+  const rows = await fetch('Place', 'en');
+  assert.equal(rows.length, 1); assert.equal(rows[0].name, 'Zero'); assert.equal(rows[0].latitude, 0); assert.equal(rows[0].longitude, 0);
 });

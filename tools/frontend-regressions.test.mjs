@@ -21,9 +21,18 @@ async function solarShellDeclarations(names) {
   }).join('\n');
 }
 
+async function sunSceneVmDeclarations() {
+  let source = await readFile(path.join(root, 'assets/js/header-weather-sun-scene.js'), 'utf8');
+  const excluded = parse(source, { ecmaVersion: 'latest', sourceType: 'module' }).body.filter(node =>
+    node.type === 'ImportDeclaration' || (node.type === 'VariableDeclaration' && node.declarations.some(item =>
+      item.init?.type === 'AwaitExpression' || item.id.name === 'SUN_RECOVERY_MODULE_URL')));
+  for (const node of excluded.sort((left, right) => right.start - left.start)) source = source.slice(0, node.start) + source.slice(node.end);
+  return source.replace(/^export /gm, '');
+}
+
 test('solar clock imports share the deployed version, coalesce, and retry a failed module URL', async () => {
   const declaration = (await solarShellDeclarations(['loadHeaderWeatherSolarClockModule']))
-    .replace('import(/* webpackIgnore: true */ target.href)', 'importModule(target.href)');
+    .replaceAll('import(/* webpackIgnore: true */ ', 'importModule(');
   const create = new Function('resolveHeaderWeatherSunSceneModuleUrl', 'window', 'importModule', `
     let headerWeatherSolarClockModulePromise = null, headerWeatherSolarClockModuleRetry = 0;
     ${declaration}; return loadHeaderWeatherSolarClockModule;
@@ -32,16 +41,18 @@ test('solar clock imports share the deployed version, coalesce, and retry a fail
   const load = create(() => 'https://hundesalon-nika.com/assets/js/header-weather-sun-scene.js?v=release%26one',
     { location: { href: 'https://hundesalon-nika.com/ru/' } }, url => {
       urls.push(new URL(url));
-      return urls.length === 1 ? Promise.reject(new Error('temporary network failure')) : Promise.resolve(module);
+      return urls.length <= 2 ? Promise.reject(new Error('temporary network failure')) : Promise.resolve({ skyClock: module });
     });
   await assert.rejects(load(), /temporary network failure/);
   const second = load(), coalesced = load();
   assert.equal(second, coalesced);
   assert.equal(await second, module);
-  assert.equal(urls.length, 2);
+  assert.equal(urls.length, 3);
+  assert.equal(urls[0].pathname, '/assets/js/header-weather-sky-motion.js');
   assert.equal(urls[1].pathname, '/assets/js/weather-solar-time.js');
-  assert.equal(urls[1].searchParams.get('v'), 'release&one');
-  assert.equal(urls[1].searchParams.get('weather-retry'), '1');
+  assert.equal(urls[2].pathname, '/assets/js/header-weather-sky-motion.js');
+  assert.ok(urls.every(url => url.searchParams.get('v') === 'release&one'));
+  assert.equal(urls[2].searchParams.get('weather-retry'), '1');
 });
 
 test('the header retains sunset light and the end-of-day surface timeline until civil twilight ends', async () => {
@@ -82,11 +93,95 @@ test('the header retains sunset light and the end-of-day surface timeline until 
   assert.equal(api.stars(unavailable), 0, 'an unavailable model must not invent night stars');
 });
 
+test('foreground clouds occlude the discs without making the whole Sun or Moon transparent in cloud gaps', async () => {
+  const declarations = await solarShellDeclarations(['applyHeaderWeatherOrbAtmosphere', 'clampHeaderWeatherValue']);
+  const apply = new Function('HEADER_WEATHER_CLOUDS_ENABLED', `${declarations}; return applyHeaderWeatherOrbAtmosphere;`)(true);
+  for (const kind of ['sun', 'moon']) {
+    for (const preview of [true, false]) {
+      const properties = new Map();
+      const classes = new Set([`is-${kind}`, ...(preview ? ['weather-orb-overlay--preview'] : []), ...(kind === 'sun' ? ['is-header-sun'] : [])]);
+      const overlay = {
+        style: { setProperty: (name, value) => properties.set(name, value), removeProperty: name => properties.delete(name) },
+        classList: {
+          contains: name => classes.has(name), remove: name => classes.delete(name),
+          toggle: (name, active) => active ? classes.add(name) : classes.delete(name),
+        },
+      };
+      for (const sunTransmission of [1, 0.26125, 0.015, NaN]) {
+        apply(overlay, { mode: 'overcast', alpha: 0.3, sunTransmission });
+        assert.equal(Number(properties.get(`--orb-${kind}-transmission`)), 1,
+          `${kind} ${preview ? 'preview' : 'popup'} must retain its silhouette behind local cloud pixels`);
+        assert.equal(properties.has(`--orb-${kind === 'sun' ? 'moon' : 'sun'}-transmission`), false);
+      }
+      if (kind === 'sun') {
+        properties.set('--orb-sun-transmission', '0.05');
+        apply(overlay, { mode: 'fog', alpha: .3 });
+        assert.equal(properties.get('--orb-sun-transmission'), '0.05', 'an atmosphere-only refresh must not flash the fog-attenuated source back to full brightness');
+        apply(overlay, { mode: 'cloudy', alpha: .3 });
+        assert.equal(properties.get('--orb-sun-transmission'), '1', 'ordinary cloud gaps regain the full source when fog clears');
+      }
+    }
+  }
+});
+
+test('fog keeps its own visibility context instead of cloud coverage or another forecast day', async () => {
+  const declarations = await solarShellDeclarations(['resolveHeaderWeatherOrbAtmosphere', 'getHeaderWeatherFiniteNumber', 'clampHeaderWeatherValue']);
+  const resolve = new Function('getHeaderWeatherConditionText', 'getHeaderWeatherConditionCode', 'getHeaderWeatherCloudCover',
+    `${declarations}; return resolveHeaderWeatherOrbAtmosphere;`)(host => host.text, host => host.code, host => host.cloud);
+  const current = { current: { vis_km: .75 } };
+  const host = { code: 45, text: 'Clear', cloud: 0, __weatherWidgetInstance: { getState: () => ({ weather: current }) } };
+  for (const code of [45, 48, 1030, 1135, 1147]) {
+    host.code = code;
+    for (const cloud of [0, 40, 100, null]) {
+      host.cloud = cloud;
+      const atmosphere = resolve(host);
+      assert.equal(atmosphere.mode, 'fog', 'an authoritative fog code survives a stale clear label and zero cloud cover');
+      assert.equal(atmosphere.visibilityKm, .75, 'cloud area cannot manufacture fog visibility');
+    }
+  }
+  for (const visibility of [.18, 1.5]) {
+    const forecast = resolve(host, { condition: { code: 48, text: 'Fog' }, cloud: 0, avgvis_km: visibility });
+    assert.equal(forecast.mode, 'fog');
+    assert.equal(forecast.visibilityKm, visibility, 'the selected forecast owns its visibility');
+  }
+  for (const visibility of [undefined, null, '', 0, -1, NaN, Infinity]) {
+    const forecast = resolve(host, { condition: { code: 45, text: 'Fog' }, cloud: 0, avgvis_km: visibility });
+    assert.equal(forecast.visibilityKm, null, 'missing forecast visibility must not borrow current visibility or mean opaque zero');
+  }
+  host.__weatherWidgetData = current; delete host.__weatherWidgetInstance;
+  assert.equal(resolve(host).visibilityKm, .75, 'the retained data snapshot also supports recovery');
+  host.code = 0; host.text = 'Clear'; host.cloud = 0;
+  assert.equal(resolve(host).alpha, 0, 'a reported visibility alone cannot turn clear weather into fog');
+  for (const code of [0, 1000]) {
+    host.code = code; host.text = 'Fog';
+    assert.equal(resolve(host).alpha, 0, 'the authoritative clear code also wins while the previous fog text is being repainted');
+    assert.notEqual(resolve(host).mode, 'fog');
+  }
+});
+
+test('weather atmosphere reads one live widget snapshot before stale header metadata during refresh', async () => {
+  const declarations = await solarShellDeclarations(['getHeaderWeatherConditionCode', 'getHeaderWeatherCloudCover', 'getHeaderWeatherFiniteNumber', 'clampHeaderWeatherValue']);
+  const read = new Function(`${declarations}; return host => [getHeaderWeatherConditionCode(host), getHeaderWeatherCloudCover(host)];`)();
+  let current = { weatherMeta: { weatherCode: 0, cloudCover: 0 }, current: { condition: { code: 1000 }, cloud: 0 } };
+  const host = { __weatherCurrentMeta: { weatherCode: 48, cloudCover: 100 }, dataset: { weatherCode: '48', weatherCloud: '100' },
+    __weatherWidgetInstance: { getState: () => ({ weather: current }) } };
+  assert.deepEqual(read(host), [0, 0], 'an accepted clear snapshot must clear the previous fog even before the header cache is repainted');
+  current = { weatherMeta: { weatherCode: 45, cloudCover: 10 }, current: { condition: { code: 1030 }, cloud: 10 } };
+  host.__weatherCurrentMeta = { weatherCode: 0, cloudCover: 0 };
+  assert.deepEqual(read(host), [45, 10], 'new fog also wins over a retained clear header');
+  current = { current: { condition: { code: 1135 }, cloud: 30 } };
+  assert.deepEqual(read(host), [1135, 30], 'a fallback provider without extra metadata still owns its live current values');
+  host.__weatherWidgetData = current; delete host.__weatherWidgetInstance;
+  assert.deepEqual(read(host), [1135, 30], 'the retained coherent weather snapshot supports recovery');
+  delete host.__weatherWidgetData;
+  assert.deepEqual(read(host), [0, 0], 'the original metadata fallback remains available before a weather snapshot exists');
+});
+
 test('header star visibility follows current and selected-forecast cloud transmission without replacing Moon assets', async t => {
   const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
   const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'script' });
   const shell = ast.body.find(node => node.expression?.callee?.id?.name === 'siteShellBootstrap').expression.callee.body.body;
-  const constants = ['HEADER_WEATHER_MOON_VIDEO_FILES', 'HEADER_WEATHER_MOON_VIDEO_DURATION_SEC', 'WEATHER_WIDGET_ASSET_VERSION']
+  const constants = ['WEATHER_WIDGET_ASSET_VERSION']
     .map(name => {
       const node = shell.filter(item => item.type === 'VariableDeclaration').flatMap(item => item.declarations)
         .find(item => item.id.name === name);
@@ -106,7 +201,7 @@ test('header star visibility follows current and selected-forecast cloud transmi
       ensureHeaderWeatherOrbStack, syncHeaderWeatherPreviewLayerOrder, resolveHeaderWeatherDropdownSceneContext,
       ensureHeaderWeatherDropdownStarsBackLayer, enforceHeaderWeatherToggleArrow, scheduleHeaderWeatherMenuPlacement,
       syncHeaderWeatherShootingStars, syncHeaderWeatherUnifiedReadings, scheduleHeaderWeatherReadingsSync,
-      syncHeaderWeatherLiveClock, syncHeaderWeatherCloudBandLayout, document, window } = deps;
+      syncHeaderWeatherLiveClock, syncHeaderWeatherCloudBandLayout, syncHeaderWeatherRainLayer, document, window } = deps;
     ${constants}\n${declarations}; return renderHeaderWeatherOrbOverlay;
   `);
   const noop = () => {};
@@ -155,10 +250,12 @@ test('header star visibility follows current and selected-forecast cloud transmi
       resolveHeaderWeatherDropdownSceneContext: () => ({
         forecast: !!host.selectedForecast,
         presentation: host.selectedForecast ? { ...presentation, dominantKind: forecastKind } : presentation,
+        geoState: { latitude: 51.2, longitude: 6.8, timeMs: 1000, appearanceTimeMs: host.selectedForecast ? 2000 : null },
       }),
       ensureHeaderWeatherDropdownStarsBackLayer: box => box.stars, enforceHeaderWeatherToggleArrow: noop,
       scheduleHeaderWeatherMenuPlacement: noop, syncHeaderWeatherShootingStars: noop, syncHeaderWeatherUnifiedReadings: noop,
       scheduleHeaderWeatherReadingsSync: noop, syncHeaderWeatherLiveClock: noop, syncHeaderWeatherCloudBandLayout: noop,
+      syncHeaderWeatherRainLayer: noop,
       document: { querySelector: () => null }, window: { addEventListener: noop },
     });
     return { host, preview, dropdown, hero, timeline, render: () => render(host, null, { latitude: 51.2, longitude: 6.8 }) };
@@ -196,20 +293,18 @@ test('header star visibility follows current and selected-forecast cloud transmi
       assert.equal(bindings.length, 1, `${selector} must bind its native star scene to the renderer opacity`);
     }
   });
-  await t.test('a clear night keeps both star layers fully visible and leaves the original Moon source and timeline intact', () => {
+  await t.test('a clear night keeps both star layers fully visible and passes the live Moon renderer its shared UTC geometry', () => {
     const ui = createHarness();
     ui.render();
     assertLayer(ui.preview.stars, 'preview', '1.000', true);
     assertDropdown(ui, '1.000', true);
-    assert.equal(ui.preview.stack.moon.config, ui.hero.stack.moon.config, 'both Moon renderers retain the same original source configuration');
+    assert.deepEqual(ui.preview.stack.moon.config.geoState, ui.hero.stack.moon.config.geoState, 'current preview and dropdown sample the same UTC and coordinates');
     for (const moon of [ui.preview.stack.moon, ui.hero.stack.moon]) {
       assert.equal(moon.kind, 'moon');
-      assert.equal(moon.config.type, 'video-keyed');
-      assert.equal(moon.config.sources.length, 1);
-      const moonSource = new URL(moon.config.sources[0], 'https://hundesalon-nika.com');
-      assert.equal(moonSource.pathname, '/3d-weather-codrops-main/assets/Moon/mission_2160p30_fallback.mp4');
-      assert.ok(moonSource.searchParams.get('v'), 'the original Moon asset keeps its release cache version');
-      assert.equal(moon.config.timelineBase, ui.timeline, 'star updates must not reset the Moon phase playback');
+      assert.equal(moon.config.type, 'header-moon');
+      assert.equal(moon.config.sources, undefined, 'Moon phase must not use a baked mission video');
+      assert.equal(moon.config.timelineBase, undefined, 'night-progress video seeking cannot drive physical lunar illumination');
+      assert.equal(moon.config.geoState.timeMs, 1000);
       assert.equal(moon.part.active, true);
     }
   });
@@ -375,13 +470,13 @@ test('cached solar phases advance through failed or pending network refreshes wi
   assert.deepEqual(calls, { clock: 2, astro: 2, current: 2, scheduled: 0 });
 });
 
-test('the five-second phase timer pauses when hidden and is cleaned up independently of the minute refresh', async () => {
+test('the one-second phase timer pauses when hidden and is cleaned up independently of the minute refresh', async () => {
   const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
   const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'script' });
   const body = ast.body.find(node => node.expression?.callee?.id?.name === 'siteShellBootstrap').expression.callee.body.body;
   const constant = name => body.flatMap(node => node.declarations || []).find(node => node.id.name === name)?.init.value;
   assert.equal(constant('HEADER_WEATHER_ASTRO_REFRESH_INTERVAL'), 60000, 'the full network refresh retains its original minute cadence');
-  assert.equal(constant('HEADER_WEATHER_SOLAR_PHASE_REFRESH_INTERVAL'), 5000);
+  assert.equal(constant('HEADER_WEATHER_SOLAR_PHASE_REFRESH_INTERVAL'), 1000);
   const begin = source.indexOf('    host.__weatherSolarPhaseRefreshId = window.setInterval(');
   const endToken = '    }, HEADER_WEATHER_SOLAR_PHASE_REFRESH_INTERVAL);';
   const end = source.indexOf(endToken, begin);
@@ -391,10 +486,10 @@ test('the five-second phase timer pauses when hidden and is cleaned up independe
   const window = { setInterval: (callback, interval) => { tick = callback; cadence = interval; return 42; },
     clearInterval: id => cleared.push(id) };
   new Function('window', 'document', 'host', 'syncHeaderWeatherCachedOrbPhase', `
-    const HEADER_WEATHER_SOLAR_PHASE_REFRESH_INTERVAL = 5000;
+    const HEADER_WEATHER_SOLAR_PHASE_REFRESH_INTERVAL = 1000;
     ${source.slice(begin, end + endToken.length)};
   `)(window, document, host, () => { rendered++; });
-  assert.equal(cadence, 5000);
+  assert.equal(cadence, 1000);
   tick();
   assert.equal(rendered, 0);
   document.hidden = false;
@@ -1275,14 +1370,378 @@ test('analytics ignores malformed Microsoft Clarity project IDs', async () => {
   assert.doesNotMatch(env, /efbb2b19-7440-48bf-bc3a-166725c69d1b/);
 });
 
-test('weather geocoding rejects the technical Null Island coordinate', async () => {
-  const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
+async function headerGeoRequestHarness({ current = true } = {}) {
+  const declarations = await solarShellDeclarations([
+    'hasValidHeaderWeatherCoordinates', 'getHeaderWeatherGeoAccuracy', 'requestHeaderWeatherHighAccuracyPosition',
+  ]);
+  let now = Date.parse('2026-11-08T12:00:00Z'), nextTimer = 0;
+  const timeout = 12000, timers = new Map(), scheduled = [], once = [], watches = [], clearedWatches = [];
+  const geolocation = {
+    watchPosition(success, error, options) {
+      const id = 17 + watches.length;
+      watches.push({ success, error, options, id });
+      return id;
+    },
+    clearWatch(id) { clearedWatches.push(id); },
+  };
+  if (current) geolocation.getCurrentPosition = (success, error, options) => once.push({ success, error, options });
+  const request = new Function('deps', `
+    const { window, navigator, Date, HEADER_WEATHER_GEO_TIMEOUT, HEADER_WEATHER_GEO_CACHE_TTL,
+      HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS } = deps;
+    ${declarations}; return requestHeaderWeatherHighAccuracyPosition;
+  `)({
+    navigator: { geolocation }, Date: { now: () => now },
+    HEADER_WEATHER_GEO_TIMEOUT: timeout, HEADER_WEATHER_GEO_CACHE_TTL: 5 * 60 * 1000,
+    HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS: 10,
+    window: {
+      setTimeout(callback, delay) {
+        const id = ++nextTimer;
+        const timer = { callback, delay, at: now + delay };
+        timers.set(id, timer); scheduled.push(timer);
+        return id;
+      },
+      clearTimeout(id) { timers.delete(id); },
+    },
+  });
+  return {
+    timeout, timers, scheduled, once, watches, clearedWatches,
+    position: (coords = {}, timestamp = now) => ({ coords: { latitude: 51.2, longitude: 6.8, accuracy: 5, ...coords }, timestamp }),
+    start() {
+      const controller = new AbortController(), outcome = { state: 'pending' };
+      const promise = request(controller.signal);
+      promise.then(value => { outcome.state = 'resolved'; outcome.value = value; },
+        error => { outcome.state = 'rejected'; outcome.error = error; });
+      return { promise, outcome, abort: () => controller.abort() };
+    },
+    advance(milliseconds) {
+      const target = now + milliseconds;
+      for (;;) {
+        const due = [...timers.entries()].filter(([, timer]) => timer.at <= target).sort((a, b) => a[1].at - b[1].at)[0];
+        if (!due) break;
+        now = due[1].at; timers.delete(due[0]); due[1].callback();
+      }
+      now = target;
+    },
+  };
+}
 
-  assert.match(source, /!\(latitude === 0 && longitude === 0\)/);
-  assert.match(
-    source,
-    /if \(headerWeatherReverseGeoProxyUnavailable \|\| !hasValidHeaderWeatherCoordinates\(latitude, longitude\)\)/
-  );
+test('geolocation leaves permission UI unbounded before the first browser callback', async t => {
+  const h = await headerGeoRequestHarness(), task = h.start();
+  t.after(task.abort);
+  assert.deepEqual(h.once[0].options, { enableHighAccuracy: true, timeout: h.timeout, maximumAge: 0 });
+  await h.advance(h.timeout * 10);
+  assert.equal(task.outcome.state, 'pending');
+  assert.equal(h.scheduled.length, 0, 'a pending permission prompt must not receive a wall timer');
+  assert.equal(h.watches.length, 0);
+  task.abort();
+  await assert.rejects(task.promise, { name: 'AbortError' });
+});
+
+test('geolocation bounds unusable one-shot success callbacks without starting another watch', async t => {
+  for (const [label, invalid] of [
+    ['stale timestamp', h => h.position({}, Date.parse('2026-11-08T11:54:59Z'))],
+    ['future timestamp', h => h.position({}, Date.parse('2026-11-08T12:01:01Z'))],
+    ['invalid coordinates', h => h.position({ latitude: 91 })],
+    ['missing timestamp', h => ({ ...h.position(), timestamp: undefined })],
+  ]) {
+    await t.test(label, async t => {
+      const h = await headerGeoRequestHarness(), task = h.start();
+      t.after(task.abort);
+      h.once[0].success(invalid(h));
+      assert.equal(h.timers.size, 1, 'an unusable callback must arm the existing finite deadline');
+      assert.equal(h.scheduled[0].delay, h.timeout);
+      assert.equal(h.watches.length, 0, 'a failed one-shot result must not invent a tracking loop');
+      await h.advance(h.timeout - 1);
+      assert.equal(task.outcome.state, 'pending');
+      await h.advance(1);
+      await assert.rejects(task.promise, /did not return a valid position/);
+      assert.equal(h.timers.size, 0);
+    });
+  }
+});
+
+test('geolocation accepts a fresh watch fix after an unusable first watch callback', async t => {
+  const h = await headerGeoRequestHarness({ current: false }), task = h.start();
+  t.after(task.abort);
+  assert.equal(h.timers.size, 0, 'watch permission remains unbounded until a callback');
+  h.watches[0].success(h.position({ longitude: 181 }));
+  assert.equal(h.timers.size, 1);
+  await h.advance(1000);
+  const fresh = h.position();
+  h.watches[0].success(fresh);
+  assert.deepEqual(await task.promise, { ...fresh.coords, updatedAt: fresh.timestamp });
+  assert.deepEqual(h.clearedWatches, [17]);
+  assert.equal(h.timers.size, 0);
+  assert.equal(h.watches.length, 1, 'recovery must not restart native tracking');
+});
+
+test('geolocation preserves the original coarse-fix refinement deadline through invalid updates', async t => {
+  const h = await headerGeoRequestHarness(), task = h.start();
+  t.after(task.abort);
+  const coarse = h.position({ accuracy: 100 });
+  h.once[0].success(coarse);
+  const deadline = h.scheduled[0].at;
+  await h.advance(4000);
+  h.watches[0].success(h.position({ latitude: NaN }));
+  assert.equal(h.scheduled.length, 1);
+  assert.equal([...h.timers.values()][0].at, deadline, 'an invalid refinement cannot prolong an existing deadline');
+  await h.advance(8000);
+  assert.deepEqual(await task.promise, { ...coarse.coords, updatedAt: coarse.timestamp });
+  assert.deepEqual(h.clearedWatches, [17]);
+});
+
+test('geolocation abort clears an invalid-callback deadline and ignores late callbacks', async t => {
+  const h = await headerGeoRequestHarness({ current: false }), task = h.start();
+  t.after(task.abort);
+  h.watches[0].success(h.position({ latitude: 91 }));
+  assert.equal(h.timers.size, 1);
+  task.abort();
+  await assert.rejects(task.promise, { name: 'AbortError' });
+  assert.equal(h.timers.size, 0);
+  assert.deepEqual(h.clearedWatches, [17]);
+  h.watches[0].success(h.position({ latitude: 91 }));
+  assert.equal(h.timers.size, 0, 'a settled request cannot arm a new deadline');
+});
+
+test('geolocation retains immediate accurate success and native error semantics', async () => {
+  const h = await headerGeoRequestHarness(), task = h.start();
+  const fresh = h.position({ accuracy: 10 });
+  h.once[0].success(fresh);
+  assert.deepEqual(await task.promise, { ...fresh.coords, updatedAt: fresh.timestamp });
+  assert.equal(h.scheduled.length, 0);
+  assert.equal(h.watches.length, 0);
+  h.once[0].success(h.position({ latitude: 91 }));
+  assert.equal(h.scheduled.length, 0);
+  const denied = h.start(), error = Object.assign(new Error('permission denied'), { code: 1 });
+  h.once[1].error(error);
+  await assert.rejects(denied.promise, actual => actual === error);
+  assert.equal(h.scheduled.length, 0);
+});
+
+test('weather coordinates distinguish a real zero point from missing or invalid input worldwide', async () => {
+  const declarations = await solarShellDeclarations(['hasValidHeaderWeatherCoordinates', 'parseHeaderWeatherCoordinates']);
+  const api = new Function(`${declarations}; return { valid: hasValidHeaderWeatherCoordinates, parse: parseHeaderWeatherCoordinates };`)();
+  for (const [latitude, longitude] of [[0, 0], [90, 180], [-90, -180], [0, 179.999], ['0', '0']]) {
+    assert.equal(api.valid(latitude, longitude), true, `${latitude},${longitude}`);
+  }
+  for (const value of [null, undefined, '', ' ', true, false, {}, NaN, Infinity]) {
+    assert.equal(api.valid(value, 0), false);
+    assert.equal(api.valid(0, value), false);
+  }
+  assert.equal(api.valid(90.001, 0), false);
+  assert.equal(api.valid(0, -180.001), false);
+  assert.deepEqual(api.parse('0,0'), { latitude: 0, longitude: 0 });
+  assert.equal(api.parse(',0'), null);
+});
+
+test('selected weather timezone supersedes the previous city and never uses the computer timezone', async () => {
+  const declarations = await solarShellDeclarations(['normalizeHeaderWeatherTimeZone', 'resolveHeaderWeatherTimeZone']);
+  const resolve = new Function('window', 'getHeaderWeatherNowMs', `${declarations}; return resolveHeaderWeatherTimeZone;`)(
+    { Intl }, () => Date.parse('2026-11-07T10:00:00Z'));
+  const host = { __weatherTimeZone: 'Europe/Berlin', __weatherCurrentMeta: { timezone: 'Australia/Sydney' },
+    __weatherWidgetInstance: { getState: () => ({ weather: { location: { tz_id: 'Asia/Tokyo' } } }) } };
+  assert.equal(resolve(host, { timezone: 'America/New_York' }), 'Asia/Tokyo');
+  for (const timeZone of ['Pacific/Kiritimati', 'Pacific/Chatham', 'Asia/Kathmandu', 'Etc/GMT+12']) {
+    host.__weatherWidgetInstance.getState = () => ({ weather: { location: { tz_id: timeZone } } });
+    assert.equal(resolve(host), timeZone);
+  }
+  assert.equal(resolve({}, { timezone: 'Bad/Zone' }), 'UTC', 'unknown metadata must not invent a Berlin location');
+});
+
+test('named geocoding validates provider fields before conversion and retries a missing result', async () => {
+  const declarations = await solarShellDeclarations(['hasValidHeaderWeatherCoordinates', 'resolveHeaderWeatherLocationMeta']);
+  const cache = new Map(), queries = [];
+  let validResponse = true;
+  const resolve = new Function('deps', `const { normalizeHeaderWeatherLocationKey, headerWeatherLocationCache,
+    parseHeaderWeatherCoordinates, document, HEADER_WEATHER_GEOCODE_ENDPOINT, fetch, URL,
+    normalizeHeaderWeatherGermanStateLabel, normalizeHeaderWeatherTimeZone, HEADER_WEATHER_LOCATION_CACHE_TTL } = deps;
+    ${declarations}; return resolveHeaderWeatherLocationMeta;`)({
+    normalizeHeaderWeatherLocationKey: value => value.trim().toLowerCase(), headerWeatherLocationCache: cache,
+    parseHeaderWeatherCoordinates: () => null, document: { documentElement: { lang: 'ru' } }, URL,
+    HEADER_WEATHER_GEOCODE_ENDPOINT: 'https://geocoding-api.open-meteo.com/v1/search',
+    fetch: async url => {
+      const language = new URL(url).searchParams.get('language'); queries.push(language);
+      const result = validResponse && language === 'en'
+        ? { latitude: 0, longitude: 0, name: 'Ocean point', timezone: 'Etc/GMT' }
+        : { latitude: null, longitude: '', name: 'Invalid point' };
+      return { ok: true, json: async () => ({ results: [result] }) };
+    },
+    normalizeHeaderWeatherGermanStateLabel: value => value,
+    normalizeHeaderWeatherTimeZone: value => value || null, HEADER_WEATHER_LOCATION_CACHE_TTL: 60000,
+  });
+  const point = await resolve('Ocean point');
+  assert.equal(point.latitude, 0);
+  assert.equal(point.longitude, 0);
+  assert.equal(point.timezone, 'Etc/GMT');
+  assert.deepEqual(queries, ['ru', 'en']);
+  validResponse = false;
+  assert.equal(await resolve('Another point'), null);
+  assert.equal(cache.has('another point'), false, 'an unavailable result must remain retryable');
+  validResponse = true;
+  assert.equal((await resolve('Another point')).timezone, 'Etc/GMT');
+});
+
+test('header weather requests resolve unknown point timezones on the server', async () => {
+  const declaration = await solarShellDeclarations(['fetchHeaderWeatherCurrent']);
+  const urls = [];
+  const request = new Function('deps', `const { URL, window, HEADER_WEATHER_CURRENT_ENDPOINT,
+    normalizeHeaderWeatherTimeZone, getHeaderWeatherPressureLang, fetch, getHeaderWeatherTimestampMs,
+    getHeaderWeatherNowMs, getHeaderWeatherFiniteNumber, resolveHeaderWeatherTimeZone } = deps;
+    ${declaration}; return fetchHeaderWeatherCurrent;`)({
+    URL, window: { location: { origin: 'https://preview.invalid' } }, HEADER_WEATHER_CURRENT_ENDPOINT: '/api/weather',
+    normalizeHeaderWeatherTimeZone: value => value || null, getHeaderWeatherPressureLang: () => 'ru',
+    fetch: async url => { urls.push(new URL(url)); return { ok: true, json: async () => ({ weatherMeta: { timezone: 'Australia/Sydney' } }) }; },
+    getHeaderWeatherTimestampMs: () => null, getHeaderWeatherNowMs: () => 100,
+    getHeaderWeatherFiniteNumber: value => Number.isFinite(value) ? value : null,
+    resolveHeaderWeatherTimeZone: () => 'Europe/Berlin',
+  });
+  await request({}, { latitude: -33.86785, longitude: 151.20732, timezone: null });
+  await request({}, { latitude: 27.7172, longitude: 85.324, timezone: 'Asia/Kathmandu' });
+  assert.equal(urls[0].searchParams.get('timezone'), 'auto');
+  assert.equal(urls[1].searchParams.get('timezone'), 'Asia/Kathmandu');
+});
+
+test('header current metadata reuses the accepted fresh widget snapshot before its older independent cache', async () => {
+  const declaration = await solarShellDeclarations(['resolveHeaderWeatherCurrent']);
+  const fresh = { time: '2026-11-07T11:00:00Z', cloudCover: 100, weatherCode: 3 };
+  const older = { time: '2026-11-07T10:30:00Z', cloudCover: 75, weatherCode: 2 };
+  const weather = { weatherMeta: fresh, stale: false };
+  const host = { __weatherWidgetInstance: { getState: () => ({ weather }) } };
+  const cache = new Map([['51.16,6.87:51.1600:6.8700', { value: older, expiresAt: Date.now() + 60000 }]]);
+  let applied = true, geocodes = 0, fetches = 0;
+  const resolve = new Function('deps', `const { getHeaderWeatherLocationLabel, resolveHeaderWeatherLocationMeta,
+    normalizeHeaderWeatherLocationKey, headerWeatherCurrentCache, fetchHeaderWeatherCurrent,
+    HEADER_WEATHER_CURRENT_CACHE_TTL, isHeaderWeatherCoordinateSelectionApplied, isHeaderWeatherCurrentMetaFresh } = deps;
+    ${declaration}; return resolveHeaderWeatherCurrent;`)({
+    getHeaderWeatherLocationLabel: () => '51.16,6.87',
+    resolveHeaderWeatherLocationMeta: async () => { geocodes++; return { latitude: 51.16, longitude: 6.87 }; },
+    normalizeHeaderWeatherLocationKey: value => value, headerWeatherCurrentCache: cache,
+    fetchHeaderWeatherCurrent: async () => { fetches++; return fresh; }, HEADER_WEATHER_CURRENT_CACHE_TTL: 60000,
+    isHeaderWeatherCoordinateSelectionApplied: () => applied,
+    isHeaderWeatherCurrentMetaFresh: meta => meta === fresh,
+  });
+  assert.equal(await resolve(host), fresh, 'a newer accepted observation must not be overridden by an older API cache');
+  assert.equal(geocodes, 0);
+  assert.equal(fetches, 0);
+  weather.stale = true;
+  assert.equal(await resolve(host), older, 'offline/stale widget data must retain the existing server recovery path');
+  weather.stale = false;
+  applied = false;
+  assert.equal(await resolve(host), older, 'a pending selection cannot reuse another location snapshot');
+  applied = true;
+  weather.weatherMeta = older;
+  cache.clear();
+  assert.equal(await resolve(host), fresh, 'missing or expired widget metadata still uses the server lookup');
+  assert.equal(fetches, 1);
+});
+
+test('submitting new search text cannot select a stale suggestion from the previous query', async () => {
+  const declaration = await solarShellDeclarations(['findHeaderWeatherSubmittedSuggestion']);
+  const find = new Function(`${declaration}; return findHeaderWeatherSubmittedSuggestion;`)();
+  const berlin = { querySelector: selector => ({ textContent: selector === 'strong' ? 'Berlin' : 'Germany' }) };
+  let query = 'Sydney';
+  const form = { querySelector: () => ({ value: query }), closest: () => ({ querySelectorAll: () => [berlin] }) };
+  assert.equal(find(form), null);
+  query = 'Berlin';
+  assert.equal(find(form), berlin);
+});
+
+test('a point change clears astronomy, readings and region from the previous city before fetching', async () => {
+  const declarations = await solarShellDeclarations(['updateHeaderWeatherWidgetLocation', 'resetHeaderWeatherReadingsState']);
+  const calls = [];
+  const update = new Function('deps', `const { parseHeaderWeatherCoordinates, refreshHeaderWeatherWidgetData } = deps;
+    ${declarations}; return updateHeaderWeatherWidgetLocation;`)({
+    parseHeaderWeatherCoordinates: () => ({ latitude: 0, longitude: 0 }),
+    refreshHeaderWeatherWidgetData: (host, options) => { calls.push({ host, options }); return true; },
+  });
+  const host = { isConnected: true, dataset: { weatherMounted: 'true', weatherLocation: '0,0',
+    weatherRegionLabel: 'Old region', weatherResolvedLocationLabel: 'Old city' },
+    __weatherWidgetInstance: { setLocation() {} }, __weatherPressureMmHg: 761, __weatherHumidityValue: '76%',
+    __weatherCurrentMeta: {}, __weatherTimeZone: 'Europe/Berlin', __weatherAstroSnapshot: {}, __weatherSolarPresentation: {} };
+  assert.equal(await update(host), true);
+  assert.equal(calls.length, 1);
+  assert.equal(host.__weatherPressureMmHg, undefined);
+  assert.equal(host.__weatherHumidityValue, undefined);
+  for (const key of ['__weatherCurrentMeta', '__weatherTimeZone', '__weatherAstroSnapshot', '__weatherSolarPresentation']) assert.equal(host[key], null);
+  assert.equal(host.dataset.weatherRegionLabel, undefined);
+  assert.equal(host.dataset.weatherResolvedLocationLabel, undefined);
+});
+
+test('a city without region metadata clears both rendered copies of the old region', async () => {
+  const declaration = await solarShellDeclarations(['syncHeaderWeatherPreciseLocationMeta']);
+  const nodes = [{ textContent: 'Sydney · New South Wales' }, { textContent: 'Sydney · New South Wales' }];
+  const sync = new Function('deps', `const { isHeaderWeatherTextManualLocation, isHeaderWeatherCoordinateSelectionApplied,
+    getHeaderWeatherLocationLabel, resolveHeaderWeatherLocationMeta, restoreHeaderWeatherAreaLocationLabel,
+    syncHeaderWeatherPublicLocationLabel, resolveHeaderWeatherTimeZone, buildHeaderWeatherMetaText, syncHeaderWeatherAttribution } = deps;
+    ${declaration}; return syncHeaderWeatherPreciseLocationMeta;`)({
+    isHeaderWeatherTextManualLocation: () => false, isHeaderWeatherCoordinateSelectionApplied: () => true,
+    getHeaderWeatherLocationLabel: () => '35.6895,139.69171',
+    resolveHeaderWeatherLocationMeta: async () => ({ label: 'Tokyo', regionLabel: null }),
+    restoreHeaderWeatherAreaLocationLabel() {}, syncHeaderWeatherPublicLocationLabel() {},
+    resolveHeaderWeatherTimeZone: () => 'Asia/Tokyo',
+    buildHeaderWeatherMetaText: (zone, region) => `${zone}${region ? ` · ${region}` : ''}`, syncHeaderWeatherAttribution() {},
+  });
+  const host = { dataset: { weatherRegionLabel: 'New South Wales' }, shadowRoot: { querySelectorAll: () => nodes } };
+  await sync(host);
+  assert.equal(host.dataset.weatherRegionLabel, undefined);
+  assert.deepEqual(nodes.map(node => node.textContent), ['Asia/Tokyo', 'Asia/Tokyo']);
+});
+
+test('manual city readings update formatter values without replacing the device weather cache', async () => {
+  const declaration = await solarShellDeclarations(['syncHeaderWeatherUnifiedReadings', 'writeHeaderWeatherReadingsCache']);
+  const readings = { humidity: '55%', pressure: '768', condition: '', temp: 18 };
+  const rendered = [];
+  const sync = new Function('deps', `const { isHeaderWeatherCoordinateSelectionApplied, resolveHeaderWeatherReadings,
+    applyHeaderWeatherDropdownReadings, applyHeaderWeatherPreviewReadings, syncHeaderWeatherAttribution,
+    HTMLElement, isHeaderWeatherDropdownForecastSelected, applyHeaderWeatherDropdownConditionTypography,
+    normalizeHeaderWeatherCelsiusUnits, applyHeaderWeatherTextReadability, parseHeaderWeatherNumericToken,
+    readHeaderWeatherReadingsCache, refreshHeaderWeatherPreviewValues } = deps;
+    ${declaration}; return syncHeaderWeatherUnifiedReadings;`)({
+    isHeaderWeatherCoordinateSelectionApplied: () => true, resolveHeaderWeatherReadings: () => readings,
+    applyHeaderWeatherDropdownReadings() {}, applyHeaderWeatherPreviewReadings() {}, syncHeaderWeatherAttribution() {},
+    HTMLElement: class {}, isHeaderWeatherDropdownForecastSelected: () => false,
+    applyHeaderWeatherDropdownConditionTypography() {}, normalizeHeaderWeatherCelsiusUnits() {}, applyHeaderWeatherTextReadability() {},
+    parseHeaderWeatherNumericToken: Number,
+    readHeaderWeatherReadingsCache() { assert.fail('manual city must not access the device readings cache'); },
+    refreshHeaderWeatherPreviewValues: host => rendered.push([host.__weatherPressureMmHg, host.__weatherHumidityValue]),
+  });
+  const host = { dataset: { weatherManualLocation: 'true' }, shadowRoot: { querySelector: () => null },
+    __weatherPressureMmHg: 761, __weatherHumidityValue: '76%' };
+  sync(host);
+  assert.equal(host.__weatherPressureMmHg, 768);
+  assert.equal(host.__weatherHumidityValue, '55%');
+  assert.deepEqual(rendered, [[768, '55%']], 'the new formatter values must reach the rendered preview in the same update');
+});
+
+test('reference pressure layout cannot prevent humidity from updating after a city change', async () => {
+  const declarations = await solarShellDeclarations(['refreshHeaderWeatherPreviewValues', 'updateHeaderWeatherHumidityValue']);
+  class Element {
+    constructor(textContent = '') { this.textContent = textContent; this.childElementCount = 0; }
+  }
+  const pressureValue = new Element('762'), humidityValue = new Element('73%');
+  const pressure = Object.assign(new Element(), { dataset: { weatherPressureLayout: 'reference' }, lastElementChild: pressureValue });
+  const humidity = Object.assign(new Element(), { lastElementChild: humidityValue });
+  const metrics = { querySelector: selector => selector.includes('pressure') ? pressure : selector.includes('humidity') ? humidity : null };
+  const rootNode = { querySelector: selector => selector.includes('right-column') ? metrics : selector.includes('feels-layout') ? {} : null };
+  const refresh = new Function('deps', `const { HTMLElement, hydrateHeaderWeatherReadingsFromCache,
+    applyHeaderWeatherFeelsLikePreview, ensureHeaderWeatherCollapsedFeelsFallback, ensureHeaderWeatherPreviewMetricsVisible,
+    applyHeaderWeatherConditionTypography, isHeaderWeatherDropdownForecastSelected, getHeaderWeatherConditionPlainText,
+    applyHeaderWeatherDropdownConditionTypography, formatHeaderWeatherPressureValue } = deps;
+    ${declarations}; return refreshHeaderWeatherPreviewValues;`)({
+    HTMLElement: Element, hydrateHeaderWeatherReadingsFromCache() {}, applyHeaderWeatherFeelsLikePreview() {},
+    ensureHeaderWeatherCollapsedFeelsFallback() {}, ensureHeaderWeatherPreviewMetricsVisible() {},
+    applyHeaderWeatherConditionTypography() {}, isHeaderWeatherDropdownForecastSelected: () => false,
+    getHeaderWeatherConditionPlainText: () => '', applyHeaderWeatherDropdownConditionTypography() {},
+    formatHeaderWeatherPressureValue: (_host, value) => `${value} мм`,
+  });
+  const host = { dataset: { weatherVariant: 'header' }, shadowRoot: rootNode,
+    __weatherPressureMmHg: 769, __weatherHumidityValue: '55%' };
+  refresh(host);
+  assert.equal(pressureValue.textContent, '769');
+  assert.equal(humidityValue.textContent, '55%');
+  host.__weatherHumidityValue = '0%';
+  refresh(host);
+  assert.equal(humidityValue.textContent, '0%');
 });
 
 test('home pages render one testimonial section with three localized cards', async () => {
@@ -1476,7 +1935,7 @@ test('cookie choices remain usable when browser storage rejects writes', async (
   }
 });
 
-test('header Sun matches menu size with its own preview offset while Moon and menu anchors remain fixed', async () => {
+test('header Sun and Moon retain their base scales and anchors through the sky positioning module', async () => {
   const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
   const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'script' });
   const bootstrap = ast.body.find(node =>
@@ -1527,14 +1986,18 @@ test('header Sun matches menu size with its own preview offset while Moon and me
     assert.ok(node, `siteShellBootstrap must declare const ${name}`);
     return `const ${source.slice(node.start, node.end)};`;
   }).join('\n');
-  const { apply, fixed } = new Function(`${constants}\n${declaration('resolveHeaderWeatherOrbFixedLayout')}\n${declaration('applyHeaderWeatherOrbLayout')}\nreturn { apply: applyHeaderWeatherOrbLayout, fixed: resolveHeaderWeatherOrbFixedLayout };`)();
+  const fixed = new Function(`${constants}\n${declaration('resolveHeaderWeatherOrbFixedLayout')}\nreturn resolveHeaderWeatherOrbFixedLayout;`)();
+  const { applySkyPosition: apply } = await import('../assets/js/header-weather-sky-motion.js');
   const positions = ['--orb-left', '--orb-top', '--orb-offset-x', '--orb-offset-y'];
   const createOrb = (variant, kind) => {
     const values = new Map([['left', '50%'], ['top', '50%'], ...positions.map(name => [name, 'stale'])]);
     const writes = [];
     return {
       dataset: { orbRole: kind },
+      setAttribute() {},
+      querySelector: () => null,
       classList: { contains: name => name === `weather-orb-overlay--${variant}` },
+      closest: () => null,
       style: {
         setProperty(name, value) { values.set(name, value); writes.push(name); },
         removeProperty: name => values.delete(name),
@@ -1555,7 +2018,7 @@ test('header Sun matches menu size with its own preview offset while Moon and me
 
   for (const variant of ['preview', 'dropdown']) {
     const moon = createOrb(variant, 'moon');
-    apply(moon, { left: -500, top: 'invalid', scale: 9, offsetX: 99, offsetY: 99 });
+    apply(moon, { left: -500, top: 'invalid', scale: 9, offsetX: 99, offsetY: 99 }, fixed);
     assert.equal(moon.values.get('--orb-scale-visible'), expectedScale, `${variant}: stale model scale must not replace the fixed moon scale`);
     assert.equal(moon.dataset.orbPositionLocked, variant);
     for (const name of positions) assert.equal(moon.values.has(name), false, `${variant}: ${name} must be controlled by CSS`);
@@ -1563,23 +2026,27 @@ test('header Sun matches menu size with its own preview offset while Moon and me
     assert.equal(moon.values.get('top'), '50%');
     assert.equal(moon.writes.some(name => positions.includes(name)), false);
 
-    positions.forEach(name => moon.values.set(name, 'stale-again'));
-    apply(moon, null);
+    apply(moon, null, fixed);
     assert.equal(moon.values.get('--orb-scale-visible'), expectedScale);
-    for (const name of positions) assert.equal(moon.values.has(name), false, 'cached layouts must still remove stale inline positions');
+    for (const name of positions) assert.equal(moon.values.has(name), false, 'cached layouts retain CSS-controlled base positions');
+    positions.forEach(name => moon.values.set(name, 'stale-again')); moon.dataset.orbLayoutKey = 'obsolete';
+    apply(moon, null, fixed);
+    for (const name of positions) assert.equal(moon.values.has(name), false, 'layout invalidation clears stale inline positions');
   }
 
   for (const variant of ['preview', 'dropdown']) {
     const sun = createOrb(variant, 'sun');
     const expectedSunScale = fixed('sun', variant).scale.toFixed(3);
-    apply(sun, { left: 23, top: 41, scale: 0.7, offsetX: 4, offsetY: -2 });
+    apply(sun, { left: 23, top: 41, scale: 0.7, offsetX: 4, offsetY: -2 }, fixed);
     assert.equal(sun.values.get('--orb-scale-visible'), expectedSunScale);
     assert.equal(sun.dataset.orbPositionLocked, variant);
     for (const name of positions) assert.equal(sun.values.has(name), false, `${variant}: Sun must retain its own fixed CSS anchor`);
-    positions.forEach(name => sun.values.set(name, 'stale-again'));
-    apply(sun, null);
+    apply(sun, null, fixed);
     assert.equal(sun.values.get('--orb-scale-visible'), expectedSunScale, 'missing model coordinates must not reset the rendered solar scale');
     for (const name of positions) assert.equal(sun.values.has(name), false);
+    positions.forEach(name => sun.values.set(name, 'stale-again')); sun.dataset.orbLayoutKey = 'obsolete';
+    apply(sun, null, fixed);
+    for (const name of positions) assert.equal(sun.values.has(name), false, 'Sun layout invalidation clears stale inline positions');
   }
 });
 
@@ -1594,7 +2061,7 @@ test('header moon readability matches in preview and dropdown without changing t
       this.style = { setProperty: (name, value, priority) => {
         this.values.set(name, value);
         this.priorities.set(name, priority);
-      } };
+      }, removeProperty: name => { this.values.delete(name); this.priorities.delete(name); } };
     }
   }
   const previewMoon = new Element('weather-orb-overlay--preview is-moon');
@@ -1610,9 +2077,9 @@ test('header moon readability matches in preview and dropdown without changing t
   const apply = new Function('HTMLElement', `${declaration}\nreturn lockHeaderWeatherMainTemperatureTypography;`)(Element);
   apply({ shadowRoot, dataset: { weatherVariant: 'header' } });
   for (const moon of [previewMoon, dropdownMoon]) {
-    assert.equal(moon.values.get('opacity'), '0.62');
+    assert.equal(moon.values.has('opacity'), false, 'Moon opacity belongs to the live sky/crossfade instead of a fixed inline value');
     assert.equal(moon.values.get('filter'), 'brightness(1.18) saturate(1.08) drop-shadow(0 0 12px rgba(232, 212, 139, 0.36))');
-    assert.equal(moon.priorities.get('opacity'), 'important');
+    assert.equal(moon.priorities.has('opacity'), false);
     assert.equal(moon.priorities.get('filter'), 'important');
   }
   assert.equal(sun.values.get('opacity'), '0.91');
@@ -1753,11 +2220,13 @@ test('weather menu arrow stays inside its pill and animates only actual expanded
 });
 
 test('header Sun preserves CSS geometry while rendering native retina and pinch-zoom pixels in one scaling pass', async () => {
-  const source = await readFile(path.join(root, 'assets/js/header-weather-sun-scene.js'), 'utf8');
-  const runnable = source.replace(/^(?:import .+|const \{ solarPosition \} = await import.+);$/gm, '').replace(/^export /gm, '');
+  const runnable = await sunSceneVmDeclarations();
   const context = {
     solarPosition,
-    THREE: { MathUtils: { degToRad: value => value * Math.PI / 180 }, Clock: class {}, Color: class {} },
+    performance: { now: () => 0 },
+    THREE: { MathUtils: { degToRad: value => value * Math.PI / 180 }, Clock: class {},
+      Color: class { setRGB(r, g, b) { Object.assign(this, { r, g, b }); } },
+      Vector2: class { constructor(x, y) { this.x = x; this.y = y; } } },
     window: { devicePixelRatio: 3, visualViewport: { scale: 1, addEventListener() {}, removeEventListener() {} }, matchMedia: () => ({ matches: false }), addEventListener() {}, removeEventListener() {} },
     requestAnimationFrame: () => 1, cancelAnimationFrame() {},
   };
@@ -1779,7 +2248,8 @@ test('header Sun preserves CSS geometry while rendering native retina and pinch-
         canvas.height = Math.floor(height * pixelRatio);
       },
     };
-    scene.camera = { updateProjectionMatrix() {} };
+    let view;
+    scene.camera = { updateProjectionMatrix() {}, setViewOffset: (...values) => { view = values; } };
     scene.resize();
     const expectedRatio = Math.min(dpr * zoom, 1024 / 100);
     assert.equal(pixelRatio, expectedRatio);
@@ -1787,15 +2257,19 @@ test('header Sun preserves CSS geometry while rendering native retina and pinch-
     assert.equal(canvas.width, Math.floor(100 * expectedRatio));
     assert.equal(canvas.height, Math.floor(60 * expectedRatio));
     assert.equal(scene.camera.aspect, 100 / 60);
+    assert.equal(scene.viewportOverscan, 2.25);
+    assert.deepEqual(view, [100 / 2.25, 60 / 2.25, (100 / 2.25 - 100) / 2, (60 / 2.25 - 60) / 2, 100, 60]);
   }
 });
 
 test('header Sun advances at physical hourly speed from absolute UTC and retains phase after remount', async () => {
-  const source = await readFile(path.join(root, 'assets/js/header-weather-sun-scene.js'), 'utf8');
-  const runnable = source.replace(/^(?:import .+|const \{ solarPosition \} = await import.+);$/gm, '').replace(/^export /gm, '');
+  const runnable = await sunSceneVmDeclarations();
   const context = {
     solarPosition,
-    THREE: { MathUtils: { degToRad: value => value * Math.PI / 180 }, Clock: class {}, Color: class {} },
+    performance: { now: () => 0 },
+    THREE: { MathUtils: { degToRad: value => value * Math.PI / 180 }, Clock: class {},
+      Color: class { setRGB(r, g, b) { Object.assign(this, { r, g, b }); } },
+      Vector2: class { constructor(x, y) { this.x = x; this.y = y; } } },
     window: { visualViewport: { addEventListener() {}, removeEventListener() {} }, addEventListener() {}, removeEventListener() {} },
     requestAnimationFrame: () => 1, cancelAnimationFrame() {},
   };
@@ -1819,7 +2293,7 @@ test('header Sun advances at physical hourly speed from absolute UTC and retains
   assert.doesNotThrow(() => Scene.prototype.updateAnimation.call({ sunMesh: null }, later));
 });
 
-test('the shared Sun bootstrap passes the live server clock without reading cached observations or artificial forecast noon', async () => {
+test('both celestial bootstraps pass the shared live server clock without using cached observations or forecast noon as UTC', async () => {
   const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
   const pending = [parse(source, { ecmaVersion: 'latest', sourceType: 'script' })];
   const clocks = [];
@@ -1833,9 +2307,8 @@ test('the shared Sun bootstrap passes the live server clock without reading cach
       else if (value?.type) pending.push(value);
     }
   }
-  assert.equal(clocks.length, 1, 'preview and dropdown must use one common solar mount clock');
-  assert.equal(clocks[0].type, 'Identifier');
-  assert.equal(clocks[0].name, 'getHeaderWeatherNowMs');
+  assert.equal(clocks.length, 2, 'Sun and Moon mounts each receive the same shared clock for their preview/dropdown consumers');
+  assert.ok(clocks.every(node => node.type === 'Identifier' && node.name === 'getHeaderWeatherNowMs'));
   let correctedTime = Date.parse('2026-03-20T06:00:00Z');
   const liveClock = () => correctedTime;
   const rendererClock = new Function('getHeaderWeatherNowMs', `return (${source.slice(clocks[0].start, clocks[0].end)});`)(liveClock);
@@ -1878,7 +2351,7 @@ test('weather server time preserves UTC across browser timezones and avoids the 
   };
   const expected = Date.UTC(2026, 10, 4, 15, 6, 39, 771);
   const naive = '2026-11-04T15:06:39.7718954';
-  let clientNow;
+  let clientNow, clientTick;
   const requests = [];
   const parsedInputs = [];
   class ClientDate extends Date {
@@ -1892,7 +2365,7 @@ test('weather server time preserves UTC across browser timezones and avoids the 
       return Date.parse(value);
     }
   }
-  const helpers = new Function('window', 'fetch', 'Date', `
+  const helpers = new Function('window', 'fetch', 'Date', 'performance', `
     ${declaration('parseHeaderWeatherServerTimestamp')}
     ${declaration('getHeaderWeatherTimeSources')}
     ${declaration('fetchHeaderWeatherSourceTimeMs')}
@@ -1900,9 +2373,10 @@ test('weather server time preserves UTC across browser timezones and avoids the 
   `)({ location: { origin: 'https://example.com' } }, async (url, options) => {
     requests.push({ url: new URL(url), options });
     clientNow = expected + 100;
+    clientTick = 400;
     return { ok: true, headers: { get: name => name === 'date' ? new Date(expected).toUTCString() : null },
       json: async () => ({ dateTime: naive, utc_datetime: '2026-11-04T15:06:39.7718954+00:00' }) };
-  }, ClientDate);
+  }, ClientDate, { now: () => clientTick });
   const sources = helpers.sources();
   assert.equal(sources[0].id, 'origin-date-header');
   assert.equal(sources[0].url, 'https://example.com/site.webmanifest', 'same-origin time must use a static route without the root language redirect');
@@ -1923,8 +2397,10 @@ test('weather server time preserves UTC across browser timezones and avoids the 
       assert.equal(helpers.parse(naive), Date.parse(naive), 'UTC normalization must apply only to a source explicitly marked UTC');
       for (const item of sources) {
         clientNow = expected - 100;
-        const offset = await helpers.fetchTime(item);
-        assert.equal(offset, item.type === 'date-header' ? -771 : 0, `${timeZone}: the actual fetch helper must pass source UTC metadata to its parser`);
+        clientTick = 200;
+        const sample = await helpers.fetchTime(item);
+        assert.equal(sample.timeMs, expected + 100 - (item.type === 'date-header' ? 771 : 0), `${timeZone}: UTC is estimated at receipt with monotonic RTT compensation`);
+        assert.equal(sample.tickMs, 400);
         const request = requests.at(-1);
         assert.ok(request.url.searchParams.has('_ts'));
         assert.equal(request.options.cache, 'no-store');
@@ -1946,6 +2422,110 @@ test('weather server time preserves UTC across browser timezones and avoids the 
   for (const invalid of [null, undefined, NaN, Infinity, '', 'not-a-time', '04/11/2026 15:06:39', '2026-11-04', {}, []]) {
     assert.ok(Number.isNaN(helpers.parse(invalid, 'UTC')), 'unsupported timestamps must fail rather than silently shift the solar clock');
   }
+});
+
+async function serverClockHarness() {
+  const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
+  const body = parse(source, { ecmaVersion: 'latest', sourceType: 'script' }).body
+    .find(node => node.expression?.callee?.id?.name === 'siteShellBootstrap').expression.callee.body.body;
+  const names = ['headerWeatherServerClock', 'headerWeatherServerTimeSyncedAt', 'headerWeatherServerTimeSyncPromise',
+    'HEADER_WEATHER_TIME_SYNC_INTERVAL', 'HEADER_WEATHER_TIME_SYNC_TIMEOUT', 'HEADER_WEATHER_MAX_CLOCK_DRIFT_MS'];
+  const variables = body.filter(node => node.type === 'VariableDeclaration' && node.declarations.some(item => names.includes(item.id.name)))
+    .map(node => source.slice(node.start, node.end)).join('\n');
+  const declarations = await solarShellDeclarations(['getHeaderWeatherNowMs', 'getHeaderWeatherTimeSources',
+    'withHeaderWeatherTimeout', 'parseHeaderWeatherServerTimestamp', 'fetchHeaderWeatherSourceTimeMs', 'syncHeaderWeatherClockWithServers']);
+  const base = Date.UTC(2026, 10, 6, 12), clock = { wall: base, tick: 1000, replyTime: base };
+  const timers = new Map(), requests = [];
+  const reply = (time = clock.replyTime, age = null) => ({ ok: true,
+    headers: { get: name => name === 'date' ? new Date(time).toUTCString() : name === 'age' ? age : null },
+    json: async () => ({ utc_datetime: new Date(time).toISOString(), dateTime: new Date(time).toISOString() }) });
+  let respond = async () => reply();
+  class ClientDate extends Date { static now() { return clock.wall; } }
+  const api = new Function('Date', 'performance', 'fetch', 'window', `${variables}\n${declarations};
+    return { now: getHeaderWeatherNowMs, sync: syncHeaderWeatherClockWithServers,
+      fetchTime: fetchHeaderWeatherSourceTimeMs, sources: getHeaderWeatherTimeSources,
+      state: () => ({ clock: headerWeatherServerClock, syncedAt: headerWeatherServerTimeSyncedAt }) };`)(
+    ClientDate, { now: () => clock.tick }, (url, options) => { requests.push({ url, options }); return respond(url, options); },
+    { location: { origin: 'https://clock.example' },
+      setTimeout(callback, milliseconds) { const id = timers.size + 1; timers.set(id, { callback, milliseconds }); return id; },
+      clearTimeout: id => timers.delete(id) });
+  return { ...api, base, clock, reply, requests, timers, respond: callback => { respond = callback; } };
+}
+
+test('server UTC anchors to monotonic elapsed time and ignores later device-clock corrections', async () => {
+  const h = await serverClockHarness();
+  assert.equal(h.now(), h.base, 'before a successful sync only the local clock is available');
+  await h.sync(true); assert.equal(h.now(), h.base);
+  h.clock.tick += 1000; h.clock.wall += 24 * 3600000;
+  assert.equal(h.now(), h.base + 1000);
+  h.clock.tick += 1500; h.clock.wall -= 48 * 3600000;
+  assert.equal(h.now(), h.base + 2500, 'an OS wall-clock jump cannot move astronomy or solar palette after synchronization');
+  assert.equal(h.timers.size, 0);
+});
+
+test('repeat server synchronization slews forward and backward without a time discontinuity', async t => {
+  for (const correction of [10000, -10000]) await t.test(`${correction}ms correction`, async () => {
+    const h = await serverClockHarness(); await h.sync(true);
+    h.clock.tick += 1800000; const before = h.now(); h.clock.replyTime = before + correction;
+    await h.sync(); assert.equal(h.now(), before, 'normal resync must not snap visible sky positions');
+    let previous = h.now();
+    for (let seconds = 1; seconds <= 200; seconds++) {
+      h.clock.tick += 1000; const next = h.now(), step = next - previous;
+      assert.ok(step >= 950 && step <= 1050, 'UTC remains monotonic at normal speed within50ms/s correction'); previous = next;
+    }
+    assert.equal(h.now(), before + 200000 + correction); assert.equal(h.timers.size, 0);
+  });
+});
+
+test('sync cadence uses monotonic elapsed time while resume forces a fresh immediate UTC anchor', async () => {
+  const h = await serverClockHarness(); await h.sync(true);
+  h.clock.wall += 8 * 3600000; h.clock.replyTime += 8 * 3600000;
+  await h.sync(); assert.equal(h.requests.length, 1, 'wall-clock jumps must not trigger the ordinary half-hour cadence');
+  assert.equal(h.now(), h.base, 'this models Windows performance.now pausing during sleep');
+  await h.sync(true); assert.equal(h.requests.length, 2); assert.equal(h.now(), h.base + 8 * 3600000, 'visibility resume must not take160hours to slew an8hour sleep gap');
+  h.clock.tick += 1800000; h.clock.replyTime += 1800000;
+  await h.sync(); assert.equal(h.requests.length, 3);
+});
+
+test('ordinary synchronization coalesces requests and a forced resume supersedes an older pending sample', async () => {
+  const h = await serverClockHarness(), replies = [];
+  h.respond(() => new Promise(resolve => replies.push(resolve)));
+  const old = h.sync(), same = h.sync(); assert.equal(h.requests.length, 1);
+  const fresh = h.sync(true); assert.equal(h.requests.length, 2, 'resume starts a new request instead of trusting a pre-sleep response');
+  replies[1](h.reply(h.base)); await fresh; assert.equal(h.now(), h.base);
+  replies[0](h.reply(h.base - 60000)); await Promise.all([old, same]);
+  assert.equal(h.now(), h.base, 'late old responses cannot overwrite the resumed server anchor'); assert.equal(h.timers.size, 0);
+});
+
+test('a failed resynchronization retains the last valid monotonic clock instead of returning to device time', async () => {
+  const h = await serverClockHarness(); await h.sync(true);
+  h.clock.tick += 4000; h.clock.wall -= 3600000; h.respond(async () => { throw new Error('offline'); });
+  await h.sync(true); assert.equal(h.now(), h.base + 4000);
+  assert.equal(h.requests.length, 4, 'all existing sources may fail without clearing a valid anchor'); assert.equal(h.timers.size, 0);
+});
+
+test('source samples compensate monotonic RTT and HTTP cache Age independently of the device clock', async () => {
+  const h = await serverClockHarness();
+  h.respond(async () => { h.clock.tick += 200; h.clock.wall += 3600000; return h.reply(h.base - 60000, '60'); });
+  const sample = await h.fetchTime(h.sources()[0]);
+  assert.equal(sample.timeMs, h.base + 100); assert.equal(sample.tickMs, 1200);
+  assert.ok(h.requests[0].url.startsWith('https://clock.example/site.webmanifest?'));
+  for (const age of ['-1', '1.5', 'NaN', 'Infinity', '9007199254740992']) {
+    h.respond(async () => h.reply(h.base, age));
+    await assert.rejects(h.fetchTime(h.sources()[0]), /invalid Age/);
+  }
+});
+
+test('the actual visibility handler forces server synchronization after a suspended tab returns', async () => {
+  const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
+  const begin = source.indexOf('    host.__weatherAstroVisibilityHandler = () => {');
+  const end = source.indexOf('\n    };', begin);
+  assert.ok(begin >= 0 && end > begin); const calls = [], host = {}, document = { hidden: true };
+  new Function('host', 'document', 'stopHeaderWeatherToggleArrowAnimation', 'syncHeaderWeatherClockWithServers',
+    'syncHeaderWeatherLiveClock', 'scheduleHeaderWeatherOrbSync', 'refreshHeaderWeatherLifecycle', source.slice(begin, end + 7))(
+    host, document, () => {}, async force => { calls.push(force); }, () => {}, () => {}, async () => {});
+  host.__weatherAstroVisibilityHandler(); assert.deepEqual(calls, []);
+  document.hidden = false; host.__weatherAstroVisibilityHandler(); assert.deepEqual(calls, [true]);
 });
 
 test('weather locale animation retains its requested timing under system reduced motion', async () => {
@@ -2070,4 +2650,66 @@ test('blocked preference storage does not stop shell setup or language navigatio
   );
   await navigate();
   assert.equal(window.location.href, '/en/index.html');
+});
+
+test('local weather gateways keep API requests same-origin while static previews retain their bridge', async () => {
+  const declarations = await solarShellDeclarations([
+    'isHeaderWeatherStaticLocalPreview', 'resolveHeaderWeatherPublicEndpoint', 'installHeaderWeatherLocalApiBridge',
+  ]);
+  const create = new Function('window', 'URL', 'HEADER_WEATHER_PUBLIC_API_ORIGIN', 'HEADER_WEATHER_LOCAL_API_PATHS', `
+    ${declarations}; return {
+      isStatic: isHeaderWeatherStaticLocalPreview,
+      endpoint: resolveHeaderWeatherPublicEndpoint,
+      install: installHeaderWeatherLocalApiBridge,
+    };
+  `);
+  const publicOrigin = 'https://hundesalon-nika.com';
+  const requests = [
+    '/api/weather?latitude=51.16&longitude=6.87&timezone=Europe%2FBerlin&lang=ru',
+    '/reverse-geocode?latitude=51.16&longitude=6.87&lang=ru',
+  ];
+  for (const { origin, bridge } of [
+    { origin: 'http://localhost:5502', bridge: true },
+    { origin: 'http://127.0.0.1:5500', bridge: true },
+    { origin: 'http://127.0.0.1:5514', bridge: false },
+    { origin: 'http://localhost:5514', bridge: false },
+    { origin: 'http://[::1]:5514', bridge: false },
+    { origin: 'http://127.0.0.1:8788', bridge: false },
+    { origin: 'https://preview-test.trycloudflare.com', bridge: false },
+    { origin: publicOrigin, bridge: false },
+  ]) {
+    const calls = [], result = Symbol('native-open-result');
+    class XMLHttpRequest {
+      open(...args) { calls.push({ receiver: this, args }); return result; }
+    }
+    const nativeOpen = XMLHttpRequest.prototype.open;
+    const window = { location: new URL(`${origin}/ru/`), XMLHttpRequest };
+    const api = create(window, URL, publicOrigin, new Set(['/api/weather', '/reverse-geocode']));
+    assert.equal(api.isStatic(), bridge, `${origin}: gateway and static preview must be distinguished`);
+    for (const request of requests) {
+      assert.equal(api.endpoint(request), bridge ? new URL(request, publicOrigin).href : request,
+        `${origin}: fetch endpoint and its encoded query must use the expected backend`);
+    }
+    api.install();
+    const installed = XMLHttpRequest.prototype.open;
+    if (bridge) assert.notEqual(installed, nativeOpen, origin);
+    else assert.equal(installed, nativeOpen, `${origin}: an API-capable origin must keep native XHR`);
+    assert.equal(Boolean(window.__headerWeatherLocalApiBridgeInstalled), bridge, origin);
+    api.install();
+    assert.equal(XMLHttpRequest.prototype.open, installed, `${origin}: installation must be idempotent`);
+    const xhr = new XMLHttpRequest();
+    for (const request of requests) for (const absolute of [false, true]) {
+      const url = absolute ? new URL(request, origin).href : request;
+      const args = ['GET', url, false, undefined, undefined];
+      assert.equal(xhr.open(...args), result);
+      const actual = calls.at(-1);
+      assert.equal(actual.receiver, xhr, 'the bridge must preserve the native receiver');
+      assert.deepEqual(actual.args, ['GET', bridge ? new URL(request, publicOrigin).href : url, ...args.slice(2)],
+        `${origin}: relative and absolute API requests must preserve queries and arguments`);
+    }
+    for (const url of ['/assets/js/main.js?v=qa', '/api/maps-config?check=1', 'https://outside.example/api/weather?lang=ru']) {
+      assert.equal(xhr.open('GET', url, true), result);
+      assert.deepEqual(calls.at(-1).args, ['GET', url, true], `${origin}: unrelated requests must remain untouched`);
+    }
+  }
 });

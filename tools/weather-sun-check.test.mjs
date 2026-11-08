@@ -345,6 +345,19 @@ test('initialization stages are explicit and native creation status is bounded a
   dispose2();
 });
 
+test('Sun render modes distinguish native media from WebGL without reading private values or creating contexts', () => {
+  for (const value of ['webgl', 'video', 'animation', 'poster', undefined, null, 'video ', 'private-mode-value', { private: 'private-storage-value' }]) {
+    const h = diagnosticHarness({ state: 'failed', renderer: false });
+    h.overlay.dataset.sunRenderMode = value;
+    const dispose = h.mount(), report = h.json();
+    assert.equal(report.sun[0].renderMode, ['webgl', 'video', 'animation', 'poster'].includes(value) ? value : null);
+    assert.equal(report.sun[0].readback.valid, false);
+    assert.equal(h.metrics.canvasContexts, 0);
+    assert.equal(h.metrics.network, 0);
+    dispose();
+  }
+});
+
 test('context profiles expose only the three public outcomes without reading requested options or creating contexts', async () => {
   for (const value of ['preferred', 'compatible', 'unavailable', undefined, null, 'preferred ', 'private-chat-message-unique', { private: 'private-storage-unique' }]) {
     const h = diagnosticHarness(); h.canvas.dataset.sunContextProfile = value;

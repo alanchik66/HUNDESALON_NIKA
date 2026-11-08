@@ -3,6 +3,7 @@ import { lstatSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { assertProductionAssetContent } from './production-assets.mjs';
+import { findPublicWeatherImporters, weatherRuntimeOutputNames } from './weather-asset-versions.mjs';
 
 export const PRODUCTION_ORIGIN = 'https://hundesalon-nika.com';
 export const RELEASE_LOCALES = ['de', 'en', 'ru', 'uk'];
@@ -121,7 +122,7 @@ export function inspectLocaleHtml(html, { locale, baseUrl, canonicalOrigin = PRO
   return { locale, path: pageUrl.pathname, assets };
 }
 
-export function validateReleaseManifest(manifest, { commit, stamp, canonicalOrigin = PRODUCTION_ORIGIN } = {}) {
+export function validateReleaseManifest(manifest, { commit, stamp, canonicalOrigin = PRODUCTION_ORIGIN, requiredAssets = [] } = {}) {
   if (manifest?.schema !== 1 || !/^[a-f0-9]{40}$/u.test(manifest.commit || '') || (commit && manifest.commit !== commit)) {
     throw new Error('Release manifest does not match the full expected commit.');
   }
@@ -139,6 +140,9 @@ export function validateReleaseManifest(manifest, { commit, stamp, canonicalOrig
       throw new Error('Invalid release video metadata.');
     }
     paths.add(asset.path);
+  }
+  for (const required of requiredAssets) {
+    if (!paths.has(publicPath(required))) throw new Error(`Release manifest is missing required release asset: ${required}`);
   }
   for (const locale of RELEASE_LOCALES) {
     const entry = manifest.locales.find(item => item.locale === locale);
@@ -176,12 +180,13 @@ export function resolveWeatherReleaseAssets(projectRoot, runtimeRoot) {
     ? readFileSync(path.join(runtimeRoot, STAMP_PATH.slice(1)), 'utf8').trim()
     : readFileSync(path.join(projectRoot, 'assets/js/site-shell.js'), 'utf8').match(/WEATHER_WIDGET_ASSET_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1];
   if (!version || !Array.isArray(buildManifest.entries) || !buildManifest.entries.length) throw new Error('Missing maintained weather module manifest or version.');
-  return [...buildManifest.entries.map(entry => publicPath(`/3d-weather-codrops-main/dist-widget/${entry.output}?v=${encodeURIComponent(version)}`)),
-    publicPath(`${MOON_VIDEO_PATH}?v=${encodeURIComponent(version)}`)];
+  return [...weatherRuntimeOutputNames(buildManifest)].map(output => publicPath(`/3d-weather-codrops-main/dist-widget/${output}?v=${encodeURIComponent(version)}`)).concat(
+    findPublicWeatherImporters(runtimeRoot || projectRoot, buildManifest).map(importer => publicPath(`/${importer}?v=${encodeURIComponent(version)}`)),
+    publicPath(`${MOON_VIDEO_PATH}?v=${encodeURIComponent(version)}`));
 }
 
-export function verifyProductionArtifact({ directory, manifest, commit, stamp }) {
-  validateReleaseManifest(manifest, { commit, stamp });
+export function verifyProductionArtifact({ directory, manifest, commit, stamp, requiredAssets = [] }) {
+  validateReleaseManifest(manifest, { commit, stamp, requiredAssets });
   if (readFileSync(artifactFile(directory, STAMP_PATH), 'utf8').trim() !== manifest.stamp) throw new Error('Artifact asset stamp mismatch.');
   for (const locale of RELEASE_LOCALES) {
     const actual = inspectLocaleHtml(readFileSync(artifactFile(directory, `/${locale}/index.html`), 'utf8'), {
@@ -242,12 +247,13 @@ export async function verifyLocaleSmoke({ baseUrl = PRODUCTION_ORIGIN, canonical
 
 export async function verifyProductionRelease({
   commit, stamp, manifest: expectedManifest, baseUrl = PRODUCTION_ORIGIN,
+  requiredAssets = [],
   attempts = 30, delayMs = 5000, timeoutMs = 10000, maxDurationMs = 180000, fetcher = fetch, pause = sleep,
 } = {}) {
   if (!/^[a-f0-9]{40}$/u.test(commit || '')) throw new Error('Pass the full reviewed commit SHA.');
   if (!Number.isInteger(attempts) || attempts < 1 || attempts > 30 || !Number.isFinite(delayMs) || delayMs < 0 || delayMs > 60000 ||
       !Number.isInteger(timeoutMs) || timeoutMs < 1 || !Number.isInteger(maxDurationMs) || maxDurationMs < 1) throw new Error('Invalid verification retry bounds.');
-  if (expectedManifest) validateReleaseManifest(expectedManifest, { commit, stamp });
+  if (expectedManifest) validateReleaseManifest(expectedManifest, { commit, stamp, requiredAssets });
   baseUrl = origin(baseUrl);
   const context = { timeoutMs, fetcher, deadline: Date.now() + maxDurationMs };
   let failure;
@@ -258,7 +264,7 @@ export async function verifyProductionRelease({
       if (published.response.status !== 200 || !/application\/json/iu.test(contentType)) {
         throw new Error(`Published release manifest is unavailable (HTTP ${published.response.status}; Content-Type: ${contentType || 'missing'}; attempt ${attempt}/${attempts}).`);
       }
-      const manifest = validateReleaseManifest(JSON.parse(published.bytes.toString('utf8')), { commit, stamp });
+      const manifest = validateReleaseManifest(JSON.parse(published.bytes.toString('utf8')), { commit, stamp, requiredAssets });
       if (expectedManifest && JSON.stringify(manifest) !== JSON.stringify(expectedManifest)) throw new Error('Published manifest differs from the validated artifact.');
       const liveStamp = await resource(new URL(`${STAMP_PATH}?commit=${commit}`, baseUrl), context);
       if (liveStamp.response.status !== 200 || liveStamp.bytes.toString('utf8').trim() !== manifest.stamp) throw new Error('Published asset stamp does not match the release.');

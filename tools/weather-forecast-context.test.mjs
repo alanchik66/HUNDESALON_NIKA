@@ -420,6 +420,11 @@ test('forecast noon resolves local calendar dates through DST, leap days and UTC
     ['Europe/Berlin', '2028-02-29', '2028-02-29T11:00:00Z'],
     ['Pacific/Kiritimati', '2027-01-01', '2026-12-31T22:00:00Z'],
     ['Asia/Kathmandu', '2026-11-04', '2026-11-04T06:15:00Z'],
+    ['Asia/Tokyo', '2026-11-04', '2026-11-04T03:00:00Z'],
+    ['Asia/Kolkata', '2026-11-04', '2026-11-04T06:30:00Z'],
+    ['Australia/Sydney', '2026-11-04', '2026-11-04T01:00:00Z'],
+    ['Pacific/Chatham', '2026-11-04', '2026-11-03T22:15:00Z'],
+    ['Pacific/Pago_Pago', '2026-11-04', '2026-11-04T23:00:00Z'],
   ];
   for (const [timeZone, date, expected] of fixtures) {
     assert.equal(resolveForecastNoonMs(date, timeZone), Date.parse(expected), `${timeZone} ${date}`);
@@ -428,6 +433,7 @@ test('forecast noon resolves local calendar dates through DST, leap days and UTC
     assert.equal(resolveForecastNoonMs(date, 'Europe/Berlin'), null, String(date));
   }
   assert.equal(resolveForecastNoonMs('2026-11-04', 'Invalid/Timezone'), null);
+  for (const zone of [undefined, null, '', ' ', false, 0]) assert.equal(resolveForecastNoonMs('2026-11-04', zone), null, `missing zone ${String(zone)} cannot use the browser timezone`);
 });
 
 async function solarContextHarness() {
@@ -435,20 +441,28 @@ async function solarContextHarness() {
   const math = sourceBlock(source, 'const TAU = ', '\nfunction resolveSolarPixelRatio(').replace(/export /g, '');
   const state = sourceBlock(source, '  setGeoState(next) {', '\n  async init() {');
   const animation = sourceBlock(source, '  updateAnimation(', '\n  renderFrame() {');
-  return new Function('THREE', 'solarPosition', `${math}\nclass SolarContext { ${state}\n${animation} }
+  let tick = 0;
+  const api = new Function('THREE', 'solarPosition', 'performance', `${math}\nclass SolarContext { ${state}\n${animation} }
     return { Scene: SolarContext, elevation: solarElevationDegrees, color: solarColorForElevation,
       surfaceColor: solarSurfaceColorForElevation, angle: solarRotationAngle, epoch: SOLAR_MODEL_EPOCH_MS };`)(
-    { MathUtils: { degToRad: degrees => degrees * Math.PI / 180 } }, solarPosition
+    { MathUtils: { degToRad: degrees => degrees * Math.PI / 180 } }, solarPosition, { now: () => tick }
   );
+  api.finishBlend = () => { tick += 1200; };
+  return api;
 }
 
 function solarScene(h, options) {
   const scene = Object.create(h.Scene.prototype);
+  const color = { r: 1, g: 1, b: 1 };
+  Object.defineProperty(color, 'setRGB', { value(r, g, b) { Object.assign(this, { r, g, b }); return this; } });
+  const sharedColor = { value: color };
   Object.assign(scene, {
     options, geoState: {}, sunMesh: { rotation: { y: 0 } },
     solarDaysUniform: { value: 0 },
-    solarColorUniform: { value: { r: 1, g: 1, b: 1 } },
-    solarSurfaceColorUniform: { value: { r: 1, g: 1, b: 1 } },
+    solarColorUniform: sharedColor,
+    solarSurfaceColorUniform: sharedColor,
+    prominenceStates: [{}, {}, {}], prominenceUniform: { value: new Float32Array(12) },
+    updateOpticalGeometry() {},
     solarSpotStrengthUniform: { value: 0 },
     flareMesh: { material: { uniforms: { uTime: { value: 0 } } } },
   });
@@ -476,12 +490,15 @@ test('actual solar methods use forecast noon only for colour while rotation, spo
   preview.updateAnimation(preview.getTimeMs());
   assert.ok(expectedElevation > 12 && liveElevation() < 0, 'the fixture must distinguish forecast daytime from the actual night');
   assertLiveMotion();
-  assert.deepEqual(scene.solarColorUniform.value, h.color(expectedElevation));
+  assert.equal(scene.solarColorUniform, scene.solarSurfaceColorUniform, 'rays and photosphere use the same calibrated current palette');
+  assert.deepEqual(scene.solarColorUniform.value, h.surfaceColor(expectedElevation));
   assert.deepEqual(scene.solarSurfaceColorUniform.value, h.surfaceColor(expectedElevation));
-  assert.deepEqual(preview.solarColorUniform.value, h.color(liveElevation()), 'the current preview keeps its live phase');
+  assert.deepEqual(preview.solarColorUniform.value, h.surfaceColor(liveElevation()), 'the current preview keeps its live phase');
   assert.notDeepEqual(scene.solarColorUniform.value, preview.solarColorUniform.value);
   assert.equal(appearances.at(-1).elevationDeg, expectedElevation);
-  assert.equal(appearances.at(-1).glowRgb, '255 255 255', 'CSS glow follows the same representative daylight');
+  const expectedGlow = Object.values(h.surfaceColor(expectedElevation)).map(channel => Math.round(255 *
+    (channel <= .0031308 ? channel * 12.92 : 1.055 * channel ** (1 / 2.4) - .055))).join(' ');
+  assert.equal(appearances.at(-1).glowRgb, expectedGlow, 'CSS glow follows the same representative daylight palette as the photosphere');
   const blue = h.surfaceColor(expectedElevation).b;
   const srgbBlue = blue <= .0031308 ? blue * 12.92 : 1.055 * blue ** (1 / 2.4) - .055;
   const recoveryWarmth = Math.max(0, Math.min(1, (1 - srgbBlue) / .93));
@@ -495,15 +512,19 @@ test('actual solar methods use forecast noon only for colour while rotation, spo
   assertLiveMotion();
   assert.notEqual(scene.sunMesh.rotation.y, firstRotation);
   assert.equal(scene.flareMesh.material.uniforms.uTime.value, firstFlareTime + 20, 'forecast selection must not freeze optical animation');
-  assert.deepEqual(scene.solarColorUniform.value, h.color(expectedElevation));
+  assert.deepEqual(scene.solarColorUniform.value, h.surfaceColor(expectedElevation));
   assert.equal(scene.solarColorUniform, colorUniform);
   assert.equal(scene.solarSurfaceColorUniform, surfaceUniform);
   scene.setGeoState(geoState);
   assert.equal(scene.geoState.appearanceTimeMs, null, 'returning to Now must clear the previous daily appearance sample');
+  h.finishBlend();
   scene.updateAnimation(scene.getTimeMs());
   assertLiveMotion();
-  assert.deepEqual(scene.solarColorUniform.value, h.color(liveElevation()));
-  assert.deepEqual(scene.solarSurfaceColorUniform.value, h.surfaceColor(liveElevation()));
+  for (const channel of ['r', 'g', 'b']) {
+    assert.ok(Math.abs(scene.solarColorUniform.value[channel] - h.surfaceColor(liveElevation())[channel]) < 1e-12,
+      'the completed interpolation must settle to the live palette within floating-point arithmetic');
+    assert.ok(Math.abs(scene.solarSurfaceColorUniform.value[channel] - h.surfaceColor(liveElevation())[channel]) < 1e-12);
+  }
   assert.equal(appearances.at(-1).elevationDeg, liveElevation());
 });
 
@@ -512,11 +533,12 @@ test('solar appearance override accepts epoch zero but clears invalid samples in
   const liveUtc = Date.parse('2026-11-04T21:39:00Z');
   const scene = solarScene(h, { getTimeMs: () => liveUtc, geoState: { latitude: 0, longitude: 0, appearanceTimeMs: 0 } });
   assert.equal(scene.geoState.appearanceTimeMs, 0);
-  assert.deepEqual(scene.solarColorUniform.value, h.color(h.elevation(0, 0, 0)));
+  assert.deepEqual(scene.solarColorUniform.value, h.surfaceColor(h.elevation(0, 0, 0)));
   for (const invalid of [undefined, null, NaN, Infinity, String(liveUtc)]) {
     scene.setGeoState({ appearanceTimeMs: liveUtc + 43200000 });
     scene.setGeoState({ appearanceTimeMs: invalid });
     assert.equal(scene.geoState.appearanceTimeMs, null, String(invalid));
-    assert.deepEqual(scene.solarColorUniform.value, h.color(h.elevation(liveUtc, 0, 0)), String(invalid));
+    h.finishBlend(); scene.updateAnimation(scene.getTimeMs());
+    assert.deepEqual(scene.solarColorUniform.value, h.surfaceColor(h.elevation(liveUtc, 0, 0)), String(invalid));
   }
 });

@@ -4,22 +4,25 @@ import {
   getPublicReadCorsOrigin,
   jsonResponse,
 } from '../_lib/http-security.js';
+import { solarPhase } from '../../assets/js/weather-solar-time.js';
 
 const BRIGHT_SKY_CURRENT_ENDPOINT = 'https://api.brightsky.dev/current_weather';
 const BRIGHT_SKY_FORECAST_ENDPOINT = 'https://api.brightsky.dev/weather';
-const MET_LOCATIONFORECAST_ENDPOINT = 'https://api.met.no/weatherapi/locationforecast/2.0/compact';
+const MET_LOCATIONFORECAST_ENDPOINT = 'https://api.met.no/weatherapi/locationforecast/2.0/complete';
 const PHOTON_SEARCH_ENDPOINT = 'https://photon.komoot.io/api/';
 const NOMINATIM_SEARCH_ENDPOINT = 'https://nominatim.openstreetmap.org/search';
+const OPEN_METEO_TIME_ZONE_ENDPOINT = 'https://api.open-meteo.com/v1/forecast';
 const WEATHER_CACHE_TTL_SECONDS = 5 * 60;
+const TIME_ZONE_CACHE_TTL_SECONDS = 24 * 60 * 60;
 const CLIENT_CACHE_TTL_SECONDS = 60;
 const PROVIDER_TIMEOUT_MS = 8500;
+const TIME_ZONE_TIMEOUT_MS = 4500;
 const MET_FORECAST_TIMEOUT_MS = 4500;
 const BRIGHT_SKY_FORECAST_TIMEOUT_MS = 3500;
 const PROVIDER_FAILURE_COOLDOWN_SECONDS = 30;
 // Allow hourly reports and normal publication lag, but never present old reports as current.
 const CURRENT_MAX_AGE_MS = 2 * 60 * 60 * 1000;
 const CURRENT_FUTURE_TOLERANCE_MS = 10 * 60 * 1000;
-const DEFAULT_TIME_ZONE = 'Europe/Berlin';
 const PROVIDER_USER_AGENT =
   'HundesalonNikaWeather/1.0 (+https://hundesalon-nika.com/kontakty.html)';
 
@@ -67,8 +70,7 @@ export function parseWeatherCoordinates(latitudeValue, longitudeValue) {
     latitude < -90 ||
     latitude > 90 ||
     longitude < -180 ||
-    longitude > 180 ||
-    (latitude === 0 && longitude === 0)
+    longitude > 180
   ) {
     return null;
   }
@@ -93,16 +95,26 @@ function normalizeLanguage(value) {
 }
 
 function normalizeTimeZone(value) {
-  const candidate = String(value || '').trim();
+  const candidate = typeof value === 'string' ? value.trim() : '';
   if (!candidate || candidate.length > 80) {
-    return DEFAULT_TIME_ZONE;
+    return null;
   }
   try {
     new Intl.DateTimeFormat('en', { timeZone: candidate }).format(new Date());
     return candidate;
   } catch {
-    return DEFAULT_TIME_ZONE;
+    return null;
   }
+}
+
+async function fetchLocationTimeZone(coordinates) {
+  const url = new URL(OPEN_METEO_TIME_ZONE_ENDPOINT);
+  url.searchParams.set('latitude', String(coordinates.latitude));
+  url.searchParams.set('longitude', String(coordinates.longitude));
+  url.searchParams.set('timezone', 'auto');
+  url.searchParams.set('forecast_days', '1');
+  const payload = await fetchJson(url, {}, false, TIME_ZONE_TIMEOUT_MS);
+  return normalizeTimeZone(payload?.timezone);
 }
 
 async function fetchJson(url, options = {}, includeExpiry = false, timeoutMs = PROVIDER_TIMEOUT_MS) {
@@ -230,11 +242,16 @@ export function calculateApparentTemperature(temperatureValue, humidityValue, wi
   return round(temperature + 0.33 * vapourPressure - 0.7 * windSpeedMs - 4);
 }
 
-function isDayFromToken(value, fallback = 1) {
+function isDayFromToken(value, observedAt, coordinates) {
   const token = String(value || '').toLowerCase();
   if (token.includes('night')) return 0;
   if (token.includes('day')) return 1;
-  return fallback;
+  const point = parseWeatherCoordinates(coordinates?.latitude, coordinates?.longitude);
+  if (!point) return 1;
+  // A neutral icon has no daylight evidence. Use the observation's UTC and the
+  // shared geometric-centre -0.833-degree ideal-horizon sunrise/set criterion.
+  const phase = solarPhase(observedAt, null, point.latitude, point.longitude).phase;
+  return phase === 'unavailable' ? 1 : Number(phase === 'day');
 }
 
 export function weatherCodeFromBrightSky(iconValue, cloudCoverValue) {
@@ -334,6 +351,22 @@ function nearestBrightSkySource(payload, sourceId) {
   return sources.find(source => Number(source?.id) === Number(sourceId)) || sources[0] || null;
 }
 
+function brightSkyFieldSource(payload, current, field) {
+  const sourceId = finiteNumber(current.fallback_source_ids?.[field]) ?? finiteNumber(current.source_id);
+  const sources = Array.isArray(payload.sources) ? payload.sources : [];
+  const station = sourceId === null ? null
+    : sources.find(source => finiteNumber(source?.id) === sourceId);
+  return {
+    source: 'dwd-bright-sky', time: current.timestamp, timeBasis: 'compiled-record', sourceId,
+    stationName: firstText(station?.station_name),
+    stationDistanceMeters: finiteNumber(station?.distance),
+    stationLatitude: finiteNumber(station?.lat), stationLongitude: finiteNumber(station?.lon),
+    dwdStationId: firstText(station?.dwd_station_id) || null,
+    wmoStationId: firstText(station?.wmo_station_id) || null,
+    observationType: firstText(station?.observation_type) || null,
+  };
+}
+
 function currentTimestamp(value, nowMs) {
   const timestamp = typeof value === 'string' ? Date.parse(value) : NaN;
   return Number.isFinite(timestamp) &&
@@ -380,6 +413,7 @@ export function normalizeBrightSkyCurrent(payload, coordinates, timeZone, nowMs 
     longitude: coordinates.longitude,
     weatherCode,
     cloudCover,
+    fieldSources: cloudCover === null ? {} : { cloudCover: brightSkyFieldSource(payload, current, 'cloud_cover') },
     precipitation:
       finiteNumber(current.precipitation_10) ??
       finiteNumber(current.precipitation_30) ??
@@ -387,7 +421,7 @@ export function normalizeBrightSkyCurrent(payload, coordinates, timeZone, nowMs 
     humidity,
     temperature,
     apparentTemperature: calculateApparentTemperature(temperature, humidity, windSpeedKph),
-    isDay: isDayFromToken(current.icon),
+    isDay: isDayFromToken(current.icon, observedAt, coordinates),
     pressureMsl,
     surfacePressure: null,
     pressureMmHg: pressureMsl === null ? null : Math.round(pressureMsl * 0.750061683),
@@ -410,6 +444,21 @@ function getMetSymbol(entry) {
     entry?.data?.next_6_hours?.summary?.symbol_code,
     entry?.data?.next_12_hours?.summary?.symbol_code
   );
+}
+
+function metCloudLayers(details, time, updatedAt, fetchedAt) {
+  const percent = value => {
+    const number = finiteNumber(value);
+    return number !== null && number >= 0 && number <= 100 ? number : null;
+  };
+  const low = percent(details.cloud_area_fraction_low), mid = percent(details.cloud_area_fraction_medium);
+  const high = percent(details.cloud_area_fraction_high);
+  if (low === null && mid === null && high === null) return null;
+  const updated = typeof updatedAt === 'string' ? Date.parse(updatedAt) : NaN;
+  return {
+    low, mid, high, total: percent(details.cloud_area_fraction), source: 'met-norway-locationforecast',
+    validTime: time, modelUpdatedAt: Number.isFinite(updated) ? new Date(updated).toISOString() : null, fetchedAt,
+  };
 }
 
 export function normalizeMetCurrent(payload, coordinates, timeZone, nowMs = Date.now()) {
@@ -447,11 +496,12 @@ export function normalizeMetCurrent(payload, coordinates, timeZone, nowMs = Date
     longitude: coordinates.longitude,
     weatherCode: weatherCodeFromMetSymbol(symbol, cloudCover),
     cloudCover,
+    cloudLayers: metCloudLayers(details, entry.time, payload?.properties?.meta?.updated_at, nowMs),
     precipitation: finiteNumber(entry?.data?.next_1_hours?.details?.precipitation_amount),
     humidity,
     temperature,
     apparentTemperature: calculateApparentTemperature(temperature, humidity, windSpeedKph),
-    isDay: isDayFromToken(symbol),
+    isDay: isDayFromToken(symbol, Date.parse(entry.time), coordinates),
     pressureMsl,
     surfacePressure: null,
     pressureMmHg: pressureMsl === null ? null : Math.round(pressureMsl * 0.750061683),
@@ -740,7 +790,7 @@ async function fetchBrightSkyForecast(coordinates, timeZone) {
 
 async function fetchMetForecast(context, cache, coordinates, timeZone) {
   const cacheKey = new Request(
-    `https://met-forecast-cache.hundesalon-nika.internal/v2/${coordinates.latitude.toFixed(4)}/${coordinates.longitude.toFixed(4)}`
+    `https://met-forecast-cache.hundesalon-nika.internal/v3/${coordinates.latitude.toFixed(4)}/${coordinates.longitude.toFixed(4)}`
   );
   const cached = await readCachedPayload(cache, cacheKey);
   if (cached?.expiresAt > Date.now()) {
@@ -826,7 +876,7 @@ export async function onRequest(context) {
   const language = normalizeLanguage(
     url.searchParams.get('lang') || request.headers.get('Accept-Language')
   );
-  const timeZone = normalizeTimeZone(url.searchParams.get('timezone'));
+  let timeZone = normalizeTimeZone(url.searchParams.get('timezone'));
   const rateLimitOptions = { route: 'weather-current', limit: 24, windowSec: 60 };
   let rateLimitChecked = false;
   let location = parseWeatherCoordinates(
@@ -853,8 +903,30 @@ export async function onRequest(context) {
   }
 
   const cache = getDefaultCache();
+  if (!timeZone) {
+    const timeZoneCacheKey = new Request(
+      `https://weather-timezone-cache.hundesalon-nika.internal/v1/${location.latitude.toFixed(5)}/${location.longitude.toFixed(5)}`
+    );
+    const cachedTimeZone = await readCachedPayload(cache, timeZoneCacheKey);
+    timeZone = cachedTimeZone?.expiresAt > Date.now() ? normalizeTimeZone(cachedTimeZone.timezone) : null;
+    if (!timeZone) {
+      // An uncached metadata lookup is an upstream request, just like geocoding.
+      if (!rateLimitChecked) {
+        const rateLimitResponse = await enforceRateLimit(request, rateLimitOptions).catch(() => null);
+        if (rateLimitResponse) return respond(rateLimitResponse);
+        rateLimitChecked = true;
+      }
+      timeZone = await fetchLocationTimeZone(location).catch(() => null);
+      if (!timeZone) {
+        return respond(jsonResponse({ error: 'Location time zone is temporarily unavailable' }, 503));
+      }
+      storeCachedPayload(context, cache, timeZoneCacheKey, {
+        timezone: timeZone, expiresAt: Date.now() + TIME_ZONE_CACHE_TTL_SECONDS * 1000,
+      }, TIME_ZONE_CACHE_TTL_SECONDS);
+    }
+  }
   const cacheKey = new Request(
-    `https://weather-cache.hundesalon-nika.internal/v5/${location.latitude.toFixed(4)}/${location.longitude.toFixed(4)}/${encodeURIComponent(timeZone)}/${language}`
+    `https://weather-cache.hundesalon-nika.internal/v7/${location.latitude.toFixed(4)}/${location.longitude.toFixed(4)}/${encodeURIComponent(timeZone)}/${language}`
   );
   const cachedPayload = await readCachedPayload(cache, cacheKey);
   if (cachedPayload?.forecastStatus === 'complete' && hasCompleteForecast(cachedPayload.forecast?.forecastday, timeZone) &&
@@ -884,6 +956,10 @@ export async function onRequest(context) {
   if (!currentMeta) {
     return respond(jsonResponse({ error: 'Weather providers are temporarily unavailable' }, 502));
   }
+
+  // Layer amounts are optional model evidence, independent of DWD observations
+  // and their condition. They neither replace the measured total nor imply opacity.
+  currentMeta.cloudLayers = metCurrent?.cloudLayers || null;
 
   if (brightSkyCurrent?.cloudCover === null && metCurrent && metCurrent.cloudCover !== null) {
     currentMeta.cloudCover = metCurrent.cloudCover;

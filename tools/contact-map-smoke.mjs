@@ -142,7 +142,10 @@ try {
       }
 
       await page.locator('.map-actions a[href="#contact-form"]').click();
-      await page.waitForTimeout(700);
+      await page.waitForFunction(() => {
+        const rect = document.querySelector('#contact-form').getBoundingClientRect();
+        return rect.top < window.innerHeight && rect.bottom > 0;
+      }, null, { timeout: 3000 });
       const formPosition = await page.locator('#contact-form').evaluate(form => {
         const rect = form.getBoundingClientRect();
         return { top: rect.top, bottom: rect.bottom, viewportHeight: window.innerHeight };
@@ -354,6 +357,58 @@ try {
   );
   console.log('[contact-map] single Google map, two modes, controls, localization and marker: ok');
   await googleContext.close();
+
+  for (const [name, embedUrl, expectedProvider, configStatus = 200] of [
+    ['share embed', 'https://www.google.com/maps/embed?pb=preview-map-fixture', 'google-embed'],
+    ['transient configuration error', 'https://www.google.com/maps/embed?pb=preview-map-fixture', 'google-embed', 503],
+    ['permanent configuration denial', 'https://www.google.com/maps/embed?pb=preview-map-fixture', 'unavailable', 403],
+    ['foreign origin', 'https://www.google.com.example.test/maps/embed?pb=fixture', 'unavailable'],
+    ['Google redirect', 'https://www.google.com/url?pb=fixture', 'unavailable'],
+    ['credentialed URL', 'https://user@www.google.com/maps/embed?pb=fixture', 'unavailable'],
+  ]) {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
+    try {
+      const page = await context.newPage();
+      const errors = [];
+      const mapRequests = [];
+      let configRequests = 0;
+      page.on('pageerror', error => errors.push(error.message));
+      page.on('request', request => {
+        if (request.url().includes('/maps/embed') || request.url().includes('maps.googleapis.com')) {
+          mapRequests.push(request.url());
+        }
+      });
+      await page.route('**/api/maps-config', route => {
+        configRequests += 1;
+        return route.fulfill({
+          status: configRequests === 1 ? configStatus : 200,
+          contentType: 'application/json', body: JSON.stringify({ enabled: false, embedUrl }),
+        });
+      });
+      await page.route('https://www.google.com/maps/embed?**', route => route.fulfill({
+        contentType: 'text/html', body: '<!doctype html><title>Google Maps fixture</title><p>Preview map fixture</p>',
+      }));
+      await page.goto(`${server.baseUrl}/ru/kontakty.html`, { waitUntil: 'domcontentloaded' });
+      await page.locator('.map-native').scrollIntoViewIfNeeded();
+      await page.waitForSelector(`.map-native[data-map-provider="${expectedProvider}"]`, { timeout: 15000 });
+      const frame = page.locator('.map-native iframe');
+      assert.equal(await frame.count(), expectedProvider === 'google-embed' ? 1 : 0, `${name}: iframe policy`);
+      assert.equal(mapRequests.length, expectedProvider === 'google-embed' ? 1 : 0, `${name}: request policy`);
+      assert.equal(configRequests, configStatus === 503 ? 2 : 1, `${name}: bounded transient retry`);
+      assert.equal(await page.locator('.map-mode-controls').count(), 0, `${name}: no misleading 3D controls`);
+      assert.deepEqual(errors, [], `${name}: no page errors`);
+      if (expectedProvider === 'google-embed') {
+        assert.equal(await frame.getAttribute('src'), embedUrl, 'official share URL is retained');
+        assert.equal(await frame.getAttribute('title'), 'Карта расположения салона', 'iframe has a localized title');
+        assert.ok(await page.frameLocator('.map-native iframe').getByText('Preview map fixture').isVisible(), 'embedded content rendered');
+        const bounds = await frame.boundingBox();
+        assert.ok(bounds.width >= 320 && bounds.height >= 280, 'embed fills the responsive map viewport');
+      }
+      console.log(`[contact-map] ${name}: ok`);
+    } finally {
+      await context.close();
+    }
+  }
 } finally {
   await browser.close();
   await server.close();

@@ -1,6 +1,6 @@
 # HUNDESALON_NIKA Website Knowledge for the SendPulse AI Agent #
 
-Generated source fingerprint: sha256:0c543172d1b83aaed26f3bdfa3c7ffefb808770ea61de1a46ada0d689ac0cb7f
+Generated source fingerprint: sha256:01101f44901b3bfed6908758daf2e80a08bfdb231c98f90c76c9d3978a82b971
 
 This document is the factual knowledge base for the customer-facing SendPulse live-chat AI agent. It covers the public HUNDESALON_NIKA website in German, English, Russian, and Ukrainian.
 
@@ -45,7 +45,7 @@ Mandatory behavior:
 - Customer replies: info@hundesalon-nika.com
 - Website: https://hundesalon-nika.com/
 - Public languages: German (`de`), English (`en`), Russian (`ru`), Ukrainian (`uk`)
-- Published hours: Monday to Friday, 09:00-21:00; Saturday and Sunday closed
+- Published hours: Monday to Friday, 09:00-21:00; Saturday, 10:00-16:00; Sunday closed
 - Published online booking time inputs currently allow appointment start times from 09:00 through 19:00.
 - The website states that the salon is opening soon and online payment is not active yet.
 - No exact opening date is published. For an opening date or real-time availability, hand off to a human specialist.
@@ -1840,8 +1840,11 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Inhaberin: HUNDESALON_NIKA
 - Telefon: +49 151 72450988
 - E-Mail: info@hundesalon-nika.com
-- Adresse: Untere Eichstädtstraße 38, 04299 Leipzig, Sachsen, Deutschland
-- Öffnungszeiten: Mo–Fr, 9:00–21:00 Uhr · Sa–So geschlossen
+- Adresse: Untere Eichstädtstraße 38,
+- 04299 Leipzig, Sachsen, Deutschland
+- Öffnungszeiten: Mo–Fr, 9:00–21:00 Uhr
+- Sa, 10:00–16:00 Uhr
+- So geschlossen
 - In Telegram schreiben Alle Netzwerke
 - Schnellaktionen
 - Mit dem Auto ÖPNV Zu Fuß Fahrrad Schreiben
@@ -2133,8 +2136,11 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Owner: HUNDESALON_NIKA
 - Phone: +49 151 72450988
 - Email: info@hundesalon-nika.com
-- Address: Untere Eichstädtstraße 38, 04299 Leipzig, Saxony, Germany
-- Opening hours: Mon–Fri, 9:00–21:00 · Sat–Sun closed
+- Address: Untere Eichstädtstraße 38,
+- 04299 Leipzig, Saxony, Germany
+- Opening hours: Mon–Fri, 9:00–21:00
+- Sat, 10:00–16:00
+- Sun closed
 - Message us on Telegram All socials
 - Quick actions
 - By car Public transport Walking Cycling Write to us
@@ -2426,8 +2432,11 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Владелец: HUNDESALON_NIKA
 - Телефон: +49 151 72450988
 - Email: info@hundesalon-nika.com
-- Адрес: Untere Eichstädtstraße 38, 04299 Лейпциг, Саксония, Германия
-- Часы работы: Пн–Пт, 9:00 – 21:00 · Сб–Вс выходной
+- Адрес: Untere Eichstädtstraße 38,
+- 04299 Лейпциг, Саксония, Германия
+- Часы работы: Пн–Пт, 9:00 – 21:00
+- Сб, 10:00 – 16:00
+- Вс — выходной
 - Написать в Telegram Все соцсети
 - Быстрые действия
 - На автомобиле Транспорт Пешком Велосипед Написать
@@ -2719,8 +2728,11 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Власник: HUNDESALON_NIKA
 - Телефон: +49 151 72450988
 - Email: info@hundesalon-nika.com
-- Адреса: Untere Eichstädtstraße 38, 04299 Лейпциг, Саксонія, Німеччина
-- Години роботи: Пн–Пт, 9:00 – 21:00 · Сб–Нд вихідний
+- Адреса: Untere Eichstädtstraße 38,
+- 04299 Лейпциг, Саксонія, Німеччина
+- Години роботи: Пн–Пт, 9:00 – 21:00
+- Сб, 10:00 – 16:00
+- Нд — вихідний
 - Написати в Telegram Усі соцмережі
 - Швидкі дії
 - Автомобілем Транспортом Пішки Велосипедом Написати

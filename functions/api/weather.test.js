@@ -47,13 +47,13 @@ function brightSkyForecastFixture(days = 4) {
   ]).flat() };
 }
 
-function cachedWeatherFixture() {
+function cachedWeatherFixture(timeZone = 'Europe/Berlin') {
   const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit',
+    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
   }).formatToParts(Date.now()).map(part => [part.type, part.value]));
   const today = Date.parse(`${parts.year}-${parts.month}-${parts.day}T12:00:00Z`);
   return {
-    location: { name: 'Leipzig' },
+    location: { name: 'Leipzig', tz_id: timeZone },
     weatherMeta: { time: new Date().toISOString(), forecastProviderLabel: 'MET Norway' },
     provider: { forecast: 'MET Norway' },
     forecastStatus: 'complete',
@@ -67,6 +67,7 @@ function cachedWeatherFixture() {
 function weatherHarness(t, {
   bright = brightSkyFixture(), met = metFixture(), brightForecast = null,
   cache = null, expires, now = CURRENT_TIME, timeZone = 'Europe/Berlin',
+  coordinates = COORDINATES, timeZoneMetadata = null,
 } = {}) {
   const originalFetch = globalThis.fetch;
   const originalCaches = globalThis.caches;
@@ -79,7 +80,8 @@ function weatherHarness(t, {
     const url = new URL(input instanceof Request ? input.url : input);
     calls.push(url.hostname);
     requests.push(url);
-    const payload = url.hostname === 'api.met.no' ? met : url.pathname === '/weather' ? brightForecast : bright;
+    const payload = url.hostname === 'api.open-meteo.com' ? timeZoneMetadata
+      : url.hostname === 'api.met.no' ? met : url.pathname === '/weather' ? brightForecast : bright;
     if (typeof payload === 'function') return payload(url, options);
     if (payload instanceof Error) throw payload;
     return payload ? Response.json(payload, { headers: expires ? { Expires: expires } : {} })
@@ -93,12 +95,198 @@ function weatherHarness(t, {
   const pending = [];
   return {
     calls, requests, pending,
-    request: () => onRequest({
-      request: new Request(`https://hundesalon-nika.com/api/weather?latitude=51.3397&longitude=12.3731&timezone=${encodeURIComponent(timeZone)}`),
-      waitUntil: operation => pending.push(operation),
-    }),
+    request: () => {
+      const url = new URL('https://hundesalon-nika.com/api/weather');
+      url.searchParams.set('latitude', String(coordinates.latitude));
+      url.searchParams.set('longitude', String(coordinates.longitude));
+      if (timeZone !== null) url.searchParams.set('timezone', timeZone);
+      return onRequest({ request: new Request(url), waitUntil: operation => pending.push(operation) });
+    },
   };
 }
+
+function currentDayFixture(provider, token, utc, coordinates, nowMs = Date.parse(utc), timeZone = 'UTC') {
+  if (provider === 'DWD') {
+    return normalizeBrightSkyCurrent(brightSkyFixture({ timestamp: utc, icon: token }), coordinates, timeZone, nowMs);
+  }
+  const payload = metFixture([{ time: utc, temperature: 8 }]);
+  payload.properties.timeseries[0].data.next_1_hours.summary.symbol_code = token;
+  return normalizeMetCurrent(payload, coordinates, timeZone, nowMs);
+}
+
+for (const provider of ['DWD', 'MET']) {
+  test(`${provider} neutral weather tokens use the observation's astronomical night`, () => {
+    const utc = '2026-11-07T20:30:00Z', point = { latitude: 51.21, longitude: 6.77 };
+    for (const token of ['cloudy', 'rain', 'fog']) {
+      assert.equal(currentDayFixture(provider, token, utc, point).isDay, 0, `${token} has no day/night suffix`);
+    }
+  });
+
+  test(`${provider} neutral tokens preserve day at the ideal sunrise before the solar centre reaches zero`, () => {
+    const point = { latitude: 51.21, longitude: 6.77 };
+    // Shared NOAA geometry: -0.7498 degrees at 06:35Z is above the -0.833-degree
+    // ideal-horizon sunrise threshold; -1.4610 degrees at 06:30Z is still below it.
+    assert.equal(currentDayFixture(provider, 'cloudy', '2026-11-07T06:35:00Z', point).isDay, 1);
+    assert.equal(currentDayFixture(provider, 'cloudy', '2026-11-07T06:30:00Z', point).isDay, 0);
+  });
+
+  test(`${provider} neutral tokens use the accepted UTC observation instead of fetch time or timezone labels`, () => {
+    const utc = '2026-03-20T17:30:00Z', fetchedAt = Date.parse('2026-03-20T19:00:00Z');
+    const point = { latitude: 0, longitude: 0 };
+    for (const zone of ['Europe/Berlin', 'Pacific/Kiritimati']) {
+      const current = currentDayFixture(provider, 'cloudy', utc, point, fetchedAt, zone);
+      assert.equal(current.isDay, 1, 'the 90-minute-old observation precedes sunset; fetch time is already night');
+      assert.equal(current.time, utc);
+      assert.equal(current.fetchedAt, fetchedAt);
+    }
+  });
+
+  test(`${provider} neutral tokens work across hemispheres, the date line, zero coordinates and polar seasons`, async t => {
+    for (const [label, utc, latitude, longitude, expected] of [
+      ['Sydney morning', '2026-11-07T20:30:00Z', -33.8688, 151.2093, 1],
+      ['date-line daylight', '2026-11-07T20:30:00Z', 1.8721, -157.4278, 1],
+      ['zero-point midnight', '2026-03-20T00:00:00Z', 0, 0, 0],
+      ['north polar day', '2026-06-21T00:00:00Z', 90, 0, 1],
+      ['north polar night', '2026-12-21T12:00:00Z', 90, 0, 0],
+      ['south polar night', '2026-06-21T12:00:00Z', -90, 0, 0],
+    ]) {
+      await t.test(label, () => {
+        assert.equal(currentDayFixture(provider, 'cloudy', utc, { latitude, longitude }).isDay, expected);
+      });
+    }
+  });
+
+  test(`${provider} explicit day/night tokens retain priority over the astronomical fallback`, () => {
+    const dayToken = provider === 'DWD' ? 'clear-day' : 'clearsky_day';
+    const nightToken = provider === 'DWD' ? 'clear-night' : 'clearsky_night';
+    assert.equal(currentDayFixture(provider, dayToken, '2026-11-07T20:30:00Z', { latitude: 51.21, longitude: 6.77 }).isDay, 1);
+    assert.equal(currentDayFixture(provider, nightToken, '2026-11-07T20:30:00Z', { latitude: -33.8688, longitude: 151.2093 }).isDay, 0);
+  });
+}
+
+test('neutral nighttime API observations return a night icon without changing the daily forecast context', async t => {
+  const utc = '2026-11-03T20:30:00Z';
+  const harness = weatherHarness(t, {
+    now: Date.parse(utc), bright: brightSkyFixture({ timestamp: utc, icon: 'cloudy', cloud_cover: 100 }),
+    met: metFixture(Array.from({ length: 4 }, (_, index) => ({
+      time: new Date(Date.parse(utc) + index * 24 * 60 * 60_000).toISOString(), temperature: 8 + index,
+    }))),
+  });
+  const response = await harness.request(), payload = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(payload.weatherMeta.isDay, 0);
+  assert.equal(payload.current.is_day, 0);
+  assert.match(payload.current.condition.icon, /\/night\/122\.png$/);
+  assert.equal(payload.current.condition.code, 1009);
+  assert.equal(payload.current.cloud, 100);
+  assert.equal(payload.weatherMeta.time, utc);
+  assert.deepEqual(payload.forecast.forecastday.map(day => day.date), ['2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06']);
+  for (const day of payload.forecast.forecastday) assert.match(day.day.condition.icon, /\/day\/122\.png$/);
+});
+
+test('missing, automatic and invalid time zones resolve from the selected coordinates worldwide', async t => {
+  for (const [label, coordinates, timeZone, expected] of [
+    ['Sydney', { latitude: -33.8688, longitude: 151.2093 }, null, 'Australia/Sydney'],
+    ['Tokyo', { latitude: 35.6762, longitude: 139.6503 }, 'auto', 'Asia/Tokyo'],
+    ['date line', { latitude: 1.8721, longitude: -157.4278 }, 'Invalid/Zone', 'Pacific/Kiritimati'],
+    ['pole', { latitude: 90, longitude: 0 }, null, 'Etc/GMT'],
+    ['zero-zero', { latitude: 0, longitude: 0 }, 'auto', 'GMT'],
+  ]) {
+    await t.test(label, async t => {
+      const harness = weatherHarness(t, { coordinates, timeZone, timeZoneMetadata: { timezone: expected } });
+      const response = await harness.request();
+      assert.equal(response.status, 200);
+      const payload = await response.json();
+      assert.equal(payload.location.tz_id, expected);
+      assert.equal(payload.weatherMeta.timezone, expected);
+      assert.equal(payload.location.lat, coordinates.latitude);
+      assert.equal(payload.location.lon, coordinates.longitude);
+      const lookups = harness.requests.filter(url => url.hostname === 'api.open-meteo.com');
+      assert.equal(lookups.length, 1);
+      assert.equal(lookups[0].pathname, '/v1/forecast');
+      assert.deepEqual([...lookups[0].searchParams.keys()].sort(), ['forecast_days', 'latitude', 'longitude', 'timezone']);
+      assert.equal(lookups[0].searchParams.get('timezone'), 'auto');
+      assert.equal(lookups[0].searchParams.get('forecast_days'), '1');
+      assert.equal(Number(lookups[0].searchParams.get('latitude')), coordinates.latitude);
+      assert.equal(Number(lookups[0].searchParams.get('longitude')), coordinates.longitude);
+    });
+  }
+});
+
+test('a valid explicit IANA time zone avoids the automatic metadata request', async t => {
+  const harness = weatherHarness(t, { timeZone: 'Asia/Tokyo' });
+  const payload = await (await harness.request()).json();
+  assert.equal(payload.location.tz_id, 'Asia/Tokyo');
+  assert.ok(!harness.calls.includes('api.open-meteo.com'));
+});
+
+test('automatic time zones are cached by five-decimal coordinates for a day without charging healthy weather hits', async t => {
+  const entries = new Map(), writes = [], reads = [];
+  const cache = {
+    match: async request => { reads.push(request.url); return entries.get(request.url)?.clone() || null; },
+    put: async (request, response) => {
+      writes.push(request.url);
+      entries.set(request.url, response.clone());
+    },
+  };
+  const harness = weatherHarness(t, { cache, timeZone: null, coordinates: { latitude: -33.8688, longitude: 151.2093 }, timeZoneMetadata: { timezone: 'Australia/Sydney' } });
+  assert.equal((await harness.request()).status, 200);
+  await Promise.all(harness.pending);
+  const timeZoneKey = writes.find(url => new URL(url).hostname === 'weather-timezone-cache.hundesalon-nika.internal');
+  assert.equal(new URL(timeZoneKey).pathname, '/v1/-33.86880/151.20930');
+  assert.equal(entries.get(timeZoneKey).headers.get('Cache-Control'), 'max-age=86400');
+  assert.deepEqual(await entries.get(timeZoneKey).clone().json(), { timezone: 'Australia/Sydney', expiresAt: CURRENT_TIME + 86400000 });
+  const rateKey = writes.find(url => new URL(url).hostname === 'rate-limit.hundesalon-nika.internal');
+  entries.set(rateKey, new Response('24'));
+  const networkCalls = harness.calls.length, writeCount = writes.length;
+  const rateReads = reads.filter(url => new URL(url).hostname === 'rate-limit.hundesalon-nika.internal').length;
+  const response = await harness.request();
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('X-Weather-Cache'), 'HIT');
+  assert.equal((await response.json()).location.tz_id, 'Australia/Sydney');
+  assert.equal(harness.calls.length, networkCalls);
+  assert.equal(writes.length, writeCount);
+  assert.equal(reads.filter(url => new URL(url).hostname === 'rate-limit.hundesalon-nika.internal').length, rateReads);
+});
+
+test('expired time-zone metadata is resolved again instead of reusing another local time', async t => {
+  const harness = weatherHarness(t, {
+    timeZone: null, timeZoneMetadata: { timezone: 'Asia/Tokyo' },
+    cache: {
+      match: async request => new URL(request.url).hostname === 'weather-timezone-cache.hundesalon-nika.internal'
+        ? Response.json({ timezone: 'Europe/Berlin', expiresAt: CURRENT_TIME - 1 }) : null,
+      put: async () => {},
+    },
+  });
+  const payload = await (await harness.request()).json();
+  assert.equal(payload.location.tz_id, 'Asia/Tokyo');
+  assert.equal(harness.calls.filter(host => host === 'api.open-meteo.com').length, 1);
+});
+
+test('an uncached automatic time-zone lookup is rate limited before contacting any provider', async t => {
+  const harness = weatherHarness(t, {
+    timeZone: null,
+    cache: {
+      match: async request => new URL(request.url).hostname === 'rate-limit.hundesalon-nika.internal' ? new Response('24') : null,
+      put: async () => assert.fail('Rejected requests must not write any cache'),
+    },
+  });
+  assert.equal((await harness.request()).status, 429);
+  assert.equal(harness.calls.length, 0);
+});
+
+test('unavailable or malformed time-zone metadata returns 503 without inventing Berlin or UTC', async t => {
+  for (const metadata of [null, {}, { timezone: 'Invalid/Zone' }, new Error('metadata unavailable')]) {
+    await t.test(String(metadata?.timezone || metadata), async t => {
+      const harness = weatherHarness(t, { timeZone: null, timeZoneMetadata: metadata });
+      const response = await harness.request();
+      assert.equal(response.status, 503);
+      const payload = await response.json();
+      assert.equal(payload.location, undefined);
+      assert.deepEqual(harness.calls, ['api.open-meteo.com']);
+    });
+  }
+});
 
 test('current observations reject missing, invalid, stale and far-future timestamps without relabeling fetch time', () => {
   for (const timestamp of [undefined, '', 'invalid', new Date(CURRENT_TIME - 120 * 60_000 - 1).toISOString(), new Date(CURRENT_TIME + 10 * 60_000 + 1).toISOString()]) {
@@ -124,6 +312,91 @@ test('current observations accept only finite numeric values or nonblank numeric
       { time: new Date(CURRENT_TIME).toISOString(), temperature },
     ]), COORDINATES, 'Europe/Berlin', CURRENT_TIME).temperature, Number(temperature));
   }
+});
+
+test('DWD cloud provenance follows the field fallback station while preserving the primary station context', () => {
+  const payload = brightSkyFixture({ source_id: 10, cloud_cover: 75, fallback_source_ids: { cloud_cover: 20 } });
+  payload.sources = [
+    { id: 10, station_name: 'Dormagen-Zons', distance: 5096 },
+    { id: 20, station_name: 'Duesseldorf', distance: 16708, lat: 51.296, lon: 6.76863,
+      dwd_station_id: '01078', wmo_station_id: '10400', observation_type: 'synop' },
+  ];
+  const current = normalizeBrightSkyCurrent(payload, COORDINATES, 'Europe/Berlin', CURRENT_TIME);
+  assert.equal(current.stationName, 'Dormagen-Zons');
+  assert.equal(current.stationDistanceMeters, 5096);
+  assert.deepEqual(current.fieldSources.cloudCover, {
+    source: 'dwd-bright-sky', time: payload.weather.timestamp, timeBasis: 'compiled-record', sourceId: 20,
+    stationName: 'Duesseldorf', stationDistanceMeters: 16708, stationLatitude: 51.296, stationLongitude: 6.76863,
+    dwdStationId: '01078', wmoStationId: '10400', observationType: 'synop',
+  });
+  payload.weather.fallback_source_ids.cloud_cover = 99;
+  const unknown = normalizeBrightSkyCurrent(payload, COORDINATES, 'Europe/Berlin', CURRENT_TIME).fieldSources.cloudCover;
+  assert.equal(unknown.sourceId, 99);
+  assert.equal(unknown.stationName, '');
+  assert.equal(unknown.stationDistanceMeters, null, 'an unknown fallback must not borrow the primary station');
+  payload.sources = {};
+  assert.equal(normalizeBrightSkyCurrent(payload, COORDINATES, 'Europe/Berlin', CURRENT_TIME).fieldSources.cloudCover.stationName, '');
+});
+
+test('MET cloud layers retain separate model timing, physical percentages and zero without summing overlaps', () => {
+  const payload = metFixture();
+  Object.assign(payload.properties.timeseries[0].data.instant.details, {
+    cloud_area_fraction: 59.4, cloud_area_fraction_low: 0, cloud_area_fraction_medium: 42.2, cloud_area_fraction_high: 28.9,
+  });
+  const actual = normalizeMetCurrent(payload, COORDINATES, 'Europe/Berlin', CURRENT_TIME);
+  assert.deepEqual(actual.cloudLayers, {
+    low: 0, mid: 42.2, high: 28.9, total: 59.4, source: 'met-norway-locationforecast',
+    validTime: new Date(CURRENT_TIME).toISOString(), modelUpdatedAt: payload.properties.meta.updated_at, fetchedAt: CURRENT_TIME,
+  });
+  assert.equal(actual.cloudCover, 59.4);
+  assert.notEqual(actual.cloudLayers.total, actual.cloudLayers.low + actual.cloudLayers.mid + actual.cloudLayers.high);
+});
+
+test('missing and malformed cloud layers stay unknown instead of creating a clear lower sky', () => {
+  assert.equal(normalizeMetCurrent(metFixture(), COORDINATES, 'Europe/Berlin', CURRENT_TIME).cloudLayers, null);
+  for (const invalid of [null, undefined, '', ' ', false, true, [], {}, -1, 101, NaN, Infinity]) {
+    const payload = metFixture();
+    Object.assign(payload.properties.timeseries[0].data.instant.details, {
+      cloud_area_fraction_low: invalid, cloud_area_fraction_medium: invalid, cloud_area_fraction_high: invalid,
+    });
+    assert.equal(normalizeMetCurrent(payload, COORDINATES, 'Europe/Berlin', CURRENT_TIME).cloudLayers, null);
+  }
+  const partial = metFixture();
+  partial.properties.timeseries[0].data.instant.details.cloud_area_fraction_high = 100;
+  const layers = normalizeMetCurrent(partial, COORDINATES, 'Europe/Berlin', CURRENT_TIME).cloudLayers;
+  assert.equal(layers.low, null);
+  assert.equal(layers.mid, null);
+  assert.equal(layers.high, 100);
+});
+
+test('independent model layers survive the combined cache without replacing observed cloud totals or condition', async t => {
+  const met = metFixture(), records = new Map();
+  Object.assign(met.properties.timeseries[0].data.instant.details, {
+    cloud_area_fraction: 80, cloud_area_fraction_low: 0, cloud_area_fraction_medium: 0, cloud_area_fraction_high: 80,
+  });
+  const harness = weatherHarness(t, {
+    bright: brightSkyFixture({ cloud_cover: 100, icon: 'cloudy' }), met,
+    cache: {
+      match: async request => records.get(request.url)?.clone() || null,
+      put: async (request, response) => { records.set(request.url, response.clone()); },
+    },
+  });
+  const first = await (await harness.request()).json();
+  assert.equal(first.weatherMeta.source, 'dwd-bright-sky');
+  assert.equal(first.weatherMeta.cloudCover, 100);
+  assert.equal(first.current.cloud, 100);
+  assert.equal(first.current.condition.code, 1009);
+  assert.equal(first.weatherMeta.cloudLayers.source, 'met-norway-locationforecast');
+  assert.equal(first.weatherMeta.cloudLayers.total, 80);
+  assert.equal(first.weatherMeta.cloudLayers.low, 0);
+  assert.equal(first.forecast.forecastday[0].day.cloudLayers, undefined, 'current model layers are not daily forecast layers');
+  assert.equal(harness.requests.find(url => url.hostname === 'api.met.no').pathname, '/weatherapi/locationforecast/2.0/complete');
+  await Promise.all(harness.pending);
+  const networkCalls = harness.calls.length;
+  const cached = await harness.request();
+  assert.equal(cached.headers.get('X-Weather-Cache'), 'HIT');
+  assert.deepEqual((await cached.json()).weatherMeta.cloudLayers, first.weatherMeta.cloudLayers);
+  assert.equal(harness.calls.length, networkCalls);
 });
 
 test('MET current selection uses the closest valid temperature and time, not the first array entry', () => {
@@ -207,11 +480,14 @@ test('unusable provider timestamps return a temporary error instead of invented 
   assert.equal((await harness.request()).status, 502);
 });
 
-test('zero-zero coordinates are rejected before contacting a weather provider', async t => {
+test('genuine zero-zero coordinates remain a valid point for current weather', async t => {
   const harness = weatherHarness(t);
-  const response = await onRequest({ request: new Request('https://hundesalon-nika.com/api/weather?latitude=0&longitude=0') });
-  assert.equal(response.status, 400);
-  assert.equal(harness.calls.length, 0);
+  const response = await onRequest({ request: new Request('https://hundesalon-nika.com/api/weather?latitude=0&longitude=0&timezone=Etc/GMT') });
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.location.lat, 0);
+  assert.equal(payload.location.lon, 0);
+  assert.equal(harness.calls.length, 2);
 });
 
 test('cached observations that have aged beyond the current window are refreshed', async t => {
@@ -242,7 +518,7 @@ test('asynchronous cache write rejections are handled even without waitUntil', a
     match: async () => null,
     put: async () => { throw new Error('Cache unavailable'); },
   } });
-  const response = await onRequest({ request: new Request('https://hundesalon-nika.com/api/weather?latitude=51.3397&longitude=12.3731') });
+  const response = await onRequest({ request: new Request('https://hundesalon-nika.com/api/weather?latitude=51.3397&longitude=12.3731&timezone=Europe/Berlin') });
   assert.equal(response.status, 200);
   assert.equal((await response.json()).current.temp_c, 7);
   assert.equal(harness.calls.length, 2);
@@ -255,6 +531,7 @@ test('MET provider cache honors Expires across five-minute combined-cache misses
     match: async request => {
       const url = new URL(request.url);
       if (url.hostname !== 'met-forecast-cache.hundesalon-nika.internal') return null;
+      assert.match(url.pathname, /^\/v3\//);
       return records.get(request.url)?.clone() || null;
     },
     put: async (request, response) => {
@@ -280,8 +557,13 @@ test('weather coordinate parsing rejects invalid or out-of-range values', () => 
   assert.deepEqual(parseWeatherLocation('51.3397, 12.3731'), COORDINATES);
   assert.equal(parseWeatherCoordinates('', '12.3731'), null);
   assert.equal(parseWeatherCoordinates('91', '12.3731'), null);
-  assert.equal(parseWeatherCoordinates('0', '0'), null);
+  assert.deepEqual(parseWeatherCoordinates('0', '0'), { latitude: 0, longitude: 0 });
   assert.deepEqual(parseWeatherCoordinates('0', '12'), { latitude: 0, longitude: 12 });
+  assert.deepEqual(parseWeatherLocation('0, 0'), { latitude: 0, longitude: 0 });
+  for (const invalid of [null, undefined, '', ' ', false, true, [], {}, NaN, Infinity]) {
+    assert.equal(parseWeatherCoordinates(invalid, 0), null);
+    assert.equal(parseWeatherCoordinates(0, invalid), null);
+  }
   assert.equal(parseWeatherLocation('Leipzig'), null);
 });
 
@@ -408,7 +690,7 @@ test('cached weather coordinates avoid upstream requests even when the rate limi
     default: {
       match: async request => {
         assert.equal(new URL(request.url).hostname, 'weather-cache.hundesalon-nika.internal');
-        assert.match(new URL(request.url).pathname, /^\/v5\//);
+        assert.match(new URL(request.url).pathname, /^\/v7\//);
         return Response.json(cachedWeatherFixture());
       },
       put: async () => assert.fail('Cache hits must not consume a rate-limit allowance'),
@@ -417,7 +699,7 @@ test('cached weather coordinates avoid upstream requests even when the rate limi
 
   try {
     const response = await onRequest({
-      request: new Request('https://hundesalon-nika.com/api/weather?latitude=51.3397&longitude=12.3731'),
+      request: new Request('https://hundesalon-nika.com/api/weather?latitude=51.3397&longitude=12.3731&timezone=Europe/Berlin'),
     });
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('X-Weather-Cache'), 'HIT');
@@ -456,7 +738,7 @@ test('a named location consumes one rate-limit allowance before reading cached w
 
   try {
     const response = await onRequest({
-      request: new Request('https://hundesalon-nika.com/api/weather?location=Leipzig'),
+      request: new Request('https://hundesalon-nika.com/api/weather?location=Leipzig&timezone=Europe/Berlin'),
     });
     assert.equal(response.status, 200);
     assert.equal(upstreamCalls, 1);
@@ -512,7 +794,7 @@ test('weather forecast returns four successive real days and preserves partial p
         default: {
           match: async request => {
             if (new URL(request.url).hostname === 'weather-cache.hundesalon-nika.internal') {
-              assert.match(new URL(request.url).pathname, /^\/v5\//);
+              assert.match(new URL(request.url).pathname, /^\/v7\//);
             }
             return null;
           },
@@ -521,7 +803,7 @@ test('weather forecast returns four successive real days and preserves partial p
       };
 
       const response = await onRequest({
-        request: new Request('https://hundesalon-nika.com/api/weather?latitude=51.3397&longitude=12.3731&lang=ru'),
+        request: new Request('https://hundesalon-nika.com/api/weather?latitude=51.3397&longitude=12.3731&timezone=Europe/Berlin&lang=ru'),
       });
       assert.equal(response.status, 200);
       const payload = await response.json();
@@ -691,7 +973,7 @@ test('provider cache with future expiry still requires four valid consecutive ta
         match: async request => {
           const url = new URL(request.url);
           if (url.hostname !== 'met-forecast-cache.hundesalon-nika.internal') return null;
-          assert.match(url.pathname, /^\/v2\//);
+          assert.match(url.pathname, /^\/v3\//);
           return Response.json({ payload: entries === null ? {} : metFixture(entries), expiresAt: CURRENT_TIME + 20 * 60_000 });
         },
         put: async () => {},
@@ -742,7 +1024,7 @@ test('an empty MET 200 stores only cooldown metadata and recovers after its adve
   assert.equal(harness.calls.filter(host => host === 'api.met.no').length, 2);
   const healthyCache = [...records.entries()].find(([key]) => new URL(key).hostname === 'weather-cache.hundesalon-nika.internal');
   assert.ok(healthyCache);
-  assert.match(new URL(healthyCache[0]).pathname, /^\/v5\//);
+  assert.match(new URL(healthyCache[0]).pathname, /^\/v7\//);
   assert.equal(healthyCache[1].headers.get('Cache-Control'), 'max-age=300');
 
   const hit = await harness.request();

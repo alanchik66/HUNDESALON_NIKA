@@ -2005,7 +2005,7 @@ var compiledWeatherConfiguration = {
     thunderNight: `//cdn.weatherapi.com/weather/64x64/night/389.png`,
   },
   bn = `Location not found. Please check your spelling and try again.`,
-  xn = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/,
+  xn = /^\s*([+-]?\d+(?:\.\d+)?)\s*,\s*([+-]?\d+(?:\.\d+)?)\s*$/,
   Sn = new Map(),
   J = e => Math.round(Number(e || 0) * 10) / 10,
   Y = e => J((Number(e || 0) * 9) / 5 + 32),
@@ -2046,11 +2046,16 @@ var compiledWeatherConfiguration = {
     if (!t) throw X();
     return t;
   },
+  coordinateNumber = (value, limit) => (typeof value === `number` || typeof value === `string` && value.trim() !== ``) && Number.isFinite(Number(value)) && Math.abs(Number(value)) <= limit ? Number(value) : NaN,
   Pn = e => {
-    if (typeof e == `string`) return { query: Nn(e), explicitMeta: null };
+    if (typeof e == `string`) {
+      const query = Nn(e);
+      Fn(query); // Reject out-of-range coordinate literals before any network request.
+      return { query, explicitMeta: null };
+    }
     if (e && typeof e == `object`) {
-      let t = Number(e.latitude),
-        n = Number(e.longitude);
+      let t = coordinateNumber(e.latitude, 90),
+        n = coordinateNumber(e.longitude, 180);
       if (!Number.isFinite(t) || !Number.isFinite(n)) throw X();
       let r = {
           latitude: t,
@@ -2067,7 +2072,10 @@ var compiledWeatherConfiguration = {
   },
   Fn = e => {
     let t = e.match(xn);
-    return t ? { latitude: Number(t[1]), longitude: Number(t[2]) } : null;
+    if (!t) return null;
+    const latitude = coordinateNumber(t[1], 90), longitude = coordinateNumber(t[2], 180);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) throw X();
+    return { latitude, longitude };
   },
   In = async () => null,
   Ln = async ({ latitude: e, longitude: t }, n = `en`) => {
@@ -2239,28 +2247,32 @@ var compiledWeatherConfiguration = {
       a = `${r}:${i}`;
     return n.has(a) ? e : (n.add(a), e.push({ ...t, label: i, query: t.query || jn(t) }), e);
   },
-  _mapOpenMeteoSearchRow = (e, t) => ({
-    id: `${e.latitude},${e.longitude}`,
-    name: e.name || t,
-    region: e.admin1 || e.admin2 || ``,
-    country: e.country || ``,
-    countryCode: e.country_code || ``,
-    timezone: e.timezone || ``,
-    latitude: e.latitude,
-    longitude: e.longitude,
-    label: An({ name: e.name || t, region: e.admin1 || e.admin2 || ``, country: e.country || `` }),
-    query: jn({
+  _mapOpenMeteoSearchRow = (e, t) => {
+    const latitude = coordinateNumber(e?.latitude, 90), longitude = coordinateNumber(e?.longitude, 180);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+    return {
+      id: `${latitude},${longitude}`,
       name: e.name || t,
       region: e.admin1 || e.admin2 || ``,
       country: e.country || ``,
-      latitude: e.latitude,
-      longitude: e.longitude,
-    }),
-  }),
+      countryCode: e.country_code || ``,
+      timezone: e.timezone || ``,
+      latitude,
+      longitude,
+      label: An({ name: e.name || t, region: e.admin1 || e.admin2 || ``, country: e.country || `` }),
+      query: jn({
+        name: e.name || t,
+        region: e.admin1 || e.admin2 || ``,
+        country: e.country || ``,
+        latitude,
+        longitude,
+      }),
+    };
+  },
   _mapPhotonSearchRow = e => {
     let t = e?.properties || {},
-      n = Number(e?.geometry?.coordinates?.[1]),
-      r = Number(e?.geometry?.coordinates?.[0]);
+      n = coordinateNumber(e?.geometry?.coordinates?.[1], 90),
+      r = coordinateNumber(e?.geometry?.coordinates?.[0], 180);
     if (!Number.isFinite(n) || !Number.isFinite(r)) return null;
     let i = t.name || t.city || t.county || t.state || ``,
       a = t.state || t.county || t.district || ``,
@@ -2282,8 +2294,8 @@ var compiledWeatherConfiguration = {
   },
   _mapNominatimSearchRow = e => {
     let t = e?.address || {},
-      n = Number(e?.lat),
-      r = Number(e?.lon);
+      n = coordinateNumber(e?.lat, 90),
+      r = coordinateNumber(e?.lon, 180);
     if (!Number.isFinite(n) || !Number.isFinite(r)) return null;
     let i = Q(
         t.name,
@@ -2320,7 +2332,10 @@ var compiledWeatherConfiguration = {
       r && (i.language = r);
       try {
         let t = await axios.get(mn, { params: i, timeout: 1e4 });
-        for (let r of t.data?.results || []) n.push(_mapOpenMeteoSearchRow(r, e));
+        for (let r of t.data?.results || []) {
+          const row = _mapOpenMeteoSearchRow(r, e);
+          if (row) n.push(row);
+        }
       } catch {}
     }
     return n;
@@ -2380,7 +2395,7 @@ var compiledWeatherConfiguration = {
             country_code: t.countryCode || e.location.country_code,
             lat: t.latitude ?? e.location.lat,
             lon: t.longitude ?? e.location.lon,
-            tz_id: t.timezone || e.location.tz_id,
+            tz_id: e.location.tz_id || t.timezone || ``,
           },
         },
   Wn = async (e, t, n = `en`) => {
@@ -2501,7 +2516,7 @@ var compiledWeatherConfiguration = {
     );
   },
   qn = async (e, options = {}) => {
-    let t = (await axios.get(`${dn}/weather`, { params: { location: e, forecast_contract: `four-day-v2` },
+    let t = (await axios.get(`${dn}/weather`, { params: { location: e, forecast_contract: `four-day-v2`, ...(options.timezone ? { timezone: options.timezone } : {}) },
       ...(options.forceRefresh ? { headers: { 'Cache-Control': 'no-cache' } } : {}), timeout: 15e3 })).data;
     return t?.rateLimited || t?.serviceUnavailable ? null : t;
   },
@@ -2514,7 +2529,6 @@ var compiledWeatherConfiguration = {
           days: 4,
           aqi: `no`,
           alerts: `no`,
-          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
         timeout: 1e4,
       })
@@ -2623,7 +2637,7 @@ var compiledWeatherConfiguration = {
       if (l && !t.forceRefresh) return l;
       if (un)
         try {
-          let e = await qn(r, t);
+          let e = await qn(r, { ...t, timezone: n.explicitMeta?.timezone || `` });
           if (e) return c(await Wn(e, n, i));
         } catch (e) {
           if (On(e)) {

@@ -19,9 +19,18 @@ try {
         mode === 'mobile' ? { ...devices['iPhone 13'] } : { viewport: { width: 1440, height: 1000 } }
       );
       const page = await context.newPage();
+      // Keep the localhost development watcher independent of the fixed QA clock.
+      await page.route('**/assets/js/local-dev-refresh.js*', route => route.fulfill({
+        status: 200, contentType: 'application/javascript', body: '/* Development refresh is isolated in QA. */',
+      }));
       await page.clock.setFixedTime(new Date('2026-11-02T08:00:00Z'));
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
+      let flowStarted = false;
+      let unexpectedNavigations = 0;
+      page.on('framenavigated', frame => {
+        if (flowStarted && frame === page.mainFrame()) unexpectedNavigations++;
+      });
       let calls = 0;
       const payloads = [];
       let busyIntervals = [];
@@ -58,6 +67,7 @@ try {
       };
       const modal = page.locator('#booking-modal');
       await page.goto(`${base}/${locale}/prays-list.html`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      flowStarted = true;
       const cookie = page.locator('[data-cookie-choice="accept"]');
       if (await cookie.isVisible()) await cookie.click();
       const card = page.locator('[data-price-categories] .price-card:visible').first();
@@ -90,7 +100,9 @@ try {
         return Object.fromEntries(['date', 'time', 'service', 'breed', 'service_ids', 'pet_species', 'pet_breed']
           .map(name => [name, String(data.get(name) || '')]));
       });
-      Object.values(selected).forEach(value => assert.notEqual(value, ''));
+      Object.entries(selected).forEach(([name, value]) => {
+        assert.notEqual(value, '', `${locale}/${mode}: ${name} must be populated before the contact step`);
+      });
       await modal.locator('#next-step-2').click();
       await assertStep(3);
       await modal.locator('[data-booking-flow-back]').click();
@@ -158,6 +170,7 @@ try {
         for (const [name, value] of Object.entries(selected)) assert.equal(payload[name], value);
       }
       assert.deepEqual(errors, []);
+      assert.equal(unexpectedNavigations, 0, `${locale}/${mode}: the modal flow must not navigate or reload the page`);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1), false);
       await page.screenshot({ path: path.join(output, `${locale}-${mode}-saved.png`) });
       console.log(JSON.stringify({ locale, mode, ok: true, mocked: true, calls, unifiedModal: true }));

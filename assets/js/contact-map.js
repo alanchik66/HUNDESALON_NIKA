@@ -146,18 +146,50 @@
     window.HundesalonNavPill?.scan(controls);
   }
 
-  async function getGoogleMapsKey() {
-    const controller = new window.AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), CONFIG_TIMEOUT_MS);
-    const response = await fetch(GOOGLE_MAPS_CONFIG_URL, {
-      headers: { Accept: 'application/json' },
-      credentials: 'same-origin',
-      cache: 'no-store',
-      signal: controller.signal,
-    }).finally(() => clearTimeout(timeoutId));
-    if (!response.ok) throw new Error(`Maps config returned ${response.status}`);
-    const payload = await response.json();
-    return payload.enabled && typeof payload.apiKey === 'string' ? payload.apiKey.trim() : '';
+  async function getGoogleMapsConfig() {
+    const requestConfig = async () => {
+      const controller = new window.AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), CONFIG_TIMEOUT_MS);
+      try {
+        const response = await fetch(GOOGLE_MAPS_CONFIG_URL, {
+          headers: { Accept: 'application/json' },
+          credentials: 'same-origin',
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          const error = new Error(`Maps config returned ${response.status}`);
+          error.retryable = response.status >= 500;
+          throw error;
+        }
+        return await response.json();
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    };
+    let payload;
+    try {
+      payload = await requestConfig();
+    } catch (error) {
+      if (error.retryable === false) throw error;
+      payload = await requestConfig();
+    }
+    let embedUrl = '';
+    if (typeof payload.embedUrl === 'string') {
+      try {
+        const url = new URL(payload.embedUrl);
+        if (url.origin === 'https://www.google.com' && url.pathname === '/maps/embed'
+          && !url.username && !url.password && url.searchParams.has('pb') && !url.searchParams.has('key')) {
+          embedUrl = url.href;
+        }
+      } catch {
+        // Ignore malformed configuration instead of embedding an arbitrary URL.
+      }
+    }
+    return {
+      apiKey: payload.enabled && typeof payload.apiKey === 'string' ? payload.apiKey.trim() : '',
+      embedUrl,
+    };
   }
 
   function loadGoogleMaps(apiKey) {
@@ -365,6 +397,24 @@
     return true;
   }
 
+  async function initGoogleEmbed(element, url) {
+    const frame = document.createElement('iframe');
+    frame.className = 'map-embed-google';
+    frame.title = element.getAttribute('aria-label') || 'HUNDESALON NIKA — Google Maps';
+    frame.referrerPolicy = 'strict-origin-when-cross-origin';
+    frame.allowFullscreen = true;
+    const loaded = new Promise((resolve, reject) => {
+      frame.addEventListener('load', resolve, { once: true });
+      frame.addEventListener('error', () => reject(new Error('Google Maps embed failed to load')), { once: true });
+    });
+    frame.src = url;
+    element.replaceChildren(frame);
+    await withTimeout(loaded, GOOGLE_MAPS_TIMEOUT_MS, 'Google Maps embed timed out');
+    element.dataset.mapReady = '1';
+    element.dataset.mapProvider = 'google-embed';
+    element.dataset.mapMode = 'roadmap';
+  }
+
   function showMapUnavailable(element) {
     const ui = MAP_UI_LABELS[getMapLanguage()] || MAP_UI_LABELS.de;
     const message = document.createElement('p');
@@ -378,17 +428,25 @@
   async function initMaps() {
     await waitUntilNearViewport(MAP_ELEMENTS[0]);
 
-    let apiKey = '';
+    let config = { apiKey: '', embedUrl: '' };
     try {
-      apiKey = await getGoogleMapsKey();
+      config = await getGoogleMapsConfig();
     } catch {
       // The public configuration endpoint may be temporarily unavailable.
     }
 
     for (const element of MAP_ELEMENTS) {
-      if (apiKey) {
+      if (config.embedUrl) {
         try {
-          if (await initGoogleMap(element, apiKey)) continue;
+          await initGoogleEmbed(element, config.embedUrl);
+          continue;
+        } catch {
+          // Fall through to the configured API or the localized unavailable state.
+        }
+      }
+      if (config.apiKey) {
+        try {
+          if (await initGoogleMap(element, config.apiKey)) continue;
         } catch {
           // Continue to the localized Google Maps unavailable state below.
         }

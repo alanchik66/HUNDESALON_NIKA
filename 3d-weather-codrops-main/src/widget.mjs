@@ -28,6 +28,8 @@ var React = toInteropDefault(getReact()),
       x = (0, React.useRef)(null),
       S = (0, React.useRef)(0),
       mounted = (0, React.useRef)(true),
+      resultQuery = (0, React.useRef)(``),
+      selectionRevision = (0, React.useRef)(0),
       C = s.searchPlaceholder || `Search...`,
       w = s.searchNoResults || `No matching cities`,
       T = s.searchResultsLabel || `Choose a city`,
@@ -48,12 +50,12 @@ var React = toInteropDefault(getReact()),
         : `weather-location-selector__current weather-location-selector__current--stacked`;
     ((0, React.useEffect)(() => {
       mounted.current = true;
-      return () => { mounted.current = false; S.current += 1; };
+      return () => { mounted.current = false; S.current += 1; selectionRevision.current += 1; };
     }, []), (0, React.useEffect)(() => {
       if (typeof window > `u`) return;
       let e = d.trim();
       if (e.length < 2) {
-        ((S.current += 1), v([]), b(!1), g(!1));
+        ((S.current += 1), (resultQuery.current = ``), v([]), b(!1), g(!1));
         return;
       }
       let t = S.current + 1;
@@ -63,7 +65,7 @@ var React = toInteropDefault(getReact()),
           g(!0);
           let n = await weatherService.searchLocations(e, { locale: u });
           if (S.current !== t) return;
-          (v(n), b(!0));
+          ((resultQuery.current = e.toLowerCase()), v(n), b(!0));
         } catch {
           if (S.current !== t) return;
           (v([]), b(!0));
@@ -88,23 +90,25 @@ var React = toInteropDefault(getReact()),
         );
       }, [y]));
     let I = () => {
-        (f(``), v([]), b(!1), g(!1));
+        (S.current += 1, (resultQuery.current = ``), f(``), v([]), b(!1), g(!1));
       },
       L = async t => {
+        const revision = ++selectionRevision.current;
         m(!0);
         try {
           await e(t);
-          if (mounted.current) I();
+          if (mounted.current && revision === selectionRevision.current) I();
         } finally {
-          if (mounted.current) m(!1);
+          if (mounted.current && revision === selectionRevision.current) m(!1);
         }
       },
       R = async e => {
         if ((e.preventDefault(), d.trim() && !n)) {
           let e = d.trim().toLowerCase();
+          const results = resultQuery.current === e ? _ : [];
           await L(
-            _.find(t => t.label.toLowerCase() === e || t.name.toLowerCase() === e || t.query.toLowerCase() === e) ||
-              _[0] ||
+            results.find(t => t.label.toLowerCase() === e || t.name.toLowerCase() === e || t.query.toLowerCase() === e) ||
+              results[0] ||
               d.trim()
           );
         }
@@ -129,7 +133,7 @@ var React = toInteropDefault(getReact()),
                     type: `text`,
                     value: d,
                     onChange: e => {
-                      (f(e.target.value), !y && e.target.value.trim().length >= 2 && b(!0));
+                      (S.current += 1, (resultQuery.current = ``), v([]), f(e.target.value), !y && e.target.value.trim().length >= 2 && b(!0));
                     },
                     onFocus: () => {
                       (_.length || d.trim().length >= 2) && b(!0);
@@ -208,6 +212,7 @@ var React = toInteropDefault(getReact()),
         (0, jsxRuntime.jsxs)(`button`, {
           onClick: async () => {
             if (!n) {
+              const revision = ++selectionRevision.current;
               m(!0);
               try {
                 if (!navigator.geolocation) throw Error(D);
@@ -221,13 +226,13 @@ var React = toInteropDefault(getReact()),
                     });
                   })
                 ).coords;
-                if (mounted.current) await e({ latitude: t, longitude: n });
+                if (mounted.current && revision === selectionRevision.current) await e({ latitude: t, longitude: n });
               } catch (e) {
-                if (!mounted.current) return;
+                if (!mounted.current || revision !== selectionRevision.current) return;
                 console.error(`Error getting current location:`, e);
                 e?.code === 1 ? l?.(O) : e?.code === 3 ? l?.(k) : window.isSecureContext ? l?.(D) : l?.(A);
               } finally {
-                if (mounted.current) m(!1);
+                if (mounted.current && revision === selectionRevision.current) m(!1);
               }
             }
           },
@@ -327,7 +332,7 @@ var React = toInteropDefault(getReact()),
   Scene3D = createRecoverableScene(React, jsxRuntime.jsx, createRetryableModuleLoader(new URL('./scene.mjs?v=20261103-weather-parity-v6', import.meta.url).href)),
   localeCopy = {
     ru: {
-      locationDeniedStatus: `Нет доступа к геопозиции`,
+      locationDeniedStatus: `Нет доступа. Нажмите «Моя геопозиция» или выберите город.`,
       locationTimeoutStatus: `Время определения геопозиции истекло`,
       locationUnavailableStatus: `Геопозиция недоступна`,
       headerLabel: `Ваша геолокация`,
@@ -364,7 +369,7 @@ var React = toInteropDefault(getReact()),
       enterCityName: `Введите страну, город, село или район...`,
     },
     uk: {
-      locationDeniedStatus: `Немає доступу до геолокації`,
+      locationDeniedStatus: `Немає доступу. Натисніть «Моя геолокація» або виберіть місто.`,
       locationTimeoutStatus: `Час визначення геолокації минув`,
       locationUnavailableStatus: `Геолокація недоступна`,
       headerLabel: `Ваша геолокація`,
@@ -401,7 +406,7 @@ var React = toInteropDefault(getReact()),
       enterCityName: `Введіть країну, місто, село або район...`,
     },
     de: {
-      locationDeniedStatus: `Standortzugriff nicht erlaubt`,
+      locationDeniedStatus: `Kein Standortzugriff. „Mein Standort“ wählen oder Ort suchen.`,
       locationTimeoutStatus: `Standortermittlung hat zu lange gedauert`,
       locationUnavailableStatus: `Standort nicht verfügbar`,
       headerLabel: `Ihre Geolokation`,
@@ -438,7 +443,7 @@ var React = toInteropDefault(getReact()),
       enterCityName: `Stadt eingeben...`,
     },
     en: {
-      locationDeniedStatus: `Location access is not allowed`,
+      locationDeniedStatus: `Location blocked. Tap “My location” or choose a place.`,
       locationTimeoutStatus: `Location request timed out`,
       locationUnavailableStatus: `Location is unavailable`,
       headerLabel: `Your geolocation`,
@@ -531,14 +536,15 @@ var React = toInteropDefault(getReact()),
   formatLocation = (e, t) => (e ? [e.name, formatRegion(e, t)].filter(Boolean).join(`, `) : ``),
   formatLocalTime = (e, t) => {
     if (!e) return ``;
-    let n = new Date(e);
-    return Number.isNaN(n.getTime())
+    const clock = String(e).match(/^\d{4}-\d{2}-\d{2}[T ](\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?$/);
+    return !clock || Number(clock[1]) > 23 || Number(clock[2]) > 59
       ? ``
       : new Intl.DateTimeFormat(localeTags[t] || localeTags.en, {
           hour: `2-digit`,
           minute: `2-digit`,
           hourCycle: `h23`,
-        }).format(n);
+          timeZone: `UTC`,
+        }).format(Date.UTC(2000, 0, 1, Number(clock[1]), Number(clock[2])));
   },
   formatForecastDate = (e, t, full = !1) => {
     if (!e) return ``;
@@ -585,6 +591,7 @@ var React = toInteropDefault(getReact()),
         is_day: 1,
       },
       location: { ...e.location, localtime: `${t.date} 12:00` },
+      weatherMeta: { ...e.weatherMeta, cloudLayers: null },
     };
   },
   weatherStatistics = (e, t) => [
@@ -725,7 +732,8 @@ function WeatherApp({
     ue = d ? formatRegion(d.location, u) : ``,
     de = $ ? formatRegion($.location, u) : ``,
     fe = J ? formatRegion(J.location, u) : ``,
-    canRecover = !d && !(_ || geoPending) && Boolean(y);
+    canRecover = !d && !(_ || geoPending) && Boolean(y),
+    canRequestDeviceLocation = managedRefresh && canRecover && ['denied', 'timeout', 'unavailable'].includes(controller.getState().geoStatus);
   return W
     ? (0, jsxRuntime.jsxs)(`div`, {
         ref: ee,
@@ -881,10 +889,17 @@ function WeatherApp({
                 (0, jsxRuntime.jsx)(`div`, {
                   className: `weather-header-state weather-header-state--recovery absolute inset-0 z-50`,
                   children: (0, jsxRuntime.jsxs)(`div`, {
-                    className: `weather-header-state__inner${y ? ` weather-header-state__inner--error` : ``}`,
+                    className: `weather-header-state__inner${y ? ` weather-header-state__inner--error` : ``}${canRequestDeviceLocation ? ` weather-header-state__inner--geolocation` : ``}`,
                     children: [
                       (_ || geoPending) && !y && (0, jsxRuntime.jsx)(`div`, { className: `weather-header-state__spinner` }),
                       (0, jsxRuntime.jsx)(`p`, { className: `weather-header-state__notice`, role: `status`, children: y || (geoPending ? U.locating : U.loading) }),
+                      canRequestDeviceLocation && (0, jsxRuntime.jsx)(`button`, {
+                        type: `button`,
+                        className: `weather-header-state__geolocation weather-location-selector__current`,
+                        onClick: G,
+                        title: U.locationPermissionDenied,
+                        children: U.currentLocation,
+                      }),
                     ],
                   }),
                 }),
@@ -1052,7 +1067,7 @@ function WeatherApp({
                               children: [
                                 (0, jsxRuntime.jsx)(`span`, { children: formatForecastDate(e.date, u) }),
                                 (0, jsxRuntime.jsxs)(`strong`, {
-                                  children: e.available ? [Math.round(e.day.maxtemp_c), `° / `, Math.round(e.day.mintemp_c), `°`] : `— / —`,
+                                  children: e.available ? [Math.round(e.day.maxtemp_c), `°C / `, Math.round(e.day.mintemp_c), `°C`] : `— / —`,
                                 }),
                                 (0, jsxRuntime.jsx)(`em`, {
                                   children: e.available ? translateCondition(e.day.condition, u) : U.forecastUnavailable,

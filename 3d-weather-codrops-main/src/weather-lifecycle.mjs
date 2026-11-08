@@ -1,3 +1,16 @@
+const cloudAppearanceUrl = new URL('../../assets/js/weather-cloud-motion.js', import.meta.url);
+cloudAppearanceUrl.search = new URL(import.meta.url).search;
+let resolveCloudAppearance;
+// Cloud enhancement must neither block current weather nor disable its static recovery.
+void import(cloudAppearanceUrl.href).then(module => { resolveCloudAppearance = module.resolveCloudAppearance; }).catch(() => null);
+const solarClockUrl = new URL('../../assets/js/weather-solar-time.js', import.meta.url);
+solarClockUrl.search = new URL(import.meta.url).search;
+let resolveSolarPhase;
+// Weather text/recovery must not wait for optional celestial-clock loading.
+export const weatherSceneSolarReady = import(solarClockUrl.href).then(module => {
+  resolveSolarPhase = module.solarPhase; return true;
+}).catch(() => false);
+
 export const WEATHER_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
 export function weatherCurrentTimestamp(data) {
@@ -101,6 +114,7 @@ export function resolveForecastCloudCover(forecastDay) {
 }
 
 export function resolveForecastNoonMs(date, timeZone) {
+  if (typeof timeZone !== 'string' || !timeZone.trim()) return null;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) return null;
   const targetMs = Date.parse(`${date}T12:00:00Z`);
   if (!Number.isFinite(targetMs) || new Date(targetMs).toISOString().slice(0, 10) !== date) return null;
@@ -154,6 +168,18 @@ export const HEADER_WEATHER_RECOVERY_STYLES = `
   margin: 0 !important; padding: 0 !important; overflow-wrap: anywhere; text-align: center;
   font-size: 10px !important; line-height: 1.25 !important; letter-spacing: 0 !important; text-transform: none !important;
 }
+:host([data-weather-variant='header']) .weather-header-preview .weather-header-state--recovery .weather-header-state__inner--geolocation {
+  flex-direction: column !important; gap: 4px !important; padding-bottom: 24px !important; box-sizing: border-box !important;
+}
+:host([data-weather-variant='header']) .weather-header-preview .weather-header-state--recovery .weather-header-state__geolocation {
+  pointer-events: auto !important; min-height: 24px !important; max-width: 100% !important; margin: 0 !important;
+  padding: 3px 10px !important; border: 1px solid #d6c38a88 !important; border-radius: 999px !important;
+  background: #0a2419cc !important; color: #fff2c5 !important; font-size: 11px !important; line-height: 1.25 !important;
+  letter-spacing: 0 !important; text-transform: none !important; cursor: pointer;
+}
+:host([data-weather-variant='header']) .weather-header-preview .weather-header-state--recovery .weather-header-state__geolocation:focus-visible {
+  outline: 2px solid #fff2c5; outline-offset: 2px;
+}
 .weather-scene-recovery,
 :host([data-weather-variant='header']) .weather-header-preview .weather-scene-recovery,
 :host([data-weather-variant='header']) .weather-header-dropdown .weather-scene-recovery {
@@ -166,11 +192,17 @@ export const HEADER_WEATHER_RECOVERY_STYLES = `
   position: absolute; top: 0; left: -16%; width: 72%; height: 94%;
   background: url('/assets/images/weather/cloud-9225a9f1.png') center / contain no-repeat;
   opacity: .5; filter: brightness(1.1) drop-shadow(0 6px 10px #101c2b55);
-  animation: weatherRecoveryCloudDrift 18s ease-in-out infinite alternate;
 }
-.weather-scene-recovery__cloud:nth-child(2) { left: 24%; top: 8%; opacity: .45; animation-duration: 23s; animation-delay: -11s; }
-.weather-scene-recovery__cloud:nth-child(3) { left: 62%; top: -8%; opacity: .4; animation-duration: 27s; animation-delay: -18s; }
+.weather-scene-recovery__cloud:nth-child(2) { left: 24%; top: 8%; opacity: .45; }
+.weather-scene-recovery__cloud:nth-child(3) { left: 62%; top: -8%; opacity: .4; }
+.weather-scene-recovery--night .weather-scene-recovery__cloud {
+  filter: brightness(.42) sepia(.45) saturate(1.2) hue-rotate(150deg) drop-shadow(0 6px 10px #070e1899);
+}
+.weather-scene-recovery--unknown .weather-scene-recovery__cloud { filter: brightness(.65) saturate(.4); }
 .weather-scene-recovery--foggy .weather-scene-recovery__clouds { opacity: .7; filter: blur(8px); }
+[data-weather-renderer='primary'] { width:100%; height:100%; transition:opacity .4s ease; }
+[data-weather-renderer='primary'][data-weather-visible='false'] { opacity:0!important; pointer-events:none!important; transition:none!important; }
+@media(prefers-reduced-motion:reduce) { [data-weather-renderer='primary'] { transition:none!important; } }
 .weather-scene-recovery__orb {
   position: absolute; left: 50%; top: 18%; width: min(26%, 120px); aspect-ratio: 1;
   border-radius: 50%; transform: translateX(-50%);
@@ -198,39 +230,74 @@ export const HEADER_WEATHER_RECOVERY_STYLES = `
   clip-path: polygon(50% 0, 10% 58%, 45% 55%, 25% 100%, 95% 35%, 56% 40%, 78% 0) !important;
   background: #eef4ff; filter: drop-shadow(0 0 8px #c4e6ff); animation: weatherRecoveryLightning 6s linear infinite;
 }
-@keyframes weatherRecoveryCloudDrift { from { transform: translate3d(-7%, 0, 0) scale(1); } to { transform: translate3d(12%, 4%, 0) scale(1.07); } }
 @keyframes weatherRecoveryOrbGlow { from { filter: brightness(.96); } to { filter: brightness(1.08); } }
 @keyframes weatherRecoveryRain { to { background-position: -12px 42px; } }
 @keyframes weatherRecoverySnow { to { background-position: 12px 86px; } }
 @keyframes weatherRecoveryLightning { 0%, 70%, 73%, 76%, 100% { opacity: 0; } 71%, 74% { opacity: .8; } }
 `;
 
-export function resolveWeatherSceneFallback(weather) {
+export function resolveWeatherSceneFallback(weather, { getSolarPhase, now = Date.now } = {}) {
   if (!weather?.current) return null;
   const current = weather.current;
   const code = Number(current.condition?.code);
   const text = String(current.condition?.text || '').toLowerCase();
-  const hour = Number(weather.location?.localtime?.match(/[T ](\d{2}):\d{2}/)?.[1]);
-  const night = current.is_day === 0 || current.is_day === '0' ||
-    (current.is_day == null && Number.isFinite(hour) && (hour >= 19 || hour <= 6));
+  const cover = [current.cloud, weather.weatherMeta?.cloudCover].find(value =>
+    (typeof value === 'number' || typeof value === 'string' && value.trim()) && Number.isFinite(Number(value)));
+  let phase;
+  const appearanceTime = weather.weatherMeta?.appearanceTimeMs;
+  try {
+    // A current sky callback must not overwrite a selected future forecast's time.
+    if (!Number.isFinite(appearanceTime)) phase = getSolarPhase?.(now());
+  } catch { /* A failed optional clock leaves the valid provider day flag usable. */ }
+  if (!['day', 'night', 'dawn', 'sunset'].includes(phase?.phase)) {
+    const coordinate = value => (typeof value === 'number' || typeof value === 'string' && value.trim()) && Number.isFinite(Number(value)) ? Number(value) : NaN;
+    const latitude = coordinate(weather.location?.lat ?? weather.weatherMeta?.latitude);
+    const longitude = coordinate(weather.location?.lon ?? weather.weatherMeta?.longitude);
+    if (Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180) {
+      try { phase = resolveSolarPhase?.(Number.isFinite(appearanceTime) ? appearanceTime : now(), null, latitude, longitude); }
+      catch { /* Unknown astronomy stays neutral instead of inventing local fixed hours. */ }
+    }
+  }
+  const astronomical = ['day', 'night', 'dawn', 'sunset'].includes(phase?.phase);
+  const night = astronomical ? Number.isFinite(phase.starOpacity) ? phase.starOpacity > .02 : phase.phase === 'night'
+    : Number.isFinite(appearanceTime) ? null
+      : current.is_day === 0 || current.is_day === '0' ? true : current.is_day === 1 || current.is_day === '1' ? false : null;
   const kind = [1087, 1273, 1276, 1279, 1282].includes(code) || /thunder|storm/.test(text) ? 'stormy'
     : [1066, 1069, 1114, 1117, 1204, 1207, 1210, 1213, 1216, 1219, 1222, 1225, 1237, 1249, 1252, 1255, 1258, 1261, 1264].includes(code) || /snow|sleet|blizzard|ice pellet/.test(text) ? 'snowy'
       : [1063, 1072, 1150, 1153, 1168, 1171, 1180, 1183, 1186, 1189, 1192, 1195, 1198, 1201, 1240, 1243, 1246].includes(code) || /rain|drizzle|shower/.test(text) ? 'rainy'
         : [1030, 1135, 1147].includes(code) || /fog|mist/.test(text) ? 'foggy'
           : code === 1000 || /sunny|clear/.test(text) ? 'clear' : 'cloudy';
-  return { kind, night, clouds: kind !== 'clear', orb: kind === 'clear' || code === 1003 || /partly/.test(text), precipitation: ['rainy', 'snowy', 'stormy'].includes(kind) };
+  return { kind, night, clouds: resolveCloudAppearance ? resolveCloudAppearance(weather).opacity > 0 : kind !== 'clear' || Number(cover) > 0, orb: kind === 'clear' || code === 1003 || /partly/.test(text), precipitation: ['rainy', 'snowy', 'stormy'].includes(kind) };
 }
 
-export function renderWeatherSceneFallback(jsx, { weatherData, embedded, variant } = {}, loadingFallback) {
-  const model = resolveWeatherSceneFallback(weatherData);
+let fallbackCloudModule;
+function fallbackCloudRef(weather) {
+  let node, controller, revision = 0;
+  return element => {
+    const current = ++revision;
+    controller?.dispose(); controller = null; node = element;
+    if (!node) return;
+    if (!fallbackCloudModule) {
+      const url = new URL('../../assets/js/weather-cloud-motion.js', import.meta.url);
+      url.search = new URL(import.meta.url).search;
+      fallbackCloudModule = import(url.href).catch(error => { fallbackCloudModule = null; throw error; });
+    }
+    fallbackCloudModule.then(module => {
+      if (current === revision && node?.isConnected !== false) controller = module.createFallbackCloudMotion(node, weather);
+    }).catch(() => {}); // Keep the existing static raster clouds if enhancement is unavailable.
+  };
+}
+
+export function renderWeatherSceneFallback(jsx, { weatherData, embedded, variant, getSolarPhase, now } = {}, loadingFallback) {
+  const model = resolveWeatherSceneFallback(weatherData, { getSolarPhase, now });
   if (!model) return loadingFallback;
   const children = [];
   // The header panel's Sun and Moon are shared shell overlays, not duplicate icons.
   if (model.orb && !(embedded && variant === 'header-panel')) children.push(jsx('span', { className: 'weather-scene-recovery__orb' }, 'orb'));
-  if (model.clouds) children.push(jsx('div', { className: 'weather-scene-recovery__clouds', children: [0, 1, 2].map(key => jsx('span', { className: 'weather-scene-recovery__cloud' }, key)) }, 'clouds'));
+  if (model.clouds) children.push(jsx('div', { className: 'weather-scene-recovery__clouds', ref: fallbackCloudRef(weatherData), children: [0, 1, 2].map(key => jsx('span', { className: 'weather-scene-recovery__cloud' }, key)) }, 'clouds'));
   if (model.precipitation) children.push(jsx('div', { className: 'weather-scene-recovery__precipitation' }, 'precipitation'));
   return jsx('div', {
-    className: `weather-scene-recovery weather-scene-recovery--${model.kind}${model.night ? ' weather-scene-recovery--night' : ''}`,
+    className: `weather-scene-recovery weather-scene-recovery--${model.kind}${model.night === true ? ' weather-scene-recovery--night' : model.night === null ? ' weather-scene-recovery--unknown' : ''}`,
     'data-weather-fallback-kind': model.kind,
     'aria-hidden': true,
     children,
@@ -397,7 +464,7 @@ export function createRecoverableScene(React, jsx, load, environment = globalThi
   return class WeatherSceneBoundary extends React.Component {
     constructor(props) {
       super(props);
-      this.state = { error: null, contextLost: false, readyWeather: null, readiness: 0, Scene: React.lazy(load), version: 0 };
+      this.state = { error: null, contextLost: false, readyWeather: null, generationReady: false, recovering: false, readiness: 0, Scene: React.lazy(load), version: 0 };
       this.attempts = 0;
       this.lossTimers = new Map();
       this.retry = () => {
@@ -406,7 +473,7 @@ export function createRecoverableScene(React, jsx, load, environment = globalThi
         for (const timer of this.lossTimers.values()) window.clearTimeout(timer);
         this.lossTimers.clear();
         load.reset?.();
-        this.setState(state => ({ error: null, contextLost: false, readyWeather: null, readiness: state.readiness + 1, Scene: React.lazy(load), version: state.version + 1 }));
+        this.setState(state => ({ error: null, contextLost: false, readyWeather: null, generationReady: false, recovering: true, readiness: state.readiness + 1, Scene: React.lazy(load), version: state.version + 1 }));
       };
       this.resume = () => {
         if (document?.hidden) return;
@@ -417,7 +484,7 @@ export function createRecoverableScene(React, jsx, load, environment = globalThi
         event.preventDefault?.();
         const canvas = event.target;
         if (this.lossTimers.has(canvas)) return;
-        this.setState(state => ({ contextLost: true, readyWeather: null, readiness: state.readiness + 1 }));
+        this.setState(state => ({ contextLost: true, readyWeather: null, generationReady: false, recovering: true, readiness: state.readiness + 1 }));
         this.lossTimers.set(canvas, window.setTimeout(() => {
           this.lossTimers.delete(canvas);
           if (!this.mounted) return;
@@ -432,10 +499,10 @@ export function createRecoverableScene(React, jsx, load, environment = globalThi
       this.sceneReady = (weather, readiness) => {
         if (!this.mounted || this.state.error || this.state.contextLost || readiness !== this.state.readiness ||
             !weather?.current || weather !== this.props.weatherData || this.state.readyWeather === weather) return;
-        this.setState({ readyWeather: weather });
+        this.setState({ readyWeather: weather, generationReady: true, recovering: false });
       };
     }
-    static getDerivedStateFromError(error) { return { error }; }
+    static getDerivedStateFromError(error) { return { error, readyWeather: null, generationReady: false, recovering: true }; }
     componentDidCatch() { this.scheduleRetry(); }
     scheduleRetry() {
       window.clearTimeout(this.retryTimer);
@@ -444,6 +511,9 @@ export function createRecoverableScene(React, jsx, load, environment = globalThi
     }
     componentDidMount() {
       this.mounted = true;
+      void weatherSceneSolarReady.then(ready => {
+        if (ready && this.mounted && !this.state.generationReady) this.forceUpdate?.();
+      }).catch(() => null);
       window.addEventListener?.('online', this.resume);
       document?.addEventListener('visibilitychange', this.resume);
       this.node?.addEventListener('webglcontextlost', this.lost, true);
@@ -463,16 +533,26 @@ export function createRecoverableScene(React, jsx, load, environment = globalThi
       const { fallback, ...props } = this.props;
       const visualFallback = renderWeatherSceneFallback(jsx, props, fallback);
       const readiness = this.state.readiness;
-      const awaitingFrame = Boolean(props.weatherData?.current && this.state.readyWeather !== props.weatherData);
+      const recovering = Boolean(this.state.error || this.state.contextLost || this.state.recovering);
+      const primaryVisible = this.state.generationReady && !recovering;
+      const header = props.embedded && props.variant === 'header-panel';
+      const showFallback = Boolean(visualFallback && (recovering || !header && !this.state.generationReady));
       const scene = jsx(React.Suspense, {
-        fallback: awaitingFrame ? null : visualFallback,
+        fallback: null,
         children: jsx(this.state.Scene, { ...props, sceneRecoveryVersion: readiness,
           onSceneReady: weather => this.sceneReady(weather, readiness) }, this.state.version),
       });
+      // Opacity retains Canvas layout and frame production. The native image and
+      // the primary renderer never paint together, including retry/asset recovery.
+      const primary = jsx('div', {
+        'data-weather-renderer': 'primary', 'data-weather-visible': String(primaryVisible),
+        style: { width: '100%', height: '100%', opacity: primaryVisible ? 1 : 0 }, children: scene,
+      });
       return jsx('div', {
         ref: node => { this.node = node; },
+        'data-weather-scene-owner': primaryVisible ? 'primary' : showFallback ? 'fallback' : 'loading',
         style: { position: 'relative', width: '100%', height: '100%' },
-        children: this.state.error ? visualFallback : this.state.contextLost || awaitingFrame ? [scene, visualFallback] : scene,
+        children: this.state.error ? visualFallback : showFallback ? [primary, visualFallback] : primary,
       });
     }
   };

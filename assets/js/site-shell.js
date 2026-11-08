@@ -311,17 +311,16 @@
   /** Arrow: left when closed → CW to down when open (cursor demo: слева → вниз). */
   const HEADER_WEATHER_TOGGLE_ARROW_CLOSED = 'rotate(90deg)';
   const HEADER_WEATHER_TOGGLE_ARROW_OPEN = 'rotate(0deg)';
-  /** Preview moon size (+30% vs backup 8fbeca0 baseline), −15% display trim, −20% owner trim. */
+  /** Retain the existing Moon transform; calibrate its visible diameter below. */
   const HEADER_WEATHER_MOON_DISPLAY_SCALE = 0.85;
   const HEADER_WEATHER_MOON_SIZE_REDUCTION = 0.8;
   const HEADER_WEATHER_MOON_SIZE_BOOST =
     1.3 * 0.85 * 1.3 * HEADER_WEATHER_MOON_DISPLAY_SCALE * HEADER_WEATHER_MOON_SIZE_REDUCTION;
-  const HEADER_WEATHER_MOON_SIZE_FACTOR = 3 * HEADER_WEATHER_MOON_SIZE_BOOST;
-  /** Tiled CSS starfield — fills full trigger/dropdown height (avoids mid-band-only clusters). */
-  const HEADER_WEATHER_STARFIELD_TILE_A =
-    'radial-gradient(circle,rgba(255,255,255,.54) 0 .48px,transparent .84px) 0 0/30px 30px';
-  const HEADER_WEATHER_STARFIELD_TILE_B =
-    'radial-gradient(circle,rgba(214,229,252,.38) 0 .42px,transparent .8px) 12px 8px/34px 34px';
+  /** Fixed seeded decorative positions; one non-repeating field per sky layer. */
+  const STARFIELD_FAINT =
+    'radial-gradient(circle at 23.1% 84%,rgba(255,255,255,.54) 0 .5px,transparent .9px),radial-gradient(circle at 16.8% 47.6%,rgba(224,234,249,.42) 0 .4px,transparent .8px),radial-gradient(circle at 90.7% 39.4%,rgba(255,255,255,.36) 0 .35px,transparent .75px),radial-gradient(circle at 52.3% 35.5%,rgba(232,241,255,.48) 0 .45px,transparent .85px),radial-gradient(circle at 87.8% 84.9%,rgba(255,255,255,.54) 0 .5px,transparent .9px),radial-gradient(circle at 81.5% 74.1%,rgba(224,234,249,.42) 0 .4px,transparent .8px),radial-gradient(circle at 71.1% 82.6%,rgba(255,255,255,.36) 0 .35px,transparent .75px),radial-gradient(circle at 18.2% 17.6%,rgba(232,241,255,.48) 0 .45px,transparent .85px),radial-gradient(circle at 11.7% 6.3%,rgba(255,255,255,.54) 0 .5px,transparent .9px),radial-gradient(circle at 51.5% 48.9%,rgba(224,234,249,.42) 0 .4px,transparent .8px),radial-gradient(circle at 39.4% 39.8%,rgba(255,255,255,.36) 0 .35px,transparent .75px),radial-gradient(circle at 19.2% 33.3%,rgba(232,241,255,.48) 0 .45px,transparent .85px),radial-gradient(circle at 8% 87.4%,rgba(255,255,255,.54) 0 .5px,transparent .9px),radial-gradient(circle at 61.9% 91.3%,rgba(224,234,249,.42) 0 .4px,transparent .8px),radial-gradient(circle at 71.4% 61.2%,rgba(255,255,255,.36) 0 .35px,transparent .75px),radial-gradient(circle at 59.1% 61.4%,rgba(232,241,255,.48) 0 .45px,transparent .85px),radial-gradient(circle at 79% 40.8%,rgba(255,255,255,.54) 0 .5px,transparent .9px),radial-gradient(circle at 12.2% 74%,rgba(224,234,249,.42) 0 .4px,transparent .8px),radial-gradient(circle at 53.5% 71%,rgba(255,255,255,.36) 0 .35px,transparent .75px),radial-gradient(circle at 44.8% 82.2%,rgba(232,241,255,.48) 0 .45px,transparent .85px)';
+  const STARFIELD_BRIGHT =
+    'radial-gradient(circle at 66.4% 16.1%,rgba(255,255,255,.84) 0 .9px,transparent 1.25px),radial-gradient(circle at 93.5% 10.2%,rgba(230,240,255,.72) 0 .8px,transparent 1.15px),radial-gradient(circle at 81.4% 96.3%,rgba(255,255,255,.84) 0 .9px,transparent 1.25px),radial-gradient(circle at 49.3% 11%,rgba(230,240,255,.72) 0 .8px,transparent 1.15px),radial-gradient(circle at 29.1% 46.6%,rgba(255,255,255,.84) 0 .9px,transparent 1.25px),radial-gradient(circle at 87.1% 60.6%,rgba(230,240,255,.72) 0 .8px,transparent 1.15px)';
   /**
    * Red-cross slot (owner screenshot): vertical line under the header lightbulb (~68%),
    * horizontal mid-line of the weather band; geometric center on the intersection.
@@ -357,7 +356,13 @@
   });
   /** Gentle display gain; retain detail and colour from the original solar map. */
   const HEADER_WEATHER_SUN_BRIGHTNESS = 1.06;
-  const HEADER_WEATHER_SUN_MEDIA_SCALE = 1;
+  const HEADER_WEATHER_SUN_MEDIA_SCALE = 2.25;
+  // Photosphere projection: SunScene sphere radius .7, camera distance4.55/FOV35°.
+  // Transparent renderer margins are separate from astronomical angular size.
+  const HEADER_WEATHER_SUN_DISC_FRACTION =
+    0.7 / (Math.sqrt(4.55 ** 2 - 0.7 ** 2) * Math.tan(17.5 * Math.PI / 180));
+  const HEADER_WEATHER_MOON_DISC_FRACTION = 0.51;
+  const HEADER_WEATHER_MOON_SIZE_FACTOR = HEADER_WEATHER_SUN_DISC_FRACTION / HEADER_WEATHER_MOON_DISC_FRACTION;
 
   const HEADER_WEATHER_TRANSPARENT_STYLES = `
 :host([data-weather-variant='header']),
@@ -420,7 +425,7 @@
   -webkit-mask-image: none !important;
 }
 
-/* Unified stars back layer (CSS + 3D canvas) — never mask the cloud scene. */
+/* One starfield back layer — never mask the cloud scene. */
 :host([data-weather-variant='header']) .weather-header-preview__stars-back:not(.is-night-sky)::before,
 :host([data-weather-variant='header']) .weather-header-preview__stars-back:not(.is-night-sky)::after {
   content: none !important;
@@ -496,9 +501,9 @@
    intentional UI parts. The base preview/scene/trigger area must be invisible
    so only the 3D animation is visible. */
 :host([data-weather-variant='header']) .weather-app,
-:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *):not(.weather-header-preview):not(.weather-header-preview *),
-:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *):not(.weather-header-preview):not(.weather-header-preview *)::before,
-:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *):not(.weather-header-preview):not(.weather-header-preview *)::after {
+:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown__close):not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *):not(.weather-header-preview):not(.weather-header-preview *),
+:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown__close):not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *):not(.weather-header-preview):not(.weather-header-preview *)::before,
+:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown__close):not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *):not(.weather-header-preview):not(.weather-header-preview *)::after {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
@@ -636,6 +641,10 @@
   overflow: visible !important;
 }
 
+.weather-app--header .weather-scene-recovery__stars {
+  display: none !important;
+}
+
 .weather-app--header,
 .weather-header-preview,
 .weather-header-card,
@@ -722,7 +731,7 @@
 }
 
 .weather-orb-overlay.is-moon {
-  /* Layer stack: stars (1) → moon (9) → sun (10) → clouds (12) → weather info (20+). */
+  /* Paint order: stars (1) → Sun (9) → Moon (10) → clouds (12) → weather info (20+) → rain (200). */
   z-index: 13 !important;
   isolation: isolate !important;
   background: transparent !important;
@@ -736,7 +745,7 @@
   transform-origin: center center !important;
 }
 
-/* Moon layer under clouds: never clip the orb (no overflow/clip on this stack). */
+/* Legacy stack names stay stable; the Moon paints in front of the Sun and below clouds. */
 :host([data-weather-variant='header']) .weather-header-preview .weather-orb-stack--preview-back,
 .weather-header-preview .weather-orb-stack--preview-back {
   position: absolute !important;
@@ -747,7 +756,7 @@
   left: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  z-index: 9 !important;
+  z-index: 10 !important;
   overflow: visible !important;
   pointer-events: none !important;
   clip-path: none !important;
@@ -756,7 +765,7 @@
 }
 
 .weather-orb-overlay--preview.is-moon {
-  z-index: 9 !important;
+  z-index: 10 !important;
   isolation: isolate !important;
 }
 
@@ -788,7 +797,7 @@
   left: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  z-index: 10 !important;
+  z-index: 9 !important;
   overflow: visible !important;
   pointer-events: none !important;
 }
@@ -822,7 +831,7 @@
 :host([data-weather-variant='header']) .weather-orb-overlay.is-sun,
 .weather-header-preview .weather-orb-overlay.is-sun,
 .weather-header-dropdown__hero .weather-orb-overlay.is-sun {
-  z-index: 999 !important;
+  z-index: 12 !important;
 }
 
 .weather-orb-overlay.is-sun.is-visible {
@@ -889,8 +898,10 @@
 
 .weather-orb-overlay--preview.is-moon,
 .weather-orb-overlay--dropdown.is-moon {
-  width: clamp(${82 * HEADER_WEATHER_MOON_SIZE_FACTOR}px, ${19 * HEADER_WEATHER_MOON_SIZE_FACTOR}vw, ${118 * HEADER_WEATHER_MOON_SIZE_FACTOR}px) !important;
-  height: clamp(${82 * HEADER_WEATHER_MOON_SIZE_FACTOR}px, ${19 * HEADER_WEATHER_MOON_SIZE_FACTOR}vw, ${118 * HEADER_WEATHER_MOON_SIZE_FACTOR}px) !important;
+  --orb-scale-visible: ${HEADER_WEATHER_MOON_PREVIEW_LAYOUT.scale.toFixed(3)};
+  --orb-scale-hidden: var(--orb-scale-visible, 1);
+  width: calc(clamp(${68 * HEADER_WEATHER_MOON_SIZE_FACTOR}px, ${14 * HEADER_WEATHER_MOON_SIZE_FACTOR}vw, ${92 * HEADER_WEATHER_MOON_SIZE_FACTOR}px) * var(--orb-moon-angular-ratio, 1) / var(--orb-scale-visible, 1)) !important;
+  height: calc(clamp(${68 * HEADER_WEATHER_MOON_SIZE_FACTOR}px, ${14 * HEADER_WEATHER_MOON_SIZE_FACTOR}vw, ${92 * HEADER_WEATHER_MOON_SIZE_FACTOR}px) * var(--orb-moon-angular-ratio, 1) / var(--orb-scale-visible, 1)) !important;
 }
 
 .weather-orb-overlay--preview.is-moon {
@@ -910,7 +921,6 @@
 }
 
 .weather-orb-overlay--preview.is-moon.is-visible {
-  opacity: calc(0.38 + var(--orb-crossfade-opacity, 1) * 0.62) !important;
   filter: drop-shadow(0 0 12px rgb(244 248 255 / 0.18)) drop-shadow(0 0 22px rgb(186 205 255 / 0.16)) !important;
 }
 
@@ -927,10 +937,6 @@
   bottom: auto !important;
   margin: 0 !important;
   transition: opacity 1.35s ease-in-out !important;
-}
-
-.weather-orb-overlay--preview.is-sun.is-visible {
-  opacity: calc(var(--orb-crossfade-opacity, 1) * 0.28) !important;
 }
 
 .weather-orb-overlay--preview.is-sun.is-visible,
@@ -1330,9 +1336,13 @@
   opacity: 1 !important;
   width: calc(100% * ${HEADER_WEATHER_SUN_MEDIA_SCALE}) !important;
   height: calc(100% * ${HEADER_WEATHER_SUN_MEDIA_SCALE}) !important;
-  margin: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  left: ${(1 - HEADER_WEATHER_SUN_MEDIA_SCALE) * 50}% !important;
+  top: ${(1 - HEADER_WEATHER_SUN_MEDIA_SCALE) * 50}% !important;
+  margin: 0 !important;
   background: transparent !important;
-  position: relative !important;
+  position: absolute !important;
   z-index: 1;
   filter:
     brightness(${HEADER_WEATHER_SUN_BRIGHTNESS})
@@ -1412,14 +1422,6 @@
   filter: none !important;
 }
 
-/* Stars: brighter and crisper — override the aggressive filter:none reset
-   by matching its :not() chain to gain equal specificity, then win by
-   source order (this rule appears later in the same style block). */
-:host([data-weather-variant='header']) .weather-header-preview__stars-back .weather-app__stars-scene--header-panel canvas {
-  z-index: 0 !important;
-  filter: brightness(1.28) contrast(1.08) saturate(1.04) !important;
-}
-
 :host([data-weather-variant='header']) .weather-header-preview .weather-app__scene--header canvas,
 :host([data-weather-variant='header']) .weather-header-dropdown__scene canvas:not(.weather-orb-overlay__canvas) {
   filter: none !important;
@@ -1459,34 +1461,8 @@
 
 :host([data-weather-variant='header']) .weather-header-preview__stars-back.is-night-sky::before,
 .weather-header-preview__stars-back.is-night-sky::before {
-  background:
-    ${HEADER_WEATHER_STARFIELD_TILE_A},
-    ${HEADER_WEATHER_STARFIELD_TILE_B},
-    radial-gradient(circle at 4% 3%, rgba(255, 255, 255, 0.9) 0 0.62px, transparent 1px),
-    radial-gradient(circle at 96% 4%, rgba(255, 255, 255, 0.88) 0 0.6px, transparent 0.98px),
-    radial-gradient(circle at 6% 97%, rgba(255, 255, 255, 0.86) 0 0.6px, transparent 0.98px),
-    radial-gradient(circle at 94% 95%, rgba(236, 244, 255, 0.82) 0 0.58px, transparent 0.96px),
-    radial-gradient(circle at 8% 12%, rgba(255, 255, 255, 0.92) 0 0.65px, transparent 1.05px),
-    radial-gradient(circle at 16% 26%, rgba(228, 238, 255, 0.8) 0 0.58px, transparent 0.98px),
-    radial-gradient(circle at 24% 8%, rgba(255, 255, 255, 0.88) 0 0.65px, transparent 1.02px),
-    radial-gradient(circle at 32% 19%, rgba(201, 224, 255, 0.72) 0 0.58px, transparent 0.98px),
-    radial-gradient(circle at 40% 6%, rgba(255, 255, 255, 0.9) 0 0.65px, transparent 1.02px),
-    radial-gradient(circle at 49% 22%, rgba(235, 244, 255, 0.78) 0 0.58px, transparent 0.98px),
-    radial-gradient(circle at 57% 11%, rgba(255, 255, 255, 0.92) 0 0.68px, transparent 1.06px),
-    radial-gradient(circle at 66% 28%, rgba(236, 242, 252, 0.74) 0 0.58px, transparent 0.98px),
-    radial-gradient(circle at 74% 9%, rgba(255, 255, 255, 0.9) 0 0.65px, transparent 1.02px),
-    radial-gradient(circle at 83% 21%, rgba(240, 245, 253, 0.76) 0 0.58px, transparent 0.98px),
-    radial-gradient(circle at 91% 7%, rgba(255, 255, 255, 0.9) 0 0.65px, transparent 1.02px),
-    radial-gradient(circle at 12% 43%, rgba(255, 255, 255, 0.86) 0 0.62px, transparent 1px),
-    radial-gradient(circle at 21% 56%, rgba(210, 228, 255, 0.72) 0 0.56px, transparent 0.94px),
-    radial-gradient(circle at 30% 41%, rgba(255, 255, 255, 0.88) 0 0.62px, transparent 1px),
-    radial-gradient(circle at 38% 63%, rgba(235, 244, 255, 0.78) 0 0.56px, transparent 0.94px),
-    radial-gradient(circle at 47% 48%, rgba(255, 255, 255, 0.86) 0 0.62px, transparent 1px),
-    radial-gradient(circle at 55% 64%, rgba(208, 227, 255, 0.7) 0 0.56px, transparent 0.94px),
-    radial-gradient(circle at 63% 46%, rgba(255, 255, 255, 0.86) 0 0.62px, transparent 1px),
-    radial-gradient(circle at 72% 58%, rgba(229, 239, 255, 0.76) 0 0.56px, transparent 0.94px),
-    radial-gradient(circle at 80% 44%, rgba(255, 255, 255, 0.9) 0 0.62px, transparent 1px),
-    radial-gradient(circle at 89% 60%, rgba(238, 244, 252, 0.7) 0 0.56px, transparent 0.94px) !important;
+  background: ${STARFIELD_FAINT} !important;
+  background-repeat: no-repeat !important;
   animation: weatherHeaderStarsTwinkle 6.6s ease-in-out infinite;
 }
 
@@ -1494,18 +1470,8 @@
 .weather-header-preview__stars-back.is-night-sky::after {
   opacity: calc(var(--preview-stars-opacity, 0.82) * 0.72);
   filter: none !important;
-  background:
-    ${HEADER_WEATHER_STARFIELD_TILE_B},
-    radial-gradient(circle at 18px 14px, rgba(255, 255, 255, 0.46) 0 0.44px, transparent 0.78px) 0 0 / 38px 38px,
-    radial-gradient(circle at 14% 18%, rgba(255, 255, 255, 0.96) 0 1.05px, transparent 1.55px),
-    radial-gradient(circle at 36% 14%, rgba(229, 241, 255, 0.86) 0 0.88px, transparent 1.32px),
-    radial-gradient(circle at 58% 18%, rgba(255, 255, 255, 0.94) 0 1.02px, transparent 1.5px),
-    radial-gradient(circle at 78% 16%, rgba(246, 249, 254, 0.82) 0 0.88px, transparent 1.32px),
-    radial-gradient(circle at 26% 52%, rgba(255, 255, 255, 0.92) 0 0.95px, transparent 1.42px),
-    radial-gradient(circle at 50% 56%, rgba(232, 243, 255, 0.86) 0 0.88px, transparent 1.32px),
-    radial-gradient(circle at 74% 50%, rgba(255, 255, 255, 0.92) 0 0.95px, transparent 1.42px),
-    radial-gradient(circle at 40% 80%, rgba(226, 238, 255, 0.8) 0 0.82px, transparent 1.24px),
-    radial-gradient(circle at 66% 76%, rgba(248, 250, 254, 0.86) 0 0.88px, transparent 1.3px) !important;
+  background: ${STARFIELD_BRIGHT} !important;
+  background-repeat: no-repeat !important;
   animation: weatherHeaderStarsTwinkleAlt 8.1s ease-in-out infinite;
 }
 
@@ -1550,65 +1516,16 @@
 
 :host([data-weather-variant='header']) .weather-header-dropdown__stars-back.is-night-sky::before,
 .weather-header-dropdown__stars-back.is-night-sky::before {
-  background:
-    ${HEADER_WEATHER_STARFIELD_TILE_A},
-    ${HEADER_WEATHER_STARFIELD_TILE_B},
-    radial-gradient(circle at 5% 2%, rgba(255, 255, 255, 0.9) 0 0.62px, transparent 1px),
-    radial-gradient(circle at 95% 3%, rgba(255, 255, 255, 0.88) 0 0.6px, transparent 0.98px),
-    radial-gradient(circle at 4% 98%, rgba(255, 255, 255, 0.86) 0 0.6px, transparent 0.98px),
-    radial-gradient(circle at 96% 96%, rgba(236, 244, 255, 0.84) 0 0.58px, transparent 0.96px),
-    radial-gradient(circle at 8% 12%, rgba(255, 255, 255, 0.92) 0 0.65px, transparent 1.05px),
-    radial-gradient(circle at 16% 26%, rgba(228, 238, 255, 0.8) 0 0.58px, transparent 0.98px),
-    radial-gradient(circle at 24% 8%, rgba(255, 255, 255, 0.88) 0 0.65px, transparent 1.02px),
-    radial-gradient(circle at 32% 19%, rgba(201, 224, 255, 0.72) 0 0.58px, transparent 0.98px),
-    radial-gradient(circle at 40% 6%, rgba(255, 255, 255, 0.9) 0 0.65px, transparent 1.02px),
-    radial-gradient(circle at 49% 22%, rgba(235, 244, 255, 0.78) 0 0.58px, transparent 0.98px),
-    radial-gradient(circle at 57% 11%, rgba(255, 255, 255, 0.92) 0 0.68px, transparent 1.06px),
-    radial-gradient(circle at 66% 28%, rgba(236, 242, 252, 0.74) 0 0.58px, transparent 0.98px),
-    radial-gradient(circle at 74% 9%, rgba(255, 255, 255, 0.9) 0 0.65px, transparent 1.02px),
-    radial-gradient(circle at 83% 21%, rgba(240, 245, 253, 0.76) 0 0.58px, transparent 0.98px),
-    radial-gradient(circle at 91% 7%, rgba(255, 255, 255, 0.9) 0 0.65px, transparent 1.02px),
-    radial-gradient(circle at 12% 43%, rgba(255, 255, 255, 0.86) 0 0.62px, transparent 1px),
-    radial-gradient(circle at 21% 56%, rgba(210, 228, 255, 0.72) 0 0.56px, transparent 0.94px),
-    radial-gradient(circle at 30% 41%, rgba(255, 255, 255, 0.88) 0 0.62px, transparent 1px),
-    radial-gradient(circle at 38% 63%, rgba(235, 244, 255, 0.78) 0 0.56px, transparent 0.94px),
-    radial-gradient(circle at 47% 48%, rgba(255, 255, 255, 0.86) 0 0.62px, transparent 1px),
-    radial-gradient(circle at 55% 64%, rgba(208, 227, 255, 0.7) 0 0.56px, transparent 0.94px),
-    radial-gradient(circle at 63% 46%, rgba(255, 255, 255, 0.86) 0 0.62px, transparent 1px),
-    radial-gradient(circle at 72% 58%, rgba(229, 239, 255, 0.76) 0 0.56px, transparent 0.94px),
-    radial-gradient(circle at 80% 44%, rgba(255, 255, 255, 0.9) 0 0.62px, transparent 1px),
-    radial-gradient(circle at 89% 60%, rgba(238, 244, 252, 0.7) 0 0.56px, transparent 0.94px),
-    radial-gradient(circle at 6% 72%, rgba(255, 255, 255, 0.84) 0 0.6px, transparent 0.98px),
-    radial-gradient(circle at 18% 84%, rgba(224, 238, 255, 0.74) 0 0.56px, transparent 0.94px),
-    radial-gradient(circle at 28% 76%, rgba(255, 255, 255, 0.86) 0 0.6px, transparent 0.98px),
-    radial-gradient(circle at 42% 88%, rgba(232, 242, 255, 0.72) 0 0.56px, transparent 0.94px),
-    radial-gradient(circle at 54% 74%, rgba(255, 255, 255, 0.84) 0 0.6px, transparent 0.98px),
-    radial-gradient(circle at 68% 86%, rgba(214, 230, 252, 0.7) 0 0.56px, transparent 0.94px),
-    radial-gradient(circle at 82% 78%, rgba(255, 255, 255, 0.86) 0 0.6px, transparent 0.98px),
-    radial-gradient(circle at 94% 92%, rgba(240, 245, 253, 0.74) 0 0.56px, transparent 0.94px) !important;
+  background: ${STARFIELD_FAINT} !important;
+  background-repeat: no-repeat !important;
   animation: weatherDropdownStarsTwinkle 6.6s ease-in-out infinite;
 }
 
 :host([data-weather-variant='header']) .weather-header-dropdown__stars-back.is-night-sky::after,
 .weather-header-dropdown__stars-back.is-night-sky::after {
   opacity: calc(var(--dropdown-stars-opacity, 0.82) * 0.5);
-  background:
-    ${HEADER_WEATHER_STARFIELD_TILE_B},
-    radial-gradient(circle at 20px 16px, rgba(255, 255, 255, 0.44) 0 0.44px, transparent 0.78px) 0 0 / 36px 36px,
-    radial-gradient(circle at 14% 18%, rgba(255, 255, 255, 0.96) 0 1.05px, transparent 1.55px),
-    radial-gradient(circle at 36% 14%, rgba(229, 241, 255, 0.86) 0 0.88px, transparent 1.32px),
-    radial-gradient(circle at 58% 18%, rgba(255, 255, 255, 0.94) 0 1.02px, transparent 1.5px),
-    radial-gradient(circle at 78% 16%, rgba(246, 249, 254, 0.82) 0 0.88px, transparent 1.32px),
-    radial-gradient(circle at 26% 52%, rgba(255, 255, 255, 0.92) 0 0.95px, transparent 1.42px),
-    radial-gradient(circle at 50% 56%, rgba(232, 243, 255, 0.86) 0 0.88px, transparent 1.32px),
-    radial-gradient(circle at 74% 50%, rgba(255, 255, 255, 0.92) 0 0.95px, transparent 1.42px),
-    radial-gradient(circle at 40% 80%, rgba(226, 238, 255, 0.8) 0 0.82px, transparent 1.24px),
-    radial-gradient(circle at 66% 76%, rgba(248, 250, 254, 0.86) 0 0.88px, transparent 1.3px),
-    radial-gradient(circle at 12% 68%, rgba(255, 255, 255, 0.9) 0 0.92px, transparent 1.38px),
-    radial-gradient(circle at 88% 72%, rgba(228, 239, 255, 0.82) 0 0.86px, transparent 1.28px),
-    radial-gradient(circle at 22% 94%, rgba(255, 255, 255, 0.88) 0 0.9px, transparent 1.34px),
-    radial-gradient(circle at 48% 96%, rgba(236, 244, 255, 0.8) 0 0.84px, transparent 1.26px),
-    radial-gradient(circle at 72% 92%, rgba(255, 255, 255, 0.9) 0 0.9px, transparent 1.34px) !important;
+  background: ${STARFIELD_BRIGHT} !important;
+  background-repeat: no-repeat !important;
   animation: weatherDropdownStarsTwinkleAlt 8.1s ease-in-out infinite;
 }
 
@@ -1685,7 +1602,7 @@
   height: 112% !important;
   transform: translateX(-50%) !important;
   transform-origin: center top !important;
-  z-index: 0 !important;
+  z-index: 12 !important;
   isolation: isolate !important;
   overflow: visible !important;
   pointer-events: none !important;
@@ -1705,7 +1622,7 @@
 }
 
 .weather-header-dropdown__hero .weather-orb-stack {
-  z-index: 2 !important;
+  z-index: 10 !important;
   pointer-events: none !important;
 }
 
@@ -2878,7 +2795,7 @@
 
 .weather-header-dropdown__hero-top {
   position: relative !important;
-  z-index: 5 !important;
+  z-index: 20 !important;
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: start !important;
@@ -2992,7 +2909,7 @@
   bottom: auto !important;
   left: auto !important;
   right: auto !important;
-  z-index: 5 !important;
+  z-index: 20 !important;
   display: grid !important;
   grid-template-columns: max-content minmax(0, 1fr) !important;
   grid-template-rows: auto auto auto !important;
@@ -3378,12 +3295,6 @@
     height: 102px !important;
   }
 
-  .weather-orb-overlay--preview.is-moon,
-  .weather-orb-overlay--dropdown.is-moon {
-    width: ${102 * HEADER_WEATHER_MOON_SIZE_FACTOR}px !important;
-    height: ${102 * HEADER_WEATHER_MOON_SIZE_FACTOR}px !important;
-  }
-
   .weather-orb-overlay--dropdown {
     width: clamp(68px, 18vw, 88px) !important;
     height: clamp(68px, 18vw, 88px) !important;
@@ -3675,7 +3586,6 @@
   const HEADER_WEATHER_MOON_VIDEO_DURATION_SEC = 458.233333;
   /** Fallback duration used by the shared orb timeline model. */
   const HEADER_WEATHER_SUN_VIDEO_DURATION_SEC = 10;
-  const HEADER_WEATHER_MOON_VIDEO_FILES = Object.freeze(['mission_2160p30_fallback.mp4']);
 
   const LOCALIZED_ROUTES = new Set([
     '',
@@ -3712,7 +3622,7 @@
   const HEADER_WEATHER_ASTRO_ENDPOINT = 'https://api.sunrise-sunset.org/json';
   const HEADER_WEATHER_REVERSE_GEOCODE_PROXY_ENDPOINT = resolveHeaderWeatherPublicEndpoint('/reverse-geocode');
   const HEADER_WEATHER_ASTRO_REFRESH_INTERVAL = 60000;
-  const HEADER_WEATHER_SOLAR_PHASE_REFRESH_INTERVAL = 5000;
+  const HEADER_WEATHER_SOLAR_PHASE_REFRESH_INTERVAL = 1000;
   const HEADER_WEATHER_WIDGET_REFRESH_INTERVAL = 5 * 60 * 1000;
   const HEADER_WEATHER_GEO_REFRESH_INTERVAL = 5 * 60 * 1000;
   const HEADER_WEATHER_TIME_SYNC_INTERVAL = 30 * 60 * 1000;
@@ -3739,7 +3649,6 @@
   const HEADER_WEATHER_STRICT_STYLE_LOCK = true;
   const HEADER_WEATHER_BERLIN_LABEL = 'Ber' + 'lin';
   const HEADER_WEATHER_BERLIN_ALIAS_KEY = ('ber' + 'lin').toLowerCase();
-  const HEADER_WEATHER_DEFAULT_TIMEZONE = `Europe/${HEADER_WEATHER_BERLIN_LABEL}`;
   const HEADER_WEATHER_SEARCH_PLACEHOLDER_BY_LANG = Object.freeze({
     ru: 'Искать место: страна, город, индекс, село, район',
     uk: 'Шукати місце: країна, місто, індекс',
@@ -3767,14 +3676,16 @@
   const headerWeatherLocationCache = new Map();
   const headerWeatherCurrentCache = new Map();
   const headerWeatherAstroCache = new Map();
-  let headerWeatherServerTimeOffsetMs = 0;
-  let headerWeatherServerTimeSyncedAt = 0;
+  let headerWeatherServerClock = null;
+  let headerWeatherServerTimeSyncedAt = -Infinity;
+  let headerWeatherServerTimeSyncPromise = null;
 
   function isHeaderWeatherStaticLocalPreview() {
     return (
       typeof window !== 'undefined' &&
       window.location.protocol === 'http:' &&
       /^(127\.0\.0\.1|localhost|\[::1\])$/i.test(window.location.hostname) &&
+      window.location.port !== '5514' && // The local gateway already provides the current weather API.
       /^55\d{2}$/.test(window.location.port)
     );
   }
@@ -4312,6 +4223,8 @@
 
   let headerWeatherSunSceneModulePromise = null;
   let headerWeatherSunSceneModuleRetry = 0;
+  let headerWeatherMoonSceneModulePromise = null;
+  let headerWeatherMoonSceneModuleRetry = 0;
 
   function resolveHeaderWeatherSunSceneModuleUrl() {
     const shellScript = document.querySelector('script[src*="site-shell.js"]');
@@ -4346,19 +4259,33 @@
 
   let headerWeatherSolarClockModulePromise = null;
   let headerWeatherSolarClockModuleRetry = 0;
+  let headerWeatherRainIntegration;
+  let headerWeatherRainRetryAt = 0;
 
   function loadHeaderWeatherSolarClockModule() {
     if (!headerWeatherSolarClockModulePromise) {
       const target = new URL(resolveHeaderWeatherSunSceneModuleUrl());
-      target.pathname = target.pathname.replace(/header-weather-sun-scene\.js$/, 'weather-solar-time.js');
+      target.pathname = target.pathname.replace(/header-weather-sun-scene\.js$/, 'header-weather-sky-motion.js');
       if (headerWeatherSolarClockModuleRetry) target.searchParams.set('weather-retry', headerWeatherSolarClockModuleRetry);
-      headerWeatherSolarClockModulePromise = import(/* webpackIgnore: true */ target.href).catch(error => {
+      headerWeatherSolarClockModulePromise = import(/* webpackIgnore: true */ target.href).then(module => module.skyClock)
+        .catch(() => import(/* webpackIgnore: true */ target.href.replace('header-weather-sky-motion.js', 'weather-solar-time.js'))).catch(error => {
         headerWeatherSolarClockModulePromise = null;
         headerWeatherSolarClockModuleRetry += 1;
         throw error;
       });
     }
     return headerWeatherSolarClockModulePromise;
+  }
+
+  function syncHeaderWeatherRainLayer(region, options) {
+    if (headerWeatherRainIntegration) return headerWeatherRainIntegration.syncHeaderWeatherRain(region, options);
+    if (performance.now() < headerWeatherRainRetryAt) return;
+    const target = new URL(resolveHeaderWeatherSunSceneModuleUrl());
+    target.pathname = target.pathname.replace('header-weather-sun-scene.js', 'header-weather-rain-integration.js');
+    target.searchParams.set('rain-retry', String(headerWeatherRainRetryAt));
+    headerWeatherRainRetryAt = Infinity;
+    import(/* webpackIgnore: true */ target.href).then(module => { headerWeatherRainIntegration = module; })
+      .catch(() => { headerWeatherRainRetryAt = performance.now() + 15000; });
   }
 
   function updateHeaderWeatherSunSceneGeo(overlay, geoState) {
@@ -4385,6 +4312,9 @@
   }
 
   function hasValidHeaderWeatherCoordinates(latitudeValue, longitudeValue) {
+    if ([latitudeValue, longitudeValue].some(value =>
+      (typeof value !== 'number' && typeof value !== 'string') || String(value).trim() === ''
+    )) return false;
     const latitude = Number(latitudeValue);
     const longitude = Number(longitudeValue);
     return (
@@ -4393,8 +4323,7 @@
       latitude >= -90 &&
       latitude <= 90 &&
       longitude >= -180 &&
-      longitude <= 180 &&
-      !(latitude === 0 && longitude === 0)
+      longitude <= 180
     );
   }
 
@@ -4592,17 +4521,18 @@
       };
 
       const onPosition = position => {
+        if (settled) return;
         const latitude = Number(position?.coords?.latitude);
         const longitude = Number(position?.coords?.longitude);
         const accuracy = getHeaderWeatherGeoAccuracy(position?.coords?.accuracy);
         const updatedAt = Number(position?.timestamp);
         if (
-          settled ||
           !hasValidHeaderWeatherCoordinates(latitude, longitude) ||
           !Number.isFinite(updatedAt) ||
           updatedAt > Date.now() + 60000 ||
           Date.now() - updatedAt > HEADER_WEATHER_GEO_CACHE_TTL
         ) {
+          if (!timeoutId) timeoutId = window.setTimeout(finish, HEADER_WEATHER_GEO_TIMEOUT);
           return;
         }
 
@@ -5143,20 +5073,11 @@
   }
 
   function getHeaderWeatherNowMs() {
-    return Date.now() + (Number.isFinite(headerWeatherServerTimeOffsetMs) ? headerWeatherServerTimeOffsetMs : 0);
-  }
-
-  function getHeaderWeatherBrowserTimeZone() {
-    try {
-      const browserTimeZone = window.Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (typeof browserTimeZone === 'string' && browserTimeZone.includes('/')) {
-        return browserTimeZone;
-      }
-    } catch {
-      // Ignore and use fallback chain.
-    }
-
-    return null;
+    if (!headerWeatherServerClock) return Date.now();
+    const { timeMs, tickMs, correctionMs } = headerWeatherServerClock;
+    const elapsed = Math.max(0, performance.now() - tickMs);
+    const limit = elapsed * .05;
+    return timeMs + elapsed + Math.max(-limit, Math.min(limit, correctionMs));
   }
 
   function normalizeHeaderWeatherTimeZone(value) {
@@ -5180,13 +5101,14 @@
   }
 
   function resolveHeaderWeatherTimeZone(host, locationMeta = null) {
+    const weather = host?.__weatherWidgetInstance?.getState?.()?.weather || host?.__weatherWidgetData;
     return (
-      normalizeHeaderWeatherTimeZone(host?.__weatherTimeZone) ||
-      normalizeHeaderWeatherTimeZone(host?.__weatherWidgetData?.location?.tz_id) ||
-      normalizeHeaderWeatherTimeZone(host?.__weatherWidgetData?.location?.timezone) ||
+      normalizeHeaderWeatherTimeZone(weather?.location?.tz_id) ||
+      normalizeHeaderWeatherTimeZone(weather?.location?.timezone) ||
       normalizeHeaderWeatherTimeZone(locationMeta?.timezone) ||
-      getHeaderWeatherBrowserTimeZone() ||
-      HEADER_WEATHER_DEFAULT_TIMEZONE
+      normalizeHeaderWeatherTimeZone(host?.__weatherCurrentMeta?.timezone) ||
+      normalizeHeaderWeatherTimeZone(host?.__weatherTimeZone) ||
+      'UTC'
     );
   }
 
@@ -5259,7 +5181,7 @@
   async function fetchHeaderWeatherSourceTimeMs(source) {
     const separator = source.url.includes('?') ? '&' : '?';
     const requestUrl = `${source.url}${separator}_ts=${Date.now()}`;
-    const requestStartedAt = Date.now();
+    const requestStartedAt = performance.now();
     const response = await fetch(requestUrl, {
       method: source.method || 'GET',
       mode: source.mode || 'cors',
@@ -5269,8 +5191,6 @@
         Accept: 'application/json, text/plain, */*',
       },
     });
-    const requestEndedAt = Date.now();
-
     if (!response.ok) {
       throw new Error(`Header weather time source failed with status ${response.status}.`);
     }
@@ -5279,7 +5199,9 @@
     if (source.type === 'date-header') {
       const dateHeader = response.headers.get('date');
       if (dateHeader) {
-        serverTimeMs = Date.parse(dateHeader);
+        const age = Number(response.headers.get('age') || 0);
+        if (!Number.isSafeInteger(age) || age < 0) throw new Error('Header weather time source returned invalid Age.');
+        serverTimeMs = Date.parse(dateHeader) + age * 1000;
       }
     } else if (source.type === 'json-field') {
       const payload = await response.json();
@@ -5291,29 +5213,40 @@
       throw new Error(`Header weather time source ${source.id} returned invalid time.`);
     }
 
-    const clientMidpointMs = requestStartedAt + (requestEndedAt - requestStartedAt) / 2;
-    return serverTimeMs - clientMidpointMs;
+    const tickMs = performance.now();
+    return { timeMs: serverTimeMs + Math.max(0, tickMs - requestStartedAt) / 2, tickMs };
   }
 
   async function syncHeaderWeatherClockWithServers(force = false) {
-    const nowMs = Date.now();
+    if (headerWeatherServerTimeSyncPromise && !force) return headerWeatherServerTimeSyncPromise;
+    const nowMs = performance.now();
     if (!force && nowMs - headerWeatherServerTimeSyncedAt < HEADER_WEATHER_TIME_SYNC_INTERVAL) {
       return;
     }
 
-    const sources = getHeaderWeatherTimeSources();
-    for (const source of sources) {
-      try {
-        const nextOffsetMs = await withHeaderWeatherTimeout(fetchHeaderWeatherSourceTimeMs(source));
-        if (Math.abs(nextOffsetMs) <= HEADER_WEATHER_MAX_CLOCK_DRIFT_MS) {
-          headerWeatherServerTimeOffsetMs = nextOffsetMs;
-          headerWeatherServerTimeSyncedAt = Date.now();
-          return;
+    const pending = (async () => {
+      for (const source of getHeaderWeatherTimeSources()) {
+        try {
+          const sample = await withHeaderWeatherTimeout(fetchHeaderWeatherSourceTimeMs(source));
+          if (headerWeatherServerTimeSyncPromise !== pending) return;
+          const tickMs = performance.now();
+          const targetMs = sample.timeMs + Math.max(0, tickMs - sample.tickMs);
+          const currentMs = getHeaderWeatherNowMs();
+          if (Math.abs(targetMs - (force ? Date.now() : currentMs)) <= HEADER_WEATHER_MAX_CLOCK_DRIFT_MS) {
+            const snap = force || !headerWeatherServerClock;
+            headerWeatherServerClock = { timeMs: snap ? targetMs : currentMs, tickMs,
+              correctionMs: snap ? 0 : targetMs - currentMs };
+            headerWeatherServerTimeSyncedAt = tickMs;
+            return;
+          }
+        } catch {
+          // Keep the last monotonic clock and try the next source silently.
         }
-      } catch {
-        // Try the next source silently.
       }
-    }
+    })();
+    headerWeatherServerTimeSyncPromise = pending;
+    try { await pending; }
+    finally { if (headerWeatherServerTimeSyncPromise === pending) headerWeatherServerTimeSyncPromise = null; }
   }
 
   function formatHeaderWeatherLiveTime(timeZone) {
@@ -5667,10 +5600,10 @@
   }
 
   function getHeaderWeatherConditionCode(host) {
+    const weather = host?.__weatherWidgetInstance?.getState?.()?.weather || host?.__weatherWidgetData;
     const conditionCode = getHeaderWeatherFiniteNumber(
-      host?.__weatherCurrentMeta?.weatherCode ??
-        host?.dataset?.weatherCode ??
-        host?.__weatherWidgetData?.current?.condition?.code
+      weather?.weatherMeta?.weatherCode ?? weather?.current?.condition?.code ??
+        host?.__weatherCurrentMeta?.weatherCode ?? host?.dataset?.weatherCode
     );
     return Number.isFinite(conditionCode) ? conditionCode : null;
   }
@@ -6304,9 +6237,6 @@
     if (readings.condition) {
       host.dataset.weatherCondition = readings.condition;
     }
-    if (host.dataset.weatherManualLocation === 'true') {
-      return;
-    }
     if (readings.humidity) {
       host.__weatherHumidityValue = readings.humidity;
       writeHeaderWeatherReadingsCache(host, { humidity: readings.humidity });
@@ -6319,6 +6249,7 @@
         writeHeaderWeatherReadingsCache(host, { pressureMmHg });
       }
     }
+    refreshHeaderWeatherPreviewValues(host);
   }
 
   function scheduleHeaderWeatherReadingsSync(host) {
@@ -6873,7 +6804,7 @@
       if (!(moon instanceof HTMLElement)) {
         return;
       }
-      moon.style.setProperty('opacity', '0.62', 'important');
+      moon.style.removeProperty('opacity');
       moon.style.setProperty(
         'filter',
         'brightness(1.18) saturate(1.08) drop-shadow(0 0 12px rgba(232, 212, 139, 0.36))',
@@ -6956,7 +6887,7 @@
       });
 
     root
-      .querySelectorAll('.weather-header-dropdown__forecast-pill strong, .weather-header-dropdown__detail-card strong')
+      .querySelectorAll('.weather-header-dropdown__detail-card strong')
       .forEach(node => {
         if (!(node instanceof HTMLElement)) {
           return;
@@ -7030,8 +6961,10 @@
   }
 
   function getHeaderWeatherCloudCover(host) {
+    const weather = host?.__weatherWidgetInstance?.getState?.()?.weather || host?.__weatherWidgetData;
     const cloudCover = getHeaderWeatherFiniteNumber(
-      host?.__weatherCurrentMeta?.cloudCover ?? host?.dataset?.weatherCloud ?? host?.__weatherWidgetData?.current?.cloud
+      weather?.weatherMeta?.cloudCover ?? weather?.current?.cloud ??
+        host?.__weatherCurrentMeta?.cloudCover ?? host?.dataset?.weatherCloud
     );
     return cloudCover === null ? null : clampHeaderWeatherValue(cloudCover, 0, 100);
   }
@@ -7088,11 +7021,13 @@
       ? getHeaderWeatherFiniteNumber(forecastDay.cloud ?? forecastDay.cloud_cover ?? forecastDay.avgcloud)
       : getHeaderWeatherCloudCover(host);
     const normalizedCloudCover = cloudCover === null ? null : clampHeaderWeatherValue(cloudCover / 100, 0, 1);
+    const visibilityKm = getHeaderWeatherFiniteNumber(forecastDay ? forecastDay.avgvis_km
+      : (host?.__weatherWidgetInstance?.getState?.()?.weather || host?.__weatherWidgetData)?.current?.vis_km);
     const isClearCode = conditionCode === 1000 || conditionCode === 0 || conditionCode === 1;
     const isPartlyCloudyCode = conditionCode === 1003 || conditionCode === 2;
     const isCloudyCode = conditionCode === 1006;
     const isOvercastCode = conditionCode === 1009 || conditionCode === 3;
-    const isFogCode = conditionCode === 1030 || conditionCode === 45 || conditionCode === 48;
+    const isFogCode = [45, 48, 1030, 1135, 1147].includes(conditionCode);
     const isPrecipitationCode =
       [1153, 1183, 1210, 1240, 1273].includes(conditionCode) ||
       (conditionCode >= 51 && conditionCode <= 67) ||
@@ -7132,7 +7067,7 @@
       : normalizedCloudCover ?? inferredCloudCover;
     const sunTransmission = 0.015 + 0.985 * (1 - lightCloudCover) ** 2;
 
-    if (isClearCode || isClearText) {
+    if (isClearCode || (!isFogCode && !isFogText && isClearText)) {
       return {
         alpha: normalizedCloudCover !== null ? clampHeaderWeatherValue(normalizedCloudCover * 0.05, 0, 0.06) : 0,
         sunTransmission,
@@ -7320,6 +7255,7 @@
 
     return {
       mode,
+      visibilityKm: visibilityKm > 0 ? visibilityKm : null,
       sunTransmission,
       alpha: clampHeaderWeatherValue(alpha, 0, 0.5),
       blur,
@@ -7403,7 +7339,7 @@
             getHeaderWeatherLocationStatusCopy(null, 'resolving'),
           areaResolved: Boolean(reverseMeta?.districtLabel || reverseMeta?.locationLabel),
           regionLabel: reverseMeta?.regionLabel || null,
-          timezone: getHeaderWeatherBrowserTimeZone() || HEADER_WEATHER_DEFAULT_TIMEZONE,
+          timezone: null,
           geocodeProvider: reverseMeta?.provider || null,
           geocodeAttributionUrl: reverseMeta?.attributionUrl || null,
         };
@@ -7453,13 +7389,15 @@
         }
 
         const payload = await response.json();
-        result = payload?.results?.[0] || null;
+        const candidate = payload?.results?.[0];
+        result = hasValidHeaderWeatherCoordinates(candidate?.latitude, candidate?.longitude) ? candidate : null;
         if (result) {
           break;
         }
       }
 
       if (!result) {
+        headerWeatherLocationCache.delete(normalizedKey);
         return null;
       }
 
@@ -7479,10 +7417,7 @@
         regionLabel: normalizeHeaderWeatherGermanStateLabel(result.admin1 || result.admin2 || null, {
           country_code: result.country_code,
         }),
-        timezone:
-          normalizeHeaderWeatherTimeZone(result.timezone) ||
-          getHeaderWeatherBrowserTimeZone() ||
-          HEADER_WEATHER_DEFAULT_TIMEZONE,
+        timezone: normalizeHeaderWeatherTimeZone(result.timezone),
       };
 
       headerWeatherLocationCache.set(normalizedKey, {
@@ -7593,144 +7528,11 @@
     return clampHeaderWeatherValue(presentation?.starOpacity ?? (presentation?.dominantKind === 'moon' ? 1 : 0), 0, 1);
   }
 
-  function applyHeaderWeatherOrbLayout(overlay, layout) {
-    if (!overlay) {
-      return;
-    }
-
-    const orbKind = overlay.dataset.orbKind || overlay.dataset.orbRole || '';
-    const isPreviewOrb =
-      overlay.classList.contains('weather-orb-overlay--preview') &&
-      (orbKind === 'moon' ||
-        orbKind === 'sun' ||
-        overlay.classList.contains('is-moon') ||
-        overlay.classList.contains('is-sun'));
-    const isDropdownOrb =
-      overlay.classList.contains('weather-orb-overlay--dropdown') &&
-      (orbKind === 'moon' || orbKind === 'sun' || overlay.classList.contains('is-moon') || overlay.classList.contains('is-sun'));
-    const isCssAnchoredOrb = isPreviewOrb || isDropdownOrb;
-
-    if ((isPreviewOrb && (orbKind === 'moon' || orbKind === 'sun')) || isDropdownOrb) {
-      const fixedKind = orbKind === 'sun' || overlay.classList.contains('is-sun') ? 'sun' : 'moon';
-      layout = resolveHeaderWeatherOrbFixedLayout(fixedKind, isDropdownOrb ? 'dropdown' : 'preview');
-      overlay.dataset.orbPositionLocked = isDropdownOrb ? 'dropdown' : 'preview';
-      overlay.style.removeProperty('--orb-left');
-      overlay.style.removeProperty('--orb-top');
-      overlay.style.removeProperty('--orb-offset-x');
-      overlay.style.removeProperty('--orb-offset-y');
-    }
-
-    if (!layout) {
-      if (!isCssAnchoredOrb) {
-        overlay.style.removeProperty('--orb-left');
-        overlay.style.removeProperty('--orb-top');
-        overlay.style.removeProperty('--orb-offset-x');
-        overlay.style.removeProperty('--orb-offset-y');
-      }
-      overlay.style.removeProperty('--orb-scale-visible');
-      overlay.style.removeProperty('--orb-scale-hidden');
-      overlay.dataset.orbLayoutKey = '';
-      overlay.dataset.orbPositionLocked = '';
-      return;
-    }
-
-    const fallbackVariant = isPreviewOrb ? 'preview' : 'dropdown';
-    const fallbackLayout =
-      orbKind === 'moon' || orbKind === 'sun' ? resolveHeaderWeatherOrbFixedLayout(orbKind, fallbackVariant) : null;
-
-    layout = {
-      ...layout,
-      scale: Number.isFinite(Number(layout.scale)) ? Number(layout.scale) : Number(fallbackLayout?.scale) || 1,
-      left: isCssAnchoredOrb
-        ? Number(layout.left)
-        : Number.isFinite(Number(layout.left))
-          ? Number(layout.left)
-          : Number(fallbackLayout?.left),
-      top: isCssAnchoredOrb
-        ? Number(layout.top)
-        : Number.isFinite(Number(layout.top))
-          ? Number(layout.top)
-          : Number(fallbackLayout?.top),
-      offsetX:
-        typeof layout.offsetX === 'number'
-          ? layout.offsetX
-          : typeof fallbackLayout?.offsetX === 'number'
-            ? fallbackLayout.offsetX
-            : layout.offsetX,
-      offsetY:
-        typeof layout.offsetY === 'number'
-          ? layout.offsetY
-          : typeof fallbackLayout?.offsetY === 'number'
-            ? fallbackLayout.offsetY
-            : layout.offsetY,
-    };
-
-    if (!isCssAnchoredOrb && (!Number.isFinite(layout.left) || !Number.isFinite(layout.top))) {
-      overlay.style.removeProperty('--orb-left');
-      overlay.style.removeProperty('--orb-top');
-      overlay.style.removeProperty('--orb-offset-x');
-      overlay.style.removeProperty('--orb-offset-y');
-      overlay.style.removeProperty('--orb-scale-visible');
-      overlay.style.removeProperty('--orb-scale-hidden');
-      overlay.dataset.orbLayoutKey = '';
-      overlay.dataset.orbPositionLocked = '';
-      return;
-    }
-
-    const layoutKey = isCssAnchoredOrb
-      ? String(layout.scale ?? 1)
-      : [layout.left, layout.top, layout.scale, layout.offsetX ?? '', layout.offsetY ?? ''].join('|');
-    if (overlay.dataset.orbLayoutKey === layoutKey) {
-      return;
-    }
-    overlay.dataset.orbLayoutKey = layoutKey;
-
-    const visibleScale = Number(layout.scale) || 1;
-    overlay.style.setProperty('--orb-scale-visible', visibleScale.toFixed(3));
-    overlay.style.setProperty('--orb-scale-hidden', Math.max(0.88, visibleScale - 0.08).toFixed(3));
-
-    if (isCssAnchoredOrb) {
-      return;
-    }
-
-    overlay.style.setProperty('--orb-left', `${layout.left.toFixed(2)}%`);
-    overlay.style.setProperty('--orb-top', `${layout.top.toFixed(2)}px`);
-
-    if (orbKind === 'moon' || orbKind === 'sun') {
-      const isPreview = overlay.classList.contains('weather-orb-overlay--preview');
-      const orbDefaults =
-        orbKind === 'moon'
-          ? isPreview
-            ? HEADER_WEATHER_MOON_PREVIEW_LAYOUT
-            : HEADER_WEATHER_MOON_DROPDOWN_LAYOUT
-          : isPreview
-            ? HEADER_WEATHER_SUN_PREVIEW_LAYOUT
-            : HEADER_WEATHER_SUN_DROPDOWN_LAYOUT;
-      const offsetX =
-        typeof layout.offsetX === 'number'
-          ? layout.offsetX
-          : typeof orbDefaults?.offsetX === 'number'
-            ? orbDefaults.offsetX
-            : 0;
-      const offsetY =
-        typeof layout.offsetY === 'number'
-          ? layout.offsetY
-          : typeof orbDefaults?.offsetY === 'number'
-            ? orbDefaults.offsetY
-            : 0;
-      overlay.style.setProperty('--orb-offset-x', `${offsetX}px`);
-      overlay.style.setProperty('--orb-offset-y', `${offsetY}px`);
-    } else {
-      overlay.style.removeProperty('--orb-offset-x');
-      overlay.style.removeProperty('--orb-offset-y');
-    }
-  }
-
   async function fetchHeaderWeatherCurrent(host, locationMeta) {
     const url = new URL(HEADER_WEATHER_CURRENT_ENDPOINT, window.location.origin);
     url.searchParams.set('latitude', String(locationMeta.latitude));
     url.searchParams.set('longitude', String(locationMeta.longitude));
-    url.searchParams.set('timezone', resolveHeaderWeatherTimeZone(host, locationMeta));
+    url.searchParams.set('timezone', normalizeHeaderWeatherTimeZone(locationMeta.timezone) || 'auto');
     url.searchParams.set('lang', getHeaderWeatherPressureLang(host));
 
     const response = await fetch(url.toString(), {
@@ -7760,6 +7562,9 @@
   }
 
   async function resolveHeaderWeatherCurrent(host) {
+    const weather = host?.__weatherWidgetInstance?.getState?.()?.weather;
+    if (!weather?.stale && isHeaderWeatherCoordinateSelectionApplied(host) &&
+        isHeaderWeatherCurrentMetaFresh(weather?.weatherMeta)) return weather.weatherMeta;
     const locationLabel = getHeaderWeatherLocationLabel(host);
     const locationMeta = await resolveHeaderWeatherLocationMeta(locationLabel);
     if (!locationMeta) {
@@ -7829,20 +7634,12 @@
       syncHeaderWeatherPublicLocationLabel(host);
     }
 
-    if (locationMeta.regionLabel) {
-      const normalizedRegionLabel = String(locationMeta.regionLabel).trim();
-      if (normalizedRegionLabel) {
-        host.dataset.weatherRegionLabel = normalizedRegionLabel;
-        const metaNodes = root.querySelectorAll('.weather-header-card__meta, .weather-header-dropdown__hero-meta');
-        const timeZone = resolveHeaderWeatherTimeZone(host, locationMeta);
-        const nextMetaText = buildHeaderWeatherMetaText(timeZone, normalizedRegionLabel);
-        metaNodes.forEach(node => {
-          if (node) {
-            node.textContent = nextMetaText;
-          }
-        });
-      }
-    }
+    const regionLabel = String(locationMeta.regionLabel || '').trim();
+    if (regionLabel) host.dataset.weatherRegionLabel = regionLabel;
+    else delete host.dataset.weatherRegionLabel;
+    const metaText = buildHeaderWeatherMetaText(resolveHeaderWeatherTimeZone(host, locationMeta), regionLabel);
+    root.querySelectorAll('.weather-header-card__meta, .weather-header-dropdown__hero-meta')
+      .forEach(node => { node.textContent = metaText; });
 
     syncHeaderWeatherAttribution(host);
   }
@@ -7978,16 +7775,16 @@
       return;
     }
 
+    // Ordinary cloud cover measures sky area. Fog has continuous extinction,
+    // owned by the shared sky veil, including rays outside the cloud canvas.
     if (overlay.classList.contains('is-sun')) {
-      const transmission = Number.isFinite(atmosphere?.sunTransmission) ? atmosphere.sunTransmission : 1;
-      overlay.style.setProperty('--orb-sun-transmission', clampHeaderWeatherValue(transmission, 0, 1).toFixed(3));
+      if (atmosphere?.mode !== 'fog') overlay.style.setProperty('--orb-sun-transmission', '1');
     } else {
       overlay.style.removeProperty('--orb-sun-transmission');
     }
 
     if (overlay.classList.contains('is-moon')) {
-      const transmission = Number.isFinite(atmosphere?.sunTransmission) ? atmosphere.sunTransmission : 1;
-      overlay.style.setProperty('--orb-moon-transmission', clampHeaderWeatherValue(transmission, 0, 1).toFixed(3));
+      overlay.style.setProperty('--orb-moon-transmission', '1');
     } else {
       overlay.style.removeProperty('--orb-moon-transmission');
     }
@@ -7997,7 +7794,7 @@
         const cloudMode = String(atmosphere.mode || '').toLowerCase();
         const cloudAlphaRaw = clampHeaderWeatherValue(Number(atmosphere.alpha) || 0, 0, 0.34);
         const cloudAlpha = cloudMode === 'clear' ? 0 : cloudAlphaRaw;
-        overlay.classList.toggle('has-cloud-veil', cloudAlpha > 0.06);
+        overlay.classList.toggle('has-cloud-veil', cloudAlpha > 0.06 && !overlay.classList.contains('is-header-sun'));
         if (cloudAlpha > 0.03) {
           overlay.style.setProperty('--orb-cloud-alpha', cloudAlpha.toFixed(3));
           overlay.style.setProperty('--orb-cloud-blur', `${Math.round(Number(atmosphere.blur) || 16)}px`);
@@ -9766,6 +9563,10 @@
       }
     }
 
+    if (humidityChip instanceof HTMLElement) {
+      updateHeaderWeatherHumidityValue(humidityChip, host?.__weatherHumidityValue);
+    }
+
     if (pressureChip instanceof HTMLElement) {
       const valueEl = pressureChip.lastElementChild;
       if (valueEl instanceof HTMLElement) {
@@ -9801,10 +9602,6 @@
           }
         }
       }
-    }
-
-    if (humidityChip instanceof HTMLElement) {
-      updateHeaderWeatherHumidityValue(humidityChip, host?.__weatherHumidityValue);
     }
   }
 
@@ -12228,6 +12025,11 @@
 
     stopHeaderWeatherMoonTimelineSync(overlay);
     stopHeaderWeatherSunScene(overlay);
+    overlay.__moonSceneMountToken = null;
+    overlay.__moonScene?.dispose();
+    overlay.__moonScene = null;
+    delete overlay.__moonLatestAssetConfig;
+    delete overlay.__moonSceneError;
 
     const video = overlay.querySelector('video');
     if (overlay.__orbFrameScheduler === 'video' && typeof overlay.__orbFrameHandle === 'number') {
@@ -12473,7 +12275,7 @@
     overlay.__sunSurfaceToken = mountToken;
     overlay.dataset.sunScene = 'loading';
     overlay.dataset.sunSurface = 'loading';
-    overlay.__sunSceneResume = () => {
+    overlay.__sunSceneResume ||= () => {
       if (!overlay.isConnected || document.hidden || !['failed', 'lost'].includes(overlay.dataset.sunScene)) return;
       const latestConfig = overlay.__sunLatestAssetConfig;
       if (!latestConfig) return;
@@ -12515,6 +12317,8 @@
             ? appearance.elevationDeg.toFixed(3) : 'unknown';
         },
         getOpticalCenter: () => {
+          const skyCenter = overlay.__getWeatherSkyOpticalCenter?.();
+          if (skyCenter) return skyCenter;
           const bounds = canvas.getBoundingClientRect();
           const region = overlay.closest('.weather-header-preview, .weather-header-dropdown__hero')?.getBoundingClientRect();
           if (!region || !bounds.width || !bounds.height) return null;
@@ -12538,6 +12342,7 @@
 
       overlay.__sunScene = scene;
       scene.setGeoState(overlay.__sunLatestAssetConfig?.geoState || assetConfig.geoState);
+      if (scene.recovery) return;
       if (!overlay.__sunSceneResizeObserver && typeof ResizeObserver === 'function') {
         overlay.__sunSceneResizeObserver = new ResizeObserver(() => {
           overlay.__sunScene?.resize();
@@ -12568,6 +12373,53 @@
     }
   }
 
+  async function mountHeaderWeatherMoonScene(overlay, assetConfig) {
+    stopHeaderWeatherOrbRender(overlay);
+    const token = {};
+    overlay.__moonSceneMountToken = token;
+    overlay.__moonLatestAssetConfig = assetConfig;
+    const current = () => overlay.isConnected !== false && overlay.__moonSceneMountToken === token;
+    const canvas = overlay.querySelector('canvas'), video = overlay.querySelector('video'), image = overlay.querySelector('img');
+    if (!canvas || !video) { overlay.__moonSceneMountToken = null; return; }
+    video.onloadeddata = video.oncanplay = video.onloadedmetadata = video.onerror = null;
+    video.pause(); video.hidden = true;
+    if (video.dataset.currentSrc) { video.removeAttribute('src'); video.load(); delete video.dataset.currentSrc; }
+    canvas.hidden = true; if (image) image.hidden = true;
+    overlay.dataset.moonScene = 'loading';
+    try {
+      const url = new URL(resolveHeaderWeatherSunSceneModuleUrl());
+      url.pathname = url.pathname.replace('header-weather-sun-scene.js', 'header-weather-moon-scene.js');
+      if (headerWeatherMoonSceneModuleRetry) url.searchParams.set('moon-retry', headerWeatherMoonSceneModuleRetry);
+      const module = await (headerWeatherMoonSceneModulePromise ||= import(/* webpackIgnore: true */ url.href));
+      if (!current()) return;
+      const scene = await module.createHeaderWeatherMoonScene(canvas, {
+        geoState: overlay.__moonLatestAssetConfig.geoState, getTimeMs: getHeaderWeatherNowMs, isCurrent: current, skyProjection: 'dome', deferTerrain: true,
+        getGeoState: () => overlay.__moonLatestAssetConfig?.geoState,
+        onReady: () => { if (current()) overlay.dataset.moonScene = 'ready'; },
+      });
+      if (!current()) { scene?.dispose(); return; }
+      overlay.__moonScene = scene;
+      scene.setGeoState(overlay.__moonLatestAssetConfig.geoState);
+      await scene.whenReady;
+      if (!current()) return;
+      const diameterRatio = scene.getLightingState?.()?.apparentDiameterRatio;
+      if (Number.isFinite(diameterRatio) && diameterRatio > 0) {
+        overlay.style.setProperty('--orb-moon-angular-ratio', diameterRatio.toFixed(8));
+      }
+      canvas.hidden = false;
+      overlay.dataset.moonScene = canvas.dataset.moonDetail === 'paused' ? 'paused' : 'ready';
+    } catch (error) {
+      if (!current()) return;
+      if (canvas.dataset.moonDetail !== 'fallback') {
+        overlay.__moonScene?.dispose(); overlay.__moonScene = null; overlay.__moonSceneMountToken = null;
+      }
+      overlay.__moonSceneError = error;
+      headerWeatherMoonSceneModulePromise = null; headerWeatherMoonSceneModuleRetry += 1;
+      overlay.__moonSceneRetryAfter = performance.now() + 15000;
+      overlay.dataset.moonScene = 'failed';
+    }
+  }
+
   function setHeaderWeatherOrbSource(overlay, kind, assetConfig) {
     const video = overlay.querySelector('video');
     const canvas = overlay.querySelector('canvas');
@@ -12580,6 +12432,7 @@
           ? [assetConfig.sunTextureUrl]
           : [];
     const isHeaderSun = kind === 'sun' && assetConfig?.type === 'header-sun';
+    const isHeaderMoon = kind === 'moon' && assetConfig?.type === 'header-moon';
     if (!video) {
       stopHeaderWeatherOrbRender(overlay);
       return;
@@ -12591,7 +12444,7 @@
     overlay.classList.remove('is-native-alpha');
     overlay.dataset.orbKind = kind || '';
 
-    if (!kind || !assetConfig || (!isHeaderSun && !videoSources.length && !assetConfig.src)) {
+    if (!kind || !assetConfig || (!isHeaderSun && !isHeaderMoon && !videoSources.length && !assetConfig.src)) {
       stopHeaderWeatherOrbRender(overlay);
       stopHeaderWeatherMoonTimelineSync(overlay);
       overlay.hidden = true;
@@ -12635,6 +12488,23 @@
     overlay.classList.add('is-visible');
     delete overlay.dataset.fallbackSrc;
 
+    if (isHeaderMoon) {
+      overlay.__moonLatestAssetConfig = assetConfig;
+      if (overlay.__moonScene && overlay.dataset.moonScene === 'failed' && performance.now() >= (overlay.__moonSceneRetryAfter || 0)) {
+        void mountHeaderWeatherMoonScene(overlay, assetConfig);
+      } else if (overlay.__moonScene) {
+        overlay.__moonScene.setGeoState(assetConfig.geoState);
+        const diameterRatio = overlay.__moonScene.getLightingState?.()?.apparentDiameterRatio;
+        if (Number.isFinite(diameterRatio) && diameterRatio > 0) {
+          overlay.style.setProperty('--orb-moon-angular-ratio', diameterRatio.toFixed(8));
+        }
+      }
+      else if (!overlay.__moonSceneMountToken && performance.now() >= (overlay.__moonSceneRetryAfter || 0)) {
+        void mountHeaderWeatherMoonScene(overlay, assetConfig);
+      }
+      return;
+    }
+
     if (isHeaderSun) {
       overlay.__sunLatestAssetConfig = assetConfig;
       if (overlay.__sunScene && (overlay.dataset.sunScene === 'failed' || overlay.dataset.sunScene === 'lost')) {
@@ -12643,6 +12513,7 @@
       }
       if (overlay.__sunScene) {
         updateHeaderWeatherSunSceneGeo(overlay, assetConfig.geoState);
+        if (overlay.__sunScene.recovery) return;
         if (video) {
           video.hidden = true;
         }
@@ -12903,19 +12774,7 @@
       timeMs: getHeaderWeatherNowMs(),
       appearanceTimeMs: null,
     };
-    const moonVideoSources = widgetBasePath
-      ? HEADER_WEATHER_MOON_VIDEO_FILES.map(file => `${widgetBasePath}/assets/Moon/${file}?v=${WEATHER_WIDGET_ASSET_VERSION}`)
-      : [];
-    const moonAssetConfig = moonVideoSources.length
-      ? {
-          type: 'video-keyed',
-          sources: moonVideoSources,
-          timelineBase: presentation?.moon?.timeline || {
-            videoDurationSec: HEADER_WEATHER_MOON_VIDEO_DURATION_SEC,
-            nightProgress: 0,
-          },
-        }
-      : null;
+    const moonAssetConfig = { type: 'header-moon', geoState };
     const sunAssetConfig =
       widgetBasePath && assetsModuleBase
         ? {
@@ -12926,35 +12785,30 @@
           }
         : null;
 
-    const applyOrbStack = (stack, variantActive, layoutKey = 'preview', atmosphere = orbAtmosphere,
+    const applyOrbStack = (stack, variantActive, _layoutKey = 'preview', atmosphere = orbAtmosphere,
       sceneContext = { presentation, geoState }) => {
       if (!stack) {
         return;
       }
 
-      const moonPart = sceneContext.presentation?.moon;
-      const sunPart = sceneContext.presentation?.sun;
+      const sky = host.__weatherSolarClock?.withSkyPresentation?.(sceneContext.presentation, sceneContext.geoState, host.__weatherSolarClock);
+      const moonPart = sky?.moon || sceneContext.presentation?.moon;
+      const sunPart = sky?.sun || sceneContext.presentation?.sun;
       const sceneSunAssetConfig = sunAssetConfig ? { ...sunAssetConfig, geoState: sceneContext.geoState } : null;
-      const moonLayout =
-        layoutKey === 'dropdown' ? moonPart?.dropdownLayout : resolveHeaderWeatherOrbFixedLayout('moon', 'preview');
-      const sunLayout =
-        layoutKey === 'dropdown' ? sunPart?.dropdownLayout : resolveHeaderWeatherOrbFixedLayout('sun', 'preview');
-
       if (stack.moon) {
         applyHeaderWeatherOrbCrossfade(stack.moon, moonPart);
-        applyHeaderWeatherOrbLayout(stack.moon, moonLayout);
         if (variantActive && moonPart?.active) {
-          setHeaderWeatherOrbSource(stack.moon, 'moon', moonAssetConfig);
+          setHeaderWeatherOrbSource(stack.moon, 'moon', { ...moonAssetConfig, geoState: sceneContext.geoState });
           applyHeaderWeatherOrbAtmosphere(stack.moon, atmosphere);
         } else {
           setHeaderWeatherOrbSource(stack.moon, null, null);
           applyHeaderWeatherOrbAtmosphere(stack.moon, 0);
         }
+        host.__weatherSolarClock?.applySkyPosition?.(stack.moon, moonPart, resolveHeaderWeatherOrbFixedLayout, getHeaderWeatherPressureLang(host));
       }
 
       if (stack.sun) {
         applyHeaderWeatherOrbCrossfade(stack.sun, sunPart);
-        applyHeaderWeatherOrbLayout(stack.sun, sunLayout);
         if (variantActive && sunPart?.active) {
           setHeaderWeatherOrbSource(stack.sun, 'sun', sceneSunAssetConfig);
           applyHeaderWeatherOrbAtmosphere(stack.sun, atmosphere);
@@ -12966,6 +12820,8 @@
           setHeaderWeatherOrbSource(stack.sun, null, null);
           applyHeaderWeatherOrbAtmosphere(stack.sun, 0);
         }
+        host.__weatherSolarClock?.applySkyPosition?.(stack.sun, sunPart, resolveHeaderWeatherOrbFixedLayout);
+        host.__weatherSolarClock?.applySkyFog?.(stack.sun, sunPart, atmosphere);
       }
     };
 
@@ -13012,6 +12868,7 @@
       const previewStack = ensureHeaderWeatherOrbStack(previewContainer, 'preview');
       syncHeaderWeatherPreviewLayerOrder(previewContainer);
       applyOrbStack(previewStack, true);
+      syncHeaderWeatherRainLayer(previewContainer, { host });
       syncHeaderWeatherPreviewLayerOrder(previewContainer);
     }
 
@@ -13046,6 +12903,7 @@
     if (dropdownHero) {
       const dropdownStack = ensureHeaderWeatherOrbStack(dropdownHero, 'dropdown');
       applyOrbStack(dropdownStack, isExpanded, 'dropdown', dropdownAtmosphere, dropdownContext);
+      syncHeaderWeatherRainLayer(dropdownHero, { host, active: isExpanded, forecast: resolveHeaderWeatherSelectedForecast(host) });
     }
 
     enforceHeaderWeatherToggleArrow(host);
@@ -13328,6 +13186,7 @@
   }
 
   function clearHeaderWeatherOrbResources(root) {
+    headerWeatherRainIntegration?.disposeHeaderWeatherRain(root);
     for (const orb of [root, ...(root.querySelectorAll?.('.weather-orb-overlay') || [])]) {
       if (orb.matches?.('.weather-orb-overlay')) setHeaderWeatherOrbSource(orb, null, null);
     }
@@ -13510,7 +13369,7 @@
       host.__weatherShootingStars?.sync(true);
       if (document.hidden) stopHeaderWeatherToggleArrowAnimation(host);
       if (!document.hidden) {
-        syncHeaderWeatherClockWithServers().catch(() => null);
+        syncHeaderWeatherClockWithServers(true).catch(() => null);
         syncHeaderWeatherLiveClock(host);
         scheduleHeaderWeatherOrbSync(host);
         void refreshHeaderWeatherLifecycle(host);
@@ -13564,7 +13423,7 @@
         const name = normalize(button.querySelector('strong')?.textContent);
         const area = normalize(button.querySelector('span')?.textContent);
         return name === query || (area && `${name}, ${area}` === query);
-      }) || suggestions[0]
+      }) || null
     );
   }
 
@@ -13617,9 +13476,9 @@
       return;
     }
 
-    const latitude = Number(locationMeta?.latitude);
-    const longitude = Number(locationMeta?.longitude);
-    if (hasValidHeaderWeatherCoordinates(latitude, longitude)) {
+    if (hasValidHeaderWeatherCoordinates(locationMeta?.latitude, locationMeta?.longitude)) {
+      const latitude = Number(locationMeta.latitude);
+      const longitude = Number(locationMeta.longitude);
       await selectHeaderWeatherManualCoordinates(host, { latitude, longitude });
       return;
     }
@@ -13709,6 +13568,14 @@
     if (!host || !parseHeaderWeatherCoordinates(weatherLocation)) {
       return;
     }
+
+    resetHeaderWeatherReadingsState(host);
+    host.__weatherCurrentMeta = null;
+    host.__weatherTimeZone = null;
+    host.__weatherAstroSnapshot = null;
+    host.__weatherSolarPresentation = null;
+    delete host.dataset.weatherResolvedLocationLabel;
+    delete host.dataset.weatherRegionLabel;
 
     if (typeof host.__weatherWidgetInstance?.setLocation === 'function') {
       return refreshHeaderWeatherWidgetData(host, { coords: parseHeaderWeatherCoordinates(weatherLocation) });

@@ -1,0 +1,222 @@
+/* Contact-page layout; loaded after the shared page modules. */
+
+.contacts-info {
+  min-width: 0;
+}
+
+.contact-item > .contact-icon {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.contact-item > strong {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+/* Keep browser-detected addresses and translated fragments in one grid cell. */
+.contact-item > .contact-value {
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  -webkit-hyphens: none;
+  hyphens: none;
+}
+
+.contact-citations {
+  margin-bottom: 32px;
+}
+
+.contact-citations .section-block {
+  margin-bottom: 0;
+  padding: 28px 32px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 28px;
+}
+
+.contact-citations .section-title {
+  margin-bottom: 20px;
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-wrap: balance;
+}
+
+.contact-citations .section-title::after {
+  margin-inline: 0;
+}
+
+.contacts .contact-citations :is(p, li) {
+  text-align: left;
+  text-align-last: auto;
+  -webkit-hyphens: none;
+  hyphens: none;
+}
+
+.contact-citations p {
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.contact-citations ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 32px;
+  margin: 0;
+  padding-inline-start: 1.25em;
+}
+
+.contact-citations li {
+  min-width: 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.contact-citations li::marker {
+  color: var(--accent-gold);
+}
+
+.contact-citations li a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding-block: 10px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.contact-form input,
+.contact-form textarea,
+.contact-form select {
+  font-size: max(16px, 1rem);
+  line-height: 1.5;
+}
+
+.contact-form textarea {
+  min-height: 9rem;
+  border-radius: 20px;
+  resize: vertical;
+}
+
+.map-frame:has(.map-embed-google) .map-actions {
+  position: relative;
+  inset: auto;
+  flex: 0 0 auto;
+  background: var(--glass-bg);
+}
+
+.map-frame:has(.map-embed-google) .map-viewport {
+  flex: 1 1 auto;
+  min-height: 280px;
+}
+
+@media (width > 600px) {
+  .contacts-info h1 {
+    margin-bottom: 16px;
+    font-size: clamp(1.8rem, 2.3vw, 2.25rem);
+    line-height: 1.2;
+    letter-spacing: 0.04em;
+    text-wrap: balance;
+  }
+
+  .contacts-info > .contact-item {
+    align-items: start;
+    margin-bottom: 0;
+    padding-block: 8px;
+  }
+
+  .contacts-info > .contact-item + .contact-item {
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .contacts-info > .contact-item > strong {
+    font-size: 0.9em;
+    line-height: 1.6;
+  }
+
+  @supports (grid-template-columns: subgrid) {
+    .contacts-info {
+      display: grid;
+      grid-template-columns: 36px max-content minmax(0, 1fr);
+      grid-template-rows: auto repeat(5, auto) 1fr;
+      column-gap: 12px;
+    }
+
+    .contacts-info > h1,
+    .contacts-info > .socials {
+      grid-column: 1 / -1;
+    }
+
+    .contacts-info > .contact-item {
+      grid-column: 1 / -1;
+      grid-template-columns: subgrid;
+    }
+
+    .contacts-info > .socials {
+      align-self: end;
+      margin-top: 20px;
+    }
+  }
+}
+
+@media (width <= 600px) {
+  .contacts-info,
+  .contact-form,
+  .contact-citations .section-block {
+    padding: 20px;
+    border-radius: 24px;
+  }
+
+  .contacts-info h1 {
+    margin-bottom: 16px;
+    font-size: clamp(1.75rem, 7.5vw, 2.25rem);
+    line-height: 1.2;
+    letter-spacing: 0.04em;
+    text-wrap: balance;
+  }
+
+  .contact-item {
+    grid-template-columns: 36px minmax(0, 1fr);
+    align-items: start;
+    gap: 4px 12px;
+    margin-bottom: 0;
+    padding-block: 14px;
+  }
+
+  .contact-item + .contact-item {
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .contact-item > .contact-icon {
+    grid-row: 1 / 3;
+  }
+
+  .contact-item > strong {
+    font-size: 0.82em;
+    line-height: 1.4;
+  }
+
+  .contact-item > .contact-value {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .contacts-info .socials {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 16px;
+  }
+
+  .contacts-info .social-link {
+    justify-content: center;
+    min-height: 44px;
+    text-align: center;
+  }
+
+  .contact-citations ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

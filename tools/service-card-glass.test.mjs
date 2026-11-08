@@ -421,8 +421,9 @@ test('touch highlights clamp to the card and cancel on pointerup, pointercancel 
   for (const type of ['pointerup', 'pointercancel', 'blur']) {
     card.dispatch('pointerdown', { pointerType: 'touch', clientX: -100, clientY: 2000,
       preventDefault() { assert.fail('the decorative touch effect must not cancel native interaction'); } });
-    assert.equal(card.values.get('--glass-touch-x'), '0%');
-    assert.equal(card.values.get('--glass-touch-y'), '100%');
+    h.settle();
+    assert.ok(parseFloat(card.values.get('--glass-light-x')) < 30);
+    assert.ok(parseFloat(card.values.get('--glass-light-y')) > 85);
     assert.equal(card.classList.contains('is-glass-touch'), true);
     h.window.dispatch(type);
     h.window.dispatch(type);
@@ -431,6 +432,69 @@ test('touch highlights clamp to the card and cancel on pointerup, pointercancel 
   assert.equal(card.listeners.get('pointerdown')[0].options.passive, true);
   assert.equal(h.window.listeners.get('pointercancel')[0].options.passive, true);
   assert.equal(card.children.length, 1);
+});
+
+test('touch movement changes the optical sample in one visible-card frame and releases without capturing scroll', () => {
+  const h = harness(), card = h.cards[0];
+  h.settle();
+  const idleWidth = card.values.get('--glass-scene-width');
+  card.dispatch('pointermove', { pointerType: 'touch', pointerId: 7, clientX: 120, clientY: 200 });
+  assert.equal(h.frames.size, 0, 'a stray pointermove must not begin an interaction');
+  h.trace.length = 0;
+  card.dispatch('pointerdown', { pointerType: 'touch', pointerId: 7, clientX: 110, clientY: 190 });
+  card.dispatch('pointermove', { pointerType: 'touch', pointerId: 7, clientX: 120, clientY: 200 });
+  assert.equal(h.trace.length, 0, 'pointer input only records coordinates; layout and paint writes belong to RAF');
+  assert.equal(h.frames.size, 1);
+  h.settle();
+  const before = card.values.get('--glass-scene-x');
+  const upperWidth = parseFloat(card.values.get('--glass-scene-width'));
+  card.dispatch('pointermove', { pointerType: 'touch', pointerId: 8, clientX: 340, clientY: 350 });
+  assert.equal(h.frames.size, 0, 'another finger must not replace the active pointer');
+  card.dispatch('pointermove', { pointerType: 'touch', pointerId: 7, clientX: 340, clientY: 350,
+    preventDefault() { assert.fail('the glass must preserve native scrolling'); } });
+  h.settle();
+  assert.notEqual(card.values.get('--glass-scene-x'), before, 'the optical background moves with the focal point');
+  assert.ok(parseFloat(card.values.get('--glass-scene-width')) > upperWidth, 'moving down changes magnification, not just the glow');
+  h.window.dispatch('pointercancel', { pointerId: 7 });
+  h.settle();
+  assert.ok(Math.abs(parseFloat(card.values.get('--glass-scene-width')) - parseFloat(idleWidth)) < 0.2);
+  assert.equal(h.frames.size + h.timers.size, 0, 'a settled static surface must not keep polling');
+  assert.equal(card.listeners.get('pointermove')[0].options.passive, true);
+});
+
+test('scroll changes lens magnification while offscreen cards receive no optical writes', () => {
+  const h = harness(), card = h.cards[0], hidden = h.cards[1];
+  h.settle();
+  h.observers.intersection[0].callback([{ target: hidden, isIntersecting: false }]);
+  h.settle();
+  const width = parseFloat(card.values.get('--glass-scene-width'));
+  const hiddenWrites = hidden.writes.length;
+  card.rect.top = 20;
+  h.scrollRoot.dispatch('scroll');
+  h.settle();
+  assert.ok(parseFloat(card.values.get('--glass-scene-width')) > width);
+  assert.equal(hidden.writes.length, hiddenWrites);
+});
+
+test('a second finger cannot replace or release the active optical interaction', () => {
+  for (const release of ['pointerup', 'pointercancel']) {
+    const h = harness(), card = h.cards[0];
+    h.settle();
+    card.dispatch('pointerdown', { pointerType: 'touch', pointerId: 7, clientX: 110, clientY: 190 });
+    h.settle();
+    const sample = card.values.get('--glass-scene-x');
+    card.dispatch('pointerdown', { pointerType: 'touch', pointerId: 8, clientX: 340, clientY: 350 });
+    h.window.dispatch(release, { pointerId: 8 });
+    assert.equal(h.frames.size, 0, 'an unrelated finger cannot change the active sample or schedule a release');
+    assert.equal(card.classList.contains('is-glass-touch'), true);
+    card.dispatch('pointermove', { pointerType: 'touch', pointerId: 7, clientX: 340, clientY: 350 });
+    h.settle();
+    assert.notEqual(card.values.get('--glass-scene-x'), sample, 'the original finger must still control the lens');
+    h.window.dispatch(release, { pointerId: 7 });
+    assert.equal(card.classList.contains('is-glass-touch'), false);
+    h.settle();
+    assert.equal(h.frames.size + h.timers.size, 0);
+  }
 });
 
 test('the registered lens samples the actual CSS background and DOMMatrix geometry without filtering content', () => {
@@ -447,10 +511,18 @@ test('the registered lens samples the actual CSS background and DOMMatrix geomet
     const card = h.cards[0], lens = card.children[0];
     assert.equal(lens.style.backgroundImage, dark);
     assert.equal(h.metrics.matrixInputs[0], transform);
-    assert.equal(card.values.get('--glass-scene-width'), '1315.48px');
-    assert.equal(card.values.get('--glass-scene-height'), '1052.39px');
-    assert.equal(card.values.get('--glass-scene-x'), '-259.21px');
-    assert.equal(card.values.get('--glass-scene-y'), '-307.60px');
+    const scale = parseFloat(card.values.get('--glass-scene-width')) / 1271;
+    assert.ok(scale > 1.1 && scale < 1.17, 'the decorative sample has bounded optical magnification');
+    assert.ok(Math.abs(parseFloat(card.values.get('--glass-scene-height')) / 1016.8 - scale) < 0.00001,
+      'the background image must preserve its aspect ratio');
+    const focusX = 238 * parseFloat(card.values.get('--glass-light-x')) / 100;
+    const focusY = 168 * parseFloat(card.values.get('--glass-light-y')) / 100;
+    const originX = parseFloat(card.values.get('--glass-scene-x'));
+    const originY = parseFloat(card.values.get('--glass-scene-y'));
+    assert.ok(Math.abs((focusX - originX) / scale - (focusX + 246.42)) < 0.02,
+      'the focal point stays registered with the actual transformed background on x');
+    assert.ok(Math.abs((focusY - originY) / scale - (focusY + 294.36)) < 0.02,
+      'the focal point stays registered with the actual transformed background on y');
     assert.equal(card.values.has('filter'), false);
     assert.equal(card.values.has('transform'), false);
     h.surface.backgroundImage = light;

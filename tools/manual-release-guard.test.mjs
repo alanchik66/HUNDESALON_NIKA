@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import { deployPages } from './deploy-pages.mjs';
 
 const commit = 'a'.repeat(40);
@@ -33,19 +34,26 @@ const fixture = ({ branch = 'main', dirty = false, failure, activeAt = 0, change
       }
       throw new Error('Unexpected fixture command.');
     },
-    resolveAssets: () => ['/weather.mjs?v=reviewed'],
+    resolveAssets: (root, directory) => {
+      assert.equal(directory, path.join(root, 'dist'), 'manual coverage must use the built artifact stamp');
+      return ['/weather.mjs?v=reviewed'];
+    },
     prepareRelease: ({ commit: expected, extraAssets }) => {
       assert.deepEqual(extraAssets, ['/weather.mjs?v=reviewed']);
       return { commit: expected, stamp: 'stamp' };
     },
-    verifyArtifact: () => { if (stampMismatch) throw new Error('Artifact asset stamp mismatch.'); },
+    verifyArtifact: ({ requiredAssets }) => {
+      assert.deepEqual(requiredAssets, ['/weather.mjs?v=reviewed']);
+      if (stampMismatch) throw new Error('Artifact asset stamp mismatch.');
+    },
     authenticate: async () => { authenticated += 1; return { token: '', mode: 'fixture' }; },
     upload: args => { uploaded += 1; calls.push({ upload: args }); return { status: uploadFailure ? 1 : 0 }; },
-    verifyPublished: async ({ commit: expected, manifest }) => {
+    verifyPublished: async ({ commit: expected, manifest, requiredAssets }) => {
       publishedChecks += 1;
       assert.equal(uploaded, 1);
       assert.equal(expected, commit);
       assert.equal(manifest.commit, commit);
+      assert.deepEqual(requiredAssets, ['/weather.mjs?v=reviewed']);
       if (publicMismatch) throw new Error('Public release digest mismatch.');
     },
   };

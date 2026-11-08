@@ -18,6 +18,7 @@ const functions = [
   'shouldApplyHeaderWeatherGeo', 'applyHeaderWeatherAutoGeoLocation', 'invalidateHeaderWeatherLocationRequest',
   'isHeaderWeatherManualCoordinateLocation', 'isHeaderWeatherTextManualLocation',
   'isHeaderWeatherCoordinateSelectionApplied',
+  'resetHeaderWeatherReadingsState',
   'refreshHeaderWeatherLifecycle', 'refreshHeaderWeatherWidgetData',
 ];
 const constants = [
@@ -777,11 +778,17 @@ test('changing coordinates updates the existing widget and preserves its visible
   const h = harness(['updateHeaderWeatherWidgetLocation']);
   const seen = [];
   h.host.dataset.weatherExpanded = 'true';
+  h.host.__weatherCurrentMeta = { timezone: 'Europe/Berlin' };
+  h.host.__weatherTimeZone = 'Europe/Berlin';
+  h.host.__weatherReadingsSnapshot = { humidity: 80 };
   h.host.__weatherWidgetInstance = { setLocation: async coords => { seen.push(coords); return { current: {}, forecast: {} }; } };
   assert.equal(await h.context.updateHeaderWeatherWidgetLocation(h.host), true);
   assert.equal(seen[0].latitude, 51.34);
   assert.equal(h.host.dataset.weatherExpanded, 'true');
   assert.equal(h.host.dataset.weatherDataUpdatedAt, String(h.clock.now()));
+  assert.equal(h.host.__weatherCurrentMeta, null);
+  assert.equal(h.host.__weatherTimeZone, null);
+  assert.equal(h.host.__weatherReadingsSnapshot, undefined, 'the new location cannot borrow readings from the previous city');
 });
 
 test('late full weather completion after unmount cannot alter freshness', async () => {
@@ -838,7 +845,9 @@ test('the existing device action retries from automatic mode and uses exact devi
   delete h.host.dataset.weatherLocation;
   const seen = [];
   h.host.__weatherWidgetInstance = { setLocation: async coords => { seen.push(coords); return { current: {}, forecast: {} }; } };
+  h.context.navigator.geolocation.getCurrentPosition = (success, error, options) => { h.requests.push({ success, error, options }); };
   const operation = h.context.restoreHeaderWeatherDeviceLocation(h.host);
+  assert.equal(h.requests.length, 1, 'the explicit device action must invoke the native one-shot before yielding the tap activation');
   h.requests[0].success({ coords: { latitude: 48.853421, longitude: 2.349857, accuracy: 6 }, timestamp: h.clock.now() });
   await operation;
   assert.equal(seen.length, 1);

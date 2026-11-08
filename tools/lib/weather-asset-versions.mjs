@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { parse } from 'espree';
 
@@ -27,27 +27,54 @@ function replaceRanges(source, replacements) {
   return source;
 }
 
-/** Only local references to maintained outputs change; vendor imports and shader/CSS strings stay intact. */
-export function stampWeatherModuleReferences(source, outputs, version) {
+const RUNTIME_PATH = '/3d-weather-codrops-main/dist-widget/';
+
+export function weatherRuntimeOutputNames(manifest) {
+  const outputs = new Set([...manifest.entries.map(entry => entry.output), ...(manifest.vendorInputs || []).map(entry => entry.file)]);
+  if (!outputs.size || [...outputs].some(output => typeof output !== 'string' || /[\\/]/u.test(output) || path.basename(output) !== output || !/\.(?:mjs|js)$/.test(output))) {
+    throw new Error('Invalid maintained weather output paths.');
+  }
+  return outputs;
+}
+
+/** Version only URLs resolving to the reviewed weather outputs, regardless of importer location. */
+export function stampWeatherModuleReferences(source, outputs, version, importerPath = `${RUNTIME_PATH}_entry.mjs`) {
   const replacements = [];
   for (const node of nodes(source)) {
     const value = stringValue(node);
-    if (!value?.startsWith('./')) continue;
-    const url = new URL(value, 'https://weather-build.invalid/');
-    if (!outputs.has(url.pathname.slice(1))) continue;
+    if (!value || !(value.startsWith('.') || value.startsWith('/'))) continue;
+    const url = new URL(value, `https://weather-build.invalid${importerPath}`);
+    if (url.origin !== 'https://weather-build.invalid' || !url.pathname.startsWith(RUNTIME_PATH) || !outputs.has(url.pathname.slice(RUNTIME_PATH.length))) continue;
     url.searchParams.set('v', version);
-    replacements.push({ start: node.range[0], end: node.range[1], value: `.${url.pathname}${url.search}${url.hash}` });
+    const referencePath = value.split(/[?#]/u, 1)[0];
+    replacements.push({ start: node.range[0], end: node.range[1], value: `${referencePath}${url.search}${url.hash}` });
   }
   return { code: replaceRanges(source, replacements), references: replacements.length };
+}
+
+export function findPublicWeatherImporters(directory, manifest) {
+  const outputs = weatherRuntimeOutputNames(manifest), importers = [];
+  const walk = current => {
+    if (!existsSync(current)) return;
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const file = path.join(current, entry.name);
+      if (entry.isDirectory()) walk(file);
+      else if (entry.isFile() && /\.(?:mjs|js)$/u.test(entry.name)) {
+        const source = readFileSync(file, 'utf8');
+        if (![...outputs].some(output => source.includes(output))) continue;
+        const relative = path.relative(directory, file).replaceAll('\\', '/');
+        if (stampWeatherModuleReferences(source, outputs, 'discovery', `/${relative}`).references) importers.push(relative);
+      }
+    }
+  };
+  walk(path.join(directory, 'assets', 'js'));
+  return importers.sort();
 }
 
 /** Run on the production copy before minifying the shell, after computing its version. */
 export function stampWeatherRuntimeVersions(directory, manifest, version) {
   if (typeof version !== 'string' || !version.trim()) throw new Error('A production weather asset version is required.');
-  const outputs = new Set(manifest.entries.map(entry => entry.output));
-  if (!outputs.size || [...outputs].some(output => path.basename(output) !== output || !/\.(?:mjs|js)$/.test(output))) {
-    throw new Error('Invalid maintained weather output paths.');
-  }
+  const outputs = weatherRuntimeOutputNames(manifest);
   const shellFile = path.join(directory, 'assets', 'js', 'site-shell.js');
   const shell = readFileSync(shellFile, 'utf8');
   const bindings = nodes(shell).filter(node => node.type === 'VariableDeclarator' && node.id?.name === 'WEATHER_WIDGET_ASSET_VERSION');
@@ -63,5 +90,12 @@ export function stampWeatherRuntimeVersions(directory, manifest, version) {
     references += result.references;
     writeFileSync(file, result.code);
   }
-  return { files: outputs.size, references };
+  const publicImporters = findPublicWeatherImporters(directory, manifest);
+  for (const relative of publicImporters) {
+    const file = path.join(directory, relative);
+    const result = stampWeatherModuleReferences(readFileSync(file, 'utf8'), outputs, version, `/${relative}`);
+    references += result.references;
+    writeFileSync(file, result.code);
+  }
+  return { files: outputs.size, references, publicImporters };
 }

@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { validateReleaseManifest, verifyProductionArtifact, verifyProductionRelease } from './production-release-verification.mjs';
+import { validateReleaseManifest, verifyProductionArtifact, verifyProductionRelease, resolveWeatherReleaseAssets } from './production-release-verification.mjs';
 
 const REPOSITORY = 'alanchik66/HUNDESALON_NIKA';
 const runUrl = id => `https://github.com/${REPOSITORY}/actions/runs/${id}`;
@@ -31,6 +31,7 @@ function validateRun(run, { commit, id, attempt }) {
 export async function watchProductionRelease({
   commit, root, run = runCommand, pause = sleep, createReceiptDirectory = receiptDirectory,
   verifyArtifact = verifyProductionArtifact, verifyPublished = verifyProductionRelease, log = console.log,
+  resolveAssets = resolveWeatherReleaseAssets,
 }) {
   if (!/^[a-f0-9]{40}$/u.test(commit || '')) throw new Error('Pass the full reviewed commit SHA.');
   const gh = (args, { json = false, inherit = false } = {}) => {
@@ -60,11 +61,12 @@ export async function watchProductionRelease({
   validateRun(inspectRun(), { commit, id: completed.databaseId, attempt: completed.attempt });
 
   const receipt = path.join(directory, 'config', 'release-manifest.json');
-  const manifest = validateReleaseManifest(JSON.parse(readFileSync(receipt, 'utf8')), { commit });
-  verifyArtifact({ directory, manifest, commit, stamp: manifest.stamp });
+  const requiredAssets = resolveAssets(root, directory);
+  const manifest = validateReleaseManifest(JSON.parse(readFileSync(receipt, 'utf8')), { commit, requiredAssets });
+  verifyArtifact({ directory, manifest, commit, stamp: manifest.stamp, requiredAssets });
   log(`Exact CI receipt: ${receipt}`);
   // No baseUrl override: release completion always checks the canonical company domain.
-  const verification = await verifyPublished({ commit, manifest });
+  const verification = await verifyPublished({ commit, manifest, requiredAssets });
   return { ...verification, verificationScope: 'canonical-domain', canonicalDomainVerified: true,
     run: completed.url, runAttempt: completed.attempt, artifact, receipt };
 }

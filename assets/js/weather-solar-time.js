@@ -8,7 +8,7 @@ const CLOCK_HORIZON_DEG = -0.833;
 const CLOCK_CIVIL_DEG = -6;
 
 export function solarPosition(timeMs, latitude, longitude) {
-  const unavailable = { elevationDeg: NaN, hourAngleDeg: NaN };
+  const unavailable = { elevationDeg: NaN, azimuthDeg: NaN, hourAngleDeg: NaN };
   if (!Number.isFinite(timeMs) || !Number.isFinite(latitude) || !Number.isFinite(longitude)
     || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return unavailable;
   const date = new Date(timeMs);
@@ -31,7 +31,99 @@ export function solarPosition(timeMs, latitude, longitude) {
   const latitudeRad = latitude * Math.PI / 180;
   const sineElevation = Math.sin(latitudeRad) * Math.sin(declination)
     + Math.cos(latitudeRad) * Math.cos(declination) * Math.cos(hourAngle);
-  return { elevationDeg: Math.asin(Math.max(-1, Math.min(1, sineElevation))) * 180 / Math.PI, hourAngleDeg };
+  const east = -Math.cos(declination) * Math.sin(hourAngle);
+  const north = Math.sin(declination) * Math.cos(latitudeRad)
+    - Math.cos(declination) * Math.cos(hourAngle) * Math.sin(latitudeRad);
+  const azimuthDeg = (Math.atan2(east, north) * 180 / Math.PI + 360) % 360;
+  return { elevationDeg: Math.asin(Math.max(-1, Math.min(1, sineElevation))) * 180 / Math.PI, azimuthDeg, hourAngleDeg };
+}
+
+// Low-precision lunar orbit plus its principal perturbations, Paul Schlyter:
+// https://www.stjarnhimlen.se/comp/ppcomp.html (sections4,6,9,12–13).
+// Airless topocentric centre at sea level; not a precision eclipse ephemeris.
+export function moonPosition(timeMs, latitude, longitude) {
+  const unavailable = { elevationDeg: NaN, azimuthDeg: NaN, hourAngleDeg: NaN, distanceKm: NaN };
+  if (!Number.isFinite(timeMs) || !Number.isFinite(latitude) || !Number.isFinite(longitude)
+    || Math.abs(latitude) > 90 || Math.abs(longitude) > 180 || !Number.isFinite(new Date(timeMs).getTime())) return unavailable;
+  const rad = Math.PI / 180, deg = 180 / Math.PI;
+  const days = timeMs / CLOCK_DAY_MS + 2440587.5 - 2451543.5;
+  const angle = value => ((value % 360 + 360) % 360) * rad;
+  const node = angle(125.1228 - .0529538083 * days);
+  const inclination = 5.1454 * rad;
+  const periapsis = angle(318.0634 + .1643573223 * days);
+  const anomaly = angle(115.3654 + 13.0649929509 * days);
+  const sunAnomaly = angle(356.0470 + .9856002585 * days);
+  const sunLongitude = sunAnomaly + angle(282.9404 + .0000470935 * days);
+  const lunarLongitude = anomaly + periapsis + node;
+  const elongation = lunarLongitude - sunLongitude, argumentLatitude = lunarLongitude - node;
+  const eccentricity = .0549;
+  let eccentricAnomaly = anomaly + eccentricity * Math.sin(anomaly) * (1 + eccentricity * Math.cos(anomaly));
+  for (let iteration = 0; iteration < 4; iteration++) {
+    eccentricAnomaly -= (eccentricAnomaly - eccentricity * Math.sin(eccentricAnomaly) - anomaly)
+      / (1 - eccentricity * Math.cos(eccentricAnomaly));
+  }
+  const orbitalX = 60.2666 * (Math.cos(eccentricAnomaly) - eccentricity);
+  const orbitalY = 60.2666 * Math.sqrt(1 - eccentricity ** 2) * Math.sin(eccentricAnomaly);
+  const trueLongitude = Math.atan2(orbitalY, orbitalX) + periapsis;
+  const cosLongitude = Math.cos(trueLongitude), sinLongitude = Math.sin(trueLongitude);
+  const x = Math.cos(node) * cosLongitude - Math.sin(node) * sinLongitude * Math.cos(inclination);
+  const y = Math.sin(node) * cosLongitude + Math.cos(node) * sinLongitude * Math.cos(inclination);
+  const z = sinLongitude * Math.sin(inclination);
+  const eclipticLongitude = Math.atan2(y, x) + rad * (
+    -1.274 * Math.sin(anomaly - 2 * elongation) + .658 * Math.sin(2 * elongation) - .186 * Math.sin(sunAnomaly)
+    - .059 * Math.sin(2 * anomaly - 2 * elongation) - .057 * Math.sin(anomaly - 2 * elongation + sunAnomaly)
+    + .053 * Math.sin(anomaly + 2 * elongation) + .046 * Math.sin(2 * elongation - sunAnomaly)
+    + .041 * Math.sin(anomaly - sunAnomaly) - .035 * Math.sin(elongation) - .031 * Math.sin(anomaly + sunAnomaly)
+    - .015 * Math.sin(2 * argumentLatitude - 2 * elongation) + .011 * Math.sin(anomaly - 4 * elongation));
+  const eclipticLatitude = Math.atan2(z, Math.hypot(x, y)) + rad * (
+    -.173 * Math.sin(argumentLatitude - 2 * elongation) - .055 * Math.sin(anomaly - argumentLatitude - 2 * elongation)
+    - .046 * Math.sin(anomaly + argumentLatitude - 2 * elongation) + .033 * Math.sin(argumentLatitude + 2 * elongation)
+    + .017 * Math.sin(2 * anomaly + argumentLatitude));
+  const distance = Math.hypot(orbitalX, orbitalY) - .58 * Math.cos(anomaly - 2 * elongation) - .46 * Math.cos(2 * elongation);
+  const obliquity = (23.4393 - .0000003563 * days) * rad;
+  const eclipticX = distance * Math.cos(eclipticLongitude) * Math.cos(eclipticLatitude);
+  const eclipticY = distance * Math.sin(eclipticLongitude) * Math.cos(eclipticLatitude);
+  const eclipticZ = distance * Math.sin(eclipticLatitude);
+  // Mean sidereal angle, equatorial coordinates of date. UTC is sufficient for
+  // this illustrative orbit; TT/UT and nutation remain approximation errors.
+  const jd2000 = timeMs / CLOCK_DAY_MS + 2440587.5 - 2451545;
+  const centuries = jd2000 / 36525;
+  const sidereal = angle(280.46061837 + 360.98564736629 * jd2000
+    + .000387933 * centuries ** 2 - centuries ** 3 / 38710000 + longitude);
+  const latitudeRad = latitude * rad, cosLatitude = Math.cos(latitudeRad), sinLatitude = Math.sin(latitudeRad);
+  const flattening = 1 / 298.257223563, eccentricitySquared = flattening * (2 - flattening);
+  const observerRadius = 1 / Math.sqrt(1 - eccentricitySquared * sinLatitude ** 2);
+  // Subtract the geodetic WGS84 observer vector before the horizontal transform:
+  // lunar parallax can exceed1°, so a geocentric/night-progress icon is unsuitable.
+  const topX = eclipticX - observerRadius * cosLatitude * Math.cos(sidereal);
+  const topY = eclipticY * Math.cos(obliquity) - eclipticZ * Math.sin(obliquity)
+    - observerRadius * cosLatitude * Math.sin(sidereal);
+  const topZ = eclipticY * Math.sin(obliquity) + eclipticZ * Math.cos(obliquity)
+    - observerRadius * (1 - eccentricitySquared) * sinLatitude;
+  const east = -Math.sin(sidereal) * topX + Math.cos(sidereal) * topY;
+  const north = -sinLatitude * (Math.cos(sidereal) * topX + Math.sin(sidereal) * topY) + cosLatitude * topZ;
+  const up = cosLatitude * (Math.cos(sidereal) * topX + Math.sin(sidereal) * topY) + sinLatitude * topZ;
+  return {
+    elevationDeg: Math.atan2(up, Math.hypot(east, north)) * deg,
+    azimuthDeg: (Math.atan2(east, north) * deg + 360) % 360,
+    hourAngleDeg: ((sidereal - Math.atan2(topY, topX)) * deg % 360 + 540) % 360 - 180,
+    distanceKm: Math.hypot(topX, topY, topZ) * 6378.137,
+  };
+}
+
+// Stereographic overhead chart: north up, east left, zenith at the centre.
+// Below-horizon coordinates stay physical; only their chart marker is at the rim.
+export function projectSkyPosition(position) {
+  if (!Number.isFinite(position?.elevationDeg) || !Number.isFinite(position?.azimuthDeg)) {
+    return { valid: false, x: .5, y: 1, east: 0, north: 0, up: -1, horizonOpacity: 0, visible: false };
+  }
+  const elevation = position.elevationDeg * Math.PI / 180, azimuth = position.azimuthDeg * Math.PI / 180;
+  const east = Math.cos(elevation) * Math.sin(azimuth), north = Math.cos(elevation) * Math.cos(azimuth), up = Math.sin(elevation);
+  const horizonOpacity = solarSmooth(-1, .5, position.elevationDeg);
+  const radius = Math.tan((Math.PI / 2 - Math.max(0, elevation)) / 2);
+  return { valid: true, skyProjection: 'stereographic', elevationDeg: position.elevationDeg, azimuthDeg: position.azimuthDeg,
+    x: solarUnit(.5 - .5 * radius * Math.sin(azimuth)), y: solarUnit(.5 - .5 * radius * Math.cos(azimuth)), east, north, up,
+    belowHorizon: position.elevationDeg < 0, horizonOpacity, visible: horizonOpacity > .001 };
 }
 
 function solarDateFormatter(dateString, timeZone) {
@@ -96,6 +188,17 @@ function solarCrossing(left, right, target, valueAt) {
   return Math.round(right);
 }
 
+// Refine a bracketed local height extremum, including a grazing polar horizon.
+// The normal crossing scan and its existing time precision remain unchanged.
+function solarExtremum(left, right, direction, elevation) {
+  for (let iteration = 0; iteration < 32 && right - left > 25; iteration++) {
+    const third = (right - left) / 3, first = left + third, second = right - third;
+    if (direction * elevation(first) < direction * elevation(second)) left = first;
+    else right = second;
+  }
+  return (left + right) / 2;
+}
+
 export function calculateSolarDay(dateString, timeZone = 'UTC', latitude, longitude) {
   const localDate = solarDateFormatter(dateString, timeZone);
   const dayStart = Date.parse(`${dateString}T00:00:00Z`);
@@ -106,14 +209,12 @@ export function calculateSolarDay(dateString, timeZone = 'UTC', latitude, longit
   const elevation = time => position(time).elevationDeg;
   const hourAngle = time => position(time).hourAngleDeg;
   const step = 5 * 60000;
+  const crossings = [[CLOCK_HORIZON_DEG, 'sunrise', 'sunset'], [CLOCK_CIVIL_DEG, 'civilTwilightBegin', 'civilTwilightEnd']];
   let left = dayStart - 18 * 3600000;
-  let prior = position(left);
+  let before = position(left - step), prior = position(left);
   for (let right = left + step; right <= dayStart + 42 * 3600000; right += step) {
     const next = position(right);
-    for (const [target, risingKey, fallingKey] of [
-      [CLOCK_HORIZON_DEG, 'sunrise', 'sunset'],
-      [CLOCK_CIVIL_DEG, 'civilTwilightBegin', 'civilTwilightEnd'],
-    ]) {
+    for (const [target, risingKey, fallingKey] of crossings) {
       const rising = prior.elevationDeg <= target && next.elevationDeg > target;
       const falling = prior.elevationDeg >= target && next.elevationDeg < target;
       if (rising || falling) {
@@ -121,10 +222,32 @@ export function calculateSolarDay(dateString, timeZone = 'UTC', latitude, longit
         if (localDate(event) === dateString) result[rising ? risingKey : fallingKey] = event;
       }
     }
+    // A short polar day or twilight can cross a threshold twice between scan
+    // samples. Inspect its extremum rather than inventing missing rise/set times.
+    const maximum = prior.elevationDeg >= before.elevationDeg && prior.elevationDeg >= next.elevationDeg;
+    const minimum = prior.elevationDeg <= before.elevationDeg && prior.elevationDeg <= next.elevationDeg;
+    const direction = maximum === minimum ? 0 : maximum ? 1 : -1;
+    const missed = direction ? crossings.filter(([target]) => [before, prior, next]
+      .every(sample => direction * (sample.elevationDeg - target) <= 0)) : [];
+    if (missed.length) {
+      const extremum = solarExtremum(left - step, right, direction, elevation);
+      const height = elevation(extremum);
+      for (const [target, risingKey, fallingKey] of missed) {
+        if (direction * (height - target) <= 0) continue;
+        for (const [start, end, key] of [
+          [left - step, extremum, direction > 0 ? risingKey : fallingKey],
+          [extremum, right, direction > 0 ? fallingKey : risingKey],
+        ]) {
+          const event = solarCrossing(start, end, target, elevation);
+          if (localDate(event) === dateString) result[key] = event;
+        }
+      }
+    }
     if (prior.hourAngleDeg <= 0 && next.hourAngleDeg > 0 && next.hourAngleDeg - prior.hourAngleDeg < 180) {
       const event = solarCrossing(left, right, 0, hourAngle);
       if (localDate(event) === dateString) result.solarNoon = event;
     }
+    before = prior;
     left = right;
     prior = next;
   }
@@ -201,7 +324,11 @@ export function solarPhase(nowMs, day, latitude, longitude) {
   const position = solarPosition(nowMs, latitude, longitude);
   const { elevationDeg, hourAngleDeg } = position;
   const orderedDay = Number.isFinite(day?.sunrise) && Number.isFinite(day?.sunset) && day.sunrise < day.sunset;
-  const recentDay = orderedDay && nowMs >= day.sunrise - CLOCK_DAY_MS / 2 && nowMs <= day.sunset + CLOCK_DAY_MS / 2;
+  // A provider day belongs to one solar rotation, not twelve hours beyond each
+  // horizon event: yesterday's long summer day must not hide today's sunrise.
+  const noon = orderedDay && Number.isFinite(day.solarNoon) && day.sunrise < day.solarNoon && day.solarNoon < day.sunset
+    ? day.solarNoon : orderedDay ? (day.sunrise + day.sunset) / 2 : NaN;
+  const recentDay = orderedDay && nowMs >= noon - CLOCK_DAY_MS / 2 && nowMs < noon + CLOCK_DAY_MS / 2;
   const dayProgress = recentDay ? solarUnit((nowMs - day.sunrise) / (day.sunset - day.sunrise))
     : Number.isFinite(hourAngleDeg) ? solarUnit((hourAngleDeg + 180) / 360) : 0;
   const make = (phase, weights, source) => ({ phase, ...weights, dayProgress, elevationDeg, source });
