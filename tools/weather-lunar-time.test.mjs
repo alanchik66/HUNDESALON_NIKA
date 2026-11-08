@@ -5,6 +5,33 @@ import { parse } from 'espree';
 import { lunarLighting } from '../assets/js/weather-lunar-time.js';
 import { moonPosition } from '../assets/js/weather-solar-time.js';
 
+function withMoonPosition(source, position) {
+  const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module', range: true });
+  const targets = ast.body.filter(node => {
+    const declaration = node.declarations?.[0], binding = declaration?.id;
+    const property = binding?.properties?.[0];
+    return node.type === 'VariableDeclaration' && node.kind === 'const' && node.declarations.length === 1 &&
+      binding.type === 'ObjectPattern' && binding.properties.length === 1 &&
+      property.type === 'Property' && !property.computed &&
+      property.key.name === 'moonPosition' && property.value.name === 'moonPosition' &&
+      declaration.init?.type === 'AwaitExpression' && declaration.init.argument.type === 'ImportExpression';
+  });
+  assert.equal(targets.length, 1, 'expected one parsed moonPosition dependency');
+  const [start, end] = targets[0].range;
+  return source.slice(0, start) + `const moonPosition = () => (${JSON.stringify(position)});` + source.slice(end);
+}
+
+test('the lunar orbit fixture replaces one dependency and rejects missing or duplicate targets', () => {
+  const dependency = "const { moonPosition } = await import('orbit');";
+  const before = '// retained prefix\n', after = '\nexport const retained = 1;';
+  const position = { elevationDeg: 90, azimuthDeg: 17, distanceKm: 384400 };
+  assert.equal(withMoonPosition(before + dependency + after, position),
+    `${before}const moonPosition = () => (${JSON.stringify(position)});${after}`);
+  for (const source of [before + after, dependency.replace('moonPosition', 'otherPosition'), `${dependency}\n${dependency}`]) {
+    assert.throws(() => withMoonPosition(source, position), 'an unverified code transform cannot silently proceed');
+  }
+});
+
 test('the lunar orbit dependency inherits the complete caller cache revision', async () => {
   const source = await readFile(new URL('../assets/js/weather-lunar-time.js', import.meta.url), 'utf8');
   const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module', range: true });
@@ -147,7 +174,7 @@ test('dome roll uses the nonsingular celestial-north basis at the exact zenith',
     // At the zenith every azimuth denotes the same direction. Inject only the
     // orbit boundary value, leaving the actual observer/body/light transforms intact.
     const position = { elevationDeg: 90, azimuthDeg, distanceKm: 384400 };
-    const fixture = source.replace(/^const \{ moonPosition \} = .+;$/m, `const moonPosition = () => (${JSON.stringify(position)});`);
+    const fixture = withMoonPosition(source, position);
     const { lunarLighting: lighting } = await import(`data:text/javascript;base64,${Buffer.from(fixture).toString('base64')}`);
     const state = lighting(Date.parse('2026-11-06T11:00:00Z'), 0, 0);
     assert.equal(state.orientationMode, 'celestial-north');

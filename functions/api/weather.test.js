@@ -217,7 +217,7 @@ test('a valid explicit IANA time zone avoids the automatic metadata request', as
   const harness = weatherHarness(t, { timeZone: 'Asia/Tokyo' });
   const payload = await (await harness.request()).json();
   assert.equal(payload.location.tz_id, 'Asia/Tokyo');
-  assert.ok(!harness.calls.includes('api.open-meteo.com'));
+  assert.equal(harness.requests.some(url => url.hostname === 'api.open-meteo.com'), false);
 });
 
 test('automatic time zones are cached by five-decimal coordinates for a day without charging healthy weather hits', async t => {

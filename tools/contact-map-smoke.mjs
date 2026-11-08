@@ -374,7 +374,8 @@ try {
       let configRequests = 0;
       page.on('pageerror', error => errors.push(error.message));
       page.on('request', request => {
-        if (request.url().includes('/maps/embed') || request.url().includes('maps.googleapis.com')) {
+        const url = new URL(request.url());
+        if (url.pathname === '/maps/embed' || url.hostname === 'maps.googleapis.com') {
           mapRequests.push(request.url());
         }
       });

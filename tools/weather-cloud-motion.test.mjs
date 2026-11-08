@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { parse } from 'espree';
 import * as cloud from '../assets/js/weather-cloud-motion.js';
 import { resolveForecastCloudCover, resolveForecastNoonMs, resolveWeatherSceneFallback } from '../3d-weather-codrops-main/src/weather-lifecycle.mjs';
@@ -27,8 +28,8 @@ test('numeric cloud coverage controls strength and unknown coverage never become
 });
 
 test('a rejected optional cloud asset cannot prevent core weather loading or its static recovery', async () => {
-  const output = resolve(fileURLToPath(new URL('../output/', import.meta.url)));
-  const directory = await mkdtemp(join(output, 'weather-cloud-optional-'));
+  const temporaryRoot = resolve(tmpdir());
+  const directory = await mkdtemp(join(temporaryRoot, 'weather-cloud-optional-'));
   try {
     const file = join(directory, '3d-weather-codrops-main/src/weather-lifecycle.mjs');
     await mkdir(dirname(file), { recursive: true });
@@ -45,14 +46,14 @@ test('a rejected optional cloud asset cannot prevent core weather loading or its
     assert.equal(lifecycle.resolveWeatherSceneFallback({ current: { condition: { code: 1000, text: 'Clear sky' } } }).clouds, false);
     controller.dispose();
   } finally {
-    assert.equal(dirname(directory), output, 'remove only the exact fixture directory created in ignored output');
+    assert.equal(dirname(directory), temporaryRoot, 'remove only the exact fixture directory created in the OS temporary directory');
     await rm(directory, { recursive: true, force: true });
   }
 });
 
 test('clear-label positive coverage creates the native container before a late helper and paints it without a weather rerender', async () => {
-  const output = resolve(fileURLToPath(new URL('../output/', import.meta.url)));
-  const directory = await mkdtemp(join(output, 'weather-cloud-late-'));
+  const temporaryRoot = resolve(tmpdir());
+  const directory = await mkdtemp(join(temporaryRoot, 'weather-cloud-late-'));
   const gateKey = `nika-cloud-helper:${directory}`;
   let release, timer, cloudNode;
   globalThis[gateKey] = new Promise(resolve => { release = resolve; });
@@ -76,7 +77,7 @@ test('clear-label positive coverage creates the native container before a late h
     assert.equal(f.frames.size, 0);
   } finally {
     clearTimeout(timer); release(); cloudNode?.props.ref(null); delete globalThis[gateKey];
-    assert.equal(dirname(directory), output);
+    assert.equal(dirname(directory), temporaryRoot);
     await rm(directory, { recursive: true, force: true });
   }
 });
