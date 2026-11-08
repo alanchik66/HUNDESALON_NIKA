@@ -3,6 +3,7 @@
 ## ✅ Реализовано (2026-10-15)
 
 ### Код (репозиторий)
+
 - ✅ **Security headers** добавлены в `functions/_lib/http-security.js`
   - X-Frame-Options: SAMEORIGIN
   - Referrer-Policy: strict-origin-when-cross-origin
@@ -20,6 +21,7 @@
   - Frontend token submission добавлен в `assets/js/page-modules.js`
 
 ### Cloudflare Dashboard (browser automation)
+
 - ✅ **2FA проверен** - Security Key, Mobile App (TOTP), Email Authentication активны
 - ✅ **Budget Alert создан** - $50 USD alert через browser automation
 - ✅ **Bot Fight Mode включен** - защита от bot abuse
@@ -28,6 +30,7 @@
 - ✅ **AI Crawl Control** - Active rule для защиты от агрессивных AI ботов
 
 ### Остальные действия (требуют выполнения)
+
 - ✅ **TURNSTILE_SECRET_KEY и TURNSTILE_SITE_KEY добавлены в Cloudflare Pages secrets** (production)
 
 ## Проверяемые факты
@@ -40,16 +43,29 @@ node tools/audit-cloudflare-security.mjs
 node tools/audit-cloudflare-security.mjs --public-only
 ```
 
-Аудит выполняет только GET-запросы и выводит JSON без токенов, тел запросов и
-ответов провайдеров. Для чтения конфигурации используется существующий локальный
-`CLOUDFLARE_API_TOKEN`; скрипт не создаёт токены и не обновляет OAuth. Без токена
-доступна проверка публичных ответов. Нужны права чтения зоны, Rulesets/WAF и Bot
-Management; недоступные проверки отмечаются как `unknown`.
+Проверки сайта и конфигурации выполняют только GET-запросы и выводят JSON без
+токенов, тел запросов и ответов провайдеров. Предпочтительный вариант — отдельный локальный
+`CLOUDFLARE_SECURITY_AUDIT_API_TOKEN` в `.dev.vars`, только для чтения. Если он
+не задан, используется основной `CLOUDFLARE_API_TOKEN`; когда он истёк, скрипт
+проверяет статус и переключается на Wrangler OAuth. При необходимости OAuth
+обновляется POST-запросом к Cloudflare, а новые credentials сохраняются в локальной
+конфигурации Wrangler. Без доступных credentials выполняется проверка только
+публичных ответов.
+
+Для security-токена достаточно минимальных прав на `hundesalon-nika.com`: Zone →
+Read, Zone → WAF → Read и Bot Management → Read. Account → Rulesets → Read (или
+Account WAF → Read) нужен только для account-level WAF на Enterprise. На текущем
+Free Website плане такие account-level endpoints помечаются `not-applicable` и
+не вызываются. Полный административный токен для read-only аудита не нужен. HTTP
+403 указывает требуемый read-scope; account-level WAF также зависит от роли и
+тарифа. Скрипт не создаёт токены и не меняет Cloudflare settings.
 
 Проверяются:
 
 - Реальные security headers главной страницы и GET-ответа `/sendmail`.
 - Включённые правила Custom WAF, Managed WAF и rate limiting через Rulesets API.
+- Отдельно zone-level и account-level WAF/rate-limiting entrypoints; account-level
+  отсутствие или недоступность не смешивается с настройками зоны.
 - Поле `fight_mode` Bot Management; `enable_js` не подтверждает Bot Fight Mode.
 
 Статус `incomplete` означает, что часть настроек отсутствует или не проверена.

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { auditCloudflareSecurity } from './audit-cloudflare-security.mjs';
+import { auditCloudflareSecurity, resolveSecurityAuditAuthHeaders } from './audit-cloudflare-security.mjs';
 
 const liveHeaders = {
   'x-content-type-options': 'nosniff',
@@ -14,8 +14,12 @@ const authHeaders = { Authorization: 'Bearer fixture-token' };
 function createFetch({
   bots = { fight_mode: true },
   apiStatus = 200,
+  zoneLookupStatus = 200,
+  rulesStatus = 200,
+  zonePlan = 'Enterprise',
   rules = [{ enabled: true }],
   headers = liveHeaders,
+  requests = [],
 } = {}) {
   return async (url, options) => {
     assert.equal(options.method, 'GET');
@@ -25,9 +29,34 @@ function createFetch({
       return new Response(null, { status: target.pathname === '/' ? 200 : 405, headers });
     }
     assert.equal(options.headers.Authorization, 'Bearer fixture-token');
+    requests.push(target.pathname);
     if (apiStatus !== 200)
-      return Response.json({ success: false, errors: [{ message: 'private provider detail' }] }, { status: apiStatus });
-    const result = target.pathname.endsWith('/bot_management') ? bots : { rules };
+      return Response.json(
+        { success: false, errors: [{ code: 10000, message: 'private provider detail' }] },
+        { status: apiStatus }
+      );
+    if (target.pathname === '/client/v4/zones' && target.searchParams.has('name')) {
+      if (zoneLookupStatus !== 200)
+        return Response.json(
+          { success: false, errors: [{ code: 10000, message: 'private provider detail' }] },
+          { status: zoneLookupStatus }
+        );
+      return Response.json({
+        success: true,
+        result: [{ name: 'hundesalon-nika.com', id: 'fixture-zone' }],
+      });
+    }
+    if (target.pathname.includes('/rulesets/') && rulesStatus !== 200) {
+      return Response.json(
+        { success: false, errors: [{ code: 10000, message: 'private provider detail' }] },
+        { status: rulesStatus }
+      );
+    }
+    const result = target.pathname.endsWith('/zones/fixture-zone')
+      ? { plan: { name: zonePlan } }
+      : target.pathname.endsWith('/bot_management')
+        ? bots
+        : { rules };
     return Response.json({ success: true, result });
   };
 }
@@ -35,6 +64,7 @@ function createFetch({
 test('checks live headers and modern rulesets without sending credentials to the site', async () => {
   const report = await auditCloudflareSecurity({ authHeaders, zoneId: 'fixture-zone', fetchImpl: createFetch() });
   assert.equal(report.checks.find(check => check.check === 'Rate limiting rules').activeRules, 1);
+  assert.equal(report.checks.find(check => check.check === 'Account Rate limiting rules').activeRules, 1);
   assert.equal(report.checks.find(check => check.check === 'Bot Fight Mode').status, 'ok');
   assert.equal(report.checks.find(check => check.check === 'Account 2FA').status, 'unknown');
   assert.equal(report.status, 'incomplete');
@@ -62,10 +92,87 @@ test('reports insufficient permissions as unknown without exposing provider resp
   const report = await auditCloudflareSecurity({
     authHeaders,
     zoneId: 'fixture-zone',
-    fetchImpl: createFetch({ apiStatus: 403 }),
+    fetchImpl: createFetch({ rulesStatus: 403 }),
   });
   assert.equal(report.checks.find(check => check.check === 'Custom WAF rules').status, 'unknown');
+  assert.match(report.checks.find(check => check.check === 'Custom WAF rules').message, /Zone WAF Read/);
+  assert.match(report.checks.find(check => check.check === 'Account Custom WAF rules').message, /Account Rulesets Read/);
   assert.doesNotMatch(JSON.stringify(report), /fixture-token|private provider detail/);
+});
+
+test('reports zone lookup HTTP status without exposing provider responses', async () => {
+  const report = await auditCloudflareSecurity({
+    authHeaders,
+    fetchImpl: createFetch({ zoneLookupStatus: 400 }),
+  });
+  const zoneAccess = report.checks.find(check => check.check === 'Cloudflare zone access');
+  assert.equal(zoneAccess.status, 'error');
+  assert.match(zoneAccess.message, /HTTP 400/);
+  assert.match(zoneAccess.message, /code 10000/);
+  assert.doesNotMatch(JSON.stringify(report), /fixture-token|private provider detail/);
+});
+
+test('skips account-level WAF endpoints on a Free plan', async () => {
+  const requests = [];
+  const report = await auditCloudflareSecurity({
+    authHeaders,
+    zoneId: 'fixture-zone',
+    fetchImpl: createFetch({ zonePlan: 'Free Website', requests }),
+  });
+  assert.equal(report.checks.find(check => check.check === 'Account Custom WAF rules').status, 'not-applicable');
+  assert.equal(report.checks.find(check => check.check === 'Account Rate limiting rules').status, 'not-applicable');
+  assert.equal(requests.some(path => path.startsWith('/accounts/')), false);
+});
+
+test('prefers a dedicated audit token over an expired shared token', async () => {
+  const credential = await resolveSecurityAuditAuthHeaders({
+    dedicatedToken: 'audit-only-token',
+    currentAuthHeaders: authHeaders,
+    loadLocalVars: () => {},
+    fetchImpl: async () => Response.json({ success: true, result: { status: 'active' } }),
+  });
+  assert.deepEqual(credential, {
+    headers: { Authorization: 'Bearer audit-only-token' },
+    source: 'security-audit-token',
+  });
+});
+
+test('falls back to refreshed Wrangler OAuth when the configured API token is expired', async () => {
+  let refreshed = false;
+  const credential = await resolveSecurityAuditAuthHeaders({
+    currentAuthHeaders: { Authorization: 'Bearer expired-token' },
+    loadLocalVars: () => {},
+    loadOAuth: () => ({ refresh_token: 'opaque-fixture' }),
+    refreshOAuth: async stored => {
+      refreshed = stored.refresh_token === 'opaque-fixture';
+      return 'fresh-oauth-token';
+    },
+    fetchImpl: async () => Response.json({ success: true, result: { status: 'expired' } }),
+  });
+  assert.equal(refreshed, true);
+  assert.deepEqual(credential, {
+    headers: { Authorization: 'Bearer fresh-oauth-token' },
+    source: 'wrangler-oauth',
+  });
+});
+
+test('reports a clear expired-credential error when OAuth fallback is unavailable', async () => {
+  await assert.rejects(
+    resolveSecurityAuditAuthHeaders({
+      currentAuthHeaders: { Authorization: 'Bearer expired-token' },
+      loadLocalVars: () => {},
+      loadOAuth: () => {
+        throw new Error('private local detail');
+      },
+      fetchImpl: async () => Response.json({ success: true, result: { status: 'expired' } }),
+    }),
+    error => {
+      assert.equal(error.code, 'CLOUDFLARE_AUDIT_TOKEN_EXPIRED');
+      assert.match(error.message, /expired/);
+      assert.doesNotMatch(error.message, /private local detail|expired-token/);
+      return true;
+    }
+  );
 });
 
 test('supports public-only checks and identifies missing live headers', async () => {

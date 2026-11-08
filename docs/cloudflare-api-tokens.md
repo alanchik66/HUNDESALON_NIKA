@@ -4,26 +4,38 @@
 
 В Dashboard много записей — это нормально путает. Разделить нужно так:
 
-| Что видите в Dashboard | Нужно ли проекту | Действие |
-| --- | --- | --- |
-| **Global API Key / Origin CA Key** | Нет | Legacy, не использовать (оранжевое предупреждение до 2026 — скрыть нельзя) |
-| **Cloudflare Agent (conversation)** | Нет | Мусор после сессий Ask AI — удалять |
-| Старые `NIKA-Purge`, `WordPress`, … | Нет | Удалить |
-| **`HUNDESALON_NIKA — Automation`** | **Да — один на всё** | Единственный рабочий automation token |
-| Wrangler OAuth (не в списке API Tokens) | Fallback | Локально, если API token не настроен |
+| Что видите в Dashboard                  | Нужно ли проекту     | Действие                                                                   |
+| --------------------------------------- | -------------------- | -------------------------------------------------------------------------- |
+| **Global API Key / Origin CA Key**      | Нет                  | Legacy, не использовать (оранжевое предупреждение до 2026 — скрыть нельзя) |
+| **Cloudflare Agent (conversation)**     | Нет                  | Мусор после сессий Ask AI — удалять                                        |
+| Старые `NIKA-Purge`, `WordPress`, …     | Нет                  | Удалить                                                                    |
+| **`HUNDESALON_NIKA — Automation`**      | **Да — один на всё** | Единственный рабочий automation token                                      |
+| Wrangler OAuth (не в списке API Tokens) | Fallback             | Локально, если API token не настроен                                       |
 
 **Не делать:** один «глобальный» Global API Key — он deprecated, слишком широкий и небезопасный.
 
 **Делать:** один **scoped User API Token** с минимальными правами на зону + Pages.
 
+### Дополнительный токен только для security-аудита
+
+Не расширяй deploy-токен до admin-доступа ради read-only аудита. Если WAF/Bot
+проверки требуют отдельных scopes, используй отдельный локальный User API Token:
+
+- Zone `hundesalon-nika.com`: Zone Read, Zone WAF Read, Bot Management Read.
+- Account Rulesets Read нужен только для account-level WAF на Enterprise-плане.
+- Храни его только в `.dev.vars` под `CLOUDFLARE_SECURITY_AUDIT_API_TOKEN`;
+  не добавляй в GitHub CI и не выдавай права записи, DNS или Pages.
+- На текущем Free Website плане account-level WAF не применяется; аудит помечает
+  эти проверки как `not-applicable`.
+
 ## Canonical token: `HUNDESALON_NIKA — Automation`
 
-| Поле | Значение |
-| --- | --- |
-| **Имя** | `HUNDESALON_NIKA — Automation` |
-| **Account** | `HUNDESALON_NIKA` (`25e872aeab8cb246c69142ab07cd0fee`) |
-| **Zone** | `hundesalon-nika.com` |
-| **Локально** | `CLOUDFLARE_API_TOKEN` в `.dev.vars` + `.cloudflare-api.token` |
+| Поле          | Значение                                                                             |
+| ------------- | ------------------------------------------------------------------------------------ |
+| **Имя**       | `HUNDESALON_NIKA — Automation`                                                       |
+| **Account**   | `HUNDESALON_NIKA` (`25e872aeab8cb246c69142ab07cd0fee`)                               |
+| **Zone**      | `hundesalon-nika.com`                                                                |
+| **Локально**  | `CLOUDFLARE_API_TOKEN` в `.dev.vars` + `.cloudflare-api.token`                       |
 | **GitHub CI** | тот же секрет (можно `CLOUDFLARE_API_TOKEN` или legacy `CLOUDFLARE_PAGES_API_TOKEN`) |
 
 ### Права (в одном токене)
@@ -89,13 +101,13 @@ npm run cf:set-api-token -- <token>
 
 ## Что покрывает один токен
 
-| Задача | Команда |
-| --- | --- |
-| Pages deploy | `npm run deploy` |
-| CDN purge | `npm run cf:purge-cache` |
-| DNS / redirects | zone scripts |
-| WAF rate limits | `npm run cf:configure-waf-rate-limits` |
-| Post-deploy checks | `npm run deploy:full` |
+| Задача             | Команда                                |
+| ------------------ | -------------------------------------- |
+| Pages deploy       | `npm run deploy`                       |
+| CDN purge          | `npm run cf:purge-cache`               |
+| DNS / redirects    | zone scripts                           |
+| WAF rate limits    | `npm run cf:configure-waf-rate-limits` |
+| Post-deploy checks | `npm run deploy:full`                  |
 
 Wrangler OAuth остаётся только как **fallback**, если API token не настроен. Для стабильности — один API token.
 
@@ -111,8 +123,8 @@ Wrangler OAuth остаётся только как **fallback**, если API t
 
 ## Legacy aliases (совместимость)
 
-| Переменная | Статус |
-| --- | --- |
-| `CLOUDFLARE_API_TOKEN` | основная |
-| `CLOUDFLARE_PAGES_API_TOKEN` | alias; при unified set-api-token пишет туда же |
-| `cf:open-pages-token`, `cf:set-pages-token` | aliases; используй `cf:open-unified-token` |
+| Переменная                                  | Статус                                         |
+| ------------------------------------------- | ---------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`                      | основная                                       |
+| `CLOUDFLARE_PAGES_API_TOKEN`                | alias; при unified set-api-token пишет туда же |
+| `cf:open-pages-token`, `cf:set-pages-token` | aliases; используй `cf:open-unified-token`     |
