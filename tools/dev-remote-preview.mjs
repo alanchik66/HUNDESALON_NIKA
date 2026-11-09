@@ -10,6 +10,8 @@ import { isPublicPath, startStaticTestServer } from './lib/static-test-server.mj
 import { PREVIEW_MOTION_SCRIPT, sanitizeMotionDiagnostic, createMotionDiagnosticRecorder } from './lib/preview-motion-diagnostics.mjs';
 
 const project = 'HUNDESALON_NIKA';
+const weatherBridgeOrigin = 'https://hundesalon-nika.com';
+const weatherBridgePaths = new Set(['/api/weather', '/reverse-geocode']);
 const sameKey = (candidate, key) => {
   const left = Buffer.from(candidate || '');
   const right = Buffer.from(key);
@@ -155,9 +157,10 @@ export async function createRemoteGateway({
       response.writeHead(400).end('Bad request');
       return;
     }
-    const isPagesApi = websiteOrigin && (publicReadOnly
-      ? ['/api/weather', '/reverse-geocode', '/api/maps-config'].includes(url.pathname)
-      : relative.startsWith(`api${path.sep}`) || relative === 'reverse-geocode');
+    const bridgeWeather = !websiteOrigin && weatherBridgePaths.has(url.pathname);
+    const isPagesApi = bridgeWeather || (websiteOrigin && (publicReadOnly
+      ? weatherBridgePaths.has(url.pathname) || url.pathname === '/api/maps-config'
+      : relative.startsWith(`api${path.sep}`) || relative === 'reverse-geocode'));
     if (relative.startsWith('..') || path.isAbsolute(relative) || (!isPublicPath(relative) && !isPagesApi)) {
       response.writeHead(403).end('Forbidden');
       return;
@@ -169,8 +172,8 @@ export async function createRemoteGateway({
       }
       const upstreamUrl = new URL(url);
       upstreamUrl.searchParams.delete('__preview_key');
-      const upstreamOrigin = media && ['.mp4', '.webm'].includes(path.extname(relative).toLowerCase())
-        ? media.baseUrl : website.baseUrl;
+      const useMediaOrigin = media && ['.mp4', '.webm'].includes(path.extname(relative).toLowerCase());
+      const upstreamOrigin = bridgeWeather ? weatherBridgeOrigin : useMediaOrigin ? media.baseUrl : website.baseUrl;
       const upstream = await fetch(`${upstreamOrigin}${upstreamUrl.pathname}${upstreamUrl.search}`, {
         method: request.method,
         headers: requestHeaders,

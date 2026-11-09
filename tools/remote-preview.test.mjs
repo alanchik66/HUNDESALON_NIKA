@@ -106,6 +106,38 @@ test('public read-only phone preview keeps internal files and submissions closed
   }
 });
 
+test('static phone preview forwards only weather reads to the fixed service', async t => {
+  const request = globalThis.fetch;
+  const forwarded = [];
+  t.mock.method(globalThis, 'fetch', (url, options) => {
+    if (!url.startsWith('https://hundesalon-nika.com/')) return request(url, options);
+    forwarded.push({ url, method: options.method, headers: options.headers, redirect: options.redirect });
+    return Promise.resolve(new Response(options.method === 'HEAD' ? null : '{"ready":true}', {
+      headers: { 'Content-Type': 'application/json' },
+    }));
+  });
+  const gateway = await createRemoteGateway({
+    root: fileURLToPath(new URL('../', import.meta.url)), key: 'f'.repeat(43), publicReadOnly: true,
+  });
+  try {
+    const weather = await request(`${gateway.baseUrl}/api/weather?latitude=51.2277&longitude=6.7735&__preview_key=fixture`, {
+      headers: { Cookie: 'preview=fixture', Authorization: 'Bearer fixture' },
+    });
+    assert.equal(weather.status, 200);
+    assert.deepEqual(await weather.json(), { ready: true });
+    assert.equal(weather.headers.get('cache-control'), 'private, no-store');
+    assert.equal((await request(`${gateway.baseUrl}/reverse-geocode`, { method: 'HEAD' })).status, 200);
+    assert.equal((await request(`${gateway.baseUrl}/api/weather`, { method: 'POST' })).status, 405);
+    assert.equal((await request(`${gateway.baseUrl}/api/maps-config`)).status, 403);
+    assert.deepEqual(forwarded, [
+      { url: 'https://hundesalon-nika.com/api/weather?latitude=51.2277&longitude=6.7735', method: 'GET', headers: { 'Accept-Encoding': 'identity' }, redirect: 'manual' },
+      { url: 'https://hundesalon-nika.com/reverse-geocode', method: 'HEAD', headers: { 'Accept-Encoding': 'identity' }, redirect: 'manual' },
+    ]);
+  } finally {
+    await gateway.close();
+  }
+});
+
 test('authenticated phone preview serves current weather modules without exposing build files', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'nika-remote-weather-'));
   const weather = path.join(root, '3d-weather-codrops-main');

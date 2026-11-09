@@ -68,8 +68,8 @@ test('mobile social rollout and continuous wave preserve their original time and
 
 test('normal visibility gates and established nonzero performance timings are preserved', async () => {
   const root = await stylesheet('style.css');
-  assert.match(declaration(rulesFor(root, '#mobile-nav::after')[0], 'animation'), /infinite paused/);
-  assert.equal(declaration(rulesFor(root, '#mobile-nav.active::after')[0], 'animation-play-state'), 'running');
+  assert.match(declaration(rulesFor(root, '#mobile-nav::before')[0], 'animation'), /infinite alternate paused/);
+  assert.equal(declaration(rulesFor(root, '#mobile-nav.active::before')[0], 'animation-play-state'), 'running');
   const durations = [];
   root.walkRules(rule => {
     if (!/html\.site-perf-(?:lite|balanced)/.test(rule.selector)) return;

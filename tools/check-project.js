@@ -98,9 +98,16 @@ if (fs.existsSync(path.join(root, 'assets/js/site-shell.js'))) {
     'site-shell.js: gallery nav trigger must stay a btn-neon link like other nav items'
   );
   assert(
-    siteShell.includes('nav-gallery-dropdown') && siteShell.includes('mobileGalleryBtn'),
-    'site-shell.js: gallery nav must expose submenu markup for galereya and do-i-posle'
+    siteShell.includes('nav-gallery-dropdown'),
+    'site-shell.js: desktop gallery nav must expose submenu markup'
   );
+  const mobileGalleryMarkup = siteShell.match(/const galleryMobileNavMarkup = `([^`]+)`;/)?.[1] || '';
+  for (const route of ['galereya.html', 'do-i-posle.html']) {
+    assert(
+      mobileGalleryMarkup.includes(`<a href="\${pathPrefix}${route}"`),
+      `site-shell.js: mobile navigation must expose a direct tile for ${route}`
+    );
+  }
   assert(
     siteShell.includes('${pathPrefix}blog/blog.html'),
     'site-shell.js: blog nav must point to blog/blog.html in each locale'
@@ -113,10 +120,6 @@ if (fs.existsSync(path.join(root, 'assets/js/site-shell.js'))) {
 
 if (fs.existsSync(path.join(root, 'assets/js/main.js'))) {
   const mainJs = read('assets/js/main.js');
-  assert(
-    mainJs.includes('mobileGalleryBtn') && mainJs.includes('setGalleryMenuState'),
-    'main.js: gallery mobile submenu toggle must be wired'
-  );
   assert(mainJs.includes('initGalleryNavDropdown'), 'main.js: desktop gallery submenu toggle must be wired');
 }
 

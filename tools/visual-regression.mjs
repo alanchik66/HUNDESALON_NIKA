@@ -34,6 +34,9 @@ try {
       serviceWorkers: 'block',
     });
     const page = await context.newPage();
+    await page.route('**/assets/js/local-dev-refresh.js*', route => route.fulfill({
+      contentType: 'application/javascript', body: '/* Workstation refresh is isolated in browser QA. */',
+    }));
     await page.goto(`${server.baseUrl}/de/prays-list.html`, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await page.addStyleTag({ url: `${server.baseUrl}/assets/css/ai-chat.css` });
     await page.addScriptTag({ url: `${server.baseUrl}/assets/js/ai-chat.js` });
@@ -240,55 +243,34 @@ try {
     await page.waitForSelector('#mobile-nav.active', { state: 'visible', timeout: 15000 });
     await page.waitForTimeout(500);
 
-    const galleryButton = page.locator('#mobileGalleryBtn');
-    await galleryButton.click();
-    await page.waitForFunction(() => document.querySelector('#mobileGalleryMenu')?.classList.contains('open'));
-    await page.waitForTimeout(500);
-
     const galleryState = await page.evaluate(() => {
-      const galleryTrigger = document.querySelector('#mobileGalleryBtn');
       const primaryGroup = document.querySelector('.mobile-nav-group--primary');
-      const galleryMenu = document.querySelector('#mobileGalleryMenu');
-      const galleryDropdown = galleryMenu?.closest('.mobile-dropdown');
-      const primaryItems = primaryGroup ? [...primaryGroup.children] : [];
-      const galleryIndex = galleryDropdown ? primaryItems.indexOf(galleryDropdown) : -1;
-      const followingLinks =
-        galleryIndex >= 0
-          ? primaryItems
-              .slice(galleryIndex + 1)
-              .filter(element => element.matches('a[href]'))
-              .slice(0, 2)
-          : [];
-      const checkedItems = [...document.querySelectorAll('#mobileGalleryMenu > a[href]'), ...followingLinks];
+      const primaryItems = primaryGroup ? [...primaryGroup.querySelectorAll(':scope > a[href]')] : [];
+      const galleryIndex = primaryItems.findIndex(item => new URL(item.href).pathname.endsWith('/galereya.html'));
+      const checkedItems = galleryIndex >= 0 ? primaryItems.slice(galleryIndex, galleryIndex + 4) : [];
       const details = checkedItems.map(item => {
         const rect = item.getBoundingClientRect();
-        const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
         return {
           href: item.getAttribute('href'),
-          rect: {
-            top: Math.round(rect.top),
-            bottom: Math.round(rect.bottom),
-            left: Math.round(rect.left),
-            right: Math.round(rect.right),
-          },
-          hitHref: hit?.closest?.('a[href]')?.getAttribute('href') ?? null,
-          clickable: hit === item || item.contains(hit),
+          width: rect.width,
+          height: rect.height,
         };
       });
 
       return {
-        expanded: galleryTrigger?.getAttribute('aria-expanded') === 'true' && galleryMenu?.classList.contains('open'),
-        galleryHeight: Math.round(galleryMenu?.getBoundingClientRect().height ?? 0),
+        flat: !document.querySelector('#mobileGalleryBtn, #mobileGalleryMenu'),
+        beforeAfter: checkedItems.some(item => new URL(item.href).pathname.endsWith('/do-i-posle.html')),
         checked: checkedItems.map(item => item.getAttribute('href')),
-        hit: details.filter(item => item.clickable).map(item => item.href),
         details,
       };
     });
 
-    assert(`${scenario.name}: gallery submenu expands`, galleryState.expanded, JSON.stringify(galleryState));
+    assert(`${scenario.name}: both gallery destinations are direct links`, galleryState.flat && galleryState.beforeAfter, JSON.stringify(galleryState));
     assert(
-      `${scenario.name}: gallery and following links do not overlap`,
-      galleryState.checked.length >= 4 && galleryState.hit.length === galleryState.checked.length,
+      `${scenario.name}: gallery and following tiles share equal dimensions`,
+      galleryState.checked.length === 4 && galleryState.details.every(item =>
+        item.height >= 56 && Math.abs(item.width - galleryState.details[0].width) <= 1 &&
+        Math.abs(item.height - galleryState.details[0].height) <= 1),
       JSON.stringify(galleryState)
     );
 

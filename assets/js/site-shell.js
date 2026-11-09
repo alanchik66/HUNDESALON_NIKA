@@ -269,34 +269,19 @@
     ru: {
       openMenu: 'Открыть меню',
       closeMenu: 'Закрыть меню',
-      expandGallery: 'Открыть раздел галереи',
-      collapseGallery: 'Скрыть раздел галереи',
     },
     uk: {
       openMenu: 'Відкрити меню',
       closeMenu: 'Закрити меню',
-      expandGallery: 'Відкрити розділ галереї',
-      collapseGallery: 'Згорнути розділ галереї',
     },
     de: {
       openMenu: 'Menü öffnen',
       closeMenu: 'Menü schließen',
-      expandGallery: 'Galeriebereich öffnen',
-      collapseGallery: 'Galeriebereich schließen',
     },
     en: {
       openMenu: 'Open menu',
       closeMenu: 'Close menu',
-      expandGallery: 'Open gallery section',
-      collapseGallery: 'Close gallery section',
     },
-  };
-
-  const MENU_SECTION_COPY = {
-    ru: { more: 'Дополнительно' },
-    uk: { more: 'Додатково' },
-    de: { more: 'Mehr' },
-    en: { more: 'More' },
   };
 
   const WEATHER_WIDGET_COPY = {
@@ -800,6 +785,11 @@
   z-index: 9 !important;
   overflow: visible !important;
   pointer-events: none !important;
+}
+
+/* A bright disk can obscure the status shown while the preview has no readings. */
+.weather-header-preview:has(> .weather-header-state--recovery) > .weather-orb-stack--preview {
+  opacity: 0 !important;
 }
 
 /* Keep moon visible in expanded dropdown too. */
@@ -3843,7 +3833,6 @@
       copy: HEADER_COPY[currentLang || pageLang] || HEADER_COPY.en,
       mediaLibraryCopy: MEDIA_LIBRARY_COPY[currentLang || pageLang] || MEDIA_LIBRARY_COPY.en,
       menuA11y: MENU_A11Y[pageLang] || MENU_A11Y.en,
-      menuSections: MENU_SECTION_COPY[pageLang] || MENU_SECTION_COPY.en,
       preloaderNotice: PRELOADER_COPY[pageLang] || PRELOADER_COPY.en,
       weatherWidgetCopy: WEATHER_WIDGET_COPY[pageLang] || WEATHER_WIDGET_COPY.en,
     };
@@ -3967,19 +3956,8 @@
       </div>`;
 
     const galleryMobileNavMarkup = `
-  <div class="mobile-dropdown">
-    <button class="mobile-dropdown-btn${activeClass('gallery')}" id="mobileGalleryBtn" type="button" aria-expanded="false" aria-controls="mobileGalleryMenu" aria-label="${context.menuA11y.expandGallery}">${copy.gallery}</button>
-    <div class="mobile-dropdown-menu" id="mobileGalleryMenu">
-      <a href="${pathPrefix}galereya.html"${submenuItemAttrs('galereya.html')}>
-        <span class="mobile-dropdown-menu__label">${copy.galleryAll}</span>
-        <span class="mobile-dropdown-menu__hint">${copy.galleryAllHint}</span>
-      </a>
-      <a href="${pathPrefix}do-i-posle.html"${submenuItemAttrs('do-i-posle.html')}>
-        <span class="mobile-dropdown-menu__label">${copy.beforeAfter}</span>
-        <span class="mobile-dropdown-menu__hint">${copy.beforeAfterHint}</span>
-      </a>
-    </div>
-  </div>`;
+  <a href="${pathPrefix}galereya.html"${submenuItemAttrs('galereya.html')}>${copy.gallery}</a>
+  <a href="${pathPrefix}do-i-posle.html"${submenuItemAttrs('do-i-posle.html')}>${copy.beforeAfter}</a>`;
 
     const primaryLinks =
       context.currentLang === 'ru'
@@ -4127,11 +4105,9 @@
     <div class="mobile-nav-group mobile-nav-group--primary">
       ${primaryLinks}
     </div>
-    <div class="menu-separator" aria-hidden="true"><span>${context.menuSections.more}</span></div>
     <div class="mobile-nav-group mobile-nav-group--secondary">
       ${secondaryLinks}
     </div>
-    <div class="menu-separator menu-separator--bottom" aria-hidden="true"></div>
   </div>
 </nav>`;
   }
@@ -14213,23 +14189,6 @@
 
   }
 
-  function normalizeMenuSeparators(label) {
-    document.querySelectorAll('.menu-separator').forEach(separator => {
-      separator.setAttribute('aria-hidden', 'true');
-
-      if (separator.classList.contains('menu-separator--bottom')) {
-        separator.querySelectorAll('span').forEach(caption => caption.remove());
-        return;
-      }
-
-      if (!separator.querySelector('span')) {
-        const caption = document.createElement('span');
-        caption.textContent = label;
-        separator.appendChild(caption);
-      }
-    });
-  }
-
   function resolveHeaderHomeBrandAnchor() {
     const homeIcon = document.querySelector('.social-home .home-icon-img');
     if (homeIcon instanceof HTMLElement) {
@@ -14881,7 +14840,6 @@
     standardizePageHeader(context);
     hardenHeaderA11y();
     syncHeaderWeatherWidget(context.pageLang);
-    normalizeMenuSeparators(context.menuSections.more);
     fitHomeLabelToLogo();
 
     window.addEventListener('load', fitHomeLabelToLogo);

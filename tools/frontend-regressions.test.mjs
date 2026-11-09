@@ -1247,7 +1247,7 @@ test('localized burger menus expose promotions while keeping booking in the head
       const markup = renderHeader({
         currentLang: locale, pageLang: locale, currentRoute, copy: copy[locale],
         mediaLibraryCopy: { mediaLibrary: 'Media' }, menuA11y: { openMenu: 'Menu', expandGallery: 'Gallery' },
-        menuSections: { more: 'More' }, weatherWidgetCopy: { ariaLabel: 'Weather' },
+        weatherWidgetCopy: { ariaLabel: 'Weather' },
       });
       const mobileNav = markup.match(/<nav id="mobile-nav"[^>]*>([\s\S]*?)<\/nav>/)[1];
       const mobileNavContent = mobileNav.match(/^\s*<div class="mobile-nav__content">([\s\S]*)<\/div>\s*$/)?.[1];
@@ -2630,13 +2630,13 @@ test('blocked preference storage does not stop shell setup or language navigatio
   assert.equal(preferred(['de', 'en', 'ru', 'uk'], storage, window), 'ru');
 
   let headerInitialized = false;
-  const context = { currentLang: 'de', pageLang: 'de', menuSections: { more: 'More' } };
+  const context = { currentLang: 'de', pageLang: 'de' };
   const helpers = {
     resolvePageContext: () => context,
     getLaunchLanguageRedirectUrl: () => null,
     initIndependentEuroMotion() {},
     standardizePageHeader: () => { headerInitialized = true; },
-    hardenHeaderA11y() {}, syncHeaderWeatherWidget() {}, normalizeMenuSeparators() {}, fitHomeLabelToLogo() {},
+    hardenHeaderA11y() {}, syncHeaderWeatherWidget() {}, fitHomeLabelToLogo() {},
     getVisibleHeaderBottom() {}, initHeaderAdaptiveLayout() {},
   };
   const initialize = new Function('localStorage', 'window', 'document', ...Object.keys(helpers), `${common}\n${declaration('init')}\nreturn init();`);

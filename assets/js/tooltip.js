@@ -533,8 +533,8 @@
       .querySelectorAll('.social-music-item[data-music-service="apple"]')
       .forEach(el => attach(el, mediaTooltip.appleMusic));
 
-    /* навигационные ссылки (десктоп + мобиль) */
-    document.querySelectorAll('.nav-main a, #mobile-nav a').forEach(el => {
+    /* Drawer labels are fully visible; focus must not open a duplicate floating label. */
+    document.querySelectorAll('.nav-main a').forEach(el => {
       const key = 'nav:' + routeKey(el.getAttribute('href'));
       const text = t[key] || t['btn:neon'];
       attach(el, text);

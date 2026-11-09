@@ -39,8 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const menuA11y = siteShell.menuA11y || {
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
-    expandGallery: 'Open gallery section',
-    collapseGallery: 'Close gallery section',
   };
   siteShell.initLanguageDropdown?.();
 
@@ -273,8 +271,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const mobileNav = getByAnyId('mobile-nav', 'mobileNav');
   const mobileNavScroll = mobileNav?.querySelector('.mobile-nav__content') || mobileNav;
   const overlay = getByAnyId('mobile-nav-overlay', 'mobileNavOverlay');
-  const mobileGalleryBtn = getByAnyId('mobileGalleryBtn', 'mobile-gallery-btn');
-  const mobileGalleryMenu = getByAnyId('mobileGalleryMenu', 'mobile-gallery-menu');
 
   const createLiquidScrollbar = ({
     scrollTarget,
@@ -510,8 +506,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const getMaxOffset = () => Math.max(scrollTarget[scrollSizeKey] - scrollTarget[clientSizeKey], 0);
     const clampOffset = value => Math.max(0, Math.min(getMaxOffset(), value));
+    const isPageScrollLocked = () =>
+      scrollTarget === scrollRoot && document.body.classList.contains('nav-open');
 
     const tick = () => {
+      if (isPageScrollLocked()) {
+        currentOffset = scrollTarget[scrollKey];
+        targetOffset = currentOffset;
+        frameId = null;
+        return;
+      }
+
       currentOffset += (targetOffset - currentOffset) * easing;
 
       if (Math.abs(targetOffset - currentOffset) <= threshold) {
@@ -534,7 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollTarget.addEventListener(
       'wheel',
       event => {
-        if (event.ctrlKey || event.metaKey) return;
+        if (event.defaultPrevented || event.ctrlKey || event.metaKey || isPageScrollLocked()) return;
         if (
           scrollTarget === scrollRoot
           && event.target instanceof Element
@@ -706,16 +711,6 @@ document.addEventListener('DOMContentLoaded', () => {
       refreshMobileNavScrollbar();
     };
 
-    const setGalleryMenuState = isOpen => {
-      if (!mobileGalleryBtn || !mobileGalleryMenu) return;
-      mobileGalleryBtn.classList.toggle('is-open', isOpen);
-      mobileGalleryBtn.setAttribute('aria-expanded', String(isOpen));
-      mobileGalleryBtn.setAttribute('aria-label', isOpen ? menuA11y.collapseGallery : menuA11y.expandGallery);
-      mobileGalleryMenu.classList.toggle('open', isOpen);
-      mobileGalleryMenu.inert = !isOpen;
-      refreshMobileNavScrollbar();
-    };
-
     const setMenuState = (isOpen, { restoreFocus = true } = {}) => {
       burger.classList.toggle('active', isOpen);
       burger.setAttribute('aria-expanded', String(isOpen));
@@ -741,7 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.hidden = true;
           }
           overlayHideTimer = null;
-        }, 440);
+        }, 380);
       }
 
       if (isOpen) {
@@ -764,12 +759,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (isOpen) {
         lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        mobileNavScroll.scrollTop = 0;
         refreshMobileNavScrollbar();
         requestAnimationFrame(() => {
-          mobileNav.querySelector(focusableSelector)?.focus({ preventScroll: true });
+          if (mobileNav.classList.contains('active')) {
+            mobileNav.querySelector(focusableSelector)?.focus({ preventScroll: true });
+          }
         });
       } else {
-        setGalleryMenuState(false);
         if (restoreFocus) {
           lastFocusedElement?.focus({ preventScroll: true });
         }
@@ -803,7 +800,9 @@ document.addEventListener('DOMContentLoaded', () => {
       mobileNav.inert = true;
     }
     syncMobileNavLayout();
-    setGalleryMenuState(false);
+    mobileNav.querySelectorAll('a[href]').forEach((link, index) => {
+      link.style.setProperty('--menu-item-delay', `${Math.min(index, 12) * 14}ms`);
+    });
     refreshMobileNavScrollbar();
     normalizeNavLockState();
 
@@ -895,7 +894,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const link = target.closest('a[href]');
       if (!link || !mobileNav.contains(link)) return;
 
-      setGalleryMenuState(false);
       closeMenu({ restoreFocus: false });
     };
 
@@ -912,26 +910,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // принудительно закрываем меню после смены hash.
     window.addEventListener('hashchange', () => {
       if (!isMenuOpen()) return;
-      setGalleryMenuState(false);
       closeMenu({ restoreFocus: false });
     });
-
-    if (mobileGalleryBtn && mobileGalleryMenu) {
-      mobileGalleryBtn.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        setGalleryMenuState(!mobileGalleryMenu.classList.contains('open'));
-      });
-
-      const navButtons = mobileNav.querySelectorAll('button:not(#mobileGalleryBtn)');
-      navButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-          if (mobileGalleryMenu.classList.contains('open')) {
-            setGalleryMenuState(false);
-          }
-        });
-      });
-    }
   }
 
   /* ========== HEADER SCROLL + SOCIAL BAR + HERO PARALLAX ========== */
@@ -2047,40 +2027,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }, { once: true });
     });
 
-    if (control.matches('.mobile-dropdown-btn')) {
-      try {
-        const previous = siteArrowActivationAnimations.get(control);
-        previous?.animation.cancel();
-        const animation = control.animate(
-          [{ rotate: '0deg' }, { rotate: `${settings.spinDegrees}deg` }],
-          {
-            duration: settings.duration,
-            easing: settings.easing,
-            pseudoElement: '::after',
-          }
-        );
-        const record = { animation, control, isBreedClose: false };
-        siteArrowActivationAnimations.set(control, record);
-        const release = () => {
-          if (siteArrowActivationAnimations.get(control) === record) {
-            siteArrowActivationAnimations.delete(control);
-          }
-        };
-        animation.addEventListener('finish', release, { once: true });
-        animation.addEventListener('cancel', release, { once: true });
-      } catch {
-        // The continuous shared bounce remains available when pseudo-element WAAPI is unsupported.
-      }
-    }
   };
 
   document.addEventListener('click', event => {
     const control = event.target instanceof Element
-      ? event.target.closest('button, a, [role="button"], .mobile-dropdown-btn')
+      ? event.target.closest('button, a, [role="button"]')
       : null;
     if (!control) return;
     const isBreedToggle = control.matches('[data-price-breeds-toggle]');
-    const hasArrow = control.matches('.mobile-dropdown-btn') || control.querySelector(
+    const hasArrow = control.querySelector(
       '.site-icon-arrow, .site-select__arrow, .nav-dropdown-chevron, .lang-dropdown-btn > i:last-child, .btn-read i.fa-arrow-right'
     );
     if (hasArrow && !isBreedToggle) playSiteArrowActivation(control);
