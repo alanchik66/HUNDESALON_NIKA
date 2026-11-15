@@ -2912,8 +2912,8 @@ body.booking-modal-open {
   --booking-motion-dismiss: 0.44s;
   --booking-motion-step: 0.42s;
   --booking-motion-resize: 0.64s;
-  --booking-tilt-x: 0deg;
-  --booking-tilt-y: 0deg;
+  --booking-light-x: 0px;
+  --booking-light-y: 0px;
   --booking-panel-inline: 2px;
   --booking-panel-gap: 0.4rem;
   --booking-emerald-neon: #5ef0b8;
@@ -3011,16 +3011,14 @@ body.booking-modal-open {
 
   100% {
     opacity: 1;
-    transform: perspective(1280px) rotateX(var(--booking-tilt-x, 0deg))
-      rotateY(var(--booking-tilt-y, 0deg)) scale(1) translateY(0);
+    transform: perspective(1280px) scale(1) translateY(0);
   }
 }
 
 @keyframes booking-liquid-dismiss {
   0% {
     opacity: 1;
-    transform: perspective(1280px) rotateX(var(--booking-tilt-x, 0deg))
-      rotateY(var(--booking-tilt-y, 0deg)) scale(1) translateY(0);
+    transform: perspective(1280px) scale(1) translateY(0);
   }
 
   100% {
@@ -3077,12 +3075,10 @@ body.booking-modal-open {
     width var(--booking-motion-resize) var(--booking-ease-drift),
     height var(--booking-motion-resize) var(--booking-ease-drift),
     max-height var(--booking-motion-resize) var(--booking-ease-drift),
-    padding 0.48s var(--booking-ease-drift),
-    transform 0.62s var(--booking-ease-drift);
+    padding 0.48s var(--booking-ease-drift);
   border-radius: var(--liquid-edge, 28px);
   border: none;
-  transform: perspective(1280px) rotateX(var(--booking-tilt-x, 0deg))
-    rotateY(var(--booking-tilt-y, 0deg));
+  transform: perspective(1280px);
   transform-style: preserve-3d;
   background:
     radial-gradient(140% 100% at 14% -16%, rgb(94 240 184 / 14%) 0%, transparent 58%),
@@ -3187,6 +3183,9 @@ body.booking-modal-open {
   position: absolute;
   z-index: 0;
   pointer-events: none;
+  /* Individual translate composes with each layer's existing animated transform. */
+  translate: var(--booking-light-x, 0px) var(--booking-light-y, 0px);
+  transition: translate 0.62s var(--booking-ease-drift);
 }
 
 #booking-modal .modal-content > :not(.modal-close, .booking-glass-layer, .custom-scrollbar-track) {
@@ -4036,6 +4035,7 @@ body.booking-modal-open {
 #booking-modal #step-2 .modal-buttons {
   flex: 0 0 auto;
   width: 100%;
+  margin-inline: 0;
   margin-top: 0.42rem;
   padding-inline: var(--booking-panel-inline);
   padding-top: 0.62rem;
@@ -5957,6 +5957,8 @@ body .btn-read:hover .site-icon-arrow-right {
 
 /* Filter pills — reuse nav-main glass pill system */
 .before-after-filters.nav-main {
+  display: flex;
+  flex-wrap: wrap;
   grid-column: auto;
   place-self: auto;
   margin: 20px auto;
@@ -9693,6 +9695,11 @@ body.price-page .site-scroll-root main[data-price-page] {
   margin-inline: 0;
   padding-inline: clamp(12px, 1.5vw, 24px);
   box-sizing: border-box;
+}
+
+/* Legacy localized containers also leave the fixed scroll-arrow rail clear. */
+body.price-page .site-scroll-root > div.container.page-offset-top {
+  padding-right: calc(var(--site-side-padding) + 46px + env(safe-area-inset-right)) !important;
 }
 
 /* Keep the assistant in the same reserved rail instead of narrowing the page. */

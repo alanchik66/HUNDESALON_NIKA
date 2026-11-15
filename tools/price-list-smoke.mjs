@@ -275,7 +275,7 @@ for (const locale of locales) {
         }),
         breedBadgeArrowUsesSiteMotion: Boolean(
           breedBadgeMotionStyle?.animationName.includes('siteArrowAxisBounce')
-          && breedBadgeMotionStyle?.getPropertyValue('--site-arrow-motion-peak-x').trim() === '-7px'
+          && breedBadgeMotionStyle?.getPropertyValue('--site-arrow-motion-peak-x').trim() === '-4px'
         && breedBadgeIconStyle?.backgroundImage.includes('chevron-down.webp')
           && rootStyle.getPropertyValue('--site-arrow-bounce-peak').trim() === '7px'
         ),
@@ -725,7 +725,7 @@ for (const locale of locales) {
         await additionalBreedOptions.nth(speciesIndex).evaluate(option => option.click());
         await page.waitForFunction(
           () => {
-            const modal = document.querySelector('#price-category-modal');
+            const modal = document.querySelector('#booking-modal[data-price-booking-flow]');
             return modal?.classList.contains('active') && modal.getAttribute('aria-hidden') === 'false';
           },
           null,
@@ -746,7 +746,7 @@ for (const locale of locales) {
         );
         await modalClose.evaluate(button => button.click());
         await page.waitForFunction(
-          () => !document.querySelector('#price-category-modal')?.classList.contains('active'),
+          () => !document.querySelector('#booking-modal')?.classList.contains('active'),
           null,
           { timeout: 5000 }
         );
@@ -769,7 +769,7 @@ for (const locale of locales) {
         assert(`ru desktop: ${categoryId} exposes additional services`, await additionalButton.count() === 1);
         await additionalButton.evaluate(button => button.click());
         await page.waitForFunction(
-          () => document.querySelector('#price-category-modal')?.classList.contains('active'),
+          () => document.querySelector('#booking-modal')?.classList.contains('active'),
           null,
           { timeout: 5000 }
         );
@@ -792,7 +792,7 @@ for (const locale of locales) {
         );
         await modalClose.evaluate(button => button.click());
         await page.waitForFunction(
-          () => !document.querySelector('#price-category-modal')?.classList.contains('active'),
+          () => !document.querySelector('#booking-modal')?.classList.contains('active'),
           null,
           { timeout: 5000 }
         );
@@ -912,7 +912,31 @@ for (const locale of locales) {
     }
 
     const euroIcon = page.locator('.site-icon-euro.currency-inline').first();
-    await euroIcon.evaluate(icon => icon.scrollIntoView({ block: 'center' }));
+    await euroIcon.evaluate(async icon => {
+      // Align a non-animated ancestor before measuring the same rotating icon.
+      (icon.closest('.price-card__price') || icon.parentElement).scrollIntoView({ block: 'center', behavior: 'instant' });
+      const root = document.querySelector('.site-scroll-root');
+      const deadline = performance.now() + 10000;
+      let lastPosition = null;
+      let stableSamples = 0;
+      while (performance.now() < deadline) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const position = [root?.scrollTop || 0, root?.scrollLeft || 0, window.scrollX, window.scrollY];
+        const rect = icon.getBoundingClientRect();
+        const style = getComputedStyle(icon);
+        const visible = rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.bottom <= window.innerHeight
+          && rect.left >= 0 && rect.right <= window.innerWidth && style.display !== 'none' && style.visibility === 'visible';
+        stableSamples = visible && lastPosition && position.every((value, index) => Math.abs(value - lastPosition[index]) <= 0.5)
+          ? stableSamples + 1 : 0;
+        if (stableSamples >= 3) return;
+        lastPosition = position;
+      }
+      const rect = icon.getBoundingClientRect();
+      throw new Error(`Coin is not visible with settled scrolling: ${JSON.stringify({
+        rect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right },
+        position: lastPosition, stableSamples,
+      })}`);
+    });
     const euroMotionState = await euroIcon.evaluate(async icon => {
       const readMotion = () => {
         const style = getComputedStyle(icon);
@@ -1128,7 +1152,7 @@ for (const locale of locales) {
         if (mode === 'additional') {
           await coatCard.locator('[data-price-additional-select]').evaluate(button => button.click());
         }
-        await page.waitForFunction(() => document.querySelector('#price-category-modal')?.classList.contains('active'));
+        await page.waitForFunction(() => document.querySelector('#booking-modal')?.classList.contains('active'));
         const trimmingState = await page.evaluate(currentLocale => {
           const additionalRows = window.PricePageCatalog.categoriesByLocale[currentLocale]
             .find(category => category.id === 'ru-additional-services').priceRows;
@@ -1161,7 +1185,7 @@ for (const locale of locales) {
           JSON.stringify(trimmingState)
         );
         await page.locator('[data-price-modal-close]').evaluate(button => button.click());
-        await page.waitForFunction(() => !document.querySelector('#price-category-modal')?.classList.contains('active'));
+        await page.waitForFunction(() => !document.querySelector('#booking-modal')?.classList.contains('active'));
       }
     }
     await weightFilter.selectOption('medium');
@@ -1493,7 +1517,7 @@ for (const locale of locales) {
     assert(`${locale} ${label}: information card preview`, Boolean(informationPreview?.trim()) && informationHighlights === 6);
     if (label === 'mobile') await informationCard.locator('[data-price-card-toggle]').click();
     await informationCard.locator('[data-price-open]').click();
-    await page.waitForSelector('#price-category-modal.active', { timeout: 15000 });
+    await page.waitForSelector('#booking-modal.active #step-0.active', { timeout: 15000 });
 
     const informationModalState = await page.evaluate(() => {
       const modal = document.querySelector('#price-category-modal');
@@ -1513,7 +1537,7 @@ for (const locale of locales) {
     assert(`${locale} ${label}: information modal`, informationModalState.controlsHidden && informationModalState.conditionsVisible && informationModalState.bookingHidden && informationModalState.rules === 8);
     await page.locator('[data-price-modal-close]').click();
     await page.waitForFunction(
-      () => !document.querySelector('#price-category-modal')?.classList.contains('active'),
+      () => !document.querySelector('#booking-modal')?.classList.contains('active'),
       null,
       { timeout: 15000 }
     );
@@ -1521,16 +1545,16 @@ for (const locale of locales) {
     const firstCard = page.locator('[data-price-categories] .price-card').first();
     if (label === 'mobile') await firstCard.locator('[data-price-card-toggle]').click();
     await firstCard.locator('[data-price-open]').click();
-    await page.waitForSelector('#price-category-modal.active', { timeout: 15000 });
-    const initialModalScrollTop = await page.locator('#price-category-modal .modal-content').evaluate(content => content.scrollTop);
+    await page.waitForSelector('#booking-modal.active #step-0.active', { timeout: 15000 });
+    const initialModalScrollTop = await page.locator('#booking-modal #step-0').evaluate(content => content.scrollTop);
     assert(`${locale} ${label}: category modal opens at the top`, initialModalScrollTop <= 1, String(initialModalScrollTop));
 
     const modalBreedPhotos = await readLoadedPhotoImages(
       page,
-      '#price-category-modal.active [data-price-modal-breed-photo]:not([hidden]) [data-price-modal-breed-photo-image]'
+      '#booking-modal.active #step-0 [data-price-modal-breed-photo]:not([hidden]) [data-price-modal-breed-photo-image]'
     );
     const modalBreedPhotoBinding = await page.evaluate(() => {
-      const modal = document.querySelector('#price-category-modal.active');
+      const modal = document.querySelector('#booking-modal.active');
       const unifiedTile = modal?.querySelector('.price-category-modal__selection');
       const categoryHeader = modal?.querySelector('.price-category-modal__header');
       const selectionHeader = modal?.querySelector('[data-price-modal-selection-header]');
@@ -1643,15 +1667,15 @@ for (const locale of locales) {
     assert(`${locale} ${label}: conditions hidden before service`, initialModalState.conditionsHidden && initialModalState.consentAbsentBeforeService);
 
     if (locale === 'ru') {
-      const modalBreedTrigger = page.locator('#price-category-modal.active [data-price-modal-breed] + .site-select__trigger');
+      const modalBreedTrigger = page.locator('#booking-modal.active #step-0 [data-price-modal-breed] + .site-select__trigger');
       await modalBreedTrigger.click();
-      await page.waitForSelector('#price-category-modal.active .site-select__menu:not([hidden])', { timeout: 5000 });
+      await page.waitForSelector('#booking-modal.active #step-0 .site-select__menu:not([hidden])', { timeout: 5000 });
 
       const nestedScrollBefore = await page.evaluate(() => ({
-        menu: document.querySelector('#price-category-modal.active .site-select__menu')?.scrollTop || 0,
-        modal: document.querySelector('#price-category-modal.active .modal-content')?.scrollTop || 0,
+        menu: document.querySelector('#booking-modal.active #step-0 .site-select__menu')?.scrollTop || 0,
+        modal: document.querySelector('#booking-modal.active #step-0')?.scrollTop || 0,
       }));
-      const modalBreedMenuBox = await page.locator('#price-category-modal.active .site-select__menu').boundingBox();
+      const modalBreedMenuBox = await page.locator('#booking-modal.active #step-0 .site-select__menu').boundingBox();
       if (modalBreedMenuBox) {
         await page.mouse.move(
           modalBreedMenuBox.x + modalBreedMenuBox.width / 2,
@@ -1662,25 +1686,24 @@ for (const locale of locales) {
       }
 
       const nestedScrollAfter = await page.evaluate(() => {
-        const menu = document.querySelector('#price-category-modal.active .site-select__menu');
-        const content = document.querySelector('#price-category-modal.active .modal-content');
+        const menu = document.querySelector('#booking-modal.active #step-0 .site-select__menu');
+        const content = document.querySelector('#booking-modal.active #step-0');
         const menuRect = menu?.getBoundingClientRect();
-        const nativeSelect = document.querySelector('#price-category-modal.active [data-price-modal-breed]');
+        const nativeSelect = document.querySelector('#booking-modal.active #step-0 [data-price-modal-breed]');
         const target = [...(menu?.querySelectorAll('.site-select__option') || [])].find(option => {
           const rect = option.getBoundingClientRect();
+          const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
           return option.dataset.value !== nativeSelect?.value
-            && Boolean(menuRect && rect.top >= menuRect.top && rect.bottom <= menuRect.bottom);
+            && Boolean(menuRect && rect.top >= menuRect.top && rect.bottom <= menuRect.bottom)
+            && Boolean(hit && option.contains(hit));
         });
-        const targetRect = target?.getBoundingClientRect();
         return {
           menu: menu?.scrollTop || 0,
           modal: content?.scrollTop || 0,
           menuActive: menu?.classList.contains('site-scroll-active'),
-          target: targetRect && {
+          target: target && {
             value: target.dataset.value || '',
             text: target.textContent?.trim() || '',
-            x: targetRect.left + targetRect.width / 2,
-            y: targetRect.top + targetRect.height / 2,
           },
         };
       });
@@ -1692,16 +1715,53 @@ for (const locale of locales) {
         JSON.stringify({ before: nestedScrollBefore, after: nestedScrollAfter })
       );
 
+      if (label === 'mobile') {
+        const menu = page.locator('#booking-modal.active #step-0 .site-select__menu:not([hidden])');
+        const touch = await context.newCDPSession(page);
+        try {
+          for (const [edge, direction] of [['move', 1], ['top', -1], ['bottom', 1]]) {
+            const before = await menu.evaluate((element, currentEdge) => {
+              element.scrollTop = currentEdge === 'bottom' ? element.scrollHeight : 0;
+              const rect = element.getBoundingClientRect();
+              const panel = element.closest('.booking-step');
+              const panelRect = panel.getBoundingClientRect();
+              const searchBottom = element.querySelector('.site-select__search-input')?.getBoundingClientRect().bottom || rect.top;
+              return { menu: element.scrollTop, panel: panel.scrollTop, root: document.querySelector('.site-scroll-root').scrollTop,
+                x: rect.left + rect.width / 2, top: Math.max(rect.top, panelRect.top, searchBottom) + 16,
+                bottom: Math.min(rect.bottom, panelRect.bottom, innerHeight) - 16 };
+            }, edge);
+            const distance = Math.min(128, before.bottom - before.top);
+            assert(`ru mobile: ${edge} breed gesture has a visible list area`, distance >= 40, JSON.stringify(before));
+            const point = { x: before.x, y: direction > 0 ? before.bottom : before.top };
+            await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
+            for (let step = 1; step <= 8; step++) {
+              await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: point.x, y: point.y - direction * distance * step / 8 }] });
+              await page.waitForTimeout(25);
+            }
+            await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+            await page.waitForTimeout(450);
+            const after = await menu.evaluate(element => ({ menu: element.scrollTop, panel: element.closest('.booking-step').scrollTop,
+              root: document.querySelector('.site-scroll-root').scrollTop, contained: getComputedStyle(element).overscrollBehaviorY === 'contain' }));
+            assert(`ru mobile: native ${edge} touch scroll stays inside the breed list`, after.contained
+              && Math.abs(after.panel - before.panel) <= 1 && Math.abs(after.root - before.root) <= 1
+              && (edge === 'move' ? after.menu > before.menu : Math.abs(after.menu - before.menu) <= 1), JSON.stringify({ before, after }));
+          }
+        } finally {
+          await touch.detach();
+        }
+      }
+
       if (nestedScrollAfter.target) {
-        await page.mouse.click(nestedScrollAfter.target.x, nestedScrollAfter.target.y);
+        await page.locator('#booking-modal.active #step-0 .site-select__menu:not([hidden])')
+          .locator(`.site-select__option[data-value="${nestedScrollAfter.target.value}"]`).click();
         await page.waitForTimeout(180);
       }
       const nestedSelectionState = await page.evaluate(() => {
-        const select = document.querySelector('#price-category-modal.active [data-price-modal-breed]');
+        const select = document.querySelector('#booking-modal.active #step-0 [data-price-modal-breed]');
         return {
           nativeValue: select?.value || '',
           visibleValue: select?.closest('.site-select')?.querySelector('.site-select__value')?.textContent?.trim() || '',
-          modalScroll: document.querySelector('#price-category-modal.active .modal-content')?.scrollTop || 0,
+          modalScroll: document.querySelector('#booking-modal.active #step-0')?.scrollTop || 0,
           menuClosed: !select?.closest('.site-select')?.classList.contains('is-open'),
         };
       });
@@ -1843,15 +1903,26 @@ for (const locale of locales) {
       const dentalWeightControl = page.locator('[data-price-modal-dental-weight]');
       const dentalWeight = page.locator('[data-price-modal-dental-weight-input]');
       const dentalService = page.locator('[data-price-modal-additional-service-options] [data-service-index="1"] input');
+      const checkPrimaryService = async index => {
+        const input = primaryServices.nth(index);
+        const tile = input.locator('xpath=..');
+        const detail = JSON.stringify({ id: await input.getAttribute('value'), name: (await tile.textContent())?.trim() });
+        try {
+          if (!(await input.isChecked())) await tile.click();
+        } catch (error) {
+          throw new Error(`ru desktop: primary service tile click failed: ${detail}`, { cause: error });
+        }
+        assert(`ru desktop: primary service ${index + 1} is selected through its visible tile`, await input.isChecked(), detail);
+      };
 
       assert('ru desktop: three primary grooming services available', await primaryServices.count() >= 3);
       for (let index = 0; index < 3; index += 1) {
-        await primaryServices.nth(index).check({ force: true });
+        await checkPrimaryService(index);
         assert(`ru desktop: primary service ${index + 1} does not request dental weight`, !(await dentalWeightControl.isVisible()));
         assert(`ru desktop: dental option remains available for primary service ${index + 1}`, await dentalService.count() === 1);
       }
 
-      await primaryServices.first().check({ force: true });
+      await checkPrimaryService(0);
       assert('ru desktop: dental weight input disabled before dental selection', await dentalWeight.isDisabled());
       await dentalService.evaluate(input => {
         input.checked = true;
@@ -1962,7 +2033,7 @@ for (const locale of locales) {
     });
 
     await page.waitForTimeout(240);
-    const categoryContent = page.locator('#price-category-modal.active .modal-content');
+    const categoryContent = page.locator('#booking-modal.active #step-0');
     await page.evaluate(() => {
       window.__priceSmokeCategoryScrollActivity = null;
     });
@@ -1979,7 +2050,7 @@ for (const locale of locales) {
       await page.mouse.wheel(0, 720);
       await page.waitForFunction(
         () => {
-          const content = document.querySelector('#price-category-modal.active .modal-content');
+          const content = document.querySelector('#booking-modal.active #step-0');
           if (!content?.classList.contains('site-scroll-active')) return false;
           const scrollbar = getComputedStyle(content, '::-webkit-scrollbar');
           const thumb = getComputedStyle(content, '::-webkit-scrollbar-thumb');
@@ -2005,7 +2076,7 @@ for (const locale of locales) {
         const selectionHeader = content.querySelector('.price-category-modal__selection-header');
         const stickyContext = selectionHeader?.closest('.price-category-modal__context');
         const stickyRect = stickyContext?.getBoundingClientRect();
-        const close = content.querySelector('.price-category-modal__close');
+        const close = content.closest('#booking-modal')?.querySelector('.modal-close');
         const contentRect = content.getBoundingClientRect();
         const headerRect = header?.getBoundingClientRect();
         const selectionHeaderRect = selectionHeader?.getBoundingClientRect();
@@ -2021,7 +2092,7 @@ for (const locale of locales) {
         thumbRadius: thumb.borderRadius,
           observedScrollActivity,
           rootLocked: Boolean(
-            root?.classList.contains('price-modal-scroll-locked')
+            root?.classList.contains('booking-scroll-locked')
             && getComputedStyle(root).overflowY === 'hidden'
           ),
           headerTop: headerRect?.top || 0,
@@ -2043,8 +2114,8 @@ for (const locale of locales) {
           ),
           closeVisible: Boolean(
             closeRect
-            && closeRect.top >= contentRect.top - 1
-            && closeRect.bottom <= contentRect.bottom + 1
+            && closeRect.top >= 0
+            && closeRect.bottom <= innerHeight + 1
           ),
         };
     });
@@ -2107,125 +2178,78 @@ for (const locale of locales) {
       `${locale} ${label}: category booking action enabled`,
       await categoryBookingAction.getAttribute('aria-disabled') !== 'true'
     );
+    const selection = await categoryBookingAction.evaluate(action => ({ ...action.dataset }));
+    const rootScrollBeforeBooking = await page.locator('.site-scroll-root').evaluate(root => root.scrollTop);
     await categoryBookingAction.click({ timeout: 15000 });
-    try {
-      await page.waitForSelector('#client-registration-modal.active', { timeout: 30000 });
-    } catch (error) {
-      const registrationOpenDiagnostic = await page.evaluate(() => ({
-        categoryModalActive: Boolean(document.querySelector('#price-category-modal.active')),
-        registrationModalExists: Boolean(document.querySelector('#client-registration-modal')),
-        registrationModalActive: Boolean(document.querySelector('#client-registration-modal.active')),
-        bookingAriaDisabled: document.querySelector('[data-price-modal-booking]')?.getAttribute('aria-disabled') || '',
-        bookingServices: document.querySelector('[data-price-modal-booking]')?.dataset.bookingServices || '',
-        consentChecked: Boolean(document.querySelector('[data-price-modal-service-conditions-consent]')?.checked),
-      }));
-      throw new Error(
-        `${locale} ${label}: registration modal did not open: ${JSON.stringify(registrationOpenDiagnostic)}`,
-        { cause: error }
-      );
-    }
-      await page.waitForTimeout(600);
-
-      const registrationHeaderBefore = await page.locator('.client-registration-modal__content').evaluate(content => (
-        content.querySelector('.client-registration-modal__header')?.getBoundingClientRect().top || 0
-      ));
-      await page.locator('.client-registration-modal__content').evaluate(content => {
-      const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
-      content.scrollTop = Math.min(maxScroll, content.scrollTop + 160);
+    const bookingFlow = page.locator('#booking-modal[data-price-booking-flow].active');
+    await page.waitForFunction(() => document.querySelector('#booking-modal.active')?.dataset.bookingStep === '1');
+    await page.waitForTimeout(600);
+    const bookingState = await bookingFlow.evaluate(modal => {
+      const form = modal.querySelector('#booking-form');
+      const field = name => form?.querySelector(`[name="${name}"]`)?.value || '';
+      return {
+        role: modal.getAttribute('role'), ariaModal: modal.getAttribute('aria-modal'), ariaHidden: modal.getAttribute('aria-hidden'),
+        activeSteps: modal.querySelectorAll('.booking-step.active:not([hidden])').length,
+        context: modal.querySelector('[data-booking-selected-context]')?.textContent || '',
+        breed: field('breed'), serviceIds: field('service_ids'), category: field('service_category'), price: field('service_price'),
+        service: field('service'), legacyAbsent: !document.querySelector('#client-registration-modal'),
+        rootLocked: document.querySelector('.site-scroll-root')?.classList.contains('booking-scroll-locked')
+          && document.body.classList.contains('booking-modal-open'),
+      };
     });
-    await page.waitForTimeout(160);
-
-    const registrationState = await page.evaluate(() => {
-      const modal = document.querySelector('#client-registration-modal');
-      const content = modal?.querySelector('.client-registration-modal__content');
-      const form = modal?.querySelector('[data-client-registration-form]');
-      const root = document.querySelector('.site-scroll-root');
-      const actions = form?.querySelector('.client-registration-form__actions');
-      const scrollbar = content ? getComputedStyle(content, '::-webkit-scrollbar') : null;
-      const thumb = content ? getComputedStyle(content, '::-webkit-scrollbar-thumb') : null;
-        const modalMaxScroll = Math.max(0, (content?.scrollHeight || 0) - (content?.clientHeight || 0));
-        const header = modal?.querySelector('.client-registration-modal__header');
-        const close = modal?.querySelector('.client-registration-modal__close');
-        const contentRect = content?.getBoundingClientRect();
-        const headerRect = header?.getBoundingClientRect();
-        const closeRect = close?.getBoundingClientRect();
-        return {
-        modalOpen: Boolean(modal?.classList.contains('active')),
-        rootLocked: root?.classList.contains('price-modal-scroll-locked')
-          && document.body.classList.contains('price-modal-open')
-          && getComputedStyle(root || document.body).overflowY === 'hidden',
-        modalCanScroll: modalMaxScroll > 1,
-        modalScrolled: modalMaxScroll < 2 || (content?.scrollTop || 0) > 0,
-        scrollbarStyled: Boolean(
-          content
-          && getComputedStyle(content).overflowY === 'auto'
-          && scrollbar?.display === 'block'
-          && Number.parseFloat(scrollbar?.width || '0') === 8
-          && Number.parseFloat(thumb?.borderRadius || '0') >= 999
-        ),
-        matteBackdrop: getComputedStyle(modal || document.body).backdropFilter !== 'none',
-        hiddenBreed: form?.querySelector('input[name="pet_breed"]')?.type === 'hidden',
-        noSpeciesDuplicate: !form?.querySelector('[name="pet_species_display"]'),
-        petContext: Boolean(form?.querySelector('[data-client-registration-pet-context]')?.textContent?.trim()),
-          navActions: actions?.querySelectorAll('.btn-neon[data-nav-pill="client-registration-action"]').length === 2,
-          singleColumnLayout: form ? getComputedStyle(form).gridTemplateColumns.trim().split(/\s+/).filter(column => Number.parseFloat(column) > 1).length === 1 : false,
-          headerTop: headerRect?.top || 0,
-          scrollingHeader: Boolean(
-            header
-            && getComputedStyle(header).position === 'relative'
-            && contentRect
-            && headerRect
-            && closeRect
-            && closeRect.top >= contentRect.top - 1
-            && closeRect.bottom <= contentRect.bottom + 1
-          ),
-        };
+    assert(`${locale} ${label}: one accessible booking flow replaces registration`,
+      bookingState.role === 'dialog' && bookingState.ariaModal === 'true' && bookingState.ariaHidden === 'false'
+        && bookingState.activeSteps === 1 && bookingState.legacyAbsent, JSON.stringify(bookingState));
+    assert(`${locale} ${label}: booking keeps the selected pet, services and price`,
+      bookingState.breed === selection.bookingBreed && bookingState.serviceIds === selection.bookingServices
+        && bookingState.category === selection.bookingCategory && bookingState.price === selection.bookingPrice
+        && bookingState.service === selection.bookingServiceLabel && bookingState.context.includes(selection.bookingServiceLabel),
+      JSON.stringify({ selection, bookingState }));
+    const bookingScrollState = await bookingFlow.locator('#step-1').evaluate(panel => {
+      const maxScroll = Math.max(0, panel.scrollHeight - panel.clientHeight);
+      panel.scrollTop = Math.min(maxScroll, 160);
+      const modal = panel.closest('#booking-modal');
+      const controls = [...modal.querySelectorAll('.modal-close, [data-booking-flow-back]')];
+      return { maxScroll, scrollTop: panel.scrollTop, overflow: getComputedStyle(panel).overflowY,
+        controlsVisible: controls.length === 2 && controls.every(control => {
+          const rect = control.getBoundingClientRect();
+          // The perspective tilt changes the projected rectangle, not the CSS target size.
+          return !control.hidden && rect.top >= 0 && rect.bottom <= innerHeight
+            && control.offsetWidth >= 44 && control.offsetHeight >= 44;
+        }) };
     });
-
-    assert(
-      `${locale} ${label}: registration modal scroll isolation`,
-      registrationState.modalOpen
-        && registrationState.rootLocked
-        && registrationState.modalScrolled
-        && (!registrationState.modalCanScroll || registrationState.scrollbarStyled),
-      JSON.stringify(registrationState)
-    );
-      assert(
-        `${locale} ${label}: registration uses selected pet`,
-        registrationState.hiddenBreed && registrationState.noSpeciesDuplicate && registrationState.petContext && registrationState.navActions && registrationState.singleColumnLayout && registrationState.matteBackdrop
-      );
-      assert(
-        `${locale} ${label}: registration intro scrolls without hiding the close control`,
-        registrationState.scrollingHeader
-          && (!registrationState.modalCanScroll || registrationState.headerTop < registrationHeaderBefore),
-        JSON.stringify({ before: registrationHeaderBefore, after: registrationState })
-      );
-
+    assert(`${locale} ${label}: booking scroll stays inside its active panel with visible controls`,
+      bookingState.rootLocked && bookingScrollState.overflow === 'auto' && bookingScrollState.controlsVisible
+        && (bookingScrollState.maxScroll < 2 || bookingScrollState.scrollTop > 0)
+        && await page.locator('.site-scroll-root').evaluate(root => getComputedStyle(root).overflowY === 'hidden'
+          && root.scrollTop) === rootScrollBeforeBooking, JSON.stringify(bookingScrollState));
+    const bookingClose = bookingFlow.locator('.modal-close');
+    const bookingFirstControl = bookingFlow.locator('[data-booking-flow-back]');
+    await bookingFirstControl.focus();
+    await page.keyboard.press('Shift+Tab');
+    assert(`${locale} ${label}: reverse Tab remains in booking`, await bookingFlow.evaluate(modal => modal.contains(document.activeElement)));
+    await page.keyboard.press('Tab');
+    assert(`${locale} ${label}: Tab wraps to the first booking control`, await bookingFirstControl.evaluate(control => control === document.activeElement));
     if (locale === 'ru' && label === 'desktop') {
-      await page.locator('.client-registration-modal__content').evaluate(content => {
-        content.scrollTop = 0;
-      });
-      await page.waitForTimeout(100);
-      await page.screenshot({
-        path: path.join(outDir, 'ru-desktop-registration.png'),
-        fullPage: false,
-      });
-      await page.locator('.client-registration-modal__content').evaluate(content => {
-        content.scrollTop = content.scrollHeight;
-      });
-      await page.waitForTimeout(100);
-      await page.screenshot({
-        path: path.join(outDir, 'ru-desktop-registration-actions.png'),
-        fullPage: false,
-      });
+      await page.screenshot({ path: path.join(outDir, 'ru-desktop-registration.png'), fullPage: false });
+      await bookingFlow.locator('#step-1').evaluate(panel => { panel.scrollTop = panel.scrollHeight; });
+      await page.screenshot({ path: path.join(outDir, 'ru-desktop-registration-actions.png'), fullPage: false });
     }
-
-    await page.locator('[data-client-registration-cancel]').click();
-    await page.waitForFunction(
-      () => !document.querySelector('#client-registration-modal')?.classList.contains('active'),
-      null,
-      { timeout: 15000 }
-    );
+    await bookingFlow.locator('[data-booking-flow-back]').click();
+    await page.waitForFunction(() => document.querySelector('#booking-modal.active')?.dataset.bookingStep === '0');
+    assert(`${locale} ${label}: back restores the selected category and consent`,
+      await categoryBookingAction.evaluate((action, expected) => action.dataset.bookingBreed === expected.bookingBreed
+        && action.dataset.bookingServices === expected.bookingServices && action.dataset.bookingPrice === expected.bookingPrice
+        && document.querySelector('[data-price-modal-service-conditions-consent]')?.checked, selection));
+    await categoryBookingAction.click();
+    await page.waitForFunction(() => document.querySelector('#booking-modal.active')?.dataset.bookingStep === '1');
+    await bookingClose.click();
+    await page.waitForFunction(() => !document.querySelector('#booking-modal')?.classList.contains('active')
+      && !document.querySelector('.site-scroll-root')?.classList.contains('booking-scroll-locked'));
+    assert(`${locale} ${label}: booking close restores page focus and scrolling`,
+      await firstCard.locator('[data-price-open]').evaluate(button => button === document.activeElement)
+        && await page.locator('.site-scroll-root').evaluate(root => getComputedStyle(root).overflowY !== 'hidden'
+          && root.scrollTop) === rootScrollBeforeBooking);
 
     const breedToggle = page.locator('[data-price-breeds-toggle]').first();
     await breedToggle.evaluate(toggle => {
@@ -2274,7 +2298,7 @@ for (const locale of locales) {
       && openedBreedArrowState.activationTurns === openedBreedArrowState.sharedSettings.turnCount;
     const openedBreedArrowPasses = openedBreedArrowState.expanded === 'true'
       && openedBreedArrowState.motionAnimation.includes('siteArrowAxisBounce')
-      && openedBreedArrowState.motionPeak === '7px'
+      && openedBreedArrowState.motionPeak === '4px'
       && openedBreedArrowState.activationKind === 'open'
       && openedBreedArrowSettingsMatch;
     assert(
@@ -2505,7 +2529,7 @@ for (const locale of locales) {
       && closedBreedArrowState.activationTurns === closedBreedArrowState.sharedSettings.turnCount;
     const closedBreedArrowPasses = closedBreedArrowState.expanded === 'false'
       && closedBreedArrowState.motionAnimation.includes('siteArrowAxisBounce')
-      && closedBreedArrowState.motionPeak === '-7px'
+      && closedBreedArrowState.motionPeak === '-4px'
       && closedBreedArrowState.activationKind === 'close'
       && closedBreedArrowSettingsMatch;
     assert(
@@ -2528,7 +2552,7 @@ for (const locale of locales) {
       !((await breedToggle.getAttribute('class')) || '').includes('price-breed-arrow--closing')
     );
     await page.waitForFunction(
-      () => !document.querySelector('#price-category-modal')?.classList.contains('active'),
+      () => !document.querySelector('#booking-modal')?.classList.contains('active'),
       null,
       { timeout: 15000 }
     );

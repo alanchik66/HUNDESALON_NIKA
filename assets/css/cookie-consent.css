@@ -3,7 +3,8 @@
   position: fixed;
   right: clamp(14px, 3vw, 34px);
   bottom: clamp(14px, 3vw, 34px);
-  z-index: 9999;
+  /* Keep consent controls above the floating help launcher. */
+  z-index: 2147483000;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
@@ -26,6 +27,12 @@
 
 .cookie-consent--leaving {
   animation: cookieConsentOut 220ms ease both;
+}
+
+/* Keep active dialogs unobstructed; the pending choice returns on close. */
+body.booking-modal-open .cookie-consent,
+body.header-weather-expanded .cookie-consent {
+  display: none;
 }
 
 .cookie-consent__body {

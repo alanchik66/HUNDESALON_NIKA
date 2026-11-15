@@ -24,11 +24,34 @@ try {
       serviceWorkers: 'block',
     });
     const page = await context.newPage();
+    const pageErrors = [];
+    const failedRequests = [];
+    page.on('pageerror', error => pageErrors.push(error.message));
+    page.on('requestfailed', request => {
+      if (request.url().startsWith(server.baseUrl)) {
+        failedRequests.push({ url: request.url(), error: request.failure()?.errorText });
+      }
+    });
+    console.log(`[a11y-smoke] Checking ${route}`);
     await page.goto(`${server.baseUrl}${route}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
     // The universal QR chooser has no locale, so site-shell intentionally omits its localized header.
-    const weatherHostRole =
-      route === '/reviews.html' ? null : await page.locator('.header-weather-widget').getAttribute('role');
+    let weatherHostRole = null;
+    if (route !== '/reviews.html') {
+      try {
+        weatherHostRole = await page.locator('.header-weather-widget').getAttribute('role');
+      } catch (error) {
+        const startup = await page.evaluate(() => ({
+          url: location.href,
+          readyState: document.readyState,
+          headerCount: document.querySelectorAll('header.header').length,
+          shellAvailable: typeof window.SiteShell?.init === 'function',
+          scriptSources: Array.from(document.scripts, script => script.src).filter(Boolean),
+        }));
+        throw new Error(`${route}: weather header startup failed: ${JSON.stringify({ startup, pageErrors, failedRequests })}`,
+          { cause: error });
+      }
+    }
     if (route !== '/reviews.html') {
       assert.equal(weatherHostRole, 'group', `${route}: the named weather widget must expose a group role`);
     }

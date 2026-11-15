@@ -2190,8 +2190,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const resetBookingTilt = () => {
-      modalContent?.style.setProperty('--booking-tilt-x', '0deg');
-      modalContent?.style.setProperty('--booking-tilt-y', '0deg');
+      modalContent?.style.setProperty('--booking-light-x', '0px');
+      modalContent?.style.setProperty('--booking-light-y', '0px');
       modal.classList.remove('is-tilting');
     };
 
@@ -2199,7 +2199,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!modal.classList.contains('active') || !modalContent || modal.classList.contains('is-closing')) {
         return;
       }
-
       const rect = modalContent.getBoundingClientRect();
       if (!rect.width || !rect.height) {
         return;
@@ -2209,8 +2208,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const y = (event.clientY - rect.top) / rect.height - 0.5;
 
       modal.classList.add('is-tilting');
-      modalContent.style.setProperty('--booking-tilt-y', `${(x * 4.2).toFixed(2)}deg`);
-      modalContent.style.setProperty('--booking-tilt-x', `${(-y * 3.1).toFixed(2)}deg`);
+      // Move only the non-interactive glass lighting; form controls must not dodge the pointer.
+      modalContent.style.setProperty('--booking-light-x', `${(x * 18).toFixed(2)}px`);
+      modalContent.style.setProperty('--booking-light-y', `${(y * 14).toFixed(2)}px`);
 
       if (tiltResetTimer) {
         window.clearTimeout(tiltResetTimer);
@@ -2326,7 +2326,10 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       wheelBlockHandler = event => {
-        if (!modal.classList.contains('active')) {
+        // Custom selects handle their own wheel events without scrolling the booking panel.
+        if (!modal.classList.contains('active') || (
+          event.target instanceof Element && event.target.closest('#booking-modal .site-select__menu')
+        )) {
           return;
         }
 
@@ -2348,7 +2351,10 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       touchBlockHandler = event => {
-        if (!modal.classList.contains('active')) {
+        // Keep native touch panning inside the select's overscroll-contained list.
+        if (!modal.classList.contains('active') || (
+          event.target instanceof Element && event.target.closest('#booking-modal .site-select__menu')
+        )) {
           return;
         }
 

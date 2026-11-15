@@ -608,7 +608,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const getVisibleHeaderBottom = siteShell.getVisibleHeaderBottom || (() => 0);
 
   const syncContentTopOffsets = () => {
-    const headerBottom = getVisibleHeaderBottom();
+    // Reserve layout height so hiding or revealing the fixed header cannot move content under a pointer.
+    const headerBottom = document.querySelector('header.header')?.offsetHeight || 0;
 
     const rootStyle = document.documentElement.style;
     const rootComputed = window.getComputedStyle(document.documentElement);

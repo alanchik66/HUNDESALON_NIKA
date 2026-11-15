@@ -185,6 +185,11 @@ body.header-weather-expanded .hn-ai-launcher {
   display: none;
 }
 
+/* Booking keeps exclusive input; restore the chat state after the dialog closes. */
+body.booking-modal-open .hn-ai-chat {
+  display: none;
+}
+
 .hn-ai-launcher img {
   width: 100%;
   height: 100%;

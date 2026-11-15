@@ -95,18 +95,81 @@
     de: ['Vorheriges Video', 'Nächstes Video', 'Original öffnen'],
     en: ['Previous video', 'Next video', 'Open original'],
   }[language] || ['Previous video', 'Next video', 'Open original'];
+  const embedCopy = {
+    ru: {
+      notice: 'После загрузки видео браузер подключится к {provider}. Сервис получит ваш IP-адрес и технические данные браузера.',
+      activate: 'Загрузить видео {provider}',
+      disable: 'Отключить видео {provider}',
+    },
+    uk: {
+      notice: 'Після завантаження відео браузер підключиться до {provider}. Сервіс отримає вашу IP-адресу та технічні дані браузера.',
+      activate: 'Завантажити відео {provider}',
+      disable: 'Вимкнути відео {provider}',
+    },
+    de: {
+      notice: 'Beim Laden stellt Ihr Browser eine Verbindung zu {provider} her. Dabei werden Ihre IP-Adresse und technische Browserdaten übermittelt.',
+      activate: '{provider}-Video laden',
+      disable: '{provider}-Video deaktivieren',
+    },
+    en: {
+      notice: 'Loading the video connects your browser to {provider}. The service receives your IP address and technical browser data.',
+      activate: 'Load {provider} video',
+      disable: 'Disable {provider} video',
+    },
+  }[language] || {
+    notice: 'Loading the video connects your browser to {provider}. The service receives your IP address and technical browser data.',
+    activate: 'Load {provider} video',
+    disable: 'Disable {provider} video',
+  };
   document.querySelectorAll('.social-grid .social-card').forEach(card => {
     const network = card === reelTemplate ? 'instagram' : card.querySelector('h3')?.textContent.trim().toLowerCase();
     const reels = networkReels[network];
     if (!reels) return;
     card.className = 'social-card social-card--reel-carousel';
     card.dataset.socialNetwork = network;
+    card.dataset.socialEmbedActive = 'false';
+    const provider = { instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok' }[network];
+    const copyForProvider = key => embedCopy[key].replace('{provider}', provider);
+    const stage = document.createElement('div');
+    stage.className = 'social-reel-stage';
     const frame = document.createElement('iframe');
     frame.className = 'social-reel-frame';
+    frame.id = `social-${network}-player`;
+    frame.hidden = true;
     frame.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture';
     frame.allowFullscreen = true;
     frame.loading = 'lazy';
     frame.scrolling = 'no';
+    const placeholder = document.createElement('div');
+    placeholder.className = 'social-reel-placeholder';
+    const logo = document.createElement('img');
+    logo.src = `/assets/images/icons/${network}.png`;
+    logo.alt = '';
+    logo.width = logo.height = 96;
+    logo.loading = 'lazy';
+    logo.decoding = 'async';
+    const heading = document.createElement('h3');
+    heading.textContent = provider;
+    const notice = document.createElement('p');
+    notice.id = `social-${network}-connection-notice`;
+    notice.textContent = copyForProvider('notice');
+    const activate = document.createElement('button');
+    activate.type = 'button';
+    activate.className = 'social-reel-activate social-reel-connection-button';
+    activate.dataset.socialEmbedAction = 'activate';
+    activate.textContent = copyForProvider('activate');
+    activate.setAttribute('aria-controls', frame.id);
+    activate.setAttribute('aria-describedby', notice.id);
+    activate.setAttribute('aria-expanded', 'false');
+    placeholder.append(logo, heading, notice, activate);
+    const disable = document.createElement('button');
+    disable.type = 'button';
+    disable.className = 'social-reel-disable social-reel-connection-button';
+    disable.dataset.socialEmbedAction = 'disable';
+    disable.textContent = copyForProvider('disable');
+    disable.setAttribute('aria-controls', frame.id);
+    disable.hidden = true;
+    const masks = [];
     const controls = document.createElement('div');
     controls.className = 'social-reel-controls';
     const previous = document.createElement('button');
@@ -122,21 +185,38 @@
     original.className = 'social-reel-original';
     original.target = '_blank';
     original.rel = 'noopener noreferrer';
-    original.textContent = `${network[0].toUpperCase()}${network.slice(1)} · ${navigationCopy[2]}`;
+    original.textContent = `${provider} · ${navigationCopy[2]}`;
     let index = 0;
+    let embedActive = false;
     const show = direction => {
       index = (index + direction + reels.length) % reels.length;
       const id = reels[index];
       const url = network === 'instagram' ? `https://www.instagram.com/reel/${id}/`
         : network === 'facebook' ? `https://www.facebook.com/reel/${id}/`
           : `https://www.tiktok.com/@hundesalon_nika/video/${id}`;
-      frame.src = network === 'instagram' ? `${url}embed/`
+      const embedUrl = network === 'instagram' ? `${url}embed/`
         : network === 'facebook' ? `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=360`
           : `https://www.tiktok.com/player/v1/${id}?autoplay=0&rel=0`;
-      frame.title = `${network} — ${index + 1} / ${reels.length}`;
+      // Browsing the local carousel does not connect to the provider until activation.
+      if (embedActive) frame.src = embedUrl;
+      frame.title = `${provider} — ${index + 1} / ${reels.length}`;
       counter.textContent = `${index + 1} / ${reels.length}`;
       original.href = url;
     };
+    const setEmbedActive = active => {
+      embedActive = active;
+      card.dataset.socialEmbedActive = String(active);
+      frame.hidden = !active;
+      placeholder.hidden = active;
+      disable.hidden = !active;
+      activate.setAttribute('aria-expanded', String(active));
+      masks.forEach(mask => { mask.hidden = !active; });
+      if (active) show(0);
+      else frame.removeAttribute('src');
+      (active ? disable : activate).focus({ preventScroll: true });
+    };
+    activate.addEventListener('click', () => setEmbedActive(true));
+    disable.addEventListener('click', () => setEmbedActive(false));
     previous.addEventListener('click', () => show(-1));
     next.addEventListener('click', () => show(1));
     let start = null;
@@ -147,13 +227,15 @@
     });
     controls.addEventListener('pointercancel', () => { start = null; });
     controls.append(previous, counter, next);
-    card.replaceChildren(frame, controls, original);
+    stage.append(frame, placeholder, controls);
+    card.replaceChildren(stage, disable, original);
     show(0);
     if (network === 'instagram') {
       const topMask = document.createElement('span');
       const bottomMask = document.createElement('div');
       topMask.className = 'social-reel-mask social-reel-mask--top';
       bottomMask.className = 'social-reel-mask social-reel-mask--bottom';
+      topMask.hidden = bottomMask.hidden = true;
       topMask.setAttribute('aria-hidden', 'true');
       const actionCopy = {
         ru: ['Нравится', 'Комментарий', 'Поделиться'],
@@ -178,12 +260,15 @@
         });
         bottomMask.append(action);
       });
-      card.append(topMask, bottomMask);
+      masks.push(topMask, bottomMask);
+      stage.append(topMask, bottomMask);
     } else if (network === 'tiktok') {
       const topMask = document.createElement('span');
       topMask.className = 'social-reel-mask social-reel-mask--top social-reel-mask--tiktok';
       topMask.setAttribute('aria-hidden', 'true');
-      card.append(topMask);
+      topMask.hidden = true;
+      masks.push(topMask);
+      stage.append(topMask);
     }
   });
 

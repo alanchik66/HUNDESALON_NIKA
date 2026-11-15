@@ -5879,6 +5879,7 @@ body.light .social-music-item-icon {
 
 .custom-scrollbar-track--page {
   position: fixed;
+  overflow: hidden;
   top: 14px;
   bottom: 14px;
   right: 9px;

@@ -156,10 +156,18 @@
   content: none;
 }
 
+.social-reel-stage {
+  position: relative;
+  width: 100%;
+  height: 34rem;
+  overflow: hidden;
+  border-radius: 1.25rem;
+}
+
 .social-reel-frame {
   display: block;
   width: 100%;
-  height: 34rem;
+  height: 100%;
   aspect-ratio: auto;
   min-height: 0;
   flex: none;
@@ -167,6 +175,79 @@
   border-radius: 1.25rem;
   background: transparent !important;
   overflow: hidden;
+}
+
+.social-reel-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 6.25rem 1.25rem 1.5rem;
+  border: 1px solid var(--social-border, rgb(201 168 76 / 34%));
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(ellipse at 50% 20%, rgb(41 99 71 / 36%), transparent 65%),
+    linear-gradient(160deg, #0b281e, #031810);
+  color: #fff4cf;
+  text-align: center;
+}
+
+.social-reel-placeholder img {
+  width: 5rem;
+  height: 5rem;
+  flex: none;
+  object-fit: contain;
+}
+
+.social-reel-placeholder :is(h3, p) {
+  max-width: 100%;
+  margin: 0;
+}
+
+.social-reel-placeholder h3 {
+  color: var(--social-gold-bright);
+  font-size: 1.35rem;
+}
+
+.social-reel-placeholder p {
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.social-reel-connection-button {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--social-border, rgb(201 168 76 / 34%));
+  border-radius: 1rem;
+  background: linear-gradient(160deg, #163b2b, #092218);
+  color: var(--social-gold-bright);
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  white-space: normal;
+  cursor: pointer;
+}
+
+.social-reel-connection-button:focus-visible {
+  outline: 2px solid var(--social-gold-bright);
+  outline-offset: 2px;
+}
+
+.social-reel-disable {
+  margin-block: 0.5rem;
+}
+
+.social-reel-frame[hidden],
+.social-reel-placeholder[hidden],
+.social-reel-mask[hidden],
+.social-reel-disable[hidden] {
+  display: none !important;
 }
 
 .social-reel-mask {

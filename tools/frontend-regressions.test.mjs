@@ -2587,6 +2587,91 @@ test('booking slots use the salon timezone for foreign visitors across DST chang
   }
 });
 
+test('content header clearance stays stable through header visibility animations', async t => {
+  const source = await readFile(path.join(root, 'assets/js/main.js'), 'utf8');
+  const begin = source.indexOf('  const syncContentTopOffsets = () => {');
+  const end = source.indexOf('\n  const updatePageScrollbarOffset =', begin);
+  assert.ok(begin >= 0 && end > begin, 'the actual content reservation function must be tested');
+  const initialize = new Function('document', 'window', 'getVisibleHeaderBottom', `
+    ${source.slice(begin, end)}
+    return syncContentTopOffsets;
+  `);
+  const createHarness = (width, { height = 220, present = true, visibleBottom = height } = {}) => {
+    const values = new Map();
+    const state = { visibleBottom, safeArea: '24px' };
+    const header = { offsetHeight: height };
+    const bases = { '--section-top-offset-base': '148px', '--hero-top-offset-base': '86px' };
+    const document = {
+      documentElement: { style: { setProperty: (name, value) => values.set(name, value) } },
+      querySelector(selector) {
+        assert.equal(selector, 'header.header');
+        return present ? header : null;
+      },
+    };
+    const window = {
+      innerWidth: width,
+      getComputedStyle: () => ({
+        getPropertyValue: name => name === '--safe-top-offset' ? state.safeArea : bases[name] || '',
+      }),
+    };
+    return { header, state, values, bases, sync: initialize(document, window, () => state.visibleBottom) };
+  };
+  const offsets = harness => Object.fromEntries(harness.values);
+
+  for (const width of [375, 820, 1440]) {
+    await t.test(`${width}px: hiding and revealing a fixed-height header does not move content`, () => {
+      const harness = createHarness(width);
+      harness.sync();
+      const initial = offsets(harness);
+      for (const visibleBottom of [220, 170, 22, 0]) {
+        harness.state.visibleBottom = visibleBottom;
+        harness.sync();
+        assert.deepEqual(offsets(harness), initial, `visible bottom ${visibleBottom} must not change flow clearance`);
+      }
+    });
+  }
+
+  await t.test('an actual weather/header height resize still updates content while the header is hidden', () => {
+    const harness = createHarness(1440, { visibleBottom: 0 });
+    harness.sync();
+    const previous = offsets(harness);
+    harness.header.offsetHeight += 80;
+    harness.sync();
+    for (const name of ['--section-top-offset-dynamic', '--hero-top-offset-dynamic']) {
+      assert.ok(parseFloat(harness.values.get(name)) >= parseFloat(previous[name]) + 80,
+        `${name} must follow real layout growth even when visible bottom stays zero`);
+    }
+  });
+
+  await t.test('a missing or zero-height header uses the CSS base offsets', () => {
+    for (const options of [{ present: false }, { height: 0 }]) {
+      const harness = createHarness(1440, { ...options, visibleBottom: 220 });
+      harness.sync();
+      assert.deepEqual(offsets(harness), {
+        '--section-top-offset-dynamic': harness.bases['--section-top-offset-base'],
+        '--hero-top-offset-dynamic': harness.bases['--hero-top-offset-base'],
+      });
+    }
+  });
+
+  await t.test('safe-area clearance remains added once by CSS rather than duplicated in the dynamic values', async () => {
+    const harness = createHarness(375);
+    harness.sync();
+    const initial = offsets(harness);
+    harness.state.safeArea = '44px';
+    harness.sync();
+    assert.deepEqual(offsets(harness), initial);
+    const css = postcss.parse(await readFile(path.join(root, 'assets/css/style.css'), 'utf8'));
+    for (const property of ['--section-top-offset', '--hero-top-offset']) {
+      const declaration = css.nodes.find(node => node.type === 'rule' && node.selector === ':root')
+        ?.nodes.find(node => node.type === 'decl' && node.prop === property);
+      assert.ok(declaration, `${property} must retain its CSS consumer`);
+      assert.equal((declaration.value.match(/var\(--safe-top-offset\)/g) || []).length, 1);
+      assert.match(declaration.value, /\+\s*var\(--safe-top-offset\)/);
+    }
+  });
+});
+
 test('theme initialization and toggling work when browser storage is blocked', async () => {
   const source = await readFile(path.join(root, 'assets/js/main.js'), 'utf8');
   const themeCode = source.split('/* ========== THEME TOGGLE ========== */')[1].split('  const scrollRoot =')[0];

@@ -67,7 +67,7 @@ test('adds security headers to Function responses without changing API or CORS h
   }
 });
 
-test('static and Function HTML CSP allow Turnstile resources without broadening script execution', async () => {
+test('static and Function HTML CSP allow only approved frames without broadening script execution', async () => {
   const staticHeaders = parseWildcardSecurityHeaders(await readFile(new URL('../_headers', import.meta.url), 'utf8'));
   const response = await onRequest({
     request: new Request('https://hundesalon-nika.com/de/onlayn-bronirovanie'),
@@ -78,6 +78,14 @@ test('static and Function HTML CSP allow Turnstile resources without broadening 
   });
   const turnstileScript = new URL('https://challenges.cloudflare.com/turnstile/v0/api.js');
   const turnstileFrame = new URL('https://challenges.cloudflare.com/turnstile/v0/widget');
+  const allowedFrameOrigins = [
+    turnstileFrame.origin,
+    'https://open.spotify.com',
+    'https://embed.music.apple.com',
+    'https://www.instagram.com',
+    'https://www.facebook.com',
+    'https://www.tiktok.com',
+  ];
   for (const policy of [
     staticHeaders.get('Content-Security-Policy'),
     response.headers.get('Content-Security-Policy'),
@@ -89,7 +97,8 @@ test('static and Function HTML CSP allow Turnstile resources without broadening 
       })
     );
     assert.ok(directives.get('script-src').includes(turnstileScript.origin));
-    assert.ok(directives.get('frame-src').includes(turnstileFrame.origin));
+    assert.deepEqual(directives.get('frame-src'), allowedFrameOrigins,
+      'Only Turnstile, music embeds and the three social video players can load as frames');
     assert.ok(directives.get('connect-src').includes("'self'"), 'Pre-clearance can reach its same-origin endpoint');
     for (const source of ['*', "'unsafe-inline'", "'unsafe-eval'"]) {
       assert.equal(directives.get('script-src').includes(source), false);

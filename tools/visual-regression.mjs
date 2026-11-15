@@ -1,20 +1,28 @@
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { chromium, devices } from 'playwright';
+import { chromium, devices, webkit } from 'playwright';
 
 import { startStaticTestServer } from './lib/static-test-server.mjs';
 
-const outDir = path.resolve('test-results', 'visual-regression');
+const useWebKit = process.argv.includes('--webkit');
+const outDir = path.resolve('test-results', useWebKit ? 'visual-regression-webkit' : 'visual-regression');
+const requestedScenarios = (process.env.VISUAL_SCENARIOS || '').split(',').map(name => name.trim()).filter(Boolean);
 const scenarios = [
   { name: 'desktop-dark', viewport: { width: 1440, height: 900 }, light: false, mobile: false },
   { name: 'desktop-light', viewport: { width: 1440, height: 900 }, light: true, mobile: false },
   { name: 'mobile-dark', viewport: devices['iPhone 13'].viewport, light: false, mobile: true },
   { name: 'mobile-light', viewport: devices['iPhone 13'].viewport, light: true, mobile: true },
   { name: 'android-dark', viewport: devices['Pixel 7'].viewport, light: false, mobile: true },
-];
+].filter(scenario => !requestedScenarios.length || requestedScenarios.includes(scenario.name));
+if (requestedScenarios.some(name => !scenarios.some(scenario => scenario.name === name))) {
+  throw new Error(`Unknown visual scenario requested: ${requestedScenarios.join(', ')}`);
+}
 
 const results = [];
+const completedScenarios = [];
+let failure = null;
 const drawerScreenshots = [];
+const consentScreenshots = [];
 const assert = (name, condition, detail = '') => {
   results.push({ name, ok: Boolean(condition), detail });
   if (!condition) throw new Error(`${name}${detail ? `: ${detail}` : ''}`);
@@ -22,10 +30,14 @@ const assert = (name, condition, detail = '') => {
 
 await mkdir(outDir, { recursive: true });
 const server = await startStaticTestServer();
-const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
+const browser = await (useWebKit ? webkit : chromium).launch({
+  headless: true,
+  ...(!useWebKit && process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}),
+});
 
 try {
   for (const scenario of scenarios) {
+    console.log(`[visual] ${useWebKit ? 'webkit' : 'chromium'} ${scenario.name}`);
     const context = await browser.newContext({
       viewport: scenario.viewport,
       isMobile: scenario.mobile,
@@ -34,6 +46,8 @@ try {
       serviceWorkers: 'block',
     });
     const page = await context.newPage();
+    const pageErrors = [];
+    page.on('pageerror', error => pageErrors.push(error.message));
     await page.route('**/assets/js/local-dev-refresh.js*', route => route.fulfill({
       contentType: 'application/javascript', body: '/* Workstation refresh is isolated in browser QA. */',
     }));
@@ -41,6 +55,142 @@ try {
     await page.addStyleTag({ url: `${server.baseUrl}/assets/css/ai-chat.css` });
     await page.addScriptTag({ url: `${server.baseUrl}/assets/js/ai-chat.js` });
     await page.waitForSelector('#hundesalon-ai-chat', { state: 'visible', timeout: 15000 });
+    await page.locator('body').evaluate((body, light) => body.classList.toggle('light', light), scenario.light);
+    await page.locator('.cookie-consent').waitFor({ state: 'visible', timeout: 15000 });
+    await page.evaluate(() => document.fonts.ready);
+    await page.locator('.cookie-consent').evaluate(banner => Promise.all(banner.getAnimations().map(animation => animation.finished)));
+    const consentButtons = await page.locator('[data-cookie-choice]').evaluateAll(buttons => buttons.map(button => {
+      const rect = button.getBoundingClientRect();
+      const points = [[rect.width / 2, rect.height / 2], [8, 8], [rect.width - 8, 8],
+        [8, rect.height - 8], [rect.width - 8, rect.height - 8]];
+      return {
+        choice: button.dataset.cookieChoice,
+        visible: rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.bottom <= innerHeight,
+        hits: points.map(([x, y]) => {
+          const hit = document.elementFromPoint(rect.left + x, rect.top + y);
+          return hit === button || button.contains(hit);
+        }),
+      };
+    }));
+    assert(`${scenario.name}: both consent choices accept input across their full area`,
+      consentButtons.length === 2 && consentButtons.every(button => button.visible && button.hits.every(Boolean)),
+      JSON.stringify(consentButtons));
+    const consentScreenshot = path.join(outDir, `${scenario.name}-consent.png`);
+    consentScreenshots.push(consentScreenshot);
+    await page.screenshot({ path: consentScreenshot, fullPage: false, animations: 'disabled' });
+
+    // A visitor can start booking before making a cookie choice.
+    const pressRenderedControl = async control => {
+      const point = await control.evaluate(element => {
+        const rect = element.getBoundingClientRect();
+        const points = [[rect.width / 2, rect.height / 2], [8, 8], [rect.width - 8, 8],
+          [8, rect.height - 8], [rect.width - 8, rect.height - 8]];
+        const hits = points.map(([x, y]) => {
+          const hit = document.elementFromPoint(rect.left + x, rect.top + y);
+          return { ok: hit === element || element.contains(hit), target: hit && `${hit.tagName}.${hit.className}` };
+        });
+        const hittable = rect.width > 16 && rect.height > 16 && rect.top >= 0 && rect.bottom <= innerHeight
+          && hits.every(hit => hit.ok);
+        if (!hittable) throw new Error(`Control is obscured or outside the viewport: ${JSON.stringify({ text: element.textContent?.trim(), rect: { top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height }, hits })}`);
+        window.__visualControlProbe = { clicked: false, before: { top: rect.top, left: rect.left, width: rect.width, height: rect.height }, hits };
+        window.addEventListener('click', event => {
+          window.__visualControlProbe.clicked = event.composedPath().includes(element);
+          window.__visualControlProbe.trusted = event.isTrusted;
+          window.__visualControlProbe.target = `${event.target.tagName}.${event.target.className}`;
+        }, { capture: true, once: true });
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      }).catch(async error => {
+        await page.screenshot({ path: path.join(outDir, `${scenario.name}-control-hit-failure.png`) }).catch(() => {});
+        throw error;
+      });
+      // Use native input at the current hit target, without forced clicks or a
+      // WebKit automation scroll across the deliberately non-scrolling frame.
+      if (scenario.mobile) await page.touchscreen.tap(point.x, point.y);
+      else await page.mouse.click(point.x, point.y);
+      const probe = await page.evaluate(() => window.__visualControlProbe);
+      assert(`${scenario.name}: native input reaches the intended control`, probe?.clicked && probe.trusted, JSON.stringify(probe));
+    };
+    const clickAboveConsent = async control => {
+      // Header height changes after scrolling; align again once it settles.
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        await control.evaluate(element => {
+          const root = document.querySelector('.site-scroll-root');
+          const banner = document.querySelector('.cookie-consent')?.getBoundingClientRect();
+          const header = document.querySelector('.header')?.getBoundingClientRect();
+          const rect = element.getBoundingClientRect();
+          const start = Math.max(0, header?.bottom || 0) + 16;
+          const end = (banner?.top || innerHeight) - 16;
+          const top = Math.max(start, start + (end - start - rect.height) / 2);
+          root.scrollTo({ top: root.scrollTop + rect.top - top, behavior: 'instant' });
+        });
+        await page.waitForTimeout(350);
+      }
+      await pressRenderedControl(control);
+    };
+    const firstPriceCard = page.locator('[data-price-categories] .price-card:visible').first();
+    const priceOpener = firstPriceCard.locator('[data-price-open]');
+    await priceOpener.waitFor({ state: 'attached', timeout: 15000 });
+    if (!(await priceOpener.isVisible())) await clickAboveConsent(firstPriceCard.locator('[data-price-card-toggle]'));
+    await clickAboveConsent(priceOpener);
+    const booking = page.locator('#booking-modal.active');
+    await booking.waitFor({ state: 'visible', timeout: 15000 }).catch(async error => {
+      const diagnostic = await page.evaluate(() => ({
+        probe: window.__visualControlProbe,
+        body: document.body.className,
+        bookingExists: Boolean(document.querySelector('#booking-modal')),
+        bookingClass: document.querySelector('#booking-modal')?.className,
+        categoryClass: document.querySelector('#price-category-modal')?.className,
+      }));
+      await page.screenshot({ path: path.join(outDir, `${scenario.name}-booking-open-failure.png`) }).catch(() => {});
+      throw new Error(`${scenario.name}: booking did not open: ${JSON.stringify({ ...diagnostic, pageErrors })}`, { cause: error });
+    });
+    assert(`${scenario.name}: pending consent does not cover the booking dialog`,
+      !(await page.locator('.cookie-consent').isVisible()));
+    assert(`${scenario.name}: floating help does not cover the booking dialog`,
+      !(await page.locator('#hundesalon-ai-chat').isVisible()));
+    const service = booking.locator('[data-price-modal-service-options] input[type="checkbox"]').first();
+    if (!(await service.isChecked())) {
+      const tile = service.locator('xpath=..');
+      await tile.evaluate(element => {
+        const panel = element.closest('.booking-step');
+        const rect = element.getBoundingClientRect();
+        const panelRect = panel.getBoundingClientRect();
+        panel.scrollTo({ top: panel.scrollTop + rect.top - panelRect.top - panelRect.height / 2 + rect.height / 2,
+          behavior: 'instant' });
+      });
+      await pressRenderedControl(tile);
+    }
+    assert(`${scenario.name}: the visible service tile selects its checkbox`, await service.isChecked());
+    const bookingFrame = await booking.evaluate(modal => {
+      const frame = modal.querySelector('.price-booking-flow__content');
+      const close = modal.querySelector('.modal-close');
+      const rect = close?.getBoundingClientRect();
+      const hit = rect && document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      return {
+        scrollTop: frame?.scrollTop,
+        closeRect: rect && { top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height },
+        // The dialog can tilt: its projected rectangle is slightly smaller
+        // than the 44px layout target. Keep viewport and hit checks strict.
+        closeVisible: Boolean(rect && rect.top >= 0 && rect.bottom <= innerHeight && close.offsetWidth >= 44 && close.offsetHeight >= 44),
+        closeHit: Boolean(close && (hit === close || close.contains(hit))),
+      };
+    });
+    assert(`${scenario.name}: selecting a service keeps the dialog close control visible and clickable`,
+      bookingFrame.scrollTop === 0 && bookingFrame.closeVisible && bookingFrame.closeHit, JSON.stringify(bookingFrame));
+    const bookingScreenshot = path.join(outDir, `${scenario.name}-pending-consent-booking.png`);
+    consentScreenshots.push(bookingScreenshot);
+    await page.screenshot({ path: bookingScreenshot, fullPage: false, animations: 'disabled' });
+    await pressRenderedControl(booking.locator('.modal-close'));
+    await page.waitForFunction(() => !document.querySelector('#booking-modal')?.classList.contains('active'));
+    assert(`${scenario.name}: closing booking restores the pending consent choice`,
+      await page.locator('.cookie-consent').isVisible());
+    assert(`${scenario.name}: closing booking restores floating help`,
+      await page.locator('#hundesalon-ai-chat').isVisible());
+    await page.locator('.site-scroll-root').evaluate(root => root.scrollTo({ top: 0, behavior: 'instant' }));
+    await page.waitForFunction(() => {
+      const rect = document.querySelector('#theme-toggle')?.getBoundingClientRect();
+      return rect && rect.top >= 0 && rect.bottom <= innerHeight;
+    });
     await page.evaluate(() => {
       if (document.querySelector('sp-live-chat')) return;
       const sendPulseChat = document.createElement('sp-live-chat');
@@ -49,7 +199,6 @@ try {
         'position:fixed;right:0;bottom:0;z-index:2147483646;display:block;width:12rem;height:8rem;';
       document.body.append(sendPulseChat);
     });
-    await page.locator('body').evaluate((body, light) => body.classList.toggle('light', light), scenario.light);
     await page.waitForSelector('.header .online-order-pill .nav-plasma--active', { timeout: 15000 });
     await page.evaluate(() => document.fonts.ready);
 
@@ -89,12 +238,14 @@ try {
     assert(`${scenario.name}: theme control remains inside the viewport`, state.themeVisible);
     assert(`${scenario.name}: theme control accepts pointer input`, state.themeHit);
     const initialLight = await page.locator('body').evaluate(body => body.classList.contains('light'));
-    await page.locator('#theme-toggle').click();
+    await pressRenderedControl(page.locator('#theme-toggle'));
     assert(
       `${scenario.name}: pointer click switches theme`,
       (await page.locator('body').evaluate(body => body.classList.contains('light'))) !== initialLight
     );
-    await page.locator('#theme-toggle').click();
+    await pressRenderedControl(page.locator('#theme-toggle'));
+    assert(`${scenario.name}: a second native press restores the theme`,
+      (await page.locator('body').evaluate(body => body.classList.contains('light'))) === initialLight);
 
     await page.screenshot({
       path: path.join(outDir, `${scenario.name}.png`),
@@ -107,7 +258,50 @@ try {
     await burger.waitFor({ state: 'visible', timeout: 15000 });
     await burger.click();
     await page.waitForSelector('#mobile-nav.active', { state: 'visible', timeout: 15000 });
-    await page.waitForTimeout(650);
+    // Animation enumeration alone can precede the final rendered geometry.
+    await page.evaluate(() => { window.__visualDrawerReadiness = null; });
+    await page.waitForFunction(() => {
+      const element = document.querySelector('#mobile-nav');
+      if (!element?.classList.contains('active') || element.inert) {
+        window.__visualDrawerReadiness = null;
+        return false;
+      }
+      const box = element.getBoundingClientRect();
+      const rect = { left: box.left, top: box.top, width: box.width, height: box.height };
+      const animationsReady = element.getAnimations({ subtree: true }).filter(animation => !animation.effect?.pseudoElement).every(animation =>
+        animation.effect?.getComputedTiming().iterations === Infinity || (!animation.pending && animation.playState !== 'running')
+      );
+      if (!animationsReady || Math.abs(rect.left - 12) > 1 || Math.abs(rect.width - Math.min(420, window.innerWidth - 24)) > 1) {
+        window.__visualDrawerReadiness = null;
+        return false;
+      }
+      const state = window.__visualDrawerReadiness;
+      if (!state || Object.keys(rect).some(key => Math.abs(rect[key] - state.anchor[key]) > 0.25)) {
+        window.__visualDrawerReadiness = { anchor: rect, stableSince: performance.now() };
+        return false;
+      }
+      return performance.now() - state.stableSince >= 100;
+    }, null, { timeout: 5000, polling: 'raf' }).catch(async error => {
+      const diagnostic = await page.evaluate(() => {
+        const nav = document.querySelector('#mobile-nav');
+        const rect = nav?.getBoundingClientRect();
+        const style = nav && getComputedStyle(nav);
+        return { active: nav?.classList.contains('active'), inert: nav?.inert,
+          rect: rect && { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+          transform: style?.transform, scale: style?.scale, translate: style?.translate, rotate: style?.rotate,
+          readiness: window.__visualDrawerReadiness,
+          animations: nav?.getAnimations({ subtree: true }).map(animation => ({
+            name: animation.animationName, type: animation.constructor.name, pending: animation.pending,
+            playState: animation.playState, currentTime: animation.currentTime,
+            target: animation.effect?.target?.id || animation.effect?.target?.tagName,
+            pseudoElement: animation.effect?.pseudoElement, infinite: animation.effect?.getComputedTiming().iterations === Infinity,
+            progress: animation.effect?.getComputedTiming().progress,
+          })) };
+      });
+      await writeFile(path.join(outDir, `${scenario.name}-drawer-readiness-failure.json`), JSON.stringify(diagnostic, null, 2));
+      await page.screenshot({ path: path.join(outDir, `${scenario.name}-drawer-readiness-failure.png`), animations: 'allow' }).catch(() => {});
+      throw new Error(`${scenario.name}: drawer never reached stable entrance geometry: ${JSON.stringify(diagnostic)}`, { cause: error });
+    });
 
     const drawerState = await page.evaluate(() => {
       const nav = document.querySelector('#mobile-nav');
@@ -295,22 +489,40 @@ try {
     assert(`${scenario.name}: drawer has a navigable link`, targetIndex >= 0);
 
     await Promise.all([
-      page.waitForURL(url => new URL(url).pathname !== originalPath, { timeout: 15000 }),
-      links.nth(targetIndex).click(),
+      page.waitForURL(url => new URL(url).pathname !== originalPath, { waitUntil: 'domcontentloaded', timeout: 30000 }),
+      links.nth(targetIndex).click({ noWaitAfter: true }),
     ]);
     assert(`${scenario.name}: drawer link navigation works`, new URL(page.url()).pathname !== originalPath, page.url());
+    assert(`${scenario.name}: destination document keeps its language`, await page.locator('html').getAttribute('lang') === 'de');
     await context.close();
+    completedScenarios.push(scenario.name);
   }
+} catch (error) {
+  failure = { name: error.name, message: error.message };
+  throw error;
 } finally {
-  await browser.close();
-  await server.close();
+  try {
+    await writeFile(path.join(outDir, 'results.json'), JSON.stringify({
+      ok: failure === null && completedScenarios.length === scenarios.length,
+      plannedScenarios: scenarios.map(scenario => scenario.name),
+      completedScenarios,
+      results,
+      error: failure,
+    }, null, 2));
+  } finally {
+    try {
+      await browser.close();
+    } finally {
+      await server.close();
+    }
+  }
 }
 
 console.log(
   JSON.stringify(
     {
       ok: true,
-      screenshots: scenarios.map(item => path.join(outDir, `${item.name}.png`)).concat(drawerScreenshots),
+      screenshots: scenarios.map(item => path.join(outDir, `${item.name}.png`)).concat(drawerScreenshots, consentScreenshots),
       results,
     },
     null,
