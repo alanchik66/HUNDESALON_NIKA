@@ -118,6 +118,29 @@ test('the compact sky lane reserves physical disc margins around weather reading
   assert.ok(Number.isFinite(collapsed.left));
 });
 
+test('the display sky is lifted gently without moving the top edge or changing azimuth', () => {
+  for (const [height, radius] of [[78, 16.8], [78, 20.88], [164, 22.724], [220, 27.03]]) {
+    const bounds = { left: 12, right: 363, top: 54, bottom: 54 + height };
+    const lane = skyLane(bounds, null, null, radius);
+    const oldTop = bounds.top + radius + 4, oldBottom = bounds.bottom - radius - 4;
+    const lift = oldBottom - lane.bottom;
+    assert.equal(lane.top, oldTop, 'the highest visible chart edge retains its complete-disc margin');
+    assert.equal(lane.left, bounds.left + radius + 5);
+    assert.equal(lane.right, bounds.right - radius - 5);
+    assert.ok(lift >= 10 && lift <= 22, 'normal header and dropdown fields get a restrained visible lift');
+    assert.ok(lane.bottom > lane.top, 'the lifted sky still has a vertical travel range');
+    let previousY;
+    for (let step = 0; step <= 1000; step++) {
+      const y = step / 1000, currentY = lane.top + (lane.bottom - lane.top) * y;
+      const oldY = oldTop + (oldBottom - oldTop) * y;
+      assert.ok(currentY <= oldY && currentY - radius >= bounds.top && currentY + radius <= bounds.bottom);
+      if (previousY !== undefined) assert.ok(currentY >= previousY && currentY - previousY < .2,
+        'the whole placement range remains continuous, without a threshold jump');
+      previousY = currentY;
+    }
+  }
+});
+
 test('a compressed lane fades a nearby daytime Moon without displacing its astronomical coordinates', () => {
   assert.equal(solarMoonContrast(10, 17, 27, 1), 0);
   assert.equal(solarMoonContrast(10, 17, 27, 0), 1);
@@ -189,7 +212,7 @@ test('continuous CSS positions retain the same base anchor and reuse the existin
   assert.equal(h.styles.get('--orb-sky-duration'), '0s', 'resume snaps to the actual sky rather than replaying hidden time');
 });
 
-test('both physical discs use full widget edges and keep their radius when no control occupies the sky',()=>{
+test('both physical discs keep their radius and azimuth while the lower sky stays above the widget edge',()=>{
   for(const variant of ['preview','dropdown'])for(const [kind,width,factor]of [['sun',68,.247],['moon',106,.255]]){
     const h=motionHarness(),bounds=variant==='preview'?{left:12,top:54,right:363,bottom:132,width:351,height:78}:{left:0,top:0,right:520,bottom:220,width:520,height:220};
     h.region.getBoundingClientRect=()=>bounds;
@@ -202,7 +225,8 @@ test('both physical discs use full widget edges and keep their radius when no co
       applySkyPosition(h.overlay,{active:true,opacity:1,sky:{x,y}});
       const rect=h.overlay.getBoundingClientRect(),cx=rect.left+width/2,cy=rect.top+width/2;
       assert.ok(Math.abs(cx-(x?bounds.right-radius-5:bounds.left+radius+5))<.001);
-      assert.ok(Math.abs(cy-(y?bounds.bottom-radius-4:bounds.top+radius+4))<.001);
+      if (y) assert.ok(cy < bounds.bottom-radius-4-1, 'the lower chart moves up instead of resting at the widget floor');
+      else assert.ok(Math.abs(cy-(bounds.top+radius+4))<.001);
       assert.ok(cx-radius>=bounds.left&&cx+radius<=bounds.right);
       assert.ok(cy-radius>=bounds.top&&cy+radius<=bounds.bottom);
        const optical = skyOpticalCenter(h.overlay);
@@ -240,11 +264,13 @@ test('visible weather controls keep both discs above their bounds without changi
       assert.ok(Math.abs(optical.x - (1 - x)) < .0001);
       assert.ok(Math.abs(optical.y - y) < .0001, 'both panels normalize optics in their control-safe frame');
     }
+    applySkyPosition(h.overlay, { active: true, opacity: .72, sky: { x: .5, y: 1 } });
+    const reservedBottom = h.overlay.getBoundingClientRect().top + width / 2;
     control = { ...control, width: 0, height: 0 };
     applySkyPosition(h.overlay, { active: true, opacity: .72, sky: { x: .5, y: 1 } });
     const rect = h.overlay.getBoundingClientRect();
-    assert.ok(Math.abs(rect.top + width / 2 + width * factor - (bounds.bottom - 4)) < .001,
-      'an unrendered control does not reserve empty sky space');
+    assert.ok(rect.top + width / 2 > reservedBottom + 1,
+      'an unrendered control releases its reserved space while retaining the gentle sky lift');
   }
 });
 

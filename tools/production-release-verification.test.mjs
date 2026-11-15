@@ -462,13 +462,40 @@ test('persistent unavailable manifests stop at the default bound and report only
   assert.deepEqual(pauses, Array(29).fill(5000));
 });
 
-test('a stalled server cannot keep verification running beyond its bounded request budget', async t => {
-  const f = await fixture(t, ({ url }) => url.pathname === RELEASE_MANIFEST_PATH ? { hang: true } : null);
-  const started = Date.now();
-  await assert.rejects(verifyProductionRelease({ ...verification(f), attempts: 2, delayMs: 0, timeoutMs: 80, maxDurationMs: 240 }), /verification failed/u);
-  assert.ok(Date.now() - started < 1500);
-  assert.ok(f.requests.length >= 1 && f.requests.length <= 2);
-});
+for (const beforeServerAdmission of [false, true]) {
+  test(`${beforeServerAdmission ? 'a stalled client before server admission' : 'a stalled server'} cannot exceed its bounded request budget`, { timeout: 2500 }, async t => {
+    const f = await fixture(t, ({ url }) => url.pathname === RELEASE_MANIFEST_PATH ? { hang: true } : null);
+    const clientAttempts = [];
+    const maxDurationMs = 240;
+    const started = Date.now();
+    const fetcher = (url, options) => {
+      clientAttempts.push({ url: url.href, signal: options.signal, startedAt: Date.now() });
+      assert.ok(options.signal instanceof AbortSignal);
+      if (!beforeServerAdmission) return fetch(url, options);
+      // A closed admission gate models a request cancelled before the server can receive it.
+      return new Promise((resolve, reject) => {
+        const abort = () => reject(options.signal.reason);
+        if (options.signal.aborted) abort();
+        else options.signal.addEventListener('abort', abort, { once: true });
+      });
+    };
+    await assert.rejects(verifyProductionRelease({
+      ...verification(f), attempts: 2, delayMs: 0, timeoutMs: 80, maxDurationMs, fetcher,
+    }), /verification failed/u);
+    assert.ok(Date.now() - started < 1500);
+    assert.ok(clientAttempts.length >= 1 && clientAttempts.length <= 2, `client attempts: ${clientAttempts.length}`);
+    assert.ok(clientAttempts.every(attempt => attempt.url === new URL(`${RELEASE_MANIFEST_PATH}?commit=${COMMIT}`, f.baseUrl).href));
+    assert.ok(clientAttempts.every(attempt => attempt.signal.aborted && attempt.signal.reason?.name === 'TimeoutError'));
+    const firstAttemptAt = clientAttempts[0].startedAt;
+    assert.ok(clientAttempts.every(attempt => attempt.startedAt - firstAttemptAt < maxDurationMs));
+    const completedAttempts = clientAttempts.length;
+    // The internal deadline starts before the first fetch, so this is beyond that deadline too.
+    await new Promise(resolve => setTimeout(resolve, Math.max(1, firstAttemptAt + maxDurationMs + 1 - Date.now())));
+    assert.equal(clientAttempts.length, completedAttempts, 'no request starts after the bounded verification has rejected');
+    assert.ok(f.requests.length <= clientAttempts.length);
+    if (beforeServerAdmission) assert.equal(f.requests.length, 0);
+  });
+}
 
 test('ordinary live HTML smoke includes EN/UK and local assets without requiring a new release', async t => {
   const f = await fixture(t);

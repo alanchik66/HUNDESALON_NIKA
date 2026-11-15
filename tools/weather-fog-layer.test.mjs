@@ -224,6 +224,37 @@ test('uniformly scaled header ancestors preserve fog height and halo position in
   }
 });
 
+test('a uniformly scaled ancestor keeps the actual Sun and fog halo on the same lifted sky', () => {
+  for (const scale of [1, 2]) {
+    const f = fixture();
+    f.region.clientWidth = 360; f.region.clientHeight = 90;
+    f.region.bounds = { left: 10, top: 80, right: 10 + 360 * scale, bottom: 80 + 90 * scale,
+      width: 360 * scale, height: 90 * scale };
+    f.overlay.bounds = { left: 100, top: 90, width: 68 * scale, height: 68 * scale };
+    f.root.append = node => f.root.appendChild(node);
+    const view = f.overlay.ownerDocument.defaultView, getComputedStyle = view.getComputedStyle;
+    view.getComputedStyle = node => ({ ...getComputedStyle(node),
+      translate: `${node.style.getPropertyValue('--orb-sky-x') || '0px'} ${node.style.getPropertyValue('--orb-sky-y') || '0px'}` });
+    f.overlay.getBoundingClientRect = () => ({ ...f.overlay.bounds,
+      left: f.overlay.bounds.left + scale * parseFloat(f.overlay.style.getPropertyValue('--orb-sky-x') || 0),
+      top: f.overlay.bounds.top + scale * parseFloat(f.overlay.style.getPropertyValue('--orb-sky-y') || 0) });
+    for (const [x, y] of [[0, 0], [.5, .5], [1, 1], [.17, .82]]) {
+      const part = { active: true, sky: sky(20, x, y) };
+      applySkyPosition(f.overlay, part); applySkyFog(f.overlay, part, fog(.5));
+      const rect = f.overlay.getBoundingClientRect(), halo = f.layer().children[1];
+      const translation = halo.style.transform.match(/^translate\(([-\d.]+)px,([-\d.]+)px\)$/);
+      const haloX = 10 + scale * (Number(translation[1]) + parseFloat(halo.style.width) / 2);
+      const haloY = 80 + scale * (-36 + Number(translation[2]) + parseFloat(halo.style.height) / 2);
+      assert.ok(Math.abs(haloX - (rect.left + rect.width / 2)) < .002, `scale ${scale} shares the horizontal source`);
+      assert.ok(Math.abs(haloY - (rect.top + rect.height / 2)) < .002, `scale ${scale} shares the lifted vertical source`);
+      applySkyPosition(f.overlay, part);
+      const repeated = f.overlay.getBoundingClientRect();
+      assert.ok(Math.abs(repeated.left - rect.left) < .002 && Math.abs(repeated.top - rect.top) < .002,
+        'repeated sky updates cannot accumulate an ancestor-scaled translation');
+    }
+  }
+});
+
 test('clear fades before clock-driven removal, fog reentry cancels removal, and reduced motion removes immediately', () => {
   const f = fixture(), part = { sky: sky(20) };
   applySkyFog(f.overlay, part, fog(1)); const layer = f.layer();

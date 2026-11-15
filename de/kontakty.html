@@ -10,6 +10,7 @@
 -->
   <head>
     <meta charset="UTF-8" />
+    <meta name="format-detection" content="telephone=no" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kontakte — HUNDESALON_NIKA</title>
     <meta name="twitter:description" content="Kontakt zu HUNDESALON NIKA in Leipzig: Adresse, Telefon, Anfahrt, Öffnungszeiten und schnelle Wege zur Online-Terminbuchung für Hund und Katze. Jetzt Kontakt aufnehmen." />
@@ -64,7 +65,7 @@
       <link rel="stylesheet" href="../assets/fonts/fontawesome/all.min.css?v=20260329-0192" />
       <link rel="stylesheet" href="../assets/css/page-modules.css?v=20260720-prod-v2" />
     </noscript>
-    <link rel="stylesheet" href="../assets/css/contact-page.css?v=20261106-contact-layout-v2" />
+    <link rel="stylesheet" href="../assets/css/contact-page.css?v=20261115-contact-fax-icon-v2" />
 
 
 <link rel="stylesheet" href="../assets/css/cookie-consent.css?v=20260620-full-stack-upgrade" />
@@ -117,6 +118,11 @@
             <a class="contact-value" href="tel:+4915172450988">+49 151 72450988</a>
           </div>
           <div class="contact-item">
+            <img src="../assets/images/icons/Fax.png" alt="" class="contact-icon contact-icon--fax" aria-hidden="true" />
+            <strong>Fax:</strong>
+            <span class="contact-value" data-contact-fax dir="ltr" translate="no">+49 341 24892905</span>
+          </div>
+          <div class="contact-item">
             <img src="../assets/images/icons/mail.png" alt="E-Mail" class="contact-icon" />
             <strong>E-Mail:</strong>
             <a class="contact-value" href="mailto:info@hundesalon-nika.com">info@hundesalon-nika.com</a>
@@ -140,14 +146,9 @@
             <span class="contact-value">Mo–Fr, 9:00–21:00 Uhr<br />Sa, 10:00–16:00 Uhr<br />So geschlossen</span>
           </div>
           <div class="socials">
-            <a
-              href="https://t.me/hundesalon_nika_support_bot?start=support"
-              class="social-link"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <i class="fab fa-telegram"></i>
-              In Telegram schreiben
+            <a href="#contact-form" class="social-link">
+              <i class="fas fa-envelope" aria-hidden="true"></i>
+              Nachricht schreiben
             </a>
             <a href="social.html" class="social-link">
               <i class="fas fa-share-alt"></i>
@@ -208,7 +209,7 @@
         </div>
       </div>
 <div class="container">
-        <div class="contact-form" id="contact-form">
+        <div class="contact-form" id="contact-form" tabindex="-1" role="region" aria-label="Kontaktformular">
           <form action="/sendmail" method="POST">
             <input type="hidden" name="form_type" value="contact" />
             <input type="hidden" name="lang" value="de" />
@@ -336,7 +337,7 @@
     <!-- ═══════════════ Skript-Einbindung ════════════════════════════════ -->
     <script src="../assets/js/site-shell.js?v=20260904-social-links-v15"></script>
     <script src="../assets/js/main.js?v=20260904-site-arrow-spin"></script>
-    <script src="../assets/js/page-modules.js?v=20260720-prod-v2"></script>
+    <script src="../assets/js/page-modules.js?v=20261115-contact-form-v3"></script>
     <script src="../assets/js/contact-map.js?v=20261106-map-preview"></script>
     <script src="../assets/js/tooltip.js?v=20260330-0001"></script>
     <script src="../assets/js/cookie-consent.js?v=20260620-full-stack-upgrade"></script>

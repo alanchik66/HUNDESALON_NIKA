@@ -759,7 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (isOpen) {
-        lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        lastFocusedElement = burger;
         mobileNavScroll.scrollTop = 0;
         refreshMobileNavScrollbar();
         requestAnimationFrame(() => {

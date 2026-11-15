@@ -1138,13 +1138,21 @@ test('header shooting stars use one eligible night layer and stop with their hos
     });
     const reducedQuery = media(reduced);
     const rect = (left, top, rectWidth, height) => ({ left, top, right: left + rectWidth, bottom: top + height, width: rectWidth, height });
-    const header = { getBoundingClientRect: () => rect(0, 0, width, 180) };
-    const dropdownBox = { getBoundingClientRect: () => rect(14, 190, width - 28, 400) };
+    const stage = getBoundingClientRect => ({
+      getBoundingClientRect, children: [],
+      appendChild(element) { this.children.push(element); element.parentElement = this; },
+    });
+    const header = stage(() => rect(0, 0, width, 180));
+    const previewStage = stage(() => rect(0, 0, width, 78));
+    const dropdownStage = stage(() => rect(14, 190, width - 28, 154));
+    const dropdownBox = { getBoundingClientRect: () => rect(14, 190, width - 28, 400),
+      querySelector: selector => selector === '.weather-header-dropdown__hero' ? dropdownStage : null };
     const layer = dropdown => {
       const result = {
         isConnected: true, night, style: { display: 'block' }, children: [],
         classList: { contains: name => name === 'is-night-sky' && result.night },
-        closest: () => dropdown ? dropdownBox : null,
+        closest: selector => selector === '.weather-header-dropdown' ? (dropdown ? dropdownBox : null)
+          : selector === '.weather-header-preview' ? (dropdown ? null : previewStage) : null,
         getBoundingClientRect: dropdown ? dropdownBox.getBoundingClientRect : header.getBoundingClientRect,
         appendChild(element) { this.children.push(element); element.parentElement = this; },
       };
@@ -1161,7 +1169,8 @@ test('header shooting stars use one eligible night layer and stop with their hos
       createElement() {
         const properties = new Map();
         const element = {
-          style: { setProperty: (key, value) => properties.set(key, value) }, properties, setAttribute() {},
+          style: { setProperty: (key, value) => properties.set(key, value) }, properties, attributes: new Map(),
+          setAttribute(key, value) { this.attributes.set(key, value); },
           remove() { const list = this.parentElement?.children; const index = list?.indexOf(this); if (index >= 0) list.splice(index, 1); },
           animate(frames, options) {
             let resolve;
@@ -1185,7 +1194,7 @@ test('header shooting stars use one eligible night layer and stop with their hos
       clearTimeout: id => timers.delete(id),
     }, document, (min, max) => min + (max - min) * ratio);
     return {
-      host, preview, dropdown, document, timers, animations, reducedQuery, sync: () => sync(host),
+      host, preview, dropdown, previewStage, dropdownStage, document, timers, animations, reducedQuery, sync: () => sync(host),
       runTimer() { const [id, timer] = timers.entries().next().value; timers.delete(id); timer.handler(); },
     };
   };
@@ -1200,16 +1209,17 @@ test('header shooting stars use one eligible night layer and stop with their hos
     ui.runTimer();
     assert.equal(ui.preview.children.length, 1);
     assert.equal(ui.animations.length, 1);
-    assert.ok(ui.animations[0].options.duration >= 2000 && ui.animations[0].options.duration <= 3000);
-    assert.equal(ui.animations[0].options.duration, 7500 / 3, 'the same sampled trajectory takes exactly one third of its former duration');
+    assert.ok(ui.animations[0].options.duration >= 420 && ui.animations[0].options.duration <= 760);
+    assert.equal(ui.animations[0].options.duration, 590, 'a brief pass replaces the former 2–3 second drift');
+    assert.equal(ui.animations[0].element.properties.get('--shooting-star-duration'), '590.00ms');
     assert.equal(ui.animations[0].options.easing, 'linear');
     const frames = ui.animations[0].frames;
     const motionFrames = frames.filter(frame => frame.transform);
     assert.deepEqual(motionFrames.map(frame => frame.offset), [0, 1]);
     assert.equal(motionFrames[0].easing, 'linear', 'opacity easing must not change travel speed');
-    assert.match(motionFrames[0].transform, /scale\(1\.000\)/);
-    assert.match(motionFrames[1].transform, /scale\(0\.200\)/);
-    assert.deepEqual(frames.filter(frame => 'opacity' in frame).map(frame => frame.opacity), [0, 0.8, 0.18, 0]);
+    assert.match(motionFrames[0].transform, /scale\(1\)/);
+    assert.match(motionFrames[1].transform, /scale\(1\)/);
+    assert.deepEqual(frames.filter(frame => 'opacity' in frame).map(frame => frame.opacity), [0, 0.75, 1, 0.55, 0.08, 0]);
     assert.ok(frames.filter(frame => 'opacity' in frame && frame.offset < 1).every(frame => frame.easing === 'ease-in-out'));
     ui.sync();
     assert.equal(ui.timers.size, 0, 'an active meteor owns the next interval');
@@ -1231,7 +1241,8 @@ test('header shooting stars use one eligible night layer and stop with their hos
             ui.preview.night = false;
             ui.host.dataset.weatherExpanded = 'true';
           }
-          const layer = inDropdown ? ui.dropdown : ui.preview;
+          const front = expectedAngle / 360 < 0.28;
+          const layer = front ? (inDropdown ? ui.dropdownStage : ui.previewStage) : (inDropdown ? ui.dropdown : ui.preview);
           const bounds = layer.getBoundingClientRect();
           ui.sync();
           ui.runTimer();
@@ -1240,13 +1251,13 @@ test('header shooting stars use one eligible night layer and stop with their hos
           assert.equal(element.parentElement, layer);
           const length = parseFloat(element.properties.get('--shooting-star-length'));
           const originX = bounds.left + parseFloat(element.style.left) + length * 0.9;
-          const originY = bounds.top + parseFloat(element.style.top) + 9;
+          const originY = bounds.top + parseFloat(element.style.top) + 11;
           for (const frame of frames.filter(keyframe => keyframe.transform)) {
             const [, x, y, angle, scale] = frame.transform.match(/translate3d\(([-\d.]+)px, ([-\d.]+)px, 0\) rotate\(([-\d.]+)deg\) scale\(([-\d.]+)\)/);
             assert.equal(Number(angle), expectedAngle);
             const radians = Number(angle) * Math.PI / 180;
-            for (const localX of [-0.9 * length, 0.1 * length]) {
-              for (const localY of [-9, 9]) {
+            for (const localX of [-0.9 * length, Math.max(0.1 * length, 11)]) {
+              for (const localY of [-11, 11]) {
                 const px = originX + Number(x) + (localX * Math.cos(radians) - localY * Math.sin(radians)) * Number(scale);
                 const py = originY + Number(y) + (localX * Math.sin(radians) + localY * Math.cos(radians)) * Number(scale);
                 assert.ok(px >= bounds.left + 5.9 && px <= bounds.right - 5.9 && py >= bounds.top + 5.9 && py <= bounds.bottom - 5.9, `${width}px, ${angle}deg: ${px}, ${py}`);
@@ -1257,6 +1268,62 @@ test('header shooting stars use one eligible night layer and stop with their hos
         }
       }
     }
+  });
+
+  await t.test('a meteor can cross either disc plane, without duplicating the starfield or scheduler', async () => {
+    for (const inDropdown of [false, true]) {
+      for (const front of [false, true]) {
+        const ui = createHarness({ ratio: front ? 0.1 : 0.7 });
+        if (inDropdown) {
+          ui.preview.night = false;
+          ui.host.dataset.weatherExpanded = 'true';
+        }
+        const gate = inDropdown ? ui.dropdown : ui.preview;
+        const target = front ? (inDropdown ? ui.dropdownStage : ui.previewStage) : gate;
+        ui.sync();
+        ui.runTimer();
+        assert.equal(ui.animations.length, 1);
+        const meteor = ui.animations[0].element;
+        assert.equal(meteor.parentElement, target);
+        assert.equal(meteor.attributes.get('data-weather-meteor-depth'), front ? 'front' : 'back');
+        assert.equal(meteor.className.includes('--foreground'), front);
+        assert.equal(ui.preview.children.length + ui.dropdown.children.length
+          + ui.previewStage.children.length + ui.dropdownStage.children.length, 1);
+        ui.sync();
+        assert.equal(ui.timers.size, 0);
+        gate.night = false;
+        ui.sync();
+        await settle();
+        assert.equal(ui.animations[0].cancelled, true);
+        assert.equal(target.children.length, 0, 'loss of the original night gate cancels foreground too');
+        assert.equal(ui.timers.size, 0);
+        ui.host.__weatherShootingStars.dispose();
+      }
+    }
+  });
+
+  await t.test('the head and trail have one short bloom, not repeated flashing', () => {
+    const css = source.slice(source.indexOf('.weather-header-shooting-star {'), source.indexOf('\n.weather-header-card__toggle {', source.indexOf('.weather-header-shooting-star {')));
+    assert.doesNotMatch(css, /infinite|alternate/);
+    assert.match(css, /animation: weatherShootingStarGlint var\(--shooting-star-duration, 600ms\) linear both/);
+    assert.match(css, /animation: weatherShootingStarTrail var\(--shooting-star-duration, 600ms\) linear both/);
+    assert.match(css, /22% \{ opacity: 1;/);
+    assert.match(css, /75%, 100% \{ opacity: 0;/);
+    assert.match(css, /\.weather-header-shooting-star--foreground \{\s*z-index: 11 !important;/);
+  });
+
+  await t.test('replacing a foreground stage cancels its detached meteor before scheduling another', async () => {
+    const ui = createHarness({ ratio: 0.1 });
+    ui.sync();
+    ui.runTimer();
+    assert.equal(ui.previewStage.children.length, 1);
+    ui.animations[0].element.isConnected = false;
+    ui.sync();
+    await settle();
+    assert.equal(ui.animations[0].cancelled, true);
+    assert.equal(ui.previewStage.children.length, 0);
+    assert.equal(ui.timers.size, 1, 'the old completion callback cannot add a second timer');
+    ui.host.__weatherShootingStars.dispose();
   });
 
   await t.test('day, hidden pages and missing layers never spawn', () => {
@@ -1276,7 +1343,7 @@ test('header shooting stars use one eligible night layer and stop with their hos
       assert.equal(ui.timers.size, 1);
       ui.runTimer();
       assert.equal(ui.preview.children.length, 1);
-      assert.ok(ui.animations[0].options.duration >= 2000 && ui.animations[0].options.duration <= 3000);
+      assert.ok(ui.animations[0].options.duration >= 420 && ui.animations[0].options.duration <= 760);
       ui.reducedQuery.change(false);
       ui.reducedQuery.change(true);
       assert.equal(ui.animations[0].cancelled, false, 'changing the system preference cannot interrupt a star');
@@ -1367,6 +1434,119 @@ test('localized burger menus expose promotions while keeping booking in the head
     const socialPage = await readFile(path.join(root, locale, 'social.html'), 'utf8');
     assert.match(socialPage, /id="promotions"/);
   }
+});
+
+test('burger menu restores its invoker after pointer or keyboard Escape without stealing navigation focus', async t => {
+  const source = await readFile(path.join(root, 'assets/js/main.js'), 'utf8');
+  const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'script' });
+  const block = ast.body
+    .filter(node => node.expression?.callee?.property?.name === 'addEventListener'
+      && node.expression.arguments[0]?.value === 'DOMContentLoaded')
+    .flatMap(node => node.expression.arguments[1]?.body?.body || [])
+    .find(node => node.type === 'IfStatement' && source.slice(node.test.start, node.test.end) === 'burger && mobileNav && overlay');
+  assert.ok(block, 'execute the actual burger initialization and event handlers');
+
+  const createHarness = () => {
+    const document = new globalThis.EventTarget();
+    const frames = [], timers = [];
+    class MenuElement extends globalThis.EventTarget {
+      constructor(name) {
+        super();
+        this.name = name;
+        this.children = [];
+        this.dataset = {};
+        this.scrollTop = 0;
+        this.attributes = new Map();
+        this.focusCalls = [];
+        this.style = { setProperty() {}, top: '' };
+        const classes = new Set();
+        this.classList = {
+          add: value => classes.add(value), remove: value => classes.delete(value),
+          contains: value => classes.has(value),
+          toggle: (value, active) => active ? classes.add(value) : classes.delete(value),
+        };
+      }
+      setAttribute(name, value) { this.attributes.set(name, String(value)); }
+      getAttribute(name) { return this.attributes.get(name); }
+      querySelectorAll() { return this.children; }
+      querySelector() { return this.children[0] || null; }
+      closest(selector) { return selector === 'a[href]' && this.attributes.has('href') ? this : null; }
+      contains(element) { return element === this || this.children.includes(element); }
+      getBoundingClientRect() { return { bottom: 80 }; }
+      focus(options) {
+        this.focusCalls.push(options);
+        if (this !== document.body) document.activeElement = this;
+      }
+      get inert() { return this.isInert || false; }
+      set inert(value) {
+        this.isInert = value;
+        if (value && this.contains(document.activeElement)) document.activeElement = document.body;
+      }
+    }
+    document.body = new MenuElement('body');
+    document.activeElement = document.body;
+    document.documentElement = { scrollTop: 0 };
+    const burger = new MenuElement('burger'), mobileNav = new MenuElement('menu');
+    const overlay = new MenuElement('overlay'), scrollRoot = new MenuElement('scroll');
+    const firstLink = new MenuElement('first-link'), header = new MenuElement('header');
+    firstLink.setAttribute('href', '/ru/kontakty.html');
+    mobileNav.children.push(firstLink);
+    burger.closest = () => header;
+    const requestAnimationFrame = callback => frames.push(callback);
+    const window = Object.assign(new globalThis.EventTarget(), {
+      innerWidth: 375, innerHeight: 800, scrollY: 0, requestAnimationFrame,
+      setTimeout: callback => timers.push(callback),
+      clearTimeout: id => { timers[id - 1] = null; },
+    });
+    runInNewContext(source.slice(block.start, block.end), {
+      document, window, HTMLElement: MenuElement, Element: MenuElement, burger, mobileNav, overlay,
+      scrollRoot, mobileNavScroll: new MenuElement('menu-scroll'), mobileNavScrollbar: null,
+      getVisibleHeaderBottom: () => 80, requestAnimationFrame,
+      menuA11y: { openMenu: 'Open menu', closeMenu: 'Close menu' },
+    });
+    const flush = () => {
+      while (frames.length) frames.shift()();
+      while (timers.length) timers.shift()?.();
+    };
+    const open = () => {
+      // A pointer click deliberately does not focus the button, as in Safari.
+      burger.dispatchEvent(new Event('click'));
+      flush();
+      assert.equal(document.activeElement.name, 'first-link');
+      assert.equal(mobileNav.inert, false);
+    };
+    const escape = () => {
+      const event = new Event('keydown');
+      Object.defineProperty(event, 'key', { value: 'Escape' });
+      document.dispatchEvent(event);
+      flush();
+      assert.equal(mobileNav.inert, true);
+      assert.equal(burger.getAttribute('aria-expanded'), 'false');
+    };
+    return { document, burger, mobileNav, firstLink, open, escape, flush };
+  };
+
+  for (const activation of ['pointer', 'keyboard']) {
+    await t.test(`${activation} opening returns focus to the burger after Escape`, () => {
+      const ui = createHarness();
+      if (activation === 'keyboard') ui.burger.focus();
+      ui.open();
+      ui.escape();
+      assert.equal(ui.document.activeElement.name, 'burger');
+      assert.equal(ui.burger.focusCalls.at(-1).preventScroll, true);
+    });
+  }
+  await t.test('link activation keeps restoreFocus false while closing the inert menu', () => {
+    const ui = createHarness();
+    ui.open();
+    const event = new Event('click');
+    Object.defineProperty(event, 'target', { value: ui.firstLink });
+    ui.mobileNav.dispatchEvent(event);
+    ui.flush();
+    assert.equal(ui.mobileNav.inert, true);
+    assert.equal(ui.burger.focusCalls.length, 0, 'native navigation must not be interrupted by returning to the opener');
+    assert.equal(ui.document.activeElement.name, 'body');
+  });
 });
 
 test('social promotions deep links scroll after shell setup and on hash changes', async () => {

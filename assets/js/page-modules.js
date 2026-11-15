@@ -1298,11 +1298,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         event.preventDefault();
 
+        const isContactForm = target.id === 'contact-form';
+        const reduceMotion = isContactForm && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         target.scrollIntoView({
-          behavior: 'smooth',
+          behavior: reduceMotion ? 'instant' : 'smooth',
           block: 'start',
           inline: 'nearest',
         });
+
+        if (isContactForm) target.focus({ preventScroll: true });
 
         if (scrollRoot) {
           window.requestAnimationFrame(() => {

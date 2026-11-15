@@ -1,6 +1,6 @@
 # HUNDESALON_NIKA Website Knowledge for the SendPulse AI Agent #
 
-Generated source fingerprint: sha256:01101f44901b3bfed6908758daf2e80a08bfdb231c98f90c76c9d3978a82b971
+Generated source fingerprint: sha256:1c3bf7ff48e4440107e58edbc79ca2f2d9e375cdaf3a7dc9d1381086bbe549ae
 
 This document is the factual knowledge base for the customer-facing SendPulse live-chat AI agent. It covers the public HUNDESALON_NIKA website in German, English, Russian, and Ukrainian.
 
@@ -1839,13 +1839,14 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Unsere Kontakte
 - Inhaberin: HUNDESALON_NIKA
 - Telefon: +49 151 72450988
+- Fax: +49 341 24892905
 - E-Mail: info@hundesalon-nika.com
 - Adresse: Untere Eichstädtstraße 38,
 - 04299 Leipzig, Sachsen, Deutschland
 - Öffnungszeiten: Mo–Fr, 9:00–21:00 Uhr
 - Sa, 10:00–16:00 Uhr
 - So geschlossen
-- In Telegram schreiben Alle Netzwerke
+- Nachricht schreiben Alle Netzwerke
 - Schnellaktionen
 - Mit dem Auto ÖPNV Zu Fuß Fahrrad Schreiben
 - Offizielle Profile & Zitation
@@ -2135,13 +2136,14 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Contact details
 - Owner: HUNDESALON_NIKA
 - Phone: +49 151 72450988
+- Fax: +49 341 24892905
 - Email: info@hundesalon-nika.com
 - Address: Untere Eichstädtstraße 38,
 - 04299 Leipzig, Saxony, Germany
 - Opening hours: Mon–Fri, 9:00–21:00
 - Sat, 10:00–16:00
 - Sun closed
-- Message us on Telegram All socials
+- Write to us All socials
 - Quick actions
 - By car Public transport Walking Cycling Write to us
 - Official profiles & citation
@@ -2431,13 +2433,14 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Наши контакты
 - Владелец: HUNDESALON_NIKA
 - Телефон: +49 151 72450988
+- Факс: +49 341 24892905
 - Email: info@hundesalon-nika.com
 - Адрес: Untere Eichstädtstraße 38,
 - 04299 Лейпциг, Саксония, Германия
 - Часы работы: Пн–Пт, 9:00 – 21:00
 - Сб, 10:00 – 16:00
 - Вс — выходной
-- Написать в Telegram Все соцсети
+- Написать нам Все соцсети
 - Быстрые действия
 - На автомобиле Транспорт Пешком Велосипед Написать
 - Официальные профили и цитирование
@@ -2727,13 +2730,14 @@ This compact retrieval corpus is rebuilt from public pages during every producti
 - Наші контакти
 - Власник: HUNDESALON_NIKA
 - Телефон: +49 151 72450988
+- Факс: +49 341 24892905
 - Email: info@hundesalon-nika.com
 - Адреса: Untere Eichstädtstraße 38,
 - 04299 Лейпциг, Саксонія, Німеччина
 - Години роботи: Пн–Пт, 9:00 – 21:00
 - Сб, 10:00 – 16:00
 - Нд — вихідний
-- Написати в Telegram Усі соцмережі
+- Написати нам Усі соцмережі
 - Швидкі дії
 - Автомобілем Транспортом Пішки Велосипедом Написати
 - Офіційні профілі та цитування

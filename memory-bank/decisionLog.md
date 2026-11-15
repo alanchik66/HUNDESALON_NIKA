@@ -55,3 +55,27 @@ The upstream prompts contain Roo Code-specific XML tool contracts, while the ada
 - Keep `docs/RELEASE_GUIDE.md` as the procedure and `config/release-reference-methods.json` as the pinned method catalog. Discover the current public repositories and HEADs on every profile-triggered run; do not hard-code a permanent repository count.
 - Adapt compatible methods through the existing stack, preserve explicit staging and required gates, deploy the exact tested artifact, and verify the publicly served commit and four locales.
 - This rule does not authorize account permission changes, credential creation, messages to others, paid APIs, or bypassing failed checks. Preserve the user's separate dependency-change rule.
+
+## 2026-11-15 21:23:18 Europe/Berlin — Public fax contact
+
+- The owner provided the salon fax number `+49 341 24892905`; `config/brand-profiles.mjs` now keeps it as `NAP.fax`, separately from the voice phone and WhatsApp.
+- Contact and Impressum pages expose a selectable, localized fax value in all four locales. Explicit voice telephone links remain unchanged; telephone autodetection is disabled on those pages so a fax is not offered as a voice call.
+- Homepage/services Organization and LocalBusiness metadata use the dedicated [Schema.org faxNumber](https://schema.org/faxNumber) property, normalized to `+4934124892905`. The sync script preserves service-specific URLs/descriptions and updates visible marked values plus llms.txt from the same source.
+- This is website contact configuration based on the owner's confirmation, not proof of fax-provider setup or actual fax delivery. No external account/profile update or release is included in this change.
+
+## 2026-11-15 21:46:48 Europe/Berlin — Contact-card message action
+
+- The owner requested that the contact-card message button lead to the existing on-page contact form. The four locales now use `#contact-form`, an envelope icon and localized write-to-us copy, without an external-tab target. Other Telegram/social links remain their own channels.
+- Reuse `initSmoothHashLinks()` in page-modules.js; only the contact-form target additionally receives focus with preventScroll. The named target region has tabindex=-1 so keyboard users continue into its inputs without immediately focusing an input on phones. Reduced-motion users receive an instant contact-form transition.
+- Validate scrolling, visibility and keyboard focus in local browsers without submitting the form or testing live message delivery.
+
+## 2026-11-15 23:01:08 Europe/Berlin — Burger menu focus return
+
+- Save the explicit burger opener rather than document.activeElement: Safari pointer clicks do not necessarily focus buttons, so Escape could close the inert menu with focus left on BODY. The sole menu opener is the burger click handler; link navigation still closes with restoreFocus=false.
+- A regression executes the actual initialization and handlers for pointer/keyboard Escape and navigation closure. The pointer case fails before the one-line fix and all three cases pass after it. The prior local headless WebKit observation is recorded in Browser_Interaction_and_Overlay_QA; physical iPhone validation and the rebuilt-artifact browser check are separate.
+
+## 2026-11-15 — Observe verifier timeout attempts at the client boundary
+
+- Count fetch calls and actual aborted signals rather than requiring the localhost server handler to receive a request before its 80ms client timeout. An abort-aware admission-queue control reproduced the old assertion failure with two cancelled client calls and zero server arrivals; the original gate did not retain its actual counter or prove a CPU cause.
+- Preserve 80ms request/240ms overall/1500ms elapsed expectations and two attempts; test both native fetch and closed admission, with exact URL checks, cancelled signals, bounded arrivals and no late attempt. Add a 2500ms test-owned watchdog so a broken abort cannot hang the harness. Production verifier code is unchanged.
+- Both targeted cases and scoped lint/syntax checks pass. A separate ignored broken-signal negative control hit the 2500ms watchdog as expected. Full release QA remains a separate required run; evidence is in `output/release-2026-11-15-final/timeout-test-review.md`.

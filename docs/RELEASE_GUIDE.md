@@ -69,10 +69,13 @@ Deploy compatible readers before changing the schema. Review unapplied D1 migrat
 - Require the shared production verifier after deployment and in the release watcher: the expected commit/stamp, all four locales (`de`, `en`, `ru`, `uk`), matching `html lang`, exact canonical URLs and the served local JS/CSS. CI checks the validated immutable Pages origin; the watcher separately checks the main domain against the exact CI artifact receipt. Allow only bounded propagation retries and record failure if the expected version never arrives.
 - Open navigation and the booking dialog in a real browser; check desktop and mobile layout.
 - Run `node tools/audit-cloudflare-security.mjs --public-only` for public response headers.
+- For the separately authorized local account audit, use the existing private `node .secrets/cloudflare/management-read-check.mjs --execute-after-approved-management-create --token-kind=user` runner when its DPAPI credential is available. It verifies the active token and exact account/zone before fixed GET requests; retain the new dated evidence for Insights, Precursor, TLS and DNS. Its default `--prepare` performs no credential read or network request. This is a local capability, not a CI dependency or authorization to create/expand keys. Never export this management key globally, replace CI credentials with it, commit it, or remove `.secrets` during report cleanup. If unavailable, report the exact missing capability rather than reusing historical PASS results.
 - Use the local, read-only register audit to confirm Calendar availability without creating bookings or sending notifications.
 - Keep deployment evidence separate from proof of actual email delivery.
 
 Account settings, access permissions and live notification tests require separate authorization. Do not change WAF or Bot Fight Mode merely to complete a deployment.
+
+The [Precursor GET contract](https://developers.cloudflare.com/api/resources/precursor/methods/get/) requires `Cloudflare-Version: 1.0`; an unversioned legacy response with `default_mode/enforcement_rules` must not be classified as a broken protection. The 2026-11-15 access follow-up verified Arm, no interstitial and zero additional rules. Keep API access, configuration health and product entitlements separate; a working administrative key does not make Enterprise-only account WAF available on Free or establish a zero future bill.
 
 ## Dependency security
 

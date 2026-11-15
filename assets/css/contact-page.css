@@ -141,7 +141,7 @@
     .contacts-info {
       display: grid;
       grid-template-columns: 36px max-content minmax(0, 1fr);
-      grid-template-rows: auto repeat(5, auto) 1fr;
+      grid-template-rows: auto repeat(6, auto) 1fr;
       column-gap: 12px;
     }
 

@@ -3410,20 +3410,26 @@
   }
 }
 
+/* A meteor is one brief streak; its head blooms once instead of twinkling. */
 .weather-header-shooting-star {
   display: block;
   position: absolute;
   width: var(--shooting-star-length, 76px);
-  height: 18px;
+  height: 22px;
   z-index: 1;
   transform-origin: 90% 50%;
   background:
-    radial-gradient(ellipse 2.2px 1.7px at 90% 50%, rgba(255, 250, 232, 0.98), transparent),
-    linear-gradient(90deg, transparent 4%, rgba(31, 178, 126, 0.06) 22%, rgba(96, 218, 170, 0.36) 60%, rgba(202, 242, 219, 0.7) 83%, rgba(255, 241, 200, 0.92) 90%, transparent 94%) center / 100% 1px no-repeat,
-    radial-gradient(ellipse at 90% 50%, rgba(65, 212, 157, 0.28), transparent 30%);
-  filter: blur(0.3px) drop-shadow(0 0 4px rgba(31, 199, 137, 0.5));
+    radial-gradient(ellipse 2.8px 2px at 90% 50%, rgba(255, 253, 239, 1), transparent),
+    linear-gradient(90deg, transparent 4%, rgba(110, 185, 171, 0.04) 22%, rgba(173, 225, 211, 0.28) 60%, rgba(231, 246, 234, 0.7) 83%, rgba(255, 247, 219, 0.98) 90%, transparent 94%) center / 100% 1.3px no-repeat,
+    radial-gradient(ellipse at 90% 50%, rgba(229, 243, 218, 0.24), transparent 30%);
+  filter: drop-shadow(0 0 3px rgba(237, 248, 229, 0.6));
   opacity: 0;
-  pointer-events: none;
+  pointer-events: none !important;
+}
+
+/* Above both discs (9/10), below clouds (12), fog (13), text and rain. */
+.weather-header-shooting-star--foreground {
+  z-index: 11 !important;
 }
 
 .weather-header-shooting-star::before {
@@ -3431,15 +3437,12 @@
   position: absolute;
   left: 90%;
   top: 50%;
-  width: 7px;
-  height: 7px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background:
-    linear-gradient(90deg, transparent 36%, rgba(255, 245, 218, 0.9) 50%, transparent 64%),
-    linear-gradient(0deg, transparent 38%, rgba(193, 240, 218, 0.8) 50%, transparent 62%);
-  filter: blur(0.2px);
+  background: radial-gradient(circle, rgba(255, 255, 247, 1) 0 9%, rgba(255, 247, 217, 0.9) 15%, rgba(242, 248, 224, 0.32) 33%, transparent 67%);
   pointer-events: none;
-  animation: weatherShootingStarGlint 700ms ease-in-out infinite alternate;
+  animation: weatherShootingStarGlint var(--shooting-star-duration, 600ms) linear both;
 }
 
 .weather-header-shooting-star::after {
@@ -3450,21 +3453,24 @@
   top: calc(50% - 2px);
   height: 4px;
   border-radius: 50%;
-  background: linear-gradient(90deg, transparent 8%, rgba(31, 178, 126, 0.08) 42%, rgba(168, 231, 204, 0.3));
+  background: linear-gradient(90deg, transparent 8%, rgba(133, 211, 188, 0.04) 42%, rgba(223, 242, 225, 0.34));
   transform-origin: right center;
-  filter: blur(1.2px);
+  filter: blur(1.1px);
   pointer-events: none;
-  animation: weatherShootingStarTrail 1100ms ease-in-out infinite alternate;
+  animation: weatherShootingStarTrail var(--shooting-star-duration, 600ms) linear both;
 }
 
 @keyframes weatherShootingStarGlint {
-  from { opacity: 0.55; transform: translate(-50%, -50%) rotate(45deg) scale(0.65); }
-  to { opacity: 0.95; transform: translate(-50%, -50%) rotate(45deg) scale(1.05); }
+  0%, 8% { opacity: 0; transform: translate(-50%, -50%) scale(0.45); }
+  22% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  40% { opacity: 0.52; transform: translate(-50%, -50%) scale(0.8); }
+  75%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
 }
 
 @keyframes weatherShootingStarTrail {
-  from { opacity: 0.45; transform: scaleX(0.86) scaleY(0.65); }
-  to { opacity: 0.7; transform: scaleX(1) scaleY(1); }
+  0% { opacity: 0; transform: scaleX(0.6) scaleY(0.6); }
+  26% { opacity: 0.78; transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(0.82) scaleY(0.5); }
 }
 
 .weather-header-card__toggle {
@@ -11654,9 +11660,15 @@
         const layers = eligibleLayers();
         if (!layers.length) return;
         firstPass = false;
-        const layer = layers[Math.min(layers.length - 1, Math.floor(randomBetween(0, layers.length)))];
+        const nightLayer = layers[Math.min(layers.length - 1, Math.floor(randomBetween(0, layers.length)))];
+        const dropdown = nightLayer.closest('.weather-header-dropdown');
+        const foreground = randomBetween(0, 1) < 0.28;
+        const stage = foreground
+          ? nightLayer.closest('.weather-header-preview') || dropdown?.querySelector('.weather-header-dropdown__hero')
+          : null;
+        const layer = stage || nightLayer;
         const rect = layer.getBoundingClientRect();
-        const container = layer.closest('.weather-header-dropdown') || document.querySelector('.header');
+        const container = dropdown || document.querySelector('.header');
         const bounds = container?.getBoundingClientRect();
         if (!bounds) return;
         const viewport = window.visualViewport;
@@ -11664,13 +11676,15 @@
         const top = Math.max(rect.top, bounds.top, viewport?.offsetTop || 0);
         const right = Math.min(rect.right, bounds.right, (viewport?.offsetLeft || 0) + (viewport?.width || window.innerWidth));
         const bottom = Math.min(rect.bottom, bounds.bottom, (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight));
-        const length = Math.min(randomBetween(54, 86), (right - left) * 0.3);
         const angle = randomBetween(0, 360);
         const radians = angle * Math.PI / 180;
         const cosine = Math.cos(radians);
         const sine = Math.sin(radians);
-        const corners = [-0.9 * length, 0.1 * length].flatMap(x =>
-          [-9, 9].map(y => ({ x: x * cosine - y * sine, y: x * sine + y * cosine }))
+        // A short portrait band needs a shorter trail for steep trajectories.
+        const length = Math.min(randomBetween(54, 86), (right - left) * 0.3,
+          (bottom - top) * 0.32 / Math.max(Math.abs(sine), 0.001));
+        const corners = [-0.9 * length, Math.max(0.1 * length, 11)].flatMap(x =>
+          [-11, 11].map(y => ({ x: x * cosine - y * sine, y: x * sine + y * cosine }))
         );
         const minX = left - Math.min(...corners.map(point => point.x)) + 6;
         const maxX = right - Math.max(...corners.map(point => point.x)) - 6;
@@ -11689,29 +11703,34 @@
         const x = randomBetween(minX - Math.min(dx, 0), maxX - Math.max(dx, 0));
         const y = randomBetween(minY - Math.min(dy, 0), maxY - Math.max(dy, 0));
         const element = document.createElement('span');
-        element.className = 'weather-header-shooting-star';
+        element.className = `weather-header-shooting-star${stage ? ' weather-header-shooting-star--foreground' : ''}`;
         element.setAttribute('aria-hidden', 'true');
+        element.setAttribute('data-weather-meteor-depth', stage ? 'front' : 'back');
+        const duration = randomBetween(420, 760);
         element.style.setProperty('--shooting-star-length', `${length.toFixed(2)}px`);
+        element.style.setProperty('--shooting-star-duration', `${duration.toFixed(2)}ms`);
         element.style.left = `${(x - rect.left - length * 0.9).toFixed(2)}px`;
-        element.style.top = `${(y - rect.top - 9).toFixed(2)}px`;
+        element.style.top = `${(y - rect.top - 11).toFixed(2)}px`;
         layer.appendChild(element);
-        const transform = progress => `translate3d(${(dx * progress).toFixed(2)}px, ${(dy * progress).toFixed(2)}px, 0) rotate(${angle.toFixed(2)}deg) scale(${(1 - 0.8 * progress).toFixed(3)})`;
+        const transform = progress => `translate3d(${(dx * progress).toFixed(2)}px, ${(dy * progress).toFixed(2)}px, 0) rotate(${angle.toFixed(2)}deg) scale(1)`;
         let animation;
         try {
           animation = element.animate([
             // Opacity eases independently; transform endpoints preserve constant travel speed.
             { transform: transform(0), offset: 0, easing: 'linear' },
             { opacity: 0, offset: 0, easing: 'ease-in-out' },
-            { opacity: 0.8, offset: 0.18, easing: 'ease-in-out' },
-            { opacity: 0.18, offset: 0.7, easing: 'ease-in-out' },
+            { opacity: 0.75, offset: 0.08, easing: 'ease-in-out' },
+            { opacity: 1, offset: 0.22, easing: 'ease-in-out' },
+            { opacity: 0.55, offset: 0.42, easing: 'ease-in-out' },
+            { opacity: 0.08, offset: 0.8, easing: 'ease-in-out' },
             { transform: transform(1), opacity: 0, offset: 1 },
-          ], { duration: randomBetween(2000, 3000), easing: 'linear', fill: 'forwards' });
+          ], { duration, easing: 'linear', fill: 'forwards' });
         } catch {
           element.remove();
           return;
         }
         const token = ++generation;
-        active = { layer, element, animation };
+        active = { layer: nightLayer, element, animation };
         const finish = () => {
           element.remove();
           if (token !== generation || disposed) return;
@@ -11722,7 +11741,7 @@
       };
       const sync = (restart = false) => {
         const layers = eligibleLayers();
-        if (restart || !layers.length || (active && !layers.includes(active.layer))) stop();
+        if (restart || !layers.length || (active && (!layers.includes(active.layer) || active.element.isConnected === false))) stop();
         if (layers.length) schedule();
       };
       host.__weatherShootingStars = {

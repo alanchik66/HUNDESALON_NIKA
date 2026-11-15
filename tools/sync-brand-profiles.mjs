@@ -1,5 +1,5 @@
 /**
- * Sync sameAs, NAP, and LocalBusiness description from config/brand-profiles.mjs into index pages.
+ * Sync homepage profiles/NAP, shared fax metadata, and visible fax contact values.
  * npm run brand:profiles
  */
 import fs from 'node:fs';
@@ -10,6 +10,11 @@ import { META_DESCRIPTIONS } from '../config/meta-descriptions.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const indexFiles = ['de/index.html', 'en/index.html', 'ru/index.html', 'uk/index.html'];
+const serviceFiles = ['de/nashi-uslugi.html', 'en/nashi-uslugi.html', 'ru/nashi-uslugi.html', 'uk/nashi-uslugi.html'];
+const contactFiles = ['de', 'en', 'ru', 'uk'].flatMap(lang => [
+  `${lang}/kontakty.html`,
+  `${lang}/impressum.html`,
+]);
 
 const businessDesc = {
   de: META_DESCRIPTIONS['index.html'].de,
@@ -33,17 +38,19 @@ function pickSameAsHost(hostname) {
   });
 }
 
-function updateJsonLd(html, lang) {
+function updateJsonLd(html, lang, updateHomepage = true) {
   return html.replace(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g, (match, raw) => {
     try {
       const json = JSON.parse(raw);
+      const before = JSON.stringify(json);
       const graph = Array.isArray(json['@graph']) ? json['@graph'] : [json];
       for (const node of graph) {
         if (!node || typeof node !== 'object') continue;
         if (node['@type'] === 'Organization' || node['@type'] === 'LocalBusiness') {
-          node.sameAs = [...SAME_AS];
+          node.faxNumber = NAP.fax.replace(/\s/g, '');
+          if (updateHomepage) node.sameAs = [...SAME_AS];
         }
-        if (node['@type'] === 'LocalBusiness') {
+        if (node['@type'] === 'LocalBusiness' && updateHomepage) {
           node.description = businessDesc[lang] || businessDesc.de;
           node.url = `https://hundesalon-nika.com/${lang}/`;
           node.telephone = NAP.phone;
@@ -58,12 +65,14 @@ function updateJsonLd(html, lang) {
           };
         }
       }
-      const indent = match.match(/^(\s*)<script/)?.[1] ?? '    ';
+      if (JSON.stringify(json) === before) return match;
+      const indent = raw.match(/(?:^|\n)([ \t]*)\{/)?.[1] ?? '';
+      const closingIndent = raw.match(/\n([ \t]*)$/)?.[1] ?? '';
       const body = JSON.stringify(json, null, 2)
         .split('\n')
         .map(line => `${indent}${line}`)
         .join('\n');
-      return `<script type="application/ld+json">\n${body}\n${indent}</script>`;
+      return `<script type="application/ld+json">\n${body}\n${closingIndent}</script>`;
     } catch {
       return match;
     }
@@ -88,6 +97,7 @@ function updateLlmsTxt() {
 - ${NAP.name}
 - ${NAP.street}, ${NAP.postalCode} ${NAP.locality}, ${NAP.region}, ${NAP.country}
 - Phone: ${NAP.phone}
+- Fax: ${NAP.fax}
 - Email: ${NAP.email}
 `;
 
@@ -100,11 +110,24 @@ function updateLlmsTxt() {
 }
 
 const report = { updated: [] };
-for (const rel of indexFiles) {
+for (const rel of [...indexFiles, ...serviceFiles]) {
   const full = path.join(root, rel);
   const lang = langFromPath(rel);
   const before = fs.readFileSync(full, 'utf8');
-  const after = updateJsonLd(before, lang);
+  const after = updateJsonLd(before, lang, indexFiles.includes(rel));
+  if (after !== before) {
+    fs.writeFileSync(full, after, 'utf8');
+    report.updated.push(rel);
+  }
+}
+
+for (const rel of contactFiles) {
+  const full = path.join(root, rel);
+  const before = fs.readFileSync(full, 'utf8');
+  const after = before.replace(
+    /(<span\b[^>]*\bdata-contact-fax\b[^>]*>)[^<]*(<\/span>)/g,
+    (_, open, close) => `${open}${NAP.fax}${close}`
+  );
   if (after !== before) {
     fs.writeFileSync(full, after, 'utf8');
     report.updated.push(rel);
