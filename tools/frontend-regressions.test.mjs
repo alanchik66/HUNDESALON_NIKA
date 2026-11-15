@@ -504,6 +504,111 @@ test('the one-second phase timer pauses when hidden and is cleaned up independen
   assert.equal(host.__weatherSolarPhaseRefreshId, null);
 });
 
+test('social card DOM headings cannot select arbitrary icon URLs or inherited reel providers', async () => {
+  const source = await readFile(path.join(root, 'assets/js/social-page.js'), 'utf8');
+  const begin = source.indexOf("  'use strict';");
+  const end = source.indexOf('\n  const tileVideos =');
+  assert.ok(begin >= 0 && end > begin, 'run the actual card initialization before unrelated video controls');
+  const imageSources = [];
+  const element = (tagName, textContent = '') => {
+    const attributes = new Map();
+    const node = {
+      tagName, textContent, className: '', dataset: {}, children: [], listeners: new Map(),
+      setAttribute: (name, value) => attributes.set(name, String(value)),
+      getAttribute: name => attributes.get(name) ?? null,
+      removeAttribute: name => attributes.delete(name),
+      appendChild(child) {
+        child.remove();
+        child.parent = this;
+        this.children.push(child);
+        return child;
+      },
+      append(...children) { children.forEach(child => this.appendChild(child)); },
+      replaceChildren(...children) {
+        this.children.forEach(child => { child.parent = null; });
+        this.children = [];
+        this.append(...children);
+      },
+      remove() {
+        if (this.parent) this.parent.children = this.parent.children.filter(child => child !== this);
+        this.parent = null;
+      },
+      cloneNode() {
+        const clone = element(tagName, this.textContent);
+        attributes.forEach((value, name) => clone.setAttribute(name, value));
+        return clone;
+      },
+      closest: () => node.parent,
+      querySelector(selector) {
+        const descendants = this.children.flatMap(child => [child, ...child.descendants()]);
+        return descendants.find(child => selector === 'h3' ? child.tagName === 'h3'
+          : selector === 'a[href]' && child.tagName === 'a' && child.getAttribute('href')) || null;
+      },
+      descendants() { return this.children.flatMap(child => [child, ...child.descendants()]); },
+      addEventListener(type, listener) { this.listeners.set(type, listener); },
+      focus() {},
+    };
+    node.classList = { add: value => { node.className += ` ${value}`; } };
+    for (const property of ['src', 'href']) {
+      Object.defineProperty(node, property, {
+        get: () => node.getAttribute(property),
+        set: value => {
+          if (tagName === 'img' && property === 'src') imageSources.push(value);
+          node.setAttribute(property, value);
+        },
+      });
+    }
+    return node;
+  };
+  const grid = element('div');
+  const headings = ['Instagram', ' Facebook ', 'TikTok', 'WhatsApp', 'Telegram', 'Viber', 'YouTube',
+    'constructor', '__proto__', 'toString', '../../private', 'Instagram/../../private',
+    'https://outside.invalid/icon', 'Unknown provider'];
+  const cards = headings.map(title => {
+    const card = element('div');
+    const link = element('a');
+    link.setAttribute('href', 'https://outside.invalid/profile');
+    card.append(element('h3', title), link);
+    grid.append(card);
+    return card;
+  });
+  const document = {
+    documentElement: { lang: 'en' },
+    querySelector: selector => selector === '.social-card--instagram' ? cards[0] : null,
+    querySelectorAll: selector => selector === '.social-grid .social-card' ? [...grid.children] : [],
+    createElement: element,
+  };
+  new Function('document', source.slice(begin, end))(document);
+
+  const allowedIcons = new Set(['instagram', 'facebook', 'tiktok', 'whatsapp', 'telegram', 'viber', 'youtube']
+    .map(name => `/assets/images/icons/${name}.png`));
+  assert.equal(imageSources.length, allowedIcons.size);
+  assert.ok(imageSources.every(url => allowedIcons.has(url)), 'DOM text must never become an image path');
+  for (const card of cards.slice(7)) {
+    assert.equal(card.dataset.socialNetwork, undefined, 'unknown/prototype headings must not become reel providers');
+    assert.equal(card.dataset.socialEmbedActive, undefined);
+    assert.equal(card.descendants().filter(node => ['iframe', 'img'].includes(node.tagName)).length, 0);
+  }
+  const carousels = cards.slice(0, 3).map((card, index) => {
+    const network = ['instagram', 'facebook', 'tiktok'][index];
+    const nodes = card.descendants();
+    const frame = nodes.find(node => node.tagName === 'iframe');
+    assert.equal(card.dataset.socialNetwork, network);
+    assert.equal(card.dataset.socialEmbedActive, 'false');
+    assert.equal(nodes.find(node => node.tagName === 'img').src, `/assets/images/icons/${network}.png`);
+    assert.equal(frame.hidden, true);
+    assert.equal(frame.getAttribute('src'), null);
+    assert.equal(frame.getAttribute('srcdoc'), null);
+    nodes.filter(node => ['‹', '›'].includes(node.textContent)).forEach(button => button.listeners.get('click')());
+    assert.equal(frame.getAttribute('src'), null, 'offline carousel navigation must preserve opt-in');
+    return { card, frame, activate: nodes.find(node => node.dataset.socialEmbedAction === 'activate') };
+  });
+  carousels[1].activate.listeners.get('click')();
+  assert.equal(carousels[1].card.dataset.socialEmbedActive, 'true');
+  assert.match(carousels[1].frame.src, /^https:\/\/www\.facebook\.com\/plugins\/video\.php\?/);
+  for (const index of [0, 2]) assert.equal(carousels[index].frame.getAttribute('src'), null);
+});
+
 test('mobile social and music icons reverse their rollout without losing toggle state', async t => {
   const source = await readFile(path.join(root, 'assets/js/main.js'), 'utf8');
   const controls = source.slice(source.indexOf('  let activeMusicPanel'), source.indexOf('  [pageHeader, pageTopRow, socialBar]'));

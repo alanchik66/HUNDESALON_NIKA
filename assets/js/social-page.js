@@ -25,6 +25,15 @@
   const LETTERBOX_SCAN_INTERVAL = 140;
   const SWIPE_MIN_DISTANCE = 48;
   const SWIPE_AXIS_RATIO = 1.2;
+  const networkIcons = new Map([
+    ['instagram', '/assets/images/icons/instagram.png'],
+    ['facebook', '/assets/images/icons/facebook.png'],
+    ['tiktok', '/assets/images/icons/tiktok.png'],
+    ['whatsapp', '/assets/images/icons/whatsapp.png'],
+    ['telegram', '/assets/images/icons/telegram.png'],
+    ['viber', '/assets/images/icons/viber.png'],
+    ['youtube', '/assets/images/icons/youtube.png'],
+  ]);
 
   // Share the existing reel controls and layout across all network cards.
   const reelTemplate = document.querySelector('.social-card--instagram');
@@ -65,7 +74,7 @@
         link.className = 'social-contact-link';
         link.setAttribute('aria-label', `${title} HUNDESALON_NIKA`);
         const image = document.createElement('img');
-        image.src = `/assets/images/icons/${icon}.png`;
+        image.src = networkIcons.get(icon);
         image.alt = '';
         link.appendChild(image);
         const label = document.createElement('span');
@@ -123,6 +132,7 @@
   };
   document.querySelectorAll('.social-grid .social-card').forEach(card => {
     const network = card === reelTemplate ? 'instagram' : card.querySelector('h3')?.textContent.trim().toLowerCase();
+    if (!Object.hasOwn(networkReels, network)) return;
     const reels = networkReels[network];
     if (!reels) return;
     card.className = 'social-card social-card--reel-carousel';
@@ -143,7 +153,7 @@
     const placeholder = document.createElement('div');
     placeholder.className = 'social-reel-placeholder';
     const logo = document.createElement('img');
-    logo.src = `/assets/images/icons/${network}.png`;
+    logo.src = networkIcons.get(network);
     logo.alt = '';
     logo.width = logo.height = 96;
     logo.loading = 'lazy';
