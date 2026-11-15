@@ -98,12 +98,16 @@ export function applySkyFog(overlay, part, atmosphere) {
   const preview = region.classList.contains('weather-header-preview');
   const riseValue = preview ? parseFloat(view?.getComputedStyle(overlay).getPropertyValue('--header-weather-cloud-rise')) : 0;
   const rise = Number.isFinite(riseValue) ? Math.max(0, riseValue) : 0;
-  const width = Math.max(1, region.clientWidth || bounds.width), height = Math.max(1, (region.clientHeight || bounds.height) + rise);
+  const width = Math.max(1, region.clientWidth || bounds.width), fullHeight = Math.max(1, region.clientHeight || bounds.height);
+  const height = fullHeight + rise;
   const scale = bounds.width > 0 ? bounds.width / width : 1;
+  const control = region.querySelector(preview ? '.weather-header-card__toggle' : '.weather-header-dropdown__hero-chips')?.getBoundingClientRect();
   const radius = Math.max(0, orb.width / scale * .247);
-  const left = Math.min(width / 2, radius + 5), top = Math.min(height / 2, radius + 4);
+  const displayHeight = control?.height > 0 ? clamp((control.top - bounds.top) / scale, Math.min(fullHeight, radius * 2), fullHeight) : fullHeight;
+  const left = Math.min(width / 2, radius + 5), top = Math.min(displayHeight / 2, radius + 4);
   const x = left + Math.max(0, width - left * 2) * clamp(number(part?.sky?.x) ?? .5, 0, 1);
-  const y = top + Math.max(0, height - top * 2) * clamp(number(part?.sky?.y) ?? 1, 0, 1);
+  // Keep the veil's taller coverage, but light it from the same framed Sun.
+  const y = rise + top + Math.max(0, displayHeight - top * 2) * clamp(number(part?.sky?.y) ?? 1, 0, 1);
   layer.style.setProperty('top', `${-rise}px`, 'important');
   layer.style.setProperty('height', `${height}px`, 'important');
   const [base, halo] = layer.children;

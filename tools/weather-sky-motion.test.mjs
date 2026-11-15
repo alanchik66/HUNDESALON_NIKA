@@ -189,11 +189,11 @@ test('continuous CSS positions retain the same base anchor and reuse the existin
   assert.equal(h.styles.get('--orb-sky-duration'), '0s', 'resume snaps to the actual sky rather than replaying hidden time');
 });
 
-test('both physical discs use full scene edges and keep their radius without text-column or toggle displacement',()=>{
+test('both physical discs use full widget edges and keep their radius when no control occupies the sky',()=>{
   for(const variant of ['preview','dropdown'])for(const [kind,width,factor]of [['sun',68,.247],['moon',106,.255]]){
     const h=motionHarness(),bounds=variant==='preview'?{left:12,top:54,right:363,bottom:132,width:351,height:78}:{left:0,top:0,right:520,bottom:220,width:520,height:220};
     h.region.getBoundingClientRect=()=>bounds;
-    h.region.querySelector=selector=>{if(selector==='[data-orb-role="moon"]')return null;throw Error('Text and controls cannot narrow the physical sky projection.');};
+    h.region.querySelector=selector=>{if(['[data-orb-role="moon"]','.weather-header-card__toggle','.weather-header-dropdown__hero-chips'].includes(selector))return null;throw Error('Unrelated text columns cannot narrow the sky projection.');};
     h.overlay.dataset.orbRole=kind;
     h.overlay.classList={contains:()=>variant==='dropdown'};
     h.overlay.getBoundingClientRect=()=>({left:220+parseFloat(h.styles.get('--orb-sky-x')||0),top:50+parseFloat(h.styles.get('--orb-sky-y')||0),width,height:width});
@@ -209,6 +209,75 @@ test('both physical discs use full scene edges and keep their radius without tex
        assert.equal(optical.space, 'logical');
         assert.ok(Math.abs(optical.x - (1 - x)) < .0001);
        assert.ok(Math.abs(optical.y - y) < .0001, 'both layouts use the same sky axis, independent of local panel height');
+    }
+  }
+});
+
+test('visible weather controls keep both discs above their bounds without changing size or the optical axis', () => {
+  for (const variant of ['preview', 'dropdown']) for (const [kind, width, factor] of [['sun', 68, .247], ['moon', 106, .255]]) {
+    const h = motionHarness(), preview = variant === 'preview';
+    const bounds = preview ? { left: 12, top: 54, right: 363, bottom: 132, width: 351, height: 78 }
+      : { left: 0, top: 0, right: 520, bottom: 220, width: 520, height: 220 };
+    let control = preview ? { left: 220, top: 122, right: 320, bottom: 132, width: 100, height: 10 }
+      : { left: 20, top: 164, right: 500, bottom: 220, width: 480, height: 56 };
+    const selector = preview ? '.weather-header-card__toggle' : '.weather-header-dropdown__hero-chips';
+    h.region.getBoundingClientRect = () => bounds;
+    h.region.classList.contains = name => preview && name === 'weather-header-preview';
+    h.region.querySelector = query => query === selector ? { getBoundingClientRect: () => control } : null;
+    h.overlay.dataset.orbRole = kind;
+    h.overlay.classList = { contains: name => !preview && name === 'weather-orb-overlay--dropdown' };
+    h.styles.set('--header-weather-cloud-rise', '80px');
+    h.overlay.getBoundingClientRect = () => ({ left: 220 + parseFloat(h.styles.get('--orb-sky-x') || 0), top: 50 + parseFloat(h.styles.get('--orb-sky-y') || 0), width, height: width });
+    for (const x of [0, .5, 1]) for (const y of [0, .5, 1]) {
+      const part = { active: true, opacity: .72, sky: { x, y } }, before = structuredClone(part);
+      applySkyPosition(h.overlay, part);
+      assert.deepEqual(part, before);
+      const rect = h.overlay.getBoundingClientRect(), radius = width * factor;
+      assert.equal(rect.width, width); assert.equal(rect.height, width);
+      assert.ok(rect.top + width / 2 - radius >= bounds.top - .001);
+      assert.ok(rect.top + width / 2 + radius <= control.top + .001, `${variant}/${kind} must clear the visible control`);
+      const optical = skyOpticalCenter(h.overlay);
+      assert.ok(Math.abs(optical.x - (1 - x)) < .0001);
+      assert.ok(Math.abs(optical.y - y) < .0001, 'both panels normalize optics in their control-safe frame');
+    }
+    control = { ...control, width: 0, height: 0 };
+    applySkyPosition(h.overlay, { active: true, opacity: .72, sky: { x: .5, y: 1 } });
+    const rect = h.overlay.getBoundingClientRect();
+    assert.ok(Math.abs(rect.top + width / 2 + width * factor - (bounds.bottom - 4)) < .001,
+      'an unrendered control does not reserve empty sky space');
+  }
+});
+
+test('short control-safe frames preserve complete discs and their size before relaxing control clearance', () => {
+  for (const variant of ['preview', 'dropdown']) for (const [kind, width, factor] of [['sun', 68, .247], ['moon', 106, .255]]) {
+    const h = motionHarness(), preview = variant === 'preview', radius = width * factor;
+    const bounds = preview ? { left: 12, top: 54, right: 363, bottom: 132, width: 351, height: 78 }
+      : { left: 0, top: 0, right: 520, bottom: 220, width: 520, height: 220 };
+    let availableHeight;
+    const selector = preview ? '.weather-header-card__toggle' : '.weather-header-dropdown__hero-chips';
+    h.region.getBoundingClientRect = () => bounds;
+    h.region.classList.contains = name => preview && name === 'weather-header-preview';
+    h.region.querySelector = query => query === selector ? { getBoundingClientRect: () => ({
+      left: bounds.left, top: bounds.top + availableHeight, width: bounds.width, height: bounds.height - availableHeight,
+    }) } : null;
+    h.overlay.dataset.orbRole = kind;
+    h.overlay.classList = { contains: name => !preview && name === 'weather-orb-overlay--dropdown' };
+    h.overlay.getBoundingClientRect = () => ({ left: 220 + parseFloat(h.styles.get('--orb-sky-x') || 0), top: 50 + parseFloat(h.styles.get('--orb-sky-y') || 0), width, height: width });
+    for (availableHeight of [radius * 2 + .25, radius * 2 - 12, 0]) {
+      for (const x of [0, .5, 1]) for (const y of [0, .5, 1]) {
+        const part = { active: true, opacity: .72, sky: { x, y } }, before = structuredClone(part);
+        applySkyPosition(h.overlay, part);
+        assert.deepEqual(part, before);
+        const rect = h.overlay.getBoundingClientRect(), centreY = rect.top + width / 2;
+        assert.equal(rect.width, width); assert.equal(rect.height, width);
+        assert.ok(centreY - radius >= bounds.top - .001 && centreY + radius <= bounds.bottom + .001,
+          `${variant}/${kind}: an undersized control gap must not push the disc out of the original widget`);
+        if (availableHeight >= radius * 2) assert.ok(centreY + radius <= bounds.top + availableHeight + .001,
+          'a gap wider than the diameter must contain the disc even without the normal 4px padding');
+        const optical = skyOpticalCenter(h.overlay);
+        assert.ok(Math.abs(optical.x - (1 - x)) < .0001);
+        assert.ok(Math.abs(optical.y - y) < .0001);
+      }
     }
   }
 });
@@ -255,27 +324,44 @@ test('updating either mounted Moon view removes a stale caption without recreati
   }
 });
 
-test('preview trajectories use the cloud sky above the weather text while popup bounds and disc sizes stay fixed', () => {
-  for (const [kind, width, factor] of [['sun', 68, .247], ['moon', 106, .255]]) {
+test('cloud rise never moves either disc outside the visible widget in either panel', () => {
+  const positions = Array.from({ length: 24 }, (_, index) => astronomy.projectSkyPosition({
+    elevationDeg: 0, azimuthDeg: index * 15,
+  }));
+  positions.push(astronomy.projectSkyPosition({ elevationDeg: 90, azimuthDeg: 0 }));
+  for (const variant of ['preview', 'dropdown']) for (const [kind, width, factor] of [['sun', 68, .247], ['moon', 106, .255]]) {
     const h = motionHarness();
+    const bounds = variant === 'preview'
+      ? { left: 12, top: 54, right: 363, bottom: 132, width: 351, height: 78 }
+      : { left: 0, top: 0, right: 520, bottom: 220, width: 520, height: 220 };
+    h.region.getBoundingClientRect = () => bounds;
+    h.region.classList.contains = name => variant === 'preview' && name === 'weather-header-preview';
     h.overlay.dataset.orbRole = kind;
+    h.overlay.classList = { contains: name => variant === 'dropdown' && name === 'weather-orb-overlay--dropdown' };
     h.overlay.getBoundingClientRect = () => ({ left: 220 + parseFloat(h.styles.get('--orb-sky-x') || 0), top: 50 + parseFloat(h.styles.get('--orb-sky-y') || 0), width, height: width });
-    const sample = (preview, rise, y) => {
-      h.region.classList.contains = name => preview && name === 'weather-header-preview';
+    const sample = (rise, sky) => {
       h.styles.set('--header-weather-cloud-rise', rise);
-      applySkyPosition(h.overlay, { active: true, opacity: 1, sky: { x: .5, y } });
+      const part = { active: true, opacity: .72, sky };
+      const before = structuredClone(part);
+      applySkyPosition(h.overlay, part);
+      assert.deepEqual(part, before, 'display framing must not alter astronomical coordinates or visibility');
       const rect = h.overlay.getBoundingClientRect();
-      assert.equal(rect.width, width);
-      return { x: rect.left + width / 2, y: rect.top + width / 2 };
+      assert.equal(rect.width, width); assert.equal(rect.height, width);
+      const point = { x: rect.left + width / 2, y: rect.top + width / 2 }, radius = width * factor;
+      assert.ok(point.x - radius >= bounds.left - .001 && point.x + radius <= bounds.right + .001);
+      assert.ok(point.y - radius >= bounds.top - .001 && point.y + radius <= bounds.bottom + .001);
+      const optical = skyOpticalCenter(h.overlay);
+      assert.ok(Math.abs(optical.x - (1 - sky.x)) < .0001);
+      assert.ok(Math.abs(optical.y - sky.y) < .0001, 'the optical axis uses the same widget frame as the disc');
+      return point;
     };
-    const baselineTop = sample(true, '0px', 0), extendedTop = sample(true, '56px', 0);
-    assert.ok(Math.abs(extendedTop.y - (baselineTop.y - 56)) < .001);
-    assert.equal(extendedTop.x, baselineTop.x);
-    const baselineBottom = sample(true, '0px', 1), extendedBottom = sample(true, '56px', 1);
-    assert.deepEqual(extendedBottom, baselineBottom, 'the physical horizon stays at the same lower edge');
-    assert.ok(Math.abs(extendedTop.y - width * factor - 2) < .001, 'the disc remains inside the same full-header sky as clouds');
-    assert.deepEqual(sample(false, '56px', 0), baselineTop, 'popup clouds have no header rise');
-    for (const invalid of ['-56px', '', 'invalid', 'Infinity']) assert.deepEqual(sample(true, invalid, 0), baselineTop);
+    for (const sky of positions) {
+      const baseline = sample('0px', sky);
+      for (const rise of ['36px', '80px']) assert.deepEqual(sample(rise, sky), baseline,
+        `${variant}/${kind}: cloud rise cannot move horizon azimuth ${sky.azimuthDeg}`);
+    }
+    const north = positions[0], baselineTop = sample('0px', north);
+    for (const invalid of ['-56px', '', 'invalid', 'Infinity']) assert.deepEqual(sample(invalid, north), baselineTop);
   }
 });
 

@@ -27,8 +27,9 @@ export function skyLane(region, left, right, radius) {
   const low = Math.max(region.left + radius + 5, (left?.right ?? region.left) + radius + 5);
   const high = Math.min(region.right - radius - 5, (right?.left ?? region.right) - radius - 5);
   const middle = clamp((low + high) / 2, region.left + radius, region.right - radius);
+  const top = region.top + Math.min(radius + 4, Math.max(0, region.bottom - region.top) / 2);
   return { left: low <= high ? low : middle, right: low <= high ? high : middle,
-    top: region.top + radius + 4, bottom: Math.max(region.top + radius + 4, region.bottom - radius - 4) };
+    top, bottom: Math.max(top, region.bottom - radius - 4) };
 }
 
 export function solarMoonContrast(distance, sunRadius, moonRadius, sunOpacity) {
@@ -51,12 +52,17 @@ function measureSkyFrame(overlay) {
   const window = overlay?.ownerDocument?.defaultView;
   const bounds = region?.getBoundingClientRect(), orb = overlay?.getBoundingClientRect();
   if (!window || !bounds?.width || !bounds?.height || !orb?.width || !orb?.height) return null;
-  // Match the projection's actual disc margins and its full cloud-height sky.
+  // Frame the discs inside their widget; the taller cloud field is not a viewport.
   const radius = orb.width * (overlay.dataset.orbRole === 'sun' ? .247 : .255);
   const computed = window.getComputedStyle(overlay);
-  const rise = region.classList.contains('weather-header-preview') ? parseFloat(computed.getPropertyValue?.('--header-weather-cloud-rise')) : 0;
-  const skyBounds = { left: bounds.left, right: bounds.right, top: bounds.top - (Number.isFinite(rise) ? Math.max(0, rise) : 0), bottom: bounds.bottom };
-  return { region, window, bounds, orb, computed, lane: skyLane(skyBounds, null, null, radius) };
+  const preview = region.classList.contains('weather-header-preview');
+  const control = region.querySelector(preview ? '.weather-header-card__toggle' : '.weather-header-dropdown__hero-chips')?.getBoundingClientRect();
+  // If the control leaves less than one diameter, retain the full disc in the
+  // widget rather than shrinking it or pushing it beyond the widget's edge.
+  const minimumBottom = Math.min(bounds.bottom, bounds.top + radius * 2);
+  const bottom = control?.height > 0 ? clamp(control.top, minimumBottom, bounds.bottom) : bounds.bottom;
+  const frame = { left: bounds.left, right: bounds.right, top: bounds.top, bottom };
+  return { region, window, bounds, orb, computed, lane: skyLane(frame, null, null, radius) };
 }
 
 export function skyOpticalCenter(overlay) {

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { applySkyFog, resolveFogLight } from '../assets/js/header-weather-fog-layer.js';
+import { applySkyPosition } from '../assets/js/header-weather-sky-motion.js';
 
 const fog = visibilityKm => ({ mode: 'fog', visibilityKm });
 const sky = (elevationDeg, x = .5, y = .5) => ({ valid: true, elevationDeg, x, y, horizonOpacity: elevationDeg > 0 ? 1 : 0 });
@@ -117,6 +118,50 @@ test('both panels share one full-sky layer below text and above clouds, includin
   }
 });
 
+test('fog keeps its raised coverage while its halo follows the rendered widget Sun', () => {
+  const diameter = 68 * .247 * 2;
+  for (const preview of [true, false]) for (const rise of [0, 36, 80]) for (const availableHeight of [null, 62, diameter + .25, diameter - 12]) {
+    const f = fixture();
+    if (!preview) { f.region.classes.clear(); f.region.classes.add('weather-header-dropdown__hero'); }
+    f.overlay.computed['--header-weather-cloud-rise'] = `${rise}px`;
+    f.region.bounds = { ...f.region.bounds, right: 370, bottom: 170 };
+    const withControl = availableHeight !== null, controlTop = 80 + availableHeight;
+    if (withControl) {
+      const control = new f.Node(); control.bounds = { left: 10, top: controlTop, width: 360, height: 90 - availableHeight };
+      const query = f.region.querySelector.bind(f.region);
+      const selector = preview ? '.weather-header-card__toggle' : '.weather-header-dropdown__hero-chips';
+      f.region.querySelector = value => value === selector ? control : query(value);
+    }
+    f.root.append = node => f.root.appendChild(node);
+    const view = f.overlay.ownerDocument.defaultView, getComputedStyle = view.getComputedStyle;
+    view.getComputedStyle = node => ({ ...getComputedStyle(node),
+      translate: `${node.style.getPropertyValue('--orb-sky-x') || '0px'} ${node.style.getPropertyValue('--orb-sky-y') || '0px'}` });
+    f.overlay.getBoundingClientRect = () => ({ ...f.overlay.bounds,
+      left: f.overlay.bounds.left + parseFloat(f.overlay.style.getPropertyValue('--orb-sky-x') || 0),
+      top: f.overlay.bounds.top + parseFloat(f.overlay.style.getPropertyValue('--orb-sky-y') || 0) });
+    for (const [x, y] of [[.5, 0], [0, .5], [.5, 1], [1, .5], [.17, .82]]) {
+      const part = { active: true, opacity: .72, sky: sky(20, x, y) }, before = structuredClone(part);
+      applySkyPosition(f.overlay, part);
+      applySkyFog(f.overlay, part, fog(.5));
+      assert.deepEqual(part, before);
+      const layer = f.layer(), halo = layer.children[1], rect = f.overlay.getBoundingClientRect();
+      const coverageRise = preview ? rise : 0;
+      assert.equal(layer.style.getPropertyValue('top'), `${-coverageRise}px`);
+      assert.equal(layer.style.getPropertyValue('height'), `${90 + coverageRise}px`);
+      const translation = halo.style.transform.match(/^translate\(([-\d.]+)px,([-\d.]+)px\)$/);
+      assert.ok(translation);
+      const haloX = f.region.bounds.left + Number(translation[1]) + parseFloat(halo.style.width) / 2;
+      const haloY = f.region.bounds.top - coverageRise + Number(translation[2]) + parseFloat(halo.style.height) / 2;
+      assert.ok(Math.abs(haloX - (rect.left + rect.width / 2)) <= .001, 'halo and Sun share their rendered horizontal centre');
+      assert.ok(Math.abs(haloY - (rect.top + rect.height / 2)) <= .001, 'cloud coverage rise must not displace the halo from its Sun');
+      assert.equal(rect.width, 68); assert.equal(rect.height, 68);
+      const centreY = rect.top + rect.height / 2, radius = rect.width * .247;
+      assert.ok(centreY - radius >= 80 - .001 && centreY + radius <= 170 + .001);
+      if (withControl && availableHeight >= diameter) assert.ok(centreY + radius <= controlTop + .001);
+    }
+  }
+});
+
 test('night keeps fog but removes solar halo even when the Sun clock part is inactive', () => {
   const f = fixture();
   applySkyFog(f.overlay, { active: false, opacity: 0, sky: sky(-30) }, fog(.1));
@@ -155,18 +200,28 @@ test('moving a Sun between panel owners removes its previous layer; a Moon call 
 });
 
 test('uniformly scaled header ancestors preserve fog height and halo position in CSS pixels', () => {
-  const regular = fixture(), scaled = fixture(), part = { sky: sky(20, .2, .8) };
-  regular.region.clientWidth = scaled.region.clientWidth = 360;
-  regular.region.clientHeight = scaled.region.clientHeight = 90;
-  scaled.region.bounds = { ...scaled.region.bounds, width: 720, height: 180 };
-  scaled.overlay.bounds = { ...scaled.overlay.bounds, width: 136, height: 136 };
-  applySkyFog(regular.overlay, part, fog(.5)); applySkyFog(scaled.overlay, part, fog(.5));
-  const a = regular.layer(), b = scaled.layer();
-  assert.equal(b.style.getPropertyValue('height'), '126px');
-  assert.equal(b.style.getPropertyValue('top'), '-36px');
-  assert.equal(b.children[1].style.width, a.children[1].style.width);
-  assert.equal(b.children[1].style.height, a.children[1].style.height);
-  assert.equal(b.children[1].style.transform, a.children[1].style.transform);
+  for (const availableHeight of [null, 62, 68 * .247 * 2 + .25, 68 * .247 * 2 - 12]) {
+    const regular = fixture(), scaled = fixture(), part = { sky: sky(20, .2, .8) };
+    regular.region.clientWidth = scaled.region.clientWidth = 360;
+    regular.region.clientHeight = scaled.region.clientHeight = 90;
+    scaled.region.bounds = { ...scaled.region.bounds, width: 720, height: 180 };
+    scaled.overlay.bounds = { ...scaled.overlay.bounds, width: 136, height: 136 };
+    if (availableHeight !== null) {
+      for (const [f, scale] of [[regular, 1], [scaled, 2]]) {
+        const control = new f.Node();
+        control.bounds = { left: 10, top: 80 + availableHeight * scale, width: 360 * scale, height: (90 - availableHeight) * scale };
+        const query = f.region.querySelector.bind(f.region);
+        f.region.querySelector = value => value === '.weather-header-card__toggle' ? control : query(value);
+      }
+    }
+    applySkyFog(regular.overlay, part, fog(.5)); applySkyFog(scaled.overlay, part, fog(.5));
+    const a = regular.layer(), b = scaled.layer();
+    assert.equal(b.style.getPropertyValue('height'), '126px');
+    assert.equal(b.style.getPropertyValue('top'), '-36px');
+    assert.equal(b.children[1].style.width, a.children[1].style.width);
+    assert.equal(b.children[1].style.height, a.children[1].style.height);
+    assert.equal(b.children[1].style.transform, a.children[1].style.transform);
+  }
 });
 
 test('clear fades before clock-driven removal, fog reentry cancels removal, and reduced motion removes immediately', () => {
