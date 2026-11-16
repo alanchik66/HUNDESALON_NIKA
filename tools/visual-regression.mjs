@@ -5,8 +5,13 @@ import { chromium, devices, webkit } from 'playwright';
 import { startStaticTestServer } from './lib/static-test-server.mjs';
 
 const useWebKit = process.argv.includes('--webkit');
-const outDir = path.resolve('test-results', useWebKit ? 'visual-regression-webkit' : 'visual-regression');
-const requestedScenarios = (process.env.VISUAL_SCENARIOS || '').split(',').map(name => name.trim()).filter(Boolean);
+const meteorOnly = process.argv.includes('--meteor-only');
+const outputArgument = process.argv.find(value => value.startsWith('--output='));
+const outDir = outputArgument
+  ? path.resolve(outputArgument.slice('--output='.length))
+  : path.resolve('test-results', useWebKit ? 'visual-regression-webkit' : 'visual-regression');
+const requestedScenarios = (process.env.VISUAL_SCENARIOS || (meteorOnly ? 'mobile-dark' : ''))
+  .split(',').map(name => name.trim()).filter(Boolean);
 const scenarios = [
   { name: 'desktop-dark', viewport: { width: 1440, height: 900 }, light: false, mobile: false },
   { name: 'desktop-light', viewport: { width: 1440, height: 900 }, light: true, mobile: false },
@@ -23,9 +28,97 @@ const completedScenarios = [];
 let failure = null;
 const drawerScreenshots = [];
 const consentScreenshots = [];
+const meteorStates = [];
 const assert = (name, condition, detail = '') => {
   results.push({ name, ok: Boolean(condition), detail });
   if (!condition) throw new Error(`${name}${detail ? `: ${detail}` : ''}`);
+};
+
+const checkMeteorPseudoElements = async (page, scenarioName) => {
+  await page.waitForFunction(() => {
+    const host = document.querySelector('.header-weather-widget[data-weather-variant="header"]');
+    return host?.shadowRoot && [...host.shadowRoot.querySelectorAll('style')]
+      .some(style => style.textContent.includes('.weather-header-shooting-star'));
+  }, {}, { timeout: 15000 });
+  const measurement = await page.evaluate(() => {
+    const host = document.querySelector('.header-weather-widget[data-weather-variant="header"]');
+    const sourceStyles = [...host.shadowRoot.querySelectorAll('style')].map(style => style.textContent);
+    // Keep functional weather class names away from the live widget's observers.
+    // The frame has native Shadow DOM and the loaded CSS, but no application scripts.
+    const frame = document.createElement('iframe');
+    frame.dataset.visualMeteorFixture = 'true';
+    frame.setAttribute('aria-hidden', 'true');
+    frame.setAttribute('sandbox', 'allow-same-origin');
+    frame.style.cssText = `position:fixed;left:-10000px;top:0;width:${window.innerWidth}px;height:${window.innerHeight}px;visibility:hidden`;
+    const states = [];
+    let stylesCopiedExactly = false;
+    try {
+      document.body.append(frame);
+      const fixtureDocument = frame.contentDocument;
+      fixtureDocument.documentElement.lang = document.documentElement.lang;
+      fixtureDocument.body.className = document.body.className;
+      const fixtureHost = fixtureDocument.createElement('div');
+      for (const attribute of host.attributes) fixtureHost.setAttribute(attribute.name, attribute.value);
+      fixtureDocument.body.append(fixtureHost);
+      const shadow = fixtureHost.attachShadow({ mode: 'open' });
+      for (const text of sourceStyles) {
+        const style = fixtureDocument.createElement('style');
+        style.textContent = text;
+        shadow.append(style);
+      }
+      stylesCopiedExactly = [...shadow.querySelectorAll('style')]
+        .every((style, index) => style.textContent === sourceStyles[index]);
+      const fixture = fixtureDocument.createElement('div');
+      fixture.className = 'weather-app';
+      shadow.append(fixture);
+      for (const surface of ['preview', 'forecast']) {
+        for (const depth of ['back', 'front']) {
+          const container = fixtureDocument.createElement('div');
+          container.className = surface === 'preview' ? 'weather-header-preview' : 'weather-header-dropdown';
+          const stage = surface === 'preview' ? container : fixtureDocument.createElement('div');
+          if (stage !== container) {
+            stage.className = 'weather-header-dropdown__hero';
+            container.append(stage);
+          }
+          const layer = depth === 'front' ? stage : fixtureDocument.createElement('div');
+          if (layer !== stage) {
+            layer.className = `${surface === 'preview' ? 'weather-header-preview' : 'weather-header-dropdown'}__stars-back is-night-sky`;
+            stage.append(layer);
+          }
+          const meteor = fixtureDocument.createElement('span');
+          meteor.className = `weather-header-shooting-star${depth === 'front' ? ' weather-header-shooting-star--foreground' : ''}`;
+          layer.append(meteor);
+          fixture.append(container);
+          const pseudoStyle = selector => {
+            const style = frame.contentWindow.getComputedStyle(meteor, selector);
+            return { backgroundImage: style.backgroundImage, content: style.content, width: style.width, height: style.height };
+          };
+          states.push({ surface, depth, before: pseudoStyle('::before'), after: pseudoStyle('::after') });
+        }
+      }
+    } finally {
+      frame.remove();
+    }
+    return {
+      states, stylesCopiedExactly, sourceStyleCount: sourceStyles.length,
+      fixtureCountAfter: document.querySelectorAll('[data-visual-meteor-fixture]').length,
+    };
+  });
+  meteorStates.push({ scenario: scenarioName, ...measurement });
+  assert(`${scenarioName}: meteor check uses the loaded shell styles unchanged`,
+    measurement.sourceStyleCount > 0 && measurement.stylesCopiedExactly);
+  for (const state of measurement.states) {
+    const label = `${scenarioName}: ${state.surface} ${state.depth} meteor`;
+    assert(`${label} retains its radial head flash`,
+      state.before.backgroundImage.includes('radial-gradient(') && !['none', 'normal'].includes(state.before.content) &&
+        parseFloat(state.before.width) > 0 && parseFloat(state.before.height) > 0,
+      JSON.stringify(state.before));
+    assert(`${label} retains its linear trail glow`,
+      state.after.backgroundImage.includes('linear-gradient(') && !['none', 'normal'].includes(state.after.content) &&
+        parseFloat(state.after.height) > 0,
+      JSON.stringify(state.after));
+  }
+  assert(`${scenarioName}: meteor fixtures are removed before screenshots`, measurement.fixtureCountAfter === 0);
 };
 
 await mkdir(outDir, { recursive: true });
@@ -45,17 +138,29 @@ try {
       reducedMotion: 'reduce',
       serviceWorkers: 'block',
     });
+    if (meteorOnly) console.log('[visual] meteor context ready');
     const page = await context.newPage();
+    if (meteorOnly) console.log('[visual] meteor page ready');
     const pageErrors = [];
     page.on('pageerror', error => pageErrors.push(error.message));
     await page.route('**/assets/js/local-dev-refresh.js*', route => route.fulfill({
       contentType: 'application/javascript', body: '/* Workstation refresh is isolated in browser QA. */',
     }));
     await page.goto(`${server.baseUrl}/de/prays-list.html`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    if (meteorOnly) console.log('[visual] meteor document ready');
+    await page.locator('body').evaluate((body, light) => body.classList.toggle('light', light), scenario.light);
+    await checkMeteorPseudoElements(page, scenario.name);
+    if (meteorOnly) console.log('[visual] meteor computed styles checked');
+    if (meteorOnly) {
+      assert(`${scenario.name}: meteor style check has no JavaScript errors`, pageErrors.length === 0,
+        JSON.stringify(pageErrors));
+      await context.close();
+      completedScenarios.push(scenario.name);
+      continue;
+    }
     await page.addStyleTag({ url: `${server.baseUrl}/assets/css/ai-chat.css` });
     await page.addScriptTag({ url: `${server.baseUrl}/assets/js/ai-chat.js` });
     await page.waitForSelector('#hundesalon-ai-chat', { state: 'visible', timeout: 15000 });
-    await page.locator('body').evaluate((body, light) => body.classList.toggle('light', light), scenario.light);
     await page.locator('.cookie-consent').waitFor({ state: 'visible', timeout: 15000 });
     await page.evaluate(() => document.fonts.ready);
     await page.locator('.cookie-consent').evaluate(banner => Promise.all(banner.getAnimations().map(animation => animation.finished)));
@@ -506,6 +611,9 @@ try {
       ok: failure === null && completedScenarios.length === scenarios.length,
       plannedScenarios: scenarios.map(scenario => scenario.name),
       completedScenarios,
+      engine: useWebKit ? 'webkit' : 'chromium',
+      meteorOnly,
+      meteorStates,
       results,
       error: failure,
     }, null, 2));
@@ -522,7 +630,9 @@ console.log(
   JSON.stringify(
     {
       ok: true,
-      screenshots: scenarios.map(item => path.join(outDir, `${item.name}.png`)).concat(drawerScreenshots, consentScreenshots),
+      screenshots: (meteorOnly ? [] : scenarios.map(item => path.join(outDir, `${item.name}.png`)))
+        .concat(drawerScreenshots, consentScreenshots),
+      meteorStates,
       results,
     },
     null,

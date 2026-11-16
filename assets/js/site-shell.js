@@ -487,8 +487,8 @@
    so only the 3D animation is visible. */
 :host([data-weather-variant='header']) .weather-app,
 :host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown__close):not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *):not(.weather-header-preview):not(.weather-header-preview *),
-:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown__close):not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *):not(.weather-header-preview):not(.weather-header-preview *)::before,
-:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown__close):not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *):not(.weather-header-preview):not(.weather-header-preview *)::after {
+:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown__close):not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *):not(.weather-header-preview):not(.weather-header-preview *):not(.weather-header-shooting-star)::before,
+:host([data-weather-variant='header']) .weather-app *:not(.weather-header-dropdown__close):not(.weather-header-dropdown):not(.weather-header-dropdown *):not(.weather-location-selector):not(.weather-location-selector *):not(.weather-header-preview):not(.weather-header-preview *):not(.weather-header-shooting-star)::after {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;

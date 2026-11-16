@@ -1,7 +1,7 @@
 ---
 type: resource
 status: active
-updated: 2026-11-15
+updated: 2026-11-16
 tags:
   - frontend
   - accessibility
@@ -10,7 +10,7 @@ tags:
 
 # Проверка интерактивных элементов и модальных слоёв
 
-Проект: [[01_Projects/HUNDESALON_NIKA]]. Связи: [[03_Resources/Responsive_Contact_Layout]], [[03_Resources/Cloudflare_Security_Audit]]. Проверено 2026-11-14; дополнено 2026-11-15.
+Проект: [[01_Projects/HUNDESALON_NIKA]]. Связи: [[03_Resources/Responsive_Contact_Layout]], [[03_Resources/Cloudflare_Security_Audit]]. Проверено 2026-11-14; дополнено 2026-11-16.
 
 ## Проверенные технические сведения
 
@@ -72,3 +72,10 @@ tags:
 - `tools/production-release-verification.test.mjs` теперь наблюдает URL, signal и время попытки до native fetch; требует 1–2 попытки, TimeoutError/aborted у каждой, не больше server arrivals, чем client calls, и отсутствие новых попыток после завершения консервативного окна deadline. Отдельный closed-admission case подтверждает отмену до сервера. Бюджеты 80/240/1500ms, attempts 2 и production verifier не менялись.
 - У обоих случаев есть собственный test-runner timeout 2500ms: elapsed assertion сама по себе не защитит от promise, который вообще не завершится при сломанном abort. Ignored negative control с намеренно недоставляемым signal завершился cancellation по 2500ms вместо зависания. Это ожидаемый отрицательный контроль, не product failure.
 - Два новых адресных случая прошли, scoped ESLint и syntaxcheck прошли; полный gate root выполняет отдельно без дополнительных browser jobs во время unit stage. Свидетельства: `output/release-2026-11-15-final/timeout-test-review.md`, `infra/timeout-diagnostic-{0,120}.json`, `infra/timeout-fixed-targeted.log`, `infra/timeout-watchdog-negative.log`. Материалы внутренние и не добавляются в клиентскую базу знаний.
+
+## Вспышка метеора и reset псевдоэлементов — 2026-11-16
+
+- Первичное наблюдение собственного браузерного QA: в собранной сцене мобильный WebKit вычислял `background-image: none` у `.weather-header-shooting-star::before`, хотя radial-gradient разбирался, CSS.supports возвращал true, duration был задан, а одноразовая анимация головы работала. Chromium сохранял фон. Наличие яркого основного span/следа на PNG не доказывало работу дополнительного bloom.
+- Изоляция точного CSSOM selector общего AGGRESSIVE RESET и правила головы воспроизвела различие: complex `:not(.weather-header-preview *)` исключал элемент в обоих движках, но не защищал его псевдоэлемент от reset в проверенном WebKit. Удаление только reset-rule возвращало gradient; отдельный градиент без этого правила корректно рисовался в обоих движках. Это наблюдение конкретных движков, не утверждение обо всех версиях Safari. Первичные свидетельства: `output/release-2026-11-15-final/weather-css-isolation/results.json`, `reset-results.json`; exact-CI scene: `weather-fresh-controlled/results.json`.
+- В двух pseudo-ветвях reset добавлено простое явное `:not(.weather-header-shooting-star)` непосредственно перед `::before/::after`. Element-ветвь, материал/геометрия/скорость/тайминг и слои сцены не меняются. Изолированный matched-кандидат восстановил gradient в WebKit и сохранил его в Chromium: `weather-css-isolation/reset-candidate-results.json`. Проверка нового candidate build выполняется отдельно; изоляция сама по себе не является production PASS.
+- Для этого класса регрессии проверять actual computed фон головы и следа в полном shadow tree и смотреть PNG пика, а не ограничиваться наличием CSS rule, CSS.supports, opacity или общим status harness. Не исправлять корректный синтаксис градиента без доказательства: причина здесь в применении общего reset. QA выполнялся в Windows Playwright с эмуляцией viewport/touch; физический iPhone отдельно не проверялся. Это внутренняя справка, не клиентская база знаний.
