@@ -1,5 +1,12 @@
 # Decision Log
 
+## 2026-11-17 - Remove the vulnerable lint parser chain
+
+- Replace CLI2/globby/micromatch/braces with the official Markdownlint 0.41.1 API and native discovery while retaining the same configuration and file scopes. Upgrade Stylelint to 18.0.0 with standard config 41.0.0.
+- The `picomatch` dependency resolves to an explicitly named, private project adapter backed only by official Minimatch 11.0.4. It supports the inspected pinned Stylelint/tinyglobby calls, rejects unsupported syntax/options, and contains no legacy parser. This is an owned compatibility layer, not a claimed upstream patch or an advisory suppression.
+- Preserve strict full dependency audits. Verify installed consumer resolution, ordinary glob semantics, actual CSS/Markdown coverage and clean lockfile installation; future consumer upgrades require contract review. The previous unaccepted patch candidate and rejected adversarial verification are not used.
+- Refresh ordinary booking selects after dynamic insertion through the existing shared enhancement API. Keep a readable native fallback. The maintained Chromium/WebKit regression runs sequentially with the browser gate; CI installs both browser engines.
+
 ## 2026-11-06 - Service-page glass coverage and portable solar arithmetic
 
 - The four localized service pages lacked the glass stylesheet, script and opt-in grid attribute that were present on the homepages. Connect the existing material to all eight service cards per locale; preserve content, prices, links and layout. Include these exact pages in integration and browser coverage.
@@ -85,3 +92,71 @@ The upstream prompts contain Roo Code-specific XML tool contracts, while the ada
 - In the full shadow tree, the existing complex preview exclusion did not protect meteor pseudo-element backgrounds from the aggressive reset in the tested WebKit; Chromium preserved the radial head. CSS syntax/support and animation opacity alone passed and missed the defect. The exact CI scene plus a reset-only isolation established the cause; this is not a claim about every Safari version or a physical iPhone test.
 - Add a simple explicit `:not(.weather-header-shooting-star)` immediately before `::before` and `::after` in those two reset branches. Keep the element reset, meteor geometry/material/timing, astronomy and layer order unchanged. The isolated candidate preserves the gradient in both engines; require actual candidate-build computed head/trail backgrounds and screenshots before release.
 - Primary evidence and limits: `knowledge/03_Resources/Browser_Interaction_and_Overlay_QA.md`, `output/release-2026-11-15-final/weather-css-isolation/`, and the new `output/release-2026-11-16-meteor-fix/`. No account permissions/settings or external business data are changed by this fix.
+
+
+## 2026-11-17 — Restore the map in the static local preview
+
+- Port5502 returned403 for /api/maps-config because it serves public files without Pages Functions. Reuse the already configured official keyless Google share embed through an explicit mapsEmbedUrl option in the development server.
+- Keep the exception exact and GET/HEAD-only; default static helpers and private API/source paths remain denied. Do not copy production API keys or change Google/Cloudflare settings.
+- Live Google iframe and street/address pixels verified at desktop1280 and mobile390; six preview regression/security tests, scoped lint and diff-check pass. Evidence: output/maps-local-2026-11-17/. Local correction only; no commit/push/deploy.
+
+
+## 2026-11-17 — Compact transparent burger tiles and the original promotion icon
+
+- Keep the existing two-column link structure and destinations; reduce equal-height tiles64→48px, gaps8→6px and drawer padding12→10px. Use translucent green glass with a warm promotion accent.
+- Restore the original clash-royale.png gold shield/crown as a decorative26px image. Preserve localized social.html#promotions and equal tile geometry; suppress the old perpetual icon animation in the drawer.
+- Dim only the underlying main/section/footer while the menu is open so backdrop paint differences do not compromise label readability. Keep scroll locking, native links and focus handling intact. Final evidence and bounded image-readiness tests: output/burger-glass-2026-11-17/. No commit/push/deploy requested for this local review.
+
+## 2026-11-17 — Full-width central promotion and compact grouped navigation
+
+- Supersede the prior equal-width promotion with one centered full-width link between six service/result links and salon/community/business information. Keep every localized destination and the original PNG icon; ordinary tiles remain equal at44px, with smaller inline padding/tracking only on narrow screens.
+- Use short menu-specific social labels: RU «Наши соцсети», UK «Наші соцмережі», DE «Social Media», EN «Our Social Media». Keep other site headings unchanged.
+- Refine the web glass material with a bright multi-layer rim and translucent highlights. A minimal Windows WebKit test reproduces unsupported actual backdrop painting despite positive CSS support; blur the underlying page only during nav-open, without UA-specific rules. Full animation is the default per the user's clarification; reduced decoration belongs only to the unsupported-backdrop fallback. Existing scroll/focus controls and unrelated performance policies stay unchanged. Evidence: output/burger-glass-2026-11-17/wide-visual.json and diag-webkit-compositing.json. Local work only.
+
+## 2026-11-17 — User-specified lower rows across every locale
+
+- Latest requested pairs supersede the earlier lower-group order: About/Introduction, Socials/Blog, Documents/Partnership, Rating/LocalSEO. Keep the upper six links and the central full-width promotion unchanged.
+- Existing DE/EN/UK introduction pages contain localized content and correct lang/canonical; expose them in the menu as well so all four locales have15 tiles and identical pairs without empty slots. No new pages or destinations outside this site.
+- Consolidate today's local map/contact/menu checks in output/today-final-2026-11-17/. Keep prior map changes and already verified glass/focus/scroll treatment intact; no commit/push/deploy requested in this task.
+- Final local QA:123/123 frontend+static-preview tests,18/18 browser scenarios and56unique menu targets PASS;7visual profiles, live desktop/mobile Google iframe and native write-us clicks verified. Scoped lint, build, budgets, graphify and diff-check pass. Delivery of forms/faxes and physical iPhone behavior are outside these browser proofs; evidence and limits are in the final report.
+
+## 2026-11-17 — Latest menu rows and reused RGB perimeter
+
+- Latest user order supersedes the preceding pairs: About/Introduction, Socials/Rating, Blog/LocalSEO, Partnership/Documents. Keep Services/Price and the full-width promotion unchanged in every locale.
+- Remove permanent tile outlines and the white panel rim. Morph only decorative tile surfaces while link/text hit geometry stays fixed; retain the keyboard-only focus marker.
+- Reuse the existing menu-contour canvas palette/cycle/ribbons for the rounded rectangle with optional radius and scoped panel styling. Start at bottom center, branch along both sides, meet at top center. Pause nav painting while closed/hidden/offscreen and clean target observers on disposal; capsule behavior stays unchanged.
+- Remove the panel's transparent1px border because its overflow clip cut most of the contour centerline. No new runtime dependency or WebGL renderer. Evidence/verification: output/menu-rgb-morph-2026-11-17/. Changes remain local.
+
+## 2026-11-17 — 85 percent transparent panel and stable glass tiles
+
+- Latest visual preference supersedes animated tile corners: fixed12px rounded rectangles,44px height, borderless low-alpha glass gradients and soft internal highlights. Remove morph keyframes and phase variables; preserve the RGB perimeter, full-width promotion and all menu destinations/order.
+- Base panel alpha0.15 in dark/light themes; keep nav/text opacity1. Interpret requested5percent frosting as a light1px backdrop blur, an artistic setting rather than a physical coefficient. Remove dense panel gradients and the extra4px overlay blur.
+- Actual Chromium/WebKit comparison selected source-page opacity.4/blur2 for legibility; .55/blur1 produced competing contact text. This is a separate background-focus treatment, not a change to the base panel alpha. Keep graceful unsupported-backdrop fallback.
+- Current evidence: output/menu-clear-glass-2026-11-17/. CSS-only local work; prior map/contact and JavaScript renderer changes are preserved, with no commit/push/deploy.
+
+## 2026-11-17 — Hairline RGB menu perimeter
+
+- Latest preference: maximum practical thinness. Set only #mobile-nav contour half-width0.25px (solid core up to0.5CSSpx) and suppress its external canvas filter; leave other controls/palette/timing intact. Pixel checks pass in Chromium DPR1/3 and WebKit DPR2; evidence output/menu-hairline-2026-11-17/. Local CSS-only adjustment.
+
+## 2026-11-17 — Matte gold tile surfaces at75percent transparency
+
+- Replace tile surface gradients with opaque matte gold shades and composite only a::before atopacity.25, keeping linktext/icons opacity1. Preserve75percent base transparency for normal/hover/light/promotion states; retain panelalpha.15, hairlineRGB, dimensions and link order. Evidence: output/menu-gold-matte-2026-11-17/;9browserprofiles andCSSlint pass. LocalCSS-only change.
+
+## 2026-11-17 — Phone preview combines current local files with public weather reads
+
+- User requested an iPhone link away from the computer. Reuse the existing supervised Quick Tunnel/public-read-only preview with source origin5502. Keep local assets/keyless maps, bridge only weather/reverse GET/HEAD to the fixed production service; authenticated Pages preview still uses its own API. No account settings, secrets or production deployment changes.
+- Remote/supervisor suites18/18PASS and scopedESLint pass. External HTTPS checks verified latestCSS SHA256, maps/weather200, privateHEAD403/POST405 and current gold-menu render in390/DPR3 with no pageerrors. Public test point was Leipzig, not user geolocation. Evidence output/iphone-preview-2026-11-17/; runtime preview remains intentionally running for the user.
+
+## 2026-11-17 — Faint daytime Moon, readable sky lane and75percent panel transparency
+
+- Apply the daylight exposure to the whole lunar portrait, including the boundary indicator; floor.06 is a visual setting, not physical radiance. Remove the boundary exception to solar glare, preventing compressed display coordinates from creating a false eclipse. Preserve astronomy/time/phases/terrain and original sizes.
+- Share actual-reading bounds in weather-sky-frame.js between both body views and fog; avoid stretched info-panel and display:contents containers. Keep original star/Sun/Moon/cloud/fog/text/rain layering and the existing clock.
+- Latest menu request supersedes85percent: dark/light panelalpha.25 with existingblur1px; goldtilesalpha.25/textopacity1 and hairlineRGB remain. Local preview only. Target36/36 and broader248/248 tests plus scopedESLint/CSSlint pass; visual/delivery evidence is kept in output/sky-readable-2026-11-17/.
+
+- Final visual QA additionally exposed a React reuse defect: a former recovery-toggle DIV can become the full weather card while retaining the contour module's data attribute/canvas. Validate the live semantic target in bind/tick/scan and scope decoration CSS to those targets; release stale canvas/attributes/observers. Do not use a button-tag guard because the real weather toggle is a DIV. RED reproduced deterministically, contour18/18 and combined267/267 PASS. The final sky lane measures actual text-node ranges, releases empty metric-container space in WebKit, and caches its local coordinates for optical frames. Evidence and precise rerun limits remain in the task report.
+
+## 2026-11-17 — Precipitation rate contract and aligned weather readings
+
+- Preserve original precipitation amounts and report interval seconds plus comparable mean mm/h separately. Unknown periods stay unknown; daily totals cannot act as current rates. Use original WMO categories for daily intensity and explicit hail evidence, including localized hail labels. Keep provider/model limitations distinct from what happens at the user's window.
+- Reuse the existing native foreground canvas and successful-readiness suppression of legacy rain. Short optical trails, small heads and separate hail pellets replace long rigid strokes and invented bottom-of-sky impacts. Integrate movement over time so wind updates retain positions; retain existing visibility, reduced-motion and disposal behavior.
+- Share the dropdown temperature font context with its raised Celsius unit; align condition and update copy against the number's top and bottom, and keep pressure units unbroken. Evidence and actual browser limitations belong to output/weather-precip-2026-11-17. Local changes only; no release was requested for this adjustment.

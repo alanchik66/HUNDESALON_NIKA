@@ -3446,6 +3446,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       serviceList.appendChild(selection);
+      selection.querySelectorAll('select:not([hidden])').forEach(select => window.refreshSiteSelect?.(select));
       updateSelection();
     };
 

@@ -2108,7 +2108,8 @@ var compiledWeatherConfiguration = {
             a.state && a.state !== o && a.state !== s ? a.state : ``
           )
         : Q(c, s, a.county, a.state),
-      u = o || s || l || `${e.toFixed(4)}, ${t.toFixed(4)}`;
+      u = o || s || l;
+    if (!u) return null;
     return {
       latitude: e,
       longitude: t,
@@ -2146,7 +2147,8 @@ var compiledWeatherConfiguration = {
       countryCode: ``,
       timezone: ``,
     };
-    return (Sn.set(i, o), o);
+    if (a) Sn.set(i, a);
+    return o;
   },
   Rn = e => (e ? e.replace(`T`, ` `) : ``),
   zn = e => {
@@ -2173,7 +2175,9 @@ var compiledWeatherConfiguration = {
                     ? { text: `Rain showers`, icon: n ? q.showerDay : q.showerNight, code: 1240 }
                     : [71, 73, 75, 77, 85, 86].includes(e)
                       ? { text: `Snow`, icon: n ? q.snowDay : q.snowNight, code: 1210 }
-                      : [95, 96, 99].includes(e)
+                      : [96, 99].includes(e)
+                        ? { text: `Thunderstorm with hail`, icon: n ? q.thunderDay : q.thunderNight, code: e === 99 ? 1276 : 1273 }
+                      : [95, 97].includes(e)
                         ? { text: `Thunderstorm`, icon: n ? q.thunderDay : q.thunderNight, code: 1273 }
                         : { text: `Cloudy`, icon: n ? q.cloudyDay : q.cloudyNight, code: 1006 };
   },
@@ -2444,6 +2448,7 @@ var compiledWeatherConfiguration = {
         daily_chance_of_rain: Math.round(l),
         daily_will_it_snow: +(o > 0),
         daily_chance_of_snow: o > 0 ? Math.max(Math.round(l), 1) : 0,
+        weatherCode,
         condition: u,
         uv: J(c),
       },
@@ -2454,6 +2459,10 @@ var compiledWeatherConfiguration = {
     const validAt = parseWeatherCurrentTime(r.time, n.utc_offset_seconds);
     const numeric = value => (typeof value === 'number' || typeof value === 'string' && value.trim() !== '') && Number.isFinite(Number(value));
     if (validAt === null || !numeric(r.temperature_2m) || !numeric(r.weather_code)) throw Error('Invalid current weather observation.');
+    const precipitation = numeric(r.precipitation) && Number(r.precipitation) >= 0 ? Number(r.precipitation) : null;
+    const interval = numeric(r.interval) ? Number(r.interval) : null;
+    const precipitationIntervalSeconds = Number.isInteger(interval) && interval > 0 && interval <= 3600 ? interval : null;
+    const rate = precipitation !== null && precipitationIntervalSeconds !== null ? precipitation * (3600 / precipitationIntervalSeconds) : null;
     let i = n.daily || {},
       a = Number(r.is_day ?? 1),
       o = Number(r.temperature_2m ?? 0),
@@ -2510,6 +2519,8 @@ var compiledWeatherConfiguration = {
         },
         forecast: { forecastday: _ },
         weatherMeta: { source: 'open-meteo', providerLabel: 'Open-Meteo', attributionUrl: 'https://open-meteo.com/',
+          weatherCode: Number(r.weather_code), precipitation, precipitationIntervalSeconds,
+          precipitationRateMmPerHour: Number.isFinite(rate) ? rate : null,
           time: g, validAt, fetchedAt: Date.now(), timezone: n.timezone || t.timezone || '' },
         cached: !1,
       }

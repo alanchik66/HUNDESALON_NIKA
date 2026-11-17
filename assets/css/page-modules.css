@@ -2922,11 +2922,6 @@ body.booking-modal-open {
   --booking-emerald-glow-strong: rgb(94 240 184 / 42%);
   --booking-emerald-glow-soft: rgb(52 211 153 / 24%);
   --booking-emerald-glow-aura: rgb(46 175 100 / 14%);
-  --booking-vol-l1: none;
-  --booking-vol-l2: none;
-  --booking-vol-l3: none;
-  --booking-vol-soft-l3: none;
-  --booking-vol-hover-l3: none;
 }
 
 .modal {
@@ -3490,6 +3485,19 @@ body.booking-modal-open {
   text-transform: none;
 }
 
+/* Keep native controls readable before enhancement or when it is unavailable. */
+#booking-modal .booking-selection__field select:not(.site-select__native) {
+  color-scheme: dark;
+  background-color: #0a1812;
+  color: #fff1d6;
+}
+
+body.light #booking-modal .booking-selection__field select:not(.site-select__native) {
+  color-scheme: light;
+  background-color: #fff8e8;
+  color: #302615;
+}
+
 #booking-modal .booking-selection__field :is(select, input[type='search']):focus-visible {
   outline: 2px solid var(--gold, #c9a84c);
   outline-offset: 2px;
@@ -3677,7 +3685,7 @@ body.booking-modal-open {
   letter-spacing: 0.11em;
   text-transform: uppercase;
   white-space: nowrap;
-  text-shadow: var(--booking-vol-l1), var(--booking-vol-l2), var(--booking-vol-l3);
+  text-shadow: none;
 }
 
 #booking-modal .booking-datetime-block__meta,
@@ -3693,7 +3701,7 @@ body.booking-modal-open {
   text-align: right;
   text-transform: capitalize;
   overflow-wrap: anywhere;
-  text-shadow: var(--booking-vol-l1), var(--booking-vol-l2), var(--booking-vol-soft-l3);
+  text-shadow: none;
 }
 
 #booking-modal .booking-datetime-block--time.is-awaiting-date {
@@ -4783,7 +4791,7 @@ body.light #booking-modal .modal-buttons {
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-  text-shadow: var(--booking-vol-l1), var(--booking-vol-l2), var(--booking-vol-soft-l3);
+  text-shadow: none;
 }
 
 #booking-modal .step-indicator.nav-main > .filter-btn:hover,
@@ -4793,7 +4801,7 @@ body.light #booking-modal .modal-buttons {
   box-shadow:
     0 6px 28px rgb(0 0 0 / 16%),
     0 0 18px rgb(52 211 153 / 22%);
-  text-shadow: var(--booking-vol-l1), var(--booking-vol-l2), var(--booking-vol-hover-l3);
+  text-shadow: none;
 }
 
 #booking-modal .step-indicator.nav-main > .filter-btn.active,
@@ -4804,7 +4812,7 @@ body.light #booking-modal .modal-buttons {
     0 4px 24px rgb(0 0 0 / 8%),
     0 0 20px rgb(72 232 168 / 32%),
     0 0 40px rgb(46 201 138 / 16%);
-  text-shadow: var(--booking-vol-l1), var(--booking-vol-l2), var(--booking-vol-l3);
+  text-shadow: none;
 }
 
 #booking-modal .modal-buttons.nav-main > .filter-btn {

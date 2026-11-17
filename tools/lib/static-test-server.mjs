@@ -77,8 +77,17 @@ function resolveByteRange(value, length) {
   return { start: Number(start), end: Number(end >= size ? size - 1n : end) };
 }
 
-export async function startStaticTestServer(root = process.cwd(), { port = 0, weatherModuleDirectory } = {}) {
+export async function startStaticTestServer(root = process.cwd(), { port = 0, weatherModuleDirectory, mapsEmbedUrl } = {}) {
   const resolvedRoot = await realpath(root);
+  let mapsConfig;
+  if (mapsEmbedUrl !== undefined) {
+    const url = new URL(mapsEmbedUrl);
+    if (url.origin !== 'https://www.google.com' || url.pathname !== '/maps/embed' ||
+      url.username || url.password || url.hash || !url.searchParams.get('pb') || url.searchParams.has('key')) {
+      throw new Error('Map preview requires a keyless Google Maps share embed URL.');
+    }
+    mapsConfig = JSON.stringify({ enabled: false, embedUrl: url.href });
+  }
   const weatherModules = new Map();
   let weatherModuleRoot;
   if (weatherModuleDirectory) {
@@ -107,6 +116,16 @@ export async function startStaticTestServer(root = process.cwd(), { port = 0, we
   const server = createServer(async (request, response) => {
     if (!['GET', 'HEAD'].includes(request.method)) {
       response.writeHead(501, { Allow: 'GET, HEAD', 'Content-Type': 'text/plain; charset=utf-8' }).end('Use the Cloudflare Functions preview for form submissions');
+      return;
+    }
+    // Only this opt-in public configuration is dynamic; API/source paths stay private.
+    if (mapsConfig && request.url?.split('?')[0] === '/api/maps-config') {
+      response.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-store',
+        'X-Content-Type-Options': 'nosniff',
+        'Content-Length': Buffer.byteLength(mapsConfig),
+      }).end(request.method === 'HEAD' ? undefined : mapsConfig);
       return;
     }
     let filePath;
@@ -143,7 +162,9 @@ export async function startStaticTestServer(root = process.cwd(), { port = 0, we
         typeof ifRange === 'string' && !/^(?:W\/)?"/i.test(ifRange.trim()) &&
         Date.parse(ifRange) === Date.parse(lastModified)
       );
-      const range = matchesIfRange ? resolveByteRange(request.headers.range, metadata.size) : null;
+      // HTML references are rewritten below; do not mix ranges from the original representation.
+      const range = matchesIfRange && path.extname(filePath).toLowerCase() !== '.html'
+        ? resolveByteRange(request.headers.range, metadata.size) : null;
       const headers = {
         'Cache-Control': 'no-store',
         'Content-Type': MIME_TYPES[path.extname(filePath).toLowerCase()] || 'application/octet-stream',
@@ -156,6 +177,22 @@ export async function startStaticTestServer(root = process.cwd(), { port = 0, we
         return;
       }
       if (range) headers['Content-Range'] = `bytes ${range.start}-${range.end}/${metadata.size}`;
+      if (!range && path.extname(filePath).toLowerCase() === '.html') {
+        let html = await readFile(filePath, 'utf8');
+        // An earlier CDN policy cached the preview shell for 30 days, including on phones.
+        // Version its HTML reference so existing browser caches cannot hide local edits.
+        const shell = await stat(path.join(resolvedRoot, 'assets/js/site-shell.js')).catch(() => null);
+        if (shell?.isFile()) {
+          const revision = `${shell.mtimeMs.toString(36)}-${shell.size.toString(36)}`;
+          html = html.replace(
+            /(\bsrc\s*=\s*["'](?:\/|(?:\.\.\/)*|\.\/)?assets\/js\/site-shell\.js)(?:\?[^"'<>]*)?(["'])/g,
+            `$1?v=preview-${revision}$2`
+          );
+        }
+        headers['Content-Length'] = Buffer.byteLength(html);
+        response.writeHead(200, headers).end(request.method === 'HEAD' ? undefined : html);
+        return;
+      }
       response.writeHead(range ? 206 : 200, headers);
       if (request.method === 'HEAD') {
         response.end();

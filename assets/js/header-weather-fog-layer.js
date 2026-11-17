@@ -1,5 +1,5 @@
 /* Foreground fog is a bounded visual model, not measured vertical optical depth. */
-const { skyVerticalRange } = await import(new URL(`./weather-sky-frame.js${new URL(import.meta.url).search}`, import.meta.url).href);
+const { measureSkyLane } = await import(new URL(`./weather-sky-frame.js${new URL(import.meta.url).search}`, import.meta.url).href);
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const smooth = (low, high, value) => { const t = clamp((value - low) / (high - low), 0, 1); return t * t * (3 - 2 * t); };
 const number = value => (typeof value === 'number' || typeof value === 'string' && value.trim()) && Number.isFinite(Number(value)) ? Number(value) : null;
@@ -102,13 +102,10 @@ export function applySkyFog(overlay, part, atmosphere) {
   const width = Math.max(1, region.clientWidth || bounds.width), fullHeight = Math.max(1, region.clientHeight || bounds.height);
   const height = fullHeight + rise;
   const scale = bounds.width > 0 ? bounds.width / width : 1;
-  const control = region.querySelector(preview ? '.weather-header-card__toggle' : '.weather-header-dropdown__hero-chips')?.getBoundingClientRect();
-  const radius = Math.max(0, orb.width / scale * .247);
-  const displayHeight = control?.height > 0 ? clamp((control.top - bounds.top) / scale, Math.min(fullHeight, radius * 2), fullHeight) : fullHeight;
-  const left = Math.min(width / 2, radius + 5), vertical = skyVerticalRange(displayHeight, radius);
-  const x = left + Math.max(0, width - left * 2) * clamp(number(part?.sky?.x) ?? .5, 0, 1);
+  const lane = measureSkyLane(region, Math.max(0, orb.width * .247), scale);
+  const x = (lane.left - bounds.left + (lane.right - lane.left) * clamp(number(part?.sky?.x) ?? .5, 0, 1)) / scale;
   // Keep the veil's taller coverage, but light it from the same framed Sun.
-  const y = rise + vertical.top + (vertical.bottom - vertical.top) * clamp(number(part?.sky?.y) ?? 1, 0, 1);
+  const y = rise + (lane.top - bounds.top + (lane.bottom - lane.top) * clamp(number(part?.sky?.y) ?? 1, 0, 1)) / scale;
   layer.style.setProperty('top', `${-rise}px`, 'important');
   layer.style.setProperty('height', `${height}px`, 'important');
   const [base, halo] = layer.children;

@@ -164,6 +164,7 @@
       blog: 'БЛОГ',
       intro: 'ВВЕДЕНИЕ',
       socials: 'НАШИ СОЦИАЛЬНЫЕ СЕТИ',
+      socialsMenu: 'НАШИ СОЦСЕТИ',
       promotions: 'АКЦИИ',
       rating: 'РЕЙТИНГ',
       partner: 'ПАРТНЕРСКОЕ ПРЕДЛОЖЕНИЕ',
@@ -187,6 +188,7 @@
       blog: 'БЛОГ',
       intro: 'ВСТУП',
       socials: 'СОЦІАЛЬНІ МЕРЕЖІ',
+      socialsMenu: 'НАШІ СОЦМЕРЕЖІ',
       promotions: 'АКЦІЇ',
       rating: 'РЕЙТИНГ І ВІДГУКИ',
       partner: 'ПАРТНЕРСЬКА ПРОПОЗИЦІЯ',
@@ -210,6 +212,7 @@
       blog: 'BLOG',
       intro: 'EINFÜHRUNG',
       socials: 'SOZIALE MEDIEN',
+      socialsMenu: 'SOCIAL MEDIA',
       promotions: 'AKTIONEN',
       rating: 'BEWERTUNGEN',
       partner: 'PARTNERSCHAFT',
@@ -233,6 +236,7 @@
       blog: 'BLOG',
       intro: 'INTRODUCTION',
       socials: 'SOCIAL MEDIA',
+      socialsMenu: 'OUR SOCIAL MEDIA',
       promotions: 'PROMOTIONS',
       rating: 'RATING',
       partner: 'PARTNERSHIP OFFER',
@@ -2790,32 +2794,39 @@
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: start !important;
   gap: 10px 12px !important;
-  padding: 16px 18px 4px !important;
+  padding: 16px 18px 8px !important;
   width: 100% !important;
 }
 
 .weather-header-dropdown__hero-title {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
   min-width: 0 !important;
-  max-width: min(72%, 280px) !important;
+  max-width: 100% !important;
 }
 
 .weather-header-dropdown__eyebrow {
   font-size: 9px !important;
   letter-spacing: 0.16em !important;
-  margin: 0 0 4px !important;
+  margin: 0 !important;
   color: rgb(255 231 184 / 70%) !important;
 }
 
 .weather-header-dropdown__hero-title strong {
-  font-size: clamp(15px, 3.4vw, 17px) !important;
+  display: block !important;
+  font-size: clamp(12px, 3.6vw, 15px) !important;
   line-height: 1.18 !important;
   font-weight: 600 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .weather-header-dropdown__hero-meta {
   font-size: 10px !important;
   line-height: 1.25 !important;
-  margin: 4px 0 0 !important;
+  margin: 0 !important;
   color: rgb(255 239 209 / 72%) !important;
 }
 
@@ -2888,7 +2899,6 @@
   --hero-dropdown-updated-size: 10px;
   --hero-dropdown-updated-lh: 1.2;
   --hero-dropdown-copy-gap: 4px;
-  --hero-dropdown-temp-condition-gap: 12px;
   --hero-dropdown-copy-height: calc(
     var(--hero-dropdown-condition-size) * var(--hero-dropdown-condition-lh) *
       var(--hero-dropdown-condition-lines) + var(--hero-dropdown-condition-pad) +
@@ -2926,10 +2936,11 @@
   justify-content: flex-start !important;
   gap: 0 !important;
   box-sizing: border-box !important;
-  height: var(--hero-dropdown-copy-height) !important;
-  max-height: var(--hero-dropdown-copy-height) !important;
+  font-size: var(--hero-dropdown-copy-height) !important;
+  height: auto !important;
+  max-height: none !important;
   min-height: 0 !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   line-height: 1 !important;
   flex: 0 0 auto !important;
   align-self: start !important;
@@ -2939,7 +2950,7 @@
 }
 
 .weather-header-dropdown__hero-temp span {
-  font-size: var(--hero-dropdown-copy-height) !important;
+  font-size: 1em !important;
   font-weight: 200 !important;
   letter-spacing: 0 !important;
   line-height: 1 !important;
@@ -2971,7 +2982,7 @@
   justify-content: flex-start !important;
   gap: 1px !important;
   margin: 0 !important;
-  padding: 0 0 var(--hero-dropdown-condition-pad) !important;
+  padding: calc(var(--hero-dropdown-copy-height) * 0.12) 0 var(--hero-dropdown-condition-pad) !important;
   font-size: var(--hero-dropdown-condition-size) !important;
   line-height: var(--hero-dropdown-condition-lh) !important;
   font-weight: 600 !important;
@@ -2993,15 +3004,39 @@
 
 .weather-header-dropdown__hero-copy > span {
   grid-area: updated !important;
-  align-self: start !important;
+  align-self: end !important;
   justify-self: start !important;
-  margin: 0 !important;
+  margin: 0 0 calc(var(--hero-dropdown-copy-height) * 0.1) !important;
   padding: 0 !important;
   font-size: var(--hero-dropdown-updated-size) !important;
   line-height: var(--hero-dropdown-updated-lh) !important;
   letter-spacing: 0.01em !important;
   color: rgb(255 242 214 / 76%) !important;
   white-space: nowrap !important;
+}
+
+/* Align the visible capitals with the numeric glyph rather than font leading. */
+@supports (text-box-trim: trim-both) {
+  .weather-header-dropdown__hero-temp > small {
+    align-self: flex-start !important;
+    transform: translateX(0.03em) !important;
+  }
+
+  .weather-header-dropdown__hero-temp > span,
+  .weather-header-dropdown__hero-temp > small,
+  .weather-header-dropdown__condition-line,
+  .weather-header-dropdown__hero-copy > span {
+    text-box-trim: trim-both;
+    text-box-edge: cap alphabetic;
+  }
+
+  .weather-header-dropdown__hero-copy strong {
+    padding-top: 0 !important;
+  }
+
+  .weather-header-dropdown__hero-copy > span {
+    margin-bottom: 0 !important;
+  }
 }
 
 .weather-header-dropdown__hero-chips {
@@ -3015,7 +3050,7 @@
   gap: 6px !important;
   width: 100% !important;
   max-width: 100% !important;
-  margin-top: 0 !important;
+  margin-top: 8px !important;
   padding: 0 !important;
   overflow: visible !important;
 }
@@ -3052,7 +3087,7 @@
       'temp condition'
       'temp updated'
       'chips chips' !important;
-    row-gap: 6px !important;
+    row-gap: var(--hero-dropdown-copy-gap, 4px) !important;
   }
 }
 
@@ -3554,11 +3589,25 @@
   }
 }
 
+@media (max-width: 359px) {
+  .weather-header-dropdown__details-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
 .weather-header-dropdown__forecast-pill,
 .weather-header-dropdown__detail-card {
   padding: 10px 9px !important;
   gap: 6px !important;
   overflow-wrap: anywhere;
+}
+
+.weather-header-dropdown__detail-card strong {
+  font-size: clamp(11px, 3vw, 14px) !important;
+  line-height: 1.25 !important;
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: nowrap;
 }
 
 .weather-header-dropdown .weather-location-selector__input {
@@ -3965,34 +4014,25 @@
   <a href="${pathPrefix}galereya.html"${submenuItemAttrs('galereya.html')}>${copy.gallery}</a>
   <a href="${pathPrefix}do-i-posle.html"${submenuItemAttrs('do-i-posle.html')}>${copy.beforeAfter}</a>`;
 
-    const primaryLinks =
-      context.currentLang === 'ru'
-        ? `
-  <a href="${pathPrefix}vvedenie.html"${mobileLinkAttrs('intro')}>${copy.intro}</a>
-  <a href="${pathPrefix}o-nas.html"${mobileLinkAttrs('about')}>${copy.about}</a>
+    const primaryLinks = `
   <a href="${pathPrefix}nashi-uslugi.html"${mobileLinkAttrs('services')}>${copy.services}</a>
   <a href="${pathPrefix}prays-list.html"${mobileLinkAttrs('price')}>${copy.price}</a>
   <a href="${pathPrefix}shop.html"${mobileLinkAttrs('shop')}>${copy.shop}</a>
-  ${galleryMobileNavMarkup}
-  <a href="${pathPrefix}blog/blog.html"${mobileLinkAttrs('blog')}>${copy.blog}</a>
-  <a href="${pathPrefix}kontakty.html"${mobileLinkAttrs('contacts')}>${copy.contacts}</a>`
-        : `
-  <a href="${pathPrefix}o-nas.html"${mobileLinkAttrs('about')}>${copy.about}</a>
-  <a href="${pathPrefix}nashi-uslugi.html"${mobileLinkAttrs('services')}>${copy.services}</a>
-  <a href="${pathPrefix}prays-list.html"${mobileLinkAttrs('price')}>${copy.price}</a>
-  <a href="${pathPrefix}shop.html"${mobileLinkAttrs('shop')}>${copy.shop}</a>
-  ${galleryMobileNavMarkup}
-  <a href="${pathPrefix}blog/blog.html"${mobileLinkAttrs('blog')}>${copy.blog}</a>
-  <a href="${pathPrefix}kontakty.html"${mobileLinkAttrs('contacts')}>${copy.contacts}</a>`;
+  <a href="${pathPrefix}kontakty.html"${mobileLinkAttrs('contacts')}>${copy.contacts}</a>
+  ${galleryMobileNavMarkup}`;
+    const promotionsLink = `
+  <a href="${pathPrefix}social.html#promotions" class="mobile-nav-link--promotions"><img src="${assetPrefix}/images/icons/clash-royale.png" class="promo-btn-icon" alt="" aria-hidden="true" width="26" height="26"><span>${copy.promotions}</span></a>`;
     const isHomeRoute = currentRouteNormalized === '' || currentRouteNormalized === 'index.html';
 
     const secondaryLinks = `
-  <a href="${pathPrefix}social.html" class="mobile-nav-link--secondary">${copy.socials}</a>
-  <a href="${pathPrefix}social.html#promotions" class="mobile-nav-link--secondary">${copy.promotions}</a>
+  <a href="${pathPrefix}o-nas.html"${mobileLinkAttrs('about')}>${copy.about}</a>
+  <a href="${pathPrefix}vvedenie.html"${mobileLinkAttrs('intro')}>${copy.intro}</a>
+  <a href="${pathPrefix}social.html" class="mobile-nav-link--secondary">${copy.socialsMenu || copy.socials}</a>
   <a href="${pathPrefix}reyting.html" class="mobile-nav-link--secondary">${copy.rating}</a>
+  <a href="${pathPrefix}blog/blog.html"${mobileLinkAttrs('blog')}>${copy.blog}</a>
+  <a href="${pathPrefix}nashi-uslugi.html" class="mobile-nav-link--secondary">${copy.localSeo}</a>
   <a href="${pathPrefix}partnerstvo.html" class="mobile-nav-link--secondary">${copy.partner}</a>
-  <a href="${pathPrefix}documents.html" class="mobile-nav-link--secondary">${copy.documents}</a>
-  <a href="${pathPrefix}nashi-uslugi.html" class="mobile-nav-link--secondary">${copy.localSeo}</a>`;
+  <a href="${pathPrefix}documents.html" class="mobile-nav-link--secondary">${copy.documents}</a>`;
 
     return `
 <header class="header">
@@ -4111,6 +4151,7 @@
     <div class="mobile-nav-group mobile-nav-group--primary">
       ${primaryLinks}
     </div>
+    ${promotionsLink}
     <div class="mobile-nav-group mobile-nav-group--secondary">
       ${secondaryLinks}
     </div>
@@ -5575,7 +5616,7 @@
     conditionNode.style.setProperty('justify-content', 'flex-start', 'important');
     conditionNode.style.setProperty('gap', '2px', 'important');
     conditionNode.style.setProperty('margin', '0', 'important');
-    conditionNode.style.setProperty('padding', '0', 'important');
+    conditionNode.style.removeProperty('padding');
     conditionNode.style.setProperty('text-align', 'left', 'important');
     conditionNode.style.setProperty('max-width', '100%', 'important');
     conditionNode.style.setProperty('white-space', 'normal', 'important');
@@ -5609,6 +5650,7 @@
         showers: 'Ливни',
         snow: 'Снег',
         thunder: 'Гроза',
+        hail: 'Гроза с градом',
       },
       uk: {
         clear: 'Ясно',
@@ -5621,6 +5663,7 @@
         showers: 'Зливи',
         snow: 'Сніг',
         thunder: 'Гроза',
+        hail: 'Гроза з градом',
       },
       de: {
         clear: 'Klar',
@@ -5633,6 +5676,7 @@
         showers: 'Regenschauer',
         snow: 'Schnee',
         thunder: 'Gewitter',
+        hail: 'Gewitter mit Hagel',
       },
       en: {
         clear: 'Clear',
@@ -5645,6 +5689,7 @@
         showers: 'Rain showers',
         snow: 'Snow',
         thunder: 'Thunderstorm',
+        hail: 'Thunderstorm with hail',
       },
     };
 
@@ -5661,7 +5706,8 @@
       if ([61, 63, 65, 66, 67].includes(wmoCode)) return dict.rain;
       if ([80, 81, 82].includes(wmoCode)) return dict.showers;
       if ([71, 73, 75, 77, 85, 86].includes(wmoCode)) return dict.snow;
-      if ([95, 96, 99].includes(wmoCode)) return dict.thunder;
+      if ([96, 99].includes(wmoCode)) return dict.hail;
+      if ([95, 97].includes(wmoCode)) return dict.thunder;
       return dict.cloudy;
     }
 
@@ -5672,8 +5718,9 @@
     const isShowerCode = conditionCode === 1240 || (conditionCode >= 80 && conditionCode <= 82);
     const isRainCode = [1153, 1183].includes(conditionCode) || (conditionCode >= 61 && conditionCode <= 67);
     const isSnowCode = conditionCode === 1210 || (conditionCode >= 71 && conditionCode <= 77);
-    const isThunderCode = conditionCode === 1273 || (conditionCode >= 95 && conditionCode <= 99);
+    const isThunderCode = conditionCode === 1273 || conditionCode === 1276 || (conditionCode >= 95 && conditionCode <= 99);
 
+    if (isThunderCode && /hail|hagel|град/i.test(getHeaderWeatherConditionText(host))) return dict.hail;
     if (isThunderCode) return dict.thunder;
     if (isSnowCode) return dict.snow;
     if (isShowerCode) return dict.showers;
@@ -7635,7 +7682,7 @@
 
     const displayLocationLabel = formatHeaderWeatherCityDistrictDisplayLabel(accessibleLocationLabel);
     let locationLabelChanged = false;
-    root.querySelectorAll('.weather-header-card__location, .weather-location-selector__city').forEach(node => {
+    root.querySelectorAll('.weather-header-card__location, .weather-location-selector__city, .weather-header-dropdown__hero-title > strong').forEach(node => {
       if (displayLocationLabel && displayLocationLabel !== node.textContent?.trim()) {
         node.textContent = displayLocationLabel;
         locationLabelChanged = true;
@@ -7679,7 +7726,7 @@
     const state = host.dataset.weatherAreaState === 'unavailable' ? 'unavailable' : 'resolving';
     const statusText = getHeaderWeatherLocationStatusCopy(host, state);
     let locationLabelChanged = false;
-    root.querySelectorAll('.weather-header-card__location, .weather-location-selector__city').forEach(node => {
+    root.querySelectorAll('.weather-header-card__location, .weather-location-selector__city, .weather-header-dropdown__hero-title > strong').forEach(node => {
       const currentText = node.textContent?.trim() || '';
       if (currentText !== statusText) {
         node.textContent = statusText;

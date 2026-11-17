@@ -9,6 +9,67 @@ import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { startStaticTestServer } from './lib/static-test-server.mjs';
 
+test('preview HTML bypasses previously cached shell URLs and tracks local edits', async t => {
+  const root = await mkdtemp(path.join(tmpdir(), 'nika-preview-shell-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await mkdir(path.join(root, 'assets/js'), { recursive: true });
+  const shell = path.join(root, 'assets/js/site-shell.js');
+  await writeFile(shell, '// first');
+  const original = '<script src="../assets/js/site-shell.js?v=old"></script><script src="https://other.example/assets/js/site-shell.js?v=keep"></script>Пример';
+  await writeFile(path.join(root, 'index.html'), original);
+  const server = await startStaticTestServer(root);
+  t.after(() => server.close());
+  const first = await fetch(server.baseUrl);
+  const html = await first.text();
+  assert.match(html, /src="\.\.\/assets\/js\/site-shell\.js\?v=preview-[^"]+"/);
+  assert.ok(html.includes('https://other.example/assets/js/site-shell.js?v=keep'));
+  assert.equal(first.headers.get('cache-control'), 'no-store');
+  assert.equal(Number(first.headers.get('content-length')), Buffer.byteLength(html));
+  const head = await fetch(server.baseUrl, { method: 'HEAD' });
+  assert.equal(head.headers.get('content-length'), first.headers.get('content-length'));
+  assert.equal(await head.text(), '');
+  await writeFile(shell, '// second version');
+  const second = await (await fetch(server.baseUrl)).text();
+  assert.notEqual(second, html);
+  const ranged = await fetch(server.baseUrl, { headers: { Range: 'bytes=0-6' } });
+  assert.equal(ranged.status, 200);
+  assert.equal(await ranged.text(), second);
+});
+
+test('static preview exposes only the explicitly configured keyless map route', async t => {
+  const embedUrl = 'https://www.google.com/maps/embed?pb=public-salon-fixture';
+  const server = await startStaticTestServer(undefined, { mapsEmbedUrl: embedUrl });
+  t.after(() => server.close());
+  const response = await fetch(`${server.baseUrl}/api/maps-config?check=1`);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { enabled: false, embedUrl });
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
+  const head = await fetch(`${server.baseUrl}/api/maps-config`, { method: 'HEAD' });
+  assert.equal(head.status, 200);
+  assert.equal(await head.text(), '');
+  for (const route of ['/api/maps-config/private', '/api/maps-config/', '/api/%6daps-config', '/api/other', '/.dev.vars']) {
+    assert.equal((await fetch(`${server.baseUrl}${route}`)).status, 403, route);
+  }
+  assert.equal((await fetch(`${server.baseUrl}/api/maps-config`, { method: 'POST' })).status, 501);
+  const disabled = await startStaticTestServer();
+  t.after(() => disabled.close());
+  assert.equal((await fetch(`${disabled.baseUrl}/api/maps-config`)).status, 403);
+});
+
+test('map preview rejects keys, credentials and unofficial embed destinations', async () => {
+  for (const mapsEmbedUrl of [
+    'https://www.google.com/maps/embed?key=not-a-real-key&pb=fixture',
+    'https://user@www.google.com/maps/embed?pb=fixture',
+    'https://www.google.com.example.test/maps/embed?pb=fixture',
+    'https://www.google.com/url?pb=fixture',
+    'http://www.google.com/maps/embed?pb=fixture',
+    'https://www.google.com/maps/embed?pb=',
+  ]) {
+    await assert.rejects(startStaticTestServer(undefined, { mapsEmbedUrl }), /keyless Google Maps/);
+  }
+});
+
 test('canceling video ranges closes every source file and leaves the preview usable', { timeout: 10000 }, async t => {
   const root = await mkdtemp(path.join(tmpdir(), 'nika-canceled-video-'));
   await mkdir(path.join(root, 'assets'));

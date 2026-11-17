@@ -1104,6 +1104,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                 renderOrder: 2,
                 children: (0, jsxRuntime.jsxs)(h, {
                   material: d,
+                  texture: cloudTextureUrl.href,
                   children: [
                     (0, jsxRuntime.jsx)(WeatherCloudLayer, {
                       segments: 36,
@@ -1156,6 +1157,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                 renderOrder: 2,
                 children: (0, jsxRuntime.jsxs)(h, {
                   material: d,
+                  texture: cloudTextureUrl.href,
                   children: [
                     (0, jsxRuntime.jsx)(WeatherCloudLayer, {
                       segments: 20,

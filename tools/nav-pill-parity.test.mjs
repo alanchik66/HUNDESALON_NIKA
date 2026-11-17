@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { capsulePoint, contourHalfWidth, buildContourFrame, contourGradientStops, readContourReference, initMenuContours,
-  MENU_CONTOUR_COLORS, MENU_CONTOUR_TIMING, MENU_CONTOUR_FILTER } from '../assets/js/menu-contour.js';
+  MENU_CONTOUR_COLORS, MENU_CONTOUR_TIMING, MENU_CONTOUR_FILTER, MENU_CONTOUR_STYLES } from '../assets/js/menu-contour.js';
 
 const source = readFileSync(new URL('../assets/js/main.js', import.meta.url), 'utf8');
 
@@ -63,6 +63,30 @@ test('the real contour frame preserves the assistant cycle, trailing ribbon and 
   });
 });
 
+test('rounded rectangular contours follow actual menu corners and retain mirrored bottom-to-top paths', () => {
+  const width = 360, height = 420, radius = 28;
+  const edge = width / 2 - radius, arc = Math.PI * radius / 2, vertical = height - 2 * radius;
+  const length = 2 * edge + 2 * arc + vertical;
+  for (const [distance, x, y] of [[0, 180, 420], [edge, 28, 420], [edge + arc, 0, 392],
+    [edge + arc + vertical, 0, 28], [edge + 2 * arc + vertical, 28, 0], [length, 180, 0]]) {
+    const left = capsulePoint(width, height, distance / length, -1, radius);
+    const right = capsulePoint(width, height, distance / length, 1, radius);
+    assert.ok(Math.abs(left.x - x) < 1e-9 && Math.abs(left.y - y) < 1e-9);
+    assert.ok(Math.abs(left.x + right.x - width) < 1e-9 && left.y === right.y);
+    assert.ok(Math.abs(Math.hypot(left.nx, left.ny) - 1) < 1e-9);
+  }
+  const rectangular = buildContourFrame(width, height, 3200, MENU_CONTOUR_TIMING, 1, radius);
+  const capsule = buildContourFrame(width, height, 3200);
+  assert.notDeepEqual(rectangular.branches[0].polygon, capsule.branches[0].polygon);
+  assert.equal(rectangular.head, capsule.head, 'corner geometry does not change the shared cycle');
+  assert.deepEqual(capsulePoint(width, height, 0.5, -1, 500), capsulePoint(width, height, 0.5), 'oversized radii clamp to the capsule limit');
+  for (const corner of [0, -2, radius]) {
+    for (const branch of buildContourFrame(width, height, 3200, MENU_CONTOUR_TIMING, 1, corner).branches) {
+      assert.ok(branch.polygon.every(point => point.every(Number.isFinite)), 'square and rounded corners never divide by zero');
+    }
+  }
+});
+
 function events(target = {}) {
   const listeners = new Map();
   return Object.assign(target, {
@@ -73,7 +97,7 @@ function events(target = {}) {
   });
 }
 
-function contourEnvironment({ count = 1, contextFailure = false, assistantWidth } = {}) {
+function contourEnvironment({ count = 1, contextFailure = false, assistantWidth, nav = false } = {}) {
   const frames = new Map(), observers = { mutation: [], intersection: [], resize: [] };
   const document = events({ hidden: false, targets: [], hosts: [] });
   class Node {
@@ -81,6 +105,8 @@ function contourEnvironment({ count = 1, contextFailure = false, assistantWidth 
       this.tag = tag; this.root = root; this.children = []; this.attributes = new Map(); this.attributeWrites = 0;
       this.values = new Map(); this.style = { setProperty: (name, value) => this.values.set(name, value) };
       this.isConnected = true;
+      this.classNames = new Set();
+      this.classList = { contains: name => this.classNames.has(name), add: name => this.classNames.add(name), remove: name => this.classNames.delete(name) };
     }
     appendChild(node) { this.children.push(node); node.parentNode = this; node.root = this.root; return node; }
     remove() { if (this.parentNode) this.parentNode.children = this.parentNode.children.filter(node => node !== this); this.parentNode = null; this.isConnected = false; }
@@ -133,11 +159,12 @@ function contourEnvironment({ count = 1, contextFailure = false, assistantWidth 
       : selector === '#hundesalon-ai-chat .hn-ai-launcher-rim-trace' ? assistant?.trace || null : null;
   document.querySelectorAll = selector => selector === '[data-price-breeds-toggle]' ? document.targets.filter(target => target.isConnected)
     : selector === '.header-weather-widget[data-weather-widget]' ? document.hosts.filter(host => host.isConnected)
+      : selector === '#mobile-nav' ? document.nav?.isConnected ? [document.nav] : []
       : assistant && selector === '#hundesalon-ai-chat .hn-ai-launcher-rim linearGradient stop'
         ? MENU_CONTOUR_COLORS.map(color => ({ getAttribute: () => color })) : [];
   class Observer {
-    constructor(callback, type) { this.callback = callback; this.targets = new Set(); observers[type].push(this); }
-    observe(target) { this.targets.add(target); }
+    constructor(callback, type) { this.callback = callback; this.targets = new Set(); this.options = new Map(); observers[type].push(this); }
+    observe(target, options) { this.targets.add(target); this.options.set(target, options); }
     unobserve(target) { this.targets.delete(target); }
     disconnect() { this.targets.clear(); this.disconnected = true; }
     emit(entries) { this.callback(entries); }
@@ -147,7 +174,7 @@ function contourEnvironment({ count = 1, contextFailure = false, assistantWidth 
     document, innerHeight: 900, devicePixelRatio: 3, visualViewport: events({ scale: 1 }),
     getComputedStyle: node => node === assistant?.rim ? { width: `${assistant.width}px`, filter: assistant.filter }
       : node === assistant?.trace ? { animationDuration: '6.4s, 12.8s' }
-        : { borderLeftWidth: '1px', borderTopWidth: '1px', getPropertyValue: () => '' },
+        : { borderLeftWidth: '1px', borderTopWidth: '1px', borderTopLeftRadius: node === document.nav ? `${node.radius}px` : '999px', getPropertyValue: name => node.values?.get(name) || '' },
     requestAnimationFrame: callback => { frames.set(++nextFrame, callback); return nextFrame; }, cancelAnimationFrame: id => frames.delete(id),
   });
   const environment = {
@@ -157,7 +184,9 @@ function contourEnvironment({ count = 1, contextFailure = false, assistantWidth 
     ResizeObserver: class extends Observer { constructor(callback) { super(callback, 'resize'); } },
   };
   const makeTarget = (root = document, top = 100, width = 140, height = 44) => {
-    const target = new Node('button', root);
+    const target = new Node(root === document ? 'button' : 'div', root);
+    if (root === document) target.setAttribute('data-price-breeds-toggle', '');
+    else target.classList.add('weather-header-card__toggle');
     target.offsetWidth = width; target.offsetHeight = height;
     target.top = top;
     target.setAttribute('aria-expanded', 'false');
@@ -165,9 +194,15 @@ function contourEnvironment({ count = 1, contextFailure = false, assistantWidth 
     return target;
   };
   for (let index = 0; index < count; index += 1) document.targets.push(makeTarget(document, index < 2 ? 100 : 2000));
+  if (nav) {
+    document.nav = makeTarget(document, 100, 360, 420);
+    document.nav.id = 'mobile-nav'; document.nav.radius = 28; document.nav.inert = true;
+    document.nav.setAttribute('aria-hidden', 'true');
+  }
   const host = new Node('weather-host');
   const shadow = new Node('shadow'); shadow.root = shadow; shadow.targets = [makeTarget(shadow, 100, 74, 18)];
-  shadow.querySelectorAll = selector => selector === '.weather-header-card__toggle' ? shadow.targets.filter(target => target.isConnected) : [];
+  shadow.querySelectorAll = selector => selector === '.weather-header-card__toggle'
+    ? shadow.targets.filter(target => target.isConnected && target.classList.contains('weather-header-card__toggle')) : [];
   host.shadowRoot = shadow; document.hosts.push(host);
   return {
     environment, document, window, frames, observers, host, shadow, makeTarget,
@@ -201,6 +236,119 @@ test('all breed buttons and the open weather shadow root bind once without chang
   h.step(1200);
   assert.equal(target.attributeWrites, writes, 'animation frames must not cause weather DOM-observer feedback');
   api.dispose();
+});
+
+test('a recovery toggle reused as the weather card loses its contour while the real DIV toggle binds normally', () => {
+  for (const cleanup of ['tick', 'scan']) {
+    const h = contourEnvironment({ count: 0 });
+    const reused = h.shadow.targets[0];
+    const api = initMenuContours(h.environment);
+    h.step(0);
+    assert.equal(reused.tag, 'div', 'weather controls are DIVs, so eligibility cannot depend on a button tag');
+    assert.equal(reused.getAttribute('data-menu-contour'), 'ready');
+    const canvas = reused.children[0], draws = canvas.context.statistics.draws;
+    reused.classList.remove('weather-header-card__toggle');
+    reused.classList.add('weather-header-card');
+    reused.offsetWidth = 351; reused.offsetHeight = 78;
+    if (cleanup === 'tick') h.step(100);
+    else api.refresh();
+    assert.equal(reused.getAttribute('data-menu-contour'), null, `${cleanup} releases attributes from a repurposed connected node`);
+    assert.equal(reused.children.includes(canvas), false);
+    assert.equal(canvas.context.statistics.draws, draws, 'the weather card is never painted as a giant capsule');
+    assert.equal(h.observers.intersection[0].targets.has(reused), false);
+    assert.equal(h.observers.resize[0].targets.has(reused), false);
+    const toggle = h.makeTarget(h.shadow, 100, 74, 18);
+    h.shadow.targets.push(toggle);
+    api.refresh(); h.step(200);
+    assert.equal(api.getDiagnostics().bound, 1);
+    assert.equal(toggle.tag, 'div');
+    assert.equal(toggle.getAttribute('data-menu-contour'), 'ready');
+    assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+    assert.equal(toggle.children[0].width, (74 + 32) * 3);
+    api.dispose();
+  }
+});
+
+test('the menu contour preserves rounded panel styles and paints only an open accessible drawer', () => {
+  const h = contourEnvironment({ count: 0, nav: true });
+  h.document.hosts = [];
+  const nav = h.document.nav;
+  const api = initMenuContours(h.environment);
+  const state = h.observers.mutation.find(observer => observer.targets.has(nav));
+  assert.deepEqual(state.options.get(nav), { attributes: true, attributeFilter: ['class', 'aria-hidden', 'hidden', 'inert'] });
+  assert.deepEqual(h.observers.mutation[0].options.get(h.document.documentElement).attributeFilter, ['data-weather-mounted'], 'class observation stays local to the drawer');
+  assert.deepEqual(api.getDiagnostics(), { bound: 1, visible: 0, running: false, cycleMs: 6400, colorCount: 15 });
+  assert.equal(nav.getAttribute('aria-hidden'), 'true');
+  assert.equal(nav.getAttribute('data-menu-contour'), 'pending');
+  assert.match(MENU_CONTOUR_STYLES, /:is\(\[data-price-breeds-toggle\], \.weather-header-card__toggle\)\[data-menu-contour\]\s*\{[^}]*border-radius:999px/);
+  assert.match(MENU_CONTOUR_STYLES, /:is\(\[data-price-breeds-toggle\], \.weather-header-card__toggle\)\[data-menu-contour='ready'\]::before/);
+  assert.match(MENU_CONTOUR_STYLES, /#mobile-nav\[data-menu-contour='ready'\]::after\s*\{\s*display:none!important/);
+
+  nav.classList.add('active'); nav.setAttribute('aria-hidden', 'false');
+  state.emit([{ target: nav }]);
+  assert.equal(h.frames.size, 0, 'the class alone cannot animate an inert drawer');
+  nav.inert = false; state.emit([{ target: nav }]);
+  assert.equal(h.frames.size, 1);
+  h.step(1000); h.step(2000);
+  const canvas = nav.children[0], core = canvas.context.statistics.fills.filter(fill => fill.fillStyle?.kind === 'linear').at(-2);
+  const expected = buildContourFrame(359, 419, 1000, MENU_CONTOUR_TIMING, 1, 27.5);
+  core.points.forEach(([x, y], index) => {
+    assert.ok(Math.abs(x / 3 - 16.5 - expected.branches[0].polygon[index][0]) < 1e-9);
+    assert.ok(Math.abs(y / 3 - 16.5 - expected.branches[0].polygon[index][1]) < 1e-9);
+  });
+  assert.equal(nav.getAttribute('data-menu-contour'), 'ready');
+  const draws = canvas.context.statistics.draws;
+  nav.classList.remove('active'); nav.setAttribute('aria-hidden', 'true'); nav.inert = true;
+  state.emit([{ target: nav }]); h.step(20000);
+  assert.equal(h.frames.size, 0);
+  assert.equal(canvas.context.statistics.draws, draws, 'closed drawers consume no paint frames');
+  nav.classList.add('active'); nav.setAttribute('aria-hidden', 'false'); nav.inert = false;
+  state.emit([{ target: nav }]); h.step(21000);
+  const resumed = canvas.context.statistics.fills.filter(fill => fill.fillStyle?.kind === 'linear').at(-2);
+  assert.deepEqual(resumed.points, core.points, 'opening resumes the perimeter without counting the closed interval');
+  api.dispose();
+  assert.equal(state.disconnected, true);
+  assert.equal(nav.children.length, 0);
+  assert.equal(nav.getAttribute('data-menu-contour'), null);
+});
+
+test('menu visibility, resize and disposal retain its shared cycle and release its target observer', () => {
+  const h = contourEnvironment({ count: 0, nav: true });
+  h.document.hosts = [];
+  const nav = h.document.nav;
+  nav.classList.add('active'); nav.setAttribute('aria-hidden', 'false'); nav.inert = false;
+  const api = initMenuContours(h.environment);
+  const state = h.observers.mutation.find(observer => observer.targets.has(nav));
+  h.step(0); h.step(2000);
+  const canvas = nav.children[0], cores = () => canvas.context.statistics.fills.filter(fill => fill.fillStyle?.kind === 'linear');
+  const beforeHidden = cores().at(-2).points;
+  h.document.hidden = true; h.document.fire('visibilitychange');
+  assert.equal(h.frames.size, 0);
+  h.document.hidden = false; h.document.fire('visibilitychange'); h.step(30000);
+  assert.deepEqual(cores().at(-2).points, beforeHidden, 'background time does not advance the menu ribbon');
+  nav.hidden = true; state.emit([{ target: nav }]);
+  assert.equal(h.frames.size, 0);
+  nav.hidden = false; state.emit([{ target: nav }]); h.step(40000);
+  assert.deepEqual(cores().at(-2).points, beforeHidden);
+  h.observers.intersection[0].emit([{ target: nav, isIntersecting: false }]);
+  assert.equal(h.frames.size, 0);
+  h.observers.intersection[0].emit([{ target: nav, isIntersecting: true }]); h.step(41000);
+  assert.deepEqual(cores().at(-2).points, beforeHidden, 'offscreen time is paused too');
+  nav.offsetWidth = 420; nav.offsetHeight = 300; nav.radius = 20;
+  nav.values.set('--menu-contour-half-width', '2px');
+  h.observers.resize[0].emit([{ target: nav }]); h.step(42000);
+  assert.equal(canvas.width, (420 + 32) * 3);
+  assert.equal(canvas.height, (300 + 32) * 3);
+  const expected = buildContourFrame(419, 299, 3000, MENU_CONTOUR_TIMING, 2, 19.5);
+  cores().at(-2).points.forEach(([x, y], index) => {
+    assert.ok(Math.abs(x / 3 - 16.5 - expected.branches[0].polygon[index][0]) < 1e-9);
+    assert.ok(Math.abs(y / 3 - 16.5 - expected.branches[0].polygon[index][1]) < 1e-9);
+  });
+  api.dispose();
+  assert.equal(h.frames.size, 0);
+  assert.ok(Object.values(h.observers).flat().every(observer => observer.disconnected));
+  assert.equal(h.observers.intersection[0].targets.has(nav), false);
+  assert.equal(h.observers.resize[0].targets.has(nav), false);
 });
 
 test('one contour loop pauses offscreen and hidden, restores through BFCache and cleans replaced controls', async () => {

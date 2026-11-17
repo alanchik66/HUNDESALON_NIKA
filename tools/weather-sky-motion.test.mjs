@@ -30,14 +30,29 @@ test('Moon contrast follows gradual solar elevation rather than the legacy solar
       moonPosition: () => ({ elevationDeg: 15, azimuthDeg: 130 }),
     }).moon.opacity;
   assert.equal(at(-6, 0), 1, 'a risen Moon keeps full contrast in a dark sky even after the old phase crossfade ends');
-  assert.ok(Math.abs(at(12, 1) - .18) < 1e-12, 'the existing daylight floor remains unchanged');
+  assert.ok(Math.abs(at(12, 1) - .06) < 1e-12, 'a daylight Moon is a faint portrait, not a second bright source');
   let previous = 1;
   for (let step = 0; step <= 2400; step++) {
     const elevation = -8 + step * .01, value = at(elevation, 0);
     assert.equal(value, at(elevation, 1), 'solar phase weights must not determine lunar departure');
-    assert.ok(value >= .18 - 1e-12 && value <= 1);
+    assert.ok(value >= .06 - 1e-12 && value <= 1);
     assert.ok(value <= previous + 1e-12 && Math.abs(value - previous) < .001, 'sky contrast changes continuously');
     previous = value;
+  }
+});
+
+test('daylight also dims a below-horizon portrait instead of bypassing sky contrast', () => {
+  for (const moonElevation of [-20, -.3, 0, .3, 20]) {
+    const at = elevationDeg => withSkyPresentation(presentation(elevationDeg > 0),
+      { ...coordinates, timeMs: 1 }, { ...astronomy,
+        solarPosition: () => ({ elevationDeg, azimuthDeg: 115 }),
+        moonPosition: () => ({ elevationDeg: moonElevation, azimuthDeg: 260 }),
+      });
+    const day = at(25), night = at(-20);
+    assert.ok(Math.abs(day.moon.opacity / night.moon.opacity - .06) < 1e-12);
+    assert.ok(day.moon.active && day.moon.opacity <= .06 + 1e-12);
+    assert.deepEqual(day.moon.sky, night.moon.sky, 'exposure cannot change the Moon\'s direction or horizon');
+    assert.equal(day.moon.isBoundaryIndicator, moonElevation < 0);
   }
 });
 
@@ -49,7 +64,8 @@ test('the waning Moon keeps rising through the photographed dawn and leaves on i
     return withSkyPresentation(base, { ...coordinates, timeMs }, astronomy);
   });
   assert.ok(morning[1].moon.sky.up > morning[0].moon.sky.up, 'the Moon really rises while this Sun rises');
-  assert.ok(morning[0].moon.opacity > .8 && morning[1].moon.opacity > .5, 'dawn must not prematurely erase the rising Moon');
+  assert.ok(morning[0].moon.opacity > morning[1].moon.opacity && morning.every(value => value.moon.active && value.moon.opacity > .06),
+    'the rising Moon remains present while daylight smoothly lowers its contrast');
   const afternoon = withSkyPresentation(presentation(true), { ...coordinates, timeMs: Date.parse('2026-11-07T15:00:00Z') }, astronomy);
   assert.equal(afternoon.sun.active, true);
   assert.equal(afternoon.moon.isBoundaryIndicator, true, 'its own horizon changes the Moon to a labelled rim marker before sunset');
@@ -116,6 +132,106 @@ test('the compact sky lane reserves physical disc margins around weather reading
   const collapsed = skyLane(region, { right: 270 }, { left: 280 }, 27.4);
   assert.equal(collapsed.left, collapsed.right);
   assert.ok(Number.isFinite(collapsed.left));
+});
+
+test('actual readings reserve the sky lane in both panels, including scaled ancestors', () => {
+  for (const preview of [true, false]) for (const scale of [1, 2]) for (const overflow of [0, 12]) for (const [kind, size, factor] of [['sun', 68, .247], ['moon', 106, .255]]) {
+    const h = motionHarness(), width = size * scale;
+    const box = (left, top, w, height) => ({ left: 12 + left * scale, top: 54 + top * scale,
+      right: 12 + (left + w) * scale, bottom: 54 + (top + height) * scale, width: w * scale, height: height * scale });
+    h.region.clientWidth = 351;
+    h.region.getBoundingClientRect = () => box(0, 0, 351, 120);
+    h.region.classList.contains = name => preview && name === 'weather-header-preview';
+    const left = box(0, 0, 154.45, 49), right = box(264, 0, 85, 120);
+    const reads = new Map([
+      [preview ? '.weather-header-card__title-block' : '.weather-header-dropdown__hero-title', left],
+      [preview ? '.weather-header-card__temp-row' : '.weather-header-dropdown__hero-temp', box(0, 52, 100, 22)],
+      [preview ? '.weather-header-card__metrics-panel' : '.weather-header-dropdown__close', right],
+    ]);
+    h.region.querySelector = selector => reads.has(selector) ? { selector, getBoundingClientRect: () => reads.get(selector) } : null;
+    h.region.ownerDocument.createRange = () => {
+      let selected;
+      return { selectNodeContents(node) { selected = node; }, getBoundingClientRect() {
+        const value = selected.getBoundingClientRect();
+        return { ...value, right: value.right + (selected.selector.includes('title') ? overflow * scale : 0) };
+      } };
+    };
+    h.overlay.dataset.orbRole = kind;
+    h.overlay.getBoundingClientRect = () => ({ left: 220 + scale * parseFloat(h.styles.get('--orb-sky-x') || 0),
+      top: 50 + scale * parseFloat(h.styles.get('--orb-sky-y') || 0), width, height: width });
+    h.overlay.classList = { contains: () => !preview };
+    for (const x of [0, .5, 1]) for (const y of [0, .5, 1]) {
+      const part = { active: true, opacity: 1, sky: { x, y } }, original = structuredClone(part);
+      applySkyPosition(h.overlay, part);
+      const rect = h.overlay.getBoundingClientRect(), cx = rect.left + width / 2, radius = width * factor;
+      assert.ok(cx - radius >= left.right + (overflow + 4.99) * scale && cx + radius <= right.left - 4.99 * scale,
+        'reserve the actual overflowing glyphs, not just their smaller container');
+      assert.equal(rect.width, width, 'clearance must preserve the texture and physical disc size');
+      assert.deepEqual(part, original, 'composition cannot alter astronomical coordinates');
+      assert.ok(Math.abs(skyOpticalCenter(h.overlay).x - (1 - x)) < .0001);
+    }
+    reads.set(preview ? '.weather-header-card__title-block' : '.weather-header-dropdown__hero-title', box(0, 0, 0, 0));
+    applySkyPosition(h.overlay, { active: true, opacity: 1, sky: { x: 0, y: .5 } });
+    assert.ok(h.overlay.getBoundingClientRect().left + width / 2 < left.right + width * factor + 5 * scale,
+      'a hidden reading releases its space');
+  }
+});
+
+test('a boundary Moon also fades under a superposed Sun and cannot reset its own glare suppression', () => {
+  const h = motionHarness(), values = new Map();
+  const moon = { ...h.overlay, dataset: { orbRole: 'moon', orbBelowHorizon: 'true' },
+    style: { setProperty: (name, value) => values.set(name, value), getPropertyValue: name => values.get(name) || '' },
+    getBoundingClientRect: () => { const sun = h.overlay.getBoundingClientRect(); return { left: sun.left - 19, top: sun.top - 19, width: 106, height: 106 }; },
+  };
+  const query = h.region.querySelector;
+  h.region.querySelector = selector => selector === '[data-orb-role="moon"]' ? moon : query(selector);
+  const view = h.overlay.ownerDocument.defaultView, computed = view.getComputedStyle;
+  view.getComputedStyle = node => node === moon ? { translate: '0px 0px' } : computed(node);
+  const sun = { active: true, opacity: 1, sky: { x: .5, y: .5 } };
+  applySkyPosition(h.overlay, sun);
+  assert.equal(values.get('--orb-moon-sun-contrast'), '0.0000', 'compressed chart overlap cannot create a false eclipse');
+  applySkyPosition(moon, { active: true, opacity: .0432, isBoundaryIndicator: true, sky: { x: .5, y: .5 } });
+  assert.equal(values.get('--orb-moon-sun-contrast'), '0.0000');
+  applySkyPosition(h.overlay, { ...sun, active: false, opacity: 0 });
+  assert.equal(values.get('--orb-moon-sun-contrast'), '1', 'night restores the independent lunar portrait');
+});
+
+test('desktop WebKit glyph ranges release blank metric space and optical frames reuse the measured lane', () => {
+  const h = motionHarness();
+  h.region.clientWidth = 300;
+  h.region.getBoundingClientRect = () => ({ left: 139.1875, right: 439.1875, top: 5, bottom: 83, width: 300, height: 78 });
+  const title = { left: 139.1875, right: 295.890625, top: 5, width: 156.703125, height: 44 };
+  const metrics = { left: 312.1875, right: 437.1875, top: 9, width: 125, height: 70 };
+  const glyphTitle = { ...title, right: 295.87549 };
+  const glyphMetrics = { ...metrics, left: 368.302, width: 68.8855 };
+  const boxes = new Map([['.weather-header-card__title-block', { box: title, glyph: glyphTitle }],
+    ['.weather-header-card__metrics-panel', { box: metrics, glyph: glyphMetrics }]]);
+  h.region.querySelector = selector => boxes.has(selector) ? { getBoundingClientRect: () => boxes.get(selector).box, glyph: boxes.get(selector).glyph } : null;
+  let reads = 0;
+  h.region.ownerDocument.createTreeWalker = (node, show) => {
+    assert.equal(show, 4);
+    const nodes = [{ textContent: 'readings', glyph: node.glyph }, { textContent: ' ' }];
+    return { nextNode: () => nodes.shift() || null };
+  };
+  h.region.ownerDocument.createRange = () => {
+    let selected;
+    return { selectNodeContents(node) { selected = node; }, getClientRects() { reads++; return [selected.glyph]; } };
+  };
+  h.overlay.getBoundingClientRect = () => ({ left: 220 + parseFloat(h.styles.get('--orb-sky-x') || 0),
+    top: 5 + parseFloat(h.styles.get('--orb-sky-y') || 0), width: 92, height: 92 });
+  for (const kind of ['sun', 'moon']) {
+    h.overlay.dataset.orbRole = kind;
+    const radius = 92 * (kind === 'sun' ? .247 : .255);
+    for (const x of [0, .5, 1]) {
+      applySkyPosition(h.overlay, { active: true, opacity: 1, sky: { x, y: .5 } });
+      const rect = h.overlay.getBoundingClientRect(), centre = rect.left + 46;
+      assert.ok(centre - radius >= glyphTitle.right + 4.99 && centre + radius <= glyphMetrics.left - 4.99,
+        'a 300px header has room between its painted labels despite the 125px metric container');
+      const before = reads;
+      for (let frame = 0; frame < 60; frame++) assert.ok(Math.abs(skyOpticalCenter(h.overlay).x - (1 - x)) < .0001);
+      assert.equal(reads, before, 'optical animation must not remeasure text ranges on every frame');
+    }
+  }
 });
 
 test('the display sky is lifted gently without moving the top edge or changing azimuth', () => {
@@ -216,7 +332,7 @@ test('both physical discs keep their radius and azimuth while the lower sky stay
   for(const variant of ['preview','dropdown'])for(const [kind,width,factor]of [['sun',68,.247],['moon',106,.255]]){
     const h=motionHarness(),bounds=variant==='preview'?{left:12,top:54,right:363,bottom:132,width:351,height:78}:{left:0,top:0,right:520,bottom:220,width:520,height:220};
     h.region.getBoundingClientRect=()=>bounds;
-    h.region.querySelector=selector=>{if(['[data-orb-role="moon"]','.weather-header-card__toggle','.weather-header-dropdown__hero-chips'].includes(selector))return null;throw Error('Unrelated text columns cannot narrow the sky projection.');};
+    h.region.querySelector=()=>null;
     h.overlay.dataset.orbRole=kind;
     h.overlay.classList={contains:()=>variant==='dropdown'};
     h.overlay.getBoundingClientRect=()=>({left:220+parseFloat(h.styles.get('--orb-sky-x')||0),top:50+parseFloat(h.styles.get('--orb-sky-y')||0),width,height:width});
@@ -320,7 +436,7 @@ test('both Moon views keep localized accessibility and boundary state without vi
       assert.equal(h.children.length, 0, 'a visible caption must never be created');
       assert.equal(h.attributes.get('role'), 'img');
       assert.equal(h.attributes.get('aria-label'), `${name} — ${caption}`);
-      assert.equal(h.styles.get('--orb-moon-sun-contrast'), '1', 'the boundary portrait remains visible under solar glare');
+      assert.equal(h.styles.get('--orb-moon-sun-contrast'), undefined, 'Moon updates cannot reset glare attenuation applied by the Sun');
       const actual = { rect: h.overlay.getBoundingClientRect(), optical: skyOpticalCenter(h.overlay) };
       if (position) assert.deepEqual(actual, position, 'localization cannot displace the physical portrait or optical axis');
       else position = actual;

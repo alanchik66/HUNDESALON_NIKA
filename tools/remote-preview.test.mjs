@@ -6,8 +6,19 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createServer } from 'node:http';
 import { Script, runInNewContext } from 'node:vm';
-import { createRemoteGateway } from './dev-remote-preview.mjs';
+import { createRemoteGateway, isPreviewPublicUrl } from './dev-remote-preview.mjs';
 import { PREVIEW_MOTION_SCRIPT, sanitizeMotionDiagnostic, createMotionDiagnosticRecorder } from './lib/preview-motion-diagnostics.mjs';
+
+test('named preview IPC accepts only the configured project origin and never a replacement host', () => {
+  const named = 'https://preview.hundesalon-nika.com';
+  assert.equal(isPreviewPublicUrl(named, named), true);
+  assert.equal(isPreviewPublicUrl('https://active-preview.trycloudflare.com'), true);
+  assert.equal(isPreviewPublicUrl('https://active-preview.trycloudflare.com', named), false);
+  for (const value of ['https://other.example', named + '/path', named + '?key=x', 'http://preview.hundesalon-nika.com', 'https://preview.hundesalon-nika.com.evil.example']) {
+    assert.equal(isPreviewPublicUrl(value, named), false, value);
+  }
+  assert.equal(isPreviewPublicUrl('https://other.example', 'https://other.example'), false, 'an arbitrary local config cannot broaden the gateway hostname allowlist');
+});
 
 test('phone preview requires the secret link and exposes only public read-only files', async () => {
   const key = 'a'.repeat(43);
@@ -135,6 +146,69 @@ test('static phone preview forwards only weather reads to the fixed service', as
     ]);
   } finally {
     await gateway.close();
+  }
+});
+
+test('read-only phone preview keeps local assets and maps while bridging only public weather reads', async t => {
+  const request = globalThis.fetch;
+  const forwarded = [], localCalls = [];
+  t.mock.method(globalThis, 'fetch', (url, options) => {
+    if (!url.startsWith('https://hundesalon-nika.com/')) return request(url, options);
+    forwarded.push({ url, method: options.method, headers: options.headers, redirect: options.redirect });
+    return Promise.resolve(new Response(options.method === 'HEAD' ? null : '{"ready":true}', {
+      headers: { 'Content-Type': 'application/json' },
+    }));
+  });
+  const upstream = createServer((incoming, response) => {
+    localCalls.push({ url: incoming.url, method: incoming.method, headers: incoming.headers });
+    if (incoming.url === '/api/maps-config') {
+      response.writeHead(200, { 'Content-Type': 'application/json' }).end('{"localMap":true}');
+    } else if (incoming.url === '/assets/site.js') {
+      response.writeHead(200, { 'Content-Type': 'text/javascript' }).end('window.currentPreview = true;');
+    } else response.writeHead(403).end('Static preview does not serve weather or private APIs.');
+  });
+  await new Promise((resolve, reject) => {
+    upstream.once('error', reject);
+    upstream.listen(0, '127.0.0.1', resolve);
+  });
+  let gateway;
+  try {
+    gateway = await createRemoteGateway({
+      root: fileURLToPath(new URL('../', import.meta.url)), key: 'h'.repeat(43), publicReadOnly: true,
+      websiteOrigin: `http://127.0.0.1:${upstream.address().port}`,
+    });
+    const headers = { Cookie: 'preview=fixture', Authorization: 'Bearer fixture' };
+    for (const endpoint of ['/api/weather', '/reverse-geocode']) {
+      for (const method of ['GET', 'HEAD']) {
+        const response = await request(`${gateway.baseUrl}${endpoint}?latitude=51&__preview_key=fixture`, { method, headers });
+        assert.equal(response.status, 200);
+        assert.equal(response.headers.get('cache-control'), 'private, no-store');
+        if (method === 'GET') assert.deepEqual(await response.json(), { ready: true });
+        else assert.equal(await response.text(), '');
+      }
+    }
+    const map = await request(`${gateway.baseUrl}/api/maps-config?__preview_key=fixture`, { headers });
+    assert.deepEqual(await map.json(), { localMap: true });
+    assert.equal(map.status, 200);
+    assert.equal(await (await request(`${gateway.baseUrl}/assets/site.js`)).text(), 'window.currentPreview = true;');
+    const beforePrivate = localCalls.length;
+    for (const endpoint of ['/api/internal/status', '/.dev.vars', '/output/local-preview/remote-config.json'])
+      assert.equal((await request(`${gateway.baseUrl}${endpoint}`)).status, 403);
+    for (const endpoint of ['/api/weather', '/reverse-geocode', '/api/maps-config', '/sendmail'])
+      assert.equal((await request(`${gateway.baseUrl}${endpoint}`, { method: 'POST', body: 'test' })).status, 405);
+    assert.equal(localCalls.length, beforePrivate, 'private files and submissions never reach the local server');
+    assert.deepEqual(localCalls.map(call => ({ url: call.url, method: call.method })), [
+      { url: '/api/maps-config', method: 'GET' }, { url: '/assets/site.js', method: 'GET' },
+    ]);
+    assert.ok(localCalls.every(call => call.headers.cookie === undefined && call.headers.authorization === undefined));
+    assert.deepEqual(forwarded, ['/api/weather', '/reverse-geocode'].flatMap(endpoint => ['GET', 'HEAD'].map(method => ({
+      url: `https://hundesalon-nika.com${endpoint}?latitude=51`, method,
+      headers: { 'Accept-Encoding': 'identity' }, redirect: 'manual',
+    }))));
+  } finally {
+    await gateway?.close();
+    upstream.closeAllConnections();
+    await new Promise(resolve => upstream.close(resolve));
   }
 });
 
@@ -386,7 +460,16 @@ test('full Pages preview serves video ranges from actual dist files while keepin
   }
 });
 
-test('public full preview exposes only weather and maps configuration APIs and public files without cookies', async () => {
+test('public full preview exposes only weather and maps configuration APIs and public files without cookies', async t => {
+  const actualFetch = globalThis.fetch;
+  const remoteCalls = [];
+  t.mock.method(globalThis, 'fetch', (url, options) => {
+    if (!url.startsWith('https://hundesalon-nika.com/')) return actualFetch(url, options);
+    remoteCalls.push({ url, method: options.method, headers: options.headers, redirect: options.redirect });
+    return Promise.resolve(new Response(options.method === 'HEAD' ? null : '{"weather":true}', {
+      headers: { 'Content-Type': 'application/json' },
+    }));
+  });
   const root = await mkdtemp(path.join(tmpdir(), 'nika-public-pages-'));
   const mediaRoot = path.join(root, 'dist');
   await mkdir(path.join(mediaRoot, 'assets'), { recursive: true });
@@ -427,7 +510,16 @@ test('public full preview exposes only weather and maps configuration APIs and p
     const mapsHead = await request('/api/maps-config', { method: 'HEAD' });
     assert.equal(mapsHead.status, 200);
     assert.equal(await mapsHead.text(), '');
+    assert.deepEqual(remoteCalls, ['/api/weather?location=Leipzig', '/reverse-geocode?latitude=51'].flatMap(route => ['GET', 'HEAD'].map(method => ({
+      url: `https://hundesalon-nika.com${route}`, method,
+      headers: { 'Accept-Encoding': 'identity' }, redirect: 'manual',
+    }))));
+    assert.deepEqual(calls, [
+      { path: '/ru/', method: 'GET' }, { path: '/assets/site.js', method: 'GET' },
+      { path: '/api/maps-config', method: 'GET' }, { path: '/api/maps-config', method: 'HEAD' },
+    ], 'public files and maps retain the local upstream while weather does not reach it');
     const allowedCalls = calls.length;
+    const allowedRemoteCalls = remoteCalls.length;
     for (const route of [
       '/api/', '/api/internal/status', '/api/booking/status', '/api/weather/current', '/api/weather/', '/api/%77eather',
       '/reverse-geocode/private', '/.dev.vars', '/.git/config', '/output/local-preview/remote-config.json',
@@ -440,6 +532,7 @@ test('public full preview exposes only weather and maps configuration APIs and p
       assert.equal((await request(route, { method: 'POST', body: 'test' })).status, 405, route);
     }
     assert.equal(calls.length, allowedCalls, 'private APIs, private files and every POST must be blocked before contacting Pages');
+    assert.equal(remoteCalls.length, allowedRemoteCalls, 'private paths and submissions must not reach the production weather bridge');
   } finally {
     await gateway.close();
     pages.closeAllConnections();

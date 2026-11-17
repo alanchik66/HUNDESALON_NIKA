@@ -1,7 +1,7 @@
 ---
 type: resource
 status: active
-updated: 2026-11-06
+updated: 2026-11-17
 tags:
   - frontend
   - responsive
@@ -9,6 +9,12 @@ tags:
 ---
 
 # Адаптивная страница контактов
+
+## Карта на локальном порту 5502 — 2026-11-17
+
+- В обычном `npm run dev` сервер публичных файлов не выполняет Pages Functions: реальный GET `/api/maps-config` на 5502 возвращал 403, и `contact-map.js` показывал локализованную заглушку. Отдельный существующий preview5514 отдавал рабочий Google share embed; это разные конфигурации серверов, а не доказательство сбоя Google.
+- `dev-static-server.mjs` теперь явно передаёт существующий keyless share URL в `startStaticTestServer`. Опция разрешает только точный GET/HEAD `/api/maps-config`; обычный тестовый сервер без опции, остальные API/приватные пути, encoded aliases и POST сохраняют ограничения. API-ключи, production Functions, Cloudflare и настройки Google не менялись.
+- Собственные Chromium-контексты 1280×900 и390×844: конфигурация200, настоящий iframe Google200, видны улицы, адресная точка и атрибуция, pageerror0. PNG просмотрены. Шесть regression/security tests, scoped ESLint и diff-check прошли. Первичные свидетельства: `output/maps-local-2026-11-17/{before,after,checks}.json`, `after-desktop.png`, `after-mobile.png`; код — `tools/lib/static-test-server.mjs`. Это обычная интерактивная Google-карта, не проверка Google Maps3D и не физического iPhone. В клиентскую базу знаний эта внутренняя справка не добавлялась.
 
 Проект: [[01_Projects/HUNDESALON_NIKA]]. Проверено 2026-11-06.
 

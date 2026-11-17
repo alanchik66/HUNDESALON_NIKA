@@ -1,4 +1,4 @@
-// The assistant's neon ribbon, adapted to the perimeter of a capsule button.
+// The assistant's neon ribbon, adapted to capsule controls and the rounded menu.
 // This module owns decoration only: it never changes a control's action or ARIA.
 export const MENU_CONTOUR_COLORS = Object.freeze([
   'rgb(255, 64, 95)', 'rgb(255, 102, 55)', 'rgb(255, 160, 48)',
@@ -13,14 +13,17 @@ const TAIL = 78 / 180;
 const PAD = 16;
 const FALLBACK_SCALE = 0.325 / 0.48;
 const WEATHER_HOST = '.header-weather-widget[data-weather-widget]';
+const isContourTarget = target => target.id === 'mobile-nav' ||
+  target.getAttribute('data-price-breeds-toggle') !== null || target.classList.contains('weather-header-card__toggle');
 const instances = new WeakMap();
 const clamp = (value, low = 0, high = 1) => Math.max(low, Math.min(high, value));
 const period = (time, duration) => ((time % duration) + duration) % duration / duration;
 const positive = (value, fallback) => Number.isFinite(value) && value > 0 ? value : fallback;
 
-function geometry(width, height) {
+function geometry(width, height, cornerRadius) {
   if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return null;
-  const radius = Math.min(width, height) / 2;
+  const maximum = Math.min(width, height) / 2;
+  const radius = Number.isFinite(cornerRadius) ? clamp(cornerRadius, 0, maximum) : maximum;
   const edge = width / 2 - radius;
   const vertical = height - 2 * radius;
   const arc = Math.PI * radius / 2;
@@ -45,8 +48,8 @@ function pointOnCapsule(shape, fraction, side) {
   return side > 0 ? { x: width - x, y, nx: -nx, ny } : { x, y, nx, ny };
 }
 
-export function capsulePoint(width, height, fraction, side = -1) {
-  const shape = geometry(width, height);
+export function capsulePoint(width, height, fraction, side = -1, cornerRadius) {
+  const shape = geometry(width, height, cornerRadius);
   return shape && Number.isFinite(fraction) ? pointOnCapsule(shape, fraction, side) : null;
 }
 
@@ -95,8 +98,8 @@ function ribbon(shape, head, side, halfWidth) {
   return outer.concat(inner.reverse());
 }
 
-export function buildContourFrame(width, height, timeMs, timing = MENU_CONTOUR_TIMING, halfWidth = 0.325) {
-  const shape = geometry(width, height);
+export function buildContourFrame(width, height, timeMs, timing = MENU_CONTOUR_TIMING, halfWidth = 0.325, cornerRadius) {
+  const shape = geometry(width, height, cornerRadius);
   if (!shape) return null;
   const time = Number.isFinite(timeMs) ? timeMs : 0;
   const phase = period(time, positive(timing.cycleMs, 6400));
@@ -208,15 +211,15 @@ function drawFlash(context, x, y, pulse, size, ratio) {
 
 function draw(record, elapsed, reference) {
   const { context, width, height, ratio } = record;
-  const frame = buildContourFrame(width - 1, height - 1, elapsed, record.timing, reference.halfWidth);
+  const frame = buildContourFrame(width - 1, height - 1, elapsed, record.timing, record.halfWidth, record.cornerRadius);
   context.setTransform(ratio, 0, 0, ratio, 0, 0);
   context.clearRect(0, 0, width + PAD * 2, height + PAD * 2);
   context.save();
   context.globalCompositeOperation = 'source-over';
   context.translate(PAD + 0.5, PAD + 0.5);
   const outline = [];
-  for (let index = 0; index <= 48; index += 1) { const point = capsulePoint(width - 1, height - 1, index / 48); outline.push([point.x, point.y]); }
-  for (let index = 48; index >= 0; index -= 1) { const point = capsulePoint(width - 1, height - 1, index / 48, 1); outline.push([point.x, point.y]); }
+  for (let index = 0; index <= 48; index += 1) { const point = capsulePoint(width - 1, height - 1, index / 48, -1, record.cornerRadius); outline.push([point.x, point.y]); }
+  for (let index = 48; index >= 0; index -= 1) { const point = capsulePoint(width - 1, height - 1, index / 48, 1, record.cornerRadius); outline.push([point.x, point.y]); }
   polygon(context, outline);
   context.lineWidth = 0.35;
   context.strokeStyle = 'rgba(0,220,150,.06)';
@@ -263,16 +266,17 @@ function draw(record, elapsed, reference) {
 }
 
 export const MENU_CONTOUR_STYLES = `
-[data-menu-contour] { position:relative; overflow:visible!important; isolation:isolate; border-radius:999px!important; }
-[data-menu-contour] > canvas.site-menu-contour,
-.weather-header-preview [data-menu-contour] > canvas.site-menu-contour {
+:is([data-price-breeds-toggle], .weather-header-card__toggle)[data-menu-contour] { position:relative; overflow:visible!important; isolation:isolate; border-radius:999px!important; }
+:is(#mobile-nav, [data-price-breeds-toggle], .weather-header-card__toggle)[data-menu-contour] > canvas.site-menu-contour,
+.weather-header-preview :is([data-price-breeds-toggle], .weather-header-card__toggle)[data-menu-contour] > canvas.site-menu-contour {
   position:absolute!important; inset:auto!important; display:block!important;
   min-width:0!important; min-height:0!important; max-width:none!important; max-height:none!important;
   border:0!important; border-radius:0!important; background:transparent!important;
   clip-path:none!important; -webkit-mask:none!important; mask:none!important;
   transform:none!important; filter:var(--menu-contour-filter,${MENU_CONTOUR_FILTER})!important; opacity:1!important; pointer-events:none!important; z-index:2;
 }
-[data-menu-contour='ready']::before { display:none!important; }
+:is([data-price-breeds-toggle], .weather-header-card__toggle)[data-menu-contour='ready']::before { display:none!important; }
+#mobile-nav[data-menu-contour='ready']::after { display:none!important; }
 `;
 
 export function initMenuContours(environment = globalThis) {
@@ -297,6 +301,7 @@ export function initMenuContours(environment = globalThis) {
   const remove = record => {
     intersection?.unobserve(record.target);
     resize?.unobserve(record.target);
+    record.stateObserver?.disconnect();
     record.canvas.remove();
     record.target.removeAttribute('data-menu-contour');
     bindings.delete(record.target);
@@ -309,6 +314,8 @@ export function initMenuContours(environment = globalThis) {
     const ratio = Math.min(3, positive(window.devicePixelRatio, 1) * positive(window.visualViewport?.scale, 1));
     record.width = width; record.height = height; record.ratio = ratio;
     record.timing = { cycleMs: milliseconds(style.getPropertyValue('--menu-contour-cycle'), reference.cycleMs), hueMs: reference.hueMs };
+    record.halfWidth = positive(Number.parseFloat(style.getPropertyValue('--menu-contour-half-width')), record.panel ? 1 : reference.halfWidth);
+    record.cornerRadius = record.panel ? Math.max(0, (Number.parseFloat(style.borderTopLeftRadius) || 0) - 0.5) : undefined;
     record.canvas.width = Math.ceil((width + PAD * 2) * ratio);
     record.canvas.height = Math.ceil((height + PAD * 2) * ratio);
     record.canvas.style.setProperty('--menu-contour-filter', reference.filter);
@@ -319,7 +326,9 @@ export function initMenuContours(environment = globalThis) {
     record.dirty = false;
     return true;
   };
-  const hasVisible = () => [...records].some(record => record.visible && record.target.isConnected);
+  const active = record => !record.panel || (record.target.classList.contains('active') &&
+    record.target.getAttribute('aria-hidden') === 'false' && !record.target.hidden && !record.target.inert);
+  const hasVisible = () => [...records].some(record => record.visible && record.target.isConnected && active(record));
   const inView = target => {
     const bounds = target.getBoundingClientRect();
     return bounds.width > 0 && bounds.height > 0 && bounds.bottom > 0 && bounds.top < window.innerHeight;
@@ -335,19 +344,27 @@ export function initMenuContours(environment = globalThis) {
     if (disposed || suspended || document.hidden) return;
     if (origin === null) origin = timestamp;
     for (const record of [...records]) {
-      if (!record.target.isConnected) { remove(record); continue; }
-      if (!record.visible) continue;
+      // React can reuse a recovery DIV as the card without removing our attributes.
+      if (!record.target.isConnected || !isContourTarget(record.target)) { remove(record); continue; }
+      if (!record.visible || !active(record)) { record.lastTimestamp = null; continue; }
       try {
         const ratio = Math.min(3, positive(window.devicePixelRatio, 1) * positive(window.visualViewport?.scale, 1));
-        if ((record.dirty || ratio !== record.ratio) && !measure(record)) { record.visible = false; continue; }
-        record.frame = draw(record, timestamp - origin, reference);
+        if ((record.dirty || ratio !== record.ratio) && !measure(record)) { record.visible = false; record.lastTimestamp = null; continue; }
+        if (record.panel) {
+          if (record.lastTimestamp !== null) record.elapsed += Math.max(0, timestamp - record.lastTimestamp);
+          record.lastTimestamp = timestamp;
+        }
+        record.frame = draw(record, record.panel ? record.elapsed : timestamp - origin, reference);
         if (record.target.getAttribute('data-menu-contour') !== 'ready') record.target.setAttribute('data-menu-contour', 'ready');
       } catch { failed.add(record.target); remove(record); }
     }
     run();
   };
   const intersection = Intersection && new Intersection(entries => {
-    for (const entry of entries) { const record = bindings.get(entry.target); if (record) record.visible = entry.isIntersecting; }
+    for (const entry of entries) {
+      const record = bindings.get(entry.target);
+      if (record) { record.visible = entry.isIntersecting; if (!record.visible) record.lastTimestamp = null; }
+    }
     run();
   });
   const resize = Resize && new Resize(entries => {
@@ -359,20 +376,29 @@ export function initMenuContours(environment = globalThis) {
     run();
   });
   const bind = target => {
-    if (bindings.has(target) || failed.has(target) || !target.isConnected) return;
+    if (bindings.has(target) || failed.has(target) || !target.isConnected || !isContourTarget(target)) return;
     const canvas = document.createElement('canvas');
     let context;
     try { context = canvas.getContext?.('2d'); } catch { failed.add(target); return; }
     if (!context) { failed.add(target); return; }
     canvas.className = 'site-menu-contour';
     canvas.setAttribute('aria-hidden', 'true');
-    const record = { target, canvas, context, visible: inView(target),
-      dirty: true, ratio: 0, width: 0, height: 0 };
+    const record = { target, canvas, context, visible: inView(target), panel: target.id === 'mobile-nav',
+      dirty: true, ratio: 0, width: 0, height: 0, elapsed: 0, lastTimestamp: null };
     bindings.set(target, record); records.add(record);
     addStyle(target.getRootNode());
     target.setAttribute('data-menu-contour', 'pending');
     target.appendChild(canvas);
     intersection?.observe(target); resize?.observe(target);
+    if (record.panel && Mutation) {
+      record.stateObserver = new Mutation(() => {
+        record.dirty = true;
+        if (!active(record)) record.lastTimestamp = null;
+        if (!intersection) record.visible = inView(target);
+        run();
+      });
+      record.stateObserver.observe(target, { attributes: true, attributeFilter: ['class', 'aria-hidden', 'hidden', 'inert'] });
+    }
   };
   const scheduleScan = () => {
     if (scanPending || disposed) return;
@@ -389,13 +415,14 @@ export function initMenuContours(environment = globalThis) {
   const scan = () => {
     if (disposed) return;
     refreshReference();
-    for (const record of [...records]) if (!record.target.isConnected || record.canvas.parentNode !== record.target) remove(record);
+    for (const record of [...records]) if (!record.target.isConnected || !isContourTarget(record.target) || record.canvas.parentNode !== record.target) remove(record);
     for (const record of records) {
       if (!intersection) record.visible = inView(record.target);
       if (!resize) record.dirty = true;
     }
     for (const [root, entry] of roots) if (!entry.host.isConnected || entry.host.shadowRoot !== root) { entry.observer?.disconnect(); roots.delete(root); }
     document.querySelectorAll('[data-price-breeds-toggle]').forEach(bind);
+    document.querySelectorAll('#mobile-nav').forEach(bind);
     document.querySelectorAll(WEATHER_HOST).forEach(host => {
       const root = host.shadowRoot;
       if (!root) return;
@@ -409,14 +436,18 @@ export function initMenuContours(environment = globalThis) {
     run();
   };
   const observer = Mutation && new Mutation(scheduleScan);
-  const pause = () => { if (frameId) window.cancelAnimationFrame(frameId); frameId = 0; };
+  const pause = () => {
+    if (frameId) window.cancelAnimationFrame(frameId);
+    frameId = 0;
+    for (const record of records) record.lastTimestamp = null;
+  };
   const visibility = () => { if (document.hidden) pause(); else { scan(); run(); } };
   const pageHide = event => { suspended = true; pause(); if (!event.persisted) api.dispose(); };
   const pageShow = () => { suspended = false; scan(); run(); };
   const viewport = () => { refreshReference(); for (const record of records) record.dirty = true; if (!intersection) scan(); else run(); };
   const api = {
     refresh: scan,
-    getDiagnostics: () => ({ bound: records.size, visible: [...records].filter(record => record.visible).length, running: Boolean(frameId),
+    getDiagnostics: () => ({ bound: records.size, visible: [...records].filter(record => record.visible && active(record)).length, running: Boolean(frameId),
       cycleMs: reference.cycleMs, colorCount: reference.colors.length }),
     dispose() {
       if (disposed) return;

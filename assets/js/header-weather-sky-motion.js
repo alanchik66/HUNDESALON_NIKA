@@ -1,7 +1,8 @@
 /* Actual celestial directions projected across the weather scene, below text. */
 const astronomy = await import(new URL(`./weather-solar-time.js${new URL(import.meta.url).search}`, import.meta.url).href);
 const { applySkyFog } = await import(new URL(`./header-weather-fog-layer.js${new URL(import.meta.url).search}`, import.meta.url).href);
-const { skyVerticalRange } = await import(new URL(`./weather-sky-frame.js${new URL(import.meta.url).search}`, import.meta.url).href);
+const { skyLane, measureSkyLane } = await import(new URL(`./weather-sky-frame.js${new URL(import.meta.url).search}`, import.meta.url).href);
+export { skyLane };
 const styledRoots = new WeakMap();
 const updates = new WeakMap();
 const opticalTargets = new WeakMap();
@@ -17,20 +18,14 @@ export function withSkyPresentation(presentation, geoState, clock) {
   // Preserve the physical horizon and lunar portrait at the chart rim.
   // Blend continuously into the boundary indicator through moonset.
   const daylight = Number.isFinite(solar?.elevationDeg) ? clamp((solar.elevationDeg + 6) / 18, 0, 1) : 1;
-  const moonOpacity = moon.valid ? moon.horizonOpacity * (1 - .82 * daylight * daylight * (3 - 2 * daylight)) + (1 - moon.horizonOpacity) * .72 : 0;
+  // Daylight lowers contrast across the whole portrait, including the chart rim.
+  // The .06 display floor is an exposure choice, not measured lunar radiance.
+  const moonContrast = 1 - .94 * daylight * daylight * (3 - 2 * daylight);
+  const moonOpacity = moon.valid ? (moon.horizonOpacity + (1 - moon.horizonOpacity) * .72) * moonContrast : 0;
   const part = (kind, sky, opacity) => ({ ...presentation?.[kind], sky, opacity, active: opacity > .02 });
   return { ...presentation, sun: part('sun', sun, sunOpacity),
     moon: { ...part('moon', moon, moonOpacity), belowHorizon: moon.belowHorizon === true, isBoundaryIndicator: moon.belowHorizon === true },
     dominantKind: sunOpacity >= moonOpacity ? 'sun' : 'moon' };
-}
-
-export function skyLane(region, left, right, radius, scale = 1) {
-  const low = Math.max(region.left + radius + 5 * scale, (left?.right ?? region.left) + radius + 5 * scale);
-  const high = Math.min(region.right - radius - 5 * scale, (right?.left ?? region.right) - radius - 5 * scale);
-  const middle = clamp((low + high) / 2, region.left + radius, region.right - radius);
-  const vertical = skyVerticalRange(region.bottom - region.top, radius, scale);
-  return { left: low <= high ? low : middle, right: low <= high ? high : middle,
-    top: region.top + vertical.top, bottom: region.top + vertical.bottom };
 }
 
 export function solarMoonContrast(distance, sunRadius, moonRadius, sunOpacity) {
@@ -48,7 +43,7 @@ export function avoidSkyControl(x, y, radius, control, minimumY = -Infinity) {
   return { x, y: y + (Math.min(y, ceiling) - y) * weight };
 }
 
-function measureSkyFrame(overlay) {
+function measureSkyFrame(overlay, localLane) {
   const region = overlay?.closest('.weather-header-preview,.weather-header-dropdown__hero');
   const window = overlay?.ownerDocument?.defaultView;
   const bounds = region?.getBoundingClientRect(), orb = overlay?.getBoundingClientRect();
@@ -57,20 +52,17 @@ function measureSkyFrame(overlay) {
   const radius = orb.width * (overlay.dataset.orbRole === 'sun' ? .247 : .255);
   const computed = window.getComputedStyle(overlay);
   const scale = region.clientWidth > 0 ? bounds.width / region.clientWidth : 1;
-  const preview = region.classList.contains('weather-header-preview');
-  const control = region.querySelector(preview ? '.weather-header-card__toggle' : '.weather-header-dropdown__hero-chips')?.getBoundingClientRect();
-  // If the control leaves less than one diameter, retain the full disc in the
-  // widget rather than shrinking it or pushing it beyond the widget's edge.
-  const minimumBottom = Math.min(bounds.bottom, bounds.top + radius * 2);
-  const bottom = control?.height > 0 ? clamp(control.top, minimumBottom, bounds.bottom) : bounds.bottom;
-  const frame = { left: bounds.left, right: bounds.right, top: bounds.top, bottom };
-  return { region, window, bounds, orb, computed, scale, lane: skyLane(frame, null, null, radius, scale) };
+  const lane = localLane ? { left: bounds.left + localLane.left * scale, right: bounds.left + localLane.right * scale,
+    top: bounds.top + localLane.top * scale, bottom: bounds.top + localLane.bottom * scale } : measureSkyLane(region, radius, scale);
+  return { region, window, bounds, orb, computed, scale, lane };
 }
 
 export function skyOpticalCenter(overlay) {
   const position = opticalTargets.get(overlay);
   if (!position) return null;
-  const frame = measureSkyFrame(overlay);
+  // Text ranges are refreshed by the existing position clock. Optical animation
+  // reuses that lane and reads only moving bounds, including scroll and scale.
+  const frame = measureSkyFrame(overlay, position.localLane);
   let { x, y } = position;
   // Normalize the rendered source, including its CSS transition, into the same
   // overhead chart. Local panel aspect, header rise and page scroll are not cameras.
@@ -141,10 +133,9 @@ export function applySkyPosition(overlay, part, fixedLayout, lang = 'en') {
   if (!frame) return;
   installStyle(overlay);
   const { window, orb, computed, scale, lane } = frame;
+  opticalTargets.get(overlay).localLane = { left: (lane.left - frame.bounds.left) / scale, right: (lane.right - frame.bounds.left) / scale,
+    top: (lane.top - frame.bounds.top) / scale, bottom: (lane.bottom - frame.bounds.top) / scale };
   const radius = orb.width * (isSun ? .247 : .255);
-  if (part?.isBoundaryIndicator) {
-    overlay.style.setProperty('--orb-moon-sun-contrast', '1');
-  }
   const translate = computed.translate.split(/\s+/).map(parseFloat);
   const baseX = orb.left + orb.width / 2 - (translate[0] || 0) * scale;
   const baseY = orb.top + orb.height / 2 - (translate[1] || 0) * scale;
@@ -168,8 +159,7 @@ export function applySkyPosition(overlay, part, fixedLayout, lang = 'en') {
     // Compressing a whole sky into a tiny weather lane can superpose discs that
     // are far apart in the real sky. Fade the faint daytime Moon under glare;
     // retain its true projected coordinates rather than inventing an eclipse.
-    const contrast = moon.dataset?.orbBelowHorizon === 'true' ? 1
-      : solarMoonContrast(Math.hypot(target.x - targetX, target.y - targetY), radius, moonBox.width * .255, part.opacity);
+    const contrast = solarMoonContrast(Math.hypot(target.x - targetX, target.y - targetY), radius, moonBox.width * .255, part.opacity);
     moon.style.setProperty('--orb-moon-sun-contrast', contrast.toFixed(4));
   }
   updates.set(overlay, { key, time: now });

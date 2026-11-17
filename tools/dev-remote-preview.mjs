@@ -12,6 +12,9 @@ import { PREVIEW_MOTION_SCRIPT, sanitizeMotionDiagnostic, createMotionDiagnostic
 const project = 'HUNDESALON_NIKA';
 const weatherBridgeOrigin = 'https://hundesalon-nika.com';
 const weatherBridgePaths = new Set(['/api/weather', '/reverse-geocode']);
+export const isPreviewPublicUrl = (value, namedOrigin = null) => namedOrigin
+  ? namedOrigin === 'https://preview.hundesalon-nika.com' && value === namedOrigin
+  : /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(value);
 const sameKey = (candidate, key) => {
   const left = Buffer.from(candidate || '');
   const right = Buffer.from(key);
@@ -157,7 +160,7 @@ export async function createRemoteGateway({
       response.writeHead(400).end('Bad request');
       return;
     }
-    const bridgeWeather = !websiteOrigin && weatherBridgePaths.has(url.pathname);
+    const bridgeWeather = weatherBridgePaths.has(url.pathname) && (!websiteOrigin || publicReadOnly);
     const isPagesApi = bridgeWeather || (websiteOrigin && (publicReadOnly
       ? weatherBridgePaths.has(url.pathname) || url.pathname === '/api/maps-config'
       : relative.startsWith(`api${path.sep}`) || relative === 'reverse-geocode'));
@@ -254,6 +257,7 @@ async function run() {
   const root = fileURLToPath(new URL('../', import.meta.url));
   const output = path.join(root, 'output/local-preview');
   const config = JSON.parse(await readFile(path.join(output, 'remote-config.json'), 'utf8'));
+  if (config.namedPublicUrl && !isPreviewPublicUrl(config.namedPublicUrl, config.namedPublicUrl)) throw new Error('Invalid named preview origin.');
   const supervised = process.env.PREVIEW_REMOTE_SUPERVISED === '1';
   const websiteOrigin = process.env.PREVIEW_SITE_ORIGIN;
   const onMotionDiagnostic = process.env.PREVIEW_MOTION_DIAGNOSTICS === '1'
@@ -323,8 +327,7 @@ async function run() {
   if (supervised) {
     if (typeof process.send !== 'function') throw new Error('Supervised preview requires an IPC parent.');
     process.on('message', message => {
-      if (message?.type === 'public-url' && (message.publicUrl === null ||
-          /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(message.publicUrl))) {
+      if (message?.type === 'public-url' && (message.publicUrl === null || isPreviewPublicUrl(message.publicUrl, config.namedPublicUrl))) {
         publicUrl = message.publicUrl;
       }
     });

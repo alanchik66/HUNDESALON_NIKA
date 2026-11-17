@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { verifyPublicPreview } from './lib/remote-preview-supervisor.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const output = path.join(root, 'output/local-preview');
@@ -19,10 +20,12 @@ try {
 }
 const config = JSON.parse(await readFile(configFile, 'utf8'));
 if (!/^[A-Za-z0-9_-]{43}$/.test(config.key || '')) throw new Error('Invalid local preview access key.');
+if (config.namedPublicUrl && config.namedPublicUrl !== 'https://preview.hundesalon-nika.com') throw new Error('Unsupported named preview origin.');
 const emailIndex = process.argv.indexOf('--email');
 const requestedEmail = emailIndex < 0 ? null : process.argv[emailIndex + 1];
 const publicReadOnly = process.argv.includes('--public-read-only');
 const openHome = process.argv.includes('--home');
+if (config.namedPublicUrl && emailIndex >= 0) throw new Error('The named preview supports public read-only mode only.');
 if (emailIndex >= 0 && !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(requestedEmail || ''))
   throw new Error('A valid access email is required.');
 const probe = async () => {
@@ -98,10 +101,13 @@ if (!state) {
   }
   const command = `"${process.execPath}" "${path.join(root, 'tools/lib/remote-preview-supervisor.mjs')}"${openHome ? ' --home' : ''}`;
   const vbs = text => `"${text.replaceAll('"', '""')}"`;
+  const siteOrigin = process.env.PREVIEW_SITE_ORIGIN || '';
+  if (/[\r\n]/.test(siteOrigin)) throw new Error('Invalid preview origin.');
+  const environment = siteOrigin ? `previewShell.Environment("PROCESS")("PREVIEW_SITE_ORIGIN") = ${vbs(siteOrigin)}\r\n` : '';
   const launcher = path.join(output, 'remote-preview.vbs');
   await writeFile(
     launcher,
-    `Set previewShell = CreateObject("WScript.Shell")\r\npreviewShell.CurrentDirectory = ${vbs(root)}\r\nDo\r\n  previewExit = previewShell.Run(${vbs(command)}, 0, True)\r\n  If previewExit = 23 Then Exit Do\r\n  WScript.Sleep 3000\r\nLoop\r\n`
+    `Set previewShell = CreateObject("WScript.Shell")\r\npreviewShell.CurrentDirectory = ${vbs(root)}\r\n${environment}Do\r\n  previewExit = previewShell.Run(${vbs(command)}, 0, True)\r\n  If previewExit = 23 Then Exit Do\r\n  WScript.Sleep 3000\r\nLoop\r\n`
   );
   const child = spawn(
     path.join(process.env.SystemRoot || 'C:/Windows', 'System32/wscript.exe'),
@@ -114,12 +120,21 @@ if (!state) {
   });
   child.unref();
 }
-for (let attempt = 0; attempt < 120; attempt++) {
+const deadline = Date.now() + 90000;
+let externallyReady = false;
+while (Date.now() < deadline) {
   state = await probe();
-  if (state?.publicUrl) break;
+  if (state?.publicUrl && (config.allowedEmail || await verifyPublicPreview(state.publicUrl, { expectedPid: state.pid, allowedOrigin: config.namedPublicUrl ?? undefined }))) {
+    const latest = await probe();
+    if (latest?.publicUrl === state.publicUrl && latest.pid === state.pid) {
+      state = latest;
+      externallyReady = true;
+      break;
+    }
+  }
   await new Promise(resolve => setTimeout(resolve, 500));
 }
-if (!state?.publicUrl) throw new Error('Tunnel URL is not ready; inspect output/local-preview/tunnel.log.');
+if (!externallyReady) throw new Error('Tunnel is not externally reachable; no link was issued. Inspect output/local-preview/tunnel.log.');
 const url =
   config.allowedEmail || config.publicReadOnly
     ? `${state.publicUrl}${openHome ? '/ru/' : '/ru/prays-list.html'}`

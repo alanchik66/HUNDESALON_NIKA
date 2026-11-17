@@ -62,9 +62,9 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: npm --prefix integrations/google-gateway ci
 
-      - name: Install Chromium for manual browser checks
+      - name: Install Chromium and WebKit for manual browser checks
         if: github.event_name == 'workflow_dispatch'
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit
 
       - name: Run the complete manual release quality gate
         if: github.event_name == 'workflow_dispatch'

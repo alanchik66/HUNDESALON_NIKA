@@ -1426,7 +1426,24 @@ test('localized burger menus expose promotions while keeping booking in the head
       assert.ok(mobileNavContent, 'all menu content scrolls inside the stationary outer panel');
       const header = markup.match(/<header class="header">([\s\S]*?)<\/header>/)[1];
       const prefix = currentRoute.startsWith('blog/') ? '../' : '';
-      assert.ok(mobileNavContent.includes(`href="${prefix}social.html#promotions" class="mobile-nav-link--secondary">${promotionsLabel}</a>`), `${locale}/${currentRoute}: localized promotions link`);
+      const promotion = mobileNavContent.match(/<a href="([^"]*social\.html#promotions)"([^>]*)>([\s\S]*?)<\/a>/);
+      assert.ok(promotion, `${locale}/${currentRoute}: promotions link exists`);
+      assert.equal(promotion[1], `${prefix}social.html#promotions`, 'promotion keeps the localized destination');
+      assert.match(promotion[2], /\bmobile-nav-link--promotions\b/);
+      assert.equal(promotion[3].replace(/<[^>]*>/g, '').trim(), promotionsLabel, 'localized label is retained');
+      assert.match(promotion[3], /<img[^>]*src="[^"]*\/icons\/clash-royale\.png"[^>]*alt=""[^>]*aria-hidden="true"/);
+      const destinations = [...mobileNavContent.matchAll(/<a href="([^"]+)"/g)].map(item => item[1]);
+      assert.deepEqual(destinations.slice(0, 7), [
+        'nashi-uslugi.html', 'prays-list.html', 'shop.html', 'kontakty.html',
+        'galereya.html', 'do-i-posle.html', 'social.html#promotions',
+      ].map(route => `${prefix}${route}`), 'services and results precede the central promotion');
+      assert.deepEqual(destinations.slice(7), [
+        'o-nas.html', 'vvedenie.html', 'social.html', 'reyting.html',
+        'blog/blog.html', 'nashi-uslugi.html', 'partnerstvo.html', 'documents.html',
+      ].map(route => `${prefix}${route}`), 'localized lower rows follow the requested left/right pairs');
+      assert.equal(destinations.length, 15, 'all locales expose the same complete menu');
+      const socialMenu = mobileNavContent.match(/<a href="[^"]*social\.html"[^>]*>([^<]+)<\/a>/);
+      assert.equal(socialMenu[1], copy[locale].socialsMenu, 'navigation uses its compact localized social label');
       assert.doesNotMatch(mobileNav, /onlayn-bronirovanie\.html/);
       assert.ok(header.includes(`href="${prefix}onlayn-bronirovanie.html" class="header-online-btn online-order-pill"`), `${locale}/${currentRoute}: header booking remains available`);
       assert.ok(header.includes(`>${copy[locale].booking}</span></a>`));
@@ -1950,6 +1967,45 @@ test('a point change clears astronomy, readings and region from the previous cit
   for (const key of ['__weatherCurrentMeta', '__weatherTimeZone', '__weatherAstroSnapshot', '__weatherSolarPresentation']) assert.equal(host[key], null);
   assert.equal(host.dataset.weatherRegionLabel, undefined);
   assert.equal(host.dataset.weatherResolvedLocationLabel, undefined);
+});
+
+test('coordinate location labels synchronize the menu title, preserve its other content, and recover after rerender', async () => {
+  const declarations = await solarShellDeclarations(['restoreHeaderWeatherAreaLocationLabel', 'syncHeaderWeatherPublicLocationLabel']);
+  const node = (selector, textContent) => ({ selector, textContent, dataset: {}, attrs: {}, setAttribute(key, value) { this.attrs[key] = value; } });
+  for (const lang of ['ru', 'uk', 'de', 'en']) {
+    const preview = node('.weather-header-card__location', '51.21, 6.77');
+    const picker = node('.weather-location-selector__city', '51.21, 6.77');
+    const hero = node('.weather-header-dropdown__hero-title > strong', '51.21, 6.77');
+    const eyebrow = node('.weather-header-dropdown__eyebrow', 'Location caption');
+    const date = node('.weather-header-dropdown__hero-meta', '20:35 · Nordrhein-Westfalen');
+    const nodes = [preview, picker, hero, eyebrow, date];
+    const host = { dataset: { weatherLocation: '51.21, 6.77', weatherLocale: lang }, shadowRoot: {
+      querySelectorAll: selector => nodes.filter(item => selector.split(',').map(part => part.trim()).includes(item.selector)),
+    } };
+    let layouts = 0;
+    const api = new Function('deps', `const { formatHeaderWeatherCityDistrictDisplayLabel, scheduleHeaderWeatherMenuPlacement,
+      isHeaderWeatherTextManualLocation, getHeaderWeatherLocationLabel, resetHeaderWeatherReadingsState,
+      scheduleHeaderWeatherReadingsSync, isHeaderWeatherCoordinateSelectionApplied, parseHeaderWeatherCoordinates,
+      getHeaderWeatherLocationStatusCopy } = deps; ${declarations}; return { sync: syncHeaderWeatherPublicLocationLabel };`)({
+      formatHeaderWeatherCityDistrictDisplayLabel: value => value, scheduleHeaderWeatherMenuPlacement: () => { layouts++; },
+      isHeaderWeatherTextManualLocation: h => h.dataset.weatherManualLocation === 'true', getHeaderWeatherLocationLabel: h => h.dataset.weatherLocation,
+      resetHeaderWeatherReadingsState() {}, scheduleHeaderWeatherReadingsSync() {}, isHeaderWeatherCoordinateSelectionApplied: () => true,
+      parseHeaderWeatherCoordinates: () => ({ latitude: 51.21, longitude: 6.77 }), getHeaderWeatherLocationStatusCopy: (h, state) => `${h.dataset.weatherLocale}:${state}`,
+    });
+    api.sync(host);
+    assert.deepEqual([preview, picker, hero].map(item => item.textContent), Array(3).fill(`${lang}:resolving`));
+    host.dataset.weatherAreaState = 'unavailable'; api.sync(host);
+    assert.equal(hero.textContent, `${lang}:unavailable`);
+    host.dataset.weatherResolvedLocationLabel = 'Düsseldorf - Benrath'; api.sync(host);
+    assert.deepEqual([preview, picker, hero].map(item => item.textContent), Array(3).fill('Düsseldorf - Benrath'));
+    assert.equal(hero.attrs['aria-label'], 'Düsseldorf - Benrath');
+    hero.textContent = '51.21, 6.77'; api.sync(host);
+    assert.equal(hero.textContent, 'Düsseldorf - Benrath', 'React refresh cannot leave its coordinate fallback in the title');
+    const unchanged = layouts; api.sync(host); assert.equal(layouts, unchanged, 'unchanged labels do not create placement loops');
+    assert.equal(eyebrow.textContent, 'Location caption'); assert.equal(date.textContent, '20:35 · Nordrhein-Westfalen');
+    host.dataset.weatherManualLocation = 'true'; host.dataset.weatherLocation = 'Tokyo'; hero.textContent = 'Tokyo'; api.sync(host);
+    assert.equal(hero.textContent, 'Tokyo', 'a manual named location remains authoritative');
+  }
 });
 
 test('a city without region metadata clears both rendered copies of the old region', async () => {

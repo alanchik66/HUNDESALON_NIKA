@@ -6,22 +6,23 @@ const wrap = (value, size) => ((value % size) + size) % size;
 
 function appearance(options) {
   const input = options && typeof options === 'object' ? options : {};
-  const precipitation = clamp(number(input.precipitationMm, .25), 0, 100);
+  const kind = ['rain', 'drizzle', 'hail'].includes(input.kind) ? input.kind : 'none';
+  const categoryRate = { light: .5, moderate: 4, heavy: 12, violent: 35 }[input.intensity];
+  const precipitation = clamp(number(input.precipitationMm, categoryRate ?? (kind === 'drizzle' ? .2 : .5)), 0, 100);
   const wind = clamp(number(input.windKph, 0), 0, 180);
   const direction = wrap(number(input.windDegree, 0), 360) * Math.PI / 180;
   return {
-    active: input.kind === 'rain', precipitation,
-    intensity: clamp(.14 + Math.log1p(precipitation) * .18, .14, 1),
+    kind, active: kind !== 'none',
+    intensity: clamp(.08 + Math.log1p(precipitation) * .25, .08, 1),
     // Screen-space art calibration; the widget is not a geographic camera.
-    slant: -Math.sin(direction) * Math.min(.65, wind / 100),
-    speed: 1 + Math.min(wind, 100) / 250,
+    slant: -Math.sin(direction) * Math.min(.72, wind / 95),
   };
 }
 
 function droplets() {
   let seed = 0x4e494b41;
   const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
-  return Array.from({ length: 170 }, () => ({ x: random(), phase: random(), depth: random() ** 1.5, drift: random(), length: .7 + random() * .6, sway: random() * Math.PI * 2 }));
+  return Array.from({ length: 220 }, () => ({ x: random() * 1.2 - .1, y: random() * 1.12 - .06, depth: random() ** 1.4, drift: random(), size: .8 + random() * .4, sway: random() * Math.PI * 2, opacity: 0 }));
 }
 
 /** A transparent foreground. Weather classification stays with the caller. */
@@ -38,7 +39,9 @@ export function createHeaderWeatherRainLayer(container, options = {}) {
   let disposed = false, raf = 0, width = 0, height = 0, dpr = 1;
   let elapsed = 0, lastTick = null, lastPaint = null, intersecting = true;
   let state = appearance(options), visibilityAttached = false, viewportAttached = false, mediaAttached = false;
+  const visual = { intensity: state.intensity, slant: state.slant };
   const drops = droplets();
+  let initialized = false;
   const request = callback => view.requestAnimationFrame(callback);
   const cancel = id => view.cancelAnimationFrame(id);
   const hidden = () => document.hidden || document.visibilityState === 'hidden';
@@ -48,38 +51,59 @@ export function createHeaderWeatherRainLayer(container, options = {}) {
     raf = 0; lastTick = null; lastPaint = null;
   }
 
+  function count() {
+    const density = state.kind === 'drizzle' ? .72 : state.kind === 'hail' ? .65 : 1;
+    return clamp(width * height / 1200 * (.12 + visual.intensity * 1.25) * density, 3, drops.length);
+  }
+
+  function speed(drop) {
+    const scale = clamp(height / 160, .72, 1.4);
+    return (state.kind === 'drizzle' ? 65 + drop.depth * 110 : state.kind === 'hail' ? 180 + drop.depth * 330 : 125 + drop.depth * 310) * scale * drop.size;
+  }
+
+  function advance(dt) {
+    const blend = 1 - Math.exp(-dt * 3);
+    visual.intensity += (state.intensity - visual.intensity) * blend;
+    visual.slant += (state.slant - visual.slant) * blend;
+    const targetCount = count();
+    for (let index = 0; index < drops.length; index++) {
+      const drop = drops[index], vy = speed(drop);
+      drop.opacity += ((index < targetCount ? 1 : 0) - drop.opacity) * blend;
+      drop.y += vy / height * dt;
+      drop.x += vy * (visual.slant + Math.sin(elapsed * .8 + drop.sway) * .014) / width * dt;
+      // Recycling happens outside the visible sky, never in its interior.
+      if (drop.y > 1.12) { drop.y -= 1.24; drop.x = wrap(drop.x + .37 + drop.drift * .43, 1.2) - .1; }
+      if (drop.x < -.12) drop.x += 1.24;
+      else if (drop.x > 1.12) drop.x -= 1.24;
+    }
+  }
+
   function paint() {
     context.clearRect(0, 0, width, height);
     if (!state.active || !width || !height) return;
-    const count = Math.round(clamp(width * height / 1600 * (.3 + .7 * state.intensity), 10, drops.length));
-    const scale = clamp(height / 160, .72, 1.4);
-    for (let index = 0; index < count; index++) {
-      const drop = drops[index], depth = drop.depth;
-      const length = (5 + depth * 15) * drop.length * scale;
-      const speed = height * (.65 + depth * 1.6) * state.speed;
-      const span = height + length * 2, travel = elapsed * speed + drop.phase * span;
-      const cycle = Math.floor(travel / span), local = wrap(travel, span), y = local - length;
-      const slant = state.slant + Math.sin(elapsed * .33 + drop.sway) * .018;
-      const margin = length + Math.abs(slant) * height;
-      const x = wrap(drop.x * width + cycle * drop.drift * width + slant * local, width + margin * 2) - margin;
-      const alpha = (.024 + depth * .105) * (.65 + state.intensity * .35);
+    if (!initialized) { const initialCount = count(); drops.forEach((drop, index) => { drop.opacity = index < initialCount ? 1 : 0; }); initialized = true; }
+    const hail = state.kind === 'hail', drizzle = state.kind === 'drizzle';
+    for (const drop of drops) {
+      if (drop.opacity < .005) continue;
+      const depth = drop.depth, x = drop.x * width, y = drop.y * height;
+      const slant = visual.slant + Math.sin(elapsed * .8 + drop.sway) * .014;
+      // A short optical exposure, not a large pointed water-drop silhouette.
+      const length = speed(drop) * (hail ? .006 : drizzle ? .014 : .018);
+      const alpha = (.035 + depth * .095) * drop.opacity;
       const gradient = context.createLinearGradient(x - slant * length, y - length, x, y);
-      gradient.addColorStop(0, 'rgba(203,225,239,0)');
-      gradient.addColorStop(.65, `rgba(211,233,247,${alpha * .45})`);
-      gradient.addColorStop(1, `rgba(238,249,255,${alpha})`);
+      gradient.addColorStop(0, 'rgba(199,216,228,0)');
+      gradient.addColorStop(.6, `rgba(205,224,237,${alpha * .3})`);
+      gradient.addColorStop(1, `rgba(220,235,244,${alpha})`);
       context.strokeStyle = gradient;
-      context.lineWidth = .38 + depth * .82;
-      context.lineCap = depth > .6 ? 'round' : 'butt';
+      context.lineWidth = hail ? .5 + depth * .7 : .3 + depth * .65;
+      context.lineCap = 'round';
       context.beginPath(); context.moveTo(x - slant * length, y - length); context.lineTo(x, y); context.stroke();
-      // A few quiet impact glints belong only to a taller, wet scene.
-      if (height >= 100 && state.precipitation >= .7 && index % 17 === 0) {
-        const age = wrap(elapsed * (.7 + depth) + drop.phase, 1) / .16;
-        if (age < 1) {
-          const center = drop.x * width, spread = 1 + age * 3;
-          context.strokeStyle = `rgba(213,237,248,${.045 * (1 - age) * state.intensity})`;
-          context.lineWidth = .55;
-          context.beginPath(); context.moveTo(center - spread, height - 1 - Math.sin(age * Math.PI) * 2); context.lineTo(center, height - 1); context.lineTo(center + spread, height - 1 - Math.sin(age * Math.PI) * 2); context.stroke();
-        }
+      const radius = (hail ? .65 + depth * 1.35 : .2 + depth * .45) * drop.size;
+      context.fillStyle = hail ? `rgba(185,204,217,${(.2 + depth * .32) * drop.opacity})` : `rgba(222,237,246,${alpha * 1.2})`;
+      context.beginPath(); context.ellipse(x, y, radius, radius * (hail ? .85 : 1.15), -Math.atan(slant), 0, Math.PI * 2); context.fill();
+      if (hail) {
+        context.fillStyle = `rgba(245,249,251,${(.28 + depth * .28) * drop.opacity})`;
+        context.beginPath(); context.ellipse(x - radius * .25, y - radius * .3, radius * .42, radius * .33, 0, 0, Math.PI * 2); context.fill();
       }
     }
   }
@@ -93,7 +117,8 @@ export function createHeaderWeatherRainLayer(container, options = {}) {
     if (!shouldAnimate()) { stop(); return; }
     if (lastTick === null) { lastTick = timestamp; lastPaint = timestamp; }
     else {
-      elapsed += clamp((timestamp - lastTick) / 1000, 0, .1); lastTick = timestamp;
+      const dt = clamp((timestamp - lastTick) / 1000, 0, .1);
+      elapsed += dt; advance(dt); lastTick = timestamp;
       if (timestamp - lastPaint >= FRAME_MS - .01) { paint(); lastPaint = timestamp; }
     }
     raf = request(frame);
@@ -106,6 +131,7 @@ export function createHeaderWeatherRainLayer(container, options = {}) {
     canvas.style.setProperty('display', visible ? 'block' : 'none', 'important');
     canvas.style.setProperty('visibility', visible ? 'visible' : 'hidden', 'important');
     if (!visible) { stop(); context.clearRect(0, 0, width, height); return; }
+    if (redraw && media?.matches) { visual.intensity = state.intensity; visual.slant = state.slant; initialized = false; }
     if (redraw && intersecting && !hidden()) paint();
     if (!shouldAnimate()) { stop(); return; }
     if (!raf) raf = request(frame);

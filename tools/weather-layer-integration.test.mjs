@@ -52,14 +52,51 @@ function layerFactory(){
 }
 const host={__weatherWidgetData:{current:{condition:{code:1183,text:'Light rain'},precip_mm:1,wind_kph:10,wind_degree:90}}};
 
-test('current rain uses current measurements and selected forecast uses its own daily condition/amount/wind',()=>{
-  const current=headerWeatherRainOptions({...host,__weatherCurrentMeta:{weatherCode:61,precipitation:2,windSpeedKph:22,windDirection:240}});
-  assert.deepEqual(current,{kind:'rain',precipitationMm:2,windKph:22,windDegree:240});
+test('current precipitation uses an explicit hourly rate and forecasts retain their own category without inventing a rate',()=>{
+  const current=headerWeatherRainOptions({...host,__weatherCurrentMeta:{weatherCode:61,precipitation:2,precipitationRateMmPerHour:2,windSpeedKph:22,windDirection:240}});
+  assert.deepEqual(current,{kind:'rain',precipitationMm:2,intensity:'light',showers:false,windKph:22,windDegree:240});
   const forecast={day:{condition:{code:1240,text:'Rain showers'},totalprecip_mm:24,avgwind_kph:15,maxwind_kph:35,wind_degree:120}};
-  assert.deepEqual(headerWeatherRainOptions(host,forecast),{kind:'rain',precipitationMm:1,windKph:15,windDegree:120});
+  assert.deepEqual(headerWeatherRainOptions(host,forecast),{kind:'rain',precipitationMm:null,intensity:'light',showers:true,windKph:15,windDegree:120});
   assert.equal(headerWeatherRainOptions(host,{day:{condition:{code:1210,text:'Light snow'},totalprecip_mm:8}}).kind,'none');
-  assert.equal(headerWeatherRainOptions(host,{day:{condition:{code:1072,text:'Patchy freezing drizzle'},totalprecip_mm:2}}).kind,'rain');
+  assert.equal(headerWeatherRainOptions(host,{day:{condition:{code:1072,text:'Patchy freezing drizzle'},totalprecip_mm:2}}).kind,'drizzle');
   assert.equal(headerWeatherRainOptions(host,{day:{condition:{code:1000,text:'Clear'},totalprecip_mm:0}}).kind,'none');
+});
+
+test('precipitation windows normalize rates while missing intervals and dry weather cannot invent current rain',()=>{
+  for(const [seconds,amount,rate] of [[600,.5,3],[1800,1.5,3],[3600,3,3],[900,.75,3]]){
+    const result=headerWeatherRainOptions({__weatherWidgetData:{current:{condition:{code:1183,text:'Rain'}}},__weatherCurrentMeta:{weatherCode:63,precipitation:amount,precipitationIntervalSeconds:seconds}});
+    assert.equal(result.precipitationMm,rate);
+    assert.equal(result.intensity,'moderate');
+  }
+  assert.equal(headerWeatherRainOptions({...host,__weatherCurrentMeta:{source:'dwd-bright-sky',weatherCode:63,precipitation:3}}).precipitationMm,null);
+  assert.equal(headerWeatherRainOptions({...host,__weatherCurrentMeta:{weatherCode:99,precipitation:null,precipitationIntervalSeconds:900},__weatherWidgetData:{current:{condition:{code:1276,text:'Thunderstorm with hail'},precip_mm:0}}}).precipitationMm,null,'unknown authoritative amount cannot become legacy zero');
+  assert.equal(headerWeatherRainOptions({...host,__weatherCurrentMeta:{weatherCode:0,precipitationRateMmPerHour:4}}).kind,'none','past accumulation does not override an explicitly clear condition');
+  for(const invalid of [null,undefined,'',false,true,[],{},NaN,Infinity,-1]){
+    assert.doesNotThrow(()=>headerWeatherRainOptions({...host,__weatherCurrentMeta:{weatherCode:63,precipitation:invalid,precipitationIntervalSeconds:invalid,precipitationRateMmPerHour:invalid}}));
+    assert.equal(headerWeatherRainOptions({...host,__weatherCurrentMeta:{weatherCode:63,precipitationRateMmPerHour:invalid}}).precipitationMm,null);
+  }
+});
+
+test('precipitation categories preserve drizzle, showers and hail in every locale, with snow and ice pellets excluded',()=>{
+  const classify=(code,text='')=>headerWeatherRainOptions({__weatherWidgetData:{current:{condition:{code,text}}}});
+  for(const code of [51,53,55,56,57,1072,1150,1153,1168,1171])assert.equal(classify(code).kind,'drizzle');
+  for(const code of [96,99])assert.equal(classify(code).kind,'hail');
+  for(const text of ['Hail','Hagel','Град','Град із дощем'])assert.equal(classify(NaN,text).kind,'hail');
+  assert.equal(classify(1273,'Thunderstorm with hail').kind,'hail','generic provider thunder code retains explicit hail text');
+  for(const code of [71,73,75,77,85,86,1237,1261,1264,1279,1282])assert.equal(classify(code).kind,'none');
+  for(const code of [80,81,82,1240,1243,1246])assert.equal(classify(code).showers,true);
+  for(const [code,intensity] of [[61,'light'],[63,'moderate'],[65,'heavy'],[80,'light'],[81,'moderate'],[82,'violent'],[96,'light'],[97,'heavy'],[99,'heavy'],[1195,'heavy']])assert.equal(classify(code).intensity,intensity);
+  const forecast=headerWeatherRainOptions(host,{day:{weatherCode:99,condition:{code:1273,text:'Thunderstorm'},totalprecip_mm:48}});
+  assert.equal(forecast.kind,'hail');assert.equal(forecast.precipitationMm,null);assert.equal(forecast.intensity,'heavy');
+});
+
+test('the shared header label retains hail and heavy thunderstorms in all four languages',async()=>{
+  const resolve=new Function('getHeaderWeatherConditionCode','getHeaderWeatherPressureLang','getHeaderWeatherConditionText',`${declaration(await shell,'resolveHeaderWeatherConditionLabel')};return resolveHeaderWeatherConditionLabel;`)(h=>h.code,h=>h.lang,h=>h.text||'');
+  for(const [lang,hail,thunder]of [['ru','Гроза с градом','Гроза'],['uk','Гроза з градом','Гроза'],['de','Gewitter mit Hagel','Gewitter'],['en','Thunderstorm with hail','Thunderstorm']]){
+    for(const code of [96,99,1273,1276])assert.equal(resolve({code,lang,text:'Thunderstorm with hail'}),hail);
+    assert.equal(resolve({code:97,lang}),thunder);
+    assert.equal(resolve({code:1276,lang,text:'Moderate or heavy rain with thunder'}),thunder);
+  }
 });
 
 test('legacy rain remains until a successful native create and pending updates commit the latest forecast only',async()=>{
@@ -119,9 +156,31 @@ test('actual rainy and lightning React branches suppress only legacy rain after 
     const nodes=flatten(icon({weatherData:{location:{localtime:'2026-11-07 12:00'},current:{condition:{text:'rainy'}}},showConditionLabel:false,variant:'header-panel',externalRain:ready}));
     assert.equal(nodes.filter(node=>node.type===WeatherRain).length,ready?0:1);assert.equal(nodes.filter(node=>node.type===WeatherClouds).length,1);
   }
-  const lightningBindings={jsxRuntime,WeatherRain,WeatherCloudLayer:()=>{},React:{useRef:()=>({current:null})},P:()=>{},h:()=>{},d:{},O:()=>{}};
+  const cloudTextureUrl=new URL('https://preview.example/assets/images/weather/cloud-9225a9f1.png?v=fixture');
+  const lightningBindings={jsxRuntime,WeatherRain,WeatherCloudLayer:()=>{},React:{useRef:()=>({current:null})},P:()=>{},h:()=>{},d:{},O:()=>{},cloudTextureUrl};
   const lightning=new Function(...Object.keys(lightningBindings),`return ${variable(text,'WeatherLightning')};`)(...Object.values(lightningBindings));
-  for(const compact of [false,true])for(const externalRain of [false,true])assert.equal(flatten(lightning({compact,externalRain})).filter(node=>node.type===WeatherRain).length,externalRain?0:1);
+  for(const compact of [false,true])for(const externalRain of [false,true]){
+    const nodes=flatten(lightning({compact,externalRain}));
+    assert.equal(nodes.filter(node=>node.type===WeatherRain).length,externalRain?0:1);
+    const clouds=nodes.filter(node=>node.type===lightningBindings.h);
+    assert.equal(clouds.length,1);
+    assert.equal(clouds[0].props.texture,cloudTextureUrl.href,'both lightning layouts must load the canonical local cloud atlas');
+  }
+});
+
+test('every authored cloud container supplies the local atlas instead of relying on the vendor CDN default',async()=>{
+  const text=await scene,ast=parse(text,{ecmaVersion:'latest',sourceType:'module',range:true}),containers=[];
+  find(ast,node=>{
+    if(node.type==='CallExpression'&&node.arguments[0]?.name==='h'&&node.arguments[1]?.type==='ObjectExpression')containers.push(node.arguments[1]);
+    return false;
+  });
+  assert.equal(containers.length,6,'four weather profiles and both lightning layouts are covered');
+  for(const container of containers){
+    const texture=container.properties.find(property=>property.key?.name==='texture')?.value;
+    assert.equal(texture?.type,'MemberExpression');
+    assert.equal(texture.object.name,'cloudTextureUrl');
+    assert.equal(texture.property.name,'href');
+  }
 });
 
 test('an unresolved optional rain import cannot delay the real astronomy clock loader',async()=>{

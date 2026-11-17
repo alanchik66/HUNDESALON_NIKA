@@ -125,6 +125,12 @@ test('fog keeps its raised coverage while its halo follows the rendered widget S
     if (!preview) { f.region.classes.clear(); f.region.classes.add('weather-header-dropdown__hero'); }
     f.overlay.computed['--header-weather-cloud-rise'] = `${rise}px`;
     f.region.bounds = { ...f.region.bounds, right: 370, bottom: 170 };
+    const readingQuery = f.region.querySelector.bind(f.region);
+    const readingBoxes = new Map([
+      [preview ? '.weather-header-card__title-block' : '.weather-header-dropdown__hero-title', { left: 10, right: 160, top: 80, width: 150, height: 40 }],
+      [preview ? '.weather-header-card__metrics-panel' : '.weather-header-dropdown__close', { left: 300, right: 370, top: 80, width: 70, height: 80 }],
+    ]);
+    f.region.querySelector = selector => readingBoxes.has(selector) ? { getBoundingClientRect: () => readingBoxes.get(selector) } : readingQuery(selector);
     const withControl = availableHeight !== null, controlTop = 80 + availableHeight;
     if (withControl) {
       const control = new f.Node(); control.bounds = { left: 10, top: controlTop, width: 360, height: 90 - availableHeight };

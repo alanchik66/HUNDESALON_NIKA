@@ -6,16 +6,18 @@ const source = await readFile(new URL('../assets/js/header-weather-rain-layer.js
 const { createHeaderWeatherRainLayer } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
 function fixture({ width = 375, height = 140, reduced = false, contextAvailable = true, observerError = false } = {}) {
-  const events = new Map(), mediaEvents = new Set(), queue = new Map(), calls = [], strokes = [];
+  const events = new Map(), mediaEvents = new Set(), queue = new Map(), calls = [], strokes = [], fills = [];
   let id = 0;
   const style = { cssText: '', values: new Map(), setProperty(key, value, priority) { this.values.set(key, { value, priority }); } };
   const context = {
     clears: 0, paints: 0, points: [], transforms: [],
     setTransform(...args) { this.transforms.push(args); },
-    clearRect() { this.clears++; strokes.length = 0; },
+    clearRect() { this.clears++; strokes.length = 0; fills.length = 0; },
     createLinearGradient(...coordinates) { const stops = []; return { coordinates, stops, addColorStop(...stop) { stops.push(stop); } }; },
     beginPath() { this.points = []; }, moveTo(x, y) { this.points.push([x, y]); }, lineTo(x, y) { this.points.push([x, y]); },
     stroke() { this.paints++; strokes.push({ points: this.points.map(point => [...point]), width: this.lineWidth, color: this.strokeStyle }); },
+    ellipse(...args) { this.points.push(args); },
+    fill() { this.paints++; fills.push({ ellipses: this.points.map(point => [...point]), color: this.fillStyle }); },
   };
   const canvas = { style, dataset: {}, attributes: {}, setAttribute(key, value) { this.attributes[key] = value; }, getContext(type) { calls.push(type); return contextAvailable ? context : null; }, remove() { container.children = container.children.filter(n => n !== this); } };
   const media = { matches: reduced, addEventListener(_, listener) { mediaEvents.add(listener); }, removeEventListener(_, listener) { mediaEvents.delete(listener); } };
@@ -29,7 +31,7 @@ function fixture({ width = 375, height = 140, reduced = false, contextAvailable 
     requestAnimationFrame(callback) { queue.set(++id, callback); return id; }, cancelAnimationFrame(token) { queue.delete(token); }, addEventListener() {}, removeEventListener() {} };
   const document = { hidden: false, visibilityState: 'visible', defaultView: view, createElement(type) { assert.equal(type, 'canvas'); return canvas; }, addEventListener(name, listener) { events.set(name, listener); }, removeEventListener(name) { events.delete(name); } };
   const container = { ownerDocument: document, children: [{ name: 'existing child' }], width, height, appendChild(node) { this.children.push(node); }, getBoundingClientRect() { return { width: this.width, height: this.height, left: 0, top: 0, right: this.width, bottom: this.height }; } };
-  return { canvas, container, context, calls, strokes, events, media, mediaEvents, queue, observers,
+  return { canvas, container, context, calls, strokes, fills, events, media, mediaEvents, queue, observers,
     frame(time) { const callbacks = [...queue.values()]; queue.clear(); for (const callback of callbacks) callback(time); },
     reduce(value) { media.matches = value; for (const listener of mediaEvents) listener(); },
     visible(value) { document.hidden = !value; document.visibilityState = value ? 'visible' : 'hidden'; events.get('visibilitychange')?.(); },
@@ -55,8 +57,11 @@ test('actual drawing commands move at at most30fps and contain varied gradient t
   f.frame(34); assert.notDeepEqual(f.strokes.map(stroke => stroke.points), initial);
   assert.ok(new Set(f.strokes.map(stroke => stroke.width)).size > 3);
   const gradients = f.strokes.filter(stroke => typeof stroke.color === 'object');
-  assert.ok(gradients.length > 5); assert.equal(gradients[0].color.stops[0][1], 'rgba(203,225,239,0)');
+  assert.ok(gradients.length > 5); assert.match(gradients[0].color.stops[0][1], /,0\)$/);
   assert.ok(gradients.every(stroke => stroke.points.flat().every(Number.isFinite)));
+  assert.ok(f.fills.length > 5, 'rain has tiny optical heads rather than only long needles');
+  assert.ok(gradients.every(stroke => Math.hypot(stroke.points[1][0] - stroke.points[0][0], stroke.points[1][1] - stroke.points[0][1]) < 13));
+  assert.ok(f.fills.every(fill => fill.ellipses[0][2] < 1 && fill.ellipses[0][3] < 1));
   layer.dispose();
 });
 
@@ -64,6 +69,7 @@ test('weather mapping changes density and wind slope while invalid extremes rema
   const f = fixture({ width: 700, height: 220 }), layer = createHeaderWeatherRainLayer(f.container, { ...rainy, precipitationMm: 0, windKph: 0 });
   const drizzle = f.strokes.length;
   layer.update({ ...rainy, precipitationMm: 100, windKph: 180 });
+  f.frame(0); for (let time = 40; time <= 1200; time += 40) f.frame(time);
   assert.ok(f.strokes.length > drizzle);
   const downwind = f.strokes.filter(stroke => typeof stroke.color === 'object');
   assert.ok(downwind.every(stroke => stroke.points[1][0] < stroke.points[0][0]));
@@ -72,6 +78,52 @@ test('weather mapping changes density and wind slope while invalid extremes rema
   assert.doesNotThrow(() => layer.update({ kind: 'rain', windKph: Symbol('invalid'), windDegree: {}, precipitationMm: [] }));
   layer.update(null); assert.equal(f.queue.size, 0); assert.equal(f.canvas.style.values.get('display').value, 'none');
   layer.dispose();
+});
+
+test('changing wind and intensity preserves live positions and fades new drops in', () => {
+  const f = fixture(), layer = createHeaderWeatherRainLayer(f.container, { ...rainy, precipitationMm: .2, windKph: 0 });
+  f.frame(0); f.frame(40);
+  const before = f.strokes.map(stroke => [...stroke.points[1]]), count = f.strokes.length;
+  layer.update({ ...rainy, precipitationMm: 20, windDegree: 270, windKph: 90 });
+  assert.deepEqual(f.strokes.map(stroke => stroke.points[1]), before, 'weather refresh must not recompute phase positions');
+  assert.equal(f.strokes.length, count, 'density does not pop to the new count on refresh');
+  f.frame(80);
+  assert.ok(f.strokes.length > count);
+  for (let index = 0; index < before.length; index++) {
+    const [x, y] = before[index];
+    if (x > 30 && x < 340 && y > 0 && y < 110) assert.ok(Math.hypot(f.strokes[index].points[1][0] - x, f.strokes[index].points[1][1] - y) < 25);
+  }
+  layer.dispose();
+});
+
+test('drizzle, rain and hail have distinct density and shapes without an invented ground plane', () => {
+  const drizzle = fixture(), rain = fixture(), hail = fixture();
+  const layers = [
+    createHeaderWeatherRainLayer(drizzle.container, { kind: 'drizzle', precipitationMm: .2 }),
+    createHeaderWeatherRainLayer(rain.container, { kind: 'rain', precipitationMm: 12 }),
+    createHeaderWeatherRainLayer(hail.container, { kind: 'hail', precipitationMm: null, intensity: 'heavy' }),
+  ];
+  assert.ok(rain.strokes.length > drizzle.strokes.length * 2);
+  const longest = f => Math.max(...f.strokes.map(stroke => stroke.points[1][1] - stroke.points[0][1]));
+  assert.ok(longest(drizzle) < longest(rain));
+  assert.equal(hail.fills.length, hail.strokes.length * 2, 'ice pellets have their own body and a separate glint');
+  assert.ok(hail.fills.some(fill => fill.ellipses[0][2] > 1));
+  assert.ok([drizzle, rain, hail].every(f => f.strokes.every(stroke => stroke.points.length === 2)), 'there are no synthetic splash chevrons at the sky boundary');
+  layers.forEach(layer => layer.dispose());
+});
+
+test('missing rates respect the category while numeric rates control density and unsupported kinds stay clear', () => {
+  const light = fixture(), heavy = fixture(), measured = fixture(), clear = fixture();
+  const layers = [
+    createHeaderWeatherRainLayer(light.container, { kind: 'rain', precipitationMm: null, intensity: 'light' }),
+    createHeaderWeatherRainLayer(heavy.container, { kind: 'rain', precipitationMm: null, intensity: 'heavy' }),
+    createHeaderWeatherRainLayer(measured.container, { kind: 'rain', precipitationMm: .1, intensity: 'heavy' }),
+    createHeaderWeatherRainLayer(clear.container, { kind: 'snow', precipitationMm: 20 }),
+  ];
+  assert.ok(heavy.strokes.length > light.strokes.length);
+  assert.ok(measured.strokes.length < light.strokes.length, 'known rate takes precedence over categorical fallback');
+  assert.equal(clear.strokes.length, 0); assert.equal(clear.queue.size, 0); assert.equal(clear.canvas.hidden, true);
+  layers.forEach(layer => layer.dispose());
 });
 
 test('rain→clear→rain clears, hides, and resumes without accumulating animation loops', () => {
@@ -101,6 +153,16 @@ test('initial reduced motion paints once and resize updates physical pixels with
   const paints = f.context.paints; layer.update(rainy); assert.equal(f.context.paints, paints);
   f.container.width = 200; f.container.height = 100; f.observers[0].callback();
   assert.equal(f.canvas.width, 400); assert.equal(f.canvas.height, 200); assert.equal(f.queue.size, 0);
+  layer.dispose();
+});
+
+test('reduced motion still refreshes a static density and wind direction from new weather', () => {
+  const f = fixture({ reduced: true }), layer = createHeaderWeatherRainLayer(f.container, { kind: 'rain', precipitationMm: .1, windKph: 0 });
+  const light = f.strokes.length;
+  layer.update({ kind: 'rain', precipitationMm: 30, windKph: 80, windDegree: 90 });
+  assert.ok(f.strokes.length > light);
+  assert.ok(f.strokes.every(stroke => stroke.points[1][0] < stroke.points[0][0]));
+  assert.equal(f.queue.size, 0);
   layer.dispose();
 });
 

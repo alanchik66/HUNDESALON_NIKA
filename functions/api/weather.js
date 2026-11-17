@@ -34,6 +34,17 @@ function finiteNumber(value) {
   return Number.isFinite(number) ? number : null;
 }
 
+function precipitationReading(amountValue, intervalSeconds) {
+  const amount = finiteNumber(amountValue);
+  const precipitation = amount !== null && amount >= 0 ? amount : null;
+  const rate = precipitation === null ? null : precipitation * (3600 / intervalSeconds);
+  return {
+    precipitation,
+    precipitationIntervalSeconds: precipitation === null ? null : intervalSeconds,
+    precipitationRateMmPerHour: Number.isFinite(rate) ? rate : null,
+  };
+}
+
 function round(value, decimals = 1) {
   const factor = 10 ** decimals;
   return Math.round(Number(value || 0) * factor) / factor;
@@ -278,10 +289,11 @@ export function weatherCodeFromBrightSky(iconValue, cloudCoverValue) {
 export function weatherCodeFromMetSymbol(symbolValue, cloudCoverValue) {
   const symbol = String(symbolValue || '').toLowerCase();
   if (symbol.includes('thunder')) return 95;
-  if (symbol.includes('snow')) return symbol.includes('showers') ? 85 : 73;
+  if (symbol.includes('snow')) return symbol.includes('showers') ? symbol.includes('heavy') ? 86 : 85
+    : symbol.includes('heavy') ? 75 : symbol.includes('light') ? 71 : 73;
   if (symbol.includes('sleet')) return symbol.includes('showers') ? 81 : 67;
   if (symbol.includes('rain')) {
-    if (symbol.includes('showers')) return 80;
+    if (symbol.includes('showers')) return symbol.includes('heavy') ? 82 : symbol.includes('light') ? 80 : 81;
     if (symbol.includes('heavy')) return 65;
     if (symbol.includes('light')) return 61;
     return 63;
@@ -333,7 +345,11 @@ function weatherApiCondition(weatherCode, isDay = 1) {
     text = 'Snow';
     apiCode = 1210;
     iconCode = 338;
-  } else if ([95, 96, 99].includes(code)) {
+  } else if ([96, 99].includes(code)) {
+    text = 'Thunderstorm with hail';
+    apiCode = code === 99 ? 1276 : 1273;
+    iconCode = 389;
+  } else if ([95, 97].includes(code)) {
     text = 'Thunderstorm';
     apiCode = 1273;
     iconCode = 389;
@@ -398,8 +414,14 @@ export function normalizeBrightSkyCurrent(payload, coordinates, timeZone, nowMs 
     finiteNumber(current.wind_gust_speed_30) ??
     finiteNumber(current.wind_gust_speed_60);
   const pressureMsl = finiteNumber(current.pressure_msl);
-  const weatherCode = weatherCodeFromBrightSky(current.icon, cloudCover);
+  const weatherCode = weatherCodeFromBrightSky(
+    current.condition === 'hail' ? 'hail' : current.icon, cloudCover);
   const station = nearestBrightSkySource(payload, current.source_id);
+  // Bright Sky reports backward-looking totals over distinct 10/30/60 minute
+  // windows. Keep that amount while exposing a comparable hourly mean rate.
+  const precipitation = [10, 30, 60].map(minutes =>
+    precipitationReading(current[`precipitation_${minutes}`], minutes * 60))
+    .find(reading => reading.precipitation !== null) || precipitationReading(null, null);
 
   return {
     source: 'dwd-bright-sky',
@@ -414,10 +436,7 @@ export function normalizeBrightSkyCurrent(payload, coordinates, timeZone, nowMs 
     weatherCode,
     cloudCover,
     fieldSources: cloudCover === null ? {} : { cloudCover: brightSkyFieldSource(payload, current, 'cloud_cover') },
-    precipitation:
-      finiteNumber(current.precipitation_10) ??
-      finiteNumber(current.precipitation_30) ??
-      finiteNumber(current.precipitation_60),
+    ...precipitation,
     humidity,
     temperature,
     apparentTemperature: calculateApparentTemperature(temperature, humidity, windSpeedKph),
@@ -497,7 +516,9 @@ export function normalizeMetCurrent(payload, coordinates, timeZone, nowMs = Date
     weatherCode: weatherCodeFromMetSymbol(symbol, cloudCover),
     cloudCover,
     cloudLayers: metCloudLayers(details, entry.time, payload?.properties?.meta?.updated_at, nowMs),
-    precipitation: finiteNumber(entry?.data?.next_1_hours?.details?.precipitation_amount),
+    // MET's amount belongs to the following hour, rather than an observation
+    // accumulated over the preceding DWD reporting window.
+    ...precipitationReading(entry?.data?.next_1_hours?.details?.precipitation_amount, 3600),
     humidity,
     temperature,
     apparentTemperature: calculateApparentTemperature(temperature, humidity, windSpeedKph),
@@ -553,7 +574,7 @@ function hasCompleteForecast(days, timeZone) {
 }
 
 function conditionSeverity(weatherCode) {
-  if ([95, 96, 99].includes(weatherCode)) return 9;
+  if ([95, 96, 97, 99].includes(weatherCode)) return 9;
   if ([71, 73, 75, 77, 85, 86].includes(weatherCode)) return 8;
   if ([61, 63, 65, 66, 67, 80, 81, 82].includes(weatherCode)) return 7;
   if ([51, 53, 55, 56, 57].includes(weatherCode)) return 6;
@@ -562,6 +583,16 @@ function conditionSeverity(weatherCode) {
   if (weatherCode === 2) return 3;
   if (weatherCode === 1) return 2;
   return 1;
+}
+
+function conditionIntensity(weatherCode) {
+  // WMO numbers distinguish precipitation types; their numeric order is not
+  // an intensity scale (a slight shower must not outrank continuous heavy rain).
+  if ([82, 99].includes(weatherCode)) return 4;
+  if ([55, 57, 65, 67, 75, 86, 96].includes(weatherCode)) return 3;
+  if ([53, 63, 73, 81, 97].includes(weatherCode)) return 2;
+  if ([51, 56, 61, 66, 71, 77, 80, 85, 95].includes(weatherCode)) return 1;
+  return 0;
 }
 
 function buildForecastDays(timeseries, timeZone, currentMeta, conditionCode) {
@@ -614,7 +645,8 @@ function buildForecastDays(timeseries, timeZone, currentMeta, conditionCode) {
       if (currentMeta?.visibilityMeters !== null && Number.isFinite(currentMeta?.visibilityMeters)) {
         visibilities.push(currentMeta.visibilityMeters / 1000);
       }
-      if (severity > representativeSeverity) {
+      if (severity > representativeSeverity || severity === representativeSeverity &&
+          conditionIntensity(code) > conditionIntensity(representativeCode)) {
         representativeSeverity = severity;
         representativeCode = code;
       }
@@ -656,6 +688,7 @@ function buildForecastDays(timeseries, timeZone, currentMeta, conditionCode) {
         daily_chance_of_rain: totalPrecipitation > 0 ? 100 : 0,
         daily_will_it_snow: [71, 73, 75, 77, 85, 86].includes(representativeCode) ? 1 : 0,
         daily_chance_of_snow: [71, 73, 75, 77, 85, 86].includes(representativeCode) ? 100 : 0,
+        weatherCode: representativeCode,
         condition: weatherApiCondition(representativeCode, 1),
         uv: 0,
       },
@@ -674,7 +707,7 @@ function buildBrightSkyForecastDays(payload, timeZone, currentMeta) {
   const hours = Array.isArray(payload?.weather) ? payload.weather : [];
   const timeseries = hours.filter(hour => hour && typeof hour === 'object').map(hour => ({
     time: hour.timestamp,
-    icon: hour.icon,
+    icon: hour.condition === 'hail' ? 'hail' : hour.icon,
     data: {
       instant: { details: {
         air_temperature: hour.temperature,

@@ -314,6 +314,92 @@ test('current observations accept only finite numeric values or nonblank numeric
   }
 });
 
+test('DWD precipitation preserves the accumulation and normalizes the actual 10/30/60 minute window', () => {
+  for (const [values, amount, seconds, rate] of [
+    [{ precipitation_10: .8, precipitation_30: 1.2, precipitation_60: 1.8 }, .8, 600, 4.8],
+    [{ precipitation_10: 0, precipitation_30: 1.2 }, 0, 600, 0],
+    [{ precipitation_10: null, precipitation_30: '1.2', precipitation_60: 1.8 }, 1.2, 1800, 2.4],
+    [{ precipitation_10: -1, precipitation_30: [], precipitation_60: 1.8 }, 1.8, 3600, 1.8],
+    [{ precipitation_10: ' ', precipitation_30: false, precipitation_60: Infinity }, null, null, null],
+    [{}, null, null, null],
+  ]) {
+    const current = normalizeBrightSkyCurrent(brightSkyFixture(values), COORDINATES, 'Europe/Berlin', CURRENT_TIME);
+    assert.equal(current.precipitation, amount);
+    assert.equal(current.precipitationIntervalSeconds, seconds);
+    if (rate === null) assert.equal(current.precipitationRateMmPerHour, null);
+    else assert.ok(Math.abs(current.precipitationRateMmPerHour - rate) < 1e-10);
+  }
+});
+
+test('MET precipitation is the following hour total and unknown or invalid amounts never become zero rain', () => {
+  for (const value of [0, '0', 2.4, null, undefined, -1, ' ', false, [], {}, NaN, Infinity]) {
+    const payload = metFixture();
+    payload.properties.timeseries[0].data.next_1_hours.details = { precipitation_amount: value };
+    const current = normalizeMetCurrent(payload, COORDINATES, 'Europe/Berlin', CURRENT_TIME);
+    const expected = [0, '0', 2.4].includes(value) ? Number(value) : null;
+    assert.equal(current.precipitation, expected);
+    assert.equal(current.precipitationRateMmPerHour, expected);
+    assert.equal(current.precipitationIntervalSeconds, expected === null ? null : 3600);
+  }
+});
+
+test('explicit Bright Sky hail is retained ahead of a generic thunderstorm icon without inventing hail from sleet', () => {
+  const current = normalizeBrightSkyCurrent(brightSkyFixture({ condition: 'hail', icon: 'thunderstorm' }), COORDINATES, 'Europe/Berlin', CURRENT_TIME);
+  assert.equal(current.weatherCode, 96);
+  assert.equal(normalizeBrightSkyCurrent(brightSkyFixture({ condition: 'sleet', icon: 'sleet' }), COORDINATES, 'Europe/Berlin', CURRENT_TIME).weatherCode, 67);
+});
+
+test('weather API payload carries the reporting window, hourly mean rate and explicit hail', async t => {
+  const harness = weatherHarness(t, { bright: brightSkyFixture({ condition: 'hail', icon: 'thunderstorm', precipitation_10: .8 }) });
+  const payload = await (await harness.request()).json();
+  assert.equal(payload.weatherMeta.weatherCode, 96);
+  assert.equal(payload.weatherMeta.precipitationIntervalSeconds, 600);
+  assert.ok(Math.abs(payload.weatherMeta.precipitationRateMmPerHour - 4.8) < 1e-10);
+  assert.equal(payload.current.precip_mm, .8, 'the accumulated amount keeps its existing API meaning');
+  assert.equal(payload.current.condition.text, 'Thunderstorm with hail');
+});
+
+test('daily precipitation keeps the strongest original condition code instead of losing shower intensity', async t => {
+  const met = metFixture(Array.from({ length: 4 }, (_, index) => ({ time: new Date(CURRENT_TIME + index * 3600_000).toISOString(), temperature: 8 })));
+  for (const [index, symbol] of ['lightrainshowers_day', 'rainshowers_day', 'heavyrainshowers_day', 'lightrainshowers_day'].entries()) {
+    met.properties.timeseries[index].data.next_1_hours.summary.symbol_code = symbol;
+  }
+  const harness = weatherHarness(t, { met });
+  const payload = await (await harness.request()).json();
+  assert.equal(payload.forecast.forecastday[0].day.weatherCode, 82);
+  assert.equal(weatherCodeFromMetSymbol('lightrainshowers_day'), 80);
+  assert.equal(weatherCodeFromMetSymbol('rainshowers_day'), 81);
+  assert.equal(weatherCodeFromMetSymbol('heavyrainshowers_day'), 82);
+});
+
+test('light showers never replace heavier continuous precipitation in the daily weather code', async t => {
+  for (const [label, heavy, light, expected] of [
+    ['rain', 'heavyrain_day', 'lightrainshowers_day', 65],
+    ['snow', 'heavysnow_day', 'lightsnowshowers_day', 75],
+  ]) {
+    for (const reversed of [false, true]) await t.test(`${label}, heavy ${reversed ? 'last' : 'first'}`, async t => {
+      const met = metFixture(Array.from({ length: 2 }, (_, index) => ({
+        time: new Date(CURRENT_TIME + index * 3600_000).toISOString(), temperature: 8,
+      })));
+      const symbols = reversed ? [light, heavy] : [heavy, light];
+      symbols.forEach((symbol, index) => { met.properties.timeseries[index].data.next_1_hours.summary.symbol_code = symbol; });
+      const harness = weatherHarness(t, { met });
+      const payload = await (await harness.request()).json();
+      assert.equal(payload.forecast.forecastday[0].day.weatherCode, expected);
+    });
+  }
+});
+
+test('Bright Sky daily backup retains explicit hail when its generic icon reports thunderstorm', async t => {
+  const brightForecast = brightSkyForecastFixture();
+  brightForecast.weather[0].condition = 'hail';
+  brightForecast.weather[0].icon = 'thunderstorm';
+  const harness = weatherHarness(t, { met: null, brightForecast });
+  const payload = await (await harness.request()).json();
+  assert.equal(payload.forecast.forecastday[0].day.weatherCode, 96);
+  assert.equal(payload.forecast.forecastday[0].day.condition.text, 'Thunderstorm with hail');
+});
+
 test('DWD cloud provenance follows the field fallback station while preserving the primary station context', () => {
   const payload = brightSkyFixture({ source_id: 10, cloud_cover: 75, fallback_source_ids: { cloud_cover: 20 } });
   payload.sources = [

@@ -519,6 +519,7 @@ var React = toInteropDefault(getReact()),
     'rain showers': { ru: `Ливни`, uk: `Зливи`, de: `Regenschauer`, en: `Rain showers` },
     snow: { ru: `Снег`, uk: `Сніг`, de: `Schnee`, en: `Snow` },
     thunderstorm: { ru: `Гроза`, uk: `Гроза`, de: `Gewitter`, en: `Thunderstorm` },
+    'thunderstorm with hail': { ru: `Гроза с градом`, uk: `Гроза з градом`, de: `Gewitter mit Hagel`, en: `Thunderstorm with hail` },
   },
   localeTags = { ru: `ru-RU`, uk: `uk-UA`, de: `de-DE`, en: `en-US` },
   formatCountry = (e, t) => {
@@ -556,7 +557,8 @@ var React = toInteropDefault(getReact()),
   },
   translateCondition = (e, t) =>
     (e &&
-      ((e.code == null ? `` : conditionCodeLabels[e.code]?.[t]) ||
+      ((String(e.text || ``).trim().toLowerCase() === 'thunderstorm with hail' && conditionTextLabels['thunderstorm with hail']?.[t]) ||
+        (e.code == null ? `` : conditionCodeLabels[e.code]?.[t]) ||
         conditionTextLabels[
           String(e.text || ``)
             .trim()

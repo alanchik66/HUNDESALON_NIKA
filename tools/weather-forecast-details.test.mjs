@@ -52,6 +52,44 @@ function binding(source, name, nextName) {
   return source.slice(start + startMarker.length, end);
 }
 
+test('a transient reverse-geocoder failure cannot cache coordinates as a permanently resolved location', async () => {
+  const source = await readSource('weather-service.mjs'), cache = new Map();
+  let requests = 0;
+  const location = { latitude: 51.21, longitude: 6.77 };
+  const address = { ...location, name: 'Benrath', region: 'Düsseldorf', country: 'Deutschland' };
+  const reverse = new Function('Z', 'Mn', 'Sn', 'Ln', 'In', `return (${binding(source, '$', 'Rn')});`)(
+    value => value, (point, locale) => `${locale}:${point.latitude},${point.longitude}`, cache,
+    async () => { if (++requests === 1) throw Error('temporary provider failure'); return address; },
+    async () => null
+  );
+  const fallback = await reverse(location, 'ru');
+  assert.equal(fallback.name, '51.2100, 6.7700');
+  assert.equal(cache.size, 0, 'an unresolved numerical fallback must remain retryable');
+  assert.equal((await reverse(location, 'ru')).name, 'Benrath');
+  assert.equal(requests, 2);
+  assert.equal((await reverse(location, 'ru')).name, 'Benrath');
+  assert.equal(requests, 2, 'successfully resolved locations keep their existing positive cache');
+});
+
+test('an empty reverse address remains unresolved and can recover on the next lookup', async () => {
+  const source = await readSource('weather-service.mjs'), cache = new Map();
+  let requests = 0;
+  const firstText = (...values) => values.find(value => typeof value === 'string' && value.trim()) || '';
+  const lookup = new Function('Z', 'axios', '_n', 'Q', `return (${binding(source, 'Ln', '$')});`)(
+    value => value,
+    { get: async () => ({ data: { address: ++requests === 1 ? {} : { city: 'Düsseldorf', suburb: 'Benrath', country: 'Deutschland' } } }) },
+    '/reverse-geocode', firstText
+  );
+  const reverse = new Function('Z', 'Mn', 'Sn', 'Ln', 'In', `return (${binding(source, '$', 'Rn')});`)(
+    value => value, (point, locale) => `${locale}:${point.latitude},${point.longitude}`, cache, lookup, async () => null
+  );
+  const point = { latitude: 51.21, longitude: 6.77 };
+  assert.equal((await reverse(point, 'de')).name, '51.2100, 6.7700');
+  assert.equal(cache.size, 0);
+  assert.equal((await reverse(point, 'de')).name, 'Benrath');
+  assert.equal(requests, 2);
+});
+
 test('weather requests and normalization retain four distinct forecast days', async () => {
   const source = await readSource('weather-service.mjs');
   const dates = ['2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07'];
@@ -86,6 +124,52 @@ test('weather requests and normalization retain four distinct forecast days', as
   assert.equal(new Set(normalized.forecast.forecastday.map(day => day.date)).size, 4);
 });
 
+test('Open-Meteo current precipitation retains its supplied interval and converts only known windows into hourly rates', async () => {
+  const source = await readSource('weather-service.mjs');
+  const normalize = new Function('Gn', 'J', 'Y', 'Cn', 'Tn', 'wn', 'Bn', 'zn', 'Rn', 'Dn', 'En', 'parseWeatherCurrentTime', `return (${binding(source, 'Kn', 'qn')});`)(
+    () => ({}), Number, Number, Number, Number, Number, code => ({ code, text: 'Actual condition' }),
+    Date.parse, value => value, () => 'N', Number, parseWeatherCurrentTime
+  );
+  const location = { latitude: 51.34, longitude: 12.37, name: 'Leipzig' };
+  for (const [interval, amount, expectedRate] of [
+    [900, .8, 3.2], [600, .8, 4.8], [1800, .8, 1.6], [3600, .8, .8], ['900', '0', 0],
+    [undefined, .8, null], [null, .8, null], [0, .8, null], [-900, .8, null], [3601, .8, null],
+    [Infinity, .8, null], [true, .8, null], [[], .8, null], [900.5, .8, null],
+    [900, -1, null], [900, null, null], [900, false, null], [900, [], null],
+  ]) {
+    const result = normalize('Leipzig', location, { current: {
+      time: '2026-11-17T12:00:00Z', temperature_2m: 11, weather_code: 96, interval, precipitation: amount,
+    } });
+    assert.equal(result.weatherMeta.weatherCode, 96, 'the original hail code survives provider-neutral display normalization');
+    if (expectedRate === null) assert.equal(result.weatherMeta.precipitationRateMmPerHour, null);
+    else assert.ok(Math.abs(result.weatherMeta.precipitationRateMmPerHour - expectedRate) < 1e-10);
+    if (typeof interval === 'number' && Number.isInteger(interval) && interval > 0 && interval <= 3600 || interval === '900') {
+      assert.equal(result.weatherMeta.precipitationIntervalSeconds, Number(interval));
+    } else assert.equal(result.weatherMeta.precipitationIntervalSeconds, null);
+    if (expectedRate !== null) assert.equal(result.current.precip_mm, Number(amount), 'precip_mm remains the accumulated millimetres');
+  }
+});
+
+for (const file of ['header-preview.mjs', 'header-dropdown.mjs', 'widget.mjs']) {
+  test(`${file} keeps explicit hail in all four locales without changing ordinary storm labels`, async () => {
+    const source = await readSource(file);
+    const translate = new Function('conditionCodeLabels', 'conditionTextLabels', `return (${binding(source, 'translateCondition', 'weatherForForecastDay')});`)(
+      new Function(`return (${binding(source, 'conditionCodeLabels', 'conditionTextLabels')});`)(),
+      new Function(`return (${binding(source, 'conditionTextLabels', 'localeTags')});`)()
+    );
+    for (const [locale, hail, storm] of [
+      ['ru', 'Гроза с градом', 'Гроза'], ['uk', 'Гроза з градом', 'Гроза'],
+      ['de', 'Gewitter mit Hagel', 'Gewitter'], ['en', 'Thunderstorm with hail', 'Thunderstorm'],
+    ]) {
+      for (const code of [1273, 1276, null]) {
+        assert.equal(translate({ code, text: '  Thunderstorm WITH Hail  ' }, locale), hail);
+      }
+      assert.equal(translate({ code: 1273, text: 'Thunderstorm' }, locale), storm);
+      assert.equal(translate(null, locale), '');
+    }
+  });
+}
+
 test('fallback daily normalization preserves unknown temperatures and conditions without inventing zero degrees', async () => {
   const source = await readSource('weather-service.mjs');
   const daily = new Function('J', 'Y', 'Cn', 'Tn', 'Bn', 'zn', `return (${binding(source, 'Gn', 'Kn')});`)(
@@ -104,6 +188,7 @@ test('fallback daily normalization preserves unknown temperatures and conditions
   }
   const zero = daily({ time: [date], temperature_2m_max: [0], temperature_2m_min: [0], weather_code: [0] }, 0);
   assert.equal(zero.day.maxtemp_c, 0);
+  assert.equal(zero.day.weatherCode, 0);
   assert.equal(zero.day.mintemp_c, 0);
   assert.equal(zero.day.condition.code, 0);
   assert.equal(daily({ temperature_2m_max: [10], temperature_2m_min: [5] }, 0).date, '', 'a missing provider date must not become today');

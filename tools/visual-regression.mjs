@@ -543,10 +543,8 @@ try {
     await page.waitForTimeout(500);
 
     const galleryState = await page.evaluate(() => {
-      const primaryGroup = document.querySelector('.mobile-nav-group--primary');
-      const primaryItems = primaryGroup ? [...primaryGroup.querySelectorAll(':scope > a[href]')] : [];
-      const galleryIndex = primaryItems.findIndex(item => new URL(item.href).pathname.endsWith('/galereya.html'));
-      const checkedItems = galleryIndex >= 0 ? primaryItems.slice(galleryIndex, galleryIndex + 4) : [];
+      const checkedItems = [...document.querySelectorAll('#mobile-nav > .mobile-nav__content > .mobile-nav-group > a[href]')]
+        .filter(item => !item.classList.contains('mobile-nav-link--promotions'));
       const details = checkedItems.map(item => {
         const rect = item.getBoundingClientRect();
         return {
@@ -558,17 +556,19 @@ try {
 
       return {
         flat: !document.querySelector('#mobileGalleryBtn, #mobileGalleryMenu'),
+        gallery: checkedItems.some(item => new URL(item.href).pathname.endsWith('/galereya.html')),
         beforeAfter: checkedItems.some(item => new URL(item.href).pathname.endsWith('/do-i-posle.html')),
         checked: checkedItems.map(item => item.getAttribute('href')),
         details,
       };
     });
 
-    assert(`${scenario.name}: both gallery destinations are direct links`, galleryState.flat && galleryState.beforeAfter, JSON.stringify(galleryState));
+    assert(`${scenario.name}: both gallery destinations are direct links`, galleryState.flat && galleryState.gallery && galleryState.beforeAfter, JSON.stringify(galleryState));
+    // Native subpixel bounds can differ slightly from the 44–48px CSS touch-target height.
     assert(
-      `${scenario.name}: gallery and following tiles share equal dimensions`,
-      galleryState.checked.length === 4 && galleryState.details.every(item =>
-        item.height >= 56 && Math.abs(item.width - galleryState.details[0].width) <= 1 &&
+      `${scenario.name}: ordinary menu tiles share equal compact dimensions`,
+      galleryState.checked.length === 14 && galleryState.details.every(item =>
+        item.height >= 43.5 && item.height <= 48.5 && Math.abs(item.width - galleryState.details[0].width) <= 1 &&
         Math.abs(item.height - galleryState.details[0].height) <= 1),
       JSON.stringify(galleryState)
     );
