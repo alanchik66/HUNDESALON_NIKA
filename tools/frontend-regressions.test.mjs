@@ -1430,7 +1430,8 @@ test('localized burger menus expose promotions while keeping booking in the head
       assert.ok(promotion, `${locale}/${currentRoute}: promotions link exists`);
       assert.equal(promotion[1], `${prefix}social.html#promotions`, 'promotion keeps the localized destination');
       assert.match(promotion[2], /\bmobile-nav-link--promotions\b/);
-      assert.equal(promotion[3].replace(/<[^>]*>/g, '').trim(), promotionsLabel, 'localized label is retained');
+      const promotionLabel = promotion[3].match(/<span>([^<]*)<\/span>/)?.[1];
+      assert.equal(promotionLabel, promotionsLabel, 'localized label is retained in its text span');
       assert.match(promotion[3], /<img[^>]*src="[^"]*\/icons\/clash-royale\.png"[^>]*alt=""[^>]*aria-hidden="true"/);
       const destinations = [...mobileNavContent.matchAll(/<a href="([^"]+)"/g)].map(item => item[1]);
       assert.deepEqual(destinations.slice(0, 7), [

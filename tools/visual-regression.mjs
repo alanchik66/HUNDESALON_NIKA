@@ -360,53 +360,56 @@ try {
 
     const originalPath = new URL(page.url()).pathname;
     const burger = page.locator('.premium-burger').first();
+    const waitForDrawerEntrance = async () => {
+      await page.waitForSelector('#mobile-nav.active', { state: 'visible', timeout: 15000 });
+      // Animation enumeration alone can precede the final rendered geometry.
+      await page.evaluate(() => { window.__visualDrawerReadiness = null; });
+      await page.waitForFunction(() => {
+        const element = document.querySelector('#mobile-nav');
+        if (!element?.classList.contains('active') || element.inert) {
+          window.__visualDrawerReadiness = null;
+          return false;
+        }
+        const box = element.getBoundingClientRect();
+        const rect = { left: box.left, top: box.top, width: box.width, height: box.height };
+        const animationsReady = element.getAnimations({ subtree: true }).filter(animation => !animation.effect?.pseudoElement).every(animation =>
+          animation.effect?.getComputedTiming().iterations === Infinity || (!animation.pending && animation.playState !== 'running')
+        );
+        if (!animationsReady || Math.abs(rect.left - 12) > 1 || Math.abs(rect.width - Math.min(420, window.innerWidth - 24)) > 1) {
+          window.__visualDrawerReadiness = null;
+          return false;
+        }
+        const state = window.__visualDrawerReadiness;
+        if (!state || Object.keys(rect).some(key => Math.abs(rect[key] - state.anchor[key]) > 0.25)) {
+          window.__visualDrawerReadiness = { anchor: rect, stableSince: performance.now() };
+          return false;
+        }
+        return performance.now() - state.stableSince >= 100;
+      }, null, { timeout: 5000, polling: 'raf' }).catch(async error => {
+        const diagnostic = await page.evaluate(() => {
+          const nav = document.querySelector('#mobile-nav');
+          const rect = nav?.getBoundingClientRect();
+          const style = nav && getComputedStyle(nav);
+          return { active: nav?.classList.contains('active'), inert: nav?.inert,
+            rect: rect && { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+            transform: style?.transform, scale: style?.scale, translate: style?.translate, rotate: style?.rotate,
+            readiness: window.__visualDrawerReadiness,
+            animations: nav?.getAnimations({ subtree: true }).map(animation => ({
+              name: animation.animationName, type: animation.constructor.name, pending: animation.pending,
+              playState: animation.playState, currentTime: animation.currentTime,
+              target: animation.effect?.target?.id || animation.effect?.target?.tagName,
+              pseudoElement: animation.effect?.pseudoElement, infinite: animation.effect?.getComputedTiming().iterations === Infinity,
+              progress: animation.effect?.getComputedTiming().progress,
+            })) };
+        });
+        await writeFile(path.join(outDir, `${scenario.name}-drawer-readiness-failure.json`), JSON.stringify(diagnostic, null, 2));
+        await page.screenshot({ path: path.join(outDir, `${scenario.name}-drawer-readiness-failure.png`), animations: 'allow' }).catch(() => {});
+        throw new Error(`${scenario.name}: drawer never reached stable entrance geometry: ${JSON.stringify(diagnostic)}`, { cause: error });
+      });
+    };
     await burger.waitFor({ state: 'visible', timeout: 15000 });
     await burger.click();
-    await page.waitForSelector('#mobile-nav.active', { state: 'visible', timeout: 15000 });
-    // Animation enumeration alone can precede the final rendered geometry.
-    await page.evaluate(() => { window.__visualDrawerReadiness = null; });
-    await page.waitForFunction(() => {
-      const element = document.querySelector('#mobile-nav');
-      if (!element?.classList.contains('active') || element.inert) {
-        window.__visualDrawerReadiness = null;
-        return false;
-      }
-      const box = element.getBoundingClientRect();
-      const rect = { left: box.left, top: box.top, width: box.width, height: box.height };
-      const animationsReady = element.getAnimations({ subtree: true }).filter(animation => !animation.effect?.pseudoElement).every(animation =>
-        animation.effect?.getComputedTiming().iterations === Infinity || (!animation.pending && animation.playState !== 'running')
-      );
-      if (!animationsReady || Math.abs(rect.left - 12) > 1 || Math.abs(rect.width - Math.min(420, window.innerWidth - 24)) > 1) {
-        window.__visualDrawerReadiness = null;
-        return false;
-      }
-      const state = window.__visualDrawerReadiness;
-      if (!state || Object.keys(rect).some(key => Math.abs(rect[key] - state.anchor[key]) > 0.25)) {
-        window.__visualDrawerReadiness = { anchor: rect, stableSince: performance.now() };
-        return false;
-      }
-      return performance.now() - state.stableSince >= 100;
-    }, null, { timeout: 5000, polling: 'raf' }).catch(async error => {
-      const diagnostic = await page.evaluate(() => {
-        const nav = document.querySelector('#mobile-nav');
-        const rect = nav?.getBoundingClientRect();
-        const style = nav && getComputedStyle(nav);
-        return { active: nav?.classList.contains('active'), inert: nav?.inert,
-          rect: rect && { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
-          transform: style?.transform, scale: style?.scale, translate: style?.translate, rotate: style?.rotate,
-          readiness: window.__visualDrawerReadiness,
-          animations: nav?.getAnimations({ subtree: true }).map(animation => ({
-            name: animation.animationName, type: animation.constructor.name, pending: animation.pending,
-            playState: animation.playState, currentTime: animation.currentTime,
-            target: animation.effect?.target?.id || animation.effect?.target?.tagName,
-            pseudoElement: animation.effect?.pseudoElement, infinite: animation.effect?.getComputedTiming().iterations === Infinity,
-            progress: animation.effect?.getComputedTiming().progress,
-          })) };
-      });
-      await writeFile(path.join(outDir, `${scenario.name}-drawer-readiness-failure.json`), JSON.stringify(diagnostic, null, 2));
-      await page.screenshot({ path: path.join(outDir, `${scenario.name}-drawer-readiness-failure.png`), animations: 'allow' }).catch(() => {});
-      throw new Error(`${scenario.name}: drawer never reached stable entrance geometry: ${JSON.stringify(diagnostic)}`, { cause: error });
-    });
+    await waitForDrawerEntrance();
 
     const drawerState = await page.evaluate(() => {
       const nav = document.querySelector('#mobile-nav');
@@ -539,8 +542,7 @@ try {
     );
 
     await burger.click();
-    await page.waitForSelector('#mobile-nav.active', { state: 'visible', timeout: 15000 });
-    await page.waitForTimeout(500);
+    await waitForDrawerEntrance();
 
     const galleryState = await page.evaluate(() => {
       const checkedItems = [...document.querySelectorAll('#mobile-nav > .mobile-nav__content > .mobile-nav-group > a[href]')]

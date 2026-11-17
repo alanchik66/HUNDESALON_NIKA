@@ -68,6 +68,12 @@ try {
       const bookingModal = page.locator('#booking-modal[data-price-booking-flow].active');
       await bookingModal.waitFor({ state: 'visible', timeout: 15000 });
       await page.waitForFunction(() => document.querySelector('#booking-modal')?.dataset.bookingStep === '0');
+      // Allow the already queued initial focus callback to finish before testing deliberate keyboard focus.
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
+      await page.waitForFunction(() => {
+        const activeStep = document.querySelector('#booking-modal .booking-step.active');
+        return activeStep?.contains(document.activeElement);
+      }, null, { polling: 'raf' });
       assert.equal(await bookingModal.getAttribute('role'), 'dialog');
       assert.equal(await bookingModal.getAttribute('aria-modal'), 'true');
       assert.equal(await bookingModal.getAttribute('aria-hidden'), 'false');
@@ -76,9 +82,13 @@ try {
       const closeButton = bookingModal.locator('.modal-close');
       assert.ok(await closeButton.getAttribute('aria-label'), 'the close control must have an accessible name');
       await closeButton.focus();
+      assert.equal(await closeButton.evaluate(element => element === document.activeElement), true,
+        'the close control must own focus before testing the dialog focus loop');
       await page.keyboard.press('Shift+Tab');
       assert.equal(await bookingModal.evaluate(element => element.contains(document.activeElement)), true,
         'reverse Tab must stay inside the unified dialog');
+      assert.equal(await closeButton.evaluate(element => element === document.activeElement), false,
+        'reverse Tab must move from the close control to another control inside the dialog');
       await page.keyboard.press('Tab');
       assert.equal(await closeButton.evaluate(element => element === document.activeElement), true,
         'Tab must wrap from the last control back to the close button');
