@@ -531,6 +531,22 @@ test('production deploy requires exact-revision macOS WebKit while Linux retains
   assert.match(webkit, /run: npm ci\n/u);
   assert.match(webkit, /run: npx --no-install playwright install webkit\n/u);
   assert.match(webkit, /run: node --test tools\/booking-select-refresh\.test\.mjs\n/u);
+  const webkitSteps = webkit.split(/\n(?=      - )/u);
+  const contacts = webkitSteps.find(step => step.includes('run: node tools/burger-menu-smoke.mjs'));
+  assert.ok(contacts, 'native WebKit contacts regression remains required on every release path');
+  assert.match(contacts, /BURGER_MENU_ENGINE: webkit/u);
+  assert.match(contacts, /BURGER_MENU_CASE: ru-390-contacts-no-preference/u);
+  assert.match(contacts, /BURGER_MENU_OUTPUT: output\/webkit-release-burger/u);
+  assert.doesNotMatch(contacts, /\bif:|continue-on-error|always\(\)|BURGER_MENU_ROOT:/u);
+  assert.ok(
+    webkit.indexOf(contacts) > webkit.indexOf('run: node --test tools/booking-select-refresh.test.mjs'),
+    'contacts regression follows the existing booking gate'
+  );
+  const fixtureUpload = webkitSteps.find(step => step.includes('uses: actions/upload-artifact@'));
+  assert.ok(fixtureUpload, 'public WebKit evidence upload remains present');
+  assert.match(fixtureUpload, /if: always\(\)/u);
+  assert.match(fixtureUpload, /output\/webkit-release-check\//u);
+  assert.match(fixtureUpload, /output\/webkit-release-burger\//u);
   const checkout = webkit.indexOf('uses: actions/checkout@');
   assert.ok(checkout > 0);
   for (const guard of [

@@ -59,12 +59,20 @@ jobs:
       - run: npx --no-install playwright install webkit
       - name: Check native interaction, fixed frame and fallback pixels
         run: node --test tools/booking-select-refresh.test.mjs
+      - name: Require native WebKit contacts navigation in source
+        env:
+          BURGER_MENU_ENGINE: webkit
+          BURGER_MENU_CASE: ru-390-contacts-no-preference
+          BURGER_MENU_OUTPUT: output/webkit-release-burger
+        run: node tools/burger-menu-smoke.mjs
       - name: Preserve public WebKit fixture evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: webkit-booking-${{ github.sha }}-${{ github.run_attempt }}
-          path: output/webkit-release-check/
+          path: |
+            output/webkit-release-check/
+            output/webkit-release-burger/
           if-no-files-found: warn
           retention-days: 7
 

@@ -13973,6 +13973,15 @@ body.nav-open .site-scroll-root > :is(main, .section, footer) {
   filter: blur(2px);
 }
 
+/* Keep live map renderers out of an ancestor filter; the drawer supplies its own glass blur. */
+body.nav-open .site-scroll-root > .contacts.section {
+  filter: none;
+}
+
+body.nav-open .contacts.section .contacts-info {
+  filter: blur(2px);
+}
+
 #mobile-nav {
   --mobile-nav-drawer-width: min(420px, calc(100vw - 24px));
   --menu-contour-half-width: 0.25px;
@@ -14003,7 +14012,7 @@ body.nav-open .site-scroll-root > :is(main, .section, footer) {
   transition-delay: 0s !important;
 }
 
-#mobile-nav > canvas.site-menu-contour {
+body #mobile-nav[data-menu-contour] > canvas.site-menu-contour {
   filter: none !important;
 }
 

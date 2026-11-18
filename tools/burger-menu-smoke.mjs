@@ -1,11 +1,38 @@
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, realpath, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { chromium } from 'playwright';
+import { fileURLToPath } from 'node:url';
+import { chromium, webkit } from 'playwright';
 
 import { startStaticTestServer } from './lib/static-test-server.mjs';
 
-const output = path.resolve('test-results', 'burger-menu');
+const outputArgument = process.env.BURGER_MENU_OUTPUT;
+let output = path.resolve('test-results', 'burger-menu');
+const workspace = await realpath(fileURLToPath(new URL('../', import.meta.url)));
+if (outputArgument !== undefined) {
+  assert.ok(outputArgument.length > 0, 'BURGER_MENU_OUTPUT must not be empty');
+  const outputRoot = await realpath(path.join(workspace, 'output'));
+  const relativeOutputRoot = path.relative(workspace, outputRoot);
+  assert.ok(relativeOutputRoot !== '..' && !relativeOutputRoot.startsWith(`..${path.sep}`) && !path.isAbsolute(relativeOutputRoot),
+    'Workspace output must resolve inside this workspace');
+  const requested = path.resolve(workspace, outputArgument);
+  const parent = await realpath(path.dirname(requested));
+  const relativeParent = path.relative(outputRoot, parent);
+  assert.ok(relativeParent !== '..' && !relativeParent.startsWith(`..${path.sep}`) && !path.isAbsolute(relativeParent),
+    'BURGER_MENU_OUTPUT parent must resolve inside workspace/output');
+  assert.ok((await stat(parent)).isDirectory(), 'BURGER_MENU_OUTPUT parent must be an existing directory');
+  const leaf = path.basename(requested);
+  assert.match(leaf, /^[A-Za-z0-9][A-Za-z0-9._-]*$/, 'BURGER_MENU_OUTPUT must name a new owned leaf');
+  assert.ok(!leaf.endsWith('.'), 'BURGER_MENU_OUTPUT leaf must not end with a dot');
+  output = path.join(parent, leaf);
+}
+const root = await realpath(path.resolve(workspace, process.env.BURGER_MENU_ROOT || '.'));
+const relativeRoot = path.relative(workspace, root);
+assert.ok(relativeRoot !== '..' && !relativeRoot.startsWith(`..${path.sep}`) && !path.isAbsolute(relativeRoot),
+  'BURGER_MENU_ROOT must resolve inside this workspace');
+assert.ok((await stat(root)).isDirectory(), 'BURGER_MENU_ROOT must be a directory');
+const engine = process.env.BURGER_MENU_ENGINE ?? 'chromium';
+assert.ok(['chromium', 'webkit'].includes(engine), 'BURGER_MENU_ENGINE must be chromium or webkit');
 const viewports = [
   { width: 320, height: 568 },
   { width: 390, height: 844 },
@@ -17,13 +44,43 @@ const scenarios = ['de', 'en', 'ru', 'uk'].flatMap(locale =>
 );
 scenarios.push(
   { locale: 'ru', viewport: viewports[1], route: 'index.html', reducedMotion: 'reduce' },
-  { locale: 'ru', viewport: viewports[1], route: 'blog/blog.html', reducedMotion: 'no-preference' }
+  { locale: 'ru', viewport: viewports[1], route: 'blog/blog.html', reducedMotion: 'no-preference' },
+  { locale: 'ru', viewport: viewports[1], route: 'kontakty.html', reducedMotion: 'no-preference', deviceScaleFactor: 3 }
 );
+const scenarioName = ({ locale, viewport, route, reducedMotion }) =>
+  `${locale}-${viewport.width}-${route === 'kontakty.html' ? 'contacts' : route.startsWith('blog/') ? 'blog' : 'home'}-${reducedMotion}`;
+const filters = {
+  name: process.env.BURGER_MENU_CASE,
+  locale: process.env.BURGER_MENU_LOCALE,
+  width: process.env.BURGER_MENU_WIDTH,
+};
+if (filters.name !== undefined) assert.ok(scenarios.some(scenario => scenarioName(scenario) === filters.name),
+  'BURGER_MENU_CASE must name an existing scenario');
+if (filters.locale !== undefined) assert.ok(scenarios.some(scenario => scenario.locale === filters.locale),
+  'BURGER_MENU_LOCALE must name an existing locale');
+if (filters.width !== undefined) assert.ok(viewports.some(viewport => String(viewport.width) === filters.width),
+  'BURGER_MENU_WIDTH must name an existing viewport width');
+const selectedScenarios = scenarios.filter(scenario =>
+  (filters.name === undefined || scenarioName(scenario) === filters.name) &&
+  (filters.locale === undefined || scenario.locale === filters.locale) &&
+  (filters.width === undefined || String(scenario.viewport.width) === filters.width)
+);
+assert.ok(selectedScenarios.length > 0, 'Scenario filters must select at least one existing case');
+const selection = {
+  engine, root, output, filters, scope: selectedScenarios.length === scenarios.length ? 'full-matrix' : 'filtered',
+  availableScenarios: scenarios.length, selectedCases: selectedScenarios.map(scenarioName),
+  selectedProfiles: selectedScenarios.map(scenario => ({ name: scenarioName(scenario), deviceScaleFactor: scenario.deviceScaleFactor ?? 1 })),
+};
+console.log(JSON.stringify({ selection }));
 
-await mkdir(output, { recursive: true });
-const server = await startStaticTestServer();
-const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
+await mkdir(output, { recursive: outputArgument === undefined });
+const server = await startStaticTestServer(root);
+const browser = await ({ chromium, webkit })[engine].launch({
+  headless: true,
+  ...(engine === 'chromium' ? { channel: process.env.PLAYWRIGHT_CHANNEL || undefined } : {}),
+});
 const results = [];
+const materialChecks = [];
 const targetChecks = new Map();
 const withoutHash = value => {
   const url = new URL(value);
@@ -32,15 +89,17 @@ const withoutHash = value => {
 };
 
 try {
-  for (const scenario of scenarios) {
-    const { locale, viewport, route, reducedMotion } = scenario;
-    const name = `${locale}-${viewport.width}-${route.startsWith('blog/') ? 'blog' : 'home'}-${reducedMotion}`;
+  for (const scenario of selectedScenarios) {
+    const { locale, viewport, route, reducedMotion, deviceScaleFactor } = scenario;
+    const name = scenarioName(scenario);
+    const activate = (locator, options) => viewport.width < 900 ? locator.tap() : locator.click(options);
     const context = await browser.newContext({
       viewport,
       isMobile: viewport.width < 900,
       hasTouch: viewport.width < 900,
       serviceWorkers: 'block',
       reducedMotion,
+      ...(deviceScaleFactor === undefined ? {} : { deviceScaleFactor }),
     });
     const page = await context.newPage();
     const errors = [];
@@ -70,7 +129,7 @@ try {
       await burger.waitFor({ state: 'visible', timeout: 15000 });
       await page.evaluate(() => document.fonts.ready);
       const consent = page.locator('[data-cookie-choice="accept"]');
-      if (await consent.isVisible()) await consent.click();
+      if (await consent.isVisible()) await activate(consent);
       const assertClosed = async () => {
         assert.deepEqual(await nav.evaluate(element => ({
           inert: element.inert,
@@ -79,7 +138,7 @@ try {
         })), { inert: true, hidden: 'true', locked: false }, `${name}: closed drawer must be inert and unlock the page`);
       };
       const open = async () => {
-        await burger.click();
+        await activate(burger);
         await page.waitForFunction(() => {
           const element = document.querySelector('#mobile-nav');
           return element?.classList.contains('active') && !element.inert &&
@@ -90,6 +149,38 @@ try {
       };
       await assertClosed();
       await open();
+      await page.waitForFunction(() => {
+        const element = document.querySelector('#mobile-nav');
+        return element?.dataset.menuContour === 'ready' && Boolean(element.querySelector(':scope > canvas.site-menu-contour'));
+      }, undefined, { polling: 50, timeout: 15000 });
+      if (route === 'kontakty.html') {
+        await page.waitForFunction(() => {
+          const contacts = document.querySelector('.contacts.section');
+          return contacts && getComputedStyle(contacts).opacity === '0.4';
+        }, undefined, { polling: 50, timeout: 5000 });
+      }
+      const material = await nav.evaluate(element => {
+        const canvas = element.querySelector(':scope > canvas.site-menu-contour');
+        const contacts = document.querySelector('.contacts.section');
+        return {
+          actualDpr: window.devicePixelRatio,
+          canvasBacking: { width: canvas.width, height: canvas.height },
+          canvasCssSize: { width: canvas.clientWidth, height: canvas.clientHeight },
+          canvasFilter: getComputedStyle(canvas).filter,
+          contactsFilter: contacts ? getComputedStyle(contacts).filter : null,
+          contactsInfoFilter: contacts ? getComputedStyle(contacts.querySelector('.contacts-info')).filter : null,
+          contactsOpacity: contacts ? getComputedStyle(contacts).opacity : null,
+        };
+      });
+      materialChecks.push({ scenario: name, ...material });
+      console.log(JSON.stringify({ scenario: name, engine, root, material }));
+      if (route === 'kontakty.html') {
+        assert.equal(material.actualDpr, 3, `${name}: contacts regression must exercise iPhone pixel density`);
+        assert.equal(material.contactsFilter, 'none', `${name}: contacts map ancestor must not receive backdrop blur`);
+        assert.equal(material.contactsInfoFilter, 'blur(2px)', `${name}: static contact details retain the background softness`);
+        assert.equal(material.contactsOpacity, '0.4', `${name}: contacts retain the dimmed background while navigation is open`);
+      }
+      assert.equal(material.canvasFilter, 'none', `${name}: the large menu canvas must not receive a compositing filter`);
       assert.equal(await nav.locator('button').count(), 0, `${name}: every menu tile must be a direct link`);
       const hrefs = await links.evaluateAll(items => items.map(item => ({ href: item.href, label: item.textContent.trim() })));
       assert.equal(hrefs.length, 15, `${name}: menu destinations are complete`);
@@ -150,6 +241,9 @@ try {
       assert.ok(drawer.left >= 0 && drawer.right <= viewport.width && !drawer.overflowX &&
         drawer.bottom <= drawer.viewportBottom, `${name}: drawer must stay inside the viewport`);
 
+      await activate(burger);
+      await assertClosed();
+      await open();
       await links.last().focus();
       await page.keyboard.press('Tab');
       assert.equal(await links.first().evaluate(element => document.activeElement === element), true, `${name}: Tab wraps to first tile`);
@@ -193,7 +287,7 @@ try {
         assert.ok(hits.every(Boolean), `${name}: the entire ${hrefs[index].label} tile must receive input`);
         const requested = page.waitForRequest(request => request.isNavigationRequest() &&
           request.frame() === page.mainFrame() && withoutHash(request.url()) === withoutHash(destination.href));
-        await link.click({ noWaitAfter: true });
+        await activate(link, { noWaitAfter: true });
         await requested;
         await assertClosed();
         tileChecks.push({ ...hrefs[index], hitPoints: hits.length, nativeNavigation: true });
@@ -201,8 +295,8 @@ try {
       }
       assert.equal(navigations.length, hrefs.length, `${name}: one native navigation per tile`);
       assert.deepEqual(errors, [], `${name}: no JavaScript errors`);
-      results.push({ name, locale, viewport, route, reducedMotion, tileSize: geometry[0], drawer, tiles: tileChecks });
-      console.log(JSON.stringify({ scenario: name, ok: true, tiles: hrefs.length }));
+      results.push({ name, locale, viewport, route, reducedMotion, deviceScaleFactor: deviceScaleFactor ?? 1, actualDpr: material.actualDpr, input: viewport.width < 900 ? 'tap' : 'click', tileSize: geometry[0], drawer, tiles: tileChecks });
+      console.log(JSON.stringify({ scenario: name, engine, root, scope: selection.scope, ok: true, tiles: hrefs.length }));
     } catch (error) {
       await page.screenshot({ path: path.join(output, `${name}-failure.png`) }).catch(() => {});
       throw error;
@@ -213,6 +307,6 @@ try {
 } finally {
   await browser.close();
   await server.close();
-  await writeFile(path.join(output, 'results.json'), JSON.stringify({ scenarios: results, targets: [...targetChecks.values()] }, null, 2));
+  await writeFile(path.join(output, 'results.json'), JSON.stringify({ ...selection, scenarios: results, materialChecks, targets: [...targetChecks.values()] }, null, 2));
 }
-console.log(JSON.stringify({ ok: true, scenarios: results.length, uniqueTargets: targetChecks.size, output }));
+console.log(JSON.stringify({ ok: true, ...selection, scenarios: results.length, uniqueTargets: targetChecks.size, output }));
