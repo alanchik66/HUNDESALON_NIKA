@@ -1,7 +1,7 @@
 ---
 type: resource
 status: active
-updated: 2026-11-17
+updated: 2026-11-18
 tags:
   - frontend
   - accessibility
@@ -13,6 +13,14 @@ tags:
 Проект: [[01_Projects/HUNDESALON_NIKA]]. Связи: [[03_Resources/Responsive_Contact_Layout]], [[03_Resources/Cloudflare_Security_Audit]]. Проверено 2026-11-14; дополнено 2026-11-16.
 
 ## Проверенные технические сведения
+
+### Linux WebKit и ожидание готовности — 2026-11-18
+
+- В Linux CI с Playwright1.64.1/WebKit2370 исходные `waitForFunction` завершались тайм-аутом, хотя последующие ограниченные `page.evaluate` подтверждали `.is-alive` и opacity1, видимость страницы, фокус и отсутствие JS errors. По [официальному API](https://playwright.dev/docs/api/class-page#page-wait-for-function) polling по умолчанию использует `requestAnimationFrame`; numeric polling проверяет условие таймером. Эти механизмы не взаимозаменяемы для проверки плавности анимации.
+- Контроль polling50 с теми же predicates/deadlines прошёл native dark/light pixel checks, но позже остановился на screenshot/locator progress. Поэтому одной замены polling оказалось недостаточно; она не перенесена в релиз.
+- Контролируемое обновление только Playwright/core до1.65.1/WebKit2388 с исходными RAF assertions прошло оба Linux booking сценария, включая native close/unlock/reopen. Job134484883343 в [manual A/B run](https://github.com/alanchik66/HUNDESALON_NIKA/actions/runs/44209773941) успешен; остальной диагностический workflow затем отменён и не является полным release PASS. Runtime/CSS и deadlines не менялись. Полный QA и production delivery проверяются отдельно для точного релизного commit.
+- [Upstream43426](https://github.com/microsoft/playwright/issues/43426) описывает starvation Linux backdrop-filter в2370 и частичное улучшение2373+. Поздний [WebKit327701](https://bugs.webkit.org/show_bug.cgi?id=327701) fix324100 не входит в проверенный upstream base1.65.1. Наблюдаемое улучшение нашего теста не доказывает причинность одного конкретного commit. Точные source ancestry, patch queue и границы: `output/release-2026-11-17/remediation/playwright-webkit-upstream-provenance.md`.
+- Pixel цвета фона не доказывает полноту glyph: в isolated GTK native-select fixture light текст подрезан, Windows PNG показывает полный текст. Fixture отличается от сайта глобальными шрифтами и modal font floor; продуктовый дефект этим не установлен. Необязательный flow screenshot также может остаться timeout при успешных native действиях. Это ограничения свидетельств, не повод менять CSS приложения ради эмулятора. Наблюдения/артефакты: `output/release-2026-11-17/remediation/linux-webkit-observations.md` и `linux-webkit-{82ec13a,36a50f6,8d848ed}/`.
 
 ### Динамические списки записи и значения CSS — 2026-11-17
 
