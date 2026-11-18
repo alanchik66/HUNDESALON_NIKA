@@ -182,7 +182,8 @@ export function resolveWeatherReleaseAssets(projectRoot, runtimeRoot) {
   if (!version || !Array.isArray(buildManifest.entries) || !buildManifest.entries.length) throw new Error('Missing maintained weather module manifest or version.');
   return [...weatherRuntimeOutputNames(buildManifest)].map(output => publicPath(`/3d-weather-codrops-main/dist-widget/${output}?v=${encodeURIComponent(version)}`)).concat(
     findPublicWeatherImporters(runtimeRoot || projectRoot, buildManifest).map(importer => publicPath(`/${importer}?v=${encodeURIComponent(version)}`)),
-    publicPath(`${MOON_VIDEO_PATH}?v=${encodeURIComponent(version)}`));
+    publicPath(`${MOON_VIDEO_PATH}?v=${encodeURIComponent(version)}`),
+    publicPath(`/assets/js/contact-map.js?v=${encodeURIComponent(version)}`));
 }
 
 export function verifyProductionArtifact({ directory, manifest, commit, stamp, requiredAssets = [] }) {

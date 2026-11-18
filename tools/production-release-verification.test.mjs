@@ -294,17 +294,23 @@ test('CI and manual preparation share maintained weather output URLs and the she
     '/3d-weather-codrops-main/dist-widget/weather-widget.iife.js?v=20261104-weather-v7',
     '/3d-weather-codrops-main/dist-widget/Scene3D.mjs?v=20261104-weather-v7',
     '/3d-weather-codrops-main/dist-widget/assets/Moon/mission_2160p30_fallback.mp4?v=20261104-weather-v7',
+    '/assets/js/contact-map.js?v=20261104-weather-v7',
   ]);
   const runtimeRoot = path.join(f.directory, 'minified-runtime');
   mkdirSync(path.join(runtimeRoot, 'config'), { recursive: true });
   mkdirSync(path.join(runtimeRoot, 'assets/js'), { recursive: true });
   writeFileSync(path.join(runtimeRoot, 'config/deploy-asset-version.txt'), `${STAMP}\n`);
   writeFileSync(path.join(runtimeRoot, 'assets/js/site-shell.js'), `(()=>{const e="${STAMP}";window.fixtureVersion=e})();`);
-  assert.deepEqual(resolveWeatherReleaseAssets(f.directory, runtimeRoot), [
+  const runtimeAssets = resolveWeatherReleaseAssets(f.directory, runtimeRoot);
+  assert.deepEqual(runtimeAssets, [
     `/3d-weather-codrops-main/dist-widget/weather-widget.iife.js?v=${STAMP}`,
     `/3d-weather-codrops-main/dist-widget/Scene3D.mjs?v=${STAMP}`,
     `${MOON_PATH}?v=${STAMP}`,
+    `/assets/js/contact-map.js?v=${STAMP}`,
   ]);
+  assert.throws(() => validateReleaseManifest(f.manifest, {
+    commit: COMMIT, requiredAssets: runtimeAssets.filter(asset => asset.startsWith('/assets/js/contact-map.js?')),
+  }), /missing required release asset.*contact-map\.js/u);
   writeFileSync(path.join(f.directory, 'assets/js/site-shell.js'), 'const unrelated = true;');
   assert.throws(() => resolveWeatherReleaseAssets(f.directory), /Missing maintained weather module manifest or version/u);
 });
@@ -542,8 +548,14 @@ test('production deploy requires exact-revision macOS WebKit while Linux retains
     webkit.indexOf(contacts) > webkit.indexOf('run: node --test tools/booking-select-refresh.test.mjs'),
     'contacts regression follows the existing booking gate'
   );
+  const mapLifecycle = webkitSteps.find(step => step.includes('run: node tools/contact-map-smoke.mjs'));
+  assert.ok(mapLifecycle, 'WebKit map renderer lifecycle remains required on every release path');
+  assert.match(mapLifecycle, /CONTACT_MAP_ENGINE: webkit/u);
+  assert.doesNotMatch(mapLifecycle, /\bif:|continue-on-error|always\(\)/u);
+  assert.ok(webkit.indexOf(mapLifecycle) > webkit.indexOf(contacts), 'map lifecycle follows native contacts');
   const fixtureUpload = webkitSteps.find(step => step.includes('uses: actions/upload-artifact@'));
   assert.ok(fixtureUpload, 'public WebKit evidence upload remains present');
+  assert.ok(webkit.indexOf(mapLifecycle) < webkit.indexOf(fixtureUpload), 'map lifecycle precedes evidence upload');
   assert.match(fixtureUpload, /if: always\(\)/u);
   assert.match(fixtureUpload, /output\/webkit-release-check\//u);
   assert.match(fixtureUpload, /output\/webkit-release-burger\//u);
@@ -576,5 +588,19 @@ test('production deploy requires exact-revision macOS WebKit while Linux retains
   const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
   assert.match(manifest.scripts['qa:max'], /npm run test:browser/u);
   assert.match(manifest.scripts['test:browser'], /npm run test:booking-selects/u);
+  assert.equal(manifest.scripts['test:contact-map'], 'node tools/contact-map-smoke.mjs');
+  const browserChecks = manifest.scripts['test:browser'].split(' && ');
+  for (const check of [
+    'test:visual',
+    'test:a11y',
+    'test:burger-menu',
+    'test:burger-menu:scroll',
+    'test:social-media',
+    'test:weather-forecast-render',
+    'test:booking-selects',
+    'test:contact-map',
+  ]) {
+    assert.ok(browserChecks.includes(`npm run ${check}`), `${check} remains in the complete browser gate`);
+  }
   assert.doesNotMatch(manifest.scripts['qa:max'], /BOOKING_SELECT_ENGINES/u);
 });

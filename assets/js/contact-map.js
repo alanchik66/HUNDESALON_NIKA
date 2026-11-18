@@ -230,7 +230,208 @@
     return googleMapsPromise;
   }
 
-  async function initGoogleMap(element, apiKey) {
+  function createMapRenderLease(element) {
+    const viewport = element.closest('.map-viewport') || element;
+    const removers = [];
+    const pointers = new Set();
+    let renderer;
+    let enabled = true;
+    let inViewport = false;
+    let pageActive = true;
+    let pageFocused = true;
+    let navigating = false;
+    let disposed = false;
+    let resumeTimer = 0;
+    let resumeFrame = 0;
+    let clickTimer = 0;
+
+    const listen = (target, type, handler, options) => {
+      target.addEventListener(type, handler, options);
+      removers.push(() => target.removeEventListener(type, handler, options));
+    };
+    const cancelResume = () => {
+      clearTimeout(resumeTimer);
+      cancelAnimationFrame(resumeFrame);
+      resumeTimer = resumeFrame = 0;
+    };
+    const suspend = () => {
+      cancelResume();
+      if (!renderer) return;
+      // Preserve connection and viewport size so the SDK never recreates its Wasm surface.
+      renderer.style.visibility = 'hidden';
+      renderer.style.opacity = '0';
+      renderer.style.pointerEvents = 'none';
+      renderer.inert = true;
+      element.dataset.mapSuspended = '1';
+    };
+    const sync = () => {
+      if (!renderer) return;
+      if (disposed || !enabled || !pageActive || !pageFocused || document.hidden || !inViewport || navigating || pointers.size
+        || document.body.matches('.nav-open, .booking-modal-open, .price-modal-open, .social-reel-modal-open')) {
+        suspend();
+        return;
+      }
+      renderer.style.visibility = '';
+      renderer.style.opacity = '';
+      renderer.style.pointerEvents = '';
+      renderer.inert = false;
+      if (renderer.parentNode !== element) element.appendChild(renderer);
+      element.dataset.mapSuspended = '0';
+    };
+    const scheduleResume = () => {
+      cancelResume();
+      if (disposed) return;
+      // Resume after the complete native input action and its menu/scroll updates.
+      resumeTimer = window.setTimeout(() => {
+        resumeTimer = 0;
+        resumeFrame = requestAnimationFrame(() => {
+          resumeFrame = 0;
+          sync();
+        });
+      }, 0);
+    };
+    const updateVisibility = () => {
+      const rect = viewport.getBoundingClientRect();
+      inViewport = rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.right > 0
+        && rect.top < window.innerHeight && rect.left < window.innerWidth;
+      sync();
+    };
+    const isInsideMap = event => event.composedPath?.().includes(viewport) || viewport.contains(event.target);
+    const outsideControl = event => {
+      if (isInsideMap(event)) return null;
+      const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+      const control = target?.closest('a[href],button');
+      if (control?.matches('a') && (control.hasAttribute('download') || (control.target && control.target !== '_self'))) return null;
+      return control;
+    };
+    const beginInput = event => {
+      if (!outsideControl(event)) return;
+      pointers.add(event.pointerId ?? event.type);
+      suspend();
+    };
+    const endInput = event => {
+      if (event.pointerId != null) pointers.delete(event.pointerId);
+      else if (!event.touches?.length) pointers.clear();
+      scheduleResume();
+    };
+    const captureClick = event => {
+      const control = outsideControl(event);
+      if (!control) return;
+      suspend();
+      const link = control.matches('a') ? control : null;
+      if (link && !event.defaultPrevented && event.button === 0 && !event.metaKey && !event.ctrlKey
+        && !event.shiftKey && !event.altKey && !link.hasAttribute('download')
+        && (!link.target || link.target === '_self')) {
+        try {
+          const url = new URL(link.href, location.href);
+          const current = new URL(location.href);
+          navigating = /^https?:$/.test(url.protocol)
+            && (url.origin !== current.origin || url.pathname !== current.pathname || url.search !== current.search);
+        } catch {
+          // Invalid links retain their normal browser behavior.
+        }
+      }
+      clearTimeout(clickTimer);
+      clickTimer = window.setTimeout(() => {
+        clickTimer = 0;
+        if (event.defaultPrevented) navigating = false;
+        scheduleResume();
+      }, 0);
+    };
+    const passiveCapture = { capture: true, passive: true };
+    // Install before the SDK so its gesture work cannot precede header navigation.
+    if ('PointerEvent' in window) {
+      listen(window, 'pointerdown', beginInput, passiveCapture);
+      listen(window, 'pointerup', endInput, passiveCapture);
+      listen(window, 'pointercancel', endInput, passiveCapture);
+    } else {
+      listen(window, 'touchstart', beginInput, passiveCapture);
+      listen(window, 'touchend', endInput, passiveCapture);
+      listen(window, 'touchcancel', endInput, passiveCapture);
+      listen(window, 'mousedown', beginInput, passiveCapture);
+      listen(window, 'mouseup', endInput, passiveCapture);
+    }
+    listen(window, 'click', captureClick, passiveCapture);
+
+    const menuObserver = new MutationObserver(sync);
+    menuObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    let visibilityObserver;
+    if ('IntersectionObserver' in window) {
+      visibilityObserver = new IntersectionObserver(entries => {
+        inViewport = entries.some(entry => entry.target === viewport && entry.isIntersecting && entry.intersectionRatio > 0);
+        sync();
+      });
+      visibilityObserver.observe(viewport);
+    } else {
+      listen(window, 'scroll', updateVisibility, passiveCapture);
+    }
+    listen(window, 'resize', updateVisibility, { passive: true });
+    listen(document, 'visibilitychange', () => {
+      if (document.hidden) {
+        pointers.clear();
+        suspend();
+      } else {
+        // Visibility may resume without a separate focus event on mobile.
+        pageFocused = true;
+        updateVisibility();
+      }
+    });
+    listen(window, 'blur', () => {
+      pageFocused = false;
+      pointers.clear();
+      suspend();
+    });
+    listen(window, 'focus', () => {
+      pageFocused = true;
+      updateVisibility();
+    });
+
+    const dispose = () => {
+      if (disposed) return;
+      suspend();
+      clearTimeout(clickTimer);
+      disposed = true;
+      renderer?.remove();
+      renderer = null;
+      pointers.clear();
+      visibilityObserver?.disconnect();
+      menuObserver.disconnect();
+      for (const remove of removers) remove();
+      delete element.dataset.mapSuspended;
+    };
+    listen(window, 'pagehide', event => {
+      pageActive = false;
+      clearTimeout(clickTimer);
+      suspend();
+      if (!event.persisted) dispose();
+    });
+    listen(window, 'pageshow', () => {
+      pageActive = true;
+      pageFocused = true;
+      navigating = false;
+      pointers.clear();
+      updateVisibility();
+    });
+    updateVisibility();
+
+    return {
+      setRenderer(nextRenderer) {
+        if (disposed) return;
+        suspend();
+        if (renderer !== nextRenderer) renderer?.remove();
+        renderer = nextRenderer;
+        if (!renderer) delete element.dataset.mapSuspended;
+        else sync();
+      },
+      setEnabled(nextEnabled) {
+        enabled = nextEnabled;
+        sync();
+      },
+      dispose,
+    };
+  }
+
+  async function initGoogleMap(element, apiKey, renderLease) {
     const lat = Number(element.dataset.lat);
     const lng = Number(element.dataset.lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
@@ -269,7 +470,7 @@
       `<img class="contact-map-google-pin-image" src="${SALON_MARKER_ICON_URL}" alt="" width="64" height="64">`;
     marker.append(markerVisual);
     map.append(marker);
-    element.replaceChildren(map);
+    renderLease.setRenderer(map);
     element.dataset.mapReady = '1';
     element.dataset.mapProvider = 'google';
     element.dataset.mapMode = 'hybrid';
@@ -374,7 +575,12 @@
           zIndex: 1000,
         });
       }
-      element.replaceChildren(roadMapElement);
+      renderLease.setEnabled(false);
+      roadMapElement.style.visibility = '';
+      roadMapElement.style.opacity = '';
+      roadMapElement.style.pointerEvents = '';
+      roadMapElement.inert = false;
+      if (roadMapElement.parentNode !== element) element.appendChild(roadMapElement);
       activeMode = 'ROADMAP';
       mapControls.hidden = false;
       requestAnimationFrame(() => {
@@ -385,11 +591,15 @@
 
     addMapModeControls(element, getModeLabels(element), async mode => {
       if (mode === 'HYBRID') {
-        element.replaceChildren(map);
+        if (roadMapElement) {
+          roadMapElement.style.visibility = 'hidden';
+          roadMapElement.style.opacity = '0';
+          roadMapElement.style.pointerEvents = 'none';
+          roadMapElement.inert = true;
+        }
+        renderLease.setEnabled(true);
         activeMode = 'HYBRID';
         mapControls.hidden = false;
-        Object.assign(camera, defaultCamera);
-        map.flyCameraTo({ endCamera: { ...camera }, durationMillis: 650 });
         return;
       }
       await showRoadMap();
@@ -445,11 +655,13 @@
         }
       }
       if (config.apiKey) {
+        const renderLease = createMapRenderLease(element);
         try {
-          if (await initGoogleMap(element, config.apiKey)) continue;
+          if (await initGoogleMap(element, config.apiKey, renderLease)) continue;
         } catch {
           // Continue to the localized Google Maps unavailable state below.
         }
+        renderLease.dispose();
       }
       showMapUnavailable(element);
     }

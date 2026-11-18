@@ -65,6 +65,10 @@ jobs:
           BURGER_MENU_CASE: ru-390-contacts-no-preference
           BURGER_MENU_OUTPUT: output/webkit-release-burger
         run: node tools/burger-menu-smoke.mjs
+      - name: Require WebKit map renderer lifecycle
+        env:
+          CONTACT_MAP_ENGINE: webkit
+        run: node tools/contact-map-smoke.mjs
       - name: Preserve public WebKit fixture evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

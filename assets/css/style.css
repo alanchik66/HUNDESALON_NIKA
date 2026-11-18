@@ -8025,12 +8025,15 @@ body.light .review-card {
 
 .map-native {
   position: relative;
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   width: 100%;
   height: 100%;
 }
 
 .contact-map-3d,
 .contact-map-2d {
+  grid-area: 1 / 1;
   display: block;
   width: 100%;
   height: 100%;
@@ -8250,7 +8253,7 @@ body.light .review-card {
   opacity: 0.72;
 }
 
-.map-frame:has(.contact-map-3d) {
+.map-frame:has(.map-native[data-map-mode="hybrid"]) {
   border-color: rgb(219 182 98 / 36%);
   box-shadow:
     0 24px 58px rgb(0 0 0 / 38%),
