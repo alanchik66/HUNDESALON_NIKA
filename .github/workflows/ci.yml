@@ -37,13 +37,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Chromium and WebKit for browser quality gates
-        run: npx playwright install --with-deps chromium webkit
+      - name: Install Chromium for Linux browser quality gates
+        run: npx playwright install --with-deps chromium
 
       - name: Install Google gateway dependencies
         run: npm --prefix integrations/google-gateway ci
 
       - name: Run the complete release quality gate
+        env:
+          BOOKING_SELECT_ENGINES: chromium
         run: npm run qa:max
 
       - name: Check client registration recovery in every locale and viewport

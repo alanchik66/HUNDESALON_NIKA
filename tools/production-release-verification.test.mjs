@@ -512,3 +512,53 @@ test('unsafe artifact paths are rejected before any HTTP request', async t => {
   await assert.rejects(verifyProductionRelease({ ...verification(f), manifest: malformed }), /Invalid release asset path/u);
   assert.equal(f.requests.length, 0);
 });
+
+test('production deploy requires exact-revision macOS WebKit while Linux retains the complete release gate', () => {
+  const workflow = name => readFileSync(new URL(`../.github/workflows/${name}`, import.meta.url), 'utf8').replaceAll('\r\n', '\n');
+  const job = (source, name) => {
+    const start = source.indexOf(`\n  ${name}:\n`);
+    assert.notEqual(start, -1, `required workflow job ${name}`);
+    return source.slice(start + 1).split(/\n(?=  [\w-]+:\n)/u)[0];
+  };
+  const ci = workflow('ci.yml');
+  const release = workflow('cloudflare-pages.yml');
+  const webkit = job(release, 'webkit');
+  const deploy = job(release, 'deploy');
+  assert.match(webkit, /^    runs-on: macos-latest$/mu);
+  assert.equal(webkit.split('    permissions:\n')[1]?.split(/\n(?=    \S)/u)[0].trim(), 'contents: read');
+  assert.doesNotMatch(webkit, /^    if:|continue-on-error|\$\{\{\s*secrets\.|BOOKING_SELECT_PHASES|--test-name-pattern/mu);
+  assert.match(webkit, /^      BOOKING_SELECT_ENGINES: webkit$/mu);
+  assert.match(webkit, /run: npm ci\n/u);
+  assert.match(webkit, /run: npx --no-install playwright install webkit\n/u);
+  assert.match(webkit, /run: node --test tools\/booking-select-refresh\.test\.mjs\n/u);
+  const checkout = webkit.indexOf('uses: actions/checkout@');
+  assert.ok(checkout > 0);
+  for (const guard of [
+    'test "$GITHUB_REF" = \'refs/heads/main\'',
+    '[[ "$RELEASE_COMMIT" =~ ^[a-f0-9]{40}$ ]]',
+    'test "$RELEASE_COMMIT" = "$GITHUB_SHA"',
+    '[[ "$ARTIFACT_ID" =~ ^[0-9]+$ ]]',
+  ]) {
+    const position = webkit.indexOf(guard);
+    assert.ok(position >= 0 && position < checkout, `${guard} must run before checkout`);
+  }
+  assert.match(webkit, /ref: \$\{\{ inputs\.release_commit \|\| github\.sha \}\}/u);
+  assert.match(webkit, /persist-credentials: false/u);
+  assert.match(deploy, /^    needs: webkit$/mu);
+  assert.doesNotMatch(deploy, /^    if:|continue-on-error/mu);
+  const caller = job(ci, 'deploy');
+  assert.match(caller, /needs: \[validate-build, security\]/u);
+  assert.match(caller, /uses: \.\/\.github\/workflows\/cloudflare-pages\.yml/u);
+  for (const linux of [job(ci, 'validate-build'), deploy]) {
+    assert.match(linux, /^    runs-on: ubuntu-latest$/mu);
+    const qa = linux.split(/\n(?=      - )/u).find(step => step.includes('run: npm run qa:max'));
+    assert.ok(qa, 'the complete Linux qa:max step remains required');
+    assert.match(qa, /BOOKING_SELECT_ENGINES: chromium/u);
+    assert.doesNotMatch(qa, /continue-on-error|always\(\)/u);
+    assert.doesNotMatch(linux, /^      BOOKING_SELECT_ENGINES:/mu, 'engine selection is scoped to the QA step');
+  }
+  const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  assert.match(manifest.scripts['qa:max'], /npm run test:browser/u);
+  assert.match(manifest.scripts['test:browser'], /npm run test:booking-selects/u);
+  assert.doesNotMatch(manifest.scripts['qa:max'], /BOOKING_SELECT_ENGINES/u);
+});

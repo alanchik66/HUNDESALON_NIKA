@@ -152,10 +152,11 @@ for (const name of selectedEngines) {
           await page.locator('.cookie-consent').waitFor({ state: 'hidden', timeout: 5000 });
           await checkpoint('native-necessary-consent');
           await nativePointer(page.locator('#open-booking-btn'));
+          // This readiness flag is timer-driven, independent of the browser's paint scheduler.
           await page.waitForFunction(
             () => document.querySelector('#booking-modal')?.classList.contains('is-alive'),
             null,
-            { timeout: 4000 }
+            { timeout: 4000, polling: 50 }
           );
           result.initialMount = await mountedSelects();
           await checkpoint('first-mount-measured');
@@ -178,6 +179,80 @@ for (const name of selectedEngines) {
             'one choice emits exactly one native change'
           );
           await checkpoint('native-option-change-once');
+          result.fixedFrameProbe = await page.locator('#booking-modal').evaluate(modal => {
+            const frame = modal.querySelector('.modal-content');
+            const close = modal.querySelector('.modal-close');
+            const measure = () => ({
+              frameScrollTop: frame.scrollTop,
+              frameScrollHeight: frame.scrollHeight,
+              frameClientHeight: frame.clientHeight,
+              frameTop: frame.getBoundingClientRect().top,
+              frameOverflowY: getComputedStyle(frame).overflowY,
+              close: close.getBoundingClientRect().toJSON(),
+            });
+            const before = measure();
+            frame.scrollTop += 103;
+            return {
+              kind: 'controlled-programmatic-focus-scroll',
+              gestureProof: false,
+              requestedDelta: 103,
+              before,
+              after: measure(),
+            };
+          });
+          await checkpoint('controlled-frame-scroll-measured');
+          assert.equal(
+            result.fixedFrameProbe.after.frameScrollTop,
+            0,
+            'the modal frame must reject programmatic scrolling'
+          );
+          assert.ok(
+            Math.abs(result.fixedFrameProbe.after.close.y - result.fixedFrameProbe.before.close.y) <= 0.5,
+            'programmatic frame scrolling must not move the close control'
+          );
+          result.innerStepScrollProbe = await page.locator('#booking-modal').evaluate(modal => {
+            const frame = modal.querySelector('.modal-content');
+            const step = modal.querySelector('#step-1.booking-step.active');
+            const close = modal.querySelector('.modal-close');
+            const before = { scrollTop: step.scrollTop, close: close.getBoundingClientRect().toJSON() };
+            const range = step.scrollHeight - step.clientHeight;
+            step.scrollTop += 120;
+            const box = close.getBoundingClientRect();
+            const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+            return {
+              kind: 'controlled-programmatic-inner-scroll',
+              gestureProof: false,
+              range,
+              requestedDelta: 120,
+              before,
+              after: {
+                scrollTop: step.scrollTop,
+                frameScrollTop: frame.scrollTop,
+                close: box.toJSON(),
+                closeOwnsCenter: hit === close || close.contains(hit),
+              },
+            };
+          });
+          await checkpoint('controlled-inner-step-scroll-measured');
+          assert.ok(result.innerStepScrollProbe.range > 0, 'the active step must have real scrollable content');
+          assert.ok(
+            result.innerStepScrollProbe.after.scrollTop > result.innerStepScrollProbe.before.scrollTop,
+            'the active step must accept forward scrolling'
+          );
+          assert.equal(
+            result.innerStepScrollProbe.after.frameScrollTop,
+            0,
+            'inner scrolling must leave the modal frame fixed'
+          );
+          assert.ok(
+            Math.abs(result.innerStepScrollProbe.after.close.y - result.innerStepScrollProbe.before.close.y) <= 0.5,
+            'inner scrolling must not move the close control'
+          );
+          assert.equal(
+            result.innerStepScrollProbe.after.closeOwnsCenter,
+            true,
+            'the close control must own its center after inner scrolling'
+          );
           try {
             await page.screenshot({ path: path.join(out, 'booking-enhanced.png'), timeout: 3000 });
           } catch (error) {
@@ -189,14 +264,14 @@ for (const name of selectedEngines) {
               !document.querySelector('#booking-modal')?.classList.contains('active') &&
               !document.body.classList.contains('booking-modal-open'),
             null,
-            { timeout: 3000 }
+            { timeout: 3000, polling: 50 }
           );
           await checkpoint('native-close-unlocks-page');
           await nativePointer(page.locator('#open-booking-btn'));
           await page.waitForFunction(
             () => document.querySelector('#booking-modal')?.classList.contains('is-alive'),
             null,
-            { timeout: 4000 }
+            { timeout: 4000, polling: 50 }
           );
           result.secondMount = await mountedSelects();
           assertMounted(result.secondMount);
@@ -258,7 +333,7 @@ for (const name of selectedEngines) {
               selector => getComputedStyle(document.querySelector(selector)).opacity === '1'
             ),
           null,
-          { timeout: 3000 }
+          { timeout: 3000, polling: 50 }
         );
         for (const theme of ['dark', 'light']) {
           await page.evaluate(theme => document.body.classList.toggle('light', theme === 'light'), theme);

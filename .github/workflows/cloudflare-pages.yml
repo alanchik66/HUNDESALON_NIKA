@@ -26,8 +26,51 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  webkit:
+    name: Require WebKit booking checks on macOS
+    runs-on: macos-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      RELEASE_COMMIT: ${{ inputs.release_commit || github.sha }}
+      BOOKING_SELECT_ENGINES: webkit
+      BOOKING_SELECT_OUTPUT: output/webkit-release-check
+    steps:
+      - name: Require the exact main revision
+        env:
+          ARTIFACT_ID: ${{ inputs.artifact_id }}
+        run: |
+          test "$GITHUB_REF" = 'refs/heads/main' || { echo 'Production deployment requires main.' >&2; exit 1; }
+          [[ "$RELEASE_COMMIT" =~ ^[a-f0-9]{40}$ ]] && test "$RELEASE_COMMIT" = "$GITHUB_SHA" || { echo 'Release commit differs from this workflow revision.' >&2; exit 1; }
+          if [ "$GITHUB_EVENT_NAME" != 'workflow_dispatch' ]; then
+            [[ "$ARTIFACT_ID" =~ ^[0-9]+$ ]] || { echo 'The validated artifact ID is required.' >&2; exit 1; }
+          fi
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.release_commit || github.sha }}
+          lfs: true
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx --no-install playwright install webkit
+      - name: Check native interaction, fixed frame and fallback pixels
+        run: node --test tools/booking-select-refresh.test.mjs
+      - name: Preserve public WebKit fixture evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: webkit-booking-${{ github.sha }}-${{ github.run_attempt }}
+          path: output/webkit-release-check/
+          if-no-files-found: warn
+          retention-days: 7
+
   deploy:
     name: Build and deploy (Pages host; canonical watcher pending)
+    needs: webkit
     runs-on: ubuntu-latest
     env:
       RELEASE_COMMIT: ${{ inputs.release_commit || github.sha }}
@@ -62,12 +105,14 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: npm --prefix integrations/google-gateway ci
 
-      - name: Install Chromium and WebKit for manual browser checks
+      - name: Install Chromium for manual Linux browser checks
         if: github.event_name == 'workflow_dispatch'
-        run: npx playwright install --with-deps chromium webkit
+        run: npx playwright install --with-deps chromium
 
       - name: Run the complete manual release quality gate
         if: github.event_name == 'workflow_dispatch'
+        env:
+          BOOKING_SELECT_ENGINES: chromium
         run: npm run qa:max && node tools/client-registration-smoke.mjs
 
       - name: Record the manually tested production artifact

@@ -35,7 +35,9 @@ Claude-specific hooks and MCP SDK generators are not installed into the website 
 
 Run `npm run qa:max` and `git diff --check` before committing. The gate includes the reference manifest, strict dependency audits for both root and Google gateway, lint, unit tests, project checks, production build, asset budgets and browser tests. A failed or missing required result blocks publication; never relabel it PASS or silently skip it.
 
-If the Playwright browser download is unavailable, use an already installed browser: in PowerShell, set `$env:PLAYWRIGHT_CHANNEL = 'chrome'` before running the gate. The default remains Playwright's bundled Chromium. Record which browser was used and clear the temporary environment variable afterwards.
+The local gate requires both Chromium and WebKit. CI runs the complete Chromium gate on Ubuntu; the called Pages workflow additionally requires the same WebKit booking tests on macOS before its deploy job can run. Manual Pages runs require that macOS job as well. Keep both engines mandatory: Linux GTK rendering failures are not a reason to remove the WebKit release gate. The platform policy is covered by `tools/production-release-verification.test.mjs`.
+
+If the Chromium download is unavailable, an already installed Chrome can be selected in PowerShell with `$env:PLAYWRIGHT_CHANNEL = 'chrome'`. This changes only the Chromium launcher; it does not replace the required WebKit installation or its tests. Record the browser used and clear the temporary environment variable afterwards.
 
 Review and stage specific files. Never stage `.dev.vars`, credentials, local OAuth state or generated browser artifacts. Keep unfinished operational scripts out of the release.
 

@@ -3062,7 +3062,7 @@ body.booking-modal-open {
   width: min(100%, 660px);
   height: auto;
   max-height: min(94dvh, 900px);
-  overflow: hidden;
+  overflow: clip;
   position: relative;
   isolation: isolate;
   padding: 3.25rem 1.75rem 1.75rem;
@@ -3216,7 +3216,7 @@ body.booking-modal-open {
   width: min(100%, 930px);
   height: auto;
   max-height: min(96dvh, 940px);
-  overflow: hidden;
+  overflow: clip;
   padding: 2.75rem 1.25rem 1.45rem;
 }
 
@@ -5469,7 +5469,7 @@ body .btn-read:hover .site-icon-arrow-right {
   #booking-modal .modal-content.is-booking-step-2 {
     height: auto;
     max-height: min(98dvh, 900px);
-    overflow: hidden;
+    overflow: clip;
     padding: 1.3rem 1.05rem 1.15rem;
   }
 
