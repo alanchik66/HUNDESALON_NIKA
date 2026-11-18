@@ -11,8 +11,10 @@ export const RELEASE_MANIFEST_PATH = '/config/release-manifest.json';
 const STAMP_PATH = '/config/deploy-asset-version.txt';
 const PAGES_PROJECT = 'hundesalon-nika';
 const MOON_VIDEO_PATH = '/3d-weather-codrops-main/dist-widget/assets/Moon/mission_2160p30_fallback.mp4';
+const MAP_FRAME_PATH = '/assets/frames/contact-map.html';
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const isMp4Asset = asset => /\.mp4$/iu.test(new URL(asset, PRODUCTION_ORIGIN).pathname);
+const isMapFrameAsset = asset => new URL(asset, PRODUCTION_ORIGIN).pathname === MAP_FRAME_PATH;
 
 export function parseWranglerPagesDeploymentOutput(output, { commit } = {}) {
   if (!/^[a-f0-9]{40}$/u.test(commit || '')) throw new Error('Pass the full reviewed commit SHA.');
@@ -134,10 +136,13 @@ export function validateReleaseManifest(manifest, { commit, stamp, canonicalOrig
   const paths = new Set();
   for (const asset of manifest.assets) {
     publicPath(asset.path);
-    if (!/\.(?:css|m?js|mp4)$/iu.test(new URL(asset.path, PRODUCTION_ORIGIN).pathname) ||
+    if ((!/\.(?:css|m?js|mp4)$/iu.test(new URL(asset.path, PRODUCTION_ORIGIN).pathname) && !isMapFrameAsset(asset.path)) ||
         !/^[a-f0-9]{64}$/u.test(asset.sha256 || '') || paths.has(asset.path)) throw new Error('Invalid release asset digest.');
     if (isMp4Asset(asset.path) && (asset.contentType !== 'video/mp4' || new URL(asset.path, PRODUCTION_ORIGIN).searchParams.get('v') !== manifest.stamp)) {
       throw new Error('Invalid release video metadata.');
+    }
+    if (isMapFrameAsset(asset.path) && (asset.contentType !== 'text/html' || asset.path !== `${MAP_FRAME_PATH}?v=${manifest.stamp}`)) {
+      throw new Error('Invalid release map frame metadata.');
     }
     paths.add(asset.path);
   }
@@ -168,7 +173,7 @@ export function prepareProductionRelease({ directory, commit, canonicalOrigin = 
     locale, baseUrl: canonicalOrigin, canonicalOrigin,
   }));
   const assets = [...new Set([...locales.flatMap(locale => locale.assets), ...extraAssets.map(publicPath)])].sort()
-    .map(asset => ({ path: asset, sha256: digest(readReleaseAsset(directory, asset)), ...(isMp4Asset(asset) ? { contentType: 'video/mp4' } : {}) }));
+    .map(asset => ({ path: asset, sha256: digest(readReleaseAsset(directory, asset)), ...(isMp4Asset(asset) ? { contentType: 'video/mp4' } : isMapFrameAsset(asset) ? { contentType: 'text/html' } : {}) }));
   const manifest = validateReleaseManifest({ schema: 1, commit, stamp, canonicalOrigin: origin(canonicalOrigin), locales, assets }, { commit, canonicalOrigin });
   writeFileSync(path.join(directory, RELEASE_MANIFEST_PATH.slice(1)), `${JSON.stringify(manifest, null, 2)}\n`);
   return manifest;
@@ -183,7 +188,8 @@ export function resolveWeatherReleaseAssets(projectRoot, runtimeRoot) {
   return [...weatherRuntimeOutputNames(buildManifest)].map(output => publicPath(`/3d-weather-codrops-main/dist-widget/${output}?v=${encodeURIComponent(version)}`)).concat(
     findPublicWeatherImporters(runtimeRoot || projectRoot, buildManifest).map(importer => publicPath(`/${importer}?v=${encodeURIComponent(version)}`)),
     publicPath(`${MOON_VIDEO_PATH}?v=${encodeURIComponent(version)}`),
-    publicPath(`/assets/js/contact-map.js?v=${encodeURIComponent(version)}`));
+    publicPath(`/assets/js/contact-map.js?v=${encodeURIComponent(version)}`),
+    publicPath(`${MAP_FRAME_PATH}?v=${encodeURIComponent(version)}`));
 }
 
 export function verifyProductionArtifact({ directory, manifest, commit, stamp, requiredAssets = [] }) {
@@ -228,9 +234,18 @@ async function localePages({ baseUrl, canonicalOrigin, manifest, context }) {
   const assets = manifest?.assets || [...assetPaths].map(asset => ({ path: asset }));
   for (let offset = 0; offset < assets.length; offset += 4) {
     await Promise.all(assets.slice(offset, offset + 4).map(async asset => {
-      const result = await resource(new URL(asset.path, baseUrl), context);
+      const requested = new URL(asset.path, baseUrl);
+      let result = await resource(requested, context);
+      if (isMapFrameAsset(asset.path) && [301, 308].includes(result.response.status)) {
+        const location = result.response.headers.get('location');
+        let target;
+        try { target = typeof location === 'string' && location === location.trim() ? new URL(location, requested) : null; } catch { target = null; }
+        if (target?.href !== `${requested.origin}${MAP_FRAME_PATH.slice(0, -5)}${requested.search}`) throw new Error(`Served asset mismatch: ${asset.path}`);
+        result = await resource(target, context);
+      }
       const type = result.response.headers.get('content-type') || '';
       const validType = isMp4Asset(asset.path) ? type.split(';')[0].trim().toLowerCase() === 'video/mp4'
+        : isMapFrameAsset(asset.path) ? type.split(';')[0].trim().toLowerCase() === 'text/html'
         : /\.css$/iu.test(new URL(asset.path, baseUrl).pathname) ? /text\/css/iu.test(type) : /(?:java|ecma)script/iu.test(type);
       if (result.response.status !== 200 || !validType || (asset.sha256 && digest(result.bytes) !== asset.sha256)) throw new Error(`Served asset mismatch: ${asset.path}`);
       assertMediaContent(asset.path, result.bytes);

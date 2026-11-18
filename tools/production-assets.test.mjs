@@ -12,6 +12,34 @@ import { transformSync } from 'esbuild';
 import { stripLocalDevRefreshBootstrap } from './lib/production-dev-refresh.mjs';
 import { startStaticTestServer } from './lib/static-test-server.mjs';
 
+test('production integration injection excludes only the fixed isolated map entry', t => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'nika-map-frame-injection-'));
+  t.after(() => {
+    assert.equal(path.dirname(directory), tmpdir());
+    assert.ok(path.basename(directory).startsWith('nika-map-frame-injection-'));
+    rmSync(directory, { recursive: true, force: true });
+  });
+  const html = '<!doctype html><html><head><title>Map</title></head><body><div class="map-native"></div></body></html>';
+  for (const file of ['assets/frames/contact-map.html', 'assets/frames/other.html', 'de/index.html', 'telegram-menu.html']) {
+    const target = path.join(directory, file);
+    mkdirSync(path.dirname(target), { recursive: true });
+    writeFileSync(target, html);
+  }
+  const source = readFileSync(new URL('./build-production.js', import.meta.url), 'utf8');
+  const start = source.indexOf('function injectSendPulseIntegrations(');
+  const end = source.indexOf('\nconst assetVersion =', start);
+  assert.ok(start >= 0 && end > start, 'Read only the maintained injector, not the executable build entry.');
+  const inject = new Function('fs', 'path', `${source.slice(start, end)}\nreturn injectSendPulseIntegrations;`)(fs, path);
+  assert.equal(inject(directory, 'fixture-release'), 2);
+  assert.equal(readFileSync(path.join(directory, 'assets/frames/contact-map.html'), 'utf8'), html);
+  assert.equal(readFileSync(path.join(directory, 'telegram-menu.html'), 'utf8'), html);
+  for (const file of ['assets/frames/other.html', 'de/index.html']) {
+    const result = readFileSync(path.join(directory, file), 'utf8');
+    assert.match(result, /sendpulse-integrations\.js\?v=fixture-release/u);
+    assert.match(result, /ai-chat\.js\?v=fixture-release/u);
+  }
+});
+
 test('blocks local advertising and source-only brand assets from production', () => {
   assert.equal(isProductionSourceOnlyPath('assets/video/ads/promo.mp4'), true);
   assert.equal(isProductionSourceOnlyPath('assets/images/brand/favicon/favicon-512x512.png'), true);

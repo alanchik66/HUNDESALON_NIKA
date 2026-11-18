@@ -22,6 +22,10 @@ const VENDOR_STYLESHEET = '/assets/fonts/fontawesome/all.min.css?v=20260329-0192
 const WEATHER = '/weather/runtime.mjs?v=weather-v6';
 const MOON_PATH = '/3d-weather-codrops-main/dist-widget/assets/Moon/mission_2160p30_fallback.mp4';
 const MOON = `${MOON_PATH}?v=${STAMP}`;
+const MAP_FRAME_PATH = '/assets/frames/contact-map.html';
+const MAP_FRAME = `${MAP_FRAME_PATH}?v=${STAMP}`;
+const MAP_FRAME_CLEAN = `/assets/frames/contact-map?v=${STAMP}`;
+const MAP_FRAME_HTML = '<!doctype html><html><head><title>Isolated map</title></head><body><div class="map-native"></div></body></html>';
 // Container-signature fixture only; codec playback is verified separately in browser QA.
 const MP4 = Buffer.from('000000186674797069736f6d0000020069736f6d617663310000000c6d64617400000000', 'hex');
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -184,6 +188,18 @@ async function fixture(t, intercept = () => null, { includeVendor = false, inclu
   return { directory, manifest, requests, moonFile, baseUrl: `http://127.0.0.1:${server.address().port}` };
 }
 
+async function mapFrameFixture(t, intercept = () => null) {
+  let file;
+  const f = await fixture(t, details => intercept(details) ||
+    ([MAP_FRAME_PATH, '/assets/frames/contact-map'].includes(details.url.pathname)
+      ? { type: 'text/html; charset=utf-8', body: readFileSync(file) } : null));
+  file = path.join(f.directory, MAP_FRAME_PATH.slice(1));
+  mkdirSync(path.dirname(file), { recursive: true });
+  writeFileSync(file, MAP_FRAME_HTML);
+  Object.assign(f.manifest, prepareProductionRelease({ directory: f.directory, commit: COMMIT, extraAssets: [WEATHER, MAP_FRAME] }));
+  return { ...f, frameFile: file };
+}
+
 const verification = f => ({ commit: COMMIT, manifest: f.manifest, baseUrl: f.baseUrl, attempts: 1 });
 
 test('Pages-host verification preserves the canonical domain and exact artifact hashes for all four locales', async t => {
@@ -282,6 +298,79 @@ test('matching Moon video bytes still fail when served under the wrong MIME type
   await assert.rejects(verifyProductionRelease(verification(f)), /Served asset mismatch/u);
 });
 
+test('the fixed map frame HTML is stamped and hash verified without accepting arbitrary HTML assets', async t => {
+  const f = await mapFrameFixture(t);
+  assert.deepEqual(f.manifest.assets.find(asset => asset.path === MAP_FRAME), {
+    path: MAP_FRAME, sha256: sha256(MAP_FRAME_HTML), contentType: 'text/html',
+  });
+  assert.equal(verifyProductionArtifact({ directory: f.directory, manifest: f.manifest, commit: COMMIT, requiredAssets: [MAP_FRAME] }), f.manifest);
+  assert.equal((await verifyProductionRelease({ ...verification(f), requiredAssets: [MAP_FRAME] })).assets, 4);
+  for (const patch of [
+    asset => { delete asset.contentType; },
+    asset => { asset.contentType = 'application/javascript'; },
+    asset => { asset.path = MAP_FRAME_PATH; },
+    asset => { asset.path = `${MAP_FRAME_PATH}?v=old`; },
+    asset => { asset.path = `${MAP_FRAME}&extra=1`; },
+    asset => { asset.path = `/assets/frames/other.html?v=${STAMP}`; },
+  ]) {
+    const manifest = structuredClone(f.manifest);
+    patch(manifest.assets.find(asset => asset.path === MAP_FRAME));
+    assert.throws(() => validateReleaseManifest(manifest, { commit: COMMIT }), /Invalid release (?:map frame metadata|asset digest)/u);
+  }
+  const missing = structuredClone(f.manifest);
+  missing.assets = missing.assets.filter(asset => asset.path !== MAP_FRAME);
+  assert.throws(() => validateReleaseManifest(missing, { commit: COMMIT, requiredAssets: [MAP_FRAME] }), /missing required release asset/u);
+});
+
+test('fixed map frame bytes and MIME cannot drift in artifact or public delivery', async t => {
+  const changed = await mapFrameFixture(t);
+  writeFileSync(changed.frameFile, '<!doctype html><title>Different frame</title>');
+  assert.throws(() => verifyProductionArtifact({ directory: changed.directory, manifest: changed.manifest, commit: COMMIT }), /Artifact digest mismatch/u);
+  await assert.rejects(verifyProductionRelease(verification(changed)), /Served asset mismatch/u);
+  const wrongType = await mapFrameFixture(t, ({ url }) => url.pathname === MAP_FRAME_PATH
+    ? { type: 'application/javascript', body: MAP_FRAME_HTML } : null);
+  await assert.rejects(verifyProductionRelease(verification(wrongType)), /Served asset mismatch/u);
+});
+
+test('only the fixed map HTML may normalize via 301 or 308 to its exact same-origin clean stamped URL', async t => {
+  for (const status of [301, 308]) {
+    const f = await mapFrameFixture(t, ({ url }) => url.pathname === MAP_FRAME_PATH
+      ? { status, headers: { Location: MAP_FRAME_CLEAN }, body: '' } : null);
+    assert.equal((await verifyProductionRelease(verification(f))).assets, 4);
+    assert.ok(f.requests.includes(MAP_FRAME_CLEAN));
+  }
+});
+
+test('map HTML redirects reject changed status, origin, path, query, fragment and loops', async t => {
+  for (const [status, destination] of [
+    [302, MAP_FRAME_CLEAN], [303, MAP_FRAME_CLEAN], [307, MAP_FRAME_CLEAN],
+    [301, `https://external.invalid${MAP_FRAME_CLEAN}`],
+    [301, `/assets/frames/other?v=${STAMP}`],
+    [301, '/assets/frames/contact-map?v=old'],
+    [301, '/assets/frames/contact-map'],
+    [301, `${MAP_FRAME_CLEAN}&extra=1`],
+    [301, `${MAP_FRAME_CLEAN}#fragment`],
+    [301, `${MAP_FRAME_CLEAN}#`],
+    [301, `${MAP_FRAME_CLEAN}&v=${STAMP}`],
+    [301, MAP_FRAME],
+  ]) {
+    const f = await mapFrameFixture(t, ({ url }) => url.pathname === MAP_FRAME_PATH
+      ? { status, headers: { Location: destination }, body: '' } : null);
+    await assert.rejects(verifyProductionRelease(verification(f)), /Served asset mismatch/u);
+    assert.equal(f.requests.filter(request => request.startsWith('/assets/frames/')).length, 1, 'Reject before following any unapproved destination.');
+  }
+});
+
+test('fixed map HTML normalization follows at most one hop and never accepts a clean-path redirect loop', async t => {
+  const f = await mapFrameFixture(t, ({ url }) => {
+    if (url.pathname === MAP_FRAME_PATH) return { status: 301, headers: { Location: MAP_FRAME_CLEAN }, body: '' };
+    if (url.pathname === '/assets/frames/contact-map') return { status: 308, headers: { Location: MAP_FRAME }, body: '' };
+    return null;
+  });
+  await assert.rejects(verifyProductionRelease(verification(f)), /Served asset mismatch/u);
+  assert.deepEqual(f.requests.filter(request => request.startsWith('/assets/frames/')), [MAP_FRAME, MAP_FRAME_CLEAN]);
+});
+
 test('CI and manual preparation share maintained weather output URLs and the shell cache version', async t => {
   const f = await fixture(t);
   mkdirSync(path.join(f.directory, '3d-weather-codrops-main'));
@@ -295,6 +384,7 @@ test('CI and manual preparation share maintained weather output URLs and the she
     '/3d-weather-codrops-main/dist-widget/Scene3D.mjs?v=20261104-weather-v7',
     '/3d-weather-codrops-main/dist-widget/assets/Moon/mission_2160p30_fallback.mp4?v=20261104-weather-v7',
     '/assets/js/contact-map.js?v=20261104-weather-v7',
+    '/assets/frames/contact-map.html?v=20261104-weather-v7',
   ]);
   const runtimeRoot = path.join(f.directory, 'minified-runtime');
   mkdirSync(path.join(runtimeRoot, 'config'), { recursive: true });
@@ -307,6 +397,7 @@ test('CI and manual preparation share maintained weather output URLs and the she
     `/3d-weather-codrops-main/dist-widget/Scene3D.mjs?v=${STAMP}`,
     `${MOON_PATH}?v=${STAMP}`,
     `/assets/js/contact-map.js?v=${STAMP}`,
+    MAP_FRAME,
   ]);
   assert.throws(() => validateReleaseManifest(f.manifest, {
     commit: COMMIT, requiredAssets: runtimeAssets.filter(asset => asset.startsWith('/assets/js/contact-map.js?')),
@@ -376,10 +467,14 @@ test('a successful asset response with stale content fails its digest', async t 
 });
 
 test('redirected assets are rejected without following an unverified destination', async t => {
-  const f = await fixture(t, ({ url }) => url.pathname === '/assets/js/app.js'
-    ? { status: 302, headers: { Location: '/unexpected/' }, body: '' } : null);
-  await assert.rejects(verifyProductionRelease(verification(f)), /Served asset mismatch/u);
-  assert.ok(!f.requests.includes('/unexpected/'));
+  for (const file of ['/assets/js/app.js', '/assets/css/app.css']) {
+    for (const status of [301, 302, 308]) {
+      const f = await fixture(t, ({ url }) => url.pathname === file
+        ? { status, headers: { Location: '/unexpected/' }, body: '' } : null);
+      await assert.rejects(verifyProductionRelease(verification(f)), /Served asset mismatch/u);
+      assert.ok(!f.requests.includes('/unexpected/'));
+    }
+  }
 });
 
 test('a short stamp prefix cannot substitute another full commit', async t => {

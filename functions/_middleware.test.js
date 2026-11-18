@@ -79,6 +79,7 @@ test('static and Function HTML CSP allow only approved frames without broadening
   const turnstileScript = new URL('https://challenges.cloudflare.com/turnstile/v0/api.js');
   const turnstileFrame = new URL('https://challenges.cloudflare.com/turnstile/v0/widget');
   const allowedFrameOrigins = [
+    "'self'",
     turnstileFrame.origin,
     'https://open.spotify.com',
     'https://embed.music.apple.com',
@@ -98,7 +99,7 @@ test('static and Function HTML CSP allow only approved frames without broadening
     );
     assert.ok(directives.get('script-src').includes(turnstileScript.origin));
     assert.deepEqual(directives.get('frame-src'), allowedFrameOrigins,
-      'Only Turnstile, music embeds and the three social video players can load as frames');
+      'Only same-origin map documents, Turnstile, music embeds and the three social video players can load as frames');
     assert.ok(directives.get('connect-src').includes("'self'"), 'Pre-clearance can reach its same-origin endpoint');
     for (const source of ['*', "'unsafe-inline'", "'unsafe-eval'"]) {
       assert.equal(directives.get('script-src').includes(source), false);

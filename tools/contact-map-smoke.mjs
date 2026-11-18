@@ -26,11 +26,192 @@ const bounded = async (operation, timeoutMs, label) => {
   }
 };
 
+const frameSelector = '.map-native > iframe.contact-map-render-frame';
+const activationPrefix = '[parent-contact-map-native-activation] ';
+const mapRequestOrigins = new WeakMap();
+const isMapChildRequest = (request, page) => {
+  const frame = request.frame();
+  const url = new URL(frame.url());
+  return frame.parentFrame() === page.mainFrame() && url.origin === server.baseUrl
+    && url.pathname === '/assets/frames/contact-map.html';
+};
+const installMapProbes = context => {
+  context.on('page', page => {
+    const requests = [];
+    mapRequestOrigins.set(page, requests);
+    page.on('request', request => {
+      const url = new URL(request.url());
+      if ((url.origin === server.baseUrl && url.pathname === '/api/maps-config')
+        || (url.origin === 'https://maps.googleapis.com' && url.pathname === '/maps/api/js')) {
+        requests.push({ kind: url.pathname === '/api/maps-config' ? 'config' : 'sdk', inChild: isMapChildRequest(request, page) });
+      }
+    });
+  });
+  return context.addInitScript(({ origin, prefix }) => {
+  // Chromium may preserve the initial about:blank global across iframe navigation.
+  // Install first; validate the current origin when the observed event arrives.
+  if (!window.__contactMapMessageProbeInstalled) {
+    window.__contactMapMessageProbeInstalled = true;
+    window.__contactMapMessages = [];
+    window.addEventListener('message', event => {
+    if (location.origin !== origin || event.data?.channel !== 'nika-contact-map') return;
+    const frame = document.querySelector('iframe.contact-map-render-frame');
+    window.__contactMapMessages.push({
+      payload: event.data, origin: event.origin,
+      expectedSource: window === window.top ? event.source === frame?.contentWindow : event.source === window.parent,
+    });
+    });
+  }
+  if (window !== window.top || document.__contactMapClickProbeInstalled) return;
+  document.__contactMapClickProbeInstalled = true;
+  document.addEventListener('click', event => {
+    if (location.origin !== origin) return;
+    const anchor = event.target.closest('.logo a[href]');
+    if (!anchor) return;
+    const frame = document.querySelector('iframe.contact-map-render-frame');
+    const style = frame && getComputedStyle(frame);
+    const rect = frame?.getBoundingClientRect();
+    const childState = frame?.contentWindow?.__mockMapLease;
+    console.log(prefix + JSON.stringify({
+      href: anchor.href, trusted: event.isTrusted, defaultPrevented: event.defaultPrevented,
+      googleAbsent: typeof window.google === 'undefined', connected: Boolean(frame?.isConnected),
+      rendered: Boolean(style && style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) > 0 && rect.width > 0 && rect.height > 0),
+      display: style?.display, visibility: style?.visibility, opacity: style?.opacity,
+      pointerEvents: style?.pointerEvents, inert: frame?.inert,
+      geometry: { width: rect?.width || 0, height: rect?.height || 0 },
+      childPointerCount: childState?.pointerdowns.length, constructorCount: childState?.constructorCount,
+      connectionCount: childState?.connectionCount, disconnectionCount: childState?.disconnectionCount,
+      flyCount: childState?.flyCount, stopCount: childState?.stopCount,
+      sameInstance: childState?.instances[0] === frame?.contentWindow?.__leaseOriginalMap,
+      heading: childState?.instances[0]?.heading, range: childState?.instances[0]?.range,
+    }));
+  }, { passive: true });
+  }, { origin: server.baseUrl, prefix: activationPrefix });
+};
+
+const getMapChild = async page => {
+  const locator = page.locator(frameSelector);
+  await locator.waitFor({ state: 'attached', timeout: 15000 });
+  const handle = await locator.elementHandle();
+  const frame = await handle.contentFrame();
+  assert.ok(frame, 'first-party map iframe has its own document');
+  await frame.waitForURL(url => url.origin === server.baseUrl && url.pathname === '/assets/frames/contact-map.html', { timeout: 15000 });
+  return frame;
+};
+const assertDocumentIsolation = async page => {
+  const state = await page.evaluate(() => {
+    const frame = document.querySelector('.map-native > iframe.contact-map-render-frame');
+    const script = [...document.scripts].find(node => new URL(node.src || location.href).pathname === '/assets/js/contact-map.js');
+    return {
+      googleAbsent: typeof window.google === 'undefined', registryAbsent: !window.customElements.get('gmp-map-3d'),
+      renderers: document.querySelectorAll('gmp-map-3d, .contact-map-2d').length,
+      sdkScripts: [...document.scripts].filter(node => node.src.startsWith('https://maps.googleapis.com/maps/api/js')).length,
+      iframeCount: document.querySelectorAll('.map-native > iframe.contact-map-render-frame').length,
+      src: frame?.src, title: frame?.title, label: frame?.parentElement.getAttribute('aria-label'),
+      sourceVersion: script ? new URL(script.src).searchParams.get('v') : null,
+    };
+  });
+  assert.equal(state.googleAbsent, true, 'Google namespace is absent from parent');
+  assert.equal(state.registryAbsent, true, 'Google custom elements are not registered in parent');
+  assert.equal(state.sdkScripts, 0, 'Google SDK script is absent from parent');
+  assert.equal(state.renderers, 0, 'Google renderer DOM belongs only to child');
+  assert.equal(state.iframeCount, 1, 'exactly one first-party map document');
+  const requests = mapRequestOrigins.get(page) || [];
+  assert.ok(requests.some(request => request.kind === 'config'), 'child requested map configuration');
+  assert.ok(requests.every(request => request.inChild), 'map configuration and SDK requests belong only to child');
+  const url = new URL(state.src);
+  assert.equal(url.origin, server.baseUrl, 'map document is same-origin');
+  assert.equal(url.pathname, '/assets/frames/contact-map.html', 'map document uses the fixed first-party path');
+  assert.deepEqual([...url.searchParams.keys()], ['v'], 'iframe URL contains only asset version, no keys/data');
+  assert.equal(url.searchParams.get('v'), state.sourceVersion, 'iframe follows host script version');
+  assert.equal(state.title, state.label, 'iframe title follows localized map label');
+  const child = await getMapChild(page);
+  assert.equal(await child.locator('html[data-contact-map-frame] > body.contact-map-frame-body').count(), 1, 'child uses the authored frame document');
+  assert.equal(await child.locator('html').getAttribute('lang'), await page.locator('html').getAttribute('lang'), 'child follows parent locale');
+  assert.equal(await child.title(), state.title, 'child title follows localized iframe title');
+  return child;
+};
+const assertMessageProtocol = async (page, child, locale) => {
+  const received = await child.evaluate(() => window.__contactMapMessages);
+  assert.ok(received.length, 'child received authored host messages');
+  const init = received.filter(record => record.payload.type === 'init');
+  assert.equal(init.length, 1, 'child receives init exactly once');
+  assert.equal(init[0].payload.locale, locale, 'init locale follows parent');
+  assert.equal(typeof init[0].payload.visible, 'boolean', 'init has typed visibility');
+  assert.equal(typeof init[0].payload.light, 'boolean', 'init has typed theme');
+  const attributes = init[0].payload.attributes;
+  assert.ok(attributes && typeof attributes === 'object' && !Array.isArray(attributes), 'init has authored attributes');
+  assert.deepEqual(Object.keys(attributes).sort(), ['lat', 'lng', 'zoom', 'modeControlLabel', 'hybridLabel', 'roadmapLabel', 'label'].sort(), 'init carries only authored map attributes');
+  for (const key of ['lat', 'lng', 'zoom']) assert.ok(Number.isFinite(Number(attributes[key])), `init ${key} is numeric`);
+  for (const key of ['modeControlLabel', 'hybridLabel', 'roadmapLabel', 'label']) assert.ok(typeof attributes[key] === 'string' && attributes[key].length > 0, `init ${key} is localized text`);
+  assert.equal(attributes.label, await page.locator('.map-native').getAttribute('aria-label'), 'init label follows parent map');
+  const commands = received.filter(record => record.payload.type === 'command').map(record => record.payload);
+  if (commands.length) await page.waitForFunction(ids => ids.every(id => window.__contactMapMessages.some(record =>
+    record.payload.type === 'result' && record.payload.id === id)), commands.map(command => command.id), { polling: 50, timeout: 5000 });
+  const replies = await page.evaluate(() => window.__contactMapMessages);
+  for (const record of [...received, ...replies]) {
+    assert.equal(record.payload.channel, 'nika-contact-map', 'message channel is fixed');
+    assert.equal(record.payload.version, 1, 'message version is fixed');
+    assert.equal(record.origin, server.baseUrl, 'message arrives from same origin');
+    assert.equal(record.expectedSource, true, 'message arrives from the expected document');
+    assert.equal(JSON.stringify(record.payload).includes('test-google-key'), false, 'messages contain no API key');
+    if (record.payload.type === 'visibility') {
+      assert.equal(typeof record.payload.visible, 'boolean', 'visibility message is typed');
+      assert.equal(typeof record.payload.light, 'boolean', 'theme message is typed');
+    }
+  }
+  assert.equal(new Set(commands.map(command => command.id)).size, commands.length, 'command ids are unique');
+  for (const command of commands) {
+    assert.ok(Number.isInteger(command.id) && command.id > 0, 'command id is a positive integer');
+    assert.ok(['north', 'recenter', 'zoom-in', 'zoom-out', 'mode'].includes(command.command), 'command name is supported');
+    assert.ok(replies.some(record => record.payload.type === 'result' && record.payload.id === command.id && record.payload.ok === true), 'native command has a successful correlated reply');
+  }
+  const ready = replies.find(record => record.payload.type === 'ready')?.payload;
+  assert.ok(ready && ['google', 'google-embed', 'unavailable'].includes(ready.provider), 'parent receives typed provider readiness');
+};
+const assertIgnoredFrameMessages = async (page, child) => {
+  const project = () => {
+    const mock = window.__mockMapLease;
+    const map = mock.instances[0];
+    return { constructors: mock.constructorCount, roadConstructors: mock.roadConstructorCount,
+      fly: mock.flyCount, stop: mock.stopCount, heading: map.heading, range: map.range,
+      mode: document.querySelector('.map-native').dataset.mapMode };
+  };
+  const before = await child.evaluate(project);
+  const configCount = mapRequestOrigins.get(page).filter(request => request.kind === 'config').length;
+  await page.evaluate(() => {
+    const target = document.querySelector('iframe.contact-map-render-frame').contentWindow;
+    const base = { channel: 'nika-contact-map', version: 1, type: 'command' };
+    for (const data of [
+      { ...base, id: 0, command: 'north' },
+      { ...base, id: 9001, command: 'unknown' },
+      { ...base, id: 9002, command: 'mode', mode: 'unknown' },
+      { ...base, id: 9003, command: 1 },
+      { ...base, version: 2, id: 9006, command: 'north' },
+      { channel: 'nika-contact-map', version: 1, type: 'init', locale: 1, attributes: null, visible: 'yes', light: null },
+    ]) target.postMessage(data, location.origin);
+  });
+  await child.evaluate(async () => {
+    const base = { channel: 'nika-contact-map', version: 1, type: 'command', command: 'north' };
+    window.postMessage({ ...base, id: 9004 }, location.origin); // Same-origin, wrong source document.
+    window.dispatchEvent(new window.MessageEvent('message', {
+      source: window.parent, origin: 'https://unrelated.invalid', data: { ...base, id: 9005 },
+    }));
+    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
+  assert.deepEqual(await child.evaluate(project), before, 'invalid/unrelated messages do not run SDK commands or change mode/camera');
+  assert.equal(mapRequestOrigins.get(page).filter(request => request.kind === 'config').length, configCount, 'invalid/repeated init does not fetch configuration again');
+  const invalidIds = [0, 9001, 9002, 9003, 9004, 9005, 9006];
+  assert.equal(await page.evaluate(ids => window.__contactMapMessages.filter(record => record.payload.type === 'result' && ids.includes(record.payload.id)).length, invalidIds), 0, 'ignored messages receive no command result');
+};
+
 const googleMapsMock = `
   (() => {
     const state = window.__mockMapLease = {
       instances: [], constructorCount: 0, connectionCount: 0, disconnectionCount: 0,
       roadConstructorCount: 0, flyCount: 0, stopCount: 0, pointerdowns: [],
+      holdMapsImport: false, releaseMapsImport: null,
     };
     const isRendered = state.isRendered = element => {
       if (!element?.isConnected) return false;
@@ -104,7 +285,12 @@ const googleMapsMock = `
       maps: {
         importLibrary: async library => {
           if (library === 'maps3d') return { Map3DElement: MockMap3D, MarkerElement: MockMarker };
-          if (library === 'maps') return { Map: MockMap2D };
+          if (library === 'maps') {
+            if (state.holdMapsImport) return new Promise(resolve => {
+              state.releaseMapsImport = () => { state.holdMapsImport = false; state.releaseMapsImport = null; resolve({ Map: MockMap2D }); };
+            });
+            return { Map: MockMap2D };
+          }
           throw new Error('Unexpected Google Maps library');
         },
         Marker: MockMapMarker, Size: MockMapSize, Point: MockMapPoint, event: { trigger() {} },
@@ -118,6 +304,7 @@ try {
   for (const locale of locales) {
     for (const [layout, viewport] of layouts) {
       const context = await browser.newContext({ viewport, serviceWorkers: 'block' });
+      await installMapProbes(context);
       const page = await context.newPage();
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
@@ -128,6 +315,7 @@ try {
       });
       await page.locator('.map-native').scrollIntoViewIfNeeded();
       await page.waitForSelector('.map-native[data-map-ready="1"]', { timeout: 15000 });
+      const mapChild = await assertDocumentIsolation(page);
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.waitForTimeout(250);
 
@@ -191,6 +379,9 @@ try {
         };
       });
 
+      state.alternateMapCount = await mapChild.locator('.leaflet-container, .contact-map-2d').count();
+      assert.equal(await mapChild.locator('.map-native').getAttribute('data-map-provider'), 'unavailable', `${locale}/${layout}: child unavailable state`);
+      await assertMessageProtocol(page, mapChild, locale);
       assert.equal(state.provider, 'unavailable', `${locale}/${layout}: Google-only unavailable state`);
       assert.ok(state.viewportWidth >= Math.min(320, state.frameWidth - 4), `${locale}/${layout}: map width`);
       assert.ok(state.viewportHeight >= 280, `${locale}/${layout}: map height`);
@@ -264,17 +455,20 @@ try {
   }
 
   const googleContext = await browser.newContext({ viewport: layouts[0][1], serviceWorkers: 'block' });
+  await installMapProbes(googleContext);
   const googlePage = await googleContext.newPage();
   let requestedGoogleScriptUrl = '';
-  await googlePage.route('**/api/maps-config', route =>
-    route.fulfill({
+  await googlePage.route('**/api/maps-config', route => {
+    if (!isMapChildRequest(route.request(), googlePage)) return route.abort();
+    return route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ enabled: true, apiKey: 'browser-test-key' }),
-    })
-  );
+    });
+  });
   await googlePage.route('https://maps.googleapis.com/maps/api/js**', route => {
     requestedGoogleScriptUrl = route.request().url();
+    if (!isMapChildRequest(route.request(), googlePage)) return route.abort();
     return route.fulfill({
       status: 200,
       contentType: 'application/javascript',
@@ -285,17 +479,13 @@ try {
   await googlePage.goto(`${server.baseUrl}/ru/kontakty.html`, { waitUntil: 'domcontentloaded' });
   await googlePage.locator('.map-native').scrollIntoViewIfNeeded();
   await googlePage.waitForSelector('.map-native[data-map-provider="google"]', { timeout: 15000 });
-  await googlePage.waitForFunction(() => window.__mockMapLease.isRendered(window.__mockMapLease.instances[0]), undefined, { polling: 50, timeout: 5000 });
+  const googleChild = await assertDocumentIsolation(googlePage);
+  await googleChild.waitForFunction(() => window.__mockMapLease.isRendered(window.__mockMapLease.instances[0]), undefined, { polling: 50, timeout: 5000 });
 
-  const googleState = await googlePage.locator('.map-native').evaluate(map => {
-    const marker = map.querySelector('gmp-marker');
-    return {
+  const googleState = {
+    ...await googlePage.evaluate(() => ({
       modeCount: document.querySelectorAll('.map-mode-button').length,
       modeIds: [...document.querySelectorAll('.map-mode-button')].map(button => button.dataset.mapMode),
-      provider: map.dataset.mapProvider,
-      mapMode: map.querySelector('gmp-map-3d')?.mode,
-      mapCount: map.querySelectorAll('gmp-map-3d').length,
-      alternateMapCount: document.querySelectorAll('.leaflet-container, .contact-map-2d').length,
       controlCount: document.querySelectorAll('.contact-map-control').length,
       badgeCount: document.querySelectorAll('.map-mode-badge').length,
       navControlCount: document.querySelectorAll('.map-nav-control[data-nav-pill]').length,
@@ -303,6 +493,14 @@ try {
       activeModePlasmaCount: document.querySelectorAll('.map-mode-button[aria-pressed="true"] .nav-plasma--active').length,
       recenterIcon: document.querySelector('.contact-map-control-image-recenter')?.getAttribute('src'),
       streetViewIcon: document.querySelector('.contact-map-control-streetview .contact-map-control-image')?.getAttribute('src'),
+    })),
+    ...await googleChild.locator('.map-native').evaluate(map => {
+      const marker = map.querySelector('gmp-marker');
+      return {
+      provider: map.dataset.mapProvider,
+      mapMode: map.querySelector('gmp-map-3d')?.mode,
+      mapCount: map.querySelectorAll('gmp-map-3d').length,
+      alternateMapCount: document.querySelectorAll('.leaflet-container, .contact-map-2d').length,
       center: map.querySelector('gmp-map-3d')?.center,
       marker: marker
         ? {
@@ -314,8 +512,9 @@ try {
             iconSrc: marker.querySelector('.contact-map-google-pin-image')?.getAttribute('src'),
           }
         : null,
-    };
-  });
+      };
+    }),
+  };
   const scriptUrl = new URL(requestedGoogleScriptUrl);
   assert.equal(scriptUrl.searchParams.get('language'), 'ru', 'Google map follows page language');
   assert.equal(scriptUrl.searchParams.get('region'), 'DE', 'Google map uses German regional context');
@@ -358,14 +557,14 @@ try {
     'Google 3D salon marker stays visible on the ground'
   );
 
-  await googlePage.evaluate(() => {
+  await googleChild.evaluate(() => {
     const map = window.__mockMapLease.instances[0];
     window.__modeOriginalCamera = { heading: map.heading, range: map.range };
     map.heading = 145;
     map.range = 420;
   });
   const assertGoogleMode = async expectedMode => {
-    await googlePage.waitForFunction(mode => {
+    await googleChild.waitForFunction(mode => {
       const mock = window.__mockMapLease;
       const container = document.querySelector('.map-native');
       const threeD = container.querySelector(':scope > gmp-map-3d');
@@ -373,7 +572,8 @@ try {
       return threeD && road && mock.isRendered(threeD) === (mode === 'HYBRID')
         && mock.isRendered(road) === (mode === 'ROADMAP');
     }, expectedMode, { polling: 50, timeout: 5000 });
-    const state = await googlePage.locator('.map-native').evaluate(container => {
+    await googlePage.waitForSelector(`.map-native[data-map-mode="${expectedMode.toLowerCase()}"]`, { timeout: 5000 });
+    const state = await googleChild.locator('.map-native').evaluate(container => {
       const mock = window.__mockMapLease;
       const threeD = container.querySelector(':scope > gmp-map-3d');
       const road = container.querySelector(':scope > .contact-map-2d');
@@ -395,9 +595,10 @@ try {
         constructorCount: mock.constructorCount, roadConstructorCount: mock.roadConstructorCount,
         connectionCount: mock.connectionCount, disconnectionCount: mock.disconnectionCount,
         heading: threeD.heading, range: threeD.range, flyCount: mock.flyCount, stopCount: mock.stopCount,
-        selectedEffectCount: document.querySelectorAll('.map-mode-button[aria-pressed="true"] .nav-plasma--active').length,
+        sdkPointerCount: mock.pointerdowns.length,
       };
     });
+    state.selectedEffectCount = await googlePage.locator('.map-mode-button[aria-pressed="true"] .nav-plasma--active').count();
     console.log(`[contact-map-mode] ${engine} ${expectedMode}: ${JSON.stringify(state)}`);
     assert.deepEqual(state.visibleBackends, [expectedMode], `${expectedMode}: exactly one visible Google backend`);
     assert.equal(state.threeDCount, 1, `${expectedMode}: exactly one cached 3D backend`);
@@ -425,10 +626,27 @@ try {
     assert.equal(state.range, 420, `${expectedMode}: camera range retained`);
     assert.equal(state.flyCount, 0, `${expectedMode}: mode switch does not fly/reset camera`);
     assert.equal(state.stopCount, 0, `${expectedMode}: mode switch does not enqueue camera stop`);
+    assert.equal(state.sdkPointerCount, 0, `${expectedMode}: parent toolbar input stays outside SDK document listeners`);
     assert.equal(state.selectedEffectCount, 1, `${expectedMode}: selected navigation effect stays singular`);
   };
 
   await googlePage.getByRole('button', { name: 'Карта', exact: true }).click();
+  await assertGoogleMode('ROADMAP');
+  await googlePage.evaluate(() => document.body.classList.add('light'));
+  await googleChild.waitForFunction(() => document.body.classList.contains('light'), undefined, { polling: 50, timeout: 5000 });
+  await googlePage.evaluate(() => document.body.classList.remove('light'));
+  await googleChild.waitForFunction(() => !document.body.classList.contains('light'), undefined, { polling: 50, timeout: 5000 });
+  await googlePage.evaluate(() => document.body.classList.add('nav-open'));
+  await googlePage.waitForFunction(() => {
+    const frame = document.querySelector('iframe.contact-map-render-frame');
+    return frame?.inert && getComputedStyle(frame).visibility === 'hidden';
+  }, undefined, { polling: 50, timeout: 5000 });
+  assert.equal(await googleChild.locator('gmp-map-3d').evaluate(map => window.__mockMapLease.isRendered(map)), false, 'hidden ROADMAP host does not enable 3D');
+  await googlePage.evaluate(() => document.body.classList.remove('nav-open'));
+  await googlePage.waitForFunction(() => {
+    const frame = document.querySelector('iframe.contact-map-render-frame');
+    return frame && !frame.inert && getComputedStyle(frame).visibility === 'visible';
+  }, undefined, { polling: 50, timeout: 5000 });
   await assertGoogleMode('ROADMAP');
   assert.equal(
     await googlePage.locator('.map-mode-button[aria-pressed="true"] .nav-plasma--active').count(),
@@ -440,9 +658,9 @@ try {
     'google',
     'road map remains in the same Google provider'
   );
-  assert.equal(await googlePage.locator('.map-native > .contact-map-2d:visible').count(), 1, 'Google road map is visible');
+  assert.equal(await googleChild.locator('.map-native > .contact-map-2d:visible').count(), 1, 'Google road map is visible');
   assert.deepEqual(
-    await googlePage.evaluate(() => ({
+    await googleChild.evaluate(() => ({
       url: window.__mockRoadMarker.options.icon.url,
       scaledSize: window.__mockRoadMarker.options.icon.scaledSize,
       anchor: window.__mockRoadMarker.options.icon.anchor,
@@ -454,22 +672,24 @@ try {
     },
     'Google road map uses the salon location icon'
   );
-  assert.equal(await googlePage.locator('.map-native > gmp-map-3d:visible').count(), 0, 'cached 3D map has no visible UI in road mode');
+  assert.equal(await googleChild.locator('.map-native > gmp-map-3d:visible').count(), 0, 'cached 3D map has no visible UI in road mode');
   assert.equal(
     await googlePage.locator('.contact-map-controls').evaluate(controls => controls.hidden),
     false,
     'the shared map controls remain visible in road mode'
   );
   await googlePage.getByRole('button', { name: 'Приблизить', exact: true }).click();
+  await googleChild.waitForFunction(() => document.querySelector('.contact-map-2d')?.mockMap.zoom === 18,
+    undefined, { polling: 50, timeout: 5000 });
   assert.equal(
-    await googlePage.locator('.contact-map-2d').evaluate(map => map.mockMap.zoom),
+    await googleChild.locator('.contact-map-2d').evaluate(map => map.mockMap.zoom),
     18,
     'custom zoom control changes the road-map zoom'
   );
   await googlePage.getByRole('button', { name: 'Гибрид 3D', exact: true }).click();
   await assertGoogleMode('HYBRID');
-  assert.equal(await googlePage.locator('.map-native > gmp-map-3d:visible').count(), 1, 'Hybrid 3D map is rendered again');
-  assert.equal(await googlePage.locator('.map-native > .contact-map-2d:visible').count(), 0, 'cached road map has no visible UI in Hybrid mode');
+  assert.equal(await googleChild.locator('.map-native > gmp-map-3d:visible').count(), 1, 'Hybrid 3D map is rendered again');
+  assert.equal(await googleChild.locator('.map-native > .contact-map-2d:visible').count(), 0, 'cached road map has no visible UI in Hybrid mode');
   assert.equal(
     await googlePage.locator('.contact-map-controls').evaluate(controls => controls.hidden),
     false,
@@ -479,16 +699,32 @@ try {
   await assertGoogleMode('ROADMAP');
   await googlePage.getByRole('button', { name: 'Гибрид 3D', exact: true }).click();
   await assertGoogleMode('HYBRID');
-  await googlePage.evaluate(() => Object.assign(window.__mockMapLease.instances[0], window.__modeOriginalCamera));
+  await googleChild.evaluate(() => Object.assign(window.__mockMapLease.instances[0], window.__modeOriginalCamera));
   await googlePage.getByRole('button', { name: 'Приблизить', exact: true }).click();
+  await googleChild.waitForFunction(() => window.__mockMapLease.instances[0].lastFlyCameraTo?.endCamera.range < 520,
+    undefined, { polling: 50, timeout: 5000 });
   assert.ok(
-    (await googlePage.locator('gmp-map-3d').evaluate(map => map.lastFlyCameraTo.endCamera.range)) < 520,
+    (await googleChild.locator('gmp-map-3d').evaluate(map => map.lastFlyCameraTo.endCamera.range)) < 520,
     'custom zoom control changes the 3D camera range'
   );
+  const zoomedRange = await googleChild.locator('gmp-map-3d').evaluate(map => map.range);
+  await googlePage.getByRole('button', { name: 'Отдалить', exact: true }).click();
+  await googleChild.waitForFunction(range => window.__mockMapLease.instances[0].range > range, zoomedRange, { polling: 50, timeout: 5000 });
+  await googlePage.getByRole('button', { name: 'Ориентировать карту на север', exact: true }).click();
+  await googleChild.waitForFunction(() => window.__mockMapLease.instances[0].heading === 0, undefined, { polling: 50, timeout: 5000 });
+  await googlePage.getByRole('button', { name: 'Показать салон в центре карты', exact: true }).click();
+  await googleChild.waitForFunction(() => {
+    const map = window.__mockMapLease.instances[0];
+    return map.center.lat === 51.320486 && map.center.lng === 12.416501 && map.range === 520 && map.heading === 332;
+  }, undefined, { polling: 50, timeout: 5000 });
+  assert.equal(await googleChild.evaluate(() => window.__mockMapLease.pointerdowns.length), 0, 'all parent camera controls stay outside SDK gesture listeners');
+  await assertDocumentIsolation(googlePage);
+  await assertMessageProtocol(googlePage, googleChild, 'ru');
+  await assertIgnoredFrameMessages(googlePage, googleChild);
   // Synthetic lifecycle events test disposal; they are not native navigation/BFCache proof.
-  await googlePage.evaluate(() => window.dispatchEvent(new window.PageTransitionEvent('pagehide', { persisted: false })));
-  assert.equal(await googlePage.locator('gmp-map-3d').count(), 0, 'permanent pagehide disconnects 3D');
-  await googlePage.evaluate(async () => {
+  await googleChild.evaluate(() => window.dispatchEvent(new window.PageTransitionEvent('pagehide', { persisted: false })));
+  assert.equal(await googleChild.locator('gmp-map-3d').count(), 0, 'permanent child pagehide disconnects 3D');
+  await googleChild.evaluate(async () => {
     window.dispatchEvent(new window.PageTransitionEvent('pageshow', { persisted: false }));
     window.dispatchEvent(new Event('focus'));
     document.dispatchEvent(new Event('visibilitychange'));
@@ -497,7 +733,7 @@ try {
     await new Promise(resolve => setTimeout(resolve, 0));
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   });
-  const disposalState = await googlePage.evaluate(() => ({
+  const disposalState = await googleChild.evaluate(() => ({
     connected: window.__mockMapLease.instances[0].isConnected,
     rendered: window.__mockMapLease.isRendered(window.__mockMapLease.instances[0]),
     constructorCount: window.__mockMapLease.constructorCount,
@@ -512,8 +748,99 @@ try {
   assert.equal(disposalState.connectionCount, 1, 'terminal disposal does not reconnect 3D');
   assert.equal(disposalState.disconnectionCount, 1, 'only terminal disposal disconnects 3D');
   assert.equal(disposalState.suspended, null, 'permanent disposal removes lease state');
+  await googlePage.evaluate(() => window.dispatchEvent(new window.PageTransitionEvent('pagehide', { persisted: false })));
+  assert.equal(await googlePage.locator(frameSelector).count(), 0, 'terminal parent pagehide removes child iframe');
+  await googlePage.evaluate(() => window.dispatchEvent(new window.PageTransitionEvent('pageshow', { persisted: false })));
+  assert.equal(await googlePage.locator(frameSelector).count(), 0, 'disposed host does not recreate child after late pageshow');
   console.log('[contact-map] single Google map, two modes, controls, localization and marker: ok');
   await googleContext.close();
+
+  // In-memory host fixture uses the real first-party frame; no fixture HTML is published.
+  const protocolContext = await browser.newContext({ viewport: layouts[1][1], serviceWorkers: 'block' });
+  await installMapProbes(protocolContext);
+  try {
+    const page = await protocolContext.newPage();
+    const errors = [];
+    let configRequests = 0;
+    let sdkRequests = 0;
+    page.on('pageerror', error => errors.push(error.message));
+    await page.route('**/*', async route => {
+      const request = route.request();
+      const url = new URL(request.url());
+      if (!['GET', 'HEAD'].includes(request.method())) return route.abort();
+      if (url.origin === server.baseUrl && url.pathname === '/api/maps-config') {
+        configRequests += 1;
+        if (!isMapChildRequest(request, page)) return route.abort();
+        return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ enabled: true, apiKey: 'test-google-key' }) });
+      }
+      if (url.origin === 'https://maps.googleapis.com' && url.pathname === '/maps/api/js') {
+        sdkRequests += 1;
+        if (!isMapChildRequest(request, page)) return route.abort();
+        return route.fulfill({ contentType: 'application/javascript', body: googleMapsMock });
+      }
+      return url.origin === server.baseUrl ? route.continue() : route.abort();
+    });
+    const frameUrl = `${server.baseUrl}/assets/frames/contact-map.html?v=protocol-fixture`;
+    await page.goto(frameUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.evaluate(src => {
+      const frame = document.createElement('iframe');
+      frame.className = 'contact-map-render-frame'; frame.title = 'Protocol fixture'; frame.src = src;
+      document.querySelector('.map-native').replaceChildren(frame);
+    }, frameUrl);
+    const child = await getMapChild(page);
+    await child.waitForLoadState('domcontentloaded', { timeout: 5000 });
+    const init = {
+      channel: 'nika-contact-map', version: 1, type: 'init', locale: 'ru', visible: true, light: false,
+      attributes: { lat: '51.320486', lng: '12.416501', zoom: '17', modeControlLabel: 'Управление картой',
+        hybridLabel: 'Гибрид 3D', roadmapLabel: 'Карта', label: 'Контроль протокола карты' },
+    };
+    await page.evaluate(data => {
+      const target = document.querySelector('iframe.contact-map-render-frame').contentWindow;
+      for (const invalid of [
+        { ...data, version: 2 }, { ...data, type: 'unknown' }, { ...data, locale: 1 },
+        { ...data, visible: 'yes' }, { ...data, attributes: null },
+      ]) target.postMessage(invalid, location.origin);
+    }, init);
+    await child.evaluate(async data => {
+      window.postMessage(data, location.origin); // Valid shape, wrong source.
+      window.dispatchEvent(new window.MessageEvent('message', { source: window.parent, origin: 'https://unrelated.invalid', data }));
+      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    }, init);
+    assert.equal(configRequests, 0, 'invalid/unrelated init cannot request configuration');
+    assert.equal(sdkRequests, 0, 'invalid/unrelated init cannot load SDK');
+    assert.equal(await child.evaluate(() => typeof window.google), 'undefined', 'child has no SDK before valid init');
+    await page.evaluate(data => document.querySelector('iframe.contact-map-render-frame').contentWindow.postMessage(data, location.origin), init);
+    await page.waitForFunction(() => window.__contactMapMessages.some(record => record.payload.type === 'ready' && record.payload.provider === 'google'), undefined, { polling: 50, timeout: 15000 });
+    assert.equal(configRequests, 1, 'valid init fetches configuration once in child');
+    assert.equal(sdkRequests, 1, 'valid init loads SDK once in child');
+    assert.equal(await page.evaluate(() => typeof window.google), 'undefined', 'controlled host never loads SDK');
+    await child.evaluate(() => { window.__mockMapLease.holdMapsImport = true; });
+    await page.evaluate(() => {
+      const target = document.querySelector('iframe.contact-map-render-frame').contentWindow;
+      for (const [id, mode] of [[1, 'ROADMAP'], [2, 'HYBRID']]) target.postMessage({
+        channel: 'nika-contact-map', version: 1, type: 'command', id, command: 'mode', mode,
+      }, location.origin);
+    });
+    await child.waitForFunction(() => typeof window.__mockMapLease.releaseMapsImport === 'function'
+      && window.__contactMapMessages.some(record => record.payload.type === 'command' && record.payload.id === 2), undefined, { polling: 50, timeout: 5000 });
+    await page.evaluate(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+    assert.equal(await child.evaluate(() => window.__mockMapLease.roadConstructorCount), 0, 'held import has not created the road backend');
+    assert.equal(await page.evaluate(() => window.__contactMapMessages.filter(record => record.payload.type === 'result').length), 0, 'later mode command cannot overtake held import');
+    await child.evaluate(() => window.__mockMapLease.releaseMapsImport());
+    await page.waitForFunction(() => window.__contactMapMessages.filter(record => record.payload.type === 'result').length === 2, undefined, { polling: 50, timeout: 5000 });
+    const results = await page.evaluate(() => window.__contactMapMessages.filter(record => record.payload.type === 'result').map(record => record.payload));
+    assert.deepEqual(results.map(result => [result.id, result.ok, result.mode]), [[1, true, 'roadmap'], [2, true, 'hybrid']], 'deferred commands complete in issue order');
+    assert.equal(await child.evaluate(() => window.__mockMapLease.constructorCount), 1, 'serialized commands retain the single 3D backend');
+    assert.equal(await child.evaluate(() => window.__mockMapLease.roadConstructorCount), 1, 'serialized commands retain one cached road backend');
+    assert.deepEqual(errors, [], 'controlled protocol fixture has no page errors');
+    console.log(`[contact-map] ${engine} pre-init validation and deferred command serialization: ok (controlled messages, no timer mirroring)`);
+  } finally {
+    await bounded(protocolContext.close(), 10000, 'protocolContext.close');
+  }
 
   for (const [name, embedUrl, expectedProvider, configStatus = 200] of [
     ['share embed', 'https://www.google.com/maps/embed?pb=preview-map-fixture', 'google-embed'],
@@ -524,6 +851,7 @@ try {
     ['credentialed URL', 'https://user@www.google.com/maps/embed?pb=fixture', 'unavailable'],
   ]) {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
+    await installMapProbes(context);
     try {
       const page = await context.newPage();
       const errors = [];
@@ -538,6 +866,7 @@ try {
       });
       await page.route('**/api/maps-config', route => {
         configRequests += 1;
+        if (!isMapChildRequest(route.request(), page)) return route.abort();
         return route.fulfill({
           status: configRequests === 1 ? configStatus : 200,
           contentType: 'application/json', body: JSON.stringify({ enabled: false, embedUrl }),
@@ -549,16 +878,18 @@ try {
       await page.goto(`${server.baseUrl}/ru/kontakty.html`, { waitUntil: 'domcontentloaded' });
       await page.locator('.map-native').scrollIntoViewIfNeeded();
       await page.waitForSelector(`.map-native[data-map-provider="${expectedProvider}"]`, { timeout: 15000 });
-      const frame = page.locator('.map-native iframe');
+      const child = await assertDocumentIsolation(page);
+      const frame = child.locator('.map-native iframe.map-embed-google');
       assert.equal(await frame.count(), expectedProvider === 'google-embed' ? 1 : 0, `${name}: iframe policy`);
       assert.equal(mapRequests.length, expectedProvider === 'google-embed' ? 1 : 0, `${name}: request policy`);
       assert.equal(configRequests, configStatus === 503 ? 2 : 1, `${name}: bounded transient retry`);
       assert.equal(await page.locator('.map-mode-controls').count(), 0, `${name}: no misleading 3D controls`);
       assert.deepEqual(errors, [], `${name}: no page errors`);
+      await assertMessageProtocol(page, child, 'ru');
       if (expectedProvider === 'google-embed') {
         assert.equal(await frame.getAttribute('src'), embedUrl, 'official share URL is retained');
         assert.equal(await frame.getAttribute('title'), 'Карта расположения салона', 'iframe has a localized title');
-        assert.ok(await page.frameLocator('.map-native iframe').getByText('Preview map fixture').isVisible(), 'embedded content rendered');
+        assert.ok(await child.frameLocator('.map-native iframe.map-embed-google').getByText('Preview map fixture').isVisible(), 'embedded content rendered');
         const bounds = await frame.boundingBox();
         assert.ok(bounds.width >= 320 && bounds.height >= 280, 'embed fills the responsive map viewport');
       }
@@ -572,13 +903,13 @@ try {
     viewport: layouts[1][1], isMobile: true, hasTouch: true, deviceScaleFactor: 3,
     serviceWorkers: 'block', permissions: [],
   });
+  await installMapProbes(leaseContext);
   try {
     const page = await leaseContext.newPage();
     const errors = [];
     let scriptRequests = 0;
     let interceptNavigation = false;
     const navigations = [];
-    const activationPrefix = '[contact-map-native-activation] ';
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', message => {
       if (message.text().startsWith(activationPrefix)) console.log(`[contact-map-stage] ${engine} native console arrived: ${message.text()}`);
@@ -592,10 +923,12 @@ try {
       const request = route.request();
       const url = new URL(request.url());
       if (url.origin === server.baseUrl && url.pathname === '/api/maps-config') {
+        if (!isMapChildRequest(request, page)) return route.abort();
         return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ enabled: true, apiKey: 'test-google-key' }) });
       }
       if (url.origin === 'https://maps.googleapis.com' && url.pathname === '/maps/api/js') {
         scriptRequests += 1;
+        if (!isMapChildRequest(request, page)) return route.abort();
         return route.fulfill({ contentType: 'application/javascript', body: googleMapsMock });
       }
       if (interceptNavigation && request.isNavigationRequest() && request.frame() === page.mainFrame()) {
@@ -611,7 +944,8 @@ try {
     if (await consent.isVisible()) await consent.tap();
     await page.locator('.map-native').evaluate(map => map.scrollIntoView({ behavior: 'instant', block: 'center' }));
     await page.waitForSelector('.map-native[data-map-provider="google"]', { timeout: 15000 });
-    await page.evaluate(async () => {
+    const child = await assertDocumentIsolation(page);
+    await child.evaluate(async () => {
       await document.fonts.ready;
       const map = window.__mockMapLease.instances[0];
       window.__leaseOriginalMap = map;
@@ -620,11 +954,11 @@ try {
       map.range = 360;
     });
     const snapshot = async label => {
-      const state = await page.evaluate(() => {
+      const state = {
+        ...await child.evaluate(() => {
         const mock = window.__mockMapLease;
         const container = document.querySelector('.map-native');
         const map = mock.instances[0];
-        const rect = container.getBoundingClientRect();
         const mapRect = map.getBoundingClientRect();
         const mapStyle = getComputedStyle(map);
         return {
@@ -635,18 +969,30 @@ try {
           sameInstance: map === window.__leaseOriginalMap, constructorCount: mock.constructorCount,
           connectionCount: mock.connectionCount, disconnectionCount: mock.disconnectionCount,
           heading: map.heading, range: map.range, flyCount: mock.flyCount, stopCount: mock.stopCount,
-          visible: rect.bottom > 0 && rect.top < window.innerHeight && rect.right > 0 && rect.left < window.innerWidth,
-          rect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right },
-          pointerdowns: mock.pointerdowns.slice(), navOpen: document.body.classList.contains('nav-open'),
-          actualDpr: window.devicePixelRatio,
+          pointerdowns: mock.pointerdowns.slice(),
         };
-      });
+        }),
+        ...await page.locator(frameSelector).evaluate(frame => {
+          const rect = frame.getBoundingClientRect();
+          const style = getComputedStyle(frame);
+          return {
+            frameConnected: frame.isConnected, frameDisplay: style.display, frameVisibility: style.visibility,
+            frameOpacity: style.opacity, framePointerEvents: style.pointerEvents, frameInert: frame.inert,
+            frameRect: { width: rect.width, height: rect.height },
+            visible: rect.bottom > 0 && rect.top < window.innerHeight && rect.right > 0 && rect.left < window.innerWidth,
+            rect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right },
+            navOpen: document.body.classList.contains('nav-open'), actualDpr: window.devicePixelRatio,
+            googleAbsent: typeof window.google === 'undefined',
+          };
+        }),
+      };
       console.log(`[contact-map-lease] ${engine} ${label}: ${JSON.stringify(state)}`);
       return state;
     };
+    let parentInputPointerBaseline;
     const expectLease = async (label, rendered) => {
       try {
-        await page.waitForFunction(expected => {
+        await child.waitForFunction(expected => {
           const mock = window.__mockMapLease;
           const map = mock?.instances[0];
           const container = document.querySelector('.map-native');
@@ -658,6 +1004,15 @@ try {
       }
       const state = await snapshot(label);
       assert.equal(state.connected, true, `${label}: 3D remains connected until terminal disposal`);
+      assert.equal(state.frameConnected, true, `${label}: first-party map document remains connected`);
+      assert.equal(state.googleAbsent, true, `${label}: parent never loads Google SDK`);
+      assert.deepEqual(state.frameRect, { width: 360, height: 440 }, `${label}: iframe viewport dimensions are retained`);
+      assert.notEqual(state.frameDisplay, 'none', `${label}: iframe keeps its layout surface`);
+      assert.equal(state.frameVisibility, rendered ? 'visible' : 'hidden', `${label}: parent iframe visibility follows lease`);
+      assert.equal(state.frameOpacity, rendered ? '1' : '0', `${label}: parent iframe opacity follows lease`);
+      assert.equal(state.frameInert, !rendered, `${label}: only active iframe accepts accessible input`);
+      if (rendered) assert.notEqual(state.framePointerEvents, 'none', `${label}: active iframe accepts pointers`);
+      else assert.equal(state.framePointerEvents, 'none', `${label}: inactive iframe does not intercept pointers`);
       assert.equal(state.rendered, rendered, `${label}: 3D render suppression`);
       assert.notEqual(state.mapDisplay, 'none', `${label}: lease does not collapse the 3D layout surface`);
       assert.deepEqual(state.mapRect, { width: 360, height: 440 }, `${label}: 3D viewport dimensions are retained`);
@@ -676,9 +1031,15 @@ try {
       assert.equal(state.range, 360, `${label}: camera range retained`);
       assert.equal(state.flyCount, 0, `${label}: lease resume does not fly the camera`);
       assert.equal(state.stopCount, 0, `${label}: lease does not enqueue SDK commands`);
+      if (parentInputPointerBaseline !== undefined) assert.equal(state.pointerdowns.length, parentInputPointerBaseline, `${label}: parent input never reaches child SDK listeners`);
       return state;
     };
     await expectLease('initial-visible', true);
+    await bounded(child.locator('gmp-map-3d').tap({ timeout: 5000 }), 5000, 'positive native child map tap');
+    await child.waitForFunction(() => window.__mockMapLease.pointerdowns.some(event => event.trusted), undefined, { polling: 50, timeout: 5000 });
+    parentInputPointerBaseline = await child.evaluate(() => window.__mockMapLease.pointerdowns.length);
+    assert.ok(parentInputPointerBaseline > 0, 'positive native child tap reaches child SDK listener');
+    await expectLease('after-positive-native-child-map-input', true);
     // Controlled scrolling tests render ownership, not physical iPhone swipe delivery.
     await page.evaluate(() => { document.querySelector('.site-scroll-root').scrollTop = 0; });
     const offscreen = await expectLease('controlled-offscreen', false);
@@ -707,6 +1068,7 @@ try {
     });
     await expectLease('synthetic-visible-clears-held-pointer', true);
     await page.evaluate(() => {
+      document.querySelector('#burgerBtn').focus({ preventScroll: true });
       document.querySelector('#burgerBtn').dispatchEvent(new window.PointerEvent('pointerdown', {
         bubbles: true, pointerId: 74, pointerType: 'touch', button: 0,
       }));
@@ -716,6 +1078,7 @@ try {
     await page.evaluate(() => window.dispatchEvent(new Event('focus')));
     await expectLease('synthetic-focus-resumes-after-held-pointer', true);
     await page.evaluate(() => {
+      document.querySelector('#burgerBtn').focus({ preventScroll: true });
       window.dispatchEvent(new Event('blur'));
       Object.defineProperty(document, 'hidden', { configurable: true, value: true });
       document.dispatchEvent(new Event('visibilitychange'));
@@ -743,21 +1106,21 @@ try {
       }
     };
     await showHeader();
-    await page.evaluate(() => { window.__mockMapLease.pointerdowns.length = 0; });
     await page.locator('#burgerBtn').tap();
     await page.waitForFunction(() => document.body.classList.contains('nav-open'), undefined, { polling: 50, timeout: 5000 });
     const openState = await expectLease('native-burger-open', false);
-    assert.ok(openState.pointerdowns.some(event => event.trusted && event.connected && !event.rendered
-      && event.visibility === 'hidden' && event.opacity === '0' && event.inert), 'outside native pointerdown suppresses connected 3D before SDK bubble listener');
+    assert.equal(openState.pointerdowns.length, parentInputPointerBaseline, 'native parent burger does not reach isolated SDK listeners');
     await page.locator('#burgerBtn').tap();
     await page.waitForFunction(() => !document.body.classList.contains('nav-open'), undefined, { polling: 50, timeout: 5000 });
     await expectLease('native-X-close', true);
+    await assertDocumentIsolation(page);
+    await assertMessageProtocol(page, child, 'ru');
 
     await showHeader();
     const logo = page.locator('.logo a[href]');
     await logo.waitFor({ state: 'visible', timeout: 5000 });
     const expectedHome = new URL(await logo.getAttribute('href'), page.url()).href;
-    await page.evaluate(() => Object.assign(window.__leaseOriginalMap, window.__leaseOriginalCamera));
+    await child.evaluate(() => Object.assign(window.__leaseOriginalMap, window.__leaseOriginalCamera));
     const logoGeometry = await bounded(logo.evaluate(anchor => {
       const rect = anchor.getBoundingClientRect();
       const points = [[0.5, 0.5], [0.2, 0.2], [0.8, 0.2], [0.2, 0.8], [0.8, 0.8]].map(([xRatio, yRatio]) => {
@@ -792,6 +1155,7 @@ try {
     const navigationState = JSON.parse(activationMessage.text().slice(activationPrefix.length));
     console.log(`[contact-map-lease] ${engine} native-logo-click-before-default: ${JSON.stringify(navigationState)}`);
     assert.equal(navigationState.trusted, true, 'native logo activation is a trusted click');
+    assert.equal(navigationState.googleAbsent, true, 'native logo parent has no Google namespace');
     assert.equal(navigationState.defaultPrevented, false, 'native logo activation is not canceled by app handlers');
     assert.equal(navigationState.connected, true, 'outside logo activation keeps the same 3D element connected');
     assert.equal(navigationState.rendered, false, 'outside logo activation suppresses 3D before native navigation');
@@ -808,6 +1172,7 @@ try {
     assert.equal(navigationState.connectionCount, 1, 'native transitions do not reconnect Map3D');
     assert.equal(navigationState.disconnectionCount, 0, 'native transitions do not disconnect Map3D');
     assert.equal(navigationState.stopCount, 0, 'native capture does not enqueue SDK commands');
+    assert.equal(navigationState.childPointerCount, parentInputPointerBaseline, 'native parent logo does not reach isolated child SDK');
     assert.deepEqual(errors, [], 'mocked mobile render lease has no page errors');
     console.log(`[contact-map] ${engine} mobile mocked lifecycle: ok; trusted burger/X/logo; controlled scroll; synthetic visibility/BFCache; no physical-device/GPU claim`);
   } finally {
