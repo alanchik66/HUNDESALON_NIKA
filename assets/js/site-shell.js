@@ -3950,7 +3950,7 @@
     const assetPrefix = depth === 1 ? '../assets' : '../../assets';
     const weatherWidgetPrefix =
       depth === 1 ? '../3d-weather-codrops-main/dist-widget' : '../../3d-weather-codrops-main/dist-widget';
-    const homeHref = depth === 1 ? 'index.html' : '../index.html';
+    const homeHref = depth === 1 ? './' : '../';
     const copy = context.copy;
     const mediaLibraryCopy = context.mediaLibraryCopy;
 

@@ -82,6 +82,17 @@ const browser = await ({ chromium, webkit })[engine].launch({
 const results = [];
 const materialChecks = [];
 const targetChecks = new Map();
+const weatherServicePath = '/3d-weather-codrops-main/dist-widget/weatherService-iG8lrujy.mjs';
+const offlineWeatherService = `
+  export const i = {
+    async getCurrentWeather() { throw new Error('Unable to load weather data right now.'); },
+    async searchLocations() { return []; },
+    async getCurrentLocation() { throw new Error('Geolocation is not available in navigation smoke.'); },
+  };
+  export const n = () => false;
+  export const r = () => false;
+  export const t = () => 'cloudy';
+`;
 const withoutHash = value => {
   const url = new URL(value);
   url.hash = '';
@@ -101,21 +112,60 @@ try {
       reducedMotion,
       ...(deviceScaleFactor === undefined ? {} : { deviceScaleFactor }),
     });
+    if (route === 'kontakty.html') {
+      // Keep the document flow independent of weather. WebKit can report a
+      // weather fetch canceled by navigation as an access-control error.
+      await context.addInitScript(() => {
+        const fetch = window.fetch.bind(window);
+        window.fetch = (input, options) => {
+          const address = input instanceof Request ? input.url : String(input);
+          const url = new URL(address, location.href);
+          if (url.origin === 'https://geocoding-api.open-meteo.com' && url.pathname === '/v1/search') {
+            return Promise.resolve(Response.json({ results: [] }));
+          }
+          if (url.origin === location.origin && url.pathname === '/api/weather') {
+            return Promise.resolve(Response.json({ error: 'Offline navigation fixture' }, { status: 503 }));
+          }
+          if (url.origin === location.origin && url.pathname === '/site.webmanifest' && url.searchParams.has('_ts')) {
+            return Promise.resolve(new Response(null, { headers: { Date: new Date().toUTCString() } }));
+          }
+          if (url.origin === 'https://worldtimeapi.org' && url.pathname === '/api/timezone/Etc/UTC') {
+            return Promise.resolve(Response.json({ utc_datetime: new Date().toISOString() }));
+          }
+          if (url.origin === 'https://timeapi.io' && url.pathname === '/api/Time/current/zone') {
+            return Promise.resolve(Response.json({ dateTime: new Date().toISOString() }));
+          }
+          return fetch(input, options);
+        };
+      });
+    }
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     let interceptNavigation = false;
     const navigations = [];
-    await page.route('**/*', async requestRoute => {
+    await context.route('**/*', async requestRoute => {
       const request = requestRoute.request();
-      if (new URL(request.url()).pathname === '/assets/js/local-dev-refresh.js') {
+      const url = new URL(request.url());
+      if (url.pathname === '/assets/js/local-dev-refresh.js') {
         await requestRoute.fulfill({ contentType: 'application/javascript', body: '/* Workstation refresh is isolated in browser QA. */' });
       } else if (interceptNavigation && request.isNavigationRequest() && request.frame() === page.mainFrame()) {
         navigations.push(request.url());
-        // Record a real native navigation, then cancel loading; targets are HTTP-checked separately below.
-        // A 204 navigation leaves Playwright's document wait pending in some Chromium versions.
+        // Keep the source document alive for the full tile matrix. Real document navigation is tested below.
         await requestRoute.abort('aborted');
-      } else if (new URL(request.url()).origin !== server.baseUrl) {
+      } else if (route === 'kontakty.html' && url.origin === server.baseUrl && url.pathname === weatherServicePath) {
+        // Keep the real widget mounted without starting Axios requests that can outlive the source document.
+        await requestRoute.fulfill({ contentType: 'application/javascript', body: offlineWeatherService });
+      } else if (request.method() === 'GET' && !request.isNavigationRequest() &&
+        url.origin === 'https://geocoding-api.open-meteo.com' && url.pathname === '/v1/search') {
+        // Also serve the pinned fixture when a browser context bypasses the window.fetch stub.
+        await requestRoute.fulfill({
+          headers: { 'access-control-allow-origin': server.baseUrl }, json: { results: [] },
+        });
+      } else if (request.method() === 'GET' && !request.isNavigationRequest() &&
+        url.origin === server.baseUrl && url.pathname === '/api/weather') {
+        await requestRoute.fulfill({ status: 503, json: { error: 'Offline navigation fixture' } });
+      } else if (url.origin !== server.baseUrl) {
         await requestRoute.abort();
       } else {
         await requestRoute.continue();
@@ -131,6 +181,10 @@ try {
       const consent = page.locator('[data-cookie-choice="accept"]');
       if (await consent.isVisible()) await activate(consent);
       const assertClosed = async () => {
+        await page.waitForFunction(() => {
+          const menu = document.querySelector('#mobile-nav');
+          return menu?.inert && menu.getAttribute('aria-hidden') === 'true' && !document.body.classList.contains('nav-open');
+        });
         assert.deepEqual(await nav.evaluate(element => ({
           inert: element.inert,
           hidden: element.getAttribute('aria-hidden'),
@@ -258,6 +312,20 @@ try {
 
       const tileChecks = [];
       interceptNavigation = true;
+      await page.evaluate(() => {
+        window.__drawerActivation = null;
+        window.addEventListener('click', event => {
+          const link = event.target.closest?.('#mobile-nav a[href]');
+          if (!link) return;
+          window.__drawerActivation = {
+            href: link.href,
+            trusted: event.isTrusted,
+            prevented: event.defaultPrevented,
+            inert: link.closest('#mobile-nav').inert,
+            locked: document.body.classList.contains('nav-open'),
+          };
+        });
+      });
       for (let index = 0; index < hrefs.length; index++) {
         const destination = new URL(hrefs[index].href);
         assert.equal(destination.origin, server.baseUrl, `${name}: menu links stay on this site`);
@@ -289,13 +357,68 @@ try {
           request.frame() === page.mainFrame() && withoutHash(request.url()) === withoutHash(destination.href));
         await activate(link, { noWaitAfter: true });
         await requested;
+        assert.deepEqual(await page.evaluate(() => window.__drawerActivation), {
+          href: destination.href, trusted: true, prevented: false, inert: false, locked: true,
+        }, `${name}: the native click must finish dispatch before the drawer closes`);
         await assertClosed();
         tileChecks.push({ ...hrefs[index], hitPoints: hits.length, nativeNavigation: true });
         if (index < hrefs.length - 1) await open();
       }
       assert.equal(navigations.length, hrefs.length, `${name}: one native navigation per tile`);
+      let documentNavigation = null;
+      if (route === 'kontakty.html') {
+        interceptNavigation = false;
+        const navigate = async locator => {
+          const destination = await locator.evaluate(link => link.href);
+          await Promise.all([
+            page.waitForURL(destination, { waitUntil: 'domcontentloaded', timeout: 15000 }),
+            activate(locator),
+          ]);
+          await assertClosed();
+          return new URL(page.url()).pathname;
+        };
+        await open();
+        const services = await navigate(links.first());
+        await page.goBack({ waitUntil: 'domcontentloaded', timeout: 15000 });
+        assert.equal(new URL(page.url()).pathname, `/${locale}/${route}`);
+        await assertClosed();
+        await open();
+        const home = await navigate(page.locator('.logo a[href]'));
+        assert.equal(home, `/${locale}/`, 'Logo opens the locale home directly from an open drawer');
+        const promotionsLink = nav.locator('a[href$="social.html#promotions"]');
+        const waitForPromotions = () => page.waitForFunction(() => {
+          const target = document.getElementById('promotions');
+          if (location.hash !== '#promotions' || !target || document.querySelector('.site-scroll-root').scrollTop <= 0) return false;
+          const { top, bottom } = target.getBoundingClientRect();
+          return bottom > 0 && top < innerHeight;
+        });
+        await open();
+        const promotions = await navigate(promotionsLink);
+        await waitForPromotions();
+
+        // Set up the equivalent scrolled-away fragment without racing WebKit's initial fragment placement.
+        const fragmentless = new URL(page.url());
+        const fragment = fragmentless.hash;
+        fragmentless.hash = '';
+        const documentResponse = await page.goto(fragmentless.href, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        assert.equal(documentResponse?.status(), 200, 'The repeat tap starts in a new document without a fragment');
+        await page.waitForFunction(() => location.hash === '' && document.querySelector('.site-scroll-root')?.scrollTop < 2 &&
+          !document.body.classList.contains('hide-header'));
+        await page.evaluate(async hash => {
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          window.history.replaceState(window.history.state, '', hash);
+        }, fragment);
+        assert.equal(new URL(page.url()).hash, '#promotions');
+        assert.ok(await page.locator('#promotions').evaluate(target => target.getBoundingClientRect().top >= innerHeight),
+          'The current fragment must start offscreen for the repeat tap');
+        await open();
+        await activate(promotionsLink);
+        await assertClosed();
+        await waitForPromotions();
+        documentNavigation = { services, back: `/${locale}/${route}`, home, promotions: `${promotions}#promotions`, repeatPromotion: true };
+      }
       assert.deepEqual(errors, [], `${name}: no JavaScript errors`);
-      results.push({ name, locale, viewport, route, reducedMotion, deviceScaleFactor: deviceScaleFactor ?? 1, actualDpr: material.actualDpr, input: viewport.width < 900 ? 'tap' : 'click', tileSize: geometry[0], drawer, tiles: tileChecks });
+      results.push({ name, locale, viewport, route, reducedMotion, deviceScaleFactor: deviceScaleFactor ?? 1, actualDpr: material.actualDpr, input: viewport.width < 900 ? 'tap' : 'click', tileSize: geometry[0], drawer, tiles: tileChecks, documentNavigation });
       console.log(JSON.stringify({ scenario: name, engine, root, scope: selection.scope, ok: true, tiles: hrefs.length }));
     } catch (error) {
       await page.screenshot({ path: path.join(output, `${name}-failure.png`) }).catch(() => {});

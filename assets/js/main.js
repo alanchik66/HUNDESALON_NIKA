@@ -680,6 +680,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return Math.max(96, Math.min(260, Math.round(viewportHeight * 0.24)));
     };
     let overlayHideTimer = null;
+    let linkCloseTimer = null;
     let lastFocusedElement = null;
 
     const getCurrentScrollTop = () => {
@@ -712,7 +713,11 @@ document.addEventListener('DOMContentLoaded', () => {
       refreshMobileNavScrollbar();
     };
 
-    const setMenuState = (isOpen, { restoreFocus = true } = {}) => {
+    const setMenuState = (isOpen, { restoreFocus = true, restoreScroll = true } = {}) => {
+      if (linkCloseTimer !== null) {
+        window.clearTimeout(linkCloseTimer);
+        linkCloseTimer = null;
+      }
       burger.classList.toggle('active', isOpen);
       burger.setAttribute('aria-expanded', String(isOpen));
       burger.setAttribute('aria-label', isOpen ? menuA11y.closeMenu : menuA11y.openMenu);
@@ -749,7 +754,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedY = parseInt(document.body.dataset.scrollY || '0', 10);
         document.body.classList.remove('nav-open');
         document.body.style.top = '';
-        scrollRoot.scrollTop = savedY;
+        if (restoreScroll) scrollRoot.scrollTop = savedY;
       }
 
       syncMobileNavLayout();
@@ -814,7 +819,7 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollRoot.addEventListener(
       'scroll',
       () => {
-        if (!isMenuOpen()) return;
+        if (!isMenuOpen() || linkCloseTimer !== null) return;
         if (isAtMenuOpenTop()) return;
         closeMenu({ restoreFocus: false });
       },
@@ -890,17 +895,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const handleMobileNavLinkActivation = event => {
       const target = resolveEventElementTarget(event);
-      if (!target) return;
+      if (!target || !isMenuOpen()) return;
 
       const link = target.closest('a[href]');
       if (!link || !mobileNav.contains(link)) return;
 
-      closeMenu({ restoreFocus: false });
+      // Keep the link interactive through native click dispatch. Closing changes focus, layout and inertness.
+      if (linkCloseTimer !== null) window.clearTimeout(linkCloseTimer);
+      const sameDocumentFragment = event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey
+        && link.hash && link.origin === location.origin && link.pathname === location.pathname && link.search === location.search;
+      linkCloseTimer = window.setTimeout(() => closeMenu({ restoreFocus: false, restoreScroll: !sameDocumentFragment }), 0);
     };
 
-    // Let the browser complete the native anchor action before closing the drawer.
     mobileNav.addEventListener('click', handleMobileNavLinkActivation);
-    window.addEventListener('pageshow', normalizeNavLockState, { passive: true });
+    window.addEventListener('pageshow', event => {
+      // The previous document can be cached before its deferred close runs.
+      if (event.persisted && isMenuOpen()) closeMenu({ restoreFocus: false });
+      normalizeNavLockState();
+    }, { passive: true });
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         normalizeNavLockState();
@@ -911,7 +923,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // принудительно закрываем меню после смены hash.
     window.addEventListener('hashchange', () => {
       if (!isMenuOpen()) return;
-      closeMenu({ restoreFocus: false });
+      closeMenu({ restoreFocus: false, restoreScroll: false });
     });
   }
 
@@ -1916,7 +1928,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    link.addEventListener('click', event => {
+    link.addEventListener('click', () => {
       if (link.matches(':disabled, [aria-disabled="true"]')) return;
       if (isFilterPill) {
         playNavPillClickFlash(link);
@@ -1935,10 +1947,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const href = link.getAttribute('href');
       if (!isSafeNavigationHref(href)) return;
-      event.preventDefault();
-      link.style.pointerEvents = 'none';
+      // The visual feedback must not delay or replace native anchor activation.
       playNavPillClickFlash(link, { cta: isOnlineOrderPill });
-      setTimeout(() => navigateToSafeHref(href), 1400);
     });
   };
 
