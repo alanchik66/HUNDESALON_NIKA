@@ -11,7 +11,7 @@ import {
   prepareProductionRelease, verifyProductionArtifact, verifyProductionRelease, verifyLocaleSmoke,
   resolveWeatherReleaseAssets,
   validateReleaseManifest,
-  parseWranglerPagesDeploymentOutput,
+  parseWranglerPagesDeploymentOutput, verifyMapFrameDelivery, PRECURSOR_BOOTSTRAP_STATIC_SHA256,
 } from './lib/production-release-verification.mjs';
 
 const COMMIT = 'a'.repeat(40);
@@ -201,6 +201,216 @@ async function mapFrameFixture(t, intercept = () => null) {
 }
 
 const verification = f => ({ commit: COMMIT, manifest: f.manifest, baseUrl: f.baseUrl, attempts: 1 });
+
+const PRECURSOR_R = '0123456789abcdef';
+const PRECURSOR_TIME = 1795000000;
+const PRECURSOR_T = Buffer.from(String(PRECURSOR_TIME)).toString('base64');
+const PRECURSOR_TEMPLATE = "<script>window.__CF$cv$params={r:'[CF_R]',t:'[CF_T]',u:'[CF_U]',ut:'[CF_UT]',i:60};(function(){if(!document.body)return;var l=window.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/precursor/main.js?ray=[CF_R]',s=document.createElement('script');s.src=o?new URL(u,o).href:u;document.head.appendChild(s);})();</script>";
+const precursorBootstrap = () => PRECURSOR_TEMPLATE.replaceAll('[CF_R]', PRECURSOR_R)
+  .replace('[CF_T]', PRECURSOR_T).replace('[CF_U]', 'a'.repeat(32)).replace('[CF_UT]', 'A'.repeat(170));
+const precursorBody = (bootstrap = precursorBootstrap()) => Buffer.from(MAP_FRAME_HTML.replace('</body>', bootstrap + '</body>'));
+const precursorInput = () => ({
+  asset: { path: MAP_FRAME, contentType: 'text/html', sha256: sha256(MAP_FRAME_HTML) },
+  url: PRODUCTION_ORIGIN + MAP_FRAME, status: 200,
+  headers: { 'content-type': 'text/html; charset=utf-8', 'cf-ray': PRECURSOR_R + '-FRA', date: new Date(PRECURSOR_TIME * 1000).toUTCString() },
+  bytes: precursorBody(), redirects: [],
+});
+const canonicalFixtureFetcher = f => (url, request) => {
+  assert.equal(url.origin, PRODUCTION_ORIGIN);
+  return fetch(new URL(url.pathname + url.search, f.baseUrl), request);
+};
+
+test('frame delivery separates exact bytes from one pinned canonical Precursor envelope without logging opaque fields', () => {
+  assert.equal(precursorBootstrap().length, 642);
+  assert.equal(sha256(PRECURSOR_TEMPLATE), PRECURSOR_BOOTSTRAP_STATIC_SHA256);
+  const input = precursorInput();
+  const before = Buffer.from(input.bytes);
+  const result = verifyMapFrameDelivery(input);
+  assert.equal(result.mode, 'known-cloudflare-precursor-bootstrap-v1');
+  assert.equal(result.rawServedSha256, sha256(input.bytes));
+  assert.equal(result.authoredSha256, input.asset.sha256);
+  assert.notEqual(result.rawServedSha256, result.authoredSha256);
+  assert.equal(result.bootstrapStaticSha256, PRECURSOR_BOOTSTRAP_STATIC_SHA256);
+  assert.equal(result.rawBytesMatchArtifact, false);
+  assert.deepEqual(result.transportBindings, { cfRayMatches: true, httpDateMatches: true, loaderRayMatches: true });
+  assert.deepEqual(input.bytes, before);
+  for (const opaque of [PRECURSOR_R, PRECURSOR_T, 'a'.repeat(32), 'A'.repeat(170)]) assert.ok(!JSON.stringify(result).includes(opaque));
+
+  const exact = verifyMapFrameDelivery({ ...input, url: DEPLOYMENT_ORIGIN + MAP_FRAME, bytes: Buffer.from(MAP_FRAME_HTML), headers: { 'content-type': 'text/html' } });
+  assert.equal(exact.mode, 'exact-served-bytes');
+  assert.equal(exact.rawServedSha256, exact.authoredSha256);
+  assert.equal(exact.rawBytesMatchArtifact, true);
+  for (const status of [301, 308]) {
+    const clean = verifyMapFrameDelivery({ ...input, url: PRODUCTION_ORIGIN + MAP_FRAME_CLEAN,
+      redirects: [{ url: input.url, status, location: MAP_FRAME_CLEAN }] });
+    assert.deepEqual(clean, result);
+  }
+});
+
+test('frame edge qualification rejects neighboring assets, alternate origins, queries, status, MIME and redirect chains', () => {
+  const changes = [
+    ['neighbor frame', x => { x.asset.path = x.asset.path.replace('contact-map', 'another-map'); }],
+    ['JS asset', x => { x.asset.path = SCRIPT; x.asset.contentType = 'application/javascript'; }],
+    ['CSS asset', x => { x.asset.path = STYLESHEET; x.asset.contentType = 'text/css'; }],
+    ['missing digest', x => { delete x.asset.sha256; }],
+    ['manifest MIME', x => { x.asset.contentType = 'application/xhtml+xml'; }],
+    ['unversioned asset', x => { x.asset.path = MAP_FRAME_PATH; }],
+    ['other stamp', x => { x.url = x.url.replace('1234abcd', '87654321'); }],
+    ['extra query', x => { x.url += '&ray=' + PRECURSOR_R; }],
+    ['duplicate version', x => { x.url += '&v=' + STAMP; }],
+    ['fragment', x => { x.url += '#frame'; }],
+    ['credential', x => { x.url = x.url.replace('https://', 'https://user@'); }],
+    ['Pages host', x => { x.url = DEPLOYMENT_ORIGIN + MAP_FRAME; }],
+    ['foreign host', x => { x.url = 'https://example.invalid' + MAP_FRAME; }],
+    ['HTTP scheme', x => { x.url = x.url.replace('https:', 'http:'); }],
+    ['nonstandard port', x => { x.url = x.url.replace('.com/', '.com:8443/'); }],
+    ['redirect status', x => { x.status = 308; }],
+    ['non-200', x => { x.status = 201; }],
+    ['bad MIME', x => { x.headers['content-type'] = 'text/plain'; }],
+    ['wrong charset', x => { x.headers['content-type'] = 'text/html; charset=iso-8859-1'; }],
+    ['missing MIME', x => { delete x.headers['content-type']; }],
+    ['clean without redirect', x => { x.url = PRODUCTION_ORIGIN + MAP_FRAME_CLEAN; }],
+    ['redirect at fixed URL', x => { x.redirects = [{ url: x.url, status: 308, location: MAP_FRAME_CLEAN }]; }],
+    ...[302, 303, 307].map(status => ['unapproved redirect ' + status, x => {
+      x.redirects = [{ url: x.url, status, location: MAP_FRAME_CLEAN }]; x.url = PRODUCTION_ORIGIN + MAP_FRAME_CLEAN;
+    }]),
+    ...['https://example.invalid' + MAP_FRAME_CLEAN, MAP_FRAME_CLEAN + '&extra=1', MAP_FRAME_CLEAN + '#x', ' ' + MAP_FRAME_CLEAN].map(location => [
+      'changed redirect target', x => { x.redirects = [{ url: x.url, status: 308, location }]; x.url = PRODUCTION_ORIGIN + MAP_FRAME_CLEAN; },
+    ]),
+    ['multiple hops', x => { x.redirects = [{ url: x.url, status: 308, location: MAP_FRAME_CLEAN }, { url: x.url, status: 308, location: MAP_FRAME_CLEAN }]; x.url = PRODUCTION_ORIGIN + MAP_FRAME_CLEAN; }],
+  ];
+  for (const [name, change] of changes) {
+    const input = precursorInput();
+    change(input);
+    assert.throws(() => verifyMapFrameDelivery(input), /Map frame delivery rejected/u, name);
+  }
+});
+
+test('unknown, moved, repeated or authored-byte mutations never qualify as the observed bootstrap', () => {
+  const original = precursorBootstrap();
+  const mutations = [
+    ['static statement', original.replace('document.head.appendChild(s)', 'document.body.appendChild(s)')],
+    ['equivalent numeric literal', original.replace('i:60', 'i:6e1')],
+    ['additional parameter', original.replace('i:60', 'i:60,x:1')],
+    ['changed field order', original.replace("r:'" + PRECURSOR_R + "',t:'" + PRECURSOR_T + "'", "t:'" + PRECURSOR_T + "',r:'" + PRECURSOR_R + "'")],
+    ['extra whitespace', original.replace('i:60', 'i: 60')],
+    ['ray wrong alphabet', original.replace("r:'0", "r:'G")],
+    ['ray length', original.replace("r:'" + PRECURSOR_R, "r:'" + PRECURSOR_R.slice(1))],
+    ['u wrong alphabet', original.replace("u:'a", "u:'G")],
+    ['u short', original.replace("u:'" + 'a'.repeat(32), "u:'" + 'a'.repeat(31))],
+    ['ut unsafe slash', original.replace("ut:'A", "ut:'/")],
+    ['ut short', original.replace("ut:'" + 'A'.repeat(170), "ut:'" + 'A'.repeat(169))],
+    ['literal escape', original.replace("u:'a", "u:'\\x61")],
+    ['double quote', original.replace("u:'" + 'a'.repeat(32) + "'", 'u:"' + 'a'.repeat(32) + '"')],
+    ['loader foreign origin', original.replace("u='/cdn-cgi/", "u='https://example.invalid/cdn-cgi/")],
+    ['loader another path', original.replace('/scripts/precursor/', '/scripts/anotherxx/')],
+    ['loader unmatched ray', original.replace('?ray=' + PRECURSOR_R, '?ray=' + 'f'.repeat(16))],
+    ['loader encoded ray', original.replace('?ray=0', '?ray=%30')],
+    ['loader duplicate query', original.replace("?ray=" + PRECURSOR_R, "?ray=" + PRECURSOR_R + '&ray=' + PRECURSOR_R)],
+    ['loader unknown query', original.replace("?ray=" + PRECURSOR_R, "?key=" + PRECURSOR_R)],
+    ['loader query order', original.replace("?ray=" + PRECURSOR_R, "?x=1&ray=" + PRECURSOR_R)],
+    ['non-ASCII byte', original.replace("ut:'A", "ut:'é")],
+  ];
+  for (const [name, bootstrap] of mutations) {
+    assert.throws(() => verifyMapFrameDelivery({ ...precursorInput(), bytes: precursorBody(bootstrap) }), /Map frame delivery rejected/u, name);
+  }
+  for (const [name, body] of [
+    ['double bootstrap', MAP_FRAME_HTML.replace('</body>', original + original + '</body>')],
+    ['after body', MAP_FRAME_HTML.replace('</body>', '</body>' + original)],
+    ['inside body', MAP_FRAME_HTML.replace('<div', original + '<div')],
+    ['not immediately before body', MAP_FRAME_HTML.replace('</body>', original + '\n</body>')],
+    ['extra script', MAP_FRAME_HTML.replace('</body>', '<script>alert(1)</script>' + original + '</body>')],
+    ['mutated authored bytes', MAP_FRAME_HTML.replace('Isolated map', 'Mutated map').replace('</body>', original + '</body>')],
+    ['multiple closing bodies', MAP_FRAME_HTML.replace('</body>', original + '</body></body>')],
+  ]) assert.throws(() => verifyMapFrameDelivery({ ...precursorInput(), bytes: Buffer.from(body) }), /Map frame delivery rejected/u, name);
+});
+
+test('Precursor transport bindings reject mismatches and noncanonical Base64 with identical decoded time', () => {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const index = alphabet.indexOf(PRECURSOR_T.at(-3));
+  const alternateTime = PRECURSOR_T.slice(0, -3) + alphabet[index + 1] + '==';
+  assert.equal(Buffer.from(alternateTime, 'base64').toString(), String(PRECURSOR_TIME));
+  for (const [name, change] of [
+    ['missing ray', x => { delete x.headers['cf-ray']; }],
+    ['wrong ray', x => { x.headers['cf-ray'] = 'f'.repeat(16) + '-FRA'; }],
+    ['missing Date', x => { delete x.headers.date; }],
+    ['different Date', x => { x.headers.date = new Date((PRECURSOR_TIME + 1) * 1000).toUTCString(); }],
+    ['wrong time shape', x => { x.bytes = precursorBody(precursorBootstrap().replace(PRECURSOR_T, Buffer.from('abcdefghij').toString('base64'))); }],
+    ['noncanonical Base64', x => { x.bytes = precursorBody(precursorBootstrap().replace(PRECURSOR_T, alternateTime)); }],
+  ]) {
+    const input = precursorInput(); change(input);
+    assert.throws(() => verifyMapFrameDelivery(input), /Map frame delivery rejected/u, name);
+  }
+});
+
+test('challenge evidence fails before both raw-exact and edge-qualified fast paths', () => {
+  for (const bytes of [Buffer.from(MAP_FRAME_HTML), precursorBody()]) {
+    const input = precursorInput();
+    for (const mitigation of ['challenge', 'ChAlLeNgE', 'challenge, other', 'other']) {
+      input.headers['cf-mitigated'] = mitigation;
+      assert.throws(() => verifyMapFrameDelivery({ ...input, bytes }), /challenge response/u);
+    }
+    const duplicated = new Headers([['content-type', 'text/html'], ['cf-mitigated', 'challenge'], ['cf-mitigated', 'other']]);
+    assert.throws(() => verifyMapFrameDelivery({ ...input, bytes, headers: duplicated }), /challenge response/u);
+  }
+});
+
+test('canonical release evidence retains raw body and reports authored recovery instead of an exact-byte claim', async t => {
+  const headers = precursorInput().headers;
+  const f = await mapFrameFixture(t, ({ url }) => url.pathname === MAP_FRAME_PATH
+    ? { type: headers['content-type'], headers: { 'cf-ray': headers['cf-ray'], date: headers.date }, body: precursorBody() } : null);
+  const result = await verifyProductionRelease({ ...verification(f), baseUrl: PRODUCTION_ORIGIN, fetcher: canonicalFixtureFetcher(f) });
+  assert.equal(result.verified, true);
+  assert.equal(result.assetVerificationMode, 'exact-assets-with-known-cloudflare-frame-envelope');
+  assert.equal(result.frameDeliveries.length, 1);
+  const frame = result.frameDeliveries[0];
+  assert.equal(frame.rawBytesMatchArtifact, false);
+  assert.equal(frame.authoredSha256, sha256(MAP_FRAME_HTML));
+  assert.equal(frame.rawServedSha256, sha256(precursorBody()));
+  assert.deepEqual(readFileSync(frame.evidence.rawBody), precursorBody());
+  assert.equal(JSON.parse(readFileSync(frame.evidence.metadata, 'utf8')).rawServedSha256, frame.rawServedSha256);
+  assert.ok(path.resolve(frame.evidence.rawBody).startsWith(path.resolve('output/privacy/frame-delivery') + path.sep));
+  for (const opaque of [PRECURSOR_R, PRECURSOR_T, 'a'.repeat(32), 'A'.repeat(170)]) assert.ok(!JSON.stringify(frame).includes(opaque));
+});
+
+test('a late qualified sibling from a failed attempt cannot contaminate successful attempt evidence', async t => {
+  const f = await mapFrameFixture(t);
+  let frameReads = 0, scriptReads = 0;
+  let finishFirst;
+  const firstFinished = new Promise(resolve => { finishFirst = resolve; });
+  const secondBody = precursorBody(precursorBootstrap().replace("u:'" + 'a'.repeat(32), "u:'" + 'b'.repeat(32)));
+  const fetcher = async (url, request) => {
+    if (url.pathname === MAP_FRAME_PATH) {
+      const first = ++frameReads === 1;
+      if (first) await new Promise(resolve => setTimeout(resolve, 100));
+      const response = new Response(first ? precursorBody() : secondBody, { headers: precursorInput().headers });
+      if (first) finishFirst();
+      return response;
+    }
+    if (url.pathname === '/assets/js/app.js' && ++scriptReads === 1) return new Response('stale', { headers: { 'content-type': 'application/javascript' } });
+    return canonicalFixtureFetcher(f)(url, request);
+  };
+  const result = await verifyProductionRelease({ ...verification(f), baseUrl: PRODUCTION_ORIGIN, fetcher, attempts: 2, delayMs: 0, pause: async () => {} });
+  await firstFinished;
+  await new Promise(resolve => setTimeout(resolve, 10));
+  assert.equal(result.attempts, 2);
+  assert.equal(frameReads, 2);
+  assert.equal(result.frameDeliveries.length, 1);
+  assert.equal(result.frameDeliveries[0].rawServedSha256, sha256(secondBody));
+});
+
+test('edge qualification never changes local artifact checks or public JS and CSS digest checks', async t => {
+  const f = await mapFrameFixture(t);
+  writeFileSync(f.frameFile, precursorBody());
+  assert.throws(() => verifyProductionArtifact({ directory: f.directory, manifest: f.manifest, commit: COMMIT }), /Artifact digest mismatch/u);
+  await assert.rejects(verifyProductionRelease(verification(f)), /Served asset mismatch/u);
+  for (const filename of ['/assets/js/app.js', '/assets/css/app.css']) {
+    const other = await fixture(t, ({ url }) => url.pathname === filename
+      ? { type: filename.endsWith('.css') ? 'text/css' : 'application/javascript', body: precursorBootstrap() } : null);
+    await assert.rejects(verifyProductionRelease({ ...verification(other), baseUrl: PRODUCTION_ORIGIN, fetcher: canonicalFixtureFetcher(other) }), /Served asset mismatch/u);
+  }
+});
+
 
 test('Pages-host verification preserves the canonical domain and exact artifact hashes for all four locales', async t => {
   const f = await fixture(t);

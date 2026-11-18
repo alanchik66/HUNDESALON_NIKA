@@ -1,5 +1,6 @@
-import { createHash } from 'node:crypto';
-import { lstatSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { createHash, randomUUID } from 'node:crypto';
+import { lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { assertProductionAssetContent } from './production-assets.mjs';
@@ -15,6 +16,95 @@ const MAP_FRAME_PATH = '/assets/frames/contact-map.html';
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const isMp4Asset = asset => /\.mp4$/iu.test(new URL(asset, PRODUCTION_ORIGIN).pathname);
 const isMapFrameAsset = asset => new URL(asset, PRODUCTION_ORIGIN).pathname === MAP_FRAME_PATH;
+
+export const PRECURSOR_BOOTSTRAP_STATIC_SHA256 = 'a60d0f1d9b544e175c035ccdf04d1cd71d74e998a60739eb1702890fda6a413b';
+const PRECURSOR_LOADER_PATH = '/cdn-cgi/challenge-platform/scripts/precursor/main.js';
+const PRECURSOR_PARAMS = /^<script>window\.__CF\$cv\$params=\{r:'(?<r>[a-f0-9]{16})',t:'(?<t>[A-Za-z0-9+/]{14}==)',u:'(?<u>[a-f0-9]{32})',ut:'(?<ut>[A-Za-z0-9._-]{170})',i:60\};/u;
+
+// Observed 2026-11-18 version only. Never execute scripts or accept unknown edge mutations.
+export function verifyMapFrameDelivery({ asset, url, status, headers, bytes, redirects = [] }) {
+  const fail = message => { throw new Error('Map frame delivery rejected: ' + message); };
+  const responseHeaders = new Headers(headers);
+  if (responseHeaders.get('cf-mitigated')?.trim()) fail('challenge response or unknown mitigation');
+  if (!asset || !/^\/assets\/frames\/contact-map\.html\?v=\d{8}-prod-[a-f0-9]{7,40}-[a-f0-9]{8}$/u.test(asset.path || '')
+    || asset.contentType !== 'text/html' || !/^[a-f0-9]{64}$/u.test(asset.sha256 || '')) fail('fixed stamped HTML metadata required');
+  const served = new URL(url);
+  const authoredUrl = served.origin + asset.path;
+  const cleanUrl = served.origin + asset.path.replace('/contact-map.html?', '/contact-map?');
+  if (status !== 200 || !/^\s*text\/html(?:\s*;\s*charset\s*=\s*(?:utf-8|"utf-8"))?\s*$/iu.test(responseHeaders.get('content-type') || '')) fail('final 200 UTF-8 HTML required');
+  if (served.href === authoredUrl) {
+    if (redirects.length) fail('unexpected HTML redirect chain');
+  } else if (served.href === cleanUrl) {
+    const hop = redirects[0];
+    if (redirects.length !== 1 || hop?.url !== authoredUrl || ![301, 308].includes(hop.status)
+      || typeof hop.location !== 'string' || hop.location !== hop.location.trim()
+      || new URL(hop.location, authoredUrl).href !== cleanUrl) fail('unexpected clean URL normalization');
+  } else fail('unexpected fixed HTML URL or query');
+  const raw = Buffer.from(bytes);
+  const rawServedSha256 = digest(raw);
+  if (rawServedSha256 === asset.sha256) return {
+    mode: 'exact-served-bytes', rawServedSha256, authoredSha256: asset.sha256, rawBytesMatchArtifact: true,
+  };
+  if (served.origin !== PRODUCTION_ORIGIN) fail('edge qualification is canonical-origin only');
+  const closeBody = Buffer.from('</body>');
+  const bodyEnd = raw.indexOf(closeBody);
+  if (bodyEnd < 0 || bodyEnd !== raw.lastIndexOf(closeBody)) fail('one closing body required');
+  const scriptEnd = bodyEnd - Buffer.byteLength('</script>');
+  if (scriptEnd < 0 || raw.subarray(scriptEnd, bodyEnd).toString('utf8') !== '</script>') fail('bootstrap must immediately precede closing body');
+  const scriptStart = raw.lastIndexOf(Buffer.from('<script>'), scriptEnd);
+  if (scriptStart < 0) fail('one exact bootstrap element required');
+  const bootstrapBytes = raw.subarray(scriptStart, bodyEnd);
+  if (bootstrapBytes.length !== 642 || bootstrapBytes.some(byte => byte > 127)) fail('unknown bootstrap size or encoding');
+  const bootstrap = bootstrapBytes.toString('ascii');
+  const match = PRECURSOR_PARAMS.exec(bootstrap);
+  if (!match) fail('unknown parameter schema');
+  const { r, t } = match.groups;
+  const ray = /^([a-f0-9]{16})-[A-Z]{3}$/u.exec(responseHeaders.get('cf-ray') || '');
+  if (!ray || ray[1] !== r) fail('CF-Ray binding mismatch');
+  const decodedTime = Buffer.from(t, 'base64').toString('ascii');
+  if (!/^[1-9]\d{9}$/u.test(decodedTime) || Buffer.from(decodedTime, 'ascii').toString('base64') !== t
+    || new Date(Number(decodedTime) * 1000).toUTCString() !== responseHeaders.get('date')) fail('HTTP Date binding mismatch');
+  const loaderLiteral = "'" + PRECURSOR_LOADER_PATH + '?ray=' + r + "'";
+  if (bootstrap.split(loaderLiteral).length !== 2) fail('one exact same-origin loader/query binding required');
+  const skeleton = bootstrap.replace(match[0], "<script>window.__CF$cv$params={r:'[CF_R]',t:'[CF_T]',u:'[CF_U]',ut:'[CF_UT]',i:60};")
+    .replace(loaderLiteral, "'" + PRECURSOR_LOADER_PATH + "?ray=[CF_R]'");
+  if (digest(Buffer.from(skeleton)) !== PRECURSOR_BOOTSTRAP_STATIC_SHA256) fail('unknown bootstrap static version');
+  const authored = Buffer.concat([raw.subarray(0, scriptStart), raw.subarray(bodyEnd)]);
+  const authoredSha256 = digest(authored);
+  if (authoredSha256 !== asset.sha256) fail('authored bytes differ from artifact');
+  return {
+    mode: 'known-cloudflare-precursor-bootstrap-v1', rawServedSha256, authoredSha256,
+    rawBytesMatchArtifact: false, bootstrapStaticSha256: PRECURSOR_BOOTSTRAP_STATIC_SHA256,
+    bootstrapBytes: bootstrapBytes.length, servedBytes: raw.length, authoredBytes: authored.length,
+    transportBindings: { cfRayMatches: true, httpDateMatches: true, loaderRayMatches: true },
+  };
+}
+
+function preserveFrameDeliveryEvidence(asset, bytes, delivery) {
+  const project = realpathSync(fileURLToPath(new URL('../../', import.meta.url)));
+  const inside = target => {
+    if (lstatSync(target).isSymbolicLink()) throw new Error('Frame evidence directories cannot be symbolic links.');
+    const relative = path.relative(project, realpathSync(target));
+    if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('Frame evidence must remain inside the project output directory.');
+    return realpathSync(target);
+  };
+  const output = path.join(project, 'output');
+  mkdirSync(output, { recursive: true });
+  const privacy = path.join(inside(output), 'privacy');
+  mkdirSync(privacy, { recursive: true });
+  const directory = path.join(inside(privacy), 'frame-delivery');
+  mkdirSync(directory, { recursive: true });
+  const resolved = inside(directory);
+  const filename = digest(bytes) + '-' + randomUUID();
+  const rawBody = path.join(resolved, filename + '.html');
+  const metadata = path.join(resolved, filename + '.json');
+  writeFileSync(rawBody, bytes, { flag: 'wx', mode: 0o600 });
+  writeFileSync(metadata, JSON.stringify({
+    scope: 'Single fixed frame response evidence; whole release result is separate.',
+    asset: asset.path, ...delivery, rawBody,
+  }, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
+  return { rawBody, metadata };
+}
 
 export function parseWranglerPagesDeploymentOutput(output, { commit } = {}) {
   if (!/^[a-f0-9]{40}$/u.test(commit || '')) throw new Error('Pass the full reviewed commit SHA.');
@@ -236,18 +326,37 @@ async function localePages({ baseUrl, canonicalOrigin, manifest, context }) {
     await Promise.all(assets.slice(offset, offset + 4).map(async asset => {
       const requested = new URL(asset.path, baseUrl);
       let result = await resource(requested, context);
+      let servedUrl = requested;
+      const redirects = [];
       if (isMapFrameAsset(asset.path) && [301, 308].includes(result.response.status)) {
         const location = result.response.headers.get('location');
         let target;
         try { target = typeof location === 'string' && location === location.trim() ? new URL(location, requested) : null; } catch { target = null; }
         if (target?.href !== `${requested.origin}${MAP_FRAME_PATH.slice(0, -5)}${requested.search}`) throw new Error(`Served asset mismatch: ${asset.path}`);
+        redirects.push({ url: requested.href, status: result.response.status, location });
+        servedUrl = target;
         result = await resource(target, context);
       }
       const type = result.response.headers.get('content-type') || '';
       const validType = isMp4Asset(asset.path) ? type.split(';')[0].trim().toLowerCase() === 'video/mp4'
         : isMapFrameAsset(asset.path) ? type.split(';')[0].trim().toLowerCase() === 'text/html'
         : /\.css$/iu.test(new URL(asset.path, baseUrl).pathname) ? /text\/css/iu.test(type) : /(?:java|ecma)script/iu.test(type);
-      if (result.response.status !== 200 || !validType || (asset.sha256 && digest(result.bytes) !== asset.sha256)) throw new Error(`Served asset mismatch: ${asset.path}`);
+      if (result.response.status !== 200 || !validType) throw new Error('Served asset mismatch: ' + asset.path);
+      if (isMapFrameAsset(asset.path) && asset.sha256) {
+        let delivery;
+        try {
+          delivery = verifyMapFrameDelivery({ asset, url: servedUrl.href, status: result.response.status, headers: result.response.headers, bytes: result.bytes, redirects });
+        } catch (error) {
+          if (servedUrl.origin === PRODUCTION_ORIGIN) preserveFrameDeliveryEvidence(asset, result.bytes, {
+            mode: 'rejected-frame-delivery', rawServedSha256: digest(result.bytes), expectedAuthoredSha256: asset.sha256, reason: error.message,
+          });
+          throw new Error('Served asset mismatch: ' + asset.path, { cause: error });
+        }
+        if (!delivery.rawBytesMatchArtifact) {
+          const evidence = preserveFrameDeliveryEvidence(asset, result.bytes, delivery);
+          context.frameDeliveries.push({ asset: asset.path, ...delivery, evidence });
+        }
+      } else if (asset.sha256 && digest(result.bytes) !== asset.sha256) throw new Error('Served asset mismatch: ' + asset.path);
       assertMediaContent(asset.path, result.bytes);
     }));
   }
@@ -284,8 +393,12 @@ export async function verifyProductionRelease({
       if (expectedManifest && JSON.stringify(manifest) !== JSON.stringify(expectedManifest)) throw new Error('Published manifest differs from the validated artifact.');
       const liveStamp = await resource(new URL(`${STAMP_PATH}?commit=${commit}`, baseUrl), context);
       if (liveStamp.response.status !== 200 || liveStamp.bytes.toString('utf8').trim() !== manifest.stamp) throw new Error('Published asset stamp does not match the release.');
-      const assets = await localePages({ baseUrl, canonicalOrigin: manifest.canonicalOrigin, manifest, context });
-      return { commit, stamp: manifest.stamp, baseUrl, locales: RELEASE_LOCALES, assets, attempts: attempt, verified: true };
+      // A rejected batch may still have pending sibling reads. Keep its evidence attempt-local.
+      const frameDeliveries = [];
+      const assets = await localePages({ baseUrl, canonicalOrigin: manifest.canonicalOrigin, manifest, context: { ...context, frameDeliveries } });
+      return { commit, stamp: manifest.stamp, baseUrl, locales: RELEASE_LOCALES, assets, attempts: attempt, verified: true,
+        ...(frameDeliveries.length ? { assetVerificationMode: 'exact-assets-with-known-cloudflare-frame-envelope', frameDeliveries } : {}),
+      };
     } catch (error) {
       failure = error;
       if (attempt < attempts && Date.now() < context.deadline) await pause(Math.min(delayMs, Math.max(0, context.deadline - Date.now())));
