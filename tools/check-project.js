@@ -102,15 +102,15 @@ if (fs.existsSync(path.join(root, 'assets/js/site-shell.js'))) {
     'site-shell.js: desktop gallery nav must expose submenu markup'
   );
   const mobileGalleryMarkup = siteShell.match(/const galleryMobileNavMarkup = `([^`]+)`;/)?.[1] || '';
-  for (const route of ['galereya.html', 'do-i-posle.html']) {
+  for (const route of ['galereya', 'do-i-posle']) {
     assert(
-      mobileGalleryMarkup.includes(`<a href="\${pathPrefix}${route}"`),
+      mobileGalleryMarkup.includes(`<a href="\${pathPrefix}${route}\${mobileExtension}"`),
       `site-shell.js: mobile navigation must expose a direct tile for ${route}`
     );
   }
   assert(
-    siteShell.includes('${pathPrefix}blog/blog.html'),
-    'site-shell.js: blog nav must point to blog/blog.html in each locale'
+    siteShell.includes('${pathPrefix}blog/blog${mobileExtension}'),
+    'site-shell.js: blog menu tile must use the localized blog/blog route'
   );
   assert(
     siteShell.includes('do-i-posle.html') && siteShell.includes('galleryAllHint'),

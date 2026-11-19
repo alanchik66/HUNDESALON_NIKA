@@ -3945,12 +3945,10 @@
     };
     const currentRouteNormalized = normalizePageRoute(context.currentRoute);
     const isShopRoute = currentRouteNormalized === 'shop.html';
-    const depth = currentRouteNormalized.startsWith('blog/') ? 2 : 1;
-    const pathPrefix = depth === 1 ? '' : '../';
-    const assetPrefix = depth === 1 ? '../assets' : '../../assets';
-    const weatherWidgetPrefix =
-      depth === 1 ? '../3d-weather-codrops-main/dist-widget' : '../../3d-weather-codrops-main/dist-widget';
-    const homeHref = depth === 1 ? './' : '../';
+    const pathPrefix = currentRouteNormalized.startsWith('blog/') ? '../' : '';
+    const assetPrefix = `${pathPrefix}../assets`;
+    const weatherWidgetPrefix = `${pathPrefix}../3d-weather-codrops-main/dist-widget`;
+    const homeHref = pathPrefix || './';
     const copy = context.copy;
     const mediaLibraryCopy = context.mediaLibraryCopy;
 
@@ -3960,7 +3958,7 @@
       if (currentRouteNormalized === 'nashi-uslugi.html') return 'services';
       if (currentRouteNormalized === 'prays-list.html') return 'price';
       if (currentRouteNormalized === 'galereya.html' || currentRouteNormalized === 'do-i-posle.html') return 'gallery';
-      if (currentRouteNormalized === 'blog/blog.html' || currentRouteNormalized.startsWith('blog/')) return 'blog';
+      if (currentRouteNormalized.startsWith('blog/')) return 'blog';
       if (currentRouteNormalized === 'kontakty.html') return 'contacts';
       if (currentRouteNormalized === 'shop.html') return 'shop';
       return '';
@@ -3988,8 +3986,10 @@
 
     const activeClass = key => (activeKey === key ? ' active' : '');
     const activeAria = key => (activeKey === key ? ' aria-current="page"' : '');
-    const mobileLinkAttrs = key => `${activeKey === key ? ' class="active"' : ''}${activeAria(key)}`;
-    const submenuItemAttrs = route => (currentRouteNormalized === route ? ' class="active" aria-current="page"' : '');
+    const currentLinkAttributes = ' class="active" aria-current="page"';
+    const mobileLinkAttrs = key => activeKey === key ? currentLinkAttributes : '';
+    const submenuItemAttrs = route => currentRouteNormalized === route ? currentLinkAttributes : '';
+    const mobileExtension = window.location.origin === 'https://hundesalon-nika.com' ? '' : '.html';
 
     const galleryDesktopNavMarkup = `
       <div class="dropdown nav-gallery-dropdown">
@@ -4011,28 +4011,28 @@
       </div>`;
 
     const galleryMobileNavMarkup = `
-  <a href="${pathPrefix}galereya.html"${submenuItemAttrs('galereya.html')}>${copy.gallery}</a>
-  <a href="${pathPrefix}do-i-posle.html"${submenuItemAttrs('do-i-posle.html')}>${copy.beforeAfter}</a>`;
+  <a href="${pathPrefix}galereya${mobileExtension}"${submenuItemAttrs('galereya.html')}>${copy.gallery}</a>
+  <a href="${pathPrefix}do-i-posle${mobileExtension}"${submenuItemAttrs('do-i-posle.html')}>${copy.beforeAfter}</a>`;
 
     const primaryLinks = `
-  <a href="${pathPrefix}nashi-uslugi.html"${mobileLinkAttrs('services')}>${copy.services}</a>
-  <a href="${pathPrefix}prays-list.html"${mobileLinkAttrs('price')}>${copy.price}</a>
-  <a href="${pathPrefix}shop.html"${mobileLinkAttrs('shop')}>${copy.shop}</a>
-  <a href="${pathPrefix}kontakty.html"${mobileLinkAttrs('contacts')}>${copy.contacts}</a>
+  <a href="${pathPrefix}nashi-uslugi${mobileExtension}"${mobileLinkAttrs('services')}>${copy.services}</a>
+  <a href="${pathPrefix}prays-list${mobileExtension}"${mobileLinkAttrs('price')}>${copy.price}</a>
+  <a href="${pathPrefix}shop${mobileExtension}"${mobileLinkAttrs('shop')}>${copy.shop}</a>
+  <a href="${pathPrefix}kontakty${mobileExtension}"${mobileLinkAttrs('contacts')}>${copy.contacts}</a>
   ${galleryMobileNavMarkup}`;
     const promotionsLink = `
-  <a href="${pathPrefix}social.html#promotions" class="mobile-nav-link--promotions"><img src="${assetPrefix}/images/icons/clash-royale.png" class="promo-btn-icon" alt="" aria-hidden="true" width="26" height="26"><span>${copy.promotions}</span></a>`;
-    const isHomeRoute = currentRouteNormalized === '' || currentRouteNormalized === 'index.html';
+  <a href="${pathPrefix}social${mobileExtension}#promotions" class="mobile-nav-link--promotions"><img src="${assetPrefix}/images/icons/clash-royale.png" class="promo-btn-icon" alt="" aria-hidden="true" width="26" height="26"><span>${copy.promotions}</span></a>`;
+    const isHomeRoute = currentRouteNormalized === 'index.html';
 
     const secondaryLinks = `
-  <a href="${pathPrefix}o-nas.html"${mobileLinkAttrs('about')}>${copy.about}</a>
-  <a href="${pathPrefix}vvedenie.html"${mobileLinkAttrs('intro')}>${copy.intro}</a>
-  <a href="${pathPrefix}social.html" class="mobile-nav-link--secondary">${copy.socialsMenu || copy.socials}</a>
-  <a href="${pathPrefix}reyting.html" class="mobile-nav-link--secondary">${copy.rating}</a>
-  <a href="${pathPrefix}blog/blog.html"${mobileLinkAttrs('blog')}>${copy.blog}</a>
-  <a href="${pathPrefix}nashi-uslugi.html" class="mobile-nav-link--secondary">${copy.localSeo}</a>
-  <a href="${pathPrefix}partnerstvo.html" class="mobile-nav-link--secondary">${copy.partner}</a>
-  <a href="${pathPrefix}documents.html" class="mobile-nav-link--secondary">${copy.documents}</a>`;
+  <a href="${pathPrefix}o-nas${mobileExtension}"${mobileLinkAttrs('about')}>${copy.about}</a>
+  <a href="${pathPrefix}vvedenie${mobileExtension}"${mobileLinkAttrs('intro')}>${copy.intro}</a>
+  <a href="${pathPrefix}social${mobileExtension}" class="mobile-nav-link--secondary">${copy.socialsMenu || copy.socials}</a>
+  <a href="${pathPrefix}reyting${mobileExtension}" class="mobile-nav-link--secondary">${copy.rating}</a>
+  <a href="${pathPrefix}blog/blog${mobileExtension}"${mobileLinkAttrs('blog')}>${copy.blog}</a>
+  <a href="${pathPrefix}nashi-uslugi${mobileExtension}" class="mobile-nav-link--secondary">${copy.localSeo}</a>
+  <a href="${pathPrefix}partnerstvo${mobileExtension}" class="mobile-nav-link--secondary">${copy.partner}</a>
+  <a href="${pathPrefix}documents${mobileExtension}" class="mobile-nav-link--secondary">${copy.documents}</a>`;
 
     return `
 <header class="header">

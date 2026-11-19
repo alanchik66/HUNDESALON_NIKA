@@ -1410,22 +1410,28 @@ test('localized burger menus expose promotions while keeping booking in the head
   const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
   const copyDeclaration = source.match(/  const HEADER_COPY = \{[\s\S]*?\n  \};/)[0];
   const rendererDeclaration = source.match(/  function createHeaderMarkup\(context\) \{[\s\S]*?\n  \}/)[0];
+  const previewOrigin = 'http://127.0.0.1:5502';
+  const location = { origin: previewOrigin };
   const { copy, renderHeader } = runInNewContext(`${copyDeclaration}\n${rendererDeclaration}\n({ copy: HEADER_COPY, renderHeader: createHeaderMarkup });`, {
     WEATHER_WIDGET_ASSET_VERSION: 'test',
+    window: { location },
   });
 
   for (const [locale, promotionsLabel] of Object.entries({ ru: 'АКЦИИ', uk: 'АКЦІЇ', de: 'AKTIONEN', en: 'PROMOTIONS' })) {
     for (const currentRoute of ['index.html', 'blog/blog.html']) {
-      const markup = renderHeader({
+      const context = {
         currentLang: locale, pageLang: locale, currentRoute, copy: copy[locale],
         mediaLibraryCopy: { mediaLibrary: 'Media' }, menuA11y: { openMenu: 'Menu', expandGallery: 'Gallery' },
         weatherWidgetCopy: { ariaLabel: 'Weather' },
-      });
+      };
+      const markup = renderHeader(context);
       const mobileNav = markup.match(/<nav id="mobile-nav"[^>]*>([\s\S]*?)<\/nav>/)[1];
       const mobileNavContent = mobileNav.match(/^\s*<div class="mobile-nav__content">([\s\S]*)<\/div>\s*$/)?.[1];
       assert.ok(mobileNavContent, 'all menu content scrolls inside the stationary outer panel');
       const header = markup.match(/<header class="header">([\s\S]*?)<\/header>/)[1];
       const prefix = currentRoute.startsWith('blog/') ? '../' : '';
+      assert.ok(header.includes(`<a href="${prefix || './'}">`), 'the logo uses the locale homepage');
+      assert.ok(header.includes(`src="${prefix}../assets/images/brand/logo-ui.webp"`), 'the logo asset resolves from this depth');
       const promotion = mobileNavContent.match(/<a href="([^"]*social\.html#promotions)"([^>]*)>([\s\S]*?)<\/a>/);
       assert.ok(promotion, `${locale}/${currentRoute}: promotions link exists`);
       assert.equal(promotion[1], `${prefix}social.html#promotions`, 'promotion keeps the localized destination');
@@ -1448,6 +1454,14 @@ test('localized burger menus expose promotions while keeping booking in the head
       assert.doesNotMatch(mobileNav, /onlayn-bronirovanie\.html/);
       assert.ok(header.includes(`href="${prefix}onlayn-bronirovanie.html" class="header-online-btn online-order-pill"`), `${locale}/${currentRoute}: header booking remains available`);
       assert.ok(header.includes(`>${copy[locale].booking}</span></a>`));
+
+      location.origin = 'https://hundesalon-nika.com';
+      const canonicalMenu = renderHeader(context).match(/<nav id="mobile-nav"[^>]*>([\s\S]*?)<\/nav>/)[1];
+      location.origin = previewOrigin;
+      assert.deepEqual([...canonicalMenu.matchAll(/<a href="([^"]+)"/g)].map(item => item[1]), [
+        'nashi-uslugi', 'prays-list', 'shop', 'kontakty', 'galereya', 'do-i-posle', 'social#promotions',
+        'o-nas', 'vvedenie', 'social', 'reyting', 'blog/blog', 'nashi-uslugi', 'partnerstvo', 'documents',
+      ].map(route => `${prefix}${route}`), `${locale}/${currentRoute}: each live menu target is directly canonical`);
     }
     const socialPage = await readFile(path.join(root, locale, 'social.html'), 'utf8');
     assert.match(socialPage, /id="promotions"/);
