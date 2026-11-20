@@ -919,7 +919,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Для переходов по якорям на текущей странице (например #promotions)
+    // Для переходов по якорям на текущей странице
     // принудительно закрываем меню после смены hash.
     window.addEventListener('hashchange', () => {
       if (!isMenuOpen()) return;

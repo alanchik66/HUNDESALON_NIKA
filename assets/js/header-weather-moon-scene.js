@@ -75,6 +75,10 @@ export function canonicalLunarView(lighting) {
   return { angle, x: rotate(lighting.bodyToView.x), y: rotate(lighting.bodyToView.y), z: rotate(lighting.bodyToView.z) };
 }
 
+function reflectedSunlight(incidence, emission) {
+  return incidence > 0 ? .15 * incidence + 1.7 * incidence / (incidence + emission) : 0;
+}
+
 function* lunarRasterRows(lighting, maps, { size = 384, discFraction = .51, earthshine = true, terrain = true } = {}) {
   const data = new Uint8ClampedArray(size * size * 4);
   const stats = { pixels: 0, sunlit: 0, terrainShadow: 0, earthshine: 0, renderSize: size };
@@ -109,12 +113,21 @@ function* lunarRasterRows(lighting, maps, { size = 384, discFraction = .51, eart
       visibility = geometricIncidence < -.12 ? 0 : lunarTerrainVisibility(maps, point, sun, heightAt(maps, longitude, latitude));
       if (visibility < .9) stats.terrainShadow++;
     }
-    const direct = incidence > 0 ? (.15 * incidence + 1.7 * incidence / (incidence + emission)) * visibility : 0;
+    const direct = reflectedSunlight(incidence, emission) * visibility;
+    let displayDirect = direct;
+    if (terrain && direct > 0) {
+      const smoothDisc = reflectedSunlight(geometricIncidence, Math.max(.02, z));
+      // Improve the legibility of existing terrain shadows at header size.
+      const detail = clamp((direct - smoothDisc) * .35, -direct * .22, direct * .22);
+      displayDirect += detail;
+    }
     const { a, b, c, d, fx, fy } = coordinates(maps, longitude, latitude), offset = (row * size + column) * 4;
     for (let channel = 0; channel < 3; channel++) {
       const albedo = interpolate(linear[maps.albedo[a * 3 + channel]], linear[maps.albedo[b * 3 + channel]],
         linear[maps.albedo[c * 3 + channel]], linear[maps.albedo[d * 3 + channel]], fx, fy);
-      data[offset + channel] = encode(albedo * 3.2 * (direct + earth * [.84, .96, 1.12][channel]));
+      // Stretch the sunlit albedo midtones while leaving Earthshine unchanged.
+      const sunlitAlbedo = terrain ? albedo * (1 + .50 * (albedo - .26)) : albedo;
+      data[offset + channel] = encode(3.2 * (sunlitAlbedo * displayDirect + albedo * earth * [.84, .96, 1.12][channel]));
     }
     data[offset + 3] = Math.round(255 * coverage);
       stats.pixels++; if (direct > .01) stats.sunlit++;

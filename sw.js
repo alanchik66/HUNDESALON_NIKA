@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hundesalon-nika-static-v10';
+const CACHE_NAME = 'hundesalon-nika-static-v11';
 const CORE_ASSETS = [
   '/site.webmanifest',
   '/assets/images/brand/hero-dog.webp',
@@ -65,8 +65,8 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Weather freshness and its offline fallback are managed by the weather service.
-  if (url.pathname === '/api/weather') {
+  // Weather observations must use the network. Their own services handle freshness.
+  if (['/api/weather', '/api/satellite-clouds'].includes(url.pathname)) {
     return;
   }
 

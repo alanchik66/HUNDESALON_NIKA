@@ -165,11 +165,9 @@
       intro: 'ВВЕДЕНИЕ',
       socials: 'НАШИ СОЦИАЛЬНЫЕ СЕТИ',
       socialsMenu: 'НАШИ СОЦСЕТИ',
-      promotions: 'АКЦИИ',
       rating: 'РЕЙТИНГ',
       partner: 'ПАРТНЕРСКОЕ ПРЕДЛОЖЕНИЕ',
       documents: 'ДОКУМЕНТЫ',
-      localSeo: 'ГРУМИНГ В ЛЕЙПЦИГЕ',
       selectLanguage: 'Выбрать язык',
     },
     uk: {
@@ -189,11 +187,9 @@
       intro: 'ВСТУП',
       socials: 'СОЦІАЛЬНІ МЕРЕЖІ',
       socialsMenu: 'НАШІ СОЦМЕРЕЖІ',
-      promotions: 'АКЦІЇ',
       rating: 'РЕЙТИНГ І ВІДГУКИ',
       partner: 'ПАРТНЕРСЬКА ПРОПОЗИЦІЯ',
       documents: 'ДОКУМЕНТИ',
-      localSeo: 'ГРУМІНГ У ЛЕЙПЦИГУ',
       selectLanguage: 'Обрати мову',
     },
     de: {
@@ -213,11 +209,9 @@
       intro: 'EINFÜHRUNG',
       socials: 'SOZIALE MEDIEN',
       socialsMenu: 'SOCIAL MEDIA',
-      promotions: 'AKTIONEN',
       rating: 'BEWERTUNGEN',
       partner: 'PARTNERSCHAFT',
       documents: 'DOKUMENTE',
-      localSeo: 'HUNDEFRISEUR LEIPZIG',
       selectLanguage: 'Sprache wählen',
     },
     en: {
@@ -237,11 +231,9 @@
       intro: 'INTRODUCTION',
       socials: 'SOCIAL MEDIA',
       socialsMenu: 'OUR SOCIAL MEDIA',
-      promotions: 'PROMOTIONS',
       rating: 'RATING',
       partner: 'PARTNERSHIP OFFER',
       documents: 'DOCUMENTS',
-      localSeo: 'DOG GROOMING LEIPZIG',
       selectLanguage: 'Select language',
     },
   };
@@ -289,10 +281,10 @@
   };
 
   const WEATHER_WIDGET_COPY = {
-    ru: { ariaLabel: 'Виджет погоды по вашей геолокации' },
-    uk: { ariaLabel: 'Віджет погоди за вашою геолокацією' },
-    de: { ariaLabel: 'Wetter-Widget fuer Ihre Geolokation' },
-    en: { ariaLabel: 'Weather widget for your geolocation' },
+    ru: { ariaLabel: 'Прогноз погоды' },
+    uk: { ariaLabel: 'Прогноз погоди' },
+    de: { ariaLabel: 'Wettervorhersage' },
+    en: { ariaLabel: 'Weather forecast' },
   };
 
   /** Menu toggle aligned to the gold decorative strip between weather and social bar. */
@@ -3449,15 +3441,14 @@
 .weather-header-shooting-star {
   display: block;
   position: absolute;
-  width: var(--shooting-star-length, 76px);
+  width: var(--shooting-star-length, 42px);
   height: 22px;
   z-index: 1;
   transform-origin: 90% 50%;
-  background:
-    radial-gradient(ellipse 2.8px 2px at 90% 50%, rgba(255, 253, 239, 1), transparent),
-    linear-gradient(90deg, transparent 4%, rgba(110, 185, 171, 0.04) 22%, rgba(173, 225, 211, 0.28) 60%, rgba(231, 246, 234, 0.7) 83%, rgba(255, 247, 219, 0.98) 90%, transparent 94%) center / 100% 1.3px no-repeat,
-    radial-gradient(ellipse at 90% 50%, rgba(229, 243, 218, 0.24), transparent 30%);
-  filter: drop-shadow(0 0 3px rgba(237, 248, 229, 0.6));
+  background: radial-gradient(
+    ellipse var(--shooting-star-head-long, 1.5px) var(--shooting-star-head-short, 0.9px) at 90% 50%,
+    #fff 8%, rgba(var(--shooting-star-color, 232, 241, 255), 0.8) 43%, transparent 100%
+  );
   opacity: 0;
   pointer-events: none !important;
 }
@@ -3472,34 +3463,34 @@
   position: absolute;
   left: 90%;
   top: 50%;
-  width: 18px;
-  height: 18px;
+  width: var(--shooting-star-flare-size, 8px);
+  height: var(--shooting-star-flare-size, 8px);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 247, 1) 0 9%, rgba(255, 247, 217, 0.9) 15%, rgba(242, 248, 224, 0.32) 33%, transparent 67%);
+  background: radial-gradient(circle, #fff 7%, rgba(var(--shooting-star-color, 232, 241, 255), 0.58) 24%, transparent 69%);
   pointer-events: none;
-  animation: weatherShootingStarGlint var(--shooting-star-duration, 600ms) linear both;
+  animation: weatherShootingStarGlint var(--shooting-star-duration, 520ms) linear both;
 }
 
 .weather-header-shooting-star::after {
   content: '';
   position: absolute;
-  left: 8%;
+  left: 3%;
   right: 10%;
-  top: calc(50% - 2px);
-  height: 4px;
-  border-radius: 50%;
-  background: linear-gradient(90deg, transparent 8%, rgba(133, 211, 188, 0.04) 42%, rgba(223, 242, 225, 0.34));
+  top: calc(50% - var(--shooting-star-trail-width, 1.2px) / 2);
+  height: var(--shooting-star-trail-width, 1.2px);
+  background: linear-gradient(90deg, transparent, rgba(var(--shooting-star-color, 232, 241, 255), 0.17) 48%,
+    rgba(var(--shooting-star-color, 232, 241, 255), 0.74) 100%);
+  clip-path: polygon(0 50%, 76% 39%, 100% 10%, 100% 90%, 76% 61%);
   transform-origin: right center;
-  filter: blur(1.1px);
   pointer-events: none;
-  animation: weatherShootingStarTrail var(--shooting-star-duration, 600ms) linear both;
+  animation: weatherShootingStarTrail var(--shooting-star-duration, 520ms) linear both;
 }
 
 @keyframes weatherShootingStarGlint {
-  0%, 8% { opacity: 0; transform: translate(-50%, -50%) scale(0.45); }
-  22% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
-  40% { opacity: 0.52; transform: translate(-50%, -50%) scale(0.8); }
-  75%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  0%, 24% { opacity: 0; transform: translate(-50%, -50%) scale(0.45); }
+  38% { opacity: var(--shooting-star-flash, 0.25); transform: translate(-50%, -50%) scale(1); }
+  52% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
 }
 
 @keyframes weatherShootingStarTrail {
@@ -3691,6 +3682,8 @@
   let headerWeatherReverseGeoProxyUnavailable = false;
   const HEADER_WEATHER_GEO_TIMEOUT = 12000;
   const HEADER_WEATHER_GEO_MOUNT_WAIT = 1500;
+  // Public salon location, also used by the map on each locale's contact page.
+  const HEADER_WEATHER_SALON_LOCATION = '51.320486, 12.416501';
   const HEADER_WEATHER_STRICT_STYLE_LOCK = true;
   const HEADER_WEATHER_BERLIN_LABEL = 'Ber' + 'lin';
   const HEADER_WEATHER_BERLIN_ALIAS_KEY = ('ber' + 'lin').toLowerCase();
@@ -3912,15 +3905,12 @@
     }
 
     if (context.langIndex >= 0) {
-      const nextParts = [...context.pathParts];
-      nextParts[context.langIndex] = lang;
-
-      const localizedRoute = getLocalizedRoute(context.currentRoute);
-      const localizedRouteParts = localizedRoute ? localizedRoute.split('/') : [];
-      nextParts.splice(context.langIndex + 1, nextParts.length - (context.langIndex + 1), ...localizedRouteParts);
-
-      const nextUrl = new URL(context.currentUrl.toString());
-      nextUrl.pathname = '/' + nextParts.join('/') + (context.hasTrailingSlash && !localizedRoute ? '/' : '');
+      const prefix = context.pathParts.slice(0, context.langIndex);
+      const route = getLocalizedRoute(context.currentRoute);
+      const nextUrl = new URL(context.currentUrl);
+      const parts = [...prefix, lang];
+      if (route || context.hasTrailingSlash) parts.push(route);
+      nextUrl.pathname = '/' + parts.join('/');
       return nextUrl.toString();
     }
 
@@ -3943,17 +3933,11 @@
     const copy = context.copy;
     const mediaLibraryCopy = context.mediaLibraryCopy;
 
-    const activeKey = (() => {
-      if (currentRouteNormalized === 'vvedenie.html') return 'intro';
-      if (currentRouteNormalized === 'o-nas.html') return 'about';
-      if (currentRouteNormalized === 'nashi-uslugi.html') return 'services';
-      if (currentRouteNormalized === 'prays-list.html') return 'price';
-      if (currentRouteNormalized === 'galereya.html' || currentRouteNormalized === 'do-i-posle.html') return 'gallery';
-      if (currentRouteNormalized.startsWith('blog/')) return 'blog';
-      if (currentRouteNormalized === 'kontakty.html') return 'contacts';
-      if (currentRouteNormalized === 'shop.html') return 'shop';
-      return '';
-    })();
+    const activeKey = currentRouteNormalized.startsWith('blog/') ? 'blog' : {
+      'vvedenie.html': 'intro', 'o-nas.html': 'about', 'nashi-uslugi.html': 'services',
+      'prays-list.html': 'price', 'galereya.html': 'gallery', 'do-i-posle.html': 'gallery',
+      'kontakty.html': 'contacts', 'shop.html': 'shop',
+    }[currentRouteNormalized];
 
     const socialIcons = [
       ['https://wa.me/4915172450988', 'fab fa-whatsapp', 'WhatsApp'],
@@ -4011,8 +3995,6 @@
   <a href="${pathPrefix}shop${mobileExtension}"${mobileLinkAttrs('shop')}>${copy.shop}</a>
   <a href="${pathPrefix}kontakty${mobileExtension}"${mobileLinkAttrs('contacts')}>${copy.contacts}</a>
   ${galleryMobileNavMarkup}`;
-    const promotionsLink = `
-  <a href="${pathPrefix}social${mobileExtension}#promotions" class="mobile-nav-link--promotions"><img src="${assetPrefix}/images/icons/clash-royale.png" class="promo-btn-icon" alt="" aria-hidden="true" width="26" height="26"><span>${copy.promotions}</span></a>`;
     const isHomeRoute = currentRouteNormalized === 'index.html';
 
     const secondaryLinks = `
@@ -4021,7 +4003,6 @@
   <a href="${pathPrefix}social${mobileExtension}" class="mobile-nav-link--secondary">${copy.socialsMenu || copy.socials}</a>
   <a href="${pathPrefix}reyting${mobileExtension}" class="mobile-nav-link--secondary">${copy.rating}</a>
   <a href="${pathPrefix}blog/blog${mobileExtension}"${mobileLinkAttrs('blog')}>${copy.blog}</a>
-  <a href="${pathPrefix}nashi-uslugi${mobileExtension}" class="mobile-nav-link--secondary">${copy.localSeo}</a>
   <a href="${pathPrefix}partnerstvo${mobileExtension}" class="mobile-nav-link--secondary">${copy.partner}</a>
   <a href="${pathPrefix}documents${mobileExtension}" class="mobile-nav-link--secondary">${copy.documents}</a>`;
 
@@ -4142,7 +4123,6 @@
     <div class="mobile-nav-group mobile-nav-group--primary">
       ${primaryLinks}
     </div>
-    ${promotionsLink}
     <div class="mobile-nav-group mobile-nav-group--secondary">
       ${secondaryLinks}
     </div>
@@ -4238,6 +4218,7 @@
   let headerWeatherSunSceneModulePromise = null;
   let headerWeatherSunSceneModuleRetry = 0;
   let headerWeatherMoonSceneModulePromise = null;
+  let headerWeatherSatelliteCloudModulePromise = null;
   let headerWeatherMoonSceneModuleRetry = 0;
 
   function resolveHeaderWeatherSunSceneModuleUrl() {
@@ -4655,7 +4636,7 @@
 
   function shouldApplyHeaderWeatherGeo(host, coords) {
     const previous = parseHeaderWeatherCoordinates(host?.dataset?.weatherLocation);
-    if (!previous) {
+    if (!previous || host.dataset.weatherGeoSource === 'salon') {
       return { changed: true, distanceMeters: Number.POSITIVE_INFINITY };
     }
 
@@ -4721,6 +4702,9 @@
       }
       host.dataset.weatherGeoCheckedAt = String(Date.now());
       if (!coords) {
+        if (host.dataset.weatherGeoSource === 'salon') {
+          return { changed: false, coords: null, distanceMeters: 0 };
+        }
         const hasPreviousPosition = Boolean(parseHeaderWeatherCoordinates(host.dataset.weatherLocation));
         host.dataset.weatherGeoSource = hasPreviousPosition ? 'stale-cache' : 'unavailable';
         host.dataset.weatherGeoResolved = hasPreviousPosition ? 'true' : 'unavailable';
@@ -7777,6 +7761,14 @@
       currentMeta.forecastProviderLabel ? `Forecast: ${currentMeta.forecastProviderLabel}` : '',
       currentMeta.forecastAttributionUrl
     );
+    const satellite = root.querySelector('.weather-header-dropdown__hero [data-weather-cloud-observed-at]');
+    const observed = Date.parse(satellite?.dataset.weatherCloudObservedAt);
+    if (Number.isFinite(observed)) {
+      const time = new Intl.DateTimeFormat(getHeaderWeatherPressureLang(host), {
+        hour: '2-digit', minute: '2-digit', timeZone: host.__weatherTimeZone || undefined,
+      }).format(observed);
+      addSource(`Meteosat · EUMETSAT · ${time}`, 'https://view.eumetsat.int/productviewer/productDetails/msg_fes:clm');
+    }
     addSource('Address: OpenStreetMap contributors', 'https://www.openstreetmap.org/copyright');
 
     const links = sources.map(source => {
@@ -11659,138 +11651,7 @@
   }
 
   function syncHeaderWeatherShootingStars(host) {
-    if (!host?.shadowRoot) return;
-    if (host.dataset.weatherMounted !== 'true') {
-      host.__weatherShootingStars?.dispose();
-      host.__weatherShootingStars = null;
-      return;
-    }
-    if (!host.__weatherShootingStars) {
-      let timer = null;
-      let active = null;
-      let disposed = false;
-      let firstPass = true;
-      let generation = 0;
-      const eligibleLayers = () => {
-        if (disposed || !host.isConnected || host.dataset.weatherMounted !== 'true' ||
-          document.hidden) return [];
-        return [
-          host.shadowRoot.querySelector('.weather-header-preview__stars-back'),
-          host.dataset.weatherExpanded === 'true'
-            ? host.shadowRoot.querySelector('.weather-header-dropdown__stars-back') : null,
-        ].filter(layer => layer?.isConnected && layer.classList.contains('is-night-sky') && layer.style.display !== 'none');
-      };
-      const stop = () => {
-        generation += 1;
-        if (timer !== null) window.clearTimeout(timer);
-        timer = null;
-        const previous = active;
-        active = null;
-        previous?.animation.cancel();
-        previous?.element.remove();
-      };
-      const schedule = () => {
-        if (timer !== null || active || !eligibleLayers().length) return;
-        timer = window.setTimeout(spawn, randomBetween(firstPass ? 2000 : 7000, firstPass ? 5000 : 20000));
-      };
-      const spawn = () => {
-        timer = null;
-        const layers = eligibleLayers();
-        if (!layers.length) return;
-        firstPass = false;
-        const nightLayer = layers[Math.min(layers.length - 1, Math.floor(randomBetween(0, layers.length)))];
-        const dropdown = nightLayer.closest('.weather-header-dropdown');
-        const foreground = randomBetween(0, 1) < 0.28;
-        const stage = foreground
-          ? nightLayer.closest('.weather-header-preview') || dropdown?.querySelector('.weather-header-dropdown__hero')
-          : null;
-        const layer = stage || nightLayer;
-        const rect = layer.getBoundingClientRect();
-        const container = dropdown || document.querySelector('.header');
-        const bounds = container?.getBoundingClientRect();
-        if (!bounds) return;
-        const viewport = window.visualViewport;
-        const left = Math.max(rect.left, bounds.left, viewport?.offsetLeft || 0);
-        const top = Math.max(rect.top, bounds.top, viewport?.offsetTop || 0);
-        const right = Math.min(rect.right, bounds.right, (viewport?.offsetLeft || 0) + (viewport?.width || window.innerWidth));
-        const bottom = Math.min(rect.bottom, bounds.bottom, (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight));
-        const angle = randomBetween(0, 360);
-        const radians = angle * Math.PI / 180;
-        const cosine = Math.cos(radians);
-        const sine = Math.sin(radians);
-        // A short portrait band needs a shorter trail for steep trajectories.
-        const length = Math.min(randomBetween(54, 86), (right - left) * 0.3,
-          (bottom - top) * 0.32 / Math.max(Math.abs(sine), 0.001));
-        const corners = [-0.9 * length, Math.max(0.1 * length, 11)].flatMap(x =>
-          [-11, 11].map(y => ({ x: x * cosine - y * sine, y: x * sine + y * cosine }))
-        );
-        const minX = left - Math.min(...corners.map(point => point.x)) + 6;
-        const maxX = right - Math.max(...corners.map(point => point.x)) - 6;
-        const minY = top - Math.min(...corners.map(point => point.y)) + 6;
-        const maxY = bottom - Math.max(...corners.map(point => point.y)) - 6;
-        const distance = Math.min(
-          (maxX - minX) / Math.max(Math.abs(cosine), 0.001),
-          (maxY - minY) / Math.max(Math.abs(sine), 0.001)
-        ) * randomBetween(0.45, 0.9);
-        if (length <= 0 || maxX <= minX || maxY <= minY || distance < 12) {
-          schedule();
-          return;
-        }
-        const dx = cosine * distance;
-        const dy = sine * distance;
-        const x = randomBetween(minX - Math.min(dx, 0), maxX - Math.max(dx, 0));
-        const y = randomBetween(minY - Math.min(dy, 0), maxY - Math.max(dy, 0));
-        const element = document.createElement('span');
-        element.className = `weather-header-shooting-star${stage ? ' weather-header-shooting-star--foreground' : ''}`;
-        element.setAttribute('aria-hidden', 'true');
-        element.setAttribute('data-weather-meteor-depth', stage ? 'front' : 'back');
-        const duration = randomBetween(420, 760);
-        element.style.setProperty('--shooting-star-length', `${length.toFixed(2)}px`);
-        element.style.setProperty('--shooting-star-duration', `${duration.toFixed(2)}ms`);
-        element.style.left = `${(x - rect.left - length * 0.9).toFixed(2)}px`;
-        element.style.top = `${(y - rect.top - 11).toFixed(2)}px`;
-        layer.appendChild(element);
-        const transform = progress => `translate3d(${(dx * progress).toFixed(2)}px, ${(dy * progress).toFixed(2)}px, 0) rotate(${angle.toFixed(2)}deg) scale(1)`;
-        let animation;
-        try {
-          animation = element.animate([
-            // Opacity eases independently; transform endpoints preserve constant travel speed.
-            { transform: transform(0), offset: 0, easing: 'linear' },
-            { opacity: 0, offset: 0, easing: 'ease-in-out' },
-            { opacity: 0.75, offset: 0.08, easing: 'ease-in-out' },
-            { opacity: 1, offset: 0.22, easing: 'ease-in-out' },
-            { opacity: 0.55, offset: 0.42, easing: 'ease-in-out' },
-            { opacity: 0.08, offset: 0.8, easing: 'ease-in-out' },
-            { transform: transform(1), opacity: 0, offset: 1 },
-          ], { duration, easing: 'linear', fill: 'forwards' });
-        } catch {
-          element.remove();
-          return;
-        }
-        const token = ++generation;
-        active = { layer: nightLayer, element, animation };
-        const finish = () => {
-          element.remove();
-          if (token !== generation || disposed) return;
-          active = null;
-          schedule();
-        };
-        animation.finished.then(finish, finish);
-      };
-      const sync = (restart = false) => {
-        const layers = eligibleLayers();
-        if (restart || !layers.length || (active && (!layers.includes(active.layer) || active.element.isConnected === false))) stop();
-        if (layers.length) schedule();
-      };
-      host.__weatherShootingStars = {
-        sync,
-        dispose() {
-          disposed = true;
-          stop();
-        },
-      };
-    }
-    host.__weatherShootingStars.sync();
+    host.__weatherSolarClock?.syncHeaderWeatherShootingStars?.(host, randomBetween);
   }
 
   function ensureHeaderWeatherStarsBackLayer(container) {
@@ -12794,6 +12655,30 @@
     renderHeaderWeatherOrbOverlay(host, astroData, deviceCoordinates);
   }
 
+  function syncHeaderWeatherSatelliteClouds(host, overlay, geoState, moonPart, active) {
+    const latitude = geoState?.latitude, longitude = geoState?.longitude;
+    const position = moonPart?.sky;
+    // Fixed Meteosat coverage, shared with the satellite API and renderer.
+    const inCoverage = latitude >= 47 && latitude <= 55.8 && longitude >= 5 && longitude <= 16;
+    const current = active && !document.hidden && !Number.isFinite(geoState?.appearanceTimeMs) &&
+      position?.elevationDeg >= 12 && inCoverage;
+    if (!headerWeatherSatelliteCloudModulePromise && !current) return;
+    const token = {};
+    overlay.__weatherSatelliteCloudToken = token;
+    if (!headerWeatherSatelliteCloudModulePromise) {
+      const url = new URL(resolveHeaderWeatherSunSceneModuleUrl());
+      url.pathname = url.pathname.replace('header-weather-sun-scene.js', 'header-weather-satellite-clouds.js');
+      headerWeatherSatelliteCloudModulePromise = import(/* webpackIgnore: true */ url.href).catch(() => null);
+    }
+    void headerWeatherSatelliteCloudModulePromise.then(async module => {
+      if (!module || overlay.__weatherSatelliteCloudToken !== token || !overlay.isConnected) return;
+      const stamp = await module.syncHeaderWeatherSatelliteClouds(overlay, geoState, position, current);
+      if (overlay.__weatherSatelliteCloudToken !== token || overlay.__weatherSatelliteStamp === stamp) return;
+      overlay.__weatherSatelliteStamp = stamp;
+      syncHeaderWeatherAttribution(host);
+    }).catch(() => {});
+  }
+
   function renderHeaderWeatherOrbOverlay(host, astroData, deviceCoordinates) {
     const presentation = resolveHeaderWeatherOrbPresentation(host, astroData);
     const orbAtmosphere = resolveHeaderWeatherOrbAtmosphere(host);
@@ -12838,6 +12723,7 @@
           applyHeaderWeatherOrbAtmosphere(stack.moon, 0);
         }
         host.__weatherSolarClock?.applySkyPosition?.(stack.moon, moonPart, resolveHeaderWeatherOrbFixedLayout, getHeaderWeatherPressureLang(host));
+        syncHeaderWeatherSatelliteClouds(host, stack.moon, sceneContext.geoState, moonPart, variantActive && moonPart?.active);
       }
 
       if (stack.sun) {
@@ -13340,7 +13226,7 @@
           void selectHeaderWeatherManualQuery(host, target, submitsSearch);
           return;
         }
-        if (host.dataset.weatherGeoSource === 'manual') {
+        if (host.dataset.weatherGeoSource === 'manual' || host.dataset.weatherGeoSource === 'salon') {
           delete host.dataset.weatherLocation;
           delete host.dataset.weatherGeoSource;
         }
@@ -14059,12 +13945,13 @@
       if (!isCurrentMount()) return;
       const geoPending = geoResult === geoPendingMarker;
 
-      const requestedLocation = parseHeaderWeatherCoordinates(host.dataset.weatherLocation)
-        ? host.dataset.weatherLocation
-        : '';
-      // The shell alone requests geolocation; an unresolved position keeps the
-      // existing location status instead of presenting a default city as GPS.
-      delete host.dataset.weatherFallbackLocation;
+      if (!parseHeaderWeatherCoordinates(host.dataset.weatherLocation) && host.dataset.weatherManualLocation !== 'true') {
+        host.dataset.weatherLocation = HEADER_WEATHER_SALON_LOCATION;
+        host.dataset.weatherGeoSource = 'salon';
+        host.dataset.weatherAreaState = 'resolving';
+      }
+      const requestedLocation = host.dataset.weatherLocation || '';
+      const startedAtSalon = host.dataset.weatherGeoSource === 'salon';
 
       const widgetApi = await weatherWidget.mountWeatherWidget(host, {
         variant: 'header',
@@ -14177,11 +14064,11 @@
               host.dataset.weatherMounted !== 'true' ||
               host.__weatherWidgetInstance !== widgetApi ||
               host.dataset.weatherManualLocation === 'true' ||
-              host.dataset.weatherLocation === requestedLocation ||
               !parseHeaderWeatherCoordinates(host.dataset.weatherLocation)
             ) {
               return null;
             }
+            if (!startedAtSalon && host.dataset.weatherLocation === requestedLocation) return null;
             headerWeatherCurrentCache.clear();
             host.__weatherCurrentMeta = null;
             delete host.dataset.weatherResolvedLocationLabel;

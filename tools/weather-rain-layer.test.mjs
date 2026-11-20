@@ -14,6 +14,7 @@ function fixture({ width = 375, height = 140, reduced = false, contextAvailable 
     setTransform(...args) { this.transforms.push(args); },
     clearRect() { this.clears++; strokes.length = 0; fills.length = 0; },
     createLinearGradient(...coordinates) { const stops = []; return { coordinates, stops, addColorStop(...stop) { stops.push(stop); } }; },
+    createRadialGradient(...coordinates) { return this.createLinearGradient(...coordinates); },
     beginPath() { this.points = []; }, moveTo(x, y) { this.points.push([x, y]); }, lineTo(x, y) { this.points.push([x, y]); },
     stroke() { this.paints++; strokes.push({ points: this.points.map(point => [...point]), width: this.lineWidth, color: this.strokeStyle }); },
     ellipse(...args) { this.points.push(args); },
@@ -110,6 +111,35 @@ test('drizzle, rain and hail have distinct density and shapes without an invente
   assert.ok(hail.fills.some(fill => fill.ellipses[0][2] > 1));
   assert.ok([drizzle, rain, hail].every(f => f.strokes.every(stroke => stroke.points.length === 2)), 'there are no synthetic splash chevrons at the sky boundary');
   layers.forEach(layer => layer.dispose());
+});
+
+test('wet snow combines drifting soft flakes and finer raindrops, and showers vary density over time', () => {
+  const mixed = fixture(), steady = fixture(), shower = fixture();
+  const layers = [
+    createHeaderWeatherRainLayer(mixed.container, { ...rainy, kind: 'mixed' }),
+    createHeaderWeatherRainLayer(steady.container, rainy),
+    createHeaderWeatherRainLayer(shower.container, { ...rainy, showers: true }),
+  ];
+  try {
+    assert.ok(mixed.strokes.length > 5);
+    assert.ok(mixed.strokes.length < steady.strokes.length);
+    const flakes = mixed.fills.filter(fill => typeof fill.color === 'object');
+    assert.ok(flakes.length > 5);
+    assert.ok(flakes.some(fill => fill.ellipses[0][2] > 1));
+    assert.ok(flakes.every(fill => fill.color.stops.at(-1)[1].endsWith(',0)')));
+    const start = [...flakes[0].ellipses[0].slice(0, 2)];
+    const startRainY = mixed.strokes[0].points[1][1];
+    mixed.frame(0); mixed.frame(40);
+    const currentFlake = mixed.fills.find(fill => typeof fill.color === 'object').ellipses[0];
+    assert.ok(Math.abs(currentFlake[1] - start[1]) < Math.abs(mixed.strokes[0].points[1][1] - startRainY));
+    assert.equal(steady.strokes.length, shower.strokes.length);
+    for (let time = 0; time <= 2200; time += 40) { steady.frame(time); shower.frame(time); }
+    assert.ok(shower.strokes.length > steady.strokes.length);
+    for (let time = 2240; time <= 7300; time += 40) { steady.frame(time); shower.frame(time); }
+    assert.ok(shower.strokes.length < steady.strokes.length);
+  } finally {
+    layers.forEach(layer => layer.dispose());
+  }
 });
 
 test('missing rates respect the category while numeric rates control density and unsupported kinds stay clear', () => {

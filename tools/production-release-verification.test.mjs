@@ -593,6 +593,8 @@ test('CI and manual preparation share maintained weather output URLs and the she
     '/3d-weather-codrops-main/dist-widget/weather-widget.iife.js?v=20261104-weather-v7',
     '/3d-weather-codrops-main/dist-widget/Scene3D.mjs?v=20261104-weather-v7',
     '/3d-weather-codrops-main/dist-widget/assets/Moon/mission_2160p30_fallback.mp4?v=20261104-weather-v7',
+    '/assets/js/header-weather-sky-motion.js?v=20261104-weather-v7',
+    '/assets/js/header-weather-satellite-clouds.js?v=20261104-weather-v7',
     '/assets/js/contact-map.js?v=20261104-weather-v7',
     '/assets/frames/contact-map.html?v=20261104-weather-v7',
   ]);
@@ -606,6 +608,8 @@ test('CI and manual preparation share maintained weather output URLs and the she
     `/3d-weather-codrops-main/dist-widget/weather-widget.iife.js?v=${STAMP}`,
     `/3d-weather-codrops-main/dist-widget/Scene3D.mjs?v=${STAMP}`,
     `${MOON_PATH}?v=${STAMP}`,
+    `/assets/js/header-weather-sky-motion.js?v=${STAMP}`,
+    `/assets/js/header-weather-satellite-clouds.js?v=${STAMP}`,
     `/assets/js/contact-map.js?v=${STAMP}`,
     MAP_FRAME,
   ]);

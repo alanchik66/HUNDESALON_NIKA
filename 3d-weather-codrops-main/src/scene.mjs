@@ -47,12 +47,13 @@ const cloudMotion = await import(cloudMotionUrl.href);
 
 // Own the slow wind field; the dependency only draws the existing cloud billboards.
 function WeatherCloudLayer(props) {
+  const { band, ...cloudProps } = props;
   const weather = React.useContext(CloudMotionContext), { gl, viewport } = N();
   const group = React.useRef(), records = React.useRef([]);
   const position = React.useMemo(() => [...props.position], [props.position[0], props.position[1], props.position[2]]);
   const bounds = React.useMemo(() => [...props.bounds], [props.bounds[0], props.bounds[1], props.bounds[2]]);
   const seed = cloudMotion.cloudSeed(position), wind = cloudMotion.cloudWind(weather);
-  const appearanceTarget = cloudMotion.resolveCloudAppearance(weather);
+  const appearanceTarget = cloudMotion.resolveCloudBandAppearance(cloudMotion.resolveCloudAppearance(weather), band);
   const bases = React.useMemo(() => new WeakMap(), [seed, bounds, props.volume, props.segments, props.color]);
   const capture = React.useCallback((record, index) => { records.current[index] = record; }, []);
   const memory = React.useMemo(() => ({ layer: {}, puff: {}, viewport: {}, worldScale: new c(), last: '' }), []);
@@ -64,7 +65,7 @@ function WeatherCloudLayer(props) {
     if (!group.current || document.hidden) return;
     const now = cloudMotion.cloudMotionNow();
     if (!reduced?.matches) cloudMotion.advanceCloudFlow(flow, now, wind.speed, wind.degree);
-    const key = `${flow.elapsed}:${viewport.width}:${viewport.height}:${props.opacity}:${appearanceTarget.opacity}:${appearanceTarget.flattenY}`;
+    const key = `${flow.elapsed}:${viewport.width}:${viewport.height}:${props.opacity}:${appearanceTarget.opacity}:${appearanceTarget.flattenY}:${appearanceTarget.spreadX}:${appearanceTarget.lift}`;
     if (reduced?.matches && memory.last === key && records.current.every(record => bases.has(record))) return;
     memory.last = key;
     group.current.parent.getWorldScale(memory.worldScale);
@@ -72,8 +73,9 @@ function WeatherCloudLayer(props) {
     const width = size.width / Math.max(.01, Math.abs(memory.worldScale.x));
     const height = size.height / Math.max(.01, Math.abs(memory.worldScale.y));
     const pose = cloudMotion.sampleCloudLayer(flow, seed, .35, memory.layer);
-    const appearance = cloudMotion.smoothCloudAppearance(flow.appearance ||= {}, appearanceTarget, now, reduced?.matches);
-    group.current.position.set(position[0] + pose.x * width, position[1] + pose.y * height, position[2] + pose.z);
+    const appearanceState = band === undefined ? flow.appearance ||= {} : (flow.bands ||= [])[band] ||= {};
+    const appearance = cloudMotion.smoothCloudAppearance(appearanceState, appearanceTarget, now, reduced?.matches);
+    group.current.position.set(position[0] + pose.x * width, position[1] + (pose.y + appearance.lift) * height, position[2] + pose.z);
     group.current.scale.set(pose.scaleX * appearance.spreadX, pose.scaleY * appearance.flattenY, 1);
     records.current.length = props.segments;
     records.current.forEach((record, index) => {
@@ -88,20 +90,23 @@ function WeatherCloudLayer(props) {
     });
     group.current.updateMatrixWorld(true);
   }, -1);
-  return React.createElement(O, { ...props, ref: group, position, bounds, seed, speed: 0, growth: 0, opacity: 1, distribute: capture });
+  return React.createElement(O, { ...cloudProps, ref: group, position, bounds, seed, speed: 0, growth: 0, opacity: 1, distribute: capture });
 }
 
-function useHeaderNativeRain(ref, enabled) {
+function useHeaderNativeRain(ref, enabled, returnMode = false) {
   const [ready, setReady] = React.useState(false);
   React.useEffect(() => {
     const region = enabled && ref.current?.closest('.weather-header-preview,.weather-header-dropdown__hero');
     if (!region) { setReady(false); return; }
-    const sync = () => setReady(region.getAttribute('data-weather-native-rain') === 'ready');
+    const sync = () => {
+      const ready = region.getAttribute('data-weather-native-rain') === 'ready';
+      setReady(ready && (!returnMode || region.getAttribute('data-weather-native-precipitation') || 'rain'));
+    };
     sync();
     const observer = new MutationObserver(sync);
-    observer.observe(region, { attributes: true, attributeFilter: ['data-weather-native-rain'] });
+    observer.observe(region, { attributes: true, attributeFilter: ['data-weather-native-rain', 'data-weather-native-precipitation'] });
     return () => observer.disconnect();
-  }, [ref, enabled]);
+  }, [ref, enabled, returnMode]);
   return ready;
 }
 
@@ -443,6 +448,8 @@ var MOON_ALPHA_VIDEO_URL = new URL(
     compact: r = !1,
     isPartlyCloudy: i = !1,
   }) => {
+    const layers = cloudMotion.resolveCloudAppearance(React.useContext(CloudMotionContext)).bandCoverage;
+    const showHigh = !i || layers?.[2] > 0;
     let a = { primary: `#FFFFFF`, secondary: `#F8F8F8`, tertiary: `#F0F0F0`, light: `#FAFAFA`, intensity: e },
       c = r && typeof window < `u` && window.innerWidth <= 899;
     return c
@@ -455,6 +462,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                 texture: cloudTextureUrl.href,
             children: [
               (0, jsxRuntime.jsx)(WeatherCloudLayer, {
+                band: 0,
                 segments: 18,
                 bounds: [1.05, 0.46, 0.66],
                 volume: i ? 0.52 : 0.62,
@@ -465,6 +473,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                 position: [-1.05, 2.05, -2.05],
               }),
               (0, jsxRuntime.jsx)(WeatherCloudLayer, {
+                band: 1,
                 segments: 14,
                 bounds: [0.88, 0.4, 0.58],
                 volume: i ? 0.38 : 0.46,
@@ -474,8 +483,9 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                 opacity: a.intensity * 0.6,
                 position: [0.1, 1.92, -2.48],
               }),
-              !i &&
+              showHigh &&
                 (0, jsxRuntime.jsx)(WeatherCloudLayer, {
+                  band: 2,
                   segments: 11,
                   bounds: [0.72, 0.36, 0.52],
                   volume: 0.32,
@@ -496,6 +506,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                 texture: cloudTextureUrl.href,
               children: [
                 (0, jsxRuntime.jsx)(WeatherCloudLayer, {
+                  band: 0,
                   segments: 26,
                   bounds: [2, 0.56, 0.88],
                   volume: i ? 1.28 : 1.55,
@@ -506,6 +517,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                   position: [-0.82, 2.02, -2.02],
                 }),
                 (0, jsxRuntime.jsx)(WeatherCloudLayer, {
+                  band: 1,
                   segments: 20,
                   bounds: [1.5, 0.5, 0.78],
                   volume: i ? 0.95 : 1.14,
@@ -515,8 +527,9 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                   opacity: a.intensity * 0.64,
                   position: [0.72, 1.78, -2.48],
                 }),
-                !i &&
+                showHigh &&
                   (0, jsxRuntime.jsx)(WeatherCloudLayer, {
+                    band: 2,
                     segments: 16,
                     bounds: [1.12, 0.46, 0.7],
                     volume: 0.82,
@@ -537,6 +550,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                 texture: cloudTextureUrl.href,
                 children: [
                   (0, jsxRuntime.jsx)(WeatherCloudLayer, {
+                    band: 0,
                     segments: 40,
                     bounds: [8, 3, 3],
                     volume: 8,
@@ -547,6 +561,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                     position: [0, 4, -2],
                   }),
                   (0, jsxRuntime.jsx)(WeatherCloudLayer, {
+                    band: 1,
                     segments: 35,
                     bounds: [6, 2.5, 2.5],
                     volume: 6,
@@ -555,6 +570,16 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                     speed: t * 0.8,
                     opacity: a.intensity * 0.8,
                     position: [2, 3, -3],
+                  }),
+                  layers?.[2] > 0 && (0, jsxRuntime.jsx)(WeatherCloudLayer, {
+                    band: 2,
+                    segments: 18,
+                    bounds: [7, 2.3, 2.6],
+                    volume: 6,
+                    color: a.tertiary,
+                    fade: 60,
+                    opacity: a.intensity * 0.8,
+                    position: [-1.5, 3.8, -3.4],
                   }),
                 ],
               }),
@@ -566,6 +591,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                 texture: cloudTextureUrl.href,
                 children: [
                   (0, jsxRuntime.jsx)(WeatherCloudLayer, {
+                    band: 0,
                     segments: 30,
                     bounds: [12, 4, 4],
                     volume: 15,
@@ -576,6 +602,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                     position: [-5, 4, -2],
                   }),
                   (0, jsxRuntime.jsx)(WeatherCloudLayer, {
+                    band: 1,
                     segments: 26,
                     bounds: [14, 3, 3],
                     volume: 12,
@@ -586,6 +613,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                     position: [6, 3.5, -1],
                   }),
                   (0, jsxRuntime.jsx)(WeatherCloudLayer, {
+                    band: 2,
                     segments: 22,
                     bounds: [10, 3, 3],
                     volume: 10,
@@ -596,6 +624,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                     position: [0, 5.5, -3],
                   }),
                   (0, jsxRuntime.jsx)(WeatherCloudLayer, {
+                    band: 0,
                     segments: 18,
                     bounds: [8, 2.5, 2.5],
                     volume: 8,
@@ -606,6 +635,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                     position: [-8, 3, -4],
                   }),
                   (0, jsxRuntime.jsx)(WeatherCloudLayer, {
+                    band: 2,
                     segments: 16,
                     bounds: [6, 2, 2],
                     volume: 6,
@@ -616,6 +646,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                     position: [8, 6, -2],
                   }),
                   (0, jsxRuntime.jsx)(WeatherCloudLayer, {
+                    band: 1,
                     segments: 20,
                     bounds: [9, 2.5, 2.5],
                     volume: 9,
@@ -1083,18 +1114,20 @@ var MOON_ALPHA_VIDEO_URL = new URL(
   },
   WeatherLightning = ({ compact: e = !1, externalRain = false }) => {
     let t = (0, React.useRef)(),
-      n = (0, React.useRef)(),
-      r = (0, React.useRef)(!1);
+      n = (0, React.useRef)();
+    const pulse = React.useRef(null), motion = React.useRef(null);
     return (
-      P(e => {
-        if (Math.random() < 0.003 && !r.current && ((r.current = !0), n.current)) {
-          let e = (Math.random() - 0.5) * 10;
-          ((n.current.position.x = e),
-            (n.current.intensity = 90),
-            setTimeout(() => {
-              (n.current && (n.current.intensity = 0), (r.current = !1));
-            }, 400));
+      P((_, delta) => {
+        if (!n.current) return;
+        motion.current ??= globalThis.matchMedia?.('(prefers-reduced-motion: reduce)') ?? { matches: false };
+        if (document.hidden || motion.current.matches) {
+          pulse.current = null;
+          n.current.intensity = 0;
+          return;
         }
+        const current = pulse.current ||= { elapsed: 0 };
+        n.current.intensity = cloudMotion.advanceStormFlash(current, delta);
+        if (n.current.intensity > 0) n.current.position.x = current.x;
       }),
       e
         ? (0, jsxRuntime.jsxs)(`group`, {
@@ -1273,6 +1306,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
     showConditionLabel: i = !0,
     variant: o = `default`,
     externalRain = false,
+    externalMixed = false,
   }) => {
     let s = (() => {
         if (!e?.location?.localtime) return !1;
@@ -1283,6 +1317,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
       c = e?.current?.condition?.text,
       l = c ? weatherConditionType(c) : null,
       cloudAppearance = cloudMotion.resolveCloudAppearance(e),
+      particleDensity = cloudMotion.precipitationParticleDensity(e),
       u = o === `header`,
       d = o === `header-panel`,
       f = u;
@@ -1345,7 +1380,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                             portalMode: n,
                             compact: f,
                           }),
-                          !externalRain && (0, jsxRuntime.jsx)(WeatherRain, { count: f ? 220 : n ? 100 : 800, compact: f }),
+                          !externalRain && (0, jsxRuntime.jsx)(WeatherRain, { count: Math.round((f ? 220 : n ? 100 : 800) * particleDensity), compact: f }),
                         ],
                       })
                     : l === `snowy`
@@ -1357,7 +1392,7 @@ var MOON_ALPHA_VIDEO_URL = new URL(
                               portalMode: n,
                               compact: f,
                             }),
-                            (0, jsxRuntime.jsx)(WeatherSnow, { count: f ? 150 : n ? 50 : 400, compact: f }),
+                            !externalMixed && (0, jsxRuntime.jsx)(WeatherSnow, { count: Math.round((f ? 150 : n ? 50 : 400) * particleDensity), compact: f }),
                           ],
                         })
                       : l === `stormy`
@@ -1719,7 +1754,7 @@ var ForecastPortal = ({ position: e, dayData: t, index: n, isActive: r, isFullsc
     let s = n && r === `header`,
       c = n && r === `header-panel`,
       rainRoot = React.useRef(null),
-      externalRain = useHeaderNativeRain(rainRoot, s || c),
+      nativePrecipitation = useHeaderNativeRain(rainRoot, s || c, true),
       [l, u] = React.useState(!1),
       [d, p] = React.useState(null),
       m = e?.location,
@@ -1896,7 +1931,8 @@ var ForecastPortal = ({ position: e, dayData: t, index: n, isActive: r, isFullsc
                           isLoading: t,
                           showConditionLabel: !n,
                           variant: r,
-                          externalRain,
+                          externalRain: Boolean(nativePrecipitation),
+                          externalMixed: nativePrecipitation === 'mixed',
                         }),
                         !s &&
                           !c &&

@@ -72,7 +72,8 @@ test('clear-label positive coverage creates the native container before a late h
     assert.equal(f.styles[0].get('transform'), undefined, 'the helper is actually still pending');
     release(); await import(`${pathToFileURL(helper).href}?v=late-helper`); await new Promise(resolve => setImmediate(resolve));
     assert.ok(f.styles[0].get('transform'), 'the original ref receives the late helper without a React rerender');
-    assert.ok(Number(f.styles[0].get('opacity')) > 0 && Number(f.styles[0].get('opacity')) < .1);
+    assert.equal(Number(f.styles[0].get('opacity')), 0);
+    assert.ok(Number(f.styles[2].get('opacity')) > 0 && Number(f.styles[2].get('opacity')) < .1);
     cloudNode.props.ref(null); cloudNode = null;
     assert.equal(f.frames.size, 0);
   } finally {
@@ -101,6 +102,25 @@ test('separate complete model layers change silhouette without replacing primary
   assert.equal(cloud.resolveCloudAppearance(cloudy(0, layers(100, 0, 0))).opacity, 0, 'separate model cannot invent clouds over a measured zero');
 });
 
+test('a measured overcast sky keeps the middle deck, lower patches and high veils distinct', () => {
+  const model = cloud.resolveCloudAppearance(cloudy(100, layers(21.9, 99.2, 1.6)));
+  const [low, mid, high] = [0, 1, 2].map(index => cloud.resolveCloudBandAppearance(model, index));
+  assert.ok(mid.opacity > low.opacity && low.opacity > high.opacity);
+  assert.ok(low.flattenY > mid.flattenY && mid.flattenY > high.flattenY);
+  assert.ok(low.lift < mid.lift && mid.lift < high.lift);
+  assert.ok(high.spreadX > mid.spreadX);
+
+  const partial = cloud.resolveCloudAppearance(cloudy(75, layers(null, 0, 24)));
+  assert.deepEqual(partial.bandCoverage, [null, 0, 24]);
+  assert.ok(cloud.resolveCloudBandAppearance(partial, 0).opacity > 0, 'unknown low coverage retains a neutral estimate');
+  assert.equal(cloud.resolveCloudBandAppearance(partial, 1).opacity, 0, 'an explicit zero does not create a middle deck');
+  const forecast = cloudy(75, layers(30, 0, 100));
+  forecast.weatherMeta.appearanceTimeMs = Date.parse('2026-11-08T12:00:00Z');
+  assert.equal(cloud.resolveCloudAppearance(forecast).bandCoverage, null);
+  const clear = cloud.resolveCloudAppearance(cloudy(0, layers(100, 100, 100)));
+  assert.ok([0, 1, 2].every(index => cloud.resolveCloudBandAppearance(clear, index).opacity === 0));
+});
+
 test('rain, snow, fog and storm retain their existing weather effects under thin-layer metadata', () => {
   for (const [code, text] of [[1183, 'Rain'], [1210, 'Snow'], [1030, 'Fog'], [1273, 'Thunderstorm']]) {
     const weather = cloudy(5, layers(0, 0, 100)); weather.current.condition = { code, text };
@@ -109,6 +129,35 @@ test('rain, snow, fog and storm retain their existing weather effects under thin
     assert.equal(fallback.clouds, true);
     assert.equal(fallback.precipitation, text !== 'Fog');
   }
+});
+
+test('fog, snow, rain, overcast and storm use different cloud silhouettes', () => {
+  const band = code => cloud.resolveCloudBandAppearance(cloud.resolveCloudAppearance({ current: { cloud: 75, condition: { code } } }), 1);
+  assert.ok(band(1030).opacity < band(1006).opacity, 'foreground fog does not add a second dense cloud sheet');
+  assert.ok(band(1009).flattenY < band(1006).flattenY, 'overcast clouds form a flatter deck');
+  assert.ok(band(1210).flattenY < band(1183).flattenY, 'snow clouds use flatter sheets than rain clouds');
+  assert.ok(band(1273).opacity > band(1183).opacity && band(1273).flattenY > band(1183).flattenY, 'storm billows are darker and deeper');
+  const density = code => cloud.precipitationParticleDensity({ current: { condition: { code }, precip_mm: 200 } });
+  assert.ok(density(1153) < density(1183) && density(1183) < density(1189) && density(1189) < density(1195));
+});
+
+test('lightning is elapsed-time based with two short strokes and a long quiet interval', () => {
+  const random = () => 0;
+  const state = { elapsed: 0 };
+  for (let tick = 0; tick < 27; tick++) assert.equal(cloud.advanceStormFlash(state, .25, random), 0);
+  assert.equal(cloud.advanceStormFlash(state, .25, random), 34);
+  assert.equal(cloud.advanceStormFlash(state, .095, random), 0);
+  const returnStroke = cloud.advanceStormFlash(state, .025, random);
+  assert.ok(returnStroke > 0 && returnStroke < 15);
+  assert.equal(cloud.advanceStormFlash(state, .20, random), 0);
+  assert.equal(state.next, 15);
+  const sample = fps => {
+    const current = { elapsed: 0 };
+    let intensity;
+    for (let tick = 0; tick < fps * 7.15; tick++) intensity = cloud.advanceStormFlash(current, 1 / fps, random);
+    return intensity;
+  };
+  assert.ok(Math.abs(sample(40) - sample(60)) < 1e-7);
 });
 
 test('cloud appearance transitions preserve state and ease shape and opacity without a pause catch-up jump', () => {
@@ -307,7 +356,8 @@ test('native layer updates ease the existing raster field instead of replacing o
   assert.ok(Number(f.styles[0].get('opacity')) < opacity && Number(f.styles[0].get('opacity')) > opacity - .02);
   for (let time = 68; time <= 8000; time += 34) f.tick(time);
   assert.ok(Number(f.styles[0].get('opacity')) < opacity * .25);
-  const scaleY = Number(f.styles[0].get('transform').match(/scale\([^,]+,([\d.]+)\)/)[1]);
+  assert.ok(Number(f.styles[2].get('opacity')) > 0, 'only the high veil remains after the transition');
+  const scaleY = Number(f.styles[2].get('transform').match(/scale\([^,]+,([\d.]+)\)/)[1]);
   assert.ok(scaleY < .25, 'known high layer uses the same raster flattened into a veil');
   second.dispose();
 });

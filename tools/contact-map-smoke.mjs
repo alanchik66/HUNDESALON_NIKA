@@ -35,7 +35,17 @@ const isMapChildRequest = (request, page) => {
   return frame.parentFrame() === page.mainFrame() && url.origin === server.baseUrl
     && url.pathname === '/assets/frames/contact-map.html';
 };
-const installMapProbes = context => {
+const utcClockRoute = /^https:\/\/(?:worldtimeapi\.org\/api\/timezone\/Etc\/UTC|timeapi\.io\/api\/Time\/current\/zone\?timeZone=UTC)$/;
+const fulfillUtcClock = route => {
+  const iso = new Date().toISOString();
+  return route.fulfill({
+    headers: { 'access-control-allow-origin': '*' },
+    json: { utc_datetime: iso, dateTime: iso },
+  });
+};
+const installMapProbes = async context => {
+  // Keep the shared header clock deterministic during navigation in WebKit.
+  await context.route(utcClockRoute, fulfillUtcClock);
   context.on('page', page => {
     const requests = [];
     mapRequestOrigins.set(page, requests);
@@ -301,6 +311,59 @@ const googleMapsMock = `
 `;
 
 try {
+  const previewOrigin = 'https://preview.hundesalon-nika.com';
+  const preview = await browser.newContext({ serviceWorkers: 'block' });
+  try {
+    await preview.route('**/*', async route => {
+      const url = new URL(route.request().url());
+      if (url.hostname === 'maps.googleapis.com' && url.pathname === '/maps/api/js') {
+        return route.fulfill({ contentType: 'application/javascript', body: googleMapsMock });
+      }
+      if (url.origin !== previewOrigin) return route.abort();
+      if (url.pathname === '/api/maps-config') return route.fulfill({ json: { enabled: true, apiKey: 'fixture' } });
+      if (url.pathname === '/ru/kontakty.html') return route.fulfill({
+        contentType: 'text/html',
+        body: `<!doctype html><html lang="ru">
+          <div class="map-viewport" style="height:400px">
+            <div class="map-native" style="height:100%" data-lat="51.320486" data-lng="12.416501"></div>
+          </div>
+          <script src="/assets/js/contact-map.js"></script></html>`,
+      });
+      const response = await preview.request.get(server.baseUrl + url.pathname + url.search);
+      await route.fulfill({ response });
+    });
+    const page = await preview.newPage();
+    await page.clock.install();
+    await page.goto(`${previewOrigin}/ru/kontakty.html`, { waitUntil: 'domcontentloaded' });
+    await page.locator('.map-native').scrollIntoViewIfNeeded();
+    await page.waitForSelector('.map-native[data-map-provider="google"]');
+    const child = page.frameLocator(frameSelector);
+    await child.locator('.map-native[data-map-suspended="0"]').waitFor();
+    const marker = child.locator('.contact-map-google-pin');
+    await marker.evaluate(element => { element.style.display = 'none'; });
+    assert.equal(await marker.evaluate(element => element.getBoundingClientRect().width), 0);
+    await page.clock.runFor(16000);
+    assert.equal(await page.locator('.map-native').getAttribute('data-map-provider'), 'google');
+    assert.equal(await page.locator('.contact-map-3d-link').count(), 0);
+    await marker.evaluate(element => { element.style.removeProperty('display'); });
+    await child.locator('gmp-map-3d').evaluate(map => map.dispatchEvent(new Event('gmp-error')));
+    await page.waitForSelector('.map-native[data-map-provider="openstreetmap"]');
+    await child.locator('img.leaflet-marker-icon[alt="HUNDESALON NIKA"]').waitFor({ state: 'visible' });
+    await child.getByRole('button', { name: 'Приблизить' }).click();
+    assert.equal(await child.locator('.leaflet-control-attribution a').getAttribute('href'), 'https://www.openstreetmap.org/copyright');
+    assert.equal(await page.locator('.contact-map-3d-link').getAttribute('href'), 'https://hundesalon-nika.com/ru/kontakty');
+    assert.equal(await page.locator('.contact-map-controls, .map-mode-button').count(), 0);
+    console.log(`[contact-map] ${engine} late preview SDK failure switches to the interactive street map`);
+    await preview.route('https://maps.googleapis.com/maps/api/js*', route =>
+      route.fulfill({ contentType: 'application/javascript', body: '/* SDK callback never arrives */' })
+    );
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.map-native[data-map-provider="openstreetmap"]', { timeout: 30000 });
+    assert.equal(await page.locator('.contact-map-3d-link').count(), 1);
+    console.log(`[contact-map] ${engine} unresponsive preview SDK keeps a working map and 3D link`);
+  } finally {
+    await preview.close();
+  }
   for (const locale of locales) {
     for (const [layout, viewport] of layouts) {
       const context = await browser.newContext({ viewport, serviceWorkers: 'block' });
@@ -767,6 +830,7 @@ try {
     await page.route('**/*', async route => {
       const request = route.request();
       const url = new URL(request.url());
+      if (utcClockRoute.test(url.href)) return fulfillUtcClock(route);
       if (!['GET', 'HEAD'].includes(request.method())) return route.abort();
       if (url.origin === server.baseUrl && url.pathname === '/api/maps-config') {
         configRequests += 1;
@@ -922,6 +986,7 @@ try {
     await page.route('**/*', async route => {
       const request = route.request();
       const url = new URL(request.url());
+      if (utcClockRoute.test(url.href)) return fulfillUtcClock(route);
       if (url.origin === server.baseUrl && url.pathname === '/api/maps-config') {
         if (!isMapChildRequest(request, page)) return route.abort();
         return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ enabled: true, apiKey: 'test-google-key' }) });

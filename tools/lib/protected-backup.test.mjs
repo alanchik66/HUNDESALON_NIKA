@@ -311,15 +311,24 @@ test(
     const verified = await verifyD1Backup({ file: result.file, keyProvider });
     assert.equal(verified.integrity, 'ok');
     assert.deepEqual(verified.tableCounts, [{ table: 'fixture', rows: 1 }]);
-    const script =
-      '$ErrorActionPreference="Stop"; $target=[Console]::In.ReadToEnd(); $sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value; $acl=Get-Acl -LiteralPath $target; $rules=$acl.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier]); $unexpected=@($rules | Where-Object { $_.IdentityReference.Value -notin @($sid,"S-1-5-18") -or $_.AccessControlType -ne "Allow" -or $_.IsInherited }); [Console]::Out.Write((@{protected=$acl.AreAccessRulesProtected;unexpectedRules=$unexpected.Count;ruleCount=@($rules).Count} | ConvertTo-Json -Compress))';
+    const systemDirectory = path.join(process.env.SystemRoot || 'C:/Windows', 'System32');
+    const user = spawnSync(path.join(systemDirectory, 'whoami.exe'), ['/user', '/fo', 'csv', '/nh'], {
+      encoding: 'utf8', timeout: 30_000, windowsHide: true,
+    });
+    assert.equal(user.status, 0);
+    const sid = user.stdout.match(/"(S-[0-9-]+)"\s*$/)?.[1];
+    assert.ok(sid);
+    const aclFile = path.join(context.directory, 'fixture-acl.txt');
     const checked = spawnSync(
-      path.join(process.env.SystemRoot || 'C:/Windows', 'System32/WindowsPowerShell/v1.0/powershell.exe'),
-      ['-NoProfile', '-NonInteractive', '-Command', script],
-      { input: result.file, encoding: 'utf8', timeout: 30_000, windowsHide: true }
+      path.join(systemDirectory, 'icacls.exe'),
+      [result.file, '/save', aclFile, '/l'],
+      { encoding: 'utf8', timeout: 30_000, windowsHide: true }
     );
     assert.equal(checked.status, 0);
-    assert.deepEqual(JSON.parse(checked.stdout), { protected: true, unexpectedRules: 0, ruleCount: 2 });
+    const [, dacl] = (await fs.readFile(aclFile, 'utf16le')).trim().split(/\r?\n/);
+    assert.ok(dacl.startsWith('D:P'), 'the backup does not inherit other access rules');
+    const rules = dacl.match(/\([^()]+\)/g) || [];
+    assert.deepEqual(new Set(rules), new Set(['(A;;FA;;;' + sid + ')', '(A;;FA;;;SY)']));
   }
 );
 

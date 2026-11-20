@@ -266,7 +266,6 @@ for (const file of [
   'assets/images/favicon/favicon-64x64.png',
   'assets/images/favicon/favicon-128x128.png',
   'assets/images/favicon/favicon-384x384.png',
-  'assets/images/favicon/favicon-512x512.png',
   'assets/images/favicon/favicon-search-512.png',
   'assets/images/favicon/android-chrome-512x512.png',
   'assets/images/favicon/maskable-icon-512x512.png',

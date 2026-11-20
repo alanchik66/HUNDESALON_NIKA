@@ -1616,7 +1616,7 @@ test('scene readiness comes from a rendered frame inside asset Suspense and neve
   assert.match(suspense, /children: \[\s*\(0, jsxRuntime\.jsx\)\(SceneReady,/);
 });
 
-test('header panels retain their established cloud composition on mobile and desktop', async () => {
+test('header panels retain cloud composition and scale fallback rain on mobile and desktop', async () => {
   const source = await readFile(new URL('scene.mjs', sourceDirectory), 'utf8');
   const start = source.indexOf('  WeatherIcon = ') + '  WeatherIcon = '.length;
   const end = source.indexOf('\nj(k);', start);
@@ -1627,14 +1627,21 @@ test('header panels retain their established cloud composition on mobile and des
   );
   const previous = globalThis.window;
   try {
-    for (const [width, variant, compact, rainCount] of [[430, 'header-panel', false, 800], [899, 'header-panel', false, 800], [900, 'header-panel', false, 800], [1440, 'header-panel', false, 800], [430, 'default', false, 800], [1440, 'header', true, 220]]) {
-      globalThis.window = { innerWidth: width };
-      const tree = Icon({ weatherData: { current: { condition: { text: 'Rain' } }, location: { localtime: '2026-11-04T09:00' } }, variant, showConditionLabel: false });
+    const render = (code, variant, externalRain = false) => {
+      const weatherData = { current: { condition: { code, text: 'Rain' } }, location: { localtime: '2026-11-04T09:00' } };
+      const tree = Icon({ weatherData, variant, externalRain, showConditionLabel: false });
       assert.equal(tree.type, 'WindProvider');
-      const children = tree.props.children.props.children[0].props.children;
-      assert.equal(children[0].props.compact, compact, `${width}/${variant} clouds`);
-      assert.equal(children[1].props.count, rainCount, `${width}/${variant} rain`);
+      return tree.props.children.props.children[0].props.children;
+    };
+    for (const [width, variant, compact] of [[430, 'header-panel', false], [899, 'header-panel', false], [900, 'header-panel', false], [1440, 'header-panel', false], [430, 'default', false], [1440, 'header', true]]) {
+      globalThis.window = { innerWidth: width };
+      const [clouds, rain] = render(1189, variant);
+      assert.equal(clouds.props.compact, compact, width + '/' + variant + ' clouds');
+      assert.equal(rain.props.count, compact ? 183 : 664, width + '/' + variant + ' moderate rain');
     }
+    assert.equal(render(1153, 'header-panel')[1].props.count, 304, 'drizzle uses fewer particles');
+    assert.equal(render(1195, 'header-panel')[1].props.count, 920, 'heavy rain uses more particles');
+    assert.equal(render(1189, 'header-panel', true)[1], false, 'external rain replaces the scene fallback');
   } finally { globalThis.window = previous; }
 });
 
@@ -1645,8 +1652,9 @@ test('cloud compositions retain their layers within the shared renderer instance
   const component = name => {
     const declaration = declarations.find(node => node.id.name === name);
     assert.ok(declaration, name);
-    return new Function('jsxRuntime', 'h', 'd', 'cloudTextureUrl', 'WeatherCloudLayer', 'React', 'P', 'WeatherRain', `return (${source.slice(...declaration.init.range)});`)(
-      { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }, 'CloudRenderer', 'Lambert', { href: 'cloud.png' }, 'CloudLayer', { useRef: () => ({ current: null }) }, () => {}, 'Rain'
+    return new Function('jsxRuntime', 'h', 'd', 'cloudTextureUrl', 'WeatherCloudLayer', 'React', 'P', 'WeatherRain', 'CloudMotionContext', 'cloudMotion', `return (${source.slice(...declaration.init.range)});`)(
+      { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }, 'CloudRenderer', 'Lambert', { href: 'cloud.png' }, 'CloudLayer',
+      { useRef: () => ({ current: null }), useContext: context => context.current }, () => {}, 'Rain', { current: null }, cloudMotion
     );
   };
   const Clouds = component('WeatherClouds'), Lightning = component('WeatherLightning');

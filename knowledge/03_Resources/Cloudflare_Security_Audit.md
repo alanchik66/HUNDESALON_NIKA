@@ -2,7 +2,7 @@
 type: resource
 project: HUNDESALON_NIKA
 verified: 2026-11-08
-updated: 2026-11-18
+updated: 2026-11-20
 ---
 
 # Cloudflare security audit
@@ -93,3 +93,6 @@ Wrangler OAuth выполняет POST и сохраняет credentials в ло
 - Отдельный account GET вернул точное определение Free Managed Ruleset с 38 правилами. В 100 полученных событиях за UTC `2026-11-17T07:09:52.841Z` — `2026-11-18T07:09:52.841Z` найдены 16 `block`, одновременно совпавших по `source=firewallManaged`, точному Free `rulesetId` и `ruleId` из свежего определения. Это прямое свидетельство наблюдавшихся блокировок, а не полный снимок всех текущих настроек.
 - У всех возвращённых строк `sampleInterval=1`, но достигнут предел 100: результат намеренно `incomplete-event-limit-reached`. Нельзя называть 16 полным числом атак за сутки, экстраполировать выборку или утверждать, что все правила включены. Повтор, пагинация и GUI-проверка ради универсального вывода не выполнялись. Свидетельства: `output/release-2026-11-18/waf-read-2026-11-18T06-55-30-248Z-307d101a-c538-4955-9f9e-088159be184e.json`, `waf-passive-2026-11-18T07-09-52-841Z-d0cea044-5ca0-4b68-ab8f-4c19271f94f7.json` в той же папке; итог — `waf-final-report.md`.
 - По [официальной документации Precursor](https://developers.cloudflare.com/cloudflare-challenges/precursor/) (проверено 2026-11-18) клиентская проверка сессии повторяется в фоне; показ interstitial — отдельное поведение. В первом публичном QA собственный широкий запрет всех challenge POST остановил штатный same-origin `/cdn-cgi/challenge-platform/h/b/precursor/…` после HTML200, без наблюдавшегося interstitial. Узкий последующий QA пропустил только запросы этого фонового пути и получил три HTTP200. Это не обход защиты и не снимок sitewide/interstitial настроек; остальные challenge и бизнес-POST оставались запрещены, действительные challenge responses останавливали проверку. Свидетельства: `output/release-2026-11-18/public-click-limitation-analysis.md`, `public-clicks-v2-analysis.md` в той же папке. Отдельные UI-дефекты таким сетевым наблюдением не исключаются.
+## Временный вход владельца с телефона, 20 ноября 2026
+
+Локальная панель использует защищённый Quick Tunnel с одним разрешённым почтовым адресом. Перед подключением панели `tools/lib/private-admin-edge.mjs` проверяет обычным GET оба адреса `/admin/` и `/api/admin/settings`. В проверке с `cloudflared` 2026.10.5 оба вернули 302 на `/authorize` у `login.trycloudflare.com`. Мобильный WebKit дошёл до видимого поля Email. Независимый POST без сессии вернул 401. Порядок запуска и остановки описан в `docs/SITE_ADMIN.md`. [Документация Cloudflare](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/#restrict-access-by-email)

@@ -84,7 +84,12 @@ test('precipitation categories preserve drizzle, showers and hail in every local
   for(const text of ['Hail','Hagel','Град','Град із дощем'])assert.equal(classify(NaN,text).kind,'hail');
   assert.equal(classify(1273,'Thunderstorm with hail').kind,'hail','generic provider thunder code retains explicit hail text');
   for(const code of [71,73,75,77,85,86,1237,1261,1264,1279,1282])assert.equal(classify(code).kind,'none');
-  for(const code of [80,81,82,1240,1243,1246])assert.equal(classify(code).showers,true);
+  for(const code of [80,81,82,1240,1243,1246,1249,1252])assert.equal(classify(code).showers,true);
+  for(const code of [1069,1204,1207,1249,1252])assert.equal(classify(code).kind,'mixed');
+  for(const text of ['Rain and snow','Wet snow','Schneeregen','Мокрый снег','Мокрий сніг'])assert.equal(classify(NaN,text).kind,'mixed');
+  assert.equal(classify(67,'Freezing rain').kind,'rain');
+  const mixed=headerWeatherRainOptions({...host,__weatherCurrentMeta:{weatherCode:67,precipitationKind:'mixed'}});
+  assert.equal(mixed.kind,'mixed');assert.equal(mixed.intensity,'light');
   for(const [code,intensity] of [[61,'light'],[63,'moderate'],[65,'heavy'],[80,'light'],[81,'moderate'],[82,'violent'],[96,'light'],[97,'heavy'],[99,'heavy'],[1195,'heavy']])assert.equal(classify(code).intensity,intensity);
   const forecast=headerWeatherRainOptions(host,{day:{weatherCode:99,condition:{code:1273,text:'Thunderstorm'},totalprecip_mm:48}});
   assert.equal(forecast.kind,'hail');assert.equal(forecast.precipitationMm,null);assert.equal(forecast.intensity,'heavy');
@@ -106,7 +111,12 @@ test('legacy rain remains until a successful native create and pending updates c
   assert.equal(factory.creates.length,0);pending.resolve(factory.module);await flush();
   assert.equal(h.attrs.get('data-weather-native-rain'),'ready');assert.equal(factory.creates[0].kind,'none');
   m.syncHeaderWeatherRain(h.region,{host});assert.equal(factory.updates[0].kind,'rain');
-  factory.fail();m.syncHeaderWeatherRain(h.region,{host});assert.equal(h.attrs.has('data-weather-native-rain'),false);assert.equal(factory.disposals,1);
+  const forecast={day:{condition:{code:1204,text:'Light sleet'}}};
+  m.syncHeaderWeatherRain(h.region,{host,forecast});assert.equal(h.attrs.get('data-weather-native-precipitation'),'mixed');
+  m.syncHeaderWeatherRain(h.region,{host});assert.equal(h.attrs.has('data-weather-native-precipitation'),false);
+  m.syncHeaderWeatherRain(h.region,{host,forecast});
+  factory.fail();m.syncHeaderWeatherRain(h.region,{host});assert.equal(h.attrs.has('data-weather-native-rain'),false);
+  assert.equal(h.attrs.has('data-weather-native-precipitation'),false);assert.equal(factory.disposals,1);
 });
 
 test('optional import failure preserves legacy rain and retry is bounded rather than requested each clock tick',async()=>{
@@ -126,10 +136,12 @@ test('detached/pending regions, removed rain canvases and explicit host teardown
   assert.equal(b.attrs.has('data-weather-native-rain'),false);
 });
 
-test('clearing and remounting a ShadowRoot reinstalls fallback rain suppression without changing stars or snow',async()=>{
+test('remounting reinstalls suppression scoped to rain and to ready mixed snowfall',async()=>{
   const factory=layerFactory(),h=regionFixture(),m=await machine(async()=>factory.module);
   m.syncHeaderWeatherRain(h.region,{host});await flush();const old=h.root.children[0];
-  assert.match(old.textContent,/recovery--rainy/);assert.match(old.textContent,/recovery--stormy/);assert.doesNotMatch(old.textContent,/snowy|stars/);
+  assert.match(old.textContent,/recovery--rainy/);assert.match(old.textContent,/recovery--stormy/);
+  assert.ok(old.textContent.includes('[data-weather-native-precipitation="mixed"] .weather-scene-recovery--snowy'));
+  assert.doesNotMatch(old.textContent,/stars/);
   m.disposeHeaderWeatherRain(h.region);old.parentNode=null;h.root.children.length=0;
   m.syncHeaderWeatherRain(h.region,{host});await flush();assert.equal(h.root.children.length,1);assert.notEqual(h.root.children[0],old);
 });

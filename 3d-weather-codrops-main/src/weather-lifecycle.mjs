@@ -228,12 +228,20 @@ export const HEADER_WEATHER_RECOVERY_STYLES = `
 :host([data-weather-variant='header']) .weather-header-preview .weather-scene-recovery--stormy::after {
   content: ''; position: absolute; top: 28%; left: 58%; width: 9%; height: 35%; opacity: 0;
   clip-path: polygon(50% 0, 10% 58%, 45% 55%, 25% 100%, 95% 35%, 56% 40%, 78% 0) !important;
-  background: #eef4ff; filter: drop-shadow(0 0 8px #c4e6ff); animation: weatherRecoveryLightning 6s linear infinite;
+  background: #eef4ff; filter: drop-shadow(0 0 8px #c4e6ff); animation: weatherRecoveryLightning 17s linear infinite;
 }
 @keyframes weatherRecoveryOrbGlow { from { filter: brightness(.96); } to { filter: brightness(1.08); } }
 @keyframes weatherRecoveryRain { to { background-position: -12px 42px; } }
 @keyframes weatherRecoverySnow { to { background-position: 12px 86px; } }
-@keyframes weatherRecoveryLightning { 0%, 70%, 73%, 76%, 100% { opacity: 0; } 71%, 74% { opacity: .8; } }
+@keyframes weatherRecoveryLightning {
+  0%, 62%, 62.6%, 63.2%, 100% { opacity: 0; }
+  62.1% { opacity: .76; }
+  62.8% { opacity: .34; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .weather-scene-recovery--stormy::after,
+  :host([data-weather-variant='header']) .weather-header-preview .weather-scene-recovery--stormy::after { animation: none; }
+}
 `;
 
 export function resolveWeatherSceneFallback(weather, { getSolarPhase, now = Date.now } = {}) {

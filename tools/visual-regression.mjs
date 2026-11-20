@@ -545,8 +545,7 @@ try {
     await waitForDrawerEntrance();
 
     const galleryState = await page.evaluate(() => {
-      const checkedItems = [...document.querySelectorAll('#mobile-nav > .mobile-nav__content > .mobile-nav-group > a[href]')]
-        .filter(item => !item.classList.contains('mobile-nav-link--promotions'));
+      const checkedItems = [...document.querySelectorAll('#mobile-nav > .mobile-nav__content > .mobile-nav-group > a[href]')];
       const details = checkedItems.map(item => {
         const rect = item.getBoundingClientRect();
         return {
@@ -569,7 +568,7 @@ try {
     // Native subpixel bounds can differ slightly from the 44–48px CSS touch-target height.
     assert(
       `${scenario.name}: ordinary menu tiles share equal compact dimensions`,
-      galleryState.checked.length === 14 && galleryState.details.every(item =>
+      new Set(galleryState.checked).size === 13 && galleryState.details.every(item =>
         item.height >= 43.5 && item.height <= 48.5 && Math.abs(item.width - galleryState.details[0].width) <= 1 &&
         Math.abs(item.height - galleryState.details[0].height) <= 1),
       JSON.stringify(galleryState)

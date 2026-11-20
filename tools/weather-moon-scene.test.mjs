@@ -99,6 +99,27 @@ test('east-positive albedo landmarks and lunar north are mapped without a mirror
   assert.ok(pixel(image,128,81)[1]>pixel(image,128,175)[1]+30,'north feature is above the equator');
 });
 
+test('the small terrain render separates sunlit albedo tones without lifting Earthshine', () => {
+  const maps = mapsFor();
+  for (let row = 0; row < maps.height; row++) {
+    const start = row * maps.width * 3;
+    maps.albedo.fill(105, start, start + maps.width * 3 / 2);
+    maps.albedo.fill(185, start + maps.width * 3 / 2, start + maps.width * 3);
+  }
+  const options = { size: 129, discFraction: .86 };
+  const full = idealLighting(1);
+  const flat = renderLunarPixels(full, maps, { ...options, terrain: false });
+  const detailed = renderLunarPixels(full, maps, options);
+  const toneRange = frame => pixel(frame, 86, 64)[0] - pixel(frame, 42, 64)[0];
+  assert.ok(toneRange(detailed) >= toneRange(flat) + 4, 'original dark and bright features gain contrast');
+  for (let index = 3; index < flat.data.length; index += 4) assert.equal(detailed.data[index], flat.data[index]);
+
+  const newMoon = idealLighting(0);
+  const plainEarthshine = renderLunarPixels(newMoon, maps, { ...options, terrain: false });
+  const terrainEarthshine = renderLunarPixels(newMoon, maps, options);
+  assert.deepEqual(terrainEarthshine.data, plainEarthshine.data, 'sunlit detail gain cannot brighten the night side');
+});
+
 test('half-metre DEM units produce the physical radial-graph surface normal and wrap at the map seam',()=>{
   const flat=mapsFor(),normal=lunarSurfaceNormal(flat,.7,-.3);
   const expected={x:Math.cos(.3)*Math.cos(.7),y:Math.cos(.3)*Math.sin(.7),z:-Math.sin(.3)};

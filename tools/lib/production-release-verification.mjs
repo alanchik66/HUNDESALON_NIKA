@@ -278,6 +278,8 @@ export function resolveWeatherReleaseAssets(projectRoot, runtimeRoot) {
   return [...weatherRuntimeOutputNames(buildManifest)].map(output => publicPath(`/3d-weather-codrops-main/dist-widget/${output}?v=${encodeURIComponent(version)}`)).concat(
     findPublicWeatherImporters(runtimeRoot || projectRoot, buildManifest).map(importer => publicPath(`/${importer}?v=${encodeURIComponent(version)}`)),
     publicPath(`${MOON_VIDEO_PATH}?v=${encodeURIComponent(version)}`),
+    publicPath(`/assets/js/header-weather-sky-motion.js?v=${encodeURIComponent(version)}`),
+    publicPath(`/assets/js/header-weather-satellite-clouds.js?v=${encodeURIComponent(version)}`),
     publicPath(`/assets/js/contact-map.js?v=${encodeURIComponent(version)}`),
     publicPath(`${MAP_FRAME_PATH}?v=${encodeURIComponent(version)}`));
 }

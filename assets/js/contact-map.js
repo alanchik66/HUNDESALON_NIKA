@@ -13,6 +13,7 @@
   const FRAME_VERSION = 1;
   const FRAME_ORIGIN = location.origin;
   const IS_RENDER_FRAME = document.documentElement.hasAttribute('data-contact-map-frame');
+  const IS_PHONE_PREVIEW = location.hostname === 'preview.hundesalon-nika.com';
   const scriptVersion = new URL(document.currentScript?.src || '/assets/js/contact-map.js', location.href).searchParams.get('v');
   let googleMapsPromise;
 
@@ -23,6 +24,7 @@
       zoomIn: 'Vergrößern',
       zoomOut: 'Verkleinern',
       streetView: 'Street View öffnen',
+      open3d: '3D-Karte öffnen',
       unavailable: 'Google Maps ist vorübergehend nicht verfügbar.',
     },
     en: {
@@ -31,6 +33,7 @@
       zoomIn: 'Zoom in',
       zoomOut: 'Zoom out',
       streetView: 'Open Street View',
+      open3d: 'Open 3D map',
       unavailable: 'Google Maps is temporarily unavailable.',
     },
     ru: {
@@ -39,6 +42,7 @@
       zoomIn: 'Приблизить',
       zoomOut: 'Отдалить',
       streetView: 'Открыть просмотр улиц',
+      open3d: 'Открыть 3D-карту',
       unavailable: 'Google Карты временно недоступны.',
     },
     uk: {
@@ -47,6 +51,7 @@
       zoomIn: 'Наблизити',
       zoomOut: 'Віддалити',
       streetView: 'Відкрити перегляд вулиць',
+      open3d: 'Відкрити 3D-карту',
       unavailable: 'Google Карти тимчасово недоступні.',
     },
   };
@@ -535,11 +540,13 @@
       `<img class="contact-map-google-pin-image" src="${SALON_MARKER_ICON_URL}" alt="" width="64" height="64">`;
     marker.append(markerVisual);
     map.append(marker);
+    if (IS_PHONE_PREVIEW) {
+      map.addEventListener('gmp-error', window.gm_authFailure, { once: true });
+    }
     renderLease.setRenderer(map);
     element.dataset.mapReady = '1';
     element.dataset.mapProvider = 'google';
     element.dataset.mapMode = 'hybrid';
-
     const flyTo = overrides => {
       Object.assign(camera, overrides);
       map.flyCameraTo({ endCamera: { ...camera }, durationMillis: 650 });
@@ -639,6 +646,7 @@
     frame.className = 'map-embed-google';
     frame.title = element.getAttribute('aria-label') || 'HUNDESALON NIKA — Google Maps';
     frame.referrerPolicy = 'strict-origin-when-cross-origin';
+    frame.setAttribute('credentialless', '');
     frame.allowFullscreen = true;
     const loaded = new Promise((resolve, reject) => {
       frame.addEventListener('load', resolve, { once: true });
@@ -663,6 +671,37 @@
   }
 
   async function initializeRenderer(element, onLease) {
+    if (IS_PHONE_PREVIEW && new URL(location.href).searchParams.get('view') === 'street') {
+      const stylesheet = document.createElement('link');
+      stylesheet.rel = 'stylesheet';
+      stylesheet.href = '/assets/vendor/leaflet/1.9.4/leaflet.css';
+      document.head.appendChild(stylesheet);
+      await import('/assets/vendor/leaflet/1.9.4/leaflet.js');
+      const L = window.L;
+      const container = document.createElement('div');
+      element.replaceChildren(container);
+      const center = [Number(element.dataset.lat), Number(element.dataset.lng)];
+      const map = L.map(container, { scrollWheelZoom: false, zoomControl: false }).setView(center, Number(element.dataset.zoom));
+      const ui = MAP_UI_LABELS[getMapLanguage()];
+      L.control.zoom({ zoomInTitle: ui.zoomIn, zoomOutTitle: ui.zoomOut }).addTo(map);
+      map.attributionControl.setPrefix(false).setPosition('topleft');
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>',
+      }).addTo(map);
+      L.marker(center, {
+        title: 'HUNDESALON NIKA',
+        alt: 'HUNDESALON NIKA',
+        icon: L.icon({ iconUrl: SALON_MARKER_ICON_URL, iconSize: [56, 56], iconAnchor: [28, 56] }),
+      }).addTo(map).bindTooltip('HUNDESALON NIKA', { permanent: true, direction: 'top', offset: [0, -50] });
+      element.dataset.mapReady = '1';
+      element.dataset.mapProvider = 'openstreetmap';
+      element.dataset.mapMode = 'roadmap';
+      return { provider: 'openstreetmap', mode: 'roadmap', api: null };
+    }
+    if (IS_PHONE_PREVIEW) {
+      window.gm_authFailure = () => window.parent.postMessage(message('google-failed'), FRAME_ORIGIN);
+    }
     let config = { apiKey: '', embedUrl: '' };
     try {
       config = await getGoogleMapsConfig();
@@ -753,6 +792,8 @@
     const url = new URL('/assets/frames/contact-map.html', location.href);
     if (scriptVersion) url.searchParams.set('v', scriptVersion);
     let ready = false;
+    let streetPreview = false;
+    let previewTimer;
     let disposed = false;
     let visible = false;
     let lastVisibility;
@@ -765,6 +806,10 @@
       const state = `${visible}:${currentTheme()}`;
       if (state === lastVisibility) return;
       lastVisibility = state;
+      clearTimeout(previewTimer);
+      if (IS_PHONE_PREVIEW && visible && !ready && !streetPreview) {
+        previewTimer = setTimeout(openStreetPreview, GOOGLE_MAPS_TIMEOUT_MS);
+      }
       send('visibility', { visible, light: currentTheme() });
     };
     const attributes = { lat: element.dataset.lat || '', lng: element.dataset.lng || '', zoom: element.dataset.zoom || '17',
@@ -773,17 +818,48 @@
     const initialize = () => send('init', { locale: getMapLanguage(), attributes, visible, light: currentTheme() });
     let resolveReady;
     const readyPromise = new Promise(resolve => { resolveReady = resolve; });
+    function openStreetPreview() {
+      if (disposed || streetPreview) return;
+      streetPreview = true;
+      ready = false;
+      clearTimeout(previewTimer);
+      resolveReady('openstreetmap');
+      const viewport = element.closest('.map-viewport');
+      viewport.querySelector('.contact-map-controls')?.remove();
+      viewport.querySelector('.map-mode-controls')?.remove();
+      for (const request of pending.values()) { clearTimeout(request.timer); request.reject(new Error('Map renderer changed')); }
+      pending.clear();
+      const link = document.createElement('a');
+      link.className = 'map-mode-controls contact-map-3d-link';
+      link.textContent = MAP_UI_LABELS[getMapLanguage()].open3d;
+      link.href = `https://hundesalon-nika.com/${getMapLanguage()}/kontakty`;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      viewport.appendChild(link);
+      delete element.dataset.mapReady;
+      delete element.dataset.mapMode;
+      element.dataset.mapProvider = 'loading';
+      url.searchParams.set('view', 'street');
+      frame.contentWindow.location.replace(url.href);
+    }
     const receive = event => {
       if (event.origin !== FRAME_ORIGIN || event.source !== frame.contentWindow || !isMessage(event.data)) return;
       const data = event.data;
-      if (data.type === 'ready' && !ready && ['google', 'google-embed', 'unavailable'].includes(data.provider)
+      if (IS_PHONE_PREVIEW && !streetPreview && (data.type === 'google-failed' ||
+        (data.type === 'ready' && data.provider === 'unavailable' && data.mode === null))) {
+        openStreetPreview();
+        return;
+      }
+      const providers = streetPreview ? ['openstreetmap', 'unavailable'] : ['google', 'google-embed', 'unavailable'];
+      if (data.type === 'ready' && !ready && providers.includes(data.provider)
         && (data.provider === 'unavailable' ? data.mode === null : isMode(data.mode))) {
         ready = true;
+        clearTimeout(previewTimer);
         element.dataset.mapReady = '1';
         element.dataset.mapProvider = data.provider;
         if (data.mode) element.dataset.mapMode = data.mode;
         resolveReady(data.provider);
-      } else if (data.type === 'result' && Number.isSafeInteger(data.id) && typeof data.ok === 'boolean' && isMode(data.mode)) {
+      } else if (!streetPreview && data.type === 'result' && Number.isSafeInteger(data.id) && typeof data.ok === 'boolean' && isMode(data.mode)) {
         // A throttled tab can deliver a valid reply after the local timeout.
         if (data.id > 0 && data.id <= nextId) reflectMapMode(element, data.mode);
         const request = pending.get(data.id);
@@ -796,6 +872,7 @@
     };
     const lease = createMapRenderLease(element, { onVisibility: syncVisibility, onDispose: () => {
       disposed = true;
+      clearTimeout(previewTimer);
       resolveReady(null);
       window.removeEventListener('message', receive);
       frame.removeEventListener('load', initialize);
@@ -809,7 +886,7 @@
     lease.setRenderer(frame);
     try {
       const provider = await withTimeout(readyPromise, CONFIG_TIMEOUT_MS * 2 + GOOGLE_MAPS_TIMEOUT_MS * 2, 'Map frame timed out');
-      if (disposed || provider !== 'google') return;
+      if (disposed || streetPreview || provider !== 'google') return;
       addGoogleMapControls(element, (command, mode) => new Promise((resolve, reject) => {
         if (disposed || pending.size >= 16) { reject(new Error('Map control unavailable')); return; }
         const id = ++nextId;
@@ -819,6 +896,7 @@
       }));
     } catch {
       if (disposed) return;
+      if (IS_PHONE_PREVIEW) { openStreetPreview(); return; }
       lease.dispose();
       showMapUnavailable(element);
     }

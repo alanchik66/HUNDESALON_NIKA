@@ -47,9 +47,34 @@ test('blocks local advertising and source-only brand assets from production', ()
   assert.equal(isProductionSourceOnlyPath('assets/images/icons/locomotive-legacy.png'), true);
 });
 
+test('production excludes development configuration and retains public runtime configuration', () => {
+  for (const file of [
+    'config/brand-profiles.mjs',
+    'config/local-directories.mjs',
+    'config/markdownlint-files.json',
+    'config/meta-descriptions.mjs',
+    'config/release-reference-methods.json',
+  ]) {
+    assert.equal(isProductionSourceOnlyPath(file), true, file);
+  }
+  assert.equal(isProductionSourceOnlyPath('config/env.js'), false);
+  assert.equal(isProductionSourceOnlyPath('config/deploy-asset-version.txt'), false);
+});
+
+test('retired 512px favicon URLs go directly to the maintained PNG', () => {
+  const redirects = readFileSync(new URL('../_redirects', import.meta.url), 'utf8').split(/\r?\n/);
+  const canonical = '/assets/images/favicon/favicon-search-512.png';
+  for (const former of ['/assets/images/favicon-512x512.png', '/assets/images/favicon/favicon-512x512.png']) {
+    const matching = redirects.filter(rule => rule.startsWith(former + ' '));
+    assert.deepEqual(matching, [former + ' ' + canonical + ' 301']);
+    assert.equal(fs.existsSync(new URL('..' + former, import.meta.url)), false);
+  }
+  assert.equal(fs.existsSync(new URL('..' + canonical, import.meta.url)), true);
+});
+
 test('keeps public brand and active favicon assets deployable', () => {
   assert.equal(isProductionSourceOnlyPath('assets/images/ads/work/logo-from-card-crown-512.png'), false);
-  assert.equal(isProductionSourceOnlyPath('assets/images/favicon/favicon-512x512.png'), false);
+  assert.equal(isProductionSourceOnlyPath('assets/images/favicon/favicon-search-512.png'), false);
   assert.equal(isProductionSourceOnlyPath('assets/images/brand/logo.png'), false);
   assert.equal(isProductionSourceOnlyPath('assets\\images\\brand\\logo.png'), false);
 });

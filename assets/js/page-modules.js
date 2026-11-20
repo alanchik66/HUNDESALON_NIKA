@@ -1277,17 +1277,6 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const initSmoothHashLinks = () => {
-    const restorePromotionsHash = () => {
-      if (window.location.hash !== '#promotions' || !/\/social(?:\.html)?\/?$/.test(window.location.pathname)) return;
-      const target = resolveHashTarget(window.location.hash);
-      if (!target) return;
-      target.scrollIntoView({ behavior: 'instant', block: 'start', inline: 'nearest' });
-    };
-
-    // The shared shell moves page content into its scroll root during DOMContentLoaded.
-    window.requestAnimationFrame(restorePromotionsHash);
-    window.addEventListener('hashchange', () => window.requestAnimationFrame(restorePromotionsHash));
-
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       const targetId = anchor.getAttribute('href');
       if (!targetId || targetId === '#') return;

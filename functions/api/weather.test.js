@@ -346,7 +346,15 @@ test('MET precipitation is the following hour total and unknown or invalid amoun
 test('explicit Bright Sky hail is retained ahead of a generic thunderstorm icon without inventing hail from sleet', () => {
   const current = normalizeBrightSkyCurrent(brightSkyFixture({ condition: 'hail', icon: 'thunderstorm' }), COORDINATES, 'Europe/Berlin', CURRENT_TIME);
   assert.equal(current.weatherCode, 96);
-  assert.equal(normalizeBrightSkyCurrent(brightSkyFixture({ condition: 'sleet', icon: 'sleet' }), COORDINATES, 'Europe/Berlin', CURRENT_TIME).weatherCode, 67);
+  assert.equal(current.precipitationKind, null);
+  const mixed = normalizeBrightSkyCurrent(brightSkyFixture({ condition: 'sleet', icon: 'sleet' }), COORDINATES, 'Europe/Berlin', CURRENT_TIME);
+  assert.equal(mixed.weatherCode, 67);
+  assert.equal(mixed.precipitationKind, 'mixed');
+  const met = metFixture();
+  met.properties.timeseries[0].data.next_1_hours.summary.symbol_code = 'heavysleetshowers_day';
+  const metMixed = normalizeMetCurrent(met, COORDINATES, 'Europe/Berlin', CURRENT_TIME);
+  assert.equal(metMixed.weatherCode, 81);
+  assert.equal(metMixed.precipitationKind, 'mixed');
 });
 
 test('weather API payload carries the reporting window, hourly mean rate and explicit hail', async t => {

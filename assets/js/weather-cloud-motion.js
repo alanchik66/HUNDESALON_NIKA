@@ -36,6 +36,12 @@ export function cloudWind(weather) {
   };
 }
 
+const CLOUD_BANDS = [
+  { density: .94, height: .78, width: 1.12, lift: -.043 },
+  { density: .59, height: .49, width: 1.25, lift: .018 },
+  { density: .31, height: .24, width: 1.39, lift: .068 },
+];
+
 /** Coverage is weather data; these bounded shape/alpha coefficients are visual choices. */
 export function resolveCloudAppearance(weather) {
   const percent = value => !(typeof value === 'number' || typeof value === 'string' && value.trim()) || !Number.isFinite(Number(value))
@@ -43,6 +49,8 @@ export function resolveCloudAppearance(weather) {
   const current = weather?.current || {}, meta = weather?.weatherMeta || {};
   const code = Number(current.condition?.code), text = String(current.condition?.text || '').toLowerCase();
   const storm = [1087, 1273, 1276, 1279, 1282].includes(code) || /thunder|storm/.test(text);
+  const snow = /snow|sleet|blizzard|ice pellet/.test(text) ||
+    [1066, 1069, 1114, 1117, 1204, 1207, 1210, 1213, 1216, 1219, 1222, 1225, 1237, 1249, 1252, 1255, 1258, 1261, 1264].includes(code);
   const precipitation = storm || /rain|drizzle|shower|snow|sleet|blizzard|ice pellet/.test(text) ||
     [1063, 1066, 1069, 1072, 1114, 1117, 1150, 1153, 1168, 1171, 1180, 1183, 1186, 1189, 1192, 1195, 1198, 1201, 1204, 1207, 1210, 1213, 1216, 1219, 1222, 1225, 1237, 1240, 1243, 1246, 1249, 1252, 1255, 1258, 1261, 1264].includes(code);
   const fog = [1030, 1135, 1147].includes(code) || /fog|mist/.test(text);
@@ -51,23 +59,75 @@ export function resolveCloudAppearance(weather) {
   const coverage = measured ?? inferred;
   const layers = Number.isFinite(meta.appearanceTimeMs) ? null : meta.cloudLayers;
   const low = percent(layers?.low), mid = percent(layers?.mid), high = percent(layers?.high);
-  const layerEvidence = layers?.source === 'met-norway-locationforecast' && Number.isFinite(Date.parse(layers.validTime)) &&
-    low !== null && mid !== null && high !== null && low + mid + high > 0;
+  const bandCoverage = [low, mid, high];
+  const validBands = layers?.source === 'met-norway-locationforecast' && Number.isFinite(Date.parse(layers.validTime)) &&
+    bandCoverage.some(amount => amount > 0);
+  const layerEvidence = validBands && bandCoverage.every(amount => amount !== null);
   const weight = layerEvidence ? low + mid + high : 1;
   // A high/mid layer is flatter and lighter than the old cumulus sprite field, not a measured optical depth.
   const strength = layerEvidence ? (low + mid * .45 + high * .2) / weight : .62;
   const flattenY = layerEvidence ? (low + mid * .42 + high * .2) / weight : .7;
   const amount = coverage === 0 ? 0 : .12 + .88 * Math.sqrt(coverage / 100);
   const opacity = precipitation || fog ? Math.max(storm ? .85 : .65, amount * strength) : amount * strength;
+  const condition = storm ? 'storm' : snow ? 'snow' : precipitation ? 'rain' : fog ? 'fog'
+    : code === 1009 || /overcast/.test(text) ? 'overcast' : 'broken';
   return { coverage, measured: measured !== null, layerEvidence, profile: precipitation ? 'precipitation' : fog ? 'fog' : layerEvidence ? 'layered' : 'neutral',
-    opacity, flattenY: precipitation || fog ? 1 : flattenY, spreadX: precipitation || fog ? 1 : 1 + (1 - flattenY) * .2 };
+    bandCoverage: validBands ? bandCoverage : null, condition,
+    opacity, flattenY: precipitation || fog ? 1 : flattenY, spreadX: precipitation || fog ? 1 : 1 + (1 - flattenY) * .2, lift: 0 };
+}
+
+export function resolveCloudBandAppearance(appearance, index) {
+  const band = CLOUD_BANDS[index];
+  if (!band) return appearance;
+  const skyCover = appearance.coverage / 100;
+  const cover = appearance.bandCoverage?.[index];
+  const amount = Math.sqrt((cover ?? appearance.coverage) / 100);
+  const base = { ...appearance, opacity: Math.sqrt(skyCover) * amount * band.density,
+    flattenY: band.height, spreadX: band.width, lift: band.lift };
+
+  // Fog is drawn separately at the horizon. Cloud decks above it retain gaps.
+  if (appearance.condition === 'fog') return { ...base, opacity: base.opacity * .55 };
+  // Separate snow sheets from darker, deeper convective billows.
+  if (appearance.condition === 'storm') return { ...base, opacity: .9, flattenY: Math.max(.62, band.height), spreadX: 1.08 };
+  if (appearance.condition === 'rain') return { ...base, opacity: Math.max(base.opacity, [.59, .47, .18][index]), flattenY: Math.max(.36, band.height) };
+  if (appearance.condition === 'snow') return { ...base, opacity: Math.max(base.opacity, [.51, .45, .20][index]), flattenY: band.height * .8, spreadX: band.width * 1.12 };
+  if (appearance.condition === 'overcast') return { ...base, flattenY: band.height * .8, spreadX: band.width * 1.12 };
+  return base;
+}
+
+/** Particle counts are a visual density for the condition, not a rain-rate conversion. */
+export function precipitationParticleDensity(weather) {
+  const code = Number(weather?.current?.condition?.code);
+  if ([1072, 1150, 1153, 1168].includes(code)) return .38;
+  if ([1063, 1066, 1069, 1180, 1183, 1210, 1213, 1240, 1249, 1255].includes(code)) return .62;
+  if ([1117, 1192, 1195, 1201, 1222, 1225, 1246, 1276, 1282].includes(code)) return 1.15;
+  return .83;
+}
+
+export function advanceStormFlash(state, delta, random = Math.random) {
+  state.elapsed += clamp(finite(delta), 0, .25);
+  state.next ??= 7 + random() * 12;
+  if (state.elapsed >= state.next) {
+    state.started = state.next;
+    state.next += 8 + random() * 14;
+    state.x = (random() - .5) * 10;
+  }
+  const age = state.elapsed - (state.started ?? -Infinity);
+  if (age > .26) return 0;
+  // A bright leading stroke and a fainter return stroke with a dark gap.
+  const initialStroke = age < .085 ? 34 * (1 - age / .085) ** 2 : 0;
+  const returnStroke = age >= .105 && age < .20 ? 15 * (1 - (age - .105) / .095) ** 2 : 0;
+  return initialStroke + returnStroke;
 }
 
 export function smoothCloudAppearance(state, target, now, immediate = false) {
   const time = finite(now, state.time), gap = time - finite(state.time, time);
   const blend = immediate || !Number.isFinite(state.opacity) ? 1 : 1 - Math.exp(-clamp(gap, 0, .05) / 1.6);
   state.time = time;
-  for (const key of ['opacity', 'flattenY', 'spreadX']) state[key] = blend === 1 ? target[key] : state[key] + (target[key] - state[key]) * blend;
+  for (const key of ['opacity', 'flattenY', 'spreadX', 'lift']) {
+    const value = target[key] ?? 0;
+    state[key] = blend === 1 || !Number.isFinite(state[key]) ? value : state[key] + (value - state[key]) * blend;
+  }
   state.coverage = target.coverage; state.profile = target.profile; state.layerEvidence = target.layerEvidence;
   return state;
 }
@@ -141,7 +201,9 @@ export function createFallbackCloudMotion(container, weather) {
   const document = container.ownerDocument, view = document.defaultView || globalThis;
   const nodes = [...container.children], scope = container.closest('.weather-header-preview,.weather-header-dropdown__hero,.weather-app') || container;
   const flow = sharedCloudFlow(scope, cloudMotionNow(view)), wind = cloudWind(weather), poses = nodes.map(() => ({}));
-  const target = resolveCloudAppearance(weather);
+  const appearance = resolveCloudAppearance(weather);
+  const targets = nodes.map((_, index) => resolveCloudBandAppearance(appearance, index));
+  const bandStates = flow.bands ||= [];
   const motion = view.matchMedia?.('(prefers-reduced-motion: reduce)');
   let disposed = false, raf = 0, last = null, width = 0, height = 0, visible = true;
   let resizeObserver, intersectionObserver;
@@ -151,12 +213,12 @@ export function createFallbackCloudMotion(container, weather) {
     if (disposed || !width || !height || hidden()) return;
     const now = cloudMotionNow(view);
     if (!motion?.matches && visible) advanceCloudFlow(flow, now, wind.speed, wind.degree);
-    const appearance = smoothCloudAppearance(flow.appearance ||= {}, target, now, motion?.matches);
     nodes.forEach((node, index) => {
+      const appearance = smoothCloudAppearance(bandStates[index] ||= {}, targets[index], now, motion?.matches);
       const pose = sampleCloudLayer(flow, cloudSeed([index * 3.7, 0, -index]), .38, poses[index]);
       node.style.setProperty('left', '0', 'important');
       node.style.setProperty('top', '0', 'important');
-      node.style.setProperty('transform', `translate3d(${(([-.16, .24, .62][index] + pose.x) * width).toFixed(2)}px,${((pose.y + [0, .08, -.08][index]) * height).toFixed(2)}px,0) scale(${(pose.scaleX * appearance.spreadX).toFixed(4)},${(pose.scaleY * appearance.flattenY).toFixed(4)})`, 'important');
+      node.style.setProperty('transform', `translate3d(${(([-.16, .24, .62][index] + pose.x) * width).toFixed(2)}px,${((pose.y + [0, .08, -.08][index] - appearance.lift) * height).toFixed(2)}px,0) scale(${(pose.scaleX * appearance.spreadX).toFixed(4)},${(pose.scaleY * appearance.flattenY).toFixed(4)})`, 'important');
       node.style.setProperty('opacity', (pose.opacity * [.5, .45, .4][index] * appearance.opacity).toFixed(4), 'important');
     });
   }

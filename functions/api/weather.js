@@ -434,6 +434,7 @@ export function normalizeBrightSkyCurrent(payload, coordinates, timeZone, nowMs 
     latitude: coordinates.latitude,
     longitude: coordinates.longitude,
     weatherCode,
+    precipitationKind: [current.condition, current.icon].some(value => /sleet/i.test(String(value || ''))) ? 'mixed' : null,
     cloudCover,
     fieldSources: cloudCover === null ? {} : { cloudCover: brightSkyFieldSource(payload, current, 'cloud_cover') },
     ...precipitation,
@@ -514,6 +515,7 @@ export function normalizeMetCurrent(payload, coordinates, timeZone, nowMs = Date
     latitude: coordinates.latitude,
     longitude: coordinates.longitude,
     weatherCode: weatherCodeFromMetSymbol(symbol, cloudCover),
+    precipitationKind: /sleet/i.test(symbol) ? 'mixed' : null,
     cloudCover,
     cloudLayers: metCloudLayers(details, entry.time, payload?.properties?.meta?.updated_at, nowMs),
     // MET's amount belongs to the following hour, rather than an observation

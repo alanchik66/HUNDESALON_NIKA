@@ -237,11 +237,11 @@ try {
       assert.equal(material.canvasFilter, 'none', `${name}: the large menu canvas must not receive a compositing filter`);
       assert.equal(await nav.locator('button').count(), 0, `${name}: every menu tile must be a direct link`);
       const hrefs = await links.evaluateAll(items => items.map(item => ({ href: item.href, label: item.textContent.trim() })));
-      assert.equal(hrefs.length, 15, `${name}: menu destinations are complete`);
-      assert.deepEqual(hrefs.slice(7).map(item => new URL(item.href).pathname.replace(`/${locale}/`, '')), [
+      assert.equal(hrefs.length, 13, `${name}: menu destinations are complete`);
+      assert.deepEqual(hrefs.slice(6).map(item => new URL(item.href).pathname.replace(`/${locale}/`, '')), [
         'o-nas.html', 'vvedenie.html', 'social.html', 'reyting.html',
-        'blog/blog.html', 'nashi-uslugi.html', 'partnerstvo.html', 'documents.html',
-      ], `${name}: lower rows retain the requested left/right pairs`);
+        'blog/blog.html', 'partnerstvo.html', 'documents.html',
+      ], `${name}: secondary destinations stay in order`);
       assert.ok(hrefs.some(item => new URL(item.href).pathname.endsWith('/galereya.html')));
       assert.ok(hrefs.some(item => new URL(item.href).pathname.endsWith('/do-i-posle.html')));
 
@@ -252,7 +252,6 @@ try {
         const textRect = text.getBoundingClientRect();
         const style = getComputedStyle(item);
         return {
-          promotion: item.classList.contains('mobile-nav-link--promotions'),
           left: rect.left, top: rect.top, bottom: rect.bottom,
           width: rect.width, height: rect.height,
           textContained: textRect.left >= rect.left && textRect.right <= rect.right + 1 &&
@@ -260,27 +259,9 @@ try {
           infiniteMotion: style.animationIterationCount.split(',').some(value => value.trim() === 'infinite'),
         };
       }));
-      const regularTiles = geometry.filter(item => !item.promotion);
-      assert.ok(regularTiles.every(item => Math.abs(item.width - regularTiles[0].width) <= 1 &&
-        Math.abs(item.height - regularTiles[0].height) <= 1), `${name}: regular tiles must have uniform dimensions`);
+      assert.ok(geometry.every(item => Math.abs(item.width - geometry[0].width) <= 1 &&
+        Math.abs(item.height - geometry[0].height) <= 1), `${name}: regular tiles must have uniform dimensions`);
       assert.ok(geometry.every(item => item.height >= 44 && item.height <= 48), `${name}: all tiles remain compact touch targets`);
-      const promotionGeometry = geometry.find(item => item.promotion);
-      const contentWidth = await nav.locator('.mobile-nav__content').evaluate(element => {
-        const style = getComputedStyle(element);
-        return element.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-      });
-      assert.equal(geometry.findIndex(item => item.promotion), 6, `${name}: promotions separate the six service/result links from salon information`);
-      assert.ok(Math.abs(promotionGeometry.width - contentWidth) <= 1 &&
-        Math.abs(promotionGeometry.left - regularTiles[0].left) <= 1 &&
-        promotionGeometry.top >= geometry[5].bottom && promotionGeometry.bottom <= geometry[7].top,
-      `${name}: promotions occupy a full row between the groups`);
-      const promotion = nav.locator('a[href$="social.html#promotions"]');
-      assert.equal(await promotion.locator('.promo-btn-icon[aria-hidden="true"]').count(), 1, `${name}: promotions retain the decorative icon`);
-      await page.waitForFunction(() => {
-        const image = document.querySelector('#mobile-nav a[href$="social.html#promotions"] img');
-        return image?.complete && image.naturalWidth > 0;
-      }, undefined, { polling: 50, timeout: 15000 });
-      assert.equal(await promotion.locator('img').evaluate(image => image.complete && image.naturalWidth > 0), true, `${name}: promotion icon loads`);
       assert.ok(geometry.every(item => item.textContained), `${name}: labels must fit inside their tile`);
       assert.ok(geometry.every(item => !item.infiniteMotion), `${name}: text must not move in a perpetual loop`);
       const drawer = await nav.evaluate(element => {
@@ -385,37 +366,7 @@ try {
         await open();
         const home = await navigate(page.locator('.logo a[href]'));
         assert.equal(home, `/${locale}/`, 'Logo opens the locale home directly from an open drawer');
-        const promotionsLink = nav.locator('a[href$="social.html#promotions"]');
-        const waitForPromotions = () => page.waitForFunction(() => {
-          const target = document.getElementById('promotions');
-          if (location.hash !== '#promotions' || !target || document.querySelector('.site-scroll-root').scrollTop <= 0) return false;
-          const { top, bottom } = target.getBoundingClientRect();
-          return bottom > 0 && top < innerHeight;
-        });
-        await open();
-        const promotions = await navigate(promotionsLink);
-        await waitForPromotions();
-
-        // Set up the equivalent scrolled-away fragment without racing WebKit's initial fragment placement.
-        const fragmentless = new URL(page.url());
-        const fragment = fragmentless.hash;
-        fragmentless.hash = '';
-        const documentResponse = await page.goto(fragmentless.href, { waitUntil: 'domcontentloaded', timeout: 15000 });
-        assert.equal(documentResponse?.status(), 200, 'The repeat tap starts in a new document without a fragment');
-        await page.waitForFunction(() => location.hash === '' && document.querySelector('.site-scroll-root')?.scrollTop < 2 &&
-          !document.body.classList.contains('hide-header'));
-        await page.evaluate(async hash => {
-          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-          window.history.replaceState(window.history.state, '', hash);
-        }, fragment);
-        assert.equal(new URL(page.url()).hash, '#promotions');
-        assert.ok(await page.locator('#promotions').evaluate(target => target.getBoundingClientRect().top >= innerHeight),
-          'The current fragment must start offscreen for the repeat tap');
-        await open();
-        await activate(promotionsLink);
-        await assertClosed();
-        await waitForPromotions();
-        documentNavigation = { services, back: `/${locale}/${route}`, home, promotions: `${promotions}#promotions`, repeatPromotion: true };
+        documentNavigation = { services, back: '/' + locale + '/' + route, home };
       }
       assert.deepEqual(errors, [], `${name}: no JavaScript errors`);
       results.push({ name, locale, viewport, route, reducedMotion, deviceScaleFactor: deviceScaleFactor ?? 1, actualDpr: material.actualDpr, input: viewport.width < 900 ? 'tap' : 'click', tileSize: geometry[0], drawer, tiles: tileChecks, documentNavigation });

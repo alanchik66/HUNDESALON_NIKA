@@ -584,7 +584,7 @@ test('a failed optional sky UI module keeps the original astronomical clock avai
 });
 
 test('the actual shell passes physical sky visibility to both source lifecycles and forwards forecast time', async () => {
-  const expression = await shellStack, sources = [], sky = [], times = [];
+  const expression = await shellStack, sources = [], sky = [], times = [], satellite = [];
   const geoState = { ...coordinates, timeMs: Date.parse('2026-11-06T18:00:00Z') };
   const clock = { ...astronomy, withSkyPresentation, applySkyPosition: (overlay, part) => sky.push([overlay.kind, part]),
     solarPosition(time, ...args) { times.push(time); return astronomy.solarPosition(time, ...args); } };
@@ -592,6 +592,7 @@ test('the actual shell passes physical sky visibility to both source lifecycles 
     sunAssetConfig: { type: 'header-sun' }, moonAssetConfig: { type: 'video-keyed' },
     resolveHeaderWeatherOrbFixedLayout: () => ({}), applyHeaderWeatherOrbCrossfade: () => {}, applyHeaderWeatherOrbLayout: () => {},
     setHeaderWeatherOrbSource: (overlay, kind) => sources.push([overlay.kind, kind]), applyHeaderWeatherOrbAtmosphere: () => {},
+    syncHeaderWeatherSatelliteClouds: (_host, overlay, scene, moon, active) => satellite.push({ overlay, scene, moon, active }),
     updateHeaderWeatherSunSceneGeo: () => {}, stopHeaderWeatherSunScene: () => {}, getHeaderWeatherPressureLang: () => 'ru' };
   const apply = new Function(...Object.keys(bindings), `return ${expression};`)(...Object.values(bindings));
   const stack = { sun: { kind: 'sun' }, moon: { kind: 'moon' } };
@@ -599,7 +600,9 @@ test('the actual shell passes physical sky visibility to both source lifecycles 
   assert.deepEqual(sources, [['moon', 'moon'], ['sun', null]]);
   assert.equal(sky[0][1].isBoundaryIndicator, true);
   assert.equal(sky[1][1].active, false);
+  assert.deepEqual(satellite[0], { overlay: stack.moon, scene: geoState, moon: sky[0][1], active: true });
   const selectedTime = Date.parse('2026-11-09T11:00:00Z');
   apply(stack, true, 'dropdown', {}, { presentation: presentation(true), geoState: { ...geoState, appearanceTimeMs: selectedTime } });
   assert.equal(times.at(-1), selectedTime);
+  assert.equal(satellite.at(-1).scene.appearanceTimeMs, selectedTime);
 });

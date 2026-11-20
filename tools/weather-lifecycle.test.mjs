@@ -25,7 +25,7 @@ const constants = [
   'HEADER_WEATHER_GEO_REFRESH_INTERVAL', 'HEADER_WEATHER_WIDGET_REFRESH_INTERVAL',
   'HEADER_WEATHER_GEO_CACHE_TTL', 'HEADER_WEATHER_GEO_STALE_MAX_AGE',
   'HEADER_WEATHER_GEO_TIMEOUT', 'HEADER_WEATHER_GEO_TARGET_ACCURACY_METERS',
-  'HEADER_WEATHER_GEO_MOUNT_WAIT',
+  'HEADER_WEATHER_GEO_MOUNT_WAIT', 'HEADER_WEATHER_SALON_LOCATION',
   'HEADER_WEATHER_LIVE_CLOCK_INTERVAL', 'HEADER_WEATHER_TIME_SYNC_INTERVAL', 'HEADER_WEATHER_ASTRO_REFRESH_INTERVAL',
   'HEADER_WEATHER_SOLAR_PHASE_REFRESH_INTERVAL',
 ];
@@ -838,6 +838,37 @@ test('an unverified default city is not reverse geocoded or presented as the dev
   h.context.syncHeaderWeatherPublicLocationLabel(h.host);
   assert.equal(node.textContent, 'Location unavailable');
   assert.equal(node.dataset.weatherLocationState, 'unavailable');
+});
+
+test('a delayed, unavailable, denied or timed-out device starts the salon forecast without caching salon coordinates as GPS', async () => {
+  for (const code of [null, 1, 2, 3]) {
+    let options;
+    const h = harness(['mountHeaderWeatherWidget'], {
+      prepareHeaderWeatherLoadingState() {},
+      getHeaderWeatherNowMs: Date.now,
+      loadHeaderWeatherWidgetLoader: async () => ({
+        mountWeatherWidget: async (host, config) => { options = config; host.isConnected = false; },
+      }),
+    });
+    delete h.host.dataset.weatherLocation;
+    h.host.dataset.weatherMounted = 'false';
+    const mounting = h.context.mountHeaderWeatherWidget('ru');
+    if (code) h.requests[0].error({ code });
+    await h.clock.advance(1500);
+    await mounting;
+    assert.equal(options.initialLocation, '51.320486, 12.416501');
+    assert.equal(h.host.dataset.weatherGeoSource, 'salon');
+    assert.equal(h.context.readHeaderWeatherStoredGeo(true), null);
+    h.host.isConnected = true;
+    if (!code) h.requests[0].error({ code: 2 });
+    await settle();
+
+    const repeat = h.context.applyHeaderWeatherAutoGeoLocation(h.host, { force: true });
+    if (code !== 1) h.requests.at(-1).error({ code: 2 });
+    assert.equal((await repeat).coords, null);
+    assert.equal(h.host.dataset.weatherGeoSource, 'salon');
+    assert.equal(h.context.shouldApplyHeaderWeatherGeo(h.host, { latitude: 51.320486, longitude: 12.416501 }).changed, true);
+  }
 });
 
 test('the existing device action retries from automatic mode and uses exact device coordinates', async () => {

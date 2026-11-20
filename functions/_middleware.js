@@ -36,10 +36,16 @@ const FUNCTION_SECURITY_HEADERS = Object.freeze({
   'X-XSS-Protection': '1; mode=block',
 });
 
-function withSecurityHeaders(response) {
+function withSecurityHeaders(response, url) {
   const headers = new Headers(response.headers);
   for (const [name, value] of Object.entries(FUNCTION_SECURITY_HEADERS)) {
     if (!headers.has(name)) headers.set(name, value);
+  }
+  // WebKit upgrades loopback asset URLs to HTTPS even when the local server only speaks HTTP.
+  if (url.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname)) {
+    const policy = headers.get('Content-Security-Policy');
+    const directives = policy.split(';').map(directive => directive.trim());
+    headers.set('Content-Security-Policy', directives.filter(directive => directive !== 'upgrade-insecure-requests').join('; '));
   }
 
   return new Response(response.body, {
@@ -283,7 +289,7 @@ export async function onRequest(context) {
 
   if (url.hostname.startsWith('www.') && url.pathname === '/robots.txt') {
     const apexHost = url.hostname.slice(4);
-    return withSecurityHeaders(redirectResponse(`https://${apexHost}/robots.txt`, 301));
+    return withSecurityHeaders(redirectResponse(`https://${apexHost}/robots.txt`, 301), url);
   }
 
   if (
@@ -291,7 +297,7 @@ export async function onRequest(context) {
     wantsMarkdown(context.request) &&
     MARKDOWN_PAGE_PATH.test(url.pathname)
   ) {
-    return withSecurityHeaders(await markdownResponse(context, url));
+    return withSecurityHeaders(await markdownResponse(context, url), url);
   }
 
   if (
@@ -302,10 +308,10 @@ export async function onRequest(context) {
     const lang = pickLanguage(context.request.headers.get('Accept-Language'), context.request.cf?.country);
     const target = new URL(`/${lang}/`, url.origin);
     target.search = url.search;
-    return withSecurityHeaders(redirectResponse(target.toString(), 302));
+    return withSecurityHeaders(redirectResponse(target.toString(), 302), url);
   }
 
-  const response = withSecurityHeaders(await context.next());
+  const response = withSecurityHeaders(await context.next(), url);
   // Public email artwork must also load inside external webmail clients.
   if (
     /^\/assets\/images\/email\/(?:logo|whatsapp|telegram|viber|phone|facebook|mail|social-links)\.png$/.test(url.pathname) &&

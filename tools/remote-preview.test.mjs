@@ -117,6 +117,53 @@ test('public read-only phone preview keeps internal files and submissions closed
   }
 });
 
+test('only the successful contact map frame HTML allows same-origin embedding in phone preview', async () => {
+  const framePath = '/assets/frames/contact-map.html';
+  const upstream = createServer((request, response) => {
+    const url = new URL(request.url, 'http://localhost');
+    const status = url.searchParams.has('missing') ? 404 : 200;
+    const type = url.searchParams.has('json') ? 'application/json' : 'text/html; charset=utf-8';
+    response.writeHead(status, { 'Content-Type': type }).end('<!doctype html><title>Preview</title>');
+  });
+  await new Promise((resolve, reject) => {
+    upstream.once('error', reject);
+    upstream.listen(0, '127.0.0.1', resolve);
+  });
+  let gateway;
+  try {
+    gateway = await createRemoteGateway({
+      root: fileURLToPath(new URL('../', import.meta.url)), key: 'm'.repeat(43), publicReadOnly: true,
+      websiteOrigin: `http://127.0.0.1:${upstream.address().port}`,
+    });
+    for (const method of ['GET', 'HEAD']) {
+      for (const route of [framePath, '/assets/frames/contact-map']) {
+        const frame = await fetch(`${gateway.baseUrl}${route}?v=test`, { method });
+        assert.equal(frame.status, 200);
+        assert.equal(frame.headers.get('content-security-policy'), "frame-ancestors 'self'");
+        assert.equal(frame.headers.get('x-frame-options'), 'SAMEORIGIN');
+        assert.equal(frame.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+      }
+    }
+    for (const [route, method, status] of [
+      ['/ru/kontakty.html', 'GET', 200],
+      ['/assets/frames/%63ontact-map.html', 'GET', 200],
+      [`${framePath}?missing`, 'GET', 404],
+      [`${framePath}?json`, 'GET', 200],
+      [framePath, 'POST', 405],
+      ['/output/local-preview/remote-config.json', 'GET', 403],
+    ]) {
+      const response = await fetch(`${gateway.baseUrl}${route}`, { method });
+      assert.equal(response.status, status, route);
+      assert.equal(response.headers.get('content-security-policy'), "frame-ancestors 'none'", route);
+      assert.equal(response.headers.get('x-frame-options'), 'DENY', route);
+    }
+  } finally {
+    await gateway?.close();
+    upstream.closeAllConnections();
+    await new Promise(resolve => upstream.close(resolve));
+  }
+});
+
 test('static phone preview forwards only weather reads to the fixed service', async t => {
   const request = globalThis.fetch;
   const forwarded = [];
@@ -163,6 +210,9 @@ test('read-only phone preview keeps local assets and maps while bridging only pu
     localCalls.push({ url: incoming.url, method: incoming.method, headers: incoming.headers });
     if (incoming.url === '/api/maps-config') {
       response.writeHead(200, { 'Content-Type': 'application/json' }).end('{"localMap":true}');
+    } else if (incoming.url === '/api/satellite-clouds') {
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.end(incoming.method === 'HEAD' ? undefined : '{"source":"eumetsat-msg"}');
     } else if (incoming.url === '/assets/site.js') {
       response.writeHead(200, { 'Content-Type': 'text/javascript' }).end('window.currentPreview = true;');
     } else response.writeHead(403).end('Static preview does not serve weather or private APIs.');
@@ -190,15 +240,21 @@ test('read-only phone preview keeps local assets and maps while bridging only pu
     const map = await request(`${gateway.baseUrl}/api/maps-config?__preview_key=fixture`, { headers });
     assert.deepEqual(await map.json(), { localMap: true });
     assert.equal(map.status, 200);
+    const satellite = await request(`${gateway.baseUrl}/api/satellite-clouds?latitude=51&__preview_key=fixture`, { headers });
+    assert.deepEqual(await satellite.json(), { source: 'eumetsat-msg' });
+    const satelliteHead = await request(`${gateway.baseUrl}/api/satellite-clouds`, { headers, method: 'HEAD' });
+    assert.equal(satelliteHead.status, 200);
+    assert.equal(await satelliteHead.text(), '');
     assert.equal(await (await request(`${gateway.baseUrl}/assets/site.js`)).text(), 'window.currentPreview = true;');
     const beforePrivate = localCalls.length;
-    for (const endpoint of ['/api/internal/status', '/.dev.vars', '/output/local-preview/remote-config.json'])
+    for (const endpoint of ['/api/internal/status', '/api/satellite-clouds/private', '/api/satellite-clouds/', '/.dev.vars', '/output/local-preview/remote-config.json'])
       assert.equal((await request(`${gateway.baseUrl}${endpoint}`)).status, 403);
-    for (const endpoint of ['/api/weather', '/reverse-geocode', '/api/maps-config', '/sendmail'])
+    for (const endpoint of ['/api/weather', '/reverse-geocode', '/api/maps-config', '/api/satellite-clouds', '/sendmail'])
       assert.equal((await request(`${gateway.baseUrl}${endpoint}`, { method: 'POST', body: 'test' })).status, 405);
     assert.equal(localCalls.length, beforePrivate, 'private files and submissions never reach the local server');
     assert.deepEqual(localCalls.map(call => ({ url: call.url, method: call.method })), [
-      { url: '/api/maps-config', method: 'GET' }, { url: '/assets/site.js', method: 'GET' },
+      { url: '/api/maps-config', method: 'GET' }, { url: '/api/satellite-clouds', method: 'GET' },
+      { url: '/api/satellite-clouds', method: 'HEAD' }, { url: '/assets/site.js', method: 'GET' },
     ]);
     assert.ok(localCalls.every(call => call.headers.cookie === undefined && call.headers.authorization === undefined));
     assert.deepEqual(forwarded, ['/api/weather', '/reverse-geocode'].flatMap(endpoint => ['GET', 'HEAD'].map(method => ({
@@ -209,6 +265,37 @@ test('read-only phone preview keeps local assets and maps while bridging only pu
     await gateway?.close();
     upstream.closeAllConnections();
     await new Promise(resolve => upstream.close(resolve));
+  }
+});
+
+test('named visitor preview reads the official map, payment configuration and calendar', async t => {
+  const request = globalThis.fetch;
+  const forwarded = [];
+  t.mock.method(globalThis, 'fetch', (url, options) => {
+    if (!url.startsWith('https://hundesalon-nika.com/')) return request(url, options);
+    forwarded.push({ url, method: options.method, headers: options.headers });
+    return Promise.resolve(Response.json({ enabled: true }));
+  });
+  const gateway = await createRemoteGateway({
+    root: fileURLToPath(new URL('../', import.meta.url)), key: 'v'.repeat(43),
+    publicReadOnly: true, liveVisitorActions: true,
+  });
+  try {
+    for (const path of ['/api/maps-config', '/payment', '/booking-availability?date=2026-11-23', '/blog?lang=uk&slug=sample']) {
+      const url = new URL(path, gateway.baseUrl);
+      url.searchParams.set('unrelated', 'ignore-me');
+      const response = await request(url, { headers: { Authorization: 'Bearer fixture', Cookie: 'local=fixture' } });
+      assert.deepEqual(await response.json(), { enabled: true });
+      assert.equal(response.headers.get('cache-control'), 'private, no-store');
+      assert.equal((await request(url, { method: 'POST', body: 'test' })).status, 405);
+    }
+    for (const route of ['/payment-status', '/api/admin/settings', '/payment-webhook'])
+      assert.equal((await request(gateway.baseUrl + route)).status, 403);
+    assert.deepEqual(forwarded, ['/api/maps-config', '/payment', '/booking-availability?date=2026-11-23', '/blog?lang=uk&slug=sample'].map(path => ({
+      url: 'https://hundesalon-nika.com' + path, method: 'GET', headers: { 'Accept-Encoding': 'identity' },
+    })));
+  } finally {
+    await gateway.close();
   }
 });
 

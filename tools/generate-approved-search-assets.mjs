@@ -17,7 +17,6 @@ const icons = [
   [384, 'favicon-384x384.png'],
   [512, 'android-chrome-512x512.png'],
   [150, 'mstile-150x150.png'],
-  [512, 'favicon-512x512.png'],
   [512, 'favicon-search-512.png'],
   [512, 'maskable-icon-512x512.png'],
 ];

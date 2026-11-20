@@ -27,6 +27,11 @@ const SOURCE_ONLY_PATHS = new Set([
   'assets/images/icons/ink-pen.png',
   'assets/images/icons/locomotive-legacy.png',
   'assets/images/reviews/review-qr-salon-sticker.png',
+  'config/brand-profiles.mjs',
+  'config/local-directories.mjs',
+  'config/markdownlint-files.json',
+  'config/meta-descriptions.mjs',
+  'config/release-reference-methods.json',
 ]);
 
 export function isProductionSourceOnlyPath(value) {

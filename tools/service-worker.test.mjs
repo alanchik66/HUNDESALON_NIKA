@@ -50,6 +50,7 @@ test('current and metadata weather requests use the browser network without serv
     ['forced current refresh', { path: '/api/weather?location=51.23%2C6.78', headers: { 'Cache-Control': 'no-cache' } }],
     ['metadata refresh', { path: '/api/weather?location=51.23%2C6.78&meta_only=1', cache: 'no-store' }],
     ['bare endpoint', { path: '/api/weather' }],
+    ['satellite observations', { path: '/api/satellite-clouds' }],
   ]) {
     await t.test(name, async () => {
       const event = fetchEvent({ ...options, destination: '', cached: { current: { temp_c: 1 }, stale: true },

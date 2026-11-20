@@ -55,6 +55,32 @@ test('solar clock imports share the deployed version, coalesce, and retry a fail
   assert.equal(urls[2].searchParams.get('weather-retry'), '1');
 });
 
+test('current satellite clouds use the projected lunar direction and clear for forecast scenes', async () => {
+  const declaration = (await solarShellDeclarations(['syncHeaderWeatherSatelliteClouds']))
+    .replaceAll('import(/* webpackIgnore: true */ ', 'importModule(');
+  const create = new Function('resolveHeaderWeatherSunSceneModuleUrl', 'document', 'syncHeaderWeatherAttribution', 'importModule',
+    'let headerWeatherSatelliteCloudModulePromise = null; ' + declaration + '; return syncHeaderWeatherSatelliteClouds;');
+  const frames = [], imports = [];
+  const sync = create(() => 'https://preview.hundesalon-nika.com/assets/js/header-weather-sun-scene.js?v=preview',
+    { hidden: false }, () => {}, async url => {
+      imports.push(new URL(url));
+      return { syncHeaderWeatherSatelliteClouds: async (...args) => { frames.push(args); } };
+    });
+  const overlay = { isConnected: true };
+  const location = { latitude: 51.32, longitude: 12.42, appearanceTimeMs: null };
+  const moon = { active: true, sky: { azimuthDeg: 193, elevationDeg: 40 } };
+  sync({}, overlay, location, moon, true);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(imports[0]?.pathname, '/assets/js/header-weather-satellite-clouds.js');
+  assert.equal(imports[0].searchParams.get('v'), 'preview');
+  assert.deepEqual(frames[0], [overlay, location, moon.sky, true]);
+  const forecast = { ...location, appearanceTimeMs: Date.parse('2026-11-22T20:00:00Z') };
+  sync({}, overlay, forecast, moon, true);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(frames[1], [overlay, forecast, moon.sky, false]);
+  assert.equal(imports.length, 1);
+});
+
 test('the header retains sunset light and the end-of-day surface timeline until civil twilight ends', async () => {
   const declarations = await solarShellDeclarations([
     'resolveHeaderWeatherOrbPresentation', 'resolveHeaderWeatherStarOpacity',
@@ -201,7 +227,7 @@ test('header star visibility follows current and selected-forecast cloud transmi
       ensureHeaderWeatherOrbStack, syncHeaderWeatherPreviewLayerOrder, resolveHeaderWeatherDropdownSceneContext,
       ensureHeaderWeatherDropdownStarsBackLayer, enforceHeaderWeatherToggleArrow, scheduleHeaderWeatherMenuPlacement,
       syncHeaderWeatherShootingStars, syncHeaderWeatherUnifiedReadings, scheduleHeaderWeatherReadingsSync,
-      syncHeaderWeatherLiveClock, syncHeaderWeatherCloudBandLayout, syncHeaderWeatherRainLayer, document, window } = deps;
+      syncHeaderWeatherLiveClock, syncHeaderWeatherCloudBandLayout, syncHeaderWeatherRainLayer, syncHeaderWeatherSatelliteClouds, document, window } = deps;
     ${constants}\n${declarations}; return renderHeaderWeatherOrbOverlay;
   `);
   const noop = () => {};
@@ -256,6 +282,7 @@ test('header star visibility follows current and selected-forecast cloud transmi
       scheduleHeaderWeatherMenuPlacement: noop, syncHeaderWeatherShootingStars: noop, syncHeaderWeatherUnifiedReadings: noop,
       scheduleHeaderWeatherReadingsSync: noop, syncHeaderWeatherLiveClock: noop, syncHeaderWeatherCloudBandLayout: noop,
       syncHeaderWeatherRainLayer: noop,
+      syncHeaderWeatherSatelliteClouds: (_, orb, geoState) => { orb.satelliteAppearanceTimeMs = geoState.appearanceTimeMs; },
       document: { querySelector: () => null }, window: { addEventListener: noop },
     });
     return { host, preview, dropdown, hero, timeline, render: () => render(host, null, { latitude: 51.2, longitude: 6.8 }) };
@@ -336,6 +363,8 @@ test('header star visibility follows current and selected-forecast cloud transmi
     ui.render();
     assertLayer(ui.preview.stars, 'preview', '1.000', true);
     assertDropdown(ui, '0.015', false);
+    assert.equal(ui.preview.stack.moon.satelliteAppearanceTimeMs, null);
+    assert.equal(ui.hero.stack.moon.satelliteAppearanceTimeMs, 2000, 'satellite overlay receives forecast identity and skips current data');
     ui.host.selectedForecast = { ...selectedForecast, cloudCover: 0, day: { condition: { code: 1000 } } };
     ui.render();
     assertDropdown(ui, '1.000', true);
@@ -578,7 +607,8 @@ test('social card DOM headings cannot select arbitrary icon URLs or inherited re
     querySelectorAll: selector => selector === '.social-grid .social-card' ? [...grid.children] : [],
     createElement: element,
   };
-  new Function('document', source.slice(begin, end))(document);
+  const window = { location: { href: 'https://hundesalon-nika.com/en/social' }, addEventListener() {} };
+  new Function('document', 'window', source.slice(begin, end))(document, window);
 
   const allowedIcons = new Set(['instagram', 'facebook', 'tiktok', 'whatsapp', 'telegram', 'viber', 'youtube']
     .map(name => `/assets/images/icons/${name}.png`));
@@ -1122,9 +1152,9 @@ test('mobile social and music icons reverse their rollout without losing toggle 
 });
 
 test('header shooting stars use one eligible night layer and stop with their host', async t => {
-  const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
-  const declaration = source.match(/  function syncHeaderWeatherShootingStars\(host\) \{[\s\S]*?\n  \}/)[0];
-  const initialize = new Function('window', 'document', 'randomBetween', `${declaration}\nreturn syncHeaderWeatherShootingStars;`);
+  const source = await readFile(path.join(root, 'assets/js/header-weather-sky-motion.js'), 'utf8');
+  const declaration = source.match(/function syncHeaderWeatherShootingStars\(host, randomBetween\) \{[\s\S]*?\r?\n\}/)[0];
+  const initialize = new Function('window', 'document', 'randomBetween', `${declaration}\nreturn host => syncHeaderWeatherShootingStars(host, randomBetween);`);
   const settle = () => new Promise(resolve => setImmediate(resolve));
   const createHarness = ({ reduced = false, night = true, hidden = false, empty = false, width = 390, ratio = 0.5 } = {}) => {
     const timers = new Map();
@@ -1139,7 +1169,7 @@ test('header shooting stars use one eligible night layer and stop with their hos
     const reducedQuery = media(reduced);
     const rect = (left, top, rectWidth, height) => ({ left, top, right: left + rectWidth, bottom: top + height, width: rectWidth, height });
     const stage = getBoundingClientRect => ({
-      getBoundingClientRect, children: [],
+      isConnected: true, getBoundingClientRect, children: [],
       appendChild(element) { this.children.push(element); element.parentElement = this; },
     });
     const header = stage(() => rect(0, 0, width, 180));
@@ -1205,13 +1235,15 @@ test('header shooting stars use one eligible night layer and stop with their hos
     ui.sync();
     assert.equal(ui.timers.size, 1);
     const firstDelay = [...ui.timers.values()][0].delay;
-    assert.ok(firstDelay >= 2000 && firstDelay <= 5000);
+    assert.ok(firstDelay >= 4500 && firstDelay <= 9500);
     ui.runTimer();
-    assert.equal(ui.preview.children.length, 1);
+    assert.equal(ui.previewStage.children.length, 1);
     assert.equal(ui.animations.length, 1);
-    assert.ok(ui.animations[0].options.duration >= 420 && ui.animations[0].options.duration <= 760);
-    assert.equal(ui.animations[0].options.duration, 590, 'a brief pass replaces the former 2–3 second drift');
-    assert.equal(ui.animations[0].element.properties.get('--shooting-star-duration'), '590.00ms');
+    assert.ok(ui.animations[0].options.duration >= 260 && ui.animations[0].options.duration <= 780);
+    const duration = ui.animations[0].options.duration;
+    assert.equal(ui.animations[0].element.properties.get('--shooting-star-duration'), duration.toFixed(2) + 'ms');
+    const flare = parseFloat(ui.animations[0].element.properties.get('--shooting-star-flare-size'));
+    assert.ok(flare > 4.6 && flare < 8, 'an ordinary meteor keeps a compact halo');
     assert.equal(ui.animations[0].options.easing, 'linear');
     const frames = ui.animations[0].frames;
     const motionFrames = frames.filter(frame => frame.transform);
@@ -1219,16 +1251,19 @@ test('header shooting stars use one eligible night layer and stop with their hos
     assert.equal(motionFrames[0].easing, 'linear', 'opacity easing must not change travel speed');
     assert.match(motionFrames[0].transform, /scale\(1\)/);
     assert.match(motionFrames[1].transform, /scale\(1\)/);
-    assert.deepEqual(frames.filter(frame => 'opacity' in frame).map(frame => frame.opacity), [0, 0.75, 1, 0.55, 0.08, 0]);
+    const light = frames.filter(frame => 'opacity' in frame);
+    const peak = light[2].opacity;
+    assert.ok(peak > 0.4 && peak < 0.8, 'ordinary meteors stay dimmer than a flare');
+    assert.deepEqual(light.map(frame => frame.opacity), [0, 0.34 * peak, peak, 0.42 * peak, 0.1 * peak, 0]);
     assert.ok(frames.filter(frame => 'opacity' in frame && frame.offset < 1).every(frame => frame.easing === 'ease-in-out'));
     ui.sync();
     assert.equal(ui.timers.size, 0, 'an active meteor owns the next interval');
     ui.animations[0].finish();
     await settle();
-    assert.equal(ui.preview.children.length, 0);
+    assert.equal(ui.previewStage.children.length, 0);
     assert.equal(ui.timers.size, 1);
     const nextDelay = [...ui.timers.values()][0].delay;
-    assert.ok(nextDelay >= 7000 && nextDelay <= 20000);
+    assert.ok(nextDelay >= 28000 && nextDelay <= 68000);
     ui.host.__weatherShootingStars.dispose();
   });
 
@@ -1241,8 +1276,7 @@ test('header shooting stars use one eligible night layer and stop with their hos
             ui.preview.night = false;
             ui.host.dataset.weatherExpanded = 'true';
           }
-          const front = expectedAngle / 360 < 0.28;
-          const layer = front ? (inDropdown ? ui.dropdownStage : ui.previewStage) : (inDropdown ? ui.dropdown : ui.preview);
+          const layer = inDropdown ? ui.dropdownStage : ui.previewStage;
           const bounds = layer.getBoundingClientRect();
           ui.sync();
           ui.runTimer();
@@ -1256,7 +1290,7 @@ test('header shooting stars use one eligible night layer and stop with their hos
             const [, x, y, angle, scale] = frame.transform.match(/translate3d\(([-\d.]+)px, ([-\d.]+)px, 0\) rotate\(([-\d.]+)deg\) scale\(([-\d.]+)\)/);
             assert.equal(Number(angle), expectedAngle);
             const radians = Number(angle) * Math.PI / 180;
-            for (const localX of [-0.9 * length, Math.max(0.1 * length, 11)]) {
+            for (const localX of [Math.min(-0.9 * length, -11), Math.max(0.1 * length, 11)]) {
               for (const localY of [-11, 11]) {
                 const px = originX + Number(x) + (localX * Math.cos(radians) - localY * Math.sin(radians)) * Number(scale);
                 const py = originY + Number(y) + (localX * Math.sin(radians) + localY * Math.cos(radians)) * Number(scale);
@@ -1270,23 +1304,23 @@ test('header shooting stars use one eligible night layer and stop with their hos
     }
   });
 
-  await t.test('a meteor can cross either disc plane, without duplicating the starfield or scheduler', async () => {
+  await t.test('each night surface puts the meteor ahead of the celestial disks', async () => {
     for (const inDropdown of [false, true]) {
-      for (const front of [false, true]) {
-        const ui = createHarness({ ratio: front ? 0.1 : 0.7 });
+      for (const ratio of [0.1, 0.7]) {
+        const ui = createHarness({ ratio });
         if (inDropdown) {
           ui.preview.night = false;
           ui.host.dataset.weatherExpanded = 'true';
         }
         const gate = inDropdown ? ui.dropdown : ui.preview;
-        const target = front ? (inDropdown ? ui.dropdownStage : ui.previewStage) : gate;
+        const target = inDropdown ? ui.dropdownStage : ui.previewStage;
         ui.sync();
         ui.runTimer();
         assert.equal(ui.animations.length, 1);
         const meteor = ui.animations[0].element;
         assert.equal(meteor.parentElement, target);
-        assert.equal(meteor.attributes.get('data-weather-meteor-depth'), front ? 'front' : 'back');
-        assert.equal(meteor.className.includes('--foreground'), front);
+        assert.equal(meteor.attributes.get('data-weather-meteor-depth'), 'front');
+        assert.ok(meteor.className.includes('--foreground'));
         assert.equal(ui.preview.children.length + ui.dropdown.children.length
           + ui.previewStage.children.length + ui.dropdownStage.children.length, 1);
         ui.sync();
@@ -1302,13 +1336,37 @@ test('header shooting stars use one eligible night layer and stop with their hos
     }
   });
 
-  await t.test('the head and trail have one short bloom, not repeated flashing', () => {
-    const css = source.slice(source.indexOf('.weather-header-shooting-star {'), source.indexOf('\n.weather-header-card__toggle {', source.indexOf('.weather-header-shooting-star {')));
+  await t.test('heads, trails and haloes vary with apparent brightness while strong bursts stay rare', () => {
+    const ranks = [0.08, 0.4, 0.75, 0.95, 0.98, 0.995];
+    const samples = ranks.map(ratio => {
+      const ui = createHarness({ ratio });
+      ui.sync();
+      ui.runTimer();
+      const properties = ui.animations[0].element.properties;
+      const read = name => parseFloat(properties.get('--shooting-star-' + name));
+      const sample = ['head-long', 'head-short', 'trail-width', 'flare-size', 'flash', 'length'].map(read);
+      ui.host.__weatherShootingStars.dispose();
+      return sample;
+    });
+    for (const index of [0, 1, 2, 3]) {
+      assert.equal(new Set(samples.map(sample => sample[index])).size, ranks.length);
+      assert.ok(samples.every((sample, row) => row === 0 || sample[index] > samples[row - 1][index]));
+    }
+    assert.equal(samples.filter(([, , , , flash]) => flash > 0.7).length, 1);
+    assert.ok(samples[0][2] < 1 && samples.at(-1)[2] > 2.8);
+    assert.ok(samples[0][3] < 5 && samples.at(-1)[3] < 16);
+    assert.ok(new Set(samples.map(([, , , , , length]) => length)).size > 3);
+  });
+
+  await t.test('the head and trail have one short bloom, not repeated flashing', async () => {
+    const shell = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
+    const start = shell.indexOf('.weather-header-shooting-star {');
+    const css = shell.slice(start, shell.indexOf('\n.weather-header-card__toggle {', start));
     assert.doesNotMatch(css, /infinite|alternate/);
-    assert.match(css, /animation: weatherShootingStarGlint var\(--shooting-star-duration, 600ms\) linear both/);
-    assert.match(css, /animation: weatherShootingStarTrail var\(--shooting-star-duration, 600ms\) linear both/);
-    assert.match(css, /22% \{ opacity: 1;/);
-    assert.match(css, /75%, 100% \{ opacity: 0;/);
+    assert.match(css, /animation: weatherShootingStarGlint var\(--shooting-star-duration, 520ms\) linear both/);
+    assert.match(css, /animation: weatherShootingStarTrail var\(--shooting-star-duration, 520ms\) linear both/);
+    assert.match(css, /38% \{ opacity: var\(--shooting-star-flash, 0\.25\)/);
+    assert.match(css, /52% \{ opacity: 0;/);
     assert.match(css, /\.weather-header-shooting-star--foreground \{\s*z-index: 11 !important;/);
   });
 
@@ -1342,15 +1400,15 @@ test('header shooting stars use one eligible night layer and stop with their hos
       ui.sync();
       assert.equal(ui.timers.size, 1);
       ui.runTimer();
-      assert.equal(ui.preview.children.length, 1);
-      assert.ok(ui.animations[0].options.duration >= 420 && ui.animations[0].options.duration <= 760);
+      assert.equal(ui.previewStage.children.length, 1);
+      assert.ok(ui.animations[0].options.duration >= 260 && ui.animations[0].options.duration <= 780);
       ui.reducedQuery.change(false);
       ui.reducedQuery.change(true);
       assert.equal(ui.animations[0].cancelled, false, 'changing the system preference cannot interrupt a star');
       assert.equal(ui.reducedQuery.listeners.size, 0);
       ui.host.__weatherShootingStars.dispose();
       await settle();
-      assert.equal(ui.preview.children.length, 0);
+      assert.equal(ui.previewStage.children.length, 0);
       assert.equal(ui.timers.size, 0);
     }
   });
@@ -1369,7 +1427,7 @@ test('header shooting stars use one eligible night layer and stop with their hos
       else ui.sync();
       await settle();
       assert.equal(ui.animations[0].cancelled, true, state);
-      assert.equal(ui.preview.children.length, 0);
+      assert.equal(ui.previewStage.children.length, 0);
       assert.equal(ui.timers.size, 0, 'cancelled animation completion cannot restart the scheduler');
       controller.dispose();
       assert.equal(ui.reducedQuery.listeners.size, 0);
@@ -1381,19 +1439,19 @@ test('header shooting stars use one eligible night layer and stop with their hos
     ui.host.dataset.weatherExpanded = 'true';
     ui.sync();
     ui.runTimer();
-    assert.equal(ui.dropdown.children.length, 1);
-    assert.equal(ui.preview.children.length, 0);
+    assert.equal(ui.dropdownStage.children.length, 1);
+    assert.equal(ui.previewStage.children.length, 0);
     ui.host.dataset.weatherExpanded = 'false';
     ui.sync();
     assert.equal(ui.animations[0].cancelled, true);
     await settle();
     assert.equal(ui.timers.size, 1, 'only the replacement timer survives cancellation');
     ui.runTimer();
-    assert.equal(ui.preview.children.length, 1);
+    assert.equal(ui.previewStage.children.length, 1);
     ui.reducedQuery.change(true);
     await settle();
     assert.equal(ui.timers.size, 0);
-    assert.equal(ui.preview.children.length, 1, 'system motion preference no longer changes eligibility');
+    assert.equal(ui.previewStage.children.length, 1, 'system motion preference no longer changes eligibility');
     ui.reducedQuery.change(false);
     assert.equal(ui.animations[1].cancelled, false);
     ui.animations[1].finish();
@@ -1436,7 +1494,7 @@ test('language switching keeps the current published page, query and section', a
   }
 });
 
-test('localized burger menus expose promotions while keeping booking in the header', async () => {
+test('localized burger menus omit inactive promotions and retain booking in the header', async () => {
   const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
   const copyDeclaration = source.match(/  const HEADER_COPY = \{[\s\S]*?\n  \};/)[0];
   const rendererDeclaration = source.match(/  function createHeaderMarkup\(context\) \{[\s\S]*?\n  \}/)[0];
@@ -1447,7 +1505,7 @@ test('localized burger menus expose promotions while keeping booking in the head
     window: { location },
   });
 
-  for (const [locale, promotionsLabel] of Object.entries({ ru: 'АКЦИИ', uk: 'АКЦІЇ', de: 'AKTIONEN', en: 'PROMOTIONS' })) {
+  for (const locale of ['ru', 'uk', 'de', 'en']) {
     for (const currentRoute of ['index.html', 'blog/blog.html']) {
       const context = {
         currentLang: locale, pageLang: locale, currentRoute, copy: copy[locale],
@@ -1462,23 +1520,17 @@ test('localized burger menus expose promotions while keeping booking in the head
       const prefix = currentRoute.startsWith('blog/') ? '../' : '';
       assert.ok(header.includes(`<a href="${prefix || './'}">`), 'the logo uses the locale homepage');
       assert.ok(header.includes(`src="${prefix}../assets/images/brand/logo-ui.webp"`), 'the logo asset resolves from this depth');
-      const promotion = mobileNavContent.match(/<a href="([^"]*social\.html#promotions)"([^>]*)>([\s\S]*?)<\/a>/);
-      assert.ok(promotion, `${locale}/${currentRoute}: promotions link exists`);
-      assert.equal(promotion[1], `${prefix}social.html#promotions`, 'promotion keeps the localized destination');
-      assert.match(promotion[2], /\bmobile-nav-link--promotions\b/);
-      const promotionLabel = promotion[3].match(/<span>([^<]*)<\/span>/)?.[1];
-      assert.equal(promotionLabel, promotionsLabel, 'localized label is retained in its text span');
-      assert.match(promotion[3], /<img[^>]*src="[^"]*\/icons\/clash-royale\.png"[^>]*alt=""[^>]*aria-hidden="true"/);
+      assert.doesNotMatch(mobileNavContent, /(?:promotions|#promotions)/);
       const destinations = [...mobileNavContent.matchAll(/<a href="([^"]+)"/g)].map(item => item[1]);
-      assert.deepEqual(destinations.slice(0, 7), [
+      assert.deepEqual(destinations.slice(0, 6), [
         'nashi-uslugi.html', 'prays-list.html', 'shop.html', 'kontakty.html',
-        'galereya.html', 'do-i-posle.html', 'social.html#promotions',
-      ].map(route => `${prefix}${route}`), 'services and results precede the central promotion');
-      assert.deepEqual(destinations.slice(7), [
+        'galereya.html', 'do-i-posle.html',
+      ].map(route => `${prefix}${route}`), 'services and results come first');
+      assert.deepEqual(destinations.slice(6), [
         'o-nas.html', 'vvedenie.html', 'social.html', 'reyting.html',
-        'blog/blog.html', 'nashi-uslugi.html', 'partnerstvo.html', 'documents.html',
-      ].map(route => `${prefix}${route}`), 'localized lower rows follow the requested left/right pairs');
-      assert.equal(destinations.length, 15, 'all locales expose the same complete menu');
+        'blog/blog.html', 'partnerstvo.html', 'documents.html',
+      ].map(route => `${prefix}${route}`), 'secondary destinations remain localized');
+      assert.equal(new Set(destinations).size, 13, 'all locales expose the same complete menu');
       const socialMenu = mobileNavContent.match(/<a href="[^"]*social\.html"[^>]*>([^<]+)<\/a>/);
       assert.equal(socialMenu[1], copy[locale].socialsMenu, 'navigation uses its compact localized social label');
       assert.doesNotMatch(mobileNav, /onlayn-bronirovanie\.html/);
@@ -1489,12 +1541,12 @@ test('localized burger menus expose promotions while keeping booking in the head
       const canonicalMenu = renderHeader(context).match(/<nav id="mobile-nav"[^>]*>([\s\S]*?)<\/nav>/)[1];
       location.origin = previewOrigin;
       assert.deepEqual([...canonicalMenu.matchAll(/<a href="([^"]+)"/g)].map(item => item[1]), [
-        'nashi-uslugi', 'prays-list', 'shop', 'kontakty', 'galereya', 'do-i-posle', 'social#promotions',
-        'o-nas', 'vvedenie', 'social', 'reyting', 'blog/blog', 'nashi-uslugi', 'partnerstvo', 'documents',
+        'nashi-uslugi', 'prays-list', 'shop', 'kontakty', 'galereya', 'do-i-posle',
+        'o-nas', 'vvedenie', 'social', 'reyting', 'blog/blog', 'partnerstvo', 'documents',
       ].map(route => `${prefix}${route}`), `${locale}/${currentRoute}: each live menu target is directly canonical`);
     }
     const socialPage = await readFile(path.join(root, locale, 'social.html'), 'utf8');
-    assert.match(socialPage, /id="promotions"/);
+    assert.doesNotMatch(socialPage, /id="promotions"|data-promotion-id/);
   }
 });
 
@@ -1609,42 +1661,6 @@ test('burger menu restores its invoker after pointer or keyboard Escape without 
     assert.equal(ui.burger.focusCalls.length, 0, 'native navigation must not be interrupted by returning to the opener');
     assert.equal(ui.document.activeElement.name, 'body');
   });
-});
-
-test('social promotions deep links scroll after shell setup and on hash changes', async () => {
-  const source = await readFile(path.join(root, 'assets/js/page-modules.js'), 'utf8');
-  const declarations = ['resolveHashTarget', 'initSmoothHashLinks'].map(name =>
-    source.match(new RegExp(`  const ${name} = [\\s\\S]*?\\n  \\};`))[0]
-  ).join('\n');
-  const initialize = new Function('document', 'window', 'scrollRoot', `${declarations}\ninitSmoothHashLinks();`);
-
-  for (const pathname of ['/ru/social.html', '/uk/social.html', '/de/social', '/en/social.html', '/ru/prays-list.html']) {
-    const frames = [];
-    const scrollCalls = [];
-    const listeners = new Map();
-    const target = { scrollIntoView: options => scrollCalls.push(options) };
-    const document = { querySelectorAll: () => [], getElementById: id => id === 'promotions' ? target : null };
-    const window = {
-      location: { pathname, hash: '#promotions' },
-      requestAnimationFrame: callback => frames.push(callback),
-      addEventListener: (type, handler) => listeners.set(type, handler),
-    };
-    initialize(document, window, {});
-    assert.equal(scrollCalls.length, 0, 'wait until the shared shell has finished layout');
-    frames.shift()();
-    const expectedCount = pathname.includes('/social') ? 1 : 0;
-    assert.equal(scrollCalls.length, expectedCount, pathname);
-    if (expectedCount) assert.deepEqual(scrollCalls[0], { behavior: 'instant', block: 'start', inline: 'nearest' });
-
-    window.location.hash = '#other';
-    listeners.get('hashchange')();
-    frames.shift()();
-    assert.equal(scrollCalls.length, expectedCount, 'leave unrelated fragments unchanged');
-    window.location.hash = '#promotions';
-    listeners.get('hashchange')();
-    frames.shift()();
-    assert.equal(scrollCalls.length, expectedCount * 2, 'same-page hash navigation reaches promotions');
-  }
 });
 
 test('static preview 501 uses local Functions fallback without reporting false success', async () => {

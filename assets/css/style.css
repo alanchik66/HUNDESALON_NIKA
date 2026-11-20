@@ -8125,6 +8125,18 @@ body.contact-map-frame-body > .map-viewport {
   backdrop-filter: blur(14px) saturate(1.2);
 }
 
+.map-viewport a.contact-map-3d-link {
+  z-index: 6;
+  align-items: center;
+  min-height: 44px;
+  padding: 5px 14px;
+  background: #182019;
+  color: #ffebb9;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
 .contact-map-controls {
   position: absolute;
   top: 68px;
@@ -8237,10 +8249,11 @@ body.contact-map-frame-body > .map-viewport {
 }
 
 .map-mode-button {
+  --map-mode-radius: 999px;
   min-height: 28px;
   padding: 5px 9px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--map-mode-radius);
   background: transparent;
   color: #ecd297e0;
   font-family: var(--font-display);
@@ -8255,6 +8268,27 @@ body.contact-map-frame-body > .map-viewport {
     background 0.32s ease,
     border-color 0.32s ease,
     box-shadow 0.32s ease;
+}
+
+.map-mode-button::before,
+.map-mode-button::after,
+.map-mode-button > :is(.nav-plasma, .nav-plasma--active) {
+  inset: 0;
+  clip-path: inset(0 round var(--map-mode-radius));
+}
+
+.map-mode-button::after {
+  width: auto;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgb(255 255 255 / 7%) 35%,
+    rgb(255 244 210 / 14%) 50%,
+    transparent 100%
+  ) 0 50% / 60% 100% no-repeat;
+  filter: none;
+  transform: none;
+  animation-name: onlineOrderRefraction;
 }
 
 .map-mode-button:not([aria-pressed='true']):is(:hover, :focus-visible) {
@@ -10048,49 +10082,6 @@ body.light .nika-tooltip--visible {
   .nika-tooltip--left::after {
     width: 5px;
     height: 8px;
-  }
-}
-
-.promo-btn-icon {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  vertical-align: middle;
-  flex-shrink: 0;
-  margin-right: 4px;
-  animation: promoIconAlive 2.4s ease-in-out infinite;
-  transform-origin: center bottom;
-  filter: drop-shadow(0 0 8px rgb(255 200 60 / 55%));
-}
-
-@keyframes promoIconAlive {
-  0% {
-    transform: scale(1) rotate(0deg);
-    filter: drop-shadow(0 0 8px rgb(255 200 60 / 55%));
-  }
-  15% {
-    transform: scale(1.18) rotate(-8deg);
-    filter: drop-shadow(0 0 16px rgb(255 220 80 / 85%));
-  }
-  30% {
-    transform: scale(1.12) rotate(6deg);
-    filter: drop-shadow(0 0 12px rgb(255 200 60 / 70%));
-  }
-  45% {
-    transform: scale(1.2) rotate(-5deg);
-    filter: drop-shadow(0 0 18px rgb(255 230 100 / 90%));
-  }
-  60% {
-    transform: scale(1.1) rotate(4deg);
-    filter: drop-shadow(0 0 10px rgb(255 200 60 / 65%));
-  }
-  75% {
-    transform: scale(1.15) rotate(-3deg);
-    filter: drop-shadow(0 0 14px rgb(255 215 70 / 75%));
-  }
-  100% {
-    transform: scale(1) rotate(0deg);
-    filter: drop-shadow(0 0 8px rgb(255 200 60 / 55%));
   }
 }
 
@@ -14089,30 +14080,6 @@ body.light #mobile-nav a::before {
 #mobile-nav a:focus-visible {
   outline: 2px solid rgb(246 217 148 / 84%);
   outline-offset: -4px;
-}
-
-#mobile-nav a.mobile-nav-link--promotions {
-  --menu-tile-fill:
-    linear-gradient(135deg, #f5db94, #d3a64d 48%, #926925);
-
-  grid-column: 1 / -1;
-  justify-content: center;
-  gap: 8px;
-  text-align: center;
-  border: 0;
-  box-shadow: none;
-}
-
-#mobile-nav .promo-btn-icon {
-  width: 26px;
-  height: 26px;
-  margin: 0;
-  animation: none;
-  filter: drop-shadow(0 1px 4px rgb(255 210 103 / 30%));
-}
-
-body.light #mobile-nav a.mobile-nav-link--promotions {
-  --menu-tile-fill: linear-gradient(135deg, #ffedb8, #e8c569 48%, #bc913e);
 }
 
 @media (width <= 360px) {

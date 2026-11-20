@@ -6,13 +6,13 @@ const wrap = (value, size) => ((value % size) + size) % size;
 
 function appearance(options) {
   const input = options && typeof options === 'object' ? options : {};
-  const kind = ['rain', 'drizzle', 'hail'].includes(input.kind) ? input.kind : 'none';
+  const kind = ['rain', 'drizzle', 'hail', 'mixed'].includes(input.kind) ? input.kind : 'none';
   const categoryRate = { light: .5, moderate: 4, heavy: 12, violent: 35 }[input.intensity];
   const precipitation = clamp(number(input.precipitationMm, categoryRate ?? (kind === 'drizzle' ? .2 : .5)), 0, 100);
   const wind = clamp(number(input.windKph, 0), 0, 180);
   const direction = wrap(number(input.windDegree, 0), 360) * Math.PI / 180;
   return {
-    kind, active: kind !== 'none',
+    kind, active: kind !== 'none', showers: input.showers === true && (kind === 'rain' || kind === 'mixed'),
     intensity: clamp(.08 + Math.log1p(precipitation) * .25, .08, 1),
     // Screen-space art calibration; the widget is not a geographic camera.
     slant: -Math.sin(direction) * Math.min(.72, wind / 95),
@@ -53,11 +53,15 @@ export function createHeaderWeatherRainLayer(container, options = {}) {
 
   function count() {
     const density = state.kind === 'drizzle' ? .72 : state.kind === 'hail' ? .65 : 1;
-    return clamp(width * height / 1200 * (.12 + visual.intensity * 1.25) * density, 3, drops.length);
+    const showerPulse = state.showers ? 1 + .28 * Math.sin(elapsed * .7) : 1;
+    return clamp(width * height / 1200 * (.12 + visual.intensity * 1.25) * density * showerPulse, 3, drops.length);
   }
+
+  const isWetFlake = drop => state.kind === 'mixed' && drop.drift < .42;
 
   function speed(drop) {
     const scale = clamp(height / 160, .72, 1.4);
+    if (isWetFlake(drop)) return (26 + drop.depth * 56) * scale * drop.size;
     return (state.kind === 'drizzle' ? 65 + drop.depth * 110 : state.kind === 'hail' ? 180 + drop.depth * 330 : 125 + drop.depth * 310) * scale * drop.size;
   }
 
@@ -70,7 +74,9 @@ export function createHeaderWeatherRainLayer(container, options = {}) {
       const drop = drops[index], vy = speed(drop);
       drop.opacity += ((index < targetCount ? 1 : 0) - drop.opacity) * blend;
       drop.y += vy / height * dt;
-      drop.x += vy * (visual.slant + Math.sin(elapsed * .8 + drop.sway) * .014) / width * dt;
+      const flake = isWetFlake(drop);
+      const sway = Math.sin(elapsed * .8 + drop.sway) * (flake ? .18 : .014);
+      drop.x += vy * (visual.slant * (flake ? 1.75 : 1) + sway) / width * dt;
       // Recycling happens outside the visible sky, never in its interior.
       if (drop.y > 1.12) { drop.y -= 1.24; drop.x = wrap(drop.x + .37 + drop.drift * .43, 1.2) - .1; }
       if (drop.x < -.12) drop.x += 1.24;
@@ -86,6 +92,19 @@ export function createHeaderWeatherRainLayer(container, options = {}) {
     for (const drop of drops) {
       if (drop.opacity < .005) continue;
       const depth = drop.depth, x = drop.x * width, y = drop.y * height;
+      if (isWetFlake(drop)) {
+        const radius = (.6 + depth * 1.65) * drop.size;
+        const alpha = (.17 + depth * .25) * drop.opacity;
+        const flake = context.createRadialGradient(x - radius * .12, y, 0, x, y, radius);
+        flake.addColorStop(0, `rgba(234,244,251,${alpha})`);
+        flake.addColorStop(.56, `rgba(215,232,246,${alpha * .62})`);
+        flake.addColorStop(1, 'rgba(213,232,246,0)');
+        context.fillStyle = flake;
+        context.beginPath();
+        context.ellipse(x, y, radius, radius * (.72 + .2 * depth), drop.sway, 0, Math.PI * 2);
+        context.fill();
+        continue;
+      }
       const slant = visual.slant + Math.sin(elapsed * .8 + drop.sway) * .014;
       // A short optical exposure, not a large pointed water-drop silhouette.
       const length = speed(drop) * (hail ? .006 : drizzle ? .014 : .018);

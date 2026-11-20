@@ -7,11 +7,17 @@ import { pipeline } from 'node:stream/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { isPublicPath, startStaticTestServer } from './lib/static-test-server.mjs';
+import { PREVIEW_VISITOR_ACTIONS_PATH, PREVIEW_VISITOR_ACTIONS_SCRIPT } from './lib/preview-visitor-actions.mjs';
 import { PREVIEW_MOTION_SCRIPT, sanitizeMotionDiagnostic, createMotionDiagnosticRecorder } from './lib/preview-motion-diagnostics.mjs';
 
 const project = 'HUNDESALON_NIKA';
-const weatherBridgeOrigin = 'https://hundesalon-nika.com';
+const publicSiteOrigin = 'https://hundesalon-nika.com';
+const visitorReadParams = new Map([
+  ['/api/maps-config', []], ['/payment', []], ['/booking-availability', ['date']], ['/blog', ['lang', 'slug']],
+]);
+const contactMapFramePaths = new Set(['/assets/frames/contact-map.html', '/assets/frames/contact-map']);
 const weatherBridgePaths = new Set(['/api/weather', '/reverse-geocode']);
+const satelliteCloudsPath = '/api/satellite-clouds';
 export const isPreviewPublicUrl = (value, namedOrigin = null) => namedOrigin
   ? namedOrigin === 'https://preview.hundesalon-nika.com' && value === namedOrigin
   : /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(value);
@@ -36,6 +42,7 @@ export async function createRemoteGateway({
   port = 0,
   emailProtected = false,
   publicReadOnly = false,
+  liveVisitorActions = false,
   weatherModuleDirectory,
   websiteOrigin,
   mediaRoot,
@@ -43,6 +50,7 @@ export async function createRemoteGateway({
   getState = () => ({}),
   onStop = () => {},
 }) {
+  const liveGuest = publicReadOnly && liveVisitorActions;
   const diagnosticsEnabled = typeof onMotionDiagnostic === 'function';
   const website = websiteOrigin
     ? { baseUrl: resolveWebsiteOrigin(websiteOrigin), close: async () => {} }
@@ -128,6 +136,11 @@ export async function createRemoteGateway({
         .end(JSON.stringify({ success: false, message: 'Предварительный просмотр: отправка заявок отключена.' }));
       return;
     }
+    if (liveGuest && url.pathname === PREVIEW_VISITOR_ACTIONS_PATH) {
+      response.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Content-Length': Buffer.byteLength(PREVIEW_VISITOR_ACTIONS_SCRIPT) });
+      response.end(request.method === 'HEAD' ? undefined : PREVIEW_VISITOR_ACTIONS_SCRIPT);
+      return;
+    }
     if (diagnosticsEnabled && url.pathname === '/__preview_motion') {
       if (request.method !== 'GET') {
         response.writeHead(405, { Allow: 'GET' }).end();
@@ -161,8 +174,10 @@ export async function createRemoteGateway({
       return;
     }
     const bridgeWeather = weatherBridgePaths.has(url.pathname) && (!websiteOrigin || publicReadOnly);
-    const isPagesApi = bridgeWeather || (websiteOrigin && (publicReadOnly
-      ? weatherBridgePaths.has(url.pathname) || url.pathname === '/api/maps-config'
+    const visitorParams = liveGuest && visitorReadParams.get(url.pathname);
+    const bridgeVisitorRead = visitorParams && (url.pathname !== '/blog' || !websiteOrigin);
+    const isPagesApi = visitorParams || bridgeWeather || (websiteOrigin && (publicReadOnly
+      ? weatherBridgePaths.has(url.pathname) || ['/api/maps-config', satelliteCloudsPath].includes(url.pathname)
       : relative.startsWith(`api${path.sep}`) || relative === 'reverse-geocode'));
     if (relative.startsWith('..') || path.isAbsolute(relative) || (!isPublicPath(relative) && !isPagesApi)) {
       response.writeHead(403).end('Forbidden');
@@ -175,8 +190,16 @@ export async function createRemoteGateway({
       }
       const upstreamUrl = new URL(url);
       upstreamUrl.searchParams.delete('__preview_key');
+      if (url.pathname === satelliteCloudsPath) upstreamUrl.search = '';
       const useMediaOrigin = media && ['.mp4', '.webm'].includes(path.extname(relative).toLowerCase());
-      const upstreamOrigin = bridgeWeather ? weatherBridgeOrigin : useMediaOrigin ? media.baseUrl : website.baseUrl;
+      if (visitorParams) {
+        upstreamUrl.search = '';
+        for (const name of visitorParams) {
+          const value = url.searchParams.get(name);
+          if (value) upstreamUrl.searchParams.set(name, value);
+        }
+      }
+      const upstreamOrigin = bridgeWeather || bridgeVisitorRead ? publicSiteOrigin : useMediaOrigin ? media.baseUrl : website.baseUrl;
       const upstream = await fetch(`${upstreamOrigin}${upstreamUrl.pathname}${upstreamUrl.search}`, {
         method: request.method,
         headers: requestHeaders,
@@ -188,6 +211,12 @@ export async function createRemoteGateway({
         'Content-Type': upstream.headers.get('content-type') ||
           (upstream.status >= 400 ? 'text/plain; charset=utf-8' : 'application/octet-stream'),
       };
+      if (contactMapFramePaths.has(url.pathname) && upstream.status === 200 &&
+        /^text\/html(?:;|$)/i.test(responseHeaders['Content-Type'])) {
+        responseHeaders['Content-Security-Policy'] = "frame-ancestors 'self'";
+        responseHeaders['X-Frame-Options'] = 'SAMEORIGIN';
+        responseHeaders['Referrer-Policy'] = 'strict-origin-when-cross-origin';
+      }
       for (const name of ['content-range', 'accept-ranges', 'content-length', 'last-modified']) {
         const value = upstream.headers.get(name);
         if (value !== null) responseHeaders[name] = value;
@@ -198,7 +227,8 @@ export async function createRemoteGateway({
         if (destination.origin !== upstreamOrigin) throw new Error('Preview upstream redirects must stay on the same origin.');
         responseHeaders.Location = `${destination.pathname}${destination.search}${destination.hash}`;
       }
-      if ((directHomeAccess || diagnosticsEnabled) && upstream.status === 200 && /^text\/html(?:;|$)/i.test(responseHeaders['Content-Type'])) {
+      const visitorPage = liveGuest && /^\/(?:de|en|ru|uk)(?:\/|$)/.test(url.pathname);
+      if ((visitorPage || directHomeAccess || diagnosticsEnabled) && upstream.status === 200 && /^text\/html(?:;|$)/i.test(responseHeaders['Content-Type'])) {
         if (request.method === 'HEAD') {
           delete responseHeaders['content-length'];
         } else {
@@ -206,7 +236,8 @@ export async function createRemoteGateway({
           const html = original.toString('utf8');
           const cleanup = directHomeAccess ? `<script>try{const u=new URL(location.href);u.searchParams.delete('__preview_key');history.replaceState(history.state,'',u.pathname+u.search+u.hash)}catch{}</script>` : '';
           const diagnostics = diagnosticsEnabled ? `<script>${PREVIEW_MOTION_SCRIPT}</script>` : '';
-          const cleaned = html.replace(/<head\b[^>]*>/i, head => `${head}${cleanup}${diagnostics}`);
+          const actions = visitorPage ? `<script defer src="${PREVIEW_VISITOR_ACTIONS_PATH}"></script>` : '';
+          const cleaned = html.replace(/<head\b[^>]*>/i, head => `${head}${cleanup}${diagnostics}${actions}`);
           const body = cleaned === html ? original : Buffer.from(cleaned);
           responseHeaders['content-length'] = String(body.length);
           response.writeHead(upstream.status, responseHeaders).end(body);
@@ -299,6 +330,7 @@ async function run() {
       port: 5514,
       emailProtected: Boolean(config.allowedEmail),
       publicReadOnly: Boolean(config.publicReadOnly),
+      liveVisitorActions: config.namedPublicUrl === 'https://preview.hundesalon-nika.com',
       getState: () => ({
         publicUrl,
         supervised,

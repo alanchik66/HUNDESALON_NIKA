@@ -2,6 +2,7 @@ import { createCipheriv, createDecipheriv, randomBytes, randomUUID } from 'node:
 import { spawn } from 'node:child_process';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { promises as fs } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { PassThrough, Readable, Transform, Writable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -40,18 +41,15 @@ class ByteLimit extends Transform {
   }
 }
 
-function windowsExecutable(name) {
-  return path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', name);
-}
-
 async function command(executable, args, input = '') {
   return new Promise((resolve, reject) => {
     const child = spawn(executable, args, { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
     let output = '';
     let outputBytes = 0;
+    let timedOut = false;
     const deadline = setTimeout(() => {
+      timedOut = true;
       child.kill();
-      reject(new Error('Backup key operation timed out.'));
     }, 30_000);
     child.stdout.on('data', chunk => {
       outputBytes += chunk.length;
@@ -66,54 +64,68 @@ async function command(executable, args, input = '') {
     });
     child.on('close', code => {
       clearTimeout(deadline);
-      if (code !== 0 || outputBytes > 128 * 1024) reject(new Error('Backup key operation failed.'));
+      if (timedOut) reject(new Error('Backup key operation timed out.'));
+      else if (code !== 0 || outputBytes > 128 * 1024) reject(new Error('Backup key operation failed.'));
       else resolve(output.trim());
     });
     child.stdin.end(input);
   });
 }
 
+async function protectCompilerDirectory(directory, systemRoot, proof) {
+  const executable = name => path.join(systemRoot, 'System32', name + '.exe');
+  const user = await command(executable('whoami'), ['/user', '/fo', 'csv', '/nh']);
+  const sid = user.match(/"(S-1-[0-9-]+)"$/)?.[1];
+  if (!sid) throw new Error('Could not determine the current Windows user.');
+  await command(executable('icacls'), [
+    directory, '/inheritance:r', '/grant:r', '*' + sid + ':(OI)(CI)F', '*S-1-5-18:(OI)(CI)F', '/l', '/q',
+  ]);
+  if ((await fs.realpath(directory)).toLowerCase() !== directory.toLowerCase()) {
+    throw new Error('The Windows compiler directory is a redirected path.');
+  }
+  await command(executable('icacls'), [directory, '/save', proof, '/l', '/q']);
+  const [, dacl = ''] = (await fs.readFile(proof, 'utf16le')).trim().split(/\r?\n/);
+  const expected = new Set(['(A;OICI;FA;;;' + (sid === 'S-1-5-18' ? 'SY' : sid) + ')', '(A;OICI;FA;;;SY)']);
+  const rules = dacl.match(/\([^()]+\)/g) || [];
+  if (!dacl.startsWith('D:P') || rules.length !== expected.size || !rules.every(rule => expected.delete(rule))) {
+    throw new Error('Unexpected access to the Windows compiler directory.');
+  }
+}
+
+async function windowsSecurityCommand(operation, input) {
+  // Use the Windows ACL/DPAPI APIs without initializing PowerShell. Isolate
+  // each executable in the current profile and lock it before compilation.
+  const profile = await fs.realpath(os.homedir());
+  const directory = await fs.mkdtemp(path.join(profile, '.nika-backup-security-'));
+  const executable = path.join(directory, 'windows-backup-security.exe');
+  const proof = path.join(directory, 'acl.txt');
+  const framework = process.arch === 'ia32' ? 'Framework' : 'Framework64';
+  const systemRoot = process.env.SystemRoot || 'C:\\Windows';
+  const compiler = path.join(systemRoot, 'Microsoft.NET', framework, 'v4.0.30319', 'csc.exe');
+  try {
+    await protectCompilerDirectory(directory, systemRoot, proof);
+    await command(compiler, [
+      '/nologo', '/noconfig', '/reference:System.dll', '/reference:System.Security.dll',
+      '/out:' + executable, path.join(import.meta.dirname, 'windows-backup-security.cs'),
+    ]);
+    return await command(executable, [operation], input);
+  } finally {
+    await fs.unlink(executable).catch(() => {});
+    await fs.unlink(proof).catch(() => {});
+    await fs.rmdir(directory).catch(() => {});
+  }
+}
+
 async function securePath(target, directory = false) {
   if (process.platform !== 'win32') return fs.chmod(target, directory ? 0o700 : 0o600);
-  // Replace the ACL instead of retaining an unexpected explicit permission.
-  const script = [
-    '$ErrorActionPreference="Stop";',
-    '$data=[Console]::In.ReadToEnd() | ConvertFrom-Json;',
-    '$sid=[Security.Principal.WindowsIdentity]::GetCurrent().User;',
-    '$system=[Security.Principal.SecurityIdentifier]::new("S-1-5-18");',
-    'if($data.directory) { $acl=[Security.AccessControl.DirectorySecurity]::new(); $inheritance=[Security.AccessControl.InheritanceFlags]"ContainerInherit, ObjectInherit" }',
-    'else { $acl=[Security.AccessControl.FileSecurity]::new(); $inheritance=[Security.AccessControl.InheritanceFlags]::None };',
-    '$acl.SetAccessRuleProtection($true,$false);',
-    'foreach($principal in @($sid,$system)) { $rule=[Security.AccessControl.FileSystemAccessRule]::new($principal,[Security.AccessControl.FileSystemRights]::FullControl,$inheritance,[Security.AccessControl.PropagationFlags]::None,[Security.AccessControl.AccessControlType]::Allow); $acl.AddAccessRule($rule) };',
-    'if($data.directory) { [IO.Directory]::SetAccessControl($data.target,$acl) } else { [IO.File]::SetAccessControl($data.target,$acl) };',
-  ].join(' ');
-  await command(
-    windowsExecutable('WindowsPowerShell/v1.0/powershell.exe'),
-    ['-NoProfile', '-NonInteractive', '-Command', script],
-    JSON.stringify({ target, directory })
-  );
+  await windowsSecurityCommand(directory ? 'acl-directory' : 'acl-file', target);
 }
 
 // Recovery tooling shares the same strict file permissions as encrypted backups.
 export { securePath as secureBackupPath };
 
-async function dpapi(mode, value) {
-  const script = [
-    '$ErrorActionPreference="Stop";',
-    'Add-Type -AssemblyName System.Security;',
-    '$data=[Console]::In.ReadToEnd() | ConvertFrom-Json;',
-    '$bytes=[Convert]::FromBase64String($data.value);',
-    '$entropy=[Text.Encoding]::UTF8.GetBytes("HUNDESALON_NIKA backup key v1");',
-    'if($data.mode -eq "protect") { $result=[Security.Cryptography.ProtectedData]::Protect($bytes,$entropy,[Security.Cryptography.DataProtectionScope]::CurrentUser) }',
-    'elseif($data.mode -eq "unprotect") { $result=[Security.Cryptography.ProtectedData]::Unprotect($bytes,$entropy,[Security.Cryptography.DataProtectionScope]::CurrentUser) }',
-    'else { throw "Invalid operation" };',
-    '[Console]::Out.Write([Convert]::ToBase64String($result));',
-  ].join(' ');
-  return command(
-    windowsExecutable('WindowsPowerShell/v1.0/powershell.exe'),
-    ['-NoProfile', '-NonInteractive', '-Command', script],
-    JSON.stringify({ mode, value })
-  );
+function dpapi(mode, value) {
+  return windowsSecurityCommand(mode, value);
 }
 
 /**

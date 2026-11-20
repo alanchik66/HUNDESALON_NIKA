@@ -165,4 +165,154 @@ export function applySkyPosition(overlay, part, fixedLayout, lang = 'en') {
   updates.set(overlay, { key, time: now });
 }
 
-export const skyClock = { ...astronomy, withSkyPresentation, applySkyPosition, applySkyFog };
+export function syncHeaderWeatherShootingStars(host, randomBetween) {
+  if (!host?.shadowRoot) return;
+  if (host.dataset.weatherMounted !== 'true') {
+    host.__weatherShootingStars?.dispose();
+    host.__weatherShootingStars = null;
+    return;
+  }
+  if (!host.__weatherShootingStars) {
+    let timer = null;
+    let active = null;
+    let disposed = false;
+    let firstPass = true;
+    let generation = 0;
+    const eligibleLayers = () => {
+      if (disposed || !host.isConnected || host.dataset.weatherMounted !== 'true' ||
+        document.hidden) return [];
+      return [
+        host.shadowRoot.querySelector('.weather-header-preview__stars-back'),
+        host.dataset.weatherExpanded === 'true'
+          ? host.shadowRoot.querySelector('.weather-header-dropdown__stars-back') : null,
+      ].filter(layer => layer?.isConnected && layer.classList.contains('is-night-sky') && layer.style.display !== 'none');
+    };
+    const stop = () => {
+      generation += 1;
+      if (timer !== null) window.clearTimeout(timer);
+      timer = null;
+      const previous = active;
+      active = null;
+      previous?.animation.cancel();
+      previous?.element.remove();
+    };
+    const schedule = () => {
+      if (timer !== null || active || !eligibleLayers().length) return;
+      timer = window.setTimeout(spawn, randomBetween(firstPass ? 4500 : 28000, firstPass ? 9500 : 68000));
+    };
+    const spawn = () => {
+      timer = null;
+      const layers = eligibleLayers();
+      if (!layers.length) return;
+      firstPass = false;
+      const nightLayer = layers[Math.min(layers.length - 1, Math.floor(randomBetween(0, layers.length)))];
+      const dropdown = nightLayer.closest('.weather-header-dropdown');
+      const stage = nightLayer.closest('.weather-header-preview') || dropdown?.querySelector('.weather-header-dropdown__hero');
+      if (!stage?.isConnected) {
+        schedule();
+        return;
+      }
+      const rect = stage.getBoundingClientRect();
+      const container = dropdown || document.querySelector('.header');
+      const bounds = container?.getBoundingClientRect();
+      if (!bounds) return;
+      const viewport = window.visualViewport;
+      const left = Math.max(rect.left, bounds.left, viewport?.offsetLeft || 0);
+      const top = Math.max(rect.top, bounds.top, viewport?.offsetTop || 0);
+      const right = Math.min(rect.right, bounds.right, (viewport?.offsetLeft || 0) + (viewport?.width || window.innerWidth));
+      const bottom = Math.min(rect.bottom, bounds.bottom, (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight));
+      const angle = randomBetween(0, 360);
+      const radians = angle * Math.PI / 180;
+      const cosine = Math.cos(radians);
+      const sine = Math.sin(radians);
+      // The projection varies independently of brightness. Steep tracks have less space in the narrow header.
+      const trailLimit = Math.min(84, (right - left) * 0.25,
+        (bottom - top) * 0.28 / Math.max(Math.abs(sine), 0.001));
+      const length = trailLimit * (0.54 + 0.46 * randomBetween(0, 1) ** 1.4);
+      const corners = [Math.min(-0.9 * length, -11), Math.max(0.1 * length, 11)].flatMap(x =>
+        [-11, 11].map(y => ({ x: x * cosine - y * sine, y: x * sine + y * cosine }))
+      );
+      const minX = left - Math.min(...corners.map(point => point.x)) + 6;
+      const maxX = right - Math.max(...corners.map(point => point.x)) - 6;
+      const minY = top - Math.min(...corners.map(point => point.y)) + 6;
+      const maxY = bottom - Math.max(...corners.map(point => point.y)) - 6;
+      const distance = Math.min(
+        (maxX - minX) / Math.max(Math.abs(cosine), 0.001),
+        (maxY - minY) / Math.max(Math.abs(sine), 0.001)
+      ) * randomBetween(0.45, 0.9);
+      if (length <= 0 || maxX <= minX || maxY <= minY || distance < 12) {
+        schedule();
+        return;
+      }
+      const dx = cosine * distance;
+      const dy = sine * distance;
+      const x = randomBetween(minX - Math.min(dx, 0), maxX - Math.max(dx, 0));
+      const y = randomBetween(minY - Math.min(dy, 0), maxY - Math.max(dy, 0));
+      const element = document.createElement('span');
+      element.className = 'weather-header-shooting-star weather-header-shooting-star--foreground';
+      element.setAttribute('aria-hidden', 'true');
+      element.setAttribute('data-weather-meteor-depth', 'front');
+      // Apparent speed is scaled to the available scene width, not a physical distance.
+      const screenSpeed = (right - left) * randomBetween(0.55, 1.55);
+      const duration = Math.max(260, Math.min(780, 1000 * distance / screenSpeed));
+      // The visible glow is an apparent size in the scene. Ordinary faint tracks outnumber strong bursts.
+      const brightnessRank = randomBetween(0, 1);
+      const luminance = brightnessRank ** 2.6;
+      const strength = 0.43 + 0.57 * luminance;
+      const flash = brightnessRank >= 0.985 ? 0.83 : 0.05 + 0.34 * luminance;
+      const color = randomBetween(0, 1) < 0.18 ? '255, 232, 194' : '232, 241, 255';
+      element.style.setProperty('--shooting-star-color', color);
+      element.style.setProperty('--shooting-star-head-long', `${(1.05 + 2.1 * luminance).toFixed(2)}px`);
+      element.style.setProperty('--shooting-star-head-short', `${(0.55 + 1.25 * luminance).toFixed(2)}px`);
+      element.style.setProperty('--shooting-star-trail-width', `${(0.75 + 2.25 * luminance).toFixed(2)}px`);
+      element.style.setProperty('--shooting-star-flare-size', `${(4.6 + 10.6 * luminance).toFixed(2)}px`);
+      element.style.setProperty('--shooting-star-flash', flash.toFixed(3));
+      element.style.setProperty('--shooting-star-length', `${length.toFixed(2)}px`);
+      element.style.setProperty('--shooting-star-duration', `${duration.toFixed(2)}ms`);
+      element.style.left = `${(x - rect.left - length * 0.9).toFixed(2)}px`;
+      element.style.top = `${(y - rect.top - 11).toFixed(2)}px`;
+      stage.appendChild(element);
+      const transform = progress => `translate3d(${(dx * progress).toFixed(2)}px, ${(dy * progress).toFixed(2)}px, 0) rotate(${angle.toFixed(2)}deg) scale(1)`;
+      let animation;
+      try {
+        animation = element.animate([
+          // Opacity eases independently; transform endpoints preserve constant travel speed.
+          { transform: transform(0), offset: 0, easing: 'linear' },
+          { opacity: 0, offset: 0, easing: 'ease-in-out' },
+          { opacity: 0.34 * strength, offset: 0.12, easing: 'ease-in-out' },
+          { opacity: strength, offset: 0.38, easing: 'ease-in-out' },
+          { opacity: 0.42 * strength, offset: 0.58, easing: 'ease-in-out' },
+          { opacity: 0.1 * strength, offset: 0.84, easing: 'ease-in-out' },
+          { transform: transform(1), opacity: 0, offset: 1 },
+        ], { duration, easing: 'linear', fill: 'forwards' });
+      } catch {
+        element.remove();
+        return;
+      }
+      const token = ++generation;
+      active = { layer: nightLayer, element, animation };
+      const finish = () => {
+        element.remove();
+        if (token !== generation || disposed) return;
+        active = null;
+        schedule();
+      };
+      animation.finished.then(finish, finish);
+    };
+    const sync = (restart = false) => {
+      const layers = eligibleLayers();
+      if (restart || !layers.length || (active && (!layers.includes(active.layer) || active.element.isConnected === false))) stop();
+      if (layers.length) schedule();
+    };
+    host.__weatherShootingStars = {
+      sync,
+      dispose() {
+        disposed = true;
+        stop();
+      },
+    };
+  }
+  host.__weatherShootingStars.sync();
+}
+
+export const skyClock = { ...astronomy, withSkyPresentation, applySkyPosition, applySkyFog, syncHeaderWeatherShootingStars };

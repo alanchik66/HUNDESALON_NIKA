@@ -42,15 +42,17 @@ async function harness(filename) {
   const condition = jsxBlock(source, 'weather-header-dropdown__hero-copy', 'weather-header-dropdown__hero-chips');
   const observedTime = source.match(/observedTime = (.+),\r?\n\s+le = /)?.[1];
   assert.ok(observedTime, 'observation time binding must be present');
-  const render = new Function('Q', '$', 'u', 'U', 'B', 'de', 'ce', 'jsxRuntime', 'formatForecastDate', 'formatLocalTime', 'formatWeatherObservationTime', 'localeTags',
-    `const observedTime = (${observedTime}); return { title: (${title}), condition: (${condition}) };`);
+  const locationHeading = source.match(/locationHeading = (.+),\r?\n/)?.[1];
+  assert.ok(locationHeading, 'the selected forecast source must have a heading');
+  const render = new Function('Q', '$', 'u', 'U', 'B', 'de', 'ce', 'jsxRuntime', 'formatForecastDate', 'formatLocalTime', 'formatWeatherObservationTime', 'localeTags', 'salonForecast',
+    `const observedTime = (${observedTime}), locationHeading = (${locationHeading}); return { title: (${title}), condition: (${condition}) };`);
   const jsx = (type, props, key) => ({ type, props, key });
   return {
     source, copy, localeTags, formatDate, formatTime, project,
-    render(data, selected, locale) {
+    render(data, selected, locale, salonForecast = false) {
       const weather = project(data, selected);
       return render(selected, weather, locale, copy[locale], selected ? 3 : null, 'Region', weather.current.condition.text,
-        { jsx, jsxs: jsx, Fragment: 'Fragment' }, formatDate, formatTime, formatWeatherObservationTime, localeTags);
+        { jsx, jsxs: jsx, Fragment: 'Fragment' }, formatDate, formatTime, formatWeatherObservationTime, localeTags, salonForecast);
     },
   };
 }
@@ -67,6 +69,16 @@ function weather() {
 }
 
 for (const filename of filenames) {
+  test(`${filename}: the current forecast identifies whether its location is the salon or the device`, async () => {
+    const h = await harness(filename);
+    for (const locale of locales) {
+      const salon = text(h.render(weather(), null, locale, true).title.props.children[0]);
+      const device = text(h.render(weather(), null, locale).title.props.children[0]);
+      assert.equal(salon, { ru: 'Салон в Лейпциге', uk: 'Салон у Лейпцигу', en: 'Salon in Leipzig', de: 'Salon in Leipzig' }[locale]);
+      assert.equal(device, h.copy[locale].headerLabel);
+    }
+  });
+
   test(`${filename}: all localized current clocks stay 24-hour through midnight without a stale AM/PM marker`, async () => {
     const h = await harness(filename);
     for (const locale of locales) {

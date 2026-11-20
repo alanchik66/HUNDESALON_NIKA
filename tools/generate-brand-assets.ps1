@@ -273,7 +273,6 @@ try {
   }
 
   New-BrandIconPng -Source $source -Size 150 -OutputPath (Join-Path $faviconDir 'mstile-150x150.png') -EdgeRatio $touchEdgeRatio
-  New-BrandIconPng -Source $source -Size 512 -OutputPath (Join-Path $faviconDir 'favicon-512x512.png') -EdgeRatio $standardEdgeRatio
   New-BrandIconPng -Source $source -Size 512 -OutputPath (Join-Path $faviconDir 'favicon-search-512.png') -EdgeRatio $standardEdgeRatio
   New-BrandIconPng -Source $source -Size 512 -OutputPath (Join-Path $faviconDir 'maskable-icon-512x512.png') -EdgeRatio $maskableEdgeRatio
   New-BrandIconPng -Source $source -Size 512 -OutputPath (Join-Path $faviconDir 'favicon.png') -EdgeRatio $standardEdgeRatio

@@ -12,7 +12,7 @@
       "source": "src/scene.mjs",
       "output": "Scene3D-Cdhk74W6.mjs",
       "baselineSha256": "2bd48be805f56933124942a8164d7708543dccb268b5eccbd6525601e6fae09d",
-      "canonicalSha256": "f5f735c7d2fa446a869b80ee03e6c9e11152ef651d076bbc5cc7a2a20265e86e",
+      "canonicalSha256": "5177a114135f5a2ac3f59c66f431b786a3506c22fd54d6118d6ecb58ca9349c5",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -66,7 +66,7 @@
       "source": "src/widget.mjs",
       "output": "weather-widget.es.js",
       "baselineSha256": "11a30d167a9b9a21724da59e07a94ddfcc2dff2186c7946af7294c1bb3609cf7",
-      "canonicalSha256": "9dda75db11b834f28fdabda015d02bfb15d49e252e9850bf5b5de8c050b8e5df",
+      "canonicalSha256": "f659d9f66f177719d07ba795d2b30240fe8a95e2271e30b38fbec8f833b3baea",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -110,7 +110,7 @@
       "source": "src/header-preview.mjs",
       "output": "weather-widget.header-panel-preview.es.js",
       "baselineSha256": "b850b368a2d72b4110c329fed9440dd4c70bea7f6287da6e872986271bb360c2",
-      "canonicalSha256": "59626e3b5aec73888f8048b9726239c50460aaabe756555ea014a09cb7a7b287",
+      "canonicalSha256": "e50c79a5079506d7c7dcd4cced737b0292079fa03358f44342c0b61fb8297ef9",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -154,7 +154,7 @@
       "source": "src/header-dropdown.mjs",
       "output": "weather-widget.header-panel-dropdown-scene.es.js",
       "baselineSha256": "6336c75ab083aafd574ec0ae1344ac7ac515782231d1658dfe950e2a032175f7",
-      "canonicalSha256": "9baad8b0da024cc466c1ba7f48abef875bae648086bad9f5d588ab3a37a273c3",
+      "canonicalSha256": "d2e00495a987d97bbeae895f0f934e5fd00f6c76baf28da4d7672f2252d12acb",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -206,7 +206,7 @@
       "source": "src/weather-lifecycle.mjs",
       "output": "weather-lifecycle.mjs",
       "baselineSha256": null,
-      "canonicalSha256": "2e987752d112e217f5baa83b672b0b005ad3d1823927cefadc8910b2640132b2",
+      "canonicalSha256": "75d27f3f564fe6f5fa2a940593186362df28c5ec3470e29f4d4266f3d12798af",
       "recoveredNames": {},
       "initialEquivalent": false
     }
