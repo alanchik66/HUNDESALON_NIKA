@@ -3898,21 +3898,12 @@
     return isLight ? themeLabels.toDark : themeLabels.toLight;
   }
 
-  function getLocalizedRoute(context) {
-    if (context.langIndex < 0) {
-      return 'index.html';
-    }
-
-    const route = context.pathParts.slice(context.langIndex + 1).join('/');
-    if (!route) {
-      return '';
-    }
-
+  function getLocalizedRoute(route) {
     if (route === 'blog' || route === 'blog/index.html') {
       return 'blog/blog.html';
     }
 
-    return LOCALIZED_ROUTES.has(route) ? route : 'index.html';
+    return LOCALIZED_ROUTES.has(route) || LOCALIZED_ROUTES.has(`${route}.html`) ? route : 'index.html';
   }
 
   function buildLanguageUrl(context, lang) {
@@ -3924,7 +3915,7 @@
       const nextParts = [...context.pathParts];
       nextParts[context.langIndex] = lang;
 
-      const localizedRoute = getLocalizedRoute(context);
+      const localizedRoute = getLocalizedRoute(context.currentRoute);
       const localizedRouteParts = localizedRoute ? localizedRoute.split('/') : [];
       nextParts.splice(context.langIndex + 1, nextParts.length - (context.langIndex + 1), ...localizedRouteParts);
 

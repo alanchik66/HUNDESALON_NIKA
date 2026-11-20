@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
@@ -1404,6 +1404,36 @@ test('header shooting stars use one eligible night layer and stop with their hos
     assert.equal(ui.timers.size, 0);
     assert.equal(ui.reducedQuery.listeners.size, 0);
   });
+});
+
+test('language switching keeps the current published page, query and section', async () => {
+  const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
+  const routes = source.match(/  const LOCALIZED_ROUTES = new Set\(\[[\s\S]*?\n  \]\);/)[0];
+  const functions = source.slice(source.indexOf('  function getLocalizedRoute('), source.indexOf('  function createHeaderMarkup('));
+  const languages = ['de', 'en', 'ru', 'uk'];
+  const build = runInNewContext(`${routes}\n${functions}\nbuildLanguageUrl`, { URL, SUPPORTED_LANGS: languages });
+
+  for (const sourceLang of languages) {
+    const files = await readdir(path.join(root, sourceLang), { recursive: true });
+    const pages = files.filter(file => file.endsWith('.html')).map(file => file.split(path.sep).join('/'));
+    const cases = new Map([['', ''], ['blog', 'blog/blog.html'], ['blog/index.html', 'blog/blog.html'], ['unknown', 'index.html']]);
+    for (const file of pages) {
+      cases.set(file, file);
+      const clean = file.slice(0, -'.html'.length);
+      cases.set(clean, clean);
+    }
+    for (const [currentRoute, expected] of cases) {
+      const currentUrl = new URL(`https://hundesalon-nika.com/${sourceLang}/${currentRoute}?ref=test#section`);
+      const context = {
+        currentUrl, currentRoute, langIndex: 0,
+        pathParts: currentUrl.pathname.split('/').filter(Boolean),
+        hasTrailingSlash: currentUrl.pathname.endsWith('/'),
+      };
+      for (const lang of languages) {
+        assert.equal(build(context, lang), `https://hundesalon-nika.com/${lang}/${expected}?ref=test#section`);
+      }
+    }
+  }
 });
 
 test('localized burger menus expose promotions while keeping booking in the header', async () => {

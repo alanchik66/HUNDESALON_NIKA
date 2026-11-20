@@ -11802,12 +11802,12 @@ body.light .social-icons-toggle.is-open {
   pointer-events: auto !important;
 }
 
-/* When language menu is open, force top-row above social strip/icons. */
-.header:has(.header-controls .language-dropdown.open) .top-row {
+/* Keep open header menus above the social bar. */
+.header:has(.header-controls .language-dropdown.open, .nav-gallery-dropdown:is(:hover, :focus-within, .is-open)) .top-row {
   z-index: 96 !important;
 }
 
-.header:has(.header-controls .language-dropdown.open) .social-bar {
+.header:has(.header-controls .language-dropdown.open, .nav-gallery-dropdown:is(:hover, :focus-within, .is-open)) .social-bar {
   z-index: 40 !important;
 }
 
