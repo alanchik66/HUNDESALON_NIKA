@@ -126,6 +126,9 @@ try {
           if (url.origin === location.origin && url.pathname === '/api/weather') {
             return Promise.resolve(Response.json({ error: 'Offline navigation fixture' }, { status: 503 }));
           }
+          if (url.origin === 'https://api.sunrise-sunset.org' && url.pathname === '/json') {
+            return Promise.resolve(Response.json({ error: 'Offline navigation fixture' }, { status: 503 }));
+          }
           if (url.origin === location.origin && url.pathname === '/site.webmanifest' && url.searchParams.has('_ts')) {
             return Promise.resolve(new Response(null, { headers: { Date: new Date().toUTCString() } }));
           }
@@ -171,6 +174,13 @@ try {
       } else if (request.method() === 'GET' && !request.isNavigationRequest() &&
         url.origin === server.baseUrl && url.pathname === '/api/weather') {
         await requestRoute.fulfill({ status: 503, json: { error: 'Offline navigation fixture' } });
+      } else if (request.method() === 'GET' && !request.isNavigationRequest() &&
+        url.origin === 'https://api.sunrise-sunset.org' && url.pathname === '/json') {
+        await requestRoute.fulfill({
+          status: 503,
+          headers: { 'access-control-allow-origin': server.baseUrl },
+          json: { error: 'Offline navigation fixture' },
+        });
       } else if (url.origin !== server.baseUrl) {
         await requestRoute.abort();
       } else {

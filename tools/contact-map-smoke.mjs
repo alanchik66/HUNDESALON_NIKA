@@ -354,12 +354,21 @@ try {
     assert.equal(await page.locator('.contact-map-3d-link').getAttribute('href'), 'https://hundesalon-nika.com/ru/kontakty');
     assert.equal(await page.locator('.contact-map-controls, .map-mode-button').count(), 0);
     console.log(`[contact-map] ${engine} late preview SDK failure switches to the interactive street map`);
-    await preview.route('https://maps.googleapis.com/maps/api/js*', route =>
+    const sdkScriptUrl = 'https://maps.googleapis.com/maps/api/js*';
+    await preview.route(sdkScriptUrl, route =>
       route.fulfill({ contentType: 'application/javascript', body: '/* SDK callback never arrives */' })
     );
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.map-native[data-map-provider="openstreetmap"]', { timeout: 30000 });
-    assert.equal(await page.locator('.contact-map-3d-link').count(), 1);
+    await page.close();
+    const unresponsivePage = await preview.newPage();
+    await Promise.all([
+      unresponsivePage.waitForResponse(sdkScriptUrl),
+      unresponsivePage.goto(`${previewOrigin}/ru/kontakty.html`, { waitUntil: 'domcontentloaded' })
+        .then(() => unresponsivePage.locator('.map-native').scrollIntoViewIfNeeded()),
+    ]);
+    // Advance the map's pending timeout after the mocked SDK response.
+    await unresponsivePage.clock.runFor(16000);
+    await unresponsivePage.waitForSelector('.map-native[data-map-provider="openstreetmap"]', { timeout: 30000 });
+    assert.equal(await unresponsivePage.locator('.contact-map-3d-link').count(), 1);
     console.log(`[contact-map] ${engine} unresponsive preview SDK keeps a working map and 3D link`);
   } finally {
     await preview.close();

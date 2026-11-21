@@ -14,6 +14,7 @@
   const FRAME_ORIGIN = location.origin;
   const IS_RENDER_FRAME = document.documentElement.hasAttribute('data-contact-map-frame');
   const IS_PHONE_PREVIEW = location.hostname === 'preview.hundesalon-nika.com';
+  const IS_STREET_RENDERER = IS_PHONE_PREVIEW && new URL(location.href).searchParams.get('view') === 'street';
   const scriptVersion = new URL(document.currentScript?.src || '/assets/js/contact-map.js', location.href).searchParams.get('v');
   let googleMapsPromise;
 
@@ -671,7 +672,7 @@
   }
 
   async function initializeRenderer(element, onLease) {
-    if (IS_PHONE_PREVIEW && new URL(location.href).searchParams.get('view') === 'street') {
+    if (IS_STREET_RENDERER) {
       const stylesheet = document.createElement('link');
       stylesheet.rel = 'stylesheet';
       stylesheet.href = '/assets/vendor/leaflet/1.9.4/leaflet.css';
@@ -744,6 +745,7 @@
     let session;
     let commands = Promise.resolve();
     const send = (type, data) => window.parent.postMessage(message(type, data), FRAME_ORIGIN);
+    const reportReady = (provider, mode) => send('ready', { provider, mode, street: IS_STREET_RENDERER });
     const receive = event => {
       if (event.origin !== FRAME_ORIGIN || event.source !== window.parent || !isMessage(event.data)) return;
       const data = event.data;
@@ -767,8 +769,8 @@
         void initializeRenderer(element, nextLease => { lease = nextLease; lease.setActive(visible); }).then(result => {
           session = result;
           lease?.setActive(visible);
-          send('ready', { provider: result.provider, mode: result.mode });
-        }).catch(() => { showMapUnavailable(element); send('ready', { provider: 'unavailable', mode: null }); });
+          reportReady(result.provider, result.mode);
+        }).catch(() => { showMapUnavailable(element); reportReady('unavailable', null); });
       } else if (data.type === 'visibility' && initialized && typeof data.visible === 'boolean' && typeof data.light === 'boolean') {
         visible = data.visible;
         document.body.classList.toggle('light', data.light);
@@ -845,6 +847,8 @@
     const receive = event => {
       if (event.origin !== FRAME_ORIGIN || event.source !== frame.contentWindow || !isMessage(event.data)) return;
       const data = event.data;
+      // A replaced frame can still deliver a queued message from its previous document.
+      if (data.type === 'ready' && data.street !== streetPreview) return;
       if (IS_PHONE_PREVIEW && !streetPreview && (data.type === 'google-failed' ||
         (data.type === 'ready' && data.provider === 'unavailable' && data.mode === null))) {
         openStreetPreview();
