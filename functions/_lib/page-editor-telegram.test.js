@@ -66,9 +66,9 @@ test('the public Telegram response reads published copy once and preserves ident
   assert.equal(rendered.headers.get('ETag'), null);
   const html = await rendered.text();
   const titles = {};
+  const titleSpan = /<span data-telegram-text="title">(?:<!--nika-copy:heading:telegram-title-->)?([^<]+)(?:<!--\/nika-copy-->)?<\/span>/;
   replaceTelegramEditorTemplates(html, (_open, locale, content) => {
-    const texts = content.replace(/<!--[\s\S]*?-->/g, '');
-    titles[locale] = /<span data-telegram-text="title">([^<]+)<\/span>/.exec(texts)?.[1];
+    titles[locale] = titleSpan.exec(content)?.[1];
     return '';
   });
   assert.deepEqual(titles, {
