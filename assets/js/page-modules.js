@@ -1433,13 +1433,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   };
 
-  const initBookingPayments = (form, { modal, showValidationMessage, resetSummaryConfirmation }) => {
+  const initBookingPayments = (form, { modal, showValidationMessage, resetSummaryConfirmation, returnMount }) => {
     const copy = bookingCopy;
-    const verification = initBookingTurnstile(form, { copy, showValidationMessage });
+    const verification = form && initBookingTurnstile(form, { copy, showValidationMessage });
     const storageKey = 'hundesalon_nika_checkout_v1';
     const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     const tokenPattern = /^[A-Za-z0-9_-]{43}$/;
-    const paymentFieldset = form.querySelector('.booking-payment-fieldset');
+    const paymentFieldset = form?.querySelector('.booking-payment-fieldset');
     const paymentHint = paymentFieldset?.querySelector('.booking-payment-hint');
     let onlineOption = paymentFieldset?.querySelector('[data-booking-online-option]');
     let enabled = false;
@@ -1558,7 +1558,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     if (hintText) hintText.textContent = copy.paymentChecking;
-    const configuration = (async () => {
+    const configuration = form && (async () => {
       try {
         const response = await fetch('/payment', {
           headers: { Accept: 'application/json' },
@@ -1646,9 +1646,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       actions.append(refreshButton, resumeLink, retryCheckoutButton);
       statusPanel.append(title, statusMessage, actions);
-      const hero = document.querySelector('.booking-hero');
-      if (hero) hero.before(statusPanel);
-      else modal.before(statusPanel);
+      if (returnMount) returnMount.append(statusPanel);
+      else (document.querySelector('.booking-hero') || modal).before(statusPanel);
     };
     const refreshStatus = async () => {
       if (statusPending || !validCredentials(resumeCredentials)) return;
@@ -1687,7 +1686,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (checkoutUrl) {
             resumeLink.href = checkoutUrl;
             resumeLink.style.display = '';
-          } else if (result.retryable === true) {
+          } else if (result.retryable === true && form) {
             retryCheckoutButton.style.display = '';
           }
           if (!cancelledReturn && ++statusAttempts < 10 && !document.hidden)
@@ -1720,6 +1719,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (resumeCredentials) void refreshStatus();
     }
     window.addEventListener('pagehide', () => window.clearTimeout(pollTimer));
+    if (!form) return;
     form.addEventListener('input', () => {
       attempt = null;
     });
@@ -4314,5 +4314,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initMessageDraftTools();
   initSmoothHashLinks();
   initPriceConfigurator();
-  initBookingModal();
+  const paymentReturnMount = document.querySelector('[data-booking-payment-return]');
+  if (paymentReturnMount) initBookingPayments(null, { returnMount: paymentReturnMount });
+  else initBookingModal();
 });

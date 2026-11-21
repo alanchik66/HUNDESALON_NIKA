@@ -1,6 +1,5 @@
-import { enforceRateLimit, jsonResponse, timingSafeEqualStrings } from './_lib/http-security.js';
-import { getPaymentOrder } from './_lib/payment-orders.js';
-import { hashPaymentStatusToken, PAYMENT_ORDER_ID_RE, PAYMENT_STATUS_TOKEN_RE } from './_lib/payment-config.js';
+import { enforceRateLimit, jsonResponse } from './_lib/http-security.js';
+import { getAuthorizedPaymentOrder } from './_lib/payment-orders.js';
 
 function respond(payload, status = 200) {
   const response = jsonResponse(payload, status);
@@ -15,14 +14,9 @@ export async function onRequest({ request, env }) {
   const limited = await enforceRateLimit(request, { route: 'payment-status', limit: 90, windowSec: 60 });
   if (limited) return limited;
   const params = new URL(request.url).searchParams;
-  const id = params.get('order') || '';
-  const token = params.get('token') || '';
-  if (!PAYMENT_ORDER_ID_RE.test(id) || !PAYMENT_STATUS_TOKEN_RE.test(token))
-    return respond({ success: false, message: 'Payment status is unavailable' }, 403);
   try {
-    const order = await getPaymentOrder(env, id);
-    if (!order || !(await timingSafeEqualStrings(order.tokenHash, await hashPaymentStatusToken(token))))
-      return respond({ success: false, message: 'Payment status is unavailable' }, 403);
+    const order = await getAuthorizedPaymentOrder(env, params.get('order'), params.get('token'));
+    if (!order) return respond({ success: false, message: 'Payment status is unavailable' }, 403);
     const expired =
       order.paymentStatus === 'pending' &&
       (Date.parse(order.expiresAt) <= Date.now() ||

@@ -1,12 +1,15 @@
-import { readFormDataBody, readJsonBody, isRequestBodyTooLarge } from './http-security.js';
+import { enforceRateLimit, readFormDataBody, readJsonBody, isRequestBodyTooLarge } from './http-security.js';
 import { MANAGED_LANGS, disabledSlugs, readSiteSettings, sectionForPath } from './site-settings.js';
 import { applyPageCopy, escapeCopy, PAGE_LABELS, validLocale } from './page-copy.js';
 import { applyTelegramEditorCopy } from './page-editor-telegram.js';
 import { listPublishedSiteMedia } from './admin-media.js';
 import { adminDatabase } from './site-admin-auth.js';
+import { PAYMENT_ORDER_ID_RE, PAYMENT_STATUS_TOKEN_RE } from './payment-config.js';
+import { getAuthorizedPaymentOrder } from './payment-orders.js';
 
 const CHANGEABLE_DOCUMENT = /^\/(?:de|en|ru|uk)(?:\/|$)|^\/reviews(?:\.html)?\/?$/;
 const TELEGRAM_MENU = /^\/telegram-menu(?:\.html)?\/?$/;
+const PAYMENT_RETURN_PATH = /^\/(de|en|ru|uk)\/onlayn-bronirovanie$/;
 const telegramSections = new Map([
   ['booking', 'booking'],
   ['prices', 'prices'],
@@ -40,7 +43,7 @@ function publicError(status, method, api) {
   });
 }
 
-function uncacheable(response) {
+function uncacheable(response, privateReturn = false) {
   const headers = new Headers(response.headers);
   headers.set('Cache-Control', 'private, no-store');
   for (const name of [
@@ -53,7 +56,31 @@ function uncacheable(response) {
     'Accept-Ranges',
   ])
     headers.delete(name);
+  if (privateReturn) {
+    headers.set('Referrer-Policy', 'no-referrer');
+    headers.set('X-Robots-Tag', 'noindex, nofollow');
+  }
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
+async function canViewPaymentReturn(env, request, url) {
+  const locale = PAYMENT_RETURN_PATH.exec(url.pathname)?.[1];
+  if (!locale || !['GET', 'HEAD'].includes(request.method)) return false;
+  const [payment, ...extra] = url.searchParams.getAll('payment');
+  const [id, ...extraIds] = url.searchParams.getAll('order');
+  const [token, ...extraTokens] = url.searchParams.getAll('token');
+  if (
+    extra.length ||
+    extraIds.length ||
+    extraTokens.length ||
+    !['success', 'cancelled'].includes(payment) ||
+    !PAYMENT_ORDER_ID_RE.test(id || '') ||
+    !PAYMENT_STATUS_TOKEN_RE.test(token || '')
+  ) return false;
+  if (await enforceRateLimit(request, { route: 'payment-return', limit: 90 })) return false;
+  const order = await getAuthorizedPaymentOrder(env, id, token);
+  if (!order) return false;
+  return locale === (MANAGED_LANGS.includes(order.booking.lang) ? order.booking.lang : 'de');
 }
 
 function sourceRequest(context) {
@@ -97,7 +124,30 @@ function visibleSitemap(source, state) {
   return xml.replace('</urlset>', additions + '\n</urlset>');
 }
 
-function transformHTML(response, state, url, path) {
+function protectPaymentReturn(rewriter, url) {
+  const assetUrl = (element, attribute) => {
+    try {
+      return new URL(element.getAttribute(attribute), url);
+    } catch {
+      return null;
+    }
+  };
+  rewriter.on('script[src]', {
+    element(el) {
+      const asset = assetUrl(el, 'src');
+      if (asset?.origin !== url.origin || asset.pathname === '/assets/js/analytics.js') el.remove();
+    },
+  });
+  rewriter.on('link[href]', {
+    element(el) {
+      const rel = el.getAttribute('rel');
+      if (rel !== 'canonical' && !(rel === 'alternate' && el.hasAttribute('hreflang'))
+        && assetUrl(el, 'href')?.origin !== url.origin) el.remove();
+    },
+  });
+}
+
+function transformHTML(response, state, url, path, privateReturn, paymentStatusOnly) {
   const disabled = Object.entries(state.sections)
     .filter(([, enabled]) => !enabled)
     .map(([key]) => key);
@@ -107,6 +157,20 @@ function transformHTML(response, state, url, path) {
       el.setAttribute('data-disabled-paths', disabledSlugs(state).join(' '));
     },
   });
+  if (privateReturn) protectPaymentReturn(rewriter, url);
+  if (paymentStatusOnly) {
+    rewriter
+      .on('.booking-hero', {
+        element(el) {
+          el.replace('<main data-booking-payment-return></main>', { html: true });
+        },
+      })
+      .on('#booking-modal, [data-newsletter-section]', {
+        element(el) {
+          el.remove();
+        },
+      });
+  }
   if (disabled.length) {
     if (TELEGRAM_MENU.test(path)) {
       rewriter.on('button[data-route]', {
@@ -131,7 +195,7 @@ function transformHTML(response, state, url, path) {
         if (state.sections[sectionForPath(target.pathname)] === false) el.remove();
       },
     });
-    if (state.sections.newsletter === false)
+    if (state.sections.newsletter === false && !paymentStatusOnly)
       rewriter.on('[data-newsletter-section]', {
         element(el) {
           el.remove();
@@ -260,9 +324,12 @@ export async function managedSiteResponse(context, url) {
         return publicError(isRequestBodyTooLarge(error) ? 413 : 400, request.method, true);
       }
     }
-    if (section && state.sections[section] === false) return publicError(404, request.method, !document);
+    const disabled = section && state.sections[section] === false;
+    const privateReturn = PAYMENT_RETURN_PATH.test(url.pathname) && url.searchParams.has('order') && url.searchParams.has('token');
+    const paymentStatusOnly = disabled && section === 'booking' && privateReturn && await canViewPaymentReturn(env, request, url);
+    if (disabled && !paymentStatusOnly) return publicError(404, request.method, !document);
     if (!document && !sitemap) return null;
-    const response = uncacheable(await sourceRequest(context));
+    const response = uncacheable(await sourceRequest(context), privateReturn);
     if (!response.ok || request.method === 'HEAD') return response;
     if (sitemap) {
       return new Response(visibleSitemap(await response.text(), state), {
@@ -275,8 +342,8 @@ export async function managedSiteResponse(context, url) {
     const marked =
       typeof HTMLRewriter === 'undefined' && !env?.CHAT_DB && !env?.SITE_ADMIN_KEY
         ? edited
-        : transformHTML(edited, state, url, path);
-    return await applyPageMedia(marked, env, path);
+        : transformHTML(edited, state, url, path, privateReturn, paymentStatusOnly);
+    return paymentStatusOnly ? marked : await applyPageMedia(marked, env, path);
   } catch {
     return publicError(503, request.method, !!(endpoint || submission));
   }

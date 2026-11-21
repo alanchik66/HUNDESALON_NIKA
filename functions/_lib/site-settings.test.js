@@ -6,6 +6,8 @@ import { onRequest as session } from '../api/admin/session.js';
 import { onRequest as settings } from '../api/admin/settings.js';
 import { managedSiteResponse } from './public-site-settings.js';
 import { onRequest as middleware } from '../_middleware.js';
+import { hashPaymentStatusToken } from './payment-config.js';
+import { createPaymentOrder } from './payment-orders.js';
 import { readSiteSettings, saveSettingsChange, sectionForPath, settingsSnapshot } from './site-settings.js';
 
 const origin = 'https://hundesalon-nika.com';
@@ -282,4 +284,133 @@ test('Telegram button visibility follows the managed destinations and keeps exte
   await check('/telegram-menu.html?lang=ru', ['support']);
   state = (await saveSettingsChange(env, state, { revision: state.revision, key: 'prices', enabled: true })).state;
   await check('/telegram-menu/', ['prices', 'support']);
+});
+
+test('disabling bookings preserves only the authorized status view for existing Stripe returns', async t => {
+  edgeCaches(t);
+  const env = fixture();
+  for (const filename of ['0011_payment_orders.sql', '0014_site_page_copy.sql']) {
+    env.CHAT_DB.sqlite.exec(readFileSync(new URL('../../migrations/' + filename, import.meta.url), 'utf8'));
+  }
+  const state = await readSiteSettings(env);
+  await saveSettingsChange(env, state, { revision: state.revision, key: 'booking', enabled: false });
+  const token = 'A'.repeat(43);
+  const id = crypto.randomUUID();
+  const stored = await createPaymentOrder(env, {
+    id,
+    tokenHash: await hashPaymentStatusToken(token),
+    booking: { lang: 'ru', name: 'Fixture Customer' },
+    amount: 2000,
+    mode: 'test',
+    expiresAt: Date.now() + 3600000,
+  });
+  assert.equal(stored.ok, true);
+  let throttled = false;
+  const cache = globalThis.caches.default;
+  const readCache = cache.match.bind(cache);
+  t.mock.method(cache, 'match', request =>
+    throttled && new URL(request.url).pathname.startsWith('/payment-return/')
+      ? new Response('90')
+      : readCache(request)
+  );
+  let orderReads = 0;
+  const prepare = env.CHAT_DB.prepare.bind(env.CHAT_DB);
+  t.mock.method(env.CHAT_DB, 'prepare', sql => {
+    if (sql.includes('FROM payment_orders')) orderReads++;
+    return prepare(sql);
+  });
+
+  const handlers = new Map();
+  const previous = globalThis.HTMLRewriter;
+  globalThis.HTMLRewriter = class {
+    on(selector, handler) {
+      handlers.set(selector, handler);
+      return this;
+    }
+    transform(response) {
+      return response;
+    }
+  };
+  t.after(() => {
+    if (previous === undefined) delete globalThis.HTMLRewriter;
+    else globalThis.HTMLRewriter = previous;
+  });
+  const booking = '/ru/onlayn-bronirovanie';
+  const query = '?order=' + id + '&token=' + token;
+  let assetReads = 0;
+  const view = (path, method = 'GET') => middleware({
+    env,
+    request: req(path, method),
+    next: () => {
+      assetReads++;
+      return new Response(method === 'HEAD' ? null : '<!doctype html><html></html>', {
+        headers: { 'Content-Type': 'text/html', 'ETag': 'fixture', 'Cache-Control': 'public, max-age=3600' },
+      });
+    },
+  });
+  for (const path of [
+    booking,
+    booking + query,
+    booking + query + '&payment=unknown',
+    booking + query + '&payment=success&token=' + token,
+    booking + query.replace(token, 'B'.repeat(43)) + '&payment=success',
+    booking + query.replace(id, crypto.randomUUID()) + '&payment=success',
+    booking + '.html' + query + '&payment=success',
+    '/en/onlayn-bronirovanie' + query + '&payment=success',
+  ]) {
+    assert.equal((await view(path)).status, 404, path);
+  }
+  assert.equal((await view(booking + query + '&payment=success', 'POST')).status, 404);
+  assert.equal((await view('/payment', 'POST')).status, 404);
+  assert.equal(assetReads, 0);
+  const readsBeforeThrottle = orderReads;
+  throttled = true;
+  assert.equal((await view(booking + query + '&payment=success')).status, 404);
+  assert.equal(orderReads, readsBeforeThrottle);
+  throttled = false;
+
+  for (const [method, payment] of [['GET', 'success'], ['HEAD', 'cancelled']]) {
+    const response = await view(booking + query + '&payment=' + payment, method);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('Cache-Control'), 'private, no-store');
+    assert.equal(response.headers.get('Referrer-Policy'), 'no-referrer');
+    assert.equal(response.headers.get('X-Robots-Tag'), 'noindex, nofollow');
+    assert.equal(response.headers.get('ETag'), null);
+    assert.doesNotMatch(await response.text(), /Fixture Customer/);
+  }
+  assert.equal(assetReads, 2);
+  let mount;
+  handlers.get('.booking-hero').element({ replace(html) { mount = html; } });
+  assert.equal(mount, '<main data-booking-payment-return></main>');
+  let removed = false;
+  handlers.get('#booking-modal, [data-newsletter-section]').element({ remove() { removed = true; } });
+  assert.equal(removed, true);
+  const removedBy = (selector, attributes) => {
+    let removed = false;
+    handlers.get(selector).element({
+      getAttribute: name => attributes[name] ?? null,
+      hasAttribute: name => Object.hasOwn(attributes, name),
+      remove() { removed = true; },
+    });
+    return removed;
+  };
+  const cleanReturn = () => {
+    assert.equal(removedBy('script[src]', { src: '../assets/js/analytics.js?v=fixture' }), true);
+    assert.equal(removedBy('script[src]', { src: 'https://tracker.example.test/pixel.js' }), true);
+    assert.equal(removedBy('script[src]', { src: '../assets/js/page-modules.js?v=fixture' }), false);
+    assert.equal(removedBy('link[href]', { href: 'https://fonts.googleapis.com/css2', rel: 'stylesheet' }), true);
+    assert.equal(removedBy('link[href]', { href: origin + booking, rel: 'canonical' }), false);
+  };
+  cleanReturn();
+  const disabledState = await readSiteSettings(env);
+  await saveSettingsChange(env, disabledState, { revision: disabledState.revision, key: 'booking', enabled: true });
+  handlers.clear();
+  const reopenedReturn = await view(booking + query + '&payment=cancelled');
+  assert.equal(reopenedReturn.status, 200);
+  assert.equal(reopenedReturn.headers.get('Referrer-Policy'), 'no-referrer');
+  assert.equal(handlers.has('.booking-hero'), false, 'enabled booking retains its ordinary form');
+  cleanReturn();
+  handlers.clear();
+  assert.equal((await view(booking)).status, 200);
+  assert.equal(handlers.has('script[src]'), false, 'ordinary booking retains consented analytics');
 });

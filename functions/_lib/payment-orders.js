@@ -1,3 +1,6 @@
+import { timingSafeEqualStrings } from './http-security.js';
+import { hashPaymentStatusToken, PAYMENT_ORDER_ID_RE, PAYMENT_STATUS_TOKEN_RE } from './payment-config.js';
+
 const ORDER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TOKEN_HASH = /^[0-9a-f]{64}$/i;
 const SESSION_ID = /^cs_(?:test_|live_)?[A-Za-z0-9_]{1,200}$/;
@@ -59,6 +62,12 @@ function unavailable(operation) {
 export async function getPaymentOrder(env, id) {
   if (!ORDER_ID.test(id || '')) return null;
   return orderFromRow(await database(env).prepare('SELECT * FROM payment_orders WHERE id = ?').bind(id).first());
+}
+
+export async function getAuthorizedPaymentOrder(env, id, token) {
+  if (!PAYMENT_ORDER_ID_RE.test(id || '') || !PAYMENT_STATUS_TOKEN_RE.test(token || '')) return null;
+  const order = await getPaymentOrder(env, id);
+  return order && (await timingSafeEqualStrings(order.tokenHash, await hashPaymentStatusToken(token))) ? order : null;
 }
 
 export async function getOrderBySession(env, sessionId) {

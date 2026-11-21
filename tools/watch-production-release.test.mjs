@@ -10,8 +10,13 @@ const COMMIT = 'a'.repeat(40);
 const STAMP = '20261104-prod-aaaaaaa-1234abcd';
 const ID = 123456;
 const RUN_URL = `https://github.com/alanchik66/HUNDESALON_NIKA/actions/runs/${ID}`;
+const API_RUN = `repos/alanchik66/HUNDESALON_NIKA/actions/runs/${ID}`;
+const DIGEST = `sha256:${'b'.repeat(64)}`;
 
-function fixture(t, { patchRun, downloadFailure = false, alterArtifact, canonicalStatus, differentReceipt = false } = {}) {
+function fixture(t, {
+  patchRun, downloadFailure = false, alterArtifact, canonicalStatus, differentReceipt = false,
+  reusedBuild = false, changeArtifacts, patchOriginalAttempt, patchOriginalBuild,
+} = {}) {
   const root = mkdtempSync(path.join(tmpdir(), 'nika-release-watch-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const source = path.join(root, 'reviewed');
@@ -27,20 +32,50 @@ function fixture(t, { patchRun, downloadFailure = false, alterArtifact, canonica
   const requests = [];
   const logs = [];
   let views = 0;
+  const day = reusedBuild ? '04' : '05';
+  const iso = (hour, date = day) => `2026-11-${date}T${hour}Z`;
+  const build = {
+    name: 'Validate and build', status: 'completed', conclusion: 'success',
+    startedAt: iso('12:00:00'), completedAt: iso('12:10:00'),
+    steps: [{ name: 'Preserve the exact tested production bundle', status: 'completed', conclusion: 'success',
+      startedAt: iso('12:09:00'), completedAt: iso('12:09:30') }],
+  };
   const completed = { databaseId: ID, headSha: COMMIT, url: RUN_URL, attempt: 2, event: 'push', headBranch: 'main',
-    status: 'completed', conclusion: 'success', jobs: [{ name: 'Build and deploy (Pages host; canonical watcher pending)', conclusion: 'success' }] };
+    startedAt: iso('11:59:00', '05'), status: 'completed', conclusion: 'success',
+    jobs: [build, { name: 'Build and deploy (Pages host; canonical watcher pending)', conclusion: 'success' }] };
+  const originalAttempt = {
+    id: ID, run_attempt: 1, head_sha: COMMIT, head_branch: 'main', event: 'push', status: 'completed',
+    run_started_at: iso('11:59:00', '04'), ...patchOriginalAttempt,
+  };
+  const originalBuild = {
+    name: build.name, run_id: ID, head_sha: COMMIT, run_attempt: 1, status: build.status, conclusion: build.conclusion,
+    started_at: build.startedAt, completed_at: build.completedAt,
+    steps: build.steps.map(({ startedAt, completedAt, ...step }) => ({ ...step, started_at: startedAt, completed_at: completedAt })),
+    ...patchOriginalBuild,
+  };
+  const artifactName = `production-dist-${COMMIT}-${reusedBuild ? 1 : 2}`;
+  const artifact = { name: artifactName, id: 315, digest: DIGEST, expired: false, created_at: iso('12:09:15'),
+    workflow_run: { id: ID, head_sha: COMMIT, head_branch: 'main' } };
+  const artifacts = changeArtifacts ? changeArtifacts(artifact) : [artifact];
   const run = (command, args) => {
     assert.equal(command, 'gh');
     calls.push(args);
-    assert.deepEqual(args.slice(-2), ['--repo', 'alanchik66/HUNDESALON_NIKA']);
     let result;
+    if (args[0] === 'api') {
+      if (args[1] === `${API_RUN}/artifacts?per_page=100`) result = { total_count: artifacts.length, artifacts };
+      else if (args[1] === `${API_RUN}/attempts/1`) result = originalAttempt;
+      else if (args[1] === `${API_RUN}/attempts/1/jobs?per_page=100`) result = { total_count: 1, jobs: [originalBuild] };
+      else assert.fail(`Unexpected API endpoint: ${args[1]}`);
+      return { status: 0, stdout: JSON.stringify(result) };
+    }
+    assert.deepEqual(args.slice(-2), ['--repo', 'alanchik66/HUNDESALON_NIKA']);
     switch (args[1]) {
       case 'list': result = [{ databaseId: ID, headSha: COMMIT, url: RUN_URL }]; break;
       case 'watch': break;
       case 'view': result = { ...completed, ...patchRun?.(++views) }; break;
       case 'download': {
         if (downloadFailure) return { status: 1, stderr: 'Exact artifact unavailable' };
-        assert.equal(args[args.indexOf('--name') + 1], `production-dist-${COMMIT}-2`);
+        assert.equal(args[args.indexOf('--name') + 1], artifactName);
         const destination = args[args.indexOf('--dir') + 1];
         assert.ok(destination.startsWith(path.join(root, 'output', 'release-receipts', `${COMMIT}-${ID}-2-`)));
         cpSync(source, destination, { recursive: true });
@@ -87,11 +122,52 @@ test('the exact successful run artifact is locally verified before canonical com
   assert.equal(result.verified, true);
   assert.equal(result.run, RUN_URL);
   assert.equal(result.runAttempt, 2);
+  assert.equal(result.artifactAttempt, 2);
+  assert.equal(result.artifactId, 315);
+  assert.equal(result.artifactDigest, DIGEST);
   assert.equal(result.assets, 2);
   assert.deepEqual(JSON.parse(readFileSync(result.receipt, 'utf8')), f.manifest);
   assert.ok(f.logs.some(line => line.includes(result.receipt)));
   assert.ok(f.logs.some(line => line.includes(RUN_URL)));
-  assert.deepEqual(f.calls.map(args => args[1]), ['list', 'watch', 'view', 'download', 'view']);
+  assert.deepEqual(f.calls.map(args => args[0] === 'api' ? 'api' : args[1]), ['list', 'watch', 'view', 'api', 'download', 'view']);
+});
+
+test('a deploy-only rerun uses the exact artifact of its proven reused build', async t => {
+  const f = fixture(t, { reusedBuild: true });
+  const result = await watchProductionRelease(f.options);
+  assert.equal(result.runAttempt, 2);
+  assert.equal(result.artifactAttempt, 1);
+  assert.equal(result.artifact, `production-dist-${COMMIT}-1`);
+  assert.deepEqual(f.calls.filter(args => args[0] === 'api').map(args => args[1]), [
+    `${API_RUN}/artifacts?per_page=100`, `${API_RUN}/attempts/1`, `${API_RUN}/attempts/1/jobs?per_page=100`,
+  ]);
+  assert.equal(result.canonicalDomainVerified, true);
+});
+
+test('a rebuilt current attempt cannot silently use an older artifact', async t => {
+  const f = fixture(t, { changeArtifacts: artifact => [{ ...artifact, name: `production-dist-${COMMIT}-1` }] });
+  await assert.rejects(watchProductionRelease(f.options), /exact artifact.*unavailable/i);
+  assert.ok(!f.calls.some(args => args[1] === 'download'));
+  assert.equal(f.requests.length, 0);
+});
+
+test('an earlier artifact needs the same run, build and successful upload window', async t => {
+  const cases = [
+    { changeArtifacts: artifact => [{ ...artifact, expired: true }] },
+    { changeArtifacts: artifact => [{ ...artifact, digest: null }] },
+    { changeArtifacts: artifact => [{ ...artifact, workflow_run: { ...artifact.workflow_run, id: ID + 1 } }] },
+    { changeArtifacts: artifact => [{ ...artifact, created_at: '2026-11-04T12:08:59Z' }] },
+    { changeArtifacts: artifact => [artifact, { ...artifact, id: 316 }] },
+    { patchOriginalAttempt: { head_sha: 'b'.repeat(40) } },
+    { patchOriginalBuild: { completed_at: '2026-11-04T12:10:01Z' } },
+    { patchOriginalBuild: { run_attempt: 2 } },
+  ];
+  for (const patch of cases) {
+    const f = fixture(t, { reusedBuild: true, ...patch });
+    await assert.rejects(watchProductionRelease(f.options), /exact artifact|original build/i);
+    assert.ok(!f.calls.some(args => args[1] === 'download'));
+    assert.equal(f.requests.length, 0);
+  }
 });
 
 test('green CI followed by canonical HTTP 403 fails the full release', async t => {
