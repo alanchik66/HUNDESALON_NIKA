@@ -1,3 +1,5 @@
+import { TELEGRAM_MENU_COPY as COPY } from './telegram-menu-copy.js';
+
 const ROUTES = Object.freeze({
   de: {
     booking: '/de/onlayn-bronirovanie',
@@ -18,73 +20,6 @@ const ROUTES = Object.freeze({
     booking: '/uk/onlayn-bronirovanie',
     prices: '/uk/prays-list',
     contact: '/uk/kontakty',
-  },
-});
-
-const COPY = Object.freeze({
-  de: {
-    eyebrow: 'Premium-Fellpflege',
-    title: 'Alles für Ihr Tier. Mit Liebe zum Detail.',
-    lead: 'Wählen Sie einen Bereich – der passende Weg öffnet sich sofort.',
-    bookingTitle: 'Online-Termin',
-    bookingDescription: 'Wunschtermin bequem anfragen',
-    pricesTitle: 'Leistungen & Preise',
-    pricesDescription: 'Passende Pflege transparent finden',
-    contactTitle: 'Adresse & Zeiten',
-    contactDescription: 'Unser Salon in Leipzig',
-    supportTitle: 'Mitarbeiter kontaktieren',
-    supportDescription: 'Wir antworten direkt im Telegram-Chat',
-    promise: 'Persönliche Beratung · Transparente Preise · Liebevolle Fellpflege',
-    languageEyebrow: 'Ihre Sprache',
-    languageTitle: 'Wie dürfen wir Sie begrüßen?',
-  },
-  en: {
-    eyebrow: 'Premium coat care',
-    title: 'Everything for your pet. With care in every detail.',
-    lead: 'Choose a section and the right path opens immediately.',
-    bookingTitle: 'Book online',
-    bookingDescription: 'Request your preferred appointment',
-    pricesTitle: 'Services & prices',
-    pricesDescription: 'Find the right care with clear pricing',
-    contactTitle: 'Address & hours',
-    contactDescription: 'Our salon in Leipzig',
-    supportTitle: 'Contact support',
-    supportDescription: 'We reply directly in the Telegram chat',
-    promise: 'Personal advice · Transparent prices · Loving coat care',
-    languageEyebrow: 'Your language',
-    languageTitle: 'How would you like us to welcome you?',
-  },
-  ru: {
-    eyebrow: 'Премиальный уход за шерстью',
-    title: 'Всё для питомца. С вниманием к каждой детали.',
-    lead: 'Выберите раздел — нужный путь откроется сразу.',
-    bookingTitle: 'Онлайн-запись',
-    bookingDescription: 'Удобно запросить желаемое время',
-    pricesTitle: 'Услуги и цены',
-    pricesDescription: 'Прозрачно подобрать подходящий уход',
-    contactTitle: 'Адрес и часы',
-    contactDescription: 'Наш салон в Лейпциге',
-    supportTitle: 'Связаться с сотрудником',
-    supportDescription: 'Ответим прямо в Telegram-чате',
-    promise: 'Личная консультация · Прозрачные цены · Бережный уход за шерстью',
-    languageEyebrow: 'Ваш язык',
-    languageTitle: 'Как вас поприветствовать?',
-  },
-  uk: {
-    eyebrow: 'Преміальний догляд за шерстю',
-    title: 'Усе для улюбленця. З увагою до кожної деталі.',
-    lead: 'Оберіть розділ — потрібний шлях відкриється одразу.',
-    bookingTitle: 'Онлайн-запис',
-    bookingDescription: 'Зручно надіслати запит на час',
-    pricesTitle: 'Послуги й ціни',
-    pricesDescription: 'Прозоро підібрати потрібний догляд',
-    contactTitle: 'Адреса й години',
-    contactDescription: 'Наш салон у Лейпцигу',
-    supportTitle: 'Зв’язатися з підтримкою',
-    supportDescription: 'Відповімо безпосередньо в Telegram-чаті',
-    promise: 'Особиста консультація · Прозорі ціни · Дбайливий догляд за шерстю',
-    languageEyebrow: 'Ваша мова',
-    languageTitle: 'Як вас привітати?',
   },
 });
 
@@ -117,7 +52,10 @@ function initializeTelegramWebApp() {
 }
 
 function normalizeLanguage(value) {
-  const language = String(value || '').trim().toLowerCase().split('-')[0];
+  const language = String(value || '')
+    .trim()
+    .toLowerCase()
+    .split('-')[0];
   return Object.hasOwn(COPY, language) ? language : 'de';
 }
 
@@ -126,9 +64,19 @@ function resolveInitialLanguage() {
   return normalizeLanguage(params.get('lang') || navigator.language);
 }
 
+function pageCopy(language) {
+  const copy = { ...COPY[language] };
+  const template = document.querySelector(`template[data-telegram-editor="${language}"]`);
+  for (const field of template?.content.querySelectorAll('[data-telegram-text]') || []) {
+    const key = field.dataset.telegramText;
+    if (Object.hasOwn(copy, key)) copy[key] = field.textContent;
+  }
+  return copy;
+}
+
 function setLanguage(language, { updateUrl = true } = {}) {
   activeLanguage = normalizeLanguage(language);
-  const copy = COPY[activeLanguage];
+  const copy = pageCopy(activeLanguage);
   document.documentElement.lang = activeLanguage;
   currentLanguage.textContent = LANGUAGE_LABELS[activeLanguage];
 

@@ -43,7 +43,7 @@ function isNetworkFirstRequest(request, url) {
 }
 
 function cacheResponse(event, request, response) {
-  if (!response.ok) return;
+  if (!response.ok || /\b(?:private|no-store)\b/i.test(response.headers?.get('Cache-Control') || '')) return;
   const copy = response.clone();
   // Keep cache writes alive after returning a response; quota failures must not break navigation.
   event.waitUntil(
@@ -65,8 +65,10 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Weather observations must use the network. Their own services handle freshness.
-  if (['/api/weather', '/api/satellite-clouds'].includes(url.pathname)) {
+  // Owner sessions, changeable pages and live feature APIs must always consult the server.
+  const path = url.pathname;
+  if (/^\/(?:admin|api)(?:\/|$)|^\/(?:de|en|ru|uk)(?:\/|$)|^\/(?:reviews|telegram-menu)(?:\.html)?\/?$/.test(path) ||
+    ['/', '/index.html', '/sitemap.xml', '/blog', '/data/posts.json', '/booking-availability', '/payment', '/payment-status'].includes(path)) {
     return;
   }
 

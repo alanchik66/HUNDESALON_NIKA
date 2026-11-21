@@ -13,7 +13,10 @@
     return ['de', 'en', 'ru', 'uk'].includes(value) ? value : 'en';
   })();
 
-  const locale = catalog.locales[lang] || catalog.locales.en;
+  const locale = { ...(catalog.locales[lang] || catalog.locales.en) };
+  for (const field of document.querySelector('#price-editorial-copy')?.content.querySelectorAll('[data-price-copy]') || []) {
+    locale[field.dataset.priceCopy] = field.textContent;
+  }
   const flowCopy = {
     de: { next: 'Weiter', species: 'Tierart auswählen' },
     en: { next: 'Continue', species: 'Choose pet type' },

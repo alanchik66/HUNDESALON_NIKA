@@ -2,7 +2,8 @@
 (function () {
   'use strict';
 
-  const solarCheckScript = document.currentScript?.src;
+  const adminGlass = document.currentScript?.dataset?.adminGlass === 'true';
+  const solarCheckScript = adminGlass ? null : document.currentScript?.src;
   if (solarCheckScript && window.location?.search) {
     try {
       if (new URLSearchParams(window.location.search).get('solar-check') === '1') {
@@ -19,11 +20,12 @@
   }
 
   function initServiceGlass() {
-    const grid = document.querySelector('.services-grid[data-service-glass]');
+    const grid = document.querySelector(adminGlass ? '.admin-glass-area[data-service-glass]' : '.services-grid[data-service-glass]');
     if (!grid || grid.dataset.serviceGlass === 'ready') return;
     grid.dataset.serviceGlass = 'ready';
 
-    const cards = Array.from(grid.children).filter(card => card.classList.contains('service-card'));
+    const cardClass = adminGlass ? 'workspace' : 'service-card';
+    const cards = Array.from(grid.children).filter(card => card.classList.contains(cardClass));
     if (!cards.length) return;
     const scrollRoot = document.querySelector('.site-scroll-root') || window;
     const preferences = [

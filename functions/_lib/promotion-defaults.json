@@ -1,0 +1,68 @@
+{
+  "wellness": {
+    "de": {
+      "badge": "Bis 30. Juni",
+      "title": "Paket \"Schönheit & Gesundheit\"",
+      "description": "Haarschnitt + Baden + Ozontherapie = 15 % Rabatt."
+    },
+    "en": {
+      "badge": "Until 30 June",
+      "title": "\"Beauty & Health\" package",
+      "description": "Grooming + bathing + ozone therapy = 15% off."
+    },
+    "ru": {
+      "badge": "До 30 июня",
+      "title": "Комплекс «Красота и здоровье»",
+      "description": "Стрижка + купание + озонотерапия = скидка 15%."
+    },
+    "uk": {
+      "badge": "До 30 червня",
+      "title": "Комплекс «Краса і здоров'я»",
+      "description": "Стрижка + купання + озонотерапія = знижка 15%."
+    }
+  },
+  "first-visit": {
+    "de": {
+      "badge": "Für Neukunden",
+      "title": "Erster Besuch – 10 % Rabatt",
+      "description": "Bringen Sie einen Freund mit und erhalten Sie weitere 5 % Rabatt auf die nächste Behandlung."
+    },
+    "en": {
+      "badge": "For new clients",
+      "title": "First visit — 10% off",
+      "description": "Refer a friend and get an extra 5% off your next treatment."
+    },
+    "ru": {
+      "badge": "Для новых клиентов",
+      "title": "Первое посещение – скидка 10%",
+      "description": "Приведите друга и получите ещё 5% скидки на следующую процедуру."
+    },
+    "uk": {
+      "badge": "Для нових клієнтів",
+      "title": "Перший візит — знижка 10%",
+      "description": "Приведіть друга та отримайте ще 5% знижки на наступну процедуру."
+    }
+  },
+  "summer-cats": {
+    "de": {
+      "badge": "Sommer-Bonus",
+      "title": "20 % Rabatt auf Katzenpflege",
+      "description": "Nur im Juni – Wohlbefinden für Ihre pelzigen Freunde."
+    },
+    "en": {
+      "badge": "Summer bonus",
+      "title": "20% off cat grooming",
+      "description": "June only — help keep your fluffy friends comfortable."
+    },
+    "ru": {
+      "badge": "Летний бонус",
+      "title": "Скидка 20% на стрижку кошек",
+      "description": "Только в июне – забота о комфорте ваших пушистых друзей."
+    },
+    "uk": {
+      "badge": "Літній бонус",
+      "title": "Знижка 20% на стрижку котів",
+      "description": "Тільки в червні — турбота про комфорт ваших пухнастих друзів."
+    }
+  }
+}

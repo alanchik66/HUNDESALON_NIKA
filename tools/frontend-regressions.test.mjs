@@ -1494,24 +1494,28 @@ test('language switching keeps the current published page, query and section', a
   }
 });
 
-test('localized burger menus omit inactive promotions and retain booking in the header', async () => {
+test('localized burger menus expose promotions while keeping booking in the header', async () => {
   const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
   const copyDeclaration = source.match(/  const HEADER_COPY = \{[\s\S]*?\n  \};/)[0];
   const rendererDeclaration = source.match(/  function createHeaderMarkup\(context\) \{[\s\S]*?\n  \}/)[0];
   const previewOrigin = 'http://127.0.0.1:5502';
   const location = { origin: previewOrigin };
+  const dataset = { disabledSections: '' };
   const { copy, renderHeader } = runInNewContext(`${copyDeclaration}\n${rendererDeclaration}\n({ copy: HEADER_COPY, renderHeader: createHeaderMarkup });`, {
     WEATHER_WIDGET_ASSET_VERSION: 'test',
-    window: { location },
+    window: { location }, document: { documentElement: { dataset } },
   });
 
-  for (const locale of ['ru', 'uk', 'de', 'en']) {
+  for (const [locale, promotionsLabel] of Object.entries({ ru: 'АКЦИИ', uk: 'АКЦІЇ', de: 'AKTIONEN', en: 'PROMOTIONS' })) {
     for (const currentRoute of ['index.html', 'blog/blog.html']) {
       const context = {
         currentLang: locale, pageLang: locale, currentRoute, copy: copy[locale],
         mediaLibraryCopy: { mediaLibrary: 'Media' }, menuA11y: { openMenu: 'Menu', expandGallery: 'Gallery' },
         weatherWidgetCopy: { ariaLabel: 'Weather' },
       };
+      delete dataset.disabledSections;
+      assert.doesNotMatch(renderHeader(context), /class="mobile-nav-link--promotions"/);
+      dataset.disabledSections = '';
       const markup = renderHeader(context);
       const mobileNav = markup.match(/<nav id="mobile-nav"[^>]*>([\s\S]*?)<\/nav>/)[1];
       const mobileNavContent = mobileNav.match(/^\s*<div class="mobile-nav__content">([\s\S]*)<\/div>\s*$/)?.[1];
@@ -1520,17 +1524,23 @@ test('localized burger menus omit inactive promotions and retain booking in the 
       const prefix = currentRoute.startsWith('blog/') ? '../' : '';
       assert.ok(header.includes(`<a href="${prefix || './'}">`), 'the logo uses the locale homepage');
       assert.ok(header.includes(`src="${prefix}../assets/images/brand/logo-ui.webp"`), 'the logo asset resolves from this depth');
-      assert.doesNotMatch(mobileNavContent, /(?:promotions|#promotions)/);
+      const promotion = mobileNavContent.match(/<a href="([^"]*promotions\.html)"([^>]*)>([\s\S]*?)<\/a>/);
+      assert.ok(promotion, `${locale}/${currentRoute}: promotions link exists`);
+      assert.equal(promotion[1], `${prefix}promotions.html`, 'promotion keeps the localized destination');
+      assert.match(promotion[2], /\bmobile-nav-link--promotions\b/);
+      const promotionLabel = promotion[3].match(/<span>([^<]*)<\/span>/)?.[1];
+      assert.equal(promotionLabel, promotionsLabel, 'localized label is retained in its text span');
+      assert.match(promotion[3], /<img[^>]*src="[^"]*\/icons\/clash-royale\.png"[^>]*alt=""[^>]*aria-hidden="true"/);
       const destinations = [...mobileNavContent.matchAll(/<a href="([^"]+)"/g)].map(item => item[1]);
-      assert.deepEqual(destinations.slice(0, 6), [
+      assert.deepEqual(destinations.slice(0, 7), [
         'nashi-uslugi.html', 'prays-list.html', 'shop.html', 'kontakty.html',
-        'galereya.html', 'do-i-posle.html',
-      ].map(route => `${prefix}${route}`), 'services and results come first');
-      assert.deepEqual(destinations.slice(6), [
+        'galereya.html', 'do-i-posle.html', 'promotions.html',
+      ].map(route => `${prefix}${route}`), 'services and results precede the central promotion');
+      assert.deepEqual(destinations.slice(7), [
         'o-nas.html', 'vvedenie.html', 'social.html', 'reyting.html',
         'blog/blog.html', 'partnerstvo.html', 'documents.html',
-      ].map(route => `${prefix}${route}`), 'secondary destinations remain localized');
-      assert.equal(new Set(destinations).size, 13, 'all locales expose the same complete menu');
+      ].map(route => `${prefix}${route}`), 'localized lower rows follow the requested left/right pairs');
+      assert.equal(destinations.length, 14, 'all locales expose the same complete menu');
       const socialMenu = mobileNavContent.match(/<a href="[^"]*social\.html"[^>]*>([^<]+)<\/a>/);
       assert.equal(socialMenu[1], copy[locale].socialsMenu, 'navigation uses its compact localized social label');
       assert.doesNotMatch(mobileNav, /onlayn-bronirovanie\.html/);
@@ -1541,7 +1551,7 @@ test('localized burger menus omit inactive promotions and retain booking in the 
       const canonicalMenu = renderHeader(context).match(/<nav id="mobile-nav"[^>]*>([\s\S]*?)<\/nav>/)[1];
       location.origin = previewOrigin;
       assert.deepEqual([...canonicalMenu.matchAll(/<a href="([^"]+)"/g)].map(item => item[1]), [
-        'nashi-uslugi', 'prays-list', 'shop', 'kontakty', 'galereya', 'do-i-posle',
+        'nashi-uslugi', 'prays-list', 'shop', 'kontakty', 'galereya', 'do-i-posle', 'promotions',
         'o-nas', 'vvedenie', 'social', 'reyting', 'blog/blog', 'partnerstvo', 'documents',
       ].map(route => `${prefix}${route}`), `${locale}/${currentRoute}: each live menu target is directly canonical`);
     }

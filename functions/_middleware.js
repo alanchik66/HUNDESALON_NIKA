@@ -1,3 +1,6 @@
+import { managedSiteResponse } from './_lib/public-site-settings.js';
+import { hasSiteAdminAccess } from './_lib/site-admin-access.js';
+
 const SUPPORTED_LANGS = new Set(['de', 'ru', 'uk', 'en']);
 
 const COUNTRY_LANGUAGE_MAP = new Map([
@@ -8,6 +11,15 @@ const COUNTRY_LANGUAGE_MAP = new Map([
 ]);
 
 const MARKDOWN_PAGE_PATH = /^\/(?:index\.html)?$|^\/(?:de|en|ru|uk)\/(?:index\.html)?$/;
+const ADMIN_ASSET_PATH = /^\/assets\/(?:css\/site-admin\.css|js\/site-admin\.js)\/?$/i;
+
+function isAdminAsset(pathname) {
+  try {
+    return ADMIN_ASSET_PATH.test(decodeURIComponent(pathname).replace(/[\\/]+/g, '/'));
+  } catch {
+    return false;
+  }
+}
 
 const FUNCTION_SECURITY_HEADERS = Object.freeze({
   'Content-Security-Policy': [
@@ -263,8 +275,8 @@ function htmlToMarkdown(html, sourceUrl) {
   return [`# ${title}`, description, `Source: ${sourceUrl}`, body].filter(Boolean).join('\n\n');
 }
 
-async function markdownResponse(context, url) {
-  const response = await context.next();
+async function markdownResponse(context, url, managed) {
+  const response = managed || await context.next();
   const contentType = response.headers.get('Content-Type') || '';
   if (!response.ok || !contentType.includes('text/html')) {
     return response;
@@ -287,17 +299,28 @@ async function markdownResponse(context, url) {
 export async function onRequest(context) {
   const url = new URL(context.request.url);
 
+  if (isAdminAsset(url.pathname)) {
+    const upstream = await hasSiteAdminAccess(context.request, context.env)
+      ? await context.next()
+      : new Response(null, { status: 404 });
+    const response = withSecurityHeaders(upstream, url);
+    response.headers.set('Cache-Control', 'private, no-store');
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    return response;
+  }
+
   if (url.hostname.startsWith('www.') && url.pathname === '/robots.txt') {
     const apexHost = url.hostname.slice(4);
     return withSecurityHeaders(redirectResponse(`https://${apexHost}/robots.txt`, 301), url);
   }
 
+  const managed = await managedSiteResponse(context, url);
   if (
     ['GET', 'HEAD'].includes(context.request.method) &&
     wantsMarkdown(context.request) &&
     MARKDOWN_PAGE_PATH.test(url.pathname)
   ) {
-    return withSecurityHeaders(await markdownResponse(context, url), url);
+    return withSecurityHeaders(await markdownResponse(context, url, managed), url);
   }
 
   if (
@@ -311,7 +334,7 @@ export async function onRequest(context) {
     return withSecurityHeaders(redirectResponse(target.toString(), 302), url);
   }
 
-  const response = withSecurityHeaders(await context.next(), url);
+  const response = withSecurityHeaders(managed || await context.next(), url);
   // Public email artwork must also load inside external webmail clients.
   if (
     /^\/assets\/images\/email\/(?:logo|whatsapp|telegram|viber|phone|facebook|mail|social-links)\.png$/.test(url.pathname) &&

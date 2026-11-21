@@ -1,6 +1,25 @@
 (function () {
   'use strict';
 
+  // Bookmarks from before promotions had their own page can arrive on either URL form.
+  const openLegacyPromotions = () => {
+    const url = new URL(window.location.href);
+    if (url.hash !== '#promotions') return false;
+    const destination = url.pathname.replace(/\/social(\.html)?\/?$/, '/promotions$1');
+    if (destination === url.pathname) return false;
+    url.hash = '';
+    const disabled = document.documentElement.dataset.disabledSections ?? 'promotions';
+    if (disabled.split(/\s+/).includes('promotions')) {
+      window.history.replaceState(window.history.state, '', url.href);
+      return false;
+    }
+    url.pathname = destination;
+    window.location.replace(url.href);
+    return true;
+  };
+  if (openLegacyPromotions()) return;
+  window.addEventListener('hashchange', openLegacyPromotions);
+
   const TILE_VIDEO_SELECTOR = '.social-card__media-video[autoplay]';
   const VIDEO_TRIGGER_SELECTOR = '[data-social-video-trigger]';
   const SOUND_TOGGLE_SELECTOR = '[data-social-sound-toggle]';

@@ -1,5 +1,5 @@
-/* Opt-in service tiles. Content and layout remain in the shared styles. */
-.services-grid[data-service-glass] > .service-card {
+/* Shared glass material for service tiles and owner workspaces. */
+:is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace) {
   --service-glass-radius: clamp(28px, 2.5vw, 32px);
   --service-glass-inner-radius: calc(var(--service-glass-radius) - 1px);
   --service-glass-bevel: clamp(12px, 1.6vw, 18px);
@@ -27,9 +27,9 @@
   will-change: auto;
 }
 
-.services-grid[data-service-glass] > .service-card::before,
-.services-grid[data-service-glass] > .service-card::after,
-.services-grid[data-service-glass] > .service-card > .service-glass__lens {
+:is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace)::before,
+:is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace)::after,
+:is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace) > .service-glass__lens {
   position: absolute;
   inset: 0;
   box-sizing: border-box;
@@ -38,7 +38,7 @@
 }
 
 /* One inset rim also works when composited masks are unavailable. */
-.services-grid[data-service-glass] > .service-card::before {
+:is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace)::before {
   content: '';
   z-index: 3;
   width: auto;
@@ -50,7 +50,7 @@
 }
 
 /* Broad, quiet reflections follow scroll light, then pointer or touch light. */
-.services-grid[data-service-glass] > .service-card::after {
+:is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace)::after {
   content: '';
   z-index: 1;
   background:
@@ -70,7 +70,7 @@
 }
 
 /* The JS supplies a registered, magnified copy of the actual page background. */
-.services-grid[data-service-glass] > .service-card > .service-glass__lens {
+:is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace) > .service-glass__lens {
   z-index: 0;
   display: none;
   padding: var(--service-glass-bevel);
@@ -81,7 +81,7 @@
   opacity: 0.68;
 }
 
-.services-grid[data-service-glass] > .service-card > :is(h3, p, .price) {
+:is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace) > :is(h3, p, .price) {
   position: relative;
   z-index: 2;
   filter: none;
@@ -90,12 +90,12 @@
 }
 
 /* Keep the darkest gold stop readable over a moving reflection at small sizes. */
-.services-grid[data-service-glass] > .service-card > h3 {
+:is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace) > h3 {
   background-image: linear-gradient(180deg, #fffdf2, #e4bd63 28%, #fff8d5 48%, #e4bd63 76%, #ffeba0);
 }
 
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .services-grid[data-service-glass] > .service-card {
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace) {
     --service-glass-fill: rgb(7 23 16 / 16%);
 
     -webkit-backdrop-filter: blur(6px) saturate(1.25);
@@ -104,7 +104,7 @@
 }
 
 @supports ((mask-composite: exclude) or (-webkit-mask-composite: xor)) {
-  .services-grid[data-service-glass] > .service-card::before {
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace)::before {
     padding: 1px;
     border: 0;
     background: conic-gradient(
@@ -119,11 +119,11 @@
     );
   }
 
-  .services-grid[data-service-glass] > .service-card > .service-glass__lens {
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace) > .service-glass__lens {
     display: block;
   }
 
-  .services-grid[data-service-glass] > .service-card::before {
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace)::before {
     -webkit-mask:
       linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
@@ -135,7 +135,7 @@
   }
 
   /* Fade the optical sample inward instead of cutting a hard, coloured band. */
-  .services-grid[data-service-glass] > .service-card > .service-glass__lens {
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace) > .service-glass__lens {
     --service-glass-lens-mask:
       linear-gradient(#fff, transparent) top / 100% var(--service-glass-bevel) no-repeat,
       linear-gradient(0deg, #fff, transparent) bottom / 100% var(--service-glass-bevel) no-repeat,
@@ -150,7 +150,7 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .services-grid[data-service-glass] > .service-card:hover {
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace):hover {
     --service-glass-light-x: calc(var(--glass-light-x, 50%) * 0.4 + var(--glow-x, 50%) * 0.6);
     --service-glass-light-y: calc(var(--glass-light-y, 24%) * 0.4 + var(--glow-y, 50%) * 0.6);
 
@@ -190,8 +190,8 @@ body.light .services-grid[data-service-glass] > .service-card > :is(h3, .price) 
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .services-grid[data-service-glass] > .service-card,
-  .services-grid[data-service-glass] > .service-card:is(:hover, .is-glass-touch) {
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace),
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace):is(:hover, .is-glass-touch) {
     --service-glass-light-x: 50%;
     --service-glass-light-y: 24%;
     --service-glass-angle: 135deg;
@@ -201,7 +201,7 @@ body.light .services-grid[data-service-glass] > .service-card > :is(h3, .price) 
 }
 
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-  .services-grid[data-service-glass] > .service-card {
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace) {
     background: #081b12;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
@@ -211,15 +211,15 @@ body.light .services-grid[data-service-glass] > .service-card > :is(h3, .price) 
     background: #f6f4eb;
   }
 
-  .services-grid[data-service-glass] > .service-card::after,
-  .services-grid[data-service-glass] > .service-card > .service-glass__lens {
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace)::after,
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace) > .service-glass__lens {
     display: none;
   }
 }
 
 @media (forced-colors: active) {
-  .services-grid[data-service-glass] > .service-card,
-  .services-grid[data-service-glass] > .service-card:hover,
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace),
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace):hover,
   body.light .services-grid[data-service-glass] > .service-card {
     border-color: CanvasText;
     background: Canvas;
@@ -229,13 +229,13 @@ body.light .services-grid[data-service-glass] > .service-card > :is(h3, .price) 
     box-shadow: none;
   }
 
-  .services-grid[data-service-glass] > .service-card::before,
-  .services-grid[data-service-glass] > .service-card::after,
-  .services-grid[data-service-glass] > .service-card > .service-glass__lens {
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace)::before,
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace)::after,
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace) > .service-glass__lens {
     display: none;
   }
 
-  .services-grid[data-service-glass] > .service-card > :is(h3, p, .price) {
+  :is(.services-grid[data-service-glass] > .service-card, .admin-glass-area[data-service-glass] > .workspace) > :is(h3, p, .price) {
     background: none;
     -webkit-text-fill-color: CanvasText;
     color: CanvasText;

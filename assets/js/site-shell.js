@@ -165,6 +165,7 @@
       intro: 'ВВЕДЕНИЕ',
       socials: 'НАШИ СОЦИАЛЬНЫЕ СЕТИ',
       socialsMenu: 'НАШИ СОЦСЕТИ',
+      promotions: 'АКЦИИ',
       rating: 'РЕЙТИНГ',
       partner: 'ПАРТНЕРСКОЕ ПРЕДЛОЖЕНИЕ',
       documents: 'ДОКУМЕНТЫ',
@@ -187,6 +188,7 @@
       intro: 'ВСТУП',
       socials: 'СОЦІАЛЬНІ МЕРЕЖІ',
       socialsMenu: 'НАШІ СОЦМЕРЕЖІ',
+      promotions: 'АКЦІЇ',
       rating: 'РЕЙТИНГ І ВІДГУКИ',
       partner: 'ПАРТНЕРСЬКА ПРОПОЗИЦІЯ',
       documents: 'ДОКУМЕНТИ',
@@ -209,6 +211,7 @@
       intro: 'EINFÜHRUNG',
       socials: 'SOZIALE MEDIEN',
       socialsMenu: 'SOCIAL MEDIA',
+      promotions: 'AKTIONEN',
       rating: 'BEWERTUNGEN',
       partner: 'PARTNERSCHAFT',
       documents: 'DOKUMENTE',
@@ -231,6 +234,7 @@
       intro: 'INTRODUCTION',
       socials: 'SOCIAL MEDIA',
       socialsMenu: 'OUR SOCIAL MEDIA',
+      promotions: 'PROMOTIONS',
       rating: 'RATING',
       partner: 'PARTNERSHIP OFFER',
       documents: 'DOCUMENTS',
@@ -3643,6 +3647,7 @@
     'documents.html',
     'vvedenie.html',
     'social.html',
+    'promotions.html',
     'reyting.html',
     'partnerstvo.html',
     'impressum.html',
@@ -3936,7 +3941,7 @@
     const activeKey = currentRouteNormalized.startsWith('blog/') ? 'blog' : {
       'vvedenie.html': 'intro', 'o-nas.html': 'about', 'nashi-uslugi.html': 'services',
       'prays-list.html': 'price', 'galereya.html': 'gallery', 'do-i-posle.html': 'gallery',
-      'kontakty.html': 'contacts', 'shop.html': 'shop',
+      'kontakty.html': 'contacts', 'shop.html': 'shop', 'promotions.html': 'promotions',
     }[currentRouteNormalized];
 
     const socialIcons = [
@@ -3995,6 +4000,8 @@
   <a href="${pathPrefix}shop${mobileExtension}"${mobileLinkAttrs('shop')}>${copy.shop}</a>
   <a href="${pathPrefix}kontakty${mobileExtension}"${mobileLinkAttrs('contacts')}>${copy.contacts}</a>
   ${galleryMobileNavMarkup}`;
+    const promotionsLink = (document.documentElement.dataset.disabledSections ?? 'promotions').split(' ').includes('promotions') ? '' : `
+  <a href="${pathPrefix}promotions${mobileExtension}" class="mobile-nav-link--promotions"${activeAria('promotions')}><img src="${assetPrefix}/images/icons/clash-royale.png" class="promo-btn-icon" alt="" aria-hidden="true" width="26" height="26"><span>${copy.promotions}</span></a>`;
     const isHomeRoute = currentRouteNormalized === 'index.html';
 
     const secondaryLinks = `
@@ -4123,6 +4130,7 @@
     <div class="mobile-nav-group mobile-nav-group--primary">
       ${primaryLinks}
     </div>
+    ${promotionsLink}
     <div class="mobile-nav-group mobile-nav-group--secondary">
       ${secondaryLinks}
     </div>

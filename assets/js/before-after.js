@@ -171,7 +171,7 @@ class BeforeAfterSlider {
     this.sliderPosition = nextPosition;
     this.slider.style.left = `${nextPosition}%`;
     this.slider.setAttribute('aria-valuenow', String(Math.round(nextPosition)));
-    this.afterImage.style.clipPath = `inset(0 ${100 - nextPosition}% 0 0)`;
+    this.afterImage.style.clipPath = `inset(0 0 0 ${nextPosition}%)`;
   }
 
   destroy() {
@@ -305,7 +305,7 @@ class BeforeAfterGallery {
         </div>
         <div class="before-after-card-info">
           <h4 class="before-after-card-title">${escapeHtml(item.title)}</h4>
-          <p class="before-after-card-description">${escapeHtml(item.description)}</p>
+          ${item.description ? `<p class="before-after-card-description">${escapeHtml(item.description)}</p>` : ''}
         </div>
       </div>
     `
@@ -339,8 +339,48 @@ class BeforeAfterGallery {
   }
 }
 
-// Publish only approved customer comparisons; brand images are not grooming results.
-const beforeAfterItems = { de: [], en: [], ru: [], uk: [] };
+const comparisonCopy = {
+  de: { before: 'Vorher', after: 'Nachher', loading: 'Vergleiche werden geladen …', unavailable: 'Vergleiche konnten nicht geladen werden.' },
+  en: { before: 'Before', after: 'After', loading: 'Loading comparisons…', unavailable: 'Could not load comparisons.' },
+  ru: { before: 'До', after: 'После', loading: 'Загружаем сравнения…', unavailable: 'Не удалось загрузить сравнения.' },
+  uk: { before: 'До', after: 'Після', loading: 'Завантажуємо порівняння…', unavailable: 'Не вдалося завантажити порівняння.' },
+};
+const comparisonCategories = new Set(['dogs', 'cats', 'smallAnimals', 'salon']);
+
+async function loadBeforeAfterItems(lang) {
+  const controller = new window.AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 8000);
+  let items;
+  try {
+    const response = await fetch(`/api/site-comparisons?locale=${lang}`, {
+      cache: 'no-store',
+      credentials: 'same-origin',
+      redirect: 'error',
+      signal: controller.signal,
+    });
+    if (response.status === 404) return [];
+    if (!response.ok) throw new Error('Could not load comparisons');
+    ({ items } = await response.json());
+  } finally {
+    window.clearTimeout(timeout);
+  }
+  if (!Array.isArray(items)) throw new Error('Invalid comparison list');
+  const labels = comparisonCopy[lang];
+  return items.filter(item =>
+    item?.published === true && item.locale === lang && comparisonCategories.has(item.category) &&
+    typeof item.id === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(item.id)
+  ).map(item => ({
+    category: item.category,
+    title: item.title,
+    beforeAlt: item.beforeAlt,
+    afterAlt: item.afterAlt,
+    beforeLabel: labels.before,
+    afterLabel: labels.after,
+    beforeImage: `/api/site-comparisons?id=${item.id}&side=before`,
+    afterImage: `/api/site-comparisons?id=${item.id}&side=after`,
+    sliderLabel: `${labels.before} / ${labels.after} — ${item.title}`,
+  }));
+}
 
 function isBeforeAfterPage() {
   if (document.getElementById('before-after-gallery')) {
@@ -351,7 +391,7 @@ function isBeforeAfterPage() {
   return /\/do-i-posle(?:\.html)?$/i.test(normalizedPath);
 }
 
-function initBeforeAfterGallery() {
+async function initBeforeAfterGallery() {
   if (!isBeforeAfterPage()) {
     return;
   }
@@ -364,20 +404,19 @@ function initBeforeAfterGallery() {
   galleryContainer.dataset.beforeAfterReady = '1';
 
   const pathParts = window.location.pathname.split('/').filter(Boolean);
-  const lang = pathParts.find(part => Object.prototype.hasOwnProperty.call(beforeAfterItems, part)) || 'de';
-  const items = beforeAfterItems[lang] || beforeAfterItems.de;
-
-  new BeforeAfterGallery(galleryContainer, items, {
-    lang,
-    filterLabels: {
-      de: { all: 'Gesamte Mediathek', dogs: 'Hunde', cats: 'Katzen', salon: 'Salon' },
-      en: { all: 'Full Media Library', dogs: 'Dogs', cats: 'Cats', salon: 'Salon' },
-      ru: { all: 'ВСЯ МЕДИАТЕКА', dogs: 'СОБАКИ', cats: 'КОШКИ', salon: 'САЛОН' },
-      uk: { all: 'ВСЯ МЕДІАТЕКА', dogs: 'СОБАКИ', cats: 'КОТИ', salon: 'САЛОН' },
-    },
-  });
-
+  const lang = pathParts.find(part => Object.hasOwn(comparisonCopy, part)) || 'de';
+  const loading = document.createElement('p');
+  loading.className = 'before-after-empty';
+  loading.setAttribute('role', 'status');
+  loading.textContent = comparisonCopy[lang].loading;
+  galleryContainer.replaceChildren(loading);
   galleryContainer.closest('.reveal')?.classList.add('active');
+  try {
+    const items = await loadBeforeAfterItems(lang);
+    new BeforeAfterGallery(galleryContainer, items, { lang });
+  } catch {
+    loading.textContent = comparisonCopy[lang].unavailable;
+  }
 }
 
 if (document.readyState === 'loading') {

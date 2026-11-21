@@ -8,6 +8,7 @@ import { assertProductionAssetContent, assertProductionSourcePath, isProductionS
 import { minifyHeaderWeatherStyleTemplate } from './lib/production-style-template.mjs';
 import { stripLocalDevRefreshBootstrap } from './lib/production-dev-refresh.mjs';
 import { stampWeatherRuntimeVersions } from './lib/weather-asset-versions.mjs';
+import { annotateLocalizedPages } from './lib/page-copy-build.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -471,6 +472,7 @@ assertNoSecretArtifacts(dist);
 const publicContactFiles = normalizePublicContact(dist);
 const deferredScriptFiles = deferNonCriticalScripts(dist, assetVersion);
 const sendPulseFiles = injectSendPulseIntegrations(dist, assetVersion);
+annotateLocalizedPages(dist, assetVersion);
 assertLocalAssetVersions(dist, assetVersion);
 
 console.log('Production bundle created in dist/.');

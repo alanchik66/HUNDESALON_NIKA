@@ -12,6 +12,10 @@ import { transformSync } from 'esbuild';
 import { stripLocalDevRefreshBootstrap } from './lib/production-dev-refresh.mjs';
 import { startStaticTestServer } from './lib/static-test-server.mjs';
 
+test('private drafts are bundled by Pages Functions only', () => {
+  assert.equal(isProductionSourceOnlyPath('functions/_lib/promotion-defaults.json'), true);
+});
+
 test('production integration injection excludes only the fixed isolated map entry', t => {
   const directory = mkdtempSync(path.join(tmpdir(), 'nika-map-frame-injection-'));
   t.after(() => {

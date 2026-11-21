@@ -90,3 +90,22 @@ test('offline asset refresh preserves the cached response and fulfills its lifet
   await Promise.all(event.pending);
   assert.equal(event.writes.length, 0);
 });
+
+test('administration, public managed pages and feature feeds bypass previously cached responses', () => {
+  for (const path of ['/admin', '/admin/', '/api/admin/settings', '/api/admin/page?id=contacts', '/ru/promotions.html',
+    '/uk/blog/blog', '/de/', '/reviews', '/reviews.html/', '/telegram-menu', '/telegram-menu.html?lang=uk',
+    '/telegram-menu/', '/sitemap.xml', '/api/maps-config', '/blog', '/payment-status']) {
+    const event = fetchEvent({path,cached:{old:true},destination:''});
+    assert.equal(event.response,undefined,path);
+    assert.deepEqual(event.calls,{match:0,open:0,fetch:0,respondWith:0});
+  }
+});
+
+test('a private or no-store response cannot be added to the static cache', async () => {
+  for (const value of ['private, max-age=60','no-store']) {
+    const event = fetchEvent({response:{ok:true,headers:{get:()=>value}}});
+    await event.response;
+    await Promise.all(event.pending);
+    assert.equal(event.writes.length,0);
+  }
+});

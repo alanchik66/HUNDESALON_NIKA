@@ -16,6 +16,7 @@ const SOURCE_ONLY_PREFIXES = [
 ];
 
 const SOURCE_ONLY_PATHS = new Set([
+  'functions/_lib/promotion-defaults.json',
   'assets/js/local-dev-refresh.js',
   'assets/images/brand/google-business-logo-square.png',
   'assets/images/brand/hero-dog-source.jpg',

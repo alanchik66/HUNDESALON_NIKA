@@ -151,7 +151,7 @@ export function isRequestBodyTooLarge(error) {
   return error?.code === REQUEST_BODY_TOO_LARGE_CODE;
 }
 
-async function readBoundedBodyBytes(request, maxBytes) {
+export async function readBoundedBodyBytes(request, maxBytes) {
   if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0) {
     throw new TypeError('maxBytes must be a positive safe integer');
   }

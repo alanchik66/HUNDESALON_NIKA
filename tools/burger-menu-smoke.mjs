@@ -143,6 +143,7 @@ try {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     let interceptNavigation = false;
+    let disabledSections = '';
     const navigations = [];
     await context.route('**/*', async requestRoute => {
       const request = requestRoute.request();
@@ -153,6 +154,11 @@ try {
         navigations.push(request.url());
         // Keep the source document alive for the full tile matrix. Real document navigation is tested below.
         await requestRoute.abort('aborted');
+      } else if (request.isNavigationRequest() && request.frame() === page.mainFrame() && url.origin === server.baseUrl) {
+        // Serve the same section state the Pages middleware supplies in production.
+        const response = await requestRoute.fetch();
+        const body = (await response.text()).replace('<html ', `<html data-disabled-sections="${disabledSections}" `);
+        await requestRoute.fulfill({ response, body });
       } else if (route === 'kontakty.html' && url.origin === server.baseUrl && url.pathname === weatherServicePath) {
         // Keep the real widget mounted without starting Axios requests that can outlive the source document.
         await requestRoute.fulfill({ contentType: 'application/javascript', body: offlineWeatherService });
@@ -237,11 +243,11 @@ try {
       assert.equal(material.canvasFilter, 'none', `${name}: the large menu canvas must not receive a compositing filter`);
       assert.equal(await nav.locator('button').count(), 0, `${name}: every menu tile must be a direct link`);
       const hrefs = await links.evaluateAll(items => items.map(item => ({ href: item.href, label: item.textContent.trim() })));
-      assert.equal(hrefs.length, 13, `${name}: menu destinations are complete`);
-      assert.deepEqual(hrefs.slice(6).map(item => new URL(item.href).pathname.replace(`/${locale}/`, '')), [
+      assert.equal(hrefs.length, 14, `${name}: menu destinations are complete`);
+      assert.deepEqual(hrefs.slice(7).map(item => new URL(item.href).pathname.replace(`/${locale}/`, '')), [
         'o-nas.html', 'vvedenie.html', 'social.html', 'reyting.html',
         'blog/blog.html', 'partnerstvo.html', 'documents.html',
-      ], `${name}: secondary destinations stay in order`);
+      ], `${name}: lower rows retain the requested left/right pairs`);
       assert.ok(hrefs.some(item => new URL(item.href).pathname.endsWith('/galereya.html')));
       assert.ok(hrefs.some(item => new URL(item.href).pathname.endsWith('/do-i-posle.html')));
 
@@ -252,6 +258,7 @@ try {
         const textRect = text.getBoundingClientRect();
         const style = getComputedStyle(item);
         return {
+          promotion: item.classList.contains('mobile-nav-link--promotions'),
           left: rect.left, top: rect.top, bottom: rect.bottom,
           width: rect.width, height: rect.height,
           textContained: textRect.left >= rect.left && textRect.right <= rect.right + 1 &&
@@ -259,9 +266,27 @@ try {
           infiniteMotion: style.animationIterationCount.split(',').some(value => value.trim() === 'infinite'),
         };
       }));
-      assert.ok(geometry.every(item => Math.abs(item.width - geometry[0].width) <= 1 &&
-        Math.abs(item.height - geometry[0].height) <= 1), `${name}: regular tiles must have uniform dimensions`);
+      const regularTiles = geometry.filter(item => !item.promotion);
+      assert.ok(regularTiles.every(item => Math.abs(item.width - regularTiles[0].width) <= 1 &&
+        Math.abs(item.height - regularTiles[0].height) <= 1), `${name}: regular tiles must have uniform dimensions`);
       assert.ok(geometry.every(item => item.height >= 44 && item.height <= 48), `${name}: all tiles remain compact touch targets`);
+      const promotionGeometry = geometry.find(item => item.promotion);
+      const contentWidth = await nav.locator('.mobile-nav__content').evaluate(element => {
+        const style = getComputedStyle(element);
+        return element.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      });
+      assert.equal(geometry.findIndex(item => item.promotion), 6, `${name}: promotions separate the six service/result links from salon information`);
+      assert.ok(Math.abs(promotionGeometry.width - contentWidth) <= 1 &&
+        Math.abs(promotionGeometry.left - regularTiles[0].left) <= 1 &&
+        promotionGeometry.top >= geometry[5].bottom && promotionGeometry.bottom <= geometry[7].top,
+      `${name}: promotions occupy a full row between the groups`);
+      const promotion = nav.locator('a[href$="promotions.html"]');
+      assert.equal(await promotion.locator('.promo-btn-icon[aria-hidden="true"]').count(), 1, `${name}: promotions retain the decorative icon`);
+      await page.waitForFunction(() => {
+        const image = document.querySelector('#mobile-nav a[href$="promotions.html"] img');
+        return image?.complete && image.naturalWidth > 0;
+      }, undefined, { polling: 50, timeout: 15000 });
+      assert.equal(await promotion.locator('img').evaluate(image => image.complete && image.naturalWidth > 0), true, `${name}: promotion icon loads`);
       assert.ok(geometry.every(item => item.textContained), `${name}: labels must fit inside their tile`);
       assert.ok(geometry.every(item => !item.infiniteMotion), `${name}: text must not move in a perpetual loop`);
       const drawer = await nav.evaluate(element => {
@@ -366,7 +391,23 @@ try {
         await open();
         const home = await navigate(page.locator('.logo a[href]'));
         assert.equal(home, `/${locale}/`, 'Logo opens the locale home directly from an open drawer');
-        documentNavigation = { services, back: '/' + locale + '/' + route, home };
+        const promotionsLink = nav.locator('a[href$="promotions.html"]');
+        await open();
+        const promotions = await navigate(promotionsLink);
+        assert.equal(promotions, `/${locale}/promotions.html`, 'Promotions opens its own localized document');
+        assert.equal(new URL(page.url()).hash, '');
+        await page.locator('main h1').waitFor({ state: 'visible' });
+        const heading = await page.locator('main h1').innerText();
+        const oldUrl = `${server.baseUrl}/${locale}/social.html?ref=bookmark#promotions`;
+        await page.goto(oldUrl, { waitUntil: 'commit' });
+        await page.waitForURL(`${server.baseUrl}${promotions}?ref=bookmark`, { waitUntil: 'domcontentloaded' });
+        assert.equal(await page.locator('main h1').innerText(), heading, 'Old promotion bookmarks open the same page');
+        disabledSections = 'promotions';
+        await page.goto(oldUrl, { waitUntil: 'commit' });
+        await page.waitForURL(oldUrl.replace('#promotions', ''), { waitUntil: 'domcontentloaded' });
+        await page.locator('#burgerBtn').waitFor();
+        assert.equal(await nav.locator('a[href$="promotions.html"]').count(), 0, 'The disabled page is absent from the drawer');
+        documentNavigation = { services, back: `/${locale}/${route}`, home, promotions, legacyPromotion: true, disabledPromotion: true };
       }
       assert.deepEqual(errors, [], `${name}: no JavaScript errors`);
       results.push({ name, locale, viewport, route, reducedMotion, deviceScaleFactor: deviceScaleFactor ?? 1, actualDpr: material.actualDpr, input: viewport.width < 900 ? 'tap' : 'click', tileSize: geometry[0], drawer, tiles: tileChecks, documentNavigation });
