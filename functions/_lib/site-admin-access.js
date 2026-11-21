@@ -23,7 +23,7 @@ async function accessKey(issuer, kid) {
   if (cachedKeys?.issuer !== issuer || cachedKeys.expiresAt <= Date.now()) {
     const response = await fetch(issuer + '/cdn-cgi/access/certs', {
       cache: 'no-store',
-      redirect: 'error',
+      redirect: 'manual',
       signal: globalThis.AbortSignal.timeout(4000),
       headers: { Accept: 'application/json' },
     });

@@ -112,10 +112,20 @@ test('non-local admin routes fail closed before trusting origin or email from re
   assert.equal((await adminPage({ request: local, env: {} })).status, 200);
 });
 
+test('a redirect from the Cloudflare Access signing keys endpoint does not grant access', async t => {
+  const mockFetch = t.mock.method(globalThis, 'fetch', async () =>
+    Response.redirect('https://different.example.test/keys', 302)
+  );
+  const request = new Request(adminOrigin + '/admin/', { headers: { [accessHeader]: accessToken() } });
+  assert.equal(await hasSiteAdminAccess(request, configuration), false);
+  assert.equal(mockFetch.mock.callCount(), 1);
+  assert.equal(mockFetch.mock.calls[0].arguments[1].redirect, 'manual');
+});
+
 test('Cloudflare Access proof is signed for the single owner and cannot replace the owner key or session', async t => {
   const mockFetch = t.mock.method(globalThis, 'fetch', async (url, options) => {
     assert.equal(url, issuer + '/cdn-cgi/access/certs');
-    assert.equal(options.redirect, 'error');
+    assert.equal(options.redirect, 'manual');
     return Response.json({ keys: [jwk] });
   });
   const now = Math.floor(Date.now() / 1000);
