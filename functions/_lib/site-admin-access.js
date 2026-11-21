@@ -42,13 +42,17 @@ async function accessKey(issuer, kid) {
 export async function hasSiteAdminAccess(request, env) {
   const url = new URL(request.url);
   if (isAdminLoopback(url)) return true;
+  const token = request.headers.get('Cf-Access-Jwt-Assertion');
+  const deny = reason => {
+    if (token) console.warn('[site-admin-access] Access assertion rejected:', reason);
+    return false;
+  };
   const origin = env?.SITE_ADMIN_ORIGIN;
   const issuer = env?.SITE_ADMIN_ACCESS_TEAM;
   const audience = env?.SITE_ADMIN_ACCESS_AUD;
   const email = env?.SITE_ADMIN_ACCESS_EMAIL;
+  if (url.protocol !== 'https:' || url.origin !== origin) return deny('origin');
   if (
-    url.protocol !== 'https:' ||
-    url.origin !== origin ||
     typeof issuer !== 'string' ||
     !teamOriginPattern.test(issuer) ||
     typeof audience !== 'string' ||
@@ -56,11 +60,11 @@ export async function hasSiteAdminAccess(request, env) {
     typeof email !== 'string' ||
     !/^[^\s@]+@[^\s@]+$/.test(email)
   )
-    return false;
+    return deny('configuration');
 
-  const token = request.headers.get('Cf-Access-Jwt-Assertion');
-  if (!token || token.length > 8192 || !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)) return false;
+  if (!token || token.length > 8192 || !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)) return deny('format');
   const [encodedHeader, encodedClaims, signature] = token.split('.');
+  let phase = 'decode';
   try {
     const header = JSON.parse(decoder.decode(decodeSegment(encodedHeader)));
     if (
@@ -70,35 +74,30 @@ export async function hasSiteAdminAccess(request, env) {
       header.crit !== undefined ||
       header.b64 !== undefined
     )
-      return false;
+      return deny('header');
 
     const claims = JSON.parse(decoder.decode(decodeSegment(encodedClaims)));
     const now = Math.floor(Date.now() / 1000);
     const appAudience = Array.isArray(claims.aud) && claims.aud.length === 1 ? claims.aud[0] : claims.aud;
-    if (
-      claims.type !== 'app' ||
-      claims.iss !== issuer ||
-      appAudience !== audience ||
-      claims.email !== email ||
-      typeof claims.sub !== 'string' ||
-      !claims.sub ||
-      !Number.isSafeInteger(claims.exp) ||
-      claims.exp <= now ||
-      (claims.nbf !== undefined && (!Number.isSafeInteger(claims.nbf) || claims.nbf > now))
-    )
-      return false;
+    if (claims.type !== 'app' || typeof claims.sub !== 'string' || !claims.sub) return deny('subject');
+    if (claims.iss !== issuer) return deny('issuer');
+    if (appAudience !== audience) return deny('audience');
+    if (claims.email !== email) return deny('owner');
+    if (!Number.isSafeInteger(claims.exp) || claims.exp <= now ||
+      (claims.nbf !== undefined && (!Number.isSafeInteger(claims.nbf) || claims.nbf > now))) return deny('time');
 
+    phase = 'key';
     const key = await accessKey(issuer, header.kid);
-    return (
-      key !== null &&
-      (await crypto.subtle.verify(
-        accessAlgorithm,
-        key,
-        decodeSegment(signature),
-        encoder.encode(encodedHeader + '.' + encodedClaims)
-      ))
+    if (key === null) return deny(phase);
+    phase = 'signature';
+    const verified = await crypto.subtle.verify(
+      accessAlgorithm,
+      key,
+      decodeSegment(signature),
+      encoder.encode(encodedHeader + '.' + encodedClaims)
     );
+    return verified || deny(phase);
   } catch {
-    return false;
+    return deny(phase);
   }
 }

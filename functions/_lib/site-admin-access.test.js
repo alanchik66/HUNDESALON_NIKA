@@ -75,6 +75,7 @@ function sqliteD1(t) {
 
 test('non-local admin routes fail closed before trusting origin or email from request headers', async t => {
   const mockFetch = t.mock.method(globalThis, 'fetch', async () => assert.fail('Unexpected keys request'));
+  const warning = t.mock.method(console, 'warn', () => {});
   const untrusted = new Request('https://site.pages.dev/admin/', {
     headers: {
       [accessHeader]: accessToken(),
@@ -110,9 +111,13 @@ test('non-local admin routes fail closed before trusting origin or email from re
   const local = new Request('http://127.0.0.1:8796/admin/');
   assert.equal((await adminPage({ request: new Request(adminOrigin + '/admin/'), env: {} })).status, 404);
   assert.equal((await adminPage({ request: local, env: {} })).status, 200);
+  assert.deepEqual(warning.mock.calls.slice(0, 1).map(call => call.arguments), [
+    ['[site-admin-access] Access assertion rejected:', 'origin'],
+  ]);
 });
 
 test('a redirect from the Cloudflare Access signing keys endpoint does not grant access', async t => {
+  const warning = t.mock.method(console, 'warn', () => {});
   const mockFetch = t.mock.method(globalThis, 'fetch', async () =>
     Response.redirect('https://different.example.test/keys', 302)
   );
@@ -120,9 +125,13 @@ test('a redirect from the Cloudflare Access signing keys endpoint does not grant
   assert.equal(await hasSiteAdminAccess(request, configuration), false);
   assert.equal(mockFetch.mock.callCount(), 1);
   assert.equal(mockFetch.mock.calls[0].arguments[1].redirect, 'manual');
+  assert.deepEqual(warning.mock.calls.map(call => call.arguments), [
+    ['[site-admin-access] Access assertion rejected:', 'key'],
+  ]);
 });
 
 test('Cloudflare Access proof is signed for the single owner and cannot replace the owner key or session', async t => {
+  const warning = t.mock.method(console, 'warn', () => {});
   const mockFetch = t.mock.method(globalThis, 'fetch', async (url, options) => {
     assert.equal(url, issuer + '/cdn-cgi/access/certs');
     assert.equal(options.redirect, 'manual');
@@ -151,6 +160,9 @@ test('Cloudflare Access proof is signed for the single owner and cannot replace 
     accessToken({ type: 'org' }),
   ])
     assert.equal(await hasSiteAdminAccess(accessRequest(token), configuration), false);
+  assert.deepEqual(warning.mock.calls.map(call => call.arguments[1]), [
+    'format', 'signature', 'header', 'key', 'owner', 'issuer', 'audience', 'audience', 'time', 'time', 'subject',
+  ]);
 
   const previousCaches = globalThis.caches;
   globalThis.caches = { default: { match: async () => null, put: async () => {} } };
