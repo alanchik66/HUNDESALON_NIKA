@@ -860,6 +860,11 @@
   transform: none !important;
 }
 
+/* Paint the halo directly so the rotated Moon canvas needs no expanded blur surface. */
+.weather-orb-overlay--dropdown.is-moon.is-visible {
+  background-image: radial-gradient(circle closest-side, rgb(232 212 139 / 18%) 45%, rgb(232 212 139 / 8%) 65%, transparent 96%) !important;
+}
+
 .weather-orb-overlay.is-visible {
   opacity: var(--orb-crossfade-opacity, 1) !important;
   visibility: visible !important;
@@ -910,8 +915,12 @@
     scale(var(--orb-scale-visible, 1)) !important;
 }
 
-.weather-orb-overlay--preview.is-moon.is-visible {
-  filter: drop-shadow(0 0 12px rgb(244 248 255 / 0.18)) drop-shadow(0 0 22px rgb(186 205 255 / 0.16)) !important;
+.weather-orb-overlay--preview.is-moon {
+  filter: brightness(1.18) saturate(1.08) drop-shadow(0 0 12px rgba(232, 212, 139, 0.36)) !important;
+}
+
+.weather-orb-overlay--dropdown.is-moon {
+  filter: brightness(1.18) saturate(1.08) !important;
 }
 
 .weather-orb-overlay--preview.is-moon:not(.is-visible) {
@@ -6817,11 +6826,7 @@
         return;
       }
       moon.style.removeProperty('opacity');
-      moon.style.setProperty(
-        'filter',
-        'brightness(1.18) saturate(1.08) drop-shadow(0 0 12px rgba(232, 212, 139, 0.36))',
-        'important'
-      );
+      moon.style.removeProperty('filter');
     });
 
     return changed;

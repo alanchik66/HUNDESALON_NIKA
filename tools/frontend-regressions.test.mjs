@@ -2462,8 +2462,10 @@ test('header Sun and Moon retain their base scales and anchors through the sky p
   }
 });
 
-test('header moon readability matches in preview and dropdown without changing the sun', async () => {
+test('header moon keeps its color grade while the dropdown halo avoids a blurred canvas', async () => {
   const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
+  assert.match(source, /\.weather-orb-overlay--dropdown\.is-moon\s*\{\s*filter: brightness\(1\.18\) saturate\(1\.08\) !important;/);
+  assert.match(source, /\.weather-orb-overlay--dropdown\.is-moon\.is-visible\s*\{\s*background-image: radial-gradient\(circle closest-side,[^;]+transparent [\d.]+%\) !important;/);
   const declaration = source.match(/  function lockHeaderWeatherMainTemperatureTypography\([^)]*\) \{[\s\S]*?\n  \}/)[0];
   class Element {
     constructor(classes) {
@@ -2490,9 +2492,9 @@ test('header moon readability matches in preview and dropdown without changing t
   apply({ shadowRoot, dataset: { weatherVariant: 'header' } });
   for (const moon of [previewMoon, dropdownMoon]) {
     assert.equal(moon.values.has('opacity'), false, 'Moon opacity belongs to the live sky/crossfade instead of a fixed inline value');
-    assert.equal(moon.values.get('filter'), 'brightness(1.18) saturate(1.08) drop-shadow(0 0 12px rgba(232, 212, 139, 0.36))');
+    assert.equal(moon.values.has('filter'), false, 'Moon color and halo belong to the variant CSS rules');
     assert.equal(moon.priorities.has('opacity'), false);
-    assert.equal(moon.priorities.get('filter'), 'important');
+    assert.equal(moon.priorities.has('filter'), false);
   }
   assert.equal(sun.values.get('opacity'), '0.91');
   assert.equal(sun.values.get('filter'), 'contrast(2)');
