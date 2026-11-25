@@ -20,7 +20,9 @@
 
   const BOOKING_SCHEDULE = Object.freeze({
     workdayStartMinutes: 9 * 60,
-    workdayEndMinutes: 18 * 60,
+    workdayEndMinutes: 21 * 60,
+    saturdayStartMinutes: 10 * 60,
+    saturdayEndMinutes: 16 * 60,
     slotStepMinutes: 30,
     defaultBufferMinutes: 30,
     firstVisitExtraMinutes: 60,
@@ -113,6 +115,19 @@
     return match ? match.slice(1).map(Number) : null;
   };
 
+  // Calendar dates are salon wall-clock dates; do not use the visitor's time zone.
+  const getBookingWorkingHours = isoDate => {
+    const parts = parseIsoDateParts(isoDate);
+    if (!parts) return null;
+    const date = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+    if (date.getUTCFullYear() !== parts[0] || date.getUTCMonth() !== parts[1] - 1 || date.getUTCDate() !== parts[2]) return null;
+    const weekday = date.getUTCDay();
+    if (weekday === 0) return null;
+    return weekday === 6
+      ? { startMinutes: BOOKING_SCHEDULE.saturdayStartMinutes, endMinutes: BOOKING_SCHEDULE.saturdayEndMinutes }
+      : { startMinutes: BOOKING_SCHEDULE.workdayStartMinutes, endMinutes: BOOKING_SCHEDULE.workdayEndMinutes };
+  };
+
   const salonOffsetFormatter = new Intl.DateTimeFormat('en-US', {
     timeZone: 'Europe/Berlin',
     timeZoneName: 'longOffset',
@@ -161,17 +176,18 @@
     .filter(Boolean);
 
   const getAvailableStartTimes = (isoDate, timing, busyIntervals = [], { calendarConfigured = false, now = new Date() } = {}) => {
-    const dateParts = parseIsoDateParts(isoDate);
-    if (!dateParts || !timing?.safeBlockMinutes) return [];
+    const workingHours = getBookingWorkingHours(isoDate);
+    if (!workingHours || !Number.isFinite(timing?.safeBlockMinutes) || timing.safeBlockMinutes <= 0) return [];
 
     const busy = normalizeBusyIntervals(busyIntervals);
-    const lastStart = BOOKING_SCHEDULE.workdayEndMinutes - timing.safeBlockMinutes;
-    if (lastStart < BOOKING_SCHEDULE.workdayStartMinutes) return [];
+    const lastStart = workingHours.endMinutes - timing.safeBlockMinutes;
+    if (lastStart < workingHours.startMinutes) return [];
 
     const starts = [];
-    const step = calendarConfigured ? timing.slotStepMinutes : timing.safeBlockMinutes;
+    const step = calendarConfigured ? timing.slotStepMinutes
+      : Math.ceil(timing.safeBlockMinutes / BOOKING_SCHEDULE.slotStepMinutes) * BOOKING_SCHEDULE.slotStepMinutes;
 
-    for (let minutes = BOOKING_SCHEDULE.workdayStartMinutes; minutes <= lastStart; minutes += step) {
+    for (let minutes = workingHours.startMinutes; minutes <= lastStart; minutes += step) {
       const start = toSalonDateTime(isoDate, minutes);
       const end = toSalonDateTime(isoDate, minutes + timing.safeBlockMinutes);
       if (!start || !end) continue;
@@ -292,6 +308,7 @@
       resolveQuote,
       getTiming,
       getAvailableStartTimes,
+      getBookingWorkingHours,
       schedule: BOOKING_SCHEDULE,
     };
   };

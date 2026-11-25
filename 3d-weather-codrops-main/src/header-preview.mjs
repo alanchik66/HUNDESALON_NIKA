@@ -329,7 +329,8 @@ var React = toInteropDefault(getReact()),
   },
   DEFAULT_LOCATION = `Leipzig`,
   REFRESH_INTERVAL_MS = WEATHER_REFRESH_INTERVAL_MS,
-  Scene3D = createRecoverableScene(React, jsxRuntime.jsx, createRetryableModuleLoader(new URL('./scene.mjs?v=20261103-weather-parity-v6', import.meta.url).href)),
+  preloadScene = createRetryableModuleLoader(new URL('./scene.mjs?v=20261103-weather-parity-v6', import.meta.url).href),
+  Scene3D = createRecoverableScene(React, jsxRuntime.jsx, preloadScene),
   localeCopy = {
     ru: {
       locationDeniedStatus: `Нет доступа. Нажмите «Моя геопозиция» или выберите город.`,
@@ -1500,6 +1501,7 @@ var ReactDOM = toInteropDefault(getReactDOM()),
     mountedWidgets.get(t)?.unmount();
   };
 export {
+  preloadScene,
   WeatherApp as WeatherApp,
   mountWeatherWidget as mountWeatherWidget,
   unmountWeatherWidget as unmountWeatherWidget,

@@ -256,9 +256,16 @@ class HeaderWeatherMoonScene {
     return { ...this.request, changed };
   }
 
+  isVisible() {
+    const document = this.canvas.ownerDocument;
+    const header = this.canvas.closest?.('header.header') || this.canvas.getRootNode?.().host?.closest?.('header.header');
+    return !document?.hidden && (!header ||
+      (!document?.body?.classList?.contains('hide-header') && !document?.documentElement?.classList?.contains('site-loading')));
+  }
+
   renderFrame(force = false) {
     if (this.disposed || this.canvas.__moonSurfaceOwner !== this.owner || !this.canvas.isConnected
-      || this.canvas.ownerDocument?.hidden || this.options.isCurrent?.() === false || this.options.signal?.aborted) return false;
+      || !this.isVisible() || this.options.isCurrent?.() === false || this.options.signal?.aborted) return false;
     this.canvas.style.setProperty('transition', this.canvas.ownerDocument?.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'none' : 'rotate 1s linear', 'important');
     const { latitude, longitude, time, changed: contextChanged } = this.readRequest();
     const lighting = lunarLighting(time, latitude, longitude);
@@ -281,7 +288,7 @@ class HeaderWeatherMoonScene {
     this.renderPending = false; this.renderError = null;
     this.canvas.dataset.moonRenderState = 'rendering';
     const current = () => !this.disposed && this.canvas.isConnected && this.renderJob === job && this.contextVersion === version && this.canvas.__moonSurfaceOwner === this.owner
-      && !this.canvas.ownerDocument?.hidden && !this.options.signal?.aborted && this.options.isCurrent?.() !== false;
+      && this.isVisible() && !this.options.signal?.aborted && this.options.isCurrent?.() !== false;
     const paint = (frame, surfaceMaps = maps) => {
       if (!current()) return false;
       const image = this.context.createImageData(frame.width, frame.height); image.data.set(frame.data); this.context.putImageData(image, 0, 0);
@@ -388,7 +395,7 @@ export async function createHeaderWeatherMoonScene(canvas, options = {}) {
       if (!current() || canvas.__moonSurfaceOwner !== scene.owner) throw obsolete();
       if (scene.renderError) throw scene.renderError;
       if (scene.lastRaster?.maps !== maps || scene.lastRaster.contextVersion !== scene.contextVersion) {
-        if (!canvas.ownerDocument?.hidden) throw new Error('Lunar terrain did not commit.');
+        if (scene.isVisible()) throw new Error('Lunar terrain did not commit.');
         canvas.dataset.moonDetail = 'paused';
       }
       return scene;

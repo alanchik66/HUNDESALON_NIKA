@@ -213,6 +213,17 @@ test('read-only phone preview keeps local assets and maps while bridging only pu
     } else if (incoming.url === '/api/satellite-clouds') {
       response.writeHead(200, { 'Content-Type': 'application/json' });
       response.end(incoming.method === 'HEAD' ? undefined : '{"source":"eumetsat-msg"}');
+    } else if (incoming.url === '/api/site-media?id=01234567-0123-4123-a123-0123456789ab') {
+      response.writeHead(206, {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="prices.pdf"',
+        'Content-Range': 'bytes 0-1/10',
+        'Accept-Ranges': 'bytes',
+      }).end('%P');
+    } else if (incoming.url === '/api/site-comparisons?locale=ru') {
+      response.writeHead(200, { 'Content-Type': 'application/json' }).end('{"items":[]}');
+    } else if (incoming.url === '/api/site-comparisons?id=01234567-0123-4123-a123-0123456789ab&side=before') {
+      response.writeHead(200, { 'Content-Type': 'image/png' }).end('fixture');
     } else if (incoming.url === '/assets/site.js') {
       response.writeHead(200, { 'Content-Type': 'text/javascript' }).end('window.currentPreview = true;');
     } else response.writeHead(403).end('Static preview does not serve weather or private APIs.');
@@ -245,16 +256,35 @@ test('read-only phone preview keeps local assets and maps while bridging only pu
     const satelliteHead = await request(`${gateway.baseUrl}/api/satellite-clouds`, { headers, method: 'HEAD' });
     assert.equal(satelliteHead.status, 200);
     assert.equal(await satelliteHead.text(), '');
+    const media = await request(`${gateway.baseUrl}/api/site-media?id=01234567-0123-4123-a123-0123456789ab&other=ignored`, {
+      headers: { ...headers, Range: 'bytes=0-1' },
+    });
+    assert.equal(media.status, 206);
+    assert.equal(media.headers.get('content-type'), 'application/pdf');
+    assert.equal(media.headers.get('content-disposition'), 'attachment; filename="prices.pdf"');
+    assert.equal(media.headers.get('content-range'), 'bytes 0-1/10');
+    assert.equal(await media.text(), '%P');
+    assert.equal((await request(`${gateway.baseUrl}/api/site-media?locale=ru`)).status, 404);
+    const comparisons = await request(`${gateway.baseUrl}/api/site-comparisons?locale=ru&ignored=1`, { headers });
+    assert.deepEqual(await comparisons.json(), { items: [] });
+    const side = await request(`${gateway.baseUrl}/api/site-comparisons?side=before&id=01234567-0123-4123-a123-0123456789ab`, { headers });
+    assert.equal(side.headers.get('content-type'), 'image/png');
+    assert.equal(await side.text(), 'fixture');
+    assert.equal((await request(`${gateway.baseUrl}/api/site-comparisons?locale=invalid`)).status, 404);
     assert.equal(await (await request(`${gateway.baseUrl}/assets/site.js`)).text(), 'window.currentPreview = true;');
     const beforePrivate = localCalls.length;
-    for (const endpoint of ['/api/internal/status', '/api/satellite-clouds/private', '/api/satellite-clouds/', '/.dev.vars', '/output/local-preview/remote-config.json'])
+    for (const endpoint of ['/api/internal/status', '/api/admin/comparisons', '/api/satellite-clouds/private', '/api/satellite-clouds/', '/.dev.vars', '/output/local-preview/remote-config.json'])
       assert.equal((await request(`${gateway.baseUrl}${endpoint}`)).status, 403);
-    for (const endpoint of ['/api/weather', '/reverse-geocode', '/api/maps-config', '/api/satellite-clouds', '/sendmail'])
+    for (const endpoint of ['/api/weather', '/reverse-geocode', '/api/maps-config', '/api/satellite-clouds', '/api/site-media', '/api/site-comparisons', '/sendmail'])
       assert.equal((await request(`${gateway.baseUrl}${endpoint}`, { method: 'POST', body: 'test' })).status, 405);
     assert.equal(localCalls.length, beforePrivate, 'private files and submissions never reach the local server');
     assert.deepEqual(localCalls.map(call => ({ url: call.url, method: call.method })), [
       { url: '/api/maps-config', method: 'GET' }, { url: '/api/satellite-clouds', method: 'GET' },
-      { url: '/api/satellite-clouds', method: 'HEAD' }, { url: '/assets/site.js', method: 'GET' },
+      { url: '/api/satellite-clouds', method: 'HEAD' },
+      { url: '/api/site-media?id=01234567-0123-4123-a123-0123456789ab', method: 'GET' },
+      { url: '/api/site-comparisons?locale=ru', method: 'GET' },
+      { url: '/api/site-comparisons?id=01234567-0123-4123-a123-0123456789ab&side=before', method: 'GET' },
+      { url: '/assets/site.js', method: 'GET' },
     ]);
     assert.ok(localCalls.every(call => call.headers.cookie === undefined && call.headers.authorization === undefined));
     assert.deepEqual(forwarded, ['/api/weather', '/reverse-geocode'].flatMap(endpoint => ['GET', 'HEAD'].map(method => ({
@@ -347,6 +377,10 @@ test('phone preview proxies full local Pages GET, HEAD and media ranges without 
   const modified = 'Tue, 03 Nov 2026 08:00:00 GMT';
   const upstream = createServer((request, response) => {
     calls.push({ path: request.url, method: request.method, headers: request.headers });
+    if (['/reviews', '/telegram-menu?lang=ru'].includes(request.url)) {
+      response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }).end('<h1>Standalone page</h1>');
+      return;
+    }
     if (request.url === '/ru/?probe=current' || request.url === '/assets/site.js') {
       const page = request.url.startsWith('/ru/');
       const body = page ? '<!doctype html><html><head data-preview="full"><script src="https://external.example/analytics.js"></script><script src="/assets/site.js"></script></head><body>Actual homepage</body></html>' : 'window.currentPreview = true;';
@@ -426,6 +460,12 @@ test('phone preview proxies full local Pages GET, HEAD and media ranges without 
       assert.equal(script.status, 200);
       assert.match(script.headers.get('content-type'), /javascript/);
       assert.equal(await script.text(), 'window.currentPreview = true;');
+    }
+    for (const url of ['/reviews', '/telegram-menu?lang=ru']) {
+      const standalone = await request(url);
+      assert.equal(standalone.status, 200, url);
+      assert.equal(await standalone.text(), '<h1>Standalone page</h1>');
+      assert.equal(calls.at(-1).path, url);
     }
     const full = await request('/assets/video.mp4');
     assert.equal(full.status, 200);

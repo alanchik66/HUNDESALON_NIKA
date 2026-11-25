@@ -3,6 +3,13 @@
  * Shared header, language navigation, and weather widget bootstrap live in site-shell.js.
  */
 document.addEventListener('DOMContentLoaded', () => {
+  // Older legal/blog pages still contain the retired entrance markup. Never
+  // leave that blocking layer behind, including when the new loader is offline.
+  document.querySelectorAll('#preloader:not(.site-loader)').forEach(node => node.remove());
+  const mainScript = document.querySelector('script[src*="/main.js"]');
+  const motionUrl = new URL('./motion-visibility.js', mainScript?.src || new URL('/assets/js/main.js', location.href));
+  motionUrl.search = mainScript ? new URL(mainScript.src).search : '';
+  void import(motionUrl.href).catch(() => {});
   // Source previews and production pages share the same assistant launcher.
   // Production injects these assets at build time; do not load a second copy.
   if (!document.querySelector('link[href*="/ai-chat.css"]')) {
@@ -29,11 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const siteShell = window.SiteShell?.init?.() || {};
-  const preloaderNotice = siteShell.preloaderNotice || {
-    title: 'Sorry, the website is temporarily unavailable',
-    body: 'Due to technical reasons, the website did not finish loading right now.',
-    reload: 'Reload page',
-  };
   const getThemeToggleLabel =
     siteShell.getThemeToggleLabel || (isLight => (isLight ? 'Switch to dark theme' : 'Switch to light theme'));
   const menuA11y = siteShell.menuA11y || {
@@ -42,81 +44,10 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   siteShell.initLanguageDropdown?.();
 
-  /* ========== PRELOADER ========== */
-  const preloader = document.getElementById('preloader');
-  if (preloader) {
-    let preloaderIssueTimer = null;
-    let preloaderDismissTimer = null;
-    let preloaderRemoved = false;
-
-    const dismissPreloader = () => {
-      if (preloaderRemoved) return;
-
-      preloaderRemoved = true;
-
-      if (preloaderIssueTimer) {
-        window.clearTimeout(preloaderIssueTimer);
-      }
-
-      if (preloaderDismissTimer) {
-        window.clearTimeout(preloaderDismissTimer);
-      }
-
-      document.body.classList.add('site-loaded');
-      preloader.setAttribute('aria-hidden', 'true');
-      preloader.setAttribute('hidden', 'hidden');
-      preloader.style.pointerEvents = 'none';
-      preloader.querySelectorAll('.preloader-message').forEach(node => {
-        node.setAttribute('aria-hidden', 'true');
-      });
-      preloader.style.opacity = '0';
-      setTimeout(() => preloader.remove(), 350);
-    };
-
-    const dismissPreloaderSoon = () => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(dismissPreloader);
-      });
-    };
-
-    const showPreloaderIssue = () => {
-      if (document.body.classList.contains('site-loaded') || preloader.dataset.issueShown === 'true') return;
-      preloader.dataset.issueShown = 'true';
-      preloader.classList.add('preloader-has-message');
-
-      const notice = document.createElement('div');
-      notice.className = 'preloader-message';
-      notice.setAttribute('role', 'status');
-      notice.setAttribute('aria-live', 'polite');
-      notice.innerHTML = `
-                <strong>${preloaderNotice.title}</strong>
-                <span>${preloaderNotice.body}</span>
-                <button type="button" class="preloader-message-reload">${preloaderNotice.reload}</button>
-            `;
-      notice.querySelector('.preloader-message-reload')?.addEventListener('click', () => {
-        window.location.reload();
-      });
-      preloader.appendChild(notice);
-    };
-
-    preloaderIssueTimer = window.setTimeout(showPreloaderIssue, 10000);
-
-    const heroImage = document.querySelector('.hero-photo-img');
-    if (heroImage?.complete) {
-      dismissPreloaderSoon();
-    } else if (heroImage) {
-      heroImage.addEventListener('load', dismissPreloaderSoon, { once: true });
-      heroImage.addEventListener('error', dismissPreloaderSoon, { once: true });
-      preloaderDismissTimer = window.setTimeout(dismissPreloaderSoon, 1800);
-    } else {
-      dismissPreloaderSoon();
-    }
-
-    window.addEventListener('load', dismissPreloaderSoon, { once: true });
-  } else {
-    window.addEventListener('load', () => {
-      document.body.classList.add('site-loaded');
-    });
+  // The early shared loader owns readiness; retain a safe fallback if it fails to load.
+  if (!window.NikaSiteLoader) {
+    if (document.readyState === 'complete') document.body.classList.add('site-loaded');
+    else window.addEventListener('load', () => document.body.classList.add('site-loaded'), { once: true });
   }
 
   /* ========== THEME TOGGLE ========== */
@@ -156,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     bodyChildren.forEach(node => {
       if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'SCRIPT') return;
       if (node.nodeType === Node.ELEMENT_NODE && node.id === 'booking-modal') return;
+      if (node.nodeType === Node.ELEMENT_NODE && node.id === 'preloader') return;
       // Fixed scroll controls must share the page scrollbar's outer stacking context.
       if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('price-scroll-controls')) return;
       root.appendChild(node);
@@ -331,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     };
 
-    const updateThumb = () => {
+    const updateThumb = (scrolling = false) => {
       const { scrollSize, clientSize, scrollOffset, trackSize, minTop } = getMetrics();
       const maxScroll = Math.max(scrollSize - clientSize, 0);
 
@@ -344,35 +276,45 @@ document.addEventListener('DOMContentLoaded', () => {
       const maxOffset = Math.max(trackSize - thumbSize, 0);
       const offset = minTop + (maxScroll > 0 ? (scrollOffset / maxScroll) * maxOffset : 0);
 
-      thumb.style[sizeStyleKey] = `${Math.round(thumbSize)}px`;
-      thumb.style[offsetKey] = `${Math.round(offset)}px`;
+      const nextSize = `${Math.round(thumbSize)}px`;
+      const nextOffset = `${Math.round(offset)}px`;
+      if (thumb.style[sizeStyleKey] !== nextSize) thumb.style[sizeStyleKey] = nextSize;
+      if (thumb.style[offsetKey] !== nextOffset) thumb.style[offsetKey] = nextOffset;
       thumb.style.removeProperty('opacity');
+      if (scrolling) {
+        const directionClass = scrollOffset >= lastScrollOffset ? scrollingForwardClass : scrollingBackwardClass;
+        thumb.classList.remove('scrolling-up', 'scrolling-down', 'scrolling-forward', 'scrolling-backward');
+        thumb.classList.add('scrolling', directionClass);
+        if (scrollAnimTimeout) clearTimeout(scrollAnimTimeout);
+        scrollAnimTimeout = setTimeout(() => {
+          thumb.classList.remove('scrolling', 'scrolling-up', 'scrolling-down', 'scrolling-forward', 'scrolling-backward');
+        }, 1100);
+        lastScrollOffset = scrollOffset;
+      }
+    };
+
+    let thumbFrame = 0;
+    let scrollPending = false;
+    const scheduleThumbUpdate = () => {
+      if (thumbFrame) return;
+      thumbFrame = requestAnimationFrame(() => {
+        thumbFrame = 0;
+        const scrolling = scrollPending;
+        scrollPending = false;
+        updateThumb(scrolling);
+      });
     };
 
     const handleScroll = () => {
-      const currentScrollOffset = scrollTarget[scrollKey];
-      const directionClass = currentScrollOffset >= lastScrollOffset ? scrollingForwardClass : scrollingBackwardClass;
-
-      updateThumb();
-      thumb.classList.remove('scrolling-up', 'scrolling-down', 'scrolling-forward', 'scrolling-backward');
-      thumb.classList.add('scrolling');
-      thumb.classList.add(directionClass);
-      if (scrollAnimTimeout) clearTimeout(scrollAnimTimeout);
-      scrollAnimTimeout = setTimeout(() => {
-        thumb.classList.remove(
-          'scrolling',
-          'scrolling-up',
-          'scrolling-down',
-          'scrolling-forward',
-          'scrolling-backward'
-        );
-      }, 1100);
-      lastScrollOffset = currentScrollOffset;
+      // A scroll event only queues work. Even reading scrollTop here can force
+      // animated styles to flush before the browser reaches its next frame.
+      scrollPending = true;
+      scheduleThumbUpdate();
     };
 
     scrollTarget.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', updateThumb);
-    window.addEventListener('load', updateThumb);
+    window.addEventListener('resize', scheduleThumbUpdate);
+    window.addEventListener('load', scheduleThumbUpdate);
 
     thumb.addEventListener('mousedown', e => {
       isDragging = true;
@@ -419,19 +361,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if ('ResizeObserver' in window) {
-      const resizeObserver = new ResizeObserver(() => updateThumb());
+      const resizeObserver = new ResizeObserver(scheduleThumbUpdate);
       resizeObserver.observe(scrollTarget);
       resizeObserver.observe(track);
     }
 
     if ('MutationObserver' in window) {
-      const mutationObserver = new MutationObserver(() => updateThumb());
+      const mutationObserver = new MutationObserver(scheduleThumbUpdate);
       mutationObserver.observe(scrollTarget, { childList: true, subtree: true, characterData: true });
     }
 
-    updateThumb();
+    scheduleThumbUpdate();
 
-    return { updateThumb, thumb, track };
+    return { updateThumb: scheduleThumbUpdate, thumb, track };
   };
 
   window.HundesalonLiquidScrollbar = {
@@ -505,7 +447,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentOffset = scrollTarget[scrollKey];
 
     const getMaxOffset = () => Math.max(scrollTarget[scrollSizeKey] - scrollTarget[clientSizeKey], 0);
-    const clampOffset = value => Math.max(0, Math.min(getMaxOffset(), value));
     const isPageScrollLocked = () =>
       scrollTarget === scrollRoot && document.body.classList.contains('nav-open');
 
@@ -532,7 +473,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const startAnimation = () => {
       if (frameId !== null) return;
-      currentOffset = scrollTarget[scrollKey];
       frameId = window.requestAnimationFrame(tick);
     };
 
@@ -566,15 +506,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (Math.abs(rawDelta) < 0.01) return;
 
+        // Resync only when wheel input starts. A passive scroll listener used
+        // to force a style flush for every native/programmatic scroll event.
+        if (frameId === null) {
+          currentOffset = scrollTarget[scrollKey];
+          targetOffset = currentOffset;
+        }
         const maxOffset = getMaxOffset();
         if (maxOffset <= 0) return;
 
         const normalizedDelta = normalizeWheelDelta(event, rawDelta);
         const boundedStep = Math.max(-maxStep, Math.min(maxStep, normalizedDelta * intensity));
-        const nextTarget = clampOffset(targetOffset + boundedStep);
+        const nextTarget = Math.max(0, Math.min(maxOffset, targetOffset + boundedStep));
 
-        const atStart = scrollTarget[scrollKey] <= 0 && boundedStep < 0;
-        const atEnd = scrollTarget[scrollKey] >= maxOffset && boundedStep > 0;
+        const atStart = currentOffset <= 0 && boundedStep < 0;
+        const atEnd = currentOffset >= maxOffset && boundedStep > 0;
 
         if (nextTarget === targetOffset && (atStart || atEnd)) return;
 
@@ -585,18 +531,9 @@ document.addEventListener('DOMContentLoaded', () => {
       { passive: false }
     );
 
-    scrollTarget.addEventListener(
-      'scroll',
-      () => {
-        if (frameId !== null) return;
-        currentOffset = scrollTarget[scrollKey];
-        targetOffset = currentOffset;
-      },
-      { passive: true }
-    );
   };
 
-  enableInertialScroll(scrollRoot, { axis: 'y', intensity: 0.94, easing: 0.12, maxStep: 300 });
+  // Keep page wheel/touch scrolling native instead of driving it from a busy JS frame loop.
   enableInertialScroll(mobileNavScroll, { axis: 'y', intensity: 0.9, easing: 0.16, maxStep: 220 });
   document.querySelectorAll('.service-list').forEach(panel => {
     enableInertialScroll(panel, { axis: 'y', intensity: 0.88, easing: 0.17, maxStep: 180 });
@@ -639,8 +576,6 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const updatePageScrollbarOffset = () => {
-    syncContentTopOffsets();
-
     if (!pageScrollbar?.track) return;
 
     const baseTop = 14;
@@ -663,14 +598,22 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    pageScrollbar.track.style.top = `${nextTop}px`;
-    pageScrollbar.track.style.bottom = `${nextBottom}px`;
+    const top = `${nextTop}px`;
+    const bottom = `${nextBottom}px`;
+    if (pageScrollbar.track.style.top !== top) pageScrollbar.track.style.top = top;
+    if (pageScrollbar.track.style.bottom !== bottom) pageScrollbar.track.style.bottom = bottom;
     pageScrollbar.updateThumb();
   };
 
-  window.addEventListener('resize', updatePageScrollbarOffset);
-  window.addEventListener('load', updatePageScrollbarOffset);
-  updatePageScrollbarOffset();
+  const syncPageLayout = () => {
+    syncContentTopOffsets();
+    updatePageScrollbarOffset();
+  };
+  window.addEventListener('resize', syncPageLayout);
+  window.addEventListener('load', syncPageLayout);
+  const layoutHeader = document.querySelector('header.header');
+  if (layoutHeader && 'ResizeObserver' in window) new ResizeObserver(syncPageLayout).observe(layoutHeader);
+  syncPageLayout();
 
   if (burger && mobileNav && overlay) {
     const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -1326,8 +1269,8 @@ document.addEventListener('DOMContentLoaded', () => {
       pageHeader?.classList.remove('header-social-visible');
     }
 
-    /* Hero parallax follows the page's actual scroll position. */
-    if (hero) {
+    /* Keep the background geometry fixed while the navigation owns the scroll lock. */
+    if (hero && shouldAutoHideHeader) {
       const offset = Math.min(current * 0.15, 80);
       hero.style.transform = `translateY(${offset}px)`;
       hero.style.filter = 'none';
@@ -2235,6 +2178,9 @@ function enhanceSiteSelect(select) {
   const useFixedMenu = () => Boolean(wrapper.closest('[data-price-configurator], .price-configurator'));
 
   const syncScrollable = () => {
+    // Closed lists have no visible geometry. Measuring after every option
+    // rebuild forced a document layout even though the menu was still hidden.
+    if (menu.hidden) return;
     if (menu.scrollHeight > menu.clientHeight) {
       menu.classList.add('is-scrollable');
     } else {

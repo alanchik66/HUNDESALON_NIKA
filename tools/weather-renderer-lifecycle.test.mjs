@@ -1616,7 +1616,251 @@ test('scene readiness comes from a rendered frame inside asset Suspense and neve
   assert.match(suspense, /children: \[\s*\(0, jsxRuntime\.jsx\)\(SceneReady,/);
 });
 
-test('header panels retain cloud composition and scale fallback rain on mobile and desktop', async () => {
+test('embedded header Canvas skips scroll measurement while retaining native size observation', async () => {
+  const source = await readFile(new URL('scene.mjs', sourceDirectory), 'utf8');
+  const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module', range: true });
+  const declaration = ast.body.filter(node => node.type === 'VariableDeclaration')
+    .flatMap(node => node.declarations).find(node => node.id.name === 'Scene3D');
+  assert.ok(declaration);
+  const jsx = (type, props) => ({ type, props });
+  const dependencies = {
+    React: {
+      useRef: value => ({ current: value }), useState: value => [value, () => {}],
+      useCallback: callback => callback, useEffect() {}, useMemo: callback => callback(), Suspense: 'Suspense',
+    },
+    jsxRuntime: { jsx, jsxs: jsx, Fragment: 'Fragment' },
+    useHeaderNativeRain: () => false,
+    resolveWeatherScenePhase: () => ({ phase: 'day', starOpacity: 0 }),
+    useVisibleSun: () => false,
+    f: 'Canvas', AnimationFrameLimiter: 'Limiter', SceneReady: 'Ready', SceneBackground: 'Background',
+    A: 'Sky', S: 'Stars', WeatherIcon: 'Icon', ForecastPortals: 'Forecast',
+    ScenePostprocessing: 'Postprocessing', E: 'Controls',
+  };
+  const Scene = new Function('dependencies', `
+    const { ${Object.keys(dependencies).join(', ')} } = dependencies;
+    return (${source.slice(...declaration.init.range)});
+  `)(dependencies);
+  for (const [embedded, variant, header] of [
+    [true, 'header', true], [true, 'header-panel', true],
+    [false, 'default', false], [true, 'default', false], [false, 'header', false],
+  ]) {
+    const tree = Scene({ weatherData: { location: { localtime: '2026-11-21T12:00' } }, embedded, variant });
+    const canvas = tree.props.children[0];
+    assert.equal(canvas.type, 'Canvas');
+    if (header) {
+      assert.deepEqual(canvas.props.resize, { scroll: false }, 'only scroll listeners are disabled; native ResizeObserver options remain at their defaults');
+    } else {
+      assert.equal(canvas.props.resize, undefined, 'standalone scenes retain Canvas default measurement');
+    }
+    assert.equal(canvas.props.style.width, '100%');
+    assert.equal(canvas.props.style.height, '100%', 'the Canvas still follows its container size');
+    assert.deepEqual(canvas.props.dpr, [1, 2]);
+  }
+});
+
+test('weather frame limiter pauses hidden scenes and resumes one preserved timeline', async t => {
+  const source = await readFile(new URL('scene.mjs', sourceDirectory), 'utf8');
+  const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module', range: true });
+  const declaration = ast.body.filter(node => node.type === 'VariableDeclaration')
+    .flatMap(node => node.declarations).find(node => node.id.name === 'AnimationFrameLimiter');
+  assert.ok(declaration);
+  const create = ({ intersection = true, mutation = true, hidden = false, hiddenHeader = false, hasTopRow = true, siteLoading = false } = {}) => {
+    const frames = new Map(), documentListeners = new Map(), windowListeners = new Map(), refs = [];
+    let frameId = 0, invalidations = 0, cleanup, intersectionCallback, observed, disconnected = false;
+    let headerStateCallback, headerStateTarget, headerStateOptions, headerStateDisconnected = false;
+    const headerStateTargets = [];
+    const headerTopRow = {};
+    const header = { querySelector: () => hasTopRow ? headerTopRow : null };
+    const canvas = { isConnected: true, getRootNode: () => ({ host: { closest: () => header } }) };
+    const bodyClasses = new Set(hiddenHeader ? ['hide-header'] : []);
+    const entranceClasses = new Set(siteLoading ? ['site-loading'] : []);
+    const document = {
+      hidden,
+      body: { classList: { contains: name => bodyClasses.has(name) } },
+      documentElement: { classList: { contains: name => entranceClasses.has(name) } },
+      addEventListener: (type, callback) => documentListeners.set(type, callback),
+      removeEventListener: type => documentListeners.delete(type),
+    };
+    const window = {
+      requestAnimationFrame: callback => { frames.set(++frameId, callback); return frameId; },
+      cancelAnimationFrame: id => frames.delete(id),
+      addEventListener: (type, callback) => windowListeners.set(type, callback),
+      removeEventListener: type => windowListeners.delete(type),
+    };
+    const Observer = intersection ? class {
+      constructor(callback) { intersectionCallback = callback; }
+      observe(target) { observed = target; }
+      disconnect() { disconnected = true; }
+    } : undefined;
+    const HeaderStateObserver = mutation ? class {
+      constructor(callback) { headerStateCallback = callback; }
+      observe(target, options) { headerStateTarget ||= target; headerStateOptions ||= options; headerStateTargets.push(target); }
+      disconnect() { headerStateDisconnected = true; }
+    } : undefined;
+    const React = {
+      useRef: value => { const ref = { current: value }; refs.push(ref); return ref; },
+      useEffect: effect => { cleanup = effect(); },
+    };
+    const Limiter = new Function('React', 'N', 'window', 'document', 'IntersectionObserver', 'MutationObserver',
+      `return (${source.slice(...declaration.init.range)});`)(
+      React, () => ({ invalidate: () => { invalidations += 1; }, gl: { domElement: canvas } }), window, document, Observer, HeaderStateObserver
+    );
+    Limiter({ targetFps: 30 });
+    return {
+      frames, document, canvas, header, headerTopRow, documentListeners, windowListeners, headerStateTargets,
+      get invalidations() { return invalidations; }, get last() { return refs[0].current.last; },
+      get observed() { return observed; }, get disconnected() { return disconnected; },
+      get headerStateTarget() { return headerStateTarget; }, get headerStateOptions() { return headerStateOptions; },
+      get headerStateDisconnected() { return headerStateDisconnected; },
+      headerHidden(value) { if (value) bodyClasses.add('hide-header'); else bodyClasses.delete('hide-header'); headerStateCallback?.(); },
+      entranceLoading(value) { if (value) entranceClasses.add('site-loading'); else entranceClasses.delete('site-loading'); headerStateCallback?.(); },
+      headerMutation: () => headerStateCallback?.(),
+      intersect: (isIntersecting, intersectionRatio = isIntersecting ? 1 : 0) => intersectionCallback?.([{ isIntersecting, intersectionRatio }]),
+      visibility: value => { document.hidden = value; documentListeners.get('visibilitychange')?.(); },
+      pageshow: () => windowListeners.get('pageshow')?.(),
+      dispose: () => cleanup(),
+      fire(timestamp) {
+        assert.equal(frames.size, 1, 'one active limiter frame');
+        const [id, callback] = [...frames][0];
+        frames.delete(id);
+        callback(timestamp);
+      },
+    };
+  };
+
+  await t.test('offscreen headers stop frames, preserve their clock and resume without duplicates', () => {
+    const h = create();
+    assert.equal(h.observed, h.headerTopRow, 'the actual weather row owns visibility instead of a remaining header sliver');
+    h.fire(16);
+    assert.equal(h.invalidations, 0);
+    h.fire(34);
+    assert.equal(h.invalidations, 1);
+    assert.equal(h.last, 34);
+    const staleTick = [...h.frames.values()][0];
+    h.intersect(false);
+    assert.equal(h.frames.size, 0);
+    h.pageshow();
+    staleTick(1000);
+    assert.equal(h.frames.size, 0, 'an offscreen pageshow or cancelled tick cannot restart rendering');
+    assert.equal(h.last, 34, 'suspending a header must not reset its animation timestamp');
+    h.intersect(true, 0);
+    assert.equal(h.frames.size, 0, 'zero-area intersections remain suspended');
+    h.intersect(true);
+    h.intersect(true);
+    h.pageshow();
+    assert.equal(h.frames.size, 1);
+    assert.equal(h.last, 34, 'resume schedules work without changing animation phase');
+    h.fire(1000);
+    assert.equal(h.invalidations, 2, 'a long pause resumes with one invalidation rather than catch-up frames');
+    assert.equal(h.last, 1000);
+    h.visibility(true);
+    assert.equal(h.frames.size, 0);
+    assert.equal(h.last, 1000);
+    h.visibility(false);
+    h.pageshow();
+    assert.equal(h.frames.size, 1);
+    h.dispose();
+  });
+
+  await t.test('a hide-header class suspends even positive header intersections and cleans up its observer', () => {
+    const h = create({ hiddenHeader: true });
+    assert.equal(h.frames.size, 0);
+    assert.equal(h.headerStateTarget, h.document.body);
+    assert.deepEqual(h.headerStateOptions, { attributes: true, attributeFilter: ['class'] });
+    h.intersect(true, .1);
+    h.pageshow();
+    assert.equal(h.frames.size, 0, 'a partially visible header sliver cannot override explicit hiding');
+    h.headerHidden(false);
+    h.headerMutation();
+    h.intersect(true);
+    assert.equal(h.frames.size, 1);
+    h.fire(40);
+    assert.equal(h.invalidations, 1);
+    h.headerHidden(true);
+    assert.equal(h.frames.size, 0, 'the body class mutation cancels the pending frame immediately');
+    assert.equal(h.last, 40);
+    h.headerHidden(false);
+    assert.equal(h.frames.size, 1);
+    assert.equal(h.last, 40, 'restoring the header preserves its timestamp');
+    h.dispose();
+    assert.equal(h.headerStateDisconnected, true);
+    assert.equal(h.disconnected, true);
+    h.headerHidden(false);
+    h.headerMutation();
+    h.intersect(true);
+    assert.equal(h.frames.size, 0, 'late observer delivery after cleanup cannot revive the scene');
+  });
+
+  await t.test('the shared entrance pauses the weather Canvas and restores its existing timeline', () => {
+    const h = create({ siteLoading: true });
+    assert.deepEqual(h.headerStateTargets, [h.document.body, h.document.documentElement]);
+    h.intersect(true);
+    h.pageshow();
+    assert.equal(h.frames.size, 0, 'a visible weather row stays paused behind the opaque entrance');
+    h.entranceLoading(false);
+    h.headerMutation();
+    assert.equal(h.frames.size, 1, 'the root class mutation resumes exactly one frame');
+    h.fire(40);
+    assert.equal(h.invalidations, 1);
+    h.entranceLoading(true);
+    assert.equal(h.frames.size, 0);
+    assert.equal(h.last, 40);
+    h.entranceLoading(false);
+    assert.equal(h.frames.size, 1);
+    assert.equal(h.last, 40, 'revealing the site does not reset the scene animation timestamp');
+    h.fire(1000);
+    assert.equal(h.invalidations, 2, 'resume renders once without catch-up work');
+    h.dispose();
+    h.entranceLoading(false);
+    assert.equal(h.frames.size, 0);
+    assert.equal(h.headerStateDisconnected, true);
+  });
+
+  await t.test('without IntersectionObserver document visibility and connection still bound rendering', () => {
+    const h = create({ intersection: false, mutation: false, hasTopRow: false });
+    h.fire(40);
+    assert.equal(h.invalidations, 1);
+    h.visibility(true);
+    h.pageshow();
+    assert.equal(h.frames.size, 0);
+    h.visibility(false);
+    h.visibility(false);
+    h.pageshow();
+    assert.equal(h.frames.size, 1);
+    h.canvas.isConnected = false;
+    h.fire(80);
+    assert.equal(h.invalidations, 1);
+    assert.equal(h.frames.size, 0, 'detached scenes cannot keep a background loop');
+    h.canvas.isConnected = true;
+    h.pageshow();
+    assert.equal(h.frames.size, 1);
+    h.dispose();
+  });
+
+  await t.test('initially hidden and disposed scenes cannot be revived by late callbacks', () => {
+    const h = create({ hidden: true });
+    assert.equal(h.frames.size, 0);
+    h.visibility(false);
+    const staleTick = [...h.frames.values()][0];
+    const visibility = h.documentListeners.get('visibilitychange');
+    const pageshow = h.windowListeners.get('pageshow');
+    h.dispose();
+    assert.equal(h.disconnected, true);
+    assert.equal(h.headerStateDisconnected, true);
+    assert.equal(h.documentListeners.size, 0);
+    assert.equal(h.windowListeners.size, 0);
+    assert.equal(h.frames.size, 0);
+    visibility();
+    pageshow();
+    h.intersect(true);
+    staleTick(1000);
+    assert.equal(h.frames.size, 0);
+    assert.equal(h.invalidations, 0);
+    assert.equal(h.last, 0);
+  });
+});
+
+test('header panels retain cloud composition and condition-dependent fallback rain on mobile and desktop', async () => {
   const source = await readFile(new URL('scene.mjs', sourceDirectory), 'utf8');
   const start = source.indexOf('  WeatherIcon = ') + '  WeatherIcon = '.length;
   const end = source.indexOf('\nj(k);', start);
@@ -1633,11 +1877,14 @@ test('header panels retain cloud composition and scale fallback rain on mobile a
       assert.equal(tree.type, 'WindProvider');
       return tree.props.children.props.children[0].props.children;
     };
-    for (const [width, variant, compact] of [[430, 'header-panel', false], [899, 'header-panel', false], [900, 'header-panel', false], [1440, 'header-panel', false], [430, 'default', false], [1440, 'header', true]]) {
+    for (const [width, variant, compact, baseRainCount] of [[430, 'header-panel', false, 800], [899, 'header-panel', false, 800], [900, 'header-panel', false, 800], [1440, 'header-panel', false, 800], [430, 'default', false, 800], [1440, 'header', true, 220]]) {
       globalThis.window = { innerWidth: width };
-      const [clouds, rain] = render(1189, variant);
-      assert.equal(clouds.props.compact, compact, width + '/' + variant + ' clouds');
-      assert.equal(rain.props.count, compact ? 183 : 664, width + '/' + variant + ' moderate rain');
+      for (const [code, density] of [[undefined, .83], [1189, .83], [1153, .38], [1183, .62], [1195, 1.15]]) {
+        const [clouds, rain] = render(code, variant);
+        assert.equal(clouds.props.compact, compact, `${width}/${variant} clouds`);
+        assert.equal(rain.props.count, Math.round(baseRainCount * density), `${width}/${variant}/${code} rain`);
+        assert.ok(rain.props.count > 0 && rain.props.count <= Math.round(baseRainCount * 1.15), 'condition density stays within the precipitation instance budget');
+      }
     }
     assert.equal(render(1153, 'header-panel')[1].props.count, 304, 'drizzle uses fewer particles');
     assert.equal(render(1195, 'header-panel')[1].props.count, 920, 'heavy rain uses more particles');

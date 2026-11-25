@@ -10,7 +10,10 @@ const engine = useWebKit ? 'webkit' : 'chromium';
 const output = path.resolve('test-results', 'burger-menu-scroll');
 await mkdir(output, { recursive: true });
 const server = await startStaticTestServer();
-const browser = await (useWebKit ? webkit : chromium).launch({ headless: true });
+const browser = await (useWebKit ? webkit : chromium).launch({
+  headless: true,
+  ...(!useWebKit && process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}),
+});
 const cases = [
   { name: 'short-desktop', width: 1280, height: 620 },
   { name: 'narrow-desktop', width: 390, height: 640 },
@@ -97,6 +100,7 @@ try {
       await scrollMenu(baseline ? 600 : -600);
       await page.waitForTimeout(850);
       const after = await state();
+      let nativeLock = null;
       if (!baseline) {
         assert.equal(after.active, true, `${engine}/${scenario.name}: scrolling must keep the menu open`);
         assert.equal(after.root, before.root, `${engine}/${scenario.name}: background must not scroll`);
@@ -117,28 +121,41 @@ try {
         assert.equal(closed.root, before.root, 'Closing should preserve the page position');
         assert.ok(closed.rootMax > 20, `${engine}/${scenario.name}: the page must have room to scroll`);
         if (before.finePointer) {
-          // Queue the actual custom page inertia, then open before its next RAF.
-          const pending = await page.evaluate(() => {
+          // Page scrolling is native. Start it with trusted browser input, then
+          // verify that opening the drawer preserves and locks the actual offset.
+          await page.mouse.move(12, scenario.height * 0.7);
+          await page.mouse.wheel(0, 90);
+          await page.waitForFunction(minimum => document.querySelector('.site-scroll-root').scrollTop > minimum,
+            closed.root + 20, { timeout: 5000 });
+          nativeLock = await page.evaluate(() => {
             const root = document.querySelector('.site-scroll-root');
-            const wheel = new window.WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 90 });
-            root.dispatchEvent(wheel);
             document.querySelector('.premium-burger').click();
-            return { root: root.scrollTop, queued: wheel.defaultPrevented, locked: document.body.classList.contains('nav-open') };
+            return {
+              root: root.scrollTop, saved: Number(document.body.dataset.scrollY),
+              locked: document.body.classList.contains('nav-open'), overflow: getComputedStyle(root).overflowY,
+            };
           });
-          assert.deepEqual(pending, { root: before.root, queued: true, locked: true });
+          assert.ok(nativeLock.root > closed.root + 20, `${engine}/${scenario.name}: native page input must actually move before locking`);
+          assert.equal(nativeLock.saved, nativeLock.root, `${engine}/${scenario.name}: opening saves the actual native offset`);
+          assert.equal(nativeLock.locked, true);
+          assert.equal(nativeLock.overflow, 'hidden', `${engine}/${scenario.name}: the native page scroller must be locked`);
+          await page.mouse.move(scenario.width - 5, scenario.height - 5);
+          await page.mouse.wheel(0, 500);
           await page.waitForTimeout(700);
-          assert.equal((await state()).root, pending.root, `${engine}/${scenario.name}: queued page inertia must stop on open`);
+          assert.equal((await state()).root, nativeLock.root, `${engine}/${scenario.name}: native input must not move the open drawer's background`);
           assert.equal((await state()).active, true);
           await page.keyboard.press('Escape');
           await nav.waitFor({ state: 'hidden' });
+          assert.equal((await state()).root, nativeLock.root, `${engine}/${scenario.name}: closing restores the locked native offset`);
         }
-        await page.mouse.move(scenario.width / 2, scenario.height * 0.7);
+        const resumedFrom = (await state()).root;
+        await page.mouse.move(12, scenario.height * 0.7);
         await page.mouse.wheel(0, 350);
-        await page.waitForFunction(minimum => document.querySelector('.site-scroll-root').scrollTop > minimum, before.root + 20, { timeout: 5000 });
+        await page.waitForFunction(minimum => document.querySelector('.site-scroll-root').scrollTop > minimum, resumedFrom + 20, { timeout: 5000 });
         assert.deepEqual(errors, []);
       }
-      results.push({ name: scenario.name, before, start, after, errors });
-      console.log(JSON.stringify({ engine, scenario: scenario.name, baseline, before, start, after, ok: !baseline }));
+      results.push({ name: scenario.name, before, start, after, nativeLock, errors });
+      console.log(JSON.stringify({ engine, scenario: scenario.name, baseline, before, start, after, nativeLock, ok: !baseline }));
     } finally { await context.close(); }
   }
 } finally {

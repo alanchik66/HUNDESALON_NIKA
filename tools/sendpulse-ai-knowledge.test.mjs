@@ -238,8 +238,8 @@ test('mobile SendPulse welcome toast stays out of the content area', () => {
 
 test('SendPulse live chat keeps native uploads and adds accessible brand controls', () => {
   const source = readFileSync(path.join(ROOT, 'assets/js/sendpulse-integrations.js'), 'utf8');
-  assert.match(source, /LIVE_CHAT_BRAND_LOGO_URL\s*=\s*'\/assets\/images\/brand\/logo\.png'/);
-  assert.match(source, /\.widget-chat-message-owner::before[\s\S]*?logo\.png/);
+  assert.match(source, /LIVE_CHAT_BRAND_LOGO_URL\s*=\s*'\/assets\/images\/brand\/logo-ui\.webp'/);
+  assert.match(source, /\.widget-chat-message-owner::before[\s\S]*?logo-ui\.webp/);
   assert.match(source, /data-action="expand"|action:\s*'expand'/);
   assert.match(source, /action:\s*'download'/);
   assert.match(source, /action:\s*'new-conversation'/);

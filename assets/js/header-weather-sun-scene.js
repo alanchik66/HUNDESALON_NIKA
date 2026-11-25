@@ -502,6 +502,10 @@ export class HeaderWeatherSunScene {
       timeMs: Date.now(),
     };
     this.running = false;
+    this.visibilityHeader = canvas.closest?.('header.header') || canvas.getRootNode?.().host?.closest?.('header.header');
+    this.inViewport = true;
+    this.visibilityObserver = null;
+    this.headerStateObserver = null;
     this.rafId = 0;
     this.resizeRafId = 0;
     this.solarDaysUniform = { value: 0 };
@@ -541,31 +545,39 @@ export class HeaderWeatherSunScene {
     };
     this.onContextLost = event => {
       event.preventDefault();
+      const resume = this.running || this.resumeAfterPage || this.resumeAfterRestore;
       this.contextLost = true;
-      this.resumeAfterRestore = this.running;
       this.lastError = new Error('The live solar graphics context was lost.');
       this.stop();
+      this.resumeAfterRestore = resume;
       this.setState('lost');
     };
     this.onContextRestored = () => {
       if (this.disposed) return;
       this.contextLost = false;
       this.resize();
-      if (this.resumeAfterRestore) this.start();
+      const resume = this.resumeAfterRestore;
+      this.resumeAfterRestore = false;
+      if (resume) this.start();
     };
     this.onPageHide = () => {
       const resume = this.running || this.resumeAfterPage;
+      const restore = this.resumeAfterRestore;
       this.stop(); this.resumeAfterPage = resume;
+      this.resumeAfterRestore = restore;
     };
     this.onPageShow = () => {
-      if (!this.ownsInitialization() || this.canvas.ownerDocument?.hidden) return;
-      const resume = this.running || this.resumeAfterPage;
+      if (!this.ownsInitialization() || !this.isVisible()) return;
+      const resume = this.running || this.resumeAfterPage || this.resumeAfterRestore;
       if (!resume) return;
       this.stop();
       if (!this.contextLost && this.renderer?.getContext?.()?.isContextLost?.()) this.onContextLost({ preventDefault() {} });
       if (!this.disposed) this.start();
     };
-    this.onVisibility = () => this.canvas.ownerDocument?.hidden ? this.onPageHide() : this.onPageShow();
+    this.onVisibility = () => {
+      if (!this.isVisible()) this.onPageHide();
+      else if (!this.running) this.onPageShow();
+    };
     this.setGeoState(options.geoState);
     this.updateSolarAppearance(this.getTimeMs());
   }
@@ -579,6 +591,30 @@ export class HeaderWeatherSunScene {
   ownsInitialization() {
     return !this.disposed && this.canvas.isConnected !== false &&
       this.canvas.__sunInitializationOwner === this.initializationOwner && this.options.isCurrent?.() !== false;
+  }
+
+  isVisible() {
+    const document = this.canvas.ownerDocument;
+    return this.canvas.isConnected !== false && !document?.hidden && this.inViewport && (!this.visibilityHeader ||
+      (!document?.body?.classList?.contains('hide-header') && !document?.documentElement?.classList?.contains('site-loading')));
+  }
+
+  observeVisibility() {
+    if (!this.visibilityHeader) return;
+    const document = this.canvas.ownerDocument;
+    if (typeof IntersectionObserver === 'function') {
+      this.visibilityObserver = new IntersectionObserver(entries => {
+        this.inViewport = entries.some(entry => entry.isIntersecting && entry.intersectionRatio > 0);
+        this.onVisibility();
+      }, { threshold: [0, .01] });
+      this.visibilityObserver.observe(this.visibilityHeader.querySelector?.('.top-row') || this.visibilityHeader);
+    }
+    if (typeof MutationObserver === 'function') {
+      this.headerStateObserver = new MutationObserver(this.onVisibility);
+      for (const target of [document?.body, document?.documentElement]) {
+        if (target) this.headerStateObserver.observe(target, { attributes: true, attributeFilter: ['class'] });
+      }
+    }
   }
 
   setInitializationStage(stage) {
@@ -729,6 +765,7 @@ export class HeaderWeatherSunScene {
     window.addEventListener?.('pagehide', this.onPageHide);
     window.addEventListener?.('pageshow', this.onPageShow);
     this.canvas.ownerDocument?.addEventListener?.('visibilitychange', this.onVisibility);
+    this.observeVisibility();
     const root = this.canvas.getRootNode?.();
     if (root && typeof MutationObserver === 'function') {
       this.pendingRemovalObserver = new MutationObserver(() => {
@@ -916,12 +953,13 @@ ${mapChunk}
   }
 
   renderFrame() {
-    if (!this.renderer || !this.scene || !this.camera) {
-      return;
+    if (this.disposed || this.contextLost || !this.isVisible() || !this.renderer || !this.scene || !this.camera) {
+      return false;
     }
     this.updateAnimation(this.getTimeMs());
     this.renderer.render(this.scene, this.camera);
     if (this.shaderError) throw this.shaderError;
+    return true;
   }
 
   start() {
@@ -932,6 +970,12 @@ ${mapChunk}
       this.resumeAfterRestore = true;
       return;
     }
+    if (!this.isVisible()) {
+      this.resumeAfterPage = true;
+      this.setState('paused');
+      return;
+    }
+    this.resumeAfterPage = false;
     this.running = true;
     const tick = () => {
       if (this.canvas.isConnected === false) {
@@ -939,6 +983,10 @@ ${mapChunk}
         return;
       }
       if (!this.running) {
+        return;
+      }
+      if (!this.isVisible()) {
+        this.onPageHide();
         return;
       }
       try {
@@ -958,6 +1006,7 @@ ${mapChunk}
   stop() {
     this.running = false;
     this.resumeAfterPage = false;
+    this.resumeAfterRestore = false;
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
       this.rafId = 0;
@@ -972,6 +1021,10 @@ ${mapChunk}
     this.stop();
     this.pendingRemovalObserver?.disconnect();
     this.pendingRemovalObserver = null;
+    this.visibilityObserver?.disconnect();
+    this.visibilityObserver = null;
+    this.headerStateObserver?.disconnect();
+    this.headerStateObserver = null;
     if (this.resizeRafId) cancelAnimationFrame(this.resizeRafId);
     this.resizeRafId = 0;
     window.removeEventListener?.('resize', this.onResize);
@@ -1080,7 +1133,9 @@ export async function mountHeaderWeatherSunScene(canvas, options = {}) {
     await scene.init();
     if (scene.disposed) return scene;
     scene.start();
-    if (scene.state !== 'ready') throw scene.lastError || new Error('The solar renderer did not produce a ready frame.');
+    if (scene.state !== 'ready' && !(scene.state === 'paused' && scene.resumeAfterPage && !scene.isVisible())) {
+      throw scene.lastError || new Error('The solar renderer did not produce a ready frame.');
+    }
     live = true;
     return ownSolarLifetime(scene, scope);
   } catch (error) {

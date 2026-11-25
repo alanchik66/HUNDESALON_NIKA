@@ -106,6 +106,10 @@ export function cloudflareApi(token, fetcher = fetch) {
   };
 }
 
+export async function connectCloudflareManagement() {
+  return cloudflareApi(await loadManagementCredential());
+}
+
 async function list(api, resource) {
   const result = [];
   for (let page = 1; page <= 50; page++) {
@@ -192,7 +196,7 @@ export function validatePrivateAcl(sddl, userSid) {
   return entries.length === 2 && principals.size === 2 && principals.has('SY') && principals.has(userSid);
 }
 
-async function atomicFile(file, bytes) {
+export async function atomicFile(file, bytes) {
   const temporary = `${file}.${randomUUID()}.tmp`;
   try {
     await writeFile(temporary, bytes, { flag: 'wx', mode: 0o600 });
@@ -200,30 +204,33 @@ async function atomicFile(file, bytes) {
   } finally { await unlink(temporary).catch(error => { if (error.code !== 'ENOENT') throw error; }); }
 }
 
-async function preparePrivateDirectory(receipt) {
+export async function prepareCloudflareConnectorStorage(directory, filenames, receipt) {
   if (process.platform !== 'win32') fail('Private connector storage requires Windows ACL verification.');
-  for (const file of [TOKEN_FILE, PRIVATE_RECEIPT, path.join(OUTPUT, 'provisioning.json'), path.join(ROOT, 'output/local-preview/remote-config.json')]) requireIgnored(file);
-  try { await mkdir(PRIVATE, { mode: 0o700 }); }
+  for (const name of filenames) requireIgnored(path.join(directory, name));
+  const project = await realpath(ROOT);
+  const parent = await realpath(path.dirname(directory));
+  if (!parent.toLowerCase().startsWith(`${project.toLowerCase()}${path.sep}`)) fail('Private connector storage escaped this project.');
+  try { await mkdir(directory, { mode: 0o700 }); }
   catch (error) { if (error.code !== 'EEXIST') throw error; }
-  const entries = await readdir(PRIVATE);
-  const directory = await lstat(PRIVATE), resolved = await realpath(PRIVATE), project = await realpath(ROOT);
-  if (!directory.isDirectory() || directory.isSymbolicLink() || !resolved.toLowerCase().startsWith(`${project.toLowerCase()}${path.sep}`))
-    fail('Private preview storage is not an ordinary directory inside this project.');
-  if (entries.some(name => !['tunnel.token', 'provisioning.json'].includes(name)) || entries.length && !receipt)
-    fail('An unexpected private preview directory will not be modified.');
+  const attributes = await lstat(directory), resolved = await realpath(directory);
+  if (!attributes.isDirectory() || attributes.isSymbolicLink() || !resolved.toLowerCase().startsWith(`${project.toLowerCase()}${path.sep}`))
+    fail('Private connector storage is not an ordinary directory inside this project.');
+  const entries = await readdir(directory);
+  if (entries.some(name => !filenames.includes(name)) || entries.length && !receipt)
+    fail('An unexpected private connector directory will not be modified.');
   const identity = privateCommand('whoami.exe', ['/user', '/fo', 'csv', '/nh']).toString('utf8');
   const sids = identity.match(/S-\d-(?:\d+-)+\d+/g) || [];
   if (sids.length !== 1) fail('Current Windows user SID could not be verified.');
   const sid = sids[0];
-  privateCommand('icacls.exe', [PRIVATE, '/inheritance:r', '/grant:r', `*${sid}:(OI)(CI)F`, '*S-1-5-18:(OI)(CI)F']);
-  privateCommand('icacls.exe', [PRIVATE, '/verify']);
-  const aclFile = path.join(PRIVATE, `.acl-${randomUUID()}.tmp`);
+  privateCommand('icacls.exe', [directory, '/inheritance:r', '/grant:r', `*${sid}:(OI)(CI)F`, '*S-1-5-18:(OI)(CI)F']);
+  privateCommand('icacls.exe', [directory, '/verify']);
+  const aclFile = path.join(directory, `.acl-${randomUUID()}.tmp`);
   try {
-    privateCommand('icacls.exe', [PRIVATE, '/save', aclFile]);
+    privateCommand('icacls.exe', [directory, '/save', aclFile]);
     const bytes = await readFile(aclFile);
     const text = bytes.includes(0) ? bytes.toString('utf16le') : bytes.toString('utf8');
     const descriptor = text.split(/\r?\n/).find(line => line.startsWith('D:'));
-    if (!descriptor || !validatePrivateAcl(descriptor.trim(), sid)) fail('Private preview directory ACL contains unexpected access.');
+    if (!descriptor || !validatePrivateAcl(descriptor.trim(), sid)) fail('Private connector directory ACL contains unexpected access.');
   } finally { await unlink(aclFile).catch(error => { if (error.code !== 'ENOENT') throw error; }); }
 }
 
@@ -234,7 +241,11 @@ export function updatedRuntimeConfiguration(value) {
 }
 
 const runtimeStorage = {
-  prepare: preparePrivateDirectory,
+  prepare: async receipt => {
+    requireIgnored(path.join(OUTPUT, 'provisioning.json'));
+    requireIgnored(path.join(ROOT, 'output/local-preview/remote-config.json'));
+    await prepareCloudflareConnectorStorage(PRIVATE, ['tunnel.token', 'provisioning.json'], receipt);
+  },
   saveReceipt: value => atomicFile(PRIVATE_RECEIPT, `${JSON.stringify(value, null, 2)}\n`),
   saveToken: async token => {
     requireIgnored(TOKEN_FILE);

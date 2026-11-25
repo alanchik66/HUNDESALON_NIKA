@@ -57,10 +57,9 @@
 
   const randomBetween = (min, max) => min + (max - min) * randomUnit();
 
-  const randomizeEuroIconMotion = icon => {
+  const randomizeEuroIconMotion = (icon, spinDuration) => {
     if (!(icon instanceof HTMLElement) || icon.dataset.nikaEuroMotion === 'ready') return;
 
-    const spinDuration = Number.parseFloat(getComputedStyle(icon).animationDuration) || 4.9;
     const sheenDuration = randomBetween(2.2, 4.8);
 
     icon.style.removeProperty('--euro-spin-duration');
@@ -70,13 +69,18 @@
     icon.dataset.nikaEuroMotion = 'ready';
   };
 
-  const randomizeIndependentEuroIcons = root => {
-    if (!root || typeof root.querySelectorAll !== 'function') return;
-
-    if (typeof root.matches === 'function' && root.matches(EURO_ICON_SELECTOR)) {
-      randomizeEuroIconMotion(root);
-    }
-    root.querySelectorAll(EURO_ICON_SELECTOR).forEach(randomizeEuroIconMotion);
+  const randomizeIndependentEuroIcons = (...roots) => {
+    const icons = new Set();
+    roots.forEach(root => {
+      if (!root || typeof root.querySelectorAll !== 'function') return;
+      if (root.matches?.(EURO_ICON_SELECTOR)) icons.add(root);
+      root.querySelectorAll(EURO_ICON_SELECTOR).forEach(icon => icons.add(icon));
+    });
+    // Read every duration before writing styles: catalog insertion used to force
+    // a style recalculation for each individual currency icon.
+    const pending = [...icons].filter(icon => icon.dataset.nikaEuroMotion !== 'ready');
+    const durations = pending.map(icon => Number.parseFloat(getComputedStyle(icon).animationDuration) || 4.9);
+    pending.forEach((icon, index) => randomizeEuroIconMotion(icon, durations[index]));
   };
 
   const initIndependentEuroMotion = () => {
@@ -88,13 +92,9 @@
     if (!observationRoot) return;
 
     independentEuroMotionObserver = new MutationObserver(mutations => {
-      mutations.forEach(mutation => {
-        mutation.addedNodes.forEach(node => {
-          if (node.nodeType === 1 || node.nodeType === 11) {
-            randomizeIndependentEuroIcons(node);
-          }
-        });
-      });
+      const roots = mutations.flatMap(mutation => [...mutation.addedNodes])
+        .filter(node => node.nodeType === 1 || node.nodeType === 11);
+      randomizeIndependentEuroIcons(...roots);
     });
     independentEuroMotionObserver.observe(observationRoot, { childList: true, subtree: true });
   };
@@ -121,29 +121,6 @@
     en: {
       toLight: 'Switch to light theme',
       toDark: 'Switch to dark theme',
-    },
-  };
-
-  const PRELOADER_COPY = {
-    ru: {
-      title: 'Извините, сайт временно недоступен',
-      body: 'По техническим причинам сайт сейчас не загрузился. Мы стараемся как можно скорее вернуть его в рабочее состояние. Возможно, в данный момент ведутся административные работы.',
-      reload: 'Обновить страницу',
-    },
-    uk: {
-      title: 'Вибачте, сайт тимчасово недоступний',
-      body: 'Через технічні причини сайт зараз не завантажився. Ми намагаємося якнайшвидше повернути його в робочий стан. Можливо, зараз тривають адміністративні роботи.',
-      reload: 'Оновити сторінку',
-    },
-    de: {
-      title: 'Entschuldigung, die Website ist vorübergehend nicht verfügbar',
-      body: 'Aus technischen Gründen wurde die Website gerade nicht geladen. Wir arbeiten daran, den normalen Betrieb schnellstmöglich wiederherzustellen. Möglicherweise laufen derzeit administrative Arbeiten.',
-      reload: 'Seite neu laden',
-    },
-    en: {
-      title: 'Sorry, the website is temporarily unavailable',
-      body: 'Due to technical reasons, the website did not finish loading right now. We are working to restore normal operation as quickly as possible. Administrative maintenance may currently be in progress.',
-      reload: 'Reload page',
     },
   };
 
@@ -522,56 +499,15 @@
   --weather-text-alpha: 0.94;
   --weather-eyebrow-alpha: 0.78;
   --weather-scene-dim: 1;
-  --weather-loader-size: clamp(38px, 7.2vw, 44px);
+  --weather-loader-size: 126px;
 }
 
-/* Both asynchronous phases share one radar, anchored to the preview rather than the overscanned scene. */
-.weather-header-preview:has(.weather-header-state__spinner),
-.weather-header-preview:has(.weather-app__scene-fallback):not(:has(.weather-header-state)) {
-  --weather-sonar-content: '';
-  --weather-sonar-motion: weatherHeaderSonarSweep 2.6s linear infinite;
-}
-
-.weather-header-preview::before,
-.weather-header-preview::after {
-  content: var(--weather-sonar-content, none) !important;
-  display: block !important;
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: var(--weather-loader-size) !important;
-  height: var(--weather-loader-size) !important;
-  margin: calc(var(--weather-loader-size) / -2) 0 0 calc(var(--weather-loader-size) / -2) !important;
-  box-sizing: border-box !important;
-  border-radius: 50% !important;
-  pointer-events: none !important;
-  z-index: 3 !important;
-  filter: none !important;
-}
-
-.weather-header-preview::before {
-  border: 1px solid rgba(108, 205, 153, 0.4) !important;
-  background:
-    radial-gradient(circle at 50% 50%, #e4cb8c 0 1px, transparent 1.6px),
-    radial-gradient(circle at 72% 32%, rgba(110, 232, 164, 0.9) 0 1px, transparent 1.7px),
-    radial-gradient(circle at 30% 68%, rgba(214, 181, 109, 0.8) 0 0.8px, transparent 1.4px),
-    repeating-radial-gradient(circle at center, transparent 0 6px, rgba(72, 165, 117, 0.32) 6.5px 7px, transparent 7.5px 13px),
-    linear-gradient(90deg, transparent 49%, rgba(67, 150, 107, 0.24) 50%, transparent 51%),
-    linear-gradient(transparent 49%, rgba(67, 150, 107, 0.24) 50%, transparent 51%),
-    radial-gradient(circle, rgba(4, 51, 32, 0.9), rgba(0, 19, 11, 0.65)) !important;
-  box-shadow: 0 0 12px rgba(0, 168, 107, 0.16) !important;
-}
-
-.weather-header-preview::after {
-  background: conic-gradient(
-    from -90deg,
-    transparent 0deg 285deg,
-    rgba(0, 164, 100, 0.04) 286deg,
-    rgba(35, 187, 119, 0.32) 330deg,
-    rgba(215, 185, 109, 0.78) 358deg,
-    transparent 360deg
-  ) !important;
-  animation: var(--weather-sonar-motion, none) !important;
+/* A physical phase reserve is not the prepared terrain/solar surface. */
+:is(.weather-header-preview, .weather-header-dropdown) :is(.weather-orb-overlay--preview, .weather-orb-overlay--dropdown).is-visible:not([hidden]):is(
+  .is-moon:is([data-moon-scene='loading'], [data-moon-scene='paused']),
+  .is-sun:is([data-sun-scene='loading'], [data-sun-scene='paused'])
+) .weather-orb-overlay__canvas {
+  visibility: hidden !important;
 }
 
 /* Keep the widget's localized status text, but never render its two native spinner layers. */
@@ -599,17 +535,6 @@
 .weather-app__scene-fallback .text-sm::after {
   content: none !important;
   animation: none !important;
-}
-
-@keyframes weatherHeaderSonarSweep {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@media (max-width: 899px) {
-  :host([data-weather-variant='header']) {
-    --weather-loader-size: 34px;
-  }
 }
 
 .weather-header-preview {
@@ -722,6 +647,7 @@
   background: transparent !important;
   background-color: transparent !important;
   box-shadow: none !important;
+  filter: brightness(1.18) saturate(1.08) !important;
 }
 
 /* Preview orb: anchor point is the geometric center (red-cross slot in the preview band). */
@@ -861,7 +787,7 @@
 }
 
 /* Paint the halo directly so the rotated Moon canvas needs no expanded blur surface. */
-.weather-orb-overlay--dropdown.is-moon.is-visible {
+.weather-orb-overlay.is-moon.is-visible {
   background-image: radial-gradient(circle closest-side, rgb(232 212 139 / 18%) 45%, rgb(232 212 139 / 8%) 65%, transparent 96%) !important;
 }
 
@@ -913,14 +839,6 @@
   transform: translateX(calc(-50% + ${HEADER_WEATHER_MOON_PREVIEW_ANCHOR.offsetX}px))
     translateY(calc(-50% + ${HEADER_WEATHER_MOON_PREVIEW_ANCHOR.offsetY}px))
     scale(var(--orb-scale-visible, 1)) !important;
-}
-
-.weather-orb-overlay--preview.is-moon {
-  filter: brightness(1.18) saturate(1.08) drop-shadow(0 0 12px rgba(232, 212, 139, 0.36)) !important;
-}
-
-.weather-orb-overlay--dropdown.is-moon {
-  filter: brightness(1.18) saturate(1.08) !important;
 }
 
 .weather-orb-overlay--preview.is-moon:not(.is-visible) {
@@ -1299,9 +1217,7 @@
     brightness(1.1)
     saturate(1.18)
     hue-rotate(12deg)
-    contrast(1.05)
-    drop-shadow(0 0 12px rgba(148, 194, 255, 0.26))
-    drop-shadow(0 0 24px rgba(98, 156, 244, 0.16)) !important;
+    contrast(1.05) !important;
 }
 
 .weather-orb-overlay.is-moon.is-native-alpha .weather-orb-overlay__canvas,
@@ -3450,67 +3366,6 @@
   }
 }
 
-/* A meteor is one brief streak; its head blooms once instead of twinkling. */
-.weather-header-shooting-star {
-  display: block;
-  position: absolute;
-  width: var(--shooting-star-length, 42px);
-  height: 22px;
-  z-index: 1;
-  transform-origin: 90% 50%;
-  background: radial-gradient(
-    ellipse var(--shooting-star-head-long, 1.5px) var(--shooting-star-head-short, 0.9px) at 90% 50%,
-    #fff 8%, rgba(var(--shooting-star-color, 232, 241, 255), 0.8) 43%, transparent 100%
-  );
-  opacity: 0;
-  pointer-events: none !important;
-}
-
-/* Above both discs (9/10), below clouds (12), fog (13), text and rain. */
-.weather-header-shooting-star--foreground {
-  z-index: 11 !important;
-}
-
-.weather-header-shooting-star::before {
-  content: '';
-  position: absolute;
-  left: 90%;
-  top: 50%;
-  width: var(--shooting-star-flare-size, 8px);
-  height: var(--shooting-star-flare-size, 8px);
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff 7%, rgba(var(--shooting-star-color, 232, 241, 255), 0.58) 24%, transparent 69%);
-  pointer-events: none;
-  animation: weatherShootingStarGlint var(--shooting-star-duration, 520ms) linear both;
-}
-
-.weather-header-shooting-star::after {
-  content: '';
-  position: absolute;
-  left: 3%;
-  right: 10%;
-  top: calc(50% - var(--shooting-star-trail-width, 1.2px) / 2);
-  height: var(--shooting-star-trail-width, 1.2px);
-  background: linear-gradient(90deg, transparent, rgba(var(--shooting-star-color, 232, 241, 255), 0.17) 48%,
-    rgba(var(--shooting-star-color, 232, 241, 255), 0.74) 100%);
-  clip-path: polygon(0 50%, 76% 39%, 100% 10%, 100% 90%, 76% 61%);
-  transform-origin: right center;
-  pointer-events: none;
-  animation: weatherShootingStarTrail var(--shooting-star-duration, 520ms) linear both;
-}
-
-@keyframes weatherShootingStarGlint {
-  0%, 24% { opacity: 0; transform: translate(-50%, -50%) scale(0.45); }
-  38% { opacity: var(--shooting-star-flash, 0.25); transform: translate(-50%, -50%) scale(1); }
-  52% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-}
-
-@keyframes weatherShootingStarTrail {
-  0% { opacity: 0; transform: scaleX(0.6) scaleY(0.6); }
-  26% { opacity: 0.78; transform: scaleX(1) scaleY(1); }
-  100% { opacity: 0; transform: scaleX(0.82) scaleY(0.5); }
-}
 
 .weather-header-card__toggle {
   --weather-menu-matte: 0.5;
@@ -3895,7 +3750,6 @@
       copy: HEADER_COPY[currentLang || pageLang] || HEADER_COPY.en,
       mediaLibraryCopy: MEDIA_LIBRARY_COPY[currentLang || pageLang] || MEDIA_LIBRARY_COPY.en,
       menuA11y: MENU_A11Y[pageLang] || MENU_A11Y.en,
-      preloaderNotice: PRELOADER_COPY[pageLang] || PRELOADER_COPY.en,
       weatherWidgetCopy: WEATHER_WIDGET_COPY[pageLang] || WEATHER_WIDGET_COPY.en,
     };
   }
@@ -5554,7 +5408,11 @@
       return line;
     };
 
-    condition.replaceChildren(...lines.map(text => renderLine(text, 'weather-header-card__condition-line')));
+    const existingLines = Array.from(condition.children);
+    const sameLines = condition.childNodes.length === lines.length && existingLines.length === lines.length &&
+      existingLines.every((line, index) => line.classList.contains('weather-header-card__condition-line') &&
+        line.textContent === lines[index]);
+    if (!sameLines) condition.replaceChildren(...lines.map(text => renderLine(text, 'weather-header-card__condition-line')));
 
     const conditionFontSizePx = 12;
     const conditionLineHeightPx = Math.max(conditionFontSizePx + 1, Math.round(conditionFontSizePx * 1.2 * 100) / 100);
@@ -5601,7 +5459,13 @@
       return line;
     };
 
-    conditionNode.replaceChildren(...lines.map(renderLine));
+    const existingLines = Array.from(conditionNode.children);
+    const sameLines = conditionNode.childNodes.length === lines.length && existingLines.length === lines.length &&
+      existingLines.every((line, index) => line.classList.contains('weather-header-dropdown__condition-line') &&
+        line.textContent === lines[index]);
+    // The readings observer watches this subtree. Replacing identical lines
+    // scheduled another readings pass every frame, including during scrolling.
+    if (!sameLines) conditionNode.replaceChildren(...lines.map(renderLine));
     conditionNode.style.setProperty('display', 'flex', 'important');
     conditionNode.style.setProperty('flex-direction', 'column', 'important');
     conditionNode.style.setProperty('align-items', 'flex-start', 'important');
@@ -11663,8 +11527,96 @@
     return overlay;
   }
 
+  let headerWeatherMeteorModulesPromise = null;
+  function loadHeaderWeatherMeteorModules() {
+    if (!headerWeatherMeteorModulesPromise) {
+      const script = document.querySelector('script[src*="site-shell.js"]');
+      const entry = new URL(script?.src || '/assets/js/site-shell.js', window.location.href);
+      const version = entry.searchParams.get('v') || WEATHER_WIDGET_ASSET_VERSION;
+      const moduleUrl = name => {
+        const url = new URL(name, entry);
+        url.searchParams.set('v', version);
+        return url.href;
+      };
+      headerWeatherMeteorModulesPromise = Promise.all([
+        import(moduleUrl('weather-meteor-scene.js')),
+        import(moduleUrl('weather-loading-scene.js')),
+      ]).then(([engine, loading]) => ({ ...engine, ...loading })).catch(error => {
+        headerWeatherMeteorModulesPromise = null;
+        throw error;
+      });
+    }
+    return headerWeatherMeteorModulesPromise;
+  }
+
+  function startHeaderWeatherMeteorScenes(host) {
+    if (!host?.isConnected || !host.shadowRoot || host.__weatherMeteorModulesPending) return;
+    if (host.__weatherLoadingScenes) {
+      host.__weatherLoadingScenes.sync();
+      return;
+    }
+    const generation = host.__weatherLifecycleGeneration || 0;
+    const pending = loadHeaderWeatherMeteorModules().then(modules => {
+      if (!host.isConnected || (host.__weatherLifecycleGeneration || 0) !== generation ||
+        !['loading', 'true'].includes(host.dataset.weatherMounted)) return;
+      host.__weatherMeteorModules = modules;
+      host.__weatherLoadingScenes = modules.installWeatherLoadingScenes(host, { createMeteorScene: modules.createMeteorScene });
+      syncHeaderWeatherShootingStars(host);
+    }).catch(() => {
+      // Loading the decoration must never block weather data, controls or recovery.
+    }).finally(() => {
+      if (host.__weatherMeteorModulesPending === pending) host.__weatherMeteorModulesPending = null;
+    });
+    host.__weatherMeteorModulesPending = pending;
+  }
+
   function syncHeaderWeatherShootingStars(host) {
-    host.__weatherSolarClock?.syncHeaderWeatherShootingStars?.(host, randomBetween);
+    if (!host?.shadowRoot) return;
+    if (host.dataset.weatherMounted !== 'true') {
+      host.__weatherShootingStars?.dispose();
+      host.__weatherShootingStars = null;
+      return;
+    }
+    const createMeteorScene = host.__weatherMeteorModules?.createMeteorScene;
+    if (!createMeteorScene) return;
+    if (!host.__weatherShootingStars) {
+      host.__weatherShootingStars = createMeteorScene({
+        mode: 'ambient',
+        random: randomBetween,
+        getTargets: () => {
+          if (!host.isConnected || host.dataset.weatherMounted !== 'true' || document.hidden ||
+            document.documentElement?.classList.contains('site-loading')) return [];
+          return [
+            host.shadowRoot.querySelector('.weather-header-preview__stars-back'),
+            host.dataset.weatherExpanded === 'true'
+              ? host.shadowRoot.querySelector('.weather-header-dropdown__stars-back') : null,
+          ].filter(layer => layer?.isConnected && layer.classList.contains('is-night-sky') && layer.style.display !== 'none')
+            .map(layer => {
+              const dropdown = layer.closest('.weather-header-dropdown');
+              const stage = layer.closest('.weather-header-preview') || dropdown?.querySelector('.weather-header-dropdown__hero');
+              const container = dropdown || document.querySelector('.header');
+              if (!stage?.isConnected || !container) return null;
+              let rect;
+              return {
+                stage,
+                get rect() { return rect ||= stage.getBoundingClientRect(); },
+                get bounds() {
+                  const scene = rect ||= stage.getBoundingClientRect();
+                  const bounds = container.getBoundingClientRect();
+                  const viewport = window.visualViewport;
+                  return {
+                    left: Math.max(scene.left, bounds.left, viewport?.offsetLeft || 0),
+                    top: Math.max(scene.top, bounds.top, viewport?.offsetTop || 0),
+                    right: Math.min(scene.right, bounds.right, (viewport?.offsetLeft || 0) + (viewport?.width || window.innerWidth)),
+                    bottom: Math.min(scene.bottom, bounds.bottom, (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight)),
+                  };
+                },
+              };
+            }).filter(Boolean);
+        },
+      });
+    }
+    host.__weatherShootingStars.sync();
   }
 
   function ensureHeaderWeatherStarsBackLayer(container) {
@@ -13705,9 +13657,31 @@
       };
       script.onerror = () => reject(new Error('Failed to load weather widget loader.'));
       document.head.appendChild(script);
+    }).catch(error => {
+      headerWeatherLoaderPromise = null;
+      if (!window.Weather3DWidget) document.querySelector('script[data-weather-widget-loader="true"]')?.remove();
+      throw error;
     });
 
     return headerWeatherLoaderPromise;
+  }
+
+  let headerWeatherCriticalAssetsPromise = null;
+  function prepareCriticalAssets() {
+    const host = getHeaderWeatherHost();
+    if (!host) return Promise.resolve();
+    if (!headerWeatherCriticalAssetsPromise) {
+      // Reuse the widget's own module loader. Importing the common scene prepares
+      // its JS dependencies, but creates no Canvas, texture renderers or weather fetches.
+      headerWeatherCriticalAssetsPromise = Promise.all([
+        loadHeaderWeatherWidgetLoader(host.dataset.widgetSrc)
+          .then(loader => loader.load())
+          .then(module => module.preloadScene()),
+        loadHeaderWeatherMeteorModules(),
+      ])
+        .catch(error => { headerWeatherCriticalAssetsPromise = null; throw error; });
+    }
+    return headerWeatherCriticalAssetsPromise;
   }
 
   function enhanceHeaderWeatherCloudRenderer(host) {
@@ -13808,6 +13782,10 @@
     delete host.dataset.weatherRefreshing;
     host.__weatherShootingStars?.dispose();
     host.__weatherShootingStars = null;
+    host.__weatherLoadingScenes?.dispose();
+    host.__weatherLoadingScenes = null;
+    host.__weatherMeteorModulesPending = null;
+    host.__weatherMeteorModules = null;
     stopHeaderWeatherToggleArrowAnimation(host);
     const orbs = [...(host.shadowRoot?.querySelectorAll?.('.weather-orb-overlay') || [])];
     host.__weatherWidgetInstance?.unmount?.();
@@ -13912,9 +13890,10 @@
       root.appendChild(container);
     }
     if (!container.querySelector('.weather-header-preview')) {
-      // React replaces this existing sonar markup in the same mount container.
+      // React replaces this loading marker in the same mount container.
       container.innerHTML = '<div class="weather-header-preview" role="status" aria-busy="true"><div class="weather-header-state"><div class="weather-header-state__inner"><div class="weather-header-state__spinner"></div></div></div></div>';
     }
+    startHeaderWeatherMeteorScenes(host);
   }
 
   async function mountHeaderWeatherWidget(pageLang) {
@@ -14141,7 +14120,7 @@
 
     host.dataset.weatherMountScheduled = 'true';
 
-    // Start the native location request and module loading while the sonar is visible.
+    // Start the native location request and module loading while the starfall is visible.
     void mountHeaderWeatherWidget(pageLang);
 
   }
@@ -14815,5 +14794,6 @@
 
   window.SiteShell = {
     init,
+    prepareCriticalAssets,
   };
 })();

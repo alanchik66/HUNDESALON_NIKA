@@ -1,0 +1,61 @@
+/* Invisible components keep their animation phase without repainting each frame.
+   Opening a panel or approaching a card resumes the existing authored effects. */
+#mobile-nav:not(.active),
+#mobile-nav:not(.active)::before,
+#mobile-nav:not(.active)::after,
+#mobile-nav:not(.active) *,
+#mobile-nav:not(.active) *::before,
+#mobile-nav:not(.active) *::after,
+body.hide-header .header .top-row,
+body.hide-header .header .top-row::before,
+body.hide-header .header .top-row::after,
+body.hide-header .header .top-row *,
+body.hide-header .header .top-row *::before,
+body.hide-header .header .top-row *::after,
+:is(.social-icons, .social-service-picker)[hidden] *,
+:is(.social-icons, .social-service-picker)[hidden] *::before,
+:is(.social-icons, .social-service-picker)[hidden] *::after,
+:is(.price-card, .price-section-navigation, .price-page-hero, .newsletter-section, footer, .services-grid .service-card, .header)[data-motion-offscreen],
+:is(.price-card, .price-section-navigation, .price-page-hero, .newsletter-section, footer, .services-grid .service-card, .header)[data-motion-offscreen]::before,
+:is(.price-card, .price-section-navigation, .price-page-hero, .newsletter-section, footer, .services-grid .service-card, .header)[data-motion-offscreen]::after,
+:is(.price-card, .price-section-navigation, .price-page-hero, .newsletter-section, footer, .services-grid .service-card, .header)[data-motion-offscreen] *,
+:is(.price-card, .price-section-navigation, .price-page-hero, .newsletter-section, footer, .services-grid .service-card, .header)[data-motion-offscreen] *::before,
+:is(.price-card, .price-section-navigation, .price-page-hero, .newsletter-section, footer, .services-grid .service-card, .header)[data-motion-offscreen] *::after,
+html[data-motion-page-hidden] :is(.price-card, .price-section-navigation, .price-page-hero, .newsletter-section, footer, .services-grid .service-card, .header, #mobile-nav),
+html[data-motion-page-hidden] :is(.price-card, .price-section-navigation, .price-page-hero, .newsletter-section, footer, .services-grid .service-card, .header, #mobile-nav)::before,
+html[data-motion-page-hidden] :is(.price-card, .price-section-navigation, .price-page-hero, .newsletter-section, footer, .services-grid .service-card, .header, #mobile-nav)::after,
+html[data-motion-page-hidden] :is(.price-card, .price-section-navigation, .price-page-hero, .newsletter-section, footer, .services-grid .service-card, .header, #mobile-nav) *,
+html[data-motion-page-hidden] :is(.price-card, .price-section-navigation, .price-page-hero, .newsletter-section, footer, .services-grid .service-card, .header, #mobile-nav) *::before,
+html[data-motion-page-hidden] :is(.price-card, .price-section-navigation, .price-page-hero, .newsletter-section, footer, .services-grid .service-card, .header, #mobile-nav) *::after {
+  animation-play-state: paused !important;
+}
+
+/* Only a measured, constrained price-page scroll burst uses the lighter paint
+   profile. Removing the attribute restores the same animation phases and theme. */
+body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer),
+body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer)::before,
+body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer)::after,
+body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer) *,
+body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer) *::before,
+body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer) *::after {
+  animation-play-state: paused !important;
+  filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active main[data-price-page] :is(h1, h2, h3, h4, h5, h6, .price-card__price) {
+  color: var(--gold-face, #d5b66e) !important;
+  background-image: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  -webkit-text-fill-color: currentColor !important;
+  -webkit-text-stroke: 0 !important;
+}
+
+body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :focus-visible {
+  outline: 2px solid var(--accent-gold, #d5b66e) !important;
+  outline-offset: 2px !important;
+}

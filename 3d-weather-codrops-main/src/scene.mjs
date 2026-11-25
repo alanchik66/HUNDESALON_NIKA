@@ -1599,12 +1599,49 @@ var ForecastPortal = ({ position: e, dayData: t, index: n, isActive: r, isFullsc
       r = React.useRef({ last: 0 });
     return (
       React.useEffect(() => {
-        let n = 1e3 / e,
-          i = 0,
-          a = e => {
-            (e - r.current.last >= n && ((r.current.last = e), t()), (i = window.requestAnimationFrame(a)));
-          };
-        return ((i = window.requestAnimationFrame(a)), () => window.cancelAnimationFrame(i));
+        const interval = 1e3 / e;
+        const canvas = n.domElement;
+        const header = canvas.getRootNode?.().host?.closest?.('header.header');
+        const region = header?.querySelector?.('.top-row') || header || canvas;
+        let frame = 0;
+        let visible = true;
+        let disposed = false;
+        const active = () => !disposed && !document.hidden && visible && canvas.isConnected !== false &&
+          (!header || (!document.body?.classList?.contains('hide-header') &&
+            !document.documentElement?.classList?.contains('site-loading')));
+        const tick = timestamp => {
+          frame = 0;
+          if (!active()) return;
+          if (timestamp - r.current.last >= interval) { r.current.last = timestamp; t(); }
+          frame = window.requestAnimationFrame(tick);
+        };
+        const sync = () => {
+          if (active()) {
+            if (!frame) frame = window.requestAnimationFrame(tick);
+          } else {
+            window.cancelAnimationFrame(frame);
+            frame = 0;
+          }
+        };
+        const observer = typeof IntersectionObserver === 'function' ? new IntersectionObserver(entries => {
+          visible = entries.some(entry => entry.isIntersecting && entry.intersectionRatio > 0);
+          sync();
+        }, { threshold: [0, 0.01] }) : null;
+        observer?.observe(region);
+        const headerState = header && document.body && typeof MutationObserver === 'function' ? new MutationObserver(sync) : null;
+        headerState?.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        if (headerState && document.documentElement) headerState.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        document.addEventListener('visibilitychange', sync);
+        window.addEventListener('pageshow', sync);
+        sync();
+        return () => {
+          disposed = true;
+          observer?.disconnect();
+          headerState?.disconnect();
+          document.removeEventListener('visibilitychange', sync);
+          window.removeEventListener('pageshow', sync);
+          window.cancelAnimationFrame(frame);
+        };
       }, [t, e, n]),
       null
     );
@@ -1828,6 +1865,8 @@ var ForecastPortal = ({ position: e, dayData: t, index: n, isActive: r, isFullsc
       children: [
         (0, jsxRuntime.jsxs)(f, {
           dpr: [1, 2],
+          // Header scenes keep a fixed camera; only actual size changes need measurement.
+          resize: s || c ? { scroll: false } : undefined,
           frameloop: s || c ? `demand` : `always`,
           camera: { position: s ? [0, 1.12, 11] : c ? [0, 1.15, 10.4] : [0, 1, 10], fov: s || c ? 56 : 60 },
           gl: { alpha: s || c, antialias: !0, powerPreference: `high-performance`, stencil: !1, depth: !0 },

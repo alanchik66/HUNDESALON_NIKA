@@ -19,6 +19,14 @@ const LOCAL_ASSET_REFERENCE =
   /((?:src|href)=["'](?:\/|(?:\.\.?\/)*)assets\/(?:css|js)\/[^"'?]+\.(?:css|js))(?:\?[^"']*)?(["'])/gi;
 
 const PRODUCTION_MINIFY_ASSETS = [
+  'assets/css/site-loader.css',
+  'assets/js/paw-loader-scene.js',
+  'assets/js/site-loader.js',
+  'assets/js/weather-meteor-scene.js',
+  'assets/js/weather-loading-scene.js',
+  'assets/css/motion-visibility.css',
+  'assets/js/motion-visibility.js',
+  'assets/js/pwa.js',
   'assets/css/style.css',
   'assets/css/page-modules.css',
   'assets/css/service-card-glass.css',
@@ -274,6 +282,7 @@ function deployAssetVersion() {
     files.push(path.join(dist, '3d-weather-codrops-main', 'dist-widget', vendor.file));
   }
   const contentHash = createHash('sha256');
+  contentHash.update(JSON.stringify(PRODUCTION_MINIFY_ASSETS));
   for (const file of files.sort()) {
     contentHash.update(path.relative(dist, file).replaceAll('\\', '/'));
     contentHash.update(fs.readFileSync(file));
@@ -464,6 +473,39 @@ function injectSendPulseIntegrations(directory, version) {
   return htmlFiles;
 }
 
+function injectSiteLoader(directory, version) {
+  let htmlFiles = 0;
+  function walk(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath);
+        continue;
+      }
+      if (!entry.name.endsWith('.html')) continue;
+      const original = fs.readFileSync(fullPath, 'utf8');
+      // Isolated frames, admin documents and redirect pages keep their own lifecycle.
+      if (!/<script\b[^>]*src=["'][^"']*\/main\.js(?:\?[^"']*)?["']/i.test(original)) continue;
+      const prefix = path.relative(path.dirname(fullPath), path.join(directory, 'assets')).replaceAll('\\', '/');
+      const stylesheet = `<link rel="stylesheet" href="${prefix}/css/site-loader.css?v=${version}">`;
+      const sceneScript = `<script src="${prefix}/js/paw-loader-scene.js?v=${version}"></script>`;
+      const script = `<script src="${prefix}/js/site-loader.js?v=${version}"></script>`;
+      const cleaned = original
+        .replace(/<div\s+id=["']preloader["']\s*>\s*<div\s+class=["']loader["']\s*>\s*<\/div>\s*<\/div>/gi, '')
+        .replace(/\s*<link\b[^>]*href=["'][^"']*\/site-loader\.css(?:\?[^"']*)?["'][^>]*>/gi, '')
+        .replace(/\s*<script\b[^>]*src=["'][^"']*\/paw-loader-scene\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi, '')
+        .replace(/\s*<script\b[^>]*src=["'][^"']*\/site-loader\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi, '');
+      const next = cleaned.replace(/<head\b[^>]*>/i, match => `${match}\n${stylesheet}\n${sceneScript}\n${script}`);
+      if (next !== original) {
+        fs.writeFileSync(fullPath, next, 'utf8');
+        htmlFiles += 1;
+      }
+    }
+  }
+  walk(directory);
+  return htmlFiles;
+}
+
 const assetVersion = deployAssetVersion();
 const versionedWeather = stampWeatherRuntimeVersions(dist, weatherManifest, assetVersion);
 minifyProductionAssets(dist);
@@ -472,6 +514,7 @@ assertNoSecretArtifacts(dist);
 const publicContactFiles = normalizePublicContact(dist);
 const deferredScriptFiles = deferNonCriticalScripts(dist, assetVersion);
 const sendPulseFiles = injectSendPulseIntegrations(dist, assetVersion);
+const siteLoaderFiles = injectSiteLoader(dist, assetVersion);
 annotateLocalizedPages(dist, assetVersion);
 assertLocalAssetVersions(dist, assetVersion);
 
@@ -481,3 +524,4 @@ console.log(`Weather runtime versioned: ${versionedWeather.files} maintained mod
 console.log(`Public contact normalized in ${publicContactFiles} HTML files.`);
 console.log(`Deferred non-critical scripts in ${deferredScriptFiles} HTML files.`);
 console.log(`Injected SendPulse integrations in ${sendPulseFiles} HTML files.`);
+console.log(`Injected early site loader in ${siteLoaderFiles} HTML files.`);

@@ -12,6 +12,12 @@ globalThis.caches = {
 
 const origin = 'https://hundesalon-nika.com';
 
+function futureOpenDate() {
+  const date = new Date(Date.now() + 86400000);
+  if (date.getUTCDay() === 0) date.setUTCDate(date.getUTCDate() + 1);
+  return date.toISOString().slice(0, 10);
+}
+
 function registrationDatabase(t) {
   const sqlite = new DatabaseSync(':memory:');
   sqlite.exec(readFileSync(new URL('../migrations/0010_client_registrations.sql', import.meta.url), 'utf8'));
@@ -183,7 +189,7 @@ test('rejects a forged booking attachment before running integrations', async ()
         { privacy: 'yes', agb: 'yes' },
         {
           form_type: 'booking',
-          date: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+          date: futureOpenDate(),
           time: '10:00',
           uploaded_file_url: 'https://evil.example/pet.jpg',
           uploaded_file_id: 'forged-item',
@@ -228,7 +234,7 @@ test('accepts an exact signed OneDrive booking attachment reference', async () =
         { privacy: 'yes', agb: 'yes' },
         {
           form_type: 'booking',
-          date: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+          date: futureOpenDate(),
           time: '10:00',
           client_registration_id: 'existing',
           uploaded_file_url: reference.fileUrl,
@@ -267,7 +273,7 @@ test('rejects a tampered allowed-domain OneDrive reference with an otherwise val
         { privacy: 'yes', agb: 'yes' },
         {
           form_type: 'booking',
-          date: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+          date: futureOpenDate(),
           time: '10:00',
           uploaded_file_url: 'https://1drv.ms/u/tampered-booking-photo',
           uploaded_file_id: reference.fileId,
@@ -397,7 +403,7 @@ for (const scenario of [
           { privacy: 'yes', agb: 'yes' },
           {
             form_type: 'booking',
-            date: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+            date: futureOpenDate(),
             time: '10:00',
             client_registration_id: scenario.id || '',
           }

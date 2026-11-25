@@ -9,6 +9,8 @@ import path from 'node:path';
 import { isPublicPath, startStaticTestServer } from './lib/static-test-server.mjs';
 import { PREVIEW_VISITOR_ACTIONS_PATH, PREVIEW_VISITOR_ACTIONS_SCRIPT } from './lib/preview-visitor-actions.mjs';
 import { PREVIEW_MOTION_SCRIPT, sanitizeMotionDiagnostic, createMotionDiagnosticRecorder } from './lib/preview-motion-diagnostics.mjs';
+import { validSiteMediaId } from '../functions/_lib/admin-media.js';
+import { validLocale } from '../functions/_lib/page-copy.js';
 
 const project = 'HUNDESALON_NIKA';
 const publicSiteOrigin = 'https://hundesalon-nika.com';
@@ -18,6 +20,8 @@ const visitorReadParams = new Map([
 const contactMapFramePaths = new Set(['/assets/frames/contact-map.html', '/assets/frames/contact-map']);
 const weatherBridgePaths = new Set(['/api/weather', '/reverse-geocode']);
 const satelliteCloudsPath = '/api/satellite-clouds';
+const siteMediaPath = '/api/site-media';
+const siteComparisonsPath = '/api/site-comparisons';
 export const isPreviewPublicUrl = (value, namedOrigin = null) => namedOrigin
   ? namedOrigin === 'https://preview.hundesalon-nika.com' && value === namedOrigin
   : /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(value);
@@ -177,9 +181,10 @@ export async function createRemoteGateway({
     const visitorParams = liveGuest && visitorReadParams.get(url.pathname);
     const bridgeVisitorRead = visitorParams && (url.pathname !== '/blog' || !websiteOrigin);
     const isPagesApi = visitorParams || bridgeWeather || (websiteOrigin && (publicReadOnly
-      ? weatherBridgePaths.has(url.pathname) || ['/api/maps-config', satelliteCloudsPath].includes(url.pathname)
+      ? weatherBridgePaths.has(url.pathname) || ['/api/maps-config', satelliteCloudsPath, siteMediaPath, siteComparisonsPath].includes(url.pathname)
       : relative.startsWith(`api${path.sep}`) || relative === 'reverse-geocode'));
-    if (relative.startsWith('..') || path.isAbsolute(relative) || (!isPublicPath(relative) && !isPagesApi)) {
+    const isStandalonePage = websiteOrigin && /^\/(?:reviews|telegram-menu)\/?$/.test(url.pathname);
+    if (relative.startsWith('..') || path.isAbsolute(relative) || (!isPublicPath(relative) && !isPagesApi && !isStandalonePage)) {
       response.writeHead(403).end('Forbidden');
       return;
     }
@@ -191,6 +196,26 @@ export async function createRemoteGateway({
       const upstreamUrl = new URL(url);
       upstreamUrl.searchParams.delete('__preview_key');
       if (url.pathname === satelliteCloudsPath) upstreamUrl.search = '';
+      if (publicReadOnly && url.pathname === siteMediaPath) {
+        const id = url.searchParams.get('id');
+        if (!validSiteMediaId(id)) {
+          response.writeHead(404).end();
+          return;
+        }
+        upstreamUrl.search = new URLSearchParams({ id }).toString();
+      }
+      if (publicReadOnly && url.pathname === siteComparisonsPath) {
+        const id = url.searchParams.get('id');
+        const side = url.searchParams.get('side');
+        const locale = url.searchParams.get('locale');
+        if (id === null && validLocale(locale)) upstreamUrl.search = new URLSearchParams({ locale }).toString();
+        else if (validSiteMediaId(id) && ['before', 'after'].includes(side)) {
+          upstreamUrl.search = new URLSearchParams({ id, side }).toString();
+        } else {
+          response.writeHead(404).end();
+          return;
+        }
+      }
       const useMediaOrigin = media && ['.mp4', '.webm'].includes(path.extname(relative).toLowerCase());
       if (visitorParams) {
         upstreamUrl.search = '';
@@ -200,13 +225,21 @@ export async function createRemoteGateway({
         }
       }
       const upstreamOrigin = bridgeWeather || bridgeVisitorRead ? publicSiteOrigin : useMediaOrigin ? media.baseUrl : website.baseUrl;
+      const mediaResponse = [siteMediaPath, siteComparisonsPath].includes(url.pathname) && upstreamUrl.searchParams.has('id');
+      // Large media can take longer than the Pages API deadline once the body starts streaming.
+      const mediaController = mediaResponse ? new AbortController() : null;
+      let headerDeadline;
+      if (mediaController) {
+        headerDeadline = setTimeout(() => mediaController.abort(), 30000);
+        response.once('close', () => mediaController.abort());
+      }
       const upstream = await fetch(`${upstreamOrigin}${upstreamUrl.pathname}${upstreamUrl.search}`, {
         method: request.method,
         headers: requestHeaders,
         redirect: 'manual',
         // Static streams need room for phone backpressure after headers have been sent.
-        signal: AbortSignal.timeout(isPagesApi ? 30000 : 120000),
-      });
+        signal: mediaController?.signal ?? AbortSignal.timeout(isPagesApi ? 30000 : 120000),
+      }).finally(() => clearTimeout(headerDeadline));
       const responseHeaders = {
         'Content-Type': upstream.headers.get('content-type') ||
           (upstream.status >= 400 ? 'text/plain; charset=utf-8' : 'application/octet-stream'),
@@ -221,6 +254,8 @@ export async function createRemoteGateway({
         const value = upstream.headers.get(name);
         if (value !== null) responseHeaders[name] = value;
       }
+      const disposition = mediaResponse && upstream.headers.get('content-disposition');
+      if (disposition) responseHeaders['Content-Disposition'] = disposition;
       const location = upstream.headers.get('location');
       if (location && upstream.status >= 300 && upstream.status < 400) {
         const destination = new URL(location, upstreamOrigin);

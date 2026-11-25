@@ -3594,7 +3594,14 @@ document.addEventListener('DOMContentLoaded', () => {
         ? bookingCatalog.getAvailableStartTimes(state.selectedDate, timing, state.busyIntervals, {
             calendarConfigured: state.availabilityConfigured,
           })
-        : ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
+        : [];
+      if (timeSlots.length) {
+        selectedTimeField.setAttribute('min', timeSlots[0]);
+        selectedTimeField.setAttribute('max', timeSlots[timeSlots.length - 1]);
+      } else {
+        selectedTimeField.removeAttribute('min');
+        selectedTimeField.removeAttribute('max');
+      }
       // Revalidate a preserved selection only after the calendar lookup has settled.
       if (state.priceSelectionActive && availabilityStatusEl?.dataset.state !== 'loading'
         && state.selectedTime && !timeSlots.includes(state.selectedTime)) {
@@ -3663,8 +3670,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const bindNativeBookingFields = () => {
       const today = formatLocalDate(new Date());
       selectedDateField.setAttribute('min', today);
-      selectedTimeField.setAttribute('min', '09:00');
-      selectedTimeField.setAttribute('max', '19:00');
 
       selectedDateField.addEventListener('change', () => {
         state.selectedDate = selectedDateField.value;

@@ -1182,7 +1182,7 @@ test('visible, bfcache and online resume refresh overdue data once and unmount r
   assert.equal(requests, 2);
 });
 
-test('the existing sonar occupies the renderer mount root before modules load without adding a form', () => {
+test('the loading marker occupies the renderer mount root and starts the meteor scene without adding a form', () => {
   const node = () => ({ dataset: {}, style: {}, children: [], innerHTML: '',
     appendChild(child) { this.children.push(child); },
     querySelector(selector) {
@@ -1193,10 +1193,15 @@ test('the existing sonar occupies the renderer mount root before modules load wi
   });
   const root = node();
   const host = { dataset: {}, attachShadow: () => { host.shadowRoot = root; return root; } };
-  const context = vm.createContext({ document: { createElement: node }, HEADER_WEATHER_TRANSPARENT_STYLES: 'existing sonar CSS' });
+  const initializedHosts = [];
+  const context = vm.createContext({
+    document: { createElement: node }, HEADER_WEATHER_TRANSPARENT_STYLES: 'shared weather CSS',
+    startHeaderWeatherMeteorScenes: target => initializedHosts.push(target),
+  });
   vm.runInContext(declaration('prepareHeaderWeatherLoadingState'), context);
   context.prepareHeaderWeatherLoadingState(host);
   context.prepareHeaderWeatherLoadingState(host);
+  assert.deepEqual(initializedHosts, [host, host], 'each preparation delegates the same host to the idempotent scene initializer');
   assert.equal(root.children.length, 2, 'the same style and renderer root are reused');
   assert.equal(host.dataset.weatherVariant, 'header');
   const container = root.querySelector('[data-weather-widget-root]');

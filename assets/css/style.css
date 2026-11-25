@@ -11094,11 +11094,11 @@ body.header-weather-expanded .site-scroll-root {
 
 /* ── 1. Weather shell: collapse when widget fails to mount ──
    Uses :has() (Chrome 105+, FF 121+, Safari 15.4+).
-   When the widget loads successfully it receives .is-mounted;
-   until/unless that happens the shell takes no layout space.
+   Reserve the panel during loading so its meteor shower is visible;
+   collapse only an inactive or failed widget.
    Must use !important to override the mobile media query's
    "display: block !important" rule. */
-.header-weather-shell:not(:has(.header-weather-widget.is-mounted)) {
+.header-weather-shell:not(:has(.header-weather-widget:is(.is-mounted, [data-weather-mounted='loading']))) {
   display: none !important;
   height: 0 !important;
   min-height: 0 !important;

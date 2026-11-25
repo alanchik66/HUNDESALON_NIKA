@@ -1,0 +1,51 @@
+/* The photographic atlas is decoded once. Footfalls use transform and opacity. */
+#preloader:not(.site-loader) { display: none !important; }
+html.site-loading body { overflow: hidden; }
+html.site-loading body::before,
+html.site-loading body > :not(#preloader),
+html.site-loading body > :not(#preloader)::before,
+html.site-loading body > :not(#preloader)::after,
+html.site-loading body > :not(#preloader) *,
+html.site-loading body > :not(#preloader) *::before,
+html.site-loading body > :not(#preloader) *::after {
+  animation-play-state: paused !important;
+  visibility: hidden !important;
+}
+#preloader.site-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 32% 25%, rgb(83 111 74 / 18%), transparent 58%),
+    radial-gradient(ellipse at 85% 80%, rgb(198 161 91 / 8%), transparent 58%), #071310;
+  contain: strict;
+}
+.site-loader__scene,
+.paw-loader__animal { position: absolute; inset: 0; pointer-events: none; }
+.site-loader__scene { overflow: hidden; contain: strict; }
+.paw-loader__animal { z-index: 2; }
+.paw-loader__paw,
+.paw-loader__print {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+}
+.paw-loader__paw::before,
+.paw-loader__paw::after { content: ''; position: absolute; inset: 0; }
+.paw-loader__paw::before {
+  background-image: var(--paw-atlas-image, none);
+  background-size: 400% 300%;
+  background-position: var(--paw-column) var(--paw-row);
+  background-repeat: no-repeat;
+}
+.paw-loader__paw::after {
+  inset: 10% 18%;
+  background: var(--paw-print) center / contain no-repeat;
+  opacity: .62;
+}
+[data-paw-image-ready] .paw-loader__paw::after { opacity: 0; }
+.paw-loader__print { z-index: 1; background: center / contain no-repeat; opacity: .28; }
+.paw-loader--stopped { visibility: hidden; }

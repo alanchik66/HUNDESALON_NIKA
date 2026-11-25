@@ -276,7 +276,7 @@ test('weather dropdown clears the complete navigation on mobile and desktop and 
   }
 });
 
-async function solarRecoveryHarness({ textureFailure = false, networkFailure = false, decodeFailure = false, decodeWait = Promise.resolve(), rendererFailure = false, uploadFailure = false, shaderFailure = false, contextMode = 'preferred', recoveryModule } = {}) {
+async function solarRecoveryHarness({ textureFailure = false, networkFailure = false, decodeFailure = false, decodeWait = Promise.resolve(), rendererFailure = false, uploadFailure = false, shaderFailure = false, contextMode = 'preferred', recoveryModule, headerScene = false, siteLoading = false, headerHidden = false } = {}) {
   const [clock, sceneSource] = await Promise.all([
     readFile(new URL('../assets/js/weather-solar-time.js', import.meta.url), 'utf8'),
     readFile(new URL('../assets/js/header-weather-sun-scene.js', import.meta.url), 'utf8'),
@@ -293,6 +293,7 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
   const listeners = new Map();
   const windowListeners = new Map();
   const viewportListeners = new Map();
+  const documentListeners = new Map();
   const frames = new Map();
   let nextFrame = 0;
   let nowMs = Date.UTC(2026, 10, 4, 12);
@@ -301,10 +302,16 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
   const viewport = { scale: 1, ...events(viewportListeners) };
   const window = { devicePixelRatio: 3, visualViewport: viewport, ...events(windowListeners) };
   const stats = { renders: 0, disposed: 0, texturesDisposed: 0, failRender: false, contextLost: false, forcedLoss: 0,
-    events: [], sizes: [], textures: [], materialsDisposed: [], geometriesDisposed: [], colorsAtRender: [], contextRequests: [], observers: [], rendererCreations: 0, decodeWait };
+    events: [], sizes: [], textures: [], materialsDisposed: [], geometriesDisposed: [], colorsAtRender: [], contextRequests: [], observers: [], intersections: [], rendererCreations: 0, decodeWait };
   const context = { isContextLost: () => stats.contextLost, getContextAttributes: () => ({ antialias: contextMode !== 'compatible' }) };
-  const canvas = { clientWidth: 96, clientHeight: 96, dataset: {}, isConnected: true, ownerDocument: {},
-    getRootNode: () => ({}),
+  const bodyClasses = new Set(headerHidden ? ['hide-header'] : []), rootClasses = new Set(siteLoading ? ['site-loading'] : []);
+  const topRow = {}, header = { querySelector: () => topRow };
+  const ownerDocument = headerScene ? { hidden: false, ...events(documentListeners),
+    body: { classList: { contains: name => bodyClasses.has(name) } },
+    documentElement: { classList: { contains: name => rootClasses.has(name) } } } : {};
+  const shadowRoot = headerScene ? { host: { closest: () => header } } : {};
+  const canvas = { clientWidth: 96, clientHeight: 96, dataset: {}, isConnected: true, ownerDocument,
+    getRootNode: () => shadowRoot,
     getContext: (kind, attributes) => {
       stats.contextRequests.push({ kind, attributes: { ...attributes } });
       if (contextMode === 'none' || contextMode === 'compatible' && attributes.antialias) {
@@ -404,10 +411,17 @@ async function solarRecoveryHarness({ textureFailure = false, networkFailure = f
     observe(target) { this.active = true; this.targets.push(target); }
     disconnect() { this.active = false; }
   }
-  const api = new Function('THREE', 'window', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date', 'MutationObserver', 'loadRecoveryModule', 'performance', `${code}; return { mount: mountHeaderWeatherSunScene, unmount: unmountHeaderWeatherSunScene, rate: solarRotationRateDegPerDay, offset: solarTextureOffsetTurns, angle: solarRotationAngle, pixelRatio: resolveSolarPixelRatio, epoch: SOLAR_MODEL_EPOCH_MS, elevation: solarElevationDegrees, position: solarPosition, color: solarColorForElevation, surfaceColor: solarSurfaceColorForElevation, prominence: solarProminenceState };`)(
-    THREE, window, callback => { frames.set(++nextFrame, callback); return nextFrame; }, id => frames.delete(id), ClockDate, Observer, async () => recoveryModule, { now: () => monotonicMs }
+  class VisibilityObserver {
+    constructor(callback) { this.callback = callback; stats.intersections.push(this); }
+    observe(target) { this.target = target; this.active = true; }
+    disconnect() { this.active = false; }
+  }
+  const api = new Function('THREE', 'window', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date', 'MutationObserver', 'loadRecoveryModule', 'performance', 'IntersectionObserver', `${code}; return { mount: mountHeaderWeatherSunScene, unmount: unmountHeaderWeatherSunScene, rate: solarRotationRateDegPerDay, offset: solarTextureOffsetTurns, angle: solarRotationAngle, pixelRatio: resolveSolarPixelRatio, epoch: SOLAR_MODEL_EPOCH_MS, elevation: solarElevationDegrees, position: solarPosition, color: solarColorForElevation, surfaceColor: solarSurfaceColorForElevation, prominence: solarProminenceState };`)(
+    THREE, window, callback => { frames.set(++nextFrame, callback); return nextFrame; }, id => frames.delete(id), ClockDate, Observer, async () => recoveryModule, { now: () => monotonicMs }, VisibilityObserver
   );
-  return { ...api, canvas, context, listeners, windowListeners, viewportListeners, window, viewport, frames, stats, setNow: value => { nowMs = value; }, advanceMonotonic: value => { monotonicMs += value; } };
+  return { ...api, canvas, context, listeners, windowListeners, viewportListeners, documentListeners, window, viewport, frames, stats, bodyClasses, rootClasses, header, topRow,
+    get headerObserver() { return stats.observers.find(observer => observer.targets.includes(ownerDocument.body)); },
+    setNow: value => { nowMs = value; }, advanceMonotonic: value => { monotonicMs += value; } };
 }
 
 test('ray overscan preserves the logical photosphere and profile while expanding the transparent viewport', async () => {
@@ -543,6 +557,68 @@ test('live Sun page lifecycle restarts one frame loop, respects an explicit stop
   h.windowListeners.get('pageshow')();
   assert.equal(scene.state, 'lost'); assert.equal(h.frames.size, 0, 'a lost GPU cannot be presented as ready after return');
   scene.dispose(); assert.equal(h.windowListeners.size, 0);
+});
+
+test('header Sun visibility pauses hidden draws, preserves absolute phase and respects manual stops', async () => {
+  const h = await solarRecoveryHarness({ headerScene: true, siteLoading: true });
+  const scene = await h.mount(h.canvas, {});
+  assert.equal(scene.state, 'paused', 'a prepared scene behind the entrance is not a graphics failure');
+  assert.equal(h.stats.renders, 0);
+  assert.equal(h.frames.size, 0);
+  assert.equal(h.stats.intersections[0].target, h.topRow);
+  assert.ok(h.headerObserver.targets.includes(h.canvas.ownerDocument.documentElement));
+  const later = Date.UTC(2026, 10, 5, 12);
+  h.setNow(later);
+  h.rootClasses.delete('site-loading');
+  h.headerObserver.callback();
+  assert.equal(scene.state, 'ready');
+  assert.equal(h.frames.size, 1);
+  assert.ok(Math.abs(scene.sunMesh.rotation.y - h.angle(later)) < 1e-12, 'resume uses current absolute UTC rather than restarting animation');
+  const visibleDraws = h.stats.renders;
+  h.headerObserver.callback(); h.headerObserver.callback();
+  assert.equal(h.stats.renders, visibleDraws, 'unrelated visible body class changes do not restart or synchronously draw the scene');
+  assert.equal(h.frames.size, 1);
+
+  h.stats.intersections[0].callback([{ isIntersecting: false, intersectionRatio: 0 }]);
+  assert.equal(h.frames.size, 0);
+  const draws = h.stats.renders;
+  assert.equal(scene.renderFrame(), false, 'direct geo/resize callers cannot draw an offscreen scene');
+  scene.onResize();
+  for (const [id, callback] of [...h.frames]) { h.frames.delete(id); callback(); }
+  assert.equal(h.stats.renders, draws);
+  h.stats.intersections[0].callback([{ isIntersecting: true, intersectionRatio: 1 }]);
+  assert.equal(h.frames.size, 1);
+  h.bodyClasses.add('hide-header'); h.headerObserver.callback();
+  assert.equal(h.frames.size, 0);
+  scene.stop();
+  h.bodyClasses.delete('hide-header'); h.headerObserver.callback();
+  assert.equal(h.frames.size, 0, 'automatic visibility cannot restart an explicit stop');
+  h.rootClasses.add('site-loading');
+  scene.start();
+  assert.equal(h.frames.size, 0);
+  h.rootClasses.delete('site-loading'); h.headerObserver.callback();
+  assert.equal(h.frames.size, 1, 'manual start while covered retains resume intent');
+  const observer = h.headerObserver, visibility = h.stats.intersections[0];
+  scene.dispose();
+  assert.equal(observer.active, false); assert.equal(visibility.active, false);
+  assert.equal(h.documentListeners.size, 0); assert.equal(h.frames.size, 0);
+  observer.callback(); visibility.callback([{ isIntersecting: true, intersectionRatio: 1 }]);
+  assert.equal(h.frames.size, 0, 'late observer callbacks cannot revive disposed GPU resources');
+});
+
+test('a hidden header Sun retains context restoration intent until an explicit stop cancels it', async () => {
+  const h = await solarRecoveryHarness({ headerScene: true });
+  const scene = await h.mount(h.canvas, {});
+  h.bodyClasses.add('hide-header'); h.headerObserver.callback();
+  scene.onContextLost({ preventDefault() {} });
+  scene.onContextRestored();
+  assert.equal(h.frames.size, 0);
+  h.bodyClasses.delete('hide-header'); h.headerObserver.callback();
+  assert.equal(h.frames.size, 1);
+  scene.onContextLost({ preventDefault() {} });
+  scene.stop(); scene.onContextRestored();
+  assert.equal(h.frames.size, 0, 'explicit stop during context loss cancels restoration restart');
+  scene.dispose();
 });
 
 test('the original Sun handle disposes its own native descendant and cannot dispose a foreign replacement mount', async t => {

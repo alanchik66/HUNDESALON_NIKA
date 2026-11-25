@@ -34,81 +34,126 @@ const assert = (name, condition, detail = '') => {
   if (!condition) throw new Error(`${name}${detail ? `: ${detail}` : ''}`);
 };
 
-const checkMeteorPseudoElements = async (page, scenarioName) => {
+const checkMeteorComponent = async (page, scenarioName) => {
   await page.waitForFunction(() => {
     const host = document.querySelector('.header-weather-widget[data-weather-variant="header"]');
-    return host?.shadowRoot && [...host.shadowRoot.querySelectorAll('style')]
-      .some(style => style.textContent.includes('.weather-header-shooting-star'));
+    return host?.shadowRoot && document.querySelector('script[src*="site-shell.js"]');
   }, {}, { timeout: 15000 });
-  const measurement = await page.evaluate(() => {
+  const measurement = await page.evaluate(async () => {
     const host = document.querySelector('.header-weather-widget[data-weather-variant="header"]');
-    const sourceStyles = [...host.shadowRoot.querySelectorAll('style')].map(style => style.textContent);
-    // Keep functional weather class names away from the live widget's observers.
-    // The frame has native Shadow DOM and the loaded CSS, but no application scripts.
+    const sourceStyles = [...host.shadowRoot.querySelectorAll('style:not([data-weather-meteor-style])')]
+      .map(style => style.textContent);
+    const entry = new URL(document.querySelector('script[src*="site-shell.js"]').src);
+    const moduleUrl = new URL('weather-meteor-scene.js', entry);
+    moduleUrl.search = entry.search;
+    const { createMeteorScene } = await import(moduleUrl.href);
+    // This isolated component fixture invokes the production renderer. The renderer
+    // creates its own meteor nodes, native animations and Shadow DOM stylesheet.
     const frame = document.createElement('iframe');
     frame.dataset.visualMeteorFixture = 'true';
     frame.setAttribute('aria-hidden', 'true');
     frame.setAttribute('sandbox', 'allow-same-origin');
     frame.style.cssText = `position:fixed;left:-10000px;top:0;width:${window.innerWidth}px;height:${window.innerHeight}px;visibility:hidden`;
     const states = [];
-    let stylesCopiedExactly = false;
+    const moonStates = [];
+    const scenes = [];
+    let engineStyleCount = 0;
     try {
       document.body.append(frame);
       const fixtureDocument = frame.contentDocument;
       fixtureDocument.documentElement.lang = document.documentElement.lang;
-      fixtureDocument.body.className = document.body.className;
       const fixtureHost = fixtureDocument.createElement('div');
       for (const attribute of host.attributes) fixtureHost.setAttribute(attribute.name, attribute.value);
       fixtureDocument.body.append(fixtureHost);
       const shadow = fixtureHost.attachShadow({ mode: 'open' });
+      // Moon CSS is checked independently using unchanged loaded shell rules.
+      // Exclude the meteor stylesheet: the real renderer must install that itself.
       for (const text of sourceStyles) {
         const style = fixtureDocument.createElement('style');
         style.textContent = text;
         shadow.append(style);
       }
-      stylesCopiedExactly = [...shadow.querySelectorAll('style')]
-        .every((style, index) => style.textContent === sourceStyles[index]);
-      const fixture = fixtureDocument.createElement('div');
-      fixture.className = 'weather-app';
-      shadow.append(fixture);
       for (const surface of ['preview', 'forecast']) {
-        for (const depth of ['back', 'front']) {
-          const container = fixtureDocument.createElement('div');
-          container.className = surface === 'preview' ? 'weather-header-preview' : 'weather-header-dropdown';
-          const stage = surface === 'preview' ? container : fixtureDocument.createElement('div');
-          if (stage !== container) {
-            stage.className = 'weather-header-dropdown__hero';
-            container.append(stage);
-          }
-          const layer = depth === 'front' ? stage : fixtureDocument.createElement('div');
-          if (layer !== stage) {
-            layer.className = `${surface === 'preview' ? 'weather-header-preview' : 'weather-header-dropdown'}__stars-back is-night-sky`;
-            stage.append(layer);
-          }
-          const meteor = fixtureDocument.createElement('span');
-          meteor.className = `weather-header-shooting-star${depth === 'front' ? ' weather-header-shooting-star--foreground' : ''}`;
-          layer.append(meteor);
-          fixture.append(container);
-          const pseudoStyle = selector => {
-            const style = frame.contentWindow.getComputedStyle(meteor, selector);
-            return { backgroundImage: style.backgroundImage, content: style.content, width: style.width, height: style.height };
-          };
-          states.push({ surface, depth, before: pseudoStyle('::before'), after: pseudoStyle('::after') });
-        }
+        const stage = fixtureDocument.createElement('div');
+        stage.className = surface === 'preview' ? 'weather-header-preview' : 'weather-header-dropdown';
+        stage.style.cssText = 'position:relative;width:100%;height:180px';
+        shadow.append(stage);
+        const bounds = stage.getBoundingClientRect();
+        const scene = createMeteorScene({
+          mode: 'loading',
+          getTargets: () => [{ stage, bounds, rect: bounds, maxActive: 1 }],
+          random: (min, max) => min + (max - min) * 0.5,
+        });
+        scenes.push(scene);
+        scene.sync();
+        const meteor = stage.querySelector('[data-weather-meteor-depth]');
+        if (!meteor) throw new Error(`${surface}: production meteor renderer did not create a meteor`);
+        const animations = meteor.getAnimations({ subtree: true });
+        const motion = animations.find(animation => animation.effect.getKeyframes()
+          .some(keyframe => keyframe.transform?.includes('translate3d(')));
+        for (const animation of animations) animation.pause();
+        const pseudoStyle = selector => {
+          const style = frame.contentWindow.getComputedStyle(meteor, selector);
+          return { backgroundImage: style.backgroundImage, content: style.content, width: style.width, height: style.height };
+        };
+        const immediate = { before: pseudoStyle('::before'), after: pseudoStyle('::after') };
+        // WebKit can expose no pseudo-element until the newly attached iframe's
+        // stylesheet has crossed a render boundary. Keep the immediate evidence.
+        const renderTicksCompleted = await new Promise(resolve => {
+          let firstFrame;
+          let secondFrame;
+          const timeout = setTimeout(() => {
+            window.cancelAnimationFrame(firstFrame);
+            window.cancelAnimationFrame(secondFrame);
+            resolve(false);
+          }, 1500);
+          firstFrame = requestAnimationFrame(() => {
+            secondFrame = requestAnimationFrame(() => {
+              clearTimeout(timeout);
+              resolve(true);
+            });
+          });
+        });
+        states.push({
+          surface, depth: meteor.dataset.weatherMeteorDepth,
+          immediate, renderTicksCompleted,
+          lifecycle: {
+            documentVisibility: document.visibilityState,
+            globalLoaderEnded: !document.documentElement.classList.contains('site-loading'),
+            iframeConnected: frame.isConnected,
+            iframeVisibility: fixtureDocument.visibilityState,
+          },
+          before: pseudoStyle('::before'), after: pseudoStyle('::after'),
+          nativeMotion: Boolean(motion), duration: motion?.effect.getTiming().duration,
+        });
+      }
+      engineStyleCount = shadow.querySelectorAll('style[data-weather-meteor-style]').length;
+      for (const surface of ['preview', 'dropdown']) {
+        const moon = fixtureDocument.createElement('div');
+        moon.className = `weather-orb-overlay weather-orb-overlay--${surface} is-moon is-visible`;
+        shadow.append(moon);
+        const style = frame.contentWindow.getComputedStyle(moon);
+        moonStates.push({ surface, filter: style.filter, backgroundImage: style.backgroundImage });
       }
     } finally {
+      for (const scene of scenes) scene.dispose();
       frame.remove();
     }
     return {
-      states, stylesCopiedExactly, sourceStyleCount: sourceStyles.length,
+      states, moonStates, moduleUrl: moduleUrl.href, engineStyleCount, shellStyleCount: sourceStyles.length,
       fixtureCountAfter: document.querySelectorAll('[data-visual-meteor-fixture]').length,
     };
   });
   meteorStates.push({ scenario: scenarioName, ...measurement });
-  assert(`${scenarioName}: meteor check uses the loaded shell styles unchanged`,
-    measurement.sourceStyleCount > 0 && measurement.stylesCopiedExactly);
+  assert(`${scenarioName}: meteor component uses the versioned production renderer and its installed stylesheet`,
+    new URL(measurement.moduleUrl).pathname.endsWith('/assets/js/weather-meteor-scene.js') &&
+      measurement.engineStyleCount === 1 && measurement.states.length === 2);
   for (const state of measurement.states) {
     const label = `${scenarioName}: ${state.surface} ${state.depth} meteor`;
+    assert(`${label} completes its rendered component lifecycle`, state.renderTicksCompleted, JSON.stringify(state));
+    assert(`${label} is generated with native motion`,
+      state.depth === 'front' && state.nativeMotion && state.duration >= 260 && state.duration <= 780,
+      JSON.stringify(state));
     assert(`${label} retains its radial head flash`,
       state.before.backgroundImage.includes('radial-gradient(') && !['none', 'normal'].includes(state.before.content) &&
         parseFloat(state.before.width) > 0 && parseFloat(state.before.height) > 0,
@@ -117,6 +162,12 @@ const checkMeteorPseudoElements = async (page, scenarioName) => {
       state.after.backgroundImage.includes('linear-gradient(') && !['none', 'normal'].includes(state.after.content) &&
         parseFloat(state.after.height) > 0,
       JSON.stringify(state.after));
+  }
+  for (const state of measurement.moonStates) {
+    assert(`${scenarioName}: ${state.surface} Moon uses a radial halo without spatial filters`,
+      measurement.shellStyleCount > 0 && state.backgroundImage.includes('radial-gradient(') &&
+        state.filter.includes('brightness(1.18)') && state.filter.includes('saturate(1.08)') &&
+        !/(?:blur|drop-shadow)\(/.test(state.filter), JSON.stringify(state));
   }
   assert(`${scenarioName}: meteor fixtures are removed before screenshots`, measurement.fixtureCountAfter === 0);
 };
@@ -149,7 +200,7 @@ try {
     await page.goto(`${server.baseUrl}/de/prays-list.html`, { waitUntil: 'domcontentloaded', timeout: 30000 });
     if (meteorOnly) console.log('[visual] meteor document ready');
     await page.locator('body').evaluate((body, light) => body.classList.toggle('light', light), scenario.light);
-    await checkMeteorPseudoElements(page, scenario.name);
+    await checkMeteorComponent(page, scenario.name);
     if (meteorOnly) console.log('[visual] meteor computed styles checked');
     if (meteorOnly) {
       assert(`${scenario.name}: meteor style check has no JavaScript errors`, pageErrors.length === 0,

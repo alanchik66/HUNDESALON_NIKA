@@ -19,7 +19,7 @@
   const TEXT_SIZE_ADJUSTMENTS = ['-0.08rem', '0rem', '0.12rem', '0.22rem'];
   const DEFAULT_TEXT_SIZE_LEVEL = 1;
   const SUPPORTED_LOCALES = new Set(['de', 'en', 'ru', 'uk']);
-  const BRAND_LOGO = '/assets/images/brand/logo.png';
+  const BRAND_LOGO = '/assets/images/brand/logo-ui.webp';
   const SITE_ORIGIN = 'https://hundesalon-nika.com';
   const contourModuleUrl = new URL('./menu-contour.js', document.currentScript?.src || new URL('/assets/js/ai-chat.js', window.location.href));
   contourModuleUrl.search = new URL(document.currentScript?.src || contourModuleUrl, window.location.href).search;

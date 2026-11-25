@@ -4,6 +4,33 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const source = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
+const headersSource = readFileSync(new URL('../_headers', import.meta.url), 'utf8');
+
+// Model the relative/splat subset used here, with ordered append/detach semantics:
+// https://developers.cloudflare.com/pages/configuration/headers/ (checked 2026-11-25).
+function staticHeadersFor(pathname, rules = headersSource) {
+  const headers = new Map();
+  let matches = false;
+  for (const line of rules.split(/\r?\n/)) {
+    if (!line.trim() || line.trimStart().startsWith('#')) continue;
+    if (!/^\s/.test(line)) {
+      assert.ok(line.startsWith('/') && line.split('*').length <= 2, 'extend the test model before adding unsupported URL patterns');
+      const pattern = line.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace('*', '.*');
+      matches = new RegExp(`^${pattern}$`).test(pathname);
+      continue;
+    }
+    const instruction = line.match(/^\s+(!\s+)?([A-Za-z0-9-]+)(?::\s*(.*))?$/);
+    assert.ok(instruction, 'header instructions have an explicit name and attach/detach form');
+    const [, detach, rawName, value] = instruction;
+    const name = rawName.toLowerCase();
+    assert.equal(detach ? value : undefined, undefined, 'detach instructions have no header value');
+    if (!detach) assert.notEqual(value, undefined, 'attached headers have a value');
+    if (!matches) continue;
+    if (detach) headers.delete(name);
+    else headers.set(name, headers.has(name) ? `${headers.get(name)}, ${value}` : value);
+  }
+  return headers;
+}
 
 function fetchEvent({ cached, response, writeError, fetchError, destination = 'image', path = '/asset.png', cache = 'default', headers = {} } = {}) {
   const handlers = new Map();
@@ -108,4 +135,67 @@ test('a private or no-store response cannot be added to the static cache', async
     await Promise.all(event.pending);
     assert.equal(event.writes.length,0);
   }
+});
+
+test('Pages header precedence keeps one intended max-age on ordinary and narrowly overridden assets', () => {
+  for (const [path, seconds, immutable] of [
+    ['/assets/images/brand/logo.png', 86400, false],
+    ['/assets/images/favicon/favicon-32x32.png', 86400, false],
+    ['/favicon.ico', 86400, false],
+    ['/assets/images/icons/search.png', 31536000, false],
+    ['/assets/images/hero/salon.webp', 31536000, false],
+    ['/assets/images/before-after/dog.webp', 31536000, false],
+    ['/assets/images/preloader/paws-atlas-v1.webp', 31536000, false],
+    ['/assets/images/email/logo.png', 31536000, false],
+    ['/assets/js/site-loader.js', 31536000, true],
+    ['/assets/css/site-loader.css', 31536000, true],
+    ['/assets/fonts/inter.woff2', 31536000, true],
+    ['/ru/', 0, false],
+    ['/sw.js', 0, false],
+    ['/sp-push-worker-fb.js', 0, false],
+    ['/robots.txt', 0, false],
+  ]) {
+    const cache = staticHeadersFor(path).get('cache-control');
+    assert.ok(cache, path);
+    const directives = cache.split(',').map(value => value.trim());
+    assert.deepEqual(directives.filter(value => /^max-age\s*=/i.test(value)), [`max-age=${seconds}`], path);
+    assert.equal(directives.includes('immutable'), immutable, path);
+    if (seconds === 0) assert.ok(directives.includes('must-revalidate'), path);
+  }
+});
+
+test('the Pages model follows documented append order rather than treating an early detach as a future override', () => {
+  const broad = '/*\n  Cross-Origin-Resource-Policy: same-origin\n';
+  const narrow = '/email.png\n  ! Cross-Origin-Resource-Policy\n';
+  assert.equal(staticHeadersFor('/email.png', narrow + broad).get('cross-origin-resource-policy'), 'same-origin');
+  assert.equal(staticHeadersFor('/email.png', broad + narrow).has('cross-origin-resource-policy'), false);
+  assert.equal(staticHeadersFor('/asset.png', '/*\n  Cache-Control: public, max-age=31536000\n/asset.png\n  Cache-Control: public, max-age=86400\n').get('cache-control'),
+    'public, max-age=31536000, public, max-age=86400');
+});
+
+test('email artwork has a narrow cross-site exception while other static resources keep their security policy', () => {
+  const ordinary = staticHeadersFor('/assets/images/weather/moon-albedo.webp');
+  const security = new Map([...ordinary].filter(([name]) => name !== 'cache-control'));
+  for (const path of ['/assets/js/site-loader.js', '/assets/images/brand/logo.png', '/assets/images/email-other/logo.png', '/ru/']) {
+    assert.deepEqual(new Map([...staticHeadersFor(path)].filter(([name]) => name !== 'cache-control')), security, path);
+  }
+  assert.equal(ordinary.get('cross-origin-resource-policy'), 'same-origin');
+  for (const image of ['logo', 'whatsapp', 'telegram', 'viber', 'phone', 'facebook', 'mail', 'social-links']) {
+    const email = staticHeadersFor(`/assets/images/email/${image}.png`);
+    assert.equal(email.has('cross-origin-resource-policy'), false, `${image}: the narrow detach runs after the broad security rule`);
+    for (const name of ['content-security-policy', 'cross-origin-opener-policy', 'x-content-type-options',
+      'x-frame-options', 'referrer-policy', 'strict-transport-security', 'permissions-policy']) {
+      assert.ok(ordinary.has(name), name);
+      assert.equal(email.get(name), ordinary.get(name), `${image}: ${name}`);
+    }
+    assert.equal(email.get('x-content-type-options'), 'nosniff');
+    assert.equal(email.get('x-frame-options'), 'SAMEORIGIN');
+    assert.equal(email.get('cross-origin-opener-policy'), 'same-origin');
+  }
+});
+
+test('Pages header rules stay within the documented rule and whole-line limits', () => {
+  const lines = headersSource.split(/\r?\n/);
+  assert.ok(lines.filter(line => line && !/^(?:\s|#)/.test(line)).length <= 100);
+  for (const [index, line] of lines.entries()) assert.ok([...line].length <= 2000, `line ${index + 1} exceeds 2000 characters`);
 });

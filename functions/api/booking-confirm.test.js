@@ -105,7 +105,7 @@ test('opening a signed admin-email link only displays the confirmation button', 
   }
 });
 
-test('submitting the signed admin-email form confirms the matching pending booking', async () => {
+async function confirmStoredSlot(date, time) {
   const originalFetch = globalThis.fetch;
   const sqlite = new DatabaseSync(':memory:');
   for (const migration of ['0009_delivery_tracking.sql', '0012_booking_confirmation_outbox.sql']) {
@@ -134,19 +134,19 @@ test('submitting the signed admin-email form confirms the matching pending booki
     3: 'Test Customer',
     4: 'customer@example.test',
     6: 'Komplettpflege',
-    7: '2030-01-02',
-    8: '10:00',
+    7: date,
+    8: time,
     28: requestId,
     29: 'pending',
-    32: '2030-01-02T10:00:00',
-    33: '2030-01-02T12:00:00',
+    32: date + 'T' + time + ':00',
+    33: date + 'T12:00:00',
   });
   const calendarEvent = {
     id: eventId,
     status: 'confirmed',
     created: '2030-01-01T00:00:00Z',
-    start: { dateTime: '2030-01-02T10:00:00+01:00' },
-    end: { dateTime: '2030-01-02T12:00:00+01:00' },
+    start: { dateTime: date + 'T' + time + ':00+01:00' },
+    end: { dateTime: date + 'T12:00:00+01:00' },
     extendedProperties: { private: { bookingRequestId: requestId } },
   };
   globalThis.fetch = async (url, options = {}) => {
@@ -187,7 +187,13 @@ test('submitting the signed admin-email form confirms the matching pending booki
     globalThis.fetch = originalFetch;
     sqlite.close();
   }
-});
+}
+
+test('submitting the signed admin-email form confirms the matching pending booking', () =>
+  confirmStoredSlot('2030-01-02', '10:00'));
+
+test('signed confirmation preserves a saved Sunday slot after new-booking hours change', () =>
+  confirmStoredSlot('2030-01-06', '09:00'));
 
 test('a transport failure after email confirmation asks for a safe retry instead of claiming Calendar was unchanged', async () => {
   const originalFetch = globalThis.fetch;

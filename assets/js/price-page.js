@@ -2478,6 +2478,11 @@
   };
 
   let cardAlignmentFrame = 0;
+  const markPricePageReady = () => {
+    if (!cardsHaveRendered || document.documentElement.dataset.priceReady === 'true') return;
+    document.documentElement.dataset.priceReady = 'true';
+    window.dispatchEvent(new Event('site:page-ready'));
+  };
   const alignPriceCardRows = () => {
     cardAlignmentFrame = 0;
     const allTops = Array.from(cardsRoot.querySelectorAll('.price-card__top'));
@@ -2486,7 +2491,10 @@
       .forEach(service => service.style.removeProperty('min-height'));
     cardsRoot.querySelectorAll(`${CAT_ANIMALS_SECTION_SELECTOR} .price-card`)
       .forEach(card => card.style.removeProperty('min-height'));
-    if (window.matchMedia('(max-width: 720px)').matches) return;
+    if (window.matchMedia('(max-width: 720px)').matches) {
+      markPricePageReady();
+      return;
+    }
 
     // Measure only after the reset has reached layout, then apply all writes together.
     cardAlignmentFrame = window.requestAnimationFrame(() => {
@@ -2536,7 +2544,7 @@
       });
 
       updates.forEach(([element, height]) => element.style.setProperty('min-height', `${height}px`));
-
+      markPricePageReady();
     });
   };
 
@@ -2628,6 +2636,7 @@
   };
 
   let cardsHaveRendered = false;
+  let renderedCategoryIds = null;
   const renderCards = (query, providedMatches) => {
     cardsHaveRendered = true;
     const normalizedQuery = normalizeSearch(query);
@@ -2639,23 +2648,28 @@
       ? categoryViews.filter(category => matchingBreedIds.has(category.id))
       : categoryViews;
 
-    const sections = sectionGroups
-      .map(group => renderSection(
-        group.key,
-        sortCategoryViews(visibleCategories.filter(category => group.sourceKeys.includes(category.groupKey))),
-        group
-      ))
-      .filter(section => section.includes('price-card'))
-      .join('');
+    const categoryIds = `${searchFilterState.sort}|${visibleCategories.map(category => category.id).join('|')}`;
+    const cardsChanged = categoryIds !== renderedCategoryIds;
+    if (cardsChanged) {
+      const sections = sectionGroups
+        .map(group => renderSection(
+          group.key,
+          sortCategoryViews(visibleCategories.filter(category => group.sourceKeys.includes(category.groupKey))),
+          group
+        ))
+        .filter(section => section.includes('price-card'))
+        .join('');
 
-    setBreedMenuScrollLock(false);
-    cardsRoot.querySelectorAll('[data-nav-pill]').forEach(toggle => {
-      window.HundesalonNavPill?.deactivate?.(toggle);
-    });
-    cardsRoot.innerHTML = visibleCategories.length
-      ? sections
-      : `<div class="price-breed-search__empty">${escapeHtml(locale.searchEmpty || 'Порода не найдена. Попробуйте другой запрос.')}</div>`;
-    syncCardDetails();
+      setBreedMenuScrollLock(false);
+      cardsRoot.querySelectorAll('[data-nav-pill]').forEach(toggle => {
+        window.HundesalonNavPill?.deactivate?.(toggle);
+      });
+      cardsRoot.innerHTML = visibleCategories.length
+        ? sections
+        : `<div class="price-breed-search__empty">${escapeHtml(locale.searchEmpty || 'Порода не найдена. Попробуйте другой запрос.')}</div>`;
+      renderedCategoryIds = categoryIds;
+      syncCardDetails();
+    }
     if (searchStatus) {
       if (!normalizedQuery) {
         searchStatus.textContent = '';
@@ -2679,8 +2693,10 @@
     }
     if (searchClear) searchClear.hidden = !normalizedQuery;
     syncSearchFilterControls();
-    window.HundesalonNavPill?.scan?.(cardsRoot);
-    schedulePriceCardAlignment();
+    if (cardsChanged) {
+      window.HundesalonNavPill?.scan?.(cardsRoot);
+      schedulePriceCardAlignment();
+    }
   };
 
   const renderInitialCards = () => {
@@ -3061,12 +3077,22 @@
   document.addEventListener('pointerdown', event => closeBreedMenusOutside(event.target), { capture: true });
   document.addEventListener('click', event => closeBreedMenusOutside(event.target));
 
+  let cardResizeFrame = 0;
+  let cardLayoutWidth = window.innerWidth;
   window.addEventListener('resize', () => {
-    hideBreedPhoto();
-    syncCardDetails();
-    schedulePriceCardAlignment();
-    cardsRoot.querySelectorAll('[data-price-breeds-toggle][aria-expanded="true"]').forEach(positionBreedMenu);
-  });
+    if (cardResizeFrame) return;
+    cardResizeFrame = window.requestAnimationFrame(() => {
+      cardResizeFrame = 0;
+      hideBreedPhoto();
+      // Mobile browser chrome changes viewport height during scrolling, not card width.
+      if (window.innerWidth !== cardLayoutWidth) {
+        cardLayoutWidth = window.innerWidth;
+        syncCardDetails();
+        schedulePriceCardAlignment();
+      }
+      cardsRoot.querySelectorAll('[data-price-breeds-toggle][aria-expanded="true"]').forEach(positionBreedMenu);
+    });
+  }, { passive: true });
 
   modalClose?.addEventListener('click', closeModal);
   modal.addEventListener('click', event => {

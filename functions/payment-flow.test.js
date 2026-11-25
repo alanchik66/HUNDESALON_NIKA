@@ -18,7 +18,7 @@ const ORDER_ID = '11111111-1111-4111-8111-111111111111';
 function fixture(t, options = {}) {
   const sqlite = new DatabaseSync(':memory:');
   sqlite.exec('PRAGMA foreign_keys = ON');
-  for (const name of ['0009_delivery_tracking.sql', '0011_payment_orders.sql']) {
+  for (const name of ['0009_delivery_tracking.sql', '0011_payment_orders.sql', '0013_site_settings.sql']) {
     sqlite.exec(readFileSync(new URL('../migrations/' + name, import.meta.url), 'utf8'));
   }
   t.after(() => sqlite.close());
@@ -76,7 +76,7 @@ function fixture(t, options = {}) {
     BOOKING_RECIPIENT_EMAIL: 'salon@example.test',
     BOOKING_CONFIRM_SECRET: 'fixture-confirmation-signing-secret-32',
   };
-  const calls = { stripe: [], sheets: [], email: [], confirmations: [], captcha: 0 };
+  const calls = { stripe: [], sheets: [], email: [], confirmations: [], availability: [], captcha: 0 };
   const confirmed = new Set();
   let clientFailures = options.clientFailures || 0;
   let stripeFailures = options.stripeFailures || 0;
@@ -100,11 +100,13 @@ function fixture(t, options = {}) {
     }
     if (target === 'https://gateway.test/exec') {
       const body = JSON.parse(init.body);
-      if (body.action === 'calendar_freebusy')
+      if (body.action === 'calendar_freebusy') {
+        calls.availability.push(body);
         return Response.json({
           success: true,
           busyIntervals: options.busy ? [{ start: body.timeMin, end: body.timeMax }] : [],
         });
+      }
       if (body.action === 'sheets') {
         calls.sheets.push(body);
         return Response.json({ success: true });
@@ -456,3 +458,66 @@ for (const [lang, expected] of [
     );
   });
 }
+
+
+test('new Checkout uses the published daily hours and fits the whole appointment block', async t => {
+  const callsByCase = [];
+  const weekday = futureDate();
+  const saturday = new Date(weekday + 'T12:00:00Z');
+  saturday.setUTCDate(saturday.getUTCDate() + 4);
+  const sunday = new Date(saturday);
+  sunday.setUTCDate(sunday.getUTCDate() + 1);
+  for (const [date, time, duration, accepted] of [
+    [weekday, '20:30', 30, true],
+    [weekday, '20:30', 31, false],
+    [weekday, '21:00', 30, false],
+    [saturday.toISOString().slice(0, 10), '09:30', 30, false],
+    [saturday.toISOString().slice(0, 10), '10:00', 30, true],
+    [saturday.toISOString().slice(0, 10), '15:30', 30, true],
+    [saturday.toISOString().slice(0, 10), '15:30', 31, false],
+    [saturday.toISOString().slice(0, 10), '16:00', 30, false],
+    [sunday.toISOString().slice(0, 10), '12:00', 30, false],
+  ]) {
+    // Each fake provider returns one fixed Session ID; keep its D1 order store isolated.
+    const { env, calls } = fixture(t);
+    callsByCase.push(calls);
+    const response = await postCheckout(env, booking({
+      request_id: crypto.randomUUID(), date, time,
+      booking_client_type: 'returning', service_duration_minutes: '15',
+      booking_buffer_minutes: String(duration - 15), booking_safe_block_minutes: String(duration),
+    }));
+    assert.equal(response.status, accepted ? 200 : 400, date + ' ' + time + ', duration ' + duration);
+  }
+  assert.equal(callsByCase.reduce((count, calls) => count + calls.stripe.length, 0), 3);
+  assert.equal(callsByCase.reduce((count, calls) => count + calls.availability.length, 0), 3, 'closed/overflow slots stop before provider access');
+});
+
+test('a saved Sunday order resumes and fulfils after payment without applying new-slot hours again', async t => {
+  const { env, calls, sqlite } = fixture(t);
+  const fields = booking();
+  assert.equal((await postCheckout(env, fields)).status, 200);
+  const original = await getPaymentOrder(env, fields.request_id);
+  const sunday = new Date(fields.date + 'T12:00:00Z');
+  sunday.setUTCDate(sunday.getUTCDate() + 5);
+  const preservedDate = sunday.toISOString().slice(0, 10);
+  const preserved = { ...original.booking, date: preservedDate, time: '12:00' };
+  // Simulate a valid order saved under the previous Sunday policy, not a new submission.
+  sqlite.prepare('UPDATE payment_orders SET booking_json = ? WHERE id = ?')
+    .run(JSON.stringify(preserved), fields.request_id);
+  const availabilityBefore = calls.availability.length;
+  const resumed = await postCheckout(env, {
+    request_id: fields.request_id, statusToken: fields.statusToken, resume: true,
+    date: '2099-01-01', time: '00:00',
+  });
+  assert.equal(resumed.status, 200);
+  assert.equal(calls.stripe.length, 1);
+  assert.equal((await eventRequest(env, 'checkout.session.completed', fields.request_id)).status, 200);
+  assert.equal(calls.availability.length, availabilityBefore);
+  const saved = await getPaymentOrder(env, fields.request_id);
+  assert.equal(saved.booking.date, preservedDate);
+  assert.equal(saved.booking.time, '12:00');
+  assert.equal(saved.paymentStatus, 'paid');
+  assert.equal(saved.fulfillmentStatus, 'completed');
+  assert.equal(calls.sheets.filter(call => call.sheetName === 'bookings').length, 1);
+  assert.ok(JSON.stringify(calls.sheets.find(call => call.sheetName === 'bookings')).includes(preservedDate));
+});

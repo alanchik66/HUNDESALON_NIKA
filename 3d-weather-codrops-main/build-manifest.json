@@ -12,7 +12,7 @@
       "source": "src/scene.mjs",
       "output": "Scene3D-Cdhk74W6.mjs",
       "baselineSha256": "2bd48be805f56933124942a8164d7708543dccb268b5eccbd6525601e6fae09d",
-      "canonicalSha256": "5177a114135f5a2ac3f59c66f431b786a3506c22fd54d6118d6ecb58ca9349c5",
+      "canonicalSha256": "4a7afed10ed993d2dcad264c32c4aaea6578ea016cf1c37338eba83ed933ee38",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",
@@ -110,7 +110,7 @@
       "source": "src/header-preview.mjs",
       "output": "weather-widget.header-panel-preview.es.js",
       "baselineSha256": "b850b368a2d72b4110c329fed9440dd4c70bea7f6287da6e872986271bb360c2",
-      "canonicalSha256": "e50c79a5079506d7c7dcd4cced737b0292079fa03358f44342c0b61fb8297ef9",
+      "canonicalSha256": "6f79324fe70290ff5871c350528ae570600a2b248e158b8dd1cc9e9caa999d2b",
       "recoveredNames": {
         "e": "toInteropDefault",
         "t": "getJsxRuntime",

@@ -10,7 +10,7 @@
     primaryColor: '#034c35',
     colorScheme: 'dark',
   });
-  const LIVE_CHAT_BRAND_LOGO_URL = '/assets/images/brand/logo.png';
+  const LIVE_CHAT_BRAND_LOGO_URL = '/assets/images/brand/logo-ui.webp';
   const LIVE_CHAT_ROOT_OBSERVER_KEY = '__hundesalonLiveChatObserver';
   const LIVE_CHAT_DOCUMENT_EVENTS_KEY = '__hundesalonLiveChatDocumentEvents';
   const LIVE_CHAT_BRAND_NAME = 'HUNDESALON_NIKA';
@@ -372,7 +372,7 @@
       height: 1.9rem !important;
       border: 1px solid rgba(var(--hundesalon-chat-gold), 0.5) !important;
       border-radius: 50% !important;
-      background: rgba(0, 20, 14, 0.88) url('/assets/images/brand/logo.png') center / contain no-repeat !important;
+      background: rgba(0, 20, 14, 0.88) url('/assets/images/brand/logo-ui.webp') center / contain no-repeat !important;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.32) !important;
       content: '' !important;
     }

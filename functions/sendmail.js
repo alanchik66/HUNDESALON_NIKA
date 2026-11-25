@@ -97,7 +97,9 @@ const normalizeOneDriveFileUrl = value => {
 };
 const BOOKING_SCHEDULE = Object.freeze({
   workdayStartMinutes: 9 * 60,
-  workdayEndMinutes: 18 * 60,
+  workdayEndMinutes: 21 * 60,
+  saturdayStartMinutes: 10 * 60,
+  saturdayEndMinutes: 16 * 60,
   slotStepMinutes: 30,
   maxLookaheadDays: 90,
 });
@@ -155,6 +157,17 @@ const parseBookingDate = value => {
   return timestamp;
 };
 
+// Keep this date-only policy in parity with the classic PriceBookingCatalog API.
+export const getBookingWorkingHours = isoDate => {
+  const timestamp = parseBookingDate(isoDate);
+  if (timestamp === null) return null;
+  const weekday = new Date(timestamp).getUTCDay();
+  if (weekday === 0) return null;
+  return weekday === 6
+    ? { startMinutes: BOOKING_SCHEDULE.saturdayStartMinutes, endMinutes: BOOKING_SCHEDULE.saturdayEndMinutes }
+    : { startMinutes: BOOKING_SCHEDULE.workdayStartMinutes, endMinutes: BOOKING_SCHEDULE.workdayEndMinutes };
+};
+
 const getBerlinDateKey = () => {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Berlin',
@@ -166,10 +179,11 @@ const getBerlinDateKey = () => {
   return `${value('year')}-${value('month')}-${value('day')}`;
 };
 
-const isValidBookingWindow = (date, time) => {
+export const isValidBookingWindow = (date, time, safeBlockMinutes) => {
   const dateTimestamp = parseBookingDate(date);
+  const workingHours = getBookingWorkingHours(date);
   const timeMatch = String(time || '').match(/^(\d{2}):(\d{2})$/);
-  if (dateTimestamp === null || !timeMatch) return false;
+  if (dateTimestamp === null || !workingHours || !timeMatch || !Number.isFinite(safeBlockMinutes) || safeBlockMinutes <= 0) return false;
 
   const hour = Number(timeMatch[1]);
   const minute = Number(timeMatch[2]);
@@ -177,8 +191,8 @@ const isValidBookingWindow = (date, time) => {
   if (
     hour > 23 ||
     minute > 59 ||
-    timeMinutes < BOOKING_SCHEDULE.workdayStartMinutes ||
-    timeMinutes >= BOOKING_SCHEDULE.workdayEndMinutes ||
+    timeMinutes < workingHours.startMinutes ||
+    timeMinutes + safeBlockMinutes > workingHours.endMinutes ||
     timeMinutes % BOOKING_SCHEDULE.slotStepMinutes !== 0
   ) {
     return false;
@@ -869,7 +883,7 @@ async function handleSubmission(ctx, options = {}) {
     if (!service || !date || !time) {
       return jsonResponse({ success: false, message: copy.error }, 400, origin);
     }
-    if (!trustedPaymentOrder && !isValidBookingWindow(date, time)) {
+    if (!trustedPaymentOrder && !isValidBookingWindow(date, time, safeBlockMinutes)) {
       return jsonResponse({ success: false, message: copy.error }, 400, origin);
     }
     if (!phone) {
@@ -898,7 +912,8 @@ async function handleSubmission(ctx, options = {}) {
   if (options.preparePayment) {
     const localEnd = addLocalMinutes(date, time, safeBlockMinutes);
     const endMinutes = Number(localEnd.slice(11, 13)) * 60 + Number(localEnd.slice(14, 16));
-    if (!localEnd || localEnd.slice(0, 10) !== date || endMinutes > BOOKING_SCHEDULE.workdayEndMinutes) {
+    const workingHours = getBookingWorkingHours(date);
+    if (!localEnd || localEnd.slice(0, 10) !== date || !workingHours || endMinutes > workingHours.endMinutes) {
       return jsonResponse(
         { success: false, message: 'The selected appointment does not fit the opening hours.' },
         400,

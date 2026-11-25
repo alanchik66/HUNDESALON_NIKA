@@ -10,6 +10,88 @@ import { calculateSolarDay, solarPhase, solarPosition, solarPresentation } from 
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+test('currency motion reads a deduplicated icon batch before writing styles', async () => {
+  const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
+  const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'script' });
+  const body = ast.body.find(node => node.expression?.callee?.id?.name === 'siteShellBootstrap')?.expression.callee.body.body;
+  const names = [
+    'EURO_ICON_SELECTOR', 'independentEuroMotionObserver', 'randomizeEuroIconMotion',
+    'randomizeIndependentEuroIcons', 'initIndependentEuroMotion',
+  ];
+  const declarations = names.map(name => {
+    const node = body?.find(item => item.type === 'VariableDeclaration' && item.declarations.some(value => value.id.name === name));
+    assert.ok(node, `Missing currency motion declaration ${name}`);
+    return source.slice(node.start, node.end);
+  }).join('\n');
+  const operations = [];
+  const assertReadBatchBeforeWrites = (ids, message) => {
+    const firstWrite = operations.findIndex(operation => operation.startsWith('write:'));
+    assert.deepEqual(operations.slice(0, firstWrite), ids.map(id => `read:${id}`), message);
+    assert.ok(operations.slice(firstWrite).every(operation => operation.startsWith('write:')), message);
+    ids.forEach(id => assert.ok(operations.includes(`write:${id}`), `Missing initialized styles for ${id}`));
+  };
+  class Icon {
+    constructor(id, duration, ready = false) {
+      this.id = id;
+      this.duration = duration;
+      this.nodeType = 1;
+      this.dataset = ready ? { nikaEuroMotion: 'ready' } : {};
+      this.properties = new Map();
+      this.style = {
+        removeProperty: key => { operations.push(`write:${id}`); this.properties.delete(key); },
+        setProperty: (key, value) => { operations.push(`write:${id}`); this.properties.set(key, value); },
+      };
+    }
+    matches() { return true; }
+    querySelectorAll() { return []; }
+  }
+  const first = new Icon('first', '3.5s');
+  const second = new Icon('second', 'invalid');
+  const ready = new Icon('ready', '8s', true);
+  const makeRoot = icons => ({ nodeType: 1, matches: () => false, querySelectorAll: () => icons });
+  const document = makeRoot([first, second, ready]);
+  document.body = document;
+  let observerCallback;
+  const observations = [];
+  const context = {
+    document, HTMLElement: Icon, randomBetween: (min, max) => (min + max) / 2,
+    getComputedStyle: icon => {
+      operations.push(`read:${icon.id}`);
+      return { animationDuration: icon.duration };
+    },
+    MutationObserver: class {
+      constructor(callback) { observerCallback = callback; }
+      observe(target, options) { observations.push({ target, options }); }
+    },
+  };
+  runInNewContext(`${declarations}\nglobalThis.currencyMotion = { randomizeIndependentEuroIcons, initIndependentEuroMotion };`, context);
+  const api = context.currencyMotion;
+  api.randomizeIndependentEuroIcons(document, first, makeRoot([second, first]));
+  assertReadBatchBeforeWrites(['first', 'second'], 'overlapping roots are deduplicated and every layout/style read precedes every write');
+  assert.equal(first.properties.get('--euro-spin-delay'), '-1.75s');
+  assert.equal(second.properties.get('--euro-spin-delay'), '-2.45s', 'invalid durations retain the fallback');
+  assert.equal(first.dataset.nikaEuroMotion, 'ready');
+  assert.equal(second.dataset.nikaEuroMotion, 'ready');
+  assert.equal(ready.properties.size, 0, 'already initialized icons are neither measured nor changed');
+
+  operations.length = 0;
+  api.initIndependentEuroMotion();
+  api.initIndependentEuroMotion();
+  assert.deepEqual(operations, [], 'repeated initialization leaves ready icons untouched');
+  assert.equal(observations.length, 1);
+  assert.equal(observations[0].target, document.body);
+  assert.equal(observations[0].options.childList, true);
+  assert.equal(observations[0].options.subtree, true);
+
+  const third = new Icon('third', '4s');
+  const fourth = new Icon('fourth', '6s');
+  observerCallback([
+    { addedNodes: [makeRoot([third]), { nodeType: 3 }] },
+    { addedNodes: [makeRoot([fourth, third]), third, ready] },
+  ]);
+  assertReadBatchBeforeWrites(['third', 'fourth'], 'one observer delivery batches all added subtrees before mutating their icons');
+});
+
 async function solarShellDeclarations(names) {
   const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
   const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'script' });
@@ -19,6 +101,111 @@ async function solarShellDeclarations(names) {
     assert.ok(node, `Missing solar integration function ${name}`);
     return source.slice(node.start, node.end);
   }).join('\n');
+}
+
+test('weather loading masks pending celestial canvases and uses the shared full-surface scene', async () => {
+  const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
+  const shell = parse(source, { ecmaVersion: 'latest', sourceType: 'script' }).body
+    .find(node => node.expression?.callee?.id?.name === 'siteShellBootstrap').expression.callee.body.body;
+  const template = shell.filter(node => node.type === 'VariableDeclaration').flatMap(node => node.declarations)
+    .find(node => node.id.name === 'HEADER_WEATHER_TRANSPARENT_STYLES').init;
+  const styles = postcss.parse(template.quasis.map(quasi => quasi.value.cooked).join('0'));
+  const masks = [];
+  styles.walkRules(rule => {
+    if (rule.selector.includes("[data-moon-scene='loading']") && rule.selector.trim().endsWith('.weather-orb-overlay__canvas')) masks.push(rule);
+  });
+  assert.equal(masks.length, 1, 'the shared loader retains one mask for unprepared celestial surfaces');
+  const mask = masks[0];
+  for (const variant of ['preview', 'dropdown']) {
+    assert.ok(mask.selector.includes(`.weather-orb-overlay--${variant}`), variant + ' pending Canvas stays masked');
+  }
+  assert.ok(mask.selector.includes('.is-visible:not([hidden])'), 'inactive orbs cannot hold a surface pending');
+  for (const kind of ['moon', 'sun']) {
+    assert.ok(mask.selector.includes(`.is-${kind}:is([data-${kind}-scene='loading'], [data-${kind}-scene='paused'])`));
+  }
+  assert.doesNotMatch(mask.selector, /data-(?:moon|sun)-scene=['"](?:ready|failed|lost|recovery)['"]/);
+  const visibility = mask.nodes.find(node => node.prop === 'visibility');
+  assert.equal(visibility.value, 'hidden'); assert.equal(visibility.important, true);
+  assert.equal(mask.nodes.some(node => node.prop === 'display'), false, 'Canvas remains measurable for its real first paint');
+  assert.doesNotMatch(template.quasis.map(quasi => quasi.value.cooked).join('0'), /weatherHeaderStarfall|--weather-starfall-content/);
+  const prepare = shell.find(node => node.type === 'FunctionDeclaration' && node.id.name === 'prepareHeaderWeatherLoadingState');
+  assert.match(source.slice(prepare.start, prepare.end), /startHeaderWeatherMeteorScenes\(host\)/);
+  const load = shell.find(node => node.type === 'FunctionDeclaration' && node.id.name === 'loadHeaderWeatherMeteorModules');
+  const entry = source.slice(load.start, load.end);
+  assert.match(entry, /weather-meteor-scene\.js/);
+  assert.match(entry, /weather-loading-scene\.js/);
+  assert.match(entry, /searchParams\.set\('v', version\)/);
+});
+
+for (const [variant, formatter, lineClass] of [
+  ['preview', 'applyHeaderWeatherConditionTypography', 'weather-header-card__condition-line'],
+  ['dropdown', 'applyHeaderWeatherDropdownConditionTypography', 'weather-header-dropdown__condition-line'],
+]) {
+test(`unchanged ${variant} condition lines do not retrigger the readings observer`, async () => {
+  const declarations = await solarShellDeclarations([
+    'buildHeaderWeatherConditionLineTexts', formatter,
+  ]);
+  class Element {
+    constructor() {
+      this.nodeType = 1;
+      this.className = '';
+      this.childNodes = [];
+      this.replacements = 0;
+      this.properties = new Map();
+      this.classList = { contains: name => this.className.split(/\s+/).includes(name) };
+      this.style = {
+        setProperty: (key, value) => this.properties.set(key, value),
+        removeProperty: key => this.properties.delete(key),
+      };
+    }
+    get children() { return this.childNodes.filter(node => node.nodeType === 1); }
+    get textContent() { return this.childNodes.length ? this.childNodes.map(node => node.textContent).join('') : this.text || ''; }
+    set textContent(value) { this.text = value; this.childNodes = []; }
+    replaceChildren(...nodes) {
+      this.replacements += 1;
+      this.text = '';
+      this.childNodes = nodes;
+      this.onMutation?.();
+    }
+  }
+  const document = { documentElement: { lang: 'ru' }, createElement: () => new Element() };
+  const apply = new Function('document', 'HTMLElement', 'getHeaderWeatherConditionPlainText',
+    `${declarations}; return ${formatter};`)(
+    document, Element, node => node.textContent
+  );
+  const condition = new Element();
+  condition.textContent = 'лёгкий дождь';
+  apply(condition, 'лёгкий дождь');
+  assert.equal(condition.replacements, 1, 'initial unformatted content is normalized');
+  assert.deepEqual(condition.children.map(node => node.textContent), ['ЛЁГКИЙ', 'ДОЖДЬ']);
+  assert.ok(condition.children.every(node => node.classList.contains(lineClass)));
+  const initialNodes = [...condition.childNodes];
+
+  condition.properties.set('display', 'block');
+  apply(condition, '  ЛЁГКИЙ   ДОЖДЬ  ');
+  assert.equal(condition.replacements, 1, 'identical normalized lines preserve DOM and emit no childList mutations');
+  assert.deepEqual(condition.childNodes, initialNodes);
+  assert.equal(condition.properties.get('display'), 'flex', 'typography styles still refresh on a reused DOM');
+
+  const pendingSynchronizations = [];
+  condition.onMutation = () => pendingSynchronizations.push(() => apply(condition, 'сильный снег'));
+  apply(condition, 'сильный снег');
+  assert.equal(condition.replacements, 2, 'a real weather change updates the condition');
+  assert.deepEqual(condition.children.map(node => node.textContent), ['СИЛЬНЫЙ', 'СНЕГ']);
+  assert.equal(pendingSynchronizations.length, 1, 'the changed condition produces one observed DOM update');
+  pendingSynchronizations.shift()();
+  assert.equal(pendingSynchronizations.length, 0, 'the observer follow-up does not schedule itself again');
+  assert.equal(condition.replacements, 2);
+  condition.onMutation = null;
+
+  condition.children[0].className = 'foreign-condition-line';
+  apply(condition, 'сильный снег');
+  assert.equal(condition.replacements, 3, 'foreign markup with the same text is rebuilt');
+  condition.childNodes.push({ nodeType: 3, textContent: ' ' });
+  apply(condition, 'сильный снег');
+  assert.equal(condition.replacements, 4, 'stray text nodes cannot pass the existing-lines guard');
+  assert.equal(condition.childNodes.length, 2);
+});
 }
 
 async function sunSceneVmDeclarations() {
@@ -1152,9 +1339,10 @@ test('mobile social and music icons reverse their rollout without losing toggle 
 });
 
 test('header shooting stars use one eligible night layer and stop with their host', async t => {
-  const source = await readFile(path.join(root, 'assets/js/header-weather-sky-motion.js'), 'utf8');
-  const declaration = source.match(/function syncHeaderWeatherShootingStars\(host, randomBetween\) \{[\s\S]*?\r?\n\}/)[0];
-  const initialize = new Function('window', 'document', 'randomBetween', `${declaration}\nreturn host => syncHeaderWeatherShootingStars(host, randomBetween);`);
+  const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
+  const meteorSource = await readFile(path.join(root, 'assets/js/weather-meteor-scene.js'), 'utf8');
+  const declaration = source.match(/  function syncHeaderWeatherShootingStars\(host\) \{[\s\S]*?\n  \}/)[0];
+  const initialize = new Function('window', 'document', 'randomBetween', `${meteorSource.replace('export function createMeteorScene', 'function createMeteorScene')}\n${declaration}\nreturn host => { host.__weatherMeteorModules = { createMeteorScene }; return syncHeaderWeatherShootingStars(host); };`);
   const settle = () => new Promise(resolve => setImmediate(resolve));
   const createHarness = ({ reduced = false, night = true, hidden = false, empty = false, width = 390, ratio = 0.5 } = {}) => {
     const timers = new Map();
@@ -1358,10 +1546,8 @@ test('header shooting stars use one eligible night layer and stop with their hos
     assert.ok(new Set(samples.map(([, , , , , length]) => length)).size > 3);
   });
 
-  await t.test('the head and trail have one short bloom, not repeated flashing', async () => {
-    const shell = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
-    const start = shell.indexOf('.weather-header-shooting-star {');
-    const css = shell.slice(start, shell.indexOf('\n.weather-header-card__toggle {', start));
+  await t.test('the head and trail have one short bloom, not repeated flashing', () => {
+    const css = meteorSource.slice(meteorSource.indexOf('.weather-header-shooting-star {'), meteorSource.indexOf('\n`;'));
     assert.doesNotMatch(css, /infinite|alternate/);
     assert.match(css, /animation: weatherShootingStarGlint var\(--shooting-star-duration, 520ms\) linear both/);
     assert.match(css, /animation: weatherShootingStarTrail var\(--shooting-star-duration, 520ms\) linear both/);
@@ -1671,6 +1857,26 @@ test('burger menu restores its invoker after pointer or keyboard Escape without 
     assert.equal(ui.burger.focusCalls.length, 0, 'native navigation must not be interrupted by returning to the opener');
     assert.equal(ui.document.activeElement.name, 'body');
   });
+});
+
+test('legacy promotions bookmarks preserve locale and do not reopen a hidden section', async () => {
+  const source = await readFile(path.join(root, 'assets/js/social-page.js'), 'utf8');
+  const handler = source.match(/const openLegacyPromotions = \(\) => \{[\s\S]*?\n  \};/)[0];
+  for (const lang of ['de','en','ru','uk']) {
+    for (const extension of ['', '.html']) {
+      for (const disabledSections of [undefined, 'reviews promotions', '']) {
+        let next, replaced;
+        const href = `https://hundesalon-nika.com/${lang}/social${extension}?source=old#promotions`;
+        const window = { location: { href, replace: url => { next = url; } }, history: { replaceState: (_s,_t,url) => { replaced = url; } } };
+        runInNewContext(handler + '\nopenLegacyPromotions()', { URL, window, document: { documentElement: { dataset: { disabledSections } } } });
+        if (disabledSections === '') assert.equal(next, href.replace('/social','/promotions').replace('#promotions',''));
+        else {
+          assert.equal(next, undefined);
+          assert.equal(replaced, href.replace('#promotions',''));
+        }
+      }
+    }
+  }
 });
 
 test('static preview 501 uses local Functions fallback without reporting false success', async () => {
@@ -2462,10 +2668,15 @@ test('header Sun and Moon retain their base scales and anchors through the sky p
   }
 });
 
-test('header moon keeps its color grade while the dropdown halo avoids a blurred canvas', async () => {
+test('both header moon views use one halo without a canvas blur', async () => {
   const source = await readFile(path.join(root, 'assets/js/site-shell.js'), 'utf8');
-  assert.match(source, /\.weather-orb-overlay--dropdown\.is-moon\s*\{\s*filter: brightness\(1\.18\) saturate\(1\.08\) !important;/);
-  assert.match(source, /\.weather-orb-overlay--dropdown\.is-moon\.is-visible\s*\{\s*background-image: radial-gradient\(circle closest-side,[^;]+transparent [\d.]+%\) !important;/);
+  const moonRules = [...source.matchAll(/^[^\n{}]*\.weather-orb-overlay[^\n{}]*\.is-moon\b[^{]*\{([^}]+)\}/gm)];
+  assert.ok(moonRules.length > 0);
+  for (const [, declarations] of moonRules) {
+    assert.doesNotMatch(declarations, /\bfilter:[^;]*\b(?:drop-shadow|blur)\(/);
+  }
+  assert.match(source, /\.weather-orb-overlay\.is-moon\s*\{[^}]*filter: brightness\(1\.18\) saturate\(1\.08\) !important;/);
+  assert.match(source, /\.weather-orb-overlay\.is-moon\.is-visible\s*\{\s*background-image: radial-gradient\(circle closest-side,[^;]+transparent [\d.]+%\) !important;/);
   const declaration = source.match(/  function lockHeaderWeatherMainTemperatureTypography\([^)]*\) \{[\s\S]*?\n  \}/)[0];
   class Element {
     constructor(classes) {
@@ -2492,7 +2703,7 @@ test('header moon keeps its color grade while the dropdown halo avoids a blurred
   apply({ shadowRoot, dataset: { weatherVariant: 'header' } });
   for (const moon of [previewMoon, dropdownMoon]) {
     assert.equal(moon.values.has('opacity'), false, 'Moon opacity belongs to the live sky/crossfade instead of a fixed inline value');
-    assert.equal(moon.values.has('filter'), false, 'Moon color and halo belong to the variant CSS rules');
+    assert.equal(moon.values.has('filter'), false, 'Moon color and halo belong to the shared CSS rules');
     assert.equal(moon.priorities.has('opacity'), false);
     assert.equal(moon.priorities.has('filter'), false);
   }
@@ -2973,8 +3184,8 @@ test('booking slots use the salon timezone for foreign visitors across DST chang
       const catalog = window.PriceBookingCatalog.build('de');
 
       for (const [date, offset] of [
-        ['2026-03-28', '+01:00'], ['2026-03-29', '+02:00'],
-        ['2026-10-24', '+02:00'], ['2026-10-25', '+01:00'],
+        ['2026-03-27', '+01:00'], ['2026-03-30', '+02:00'],
+        ['2026-10-23', '+02:00'], ['2026-10-26', '+01:00'],
       ]) {
         const busy = [{ start: `${date}T09:00:00${offset}`, end: `${date}T10:00:00${offset}` }];
         const slots = catalog.getAvailableStartTimes(date, timing, busy, {
@@ -2984,6 +3195,12 @@ test('booking slots use the salon timezone for foreign visitors across DST chang
         assert.equal(slots[0], '10:00', `${timeZone}, ${date}: occupied salon slots must stay unavailable`);
         assert.equal(slots.includes('09:00'), false);
         assert.equal(slots.includes('09:30'), false);
+      }
+
+      for (const date of ['2026-03-29', '2026-10-25']) {
+        assert.equal(catalog.getAvailableStartTimes(date, timing, [], {
+          calendarConfigured: true, now: new Date('2026-01-01T00:00:00Z'),
+        }).length, 0, `${timeZone}, ${date}: DST Sundays remain closed`);
       }
 
       const currentDay = catalog.getAvailableStartTimes('2026-10-26', timing, [], {

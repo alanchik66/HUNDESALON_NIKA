@@ -371,3 +371,9 @@
 
 - 2026-11-08 — V27 CLOSED по controlled brightness: пользователь прислалSafari+ChromeJSONiPhone, обаready/visualsame/day+nightready. Все поля равны кромеbrowserLabel; dayraw28.2369/night16.3143 в обоих,0%delta. RawSHAday17b8…28ce/nightb907…9b97 иreferenceSHA489d…2cb1/f840…b6fe полностьюравны. 8module/textureSHA+bytes/200 свереныcurrent5514;32sourcebaselineunchanged. Изменятьlight/gamma/opacityнепотребовалось. Independentreview оригинальныхJSON подтвердил.
 - Physicalproof normalized files и comparison: output/cloud-light-v27/physical-iphone-{safari,chrome}-normalized.json, physical-iphone-comparison.json; browseridentity userlabelled, pixelarraysнесохранялись/несообщались. status.json complete within fixedday/nightbrightness scope, reportsReceived2/questionPendingfalse. Это НЕновыйanimation/FPS/fullsite/allweatherтест. No commit/push/deploy. Main https://parameter-items-bronze-anticipated.trycloudflare.com/ru/?preview=cloud-verified GET200; предыдущие Windowscapture ограничения сохраняются отдельно.
+
+### 2026-11-21 08:28 UTC — управление галереей
+
+- Панель владельца получила отдельные режимы для фото, видео и пар «До и после». Фотографии и видео используют прежнюю библиотеку. Пары хранятся и публикуются атомарно, отображаются в существующем слайдере и фильтруются по языку и категории. Миграция `0016_site_comparisons.sql` применена к локальной D1.
+- Изолированный Workerd подтвердил загрузку двух изображений по 4 МиБ и совместное скрытие файлов. Гостевой просмотр возвращает HTTP 200 для списка опубликованных сравнений и HTTP 403 для API владельца. [Работа с галереей](../docs/SITE_ADMIN.md)
+- После исправления обрезки снимок «До» виден слева, снимок «После» справа. Измерения цвета обеих половин и перемещение слайдера клавиатурой и касанием проверены в Chromium и WebKit. Результаты в `output/gallery-slider-rgb-dist.json`.

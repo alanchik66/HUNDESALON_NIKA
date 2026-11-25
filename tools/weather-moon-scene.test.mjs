@@ -367,6 +367,42 @@ test('finite terrain jobs discard superseded timestamps and hidden/aborted work 
   });
 });
 
+test('header Moon skips entrance and hidden-header work including late terrain paints, then uses current UTC', async () => {
+  await withDeferredFactory(async ({ mount, target, release }) => {
+    const t = target(), bodyClasses = new Set(), rootClasses = new Set(['site-loading']);
+    const header = {};
+    let insideHeader = true;
+    t.canvas.closest = () => insideHeader ? header : null;
+    t.canvas.ownerDocument.body = { classList: { contains: name => bodyClasses.has(name) } };
+    t.canvas.ownerDocument.documentElement = { classList: { contains: name => rootClasses.has(name) } };
+    const time = Date.parse('2026-11-06T11:00:00Z'), options = loadingOptions(time);
+    release();
+    const scene = await mount(t.canvas, options);
+    assert.equal(t.frames.length, 0);
+    assert.equal(t.canvas.dataset.moonDetail, 'paused', 'covered initialization remains resumable rather than failing terrain load');
+    assert.equal(scene.renderFrame(true), false);
+    rootClasses.delete('site-loading');
+    assert.equal(scene.renderFrame(), true);
+    assert.equal(await scene.whenRendered, true);
+    const draws = t.frames.length;
+    const later = time + 86400000;
+    scene.setGeoState({ ...options.geoState, appearanceTimeMs: later });
+    const pending = scene.whenRendered;
+    bodyClasses.add('hide-header');
+    assert.equal(await pending, false, 'terrain queued before hiding cannot paint its late result');
+    assert.equal(t.frames.length, draws);
+    assert.equal(scene.renderFrame(true), false);
+    bodyClasses.delete('hide-header');
+    assert.equal(scene.renderFrame(), true);
+    assert.equal(await scene.whenRendered, true);
+    assert.equal(Number(t.canvas.dataset.moonRenderedAt), later, 'resume uses the selected absolute time without resetting lunar phase');
+    bodyClasses.add('hide-header'); rootClasses.add('site-loading'); insideHeader = false;
+    assert.equal(scene.renderFrame(true), true, 'standalone lunar surfaces are unaffected by header-only covering classes');
+    assert.equal(await scene.whenRendered, true);
+    scene.dispose();
+  });
+});
+
 test('replacing a scene while its four-scanline job is pending prevents the old owner from committing',async()=>{
   await withDeferredFactory(async({mount,target,release})=>{
     release();const t=target(),time=Date.parse('2026-11-06T11:00:00Z'),options=loadingOptions(time);

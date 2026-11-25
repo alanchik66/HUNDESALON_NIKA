@@ -93,6 +93,58 @@ test('a hidden first terrain frame stays paused until an actual paint reports re
   assert.equal(orb.dataset.moonScene, 'unmounted', 'an obsolete renderer cannot change a new surface state');
 });
 
+for (const preparedPaused of [false, true]) {
+test(`the phase reserve stays loading until terrain paint (${preparedPaused ? 'paused preparation' : 'direct paint'})`, async () => {
+  const h = harness(), orb = overlay(), mapsReady = deferred();
+  h.factory(async () => {
+    orb.canvas.dataset.moonDetail = 'loading';
+    const scene = h.createScene();
+    scene.whenReady = mapsReady.promise;
+    return scene;
+  });
+  h.set(orb, 'moon', config(geo));
+  await settle();
+  assert.equal(orb.dataset.moonScene, 'loading', 'early scene publication cannot mark the featureless phase reserve ready');
+  assert.equal(orb.__moonScene, h.scenes[0]);
+  if (preparedPaused) {
+    orb.canvas.dataset.moonDetail = 'paused';
+    mapsReady.resolve();
+    await settle();
+    assert.equal(orb.dataset.moonScene, 'paused', 'decoded maps alone do not claim a visible terrain frame');
+  }
+  orb.canvas.dataset.moonDetail = 'terrain';
+  h.factories[0].options.onReady();
+  assert.equal(orb.dataset.moonScene, 'ready', 'only an actual terrain paint releases the pending visual state');
+  if (!preparedPaused) {
+    mapsReady.resolve();
+    await settle();
+    assert.equal(orb.dataset.moonScene, 'ready', 'whenReady settlement retains the actual committed terrain state');
+  }
+  h.stop(orb);
+});
+}
+
+test('a failed terrain preparation leaves terminal fallback rather than an endless pending surface', async () => {
+  const h = harness(), orb = overlay(), mapsReady = deferred();
+  h.factory(async () => {
+    orb.canvas.hidden = false;
+    orb.canvas.dataset.moonDetail = 'loading';
+    const scene = h.createScene(); scene.whenReady = mapsReady.promise;
+    return scene;
+  });
+  h.set(orb, 'moon', config(geo));
+  await settle();
+  assert.equal(orb.dataset.moonScene, 'loading');
+  orb.canvas.dataset.moonDetail = 'fallback';
+  mapsReady.reject(new Error('Terrain unavailable'));
+  await settle();
+  assert.equal(orb.dataset.moonScene, 'failed');
+  assert.equal(orb.__moonScene, h.scenes[0]);
+  assert.equal(orb.__moonScene.disposed, 0);
+  assert.equal(orb.canvas.hidden, false, 'the phase reserve remains available after a terminal terrain error');
+  h.stop(orb);
+});
+
 test('a pending native terrain scene is published early, keeps its phase on failure and retries on the existing clock', async () => {
   const h = harness(), orb = overlay(), gate = deferred();
   h.factory(async () => { orb.canvas.hidden = false; const scene = h.createScene(); scene.whenReady = gate.promise; return scene; });
