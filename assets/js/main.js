@@ -6,9 +6,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // Older legal/blog pages still contain the retired entrance markup. Never
   // leave that blocking layer behind, including when the new loader is offline.
   document.querySelectorAll('#preloader:not(.site-loader)').forEach(node => node.remove());
-  const mainScript = document.querySelector('script[src*="/main.js"]');
-  const motionUrl = new URL('./motion-visibility.js', mainScript?.src || new URL('/assets/js/main.js', location.href));
-  motionUrl.search = mainScript ? new URL(mainScript.src).search : '';
+  let mainUrl = new URL('/assets/js/main.js', location.origin);
+  // Other bootstraps can also be named main.js; only our exact entry owns this version.
+  for (const script of document.querySelectorAll('script[src]')) {
+    try {
+      const candidate = new URL(script.src, document.baseURI);
+      if (candidate.origin === location.origin && candidate.pathname === '/assets/js/main.js') {
+        mainUrl = candidate;
+        break;
+      }
+    } catch { /* Ignore malformed sources belonging to other scripts. */ }
+  }
+  const motionUrl = new URL('./motion-visibility.js', mainUrl);
+  motionUrl.search = mainUrl.search;
   void import(motionUrl.href).catch(() => {});
   // Source previews and production pages share the same assistant launcher.
   // Production injects these assets at build time; do not load a second copy.

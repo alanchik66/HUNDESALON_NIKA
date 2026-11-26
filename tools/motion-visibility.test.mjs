@@ -2,7 +2,78 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import postcss from 'postcss';
+import { parse } from 'acorn';
 import { installMotionVisibility, installScrollFrameBudget } from '../assets/js/motion-visibility.js';
+
+const mainSource = await readFile(new URL('../assets/js/main.js', import.meta.url), 'utf8');
+const mainAst = parse(mainSource, { ecmaVersion: 'latest', sourceType: 'script' });
+const mainRegistration = mainAst.body.find(node => node.type === 'ExpressionStatement'
+  && node.expression.type === 'CallExpression'
+  && node.expression.callee.type === 'MemberExpression'
+  && node.expression.callee.object.name === 'document'
+  && node.expression.callee.property.name === 'addEventListener'
+  && node.expression.arguments[0]?.value === 'DOMContentLoaded');
+assert.ok(mainRegistration, 'the actual main DOMContentLoaded bootstrap exists');
+const mainHandler = mainRegistration.expression.arguments[1];
+function findImportExpression(node) {
+  if (!node || typeof node !== 'object') return null;
+  if (node.type === 'ImportExpression') return node;
+  for (const value of Object.values(node)) for (const child of Array.isArray(value) ? value : [value]) {
+    const found = findImportExpression(child);
+    if (found) return found;
+  }
+  return null;
+}
+const motionImport = findImportExpression(mainHandler.body);
+assert.ok(motionImport, 'the actual bootstrap imports its motion policy');
+const importStatement = mainHandler.body.body.find(node => node.start <= motionImport.start && node.end >= motionImport.end);
+// Execute the actual statements up to import, then return its actual argument without loading a module.
+const mainMotionURL = new Function('document', 'location', 'URL',
+  `${mainSource.slice(mainHandler.body.start + 1, importStatement.start)}\nreturn ${mainSource.slice(motionImport.source.start, motionImport.source.end)};`);
+
+const motionEntryCases = [
+  { name: 'ignores an earlier Cloudflare precursor main.js', page: 'https://hundesalon-nika.com/ru/prays-list',
+    sources: ['/cdn-cgi/challenge-platform/scripts/precursor/main.js?ray=fixture', '../assets/js/main.js?v=own-build&mode=full'],
+    expected: 'https://hundesalon-nika.com/assets/js/motion-visibility.js?v=own-build&mode=full' },
+  { name: 'rejects a foreign main.js before the own entry', page: 'https://hundesalon-nika.com/en/',
+    sources: ['https://foreign.example/assets/js/main.js?v=foreign', '/assets/js/main.js?v=own'],
+    expected: 'https://hundesalon-nika.com/assets/js/motion-visibility.js?v=own' },
+  { name: 'falls back without a foreign or Cloudflare query', page: 'https://hundesalon-nika.com/de/prays-list?view=page',
+    sources: ['https://foreign.example/assets/js/main.js?v=foreign', '/cdn-cgi/challenge-platform/scripts/precursor/main.js?ray=fixture', '/assets/js/main.js.backup?v=wrong', '/other/main.js?v=wrong'],
+    expected: 'https://hundesalon-nika.com/assets/js/motion-visibility.js' },
+  { name: 'skips malformed and missing script sources', page: 'https://hundesalon-nika.com/uk/',
+    sources: [undefined, '', 'http://[', '/assets/js/main.js?v=valid'],
+    expected: 'https://hundesalon-nika.com/assets/js/motion-visibility.js?v=valid' },
+  { name: 'uses the fixed root when no script entry exists', page: 'https://hundesalon-nika.com/ru/blog/post.html?view=page', sources: [],
+    expected: 'https://hundesalon-nika.com/assets/js/motion-visibility.js' },
+  { name: 'resolves a nested locale reference and preserves the own version', page: 'https://hundesalon-nika.com/uk/blog/post.html',
+    sources: ['../../assets/js/main.js?v=locale%2Bbuild'],
+    expected: 'https://hundesalon-nika.com/assets/js/motion-visibility.js?v=locale%2Bbuild' },
+  { name: 'keeps source preview on its local origin', page: 'http://127.0.0.1:8796/ru/prays-list.html',
+    sources: ['../assets/js/main.js?v=source-preview'], expected: 'http://127.0.0.1:8796/assets/js/motion-visibility.js?v=source-preview' },
+];
+for (const entry of motionEntryCases) test(`main motion bootstrap ${entry.name}`, () => {
+  const nodes = entry.sources.map(src => {
+    // A browser reflects valid script src attributes as absolute URLs.
+    if (typeof src !== 'string' || !src) return { src };
+    try { return { src: new URL(src, entry.page).href }; }
+    catch { return { src }; }
+  });
+  const document = {
+    baseURI: entry.page,
+    get currentScript() { throw new Error('DOMContentLoaded bootstrap must not rely on currentScript'); },
+    querySelectorAll(selector) {
+      if (selector === '#preloader:not(.site-loader)') return [];
+      assert.equal(selector, 'script[src]');
+      return nodes;
+    },
+    querySelector(selector) {
+      assert.equal(selector, 'script[src*="/main.js"]');
+      return nodes.find(node => typeof node.src === 'string' && node.src.includes('/main.js')) || null;
+    },
+  };
+  assert.equal(mainMotionURL(document, new URL(entry.page), URL), entry.expected);
+});
 
 function fixture({ loading = false } = {}) {
   const events = new Map();
