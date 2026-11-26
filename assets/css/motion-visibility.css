@@ -30,32 +30,60 @@ html[data-motion-page-hidden] :is(.price-card, .price-section-navigation, .price
   animation-play-state: paused !important;
 }
 
-/* Only a measured, constrained price-page scroll burst uses the lighter paint
-   profile. Removing the attribute restores the same animation phases and theme. */
-body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer),
-body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer)::before,
-body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer)::after,
-body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer) *,
-body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer) *::before,
-body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer) *::after {
-  animation-play-state: paused !important;
-  filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
+/* Fine and hybrid pointers retain the measured scroll paint profile.
+   Primary touch keeps authored motion; hidden and offscreen components still pause. */
+@media (hover: hover), (pointer: fine) {
+  body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer),
+  body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer)::before,
+  body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer)::after,
+  body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer) *,
+  body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer) *::before,
+  body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :is(main[data-price-page], .header, .newsletter-section, footer) *::after {
+    animation-play-state: paused !important;
+    filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active main[data-price-page] :is(h1, h2, h3, h4, h5, h6, .price-card__price) {
+    color: var(--gold-face, #d5b66e) !important;
+    background-image: none !important;
+    -webkit-background-clip: border-box !important;
+    background-clip: border-box !important;
+    -webkit-text-fill-color: currentColor !important;
+    -webkit-text-stroke: 0 !important;
+  }
+
+  body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :focus-visible {
+    outline: 2px solid var(--accent-gold, #d5b66e) !important;
+    outline-offset: 2px !important;
+  }
 }
 
-body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active main[data-price-page] :is(h1, h2, h3, h4, h5, h6, .price-card__price) {
-  color: var(--gold-face, #d5b66e) !important;
-  background-image: none !important;
-  -webkit-background-clip: border-box !important;
-  background-clip: border-box !important;
-  -webkit-text-fill-color: currentColor !important;
-  -webkit-text-stroke: 0 !important;
+
+/* Touch controls in price cards transition transform and opacity.
+   Expandable panels keep their existing geometry and timing. */
+@media (hover: none) and (pointer: coarse) {
+  body.price-page .site-scroll-root main[data-price-page] .price-card {
+    transition-property: transform, opacity;
+  }
+
+  body.price-page .site-scroll-root main[data-price-page] .price-card :is(.price-card__service-option, .price-card__promotion-button, .price-card__chip, .price-card__badge--button) {
+    transition-property: transform, opacity;
+  }
+
+  body.price-page .site-scroll-root main[data-price-page] .price-card::before {
+    transition-property: opacity;
+  }
 }
 
-body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root[data-scroll-budget='balanced'].site-scroll-active :focus-visible {
-  outline: 2px solid var(--accent-gold, #d5b66e) !important;
-  outline-offset: 2px !important;
+/* Skip the moving fixed header backdrop during primary-touch scroll bursts. */
+@media (hover: none) and (pointer: coarse) {
+  body.price-page.hide-header:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root .header,
+  body.price-page:not(:is(.nav-open, .header-weather-expanded, .price-modal-open, .booking-modal-open, .price-breed-menu-open)) .site-scroll-root.site-scroll-active .header {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
 }

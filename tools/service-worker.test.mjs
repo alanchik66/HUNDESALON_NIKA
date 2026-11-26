@@ -199,3 +199,31 @@ test('Pages header rules stay within the documented rule and whole-line limits',
   assert.ok(lines.filter(line => line && !/^(?:\s|#)/.test(line)).length <= 100);
   for (const [index, line] of lines.entries()) assert.ok([...line].length <= 2000, `line ${index + 1} exceeds 2000 characters`);
 });
+
+test('deployment metadata always bypasses stored responses', async t => {
+  for (const [name, options] of [
+    ['ordinary request', {}],
+    ['query string', { path: '/config/deploy-asset-version.txt?release=next' }],
+    ['explicit no-store request', { cache: 'no-store' }],
+  ]) {
+    await t.test(name, () => {
+      const event = fetchEvent({ path: '/config/deploy-asset-version.txt', destination: '', cached: { stamp: 'old' },
+        response: { ok: true, headers: { get: () => 'public, max-age=0, must-revalidate' }, clone: () => ({ stamp: 'new' }) }, ...options });
+      assert.equal(event.response, undefined, 'the browser must read release metadata through the network path');
+      assert.deepEqual(event.calls, { match: 0, open: 0, fetch: 0, respondWith: 0 });
+      assert.equal(event.pending.length, 0);
+      assert.equal(event.writes.length, 0);
+    });
+  }
+});
+
+test('deployment metadata lookalike retains ordinary asset refresh', async () => {
+  const cached = { asset: 'cached' };
+  const event = fetchEvent({ path: '/config/deploy-asset-version.txt.backup?release=next', destination: '', cached,
+    response: { ok: true, clone: () => ({ asset: 'updated' }) } });
+  assert.equal(await event.response, cached, 'the exception applies only to the exact metadata pathname');
+  for (let index = 0; index < event.pending.length; index++) await event.pending[index];
+  assert.deepEqual(event.calls, { match: 1, open: 1, fetch: 1, respondWith: 1 });
+  assert.equal(event.writes.length, 1);
+  assert.equal(event.writes[0][0], event.request);
+});

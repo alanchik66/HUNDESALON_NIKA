@@ -170,7 +170,7 @@ test('page scrolling preserves content offsets until an actual layout resize or 
   const scrollSource = main.slice(body[scrollStart].start, body[scrollEnd].end);
   const windowListeners = new Map(), scrollListeners = new Map(), frames = [];
   let headerResize, observedHeader;
-  let offsetSyncs = 0, scrollbarUpdates = 0;
+  let offsetSyncs = 0, scrollbarUpdates = 0, musicCloses = 0, socialCloses = 0;
   const header = {};
   const classes = new Set();
   const ResizeObserver = class {
@@ -185,7 +185,7 @@ test('page scrolling preserves content offsets until an actual layout resize or 
     window: { innerWidth: 1440, ResizeObserver, addEventListener: (type, callback) => windowListeners.set(type, callback),
       requestAnimationFrame: callback => frames.push(callback) },
     ResizeObserver, scrollRoot, hero: null, socialBar: null, pageHeader: null,
-    closeAllMusicUI() {}, closeSocialIconsUI() {},
+    closeAllMusicUI() { musicCloses += 1; }, closeSocialIconsUI() { socialCloses += 1; },
     syncContentTopOffsets: () => { offsetSyncs += 1; },
     updatePageScrollbarOffset: () => { scrollbarUpdates += 1; },
   };
@@ -207,12 +207,19 @@ test('page scrolling preserves content offsets until an actual layout resize or 
   frames.shift()();
   assert.equal(offsetSyncs, 0, 'scrolling must not measure and rewrite content clearance');
   assert.equal(scrollbarUpdates, 1, 'the scrollbar still follows scrolling');
+  classes.add('hide-header');
+  scrollRoot.scrollTop = 600;
+  scrollListeners.get('scroll')();
+  frames.shift()();
+  assert.equal(musicCloses, 2, 'real open UI must still close when scrolling down with an already hidden header');
+  assert.equal(socialCloses, 2);
+  assert.equal(scrollbarUpdates, 2);
 
   windowListeners.get('resize')();
   windowListeners.get('load')();
   headerResize();
   assert.equal(offsetSyncs, 3, 'viewport size, load and native header ResizeObserver retain layout synchronization');
-  assert.equal(scrollbarUpdates, 4);
+  assert.equal(scrollbarUpdates, 5);
 });
 
 test('queued page parallax keeps its last position while the navigation drawer is open and resumes afterwards', () => {
@@ -358,4 +365,100 @@ test('inertial wheel scrolling resumes from native positions without a scroll-ev
       assert.equal(position, 300, 'a later native position is the origin of the next gesture');
     });
   }
+});
+
+test('booking scroll lock replaces global input callbacks on repeated opens without unlocking the page', () => {
+  const modules = readFileSync(new URL('../assets/js/page-modules.js', import.meta.url), 'utf8');
+  const ast = parse(modules, { ecmaVersion: 'latest', sourceType: 'script' });
+  const ready = ast.body.find(node => node.expression?.arguments?.[0]?.value === 'DOMContentLoaded');
+  assert.ok(ready, 'page modules register their actual ready handler');
+  const initializer = ready.expression.arguments[1].body.body.find(node => node.type === 'VariableDeclaration'
+    && node.declarations.some(value => value.id.name === 'initBookingModal'));
+  assert.ok(initializer, 'the actual booking initializer exists');
+  const body = initializer.declarations.find(value => value.id.name === 'initBookingModal').init.body.body;
+  const declarations = ['lockSiteScroll', 'unlockSiteScroll'].map(name => {
+    const node = body.find(item => item.type === 'VariableDeclaration' && item.declarations.some(value => value.id.name === name));
+    assert.ok(node, name);
+    return modules.slice(node.start, node.end);
+  }).join('\n');
+
+  const createRegistry = () => {
+    const callbacksByKey = new Map(), optionsByCallback = new WeakMap();
+    const key = (type, options) => `${type}:${typeof options === 'boolean' ? options : Boolean(options?.capture)}`;
+    return {
+      addEventListener(type, callback, options) {
+        const name = key(type, options);
+        if (!callbacksByKey.has(name)) callbacksByKey.set(name, new Set());
+        callbacksByKey.get(name).add(callback);
+        optionsByCallback.set(callback, { capture: typeof options === 'boolean' ? options : Boolean(options?.capture), passive: options?.passive });
+      },
+      removeEventListener(type, callback, options) {
+        callbacksByKey.get(key(type, options))?.delete(callback);
+      },
+      callbacks: (type, capture = false) => [...(callbacksByKey.get(key(type, capture)) || [])],
+      optionsFor: callback => optionsByCallback.get(callback),
+    };
+  };
+  const classRemovals = [];
+  const classes = target => {
+    const names = new Set();
+    return {
+      add: (...values) => values.forEach(value => names.add(value)),
+      remove: (...values) => values.forEach(value => { classRemovals.push([target, value]); names.delete(value); }),
+      contains: value => names.has(value),
+    };
+  };
+  const scrollWrites = [];
+  let offset = 640;
+  const siteScrollRoot = { ...createRegistry(), classList: classes('root') };
+  Object.defineProperty(siteScrollRoot, 'scrollTop', {
+    get: () => offset,
+    set: value => { scrollWrites.push(value); offset = value; },
+  });
+  const document = { ...createRegistry(), documentElement: { classList: classes('html') }, body: { classList: classes('body') } };
+  const modal = { classList: classes('modal') };
+  modal.classList.add('active');
+  const { lockSiteScroll, unlockSiteScroll } = new Function('document', 'modal', 'siteScrollRoot', 'savedSiteScrollTop', `
+    let wheelBlockHandler = null, touchBlockHandler = null, siteScrollRestoreHandler = null;
+    ${declarations}
+    return { lockSiteScroll, unlockSiteScroll };
+  `)(document, modal, siteScrollRoot, offset);
+  const assertInputCounts = expected => {
+    for (const type of ['wheel', 'touchmove']) {
+      assert.equal(document.callbacks(type, true).length, expected, `document ${type} capture listeners`);
+      assert.equal(document.callbacks(type, false).length, 0, 'the lifecycle does not create bubble-phase blockers');
+    }
+  };
+
+  lockSiteScroll();
+  assertInputCounts(1);
+  for (const type of ['wheel', 'touchmove']) {
+    assert.deepEqual(document.optionsFor(document.callbacks(type, true)[0]), { capture: true, passive: false });
+  }
+  assert.equal(siteScrollRoot.callbacks('scroll').length, 1);
+  lockSiteScroll();
+  assertInputCounts(1);
+  assert.equal(siteScrollRoot.callbacks('scroll').length, 1, 'relocking also retains exactly one scroll restore callback');
+  assert.deepEqual(scrollWrites, [], 'relocking must not restore or change the current offset');
+  assert.deepEqual(classRemovals, [], 'relocking must not briefly unlock any page element');
+  assert.equal(siteScrollRoot.classList.contains('booking-scroll-locked'), true);
+  for (const target of [document.documentElement, document.body]) assert.equal(target.classList.contains('booking-modal-open'), true);
+
+  modal.classList.remove('active');
+  unlockSiteScroll();
+  assertInputCounts(0);
+  assert.equal(siteScrollRoot.callbacks('scroll').length, 0);
+  assert.deepEqual(scrollWrites, [640], 'closing retains the existing saved-position restoration');
+  assert.equal(siteScrollRoot.classList.contains('booking-scroll-locked'), false);
+  for (const target of [document.documentElement, document.body]) assert.equal(target.classList.contains('booking-modal-open'), false);
+  unlockSiteScroll();
+  assertInputCounts(0);
+
+  modal.classList.add('active');
+  lockSiteScroll();
+  assertInputCounts(1);
+  modal.classList.remove('active');
+  unlockSiteScroll();
+  assertInputCounts(0);
+  assert.equal(siteScrollRoot.callbacks('scroll').length, 0);
 });

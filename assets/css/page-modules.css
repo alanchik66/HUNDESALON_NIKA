@@ -3080,6 +3080,7 @@ body.booking-modal-open {
     radial-gradient(90% 70% at 92% 108%, rgb(52 211 153 / 9%) 0%, transparent 52%),
     linear-gradient(165deg, var(--liquid-panel-highlight) 0%, transparent 36%),
     linear-gradient(180deg, rgb(6 11 9 / 48%) 0%, rgb(3 7 5 / 58%) 100%);
+  background-color: rgb(6 11 9 / 96%);
 
   -webkit-backdrop-filter: blur(44px) saturate(1.92) brightness(1.06) contrast(1.02);
 
@@ -3093,6 +3094,10 @@ body.booking-modal-open {
     inset 0 -18px 38px rgb(0 0 0 / 12%);
   padding-bottom: max(1.75rem, env(safe-area-inset-bottom));
   will-change: transform, opacity;
+}
+
+body.light #booking-modal .modal-content {
+  background-color: rgb(240 230 210 / 96%);
 }
 
 #booking-modal .booking-glass-lens {
@@ -7849,9 +7854,9 @@ body.price-page main[data-price-page] .price-card {
   box-shadow:
     0 18px 42px rgb(0 0 0 / 0.18),
     0 0 28px rgb(50 255 177 / 0.04);
-  transform-style: preserve-3d;
+  transform-style: flat;
   transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.42s ease, background 0.42s ease;
-  will-change: transform;
+  will-change: auto;
 }
 
 body.price-page main[data-price-page] .price-card::before {
@@ -7906,6 +7911,8 @@ body.price-page main[data-price-page] .price-card > * {
       0 0 34px rgb(50 255 177 / 0.09),
       0 0 12px rgb(201 168 76 / 0.06);
     transform: translateY(-8px) scale(1.012) rotateX(0.8deg) rotateY(-0.55deg);
+    transform-style: preserve-3d;
+    will-change: transform;
   }
 
   body.price-page main[data-price-page] .price-card:not(.price-card--breeds-open):is(:hover, :focus-within)::before {
@@ -7922,6 +7929,10 @@ body.price-page main[data-price-page] .price-card > * {
 body.price-page .price-card.price-card--breeds-open {
   isolation: isolate;
   z-index: 100;
+}
+
+body.price-page main[data-price-page] .price-card.price-card--breeds-open {
+  transform-style: preserve-3d;
 }
 
 /* Keep the breed menu above the service layer inside the same card. The card
@@ -8025,7 +8036,7 @@ body.price-page main[data-price-page] .price-card__chip {
     linear-gradient(135deg, rgb(24 68 48 / 0.28), rgb(6 20 14 / 0.34));
   box-shadow: 0 8px 20px rgb(0 0 0 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.045);
   transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), background 0.32s ease, box-shadow 0.32s ease;
-  will-change: transform;
+  will-change: auto;
 }
 
 body.price-page main[data-price-page] .price-card__service-option,
@@ -8087,6 +8098,7 @@ body.price-page main[data-price-page] .price-card__promotion-button:focus-visibl
       linear-gradient(135deg, rgb(35 94 67 / 0.36), rgb(6 20 14 / 0.38));
     box-shadow: 0 13px 26px rgb(0 0 0 / 0.18), 0 0 18px rgb(201 168 76 / 0.06), inset 0 1px 0 rgb(255 255 255 / 0.08);
     transform: translateY(-4px) scale(1.008);
+    will-change: transform;
   }
 
   body.price-page main[data-price-page] .price-card__service-option--additional:is(:hover, :focus-visible),
@@ -10222,5 +10234,82 @@ body.price-page .price-size-section:is(
   #booking-modal .step-indicator.nav-main > .filter-btn {
     font-size: clamp(0.92rem, 1.7vw, 1.1rem);
     letter-spacing: 0.01em;
+  }
+}
+
+body.light #booking-modal {
+  --gold: var(--accent-gold-dark);
+  --accent-gold: var(--accent-gold-dark);
+  --text-primary: var(--text-dark);
+  --text-color: var(--text-dark);
+}
+
+body.light #booking-modal .modal-content {
+  background-image:
+    radial-gradient(140% 100% at 14% -16%, rgb(94 240 184 / 14%) 0%, transparent 58%),
+    radial-gradient(90% 70% at 92% 108%, rgb(52 211 153 / 9%) 0%, transparent 52%),
+    linear-gradient(165deg, var(--liquid-panel-highlight) 0%, transparent 36%),
+    linear-gradient(180deg, rgb(255 250 238 / 48%) 0%, rgb(240 230 210 / 58%) 100%);
+  background-color: rgb(240 230 210 / 96%);
+}
+
+body.light #booking-modal .step-indicator.nav-main > .filter-btn,
+body.light #booking-modal .booking-selection__service-button,
+body.light #booking-modal :is(.booking-selection__intro, .booking-selection__risk-hint, .booking-selection__timing, .booking-availability-status) {
+  color: var(--text-dark);
+}
+
+body.light #booking-modal .step-indicator.nav-main > .filter-btn:is(.active, [aria-current='true'], :hover, :focus-visible) {
+  color: var(--accent-gold-dark);
+}
+
+body.light #booking-modal .booking-selection__field :is(select, input[type='search']) {
+  color-scheme: light;
+  background-color: #fff8e8;
+  color: var(--text-dark);
+  border-color: var(--accent-gold);
+}
+
+body.light #booking-modal .site-select__trigger,
+body.light #booking-modal .booking-selection__service-button {
+  border-color: var(--accent-gold);
+}
+
+body.light #booking-modal .booking-selection__field input[type='search']::placeholder {
+  color: var(--text-light);
+  opacity: 1;
+}
+
+body.light #booking-modal .booking-step > h3 {
+  background: none;
+  color: var(--accent-gold-dark);
+  -webkit-text-fill-color: currentColor;
+  -webkit-text-stroke: 0;
+}
+
+/* The shared close rule sets both glyph colors !important. */
+body.light #booking-modal .modal-close {
+  color: var(--accent-gold-dark) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+/* Keep touch price materials stable without backdrop resampling. */
+@media (hover: none) and (pointer: coarse) {
+  body.price-page .site-scroll-root main[data-price-page] :is(.price-page-hero, .price-card),
+  body.price-page .site-scroll-root main[data-price-page] :is(.price-page-hero, .price-card)::before,
+  body.price-page .site-scroll-root main[data-price-page] :is(.price-page-hero, .price-card)::after,
+  body.price-page .site-scroll-root main[data-price-page] :is(.price-page-hero, .price-card) *,
+  body.price-page .site-scroll-root main[data-price-page] :is(.price-page-hero, .price-card) *::before,
+  body.price-page .site-scroll-root main[data-price-page] :is(.price-page-hero, .price-card) *::after {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  body.price-page .site-scroll-root main[data-price-page] :is(.price-page-hero, .price-card) {
+    background-color: rgb(4 15 11 / 0.88);
+  }
+
+  body.light.price-page .site-scroll-root main[data-price-page] :is(.price-page-hero, .price-card) {
+    background-color: rgb(247 239 224 / 0.9);
   }
 }

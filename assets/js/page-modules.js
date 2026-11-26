@@ -2290,6 +2290,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const lockSiteScroll = () => {
+      if (wheelBlockHandler) document.removeEventListener('wheel', wheelBlockHandler, { capture: true });
+      if (touchBlockHandler) document.removeEventListener('touchmove', touchBlockHandler, { capture: true });
+
       siteScrollRoot?.classList.add('booking-scroll-locked');
       document.documentElement.classList.add('booking-modal-open');
       document.body.classList.add('booking-modal-open');

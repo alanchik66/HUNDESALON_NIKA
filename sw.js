@@ -68,7 +68,7 @@ self.addEventListener('fetch', event => {
   // Owner sessions, changeable pages and live feature APIs must always consult the server.
   const path = url.pathname;
   if (/^\/(?:admin|api)(?:\/|$)|^\/(?:de|en|ru|uk)(?:\/|$)|^\/(?:reviews|telegram-menu)(?:\.html)?\/?$/.test(path) ||
-    ['/', '/index.html', '/sitemap.xml', '/blog', '/data/posts.json', '/booking-availability', '/payment', '/payment-status'].includes(path)) {
+    ['/', '/index.html', '/sitemap.xml', '/blog', '/data/posts.json', '/config/deploy-asset-version.txt', '/booking-availability', '/payment', '/payment-status'].includes(path)) {
     return;
   }
 

@@ -9390,9 +9390,10 @@
     }
 
     const triggerNode = root.querySelector('.weather-header-trigger');
+    const isHeaderVariant = host.dataset.weatherVariant === 'header';
     const triggerHeight =
-      triggerNode instanceof HTMLElement ? Math.round(triggerNode.getBoundingClientRect().height || 0) : 0;
-    const compactPreview = host.dataset.weatherVariant === 'header' || (triggerHeight > 0 && triggerHeight <= 92);
+      !isHeaderVariant && triggerNode instanceof HTMLElement ? Math.round(triggerNode.getBoundingClientRect().height || 0) : 0;
+    const compactPreview = isHeaderVariant || (triggerHeight > 0 && triggerHeight <= 92);
     const showMetrics = compactPreview;
     const previewTempSizePx = compactPreview ? 22 : 34;
 

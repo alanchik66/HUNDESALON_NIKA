@@ -5872,9 +5872,6 @@ body.light .social-music-item-icon {
   bottom: 14px;
   right: 9px;
   z-index: 1390;
-  transition:
-    top 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-    bottom 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .custom-scrollbar-track--panel {
@@ -13023,6 +13020,7 @@ body.light .social-icons-toggle.is-open {
   }
 
   .header .top-row > .header-weather-shell,
+  .header .top-row > .header-weather-shell.weather-shell-ready,
   .top-row > .header-weather-shell,
   .header.header-social-visible .top-row > .header-weather-shell {
     height: var(--header-weather-panel-h) !important;

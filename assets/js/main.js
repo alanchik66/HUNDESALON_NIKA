@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const scrollTarget = target instanceof Element ? target : target === document ? scrollRoot : null;
     if (!scrollTarget) return;
 
-    scrollTarget.classList.add('site-scroll-active');
+    if (!scrollTarget.classList.contains('site-scroll-active')) scrollTarget.classList.add('site-scroll-active');
     const previousTimer = scrollActivityTimers.get(scrollTarget);
     if (previousTimer) window.clearTimeout(previousTimer);
 
@@ -554,23 +554,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const getVisibleHeaderBottom = siteShell.getVisibleHeaderBottom || (() => 0);
 
+  let reservedHeaderHeight = 0;
+  let reservedHeaderViewportWidth = 0;
   const syncContentTopOffsets = () => {
     // Reserve layout height so hiding or revealing the fixed header cannot move content under a pointer.
-    const headerBottom = document.querySelector('header.header')?.offsetHeight || 0;
+    const measuredHeaderHeight = document.querySelector('header.header')?.offsetHeight || 0;
+    const viewportWidth = window.innerWidth;
+    if (measuredHeaderHeight <= 0) {
+      reservedHeaderHeight = 0;
+      reservedHeaderViewportWidth = 0;
+    } else if (reservedHeaderHeight <= 0 || reservedHeaderViewportWidth !== viewportWidth ||
+      Math.abs(measuredHeaderHeight - reservedHeaderHeight) > 1) {
+      reservedHeaderHeight = measuredHeaderHeight;
+      reservedHeaderViewportWidth = viewportWidth;
+    }
+    const headerBottom = reservedHeaderHeight;
 
     const rootStyle = document.documentElement.style;
+    const setOffset = (property, value) => {
+      const serialized = value + 'px';
+      if (rootStyle.getPropertyValue(property) !== serialized) rootStyle.setProperty(property, serialized);
+    };
     const rootComputed = window.getComputedStyle(document.documentElement);
     const sectionBaseOffset = parseFloat(rootComputed.getPropertyValue('--section-top-offset-base')) || 0;
     const heroBaseOffset = parseFloat(rootComputed.getPropertyValue('--hero-top-offset-base')) || 0;
 
     if (headerBottom <= 0) {
-      rootStyle.setProperty('--section-top-offset-dynamic', `${sectionBaseOffset}px`);
-      rootStyle.setProperty('--hero-top-offset-dynamic', `${heroBaseOffset}px`);
+      setOffset('--section-top-offset-dynamic', sectionBaseOffset);
+      setOffset('--hero-top-offset-dynamic', heroBaseOffset);
       return;
     }
 
-    const isPhoneViewport = window.innerWidth <= 600;
-    const isMobileViewport = window.innerWidth <= 899;
+    const isPhoneViewport = viewportWidth <= 600;
+    const isMobileViewport = viewportWidth <= 899;
     const sectionBufferBase = isPhoneViewport ? 18 : isMobileViewport ? 22 : 28;
     const heroBufferBase = isPhoneViewport ? 14 : isMobileViewport ? 18 : 28;
     const sectionBufferAdaptive = Math.ceil(headerBottom * (isPhoneViewport ? 0.1 : isMobileViewport ? 0.09 : 0.07));
@@ -581,8 +597,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const sectionOffset = Math.max(sectionBaseOffset, Math.ceil(headerBottom + sectionBuffer));
     const heroOffset = Math.max(heroBaseOffset, Math.ceil(headerBottom + heroBuffer));
 
-    rootStyle.setProperty('--section-top-offset-dynamic', `${sectionOffset}px`);
-    rootStyle.setProperty('--hero-top-offset-dynamic', `${heroOffset}px`);
+    setOffset('--section-top-offset-dynamic', sectionOffset);
+    setOffset('--hero-top-offset-dynamic', heroOffset);
   };
 
   const updatePageScrollbarOffset = () => {
@@ -915,13 +931,13 @@ document.addEventListener('DOMContentLoaded', () => {
       closingAnimations = [];
       if (openFrame !== null) cancelAnimationFrame(openFrame);
       openFrame = null;
-      toggle?.setAttribute('aria-expanded', 'false');
-      toggle?.classList.remove('is-open');
+      if (toggle?.getAttribute('aria-expanded') !== 'false') toggle?.setAttribute('aria-expanded', 'false');
+      if (toggle?.classList.contains('is-open')) toggle.classList.remove('is-open');
       if (!list) return;
-      list.hidden = true;
-      list.inert = true;
-      list.setAttribute('aria-hidden', 'true');
-      list.classList.remove('is-open');
+      if (!list.hidden) list.hidden = true;
+      if (!list.inert) list.inert = true;
+      if (list.getAttribute('aria-hidden') !== 'true') list.setAttribute('aria-hidden', 'true');
+      if (list.classList.contains('is-open')) list.classList.remove('is-open');
     };
     const reverse = () => {
       if (!isMobileIconRollout()) return false;
@@ -1017,20 +1033,20 @@ document.addEventListener('DOMContentLoaded', () => {
       socialPanelOpenFrame = null;
     }
     if (socialMusicMenu) {
-      socialMusicMenu.classList.remove('is-open');
-      socialMusicMenu.hidden = true;
-      socialMusicMenu.setAttribute('aria-hidden', 'true');
+      if (socialMusicMenu.classList.contains('is-open')) socialMusicMenu.classList.remove('is-open');
+      if (!socialMusicMenu.hidden) socialMusicMenu.hidden = true;
+      if (socialMusicMenu.getAttribute('aria-hidden') !== 'true') socialMusicMenu.setAttribute('aria-hidden', 'true');
     }
     allMusicPanels.forEach(p => {
-      p.classList.remove('is-open');
-      p.hidden = true;
-      p.setAttribute('aria-hidden', 'true');
+      if (p.classList.contains('is-open')) p.classList.remove('is-open');
+      if (!p.hidden) p.hidden = true;
+      if (p.getAttribute('aria-hidden') !== 'true') p.setAttribute('aria-hidden', 'true');
       p.style.removeProperty('left');
       p.style.removeProperty('top');
       p.style.removeProperty('--spotify-origin-x');
     });
     activeMusicPanel = null;
-    document.body.dataset.spotifyPanelOpen = 'false';
+    if (document.body.dataset.spotifyPanelOpen !== 'false') document.body.dataset.spotifyPanelOpen = 'false';
   };
   const closeAllMusicUI = () => {
     musicPickerUI.close();
@@ -1261,22 +1277,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* Hide header on scroll down, restore on upward scroll or near top */
     if (!shouldAutoHideHeader || current <= 24) {
-      document.body.classList.remove('hide-header');
+      if (document.body.classList.contains('hide-header')) document.body.classList.remove('hide-header');
     } else if (delta > downDeltaThreshold && current > heroHideOffset) {
       closeAllMusicUI();
       closeSocialIconsUI();
-      document.body.classList.add('hide-header');
+      if (!document.body.classList.contains('hide-header')) document.body.classList.add('hide-header');
     } else if (current < heroRevealOffset) {
-      document.body.classList.remove('hide-header');
+      if (document.body.classList.contains('hide-header')) document.body.classList.remove('hide-header');
     }
 
     /* Social bar only at very top. Spotify-panel state is managed by site-shell.js. */
     if (current < 24) {
-      socialBar?.classList.add('show-social');
-      pageHeader?.classList.add('header-social-visible');
+      if (socialBar && !socialBar.classList.contains('show-social')) socialBar.classList.add('show-social');
+      if (pageHeader && !pageHeader.classList.contains('header-social-visible')) pageHeader.classList.add('header-social-visible');
     } else {
-      socialBar?.classList.remove('show-social');
-      pageHeader?.classList.remove('header-social-visible');
+      if (socialBar?.classList.contains('show-social')) socialBar.classList.remove('show-social');
+      if (pageHeader?.classList.contains('header-social-visible')) pageHeader.classList.remove('header-social-visible');
     }
 
     /* Keep the background geometry fixed while the navigation owns the scroll lock. */

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import postcss from 'postcss';
 import { parse } from 'acorn';
-import { installMotionVisibility, installScrollFrameBudget } from '../assets/js/motion-visibility.js';
+import { installMotionVisibility, installScrollAnimationBudget, installScrollFrameBudget } from '../assets/js/motion-visibility.js';
 
 const mainSource = await readFile(new URL('../assets/js/main.js', import.meta.url), 'utf8');
 const mainAst = parse(mainSource, { ecmaVersion: 'latest', sourceType: 'script' });
@@ -202,7 +202,7 @@ test('browsers without IntersectionObserver retain their original motion', () =>
 function scrollBudgetFixture({ price = true, pendingLoader = false } = {}) {
   const observers = [];
   const frames = new Map();
-  const listeners = { document: new Map(), window: new Map() };
+  const listeners = { document: new Map(), window: new Map(), root: new Map() };
   let frameId = 0;
   let resolveLoader;
   const element = initialClasses => {
@@ -227,17 +227,19 @@ function scrollBudgetFixture({ price = true, pendingLoader = false } = {}) {
     listeners[target].get(name).add(callback);
   };
   const remove = (target, name, callback) => listeners[target].get(name)?.delete(callback);
+  root.addEventListener = (name, callback) => add('root', name, callback);
+  root.removeEventListener = (name, callback) => remove('root', name, callback);
   const document = {
     body, hidden: false,
-    documentElement: { dataset: { siteReady: pendingLoader ? 'false' : 'true', priceReady: 'true' } },
+    documentElement: { ...element([]), dataset: { siteReady: pendingLoader ? 'false' : 'true', priceReady: 'true' } },
     querySelector: selector => selector === '.site-scroll-root' ? root : price ? {} : null,
     addEventListener: (name, callback) => add('document', name, callback),
     removeEventListener: (name, callback) => remove('document', name, callback),
   };
   const window = {
     MutationObserver: class {
-      constructor(callback) { this.callback = callback; this.disconnected = false; observers.push(this); }
-      observe(target, options) { this.target = target; this.options = options; }
+      constructor(callback) { this.callback = callback; this.targets = new Map(); this.disconnected = false; observers.push(this); }
+      observe(target, options) { this.targets.set(target, options); this.options = options; }
       disconnect() { this.disconnected = true; }
     },
     requestAnimationFrame(callback) { frames.set(++frameId, callback); return frameId; },
@@ -248,7 +250,7 @@ function scrollBudgetFixture({ price = true, pendingLoader = false } = {}) {
   Object.defineProperty(window, 'localStorage', { get() { throw Error('Scroll quality is never persisted.'); } });
   if (pendingLoader) window.NikaSiteLoader = { ready: new Promise(resolve => { resolveLoader = resolve; }) };
   const emit = (target, name, event = {}) => listeners[target].get(name)?.forEach(callback => callback(event));
-  const mutation = target => observers.filter(observer => observer.target === target && !observer.disconnected)
+  const mutation = target => observers.filter(observer => observer.targets.get(target)?.attributes && !observer.disconnected)
     .forEach(observer => observer.callback([{ type: 'attributes', attributeName: 'class', target }]));
   return {
     document, window, root, body, observers, frames, listeners, emit,
@@ -260,6 +262,118 @@ function scrollBudgetFixture({ price = true, pendingLoader = false } = {}) {
     listenerCount: () => Object.values(listeners).reduce((sum, map) => sum + [...map.values()].reduce((n, set) => n + set.size, 0), 0),
   };
 }
+
+function scrollAnimationFixture(options) {
+  const h = scrollBudgetFixture(options);
+  const animations = [], timers = new Map();
+  let nextTimer = 0, queries = 0;
+  h.document.querySelectorAll = () => [];
+  h.document.getElementById = () => null;
+  h.document.getAnimations = () => { queries += 1; return animations; };
+  h.window.matchMedia = () => ({ matches: true });
+  h.window.setTimeout = (callback, delay) => { timers.set(++nextTimer, { callback, delay }); return nextTimer; };
+  h.window.clearTimeout = id => timers.delete(id);
+  h.window.Animation = class {
+    constructor({ rate = 1, iterations = Infinity, paused = false, loading = false } = {}) {
+      const parentElement = loading ? { matches: () => true } : null;
+      this.effect = { target: { isConnected: true, parentElement }, getTiming: () => ({ iterations }) };
+      this.playState = paused ? 'paused' : 'running';
+      this.playbackRate = rate;
+      this.pending = false;
+      this.calls = [];
+      animations.push(this);
+    }
+    updatePlaybackRate(rate) { this.calls.push(rate); this.pending = true; }
+    settle() {
+      if (this.pending) this.playbackRate = this.calls.at(-1);
+      this.pending = false;
+    }
+  };
+  return Object.assign(h, {
+    loop: options => new h.window.Animation(options),
+    timerCount: () => timers.size,
+    queries: () => queries,
+    elapse(delay) {
+      for (const [id, { callback, delay: wait }] of [...timers]) {
+        if (wait === delay) { timers.delete(id); callback(); }
+      }
+    },
+    mouseWheel(options = {}) { h.emit('root', 'wheel', { isTrusted: true, ...options }); },
+    touchStart(options = {}) { h.emit('root', 'touchstart', { isTrusted: true, touches: [{}], ...options }); },
+    touchEnd() { h.emit('document', 'touchend', { isTrusted: true, touches: [] }); },
+  });
+}
+
+test('native price scroll holds cached decorative loops after load and restores authored rates', () => {
+  const h = scrollAnimationFixture({ pendingLoader: true });
+  const forward = h.loop({ rate: 2 });
+  const reversePaused = h.loop({ rate: -0.5, paused: true });
+  const independent = [h.loop({ rate: 0 }), h.loop({ iterations: 2 }), h.loop({ loading: true })];
+  const controller = installScrollAnimationBudget(h.document, h.window);
+  h.emit('window', 'site:page-ready');
+  h.elapse(0);
+  h.mouseWheel();
+  assert.deepEqual(forward.calls, []);
+
+  h.finishLoading();
+  h.mouseWheel({ isTrusted: false });
+  h.mouseWheel({ ctrlKey: true });
+  h.touchStart({ target: { closest: () => ({}) } });
+  assert.deepEqual(forward.calls, []);
+  h.touchStart();
+  h.burst(true);
+  h.touchEnd();
+  h.mouseWheel();
+  h.mouseWheel();
+  assert.equal(h.queries(), 1, 'input and scroll activity do not recalculate animation membership');
+  assert.deepEqual(forward.calls, [0]);
+  assert.deepEqual(reversePaused.calls, [0]);
+  assert.ok(independent.every(animation => animation.calls.length === 0));
+  forward.settle();
+  reversePaused.settle();
+
+  h.burst(false);
+  assert.deepEqual(forward.calls, [0, 2]);
+  assert.deepEqual(reversePaused.calls, [0, -0.5]);
+  assert.equal(reversePaused.playState, 'paused');
+  controller.disconnect();
+  assert.equal(h.listenerCount(), 0);
+  assert.equal(h.timerCount(), 0);
+});
+
+test('tap, inactivity, modal and pagehide release the hold even during pending rate changes', () => {
+  const h = scrollAnimationFixture();
+  const loop = h.loop({ rate: 1.25 });
+  const controller = installScrollAnimationBudget(h.document, h.window);
+  h.elapse(0);
+  h.touchStart();
+  loop.settle();
+  h.touchEnd();
+  h.mouseWheel();
+  assert.deepEqual(loop.calls, [0, 1.25, 0], 'another burst can supersede a pending restore');
+  h.elapse(240);
+  assert.equal(loop.calls.at(-1), 1.25);
+  loop.settle();
+  h.touchStart();
+  h.burst(true);
+  h.modal('price-modal-open', true);
+  assert.equal(loop.calls.at(-1), 1.25);
+  const calls = loop.calls.length;
+  h.modal('price-modal-open', false);
+  assert.equal(loop.calls.length, calls, 'closing a dialog does not revive its previous burst');
+  h.burst(false);
+  h.mouseWheel();
+  h.emit('window', 'pagehide');
+  assert.equal(loop.calls.at(-1), 1.25);
+  h.emit('window', 'pageshow');
+  h.elapse(0);
+  h.mouseWheel();
+  assert.equal(loop.calls.at(-1), 0);
+  controller.disconnect();
+  assert.equal(loop.calls.at(-1), 1.25);
+  assert.equal(h.listenerCount(), 0);
+  assert.equal(h.timerCount(), 0);
+});
 
 test('a normal 60 fps price scroll keeps full effects and has no idle sampling loop', () => {
   const h = scrollBudgetFixture();
@@ -424,4 +538,40 @@ test('balanced scrolling retains a keyboard focus indicator when decorative focu
   assert.equal(declarations.get('outline').important, true);
   assert.equal(declarations.get('outline-offset').value, '2px');
   assert.equal(declarations.get('outline-offset').important, true);
+});
+
+test('primary touch has no whole-page scroll profile while fine and hybrid pointers keep the guarded fallback', async () => {
+  const css = postcss.parse(await readFile(new URL('../assets/css/motion-visibility.css', import.meta.url), 'utf8'));
+  const rules = []; css.walkRules(rule => { if (rule.selector.includes('[data-scroll-budget=')) rules.push(rule); });
+  assert.equal(rules.length, 3, 'fine pointers retain the surface, heading and keyboard-focus profiles');
+  assert.equal(rules.filter(rule => rule.parent.type === 'root').length, 0, 'primary coarse input must not pause every descendant or override paint/focus on each touch');
+  for (const rule of rules) {
+    assert.equal(rule.parent.type, 'atrule'); assert.equal(rule.parent.name, 'media');
+    assert.equal(rule.parent.params, '(hover: hover), (pointer: fine)', 'either hover or a fine primary pointer keeps the hybrid fallback');
+  }
+  const material = rules.find(rule => rule.nodes.some(node => node.prop === 'backdrop-filter'));
+  assert.ok(material);
+  assert.ok(material.nodes.some(node => node.prop === 'animation-play-state' && node.value === 'paused' && node.important), 'fine motion and paint adaptation remain one original profile');
+  assert.ok(rules.some(rule => rule.selector.includes('.price-card__price')));
+  assert.ok(rules.some(rule => rule.selector.endsWith(':focus-visible')));
+  const commonPause = css.nodes.find(node => node.type === 'rule' && node.selector.includes('[data-motion-offscreen]') && node.selector.includes('[data-motion-page-hidden]'));
+  assert.ok(commonPause, 'hidden and offscreen components keep their shared lifecycle independently of pointer type');
+  assert.ok(commonPause.nodes.some(node => node.prop === 'animation-play-state' && node.value === 'paused' && node.important));
+});
+
+test('coarse paint-transition whitelist retains static decoration, timing, accordion and menu transitions', async () => {
+  const css = postcss.parse(await readFile(new URL('../assets/css/motion-visibility.css', import.meta.url), 'utf8'));
+  const media = css.nodes.find(node => node.type === 'atrule' && node.name === 'media' && node.params === '(hover: none) and (pointer: coarse)');
+  assert.ok(media); const rules = media.nodes.filter(node => node.type === 'rule');
+  assert.equal(rules.length, 3);
+  const roles = ['.price-card__service-option', '.price-card__promotion-button', '.price-card__chip', '.price-card__badge--button'];
+  for (const rule of rules) {
+    assert.ok(rule.selector.startsWith('body.price-page .site-scroll-root main[data-price-page] .price-card'));
+    assert.doesNotMatch(rule.selector, /price-card__details|breed-menu|modal/);
+    const declarations = rule.nodes.filter(node => node.type === 'decl');
+    assert.equal(declarations.length, 1); assert.equal(declarations[0].prop, 'transition-property');
+    assert.equal(declarations[0].value, rule.selector.endsWith('::before') ? 'opacity' : 'transform, opacity');
+  }
+  const childRule = rules.find(rule => roles.every(role => rule.selector.includes(role)));
+  assert.ok(childRule, 'only specific paint-heavy roles inside cards are whitelisted');
 });

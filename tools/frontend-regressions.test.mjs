@@ -839,21 +839,27 @@ test('mobile social and music icons reverse their rollout without losing toggle 
   const settle = () => new Promise(resolve => setImmediate(resolve));
   const createHarness = ({ mobile = true, reducedMotion = false, supported = true, supportsPlaybackRateUpdate = true, currentTime,
     savedMotion, storageBlocked = false } = {}) => {
+    const mutations = [];
     const classList = () => {
       const values = new Set();
-      return { add: value => values.add(value), remove: value => values.delete(value), contains: value => values.has(value) };
+      return { add: value => { mutations.push(['class:add', value]); values.add(value); },
+        remove: value => { mutations.push(['class:remove', value]); values.delete(value); }, contains: value => values.has(value) };
     };
     const node = parent => {
       const attributes = new Map();
       const element = {
         parent, attributes, listeners: [], children: [], dataset: {}, classList: classList(), hidden: true, inert: true,
-        style: { removeProperty() {} }, setAttribute: (key, value) => attributes.set(key, value),
+        style: { removeProperty() {} }, setAttribute: (key, value) => { mutations.push(['attribute', key, value]); attributes.set(key, value); },
         getAttribute: key => attributes.get(key),
         appendChild(child) { child.parent = this; this.children.push(child); },
         addEventListener(type, handler) { this.listeners.push({ type, handler }); },
         closest: () => parent,
         contains(target) { for (let item = target; item; item = item.parent) if (item === this) return true; return false; },
       };
+      for (const property of ['hidden', 'inert']) {
+        let value = element[property];
+        Object.defineProperty(element, property, { get: () => value, set(next) { mutations.push([property, next]); value = next; } });
+      }
       return element;
     };
     const group = count => {
@@ -915,7 +921,8 @@ test('mobile social and music icons reverse their rollout without losing toggle 
     const documentListeners = [];
     const createdElements = [];
     const document = {
-      body: { dataset: {} }, getElementById: id => panels.find(panel => panel.id === id),
+      body: { dataset: new Proxy({}, { set(target, key, value) { mutations.push(['body:data', key, value]); target[key] = value; return true; } }) },
+      getElementById: id => panels.find(panel => panel.id === id),
       documentElement: { lang: 'ru', dataset: {} },
       createElement: tag => { createdElements.push(tag); return node(); },
       querySelectorAll: selector => selector === '.social-service-btn' ? music.links : [social.wrap, social.list],
@@ -937,7 +944,7 @@ test('mobile social and music icons reverse their rollout without losing toggle 
     });
     return {
       ...social, music, panels, documentData: document.body.dataset, close: close.close, closeMusic: close.closeMusic,
-      stored, storageAccess, createdElements, addedControls: socialBar.children,
+      stored, storageAccess, createdElements, addedControls: socialBar.children, mutations,
       click: (target = social.toggle, { stopAtTarget = false } = {}) => {
         let propagationStopped = false;
         const event = { target, preventDefault() {}, stopPropagation() { propagationStopped = true; } };
@@ -955,6 +962,29 @@ test('mobile social and music icons reverse their rollout without losing toggle 
       render: () => { const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(callback => callback()); },
     };
   };
+
+  await t.test('repeated native-scroll closes leave normalized social and music DOM untouched', () => {
+    const ui = createHarness();
+    ui.close();
+    ui.closeMusic();
+    ui.mutations.length = 0;
+    for (let count = 0; count < 20; count += 1) { ui.close(); ui.closeMusic(); }
+    assert.deepEqual(ui.mutations, [], 'closed controls must not invalidate attributes, classes or body data on each scroll frame');
+    ui.click();
+    ui.render();
+    ui.close();
+    assert.equal(ui.list.hidden, true);
+    assert.equal(ui.list.inert, true);
+    assert.equal(ui.toggle.getAttribute('aria-expanded'), 'false');
+    assert.equal(ui.list.getAttribute('aria-hidden'), 'true');
+    ui.click(ui.music.toggle);
+    ui.render();
+    ui.click(ui.music.links[0]);
+    assert.equal(ui.panels[0].hidden, false, 'the service was actually opened before closing');
+    ui.closeMusic();
+    assert.ok(ui.panels.every(panel => panel.hidden && panel.getAttribute('aria-hidden') === 'true'));
+    assert.equal(ui.documentData.spotifyPanelOpen, 'false');
+  });
 
   await t.test('mobile icon groups animate automatically under reduced motion without preference UI or storage access', async () => {
     for (const options of [
@@ -2331,6 +2361,49 @@ test('manual city readings update formatter values without replacing the device 
   assert.deepEqual(rendered, [[768, '55%']], 'the new formatter values must reach the rendered preview in the same update');
 });
 
+test('header weather preview skips layout reads while retaining other preview size fallbacks', async () => {
+  const declaration = await solarShellDeclarations(['refreshHeaderWeatherPreviewValues']);
+  const fn = parse(declaration, { ecmaVersion: 'latest', sourceType: 'script' }).body[0];
+  const hydration = fn.body.body.find(node => node.type === 'ExpressionStatement'
+    && node.expression.type === 'CallExpression'
+    && node.expression.callee.name === 'hydrateHeaderWeatherReadingsFromCache');
+  assert.ok(hydration, 'The geometry decision must precede hydration in the actual function');
+  const prefix = declaration.slice(fn.start, hydration.start);
+  class Element {
+    constructor(height, forbidGeometry = false) {
+      this.height = height;
+      this.forbidGeometry = forbidGeometry;
+      this.reads = 0;
+    }
+    getBoundingClientRect() {
+      this.reads++;
+      assert.equal(this.forbidGeometry, false, 'An explicit header variant must not read trigger geometry');
+      return { height: this.height };
+    }
+  }
+  const refreshPrefix = new Function('HTMLElement', prefix
+    + 'return { compactPreview, previewTempSizePx }; } return refreshHeaderWeatherPreviewValues;')(Element);
+  const cases = [
+    { label: 'explicit header', variant: 'header', height: 300, forbidGeometry: true, compact: true, size: 22, reads: 0 },
+    { label: 'other compact preview', variant: 'header-panel', height: 92, compact: true, size: 22, reads: 1 },
+    { label: 'other full preview', variant: 'header-panel', height: 93, compact: false, size: 34, reads: 1 },
+    { label: 'rounded compact boundary', variant: 'default', height: 92.49, compact: true, size: 22, reads: 1 },
+    { label: 'rounded full boundary', variant: 'default', height: 92.5, compact: false, size: 34, reads: 1 },
+    { label: 'missing trigger', variant: 'default', compact: false, size: 34, reads: 0 },
+  ];
+  for (const fixture of cases) {
+    const trigger = fixture.height === undefined ? null : new Element(fixture.height, fixture.forbidGeometry);
+    const host = { dataset: { weatherVariant: fixture.variant }, shadowRoot: {
+      querySelector: selector => selector === '.weather-header-trigger' ? trigger : null,
+    } };
+    assert.deepEqual(refreshPrefix(host), { compactPreview: fixture.compact, previewTempSizePx: fixture.size }, fixture.label);
+    assert.equal(trigger?.reads || 0, fixture.reads, fixture.label + ': geometry read count');
+  }
+  assert.equal(refreshPrefix(null), undefined, 'A missing host keeps the existing early return');
+  assert.equal(refreshPrefix({ dataset: { weatherVariant: 'header' }, shadowRoot: null }), undefined,
+    'A missing shadow root keeps the existing early return');
+});
+
 test('reference pressure layout cannot prevent humidity from updating after a city change', async () => {
   const declarations = await solarShellDeclarations(['refreshHeaderWeatherPreviewValues', 'updateHeaderWeatherHumidityValue']);
   class Element {
@@ -3220,23 +3293,33 @@ test('booking slots use the salon timezone for foreign visitors across DST chang
 
 test('content header clearance stays stable through header visibility animations', async t => {
   const source = await readFile(path.join(root, 'assets/js/main.js'), 'utf8');
-  const begin = source.indexOf('  const syncContentTopOffsets = () => {');
-  const end = source.indexOf('\n  const updatePageScrollbarOffset =', begin);
-  assert.ok(begin >= 0 && end > begin, 'the actual content reservation function must be tested');
+  const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'script' });
+  const callback = ast.body.find(node => node.expression?.callee?.object?.name === 'document' &&
+    node.expression.callee.property?.name === 'addEventListener' && node.expression.arguments[0]?.value === 'DOMContentLoaded')?.expression.arguments[1];
+  const body = callback?.body?.body;
+  assert.ok(Array.isArray(body), 'the actual main callback must be tested');
+  const names = new Set(['reservedHeaderHeight', 'reservedHeaderViewportWidth', 'syncContentTopOffsets']);
+  const declarations = body.filter(node => node.type === 'VariableDeclaration' &&
+    node.declarations.some(declaration => names.has(declaration.id.name)));
+  assert.ok(declarations.some(node => node.declarations.some(declaration => declaration.id.name === 'syncContentTopOffsets')));
+  const actualCode = declarations.map(node => source.slice(node.start, node.end)).join('\n');
   const initialize = new Function('document', 'window', 'getVisibleHeaderBottom', `
-    ${source.slice(begin, end)}
+    ${actualCode}
     return syncContentTopOffsets;
   `);
   const createHarness = (width, { height = 220, present = true, visibleBottom = height } = {}) => {
-    const values = new Map();
-    const state = { visibleBottom, safeArea: '24px' };
+    const values = new Map(), writes = [];
+    const state = { visibleBottom, safeArea: '24px', present };
     const header = { offsetHeight: height };
     const bases = { '--section-top-offset-base': '148px', '--hero-top-offset-base': '86px' };
     const document = {
-      documentElement: { style: { setProperty: (name, value) => values.set(name, value) } },
+      documentElement: { style: {
+        getPropertyValue: name => values.get(name) || '',
+        setProperty(name, value) { writes.push([name, value]); values.set(name, value); },
+      } },
       querySelector(selector) {
         assert.equal(selector, 'header.header');
-        return present ? header : null;
+        return state.present ? header : null;
       },
     };
     const window = {
@@ -3245,7 +3328,7 @@ test('content header clearance stays stable through header visibility animations
         getPropertyValue: name => name === '--safe-top-offset' ? state.safeArea : bases[name] || '',
       }),
     };
-    return { header, state, values, bases, sync: initialize(document, window, () => state.visibleBottom) };
+    return { header, state, values, writes, bases, window, sync: initialize(document, window, () => state.visibleBottom) };
   };
   const offsets = harness => Object.fromEntries(harness.values);
 
@@ -3283,6 +3366,68 @@ test('content header clearance stays stable through header visibility animations
         '--hero-top-offset-dynamic': harness.bases['--hero-top-offset-base'],
       });
     }
+  });
+
+  await t.test('a one-pixel header oscillation keeps content offsets and performs no root writes', () => {
+    const harness = createHarness(390, { height: 184 });
+    harness.sync();
+    const initial = offsets(harness), writes = harness.writes.length;
+    assert.deepEqual(initial, { '--section-top-offset-dynamic': '203px', '--hero-top-offset-dynamic': '199px' });
+    for (const height of [183, 184, 185, 183, 184]) {
+      harness.header.offsetHeight = height; harness.sync();
+      assert.deepEqual(offsets(harness), initial); assert.equal(harness.writes.length, writes);
+    }
+  });
+
+  await t.test('a persistent two-pixel change is compared with the last reserved height', () => {
+    const harness = createHarness(390, { height: 184 });
+    harness.sync(); harness.header.offsetHeight = 183; harness.sync();
+    harness.header.offsetHeight = 182; harness.sync();
+    assert.deepEqual(offsets(harness), { '--section-top-offset-dynamic': '201px', '--hero-top-offset-dynamic': '197px' });
+  });
+
+  await t.test('a viewport width change accepts a one-pixel header resize', () => {
+    const harness = createHarness(390, { height: 184 });
+    harness.sync(); harness.window.innerWidth = 500; harness.header.offsetHeight = 183; harness.sync();
+    assert.deepEqual(offsets(harness), { '--section-top-offset-dynamic': '202px', '--hero-top-offset-dynamic': '198px' });
+  });
+
+  await t.test('real two-pixel growth and shrinkage both update content clearance', () => {
+    for (const [height, section, hero] of [[186, '205px', '201px'], [182, '201px', '197px']]) {
+      const harness = createHarness(390, { height: 184 });
+      harness.sync(); harness.header.offsetHeight = height; harness.sync();
+      assert.equal(harness.values.get('--section-top-offset-dynamic'), section);
+      assert.equal(harness.values.get('--hero-top-offset-dynamic'), hero);
+    }
+  });
+
+  await t.test('missing and zero-height headers clear the prior reservation before returning', () => {
+    for (const missing of [true, false]) {
+      const harness = createHarness(390, { height: 184 });
+      harness.sync();
+      if (missing) harness.state.present = false; else harness.header.offsetHeight = 0;
+      harness.sync();
+      assert.deepEqual(offsets(harness), { '--section-top-offset-dynamic': '148px', '--hero-top-offset-dynamic': '86px' });
+      harness.state.present = true; harness.header.offsetHeight = 183; harness.sync();
+      assert.deepEqual(offsets(harness), { '--section-top-offset-dynamic': '202px', '--hero-top-offset-dynamic': '198px' });
+    }
+  });
+
+  await t.test('unchanged normal and fallback offsets do not call root style setters again', () => {
+    for (const height of [184, 0]) {
+      const harness = createHarness(390, { height });
+      harness.sync(); const writes = harness.writes.length;
+      harness.sync(); harness.sync();
+      assert.equal(harness.writes.length, writes);
+    }
+  });
+
+  await t.test('CSS base changes still apply while a minor header fluctuation is ignored', () => {
+    const harness = createHarness(390, { height: 184 });
+    harness.sync(); harness.header.offsetHeight = 183;
+    harness.bases['--section-top-offset-base'] = '260px'; harness.bases['--hero-top-offset-base'] = '230px';
+    harness.sync();
+    assert.deepEqual(offsets(harness), { '--section-top-offset-dynamic': '260px', '--hero-top-offset-dynamic': '230px' });
   });
 
   await t.test('safe-area clearance remains added once by CSS rather than duplicated in the dynamic values', async () => {
