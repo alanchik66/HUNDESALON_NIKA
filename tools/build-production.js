@@ -4,9 +4,14 @@ import { execFileSync, execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { transformSync } from 'esbuild';
-import { assertProductionAssetContent, assertProductionSourcePath, isProductionSourceOnlyPath } from './lib/production-assets.mjs';
+import {
+  assertProductionAssetContent,
+  assertProductionSourcePath,
+  isProductionSourceOnlyPath,
+} from './lib/production-assets.mjs';
 import { minifyHeaderWeatherStyleTemplate } from './lib/production-style-template.mjs';
 import { stripLocalDevRefreshBootstrap } from './lib/production-dev-refresh.mjs';
+import { stripOwnedSiteLoaderMarkup } from './lib/production-site-loader.mjs';
 import { stampWeatherRuntimeVersions } from './lib/weather-asset-versions.mjs';
 import { annotateLocalizedPages } from './lib/page-copy-build.mjs';
 
@@ -490,11 +495,7 @@ function injectSiteLoader(directory, version) {
       const stylesheet = `<link rel="stylesheet" href="${prefix}/css/site-loader.css?v=${version}">`;
       const sceneScript = `<script src="${prefix}/js/paw-loader-scene.js?v=${version}"></script>`;
       const script = `<script src="${prefix}/js/site-loader.js?v=${version}"></script>`;
-      const cleaned = original
-        .replace(/<div\s+id=["']preloader["']\s*>\s*<div\s+class=["']loader["']\s*>\s*<\/div>\s*<\/div>/gi, '')
-        .replace(/\s*<link\b[^>]*href=["'][^"']*\/site-loader\.css(?:\?[^"']*)?["'][^>]*>/gi, '')
-        .replace(/\s*<script\b[^>]*src=["'][^"']*\/paw-loader-scene\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi, '')
-        .replace(/\s*<script\b[^>]*src=["'][^"']*\/site-loader\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi, '');
+      const cleaned = stripOwnedSiteLoaderMarkup(original);
       const next = cleaned.replace(/<head\b[^>]*>/i, match => `${match}\n${stylesheet}\n${sceneScript}\n${script}`);
       if (next !== original) {
         fs.writeFileSync(fullPath, next, 'utf8');
@@ -520,7 +521,9 @@ assertLocalAssetVersions(dist, assetVersion);
 
 console.log('Production bundle created in dist/.');
 console.log(`Asset cache version: ${assetVersion} (${stamped} HTML files stamped).`);
-console.log(`Weather runtime versioned: ${versionedWeather.files} maintained modules, ${versionedWeather.references} references.`);
+console.log(
+  `Weather runtime versioned: ${versionedWeather.files} maintained modules, ${versionedWeather.references} references.`
+);
 console.log(`Public contact normalized in ${publicContactFiles} HTML files.`);
 console.log(`Deferred non-critical scripts in ${deferredScriptFiles} HTML files.`);
 console.log(`Injected SendPulse integrations in ${sendPulseFiles} HTML files.`);

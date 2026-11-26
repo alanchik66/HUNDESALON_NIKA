@@ -6,6 +6,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import postcss from 'postcss';
+import { stripOwnedSiteLoaderMarkup } from './lib/production-site-loader.mjs';
 
 const source = readFileSync(new URL('../assets/js/site-loader.js', import.meta.url), 'utf8');
 const projectRoot = fileURLToPath(new URL('..', import.meta.url));
@@ -576,7 +577,12 @@ test('production adds versioned loader before page assets and keeps isolated doc
   const start = build.indexOf('function injectSiteLoader(');
   const end = build.indexOf('\nconst assetVersion =', start);
   assert.ok(start >= 0 && end > start);
-  const inject = new Function('fs', 'path', `${build.slice(start, end)}\nreturn injectSiteLoader;`)(fs, path);
+  const inject = new Function(
+    'fs',
+    'path',
+    'stripOwnedSiteLoaderMarkup',
+    `${build.slice(start, end)}\nreturn injectSiteLoader;`
+  )(fs, path, stripOwnedSiteLoaderMarkup);
   assert.equal(inject(directory, 'test-version'), 1);
   const result = readFileSync(path.join(directory, 'ru', 'index.html'), 'utf8');
   assert.ok(result.indexOf('site-loader.js?v=test-version') < result.indexOf('<title>'));

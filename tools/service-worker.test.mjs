@@ -15,7 +15,7 @@ function staticHeadersFor(pathname, rules = headersSource) {
     if (!line.trim() || line.trimStart().startsWith('#')) continue;
     if (!/^\s/.test(line)) {
       assert.ok(line.startsWith('/') && line.split('*').length <= 2, 'extend the test model before adding unsupported URL patterns');
-      const pattern = line.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace('*', '.*');
+      const pattern = line.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replaceAll('*', '.*');
       matches = new RegExp(`^${pattern}$`).test(pathname);
       continue;
     }

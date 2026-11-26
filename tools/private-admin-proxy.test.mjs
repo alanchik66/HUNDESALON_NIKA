@@ -89,10 +89,59 @@ test('only the registered origin reaches known routes; unregistered and unrelate
     assert.equal(copy.status, 200, path);
     assert.equal(copy.headers['cache-control'], 'private, no-store');
   }
-  assert.throws(
-    () => createPrivateAdminProxy({ getOrigin: () => origin, upstream: 'https://example.test' }),
-    /loopback/
-  );
+  for (const upstream of [
+    'https://example.test',
+    'https://127.0.0.1:8796',
+    'http://192.0.2.1:8796',
+    'http://user@127.0.0.1:8796',
+    'http://127.0.0.1:8796/admin/',
+    'http://127.0.0.1:8796/?backend=other',
+    'http://127.0.0.1:8796/#backend',
+  ]) {
+    assert.throws(() => createPrivateAdminProxy({ getOrigin: () => origin, upstream }), /loopback/, upstream);
+  }
+});
+
+test('request targets stay on the pinned backend and retain query bytes without following a foreign redirect', async t => {
+  const escaped = [];
+  const foreign = createServer((req, res) => {
+    escaped.push(req.url);
+    res.end('foreign');
+  });
+  const foreignOrigin = 'http://127.0.0.1:' + (await listen(foreign));
+  t.after(async () => {
+    foreign.closeAllConnections();
+    await new Promise(resolve => foreign.close(resolve));
+  });
+  const { send, seen } = await fixture(t, (req, res) => {
+    if (req.url === '/ru/?redirect-foreign') {
+      res.writeHead(302, { Location: foreignOrigin + '/ru/' }).end();
+    } else res.end('backend');
+  });
+  for (const path of [
+    foreignOrigin + '/admin/',
+    '//' + new URL(foreignOrigin).host + '/admin/',
+    '/\\127.0.0.1:' + new URL(foreignOrigin).port + '/admin/',
+    '/%5c%5c127.0.0.1/admin/',
+    '/admin/%2f%2f127.0.0.1/',
+    '/assets/%2e%2e/admin/',
+    '/assets/%252e%252e/admin/',
+  ]) {
+    assert.equal((await send(path)).status, 400, path);
+  }
+  assert.equal(seen.length, 0);
+  assert.deepEqual(escaped, []);
+
+  const query = '?next=' + foreignOrigin + '/ru/&escaped=%26%3d%23&dup=1&dup=2';
+  for (const path of ['/api/admin/page', '/api/admin/%70age']) {
+    const response = await send(path + query);
+    assert.equal(response.status, 200, path);
+    assert.equal(response.bytes.toString(), 'backend');
+    assert.equal(seen.at(-1).url, '/api/admin/page' + query);
+  }
+  assert.equal((await send('/ru/?redirect-foreign')).status, 502);
+  assert.equal(seen.length, 3);
+  assert.deepEqual(escaped, []);
 });
 
 test('the transfer landing stays on the protected origin and intercepts only its exact GET path', async t => {

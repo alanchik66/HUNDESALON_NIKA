@@ -87,7 +87,8 @@ try {
       await page.goto(`${base}/${locale}/prays-list.html`, { waitUntil: 'domcontentloaded', timeout: 60000 });
       flowStarted = true;
       const cookie = page.locator('[data-cookie-choice="necessary"]');
-      if (await cookie.isVisible()) await cookie.click();
+      await cookie.waitFor({ state: 'visible', timeout: 20000 });
+      await cookie.click();
       assert.equal(await page.evaluate(() => window.__hundesalonCookieConsent?.analytics), false,
         'Mock booking QA uses necessary cookies only');
       const card = page.locator('[data-price-categories] .price-card:visible').first();

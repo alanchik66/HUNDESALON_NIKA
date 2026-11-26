@@ -167,7 +167,11 @@ export function createPrivateAdminProxy({ getOrigin, upstream = 'http://127.0.0.
       if (!read && limit === undefined) return end(405);
       if ((!read || request.headers.origin !== undefined) && request.headers.origin !== remote.origin) return end(403);
       if (request.headers['service-worker'] === 'script') return end(403);
-      const target = new URL(request.url, local);
+      const target = new URL(local.origin);
+      target.pathname = pathname;
+      const queryStart = request.url.indexOf('?');
+      if (queryStart !== -1) target.search = request.url.slice(queryStart);
+      if (target.origin !== local.origin || target.username || target.password) return end(400);
       if (method === 'GET' && pathname === '/admin/' && target.search === '?key-transfer=1' && isOwnerKeyTransferActive) {
         return sendOwnerKeyTransferEntry(response, await isOwnerKeyTransferActive());
       }
